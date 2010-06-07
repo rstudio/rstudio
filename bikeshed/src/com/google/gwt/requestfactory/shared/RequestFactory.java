@@ -83,6 +83,7 @@ public interface RequestFactory {
    * Implemented by the request objects created by this factory.
    */
   interface RequestObject<T> {
+    // TODO merge fire() and to(), s.t. compiler enforces providing a callback
     void fire();
 
     String getRequestData();
@@ -93,7 +94,7 @@ public interface RequestFactory {
   }
 
   // TODO: this must be configurable
-  String URL = "/expenses/data";
+  String URL = "gwtRequest";
 
   String SYNC = "SYNC";
 
@@ -102,11 +103,4 @@ public interface RequestFactory {
   void init(HandlerManager eventBus);
 
   SyncRequest syncRequest(DeltaValueStore deltaValueStore);
-
-  /**
-   * The write operation enum used in DeltaValueStore.
-   */
-  enum WriteOperation {
-    CREATE, UPDATE, DELETE
-  }
 }

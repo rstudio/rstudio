@@ -22,7 +22,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
-import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -1267,20 +1266,7 @@ public class ModuleDefSchema extends Schema {
       logger.log(TreeLogger.ERROR, "Error reading script source", e);
       throw new UnableToCompleteException();
     } catch (JsParserException e) {
-      SourceDetail dtl = e.getSourceDetail();
-      if (dtl != null) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(moduleURL.toExternalForm());
-        sb.append("(");
-        sb.append(dtl.getLine());
-        sb.append(", ");
-        sb.append(dtl.getLineOffset());
-        sb.append("): ");
-        sb.append(e.getMessage());
-        logger.log(TreeLogger.ERROR, sb.toString(), e);
-      } else {
-        logger.log(TreeLogger.ERROR, "Error parsing JavaScript source", e);
-      }
+      logger.log(TreeLogger.ERROR, "Error parsing JavaScript source", e);
       throw new UnableToCompleteException();
     }
 

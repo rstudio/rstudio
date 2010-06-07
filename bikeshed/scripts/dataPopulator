@@ -1,0 +1,32 @@
+#!/bin/bash
+# 
+# Copyright 2010 Google Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+# example invocation: ./dataPopulator http://127.0.0.1:8888/gwtRequest $PWD/expensesJsonData.txt
+
+# the first argument should be the URL.
+# the second argument is the pathname of the file to be read.
+
+MAVEN_REPO=~/.m2/repository
+
+NEW_CLASSPATH=$MAVEN_REPO/org/json/json/20090211/json-20090211.jar
+for i in dev user servlet bikeshed
+do 
+  NEW_CLASSPATH=$MAVEN_REPO/com/google/gwt/gwt-${i}/2.1.0.M1/gwt-${i}-2.1.0.M1.jar:$NEW_CLASSPATH
+done
+
+java -Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.SimpleLog\
+     -Dorg.apache.commons.logging.simplelog.defaultlog=ERROR\
+     -cp $NEW_CLASSPATH com.google.gwt.requestfactory.server.SampleDataPopulator "$@" 

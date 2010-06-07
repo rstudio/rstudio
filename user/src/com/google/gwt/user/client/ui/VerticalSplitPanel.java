@@ -46,8 +46,15 @@ import com.google.gwt.user.client.Timer;
  * <li>.gwt-VerticalSplitPanel vsplitter { the splitter }</li>
  * </ul>
  * 
+ * @deprecated Use {@link SplitLayoutPanel} instead, but understand that it is
+ *             not a drop in replacement for this class. It requires standards
+ *             mode, and is most easily used under a {@link RootLayoutPanel} (as
+ *             opposed to a {@link RootPanel}
+ *
  * @see SplitLayoutPanel
  */
+@SuppressWarnings("deprecation")
+@Deprecated
 public final class VerticalSplitPanel extends SplitPanel {
   /**
    * The default resources used by this widget.
@@ -133,7 +140,7 @@ public final class VerticalSplitPanel extends SplitPanel {
      * @param bottomHeight
      */
     protected void updateElements(Element topElem, Element splitElem,
-        Element bottomElem, int topHeight, int bottomTop, int bottomHeight) {
+        Element bottomElem, int topHeight, int bottomTop, @SuppressWarnings("unused") int bottomHeight) {
       setHeight(topElem, topHeight + "px");
 
       setTop(splitElem, topHeight + "px");

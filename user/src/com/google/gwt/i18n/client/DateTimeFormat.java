@@ -264,8 +264,9 @@ import java.util.Date;
  * <p>
  * The pattern does not need to specify every field.  If the year, month, or
  * day is missing from the pattern, the corresponding value will be taken from
- * the current date.  If the hour, minute, or second is missing, the value
- * defaults to zero.
+ * the current date.  If the month is specified but the day is not, the day will
+ * be constrained to the last day within the specified month.  If the hour,
+ * minute, or second is missing, the value defaults to zero.
  * </p>
  * 
  * <p>
@@ -1186,7 +1187,8 @@ public class DateTimeFormat {
    * 
    * @param buf where formatted string will be appended to
    * @param count number of time pattern char repeats; this controls how a field
-   *          should be formatted
+   *     should be formatted; 2 is treated specially with the last two digits of
+   *     the year, while more than 2 digits are zero-padded
    * @param date hold the date object to be formatted
    */
   private void formatYear(StringBuffer buf, int count, Date date) {
@@ -1194,11 +1196,16 @@ public class DateTimeFormat {
     if (value < 0) {
       value = -value;
     }
-    if (count == 2) {
-      zeroPaddingNumber(buf, value % 100, 2);
-    } else {
-      // count != 2
-      buf.append(value);
+    switch (count) {
+      case 1: // no padding
+        buf.append(value);
+        break;
+      case 2: // last 2 digits of year, zero-padded
+        zeroPaddingNumber(buf, value % 100, 2);
+        break;
+      default: // anything else is zero-padded
+        zeroPaddingNumber(buf, value, count);
+        break;
     }
   }
 

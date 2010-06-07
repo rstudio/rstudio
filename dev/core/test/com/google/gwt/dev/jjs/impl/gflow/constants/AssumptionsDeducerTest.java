@@ -23,14 +23,14 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
-import com.google.gwt.dev.jjs.impl.OptimizerTestBase;
+import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.gflow.constants.AssumptionDeducer;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumption;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumption.Updater;
 
 import java.util.List;
 
-public class AssumptionsDeducerTest extends OptimizerTestBase {
+public class AssumptionsDeducerTest extends JJSTestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

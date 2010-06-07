@@ -1,0 +1,47 @@
+/* Applied to the nine box around the breadcrumb. */
+.breadcrumbBar {
+  padding: 15px 15px 0px;
+}
+
+.breadcrumbCorner {
+  height: 4px;
+  width: 4px;
+}
+
+@sprite .breadcrumbCornerTopRight {
+  gwt-image: 'cornerTopRight';
+}
+
+@sprite .breadcrumbCornerTopLeft {
+  gwt-image: 'cornerTopLeft';
+}
+
+@sprite .breadcrumbCornerBottomRight {
+  gwt-image: 'cornerBottomRight';
+}
+
+@sprite .breadcrumbCornerBottomLeft {
+  gwt-image: 'cornerBottomLeft';
+}
+
+.breadcrumbBorder {
+  background: #d7dde8;
+}
+
+.breadcrumbBorderInner {
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+}
+
+.breadcrumb {
+  padding-left: 5px;
+  color: #4b4a4a;
+  font-size: 130%;
+  font-weight: bold;
+}
+
+/* Applied to the main table. */
+.table {
+  border: 0px;
+}

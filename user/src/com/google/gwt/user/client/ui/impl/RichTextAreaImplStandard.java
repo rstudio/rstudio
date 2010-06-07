@@ -53,6 +53,11 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
   protected boolean initializing;
 
   /**
+   * Indicates that the text area should be focused as soon as it is loaded.
+   */
+  private boolean isPendingFocus;
+
+  /**
    * True when the element has been attached.
    */
   private boolean isReady;
@@ -90,7 +95,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     // the iframe becomes attached to the DOM. Any non-zero timeout will do
     // just fine.
     var _this = this;
-    _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing = true;
+    _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitializing()();
     setTimeout($entry(function() {
       // Turn on design mode.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
@@ -188,13 +193,15 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
   }
 
   @Override
-  public native void setFocus(boolean focused) /*-{
-    if (focused) {
-      this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.focus();
+  public void setFocus(boolean focused) {
+    if (initializing) {
+      // Issue 3503: if we focus before the iframe is in design mode, the text
+      // caret will not appear.
+      isPendingFocus = focused;
     } else {
-      this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.blur();
-    } 
-  }-*/;
+      setFocusImpl(focused);
+    }
+  }
 
   public void setFontName(String name) {
     execCommand("FontName", name);
@@ -307,7 +314,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     elem.__gwt_handler = $entry(function(evt) {
       if (elem.__listener) {
         if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(elem.__listener)) {
-          elem.__listener.@com.google.gwt.user.client.EventListener::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+          @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, elem.__listener);
         }
       }
     });
@@ -365,13 +372,32 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
       setEnabledImpl(isEnabled());
       beforeInitPlaceholder = null;
     }
-    
+
     super.onElementInitialized();
+
+    // Focus on the element now that it is initialized
+    if (isPendingFocus) {
+      isPendingFocus = false;
+      setFocus(true);
+    }
+  }
+
+  protected void onElementInitializing() {
+    initializing = true;
+    isPendingFocus = false;
   }
 
   protected native void setEnabledImpl(boolean enabled) /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     elem.contentWindow.document.designMode = enabled ? 'On' : 'Off';
+  }-*/;
+
+  protected native void setFocusImpl(boolean focused) /*-{
+   if (focused) {
+      this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.focus();
+    } else {
+      this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.blur();
+    }
   }-*/;
 
   protected native void setHTMLImpl(String html) /*-{

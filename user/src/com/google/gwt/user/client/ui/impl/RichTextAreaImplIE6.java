@@ -33,7 +33,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
   @Override
   public native void initElement() /*-{
     var _this = this;
-    _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing = true;
+    _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitializing()();
 
     setTimeout($entry(function() {
       if (_this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing == false) {
@@ -97,7 +97,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
           // Weird: this code has the context of the script frame, but we need the
           // event from the edit iframe's window.
           var evt = elem.contentWindow.event;
-          elem.__listener.@com.google.gwt.user.client.EventListener::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+          @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, elem.__listener);
         }
       }
     });

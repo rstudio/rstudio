@@ -313,6 +313,15 @@ public class MakeCallsStatic {
         return;
       }
 
+      if (isRunCallbacksMethod(x.getTarget())) {
+        /*
+         * Don't devirtualize these calls created by FragmentLoaderCreator,
+         * because it spoils code splitting.
+         * TODO(spoon) remove this once FragmentLoaderCreator is gone
+         */
+        return;
+      }
+
       ctx.replaceMe(makeStaticCall(x, newMethod));
     }
 
@@ -365,6 +374,18 @@ public class MakeCallsStatic {
       newCall.addArgs(x.getArgs());
       return newCall;
     }
+  }
+
+  private static boolean isRunCallbacksMethod(JMethod method) {
+    if (method.getEnclosingType() != null
+        && method.getEnclosingType().getName().startsWith(
+            FragmentLoaderCreator.ASYNC_LOADER_PACKAGE + "."
+                + FragmentLoaderCreator.ASYNC_LOADER_CLASS_PREFIX)
+        && method.getName().equals(FragmentLoaderCreator.RUN_CALLBACKS)) {
+      return true;
+    }
+
+    return false;
   }
 
   protected Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();

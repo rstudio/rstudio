@@ -3,7 +3,7 @@ package com.google.gwt.dev.jjs.impl.gflow;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.OptimizerTestBase;
+import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.AssumptionsPrinter;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgBuilder;
@@ -14,7 +14,7 @@ import com.google.gwt.dev.util.Strings;
 import java.util.Map;
 
 public abstract class CfgAnalysisTestBase<A extends Assumption<A>> 
-    extends OptimizerTestBase {
+    extends JJSTestBase {
   protected boolean forward = true;
 
   protected AnalysisResult analyze(String returnType, String... codeSnippet)

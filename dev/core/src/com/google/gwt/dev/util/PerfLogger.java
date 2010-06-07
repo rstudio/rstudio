@@ -103,7 +103,7 @@ public class PerfLogger {
    * @param message a not <code>null</code> message
    */
   public static void log(String message) {
-    if (!enabled) {
+    if (enabled) {
       start(message);
       currentTiming.get().messageOnly = true;
       end();

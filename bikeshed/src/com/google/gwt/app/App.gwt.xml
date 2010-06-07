@@ -2,11 +2,10 @@
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 0.0.999//EN" "http://google-web-toolkit.googlecode.com/svn/tags/0.0.999/distro-source/core/src/gwt-module.dtd">
 <module>
   <inherits name='com.google.gwt.user.User'/>
-  <inherits name='com.google.gwt.valuestore.ValueStore'/>
+  <inherits name='com.google.gwt.requestfactory.RequestFactory'/>
 
   <source path="place"/>
   <source path="client"/>
-  <source path="util"/>
   <generate-with class="com.google.gwt.app.rebind.EditorSupportGenerator">
     <when-type-assignable class='com.google.gwt.app.client.EditorSupport'/>
   </generate-with>

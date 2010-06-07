@@ -16,53 +16,128 @@
 package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.expenses.gwt.request.ExpenseRecord;
+import com.google.gwt.sample.expenses.gwt.request.ExpenseRecordChanged;
+import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.valuestore.shared.PropertyReference;
 
-import java.util.Date;
+import java.util.List;
 
 /**
- * TODO
+ * TODO: doc.
  */
-public class MobileExpenseDetails extends Composite {
+public class MobileExpenseDetails extends Composite implements MobilePage {
 
-  interface Binder extends UiBinder<Widget, MobileExpenseDetails> { }
-  private static Binder BINDER = GWT.create(Binder.class);
-
-  @UiField TextBox nameText, categoryText, priceText;
-  @UiField ListBox dateYear, dateMonth, dateDay;
-
-  public MobileExpenseDetails() {
-    initWidget(BINDER.createAndBindUi(this));
-
-    populateList(dateYear, 2000, 2010);
-    populateList(dateMonth, 1, 12);
-    populateList(dateDay, 1, 31);
+  /**
+   * TODO: doc.
+   */
+  public interface Listener {
+    void onEditExpense(ExpenseRecord expense);
   }
 
-  private void populateList(ListBox list, int start, int end) {
-    for (int i = start; i <= end; ++i) {
-      if (i < 10) {
-        list.addItem("0" + i);
-      } else {
-        list.addItem("" + i);
-      }
-    }
+  interface Binder extends UiBinder<Widget, MobileExpenseDetails> {
+  }
+
+  private static Binder BINDER = GWT.create(Binder.class);
+
+  @UiField
+  Element approvalText, nameText, dateText, categoryText, priceText, reasonRow,
+      reasonText;
+
+  private ExpenseRecord expense;
+  private final Listener listener;
+  private final ExpensesRequestFactory requestFactory;
+
+  public MobileExpenseDetails(Listener listener, HandlerManager eventBus,
+      ExpensesRequestFactory requestFactory) {
+    this.listener = listener;
+    this.requestFactory = requestFactory;
+
+    eventBus.addHandler(ExpenseRecordChanged.TYPE,
+        new ExpenseRecordChanged.Handler() {
+          public void onExpenseRecordChanged(ExpenseRecordChanged event) {
+            if (expense != null) {
+              ExpenseRecord newRecord = event.getRecord();
+              if (newRecord.getId().equals(expense.getId())) {
+                show(newRecord);
+              }
+            }
+          }
+        });
+
+    initWidget(BINDER.createAndBindUi(this));
+  }
+
+  public Widget asWidget() {
+    return this;
+  }
+
+  public String getPageTitle() {
+    return expense != null ? expense.getDescription() : "";
+  }
+
+  public boolean needsAddButton() {
+    return false;
+  }
+
+  public String needsCustomButton() {
+    return "Edit";
+  }
+
+  public boolean needsRefreshButton() {
+    return true;
+  }
+
+  public void onAdd() {
+  }
+
+  public void onCustom() {
+    listener.onEditExpense(expense);
+  }
+
+  public void onRefresh(boolean clear) {
+    PropertyReference<String> idRef = new PropertyReference<String>(expense,
+        ExpenseRecord.id);
+
+    requestFactory.expenseRequest().findExpense(idRef).to(
+        new Receiver<List<ExpenseRecord>>() {
+          public void onSuccess(List<ExpenseRecord> response) {
+            assert response.size() == 1;
+            show(response.get(0));
+          }
+        }).fire();
   }
 
   public void show(ExpenseRecord expense) {
-    nameText.setText(expense.getDescription());
-    categoryText.setText(expense.getCategory());
-    priceText.setText(ExpensesMobile.formatCurrency(expense.getAmount().intValue()));
+    this.expense = expense;
 
-    Date d = expense.getDate();
-    dateYear.setSelectedIndex(d.getYear() + 1900 - 2000);
-    dateMonth.setSelectedIndex(d.getMonth());
-    dateDay.setSelectedIndex(d.getDate() - 1);
+    DateTimeFormat formatter = DateTimeFormat.getMediumDateFormat();
+
+    Expenses.Approval approval = Expenses.Approval.from(expense.getApproval());
+    nameText.setInnerText(expense.getDescription());
+    dateText.setInnerText(formatter.format(expense.getCreated()));
+    categoryText.setInnerText(expense.getCategory());
+    priceText.setInnerText(ExpensesMobile.formatCurrency(expense.getAmount()));
+    approvalText.setInnerHTML(Expenses.Approval.BLANK.equals(approval)
+        ? "Awaiting Review" : approval.getText());
+    approvalText.getStyle().setColor(approval.getColor());
+
+    reasonText.setInnerText(expense.getReasonDenied());
+    if (Expenses.Approval.DENIED.equals(approval)) {
+      // Show the reason denied.
+      reasonRow.getStyle().clearDisplay();
+    } else {
+      // Hide the reason denied.
+      reasonRow.getStyle().setDisplay(Display.NONE);
+    }
   }
 }

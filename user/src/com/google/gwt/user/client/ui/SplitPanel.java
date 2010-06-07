@@ -24,7 +24,13 @@ import java.util.Iterator;
 /**
  * Abstract base class for {@link HorizontalSplitPanel} and
  * {@link VerticalSplitPanel}.
+ * 
+ * @deprecated Use {@link SplitLayoutPanel} instead, but understand that it is
+ *             not a drop in replacement for this class. It requires standards
+ *             mode, and is most easily used under a {@link RootLayoutPanel} (as
+ *             opposed to a {@link RootPanel}
  */
+@Deprecated
 abstract class SplitPanel extends Panel {
   /**
    * The element that masks the screen so we can catch mouse events over

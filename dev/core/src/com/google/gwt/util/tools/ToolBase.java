@@ -179,7 +179,7 @@ public abstract class ToolBase {
     }
   }
 
-  protected boolean processArgs(String[] args) {
+  protected boolean processArgs(String... args) {
     if (args.length > 0) {
       boolean help = false;
       if ("-help".equalsIgnoreCase(args[0])) {

@@ -28,7 +28,7 @@ import com.google.gwt.dev.util.JsniRef;
 /**
  * Tests class {@link JsniRefLookup}.
  */
-public class JsniRefLookupTest extends OptimizerTestBase {
+public class JsniRefLookupTest extends JJSTestBase {
   private class MockErrorReporter implements ErrorReporter {
     private String error = null;
 

@@ -33,27 +33,26 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return eval(json);
   }-*/;
 
-  public static RecordJsoImpl emptyCopy(RecordImpl from) {
+  public static RecordJsoImpl create(String id, Integer version,
+      final RecordSchema<?> schema) {
     RecordJsoImpl copy = create();
-    final RecordSchema<?> schema = from.getSchema();
     copy.setSchema(schema);
-    copy.set(Record.id, from.get(Record.id));
-    copy.set(Record.version, from.get(Record.version));
+    copy.set(Record.id, id);
+    copy.set(Record.version, version);
     return copy;
+  }
+
+  public static RecordJsoImpl emptyCopy(RecordImpl from) {
+    String id = from.get(Record.id);
+    Integer version = from.get(Record.version);
+    final RecordSchema<?> schema = from.getSchema();
+
+    return create(id, version, schema);
   }
 
   public static native RecordJsoImpl fromJson(String json) /*-{
     return eval(json);
   }-*/;
-
-  public static RecordJsoImpl newCopy(RecordSchema<?> schema, String id,
-      Integer version) {
-    RecordJsoImpl newCopy = create();
-    newCopy.setSchema(schema);
-    newCopy.set(Record.id, id);
-    newCopy.set(Record.version, version);
-    return newCopy;
-  }
 
   private static native RecordJsoImpl create() /*-{
     return {};
@@ -78,10 +77,16 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       return (V) Integer.valueOf(getInt(property.getName()));
     }
     if (Double.class.equals(property.getType())) {
+      if (!isDefined(property.getName())) {
+        return (V) new Double(0.0);
+      }
       return (V) Double.valueOf(getDouble(property.getName()));
     }
     if (Date.class.equals(property.getType())) {
-      double millis = getDouble(property.getName());
+      double millis = new Date().getTime();
+      if (isDefined(property.getName())) {
+        millis = getDouble(property.getName());
+      }
       if (GWT.isScript()) {
         return (V) dateForDouble(millis);
       } else {
@@ -153,6 +158,15 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       setInt(property.getName(), (Integer) value);
       return;
     }
+    if (value instanceof Date) {
+      double millis = ((Date) value).getTime();
+      setDouble(property.getName(), millis);
+      return;
+    }
+    if (value instanceof Double) {
+      setDouble(property.getName(), (Double) value);
+      return;
+    }
     throw new UnsupportedOperationException("Can't yet set properties of type "
         + value.getClass().getName());
   }
@@ -222,6 +236,10 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   private native int getInt(String name) /*-{
     return this[name];
+  }-*/;
+
+  private native void setDouble(String name, double value) /*-{
+    this[name] = value;
   }-*/;
 
   private native void setInt(String name, int value) /*-{

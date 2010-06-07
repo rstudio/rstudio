@@ -120,6 +120,20 @@ public class UIObjectTest extends GWTTestCase {
       // This *should* throw.
     }
 
+    try {
+      o.setStyleName("", true);
+      fail();
+    } catch (IllegalArgumentException e) {
+      // This *should* throw.
+    }
+
+    try {
+      o.setStyleName(" ", false);
+      fail();
+    } catch (IllegalArgumentException e) {
+      // This *should* throw.
+    }
+
     assertEquals("primary", o.getStylePrimaryName());
   }
 
@@ -175,7 +189,9 @@ public class UIObjectTest extends GWTTestCase {
     // Note: getStyleName() explicitly returns the className attribute, so it
     // doesn't guarantee that there aren't leading or trailing spaces.
     assertEquals("primaryStyle", o.getStyleName());
-    doDependentAndSecondaryStyleTest(o);
+    doDependentAndSecondaryStyleTest(o, true);
+    assertEquals("primaryStyle", o.getStyleName());
+    doDependentAndSecondaryStyleTest(o, false);
     assertEquals("primaryStyle", o.getStyleName());
   }
 
@@ -291,17 +307,25 @@ public class UIObjectTest extends GWTTestCase {
   }
 
   // doStuff() should leave MyObject's style in the same state it started in.
-  private void doDependentAndSecondaryStyleTest(MyObject o) {
+  private void doDependentAndSecondaryStyleTest(MyObject o, boolean usingSet) {
     // Test that the primary style remains the first class, and that the
     // dependent style shows up.
-    o.addStyleDependentName("dependent");
+    if (usingSet) {
+      o.setStyleDependentName("dependent", true);
+    } else {
+      o.addStyleDependentName("dependent");
+    }
     assertTrue(containsClass(o, o.getStylePrimaryName() + "-dependent"));
 
     String oldPrimaryStyle = o.getStylePrimaryName();
 
     // Test that replacing the primary style name works (and doesn't munge up
     // the secondary style).
-    o.addStyleName("secondaryStyle");
+    if (usingSet) {
+      o.setStyleName("secondaryStyle", true);
+    } else {
+      o.addStyleName("secondaryStyle");
+    }
     o.setStylePrimaryName("newPrimaryStyle");
 
     assertEquals("newPrimaryStyle", o.getStylePrimaryName());
@@ -313,8 +337,13 @@ public class UIObjectTest extends GWTTestCase {
 
     // Clean up & return.
     o.setStylePrimaryName(oldPrimaryStyle);
-    o.removeStyleDependentName("dependent");
-    o.removeStyleName("secondaryStyle");
+    if (usingSet) {
+      o.setStyleDependentName("dependent", false);
+      o.setStyleName("secondaryStyle", false);
+    } else {
+      o.removeStyleDependentName("dependent");
+      o.removeStyleName("secondaryStyle");
+    }
     assertFalse(containsClass(o, o.getStylePrimaryName() + "-dependent"));
     assertFalse(containsClass(o, "secondaryStyle"));
   }

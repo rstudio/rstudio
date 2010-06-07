@@ -104,7 +104,7 @@ public class BuildTypeMap {
    * JSNI code for native methods as an opaque string.
    * 
    * Note that methods and fields are not added to their classes here, that
-   * isn't done until {@link GenerateJavaDom}.
+   * isn't done until {@link GenerateJavaAST}.
    */
   private static class BuildDeclMapVisitor extends ASTVisitor {
 
@@ -612,6 +612,11 @@ public class BuildTypeMap {
           type.addImplements(superInterface);
         }
 
+        ReferenceBinding enclosingBinding = binding.enclosingType();
+        if (enclosingBinding != null) {
+          type.setEnclosingType((JDeclaredType) typeMap.get(enclosingBinding));
+        }
+
         if (type instanceof JEnumType) {
           processEnumType(binding, (JEnumType) type);
         }
@@ -795,7 +800,7 @@ public class BuildTypeMap {
             // Don't model an enum subclass as a JEnumType.
             newType = program.createClass(info, name, false, true);
           } else {
-            newType = program.createEnum(info, name);
+            newType = program.createEnum(info, name, binding.isAbstract());
           }
         } else {
           assert (false);

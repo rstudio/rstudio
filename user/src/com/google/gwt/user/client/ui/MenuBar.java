@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -30,7 +31,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -834,9 +834,14 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         // Close this menu and all of its parents.
         closeAllParents();
 
-        // Fire the item's command.
-        Command cmd = item.getCommand();
-        DeferredCommand.addCommand(cmd);
+        // Fire the item's command. The command must be fired in the same event
+        // loop or popup blockers will prevent popups from opening.
+        final Command cmd = item.getCommand();
+        Scheduler.get().scheduleFinally(new Scheduler.ScheduledCommand() {
+          public void execute() {
+            cmd.execute();
+          }
+        });
 
         // hide any open submenus of this item
         if (shownChildMenu != null) {

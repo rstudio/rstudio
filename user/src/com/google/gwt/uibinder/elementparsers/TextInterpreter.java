@@ -52,7 +52,7 @@ public class TextInterpreter implements XMLElement.Interpreter<String> {
   private String consumeAsTextMessage(XMLElement elem, MessagesWriter messages)
       throws UnableToCompleteException {
     if (!elem.hasChildNodes()) {
-      writer.die("Empty message: " + elem);
+      writer.die(elem, "Empty message");
     }
 
     MessageWriter message = messages.newMessage(elem);

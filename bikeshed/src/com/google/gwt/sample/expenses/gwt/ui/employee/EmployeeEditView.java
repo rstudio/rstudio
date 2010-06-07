@@ -18,6 +18,8 @@ package com.google.gwt.sample.expenses.gwt.ui.employee;
 import com.google.gwt.app.client.EditorSupport;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -49,24 +51,17 @@ public class EmployeeEditView extends Composite implements
   private static final Binder BINDER = GWT.create(Binder.class);
   private static final DataBinder DATA_BINDER = GWT.create(DataBinder.class);
 
-  @UiField
-  TextBox displayName;
-  @UiField
-  TextBox password;
-  @UiField
-  TextBox supervisorKey;
-  @UiField
-  TextBox userName;
-  @UiField
-  Button cancel;
-  @UiField
-  Button save;
-  @UiField
-  InlineLabel id;
-  @UiField
-  InlineLabel version;
-  @UiField
-  DivElement errors;
+  @UiField TextBox displayName;
+  @UiField TextBox password;
+  @UiField TextBox supervisorKey;
+  @UiField TextBox userName;
+  @UiField Button cancel;
+  @UiField Button save;
+  @UiField InlineLabel id;
+  @UiField InlineLabel version;
+  @UiField DivElement errors;
+  @UiField Element editTitle;
+  @UiField Element createTitle;
 
   private Delegate delegate;
   private DeltaValueStore deltas;
@@ -96,6 +91,16 @@ public class EmployeeEditView extends Composite implements
 
   public boolean isChanged() {
     return DATA_BINDER.isChanged(this);
+  }
+
+  public void setCreating(boolean creating) {
+    if (creating) {
+      editTitle.getStyle().setDisplay(Display.NONE);
+      createTitle.getStyle().clearDisplay();
+    } else {
+      editTitle.getStyle().clearDisplay();
+      createTitle.getStyle().setDisplay(Display.NONE);
+    }
   }
 
   public void setDelegate(Delegate delegate) {

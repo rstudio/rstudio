@@ -72,7 +72,7 @@ public class DateTimeParse_en_Test extends GWTTestCase {
 
     assertTrue(parse("yyyyMMdd", "91202", 0, date) > 0);
     assertEquals(9 - 1900, date.getYear());
-    assertEquals(12 - 1,date.getMonth());
+    assertEquals(12 - 1, date.getMonth());
     assertEquals(2, date.getDate());
   }
 
@@ -104,9 +104,70 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertEquals(2097 - 1900, date.getYear());
   }
 
+  /**
+   * Parse the pattern MMMMyyyy when the day of the current month is passed the
+   * last day of the parsed leap month. For example, parse "February2004" (leap
+   * month) on January 31. The date should be limited to the last day of the
+   * month.
+   */
+  public void testCurrentDayInvalidInParsedLeapMonth() {
+    // Parse "February2004" (leap year) on January 31, 2006.
+    Date date = new Date(2006 - 1900, 0, 31, 12, 0, 0);
+    DateTimeFormat format = DateTimeFormat.getFormat("MMMMyyyy");
+    assertEquals(12, format.parse("February2004", 0, date));
+    assertEquals(2004 - 1900, date.getYear());
+    assertEquals(1, date.getMonth());
+    assertEquals(29, date.getDate());
+  }
+
+  /**
+   * Parse the pattern MMMMyyyy when the day of the current month is passed the
+   * last day of the parsed month. For example, parse "February2006" on January
+   * 31. The date should be limited to the last day of the month.
+   */
+  public void testCurrentDayInvalidInParsedMonth() {
+    // Parse "February2006" on January 31, 2006.
+    Date date = new Date(2006 - 1900, 0, 31, 12, 0, 0);
+    DateTimeFormat format = DateTimeFormat.getFormat("MMMMyyyy");
+    assertEquals(12, format.parse("February2006", 0, date));
+    assertEquals(2006 - 1900, date.getYear());
+    assertEquals(1, date.getMonth());
+    assertEquals(28, date.getDate());
+  }
+
+  /**
+   * Parse the pattern MMMMyyyy when the day of the current month is passed the
+   * last day of the parsed month. For example, parse "February2006" on January
+   * 31. The date should be limited to the last day of the month.
+   */
+  public void testCurrentDayInvalidInParsedMonthStrict() {
+    // Parse "February2006" on January 31, 2006.
+    Date date = new Date(2006 - 1900, 0, 31, 12, 0, 0);
+    DateTimeFormat format = DateTimeFormat.getFormat("MMMMyyyy");
+    assertEquals(12, format.parseStrict("February2006", 0, date));
+    assertEquals(2006 - 1900, date.getYear());
+    assertEquals(1, date.getMonth());
+    assertEquals(28, date.getDate());
+  }
+
+  /**
+   * Parse the pattern MMMMyyyy when the day of the current month is within the
+   * last day of the parsed month. For example, parse "February2006" on January
+   * 10.
+   */
+  public void testCurrentDayValidInParsedMonth() {
+    // Set the date to January 31, 2006.
+    Date date = new Date(2006 - 1900, 0, 10, 12, 0, 0);
+    DateTimeFormat format = DateTimeFormat.getFormat("MMMMyyyy");
+    assertEquals(12, format.parse("February2006", 0, date));
+    assertEquals(2006 - 1900, date.getYear());
+    assertEquals(1, date.getMonth());
+    assertEquals(10, date.getDate());
+  }
+
   public void testDayOfWeek() {
     Date date = new Date();
-    
+
     assertTrue(parse("EEE", "Wed", 0, date) > 0);
     assertEquals(3, date.getDay());
     assertTrue(parse("EEEE", "Thursday", 0, date) > 0);
@@ -114,7 +175,7 @@ public class DateTimeParse_en_Test extends GWTTestCase {
   }
 
   /**
-   * Issue 4633: Test that an empty integer value throws an 
+   * Issue 4633: Test that an empty integer value throws an
    * {@link IllegalArgumentException}, but does not throw an
    * {@link IndexOutOfBoundsException}.
    */
@@ -536,7 +597,7 @@ public class DateTimeParse_en_Test extends GWTTestCase {
 
   public void testMonth() {
     Date date = new Date(1980, 1, 1);
-    
+
     assertTrue(parse("MM", "03", 0, date) > 0);
     assertEquals(2, date.getMonth());
     assertTrue(parse("MMM", "Feb", 0, date) > 0);
@@ -628,7 +689,7 @@ public class DateTimeParse_en_Test extends GWTTestCase {
 
   public void testStandloneDayOfWeek() {
     Date date = new Date(1980, 1, 1);
-    
+
     assertTrue(parse("ccc", "Wed", 0, date) > 0);
     assertEquals(3, date.getDay());
     assertTrue(parse("cccc", "Thursday", 0, date) > 0);
@@ -637,7 +698,7 @@ public class DateTimeParse_en_Test extends GWTTestCase {
 
   public void testStandloneMonth() {
     Date date = new Date(1980, 1, 1);
-    
+
     assertTrue(parse("LL", "03", 0, date) > 0);
     assertEquals(2, date.getMonth());
     assertTrue(parse("LLL", "Feb", 0, date) > 0);

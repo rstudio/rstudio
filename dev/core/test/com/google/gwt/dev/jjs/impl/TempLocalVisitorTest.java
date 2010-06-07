@@ -32,7 +32,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 /**
  * Test for {@link TempLocalVisitor}.
  */
-public class TempLocalVisitorTest extends OptimizerTestBase {
+public class TempLocalVisitorTest extends JJSTestBase {
   /**
    * For testing purposes; replaces all non-lvalue expressions with a temp.
    */

@@ -536,8 +536,11 @@ public class CfgBuilder {
 
     @Override
     public boolean visit(JLabeledStatement x, Context ctx) {
-      labels.put(x.getBody(), x.getLabel().getName());
-      return true;
+      String label = x.getLabel().getName();
+      labels.put(x.getBody(), label);
+      accept(x.getBody());
+      addBreakExits(label);
+      return false;
     }
 
     /**

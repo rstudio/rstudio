@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
+import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.gwt.uibinder.rebind.model.OwnerFieldClass;
@@ -75,7 +76,8 @@ public class BundleAttributeParsers {
     if (parser == null) {
       JClassType bundleClassType = getOracle().findType(bundleClassName);
       if (bundleClassType == null) {
-        die("No such resource class: " + bundleClassName);
+        die(attribute.getElement(), "No such resource class: "
+            + bundleClassName);
       }
       parser = createBundleParser(bundleClassType, attribute);
       parsers.put(bundleClassName, parser);
@@ -95,7 +97,7 @@ public class BundleAttributeParsers {
       XMLAttribute attribute) throws UnableToCompleteException {
 
     final String templateResourceName = attribute.getName().split(":")[0];
-    warn("\"%s\" is deprecated by "
+    warn(attribute.getElement(), "\"%s\" is deprecated by "
         + "<ui:with field='%s' type='%s.%s' />", BUNDLE_URI_SCHEME,
         templateResourceName, bundleClass.getPackage().getName(),
         bundleClass.getName());
@@ -104,7 +106,8 @@ public class BundleAttributeParsers {
     OwnerField field = getOwnerClass().getUiFieldForType(bundleClass);
     if (field != null) {
       if (!templateResourceName.equals(field.getName())) {
-        die("Template %s has no \"xmlns:%s='urn:with:%s'\" for %s.%s#%s",
+        die(attribute.getElement(),
+            "Template %s has no \"xmlns:%s='urn:with:%s'\" for %s.%s#%s",
             templatePath, field.getName(),
             bundleClass.getQualifiedSourceName(),
             uiOwnerType.getPackage().getName(), uiOwnerType.getName(),
@@ -128,9 +131,9 @@ public class BundleAttributeParsers {
         + bundleClass.getName().replace('.', '_') + "Instance", true);
   }
 
-  private void die(String string, Object... params)
+  private void die(XMLElement elem, String string, Object... params)
       throws UnableToCompleteException {
-    logger.die(string, params);
+    logger.die(elem, string, params);
   }
 
   private TypeOracle getOracle() {
@@ -141,7 +144,7 @@ public class BundleAttributeParsers {
     return ownerClass;
   }
 
-  private void warn(String string, Object... params) {
-    logger.warn(string, params);
+  private void warn(XMLElement elem, String string, Object... params) {
+    logger.warn(elem, string, params);
   }
 }

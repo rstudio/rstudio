@@ -36,13 +36,12 @@ public interface ListView<T> {
   public interface Delegate<T> {
     void onRangeChanged(ListView<T> listView);
   }
-
+  
   /**
-   * TODO: doc.
-   * 
-   * @param delegate
+   * Returns the value of the 'isExact' parameter of the most recent call
+   * to {@link #setDataSize(int, boolean)}.
    */
-  void setDelegate(Delegate<T> delegate);
+  boolean isDataSizeExact();
 
   /**
    * TODO: doc.
@@ -65,6 +64,13 @@ public interface ListView<T> {
    * @param isExact
    */
   void setDataSize(int size, boolean isExact);
+
+  /**
+   * TODO: doc.
+   * 
+   * @param delegate
+   */
+  void setDelegate(Delegate<T> delegate);
 
   /**
    * Set the {@link SelectionModel} used by this {@link ListView}.

@@ -84,8 +84,7 @@ public class JdtCompiler {
         CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
       CompilationUnit unit = builder.build(compiledClasses,
           compiler.computeDependencies(cud),
-          Collections.<JsniMethod> emptyList(),
-          new MethodArgNamesLookup(),
+          Collections.<JsniMethod> emptyList(), new MethodArgNamesLookup(),
           cud.compilationResult().getProblems());
       if (cud.compilationResult().hasErrors()) {
         unit = new ErrorCompilationUnit(unit);
@@ -176,13 +175,13 @@ public class JdtCompiler {
 
     @Override
     public boolean visit(TypeDeclaration typeDecl, BlockScope scope) {
-      CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
-      assert (enclosingClass != null);
       /*
        * Weird case: if JDT determines that this local class is totally
        * uninstantiable, it won't bother allocating a local name.
        */
       if (typeDecl.binding.constantPoolName() != null) {
+        CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
+        assert (enclosingClass != null);
         CompiledClass newClass = new CompiledClass(typeDecl, enclosingClass);
         map.put(typeDecl.binding, newClass);
       }

@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * Tests {@link ControlFlowAnalyzer}.
  */
-public class ControlFlowAnalyzerTest extends OptimizerTestBase {
+public class ControlFlowAnalyzerTest extends JJSTestBase {
 
   /**
    * Answers predicates about an analyzed program.

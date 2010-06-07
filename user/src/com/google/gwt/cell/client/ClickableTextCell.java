@@ -37,7 +37,7 @@ public class ClickableTextCell extends AbstractCell<String> {
   public Object onBrowserEvent(Element parent, String value, Object viewData,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
     String type = event.getType();
-    if (type.equals("click")) {
+    if (valueUpdater != null && type.equals("click")) {
       valueUpdater.update(value);
     }
     return null;

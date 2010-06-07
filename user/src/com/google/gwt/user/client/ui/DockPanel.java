@@ -36,8 +36,14 @@ import java.util.Map;
  * <img class='gallery' src='doc-files/DockPanel.png'/>
  * </p>
  * 
+ * @deprecated Use {@link DockLayoutPanel} instead, but understand that it is
+ *             not a drop in replacement for this class. It requires standards
+ *             mode, and is most easily used under a {@link RootLayoutPanel} (as
+ *             opposed to a {@link RootPanel}
+ * 
  * @see DockLayoutPanel
  */
+@Deprecated
 public class DockPanel extends CellPanel implements HasAlignment {
 
   /**

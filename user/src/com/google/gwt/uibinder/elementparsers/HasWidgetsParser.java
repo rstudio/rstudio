@@ -33,8 +33,7 @@ public class HasWidgetsParser implements ElementParser {
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
       if (!writer.isWidgetElement(child)) {
-        writer.die("%s can contain only widgets, but found %s",
-            elem, child);
+        writer.die(child, "Expecting only widgets in %s", elem);
       }
       String childFieldName = writer.parseElementToField(child);
       writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);

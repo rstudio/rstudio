@@ -74,7 +74,8 @@ public class JsniCollectorTest extends CompilationStateTestBase {
     assertEquals(source.indexOf('@') + "Bar".length(), problem.getSourceStart());
     assertEquals(3, problem.getSourceLineNumber());
     assertTrue(problem.isError());
-    assertEquals("Expected \":\" in JSNI reference", problem.getMessage());
+    assertEquals("Expected \":\" in JSNI reference\n>     @Bar;\n> --------^",
+        problem.getMessage());
   }
 
   public void testMalformedJsniRefPositionWithExtraLines() {
@@ -91,7 +92,8 @@ public class JsniCollectorTest extends CompilationStateTestBase {
     assertEquals(source.indexOf('@') + "Bar".length(), problem.getSourceStart());
     assertEquals(9, problem.getSourceLineNumber());
     assertTrue(problem.isError());
-    assertEquals("Expected \":\" in JSNI reference", problem.getMessage());
+    assertEquals("Expected \":\" in JSNI reference\n>     @Bar;\n> --------^",
+        problem.getMessage());
   }
 
   public void testSourcePosition() {

@@ -109,15 +109,15 @@ public class MessagesWriter {
     for (XMLElement child : messageChildren) {
       String attributeName = consumeMessageElementAttribute(NAME, child);
       if (attributeName.length() == 0) {
-        logger.die("Missing name attribute in %s", child);
+        logger.die(child, "Missing name attribute");
       }
       if (!elem.hasAttribute(attributeName)) {
-        logger.die("%s has no attribute matching %s", elem, child);
+        logger.die(child, "Enclosing element has no matching attribute");
       }
       XMLAttribute attribute = elem.getAttribute(attributeName);
       if (attribute.hasComputedValue()) {
-        logger.die("In %s, attribute \"%s\" has a field reference and "
-            + "so cannot be marked for localization, but found %s", elem,
+        logger.die(elem, "Attribute \"%s\" has a field reference and "
+            + "so cannot be marked for localization, but found %s",
             attributeName, child);
       }
 
@@ -273,9 +273,9 @@ public class MessagesWriter {
     String fullAttName = getMessagesPrefix() + ":" + attName;
     if (elem.hasAttribute(fullAttName)) {
       String value = elem.consumeRawAttribute(fullAttName);
-      logger.warn(
-          "In %s, deprecated prefix \"%s:\" on \"%s\". Use \"%s\" instead.",
-          elem, getMessagesPrefix(), fullAttName, attName);
+      logger.warn(elem,
+          "Deprecated prefix \"%s:\" on \"%s\". Use \"%s\" instead.",
+          getMessagesPrefix(), fullAttName, attName);
       return value;
     }
 
@@ -286,7 +286,7 @@ public class MessagesWriter {
       XMLElement elem) throws UnableToCompleteException {
     String value = consumeMessageElementAttribute(attName, elem);
     if ("".equals(value)) {
-      logger.die("%s does not have required attribute %s", elem, attName);
+      logger.die(elem, "Missing required attribute %s", attName);
     }
     return value;
   }
@@ -324,7 +324,7 @@ public class MessagesWriter {
           throws UnableToCompleteException {
         if (isAttributeMessage(child)) {
           if (child.hasChildNodes()) {
-            logger.die("Illegal body for %s in %s.", child, elem);
+            logger.die(child, "Illegal body.", child, elem);
           }
           return true;
         }

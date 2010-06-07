@@ -40,7 +40,11 @@ public class XMLAttribute {
   public String consumeStringValue() throws UnableToCompleteException {
     return xmlElem.consumeStringAttribute(w3cAttr.getName());
   }
-  
+
+  public XMLElement getElement() {
+    return xmlElem;
+  }
+
   public String getLocalName() {
     return w3cAttr.getLocalName();
   }

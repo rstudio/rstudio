@@ -24,16 +24,21 @@ public class JsParserException extends Exception {
    * Represents the location of a parser exception.
    */
   public static class SourceDetail {
+    private final String fileName;
     private final int line;
-
     private final int lineOffset;
-
     private final String lineSource;
 
-    public SourceDetail(int line, String lineSource, int lineOffset) {
+    public SourceDetail(int line, String lineSource, int lineOffset,
+        String fileName) {
       this.line = line;
       this.lineSource = lineSource;
       this.lineOffset = lineOffset;
+      this.fileName = fileName;
+    }
+
+    public String getFileName() {
+      return fileName;
     }
 
     public int getLine() {
@@ -49,50 +54,44 @@ public class JsParserException extends Exception {
     }
   }
 
-  private final SourceDetail sourceDetail;
-
-  public JsParserException(String msg) {
-    super(msg);
-    sourceDetail = null;
-  }
-
-  public JsParserException(String msg, int line, String lineSource,
-      int lineOffset) {
-    this(msg, line, lineSource, lineOffset, null);
-  }
-
-  public JsParserException(String msg, int line, String lineSource,
-      int lineOffset, Throwable cause) {
-    super(msg, cause);
-    sourceDetail = new SourceDetail(line, lineSource, lineOffset);
-  }
-
-  public JsParserException(String msg, Throwable cause) {
-    super(msg, cause);
-    sourceDetail = null;
-  }
-
-  public String getDescription() {
+  private static String createMessageWithDetail(String msg,
+      SourceDetail sourceDetail) {
+    if (sourceDetail == null) {
+      return msg;
+    }
     StringBuffer sb = new StringBuffer();
-
-    if (sourceDetail != null) {
-      sb.append("Line ");
-      sb.append(sourceDetail.getLine());
-      sb.append(": ");
-      sb.append(getMessage());
-      sb.append("\n");
-      sb.append("> ");
+    sb.append(sourceDetail.getFileName());
+    sb.append('(');
+    sb.append(sourceDetail.getLine());
+    sb.append(')');
+    sb.append(": ");
+    sb.append(msg);
+    if (sourceDetail.getLineSource() != null) {
+      sb.append("\n> ");
       sb.append(sourceDetail.getLineSource());
       sb.append("\n> ");
       for (int i = 0, n = sourceDetail.getLineOffset(); i < n; ++i) {
         sb.append('-');
       }
       sb.append('^');
-    } else {
-      sb.append(getMessage());
     }
-
     return sb.toString();
+  }
+
+  private final SourceDetail sourceDetail;
+
+  public JsParserException(String msg) {
+    this(msg, null);
+  }
+
+  public JsParserException(String msg, int line, String lineSource,
+      int lineOffset, String fileName) {
+    this(msg, new SourceDetail(line, lineSource, lineOffset, fileName));
+  }
+
+  public JsParserException(String msg, SourceDetail sourceDetail) {
+    super(createMessageWithDetail(msg, sourceDetail));
+    this.sourceDetail = sourceDetail;
   }
 
   /**

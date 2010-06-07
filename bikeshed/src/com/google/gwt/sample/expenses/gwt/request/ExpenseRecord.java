@@ -36,13 +36,13 @@ public interface ExpenseRecord extends Record {
    */
   String TOKEN = "ExpenseRecord";
 
-  Property<Double> amount = new Property<Double>("amount", Double.class);
-  Property<String> approval = new Property<String>("approval", String.class);
-  Property<String> category = new Property<String>("category", String.class);
-  Property<Date> date = new Property<Date>("date", Date.class);
-  Property<String> description = new Property<String>("description", String.class);
-  Property<String> reasonDenied = new Property<String>("reasonDenied", String.class);
-  Property<String> reportId = new Property<String>("reportId", String.class);
+  Property<Double> amount = new Property<Double>("amount", "Amount", Double.class);
+  Property<String> approval = new Property<String>("approval", "Approval", String.class);
+  Property<String> category = new Property<String>("category", "Category", String.class);
+  Property<Date> created = new Property<Date>("created", "Created", Date.class);
+  Property<String> description = new Property<String>("description", "Description", String.class);
+  Property<String> reasonDenied = new Property<String>("reasonDenied", "Reason Denied", String.class);
+  Property<String> reportId = new Property<String>("reportId", "Report Id", String.class);
 
   Double getAmount();
   
@@ -50,7 +50,7 @@ public interface ExpenseRecord extends Record {
   
   String getCategory();
 
-  Date getDate();
+  Date getCreated();
 
   String getDescription();
 

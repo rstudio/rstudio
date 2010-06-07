@@ -70,9 +70,10 @@ import com.google.gwt.user.client.DOM;
  * <p>
  * More complex styling behavior can be achieved by manipulating an object's
  * <i>secondary style names</i>. Secondary style names can be added and removed
- * using {@link #addStyleName(String)} and {@link #removeStyleName(String)}. The
- * purpose of secondary style names is to associate a variety of CSS style rules
- * over time as an object progresses through different visual states.
+ * using {@link #addStyleName(String)}, {@link #removeStyleName(String)}, or
+ * {@link #setStyleName(String, boolean)}. The purpose of secondary style names
+ * is to associate a variety of CSS style rules over time as an object
+ * progresses through different visual states.
  * </p>
  * 
  * <p>
@@ -366,10 +367,11 @@ public abstract class UIObject {
    * @param styleSuffix the suffix of the dependent style to be added.
    * @see #setStylePrimaryName(String)
    * @see #removeStyleDependentName(String)
+   * @see #setStyleDependentName(String, boolean)
    * @see #addStyleName(String)
    */
   public void addStyleDependentName(String styleSuffix) {
-    addStyleName(getStylePrimaryName() + '-' + styleSuffix);
+    setStyleDependentName(styleSuffix, true);
   }
 
   /**
@@ -420,6 +422,17 @@ public abstract class UIObject {
    *   background-color: lightgrey;
    *   border: none;
    * }</pre>
+   *
+   * <p>
+   * The code can also be simplified with
+   * {@link setStyleDependentName(String, boolean}:
+   * </p>
+   *
+   * <pre class="code">
+   * public void setReadOnly(boolean readOnly) {
+   *   isReadOnlyMode = readOnly;
+   *   setStyleDependentName("readonly", readOnly);
+   * }</pre>
    * 
    * <p>
    * Dependent style names are powerful because they are automatically updated
@@ -454,7 +467,7 @@ public abstract class UIObject {
    * @see #removeStyleName(String)
    */
   public void addStyleName(String style) {
-    setStyleName(getStyleElement(), style, true);
+    setStyleName(style, true);
   }
 
   /**
@@ -585,10 +598,10 @@ public abstract class UIObject {
    * @param styleSuffix the suffix of the dependent style to be removed
    * @see #setStylePrimaryName(Element, String)
    * @see #addStyleDependentName(String)
-   * @see #addStyleName(String)
+   * @see #setStyleDependentName(String, boolean)
    */
   public void removeStyleDependentName(String styleSuffix) {
-    removeStyleName(getStylePrimaryName() + '-' + styleSuffix);
+    setStyleDependentName(styleSuffix, false);
   }
 
   /**
@@ -598,9 +611,10 @@ public abstract class UIObject {
    * 
    * @param style the secondary style name to be removed
    * @see #addStyleName(String)
+   * @see #setStyleName(String, boolean)
    */
   public void removeStyleName(String style) {
-    setStyleName(getStyleElement(), style, false);
+    setStyleName(style, false);
   }
 
   /**
@@ -642,6 +656,41 @@ public abstract class UIObject {
   public void setSize(String width, String height) {
     setWidth(width);
     setHeight(height);
+  }
+
+  /**
+   * Adds or removes a dependent style name by specifying the style name's
+   * suffix. The actual form of the style name that is added is:
+   * 
+   * <pre class="code">
+   * getStylePrimaryName() + '-' + styleSuffix
+   * </pre>
+   * 
+   * @param styleSuffix the suffix of the dependent style to be added or removed
+   * @param add <code>true</code> to add the given style, <code>false</code> to
+   *          remove it
+   * @see #setStylePrimaryName(Element, String)
+   * @see #addStyleDependentName(String)
+   * @see #setStyleName(String, boolean)
+   * @see #removeStyleDependentName(String)
+   */
+  public void setStyleDependentName(String styleSuffix, boolean add) {
+    setStyleName(getStylePrimaryName() + '-' + styleSuffix, add);
+  }
+
+  /**
+   * Adds or removes a style name. This method is typically used to remove
+   * secondary style names, but it can be used to remove primary stylenames as
+   * well. That use is not recommended.
+   * 
+   * @param style the style name to be added or removed
+   * @param add <code>true</code> to add the given style, <code>false</code> to
+   *          remove it
+   * @see #addStyleName(String)
+   * @see #removeStyleName(String)
+   */
+  public void setStyleName(String style, boolean add) {
+    setStyleName(getStyleElement(), style, add);
   }
 
   /**

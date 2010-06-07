@@ -2,11 +2,13 @@
 <ui:UiBinder
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
-  xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'>
+  xmlns:m='urn:import:com.google.gwt.mobile.client'
+  xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
 
   <ui:with
     field='styles'
     type='com.google.gwt.sample.bikeshed.style.client.Styles.Resources' />
+  <ui:style field='desktop' src='desktop.css' />
 
   <ui:image
     field='searchCenter'
@@ -16,51 +18,42 @@
     field='searchLeft'
     src='../../../bikeshed/style/client/searchLeft.png' />
 
-  <ui:style>
-    .top {
-      padding-top: 4px;
-    }
-    
-    .breadcrumb {
-      padding-left: 5px;
-      color: #4b4a4a;
-      font-size: 160%;
-      font-weight: bold;
-    }
-    
-    .textBox {
+  <ui:image
+    field='cornerTopRight' />
+  <ui:image
+    field='cornerTopLeft' />
+  <ui:image
+    field='cornerBottomRight' />
+  <ui:image
+    field='cornerBottomLeft' />
+
+  <ui:style>   
+   .textBox {
       width: 250px;
       border: 0px;
-      padding: 0px;
+      padding: 4px 0px 2px;
       height: 16px;
       font-size: 12px;
+      outline-width: 0px;
+      background: transparent;
     }
-    
+
     .searchButton {
       cursor: pointer;
       cursor: hand;
     }
-    
+
     @sprite .searchCenter {
       gwt-image: 'searchCenter';
-      padding-top: 5px;
+      padding-top: 1px;
     }
     
     @sprite .searchLeft {
       gwt-image: 'searchLeft';
     }
-    
-    .tableControls {
-      background: white;
-    }
-    
+
     .center {
-      border-top: 1px solid #88b0f2;
-      border-bottom: 1px solid #88b0f2;
-    }
-    
-    .table {
-      border: 0px;
+      border-bottom: 1px solid #d7dde8;
     }
   </ui:style>
 
@@ -68,23 +61,50 @@
     unit='PX'>
 
     <g:north
-      size='40'>
+      size='70'>
       <g:HTMLPanel
-        styleName='{style.top}'>
+        styleName='{desktop.breadcrumbBar}'>
         <table
-          class='{style.tableControls}'
+          align='center'
           width='100%'
           cellspacing='0'
           cellpadding='0'>
+          <!-- Top of 9 box. -->
           <tr>
             <td
-              class='{style.breadcrumb}'
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerTopLeft}' />
+            </td>
+            <td
+              colspan='2'
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerTopRight}' />
+            </td>
+          </tr>
+          <tr>
+            <!-- Left of 9 box. -->
+            <td
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <!-- Breadcrumb. -->
+            <td
+              class='{desktop.breadcrumb} {desktop.breadcrumbBorder}'
               align='left'
-              colspan='3'
               ui:field='breadcrumb'>
               All Reports
             </td>
+            <!-- Search Box. -->
             <td
+              class='{desktop.breadcrumbBorder}'
               align='right'
               valign='middle'>
               <table
@@ -110,12 +130,37 @@
                       ui:field='searchButton'
                       resource='{styles.searchRight}' />
                   </td>
-                  <td
-                    width='10'>
-                &nbsp;
+                  <td>
+                    <div
+                      style='width:50px;' />
                   </td>
                 </tr>
               </table>
+            </td>
+            <!-- Right of 9 box. -->
+            <td
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+          </tr>
+          <!-- Bottom of 9 box. -->
+          <tr>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerBottomLeft}' />
+            </td>
+            <td
+              colspan='2'
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerBottomRight}' />
             </td>
           </tr>
         </table>
@@ -123,13 +168,13 @@
     </g:north>
 
     <g:center>
-      <g:ScrollPanel
+      <m:MobileScrollPanel
         styleName='{style.center}'>
-        <l:CellTable
-          addStyleNames='{style.table}'
+        <c:CellTable
+          addStyleNames='{desktop.table}'
           width='100%'
           ui:field='table' />
-      </g:ScrollPanel>
+      </m:MobileScrollPanel>
     </g:center>
 
     <g:south
@@ -137,7 +182,7 @@
       <g:HTMLPanel>
         <div
           style='position:absolute;right:30px;'>
-          <l:SimplePager
+          <c:SimplePager
             ui:field='pager' />
         </div>
       </g:HTMLPanel>

@@ -1,0 +1,39 @@
+<html>
+<body>
+<p>Classes and interfaces used by the
+{@link com.google.gwt.user.cellview.client cellview} widget set.  The package
+includes:
+<ul>
+<li>{@link com.google.gwt.view.client.ListView ListView} - interface for all views that display a list of data items
+within a {@link com.google.gwt.view.client.Range Range}</li>
+  <ul>
+  <li>{@link com.google.gwt.view.client.PagingListView PagingListView} - a ListView that may be controlled by a
+  {@link com.google.gwt.view.client.PagingListView.Pager Pager}</li>
+  </ul>
+<li>{@link com.google.gwt.view.client.AbstractListViewAdapter AbstractListViewAdapter} - a basic data source implementation</li>
+  <ul>
+  <li>{@link com.google.gwt.view.client.ListViewAdapter ListViewAdapter} - an implementation of AbstractListViewAdapter
+  that is backed by an in-memory list</li>
+<li>{@link com.google.gwt.view.client.AsyncListViewAdapter AsyncListViewAdapter} - an asynchronous data source
+implementation</li>
+  </ul>
+<li>{@link com.google.gwt.view.client.SelectionModel SelectionModel} - an interface for selection of items within a
+view</li>
+  <ul>
+  <li>{@link com.google.gwt.view.client.DefaultSelectionModel DefaultSelectionModel} - a SelectionModel that allows both
+  rule-based and explicit selection and deselection of items</li>
+  <li>{@link com.google.gwt.view.client.SingleSelectionModel SingleSelectionModel} - a SelectionModel that allows a single item
+  to be selected</li>
+  <li>{@link com.google.gwt.view.client.MultiSelectionModel MultiSelectionModel} - a SelectionModel that allows multiple items
+  to be selected</li>
+  <ul>
+<li>{@link com.google.gwt.view.client.HasViewData HasViewData} - an interface to retrieve view data for an item</li>
+<li>{@link com.google.gwt.view.client.ProvidesKey ProvidesKey} - an interface to provide a unique key value for an
+item</li>
+<li>{@link com.google.gwt.view.client.TreeViewModel TreeViewModel} - interfaces used to manage nodes in a
+{@link com.google.gwt.user.cellview.client.CellTree CellTree} or
+{@link com.google.gwt.user.cellview.client.CellBrowser CellBrowser}</li>
+</ul>
+</p>
+</body>
+</html>

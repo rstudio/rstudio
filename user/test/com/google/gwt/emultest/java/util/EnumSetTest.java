@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Tests EnumSet. TODO(tobyr) Consider using Apache collections tests.
@@ -36,9 +37,26 @@ public class EnumSetTest extends GWTTestCase {
     Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen, Fourteen, Fifteen, Sixteen, Seventeen, Eighteen, Nineteen, Twenty, TwentyOne, TwentyTwo, TwentyThree, TwentyFour, TwentyFive, TwentySix, TwentySeven, TwentyEight, TwentyNine, Thirty, ThirtyOne, ThirtyTwo, ThirtyThree, Thirtyfour,
   }
 
+  enum ClinitRace {
+    Zero, One, Two, Three;
+    
+    public static final Set<ClinitRace> set = EnumSet.allOf(ClinitRace.class);
+  }
+  
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
+  }
+  
+  /**
+   * Tests that an EnumSet can be statically initialized in an enum.
+   */
+  public void testClinitRace() {
+    assertEquals(4, ClinitRace.set.size());
+    assertTrue(ClinitRace.set.contains(ClinitRace.Zero));
+    assertTrue(ClinitRace.set.contains(ClinitRace.One));
+    assertTrue(ClinitRace.set.contains(ClinitRace.Two));
+    assertTrue(ClinitRace.set.contains(ClinitRace.Three));
   }
   
   /**

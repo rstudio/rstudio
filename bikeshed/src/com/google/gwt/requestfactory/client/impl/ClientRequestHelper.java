@@ -35,7 +35,10 @@ public class ClientRequestHelper {
     }
 
     private native void put(String key, String value)/*-{
-      this[key] = value;
+      // TODO(jgw): Find a better way to do this. Occasionally a js-wrapped
+      // string ends up in 'value', which breaks the json2.js implementation
+      // of JSON.stringify().
+      this[key] = String(value);
     }-*/;
 
     private native String toJsonString()/*-{

@@ -58,11 +58,10 @@ public class CustomButtonParser implements ElementParser {
         String faceName = child.getLocalName();
 
         if (!ns.equals(elem.getNamespaceUri())) {
-          writer.die("In %s, invalid child namespace: %s", elem, ns);
+          writer.die(elem, "Invalid child namespace: %s", ns);
         }
         if (!faceNames.contains(faceName)) {
-          writer.die("In %s, invalid CustomButton face: %s:%s", elem, ns,
-              faceName);
+          writer.die(elem, "Invalid CustomButton face: %s:%s", ns, faceName);
         }
 
         HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(

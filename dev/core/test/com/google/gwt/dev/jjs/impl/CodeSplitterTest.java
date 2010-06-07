@@ -22,7 +22,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 /**
  * Tests class {@link CodeSplitter}.
  */
-public class CodeSplitterTest extends OptimizerTestBase {
+public class CodeSplitterTest extends JJSTestBase {
   /**
    * Tests that everything in the magic Array class is considered initially
    * live.

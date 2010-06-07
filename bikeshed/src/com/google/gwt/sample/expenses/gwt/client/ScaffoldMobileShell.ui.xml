@@ -3,37 +3,17 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:a='urn:import:com.google.gwt.app.client'>
 
-  <ui:style>
-    .disabled {
-     color: gray;
-    }
-
-    .banner {
-       background-color: wheat;
-     }
-
-    .title {
-       text-align: left;
-       margin-left: 1em;
-     }
-
-    .error {
-     text-align: center;
-     background-color: red;
-    }
-
-    .users {
-    }
-  </ui:style>
+  <ui:style field='mobile' src='mobile.css'/>
 
   <g:HTMLPanel>
-    <g:HTML styleName='{style.banner}'>
-      <div class='{style.error}' ui:field='error'></div>
-      <h2 class='{style.title}'>Expenses Entity Browser</h2>
-    </g:HTML>
+    <div class='{mobile.bar}'>
+      <div class='{mobile.title}' ui:field='title'>Expense Reports</div>
+    </div>
 
-    <a:ListBoxPlacePickerView width='90%' visibleItemCount='10' ui:field='placesBox'/>
+    <div class='{mobile.error}' ui:field='error'/>
 
-    <g:SimplePanel ui:field='body'/>
+    <a:CellListPlacePickerView width='100%' pageSize='100' ui:field='placesBox'/>
+
+    <g:SimplePanel width='100%' ui:field='body'/>
   </g:HTMLPanel>
 </ui:UiBinder>

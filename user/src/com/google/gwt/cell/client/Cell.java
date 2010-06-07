@@ -33,14 +33,14 @@ public interface Cell<C> {
    * Returns true if the cell is interested in browser events. The default
    * implementation returns false.
    */
-  public abstract boolean consumesEvents();
+  boolean consumesEvents();
 
   /**
    * Check if this cell depends on the selection state.
    * 
    * @return true if dependant on selection, false if not
    */
-  public abstract boolean dependsOnSelection();
+  boolean dependsOnSelection();
 
   /**
    * Handle a browser event that took place within the cell. The default
@@ -53,7 +53,7 @@ public interface Cell<C> {
    * @param valueUpdater a {@link ValueUpdater}, or null
    * @return a view data object which may be the one passed in or a new object
    */
-  public abstract Object onBrowserEvent(Element parent, C value,
+  Object onBrowserEvent(Element parent, C value,
       Object viewData, NativeEvent event, ValueUpdater<C> valueUpdater);
 
   /**
@@ -64,7 +64,7 @@ public interface Cell<C> {
    * @param viewData view data associated with the cell
    * @param sb the StringBuilder to be written to
    */
-  public abstract void render(C value, Object viewData, StringBuilder sb);
+  void render(C value, Object viewData, StringBuilder sb);
 
   /**
    * This method may be used by cell containers to set the value on a single
@@ -76,5 +76,5 @@ public interface Cell<C> {
    * @param value the value associated with the cell
    * @param viewData the view data associated with the cell, or null
    */
-  public abstract void setValue(Element parent, C value, Object viewData);
+  void setValue(Element parent, C value, Object viewData);
 }

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui;
 
-import com.google.gwt.app.place.Activity;
+import com.google.gwt.app.place.AbstractRecordListActivity;
 import com.google.gwt.app.place.ActivityMapper;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.event.shared.HandlerManager;
@@ -28,11 +28,8 @@ import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeListActivity;
 import com.google.gwt.sample.expenses.gwt.ui.report.ReportListActivity;
 
 /**
- * The class that knows what {@link Activity} to run when the user goes to a
- * particular {@link ListScaffoldPlace}.
- * <p>
- * To create a new list activity, copy one of the existing ones (and the
- * corresponding view), and register it here.
+ * The class that knows what {@link com.google.gwt.app.place.Activity} to run
+ * when the user goes to a particular {@link ListScaffoldPlace}.
  */
 public class ListActivitiesMapper implements ActivityMapper<ListScaffoldPlace> {
   private final ExpensesRequestFactory requests;
@@ -47,7 +44,7 @@ public class ListActivitiesMapper implements ActivityMapper<ListScaffoldPlace> {
     this.placeController = placeController;
   }
 
-  public Activity getActivity(ListScaffoldPlace place) {
+  public AbstractRecordListActivity<?> getActivity(ListScaffoldPlace place) {
     if (place.getType().equals(EmployeeRecord.class)) {
       return new EmployeeListActivity(eventBus, requests, placeController);
     }

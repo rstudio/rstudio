@@ -20,13 +20,13 @@ public class QueryAndFormDataExample {
       }
 
       // encode the characters in the name
-      String encodedName = URL.encodeComponent(queryEntry.getName());
+      String encodedName = URL.encodeQueryString(queryEntry.getName());
       sb.append(encodedName);
       
       sb.append("=");
     
       // encode the characters in the value
-      String encodedValue = URL.encodeComponent(queryEntry.getValue());
+      String encodedValue = URL.encodeQueryString(queryEntry.getValue());
       sb.append(encodedValue);
     }
     

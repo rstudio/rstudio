@@ -120,8 +120,9 @@ public class RequestBuilder {
    * 
    * @param httpMethod HTTP method to use for the request
    * @param url URL that has already has already been encoded. Please see
-   *          {@link com.google.gwt.http.client.URL#encode(String)} and
-   *          {@link com.google.gwt.http.client.URL#encodeComponent(String)} for
+   *          {@link com.google.gwt.http.client.URL#encode(String)},
+   *          {@link com.google.gwt.http.client.URL#encodePathSegment(String)} and
+   *          {@link com.google.gwt.http.client.URL#encodeQueryString(String)} for
    *          how to do this.
    * @throws IllegalArgumentException if the httpMethod or URL are empty
    * @throws NullPointerException if the httpMethod or the URL are null
@@ -136,7 +137,8 @@ public class RequestBuilder {
    * @param httpMethod HTTP method to use for the request
    * @param url URL that has already has already been URL encoded. Please see
    *          {@link com.google.gwt.http.client.URL#encode(String)} and
-   *          {@link com.google.gwt.http.client.URL#encodeComponent(String)} for
+   *          {@link com.google.gwt.http.client.URL#encodePathSegment(String)} and
+   *          {@link com.google.gwt.http.client.URL#encodeQueryString(String)} for
    *          how to do this.
    * @throws IllegalArgumentException if the httpMethod or URL are empty
    * @throws NullPointerException if the httpMethod or the URL are null

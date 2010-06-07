@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
+import com.google.gwt.app.place.AbstractRecordEditActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
@@ -23,7 +24,6 @@ import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Opera
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.valuestore.shared.Value;
-import com.google.gwt.valuestore.ui.AbstractRecordEditActivity;
 import com.google.gwt.valuestore.ui.RecordEditView;
 
 /**
@@ -64,13 +64,18 @@ public class EmployeeEditActivity extends
   }
 
   @Override
+  protected void exit() {
+    placeController.goTo(new EmployeeScaffoldPlace(getId(), Operation.DETAILS));
+  }
+
+  @Override
   protected void fireFindRequest(Value<String> id,
       Receiver<EmployeeRecord> callback) {
     requests.employeeRequest().findEmployee(id).to(callback).fire();
   }
 
   @Override
-  protected void exit() {
-    placeController.goTo(new EmployeeScaffoldPlace(getId(), Operation.DETAILS));
+  protected String getRecordToken() {
+    return EmployeeRecord.TOKEN;
   }
 }

@@ -78,7 +78,7 @@ public class XMLElementTest extends TestCase {
   }
 
   public void testAssertNoAttributes() throws SAXException, IOException {
-    init("<doc><elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
+    init("<doc>\n\n<elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
     assertNull(logger.died);
     try {
       elm.assertNoAttributes();
@@ -87,22 +87,26 @@ public class XMLElementTest extends TestCase {
       assertTrue("Expect extra attributes list",
           logger.died.contains("\"yes\""));
       assertTrue("Expect extra attributes list", logger.died.contains("\"no\""));
+      assertTrue("Expect line number " + logger.died,
+          logger.died.contains("Unknown:3"));
     }
   }
 
   public void testAssertNoBody() throws SAXException, IOException {
-    init("<doc><elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
+    init("<doc>\n\n<elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
     assertNull(logger.died);
     try {
       elm.assertNoBody();
       fail();
     } catch (UnableToCompleteException e) {
-      assertTrue("Expect extra child", logger.died.contains("<blah>"));
+      assertTrue("Expect extra child " + logger.died,
+          logger.died.contains("<blah>"));
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
 
   public void testAssertNoText() throws SAXException, IOException {
-    init("<doc><elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
+    init("<doc>\n\n<elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
     assertNull(logger.died);
     try {
       elm.assertNoText();
@@ -110,12 +114,13 @@ public class XMLElementTest extends TestCase {
     } catch (UnableToCompleteException e) {
       assertTrue("Expect extra text", logger.died.contains("Blah"));
       assertTrue("Expect extra text", logger.died.contains("blah"));
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
 
   public void testConsumeBoolean() throws SAXException, IOException,
       UnableToCompleteException {
-    init("<doc><elm yes='true' no='false' "
+    init("<doc>\n\n<elm yes='true' no='false' "
         + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
 
     assertNull(elm.consumeBooleanAttribute("foo"));
@@ -134,12 +139,13 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on misparse");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
 
   public void testConsumeBooleanConstant() throws SAXException, IOException,
       UnableToCompleteException {
-    init("<doc><elm yes='true' no='false' "
+    init("<doc>\n\n<elm yes='true' no='false' "
         + "fnord='fnord' ref='{foo.bar.baz}' empty=''/></doc>");
 
     assertNull(elm.consumeBooleanConstantAttribute("foo"));
@@ -155,6 +161,7 @@ public class XMLElementTest extends TestCase {
       elm.consumeBooleanConstantAttribute("empty");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
 
     logger.died = null;
@@ -163,6 +170,7 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on field ref");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
 
     logger.died = null;
@@ -171,12 +179,13 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on misparse");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
 
   public void testConsumeBooleanDefault() throws SAXException, IOException,
       UnableToCompleteException {
-    init("<doc><elm yes='true' no='false' "
+    init("<doc>\n\n<elm yes='true' no='false' "
         + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
 
     assertEquals("false", elm.consumeBooleanAttribute("foo", false));
@@ -197,18 +206,20 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on misparse");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
 
   public void testConsumeChildrenNoTextAllowed() throws SAXException,
       IOException {
-    init("<doc><elm><child>Hi.</child> Stray text is bad</elm></doc>");
+    init("<doc>\n\n<elm><child>Hi.</child> Stray text is bad</elm></doc>");
     assertNull(logger.died);
     try {
       elm.consumeChildElements();
       fail();
     } catch (UnableToCompleteException e) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
 
@@ -257,7 +268,7 @@ public class XMLElementTest extends TestCase {
 
   public void testConsumeRequiredDouble() throws UnableToCompleteException,
       SAXException, IOException {
-    init("<doc><elm minus='-123.45' plus='123.45' minus-one='-1' "
+    init("<doc>\n\n<elm minus='-123.45' plus='123.45' minus-one='-1' "
         + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}'/></doc>");
     assertEquals("1", elm.consumeRequiredDoubleAttribute("plus-one"));
     assertEquals("-1", elm.consumeRequiredDoubleAttribute("minus-one"));
@@ -272,6 +283,7 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on misparse");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
 
     logger.died = null;
@@ -280,6 +292,7 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException consumed attribute");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
 
     logger.died = null;
@@ -288,6 +301,7 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on no such attribute");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
 
@@ -299,6 +313,7 @@ public class XMLElementTest extends TestCase {
       fail("Should throw on single child element");
     } catch (UnableToCompleteException e) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:1"));
     }
 
     init("<doc><elm><child>Hi.</child></elm></doc>");
@@ -306,13 +321,14 @@ public class XMLElementTest extends TestCase {
         elm.consumeSingleChildElement().consumeUnescapedInnerText());
 
     logger.died = null;
-    init("<doc><elm id='elm'><child>Hi.</child><child>Ho.</child></elm></doc>");
+    init("<doc>\n\n<elm id='elm'><child>Hi.</child><child>Ho.</child></elm></doc>");
     assertNull(logger.died);
     try {
       elm.consumeSingleChildElement();
       fail("Should throw on too many children");
     } catch (UnableToCompleteException e) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
 

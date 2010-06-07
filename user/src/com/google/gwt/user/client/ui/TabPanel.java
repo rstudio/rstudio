@@ -59,11 +59,17 @@ import java.util.Iterator;
  * {@example com.google.gwt.examples.TabPanelExample}
  * </p>
  * 
+ * @deprecated Use {@link TabLayoutPanel} instead, but understand that it is
+ *             not a drop in replacement for this class. It requires standards
+ *             mode, and is most easily used under a {@link RootLayoutPanel} (as
+ *             opposed to a {@link RootPanel}
+ * 
  * @see TabLayoutPanel
  */
 
 //Cannot do anything about tab panel implementing TabListener until next release.
 @SuppressWarnings("deprecation")
+@Deprecated
 public class TabPanel extends Composite implements TabListener,
     SourcesTabEvents, HasWidgets, HasAnimation, IndexedPanel,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
@@ -408,12 +414,22 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   /**
-   * Programmatically selects the specified tab.
+   * Programmatically selects the specified tab and fires events.
    * 
    * @param index the index of the tab to be selected
    */
   public void selectTab(int index) {
-    tabBar.selectTab(index);
+    selectTab(index, true);
+  }
+
+  /**
+   * Programmatically selects the specified tab.
+   * 
+   * @param index the index of the tab to be selected
+   * @param fireEvents true to fire events, false not to
+   */
+  public void selectTab(int index, boolean fireEvents) {
+    tabBar.selectTab(index, fireEvents);
   }
 
   public void setAnimationEnabled(boolean enable) {

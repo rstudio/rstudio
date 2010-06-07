@@ -15,12 +15,16 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.valuestore.shared.SyncResult;
+
 import java.util.Set;
 
 /**
  * Request to commit CRUD operations accumulated in a DeltaValueStore.
  */
+// TODO this should merge with the main RequestObject
 public interface SyncRequest {
+  // TODO merge fire() and to(), s.t. compiler enforces providing a callback
   void fire();
 
   SyncRequest to(Receiver<Set<SyncResult>> receiver);

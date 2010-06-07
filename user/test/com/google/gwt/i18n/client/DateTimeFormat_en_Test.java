@@ -491,7 +491,7 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
 
   public void test_yyyyyMMMMM() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("2006.J.27 AD 01:10 PM", DateTimeFormat.getFormat(
+    assertEquals("02006.J.27 AD 01:10 PM", DateTimeFormat.getFormat(
         "yyyyy.MMMMM.dd GGG hh:mm aaa").format(date));
   }
   
@@ -505,5 +505,14 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
     assertEquals("055", DateTimeFormat.getFormat("SSS").format(date, utc));
     assertEquals("06", DateTimeFormat.getFormat("SS").format(date, utc));
     assertEquals("1", DateTimeFormat.getFormat("S").format(date, utc));
+  }
+  
+  public void testZeroPadYear() {
+    DateTimeFormat fmt = DateTimeFormat.getFormat("dd.MM.yyyy");
+    String str = fmt.format(new Date(1 - 1900, 0, 1)); // 1 Jan 0001
+    assertEquals("01.01.0001", str);
+    fmt = DateTimeFormat.getFormat("dd.MM.yyyyy");
+    str = fmt.format(new Date(2001 - 1900, 0, 1)); // 1 Jan 2001
+    assertEquals("01.01.02001", str);
   }
 }

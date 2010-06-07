@@ -341,7 +341,8 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("    @Buggy;\n");
     code.append("  }-*/;\n");
     code.append("}\n");
-    shouldGenerateError(code, 3, "Expected \":\" in JSNI reference");
+    shouldGenerateError(code, 3,
+        "Expected \":\" in JSNI reference\n>     @Buggy;\n" + "> ----------^");
   }
 
   public void testMethodArgument() {

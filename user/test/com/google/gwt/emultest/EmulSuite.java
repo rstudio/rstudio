@@ -50,6 +50,8 @@ import com.google.gwt.emultest.java.math.BigIntegerOrTest;
 import com.google.gwt.emultest.java.math.BigIntegerSubtractTest;
 import com.google.gwt.emultest.java.math.BigIntegerToStringTest;
 import com.google.gwt.emultest.java.math.BigIntegerXorTest;
+import com.google.gwt.emultest.java.math.RoundingModeTest;
+import com.google.gwt.emultest.java.security.MessageDigestTest;
 import com.google.gwt.emultest.java.sql.SqlDateTest;
 import com.google.gwt.emultest.java.sql.SqlTimeTest;
 import com.google.gwt.emultest.java.sql.SqlTimestampTest;
@@ -121,6 +123,7 @@ public class EmulSuite {
     suite.addTestSuite(BigIntegerSubtractTest.class);
     suite.addTestSuite(BigIntegerToStringTest.class);
     suite.addTestSuite(BigIntegerXorTest.class);
+    suite.addTestSuite(RoundingModeTest.class);
 
     // java.util
     suite.addTestSuite(ApacheMapTest.class);
@@ -144,6 +147,9 @@ public class EmulSuite {
     suite.addTestSuite(SqlTimestampTest.class);
     suite.addTest(TreeMapSuiteSub.suite());
     suite.addTest(TreeSetSuiteSub.suite());
+
+    // java.security
+    suite.addTestSuite(MessageDigestTest.class);
     // $JUnit-END$
 
     return suite;

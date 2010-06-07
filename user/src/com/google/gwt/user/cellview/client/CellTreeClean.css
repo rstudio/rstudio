@@ -1,0 +1,57 @@
+.emptyMessage {
+  padding-left: 16px;
+  font-style: italic;
+}
+
+.item {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  cursor: hand;
+  cursor: pointer;
+}
+
+.itemImage {
+  
+}
+
+.itemImageValue {
+  
+}
+
+.itemValue {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+.openItem {
+  
+}
+
+.topItem {
+  font-weight: bold;
+  color: #4b4a4a;
+  margin-top: 20px;
+  padding: 3px 13px 3px 10px !important;
+}
+
+.topItemImage {
+  
+}
+
+.topItemImageValue {
+  border-bottom: 1px solid #6f7277;
+  padding-bottom: 1px;
+}
+
+@sprite .selectedItem {
+  gwt-image: 'cellTreeSelectedBackground';
+  background-color: #628cd5;
+  color: white;
+  height: auto;
+  overflow: auto;
+}
+
+.showMoreButton {
+  padding-left: 16px;
+  outline: none;
+}

@@ -25,7 +25,7 @@ import com.google.gwt.dev.jjs.ast.JReturnStatement;
 /**
  * Tests {@link ExpressionAnalyzer}.
  */
-public class ExpressionAnalyzerTest extends OptimizerTestBase {
+public class ExpressionAnalyzerTest extends JJSTestBase {
 
   private static class Result {
     private final ExpressionAnalyzer ea;

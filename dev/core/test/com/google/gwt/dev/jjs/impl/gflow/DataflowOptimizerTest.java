@@ -1,42 +1,10 @@
 package com.google.gwt.dev.jjs.impl.gflow;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.OptimizerTestBase;
-import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
-import com.google.gwt.dev.util.Strings;
 
 public class DataflowOptimizerTest extends OptimizerTestBase {
-  private final class Result {
-    private final String optimized;
-    private final String returnType;
-    private final String userCode;
-    private final boolean madeChages;
-
-    public Result(String returnType, String userCode, String optimized, 
-        boolean madeChages) {
-      this.returnType = returnType;
-      this.userCode = userCode;
-      this.optimized = optimized;
-      this.madeChages = madeChages;
-    }
-
-    public void into(String...expected) throws UnableToCompleteException {
-      JProgram program = compileSnippet(returnType, Strings.join(expected, "\n"));
-      assertEquals(userCode, getMainMethodSource(program), optimized);
-    }
-
-    public void intoString(String...expected) {
-      String expectedSnippet = Strings.join(expected, "\n");
-      assertEquals(userCode, expectedSnippet, optimized);
-    }
-
-    public void noChange() {
-      assertFalse(madeChages);
-    }
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -167,17 +135,15 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
         "return multiply(i, j);" + 
         "}");
     
-    optimizeMethod("int", "calculate", "return 1;"
+    optimizeMethod("calculate", "int", "return 1;"
         ).intoString(
-            "{",
-            "  int t;",
-            "  if (i > j) {",
-            "    t = i;",
-            "    i = j;",
-            "    j = t;",
-            "  }",
-            "  return EntryPoint.multiply(i, j);",
-            "}"         
+            "int t;",
+            "if (i > j) {",
+            "  t = i;",
+            "  i = j;",
+            "  j = t;",
+            "}",
+            "return EntryPoint.multiply(i, j);"
             );
   }
 
@@ -295,77 +261,10 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
        "return results;"
        );
   }
-  
-/*  public void testInlineField1() throws Exception {
-    optimize("int",
-        "int i = staticFooInstance.i;",
-        "return i;"
-        ).into("int i; return EntryPoint.staticFooInstance.i;");
-  }
 
-  public void testInlineField2() throws Exception {
-    optimize("int",
-        "int i = staticFooInstance.i;",
-        "createFoo();",
-        "return i;"
-        ).noChange();
-  }
-
-  public void testInlineField3() throws Exception {
-    optimize("int",
-        "int i = staticFooInstance.i;",
-        "i = 2;",
-        "return i;"
-        ).into("int i; return 2;");
-  }
-
-  public void testLoop1() throws Exception {
-    optimize("int", 
-        "int i = 0; int j = 0;",
-        "while (bar()) {",
-        "  j = i + 2;",
-        "  i = j + 1;",
-        "}",
-        "return i;").into(
-            "int i = 0;",
-            "int j;",
-            "while (EntryPoint.bar()) {",
-            "  i = i + 2 + 1;",
-            "}",
-            "return i;");
-  }
-
-  public void testLoop2() throws Exception {
-    optimize("int", 
-        "int i = 0; int j = 0;",
-        "while (bar()) {",
-        "  j = i + 2;",
-        "  i = j + 1;",
-        "}",
-        "return j;").into(
-            "int i = 0;",
-            "int j = 0;",
-            "while (EntryPoint.bar()) {",
-            "  j = i + 2;",
-            "  i = i + 2 + 1;",
-            "}",
-            "return j;");
-  }
-*/
-  private Result optimize(final String returnType, final String...codeSnippet)
-      throws UnableToCompleteException {
-    return optimizeMethod(returnType, MAIN_METHOD_NAME, codeSnippet);
-  }
-
-  private Result optimizeMethod(final String returnType, 
-      final String methodName, final String... codeSnippet)
-      throws UnableToCompleteException {
-    String snippet = Strings.join(codeSnippet, "\n");
-    JProgram program = compileSnippet(returnType, snippet);
-    JMethod method = findMethod(program, methodName);
+  @Override
+  protected boolean optimizeMethod(JProgram program, JMethod method) {
     boolean madeChanges = DataflowOptimizer.exec(program, method);
-    return new Result(returnType, snippet, method.getBody().toSource(),
-        madeChanges);
+    return madeChanges;
   }
-
 }

@@ -19,10 +19,10 @@ import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerType;
 import com.google.gwt.requestfactory.shared.RequestFactory.Config;
 import com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition;
-import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.WriteOperation;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -106,7 +106,6 @@ public class RequestFactoryServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
-    initDb(); // temporary place-holder
     ensureConfig();
 
     RequestDefinition operation = null;
@@ -130,7 +129,7 @@ public class RequestFactoryServlet extends HttpServlet {
         Object args[] = RequestDataManager.getObjectsFromParameterMap(
             getParameterMap(topLevelJsonObject),
             domainMethod.getParameterTypes());
-        Object result = domainMethod.invoke(null, args);
+        Object result = invokeStaticDomainMethod(domainMethod, args);
 
         if ((result instanceof List<?>) != operation.isReturnTypeList()) {
           throw new IllegalArgumentException(String.format(
@@ -174,9 +173,15 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   /**
-   * Allow subclass to initialize database.
+   * Generate an ID for a new record. The default behavior is to return null and
+   * let the data store generate the ID automatically.
+   * 
+   * @param key the key of the record field
+   * @return the ID of the new record, or null to auto generate
    */
-  protected void initDb() {
+  protected Long generateIdForCreate(String key) {
+    // ignored. id is assigned by default.
+    return null;
   }
 
   /**
@@ -194,54 +199,60 @@ public class RequestFactoryServlet extends HttpServlet {
    * <li>return data
    * </ol>
    */
-  JSONObject updateRecordInDataStore(String recordToken,
-      JSONObject recordObject, WriteOperation writeOperation)
-      throws SecurityException, NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException, JSONException, InstantiationException {
+  protected JSONObject updateRecordInDataStore(String recordToken,
+      JSONObject recordObject, WriteOperation writeOperation) {
 
-    Class<?> entity = tokenToEntityRecord.get(recordToken).entity;
-    Class<? extends Record> record = tokenToEntityRecord.get(recordToken).record;
-    Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(record);
-    validateKeys(recordObject, propertiesInRecord.keySet());
-    updatePropertyTypes(propertiesInRecord, entity);
+    try {
+      Class<?> entity = tokenToEntityRecord.get(recordToken).entity;
+      Class<? extends Record> record = tokenToEntityRecord.get(recordToken).record;
+      Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(record);
+      validateKeys(recordObject, propertiesInRecord.keySet());
+      updatePropertyTypes(propertiesInRecord, entity);
 
-    // get entityInstance
-    Object entityInstance = getEntityInstance(writeOperation, entity,
-        recordObject.get("id"), propertiesInRecord.get("id"));
+      // get entityInstance
+      Object entityInstance = getEntityInstance(writeOperation, entity,
+          recordObject.get("id"), propertiesInRecord.get("id"));
 
-    // persist
-    Set<ConstraintViolation<Object>> violations = null;
-    if (writeOperation == WriteOperation.DELETE) {
-      entity.getMethod("remove").invoke(entityInstance);
-    } else {
-      Iterator<?> keys = recordObject.keys();
-      while (keys.hasNext()) {
-        String key = (String) keys.next();
-        Class<?> propertyType = propertiesInRecord.get(key);
-        if (writeOperation == WriteOperation.CREATE && ("id".equals(key))) {
-          // ignored. id is assigned by default.
-        } else {
-          Object propertyValue = getPropertyValueFromRequest(recordObject, key,
-              propertyType);
-          propertyValue = getSwizzledObject(propertyValue, propertyType);
-          entity.getMethod(getMethodNameFromPropertyName(key, "set"),
-              propertyType).invoke(entityInstance, propertyValue);
+      // persist
+      Set<ConstraintViolation<Object>> violations = null;
+      if (writeOperation == WriteOperation.DELETE) {
+        entity.getMethod("remove").invoke(entityInstance);
+      } else {
+        Iterator<?> keys = recordObject.keys();
+        while (keys.hasNext()) {
+          String key = (String) keys.next();
+          Class<?> propertyType = propertiesInRecord.get(key);
+          if (writeOperation == WriteOperation.CREATE && ("id".equals(key))) {
+            Long id = generateIdForCreate(key);
+            if (id != null) {
+              entity.getMethod(getMethodNameFromPropertyName(key, "set"),
+                  propertyType).invoke(entityInstance, id);
+            }
+          } else {
+            Object propertyValue = getPropertyValueFromRequest(recordObject,
+                key, propertyType);
+            propertyValue = getSwizzledObject(propertyValue, propertyType);
+            entity.getMethod(getMethodNameFromPropertyName(key, "set"),
+                propertyType).invoke(entityInstance, propertyValue);
+          }
+        }
+
+        // validations check..
+        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+        Validator validator = validatorFactory.getValidator();
+
+        violations = validator.validate(entityInstance);
+        if (violations.isEmpty()) {
+          entity.getMethod("persist").invoke(entityInstance);
         }
       }
 
-      // validations check..
-      ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-      Validator validator = validatorFactory.getValidator();
-
-      violations = validator.validate(entityInstance);
-      if (violations.isEmpty()) {
-        entity.getMethod("persist").invoke(entityInstance);
-      }
+      // return data back.
+      return getReturnRecord(writeOperation, entityInstance, recordObject,
+          violations);
+    } catch (Exception ex) {
+      return getReturnRecordForException(writeOperation, recordObject, ex);
     }
-
-    // return data back.
-    return getReturnRecord(writeOperation, entityInstance, recordObject,
-        violations);
   }
 
   private Collection<Property<?>> allProperties(Class<? extends Record> clazz) {
@@ -332,9 +343,11 @@ public class RequestFactoryServlet extends HttpServlet {
     byte contentBytes[] = new byte[contentLength];
     BufferedInputStream bis = new BufferedInputStream(request.getInputStream());
     try {
-      int readBytes = 0;
-      while (bis.read(contentBytes, readBytes, contentLength - readBytes) > 0) {
-        // read the contents
+      int contentBytesOffset = 0;
+      int readLen;
+      while ((readLen = bis.read(contentBytes, contentBytesOffset,
+          contentLength - contentBytesOffset)) > 0) {
+        contentBytesOffset += readLen;
       }
       // TODO: encoding issues?
       return new String(contentBytes);
@@ -505,23 +518,57 @@ public class RequestFactoryServlet extends HttpServlet {
       Set<ConstraintViolation<Object>> violations) throws SecurityException,
       JSONException, IllegalAccessException, InvocationTargetException,
       NoSuchMethodException {
-
+    // id/futureId, the identifying field is sent back from the incoming record.
     JSONObject returnObject = new JSONObject();
-    if (writeOperation != WriteOperation.CREATE || violations == null) {
-      // currently sending back only two properties.
-      for (String propertyName : new String[] {"id", "version"}) {
-        if ("version".equals(propertyName) && violations != null) {
-          continue;
-        }
-        returnObject.put(propertyName, getPropertyValueFromDataStore(
-            entityInstance, propertyName));
-      }
-    }
-    if (violations != null) {
+    final boolean hasViolations = violations != null && !violations.isEmpty();
+    if (hasViolations) {
       returnObject.put("violations", getViolationsAsJson(violations));
     }
-    if (writeOperation == WriteOperation.CREATE) {
-      returnObject.put("futureId", recordObject.getString("id"));
+    switch (writeOperation) {
+      case CREATE:
+        returnObject.put("futureId", recordObject.getString("id"));
+        if (!hasViolations) {
+          returnObject.put("id", getPropertyValueFromDataStore(entityInstance,
+              "id"));
+          returnObject.put("version", getPropertyValueFromDataStore(
+              entityInstance, "version"));
+        }
+        break;
+      case DELETE:
+        returnObject.put("id", recordObject.getString("id"));
+        break;
+      case UPDATE:
+        returnObject.put("id", recordObject.getString("id"));
+        if (!hasViolations) {
+          returnObject.put("version", getPropertyValueFromDataStore(
+              entityInstance, "version"));
+        }
+        break;
+    }
+    return returnObject;
+  }
+
+  private JSONObject getReturnRecordForException(WriteOperation writeOperation,
+      JSONObject recordObject, Exception ex) {
+    JSONObject returnObject = new JSONObject();
+    try {
+      if (writeOperation == WriteOperation.DELETE
+          || writeOperation == WriteOperation.UPDATE) {
+        returnObject.put("id", recordObject.getString("id"));
+      } else {
+        returnObject.put("futureId", recordObject.getString("id"));
+      }
+      // expecting violations to be a JSON object.
+      JSONObject violations = new JSONObject();
+      if (ex instanceof NumberFormatException) {
+        violations.put("Expected a number instead of String", ex.getMessage());
+      } else {
+        violations.put("", "unexpected server error");
+      }
+      returnObject.put("violations", violations);
+    } catch (JSONException e) {
+      // ignore.
+      e.printStackTrace();
     }
     return returnObject;
   }
@@ -538,6 +585,17 @@ public class RequestFactoryServlet extends HttpServlet {
     if (idValue.getClass() == String.class && idType == Long.class) {
       return new Long((String) idValue);
     }
+    if (idType == Double.class) {
+      if (idValue.getClass() == Integer.class) {
+        return new Double((Integer) idValue);
+      }
+      if (idValue.getClass() == Long.class) {
+        return new Double((Long) idValue);
+      }
+      if (idValue.getClass() == Float.class) {
+        return new Double((Float) idValue);
+      }
+    }
     throw new IllegalArgumentException("id is of type: " + idValue.getClass()
         + ",  expected type: " + idType);
   }
@@ -550,6 +608,11 @@ public class RequestFactoryServlet extends HttpServlet {
           violation.getMessage());
     }
     return violationsAsJson;
+  }
+
+  private Object invokeStaticDomainMethod(Method domainMethod, Object args[])
+      throws IllegalAccessException, InvocationTargetException {
+    return domainMethod.invoke(null, args);
   }
 
   /**

@@ -15,8 +15,8 @@
  */
 package com.google.gwt.valuestore.client;
 
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.Map;
 
@@ -27,10 +27,16 @@ public class SyncResultImpl implements SyncResult {
 
   private final Record record;
   private final Map<String, String> violations;
+  private final String futureId;
   
-  public SyncResultImpl(Record record, Map<String, String> violations) {
+  public SyncResultImpl(Record record, Map<String, String> violations, String futureId) {
     this.record = record;
     this.violations = violations;
+    this.futureId = futureId;
+  }
+
+  public String getFutureId() {
+    return futureId;
   }
 
   public Record getRecord() {

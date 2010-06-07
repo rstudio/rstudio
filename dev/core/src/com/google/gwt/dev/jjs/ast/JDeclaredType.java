@@ -59,6 +59,14 @@ public abstract class JDeclaredType extends JReferenceType implements
   private JDeclaredType clinitTarget = this;
 
   /**
+   * The type which originally enclosed this type. Null if this class was a
+   * top-level type. Note that all classes are converted to top-level types in
+   * {@link com.google.gwt.dev.jjs.impl.GenerateJavaAST}; this information is
+   * for tracking purposes.
+   */
+  private JDeclaredType enclosingType;
+
+  /**
    * This type's super class.
    */
   private JClassType superClass;
@@ -154,6 +162,15 @@ public abstract class JDeclaredType extends JReferenceType implements
   }
 
   /**
+   * Returns the type which encloses this type.
+   * 
+   * @return The enclosing type. May be {@code null}.
+   */
+  public JDeclaredType getEnclosingType() {
+    return enclosingType;
+  }
+
+  /**
    * Returns this type's fields;does not include fields defined in a super type
    * unless they are overridden by this type.
    */
@@ -221,6 +238,15 @@ public abstract class JDeclaredType extends JReferenceType implements
    */
   public void removeMethod(int i) {
     methods = Lists.remove(methods, i);
+  }
+
+  /**
+   * Sets the type which encloses this types.
+   * 
+   * @param enclosingType May be {@code null}.
+   */
+  public void setEnclosingType(JDeclaredType enclosingType) {
+    this.enclosingType = enclosingType;
   }
 
   /**

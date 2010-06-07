@@ -33,7 +33,7 @@ import com.google.gwt.dev.jjs.ast.JAnnotation.SourceOnlyClassException;
  * Tests AST setup of JAnnotation nodes as well as the reflective proxy for
  * accessing their data.
  */
-public class JAnnotationTest extends OptimizerTestBase {
+public class JAnnotationTest extends JJSTestBase {
 
   /**
    * A test class for binary-only annotations.

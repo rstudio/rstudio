@@ -18,11 +18,15 @@ package com.google.gwt.sample.expenses.gwt.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.sample.bikeshed.style.client.Styles;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.gwt.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpenseRecordChanged;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecordChanged;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.view.client.ProvidesKey;
 
@@ -32,10 +36,81 @@ import com.google.gwt.view.client.ProvidesKey;
 public class Expenses implements EntryPoint {
 
   /**
+   * An enum describing the approval status.
+   */
+  public static enum Approval {
+    BLANK("", "inherit", Styles.resources().blankIcon()), APPROVED("Approved",
+        "#00aa00", Styles.resources().approvedIcon()), DENIED("Denied",
+        "#ff0000", Styles.resources().deniedIcon());
+
+    /**
+     * Get the {@link Approval} from the specified string.
+     * 
+     * @param approval the approval string
+     * @return the {@link Approval}
+     */
+    public static Approval from(String approval) {
+      if (APPROVED.is(approval)) {
+        return APPROVED;
+      } else if (DENIED.is(approval)) {
+        return DENIED;
+      }
+      return BLANK;
+    }
+
+    private final String color;
+    private final String iconHtml;
+    private final String text;
+
+    private Approval(String text, String color, ImageResource res) {
+      this.text = text;
+      this.color = color;
+      this.iconHtml = AbstractImagePrototype.create(res).getHTML();
+    }
+
+    public String getColor() {
+      return color;
+    }
+
+    public String getIconHtml() {
+      return iconHtml;
+    }
+
+    public String getText() {
+      return text;
+    }
+
+    public boolean is(String compare) {
+      return text.equals(compare);
+    }
+  }
+
+  public static final String[] DEPARTMENTS = {
+      "Engineering", "Finance", "Marketing", "Operations", "Sales"};
+
+  /**
    * The key provider for {@link EmployeeRecord}s.
    */
   public static final ProvidesKey<EmployeeRecord> EMPLOYEE_RECORD_KEY_PROVIDER = new ProvidesKey<EmployeeRecord>() {
     public Object getKey(EmployeeRecord item) {
+      return item == null ? null : item.getId();
+    }
+  };
+
+  /**
+   * The key provider for {@link ExpenseRecord}s.
+   */
+  public static final ProvidesKey<ExpenseRecord> EXPENSE_RECORD_KEY_PROVIDER = new ProvidesKey<ExpenseRecord>() {
+    public Object getKey(ExpenseRecord item) {
+      return item == null ? null : item.getId();
+    }
+  };
+
+  /**
+   * The key provider for {@link ReportRecord}s.
+   */
+  public static final ProvidesKey<ReportRecord> REPORT_RECORD_KEY_PROVIDER = new ProvidesKey<ReportRecord>() {
+    public Object getKey(ReportRecord item) {
       return item == null ? null : item.getId();
     }
   };
@@ -81,6 +156,8 @@ public class Expenses implements EntryPoint {
     expenseList.setRequestFactory(requestFactory);
     eventBus.addHandler(ReportRecordChanged.TYPE, expenseList);
 
+    // Forward change events to the expense details.
     eventBus.addHandler(ExpenseRecordChanged.TYPE, expenseDetails);
+    eventBus.addHandler(ReportRecordChanged.TYPE, expenseDetails);
   }
 }

@@ -1,0 +1,14 @@
+.evenItem {
+  cursor: pointer;
+}
+
+.oddItem {
+  cursor: pointer;
+}
+
+.selectedItem {
+  background-color: #628cd5;
+  color: white;
+  height: auto;
+  overflow: auto;
+}

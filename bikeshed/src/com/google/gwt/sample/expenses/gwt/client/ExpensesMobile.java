@@ -19,7 +19,9 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Entry point for the mobile version of the Expenses app.
@@ -27,11 +29,19 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 public class ExpensesMobile implements EntryPoint {
 
   /**
-   * TODO(jgw): Put this some place more sensible.
+   * The url parameter that specifies the employee id.
    */
-  public static String formatCurrency(int price) {
+  private static final String EMPLOYEE_ID_PARAM = "employeeId";
+
+  /**
+   * TODO(jgw): Put this some place more sensible.
+   * 
+   * @param amount the amount in dollars
+   */
+  public static String formatCurrency(double amount) {
     StringBuilder sb = new StringBuilder();
 
+    int price = (int) (amount * 100);
     boolean negative = price < 0;
     if (negative) {
       price = -price;
@@ -42,7 +52,7 @@ public class ExpensesMobile implements EntryPoint {
     if (negative) {
       sb.append("-");
     }
-    sb.append("$");
+
     sb.append(dollars);
     sb.append('.');
     if (cents < 10) {
@@ -57,11 +67,24 @@ public class ExpensesMobile implements EntryPoint {
    * This is the entry point method.
    */
   public void onModuleLoad() {
+    // Get the employee ID from the URL.
+    long employeeId = 1;
+    try {
+      String value = Window.Location.getParameter(EMPLOYEE_ID_PARAM);
+      if (value != null && value.length() > 0) {
+        employeeId = Long.parseLong(value);
+      }
+    } catch (NumberFormatException e) {
+      RootPanel.get().add(new Label("employeeId is invalid"));
+      return;
+    }
+
     final HandlerManager eventBus = new HandlerManager(null);
     final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
     requestFactory.init(eventBus);
 
-    final ExpensesMobileShell shell = new ExpensesMobileShell(requestFactory);
-    RootLayoutPanel.get().add(shell);
+    final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
+        requestFactory, employeeId);
+    RootPanel.get().add(shell);
   }
 }

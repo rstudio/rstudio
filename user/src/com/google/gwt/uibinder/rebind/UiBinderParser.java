@@ -41,7 +41,7 @@ public class UiBinderParser {
   private enum Resource {
     data {
       void create(UiBinderParser parser, XMLElement elem)
-      throws UnableToCompleteException {
+          throws UnableToCompleteException {
         parser.createData(elem);
       }
     },
@@ -67,6 +67,7 @@ public class UiBinderParser {
     abstract void create(UiBinderParser parser, XMLElement elem)
         throws UnableToCompleteException;
   }
+
   private static final String FLIP_RTL_ATTRIBUTE = "flipRtl";
   private static final String FIELD_ATTRIBUTE = "field";
   private static final String SOURCE_ATTRIBUTE = "src";
@@ -107,15 +108,14 @@ public class UiBinderParser {
    */
   public String parse(XMLElement elem) throws UnableToCompleteException {
     if (!writer.isBinderElement(elem)) {
-      writer.die("Bad prefix on <%s:%s>? The root element must be in "
+      writer.die(elem, "Bad prefix on <%s:%s>? The root element must be in "
           + "xml namespace \"%s\" (usually with prefix \"ui:\"), "
           + "but this has prefix \"%s\"", elem.getPrefix(),
           elem.getLocalName(), UiBinderGenerator.BINDER_URI, elem.getPrefix());
     }
 
     if (!TAG.equals(elem.getLocalName())) {
-      writer.die("Root element must be %s:%s, but found %s", elem.getPrefix(),
-          TAG, elem);
+      writer.die(elem, "Root element must be %s:%", elem.getPrefix(), TAG);
     }
 
     findResources(elem);
@@ -140,7 +140,7 @@ public class UiBinderParser {
 
     JClassType resourceType = oracle.findType(resourceTypeName);
     if (resourceType == null) {
-      writer.die("In %s, no such type %s", elem, resourceTypeName);
+      writer.die(elem, "No such type %s", resourceTypeName);
     }
 
     return resourceType;
@@ -176,7 +176,7 @@ public class UiBinderParser {
       try {
         repeatStyle = RepeatStyle.valueOf(value);
       } catch (IllegalArgumentException e) {
-        writer.die("In %s, bad repeatStyle value %s", elem, value);
+        writer.die(elem, "Bad repeatStyle value %s", value);
       }
     }
 
@@ -196,8 +196,7 @@ public class UiBinderParser {
     String resourceName = elem.consumeRequiredRawAttribute(FIELD_ATTRIBUTE);
     JClassType resourceType = consumeTypeAttribute(elem);
     if (elem.getAttributeCount() > 0) {
-      writer.die("In %s, should only find attributes \"field\" and \"type\"",
-          elem);
+      writer.die(elem, "Should only find attributes \"field\" and \"type\"");
     }
 
     FieldWriter fieldWriter = fieldManager.registerField(resourceType,
@@ -208,7 +207,7 @@ public class UiBinderParser {
 
     if (ownerField != null) {
       if (!resourceType.equals(ownerField.getType().getRawType())) {
-        writer.die("In %s, type must match %s", elem, ownerField);
+        writer.die(elem, "Type must match %s", ownerField);
       }
 
       if (ownerField.isProvided()) {
@@ -235,11 +234,11 @@ public class UiBinderParser {
   private void createStyle(XMLElement elem) throws UnableToCompleteException {
     String body = elem.consumeUnescapedInnerText();
     String[] source = elem.consumeRawArrayAttribute(SOURCE_ATTRIBUTE);
-    
+
     if (0 == body.length() && 0 == source.length) {
-      writer.die("%s must have either a src attribute or body text", elem);
+      writer.die(elem, "Must have either a src attribute or body text");
     }
-    
+
     String name = elem.consumeRawAttribute(FIELD_ATTRIBUTE, "style");
     JClassType publicType = consumeCssResourceType(elem);
 
@@ -252,8 +251,7 @@ public class UiBinderParser {
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
         publicType, body, importTypes);
 
-    FieldWriter field = fieldManager.registerFieldForGeneratedCssResource(
-        cssMethod);
+    FieldWriter field = fieldManager.registerFieldForGeneratedCssResource(cssMethod);
     field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
         cssMethod.getName()));
   }
@@ -262,11 +260,11 @@ public class UiBinderParser {
       throws UnableToCompleteException {
     JClassType publicType = oracle.findType(typeName);
     if (publicType == null) {
-      writer.die("In %s, no such type %s", elem, typeName);
+      writer.die(elem, "No such type %s", typeName);
     }
 
     if (!publicType.isAssignableTo(cssResourceType)) {
-      writer.die("In %s, type %s does not extend %s", elem,
+      writer.die(elem, "Type %s does not extend %s",
           publicType.getQualifiedSourceName(),
           cssResourceType.getQualifiedSourceName());
     }
@@ -284,9 +282,9 @@ public class UiBinderParser {
             Resource.valueOf(elem.getLocalName()).create(UiBinderParser.this,
                 elem);
           } catch (IllegalArgumentException e) {
-            writer.die(
-                "%s has unknown tag %s, or is not appropriate as a top level element",
-                elem, elem.getLocalName());
+            writer.die(elem,
+                "Unknown tag %s, or is not appropriate as a top level element",
+                elem.getLocalName());
           }
           return true;
         }

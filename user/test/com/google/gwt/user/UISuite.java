@@ -65,6 +65,7 @@ import com.google.gwt.user.client.ui.LazyPanelTest;
 import com.google.gwt.user.client.ui.LinearPanelTest;
 import com.google.gwt.user.client.ui.ListBoxTest;
 import com.google.gwt.user.client.ui.MenuBarTest;
+import com.google.gwt.user.client.ui.MenuItemTest;
 import com.google.gwt.user.client.ui.NamedFrameTest;
 import com.google.gwt.user.client.ui.PopupTest;
 import com.google.gwt.user.client.ui.PrefixTreeTest;
@@ -157,6 +158,7 @@ public class UISuite {
     suite.addTestSuite(LinearPanelTest.class);
     suite.addTestSuite(ListBoxTest.class);
     suite.addTestSuite(MenuBarTest.class);
+    suite.addTestSuite(MenuItemTest.class);
     suite.addTestSuite(NamedFrameTest.class);
     suite.addTestSuite(PopupTest.class);
     suite.addTestSuite(PrefixTreeTest.class);

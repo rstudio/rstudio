@@ -16,7 +16,8 @@
   the License.
 -->
 <module>
-  <inherits name='com.google.gwt.user.User'/>
+  <inherits name='com.google.gwt.core.Core'/>
+  <inherits name='com.google.gwt.event.EventBase'/>
 
   <source path="client"/>
   <source path="shared"/>

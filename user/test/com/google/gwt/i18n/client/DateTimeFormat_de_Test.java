@@ -211,7 +211,7 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
 
   public void test_yyyyyMMMMM() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("2006.J.27 n. Chr. 01:10 nachm.", DateTimeFormat.getFormat(
+    assertEquals("02006.J.27 n. Chr. 01:10 nachm.", DateTimeFormat.getFormat(
         "yyyyy.MMMMM.dd GGG hh:mm aaa").format(date));
   }
 }

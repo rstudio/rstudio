@@ -44,7 +44,7 @@ public class MenuBarParser implements ElementParser {
         String tagName = child.getLocalName();
 
         if (!elem.getNamespaceUri().equals(ns) || !tagName.equals(TAG_MENUITEM)) {
-          writer.die("In %s, only <%s:%s> are valid children", elem,
+          writer.die(child, "Only <%s:%s> are valid children",
               elem.getPrefix(), TAG_MENUITEM);
         }
       }

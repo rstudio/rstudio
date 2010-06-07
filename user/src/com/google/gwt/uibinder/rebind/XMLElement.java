@@ -82,6 +82,37 @@ public class XMLElement {
     }
   }
 
+  /**
+   * Represents the source location where the XMLElement was declared.
+   */
+  public static class Location {
+    private final String systemId;
+    private final int lineNumber;
+
+    public Location(String systemId, int lineNumber) {
+      this.systemId = systemId;
+      this.lineNumber = lineNumber;
+    }
+
+    public int getLineNumber() {
+      return lineNumber;
+    }
+
+    public String getSystemId() {
+      return systemId;
+    }
+
+    /**
+     * For debugging use only.
+     */
+    @Override
+    public String toString() {
+      return systemId + ":" + lineNumber;
+    }
+  }
+
+  static final String LOCATION_KEY = "gwtLocation";
+
   private static final Set<String> NO_END_TAG = new HashSet<String>();
 
   private static final String[] EMPTY = new String[] {};
@@ -165,7 +196,7 @@ public class XMLElement {
       }
       b.append('"').append(getAttribute(i).getName()).append('"');
     }
-    logger.die("Unexpected attributes in %s: %s", this, b);
+    logger.die(this, "Unexpected attributes: %s", b);
   }
 
   /**
@@ -177,7 +208,7 @@ public class XMLElement {
     consumeChildElements(new Interpreter<Boolean>() {
       public Boolean interpretElement(XMLElement elem)
           throws UnableToCompleteException {
-        logger.die("In %s, found unexpected child \"%s\"", this, elem);
+        logger.die(elem, "Found unexpected child element");
         return false; // unreachable
       }
     });
@@ -194,7 +225,7 @@ public class XMLElement {
         null);
     String s = consumeInnerTextEscapedAsHtmlStringLiteral(nullInterpreter);
     if (!"".equals(s)) {
-      logger.die("Unexpected text in %s: \"%s\"", this, s);
+      logger.die(this, "Unexpected text in element: \"%s\"", s);
     }
   }
 
@@ -204,7 +235,8 @@ public class XMLElement {
    * 
    * @param name the attribute's full name (including prefix)
    * @param type the type this attribute is expected to provide
-   * @return the attribute's value as a Java expression, or null if it is not set
+   * @return the attribute's value as a Java expression, or null if it is not
+   *         set
    * @throws UnableToCompleteException on parse failure
    */
   public String consumeAttribute(String name, JType type)
@@ -225,7 +257,7 @@ public class XMLElement {
    */
   public String consumeAttributeWithDefault(String name, String defaultValue,
       JType type) throws UnableToCompleteException {
-    return consumeAttributeWithDefault(name, defaultValue, new JType[] { type });
+    return consumeAttributeWithDefault(name, defaultValue, new JType[] {type});
   }
 
   /**
@@ -246,9 +278,15 @@ public class XMLElement {
     String value = attribute.consumeRawValue();
     AttributeParser parser = getParser(attribute, types);
     if (parser == null) {
-      logger.die("In %s, no such attribute %s", this, name);
+      logger.die(this, "No such attribute %s", name);
     }
-    return parser.parse(value);
+
+    try {
+      return parser.parse(value);
+    } catch (UnableToCompleteException e) {
+      logger.die(this, "Cannot parse attribute %s", name);
+      throw e;
+    }
   }
 
   /**
@@ -300,7 +338,7 @@ public class XMLElement {
     if (value.equals("true") || value.equals("false")) {
       return Boolean.valueOf(value);
     }
-    logger.die("In %s, %s must be \"true\" or \"false\"", this, name);
+    logger.die(this, "%s must be \"true\" or \"false\"", name);
     return null; // unreachable
   }
 
@@ -437,7 +475,7 @@ public class XMLElement {
     // Make sure there are no children left but empty husks
     for (XMLElement child : consumeChildElementsNoEmptyCheck()) {
       if (child.hasChildNodes() || child.getAttributeCount() > 0) {
-        logger.die("%s has illegal child %s", this, child);
+        logger.die(this, "Element has illegal child %s", child);
       }
     }
 
@@ -456,8 +494,8 @@ public class XMLElement {
    */
   public String consumeLengthAttribute(String name)
       throws UnableToCompleteException {
-    return consumeAttributeWithDefault(name, null, new JType[] { getDoubleType(),
-        getUnitType() });
+    return consumeAttributeWithDefault(name, null, new JType[] {
+        getDoubleType(), getUnitType()});
   }
 
   /**
@@ -545,7 +583,13 @@ public class XMLElement {
     }
     AttributeParser parser = getParser(attribute, types);
     String value = consumeRequiredRawAttribute(name);
-    return parser.parse(value);
+
+    try {
+      return parser.parse(value);
+    } catch (UnableToCompleteException e) {
+      logger.die(this, "Cannot parse attribute " + name);
+      throw e;
+    }
   }
 
   /**
@@ -586,15 +630,16 @@ public class XMLElement {
     XMLElement ret = null;
     for (XMLElement child : consumeChildElements()) {
       if (ret != null) {
-        logger.die("%s may only contain a single child element, but found "
-            + "%s and %s.", this, ret, child);
+        logger.die(this,
+            "Element may only contain a single child element, but "
+                + "found %s and %s.", ret, child);
       }
 
       ret = child;
     }
 
     if (ret == null) {
-      logger.die("%s must have a single child element", this);
+      logger.die(this, "Element must have a single child element");
     }
 
     return ret;
@@ -614,7 +659,12 @@ public class XMLElement {
 
     String[] strings = consumeRawArrayAttribute(name);
     for (int i = 0; i < strings.length; i++) {
-      strings[i] = parser.parse(strings[i]);
+      try {
+        strings[i] = parser.parse(strings[i]);
+      } catch (UnableToCompleteException e) {
+        logger.die(this, "Cannot parse attribute " + name);
+        throw e;
+      }
     }
     return strings;
   }
@@ -662,7 +712,7 @@ public class XMLElement {
     }
     if (children.getLength() > 1
         || Node.TEXT_NODE != children.item(0).getNodeType()) {
-      logger.die("%s must contain only text", this);
+      logger.die(this, "Element must contain only text");
     }
     Text t = (Text) children.item(0);
     return t.getTextContent();
@@ -709,6 +759,10 @@ public class XMLElement {
    */
   public String getLocalName() {
     return elem.getLocalName();
+  }
+
+  public Location getLocation() {
+    return (Location) elem.getUserData(LOCATION_KEY);
   }
 
   /**
@@ -774,7 +828,7 @@ public class XMLElement {
   }
 
   private void failRequired(String name) throws UnableToCompleteException {
-    logger.die("In %s, missing required attribute \"%s\"", this, name);
+    logger.die(this, "Missing required attribute \"%s\"", name);
   }
 
   private JType getBooleanType() {
@@ -801,8 +855,7 @@ public class XMLElement {
 
   private JType getImageResourceType() {
     if (imageResourceType == null) {
-      imageResourceType = oracle.findType(
-          ImageResource.class.getCanonicalName());
+      imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
     }
     return imageResourceType;
   }
@@ -817,7 +870,6 @@ public class XMLElement {
           UiBinderWriter.escapeAttributeText(attr.getValue())));
     }
     b.append(">");
-
     return b.toString();
   }
 

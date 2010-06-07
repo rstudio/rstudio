@@ -25,8 +25,8 @@ import com.google.gwt.uibinder.rebind.XMLElement;
  */
 public class LayoutPanelParser implements ElementParser {
 
-  private static final String ERR_PAIRING = "In %s %s, 'left' must be paired with 'right' or 'width'.";
-  private static final String ERR_TOO_MANY = "In %s %s, there are too many %s constraints.";
+  private static final String ERR_PAIRING = "'%s' must be paired with '%s' or '%s'.";
+  private static final String ERR_TOO_MANY = "There are too many %s constraints.";
   private static final String LAYER = "layer";
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
@@ -36,7 +36,7 @@ public class LayoutPanelParser implements ElementParser {
     for (XMLElement layerElem : elem.consumeChildElements()) {
       // Get the layer element.
       if (!isElementType(elem, layerElem, LAYER)) {
-        writer.die("In %s, only <%s:%s> children are allowed.", elem,
+        writer.die(layerElem, "Only <%s:%s> children are allowed.",
             elem.getPrefix(), LAYER);
       }
 
@@ -53,7 +53,7 @@ public class LayoutPanelParser implements ElementParser {
       if (left != null) {
         if (right != null) {
           if (width != null) {
-            writer.die(ERR_TOO_MANY, elem, layerElem, "horizontal");
+            writer.die(layerElem, ERR_TOO_MANY, "horizontal");
           }
           generateConstraint(fieldName, childFieldName, "LeftRight", left,
               right, writer);
@@ -61,14 +61,14 @@ public class LayoutPanelParser implements ElementParser {
           generateConstraint(fieldName, childFieldName, "LeftWidth", left,
               width, writer);
         } else {
-          writer.die(ERR_PAIRING, elem, layerElem, "left", "right", "width");
+          writer.die(layerElem, ERR_PAIRING, "left", "right", "width");
         }
       } else if (right != null) {
         if (width != null) {
           generateConstraint(fieldName, childFieldName, "RightWidth", right,
               width, writer);
         } else {
-          writer.die(ERR_PAIRING, elem, layerElem, "right", "left", "width");
+          writer.die(layerElem, ERR_PAIRING, "right", "left", "width");
         }
       }
 
@@ -80,7 +80,7 @@ public class LayoutPanelParser implements ElementParser {
       if (top != null) {
         if (bottom != null) {
           if (height != null) {
-            writer.die(ERR_TOO_MANY, elem, layerElem, "vertical");
+            writer.die(layerElem, ERR_TOO_MANY, "vertical");
           }
           generateConstraint(fieldName, childFieldName, "TopBottom", top,
               bottom, writer);
@@ -88,14 +88,14 @@ public class LayoutPanelParser implements ElementParser {
           generateConstraint(fieldName, childFieldName, "TopHeight", top,
               height, writer);
         } else {
-          writer.die(ERR_PAIRING, elem, layerElem, "top", "bottom", "height");
+          writer.die(layerElem, ERR_PAIRING, "top", "bottom", "height");
         }
       } else if (bottom != null) {
         if (height != null) {
           generateConstraint(fieldName, childFieldName, "BottomHeight", bottom,
               height, writer);
         } else {
-          writer.die(ERR_PAIRING, elem, layerElem, "bottom", "top", "height");
+          writer.die(layerElem, ERR_PAIRING, "bottom", "top", "height");
         }
       }
     }

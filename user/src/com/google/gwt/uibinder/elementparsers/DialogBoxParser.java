@@ -34,8 +34,7 @@ public class DialogBoxParser implements ElementParser {
     for (XMLElement child : elem.consumeChildElements()) {
       if ("caption".equals(child.getLocalName())) {
         if (caption != null) {
-          writer.die("In %s, may have only one <%s:caption>", elem,
-              elem.getPrefix());
+          writer.die(elem, "May have only one <%s:caption>", elem.getPrefix());
         }
 
         HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
@@ -43,11 +42,11 @@ public class DialogBoxParser implements ElementParser {
         caption = child.consumeInnerHtml(interpreter);
       } else {
         if (body != null) {
-          writer.die("In %s, may have only one widget, but found %s and %s",
-              elem, body, child);
+          writer.die(elem, "May have only one widget, but found %s and %s",
+              body, child);
         }
         if (!writer.isWidgetElement(child)) {
-          writer.die("In %s, found non-widget %s", elem, child);
+          writer.die(elem, "Found non-widget %s", child);
         }
         body = writer.parseElementToField(child);
       }

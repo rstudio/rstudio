@@ -23,14 +23,29 @@ package com.google.gwt.valuestore.shared;
 public class Property<V> {
   private final String name;
   private final Class<V> type;
+  private final String displayName;
 
   /**
-   * @param name the property's name
+   * @param name the property's name and displayName
    * @param type the class of the property's value
    */
   public Property(String name, Class<V> type) {
+    this(name, name, type);
+  }
+
+  /**
+   * @param name the property's name
+   * @param displayName the property's user visible name
+   * @param type the class of the property's value
+   */
+  public Property(String name, String displayName, Class<V> type) {
     this.name = name;
+    this.displayName = displayName;
     this.type = type;
+  }
+
+  public String getDisplayName() {
+    return displayName;
   }
 
   public String getName() {

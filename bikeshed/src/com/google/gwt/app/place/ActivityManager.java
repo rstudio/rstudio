@@ -16,8 +16,8 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.app.place.Activity.Display;
-import com.google.gwt.app.util.IsWidget;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.user.client.ui.IsWidget;
 
 /**
  * Manages {@link Activity} objects that should be kicked off in response to
@@ -88,7 +88,11 @@ public class ActivityManager<P extends Place> implements
       currentActivity = null;
       startingNext = false;
     } else if (currentActivity != null) {
-      display.showActivityWidget(null);
+      /*
+       * TODO until caching is in place, relying on stopped activities to be
+       * good citizens to reduce flicker. This makes me very nervous.
+       */
+//      display.showActivityWidget(null);
       currentActivity.onStop();
     }
 
@@ -119,9 +123,8 @@ public class ActivityManager<P extends Place> implements
 
       /*
        * TODO Allow asynchronous willClose check? Could have the event object
-       * vend callbacks. Place change doesn't happen until they all vended
-       * callbacks, if any, reply with yes. Would likely need to add
-       * onPlaceChangeCanceled?
+       * vend callbacks. Place change doesn't happen until all vended callbacks,
+       * if any, reply with yes. Would likely need to add onPlaceChangeCanceled?
        * 
        * Complicated, but I really want to keep AM and PC isolated. Alternative
        * is to mash them together and take place conversation off the event bus.

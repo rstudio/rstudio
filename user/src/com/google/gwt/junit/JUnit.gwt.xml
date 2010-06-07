@@ -40,5 +40,4 @@
 
   <servlet path='/junithost/*' class='com.google.gwt.junit.server.JUnitHostImpl'/>
 
-  <inherits name="com.google.gwt.benchmarks.Benchmarks"/>
 </module>

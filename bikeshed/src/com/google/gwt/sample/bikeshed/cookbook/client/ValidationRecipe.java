@@ -15,10 +15,10 @@
  */
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
-import com.google.gwt.bikeshed.list.client.Column;
-import com.google.gwt.bikeshed.list.client.CellTable;
-import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListViewAdapter;

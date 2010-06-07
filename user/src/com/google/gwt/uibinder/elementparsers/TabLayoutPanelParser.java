@@ -44,7 +44,7 @@ public class TabLayoutPanelParser implements ElementParser {
 
     String size = panelElem.consumeRequiredDoubleAttribute("barHeight");
     if ("".equals(size)) {
-      writer.die("In %s, barHeight attribute is required", panelElem);
+      writer.die(panelElem, "barHeight attribute is required");
     }
 
     JEnumType unitEnumType = writer.getOracle().findType(
@@ -60,7 +60,7 @@ public class TabLayoutPanelParser implements ElementParser {
     for (XMLElement tabElem : panelElem.consumeChildElements()) {
       // Get the tab element.
       if (!isElementType(panelElem, tabElem, TAB)) {
-        writer.die("In %s, only <%s:%s> children are allowed.", panelElem,
+        writer.die(tabElem, "Only <%s:%s> children are allowed.",
             panelElem.getPrefix(), TAB);
       }
 
@@ -69,10 +69,10 @@ public class TabLayoutPanelParser implements ElementParser {
 
       // Parse the child widget.
       if (children.body == null) {
-        writer.die("In %s, %s must have a child widget", panelElem, tabElem);
+        writer.die(tabElem, "Must have a child widget");
       }
       if (!writer.isWidgetElement(children.body)) {
-        writer.die("In %s, %s must be a widget", tabElem, children.body);
+        writer.die(children.body, "Must be a widget");
       }
       String childFieldName = writer.parseElementToField(children.body);
 
@@ -88,8 +88,7 @@ public class TabLayoutPanelParser implements ElementParser {
           children.customHeader.consumeSingleChildElement();
 
         if (!writer.isWidgetElement(headerElement)) {
-          writer.die("In %s of %s, %s is not a widget", children.customHeader,
-              tabElem, headerElement);
+          writer.die(headerElement, "Is not a widget");
         }
 
         String headerField = writer.parseElementToField(headerElement);
@@ -97,8 +96,8 @@ public class TabLayoutPanelParser implements ElementParser {
             headerField);
       } else {
         // Neither a header or customHeader.
-        writer.die("In %1$s, %2$s requires either a <%3$s:%4$s> or <%3$s:%5$s>",
-            panelElem, tabElem, tabElem.getPrefix(), HEADER, CUSTOM);
+        writer.die(tabElem, "Requires either a <%1$s:%2$s> or <%1$s:%3$s>",
+            tabElem.getPrefix(), HEADER, CUSTOM);
       }
     }
   }
@@ -125,7 +124,7 @@ public class TabLayoutPanelParser implements ElementParser {
 
         // Must be the body, then
         if (null != children.body) {
-          writer.die("In %s, may have only one body element", elem);
+          writer.die(children.body, "May have only one body element");
         }
 
         children.body = child;
@@ -134,8 +133,8 @@ public class TabLayoutPanelParser implements ElementParser {
 
       void assertFirstHeader() throws UnableToCompleteException {
         if ((null != children.header) && (null != children.customHeader)) {
-          writer.die("In %1$s, may have only one %2$s:header "
-              + "or %2$s:customHeader", elem, elem.getPrefix());
+          writer.die(elem, "May have only one %1$s:header "
+              + "or %1$s:customHeader", elem.getPrefix());
         }
       }
 

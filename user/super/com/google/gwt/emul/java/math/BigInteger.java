@@ -92,6 +92,11 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
   static final BigInteger MINUS_ONE = new BigInteger(-1, 1);
 
   /**
+   * 2^32.
+   */
+  static final double POW32 = 4294967296d;
+
+  /**
    * All the {@code BigInteger} numbers in the range [0,10] are cached.
    */
   static final BigInteger[] SMALL_VALUES = {
@@ -154,6 +159,20 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
     return new BigInteger(1, intCount + 1, resDigits);
   }
 
+  static BigInteger valueOf(double val) {
+    if (val < 0) {
+      if (val != -1) {
+        return new BigInteger(-1, -val);
+      }
+      return MINUS_ONE;
+    } else if (val <= 10) {
+      return SMALL_VALUES[(int) val];
+    } else {
+      // (val > 10)
+      return new BigInteger(1, val);
+    }
+  }
+
   /**
    * @see BigInteger#BigInteger(String, int)
    */
@@ -212,12 +231,27 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
   }
 
   /**
-   * The magnitude of this big integer. This array holds unsigned little endian
-   * digits. For example: {@code 13} is represented as [ 13 ] {@code -13} is
-   * represented as [ 13 ] {@code 2^32 + 13} is represented as [ 13, 1 ] {@code
-   * 2^64 + 13} is represented as [ 13, 0, 1 ] {@code 2^31} is represented as [
-   * Integer.MIN_VALUE ] The magnitude array may be longer than strictly
-   * necessary, which results in additional trailing zeros.
+   * Converts an integral double to an unsigned integer; ie 2^31 will be
+   * returned as 0x80000000.
+   * 
+   * @param val
+   * @return val as an unsigned int
+   */
+  private static native int toUnsignedInt(double val) /*-{
+    return ~~val;
+  }-*/;
+
+  /**
+   * The magnitude of this big integer. This array is in little endian order and
+   * each "digit" is a 32-bit unsigned integer. For example: {@code 13} is
+   * represented as [ 13 ] {@code -13} is represented as [ 13 ] {@code 2^32 +
+   * 13} is represented as [ 13, 1 ] {@code 2^64 + 13} is represented as [ 13,
+   * 0, 1 ] {@code 2^31} is represented as [ Integer.MIN_VALUE ] The magnitude
+   * array may be longer than strictly necessary, which results in additional
+   * trailing zeros.
+   * 
+   * <p>TODO(jat): consider changing to 24-bit integers for better performance
+   * in browsers.
    */
   transient int digits[];
 
@@ -461,6 +495,28 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
     } else {
       numberLength = 2;
       digits = new int[] {(int) val, (int) (val >> 32)};
+    }
+  }
+
+  /**
+   * Creates a new {@code BigInteger} whose value is equal to the specified
+   * {@code double} (which must be an integral value).
+   * 
+   * @param sign the sign of the number
+   * @param val the value of the new {@code BigInteger}.
+   */
+  private BigInteger(int sign, double val) {
+    // PRE: (val >= 0) && (sign >= -1) && (sign <= 1)
+    // ~~ forces coercion to 32 bits
+    this.sign = sign;
+    if (val < POW32) {
+      // It fits in one 'int'
+      numberLength = 1;
+      digits = new int[] { toUnsignedInt(val) };
+    } else {
+      numberLength = 2;
+      digits = new int[] { toUnsignedInt(val % POW32),
+          toUnsignedInt(val / POW32)};
     }
   }
 
@@ -1410,7 +1466,7 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
   }
 
   /**
-   * Tests if {@code this.abs()} is equals to {@code ONE}
+   * Tests if {@code this.abs()} is equals to {@code ONE}.
    */
   boolean isOne() {
     return ((numberLength == 1) && (digits[0] == 1));

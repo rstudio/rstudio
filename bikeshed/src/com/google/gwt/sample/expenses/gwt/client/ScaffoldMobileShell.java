@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * TODO
+ * TODO: doc.
  */
 public class ScaffoldMobileShell extends Composite {
 

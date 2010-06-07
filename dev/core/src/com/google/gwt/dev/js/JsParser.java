@@ -99,20 +99,20 @@ public class JsParser {
     this.program = program;
   }
 
-  List<JsStatement> parseImpl(SourceInfo rootSourceInfo, JsScope scope, Reader r)
-      throws JsParserException, IOException {
+  List<JsStatement> parseImpl(final SourceInfo rootSourceInfo, JsScope scope,
+      Reader r) throws JsParserException, IOException {
     // Create a custom error handler so that we can throw our own exceptions.
     Context.enter().setErrorReporter(new ErrorReporter() {
       public void error(String msg, String loc, int ln, String src, int col) {
         throw new UncheckedJsParserException(new JsParserException(msg, ln,
-            src, col));
+            src, col, rootSourceInfo.getFileName()));
       }
 
       public EvaluatorException runtimeError(String msg, String loc, int ln,
           String src, int col) {
         // Never called, but just in case.
         throw new UncheckedJsParserException(new JsParserException(msg, ln,
-            src, col));
+            src, col, rootSourceInfo.getFileName()));
       }
 
       public void warning(String msg, String loc, int ln, String src, int col) {
@@ -140,9 +140,8 @@ public class JsParser {
   }
 
   private JsParserException createParserException(String msg, Node offender) {
-    // TODO: get source info
-    offender.getLineno();
-    return new JsParserException(msg);
+    return new JsParserException(msg, offender.getLineno(), null, 0,
+        sourceInfoStack.peek().getFileName());
   }
 
   private JsScope getScope() {
@@ -331,8 +330,8 @@ public class JsParser {
 
       default:
         int tokenType = node.getType();
-        throw new JsParserException("Unexpected top-level token type: "
-            + tokenType);
+        throw createParserException("Unexpected top-level token type: "
+            + tokenType, node);
     }
   }
 
@@ -406,8 +405,8 @@ public class JsParser {
         return mapBinaryOperation(JsBinaryOperator.ASG_SHRU, asgNode);
 
       default:
-        throw new JsParserException("Unknown assignment operator variant: "
-            + asgNode.getIntDatum());
+        throw createParserException("Unknown assignment operator variant: "
+            + asgNode.getIntDatum(), asgNode);
     }
   }
 
@@ -572,8 +571,8 @@ public class JsParser {
         return mapBinaryOperation(JsBinaryOperator.GTE, eqNode);
 
       default:
-        throw new JsParserException("Unknown equality operator variant: "
-            + eqNode.getIntDatum());
+        throw createParserException("Unknown equality operator variant: "
+            + eqNode.getIntDatum(), eqNode);
     }
   }
 
@@ -783,8 +782,8 @@ public class JsParser {
       case TokenStream.POST:
         return mapPostfixOperation(op, node);
       default:
-        throw new JsParserException("Unknown prefix/postfix variant: "
-            + node.getIntDatum());
+        throw createParserException("Unknown prefix/postfix variant: "
+            + node.getIntDatum(), node);
     }
   }
 
@@ -907,7 +906,8 @@ public class JsParser {
         return program.getUndefinedLiteral();
 
       default:
-        throw new JsParserException("Unknown primary: " + node.getIntDatum());
+        throw createParserException("Unknown primary: " + node.getIntDatum(),
+            node);
     }
   }
 
@@ -947,8 +947,8 @@ public class JsParser {
         return mapBinaryOperation(JsBinaryOperator.INOP, relNode);
 
       default:
-        throw new JsParserException("Unknown relational operator variant: "
-            + relNode.getIntDatum());
+        throw createParserException("Unknown relational operator variant: "
+            + relNode.getIntDatum(), relNode);
     }
   }
 
@@ -1006,8 +1006,8 @@ public class JsParser {
         return mapBinaryOperation(JsBinaryOperator.SHRU, shiftNode);
 
       default:
-        throw new JsParserException("Unknown equality operator variant: "
-            + shiftNode.getIntDatum());
+        throw createParserException("Unknown equality operator variant: "
+            + shiftNode.getIntDatum(), shiftNode);
     }
   }
 
@@ -1201,8 +1201,8 @@ public class JsParser {
         return mapPrefixOperation(JsUnaryOperator.VOID, unOp);
 
       default:
-        throw new JsParserException("Unknown unary operator variant: "
-            + unOp.getIntDatum());
+        throw createParserException("Unknown unary operator variant: "
+            + unOp.getIntDatum(), unOp);
     }
   }
 

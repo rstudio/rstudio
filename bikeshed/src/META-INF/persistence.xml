@@ -9,6 +9,7 @@
         <class>com.google.gwt.sample.expenses.server.domain.Employee</class>
         <class>com.google.gwt.sample.expenses.server.domain.Expense</class>
         <class>com.google.gwt.sample.expenses.server.domain.Report</class>
+        <class>com.google.gwt.sample.expenses.server.domain.EntityCounter</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>
             <property name="datanucleus.NontransactionalRead" value="true"/>

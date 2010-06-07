@@ -34,12 +34,16 @@ public interface EmployeeRecord extends Record {
    */
   String TOKEN = "EmployeeRecord";
 
-  Property<String> userName = new Property<String>("userName", String.class);
-  Property<String> displayName = new Property<String>("displayName",
+  Property<String> userName = new Property<String>("userName", "User Name", String.class);
+  Property<String> displayName = new Property<String>("displayName", "Display Name",
       String.class);
-  Property<String> password = new Property<String>("password", String.class);
-  Property<String> supervisorKey = new Property<String>("supervisorKey",
+  Property<String> password = new Property<String>("password", "Password", String.class);
+  Property<String> supervisorKey = new Property<String>("supervisorKey", "Supervisor Key",
       String.class);
+
+  Property<String> department = new Property<String>("department", "Department", String.class);
+
+  String getDepartment();
 
   String getDisplayName();
 

@@ -15,14 +15,16 @@
  */
 package com.google.gwt.sample.expenses.gwt.client;
 
-import com.google.gwt.bikeshed.list.client.CellList;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
+import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.AsyncListViewAdapter;
+import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
@@ -32,36 +34,53 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * TODO
+ * TODO: doc.
  */
-public class MobileReportList extends Composite implements
-    Receiver<List<ReportRecord>> {
+public class MobileReportList extends Composite implements MobilePage {
 
   /**
-   * TODO
+   * TODO: doc.
    */
   public interface Listener {
+    void onCreateReport(Long reporterId);
+
     void onReportSelected(ReportRecord report);
   }
 
+  /**
+   * The receiver for the last request.
+   */
+  private Receiver<List<ReportRecord>> lastReceiver;
+
+  private final Long employeeId;
+  private final Listener listener;
   private final CellList<ReportRecord> reportList;
-  private final ListViewAdapter<ReportRecord> reportAdapter;
+  private final AsyncListViewAdapter<ReportRecord> reportAdapter;
   private final SingleSelectionModel<ReportRecord> reportSelection;
+  private final ExpensesRequestFactory requestFactory;
 
   public MobileReportList(final Listener listener,
-      final ExpensesRequestFactory requestFactory) {
-    reportAdapter = new ListViewAdapter<ReportRecord>();
+      final ExpensesRequestFactory requestFactory, long employeeId) {
+    this.listener = listener;
+    this.requestFactory = requestFactory;
+    this.employeeId = new Long(employeeId);
+    reportAdapter = new AsyncListViewAdapter<ReportRecord>() {
+      @Override
+      protected void onRangeChanged(ListView<ReportRecord> view) {
+        requestReports();
+      }
+    };
+    reportAdapter.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
 
-    reportList = new CellList<ReportRecord>(
-        new AbstractCell<ReportRecord>() {
-          @Override
-          public void render(ReportRecord value, Object viewData,
-              StringBuilder sb) {
-            sb.append("<div onclick='' class='item'>" + value.getPurpose() + "</div>");
-          }
-        });
+    reportList = new CellList<ReportRecord>(new AbstractCell<ReportRecord>() {
+      @Override
+      public void render(ReportRecord value, Object viewData, StringBuilder sb) {
+        sb.append("<div class='item'>" + value.getPurpose() + "</div>");
+      }
+    });
 
     reportSelection = new SingleSelectionModel<ReportRecord>();
+    reportSelection.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
     reportSelection.addSelectionChangeHandler(new SelectionModel.SelectionChangeHandler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         listener.onReportSelected(reportSelection.getSelectedObject());
@@ -72,13 +91,41 @@ public class MobileReportList extends Composite implements
     reportAdapter.addView(reportList);
 
     initWidget(reportList);
-
-    requestFactory.reportRequest().findAllReports().forProperties(
-        getReportColumns()).to(this).fire();
+    onRefresh(false);
   }
 
-  public void onSuccess(List<ReportRecord> newValues) {
-    reportAdapter.setList(newValues);
+  public Widget asWidget() {
+    return this;
+  }
+
+  public String getPageTitle() {
+    return "Expense Reports";
+  }
+
+  public boolean needsAddButton() {
+    return true;
+  }
+
+  public String needsCustomButton() {
+    return null;
+  }
+
+  public boolean needsRefreshButton() {
+    return true;
+  }
+
+  public void onAdd() {
+    listener.onCreateReport(employeeId);
+  }
+
+  public void onCustom() {
+  }
+
+  public void onRefresh(boolean clear) {
+    if (clear) {
+      reportAdapter.updateDataSize(0, true);
+    }
+    reportList.refresh();
   }
 
   private Collection<Property<?>> getReportColumns() {
@@ -86,5 +133,21 @@ public class MobileReportList extends Composite implements
     columns.add(ReportRecord.created);
     columns.add(ReportRecord.purpose);
     return columns;
+  }
+
+  private void requestReports() {
+    if (requestFactory == null) {
+      return;
+    }
+    lastReceiver = new Receiver<List<ReportRecord>>() {
+      public void onSuccess(List<ReportRecord> newValues) {
+        int size = newValues.size();
+        reportAdapter.updateDataSize(size, true);
+        reportAdapter.updateViewData(0, size, newValues);
+      }
+    };
+    requestFactory.reportRequest().findReportEntriesBySearch(employeeId, "",
+        "", ReportRecord.created.getName() + " DESC", 0, 25).forProperties(
+        getReportColumns()).to(lastReceiver).fire();
   }
 }

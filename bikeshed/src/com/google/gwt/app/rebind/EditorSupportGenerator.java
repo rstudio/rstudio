@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
-import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
@@ -33,7 +32,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.TakesValue;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.PrintWriterManager;
@@ -48,13 +46,18 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
- * Generates implementations of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory RequestFactory}
- * and its nested interfaces.
+ * Generates implementations of {@link
+ * com.google.gwt.app.client.EditorSupport EditorSupport} and its
+ * nested interfaces.
  */
 public class EditorSupportGenerator extends Generator {
+
+  private interface Matcher {
+    boolean matches(JClassType classType) throws UnableToCompleteException;
+  }
 
   private class SuperInterfaceType {
     private final JClassType recordType;
@@ -78,6 +81,12 @@ public class EditorSupportGenerator extends Generator {
       viewType = typeParameters[1];
     }
   }
+
+  Map<JField, JClassType> uiPropertyFields;
+  JClassType takesValueType;
+  JClassType hasTextType;
+
+  JClassType stringType;
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext generatorContext,
@@ -120,46 +129,6 @@ public class EditorSupportGenerator extends Generator {
     return packageName + "." + implName;
   }
 
-  private String findGetterMethod(JField property, JField uiField,
-      JClassType takesValueType, JClassType hasTextType, JClassType stringType,
-      TreeLogger logger) {
-
-    JClassType valueType = property.getType().isClass().isParameterized().getTypeArgs()[0];
-
-    JClassType uiFieldClassType = uiField.getType().isClass();
-    
-    if (takesValueType.isAssignableFrom(uiFieldClassType)) {
-      for (JClassType implemented : uiFieldClassType.getImplementedInterfaces()) {
-        JParameterizedType parameterized = implemented.isParameterized(); 
-        if (parameterized != null && (takesValueType == parameterized.getRawType()) 
-          && (valueType == parameterized.getTypeArgs()[0])) {
-          return "getValue";
-        }
-      }
-    }
-
-    if ((stringType == valueType)
-        && hasTextType.isAssignableFrom(uiFieldClassType)) {
-      return "getText";
-    }
-
-    logger.log(TreeLogger.WARN, String.format("Unable to take values from field \"%s\""
-        + " due to EditorSupport still being a complete hack.", uiField.getName()));
-
-    return null;
-  }
-
-  /**
-   * returns true if the change handlers are to be generated.
-   */
-  private boolean generateChangeHandlers(JClassType type,
-      JClassType takesValueType) {
-    if (type.isAssignableTo(takesValueType)) {
-      return true;
-    }
-    return false;
-  }
-
   private void generateOnce(TreeLogger logger,
       GeneratorContext generatorContext, PrintWriter out,
       JClassType interfaceType, String packageName, String implName,
@@ -167,6 +136,10 @@ public class EditorSupportGenerator extends Generator {
 
     logger = logger.branch(TreeLogger.DEBUG, String.format(
         "Generating implementation of %s", interfaceType.getName()));
+    JClassType recordType = superinterfaceType.recordType;
+    JClassType viewType = superinterfaceType.viewType;
+    uiPropertyFields = getUiPropertyFields(viewType, recordType,
+        generatorContext.getTypeOracle(), logger);
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
@@ -182,29 +155,32 @@ public class EditorSupportGenerator extends Generator {
     f.addImport(HashSet.class.getName());
     f.addImport(Map.class.getName());
     f.addImport(Set.class.getName());
+    for (JClassType valueTypes : uiPropertyFields.values()) {
+      if (valueTypes.isParameterized() == null) {
+        continue;
+      }
+      String typeName = valueTypes.isParameterized().getTypeArgs()[0].getQualifiedSourceName();
+      if (!typeName.startsWith("java.lang")) {
+        f.addImport(typeName);
+      }
+    }
     f.addImplementedInterface(interfaceType.getName());
 
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
 
-    JClassType takesValueType = generatorContext.getTypeOracle().findType(
+    takesValueType = generatorContext.getTypeOracle().findType(
         TakesValue.class.getName());
-    JClassType hasTextType = generatorContext.getTypeOracle().findType(
+    hasTextType = generatorContext.getTypeOracle().findType(
         HasText.class.getName());
-    JClassType stringType = generatorContext.getTypeOracle().findType(
+    stringType = generatorContext.getTypeOracle().findType(
         String.class.getName());
-    JClassType recordType = superinterfaceType.recordType;
-    JClassType viewType = superinterfaceType.viewType;
-    writeGetPropertiesMethod(sw, recordType);
 
-    Set<JField> uiPropertyFields = getUiPropertyFields(viewType, recordType);
-    writeInit(sw, viewType, recordType, uiPropertyFields, takesValueType,
-        logger);
-    writeIsChangedMethod(sw, recordType, viewType, uiPropertyFields,
-        takesValueType, hasTextType, stringType, logger);
-    writeSetEnabledMethod(sw, viewType, uiPropertyFields, takesValueType);
-    writeSetValueMethod(sw, recordType, viewType, uiPropertyFields,
-        generatorContext, logger);
+    writeGetPropertiesMethod(sw, recordType);
+    writeInit(sw, viewType, recordType);
+    writeIsChangedMethod(sw, recordType, viewType);
+    writeSetEnabledMethod(sw, viewType);
+    writeSetValueMethod(sw, recordType, viewType, logger);
     writeShowErrorsMethod(sw, viewType);
 
     sw.outdent();
@@ -246,7 +222,7 @@ public class EditorSupportGenerator extends Generator {
     return methodsBySignature.values();
   }
 
-  private Set<String> getAccessiblePropertyFields(JClassType classType) {
+  private Map<String, JField> getAccessiblePropertyFields(JClassType classType) {
     boolean isInterface = false;
     if (classType.isInterface() != null) {
       isInterface = true;
@@ -259,8 +235,14 @@ public class EditorSupportGenerator extends Generator {
       tempClassType = classesToBeProcessed.remove();
       JField declaredFields[] = tempClassType.getFields();
       for (JField field : declaredFields) {
+        JClassType fieldType = field.getType().isClass();
+        JParameterizedType parameterizedType = null;
+        if (fieldType != null) {
+          parameterizedType = fieldType.isParameterized();
+        }
         if (field.isPrivate()
-            || !(field.getType().getQualifiedSourceName().equals(Property.class.getName()))) {
+            || parameterizedType == null
+            || !(parameterizedType.getBaseType().getQualifiedSourceName().equals(Property.class.getName()))) {
           continue;
         }
         JField existing = fieldsByName.put(field.getName(), field);
@@ -277,7 +259,7 @@ public class EditorSupportGenerator extends Generator {
         classesToBeProcessed.add(tempClassType.getSuperclass());
       }
     }
-    return fieldsByName.keySet();
+    return fieldsByName;
   }
 
   /**
@@ -310,10 +292,7 @@ public class EditorSupportGenerator extends Generator {
         + name.substring(1, name.length());
   }
 
-  /**
-   * Handle non-integer return types.
-   */
-  private String getSuffix(JMethod method, JClassType stringType) {
+  private String getSuffix(JMethod method) {
     JClassType returnType = (JClassType) method.getReturnType();
     if (returnType.isAssignableTo(stringType)) {
       return "";
@@ -321,17 +300,109 @@ public class EditorSupportGenerator extends Generator {
     return ".toString()";
   }
 
-  private Set<JField> getUiPropertyFields(JClassType viewType,
-      JClassType recordType) {
-    Set<String> recordFieldNames = getAccessiblePropertyFields(recordType);
-    Set<JField> uiPropertyFields = new HashSet<JField>();
-    for (JField field : viewType.getFields()) {
-      if (field.getAnnotation(UiField.class) != null
-          && recordFieldNames.contains(field.getName())) {
-        uiPropertyFields.add(field);
+  /*
+   * Returns the JClassType that is a super-interface of field.getType() and
+   * matches Matcher. null if no such type.
+   */
+  private JClassType getSuperInterface(JField uiField, Matcher matcher,
+      TreeLogger logger) throws UnableToCompleteException {
+    JClassType classType = uiField.getType().isClass();
+    if (classType == null) {
+      logger.log(TreeLogger.ERROR, "The uiField " + uiField.getName()
+          + " is not a class type");
+      throw new UnableToCompleteException();
+    }
+    LinkedList<JClassType> classesToBeProcessed = new LinkedList<JClassType>();
+    classesToBeProcessed.add(classType);
+    JClassType tempClassType = null;
+    while (classesToBeProcessed.peek() != null) {
+      tempClassType = classesToBeProcessed.remove();
+      if (matcher.matches(tempClassType)) {
+        return tempClassType;
+      }
+      JClassType superclassType = tempClassType.getSuperclass();
+      if (superclassType != null) {
+        classesToBeProcessed.add(tempClassType.getSuperclass());
+      }
+      JClassType interfaces[] = tempClassType.getImplementedInterfaces();
+      if (interfaces != null && interfaces.length > 0) {
+        classesToBeProcessed.addAll(Arrays.asList(tempClassType.getImplementedInterfaces()));
       }
     }
-    return uiPropertyFields;
+    return null;
+  }
+
+  /*
+   * Return a map where a key is an uiField of type Property and the value is
+   * its super-interface type, either HasText or HasValue.
+   */
+  private Map<JField, JClassType> getUiPropertyFields(JClassType viewType,
+      JClassType recordType, TypeOracle typeOracle, final TreeLogger logger)
+      throws UnableToCompleteException {
+    JClassType propertyType = typeOracle.findType(Property.class.getName());
+    final JClassType localTakesValueType = typeOracle.findType(TakesValue.class.getName());
+    final JClassType localHasTextType = typeOracle.findType(HasText.class.getName());
+
+    Map<String, JField> recordFieldNames = getAccessiblePropertyFields(recordType);
+    Map<JField, JClassType> localUiPropertyFields = new HashMap<JField, JClassType>();
+    for (final JField uiField : viewType.getFields()) {
+      JField recordField = recordFieldNames.get(uiField.getName());
+      if (uiField.getAnnotation(UiField.class) == null || recordField == null) {
+        continue;
+      }
+      JParameterizedType parameterizedField = recordField.getType().isClass().isParameterized();
+      if (parameterizedField == null
+          || parameterizedField.getBaseType() != propertyType
+          || parameterizedField.getTypeArgs().length != 1) {
+        logger.log(TreeLogger.ERROR,
+            "A property type must have exactly one type argument");
+        throw new UnableToCompleteException();
+      }
+      final JClassType fieldTypeArg = parameterizedField.getTypeArgs()[0];
+      JClassType takesValueSuperInterface = getSuperInterface(uiField,
+          new Matcher() {
+
+            public boolean matches(JClassType classType)
+                throws UnableToCompleteException {
+              JParameterizedType parameterizedType = classType.isParameterized();
+              if (parameterizedType == null
+                  || parameterizedType.getBaseType() != localTakesValueType
+                  || parameterizedType.getTypeArgs().length != 1) {
+                return false;
+              }
+              JClassType typeArg = parameterizedType.getTypeArgs()[0];
+              if (typeArg != fieldTypeArg) {
+                logger.log(TreeLogger.ERROR, "The type of value "
+                    + typeArg.getName() + " UiField " + uiField
+                    + " can receive does not match the type of property "
+                    + fieldTypeArg.getName());
+                throw new UnableToCompleteException();
+              }
+              return true;
+            }
+
+          }, logger);
+      if (takesValueSuperInterface != null) {
+        localUiPropertyFields.put(uiField, takesValueSuperInterface);
+      } else {
+        JClassType hasTextSuperInterface = getSuperInterface(uiField,
+            new Matcher() {
+
+              public boolean matches(JClassType classType) {
+                return classType == localHasTextType;
+              }
+
+            }, logger);
+        if (hasTextSuperInterface != null) {
+          localUiPropertyFields.put(uiField, hasTextSuperInterface);
+        } else {
+          logger.log(TreeLogger.ERROR, "The UiField " + uiField
+              + " does not have a HaxText or HasValue super-interface");
+          throw new UnableToCompleteException();
+        }
+      }
+    }
+    return localUiPropertyFields;
   }
 
   /**
@@ -356,29 +427,30 @@ public class EditorSupportGenerator extends Generator {
   }
 
   private void writeInit(SourceWriter sw, JClassType viewType,
-      JClassType recordType, Set<JField> uiPropertyFields,
-      JClassType takesValueType, TreeLogger logger) {
+      JClassType recordType) {
     sw.indent();
     sw.println("public void init(final " + viewType.getName() + " view) {");
     sw.indent();
-    for (JField uiField : uiPropertyFields) {
-      if (!generateChangeHandlers((JClassType) uiField.getType(),
-          takesValueType)) {
+    for (Entry<JField, JClassType> uiFieldEntry : uiPropertyFields.entrySet()) {
+      if (uiFieldEntry.getValue() == hasTextType) {
         continue;
       }
-      sw.println("view." + uiField.getName()
-          + ".addValueChangeHandler(new ValueChangeHandler<String>() {");
-      sw.indent();
-      sw.println("public void onValueChange(ValueChangeEvent<String> event) {");
-      sw.indent();
-      JField recordField = recordType.getField(uiField.getName());
-      if (recordField == null) {
-        logger.log(TreeLogger.DEBUG, "Unable to find field name "
-            + uiField.getName() + " in " + recordType.getQualifiedSourceName());
+      JParameterizedType parameterizedType = uiFieldEntry.getValue().isParameterized();
+      if (parameterizedType == null) {
         continue;
       }
+      String parameterName = parameterizedType.getTypeArgs()[0].getName();
+      sw.println("view." + uiFieldEntry.getKey().getName()
+          + ".addValueChangeHandler(new ValueChangeHandler<" + parameterName
+          + ">() {");
+      sw.indent();
+      sw.println("public void onValueChange(ValueChangeEvent<" + parameterName
+          + "> event) {");
+      sw.indent();
+      // recordField and uiFieldEntry have the same name
+      String recordFieldName = uiFieldEntry.getKey().getName();
       sw.println("view.getDeltaValueStore().set(" + recordType.getName() + "."
-          + recordField.getName() + ", view.getValue(),");
+          + recordFieldName + ", view.getValue(),");
       sw.indent();
       sw.println("event.getValue());");
       sw.outdent();
@@ -393,23 +465,21 @@ public class EditorSupportGenerator extends Generator {
   }
 
   private void writeIsChangedMethod(SourceWriter sw, JClassType recordType,
-      JClassType viewType, Set<JField> uiPropertyFields,
-      JClassType takesValueType, JClassType hasTextType, JClassType stringType,
-      TreeLogger logger) {
+      JClassType viewType) {
     sw.indent();
     sw.println("public boolean isChanged(" + viewType.getName() + " view) {");
     sw.indent();
-    for (JField uiField : uiPropertyFields) {
-      JField property = recordType.getField(uiField.getName());
+    for (Entry<JField, JClassType> uiFieldEntry : uiPropertyFields.entrySet()) {
+      JField property = recordType.getField(uiFieldEntry.getKey().getName());
       if (property != null) {
-        String getter = findGetterMethod(property, uiField, takesValueType,
-            hasTextType, stringType, logger);
-        if (getter != null) {
-          sw.println(String.format(
-              "view.getDeltaValueStore().set(%s.%s, view.getValue(), view.%s.%s());",
-              recordType.getName(), property.getName(), uiField.getName(),
-              getter));
+        String getter = "getValue";
+        if (uiFieldEntry.getValue() == hasTextType) {
+          getter = "getText";
         }
+        sw.println(String.format(
+            "view.getDeltaValueStore().set(%s.%s, view.getValue(), view.%s.%s());",
+            recordType.getName(), property.getName(),
+            uiFieldEntry.getKey().getName(), getter));
       }
     }
     sw.println("return view.getDeltaValueStore().isChanged();");
@@ -418,18 +488,18 @@ public class EditorSupportGenerator extends Generator {
     sw.outdent();
   }
 
-  private void writeSetEnabledMethod(SourceWriter sw, JClassType viewType,
-      Set<JField> uiPropertyFields, JClassType takesValueType) {
+  private void writeSetEnabledMethod(SourceWriter sw, JClassType viewType) {
     sw.indent();
     sw.println("public void setEnabled(" + viewType.getName()
         + " view, boolean enabled) {");
     sw.indent();
     sw.println("// Note that we require package protection, just like UiBinder does.");
-    for (JField uiField : uiPropertyFields) {
-      if (!((JClassType) uiField.getType()).isAssignableTo(takesValueType)) {
+    for (Entry<JField, JClassType> uiFieldEntry : uiPropertyFields.entrySet()) {
+      if (uiFieldEntry.getValue() != takesValueType) {
         continue;
       }
-      sw.println("view." + uiField.getName() + ".setEnabled(enabled);");
+      sw.println("view." + uiFieldEntry.getKey().getName()
+          + ".setEnabled(enabled);");
     }
     sw.outdent();
     sw.println("}");
@@ -437,61 +507,36 @@ public class EditorSupportGenerator extends Generator {
   }
 
   private void writeSetValueMethod(SourceWriter sw, JClassType recordType,
-      JClassType viewType, Set<JField> uiPropertyFields,
-      GeneratorContext generatorContext, TreeLogger logger)
+      JClassType viewType, TreeLogger logger)
       throws UnableToCompleteException {
-    JClassType hasTextType = generatorContext.getTypeOracle().findType(
-        HasText.class.getName());
-    JClassType takesValueType = generatorContext.getTypeOracle().findType(
-        HasValue.class.getName());
-    JClassType stringType = generatorContext.getTypeOracle().findType(
-        "java.lang.String");
+    // JClassType stringType = generatorContext.getTypeOracle().findType(
+    // "java.lang.String");
     sw.indent();
     sw.println("public void setValue(" + viewType.getName() + " view, "
         + recordType.getName() + " record) {");
     sw.indent();
 
-    for (JField uiField : uiPropertyFields) {
-      JClassType classType = uiField.getType().isClassOrInterface();
-      if (classType == null) {
-        continue;
-      }
-      String propertyFunctionName = getPropertyFunctionName(uiField.getName(),
-          logger);
+    for (Entry<JField, JClassType> uiFieldEntry : uiPropertyFields.entrySet()) {
+      String propertyFunctionName = getPropertyFunctionName(
+          uiFieldEntry.getKey().getName(), logger);
       JMethod propertyFunction = getPropertyFunction(recordType,
           propertyFunctionName);
       if (propertyFunction == null) {
         logger.log(TreeLogger.WARN,
-            "Not generating setValue/setText call for field " + uiField);
+            "Not generating setValue/setText for field "
+                + uiFieldEntry.getKey().getName());
         continue;
       }
-      JType paramTypes[] = new JType[1];
-      paramTypes[0] = propertyFunction.getReturnType();
-
-      // TODO No method name matching magic! Rely on interfaces or nothing!
-      // Where are the checks that the property value matches the param type on
-      // TakesValue?
-
-      JMethod setValueMethod = classType.findMethod("setValue", paramTypes);
-      String suffix = "";
-      String functionName = "";
-      if (setValueMethod != null) {
-        // the setValue method works!, no need to change suffix
-        functionName = "setValue";
-      } else {
-        if (classType.isAssignableTo(takesValueType)) {
-          functionName = "setValue";
-        } else {
-          if (classType.isAssignableTo(hasTextType)) {
-            functionName = "setText";
-          } else {
-            functionName = "setValue";
-          }
-        }
-        suffix = getSuffix(propertyFunction, stringType);
+      String functionName = "setValue";
+      if (hasTextType == uiFieldEntry.getValue()) {
+        functionName = "setText";
       }
-      sw.println("view." + uiField.getName() + "." + functionName + "(record."
-          + propertyFunctionName + "()" + suffix + ");");
+      String suffix = "";
+      if ("setText".equals(functionName)) {
+        suffix = getSuffix(propertyFunction);
+      }
+      sw.println("view." + uiFieldEntry.getKey().getName() + "." + functionName
+          + "(record." + propertyFunctionName + "()" + suffix + ");");
     }
     sw.outdent();
     sw.println("}");

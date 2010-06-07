@@ -24,8 +24,8 @@ import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -45,13 +45,12 @@ public class ExpensesShell extends Composite {
   @UiField
   LayoutPanel layoutPanel;
   @UiField
-  SplitLayoutPanel splitLayout;
+  DockLayoutPanel dockLayout;
 
   private final ExpenseDetails expenseDetails = new ExpenseDetails();
 
   public ExpensesShell() {
     initWidget(uiBinder.createAndBindUi(this));
-    splitLayout.setWidgetMinSize(expenseTree, 150);
 
     // Handle breadcrumb events from Expense Details.
     expenseDetails.getReportsLink().addClickHandler(new ClickHandler() {

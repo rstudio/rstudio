@@ -15,10 +15,15 @@
  */
 package com.google.gwt.sample.expenses.gwt.client;
 
+import com.google.gwt.app.place.AbstractRecordListActivity;
 import com.google.gwt.app.place.Activity;
 import com.google.gwt.app.place.ActivityMapper;
 import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlaceToRecordType;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace;
+import com.google.gwt.sample.expenses.gwt.ui.ListActivitiesMapper;
+import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Finds the activity to run for a particular {@link ScaffoldPlace} in the top
@@ -27,20 +32,28 @@ import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
 public final class ScaffoldMasterActivities implements
     ActivityMapper<ScaffoldPlace> {
 
-  private final ActivityMapper<ListScaffoldPlace> listActivities;
+  private final ListActivitiesMapper listActivities;
 
-  private Activity last = null;
+  private AbstractRecordListActivity<?> last = null;
+  private Class<? extends Record> lastType = null;
 
-  public ScaffoldMasterActivities(
-      ActivityMapper<ListScaffoldPlace> listActivities) {
+  public ScaffoldMasterActivities(ListActivitiesMapper listActivities) {
     this.listActivities = listActivities;
   }
 
   public Activity getActivity(ScaffoldPlace place) {
     if (place instanceof ListScaffoldPlace) {
-      last = listActivities.getActivity((ListScaffoldPlace) place);
+      ListScaffoldPlace listPlace = (ListScaffoldPlace) place;
+      last = listActivities.getActivity(listPlace);
+      lastType = listPlace.getType();
     }
 
+    if (last != null && place instanceof ScaffoldRecordPlace) {
+      Class<? extends Record> thisType = place.acceptFilter(new ScaffoldPlaceToRecordType());
+      if (lastType.equals(thisType)) {
+        last.select(((ScaffoldRecordPlace) place).getId());
+      }
+    }
     return last;
   }
 }

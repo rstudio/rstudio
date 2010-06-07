@@ -36,18 +36,21 @@ public interface ReportRecord extends Record {
    */
   String TOKEN = "ReportRecord";
 
-  Property<String> approvedSupervisorKey = new Property<String>("approvedSupervisorKey",
+  Property<String> approvedSupervisorKey = new Property<String>("approvedSupervisorKey", "Approved Supervisor Key",
       String.class);
-  Property<Date> created = new Property<Date>("created", Date.class);
-  Property<String> notes = new Property<String>("notes", String.class);
-  Property<String> purpose = new Property<String>("purpose", String.class);
-  Property<String> reporterKey = new Property<String>("reporterKey",
+  Property<Date> created = new Property<Date>("created", "Created", Date.class);
+  Property<String> department = new Property<String>("department", "Department", String.class);
+  Property<String> notes = new Property<String>("notes", "Notes", String.class);
+  Property<String> purpose = new Property<String>("purpose", "Purpose", String.class);
+  Property<String> reporterKey = new Property<String>("reporterKey", "Reporter Key",
       String.class);
 
   String getApprovedSupervisorKey();
 
   Date getCreated();
-  
+
+  String getDepartment();
+
   String getNotes();
 
   String getPurpose();

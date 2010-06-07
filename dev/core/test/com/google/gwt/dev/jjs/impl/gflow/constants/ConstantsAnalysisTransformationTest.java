@@ -30,6 +30,7 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    runDeadCodeElimination = true;
     addSnippetClassDecl("static int i_;");
     addSnippetClassDecl("static int foo() { return 0; }");
     addSnippetClassDecl("static int bar(int i) {return 0;}");
@@ -93,10 +94,8 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
   }
   
   public void testWhile() throws Exception {
-    transform("void", "int j = 0; while (j > 0) { }").into(
-        "int j = 0;",
-        "while (false) {",
-        "}" );
+    transform("void", "int j = 0; while (j > 0) { }").intoString(
+        "int j = 0;");
 
   }
 
@@ -110,11 +109,11 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
   public void testNullValue() throws Exception {
     transform("void", "Object e = null; boolean b = e == null;").into(
         "Object e = null;",
-        "boolean b = null == null;" );
+        "boolean b = true;" );
 
     transform("void", "Object e = null; boolean b = e != null;").into(
         "Object e = null;",
-        "boolean b = null != null;" );
+        "boolean b = false;" );
   }
   
   public void testIncDec() throws Exception {
@@ -137,7 +136,8 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
   }
 
   @Override
-  protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, ConstantsAssumption> createIntegratedAnalysis() {
+  protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, 
+  ConstantsAssumption> createIntegratedAnalysis() {
     return new ConstantsAnalysis();
   }
 }

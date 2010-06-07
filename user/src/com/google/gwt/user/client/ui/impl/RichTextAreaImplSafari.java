@@ -40,7 +40,7 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     elem.__gwt_handler = function(evt) {
       if (elem.__listener) {
         if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(elem.__listener)) {
-          elem.__listener.@com.google.gwt.user.client.EventListener::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+          @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, elem.__listener);
         }
       }
     };
@@ -59,15 +59,15 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     // doesn't work on the iframe element (at least not for focus/blur). Don't
     // dispatch through the normal handler method, as some of the querying we do
     // there interferes with focus.
-    elem.onfocus = function(evt) {
+    wnd.onfocus = function(evt) {
       if (elem.__listener) {
-        elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, elem.__listener);
       }
     };
 
-    elem.onblur = function(evt) {
+    wnd.onblur = function(evt) {
       if (elem.__listener) {
-        elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, elem.__listener);
       }
     };
   }-*/;

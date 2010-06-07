@@ -366,11 +366,21 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
-   * Programmatically selects the specified tab.
+   * Programmatically selects the specified tab and fires events.
    * 
    * @param index the index of the tab to be selected
    */
   public void selectTab(int index) {
+    selectTab(index, true);
+  }
+
+  /**
+   * Programmatically selects the specified tab.
+   * 
+   * @param index the index of the tab to be selected
+   * @param fireEvents true to fire events, false not to
+   */
+  public void selectTab(int index, boolean fireEvents) {
     checkIndex(index);
     if (index == selectedIndex) {
       return;
@@ -378,9 +388,12 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     // Fire the before selection event, giving the recipients a chance to
     // cancel the selection.
-    BeforeSelectionEvent<Integer> event = BeforeSelectionEvent.fire(this, index);
-    if ((event != null) && event.isCanceled()) {
-      return;
+    if (fireEvents) {
+      BeforeSelectionEvent<Integer> event = BeforeSelectionEvent.fire(this,
+          index);
+      if ((event != null) && event.isCanceled()) {
+        return;
+      }
     }
 
     // Update the tabs being selected and unselected.
@@ -396,16 +409,28 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     selectedIndex = index;
 
     // Fire the selection event.
-    SelectionEvent.fire(this, index);
+    if (fireEvents) {
+      SelectionEvent.fire(this, index);
+    }
+  }
+  
+  /**
+   * Programmatically selects the specified tab and fires events.
+   * 
+   * @param child the child whose tab is to be selected
+   */
+  public void selectTab(Widget child) {
+    selectTab(child, true);
   }
 
   /**
    * Programmatically selects the specified tab.
    * 
    * @param child the child whose tab is to be selected
+   * @param fireEvents true to fire events, false not to
    */
-  public void selectTab(Widget child) {
-    selectTab(getWidgetIndex(child));
+  public void selectTab(Widget child, boolean fireEvents) {
+    selectTab(getWidgetIndex(child), fireEvents);
   }
 
   /**

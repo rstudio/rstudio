@@ -50,8 +50,8 @@ public class StackLayoutPanelParserTest extends TestCase {
       tester.parse(b.toString());
       fail();
     } catch (UnableToCompleteException e) {
-      assertTrue("expect \"only g:stack\" error", 
-          tester.logger.died.contains("only <g:stack> children"));
+      assertTrue("expect \"Only g:stack\" error", 
+          tester.logger.died.contains("Only <g:stack> children"));
     }
   }
 

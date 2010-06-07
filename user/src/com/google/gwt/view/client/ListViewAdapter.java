@@ -400,8 +400,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
    */
   public void setList(List<T> wrappee) {
     listWrapper = new ListWrapper(wrappee);
-    updateDataSize(listWrapper.size(), true);
-    updateViewData(0, listWrapper.size(), listWrapper);
+    listWrapper.flush();
   }
 
   @Override

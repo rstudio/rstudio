@@ -15,6 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
+import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -29,6 +33,30 @@ public class TabPanelTest extends GWTTestCase {
   static class Adder implements HasWidgetsTester.WidgetAdder {
     public void addChild(HasWidgets container, Widget child) {
       ((TabPanel) container).add(child, "foo");
+    }
+  }
+
+  private class TestSelectionHandler implements
+      BeforeSelectionHandler<Integer>, SelectionHandler<Integer> {
+    private boolean onBeforeSelectionFired;
+    private boolean onSelectionFired;
+
+    public void assertOnBeforeSelectionFired(boolean expected) {
+      assertEquals(expected, onBeforeSelectionFired);
+    }
+
+    public void assertOnSelectionFired(boolean expected) {
+      assertEquals(expected, onSelectionFired);
+    }
+
+    public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
+      assertFalse(onSelectionFired);
+      onBeforeSelectionFired = true;
+    }
+
+    public void onSelection(SelectionEvent<Integer> event) {
+      assertTrue(onBeforeSelectionFired);
+      onSelectionFired = true;
     }
   }
 
@@ -202,23 +230,28 @@ public class TabPanelTest extends GWTTestCase {
     p.add(new Button("foo"), "foo");
     p.add(new Button("bar"), "bar");
 
-    this.delayTestFinish(1000);
     // Make sure selecting a tab fires both events in the right order.
-    p.addTabListener(new TabListener() {
-      private boolean onBeforeFired;
-
-      public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
-        onBeforeFired = true;
-        return true;
-      }
-
-      public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
-        assertTrue(onBeforeFired);
-        finishTest();
-      }
-    });
-
+    TestSelectionHandler handler = new TestSelectionHandler();
+    p.addBeforeSelectionHandler(handler);
+    p.addSelectionHandler(handler);
     p.selectTab(1);
+    handler.assertOnBeforeSelectionFired(true);
+    handler.assertOnSelectionFired(true);
+  }
+
+  public void testSelectionEventsNoFire() {
+    TabPanel p = createTabPanel();
+    RootPanel.get().add(p);
+
+    p.add(new Button("foo"), "foo");
+    p.add(new Button("bar"), "bar");
+
+    TestSelectionHandler handler = new TestSelectionHandler();
+    p.addBeforeSelectionHandler(handler);
+    p.addSelectionHandler(handler);
+    p.selectTab(1, false);
+    handler.assertOnBeforeSelectionFired(false);
+    handler.assertOnSelectionFired(false);
   }
 
   public void testUnmodifiableDeckPanelSubclasses() {

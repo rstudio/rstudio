@@ -24,7 +24,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
-import com.google.gwt.dev.jjs.impl.OptimizerTestBase;
+import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumption;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ExpressionEvaluator;
 
@@ -34,7 +34,7 @@ import java.util.List;
  * Tests for ExpressionEvaluator - testing evaluation expressions based on 
  * assumptions.
  */
-public class ExpressionEvaluatorTest extends OptimizerTestBase {
+public class ExpressionEvaluatorTest extends JJSTestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

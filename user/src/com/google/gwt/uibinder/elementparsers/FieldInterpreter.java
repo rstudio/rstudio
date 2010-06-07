@@ -40,7 +40,7 @@ import com.google.gwt.uibinder.rebind.XMLElement;
       String token = writer.declareDomField(fieldName);
 
       if (elem.hasAttribute("id")) {
-        writer.die(String.format(
+        writer.die(elem, String.format(
             "Cannot declare id=\"%s\" and %s=\"%s\" on the same element",
             elem.consumeRawAttribute("id"), writer.getUiFieldAttributeName(),
             fieldName));

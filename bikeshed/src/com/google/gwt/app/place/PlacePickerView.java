@@ -15,17 +15,18 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.app.util.IsWidget;
-import com.google.gwt.user.client.ui.HasValueMap;
+import com.google.gwt.input.shared.Renderer;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.List;
 
 /**
  * View for a {@link PlacePicker}.
  * 
  * @param <P> the type of place displayed
  */
-public interface PlacePickerView<P extends Place> extends IsWidget,
-    HasValueMap<P> {
+public interface PlacePickerView<P extends Place> extends IsWidget {
 
   /**
    * Implemented by the presenter currently using this view.
@@ -42,4 +43,11 @@ public interface PlacePickerView<P extends Place> extends IsWidget,
    * @return the receiver as a Widget
    */
   Widget asWidget();
+
+  /**
+   * Renders a List of places.
+   * 
+   * @param places
+   */
+  void setValues(List<P> places, Renderer<P> render);
 }

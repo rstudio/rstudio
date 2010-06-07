@@ -11,7 +11,7 @@ but they should not be submitted.
 bin/
 build/
 classes/
-# Matches gwtc output in the war directory, e.g. war/com.google.gwt.bikeshed.tree.Tree/
+# Matches gwtc output in the war directory
 com.google.gwt.*
 bikeshed/war/cookbook/
 bikeshed/war/expenses/
@@ -30,10 +30,9 @@ bikeshed/war/stocksMobile/
   * Google > App Engine > ORM
     * Remove all existing entries
     * Add 
-      * src/com/google/gwt/sample/bikeshed/stocks/server
-      * src/com/google/gwt/sample/bikeshed/stocks/shared
       * src/com/google/gwt/sample/expenses/server/domain
   * Java Build Path > Libraries > Add Variable > GWT_TOOLS, Extend > redist/json/r2_20080312/json.jar
+  * Java Build Path > Libraries > Add Variable > GWT_TOOLS, Extend > lib/apache/commons/commons-httpclient-3.1.jar
 * Copy tools/redist/json/r2_20080312/json.jar to bikeshed/war/WEB_INF/lib
 * Copy all jars from  bikeshed/war/temp-lib to bikeshed/war/WEB-INF/lib
 * Right click on the bikeshed project and choose Run as > Web Application. Choose from the various .html files

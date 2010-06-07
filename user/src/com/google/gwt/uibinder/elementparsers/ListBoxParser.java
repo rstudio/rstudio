@@ -33,7 +33,7 @@ public class ListBoxParser implements ElementParser {
     for (XMLElement child : elem.consumeChildElements()) {
       String tagName = child.getLocalName();
       if (!tagName.equals(ITEM_TAG)) {
-        writer.die("Invalid ListBox child element: " + tagName);
+        writer.die(elem, "Invalid ListBox child element: " + tagName);
       }
       String value = child.consumeStringAttribute("value");
       String innerText = child.consumeInnerTextEscapedAsHtmlStringLiteral(new TextInterpreter(writer));

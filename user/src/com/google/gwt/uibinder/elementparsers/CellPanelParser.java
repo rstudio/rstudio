@@ -93,7 +93,7 @@ public class CellPanelParser implements ElementParser {
         parseCellAttributes(child, fieldName, childFieldName, writer);
       } else {
         if (!writer.isWidgetElement(child)) {
-          writer.die("In %s, expected a widget or <%s:%s>, found %s", elem,
+          writer.die(elem, "Expected a widget or <%s:%s>, found %s",
               elem.getPrefix(), CELL_TAG.toLowerCase(), child);
         }
         // It's just a normal child, so parse it as a widget.

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<datastore-indexes
+  autoGenerate="false">
+
+  <!-- SEARCH BY DEPARTMENT. -->
+
+  <!-- Search Report by department, created ASC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="department"
+      direction="asc" />
+    <property
+      name="created"
+      direction="asc" />
+  </datastore-index>
+
+  <!-- Search Report by department, created DESC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="department"
+      direction="asc" />
+    <property
+      name="created"
+      direction="desc" />
+  </datastore-index>
+
+  <!-- Search Report by department, purpose ASC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="department"
+      direction="asc" />
+    <property
+      name="purpose"
+      direction="asc" />
+  </datastore-index>
+
+  <!-- Search Report by department, purpose DESC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="department"
+      direction="asc" />
+    <property
+      name="purpose"
+      direction="desc" />
+  </datastore-index>
+
+  <!-- Search Report by department, notes ASC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="department"
+      direction="asc" />
+    <property
+      name="notes"
+      direction="asc" />
+  </datastore-index>
+
+  <!-- Search Report by department, notes DESC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="department"
+      direction="asc" />
+    <property
+      name="notes"
+      direction="desc" />
+  </datastore-index>
+
+  <!-- SEARCH BY EMPLOYEE. -->
+
+  <!-- Search Report by employee, created ASC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="created"
+      direction="asc" />
+  </datastore-index>
+
+  <!-- Search Report by employee, created DESC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="created"
+      direction="desc" />
+  </datastore-index>
+
+  <!-- Search Report by employee, purpose ASC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="purpose"
+      direction="asc" />
+  </datastore-index>
+
+  <!-- Search Report by employee, purpose DESC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="purpose"
+      direction="desc" />
+  </datastore-index>
+
+  <!-- Search Report by employee, notes ASC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="notes"
+      direction="asc" />
+  </datastore-index>
+
+  <!-- Search Report by employee, notes DESC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="notes"
+      direction="desc" />
+  </datastore-index>
+
+  <!-- Search Report by employee, department ASC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="department"
+      direction="asc" />
+  </datastore-index>
+
+  <!-- Search Report by employee, department DESC. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="department"
+      direction="desc" />
+  </datastore-index>
+
+
+  <!-- SEARCH BY STARTSWITH. -->
+
+  <!-- Search Report by employee, startsWith. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="reporterKey"
+      direction="asc" />
+    <property
+      name="purposeLowerCase"
+      direction="asc" />
+  </datastore-index>
+
+  <!-- Search Report by department, startsWith. -->
+  <datastore-index
+    kind="Report"
+    ancestor="false"
+    source="manual">
+    <property
+      name="department"
+      direction="asc" />
+    <property
+      name="purposeLowerCase"
+      direction="asc" />
+  </datastore-index>
+
+</datastore-indexes>

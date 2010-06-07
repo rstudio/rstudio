@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,8 +40,9 @@ public class BeanParser implements ElementParser {
 
   /**
    * Generates code to initialize all bean attributes on the given element.
-   * Includes support for &lt;ui:attribute /&gt; children that will apply
-   * to setters
+   * Includes support for &lt;ui:attribute /&gt; children that will apply to
+   * setters
+   * 
    * @throws UnableToCompleteException
    */
   public void parse(XMLElement elem, String fieldName, JClassType type,
@@ -80,8 +81,9 @@ public class BeanParser implements ElementParser {
       JType paramType = unfilledRequiredParams.get(key);
       if (paramType != null) {
         if (!isString(writer, paramType)) {
-          writer.die("In %s, cannot apply message attribute to non-string "
-              + "constructor argument %s %s.", elem,
+          writer.die(elem,
+              "In %s, cannot apply message attribute to non-string "
+                  + "constructor argument %s.",
               paramType.getSimpleSourceName(), key);
         }
 
@@ -93,8 +95,8 @@ public class BeanParser implements ElementParser {
 
         if (setter == null || !(params.length == 1)
             || !isString(writer, params[0].getType())) {
-          writer.die("In %s, no method found to apply message attribute %s",
-              elem, key);
+          writer.die(elem, "No method found to apply message attribute %s",
+              key);
         } else {
           setterValues.put(key, value);
         }
@@ -116,7 +118,7 @@ public class BeanParser implements ElementParser {
       String propertyName = attribute.getLocalName();
       if (setterValues.keySet().contains(propertyName)
           || requiredValues.containsKey(propertyName)) {
-        writer.die("In %s, duplicate attribute name: %s", elem, propertyName);
+        writer.die(elem, "Duplicate attribute name: %s", propertyName);
       }
 
       if (unfilledRequiredParams.keySet().contains(propertyName)) {
@@ -124,23 +126,23 @@ public class BeanParser implements ElementParser {
         String value = elem.consumeAttributeWithDefault(attribute.getName(),
             null, paramType);
         if (value == null) {
-          writer.die("In %s, unable to parse %s as constructor argument "
-              + "of type %s", elem, attribute, paramType.getSimpleSourceName());
+          writer.die(elem, "Unable to parse %s as constructor argument "
+              + "of type %s", attribute, paramType.getSimpleSourceName());
         }
         requiredValues.put(propertyName, value);
         unfilledRequiredParams.remove(propertyName);
       } else {
         JMethod setter = ownerFieldClass.getSetter(propertyName);
         if (setter == null) {
-          writer.die("In %s, class %s has no appropriate set%s() method", elem,
+          writer.die(elem, "Class %s has no appropriate set%s() method",
               elem.getLocalName(), initialCap(propertyName));
         }
         String n = attribute.getName();
-        String value = elem.consumeAttributeWithDefault(n,
-            null, getParamTypes(setter));
+        String value = elem.consumeAttributeWithDefault(n, null,
+            getParamTypes(setter));
 
         if (value == null) {
-          writer.die("In %s, unable to parse %s.", elem, attribute);
+          writer.die(elem, "Unable to parse %s.", attribute);
         }
         setterValues.put(propertyName, value);
       }
@@ -152,7 +154,7 @@ public class BeanParser implements ElementParser {
       for (String name : unfilledRequiredParams.keySet()) {
         b.append(" ").append(name);
       }
-      writer.die(b.toString());
+      writer.die(elem, b.toString());
     }
 
     if (creator != null) {
@@ -180,8 +182,8 @@ public class BeanParser implements ElementParser {
       UiBinderWriter writer) {
     final Map<String, String> localizedValues = new HashMap<String, String>();
 
-    Collection<AttributeMessage> attributeMessages =
-      writer.getMessages().retrieveMessageAttributesFor(elem);
+    Collection<AttributeMessage> attributeMessages = writer.getMessages().retrieveMessageAttributesFor(
+        elem);
 
     if (attributeMessages != null) {
       for (AttributeMessage att : attributeMessages) {
@@ -202,8 +204,8 @@ public class BeanParser implements ElementParser {
   }
 
   private String initialCap(String propertyName) {
-    return propertyName.substring(0, 1).toUpperCase() +
-    propertyName.substring(1);
+    return propertyName.substring(0, 1).toUpperCase()
+        + propertyName.substring(1);
   }
 
   private boolean isString(UiBinderWriter writer, JType paramType) {

@@ -37,6 +37,7 @@
  */
 package com.google.gwt.emultest.java.math;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.emultest.java.util.EmulTestBase;
 
 import java.math.BigInteger;
@@ -776,4 +777,38 @@ public class BigIntegerConstructorsTest extends EmulTestBase {
     }
     assertEquals("incorrect sign", 1, aNumber.signum());
   }
+
+  /**
+   * Test internal static factory method.
+   */
+  public void testValueOfDouble() {
+    if (!GWT.isScript()) {
+      // JRE implementation doesn't have the method tested here
+      return;
+    }
+    BigInteger val = fromDouble(1.0);
+    assertEquals("1", val.toString());
+    val = fromDouble(100.0);
+    assertEquals("100", val.toString());
+    val = fromDouble(2147483647.0);
+    assertEquals("2147483647", val.toString());
+    val = fromDouble(-2147483647.0);
+    assertEquals("-2147483647", val.toString());
+    val = fromDouble(2147483648.0);
+    assertEquals("2147483648", val.toString());
+    val = fromDouble(-2147483648.0);
+    assertEquals("-2147483648", val.toString());
+    val = fromDouble(4294967295.0);
+    assertEquals("4294967295", val.toString());
+    val = fromDouble(-4294967295.0);
+    assertEquals("-4294967295", val.toString());
+    val = fromDouble(4294967296.0);
+    assertEquals("4294967296", val.toString());
+    val = fromDouble(-4294967296.0);
+    assertEquals("-4294967296", val.toString());
+  }
+
+  private native BigInteger fromDouble(double v) /*-{
+    return @java.math.BigInteger::valueOf(D)(v);
+  }-*/;
 }

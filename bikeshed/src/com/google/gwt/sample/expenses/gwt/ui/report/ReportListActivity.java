@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
+import com.google.gwt.app.place.AbstractRecordListActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -26,7 +27,6 @@ import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Opera
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecordChanged;
-import com.google.gwt.valuestore.ui.AbstractRecordListActivity;
 import com.google.gwt.valuestore.ui.RecordListView;
 import com.google.gwt.view.client.Range;
 
@@ -72,6 +72,10 @@ public final class ReportListActivity extends
     this.placeController = placeController;
   }
 
+  public void createClicked() {
+    placeController.goTo(new ReportScaffoldPlace("", Operation.EDIT));
+  }
+
   @Override
   public void onStop() {
     registration.removeHandler();
@@ -81,12 +85,11 @@ public final class ReportListActivity extends
     placeController.goTo(new ReportScaffoldPlace(record, Operation.DETAILS));
   }
 
-  
   @Override
   public void start(Display display) {
     this.registration = eventBus.addHandler(ReportRecordChanged.TYPE, new ReportRecordChanged.Handler() {
       public void onReportChanged(ReportRecordChanged event) {
-        update(event.getRecord());
+        update(event.getWriteOperation(), event.getRecord());
       }
     });
     super.start(display);

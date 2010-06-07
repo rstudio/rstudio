@@ -1,14 +1,7 @@
 /* global */
-body {
-  color: black;
-  margin: 8px;
-  margin-top: 3px;
-}
-
 body, table, td {
   font-family: Arial, sans-serif;
   font-weight: light;
-  font-size: 12px;
 }
 
 h1 {
@@ -46,6 +39,8 @@ h1 {
   font-size: 18pt;
 }
 
+/* ExpenseTree */
+
 .usernameTreeItem {
   color: #999;
   font-size: 90%;
@@ -54,6 +49,47 @@ h1 {
 .usernameTreeItemSelected {
   color: white;
   font-size: 90%;
+}
+
+/* ExpenseList */
+.expenseListCreatedColumn {
+  width: 25ex;
+}
+.expenseListDepartmentColumn {
+  width: 25ex;
+}
+.expenseListPurposeColumn {
+  width: 50ex;
+}
+
+/* EpenseDetails */
+.expenseDetailsDateColumn {
+  width: 35ex;
+}
+.expenseDetailsCategoryColumn {
+  width: 30ex;
+}
+.expenseDetailsAmountColumn {
+  width: 18ex;
+}
+.expenseDetailsApprovalColumn {
+  width: 250px;
+}
+.expenseDetailsErrorPopupMessage {
+  width: 300px;
+  padding-bottom: 10px;
+  font-size: 130%;
+  color: red;
+  text-align: center;
+}
+
+.popupPanel {
+  border: 3px solid white;
+  border-right: 11px solid white;
+  border-bottom: 11px solid white;
+  -webkit-border-image: url(blueborder.png) 3 11 11 3 round round;
+  -moz-border-image: url(blueborder.png) 3 11 11 3 round round;
+  padding: 10px;
 }
 
 @sprite .blankOption {
@@ -78,6 +114,11 @@ h1 {
   width: auto;
   height: auto;
   overflow: auto;
+}
+
+.spacerColumn {
+  width: 15px;
+  border: 0 !important;
 }
 
 /* tables */
@@ -167,23 +208,6 @@ td.datePickerMonth {
   cursor: hand;
   cursor: pointer;
   padding: 0px 4px;
-}
-
-/* dialog box */
-.gwt-DialogBox {
-  border: 8px solid white;
-  border-right: 11px solid white;
-  border-bottom: 11px solid white;
-  -webkit-border-image: url(blueborder.png) 8 11 11 8 round round;
-  -moz-border-image: url(blueborder.png) 8 11 11 8 round round;
-}
-
-.gwt-DialogBox .Caption {
-  font-weight: light;
-  font-size: 12pt;
-  text-align: center;
-  margin-bottom: 0.5em;
-  border-bottom: 1px solid #ccc;
 }
 
 /* splitters */

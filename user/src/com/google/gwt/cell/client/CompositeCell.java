@@ -16,6 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 
 import java.util.ArrayList;
@@ -42,16 +43,21 @@ public class CompositeCell<C> extends AbstractCell<C> {
 
   /**
    * The cells that compose this {@link Cell}.
+   * 
+   * NOTE: Do not add add/insert/remove hasCells methods to the API. This cell
+   * assumes that the index of the cellParent corresponds to the index in the
+   * hasCells array.
    */
-  private List<HasCell<C, ?>> hasCells = new ArrayList<HasCell<C, ?>>();
+  private final List<HasCell<C, ?>> hasCells;
 
   /**
-   * Add a {@link HasCell} to the composite.
+   * Construct a new {@link CompositeCell}.
    * 
-   * @param hasCell the {@link HasCell} to add
+   * @param hasCells the cells that makeup the composite
    */
-  public void addHasCell(HasCell<C, ?> hasCell) {
-    hasCells.add(hasCell);
+  public CompositeCell(List<HasCell<C, ?>> hasCells) {
+    // Create a new array so cells cannot be added or removed.
+    this.hasCells = new ArrayList<HasCell<C, ?>>(hasCells);
   }
 
   @Override
@@ -76,41 +82,25 @@ public class CompositeCell<C> extends AbstractCell<C> {
     return false;
   }
 
-  /**
-   * Insert a {@link HasCell} into the composite.
-   * 
-   * @param index the index to insert into
-   * @param hasCell the {@link HasCell} to insert
-   */
-  public void insertHasCell(int index, HasCell<C, ?> hasCell) {
-    hasCells.add(index, hasCell);
-  }
-
   @Override
   public Object onBrowserEvent(Element parent, C value, Object viewData,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     int index = 0;
-    Element target = event.getEventTarget().cast();
-    Element wrapper = parent.getFirstChildElement();
-    while (wrapper != null) {
-      if (wrapper.isOrHasChild(target)) {
-        return onBrowserEventImpl(wrapper, value, viewData, event,
-            valueUpdater, hasCells.get(index));
-      }
+    EventTarget eventTarget = event.getEventTarget();
+    if (Element.is(eventTarget)) {
+      Element target = eventTarget.cast();
+      Element wrapper = parent.getFirstChildElement();
+      while (wrapper != null) {
+        if (wrapper.isOrHasChild(target)) {
+          return onBrowserEventImpl(wrapper, value, viewData, event,
+              valueUpdater, hasCells.get(index));
+        }
 
-      index++;
-      wrapper = wrapper.getNextSiblingElement();
+        index++;
+        wrapper = wrapper.getNextSiblingElement();
+      }
     }
     return viewData;
-  }
-
-  /**
-   * Remove a {@link HasCell} from the composite.
-   * 
-   * @param hasCell the {@link HasCell} to remove
-   */
-  public void removeHasCell(HasCell<C, ?> hasCell) {
-    hasCells.remove(hasCell);
   }
 
   @Override
@@ -122,8 +112,10 @@ public class CompositeCell<C> extends AbstractCell<C> {
 
   @Override
   public void setValue(Element parent, C object, Object viewData) {
+    Element curChild = parent.getFirstChildElement();
     for (HasCell<C, ?> hasCell : hasCells) {
-      setValueImpl(parent, object, viewData, hasCell);
+      setValueImpl(curChild, object, viewData, hasCell);
+      curChild = curChild.getNextSiblingElement();
     }
   }
 
@@ -135,8 +127,8 @@ public class CompositeCell<C> extends AbstractCell<C> {
     sb.append("</span>");
   }
 
-  private <X> Object onBrowserEventImpl(Element parent, final C object, Object viewData,
-      NativeEvent event, final ValueUpdater<C> valueUpdater,
+  private <X> Object onBrowserEventImpl(Element parent, final C object,
+      Object viewData, NativeEvent event, final ValueUpdater<C> valueUpdater,
       final HasCell<C, X> hasCell) {
     ValueUpdater<X> tempUpdater = null;
     final FieldUpdater<C, X> fieldUpdater = hasCell.getFieldUpdater();
@@ -155,8 +147,8 @@ public class CompositeCell<C> extends AbstractCell<C> {
         event, tempUpdater);
   }
 
-  private <X> void setValueImpl(Element parent, C object, Object viewData,
+  private <X> void setValueImpl(Element cellParent, C object, Object viewData,
       HasCell<C, X> hasCell) {
-    hasCell.getCell().setValue(parent, hasCell.getValue(object), viewData);
+    hasCell.getCell().setValue(cellParent, hasCell.getValue(object), viewData);
   }
 }

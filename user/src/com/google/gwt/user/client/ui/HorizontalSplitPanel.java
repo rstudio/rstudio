@@ -46,8 +46,15 @@ import com.google.gwt.user.client.Timer;
  * <li>.gwt-HorizontalSplitPanel hsplitter { the splitter }</li>
  * </ul>
  * 
+ * @deprecated Use {@link SplitLayoutPanel} instead, but understand that it is
+ *             not a drop in replacement for this class. It requires standards
+ *             mode, and is most easily used under a {@link RootLayoutPanel} (as
+ *             opposed to a {@link RootPanel}
+ *
  * @see SplitLayoutPanel
  */
+@SuppressWarnings("deprecation")
+@Deprecated
 public final class HorizontalSplitPanel extends SplitPanel {
   /**
    * The default resources used by this widget.
@@ -168,7 +175,8 @@ public final class HorizontalSplitPanel extends SplitPanel {
      * @param rightElem
      * @param newRightWidth
      */
-    public void updateRightWidth(Element rightElem, int newRightWidth) {
+    public void updateRightWidth(@SuppressWarnings("unused") Element rightElem,
+        @SuppressWarnings("unused") int newRightWidth) {
       // No need to update the width of the right side; this will be
       // recomputed automatically by CSS. This is helpful, as we do not
       // have to worry about watching for resize events and adjusting the

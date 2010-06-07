@@ -16,13 +16,24 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.InitializeEvent;
 import com.google.gwt.event.logical.shared.InitializeHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RichTextArea.BasicFormatter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Tests the {@link RichTextArea} widget.
@@ -57,6 +68,47 @@ public class RichTextAreaTest extends GWTTestCase {
     });
     RootPanel.get().add(area);
     area.setHTML("foo");
+  }
+
+  public void testBlurAfterAttach() {
+    final RichTextArea rta = new RichTextArea();
+    final List<String> actual = new ArrayList<String>();
+    rta.addFocusHandler(new FocusHandler() {
+      public void onFocus(FocusEvent event) {
+        actual.add("test");
+      }
+    });
+    RootPanel.get().add(rta);
+    rta.setFocus(true);
+    rta.setFocus(false);
+
+    // This has to be done on a timer because the rta can take some time to
+    // finish initializing (on some browsers).
+    this.delayTestFinish(3000);
+    new Timer() {
+      @Override
+      public void run() {
+        assertEquals(0, actual.size());
+        RootPanel.get().remove(rta);
+        finishTest();
+      }
+    }.schedule(2000);
+  }
+
+  public void testFocusAfterAttach() {
+    final RichTextArea rta = new RichTextArea();
+    final List<String> actual = new ArrayList<String>();
+    rta.addFocusHandler(new FocusHandler() {
+      public void onFocus(FocusEvent event) {
+        actual.add("test");
+      }
+    });
+    RootPanel.get().add(rta);
+    rta.setFocus(true);
+
+    // Webkit based browsers will not fire a focus event if the browser window
+    // is behind another window, so we can only test that this doesn't cause
+    // an error.
   }
 
   /**
@@ -200,6 +252,38 @@ public class RichTextAreaTest extends GWTTestCase {
   }
 
   /**
+   * Test that events are dispatched correctly to handlers.
+   */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
+  public void testEventDispatch() {
+    final RichTextArea rta = new RichTextArea();
+    RootPanel.get().add(rta);
+
+    final List<String> actual = new ArrayList<String>();
+    rta.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        assertNotNull(Event.getCurrentEvent());
+        actual.add("test");
+      }
+    });
+
+    // Fire a click event after the iframe is available
+    delayTestFinish(1000);
+    new Timer() {
+      @Override
+      public void run() {
+        assertEquals(0, actual.size());
+        NativeEvent event = getDocument(rta).createClickEvent(0, 0, 0, 0, 0,
+            false, false, false, false);
+        getBodyElement(rta).dispatchEvent(event);
+        assertEquals(1, actual.size());
+        RootPanel.get().remove(rta);
+        finishTest();
+      }
+    }.schedule(500);
+  }
+
+  /**
    * Test that a delayed set of HTML is reflected. Some platforms have timing
    * subtleties that need to be tested.
    */
@@ -277,4 +361,29 @@ public class RichTextAreaTest extends GWTTestCase {
     RootPanel.get().add(richTextArea);
     assertEquals("foo", richTextArea.getText());
   }
+
+  /**
+   * Get the body element from a RichTextArea.
+   * 
+   * @param rta the {@link RichTextArea}
+   * @return the body element
+   */
+  private Element getBodyElement(RichTextArea rta) {
+    return getDocument(rta).getBody().cast();
+  }
+
+  /**
+   * Get the iframe's Document. This is useful for creating events, which must
+   * be created in the iframe's document to work correctly.
+   * 
+   * @param rta the {@link RichTextArea}
+   * @return the document element
+   */
+  private Document getDocument(RichTextArea rta) {
+    return getDocumentImpl(rta.getElement());
+  }
+
+  private native Document getDocumentImpl(Element iframe) /*-{
+    return iframe.contentWindow.document;
+  }-*/;
 }

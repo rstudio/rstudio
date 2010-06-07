@@ -43,7 +43,7 @@ public class DisclosurePanelParser implements ElementParser {
 
     if (null != children.body) {
       if (!writer.isWidgetElement(children.body)) {
-        writer.die("In %s, %s must be a widget", panelElem, children.body);
+        writer.die(children.body, "Must be a widget");
       }
 
       String bodyField = writer.parseElementToField(children.body);
@@ -54,8 +54,7 @@ public class DisclosurePanelParser implements ElementParser {
       XMLElement headerElement = children.customHeader.consumeSingleChildElement();
 
       if (!writer.isWidgetElement(headerElement)) {
-        writer.die("In %s of %s, %s is not a widget", children.customHeader,
-            panelElem, headerElement);
+        writer.die(headerElement, "Must be a widget");
       }
 
       String headerField = writer.parseElementToField(headerElement);
@@ -69,8 +68,9 @@ public class DisclosurePanelParser implements ElementParser {
           writer));
 
       if ((openImage == null) ^ (closedImage == null)) {
-        writer.die("In %s of %s, both %s and %s must be specified, or neither",
-            children.header, panelElem, OPEN_IMAGE, CLOSED_IMAGE);
+        writer.die(children.header,
+            "Both %s and %s must be specified, or neither", OPEN_IMAGE,
+            CLOSED_IMAGE);
       }
 
       String panelTypeName = type.getQualifiedSourceName();
@@ -107,7 +107,7 @@ public class DisclosurePanelParser implements ElementParser {
 
         // Must be the body, then
         if (null != children.body) {
-          writer.die("In %s, may have only one body element", elem);
+          writer.die(elem, "May have only one body element");
         }
 
         children.body = child;
@@ -116,8 +116,8 @@ public class DisclosurePanelParser implements ElementParser {
 
       void assertFirstHeader() throws UnableToCompleteException {
         if ((null != children.header) && (null != children.customHeader)) {
-          writer.die("In %1$s, may have only one %2$s:header "
-              + "or %2$s:customHeader", elem, elem.getPrefix());
+          writer.die(elem, "May have only one %2$s:header "
+              + "or %2$s:customHeader", elem.getPrefix());
         }
       }
 

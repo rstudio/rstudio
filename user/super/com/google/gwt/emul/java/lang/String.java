@@ -25,6 +25,7 @@ package java.lang;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
 
 /**
@@ -169,6 +170,11 @@ public final class String implements Comparable<String>, CharSequence,
     }
   };
 
+  // names for standard character sets that are supported
+  private static final String CHARSET_8859_1 = "ISO-8859-1";
+  private static final String CHARSET_LATIN1 = "ISO-LATIN-1";
+  private static final String CHARSET_UTF8 = "UTF-8";
+
   public static String copyValueOf(char[] v) {
     return valueOf(v);
   }
@@ -284,6 +290,43 @@ public final class String implements Comparable<String>, CharSequence,
   /**
    * @skip
    */
+  static String _String(byte[] bytes) {
+    return _String(bytes, 0, bytes.length);
+  }
+
+  /**
+   * @skip
+   */
+  static String _String(byte[] bytes, int ofs, int len) {
+    return utf8ToString(bytes, ofs, len);
+  }
+
+  /**
+   * @skip
+   */
+  static String _String(byte[] bytes, int ofs, int len, String charset)
+      throws UnsupportedEncodingException {
+    if (CHARSET_UTF8.equals(charset)) {
+      return utf8ToString(bytes, ofs, len);
+    } else if (CHARSET_8859_1.equals(charset) || CHARSET_LATIN1.equals(charset)) {
+      return latin1ToString(bytes, ofs, len);
+    } else {
+      throw new UnsupportedEncodingException("Charset " + charset
+          + " not supported");
+    }
+  }
+
+  /**
+   * @skip
+   */
+  static String _String(byte[] bytes, String charsetName)
+      throws UnsupportedEncodingException {
+    return _String(bytes, 0, bytes.length, charsetName);
+  }
+
+  /**
+   * @skip
+   */
   static String _String(char value[]) {
     return valueOf(value);
   }
@@ -344,6 +387,49 @@ public final class String implements Comparable<String>, CharSequence,
     return thisStr < otherStr ? -1 : 1;
   }-*/;
 
+  /**
+   * Encode a single character in UTF8.
+   * 
+   * @param bytes byte array to store character in
+   * @param ofs offset into byte array to store first byte
+   * @param codePoint character to encode
+   * @return number of bytes consumed by encoding the character
+   * @throws IllegalArgumentException if codepoint >= 2^26
+   */
+  private static int encodeUtf8(byte[] bytes, int ofs, int codePoint) {
+    if (codePoint < (1 << 7)) {
+      bytes[ofs] = (byte) (codePoint & 127);
+      return 1;
+    } else if (codePoint < (1 << 11)) {
+      // 110xxxxx 10xxxxxx
+      bytes[ofs++] = (byte) (((codePoint >> 6) & 31) | 0xC0);
+      bytes[ofs] = (byte) ((codePoint & 63) | 0x80);
+      return 2;
+    } else if (codePoint < (1 << 16)) {
+      // 1110xxxx 10xxxxxx 10xxxxxx
+      bytes[ofs++] = (byte) (((codePoint >> 12) & 15) | 0xE0);
+      bytes[ofs++] = (byte) (((codePoint >> 6) & 63) | 0x80);
+      bytes[ofs] = (byte) ((codePoint & 63) | 0x80);
+      return 3;
+    } else if (codePoint < (1 << 21)) {
+      // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+      bytes[ofs++] = (byte) (((codePoint >> 18) & 7) | 0xF0);
+      bytes[ofs++] = (byte) (((codePoint >> 12) & 63) | 0x80);
+      bytes[ofs++] = (byte) (((codePoint >> 6) & 63) | 0x80);
+      bytes[ofs] = (byte) ((codePoint & 63) | 0x80);
+      return 4;
+    } else if (codePoint < (1 << 26)) {
+      // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+      bytes[ofs++] = (byte) (((codePoint >> 24) & 3) | 0xF8);
+      bytes[ofs++] = (byte) (((codePoint >> 18) & 63) | 0x80);
+      bytes[ofs++] = (byte) (((codePoint >> 12) & 63) | 0x80);
+      bytes[ofs++] = (byte) (((codePoint >> 6) & 63) | 0x80);
+      bytes[ofs] = (byte) ((codePoint & 63) | 0x80);
+      return 5;
+    }
+    throw new IllegalArgumentException("Character out of range: " + codePoint);
+  }
+
   private static native String fromCharCode(char ch) /*-{
     return String.fromCharCode(ch);
   }-*/;
@@ -357,6 +443,52 @@ public final class String implements Comparable<String>, CharSequence,
     } else {
       return String.fromCharCode((char) codePoint);
     }
+  }
+
+  private static byte[] getBytesLatin1(String str) {
+    int n = str.length();
+    byte[] bytes = new byte[n];
+    for (int i = 0; i < n; ++i) {
+      bytes[i] = (byte) (str.charAt(i) & 255);
+    }
+    return bytes;
+  }
+
+  private static byte[] getBytesUtf8(String str) {
+    // TODO(jat): consider using unescape(encodeURIComponent(bytes)) instead
+    int n = str.length();
+    int byteCount = 0;
+    for (int i = 0; i < n; ) {
+      int ch = str.codePointAt(i);
+      i += Character.charCount(ch);
+      if (ch < (1 << 7)) {
+        byteCount++;
+      } else if (ch < (1 << 11)) {
+        byteCount += 2;
+      } else if (ch < (1 << 16)) {
+        byteCount += 3;
+      } else if (ch < (1 << 21)) {
+        byteCount += 4;
+      } else if (ch < (1 << 26)) {
+        byteCount += 5;
+      }
+    }
+    byte[] bytes = new byte[byteCount];
+    int out = 0;
+    for (int i = 0; i < n; ) {
+      int ch = str.codePointAt(i);
+      i += Character.charCount(ch);
+      out += encodeUtf8(bytes, out, ch);
+    }
+    return bytes;
+  }
+
+  private static String latin1ToString(byte[] bytes, int ofs, int len) {
+    char[] chars = new char[len];
+    for (int i = 0; i < len; ++i) {
+      chars[i] = (char) (bytes[ofs + i] & 255);
+    }
+    return valueOf(chars);
   }
 
   private static native boolean regionMatches(String thisStr,
@@ -380,9 +512,89 @@ public final class String implements Comparable<String>, CharSequence,
     return left == right;
   }-*/;
 
+  private static String utf8ToString(byte[] bytes, int ofs, int len) {
+    // TODO(jat): consider using decodeURIComponent(escape(bytes)) instead
+    int charCount = 0;
+    for (int i = 0; i < len; ) {
+      ++charCount;
+      byte ch = bytes[ofs + i];
+      if ((ch & 0xC0) == 0x80) {
+        throw new IllegalArgumentException("Invalid UTF8 sequence");
+      } else if ((ch & 0x80) == 0) {
+        ++i;
+      } else if ((ch & 0xE0) == 0xC0) {
+        i += 2;
+      } else if ((ch & 0xF0) == 0xE0) {
+        i += 3;
+      } else if ((ch & 0xF8) == 0xF0) {
+        i += 4;
+      } else {
+        // no 5+ byte sequences since max codepoint is less than 2^21
+        throw new IllegalArgumentException("Invalid UTF8 sequence");
+      }
+      if (i > len) {
+        throw new IndexOutOfBoundsException("Invalid UTF8 sequence");
+      }
+    }
+    char[] chars = new char[charCount];
+    int outIdx = 0;
+    int count = 0;
+    for (int i = 0; i < len; ) {
+      int ch = bytes[ofs + i++];
+      if ((ch & 0x80) == 0) {
+        count = 1;
+        ch &= 127;
+      } else if ((ch & 0xE0) == 0xC0) {
+        count = 2;
+        ch &= 31;
+      } else if ((ch & 0xF0) == 0xE0) {
+        count = 3;
+        ch &= 15;
+      } else if ((ch & 0xF8) == 0xF0) {
+        count = 4;
+        ch &= 7;
+      } else if ((ch & 0xFC) == 0xF8) {
+        count = 5;
+        ch &= 3;
+      }
+      while (--count > 0) {
+        byte b = bytes[ofs + i++];
+        if ((b & 0xC0) != 0x80) {
+          throw new IllegalArgumentException("Invalid UTF8 sequence at "
+              + (ofs + i - 1) + ", byte=" + Integer.toHexString(b));
+        }
+        ch = (ch << 6) | (b & 63);
+      }
+      outIdx += Character.toChars(ch, chars, outIdx);
+    }
+    return valueOf(chars);
+  }
+
   public String() {
     // magic delegation to _String
     _String();
+  }
+
+  public String(byte[] bytes) {
+    // magic delegation to _String
+    _String(bytes);
+  }
+
+  public String(byte[] bytes, int ofs, int len) {
+    // magic delegation to _String
+    _String(bytes, ofs, len);
+  }
+
+  public String(byte[] bytes, int ofs, int len, String charsetName)
+      throws UnsupportedEncodingException {
+    // magic delegation to _String
+    _String(bytes, ofs, len, charsetName);
+  }
+
+  public String(byte[] bytes, String charsetName)
+      throws UnsupportedEncodingException {
+    // magic delegation to _String
+    _String(bytes, charsetName);
   }
 
   public String(char value[]) {
@@ -473,6 +685,21 @@ public final class String implements Comparable<String>, CharSequence,
       return false;
     return (this == other) || (this.toLowerCase() == other.toLowerCase());
   }-*/;
+
+  public byte[] getBytes() {
+    // default character set for GWT is UTF-8
+    return getBytesUtf8(this);
+  }
+
+  public byte[] getBytes(String charSet) throws UnsupportedEncodingException {
+    if (CHARSET_UTF8.equals(charSet)) {
+      return getBytesUtf8(this);
+    }
+    if (CHARSET_8859_1.equals(charSet) || CHARSET_LATIN1.equals(charSet)) {
+      return getBytesLatin1(this);
+    }
+    throw new UnsupportedEncodingException(charSet + " is not supported");
+  }
 
   public void getChars(int srcBegin, int srcEnd, char[] dst, int dstBegin) {
     for (int srcIdx = srcBegin; srcIdx < srcEnd; ++srcIdx) {

@@ -43,7 +43,7 @@ public class DockPanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-    writer.warn(
+    writer.warn(elem,
         "%1$s:%2$s is deprecated. Use the %1$s:DockLayoutPanel instead.",
         elem.getPrefix(), elem.getLocalName());
     // Parse children.
@@ -53,20 +53,20 @@ public class DockPanelParser implements ElementParser {
       String tagName = child.getLocalName();
 
       if (!ns.equals(elem.getNamespaceUri())) {
-        writer.die("Invalid DockPanel child namespace: " + ns);
+        writer.die(elem, "Invalid DockPanel child namespace: " + ns);
       }
       if (!tagName.equals(TAG_DOCK)) {
-        writer.die("Invalid DockPanel child element: " + tagName);
+        writer.die(elem, "Invalid DockPanel child element: " + tagName);
       }
 
       // And they must specify a direction.
       if (!child.hasAttribute("direction")) {
-        writer.die("Dock must specify the 'direction' attribute");
+        writer.die(elem, "Dock must specify the 'direction' attribute");
       }
       String value = child.consumeRawAttribute("direction");
       String translated = values.get(value);
       if (translated == null) {
-        writer.die("Invalid value: dockDirection='" + value + "'");
+        writer.die(elem, "Invalid value: dockDirection='" + value + "'");
       }
 
       // And they can only have a single child widget.

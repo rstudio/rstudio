@@ -49,8 +49,8 @@ public class LayoutPanelParserTest extends TestCase {
       tester.parse(b.toString());
       fail();
     } catch (UnableToCompleteException e) {
-      assertTrue("expect \"only g:layer\" error",
-          tester.logger.died.contains("only <g:layer> children"));
+      assertTrue("expect \"Only g:layer\" error",
+          tester.logger.died.contains("Only <g:layer> children"));
     }
   }
 

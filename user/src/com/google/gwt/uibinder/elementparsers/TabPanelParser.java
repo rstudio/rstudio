@@ -30,7 +30,7 @@ public class TabPanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-    writer.warn(
+    writer.warn(elem,
         "%1$s:%2$s is deprecated. Use the %1$s:TabLayoutPanel instead.",
         elem.getPrefix(), elem.getLocalName());
     // Parse children.
@@ -40,10 +40,10 @@ public class TabPanelParser implements ElementParser {
       String tagName = child.getLocalName();
 
       if (!ns.equals(elem.getNamespaceUri())) {
-        writer.die("Invalid TabPanel child namespace: " + ns);
+        writer.die(elem, "Invalid TabPanel child namespace: " + ns);
       }
       if (!tagName.equals(TAG_TAB)) {
-        writer.die("Invalid TabPanel child element: " + tagName);
+        writer.die(elem, "Invalid TabPanel child element: " + tagName);
       }
 
       // Get the caption, if any.
@@ -62,14 +62,14 @@ public class TabPanelParser implements ElementParser {
           tabHTML = tabChild.consumeInnerHtml(interpreter);
         } else {
           if (childFieldName != null) {
-            writer.die("%s may only have a single child widget", child);
+            writer.die(elem, "%s may only have a single child widget", child);
           }
           childFieldName = writer.parseElementToField(tabChild);
         }
       }
 
       if (childFieldName == null) {
-        writer.die("%s must have a child widget", child);
+        writer.die(elem, "%s must have a child widget", child);
       }
 
       if (tabHTML != null) {

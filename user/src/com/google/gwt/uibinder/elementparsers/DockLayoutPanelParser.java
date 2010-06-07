@@ -79,24 +79,23 @@ public class DockLayoutPanelParser implements ElementParser {
     for (XMLElement child : elem.consumeChildElements()) {
       // Make sure the element is one of the fixed set of valid directions.
       if (!isValidChildElement(elem, child)) {
-        writer.die(
-            "In %1$s, child must be one of "
+        writer.die(elem,
+            "Child must be one of "
                 + "<%2$s:north>, <%2$s:south>, <%2$s:east>, <%2$s:west> or <%2$s:center>, "
-                + "but found %3$s", elem, elem.getPrefix(), child);
+                + "but found %3$s", elem.getPrefix(), child);
       }
 
       // Consume the single widget element.
       XMLElement widget = child.consumeSingleChildElement();
       if (!writer.isWidgetElement(widget)) {
-        writer.die("In %s, %s must contain a widget, but found %s", elem, child,
+        writer.die(elem, "%s must contain a widget, but found %s", child,
             widget);
       }
       String widgetName = writer.parseElementToField(widget);
 
       if (child.getLocalName().equals("center")) {
         if (center != null) {
-          writer.die("In %s, only one <%s:center> is allowed", elem,
-              elem.getPrefix());
+          writer.die(elem, "Only one <%s:center> is allowed", elem.getPrefix());
         }
         center = new CenterChild(child, widgetName);
       } else {

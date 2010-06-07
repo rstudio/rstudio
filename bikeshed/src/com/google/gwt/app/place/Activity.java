@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.app.util.IsWidget;
+import com.google.gwt.user.client.ui.IsWidget;
 
 /**
  * Implemented by objects that control a piece of user interface, with a life

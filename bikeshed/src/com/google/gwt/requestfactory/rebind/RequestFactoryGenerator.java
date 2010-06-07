@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.requestfactory.client.impl.AbstractDoubleRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractIntegerRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonListRequest;
@@ -37,7 +38,6 @@ import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.ServerOperation;
-import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.PrintWriterManager;
@@ -45,9 +45,11 @@ import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.RecordChangedEvent;
+import com.google.gwt.valuestore.shared.WriteOperation;
 import com.google.gwt.valuestore.shared.impl.RecordImpl;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
+import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
 import java.io.PrintWriter;
 import java.util.Collections;
@@ -223,6 +225,7 @@ public class RequestFactoryGenerator extends Generator {
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
+    f.addImport(HandlerManager.class.getName());
     f.addImport(RequestFactoryJsonImpl.class.getName());
     f.addImport(interfaceType.getQualifiedSourceName());
     f.addImplementedInterface(interfaceType.getName());
@@ -262,6 +265,16 @@ public class RequestFactoryGenerator extends Generator {
       sw.println("}");
       sw.println();
     }
+
+    JClassType recordToTypeInterface = generatorContext.getTypeOracle().findType(
+        RecordToTypeMap.class.getName());
+    String recordToTypeMapName = recordToTypeInterface.getName() + "Impl";
+    sw.println("public void init(HandlerManager handlerManager) {");
+    sw.indent();
+    sw.println("super.init(handlerManager, new " + recordToTypeMapName + "());");
+    sw.outdent();
+    sw.println("}");
+
     sw.outdent();
     sw.println("}");
 
@@ -276,7 +289,61 @@ public class RequestFactoryGenerator extends Generator {
             nestedImplName);
       }
     }
+
+    // generate the mapping type implementation
+    PrintWriter pw = printWriters.makePrintWriterFor(recordToTypeMapName);
+    if (pw != null) {
+      generateRecordToTypeMap(logger, generatorContext, pw,
+          recordToTypeInterface, packageName, recordToTypeMapName);
+    }
+
     printWriters.commit();
+  }
+
+  private void generateRecordToTypeMap(TreeLogger logger,
+      GeneratorContext generatorContext, PrintWriter out,
+      JClassType interfaceType, String packageName, String implName)
+      throws UnableToCompleteException {
+    logger = logger.branch(TreeLogger.DEBUG, String.format(
+        "Generating implementation of %s", interfaceType.getName()));
+
+    ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
+        packageName, implName);
+    f.addImport(interfaceType.getQualifiedSourceName());
+    f.addImport(Record.class.getName());
+    f.addImport(RecordSchema.class.getName());
+    f.addImplementedInterface(interfaceType.getName());
+
+    f.addImplementedInterface(interfaceType.getName());
+
+    SourceWriter sw = f.createSourceWriter(generatorContext, out);
+    sw.println();
+
+    sw.println("public RecordSchema<? extends Record> getType(String token) {");
+    sw.indent();
+    for (JClassType publicRecordType : generatedRecordTypes) {
+      if (publicRecordType.getField("TOKEN") == null) {
+        logger.log(TreeLogger.ERROR, "Record type "
+            + publicRecordType.getQualifiedSourceName()
+            + " should have a field TOKEN");
+        throw new UnableToCompleteException();
+      }
+      sw.println("if (token == " + publicRecordType.getName() + ".TOKEN) {");
+      sw.indent();
+      sw.println("return " + publicRecordType.getName() + "Impl.SCHEMA;");
+      sw.outdent();
+      sw.println("}");
+    }
+
+    sw.println("throw new IllegalArgumentException(\"Unknown token \" + token + ");
+    sw.indent();
+    sw.println("\", does not match any of the TOKEN vairables of a Record\");");
+    sw.outdent();
+    sw.outdent();
+    sw.println("}");
+
+    sw.outdent();
+    sw.println("}");
   }
 
   private void generateRequestSelectorImplementation(TreeLogger logger,
@@ -486,7 +553,8 @@ public class RequestFactoryGenerator extends Generator {
    */
   private JClassType printSchema(TypeOracle typeOracle,
       JClassType publicRecordType, String recordImplTypeName,
-      JClassType eventType, SourceWriter sw, TreeLogger logger) throws UnableToCompleteException {
+      JClassType eventType, SourceWriter sw, TreeLogger logger)
+      throws UnableToCompleteException {
     sw.println(String.format(
         "public static class MySchema extends RecordSchema<%s> {",
         recordImplTypeName));

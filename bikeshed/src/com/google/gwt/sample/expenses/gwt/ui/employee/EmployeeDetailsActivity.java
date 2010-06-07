@@ -23,13 +23,18 @@ import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
+import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.Value;
 import com.google.gwt.valuestore.ui.RecordDetailsView;
+
+import java.util.Set;
 
 /**
  * An {@link com.google.gwt.app.place.Activity Activity} that requests and
  * displays detailed information on a given employee.
  */
+// TODO yet another abstract activity is needed
 public class EmployeeDetailsActivity extends AbstractActivity implements
     RecordDetailsView.Delegate {
   private static RecordDetailsView<EmployeeRecord> defaultView;
@@ -45,6 +50,7 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
   private final PlaceController<ScaffoldPlace> placeController;
   private final RecordDetailsView<EmployeeRecord> view;
   private String id;
+  private Display display;
 
   /**
    * Creates an activity that uses the default singleton view instance.
@@ -67,14 +73,46 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
     this.view = view;
   }
 
+  public void deleteClicked() {
+    if (!view.confirm("Really delete this record? You cannot undo this change.")) {
+      return;
+    }
+    
+    DeltaValueStore deltas = requests.getValueStore().spawnDeltaView();
+    deltas.delete(view.getValue());
+    requests.syncRequest(deltas).to(new Receiver<Set<SyncResult>>() {
+
+      public void onSuccess(Set<SyncResult> response) {
+        if (display == null) {
+          // This activity is dead
+          return;
+        }
+        
+        display.showActivityWidget(null);
+      }
+    }).fire();
+  }
+
   public void editClicked() {
     placeController.goTo(new EmployeeScaffoldPlace(view.getValue(),
         Operation.EDIT));
   }
 
-  public void start(final Display display) {
+  public void onCancel() {
+    onStop();
+  }
+
+  public void onStop() {
+    display = null;
+  }
+  
+  public void start(Display displayIn) {
+    this.display = displayIn;
     Receiver<EmployeeRecord> callback = new Receiver<EmployeeRecord>() {
       public void onSuccess(EmployeeRecord record) {
+        if (display == null) {
+          return;
+        }
         view.setValue(record);
         display.showActivityWidget(view);
       }

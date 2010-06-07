@@ -15,16 +15,17 @@
  */
 package com.google.gwt.sample.expenses.gwt.client;
 
-import com.google.gwt.bikeshed.tree.client.CellTree;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.IconCellDecorator;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.bikeshed.style.client.Styles;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
+import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.view.client.AsyncListViewAdapter;
@@ -142,8 +143,7 @@ public class ExpenseTree extends Composite {
     /**
      * The department cell singleton.
      */
-    private final Cell<String> departmentCell = new IconCellDecorator<String>(
-        Styles.resources().groupIcon(), new TextCell());
+    private final Cell<String> departmentCell = new TextCell();
 
     /**
      * The {@link EmployeeCell} singleton.
@@ -169,22 +169,22 @@ public class ExpenseTree extends Composite {
       return null;
     }
 
-    public boolean isLeaf(Object value) {
-      return !isDepartment(value) || isAllDepartment(value);
-    }
-
     /**
      * @return true if the object is the All department
      */
-    private boolean isAllDepartment(Object value) {
+    public boolean isAllDepartment(Object value) {
       return departments.getList().get(0).equals(value);
     }
 
     /**
      * @return true if the object is a department
      */
-    private boolean isDepartment(Object value) {
+    public boolean isDepartment(Object value) {
       return departments.getList().contains(value.toString());
+    }
+
+    public boolean isLeaf(Object value) {
+      return !isDepartment(value) || isAllDepartment(value);
     }
   }
 
@@ -224,19 +224,17 @@ public class ExpenseTree extends Composite {
   private CellTree tree;
 
   public ExpenseTree() {
-    createTree();
-    initWidget(tree);
-    getElement().getStyle().setOverflow(Overflow.AUTO);
-
     // Initialize the departments.
     List<String> departmentList = departments.getList();
     departmentList.add("All");
-    departmentList.add("Engineering");
-    // The Finance department is empty.
-    departmentList.add("Finance");
-    departmentList.add("Marketing");
-    departmentList.add("Operations");
-    departmentList.add("Sales");
+    for (String department : Expenses.DEPARTMENTS) {
+      departmentList.add(department);
+    }
+
+    // Initialize the widget.
+    createTree();
+    initWidget(tree);
+    getElement().getStyle().setOverflow(Overflow.AUTO);
   }
 
   public void setListener(Listener listener) {
@@ -251,6 +249,8 @@ public class ExpenseTree extends Composite {
    * Create the {@link CellTree}.
    */
   private void createTree() {
+    final ExpensesTreeViewModel model = new ExpensesTreeViewModel();
+
     // Listen for selection. We need to add this handler before the CellBrowser
     // adds its own handler.
     selectionModel.addSelectionChangeHandler(new SelectionChangeHandler() {
@@ -263,7 +263,11 @@ public class ExpenseTree extends Composite {
           lastEmployee = (EmployeeRecord) selected;
         } else if (selected instanceof String) {
           lastEmployee = null;
-          lastDepartment = (String) selected;
+          if (model.isAllDepartment(selected)) {
+            lastDepartment = null;
+          } else {
+            lastDepartment = (String) selected;
+          }
         }
 
         if (listener != null) {
@@ -281,7 +285,8 @@ public class ExpenseTree extends Composite {
     });
 
     // Create a CellBrowser.
-    tree = new CellTree(new ExpensesTreeViewModel(), null);
+    CellTree.Resources resources = GWT.create(CellTree.CleanResources.class);
+    tree = new CellTree(model, null, resources);
     tree.setAnimationEnabled(true);
   }
 

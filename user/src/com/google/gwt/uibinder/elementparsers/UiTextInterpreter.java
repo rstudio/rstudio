@@ -42,7 +42,7 @@ public class UiTextInterpreter implements XMLElement.Interpreter<String> {
         && LOCAL_NAME.equals(elem.getLocalName())) {
       String fieldRef = elem.consumeStringAttribute("from");
       if (fieldRef == null) {
-        logger.die("Attribute 'from' not found in '%s'.", elem);
+        logger.die(elem, "Attribute 'from' not found.");
       }
       return "\" + " + fieldRef + " + \"";
     }

@@ -115,6 +115,15 @@ public class DateRecord extends Date {
 
     if (this.dayOfMonth >= 0) {
       date.setDate(this.dayOfMonth);
+    } else if (this.month >= 0) {
+      // If the month was parsed but dayOfMonth was not, then the current day of
+      // the month shouldn't affect the parsed month. For example, if "Feb2006"
+      // is parse on January 31, the resulting date should be in February, not
+      // March. So, we limit the day of the month to the maximum day within the
+      // parsed month.
+      Date tmp = new Date(date.getYear(), date.getMonth(), 35);
+      int daysInCurrentMonth = 35 - tmp.getDate();
+      date.setDate(Math.min(daysInCurrentMonth, orgDayOfMonth));
     } else {
       date.setDate(orgDayOfMonth);
     }

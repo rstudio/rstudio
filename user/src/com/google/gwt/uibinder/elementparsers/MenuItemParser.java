@@ -45,8 +45,7 @@ public class MenuItemParser implements ElementParser {
 
         if (isMenuBar(child)) {
           if (menuBarField != null) {
-            writer.die(
-                "In %s, only one MenuBar may be contained in a MenuItem", elem);
+            writer.die(child, "Only one MenuBar may be contained in a MenuItem");
           }
           menuBarField = writer.parseElementToField(child);
           return true;

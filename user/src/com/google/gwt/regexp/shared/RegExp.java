@@ -360,7 +360,7 @@ public class RegExp {
   /**
    * Determines if the regular expression matches the given string. This call
    * affects the value returned by {@link #getLastIndex()} if the global flag is
-   * not set. Equivalent to: {@code exec(input) != null}
+   * set. Equivalent to: {@code exec(input) != null}
    * 
    * @param input the string to apply the regular expression to
    * @return whether the regular expression matches the given string.

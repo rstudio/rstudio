@@ -15,9 +15,8 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.app.util.Renderer;
+import com.google.gwt.input.shared.Renderer;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -44,11 +43,7 @@ public class PlacePicker<P extends Place> implements
     placeController.goTo(place);
   }
 
-  public void setPlaces(List<? extends P> places) {
-    LinkedHashMap<P, String> map = new LinkedHashMap<P, String>();
-    for (P place : places) {
-      map.put(place, renderer.render(place));
-    }
-    view.setValues(map);
+  public void setPlaces(List<P> places) {
+    view.setValues(places, renderer);
   }
 }

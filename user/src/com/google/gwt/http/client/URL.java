@@ -44,17 +44,21 @@ public final class URL {
   /**
    * Returns a string where all URL component escape sequences have been
    * converted back to their original character representations.
+   * <p>
+   * Note: this method will convert the space character escape short form, '+',
+   * into a space. It should therefore only be used for query-string parts.
    * 
    * @param encodedURLComponent string containing encoded URL component
    *        sequences
    * @return string with no encoded URL component encoded sequences
    * 
    * @throws NullPointerException if encodedURLComponent is <code>null</code>
+   * 
+   * @deprecated Use {@link #decodeQueryString(String)}
    */
+  @Deprecated
   public static String decodeComponent(String encodedURLComponent) {
-    StringValidator.throwIfNull("encodedURLComponent",
-        encodedURLComponent);
-    return decodeComponentImpl(encodedURLComponent);
+    return decodeQueryString(encodedURLComponent);
   }
 
   /**
@@ -68,12 +72,49 @@ public final class URL {
    * @return string with no encoded URL component encoded sequences
    * 
    * @throws NullPointerException if encodedURLComponent is <code>null</code>
+   * 
+   * @deprecated Use {@link #decodeQueryString(String)},
+   *             {@link #decodePathSegment(String)}
    */
+  @Deprecated
   public static String decodeComponent(String encodedURLComponent,
       boolean fromQueryString) {
     StringValidator.throwIfNull("encodedURLComponent", encodedURLComponent);
-    return fromQueryString ? decodeComponentImpl(encodedURLComponent)
-        : decodeComponentRawImpl(encodedURLComponent);
+    return fromQueryString ? decodeQueryStringImpl(encodedURLComponent)
+        : decodePathSegmentImpl(encodedURLComponent);
+  }
+
+  /**
+   * Returns a string where all URL component escape sequences have been
+   * converted back to their original character representations.
+   * 
+   * @param encodedURLComponent string containing encoded URL component
+   *          sequences
+   * @return string with no encoded URL component encoded sequences
+   * 
+   * @throws NullPointerException if encodedURLComponent is <code>null</code>
+   */
+  public static String decodePathSegment(String encodedURLComponent) {
+    StringValidator.throwIfNull("encodedURLComponent", encodedURLComponent);
+    return decodePathSegmentImpl(encodedURLComponent);
+  }
+
+  /**
+   * Returns a string where all URL component escape sequences have been
+   * converted back to their original character representations.
+   * <p>
+   * Note: this method will convert the space character escape short form, '+',
+   * into a space. It should therefore only be used for query-string parts.
+   * 
+   * @param encodedURLComponent string containing encoded URL component
+   *          sequences
+   * @return string with no encoded URL component encoded sequences
+   * 
+   * @throws NullPointerException if encodedURLComponent is <code>null</code>
+   */
+  public static String decodeQueryString(String encodedURLComponent) {
+    StringValidator.throwIfNull("encodedURLComponent", encodedURLComponent);
+    return decodeQueryStringImpl(encodedURLComponent);
   }
 
   /**
@@ -119,12 +160,19 @@ public final class URL {
    * component have been escaped. The escaping of a character is done by
    * converting it into its UTF-8 encoding and then encoding each of the
    * resulting bytes as a %xx hexadecimal escape sequence.
+   * <p>
+   * Note: this method will convert any the space character into its escape
+   * short form, '+' rather than %20. It should therefore only be used for
+   * query-string parts.
    * 
    * <p>
    * The following character sets are <em>not</em> escaped by this method:
    * <ul>
    * <li>ASCII digits or letters</li>
-   * <li>ASCII punctuation characters: <pre>- _ . ! ~ * ' ( )</pre></li>
+   * <li>ASCII punctuation characters:
+   * 
+   * <pre>- _ . ! ~ * ' ( )</pre>
+   * </li>
    * </ul>
    * </p>
    * 
@@ -143,11 +191,12 @@ public final class URL {
    * @return a string with all invalid URL characters escaped
    * 
    * @throws NullPointerException if decodedURLComponent is <code>null</code>
+   * 
+   * @deprecated Use {@link #encodeQueryString(String)}
    */
+  @Deprecated
   public static String encodeComponent(String decodedURLComponent) {
-    StringValidator.throwIfNull("decodedURLComponent",
-        decodedURLComponent);
-    return encodeComponentImpl(decodedURLComponent);
+    return encodeQueryString(decodedURLComponent);
   }
 
   /**
@@ -160,7 +209,10 @@ public final class URL {
    * The following character sets are <em>not</em> escaped by this method:
    * <ul>
    * <li>ASCII digits or letters</li>
-   * <li>ASCII punctuation characters: <pre>- _ . ! ~ * ' ( )</pre></li>
++   * <li>ASCII punctuation characters:
+   * 
+   * <pre>- _ . ! ~ * ' ( )</pre>
+   * </li>
    * </ul>
    * </p>
    * 
@@ -176,50 +228,127 @@ public final class URL {
    * </p>
    * 
    * @param decodedURLComponent a string containing invalid URL characters
-   * @param queryStringSpaces if <code>true</code>, spaces will be encoded as +'s.
+   * @param queryStringSpaces if <code>true</code>, spaces will be encoded as
+   *          +'s.
+   * @return a string with all invalid URL characters escaped
+   * 
+   * @throws NullPointerException if decodedURLComponent is <code>null</code>
+   * 
+   * @deprecated Use {@link #encodeQueryString(String)},
+   *             {@link #encodePathSegment(String)}
+   */
+  @Deprecated
+  public static String encodeComponent(String decodedURLComponent,
+      boolean queryStringSpaces) {
+    StringValidator.throwIfNull("decodedURLComponent", decodedURLComponent);
+    return queryStringSpaces ? encodeQueryStringImpl(decodedURLComponent)
+        : encodePathSegmentImpl(decodedURLComponent);
+  }
+
+  /**
+   * Returns a string where all characters that are not valid for a URL
+   * component have been escaped. The escaping of a character is done by
+   * converting it into its UTF-8 encoding and then encoding each of the
+   * resulting bytes as a %xx hexadecimal escape sequence.
+   * 
+   * <p>
+   * The following character sets are <em>not</em> escaped by this method:
+   * <ul>
+   * <li>ASCII digits or letters</li>
+   * <li>ASCII punctuation characters:
+   * 
+   * <pre>- _ . ! ~ * ' ( )</pre>
+   * </li>
+   * </ul>
+   * </p>
+   * 
+   * <p>
+   * Notice that this method <em>does</em> encode the URL component delimiter
+   * characters:<blockquote>
+   * 
+   * <pre>
+   * ; / ? : &amp; = + $ , #
+   * </pre>
+   * 
+   * </blockquote>
+   * </p>
+   * 
+   * @param decodedURLComponent a string containing invalid URL characters
    * @return a string with all invalid URL characters escaped
    * 
    * @throws NullPointerException if decodedURLComponent is <code>null</code>
    */
-  public static String encodeComponent(String decodedURLComponent,
-      boolean queryStringSpaces) {
+  public static String encodePathSegment(String decodedURLComponent) {
     StringValidator.throwIfNull("decodedURLComponent", decodedURLComponent);
-    return queryStringSpaces ? encodeComponentImpl(decodedURLComponent)
-        : encodeComponentRawImpl(decodedURLComponent);
+    return encodePathSegmentImpl(decodedURLComponent);
   }
 
-  /*
-   * Note: this method will convert the space character escape short form, '+',
-   * into a space.
+  /**
+   * Returns a string where all characters that are not valid for a URL
+   * component have been escaped. The escaping of a character is done by
+   * converting it into its UTF-8 encoding and then encoding each of the
+   * resulting bytes as a %xx hexadecimal escape sequence.
+   * <p>
+   * Note: this method will convert any the space character into its escape
+   * short form, '+' rather than %20. It should therefore only be used for
+   * query-string parts.
+   * 
+   * <p>
+   * The following character sets are <em>not</em> escaped by this method:
+   * <ul>
+   * <li>ASCII digits or letters</li>
+   * <li>ASCII punctuation characters:
+   * 
+   * <pre>- _ . ! ~ * ' ( )</pre>
+   * </li>
+   * </ul>
+   * </p>
+   * 
+   * <p>
+   * Notice that this method <em>does</em> encode the URL component delimiter
+   * characters:<blockquote>
+   * 
+   * <pre>
+   * ; / ? : &amp; = + $ , #
+   * </pre>
+   * 
+   * </blockquote>
+   * </p>
+   * 
+   * @param decodedURLComponent a string containing invalid URL characters
+   * @return a string with all invalid URL characters escaped
+   * 
+   * @throws NullPointerException if decodedURLComponent is <code>null</code>
    */
-  private static native String decodeComponentImpl(String encodedURLComponent) /*-{
-    var regexp = /\+/g;
-    return decodeURIComponent(encodedURLComponent.replace(regexp, "%20"));    
-  }-*/;
-
-  private static native String decodeComponentRawImpl(String encodedURLComponent) /*-{
-    return decodeURIComponent(encodedURLComponent);
-  }-*/;
+  public static String encodeQueryString(String decodedURLComponent) {
+    StringValidator.throwIfNull("decodedURLComponent", decodedURLComponent);
+    return encodeQueryStringImpl(decodedURLComponent);
+  }
 
   private static native String decodeImpl(String encodedURL) /*-{
     return decodeURI(encodedURL);
   }-*/;
 
-  /*
-   * Note: this method will convert any the space character into its escape
-   * short form, '+' rather than %20.
-   */
-  private static native String encodeComponentImpl(String decodedURLComponent) /*-{
-    var regexp = /%20/g;
-    return encodeURIComponent(decodedURLComponent).replace(regexp, "+");
-   }-*/;
+  private static native String decodePathSegmentImpl(String encodedURLComponent) /*-{
+    return decodeURIComponent(encodedURLComponent);
+  }-*/;
 
-  private static native String encodeComponentRawImpl(String decodedURLComponent) /*-{
-    return encodeURIComponent(decodedURLComponent);
-   }-*/;
+  private static native String decodeQueryStringImpl(String encodedURLComponent) /*-{
+    var regexp = /\+/g;
+    return decodeURIComponent(encodedURLComponent.replace(regexp, "%20"));
+  }-*/;
 
   private static native String encodeImpl(String decodedURL) /*-{
     return encodeURI(decodedURL);
+  }-*/;
+
+  private static native String encodePathSegmentImpl(String decodedURLComponent) /*-{
+    return encodeURIComponent(decodedURLComponent);
+  }-*/;
+
+  private static native String encodeQueryStringImpl(String decodedURLComponent) /*-{
+    var regexp = /%20/g;
+    return encodeURIComponent(decodedURLComponent).replace(regexp, "+");
   }-*/;
 
   private URL() {

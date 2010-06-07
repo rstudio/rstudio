@@ -31,9 +31,7 @@ import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -63,6 +61,8 @@ public final class WebAppCreator {
       registerHandler(new ArgHandlerNoEclipse());
       registerHandler(new ArgHandlerOnlyEclipse());
       registerHandler(new ArgHandlerJUnitPath());
+      registerHandler(new ArgHandlerMaven());
+      registerHandler(new ArgHandlerNoAnt());
     }
 
     @Override
@@ -215,6 +215,42 @@ public final class WebAppCreator {
     }
   }
 
+  private final class ArgHandlerMaven extends ArgHandlerFlag {
+    @Override
+    public String getPurpose() {
+      return "Create a maven2 project structure and pom file (default disabled)";
+    }
+
+    @Override
+    public String getTag() {
+      return "-maven";
+    }
+
+    @Override
+    public boolean setFlag() {
+      maven = true;
+      return true;
+    }
+  }
+
+  private final class ArgHandlerNoAnt extends ArgHandlerFlag {
+    @Override
+    public String getPurpose() {
+      return "Do not create an ant configuration file";
+    }
+
+    @Override
+    public String getTag() {
+      return "-noant";
+    }
+
+    @Override
+    public boolean setFlag() {
+      ant = false;
+      return true;
+    }
+  }
+
   private static final class FileCreator {
     private final File destDir;
     private final String destName;
@@ -228,17 +264,21 @@ public final class WebAppCreator {
   }
 
   public static void main(String[] args) {
+    System.exit(doMain(args) ? 0 : 1);
+  }
+
+  protected static boolean doMain(String... args) {
     WebAppCreator creator = new WebAppCreator();
     ArgProcessor argProcessor = creator.new ArgProcessor();
     if (argProcessor.processArgs(args)) {
-      if (creator.run()) {
-        return;
-      }
+      return creator.run();
     }
-    System.exit(1);
+    return false;
   }
 
+  private boolean ant = true;
   private boolean ignore = false;
+  private boolean maven = false;
   private String moduleName;
   private boolean noEclipse;
   private boolean onlyEclipse;
@@ -250,14 +290,24 @@ public final class WebAppCreator {
    * Create the sample app.
    * 
    * @throws IOException if any disk write fails
+   * @deprecated as of GWT 2.1, replaced by {@link #doRun(String)}
    */
+  @Deprecated
   protected void doRun() throws IOException {
+    doRun(Utility.getInstallPath());
+  }
 
-    // Figure out the installation directory
-    String installPath = Utility.getInstallPath();
+  /**
+   * Create the sample app.
+   * 
+   * @param installPath directory containing GWT libraries
+   * @throws IOException if any disk write fails
+   */
+  protected void doRun(String installPath) throws IOException {
+
+    // GWT libraries
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
     String gwtDevPath = installPath + '/' + "gwt-dev.jar";
-    String gwtServletPath = installPath + '/' + "gwt-servlet.jar";
     String gwtOophmPath = installPath + '/' + "gwt-dev-oophm.jar";
 
     // Public builds generate a DTD reference.
@@ -276,28 +326,31 @@ public final class WebAppCreator {
     String modulePackageName = moduleName.substring(0, pos);
     String moduleShortName = moduleName.substring(pos + 1);
 
-    // pro-actively let user know that this script can also create tests.
-    if (junitPath == null) {
+    // pro-actively let ant user know that this script can also create tests.
+    if (junitPath == null && !maven) {
       System.err.println("Not creating tests because -junit argument was not specified.\n");
     }
 
     // Compute module name and directories
-    File srcDir = Utility.getDirectory(outDir, "src", true);
-    File warDir = Utility.getDirectory(outDir, "war", true);
+    String srcFolder = maven ? "src/main/java" : "src";
+    String testFolder = maven ? "src/test/java" : "test";
+    String warFolder = maven ? "src/main/webapp" : "war";
+    File srcDir = Utility.getDirectory(outDir, srcFolder, true);
+    File warDir = Utility.getDirectory(outDir, warFolder, true);
     File webInfDir = Utility.getDirectory(warDir, "WEB-INF", true);
-    File libDir = Utility.getDirectory(webInfDir, "lib", true);
     File moduleDir = Utility.getDirectory(srcDir, modulePackageName.replace(
         '.', '/'), true);
     File clientDir = Utility.getDirectory(moduleDir, "client", true);
     File serverDir = Utility.getDirectory(moduleDir, "server", true);
     File sharedDir = Utility.getDirectory(moduleDir, "shared", true);
-    File moduleTestDir = Utility.getDirectory(outDir, "test/"
+    File moduleTestDir = Utility.getDirectory(outDir, testFolder + "/"
         + modulePackageName.replace('.', '/'), true);
     File clientTestDir = Utility.getDirectory(moduleTestDir, "client", true);
 
     // Create a map of replacements
     Map<String, String> replacements = new HashMap<String, String>();
     replacements.put("@moduleShortName", moduleShortName);
+    replacements.put("@modulePackageName", modulePackageName);
     replacements.put("@moduleName", moduleName);
     replacements.put("@clientPackage", modulePackageName + ".client");
     replacements.put("@serverPackage", modulePackageName + ".server");
@@ -312,6 +365,10 @@ public final class WebAppCreator {
     replacements.put("@compileClass", Compiler.class.getName());
     replacements.put("@startupUrl", moduleShortName + ".html");
     replacements.put("@renameTo", moduleShortName.toLowerCase());
+    replacements.put("@moduleNameJUnit", moduleName + "JUnit");
+    replacements.put("@srcFolder", srcFolder);
+    replacements.put("@testFolder", testFolder);
+    replacements.put("@warFolder", warFolder);
 
     String antEclipseRule = "";
     if (noEclipse) {
@@ -338,9 +395,11 @@ public final class WebAppCreator {
       String testTargetsEnd = "";
       String junitJarPath = junitPath;
       String eclipseTestDir = "";
-      if (junitPath != null) {
-        eclipseTestDir = "\n   <classpathentry kind=\"src\" path=\"test\"/>";
-      } else {
+      if (junitPath != null || maven) {
+        eclipseTestDir = "\n   <classpathentry kind=\"src\" path=\""
+            + testFolder + "\"/>";
+      } 
+      if (junitPath == null) {
         testTargetsBegin = "\n<!--"
             + "\n"
             + "Test targets suppressed because -junit argument was not specified when running webAppCreator.\n";
@@ -353,8 +412,8 @@ public final class WebAppCreator {
       replacements.put("@eclipseTestDir", eclipseTestDir);
     }
 
+    // Create a list with the files to create
     List<FileCreator> files = new ArrayList<FileCreator>();
-    List<FileCreator> libs = new ArrayList<FileCreator>();
     if (!onlyEclipse) {
       files.add(new FileCreator(moduleDir, moduleShortName + ".gwt.xml",
           "Module.gwt.xml"));
@@ -372,9 +431,14 @@ public final class WebAppCreator {
           "RpcServerTemplate.java"));
       files.add(new FileCreator(sharedDir, "FieldVerifier.java",
           "SharedClassTemplate.java"));
-      files.add(new FileCreator(outDir, "build.xml", "project.ant.xml"));
+      if (ant) {
+        files.add(new FileCreator(outDir, "build.xml", "project.ant.xml"));
+      }
+      if (maven) {
+        files.add(new FileCreator(outDir, "pom.xml", "project.maven.xml"));
+      }
       files.add(new FileCreator(outDir, "README.txt", "README.txt"));
-      if (junitPath != null) {
+      if (junitPath != null || maven) {
         // create the test file.
         files.add(new FileCreator(moduleTestDir, moduleShortName
             + "JUnit.gwt.xml", "JUnit.gwt.xml"));
@@ -383,13 +447,11 @@ public final class WebAppCreator {
       }
     }
     if (!noEclipse) {
-      assert new File(gwtDevPath).isAbsolute();
-      libs.add(new FileCreator(libDir, "gwt-servlet.jar", gwtServletPath));
       files.add(new FileCreator(outDir, ".project", ".project"));
       files.add(new FileCreator(outDir, ".classpath", ".classpath"));
       files.add(new FileCreator(outDir, moduleShortName + ".launch",
           "App.launch"));
-      if (junitPath != null) {
+      if (junitPath != null || maven) {
         files.add(new FileCreator(outDir, moduleShortName + "Test-dev.launch",
             "JUnit-dev.launch"));
         files.add(new FileCreator(outDir, moduleShortName + "Test-prod.launch",
@@ -410,22 +472,11 @@ public final class WebAppCreator {
         Utility.writeTemplateFile(file, data, replacements);
       }
     }
-
-    // copy libs directly
-    for (FileCreator fileCreator : libs) {
-      FileInputStream is = new FileInputStream(fileCreator.sourceName);
-      File file = Utility.createNormalFile(fileCreator.destDir,
-          fileCreator.destName, overwrite, ignore);
-      if (file != null) {
-        FileOutputStream os = new FileOutputStream(file);
-        Util.copy(is, os);
-      }
-    }
   }
 
   protected boolean run() {
     try {
-      doRun();
+      doRun(Utility.getInstallPath());
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

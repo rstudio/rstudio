@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -22,37 +23,36 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncRequest;
-import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.valuestore.client.DeltaValueStoreJsonImpl;
 import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.valuestore.shared.SyncResult;
+import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
 import java.util.Set;
 
 /**
  * Base implementation of RequestFactory.
  */
-public class RequestFactoryJsonImpl implements RequestFactory {
+public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private ValueStoreJsonImpl valueStore;
 
-  /**
-   * @param handlerManager
-   */
-  public void init(HandlerManager handlerManager) {
-    this.valueStore = new ValueStoreJsonImpl(handlerManager);
-  }
+  private HandlerManager handlerManager;
 
   public void fire(final RequestObject<?> requestObject) {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
-        RequestFactory.URL);
+        GWT.getHostPageBaseURL() + RequestFactory.URL);
     builder.setRequestData(requestObject.getRequestData());
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
+        postRequestEvent(State.RECEIVED);
         // shell.error.setInnerText(SERVER_ERROR);
       }
 
@@ -64,12 +64,14 @@ public class RequestFactoryJsonImpl implements RequestFactory {
           // shell.error.setInnerText(SERVER_ERROR + " ("
           // + response.getStatusText() + ")");
         }
+        postRequestEvent(State.RECEIVED);
       }
 
     });
 
     try {
       builder.send();
+      postRequestEvent(State.SENT);
     } catch (RequestException e) {
       // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
       // ")");
@@ -88,15 +90,17 @@ public class RequestFactoryJsonImpl implements RequestFactory {
 
       Receiver<Set<SyncResult>> receiver = null;
       public void fire() {
+        assert null != receiver : "to(Receiver) was not called";
 
         RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
-            "/expenses/data");
+            GWT.getHostPageBaseURL() + RequestFactory.URL);
 
         builder.setRequestData(ClientRequestHelper.getRequestString(RequestDataManager.getRequestMap(
             RequestFactory.SYNC, null, jsonDeltas.toJson())));
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {
+            postRequestEvent(State.RECEIVED);
             // shell.error.setInnerText(SERVER_ERROR);
           }
 
@@ -108,11 +112,13 @@ public class RequestFactoryJsonImpl implements RequestFactory {
               // shell.error.setInnerText(SERVER_ERROR + " ("
               // + response.getStatusText() + ")");
             }
+            postRequestEvent(State.RECEIVED);
           }
         });
 
         try {
           builder.send();
+          postRequestEvent(State.SENT);
         } catch (RequestException e) {
           // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
           // ")");
@@ -124,5 +130,17 @@ public class RequestFactoryJsonImpl implements RequestFactory {
         return this;
       }
     };
+  }
+
+  /**
+   * @param handlerManager
+   */
+  protected void init(HandlerManager handlerManager, RecordToTypeMap map) {
+    this.valueStore = new ValueStoreJsonImpl(handlerManager, map);
+    this.handlerManager = handlerManager;
+  }
+
+  private void postRequestEvent(State received) {
+    handlerManager.fireEvent(new RequestEvent(received));
   }
 }

@@ -3,56 +3,134 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:a='urn:import:com.google.gwt.app.client'>
 
+  <ui:image field='gwtLogo'></ui:image>
+
   <ui:style>
+    @def contentWidth 850px;
+
     .disabled {
-     color: gray;
+      color: gray;
+    }
+
+    .body {
+      overflow:auto;
     }
 
     .banner {
-       background-color: wheat;
-     }
+      background-color: #777;
+      -moz-border-radius-topleft: 10px;
+      -webkit-border-top-left-radius: 10px;
+      -moz-border-radius-topright: 10px;
+      -webkit-border-top-right-radius: 10px;
+      margin-top: 1.5em;
+      height: 4em;
+    }
 
     .title {
-       text-align: left;
-       margin-left: 1em;
-     }
+      color: white;
+      padding: 1em;
+      position: absolute;
+      color: #def;
+    }
+
+    .title h2 {
+      margin:0;
+    }
 
     .error {
-     position: absolute;
-     left: 12%;
-     right: 12%;
-     text-align: center;
-     background-color: red;
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      text-align: center;
+      background-color: red;
     }
 
     .users {
-     position: absolute;
-     right: 0;
+      position: absolute;
+      right: 0;
     }
-  </ui:style>
 
+    .centered {
+      width: contentWidth;
+      margin-right: auto;
+      margin-left: auto;
+    }
+
+    .content {
+      position: relative;
+      border: 1px solid #ddf;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -moz-border-radius-bottomleft: 10px;
+      -webkit-border-bottom-left-radius: 10px;
+      -moz-border-radius-bottomright: 10px;
+      -webkit-border-bottom-right-radius: 10px;
+     }
+
+     .entities {
+       position: absolute;
+       left: 0;
+       top: 0;
+       bottom: 0;
+       width: 11em;
+     }
+
+     .entitiesList {
+       border-right: 1px solid #ddf;
+       height: 100%;
+       outline: none;
+     }
+
+     .entitiesList > div > div {
+       padding-left: 1em;
+       padding-top: 5px;
+       padding-bottom: 5px;
+     }
+
+     .entityDetails {
+       margin-left: 11em;
+     }
+     @sprite .gwtLogo {
+       gwt-image: 'gwtLogo';
+       float:right;
+     }
+     .logos {
+       color: #aaa;
+       font-size: 0.8em;
+       width: 160px;
+       margin-left: auto;
+       margin-right: auto;
+       text-align: right;
+     }
+  </ui:style>
+ 
   <g:DockLayoutPanel unit='EM'>
-    <g:north size='4.5'>
-      <g:HTML styleName='{style.banner}'>
-        <div class='{style.error}' ui:field='error'></div>
-        <h2 class='{style.title}'>Expenses Entity Browser</h2>
+    <g:north size='6'>
+      <g:HTML styleName='{style.centered}'>
+        <div class='{style.banner}'>
+          <div class='{style.error}' ui:field='error'></div>
+          <span class='{style.title}'><h2>Data Browser</h2></span>
+        </div>
       </g:HTML>
     </g:north>
-    
-    <g:west size='15'>
-      <a:ListBoxPlacePickerView width='90%' visibleItemCount='10' ui:field='placesBox'/>
-    </g:west>
-
+    <g:south size='2'>
+      <g:HTML>
+          <div class='{style.logos}'>
+            <span>Powered by: </span>
+            <a href='http://code.google.com/webtoolkit/'><div class='{style.gwtLogo}'></div></a>
+          </div>
+      </g:HTML>
+    </g:south>
     <g:center>
-      <g:FlowPanel>
-      <g:SimplePanel ui:field='master'>
-        <g:HTML>
-          <h3>Welcome to Expenses</h3>
-          <p>Choose an entity set from the list on the left to get started</p>
-        </g:HTML>
-      </g:SimplePanel>
-      <g:SimplePanel ui:field='details'>
-      </g:SimplePanel>
+      <g:FlowPanel styleName='{style.content} {style.centered}'>
+        <g:SimplePanel styleName='{style.entities}'>
+          <a:CellListPlacePickerView styleName="{style.entitiesList}" width='100%' pageSize='100' ui:field='placesBox'/>
+        </g:SimplePanel>
+        <g:FlowPanel>
+          <a:NotificationMole animationDuration='0' message='loading...' ui:field='mole'></a:NotificationMole>
+          <g:SimplePanel styleName="{style.entityDetails}" ui:field='master'></g:SimplePanel>
+        </g:FlowPanel>
+        <g:SimplePanel styleName="{style.entityDetails}" ui:field='details'></g:SimplePanel>
       </g:FlowPanel>
     </g:center>
   </g:DockLayoutPanel>

@@ -31,14 +31,14 @@ public class DateCell extends AbstractCell<Date> {
   private final DateTimeFormat format;
 
   /**
-   * TODO: doc
+   * TODO: doc.
    */
   public DateCell() {
     this(DateTimeFormat.getFullDateFormat());
   }
 
   /**
-   * TODO: doc
+   * TODO: doc.
    * 
    * @param format
    */

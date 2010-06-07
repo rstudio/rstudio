@@ -30,8 +30,8 @@ public class JEnumType extends JClassType {
 
   private List<JEnumField> enumList = Lists.create();
 
-  public JEnumType(SourceInfo info, String name) {
-    super(info, name, false, false);
+  public JEnumType(SourceInfo info, String name, boolean isAbstract) {
+    super(info, name, isAbstract, false);
   }
 
   @Override

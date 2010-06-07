@@ -18,4 +18,13 @@
    <inherits name="com.google.gwt.cell.Cell"/>
    <inherits name="com.google.gwt.view.View"/>
    <source path="client"/>
+   
+  <!-- IE-specific CellTable implementation. -->
+  <replace-with class="com.google.gwt.user.cellview.client.CellTable.ImplTrident">
+    <when-type-is class="com.google.gwt.user.cellview.client.CellTable.Impl"/>
+    <any>
+      <when-property-is name="user.agent" value="ie6"/>
+      <when-property-is name="user.agent" value="ie8"/>
+    </any>
+  </replace-with>
 </module>

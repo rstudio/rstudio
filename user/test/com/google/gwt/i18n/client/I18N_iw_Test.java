@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.impl.CldrImpl;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -24,14 +25,6 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class I18N_iw_Test extends GWTTestCase {
 
   /**
-   * Test deprecated locale aliases with Messages.
-   */
-  public interface MyMessages extends Messages {
-    @DefaultMessage("default")
-    String getSourceLocale();
-  }
-  
-  /**
    * Test deprecated locale aliases with Constants.
    */
   public interface MyConstants extends Constants {
@@ -39,9 +32,22 @@ public class I18N_iw_Test extends GWTTestCase {
     String getSourceLocale();
   }
   
+  /**
+   * Test deprecated locale aliases with Messages.
+   */
+  public interface MyMessages extends Messages {
+    @DefaultMessage("default")
+    String getSourceLocale();
+  }
+  
   @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_iw";
+  }
+
+  public void testCldrImpl() {
+    CldrImpl cldr = GWT.create(CldrImpl.class);
+    assertTrue(cldr.isRTL());
   }
 
   public void testIwAlias() {

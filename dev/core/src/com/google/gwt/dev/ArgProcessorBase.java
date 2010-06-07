@@ -25,7 +25,7 @@ public abstract class ArgProcessorBase extends ToolBase {
    * Overridden to make public.
    */
   @Override
-  public final boolean processArgs(String[] args) {
+  public final boolean processArgs(String... args) {
     return super.processArgs(args);
   }
 

@@ -15,10 +15,10 @@
  */
 package com.google.gwt.valuestore.shared.impl;
 
-import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.RecordChangedEvent;
+import com.google.gwt.valuestore.shared.WriteOperation;
 
 import java.util.Collections;
 import java.util.HashSet;

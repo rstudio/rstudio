@@ -40,15 +40,25 @@ public class TabLayoutPanelTest extends GWTTestCase {
   }
 
   private class TestSelectionHandler implements BeforeSelectionHandler<Integer>, SelectionHandler<Integer> {
-    private boolean onBeforeFired;
+    private boolean onBeforeSelectionFired;
+    private boolean onSelectionFired;
+
+    public void assertOnBeforeSelectionFired(boolean expected) {
+      assertEquals(expected, onBeforeSelectionFired);
+    }
+
+    public void assertOnSelectionFired(boolean expected) {
+      assertEquals(expected, onSelectionFired);
+    }
 
     public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
-      onBeforeFired = true;
+      assertFalse(onSelectionFired);
+      onBeforeSelectionFired = true;
     }
 
     public void onSelection(SelectionEvent<Integer> event) {
-      assertTrue(onBeforeFired);
-      finishTest();
+      assertTrue(onBeforeSelectionFired);
+      onSelectionFired = true;
     }
   }
 
@@ -213,9 +223,24 @@ public class TabLayoutPanelTest extends GWTTestCase {
     TestSelectionHandler handler = new TestSelectionHandler();
     p.addBeforeSelectionHandler(handler);
     p.addSelectionHandler(handler);
-
-    delayTestFinish(1000);
     p.selectTab(1);
+    handler.assertOnBeforeSelectionFired(true);
+    handler.assertOnSelectionFired(true);
+  }
+
+  public void testSelectionEventsNoFire() {
+    TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
+    RootPanel.get().add(p);
+
+    p.add(new Button("foo"), "foo");
+    p.add(new Button("bar"), "bar");
+
+    TestSelectionHandler handler = new TestSelectionHandler();
+    p.addBeforeSelectionHandler(handler);
+    p.addSelectionHandler(handler);
+    p.selectTab(1, false);
+    handler.assertOnBeforeSelectionFired(false);
+    handler.assertOnSelectionFired(false);
   }
 
   /**

@@ -55,6 +55,7 @@ public class URLTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.http.client.URL#decodeComponent(java.lang.String)}.
    */
+  @SuppressWarnings("deprecation")
   public void testDecodeComponent() {
     try {
       URL.decodeComponent(null);
@@ -65,6 +66,8 @@ public class URLTest extends GWTTestCase {
 
     assertEquals("", URL.decodeComponent(""));
     assertEquals(" ", URL.decodeComponent(" "));
+    assertEquals(" ", URL.decodeComponent("+"));
+    assertEquals(" ", URL.decodeComponent("%20"));
 
     String actualURLComponent = URL.decodeComponent(ENCODED_URL_COMPONENT);
     assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
@@ -77,6 +80,7 @@ public class URLTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.http.client.URL#decodeComponent(java.lang.String,boolean)}.
    */
+  @SuppressWarnings("deprecation")
   public void testDecodeComponent2() {
     try {
       URL.decodeComponent(null);
@@ -103,6 +107,51 @@ public class URLTest extends GWTTestCase {
 
   /**
    * Test method for
+   * {@link com.google.gwt.http.client.URL#decodePathSegment(java.lang.String,boolean)}.
+   */
+  public void testDecodePathSegment() {
+    try {
+      URL.decodePathSegment(null);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException ex) {
+      // expected exception was thrown
+    }
+
+    assertEquals("", URL.decodePathSegment(""));
+    assertEquals(" ", URL.decodePathSegment(" "));
+    assertEquals("+", URL.decodePathSegment("+"));
+    assertEquals(" ", URL.decodePathSegment("%20"));
+
+    String actualURLComponent = URL.decodePathSegment(ENCODED_URL_COMPONENT);
+    assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
+  }
+
+  /**
+   * Test method for
+   * {@link com.google.gwt.http.client.URL#decodeQueryString(java.lang.String)}.
+   */
+  public void testDecodeQueryString() {
+    try {
+      URL.decodeQueryString(null);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException ex) {
+      // expected exception was thrown
+    }
+
+    assertEquals("", URL.decodeQueryString(""));
+    assertEquals(" ", URL.decodeQueryString(" "));
+    assertEquals(" ", URL.decodeQueryString("+"));
+    assertEquals(" ", URL.decodeQueryString("%20"));
+
+    String actualURLComponent = URL.decodeQueryString(ENCODED_URL_COMPONENT);
+    assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
+
+    actualURLComponent = URL.decodeQueryString(ENCODED_URL_COMPONENT_QS);
+    assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
+  }
+
+  /**
+   * Test method for
    * {@link com.google.gwt.http.client.URL#encode(java.lang.String)}.
    */
   public void testEncode() {
@@ -124,6 +173,7 @@ public class URLTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.http.client.URL#encodeComponent(java.lang.String)}.
    */
+  @SuppressWarnings("deprecation")
   public void testEncodeComponent() {
     try {
       URL.encodeComponent(null);
@@ -143,6 +193,7 @@ public class URLTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.http.client.URL#encodeComponent(java.lang.String,boolean)}.
    */
+  @SuppressWarnings("deprecation")
   public void testEncodeComponent2() {
     try {
       URL.encodeComponent(null, false);
@@ -167,6 +218,44 @@ public class URLTest extends GWTTestCase {
     assertEquals(ENCODED_URL_COMPONENT, actualURLComponent);
 
     actualURLComponent = URL.encodeComponent(DECODED_URL_COMPONENT, true);
+    assertEquals(ENCODED_URL_COMPONENT_QS, actualURLComponent);
+  }
+
+  /**
+   * Test method for
+   * {@link com.google.gwt.http.client.URL#encodePathSegment(java.lang.String,boolean)}.
+   */
+  public void testEncodePathSegment() {
+    try {
+      URL.encodePathSegment(null);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException ex) {
+      // expected exception was thrown
+    }
+
+    assertEquals("", URL.encodePathSegment(""));
+    assertEquals("%20", URL.encodePathSegment(" "));
+
+    String actualURLComponent = URL.encodePathSegment(DECODED_URL_COMPONENT);
+    assertEquals(ENCODED_URL_COMPONENT, actualURLComponent);
+  }
+
+  /**
+   * Test method for
+   * {@link com.google.gwt.http.client.URL#encodeQueryString(java.lang.String)}.
+   */
+  public void testEncodeQueryString() {
+    try {
+      URL.encodeQueryString(null);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException ex) {
+      // expected exception was thrown
+    }
+
+    assertEquals("", URL.encodeQueryString(""));
+    assertEquals("+", URL.encodeQueryString(" "));
+
+    String actualURLComponent = URL.encodeQueryString(DECODED_URL_COMPONENT);
     assertEquals(ENCODED_URL_COMPONENT_QS, actualURLComponent);
   }
 }

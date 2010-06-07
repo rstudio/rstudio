@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui;
 
-import com.google.gwt.app.util.Renderer;
+import com.google.gwt.input.shared.Renderer;
 import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;

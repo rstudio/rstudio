@@ -69,7 +69,7 @@ public class HtmlMessageInterpreter implements XMLElement.Interpreter<String> {
     MessagesWriter messages = uiWriter.getMessages();
     if (messages.isMessage(elem)) {
       if (!elem.hasChildNodes()) {
-        uiWriter.die("Empty message: " + elem);
+        uiWriter.die(elem, "Empty message");
       }
 
       MessageWriter message = messages.newMessage(elem);

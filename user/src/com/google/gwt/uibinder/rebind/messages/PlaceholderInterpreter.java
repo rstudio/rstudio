@@ -85,7 +85,7 @@ public abstract class PlaceholderInterpreter implements
     }
 
     if (uiWriter.isWidgetElement(elem)) {
-      uiWriter.die("Found %s in a message that cannot contain widgets", elem);
+      uiWriter.die(elem, "Found widget in a message that cannot contain widgets");
     }
     return null;
   }

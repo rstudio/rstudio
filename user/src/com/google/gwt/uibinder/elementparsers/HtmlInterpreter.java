@@ -81,7 +81,7 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
     if (writer.isWidgetElement(elem)) {
-      writer.die("Found widget %s in an HTML context", elem);
+      writer.die(elem, "Found widget in an HTML context");
     }
     return pipe.interpretElement(elem);
   }

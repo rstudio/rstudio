@@ -15,11 +15,11 @@
  */
 package com.google.gwt.sample.expenses.gwt.client;
 
-import com.google.gwt.bikeshed.list.client.Header;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 /**
@@ -67,9 +67,11 @@ public class SortableHeader extends Header<String> {
     return text;
   }
 
+  @Override
   public void render(StringBuilder sb) {
     int imageWidth = IMAGE_WIDTH;
-    sb.append("<div style='position:relative;padding-right:");
+    sb.append("<div style='position:relative;cursor:hand;cursor:pointer;");
+    sb.append("padding-right:");
     sb.append(imageWidth);
     sb.append("px;'>");
     if (sorted) {

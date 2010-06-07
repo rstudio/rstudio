@@ -40,8 +40,8 @@ public class UIObjectParser implements ElementParser {
     String stylePrimaryName = elem.consumeStringAttribute("stylePrimaryName", null);
 
     if (null != styleName && null != stylePrimaryName) {
-      writer.die("In %s, cannot set both \"styleName\" "
-          + "and \"stylePrimaryName\"", elem);
+      writer.die(elem, "Cannot set both \"styleName\" "
+          + "and \"stylePrimaryName\"");
     }
     
     if (null != styleName) {

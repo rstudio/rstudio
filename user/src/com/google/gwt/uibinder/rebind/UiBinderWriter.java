@@ -359,7 +359,7 @@ public class UiBinderWriter {
       throws UnableToCompleteException {
     JClassType type = oracle.findType(typeName);
     if (type == null) {
-      die("In %s, unknown type %s", elem, typeName);
+      die(elem, "Unknown type %s", typeName);
     }
 
     String fieldName = getFieldName(elem);
@@ -417,6 +417,15 @@ public class UiBinderWriter {
   public void die(String message, Object... params)
       throws UnableToCompleteException {
     logger.die(message, params);
+  }
+
+  /**
+   * Post an error message about a specific XMLElement and halt processing. This
+   * method always throws an {@link UnableToCompleteException}
+   */
+  public void die(XMLElement context, String message, Object... params)
+      throws UnableToCompleteException {
+    logger.die(context, message, params);
   }
 
   /**
@@ -490,7 +499,7 @@ public class UiBinderWriter {
     JClassType rtn = null;
     rtn = pkg.findType(tagName);
     if (rtn == null) {
-      die("No class matching \"%s\" in %s", tagName, ns);
+      die(elem, "No class matching \"%s\" in %s", tagName, ns);
     }
 
     return rtn;
@@ -660,6 +669,13 @@ public class UiBinderWriter {
   }
 
   /**
+   * Post a warning message.
+   */
+  public void warn(XMLElement context, String message, Object... params) {
+    logger.warn(context, message, params);
+  }
+
+  /**
    * Entry point for the code generation logic. It generates the
    * implementation's superstructure, and parses the root widget (leading to all
    * of its children being parsed as well).
@@ -771,13 +787,13 @@ public class UiBinderWriter {
       hasOldSchoolId = true;
       // If an id is specified on the element, use that.
       fieldName = elem.consumeRawAttribute("id");
-      warn("Deprecated use of id=\"%1$s\" for field name. "
+      warn(elem, "Deprecated use of id=\"%1$s\" for field name. "
           + "Please switch to gwt:field=\"%1$s\" instead. "
           + "This will soon be a compile error!", fieldName);
     }
     if (elem.hasAttribute(getUiFieldAttributeName())) {
       if (hasOldSchoolId) {
-        die("Cannot declare both id and field on the same element: " + elem);
+        die(elem, "Cannot declare both id and field on the same element");
       }
       fieldName = elem.consumeRawAttribute(getUiFieldAttributeName());
     }

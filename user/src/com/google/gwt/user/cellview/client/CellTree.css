@@ -1,0 +1,53 @@
+.emptyMessage {
+  padding-left: 16px;
+  font-style: italic;
+}
+
+.item {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  cursor: hand;
+  cursor: pointer;
+}
+
+.itemImage {
+  
+}
+
+.itemImageValue {
+  
+}
+
+.itemValue {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+.openItem {
+  
+}
+
+@sprite .selectedItem {
+  gwt-image: 'cellTreeSelectedBackground';
+  background-color: #628cd5;
+  color: white;
+  height: auto;
+  overflow: auto;
+}
+
+.showMoreButton {
+  padding-left: 16px;
+  outline: none;
+}
+
+.topItem {
+  
+}
+
+.topItemImage {
+  
+}
+
+.topItemImageValue {
+  
+}

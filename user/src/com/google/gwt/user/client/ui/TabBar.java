@@ -435,19 +435,34 @@ public class TabBar extends Composite implements SourcesTabEvents,
   }
 
   /**
-   * Programmatically selects the specified tab. Use index -1 to specify that no
-   * tab should be selected.
+   * Programmatically selects the specified tab and fires events. Use index -1
+   * to specify that no tab should be selected.
    * 
    * @param index the index of the tab to be selected
    * @return <code>true</code> if successful, <code>false</code> if the change
    * is denied by the {@link BeforeSelectionHandler}.
    */
   public boolean selectTab(int index) {
-    checkTabIndex(index);
-    BeforeSelectionEvent<?> event = BeforeSelectionEvent.fire(this, index);
+    return selectTab(index, true);
+  }
 
-    if (event != null && event.isCanceled()) {
-      return false;
+  /**
+   * Programmatically selects the specified tab. Use index -1 to specify that no
+   * tab should be selected.
+   * 
+   * @param index the index of the tab to be selected
+   * @param fireEvents true to fire events, false not to
+   * @return <code>true</code> if successful, <code>false</code> if the change
+   * is denied by the {@link BeforeSelectionHandler}.
+   */
+  public boolean selectTab(int index, boolean fireEvents) {
+    checkTabIndex(index);
+
+    if (fireEvents) {
+      BeforeSelectionEvent<?> event = BeforeSelectionEvent.fire(this, index);
+      if (event != null && event.isCanceled()) {
+        return false;
+      }
     }
 
     // Check for -1.
@@ -459,7 +474,9 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
     selectedTab = panel.getWidget(index + 1);
     setSelectionStyle(selectedTab, true);
-    SelectionEvent.fire(this, index);
+    if (fireEvents) {
+      SelectionEvent.fire(this, index);
+    }
     return true;
   }
 

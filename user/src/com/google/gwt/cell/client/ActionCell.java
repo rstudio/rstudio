@@ -31,11 +31,11 @@ import com.google.gwt.dom.client.NativeEvent;
 public class ActionCell<C> extends AbstractCell<C> {
 
   /**
-   * TODO: doc
+   * The delegate that will handle events from the cell.
    * 
    * @param <T> the type that this delegate acts on
    */
-  public interface Delegate<T> {
+  public static interface Delegate<T> {
     void execute(T object);
   }
 
@@ -43,10 +43,10 @@ public class ActionCell<C> extends AbstractCell<C> {
   private final Delegate<C> delegate;
 
   /**
-   * TODO: doc
+   * Construct a new {@link ActionCell}.
    * 
-   * @param message
-   * @param delegate
+   * @param message the message to display on the button
+   * @param delegate the delegate that will handle events
    */
   public ActionCell(String message, Delegate<C> delegate) {
     this.message = message;
@@ -55,7 +55,6 @@ public class ActionCell<C> extends AbstractCell<C> {
 
   @Override
   public boolean consumesEvents() {
-    // TODO Auto-generated method stub
     return true;
   }
 

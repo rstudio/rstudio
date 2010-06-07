@@ -125,17 +125,7 @@ public class IconCellDecorator<C> extends AbstractCell<C> {
   }
 
   /**
-   * Get the parent element of the decorated cell.
-   * 
-   * @param parent the parent of this cell
-   * @return the decorated cell's parent
-   */
-  private Element getCellParent(Element parent) {
-    return parent.getFirstChildElement().getChild(1).cast();
-  }
-
-  /**
-   * Get the HTML representation of an image.
+   * Get the HTML representation of an image. Visible for testing.
    * 
    * @param res the {@link ImageResource} to render as HTML
    * @param valign the vertical alignment
@@ -143,13 +133,13 @@ public class IconCellDecorator<C> extends AbstractCell<C> {
    * @return the rendered HTML
    */
   // TODO(jlabanca): Move this to a Utility class.
-  private String getImageHtml(ImageResource res,
+  String getImageHtml(ImageResource res,
       VerticalAlignmentConstant valign, boolean isPlaceholder) {
     // Add the position and dimensions.
     StringBuilder sb = new StringBuilder();
     sb.append("<div style=\"position:absolute;left:0px;top:0px;height:100%;");
     sb.append("width:").append(res.getWidth()).append("px;");
-
+  
     // Add the background, vertically centered.
     if (!isPlaceholder) {
       String vert = valign == HasVerticalAlignment.ALIGN_MIDDLE ? "center"
@@ -157,9 +147,19 @@ public class IconCellDecorator<C> extends AbstractCell<C> {
       sb.append("background:url('").append(res.getURL()).append("') ");
       sb.append("no-repeat scroll ").append(vert).append(" center transparent;");
     }
-
+  
     // Close the div and return.
     sb.append("\"></div>");
     return sb.toString();
+  }
+
+  /**
+   * Get the parent element of the decorated cell.
+   * 
+   * @param parent the parent of this cell
+   * @return the decorated cell's parent
+   */
+  private Element getCellParent(Element parent) {
+    return parent.getFirstChildElement().getChild(1).cast();
   }
 }

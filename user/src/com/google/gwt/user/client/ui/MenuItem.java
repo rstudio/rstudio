@@ -155,12 +155,19 @@ public class MenuItem extends UIObject implements HasHTML {
       this.parentMenu.updateSubmenuIcon(this);
     }
 
-    // Change tab index from 0 to -1, because only the root menu is supposed to
-    // be in the tab order
-    FocusPanel.impl.setTabIndex(subMenu.getElement(), -1);
+    if (subMenu != null) {
+      // Change tab index from 0 to -1, because only the root menu is supposed
+      // to be in the tab order
+      FocusPanel.impl.setTabIndex(subMenu.getElement(), -1);
 
-    // Update a11y role "haspopup"
-    Accessibility.setState(this.getElement(), Accessibility.STATE_HASPOPUP, "true");
+      // Update a11y role "haspopup"
+      Accessibility.setState(this.getElement(), Accessibility.STATE_HASPOPUP,
+          "true");
+    } else {
+      // Update a11y role "haspopup"
+      Accessibility.setState(this.getElement(), Accessibility.STATE_HASPOPUP,
+          "false");
+    }
   }
 
   public void setText(String text) {

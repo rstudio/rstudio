@@ -415,12 +415,11 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     funcName.setObfuscatable(false);
 
     try {
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
-          StandardLinkerContext.class, "Linker-derived JS");
+      SourceInfo sourceInfo = jsProgram.createSourceInfo(1,
+          "StandardLinkerContext.optimizeJavaScript");
       JsParser.parseInto(sourceInfo, topScope, jsProgram.getGlobalBlock(), r);
     } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to parse JavaScript", e);
-      throw new UnableToCompleteException();
+      throw new RuntimeException("Unexpected error reading in-memory stream", e);
     } catch (JsParserException e) {
       logger.log(TreeLogger.ERROR, "Unable to parse JavaScript", e);
       throw new UnableToCompleteException();

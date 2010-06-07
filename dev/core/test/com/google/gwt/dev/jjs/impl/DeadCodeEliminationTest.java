@@ -15,46 +15,13 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
 /**
  * Tests {@link DeadCodeElimination}.
  */
 public class DeadCodeEliminationTest extends OptimizerTestBase {
-
-  private final class Result {
-    private final String optimized;
-    private final String returnType;
-    private final String userCode;
-
-    public Result(String returnType, String userCode, String optimized) {
-      this.returnType = returnType;
-      this.userCode = userCode;
-      this.optimized = optimized;
-    }
-
-    public void into(String expected) throws UnableToCompleteException {
-      JProgram program = compileSnippet(returnType, expected);
-      expected = getMainMethodSource(program);
-      assertEquals(userCode, expected, optimized);
-    }
-
-    /**
-     * Compare without compiling expected, needed when optimizations produce
-     * incorrect java code (e.g. "a" || "b" is incorrect in java).
-     */
-    public void intoString(String expected) {
-      String actual = optimized;
-      assertTrue(actual.startsWith("{"));
-      assertTrue(actual.endsWith("}"));
-      actual = actual.substring(1, actual.length() - 2).trim();
-      // Join lines in actual code and remove indentations
-      actual = actual.replaceAll(" +", " ").replaceAll("\n", "");
-      assertEquals(userCode, expected, actual);
-    }
-  }
-
   @Override
   public void setUp() throws Exception {
     addSnippetClassDecl("static volatile boolean b;");
@@ -124,17 +91,22 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
   }
   
   public void testDoOptimization() throws Exception {
-    optimize("void", "do {} while (b);").intoString("do { } while (EntryPoint.b);");
-    optimize("void", "do {} while (true);").intoString("do { } while (true);");
+    optimize("void", "do {} while (b);").intoString(
+        "do {", 
+        "} while (EntryPoint.b);");
+    optimize("void", "do {} while (true);").intoString(
+        "do {",
+        "} while (true);");
     optimize("void", "do {} while (false);").intoString("");
     optimize("void", "do { i++; } while (false);").intoString("++EntryPoint.i;");
-    optimize("void", "do { break; } while (false);").intoString("do { break; } while (false);");
+    optimize("void", "do { break; } while (false);").intoString(
+        "do {",
+        "  break;",
+        "} while (false);");
   }
 
-  private Result optimize(final String returnType, final String codeSnippet)
-      throws UnableToCompleteException {
-    JProgram program = compileSnippet(returnType, codeSnippet);
-    DeadCodeElimination.exec(program);
-    return new Result(returnType, codeSnippet, getMainMethodSource(program));
+  @Override
+  protected boolean optimizeMethod(JProgram program, JMethod method) {
+    return DeadCodeElimination.exec(program, method);
   }
 }

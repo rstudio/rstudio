@@ -15,7 +15,7 @@
  */
 package com.google.gwt.valuestore.ui;
 
-import com.google.gwt.app.util.IsWidget;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.TakesValue;
 
 /**
@@ -29,8 +29,11 @@ public interface RecordDetailsView<R> extends TakesValue<R>, IsWidget {
    * Implemented by the owner of the view.
    */
   interface Delegate {
+    void deleteClicked();
     void editClicked();
   }
+  
+  boolean confirm(String msg);
   
   void setDelegate(Delegate delegate);
 }

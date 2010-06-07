@@ -121,14 +121,22 @@ public class SoycReportLinker extends Linker {
     }
   }
 
-  private boolean anyReportFilesPresent(ArtifactSet artifacts) {
-    String prefix = "soycReport/"
-        + ArtifactsOutputDirectory.COMPILE_REPORT_DIRECTORY + "/";
+  /**
+   * Check whether an artifact set contains any SOYC report documents.
+   */
+  boolean anyReportFilesPresent(ArtifactSet artifacts) {
+    String prefix1 = ArtifactsOutputDirectory.COMPILE_REPORT_DIRECTORY + "/";
+    String prefix2 = "soycReport/" + prefix1;
+
     for (EmittedArtifact art : artifacts.find(EmittedArtifact.class)) {
-      if (art.getPartialPath().startsWith(prefix)) {
+      if (art.getPartialPath().startsWith(prefix1)) {
+        return true;
+      }
+      if (art.getPartialPath().startsWith(prefix2)) {
         return true;
       }
     }
+
     return false;
   }
 

@@ -243,7 +243,11 @@ public class JsniCollector {
           e.getSourceDetail());
       SourceInfo errorInfo = SourceOrigin.create(problemCharPos,
           problemCharPos, e.getSourceDetail().getLine(), info.getFileName());
-      reportJsniError(errorInfo, method, e.getMessage());
+      // Strip the file/line header because reportJsniError will add that.
+      String msg = e.getMessage();
+      int pos = msg.indexOf(": ");
+      msg = msg.substring(pos + 2);
+      reportJsniError(errorInfo, method, msg);
       return null;
     }
   }

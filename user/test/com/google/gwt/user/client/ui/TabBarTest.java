@@ -15,6 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
+import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -23,6 +27,31 @@ import com.google.gwt.user.client.Element;
  * Tests the {@link TabBar} widget.
  */
 public class TabBarTest extends GWTTestCase {
+
+  private class TestSelectionHandler implements
+      BeforeSelectionHandler<Integer>, SelectionHandler<Integer> {
+    private boolean onBeforeSelectionFired;
+    private boolean onSelectionFired;
+
+    public void assertOnBeforeSelectionFired(boolean expected) {
+      assertEquals(expected, onBeforeSelectionFired);
+    }
+
+    public void assertOnSelectionFired(boolean expected) {
+      assertEquals(expected, onSelectionFired);
+    }
+
+    public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
+      assertFalse(onSelectionFired);
+      onBeforeSelectionFired = true;
+    }
+
+    public void onSelection(SelectionEvent<Integer> event) {
+      assertTrue(onBeforeSelectionFired);
+      onSelectionFired = true;
+    }
+  }
+
   int selected;
   int beforeSelection;
 
@@ -110,6 +139,37 @@ public class TabBarTest extends GWTTestCase {
     assertEquals(2, beforeSelection);
   }
 
+  public void testSelectionEvents() {
+    TabBar bar = new TabBar();
+    RootPanel.get().add(bar);
+
+    bar.addTab("foo");
+    bar.addTab("bar");
+
+    // Make sure selecting a tab fires both events in the right order.
+    TestSelectionHandler handler = new TestSelectionHandler();
+    bar.addBeforeSelectionHandler(handler);
+    bar.addSelectionHandler(handler);
+    bar.selectTab(1);
+    handler.assertOnBeforeSelectionFired(true);
+    handler.assertOnSelectionFired(true);
+  }
+
+  public void testSelectionEventsNoFire() {
+    TabBar bar = new TabBar();
+    RootPanel.get().add(bar);
+
+    bar.addTab("foo");
+    bar.addTab("bar");
+
+    TestSelectionHandler handler = new TestSelectionHandler();
+    bar.addBeforeSelectionHandler(handler);
+    bar.addSelectionHandler(handler);
+    bar.selectTab(1, false);
+    handler.assertOnBeforeSelectionFired(false);
+    handler.assertOnSelectionFired(false);
+  }
+
   public void testGetHTML() {
     final TabBar bar = createTabBar();
     bar.addTab("foo");
@@ -136,12 +196,12 @@ public class TabBarTest extends GWTTestCase {
     bar.setTabHTML(1, "<i>w00t!</i>");
     assertEquals("<i>w00t!</i>", bar.getTabHTML(1).toLowerCase());
 
-    // Set the text knowing that we currently have an HTML.  This should replace
+    // Set the text knowing that we currently have an HTML. This should replace
     // the HTML with a Label.
     bar.setTabText(1, "<b>w00t</b>");
     assertEquals("<b>w00t</b>", bar.getTabHTML(1).toLowerCase());
 
-    // Set the text knowing that we currently have a Grid.  This should replace
+    // Set the text knowing that we currently have a Grid. This should replace
     // the Grid with a Label.
     bar.setTabText(3, "w00t");
     assertEquals("w00t", bar.getTabHTML(3));

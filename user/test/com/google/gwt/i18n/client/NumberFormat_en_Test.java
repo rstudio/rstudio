@@ -289,6 +289,22 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("1234567890", str);
   }
 
+  public void testIssue4598() {
+    String str = NumberFormat.getFormat("#,##0.######").format(1.3);
+    assertStartsWith("1.3", str);
+  }
+
+  public void testLargeNumber() {
+    // issue 4473
+    String str = NumberFormat.getFormat("0.00").format(
+        222222222222222222222222222222.0);
+    // we can't test the exact value, because different browsers round
+    // differently, so we just check the prefix and that it isn't in exponential
+    // format
+    assertStartsWith("22222222222", str);
+    assertTrue(str.indexOf('e') < 0);
+  }
+
   // See external issue 3140
   public void testLeadingZeros() {
     String str;

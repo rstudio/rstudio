@@ -41,11 +41,11 @@ package java.math;
 public enum RoundingMode {
 
   /**
-   * Rounding mode to round towards positive infinity. For positive values this
-   * rounding mode behaves as {@link #UP}, for negative values as {@link #DOWN}. <br>
-   * Rule: {@code x.round() >= x}
+   * Rounding mode where positive values are rounded towards positive infinity
+   * and negative values towards negative infinity. <br>
+   * Rule: {@code x.round().abs() >= x.abs()}
    */
-  CEILING(BigDecimal.ROUND_CEILING),
+  UP(BigDecimal.ROUND_UP),
 
   /**
    * Rounding mode where the values are rounded towards zero. <br>
@@ -54,11 +54,24 @@ public enum RoundingMode {
   DOWN(BigDecimal.ROUND_DOWN),
 
   /**
+   * Rounding mode to round towards positive infinity. For positive values this
+   * rounding mode behaves as {@link #UP}, for negative values as {@link #DOWN}. <br>
+   * Rule: {@code x.round() >= x}
+   */
+  CEILING(BigDecimal.ROUND_CEILING),
+
+  /**
    * Rounding mode to round towards negative infinity. For positive values this
    * rounding mode behaves as {@link #DOWN}, for negative values as {@link #UP}. <br>
    * Rule: {@code x.round() <= x}
    */
   FLOOR(BigDecimal.ROUND_FLOOR),
+
+  /**
+   * Rounding mode where values are rounded towards the nearest neighbor. Ties
+   * are broken by rounding up.
+   */
+  HALF_UP(BigDecimal.ROUND_HALF_UP),
 
   /**
    * Rounding mode where values are rounded towards the nearest neighbor. Ties
@@ -73,24 +86,12 @@ public enum RoundingMode {
   HALF_EVEN(BigDecimal.ROUND_HALF_EVEN),
 
   /**
-   * Rounding mode where values are rounded towards the nearest neighbor. Ties
-   * are broken by rounding up.
-   */
-  HALF_UP(BigDecimal.ROUND_HALF_UP),
-
-  /**
    * Rounding mode where the rounding operations throws an ArithmeticException
    * for the case that rounding is necessary, i.e. for the case that the value
    * cannot be represented exactly.
    */
-  UNNECESSARY(BigDecimal.ROUND_UNNECESSARY),
-
-  /**
-   * Rounding mode where positive values are rounded towards positive infinity
-   * and negative values towards negative infinity. <br>
-   * Rule: {@code x.round().abs() >= x.abs()}
-   */
-  UP(BigDecimal.ROUND_UP);
+  UNNECESSARY(BigDecimal.ROUND_UNNECESSARY);
+  
 
   /**
    * Converts rounding mode constants from class {@code BigDecimal} into {@code

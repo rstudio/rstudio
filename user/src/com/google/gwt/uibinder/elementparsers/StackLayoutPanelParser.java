@@ -54,7 +54,7 @@ public class StackLayoutPanelParser implements ElementParser {
     for (XMLElement stackElem : panelElem.consumeChildElements()) {
       // Get the stack element.
       if (!isElementType(panelElem, stackElem, STACK)) {
-        writer.die("In %s, only <%s:%s> children are allowed.", panelElem, 
+        writer.die(stackElem, "Only <%s:%s> children are allowed.", 
             panelElem.getPrefix(), STACK);
       }
       
@@ -63,10 +63,10 @@ public class StackLayoutPanelParser implements ElementParser {
 
       // Parse the child widget.
       if (children.body == null) {
-        writer.die("In %s, %s must have a child widget", panelElem, stackElem);
+        writer.die(stackElem, "Must have a child widget");
       }
       if (!writer.isWidgetElement(children.body)) {
-        writer.die("In %s, %s must be a widget", stackElem, children.body);
+        writer.die(children.body, "Must be a widget");
       }
       String childFieldName = writer.parseElementToField(children.body);
 
@@ -83,8 +83,7 @@ public class StackLayoutPanelParser implements ElementParser {
           children.customHeader.consumeSingleChildElement();
         String size = children.customHeader.consumeRequiredDoubleAttribute("size");
         if (!writer.isWidgetElement(headerElement)) {
-          writer.die("In %s of %s, %s is not a widget", children.customHeader,
-              stackElem, headerElement);
+          writer.die(headerElement, "Is not a widget");
         }
 
         String headerField = writer.parseElementToField(headerElement);
@@ -92,8 +91,8 @@ public class StackLayoutPanelParser implements ElementParser {
             headerField, size);
       } else {
         // Neither a header or customHeader.
-        writer.die("In %1$s, %2$s requires either a <%3$s:%4$s> or <%3$s:%5$s>",
-            panelElem, stackElem, stackElem.getPrefix(), HEADER, CUSTOM);
+        writer.die(stackElem, "Requires either a <%1$s:%2$s> or <%1$s:%3$s>",
+            stackElem.getPrefix(), HEADER, CUSTOM);
       }
     }
   }
@@ -120,7 +119,7 @@ private Children findChildren(final XMLElement elem,
 
       // Must be the body, then
       if (null != children.body) {
-        writer.die("In %s, may have only one body element", elem);
+        writer.die(children.body, "May have only one body element");
       }
 
       children.body = child;
@@ -129,8 +128,8 @@ private Children findChildren(final XMLElement elem,
 
     void assertFirstHeader() throws UnableToCompleteException {
       if ((null != children.header) && (null != children.customHeader)) {
-        writer.die("In %1$s, may have only one %2$s:header "
-            + "or %2$s:customHeader", elem, elem.getPrefix());
+        writer.die(elem, "May have only one %2$s:header "
+            + "or %2$s:customHeader", elem.getPrefix());
       }
     }
 

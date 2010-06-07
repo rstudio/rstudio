@@ -15,9 +15,9 @@
  */
 package com.google.gwt.valuestore.ui;
 
-import com.google.gwt.app.util.IsWidget;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.PagingListView;
 
 /**
  * A view of a list of {@link Records}, which declares which properties it is
@@ -29,27 +29,18 @@ import com.google.gwt.view.client.ListView;
  * 
  * @param <R> the type of the records to display
  */
-public interface RecordListView<R extends Record> extends ListView<R>,
-    IsWidget, PropertyView<R> {
+public interface RecordListView<R extends Record> extends IsWidget, PropertyView<R> {
   /**
    * Implemented by the owner of a RecordTableView.
    * 
    * @param<R> the type of the records to display
    */
-  interface Delegate<R extends Record> extends ListView.Delegate<R> {
-    /**
-     * @param record the record whose details the user wants to see
-     */
-    void showDetails(R record);
+  interface Delegate<R extends Record> {
+    void createClicked();
   }
 
-  /**
-   * A RecordListView requires a RecordListView.Delegate.
-   */
-  void setDelegate(
-      com.google.gwt.view.client.ListView.Delegate<R> delegate)
-      throws UnsupportedOperationException;
-
+  PagingListView<R> asPagingListView();
+  
   /**
    * Sets the delegate.
    */

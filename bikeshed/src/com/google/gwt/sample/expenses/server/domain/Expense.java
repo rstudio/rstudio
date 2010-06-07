@@ -34,6 +34,15 @@ import javax.persistence.Version;
 @Entity
 public class Expense {
 
+  public static long countExpenses() {
+    EntityManager em = entityManager();
+    try {
+      return ((Number) em.createQuery("select count(o) from Expense o").getSingleResult()).longValue();
+    } finally {
+      em.close();
+    }
+  }
+
   public static final EntityManager entityManager() {
     return EMF.get().createEntityManager();
   }
@@ -82,29 +91,29 @@ public class Expense {
     return Collections.singletonList(findExpense(id));
   }
 
+  private Double amount;
+
+  private String approval;
+
+  private String category;
+
+  private Date created;
+  
+  private String description;
+  
   @Id
   @Column(name = "id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+  
+  private String reasonDenied;
+  
+  // @JoinColumn
+  private Long reportId;
 
   @Version
   @Column(name = "version")
   private Integer version;
-
-  private Double amount;
-
-  private String approval;
-  
-  private String category;
-  
-  private Date date;
-  
-  private String description;
-  
-  private String reasonDenied;
-
-  // @JoinColumn
-  private Long reportId;
 
   public Double getAmount() {
     return this.amount;
@@ -118,8 +127,8 @@ public class Expense {
     return this.category;
   }
 
-  public Date getDate() {
-    return this.date;
+  public Date getCreated() {
+    return this.created;
   }
 
   public String getDescription() {
@@ -173,8 +182,8 @@ public class Expense {
     this.category = category;
   }
 
-  public void setDate(Date date) {
-    this.date = date;
+  public void setCreated(Date created) {
+    this.created = created;
   }
 
   public void setDescription(String description) {
@@ -205,7 +214,7 @@ public class Expense {
     sb.append("Amount: ").append(getAmount()).append(", ");
     sb.append("Approval: ").append(getApproval()).append(", ");
     sb.append("Category: ").append(getCategory()).append(", ");
-    sb.append("Date: ").append(getDate()).append(", ");
+    sb.append("Created: ").append(getCreated()).append(", ");
     sb.append("Description: ").append(getDescription());
     return sb.toString();
   }

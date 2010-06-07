@@ -42,6 +42,7 @@ public class FragmentLoaderCreator {
   public static final String BROWSER_LOADER = "AsyncFragmentLoader.BROWSER_LOADER";
   public static final String LOADER_METHOD_RUN_ASYNC = "runAsync";
   public static final String RUN_ASYNC_CALLBACK = "com.google.gwt.core.client.RunAsyncCallback";
+  public static final String RUN_CALLBACKS = "runCallbacks";
   private static final String GWT_CLASS = FindDeferredBindingSitesVisitor.MAGIC_CLASS;
   private static final String PROP_RUN_ASYNC_NEVER_RUNS = "gwt.jjs.runAsyncNeverRuns";
   private static final String UNCAUGHT_EXCEPTION_HANDLER_CLASS = "GWT.UncaughtExceptionHandler";
@@ -108,11 +109,11 @@ public class FragmentLoaderCreator {
     srcWriter.println(BROWSER_LOADER + ".fragmentHasLoaded(" + entryNumber
         + ");");
 
-    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\"runCallbacks"
-        + entryNumber + "\", \"begin\");");
-    srcWriter.println("instance.runCallbacks();");
-    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\"runCallbacks"
-        + entryNumber + "\", \"end\");");
+    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\""
+        + RUN_CALLBACKS + entryNumber + "\", \"begin\");");
+    srcWriter.println("instance." + RUN_CALLBACKS + "();");
+    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\""
+        + RUN_CALLBACKS + entryNumber + "\", \"end\");");
 
     srcWriter.println("}");
   }
@@ -138,7 +139,7 @@ public class FragmentLoaderCreator {
     srcWriter.println("}");
 
     srcWriter.println("if (instance != null) {");
-    srcWriter.println("  instance.runCallbacks();");
+    srcWriter.println("  instance." + RUN_CALLBACKS + "();");
     srcWriter.println("  return;");
     srcWriter.println("}");
     srcWriter.println("if (!" + BROWSER_LOADER + ".isLoading(" + entryNumber
@@ -164,7 +165,7 @@ public class FragmentLoaderCreator {
   }
 
   private void generateRunCallbacksMethod(PrintWriter srcWriter) {
-    srcWriter.println("public void runCallbacks() {");
+    srcWriter.println("public void " + RUN_CALLBACKS + "() {");
 
     srcWriter.println("while (callbacksHead != null) {");
 

@@ -34,16 +34,27 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     }
   }
 
-  private class TestSelectionHandler implements BeforeSelectionHandler<Integer>, SelectionHandler<Integer> {
-    private boolean onBeforeFired;
+  private class TestSelectionHandler implements
+      BeforeSelectionHandler<Integer>, SelectionHandler<Integer> {
+    private boolean onBeforeSelectionFired;
+    private boolean onSelectionFired;
+
+    public void assertOnBeforeSelectionFired(boolean expected) {
+      assertEquals(expected, onBeforeSelectionFired);
+    }
+
+    public void assertOnSelectionFired(boolean expected) {
+      assertEquals(expected, onSelectionFired);
+    }
 
     public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
-      onBeforeFired = true;
+      assertFalse(onSelectionFired);
+      onBeforeSelectionFired = true;
     }
 
     public void onSelection(SelectionEvent<Integer> event) {
-      assertTrue(onBeforeFired);
-      finishTest();
+      assertTrue(onBeforeSelectionFired);
+      onSelectionFired = true;
     }
   }
 
@@ -168,9 +179,24 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     TestSelectionHandler handler = new TestSelectionHandler();
     p.addBeforeSelectionHandler(handler);
     p.addSelectionHandler(handler);
-
-    delayTestFinish(2000);
     p.showWidget(1);
+    handler.assertOnBeforeSelectionFired(true);
+    handler.assertOnSelectionFired(true);
+  }
+
+  public void testSelectionEventsNoFire() {
+    StackLayoutPanel p = new StackLayoutPanel(Unit.EM);
+    RootPanel.get().add(p);
+
+    p.add(new Button("foo"), "foo", 1);
+    p.add(new Button("bar"), "bar", 1);
+
+    TestSelectionHandler handler = new TestSelectionHandler();
+    p.addBeforeSelectionHandler(handler);
+    p.addSelectionHandler(handler);
+    p.showWidget(1, false);
+    handler.assertOnBeforeSelectionFired(false);
+    handler.assertOnSelectionFired(false);
   }
 
   public void testVisibleWidget() {

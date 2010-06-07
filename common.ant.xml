@@ -102,6 +102,9 @@
   <property name="gwt.junit.port" value="8888" />
   <property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
 
+  <!-- Benchmark support -->
+  <property name="gwt.benchmark.testcase.includes" value="**/*SuiteBenchmark.class"/>
+
   <!-- Shared class paths -->
   <path id="project.classpath.class">
     <pathelement location="${javac.out}" />
@@ -162,6 +165,7 @@
     <attribute name="test.emma.coverage" default="@{test.out}/emma-coverage" />
     <attribute name="test.cases" default="" />
     <attribute name="test.name" default="" />
+    <attribute name="test.extra.jvmargs" default="" />
     <attribute name="haltonfailure" default="true" />
     <element name="extraclasspaths" optional="true" />
     <sequential>
@@ -190,6 +194,7 @@
         <jvmarg line="-Xss512k" />
         <jvmarg value="-Demma.coverage.out.file=@{test.emma.coverage}/coverage.emma" />
         <jvmarg value="-Demma.coverage.out.merge=true" />
+        <jvmarg value="-Dcom.google.gwt.junit.reportPath=reports" />
         <sysproperty key="gwt.args" value="@{test.args}" />
         <sysproperty key="java.awt.headless" value="true" />
         <classpath>

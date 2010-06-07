@@ -106,12 +106,14 @@ public class MyTreeViewModel implements TreeViewModel {
     }
   };
 
-  private CompositeCell<String> compositeCell = new CompositeCell<String>();
-  private SelectionModel<String> selectionModel;
+  private final CompositeCell<String> compositeCell;
+  private final SelectionModel<String> selectionModel;
 
   public MyTreeViewModel(final SelectionModel<String> selectionModel) {
     this.selectionModel = selectionModel;
-    compositeCell.addHasCell(new HasCell<String, Boolean>() {
+
+    List<HasCell<String, ?>> hasCells = new ArrayList<HasCell<String, ?>>();
+    hasCells.add(new HasCell<String, Boolean>() {
       public Cell<Boolean> getCell() {
         return new CheckboxCell() {
           @Override
@@ -133,7 +135,7 @@ public class MyTreeViewModel implements TreeViewModel {
         return selectionModel.isSelected(object);
       }
     });
-    compositeCell.addHasCell(new HasCell<String, String>() {
+    hasCells.add(new HasCell<String, String>() {
       public Cell<String> getCell() {
         return new ButtonCell();
       }
@@ -150,6 +152,7 @@ public class MyTreeViewModel implements TreeViewModel {
         return object;
       }
     });
+    compositeCell = new CompositeCell<String>(hasCells);
   }
 
   public <T> NodeInfo<?> getNodeInfo(T value) {

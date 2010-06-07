@@ -51,7 +51,7 @@ public class EditTextCell extends AbstractCell<String> {
   public void render(String value, Object viewData, StringBuilder sb) {
     if (viewData != null) {
       sb.append("<input type='text' value='" + viewData + "'></input>");
-    } else {
+    } else if (value != null) {
       sb.append(value);
     }
   }

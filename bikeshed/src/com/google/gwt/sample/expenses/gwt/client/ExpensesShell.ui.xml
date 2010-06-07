@@ -2,69 +2,67 @@
 <ui:UiBinder
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'
-  xmlns:c='urn:import:com.google.gwt.sample.expenses.gwt.client'>
+  xmlns:m='urn:import:com.google.gwt.mobile.client'
+  xmlns:e='urn:import:com.google.gwt.sample.expenses.gwt.client'>
 
-  <ui:with
-    field='styles'
-    type='com.google.gwt.sample.bikeshed.style.client.Styles' />
+  <ui:with field='styles' type='com.google.gwt.sample.bikeshed.style.client.Styles' />
+
+  <ui:image field='logo' />
 
   <ui:style>
+    @sprite .logo {
+      gwt-image: 'logo';
+    }
+    
     .title {
       border-bottom: 1px solid #c3c3c3;
     }
     
     .titleText {
-      font-family: Times New Roman, sans-serif;
       color: #7b8fae;
-      font-size: 18pt;
+      font-size: 20pt;
       font-weight: bold;
+      text-shadow: #ddd 3px 3px 1px;
+    }
+    
+    .expenseTree {
+      background-color: #d7dde8;
+      border-right: 1px solid #c3c3c3;
     }
   </ui:style>
 
-  <g:DockLayoutPanel
-    unit='PX'>
-    <g:north
-      size='50'>
-      <g:HTMLPanel
-        styleName='{style.title}'>
-        <table
-          height='100%'>
+  <g:DockLayoutPanel unit='PX'>
+    <g:north size='96'>
+      <g:HTMLPanel styleName='{style.title}'>
+        <table height='100%' cellpadding='8' cellspacing='0'>
           <tr>
             <td>
-              <img
-                height='40'
-                src='http://www.google.com/intl/en_ALL/images/logo.gif' />
+              <div class='{style.logo}' />
             </td>
-            <td
-              class='{style.titleText}'
-              valign='middle'>
-              Expenses Sample
-                </td>
+            <td class='{style.titleText}' valign='middle'>
+              Expense Reports
+            </td>
           </tr>
         </table>
       </g:HTMLPanel>
     </g:north>
 
-    <g:center>
-      <g:SplitLayoutPanel
-        ui:field='splitLayout'>
-        <g:west
-          size='250'>
-          <c:ExpenseTree
-            ui:field='expenseTree' />
-        </g:west>
-        <g:center>
-          <g:LayoutPanel
-            ui:field='layoutPanel'>
-            <g:layer>
-              <c:ExpenseList
-                ui:field='expenseList' />
-            </g:layer>
-          </g:LayoutPanel>
-        </g:center>
-      </g:SplitLayoutPanel>
-    </g:center>
+  <g:center>
+    <g:DockLayoutPanel ui:field='dockLayout'>
+      <g:west size='225'>
+        <m:MobileScrollPanel addStyleNames='{style.expenseTree}'>
+          <e:ExpenseTree ui:field='expenseTree' />
+        </m:MobileScrollPanel>
+      </g:west>
+      <g:center>
+        <g:LayoutPanel ui:field='layoutPanel'>
+          <g:layer>
+            <e:ExpenseList ui:field='expenseList' />
+          </g:layer>
+        </g:LayoutPanel>
+      </g:center>
+    </g:DockLayoutPanel>
+  </g:center>
   </g:DockLayoutPanel>
 
 </ui:UiBinder>

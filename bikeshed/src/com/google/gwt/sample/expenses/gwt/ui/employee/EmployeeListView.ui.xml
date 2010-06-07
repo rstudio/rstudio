@@ -1,9 +1,53 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:b='urn:import:com.google.gwt.bikeshed.list.client'>
-  <g:HTMLPanel>
-    <h3><ui:msg>Employees</ui:msg></h3>
-    <b:CellTable ui:field='table'/>
+  xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
+  
+  <ui:image field="createButton" />
+  <ui:style>
+    .controls {
+      position: absolute;
+      left:0;
+      right:0;
+      top:0;
+      height: 2em;
+      margin-left: 12em;
+    }
+    @sprite .createButton {
+      gwt-image: 'createButton';
+      border: 0;
+      margin-top: 5px;
+      width: 12em;
+      font-size: 1em;
+      cursor: pointer;
+      text-align: left;
+      padding-left: 22px;
+    }
+    .controls table {
+       position:absolute;
+       right:0;
+       top:0;
+     }
+    .controls button {
+       display:inline;       
+     }
+     .listView > table {
+       table-layout:fixed;
+     }
+     .listView > table td {
+       text-overflow: ellipsis;
+       overflow: hidden;
+       white-space: nowrap;
+       cursor: pointer;
+     }
+  </ui:style>
+
+  <g:HTMLPanel styleName="{style.listView}">
+    <div style='height:3em;'></div>
+    <c:CellTable width='100%' ui:field='table' pageSize='8'/>
+    <div class='{style.controls}'>      
+      <g:Button styleName='{style.createButton}' ui:field='newButton'>Create Employee</g:Button>
+      <c:SimplePager view='{table}' location='RIGHT'/>
+    </div>
   </g:HTMLPanel>
 </ui:UiBinder>

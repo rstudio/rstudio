@@ -23,7 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The DataBinder base class for all the editor functionality.
+ * Implemented by objects that provide data binding support for 
+ * instances of {@link RecordEditView}. 
  * 
  * @param <R> the Record type
  * @param <V> the View type
