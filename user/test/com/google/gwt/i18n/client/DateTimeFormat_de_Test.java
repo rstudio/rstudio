@@ -15,7 +15,7 @@
  */
 package com.google.gwt.i18n.client;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Date;
 
@@ -24,7 +24,7 @@ import java.util.Date;
  * language.
  */
 @SuppressWarnings("deprecation")
-public class DateTimeFormat_de_Test extends DateTimeFormatTestBase {
+public class DateTimeFormat_de_Test extends GWTTestCase {
 
   @Override
   public String getModuleName() {
@@ -213,19 +213,5 @@ public class DateTimeFormat_de_Test extends DateTimeFormatTestBase {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("02006.J.27 n. Chr. 01:10 nachm.", DateTimeFormat.getFormat(
         "yyyyy.MMMMM.dd GGG hh:mm aaa").format(date));
-  }
-
-  public void testCustomFormats() {
-    MyFormats m = GWT.create(MyFormats.class);
-    Date d = new Date(2010 - 1900, 1, 15, 12, 0, 0);
-    assertEquals("15. Feb 2010", m.yearMonthDayAbbrev().format(d));
-    assertEquals("15. Februar 2010", m.yearMonthDayFull().format(d));
-    assertEquals("15. Februar 2010", m.yearMonthDayFull2().format(d));
-  }
-
-  public void testMessageDateTime() {
-    MyMessages m = GWT.create(MyMessages.class);
-    Date d = new Date(2010 - 1900, 1, 15, 12, 0, 0);
-    assertEquals("Es ist 15. Feb 2010", m.getCustomizedDate(d));
   }
 }

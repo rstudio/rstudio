@@ -18,12 +18,9 @@ package com.google.gwt.i18n.client;
 
 import com.google.gwt.i18n.client.constants.DateTimeConstants;
 import com.google.gwt.i18n.client.impl.DateRecord;
-import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl_en;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Formats and parses dates and times using locale-sensitive patterns.
@@ -247,14 +244,9 @@ import java.util.Map;
  * <td>UTC-7</td>
  * </tr>
  * <tr>
- * <td>Z, ZZ</td>
+ * <td>Z, ZZ, ZZZ</td>
  * <td>-0700</td>
  * <td>-0700</td>
- * </tr>
- * <tr>
- * <td>ZZZ</td>
- * <td>-07:00</td>
- * <td>-07:00</td>
  * </tr>
  * <tr>
  * <td>ZZZZ</td>
@@ -389,67 +381,6 @@ import java.util.Map;
  */
 @SuppressWarnings("deprecation")
 public class DateTimeFormat {
-
-  /**
-   * Predefined date/time formats -- see {@link CustomDateTimeFormat} if you
-   * need some format that isn't supplied here.
-   */
-  public enum PredefinedFormat {
-    // TODO(jat): Javadoc to explain these formats
-
-    /**
-     * ISO 8601 date format, fixed across all locales.
-     * <p>Example: {@code 2008-10-03T10:29:40.046-04:00}
-     * <p>http://code.google.com/p/google-web-toolkit/issues/detail?id=3068
-     * <p>http://www.iso.org/iso/support/faqs/faqs_widely_used_standards/widely_used_standards_other/date_and_time_format.htm
-     */
-    ISO_8601,
-
-    /**
-     * RFC 2822 date format, fixed across all locales.
-     * <p>Example: {@code Thu, 20 May 2010 17:54:50 -0700}
-     * <p>http://tools.ietf.org/html/rfc2822#section-3.3
-     */
-    RFC_2822,
-
-    DATE_FULL,
-    DATE_LONG,
-    DATE_MEDIUM,
-    DATE_SHORT,
-
-    TIME_FULL,
-    TIME_LONG,
-    TIME_MEDIUM,
-    TIME_SHORT,
-
-    DATE_TIME_FULL,
-    DATE_TIME_LONG,
-    DATE_TIME_MEDIUM,
-    DATE_TIME_SHORT,
-
-    DAY,
-    HOUR_MINUTE,
-    HOUR_MINUTE_SECOND,
-    HOUR24_MINUTE,
-    HOUR24_MINUTE_SECOND,
-    MINUTE_SECOND,
-    MONTH,
-    MONTH_ABBR,
-    MONTH_ABBR_DAY,
-    MONTH_DAY,
-    MONTH_NUM_DAY,
-    MONTH_WEEKDAY_DAY,
-    YEAR,
-    YEAR_MONTH,
-    YEAR_MONTH_ABBR,
-    YEAR_MONTH_ABBR_DAY,
-    YEAR_MONTH_DAY,
-    YEAR_MONTH_NUM,
-    YEAR_MONTH_NUM_DAY,
-    YEAR_QUARTER,
-    YEAR_QUARTER_ABBR,
-  }
-
   /**
    * Class PatternPart holds a "compiled" pattern part.
    */
@@ -465,13 +396,34 @@ public class DateTimeFormat {
     }
   }
 
+  private static final int FULL_DATE_FORMAT = 0;
+  private static final int LONG_DATE_FORMAT = 1;
+  private static final int MEDIUM_DATE_FORMAT = 2;
+  private static final int SHORT_DATE_FORMAT = 3;
+  private static final int FULL_TIME_FORMAT = 0;
+  private static final int LONG_TIME_FORMAT = 1;
+  private static final int MEDIUM_TIME_FORMAT = 2;
+
+  private static final int SHORT_TIME_FORMAT = 3;
   private static final int NUMBER_BASE = 10;
   private static final int JS_START_YEAR = 1900;
 
-  private static final Map<String, DateTimeFormat> cache;
+  private static DateTimeFormat cachedFullDateFormat;
+  private static DateTimeFormat cachedLongDateFormat;
+  private static DateTimeFormat cachedMediumDateFormat;
+
+  private static DateTimeFormat cachedShortDateFormat;
+  private static DateTimeFormat cachedFullTimeFormat;
+  private static DateTimeFormat cachedLongTimeFormat;
+  private static DateTimeFormat cachedMediumTimeFormat;
+
+  private static DateTimeFormat cachedShortTimeFormat;
+  private static DateTimeFormat cachedFullDateTimeFormat;
+  private static DateTimeFormat cachedLongDateTimeFormat;
+  private static DateTimeFormat cachedMediumDateTimeFormat;
+  private static DateTimeFormat cachedShortDateTimeFormat;
 
   private static final int NUM_MILLISECONDS_IN_DAY = 24 * 60 * 60000;
-
   private static final String PATTERN_CHARS = "GyMLdkHmsSEcDahKzZv";
 
   // Note: M & L must be the first two characters
@@ -483,161 +435,11 @@ public class DateTimeFormat {
 
   private static final int MINUTES_PER_HOUR = 60;
 
-  private static final String RFC2822_PATTERN = "EEE, d MMM yyyy HH:mm:ss Z";
-  private static final String ISO8601_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZ";
-
-  static {
-    cache = new HashMap<String, DateTimeFormat>();
-  }
-
-  /**
-   * Get a DateTimeFormat instance for a predefined format.
-   * 
-   * <p>See {@link CustomDateTimeFormat} if you need a localized format that is
-   * not supported here.
-   * 
-   * @param predef {@link PredefinedFormat} describing desired format
-   * @return a DateTimeFormat instance for the specified format
-   */
-  public static DateTimeFormat getFormat(PredefinedFormat predef) {
-    if (usesFixedEnglishStrings(predef)) {
-      String pattern;
-      switch (predef) {
-        case RFC_2822:
-          pattern = RFC2822_PATTERN;
-          break;
-        case ISO_8601:
-          pattern = ISO8601_PATTERN;
-          break;
-        default:
-          throw new IllegalStateException("Unexpected predef type " + predef);
-      }
-      return getFormat(pattern, new DateTimeFormatInfoImpl_en());
-    }
-    DateTimeFormatInfo dtfi = getDefaultDateTimeFormatInfo();
-    String pattern;
-    switch (predef) {
-      case DATE_FULL:
-        pattern = dtfi.dateFormatFull();
-        break;
-      case DATE_LONG:
-        pattern = dtfi.dateFormatLong();
-        break;
-      case DATE_MEDIUM:
-        pattern = dtfi.dateFormatMedium();
-        break;
-      case DATE_SHORT:
-        pattern = dtfi.dateFormatShort();
-        break;
-      case DATE_TIME_FULL:
-        pattern = dtfi.dateTimeFull(dtfi.timeFormatFull(),
-            dtfi.dateFormatFull());
-        break;
-      case DATE_TIME_LONG:
-        pattern = dtfi.dateTimeLong(dtfi.timeFormatLong(),
-            dtfi.dateFormatLong());
-        break;
-      case DATE_TIME_MEDIUM:
-        pattern = dtfi.dateTimeMedium(dtfi.timeFormatMedium(),
-            dtfi.dateFormatMedium());
-        break;
-      case DATE_TIME_SHORT:
-        pattern = dtfi.dateTimeShort(dtfi.timeFormatShort(),
-            dtfi.dateFormatShort());
-        break;
-      case DAY:
-        pattern = dtfi.formatDay();
-        break;
-      case HOUR24_MINUTE:
-        pattern = dtfi.formatHour24Minute();
-        break;
-      case HOUR24_MINUTE_SECOND:
-        pattern = dtfi.formatHour24MinuteSecond();
-        break;
-      case HOUR_MINUTE:
-        pattern = dtfi.formatHour12Minute();
-        break;
-      case HOUR_MINUTE_SECOND:
-        pattern = dtfi.formatHour12MinuteSecond();
-        break;
-      case MINUTE_SECOND:
-        pattern = dtfi.formatMinuteSecond();
-        break;
-      case MONTH:
-        pattern = dtfi.formatMonthFull();
-        break;
-      case MONTH_ABBR:
-        pattern = dtfi.formatMonthAbbrev();
-        break;
-      case MONTH_ABBR_DAY:
-        pattern = dtfi.formatMonthAbbrevDay();
-        break;
-      case MONTH_DAY:
-        pattern = dtfi.formatMonthFullDay();
-        break;
-      case MONTH_NUM_DAY:
-        pattern = dtfi.formatMonthNumDay();
-        break;
-      case MONTH_WEEKDAY_DAY:
-        pattern = dtfi.formatMonthFullWeekdayDay();
-        break;
-      case TIME_FULL:
-        pattern = dtfi.timeFormatFull();
-        break;
-      case TIME_LONG:
-        pattern = dtfi.timeFormatLong();
-        break;
-      case TIME_MEDIUM:
-        pattern = dtfi.timeFormatMedium();
-        break;
-      case TIME_SHORT:
-        pattern = dtfi.timeFormatShort();
-        break;
-      case YEAR:
-        pattern = dtfi.formatYear();
-        break;
-      case YEAR_MONTH:
-        pattern = dtfi.formatYearMonthFull();
-        break;
-      case YEAR_MONTH_ABBR:
-        pattern = dtfi.formatYearMonthAbbrev();
-        break;
-      case YEAR_MONTH_ABBR_DAY:
-        pattern = dtfi.formatYearMonthAbbrevDay();
-        break;
-      case YEAR_MONTH_DAY:
-        pattern = dtfi.formatYearMonthFullDay();
-        break;
-      case YEAR_MONTH_NUM:
-        pattern = dtfi.formatYearMonthNum();
-        break;
-      case YEAR_MONTH_NUM_DAY:
-        pattern = dtfi.formatYearMonthNumDay();
-        break;
-      case YEAR_QUARTER:
-        pattern = dtfi.formatYearQuarterFull();
-        break;
-      case YEAR_QUARTER_ABBR:
-        pattern = dtfi.formatYearQuarterShort();
-        break;
-      default:
-        throw new IllegalArgumentException("Unexpected predefined format "
-            + predef);
-    }
-    return getFormat(pattern, dtfi);
-  }
-
   /**
    * Returns a DateTimeFormat object using the specified pattern. If you need to
    * format or parse repeatedly using the same pattern, it is highly recommended
    * that you cache the returned <code>DateTimeFormat</code> object and reuse it
    * rather than calling this method repeatedly.
-   * 
-   * <p>Note that the pattern supplied is used as-is -- for example, if you
-   * supply "MM/dd/yyyy" as the pattern, that is the order you will get the
-   * fields, even in locales where the order is different.  It is recommended to
-   * use {@link #getFormat(PredefinedFormat)} instead -- if you use this method,
-   * you are taking responsibility for localizing the patterns yourself.
    * 
    * @param pattern string to specify how the date should be formatted
    * 
@@ -648,149 +450,165 @@ public class DateTimeFormat {
    *           parsed
    */
   public static DateTimeFormat getFormat(String pattern) {
-    return getFormat(pattern, getDefaultDateTimeFormatInfo());
+    return new DateTimeFormat(pattern, getDefaultDateTimeConstants());
   }
 
   /**
    * Retrieve the DateTimeFormat object for full date format. The pattern for
    * this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#DATE_FULL} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getFullDateFormat() {
-    return getFormat(PredefinedFormat.DATE_FULL);
+    if (cachedFullDateFormat == null) {
+      String pattern = getDefaultDateTimeConstants().dateFormats()[FULL_DATE_FORMAT];
+      cachedFullDateFormat = new DateTimeFormat(pattern);
+    }
+    return cachedFullDateFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for full date and time format. The
    * pattern for this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#DATE_TIME_FULL} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getFullDateTimeFormat() {
-    return getFormat(PredefinedFormat.DATE_TIME_FULL);
+    if (cachedFullDateTimeFormat == null) {
+      String pattern = getDefaultDateTimeConstants().dateFormats()[FULL_DATE_FORMAT]
+          + " " + getDefaultDateTimeConstants().timeFormats()[FULL_TIME_FORMAT];
+      cachedFullDateTimeFormat = new DateTimeFormat(pattern);
+    }
+    return cachedFullDateTimeFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for full time format. The pattern for
    * this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#TIME_FULL} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getFullTimeFormat() {
-    return getFormat(PredefinedFormat.TIME_FULL);
+    if (cachedFullTimeFormat == null) {
+      String pattern = getDefaultDateTimeConstants().timeFormats()[FULL_TIME_FORMAT];
+      cachedFullTimeFormat = new DateTimeFormat(pattern);
+    }
+    return cachedFullTimeFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for long date format. The pattern for
    * this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#DATE_LONG} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getLongDateFormat() {
-    return getFormat(PredefinedFormat.DATE_LONG);
+    if (cachedLongDateFormat == null) {
+      String pattern = getDefaultDateTimeConstants().dateFormats()[LONG_DATE_FORMAT];
+      cachedLongDateFormat = new DateTimeFormat(pattern);
+    }
+    return cachedLongDateFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for long date and time format. The
    * pattern for this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#DATE_TIME_LONG} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getLongDateTimeFormat() {
-    return getFormat(PredefinedFormat.DATE_TIME_LONG);
+    if (cachedLongDateTimeFormat == null) {
+      String pattern = getDefaultDateTimeConstants().dateFormats()[LONG_DATE_FORMAT]
+          + " " + getDefaultDateTimeConstants().timeFormats()[LONG_TIME_FORMAT];
+      cachedLongDateTimeFormat = new DateTimeFormat(pattern);
+    }
+    return cachedLongDateTimeFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for long time format. The pattern for
    * this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#TIME_LONG} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getLongTimeFormat() {
-    return getFormat(PredefinedFormat.TIME_LONG);
+    if (cachedLongTimeFormat == null) {
+      String pattern = getDefaultDateTimeConstants().timeFormats()[LONG_TIME_FORMAT];
+      cachedLongTimeFormat = new DateTimeFormat(pattern);
+    }
+    return cachedLongTimeFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for medium date format. The pattern for
    * this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#DATE_MEDIUM} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getMediumDateFormat() {
-    return getFormat(PredefinedFormat.DATE_MEDIUM);
+    if (cachedMediumDateFormat == null) {
+      String pattern = getDefaultDateTimeConstants().dateFormats()[MEDIUM_DATE_FORMAT];
+      cachedMediumDateFormat = new DateTimeFormat(pattern);
+    }
+    return cachedMediumDateFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for medium date and time format. The
    * pattern for this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   *     {@link PredefinedFormat#DATE_TIME_MEDIUM} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getMediumDateTimeFormat() {
-    return getFormat(PredefinedFormat.DATE_TIME_MEDIUM);
+    if (cachedMediumDateTimeFormat == null) {
+      String pattern = getDefaultDateTimeConstants().dateFormats()[MEDIUM_DATE_FORMAT]
+          + " " + getDefaultDateTimeConstants().timeFormats()[MEDIUM_TIME_FORMAT];
+      cachedMediumDateTimeFormat = new DateTimeFormat(pattern);
+    }
+    return cachedMediumDateTimeFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for medium time format. The pattern for
    * this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#TIME_MEDIUM} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getMediumTimeFormat() {
-    return getFormat(PredefinedFormat.TIME_MEDIUM);
+    if (cachedMediumTimeFormat == null) {
+      String pattern = getDefaultDateTimeConstants().timeFormats()[MEDIUM_TIME_FORMAT];
+      cachedMediumTimeFormat = new DateTimeFormat(pattern);
+    }
+    return cachedMediumTimeFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for short date format. The pattern for
    * this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#DATE_SHORT} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getShortDateFormat() {
-    return getFormat(PredefinedFormat.DATE_SHORT);
+    if (cachedShortDateFormat == null) {
+      String pattern = getDefaultDateTimeConstants().dateFormats()[SHORT_DATE_FORMAT];
+      cachedShortDateFormat = new DateTimeFormat(pattern);
+    }
+    return cachedShortDateFormat;
   }
 
   /**
    * Retrieve the DateTimeFormat object for short date and time format. The
    * pattern for this format is predefined for each locale.
    * 
-   * @return A DateTimeFormat object
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#DATE_TIME_SHORT} instead
+   * @return A DateTimeFormat object.
    */
-  @Deprecated
   public static DateTimeFormat getShortDateTimeFormat() {
-    return getFormat(PredefinedFormat.DATE_TIME_SHORT);
+    if (cachedShortDateTimeFormat == null) {
+      String pattern = getDefaultDateTimeConstants().dateFormats()[SHORT_DATE_FORMAT]
+          + " " + getDefaultDateTimeConstants().timeFormats()[SHORT_TIME_FORMAT];
+      cachedShortDateTimeFormat = new DateTimeFormat(pattern);
+    }
+    return cachedShortDateTimeFormat;
   }
 
   /**
@@ -798,63 +616,22 @@ public class DateTimeFormat {
    * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
-   * @deprecated use {@link #getFormat(PredefinedFormat)} with
-   *     {@link PredefinedFormat#TIME_SHORT} instead
    */
-  @Deprecated
   public static DateTimeFormat getShortTimeFormat() {
-    return getFormat(PredefinedFormat.TIME_SHORT);
+    if (cachedShortTimeFormat == null) {
+      String pattern = getDefaultDateTimeConstants().timeFormats()[SHORT_TIME_FORMAT];
+      cachedShortTimeFormat = new DateTimeFormat(pattern);
+    }
+    return cachedShortTimeFormat;
   }
 
-  /**
-   * Internal factory method that provides caching.
-   * 
-   * @param pattern
-   * @param dtfi
-   * @return DateTimeFormat instance
-   */
-  protected static DateTimeFormat getFormat(String pattern,
-      DateTimeFormatInfo dtfi) {
-    DateTimeFormatInfo defaultDtfi = getDefaultDateTimeFormatInfo();
-    DateTimeFormat dtf = null;
-    if (dtfi == defaultDtfi) {
-      dtf = cache.get(pattern);
-    }
-    if (dtf == null) {
-      dtf = new DateTimeFormat(pattern, dtfi);
-      if (dtfi == defaultDtfi) {
-        cache.put(pattern, dtf);
-      }
-    }
-    return dtf;
-  }
-
-  private static DateTimeFormatInfo getDefaultDateTimeFormatInfo() {
-    return LocaleInfo.getCurrentLocale().getDateTimeFormatInfo();
-  }
-
-  /**
-   * Returns true if the predefined format is one that specifies always using
-   * English names/separators.
-   * <p>This should be a method on PredefinedFormat, but that would defeat the
-   * enum optimizations GWT is currently capable of.
-   * @param predef
-   * @return true if the specified format requires English names/separators
-   */
-  private static boolean usesFixedEnglishStrings(PredefinedFormat predef) {
-    switch (predef) {
-      case RFC_2822:
-        return true;
-      case ISO_8601:
-        return true;
-      default:
-        return false;
-    }
+  private static DateTimeConstants getDefaultDateTimeConstants() {
+    return LocaleInfo.getCurrentLocale().getDateTimeConstants();
   }
 
   private final ArrayList<PatternPart> patternParts = new ArrayList<PatternPart>();
 
-  private final DateTimeFormatInfo dateTimeFormatInfo;
+  private final DateTimeConstants dateTimeConstants;
 
   private final String pattern;
 
@@ -865,7 +642,7 @@ public class DateTimeFormat {
    * @param pattern string pattern specification
    */
   protected DateTimeFormat(String pattern) {
-    this(pattern, getDefaultDateTimeFormatInfo());
+    this(pattern, getDefaultDateTimeConstants());
   }
 
   /**
@@ -874,23 +651,10 @@ public class DateTimeFormat {
    * 
    * @param pattern string pattern specification
    * @param dateTimeConstants locale specific symbol collection
-   * @deprecated use {@link #DateTimeFormat(String, DateTimeFormatInfo)}
    */
-  @Deprecated
   protected DateTimeFormat(String pattern, DateTimeConstants dateTimeConstants) {
-    this(pattern, new DateTimeFormatInfoAdapter(dateTimeConstants));
-  }
-
-  /**
-   * Constructs a format object using the specified pattern and user-supplied
-   * date time constants.
-   * 
-   * @param pattern string pattern specification
-   * @param dtfi DateTimeFormatInfo instance to use
-   */
-  protected DateTimeFormat(String pattern, DateTimeFormatInfo dtfi) {
     this.pattern = pattern;
-    this.dateTimeFormatInfo = dtfi;
+    this.dateTimeConstants = dateTimeConstants;
 
     /*
      * Even though the pattern is only compiled for use in parsing and parsing
@@ -1176,9 +940,9 @@ public class DateTimeFormat {
    */
   private void formatAmPm(StringBuffer buf, Date date) {
     if (date.getHours() >= 12 && date.getHours() < 24) {
-      buf.append(dateTimeFormatInfo.ampms()[1]);
+      buf.append(dateTimeConstants.ampms()[1]);
     } else {
-      buf.append(dateTimeFormatInfo.ampms()[0]);
+      buf.append(dateTimeConstants.ampms()[0]);
     }
   }
 
@@ -1206,11 +970,11 @@ public class DateTimeFormat {
   private void formatDayOfWeek(StringBuffer buf, int count, Date date) {
     int value = date.getDay();
     if (count == 5) {
-      buf.append(dateTimeFormatInfo.weekdaysNarrow()[value]);
+      buf.append(dateTimeConstants.narrowWeekdays()[value]);
     } else if (count == 4) {
-      buf.append(dateTimeFormatInfo.weekdaysFull()[value]);
+      buf.append(dateTimeConstants.weekdays()[value]);
     } else {
-      buf.append(dateTimeFormatInfo.weekdaysShort()[value]);
+      buf.append(dateTimeConstants.shortWeekdays()[value]);
     }
   }
 
@@ -1225,9 +989,9 @@ public class DateTimeFormat {
   private void formatEra(StringBuffer buf, int count, Date date) {
     int value = date.getYear() >= -JS_START_YEAR ? 1 : 0;
     if (count >= 4) {
-      buf.append(dateTimeFormatInfo.erasFull()[value]);
+      buf.append(dateTimeConstants.eraNames()[value]);
     } else {
-      buf.append(dateTimeFormatInfo.erasShort()[value]);
+      buf.append(dateTimeConstants.eras()[value]);
     }
   }
 
@@ -1296,13 +1060,13 @@ public class DateTimeFormat {
     int value = date.getMonth();
     switch (count) {
       case 5:
-        buf.append(dateTimeFormatInfo.monthsNarrow()[value]);
+        buf.append(dateTimeConstants.narrowMonths()[value]);
         break;
       case 4:
-        buf.append(dateTimeFormatInfo.monthsFull()[value]);
+        buf.append(dateTimeConstants.months()[value]);
         break;
       case 3:
-        buf.append(dateTimeFormatInfo.monthsShort()[value]);
+        buf.append(dateTimeConstants.shortMonths()[value]);
         break;
       default:
         zeroPaddingNumber(buf, value + 1, count);
@@ -1320,9 +1084,9 @@ public class DateTimeFormat {
   private void formatQuarter(StringBuffer buf, int count, Date date) {
     int value = date.getMonth() / 3;
     if (count < 4) {
-      buf.append(dateTimeFormatInfo.quartersShort()[value]);
+      buf.append(dateTimeConstants.shortQuarters()[value]);
     } else {
-      buf.append(dateTimeFormatInfo.quartersFull()[value]);
+      buf.append(dateTimeConstants.quarters()[value]);
     }
   }
 
@@ -1350,11 +1114,11 @@ public class DateTimeFormat {
   private void formatStandaloneDay(StringBuffer buf, int count, Date date) {
     int value = date.getDay();
     if (count == 5) {
-      buf.append(dateTimeFormatInfo.weekdaysNarrowStandalone()[value]);
+      buf.append(dateTimeConstants.standaloneNarrowWeekdays()[value]);
     } else if (count == 4) {
-      buf.append(dateTimeFormatInfo.weekdaysFullStandalone()[value]);
+      buf.append(dateTimeConstants.standaloneWeekdays()[value]);
     } else if (count == 3) {
-      buf.append(dateTimeFormatInfo.weekdaysShortStandalone()[value]);
+      buf.append(dateTimeConstants.standaloneShortWeekdays()[value]);
     } else {
       zeroPaddingNumber(buf, value, 1);
     }
@@ -1371,11 +1135,11 @@ public class DateTimeFormat {
   private void formatStandaloneMonth(StringBuffer buf, int count, Date date) {
     int value = date.getMonth();
     if (count == 5) {
-      buf.append(dateTimeFormatInfo.monthsNarrowStandalone()[value]);
+      buf.append(dateTimeConstants.standaloneNarrowMonths()[value]);
     } else if (count == 4) {
-      buf.append(dateTimeFormatInfo.monthsFullStandalone()[value]);
+      buf.append(dateTimeConstants.standaloneMonths()[value]);
     } else if (count == 3) {
-      buf.append(dateTimeFormatInfo.monthsShortStandalone()[value]);
+      buf.append(dateTimeConstants.standaloneShortMonths()[value]);
     } else {
       zeroPaddingNumber(buf, value + 1, count);
     }
@@ -1408,10 +1172,8 @@ public class DateTimeFormat {
    */
   private void formatTimeZoneRFC(StringBuffer buf, int count, Date date,
       TimeZone timeZone) {
-    if (count < 3) {
+    if (count < 4) {
       buf.append(timeZone.getRFCTimeZoneString(date));
-    } else if (count == 3) {
-      buf.append(timeZone.getISOTimeZoneString(date));
     } else {
       buf.append(timeZone.getGMTString(date));
     }
@@ -1970,7 +1732,7 @@ public class DateTimeFormat {
 
     switch (ch) {
       case 'G': // era
-        value = matchString(text, start, dateTimeFormatInfo.erasFull(), pos);
+        value = matchString(text, start, dateTimeConstants.eras(), pos);
         cal.setEra(value);
         return true;
       case 'M': // month
@@ -1982,7 +1744,7 @@ public class DateTimeFormat {
       case 'c': // standalone day of week
         return subParseStandaloneDay(text, pos, start, cal);
       case 'a': // AM/PM
-        value = matchString(text, start, dateTimeFormatInfo.ampms(), pos);
+        value = matchString(text, start, dateTimeConstants.ampms(), pos);
         cal.setAmpm(value);
         return true;
       case 'y': // year
@@ -2055,9 +1817,9 @@ public class DateTimeFormat {
     // 'E' - DAY_OF_WEEK
     // Want to be able to parse both short and long forms.
     // Try count == 4 (DDDD) first:
-    value = matchString(text, start, dateTimeFormatInfo.weekdaysFull(), pos);
+    value = matchString(text, start, dateTimeConstants.weekdays(), pos);
     if (value < 0) {
-      value = matchString(text, start, dateTimeFormatInfo.weekdaysShort(), pos);
+      value = matchString(text, start, dateTimeConstants.shortWeekdays(), pos);
     }
     if (value < 0) {
       return false;
@@ -2115,9 +1877,9 @@ public class DateTimeFormat {
     if (value < 0) {
       // Want to be able to parse both short and long forms.
       // Try count == 4 first:
-      value = matchString(text, start, dateTimeFormatInfo.monthsFull(), pos);
+      value = matchString(text, start, dateTimeConstants.months(), pos);
       if (value < 0) { // count == 4 failed, now try count == 3.
-        value = matchString(text, start, dateTimeFormatInfo.monthsShort(), pos);
+        value = matchString(text, start, dateTimeConstants.shortMonths(), pos);
       }
       if (value < 0) {
         return false;
@@ -2148,11 +1910,11 @@ public class DateTimeFormat {
     // 'c' - DAY_OF_WEEK
     // Want to be able to parse both short and long forms.
     // Try count == 4 (cccc) first:
-    value = matchString(text, start, dateTimeFormatInfo.weekdaysFullStandalone(),
+    value = matchString(text, start, dateTimeConstants.standaloneWeekdays(),
         pos);
     if (value < 0) {
       value = matchString(text, start,
-          dateTimeFormatInfo.weekdaysShortStandalone(), pos);
+          dateTimeConstants.standaloneShortWeekdays(), pos);
     }
     if (value < 0) {
       return false;
@@ -2180,10 +1942,10 @@ public class DateTimeFormat {
       // Want to be able to parse both short and long forms.
       // Try count == 4 first:
       value = matchString(text, start,
-          dateTimeFormatInfo.monthsFullStandalone(), pos);
+          dateTimeConstants.standaloneMonths(), pos);
       if (value < 0) { // count == 4 failed, now try count == 3.
         value = matchString(text, start,
-            dateTimeFormatInfo.monthsShortStandalone(), pos);
+            dateTimeConstants.standaloneShortMonths(), pos);
       }
       if (value < 0) {
         return false;

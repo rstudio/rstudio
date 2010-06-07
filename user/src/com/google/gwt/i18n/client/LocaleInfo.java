@@ -25,7 +25,6 @@ import com.google.gwt.i18n.client.impl.LocaleInfoImpl;
  * Provides access to the currently-active locale and the list of available
  * locales.
  */
-@SuppressWarnings("deprecation")
 public class LocaleInfo {
 
   /**
@@ -99,8 +98,6 @@ public class LocaleInfo {
   private final CldrImpl cldrImpl;
 
   private DateTimeConstants dateTimeConstants;
-
-  private DateTimeFormatInfo dateTimeFormatInfo;
   
   private NumberConstants numberConstants;
 
@@ -123,7 +120,7 @@ public class LocaleInfo {
     this.infoImpl = impl;
     this.cldrImpl = cldr;
   }
-
+  
   /**
    * @return a DateTimeConstants instance for this locale.
    */
@@ -131,15 +128,7 @@ public class LocaleInfo {
     ensureDateTimeConstants();
     return dateTimeConstants;
   }
-
-  /**
-   * @return a DateTimeConstants instance for this locale.
-   */
-  public final DateTimeFormatInfo getDateTimeFormatInfo() {
-    ensureDateTimeFormatInfo();
-    return dateTimeFormatInfo;
-  }
-
+  
   /**
    * @return the name of this locale, such as "default, "en_US", etc
    */
@@ -164,14 +153,7 @@ public class LocaleInfo {
 
   private void ensureDateTimeConstants() {
     if (dateTimeConstants == null) {
-      ensureDateTimeFormatInfo();
-      dateTimeConstants = new DateTimeConstantsAdapter(dateTimeFormatInfo);
-    }
-  }
-
-  private void ensureDateTimeFormatInfo() {
-    if (dateTimeFormatInfo == null) {
-      dateTimeFormatInfo = infoImpl.getDateTimeFormatInfo();
+      dateTimeConstants = infoImpl.getDateTimeConstants();
     }
   }
   

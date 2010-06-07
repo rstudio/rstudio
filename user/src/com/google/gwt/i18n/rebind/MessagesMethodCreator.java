@@ -26,7 +26,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.i18n.client.PluralRule;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.i18n.client.Messages.Optional;
 import com.google.gwt.i18n.client.Messages.PluralCount;
 import com.google.gwt.i18n.client.Messages.PluralText;
@@ -52,9 +51,8 @@ class MessagesMethodCreator extends AbstractMethodCreator {
    * Implements {x,date...} references in MessageFormat.
    */
   private static class DateFormatter implements ValueFormatter {
-    // TODO(jat): should we issue warnings for this formatter?
-    public String format(GwtLocale locale, StringGenerator out,
-        String subformat, String argName, JType argType) {
+    public String format(StringGenerator out, String subformat, String argName,
+        JType argType) {
       if (!"java.util.Date".equals(argType.getQualifiedSourceName())) {
         return "Only java.util.Date acceptable for date format";
       }
@@ -79,50 +77,11 @@ class MessagesMethodCreator extends AbstractMethodCreator {
   }
 
   /**
-   * Implements {x,localdatetime,skeleton} references in MessageFormat.
-   */
-  private static class LocalDateTimeFormatter implements ValueFormatter {
-    private static final String PREDEF = "predef:";
-
-    public String format(GwtLocale locale, StringGenerator out,
-        String subformat, String argName, JType argType) {
-      if (!"java.util.Date".equals(argType.getQualifiedSourceName())) {
-        return "Only java.util.Date acceptable for localdatetime format";
-      }
-      if (subformat == null || subformat.length() == 0) {
-        return "localdatetime format requires a skeleton pattern";
-      }
-      if (subformat.startsWith(PREDEF)) {
-        // TODO(jat): error checking/logging
-        PredefinedFormat predef;
-        try {
-          predef = PredefinedFormat.valueOf(subformat.substring(
-              PREDEF.length()));
-        } catch (IllegalArgumentException e) {
-          return e.getMessage();
-        }
-        out.appendExpression(dtFormatClassName + ".getFormat("
-            + PredefinedFormat.class.getName() + "." + predef.toString()
-            + ").format(" + argName + ")", true);
-        return null;
-      }
-      DateTimePatternGenerator dtpg = new DateTimePatternGenerator(locale);
-      String pattern = dtpg.getBestPattern(subformat);
-      if (pattern == null) {
-        return "Invalid localdatetime skeleton pattern \"" + subformat + "\"";
-      }
-      out.appendExpression(dtFormatClassName + ".getFormat("
-          + wrap(pattern) + ").format(" + argName + ")", true);
-      return null;
-    }
-  }
-
-  /**
    * Implements {x,number...} references in MessageFormat.
    */
   private static class NumberFormatter implements ValueFormatter {
-    public String format(GwtLocale locale, StringGenerator out,
-        String subformat, String argName, JType argType) {
+    public String format(StringGenerator out, String subformat, String argName,
+        JType argType) {
       JPrimitiveType argPrimType = argType.isPrimitive();
       if (argPrimType != null) {
         if (argPrimType == JPrimitiveType.BOOLEAN
@@ -275,9 +234,8 @@ class MessagesMethodCreator extends AbstractMethodCreator {
    * Implements {x,time...} references in MessageFormat.
    */
   private static class TimeFormatter implements ValueFormatter {
-    // TODO(jat): should we issue warnings for this formatter?
-    public String format(GwtLocale locale, StringGenerator out,
-        String subformat, String argName, JType argType) {
+    public String format(StringGenerator out, String subformat, String argName,
+        JType argType) {
       if (!"java.util.Date".equals(argType.getQualifiedSourceName())) {
         return "Only java.util.Date acceptable for date format";
       }
@@ -305,17 +263,14 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     /**
      * Creates code to format a value according to a format string.
      * 
-     * @param locale current locale
      * @param out StringBuffer to append to
      * @param subformat the remainder of the format string
      * @param argName the name of the argument to use in the generated code
      * @param argType the type of the argument
      * @return null if no error or an appropriate error message
      */
-    // TODO(jat): change to pass in logger and return boolean, also enable
-    //     dynamic data supplied in other parameters
-    String format(GwtLocale locale, StringGenerator out, String subformat,
-        String argName, JType argType);
+    String format(StringGenerator out, String subformat, String argName,
+        JType argType);
   }
 
   /**
@@ -337,7 +292,6 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     formatters.put("date", new DateFormatter());
     formatters.put("number", new NumberFormatter());
     formatters.put("time", new TimeFormatter());
-    formatters.put("localdatetime", new LocalDateTimeFormatter());
     // TODO: implement ChoiceFormat and PluralFormat
   }
 
@@ -408,7 +362,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           generated.append("  // " + pluralForms[i].getName() + " - "
               + pluralForms[i].getDescription() + "\n");
           generated.append("  case " + i + ": return ");
-          generateString(logger, locale, template, params, seenFlags, generated);
+          generateString(logger, template, params, seenFlags, generated);
           generated.append(";\n");
         } else if (pluralForms[i].getWarnIfMissing()) {
           logger.log(TreeLogger.WARN, "No plural form '"
@@ -421,7 +375,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     }
     generated.append("return ");
     String template = resourceList.getRequiredStringExt(key, null);
-    generateString(logger, locale, template, params, seenFlags, generated);
+    generateString(logger, template, params, seenFlags, generated);
 
     // Generate an error if any required parameter was not used somewhere.
     for (int i = 0; i < numParams; ++i) {
@@ -501,9 +455,9 @@ class MessagesMethodCreator extends AbstractMethodCreator {
    * @throws UnableToCompleteException
    */
   @SuppressWarnings("fallthrough")
-  private void generateString(TreeLogger logger, GwtLocale locale,
-      String template, JParameter[] params, boolean[] seenFlag,
-      StringBuffer outputBuf) throws UnableToCompleteException {
+  private void generateString(TreeLogger logger, String template,
+      JParameter[] params, boolean[] seenFlag, StringBuffer outputBuf)
+      throws UnableToCompleteException {
     StringGenerator buf = new StringGenerator(outputBuf);
     try {
       for (TemplateChunk chunk : MessageFormatParser.parse(template)) {
@@ -523,10 +477,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
             String subformat = argChunk.getSubFormat();
             ValueFormatter formatter = formatters.get(format);
             if (formatter != null) {
-              // TODO(jat): add support for specifying additional dynamic data
-              //     in another argument -- examples would be the currency code
-              //     for a number format or the timezone for a date/time format.
-              String err = formatter.format(locale, buf, subformat, arg,
+              String err = formatter.format(buf, subformat, arg,
                   params[argNumber].getType());
               if (err != null) {
                 throw error(logger, err);

@@ -17,7 +17,7 @@ package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.constants.TimeZoneConstants;
-import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl_de;
+import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Date;
 
@@ -26,22 +26,11 @@ import java.util.Date;
  * language.
  */
 @SuppressWarnings("deprecation")
-public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
-
-  private static class GermanDTF extends DateTimeFormat {
-
-    public static DateTimeFormat getFormat(String pattern) {
-      return DateTimeFormat.getFormat(pattern, new DateTimeFormatInfoImpl_de());
-    }
-
-    protected GermanDTF(String pattern) {
-      super(pattern);
-    }
-  }
+public class DateTimeFormat_en_Test extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.i18n.I18NTest_en";
+    return "com.google.gwt.i18n.I18NTest";
   }
 
   public void test_ccc() {
@@ -133,6 +122,48 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("J", DateTimeFormat.getFormat("LLLLL").format(date));
   }
+  
+  public void test_S() {
+    Date date = new Date(0);
+    assertEquals("0", DateTimeFormat.getFormat("S").format(date));
+    
+    date = new Date(55);
+    assertEquals("1", DateTimeFormat.getFormat("S").format(date));
+    
+    date = new Date(555);
+    assertEquals("6", DateTimeFormat.getFormat("S").format(date));
+    
+    date = new Date(999);
+    assertEquals("9", DateTimeFormat.getFormat("S").format(date));
+  }
+  
+  public void test_SS() {
+    Date date = new Date(0);
+    assertEquals("00", DateTimeFormat.getFormat("SS").format(date));
+    
+    date = new Date(55);
+    assertEquals("06", DateTimeFormat.getFormat("SS").format(date));
+    
+    date = new Date(555);
+    assertEquals("56", DateTimeFormat.getFormat("SS").format(date));
+    
+    date = new Date(999);
+    assertEquals("99", DateTimeFormat.getFormat("SS").format(date));
+  }
+  
+  public void test_SSS() {    
+    Date date = new Date(0);
+    assertEquals("000", DateTimeFormat.getFormat("SSS").format(date));
+    
+    date = new Date(55);
+    assertEquals("055", DateTimeFormat.getFormat("SSS").format(date));
+    
+    date = new Date(555);
+    assertEquals("555", DateTimeFormat.getFormat("SSS").format(date));
+    
+    date = new Date(999);
+    assertEquals("999", DateTimeFormat.getFormat("SSS").format(date));
+  }
 
   public void test_predefinedFormat() {
     Date date = new Date(2006 - 1900, 7, 4, 13, 49, 24);
@@ -180,7 +211,7 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
         usPacific);
     assertEquals("8/4/06 1:49 PM", shortFormat);
   }
-  
+
   public void test_QQQQyy() {
     Date date;
 
@@ -232,7 +263,7 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     assertEquals("4th quarter 06", DateTimeFormat.getFormat("QQQQ yy").format(
         date));
   }
-  
+
   public void test_QQyyyy() {
     Date date = new Date(2006 - 1900, 0, 27);
     date.setHours(13);
@@ -295,7 +326,7 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     date.setSeconds(10);
     assertEquals("Q4 2006", DateTimeFormat.getFormat("QQ yyyy").format(date));
   }
-  
+
   public void test_quote() {
     Date date = new Date(2006 - 1900, 6, 27);
     date.setHours(13);
@@ -306,20 +337,6 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     assertEquals("13 oclock", DateTimeFormat.getFormat("HH 'oclock'").format(
         date));
     assertEquals("13 '", DateTimeFormat.getFormat("HH ''").format(date));
-  }
-
-  public void test_S() {
-    Date date = new Date(0);
-    assertEquals("0", DateTimeFormat.getFormat("S").format(date));
-    
-    date = new Date(55);
-    assertEquals("1", DateTimeFormat.getFormat("S").format(date));
-    
-    date = new Date(555);
-    assertEquals("6", DateTimeFormat.getFormat("S").format(date));
-    
-    date = new Date(999);
-    assertEquals("9", DateTimeFormat.getFormat("S").format(date));
   }
 
   public void test_simepleTimezonev() {
@@ -370,39 +387,11 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
         "MM/dd/yyyy HH:mm:ss ZZ").format(date, simpleTimeZone));
 
-    assertEquals("07/27/2006 06:10:10 -07:00", DateTimeFormat.getFormat(
+    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
         "MM/dd/yyyy HH:mm:ss ZZZ").format(date, simpleTimeZone));
 
     assertEquals("07/27/2006 06:10:10 GMT-07:00", DateTimeFormat.getFormat(
         "MM/dd/yyyy HH:mm:ss ZZZZ").format(date, simpleTimeZone));
-  }
-
-  public void test_SS() {
-    Date date = new Date(0);
-    assertEquals("00", DateTimeFormat.getFormat("SS").format(date));
-    
-    date = new Date(55);
-    assertEquals("06", DateTimeFormat.getFormat("SS").format(date));
-    
-    date = new Date(555);
-    assertEquals("56", DateTimeFormat.getFormat("SS").format(date));
-    
-    date = new Date(999);
-    assertEquals("99", DateTimeFormat.getFormat("SS").format(date));
-  }
-
-  public void test_SSS() {    
-    Date date = new Date(0);
-    assertEquals("000", DateTimeFormat.getFormat("SSS").format(date));
-    
-    date = new Date(55);
-    assertEquals("055", DateTimeFormat.getFormat("SSS").format(date));
-    
-    date = new Date(555);
-    assertEquals("555", DateTimeFormat.getFormat("SSS").format(date));
-    
-    date = new Date(999);
-    assertEquals("999", DateTimeFormat.getFormat("SSS").format(date));
   }
 
   public void test_timezonev() {
@@ -480,7 +469,7 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
         "MM/dd/yyyy HH:mm:ss ZZ").format(date, usPacific));
 
-    assertEquals("07/27/2006 06:10:10 -07:00", DateTimeFormat.getFormat(
+    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
         "MM/dd/yyyy HH:mm:ss ZZZ").format(date, usPacific));
 
     assertEquals("07/27/2006 06:10:10 GMT-07:00", DateTimeFormat.getFormat(
@@ -493,7 +482,7 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     assertEquals("02/27/2006 05:10:10 -0800", DateTimeFormat.getFormat(
         "MM/dd/yyyy HH:mm:ss ZZ").format(date, usPacific));
 
-    assertEquals("02/27/2006 05:10:10 -08:00", DateTimeFormat.getFormat(
+    assertEquals("02/27/2006 05:10:10 -0800", DateTimeFormat.getFormat(
         "MM/dd/yyyy HH:mm:ss ZZZ").format(date, usPacific));
 
     assertEquals("02/27/2006 05:10:10 GMT-08:00", DateTimeFormat.getFormat(
@@ -505,29 +494,7 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     assertEquals("02006.J.27 AD 01:10 PM", DateTimeFormat.getFormat(
         "yyyyy.MMMMM.dd GGG hh:mm aaa").format(date));
   }
-
-  public void testCustomFormats() {
-    MyFormats m = GWT.create(MyFormats.class);
-    Date d = new Date(2010 - 1900, 1, 15, 12, 0, 0);
-    assertEquals("Feb 15, 2010", m.yearMonthDayAbbrev().format(d));
-    assertEquals("February 15, 2010", m.yearMonthDayFull().format(d));
-    assertEquals("February 15, 2010", m.yearMonthDayFull2().format(d));
-  }
-
-  public void testMessageDateTime() {
-    MyMessages m = GWT.create(MyMessages.class);
-    Date d = new Date(2010 - 1900, 1, 15, 12, 0, 0);
-    assertEquals("It is Feb 15, 2010", m.getCustomizedDate(d));
-  }
-
-  public void testPatternCaching() {
-    DateTimeFormat dtf = DateTimeFormat.getFormat("MMMM d");
-    Date d = new Date(2010 - 1900, 1, 15, 12, 0, 0);
-    assertEquals("February 15", dtf.format(d));
-    dtf = GermanDTF.getFormat("MMMM d");
-    assertEquals("Februar 15", dtf.format(d));
-  }
-
+  
   public void testPre1970Milliseconds() {
     Date date = new Date(-631151998945L); // Jan 1, 1950 00:00:01.055 UTC
     

@@ -24,10 +24,7 @@ package com.google.gwt.i18n.client.constants;
  * 
  * If you previously were using GWT.create on this interface, you should
  * use LocaleInfo.getDateTimeConstants() instead.
- * 
- * @deprecated use DateTimeFormatInfo instead
  */
-@Deprecated
 public interface DateTimeConstants {
   String[] ampms();
 

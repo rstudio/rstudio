@@ -17,7 +17,6 @@
 package com.google.gwt.user.datepicker.client;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 
 import java.util.Date;
 
@@ -166,7 +165,7 @@ public class CalendarModel {
    * @return the day of month formatter
    */
   protected DateTimeFormat getDayOfMonthFormatter() {
-    return DateTimeFormat.getFormat(PredefinedFormat.DAY);
+    return DateTimeFormat.getFormat("d");
   }
 
   /**
@@ -184,7 +183,7 @@ public class CalendarModel {
    * @return the month and year formatter
    */
   protected DateTimeFormat getMonthAndYearFormatter() {
-    return DateTimeFormat.getFormat(PredefinedFormat.YEAR_MONTH_ABBR);
+    return DateTimeFormat.getFormat("MMM yyyy");
   }
 
   /**
