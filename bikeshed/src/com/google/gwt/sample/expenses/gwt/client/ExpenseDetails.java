@@ -16,9 +16,9 @@
 package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.CurrencyCell;
 import com.google.gwt.cell.client.DateCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -38,6 +38,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.sample.bikeshed.style.client.Styles;
@@ -339,12 +340,6 @@ public class ExpenseDetails extends Composite implements
     TableStyle cellTableStyle();
   }
 
-  private static final GetValue<ExpenseRecord, Date> createdGetter = new GetValue<ExpenseRecord, Date>() {
-    public Date getValue(ExpenseRecord object) {
-      return object.getCreated();
-    }
-  };
-
   private static ExpenseDetailsUiBinder uiBinder = GWT.create(ExpenseDetailsUiBinder.class);
 
   @UiField
@@ -384,8 +379,12 @@ public class ExpenseDetails extends Composite implements
 
   private List<SortableHeader> allHeaders = new ArrayList<SortableHeader>();
 
-  private SortableColumn<ExpenseRecord, String> approvalColumn;
-  private SortableColumn<ExpenseRecord, Date> createdColumn;
+  private Column<ExpenseRecord, String> approvalColumn;
+
+  /**
+   * The default {@link Comparator} used for sorting.
+   */
+  private Comparator<ExpenseRecord> defaultComparator;
 
   /**
    * The popup used to display errors to the user.
@@ -542,7 +541,7 @@ public class ExpenseDetails extends Composite implements
     reportsLink.setText(ExpenseList.getBreadcrumb(department, employee));
 
     // Reset sorting state of table
-    lastComparator = createdColumn.getComparator(false);
+    lastComparator = defaultComparator;
     for (SortableHeader header : allHeaders) {
       header.setSorted(false);
       header.setReverseSort(true);
@@ -576,31 +575,51 @@ public class ExpenseDetails extends Composite implements
     });
 
     // Created column.
-    createdColumn = addColumn(view, "Created", new DateCell(
-        DateTimeFormat.getFormat("MMM dd yyyy")), createdGetter);
-    lastComparator = createdColumn.getComparator(false);
+    GetValue<ExpenseRecord, Date> createdGetter = new GetValue<ExpenseRecord, Date>() {
+      public Date getValue(ExpenseRecord object) {
+        return object.getCreated();
+      }
+    };
+    defaultComparator = createColumnComparator(createdGetter, false);
+    Comparator<ExpenseRecord> createdDesc = createColumnComparator(
+        createdGetter, true);
+    addColumn(view, "Created", new DateCell(
+        DateTimeFormat.getFormat("MMM dd yyyy")), createdGetter,
+        defaultComparator, createdDesc);
+    lastComparator = defaultComparator;
 
     // Description column.
-    addColumn(view, "Description", new GetValue<ExpenseRecord, String>() {
-      public String getValue(ExpenseRecord object) {
-        return object.getDescription();
-      }
-    });
-
-    // Category column.
-    addColumn(view, "Category", new GetValue<ExpenseRecord, String>() {
-      public String getValue(ExpenseRecord object) {
-        return object.getCategory();
-      }
-    });
-
-    // Amount column.
-    addColumn(view, "Amount", new CurrencyCell(),
-        new GetValue<ExpenseRecord, Integer>() {
-          public Integer getValue(ExpenseRecord object) {
-            return (int) (object.getAmount().doubleValue() * 100);
+    addColumn(view, "Description", new TextCell(),
+        new GetValue<ExpenseRecord, String>() {
+          public String getValue(ExpenseRecord object) {
+            return object.getDescription();
           }
         });
+
+    // Category column.
+    addColumn(view, "Category", new TextCell(),
+        new GetValue<ExpenseRecord, String>() {
+          public String getValue(ExpenseRecord object) {
+            return object.getCategory();
+          }
+        });
+
+    // Amount column.
+    final GetValue<ExpenseRecord, Double> amountGetter = new GetValue<ExpenseRecord, Double>() {
+      public Double getValue(ExpenseRecord object) {
+        return object.getAmount();
+      }
+    };
+    Comparator<ExpenseRecord> amountAsc = createColumnComparator(amountGetter,
+        false);
+    Comparator<ExpenseRecord> amountDesc = createColumnComparator(amountGetter,
+        true);
+    addColumn(view, "Amount", new NumberCell(NumberFormat.getCurrencyFormat()),
+        new GetValue<ExpenseRecord, Number>() {
+          public Number getValue(ExpenseRecord object) {
+            return amountGetter.getValue(object);
+          }
+        }, amountAsc, amountDesc);
 
     // Dialog box to obtain a reason for a denial
     final DenialPopup denialPopup = new DenialPopup();
@@ -652,11 +671,43 @@ public class ExpenseDetails extends Composite implements
     return view;
   }
 
-  private <C extends Comparable<C>> SortableColumn<ExpenseRecord, C> addColumn(
+  /**
+   * Add a column of a {@link Comparable} type using default comparators.
+   * 
+   * @param <C> the column type
+   * @param table the table
+   * @param text the header text
+   * @param cell the cell used to render values
+   * @param getter the {@link GetValue} used to retrieve cell values
+   * @return the new column
+   */
+  private <C extends Comparable<C>> Column<ExpenseRecord, C> addColumn(
       final CellTable<ExpenseRecord> table, final String text,
       final Cell<C> cell, final GetValue<ExpenseRecord, C> getter) {
-    final SortableColumn<ExpenseRecord, C> column = new SortableColumn<ExpenseRecord, C>(
-        cell) {
+    return addColumn(table, text, cell, getter, createColumnComparator(getter,
+        false), createColumnComparator(getter, true));
+  }
+
+  /**
+   * Add a column with the specified comparators.
+   * 
+   * @param <C> the column type
+   * @param table the table
+   * @param text the header text
+   * @param cell the cell used to render values
+   * @param getter the {@link GetValue} used to retrieve cell values
+   * @param ascComparator the comparator used to sort ascending
+   * @param descComparator the comparator used to sort ascending
+   * @return the new column
+   */
+  private <C> Column<ExpenseRecord, C> addColumn(
+      final CellTable<ExpenseRecord> table, final String text,
+      final Cell<C> cell, final GetValue<ExpenseRecord, C> getter,
+      final Comparator<ExpenseRecord> ascComparator,
+      final Comparator<ExpenseRecord> descComparator) {
+
+    // Create the column.
+    final Column<ExpenseRecord, C> column = new Column<ExpenseRecord, C>(cell) {
       @Override
       public C getValue(ExpenseRecord object) {
         return getter.getValue(object);
@@ -665,6 +716,7 @@ public class ExpenseDetails extends Composite implements
     final SortableHeader header = new SortableHeader(text);
     allHeaders.add(header);
 
+    // Hook up sorting.
     header.setUpdater(new ValueUpdater<String>() {
       public void update(String value) {
         header.setSorted(true);
@@ -676,8 +728,9 @@ public class ExpenseDetails extends Composite implements
             otherHeader.setReverseSort(true);
           }
         }
-        sortExpenses(items.getList(),
-            column.getComparator(header.getReverseSort()));
+
+        sortExpenses(items.getList(), header.getReverseSort() ? descComparator
+            : ascComparator);
         table.refreshHeaders();
       }
     });
@@ -685,10 +738,41 @@ public class ExpenseDetails extends Composite implements
     return column;
   }
 
-  private Column<ExpenseRecord, String> addColumn(
-      CellTable<ExpenseRecord> table, final String text,
-      final GetValue<ExpenseRecord, String> getter) {
-    return addColumn(table, text, new TextCell(), getter);
+  /**
+   * Create a comparator for the column.
+   * 
+   * @param <C> the column type
+   * @param getter the {@link GetValue} used to get the cell value
+   * @param descending true if descending, false if ascending
+   * @return the comparator
+   */
+  private <C extends Comparable<C>> Comparator<ExpenseRecord> createColumnComparator(
+      final GetValue<ExpenseRecord, C> getter, final boolean descending) {
+    return new Comparator<ExpenseRecord>() {
+      public int compare(ExpenseRecord o1, ExpenseRecord o2) {
+        // Null check the row object.
+        if (o1 == null && o2 == null) {
+          return 0;
+        } else if (o1 == null) {
+          return descending ? 1 : -1;
+        } else if (o2 == null) {
+          return descending ? -1 : 1;
+        }
+
+        // Compare the column value.
+        C c1 = getter.getValue(o1);
+        C c2 = getter.getValue(o2);
+        if (c1 == null && c2 == null) {
+          return 0;
+        } else if (c1 == null) {
+          return descending ? 1 : -1;
+        } else if (c2 == null) {
+          return descending ? -1 : 1;
+        }
+        int comparison = c1.compareTo(c2);
+        return descending ? -comparison : comparison;
+      }
+    };
   }
 
   /**

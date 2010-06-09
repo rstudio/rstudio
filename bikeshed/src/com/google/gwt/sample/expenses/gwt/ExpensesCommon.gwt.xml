@@ -11,4 +11,8 @@
   <source path='request'/>
   <source path='place'/>
   <source path='ui'/>
+
+  <!-- Default Locale. -->
+  <extend-property name="locale" values="en"/>
+  <set-property-fallback name="locale" value="en"/>
 </module>
