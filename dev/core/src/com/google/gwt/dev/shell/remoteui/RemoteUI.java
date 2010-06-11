@@ -72,12 +72,11 @@ public class RemoteUI extends DevModeUI implements
       String url, String tabKey, String moduleName, String sessionKey,
       String agentTag, byte[] agentIcon, Type logLevel) {
 
-    int logHandle;
-    logHandle = viewerServiceClient.addModuleLog(remoteSocket, url, tabKey,
-        moduleName, sessionKey, agentTag, agentIcon);
+    final int logHandle = viewerServiceClient.addModuleLog(remoteSocket, url,
+        tabKey, moduleName, sessionKey, agentTag, agentIcon);
     final ViewerServiceTreeLogger moduleLogger = new ViewerServiceTreeLogger(
         viewerServiceClient);
-    moduleLogger.setLogHandle(logHandle);
+    moduleLogger.initLogHandle(logHandle);
     moduleLogger.setMaxDetail(getLogLevel());
     ModuleHandle handle = new ModuleHandle() {
       public TreeLogger getLogger() {
@@ -90,11 +89,8 @@ public class RemoteUI extends DevModeUI implements
             return;
           }
         }
-
-        ViewerServiceTreeLogger moduleLogger = (ViewerServiceTreeLogger) (getLogger());
-
         try {
-          viewerServiceClient.disconnectLog(moduleLogger.getLogHandle());
+          viewerServiceClient.disconnectLog(logHandle);
         } finally {
           synchronized (modulesLock) {
             modules.remove(this);

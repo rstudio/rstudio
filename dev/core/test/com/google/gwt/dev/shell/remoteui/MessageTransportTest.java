@@ -12,12 +12,10 @@ import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.Dev
 import junit.framework.TestCase;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -66,19 +64,11 @@ public class MessageTransportTest extends TestCase {
     }
   }
 
-  private static MockNetwork createMockNetwork() throws IOException,
-      InterruptedException, ExecutionException {
-    final ServerSocket listenSocket = new ServerSocket(0);
-    ExecutorService executorService = Executors.newFixedThreadPool(1);
-    Future<Socket> future = executorService.submit(new Callable<Socket>() {
-      public Socket call() throws Exception {
-        return listenSocket.accept();
-      }
-    });
-
-    Socket clientSocket = new Socket("localhost", listenSocket.getLocalPort());
-    Socket serverSocket = future.get();
-
+  private static MockNetwork createMockNetwork() throws IOException {
+    InetAddress localHost = InetAddress.getLocalHost();
+    ServerSocket listenSocket = new ServerSocket(0, 1, localHost);
+    Socket clientSocket = new Socket(localHost, listenSocket.getLocalPort());
+    Socket serverSocket = listenSocket.accept();
     return new MockNetwork(clientSocket, serverSocket, listenSocket);
   }
 
@@ -91,7 +81,7 @@ public class MessageTransportTest extends TestCase {
    * @throws IOException
    */
   public void testExecuteAsyncRequestWithClosedServerSocket()
-      throws IOException, InterruptedException, ExecutionException {
+      throws IOException, InterruptedException {
     MockNetwork network = createMockNetwork();
 
     /*
@@ -237,9 +227,7 @@ public class MessageTransportTest extends TestCase {
    * exception on the server side ends up throwing the proper exception via the
    * future that the client is waiting on.
    */
-  public void testExecuteRequestAsyncServerThrowsException()
-      throws InterruptedException, ExecutionException, IOException,
-      TimeoutException {
+  public void testExecuteRequestAsyncServerThrowsException() throws IOException {
     MockNetwork network = createMockNetwork();
 
     /*
@@ -319,8 +307,7 @@ public class MessageTransportTest extends TestCase {
    * @throws ExecutionException
    * @throws InterruptedException
    */
-  public void testRequestProcessor() throws IOException, InterruptedException,
-      ExecutionException {
+  public void testRequestProcessor() throws IOException {
     MockNetwork network = createMockNetwork();
 
     // Create the request that will be sent to the server
@@ -390,8 +377,7 @@ public class MessageTransportTest extends TestCase {
    * @throws ExecutionException
    * @throws InterruptedException
    */
-  public void testRequestProcessorThrowsException() throws IOException,
-      InterruptedException, ExecutionException {
+  public void testRequestProcessorThrowsException() throws IOException {
     MockNetwork network = createMockNetwork();
 
     /*

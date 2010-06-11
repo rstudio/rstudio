@@ -26,6 +26,7 @@ import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.View
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.RequestType;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability;
+import com.google.gwt.dev.util.Callback;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
 import java.util.List;
@@ -40,6 +41,15 @@ import java.util.concurrent.Future;
  * the protobuf library, and we don't want to expose the rebased API as public.
  */
 public class ViewerServiceClient {
+
+  private static final Callback<Response> DUMMY_CALLBACK = new Callback<Response>() {
+    public void onDone(Response result) {
+    }
+
+    public void onError(Throwable t) {
+      // TODO(rdayal): handle errors?
+    }
+  };
 
   private final MessageTransport transport;
 
@@ -56,6 +66,8 @@ public class ViewerServiceClient {
   /**
    * Add an entry that also serves as a log branch.
    * 
+   * @param indexInParent The index of this entry/branch within the parent
+   *          logger
    * @param type The severity of the log message.
    * @param msg The message.
    * @param caught An exception associated with the message
@@ -63,12 +75,11 @@ public class ViewerServiceClient {
    *          information related to the log message
    * @param parentLogHandle The log handle of the parent of this log
    *          entry/branch
-   * @param indexInParent The index of this entry/branch within the parent
-   *          logger
-   * @return the log handle of the newly-created branch logger
+   * @param callback the callback to call when a branch handle is available
    */
-  public int addLogBranch(Type type, String msg, Throwable caught,
-      HelpInfo helpInfo, int parentLogHandle, int indexInParent) {
+  public void addLogBranch(int indexInParent, Type type, String msg,
+      Throwable caught, HelpInfo helpInfo, int parentLogHandle,
+      final Callback<Integer> callback) {
 
     LogData.Builder logDataBuilder = generateLogData(type, msg, caught,
         helpInfo);
@@ -85,16 +96,21 @@ public class ViewerServiceClient {
     Request requestMessage = buildRequestMessageFromViewerRequest(
         viewerRequestBuilder).build();
 
-    Future<Response> responseFuture = transport.executeRequestAsync(requestMessage);
+    transport.executeRequestAsync(requestMessage, new Callback<Response>() {
+      public void onDone(Response result) {
+        callback.onDone(result.getViewerResponse().getAddLogBranch().getLogHandle());
+      }
 
-    return waitForResponseOrThrowUncheckedException(responseFuture).getViewerResponse().getAddLogBranch().getLogHandle();
+      public void onError(Throwable t) {
+        callback.onError(t);
+      }
+    });
   }
 
   /**
    * Add a log entry.
    * 
-   * @param indexOfLogEntryWithinParentLogger The index of this entry within the
-   *          parent logger
+   * @param indexInParent The index of this entry within the parent logger
    * @param type The severity of the log message.
    * @param msg The message.
    * @param caught An exception associated with the message
@@ -102,14 +118,14 @@ public class ViewerServiceClient {
    *          information related to the log message
    * @param logHandle The log handle of the parent of this log entry/branch
    */
-  public void addLogEntry(int indexOfLogEntryWithinParentLogger, Type type,
-      String msg, Throwable caught, HelpInfo helpInfo, int logHandle) {
+  public void addLogEntry(int indexInParent, Type type, String msg,
+      Throwable caught, HelpInfo helpInfo, int logHandle) {
     LogData.Builder logDataBuilder = generateLogData(type, msg, caught,
         helpInfo);
 
     ViewerRequest.AddLogEntry.Builder addLogEntryBuilder = ViewerRequest.AddLogEntry.newBuilder();
     addLogEntryBuilder.setLogHandle(logHandle);
-    addLogEntryBuilder.setIndexInLog(indexOfLogEntryWithinParentLogger);
+    addLogEntryBuilder.setIndexInLog(indexInParent);
     addLogEntryBuilder.setLogData(logDataBuilder);
 
     ViewerRequest.Builder viewerRequestBuilder = ViewerRequest.newBuilder();
@@ -119,8 +135,7 @@ public class ViewerServiceClient {
     Request requestMessage = buildRequestMessageFromViewerRequest(
         viewerRequestBuilder).build();
 
-    Future<Response> responseFuture = transport.executeRequestAsync(requestMessage);
-    waitForResponseOrThrowUncheckedException(responseFuture);
+    transport.executeRequestAsync(requestMessage, DUMMY_CALLBACK);
   }
 
   /**

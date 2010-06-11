@@ -20,6 +20,7 @@ import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.MessageType;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response;
+import com.google.gwt.dev.util.Callback;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,13 +30,11 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -85,31 +84,23 @@ public class MessageTransport {
   }
 
   class PendingRequest extends PendingSend {
-    private final ReentrantLock lock = new ReentrantLock();
-    private final Condition availableResponseCondition = lock.newCondition();
-    private Response responseMessage;
-    private Exception exception;
+    private final Callback<Response> callback;
     private final Message message;
 
-    public PendingRequest(Message message) {
+    PendingRequest(Message message, Callback<Response> callback) {
       this.message = message;
+      this.callback = callback;
     }
 
     @Override
-    public void failed(Exception e) {
+    void failed(Exception e) {
+      assert e != null;
       pendingRequestMap.remove(message.getMessageId());
-
-      lock.lock();
-      try {
-        exception = e;
-        availableResponseCondition.signal();
-      } finally {
-        lock.unlock();
-      }
+      callback.onError(e);
     }
 
     @Override
-    public void send(OutputStream outputStream) throws IOException {
+    void send(OutputStream outputStream) throws IOException {
       int messageId = message.getMessageId();
       pendingRequestMap.put(messageId, this);
       message.writeDelimitedTo(outputStream);
@@ -122,50 +113,16 @@ public class MessageTransport {
      * @param responseMessage the server's response
      * @throws InterruptedException
      */
-    public void setResponse(Message.Response responseMessage)
-        throws InterruptedException {
+    void setResponse(Response responseMessage) {
       assert (responseMessage != null);
-      lock.lock();
-      try {
-        if (this.responseMessage != null) {
-          throw new IllegalStateException("Response has already been set.");
-        }
-        this.responseMessage = responseMessage;
-        availableResponseCondition.signal();
-      } finally {
-        lock.unlock();
-      }
-    }
-
-    /**
-     * Waits for a response to be returned for a given request.
-     * 
-     * @return the response from the server
-     * @throws Exception if an exception occurred while processing the request
-     */
-    public Response waitForResponse() throws Exception {
-      lock.lock();
-
-      try {
-        while (responseMessage == null && exception == null) {
-          availableResponseCondition.await();
-        }
-
-        if (exception != null) {
-          throw exception;
-        }
-
-        return responseMessage;
-      } finally {
-        lock.unlock();
-      }
+      callback.onDone(responseMessage);
     }
   }
 
   static class PendingRequestMap {
     private final Lock mapLock = new ReentrantLock();
-    private final Map<Integer, PendingRequest> requestIdToPendingServerRequest = new HashMap<Integer, PendingRequest>();
     private boolean noMoreAdds;
+    private final Map<Integer, PendingRequest> requestIdToPendingServerRequest = new HashMap<Integer, PendingRequest>();
 
     public void blockAdds(Exception e) {
       mapLock.lock();
@@ -222,22 +179,28 @@ public class MessageTransport {
   }
 
   abstract class PendingSend {
-    public abstract void failed(Exception e);
+    abstract void failed(Exception e);
 
-    public abstract void send(OutputStream outputStream) throws IOException;
+    abstract void send(OutputStream outputStream) throws IOException;
   }
 
-  private static final int DEFAULT_SERVICE_THREADS = 2;
-
+  /**
+   * A callable that does nothing.
+   */
+  private static final Callable<Response> DUMMY_CALLABLE = new Callable<Response>() {
+    public Response call() throws Exception {
+      return null;
+    }
+  };
+  private final InputStream inputStream;
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
   private final AtomicInteger nextMessageId = new AtomicInteger();
+  private final OutputStream outputStream;
+  private final PendingRequestMap pendingRequestMap = new PendingRequestMap();
   private final RequestProcessor requestProcessor;
   private final LinkedBlockingQueue<PendingSend> sendQueue = new LinkedBlockingQueue<PendingSend>();
-  private final ExecutorService serverRequestExecutor;
-  private final PendingRequestMap pendingRequestMap = new PendingRequestMap();
+
   private final TerminationCallback terminationCallback;
-  private final InputStream inputStream;
-  private final OutputStream outputStream;
 
   /**
    * Create a new instance using the given streams and request processor.
@@ -256,7 +219,6 @@ public class MessageTransport {
     this.terminationCallback = terminationCallback;
     this.inputStream = inputStream;
     this.outputStream = outputStream;
-    serverRequestExecutor = Executors.newFixedThreadPool(DEFAULT_SERVICE_THREADS);
   }
 
   /**
@@ -266,24 +228,65 @@ public class MessageTransport {
    * 
    * @return a {@link Future} that can be used to access the server's response
    */
-  public Future<Response> executeRequestAsync(final Request requestMessage) {
-    Future<Response> responseFuture = serverRequestExecutor.submit(new Callable<Response>() {
-      public Response call() throws Exception {
-        Message.Builder messageBuilder = Message.newBuilder();
-        int messageId = nextMessageId.getAndIncrement();
-        messageBuilder.setMessageId(messageId);
-        messageBuilder.setMessageType(Message.MessageType.REQUEST);
-        messageBuilder.setRequest(requestMessage);
+  public Future<Response> executeRequestAsync(Request requestMessage) {
+    Message.Builder messageBuilder = Message.newBuilder();
+    int messageId = nextMessageId.getAndIncrement();
+    messageBuilder.setMessageId(messageId);
+    messageBuilder.setMessageType(Message.MessageType.REQUEST);
+    messageBuilder.setRequest(requestMessage);
 
-        Message message = messageBuilder.build();
-        PendingRequest pendingRequest = new PendingRequest(message);
-        sendQueue.put(pendingRequest);
+    Message message = messageBuilder.build();
 
-        return pendingRequest.waitForResponse();
+    class FutureTaskExtension extends FutureTask<Response> {
+      private FutureTaskExtension() {
+        super(DUMMY_CALLABLE);
       }
-    });
 
-    return responseFuture;
+      public void set(Response v) {
+        super.set(v);
+      }
+
+      public void setException(Throwable t) {
+        super.setException(t);
+      }
+    }
+
+    final FutureTaskExtension future = new FutureTaskExtension();
+    PendingRequest pendingRequest = new PendingRequest(message,
+        new Callback<Response>() {
+
+          public void onDone(Response result) {
+            future.set(result);
+          }
+
+          public void onError(Throwable t) {
+            future.setException(t);
+          }
+        });
+    sendQueue.add(pendingRequest);
+    return future;
+  }
+
+  /**
+   * Asynchronously executes the request on a remote server. The callback will
+   * generally be called by another thread. Memory consistency effects: actions
+   * in a thread prior to calling this method happen-before the callback is
+   * invoked.
+   * 
+   * @param requestMessage The request to execute
+   * @param callback The callback to invoke when the response is received
+   */
+  public void executeRequestAsync(Request requestMessage,
+      Callback<Response> callback) {
+    Message.Builder messageBuilder = Message.newBuilder();
+    int messageId = nextMessageId.getAndIncrement();
+    messageBuilder.setMessageId(messageId);
+    messageBuilder.setMessageType(Message.MessageType.REQUEST);
+    messageBuilder.setRequest(requestMessage);
+
+    Message message = messageBuilder.build();
+    PendingRequest pendingRequest = new PendingRequest(message, callback);
+    sendQueue.add(pendingRequest);
   }
 
   /**
@@ -351,7 +354,7 @@ public class MessageTransport {
     } catch (Exception e) {
       messageBuilder.setMessageType(Message.MessageType.FAILURE);
       Message.Failure.Builder failureMessage = Message.Failure.newBuilder();
-      
+
       failureMessage.setMessage(e.getLocalizedMessage() != null
           ? e.getLocalizedMessage() : e.getClass().getName());
       StringWriter sw = new StringWriter();
@@ -405,8 +408,7 @@ public class MessageTransport {
     }
   }
 
-  private void processServerResponse(int messageId, Response response)
-      throws InterruptedException {
+  private void processServerResponse(int messageId, Response response) {
     PendingRequest pendingServerRequest = pendingRequestMap.remove(messageId);
     if (pendingServerRequest != null) {
       pendingServerRequest.setResponse(response);
