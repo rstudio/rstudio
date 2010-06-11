@@ -33,6 +33,16 @@ public final class Double extends Number implements Comparable<Double> {
   public static final int SIZE = 64;
 
   public static int compare(double x, double y) {
+    if (isNaN(x)) {
+      if (isNaN(y)) {
+        return 0;
+      } else {
+        return 1;
+      }
+    } else if (isNaN(y)) {
+      return -1;
+    }
+    
     if (x < y) {
       return -1;
     } else if (x > y) {
@@ -89,13 +99,7 @@ public final class Double extends Number implements Comparable<Double> {
   }
 
   public int compareTo(Double b) {
-    if (value < b.value) {
-      return -1;
-    } else if (value > b.value) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return compare(this.value, b.value);
   }
 
   @Override

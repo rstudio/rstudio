@@ -77,6 +77,34 @@ public class DoubleTest extends GWTTestCase {
       // Expected behavior
     }
   }
+  
+  public void testCompare() {
+    assertTrue(Double.compare(Double.NaN, Double.NaN) == 0);
+    assertTrue(Double.compare(0.0, Double.NaN) < 0);
+    assertTrue(Double.compare(Double.NaN, Double.POSITIVE_INFINITY) > 0);
+    assertTrue(Double.compare(Double.NaN, 0.0) > 0);
+    assertTrue(Double.compare(Double.POSITIVE_INFINITY, Double.NaN) < 0);
+    assertTrue(Double.compare(3.0, 500.0) < 0);
+    assertTrue(Double.compare(500.0, 3.0) > 0);
+    assertTrue(Double.compare(500.0, 500.0) == 0);
+  }
+  
+  public void testCompareTo() {
+    Double zero = new Double(0.0);
+    Double three = new Double(3.0);
+    Double fiveHundred = new Double(500.0);
+    Double infinity = new Double(Double.POSITIVE_INFINITY);
+    Double nan = new Double(Double.NaN);
+    
+    assertTrue(nan.compareTo(nan) == 0);
+    assertTrue(zero.compareTo(nan) < 0);
+    assertTrue(nan.compareTo(infinity) > 0);
+    assertTrue(nan.compareTo(zero) > 0);
+    assertTrue(infinity.compareTo(nan) < 0);
+    assertTrue(three.compareTo(fiveHundred) < 0);
+    assertTrue(fiveHundred.compareTo(three) > 0);
+    assertTrue(fiveHundred.compareTo(fiveHundred) == 0);
+  }
 
   public void testDoubleConstants() {
     assertTrue(Double.isNaN(Double.NaN));
