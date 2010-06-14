@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.dev.resource.ResourceOracle;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -45,13 +46,14 @@ class W3cDocumentBuilder extends DefaultHandler2 {
   private final Stack<Node> eltStack = new Stack<Node>();
   private Locator locator;
   private final TreeLogger logger;
-  private final GwtResourceEntityResolver resolver = new GwtResourceEntityResolver();
+  private final GwtResourceEntityResolver resolver;
 
-  public W3cDocumentBuilder(TreeLogger logger)
-      throws ParserConfigurationException {
+  public W3cDocumentBuilder(TreeLogger logger, String pathBase,
+      ResourceOracle resourceOracle) throws ParserConfigurationException {
     this.logger = logger;
     document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
     eltStack.push(document);
+    resolver = new GwtResourceEntityResolver(resourceOracle, pathBase);
   }
 
   /**

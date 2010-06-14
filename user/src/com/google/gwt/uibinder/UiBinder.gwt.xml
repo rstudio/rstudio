@@ -16,6 +16,9 @@
 <module>
   <inherits name="com.google.gwt.resources.Resources" />
   
+  <source path="client"/>
+  <source path="resources"/>
+  
   <generate-with class="com.google.gwt.uibinder.rebind.UiBinderGenerator">
     <when-type-assignable class="com.google.gwt.uibinder.client.UiBinder"/>
   </generate-with>

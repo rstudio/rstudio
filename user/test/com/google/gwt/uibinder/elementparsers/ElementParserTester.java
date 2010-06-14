@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
@@ -39,9 +40,8 @@ import junit.framework.Assert;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Set;
@@ -80,7 +80,7 @@ class ElementParserTester {
   final JClassType parsedType;
   final MockMortalLogger logger = new MockMortalLogger();
 
-  final W3cDomHelper docHelper = new W3cDomHelper(createLogger());
+  final W3cDomHelper docHelper = new W3cDomHelper(createLogger(), new MockResourceOracle());
   final TypeOracle types;
   final XMLElementProvider elemProvider;
   final MockUiBinderWriter writer;
@@ -117,9 +117,8 @@ class ElementParserTester {
     parsedType = types.findType(parsedTypeName);
   }
 
-  public XMLElement getElem(String string, String tag) throws SAXException,
-      IOException {
-    Document doc = docHelper.documentFor(string);
+  public XMLElement getElem(String string, String tag) throws SAXParseException {
+    Document doc = docHelper.documentFor(string, null);
     Element w3cElem = (Element) doc.getDocumentElement().getElementsByTagName(
         tag).item(0);
     Assert.assertNotNull(String.format(
@@ -129,7 +128,7 @@ class ElementParserTester {
   }
 
   public FieldWriter parse(String xml) throws UnableToCompleteException,
-      SAXException, IOException {
+      SAXParseException {
 
     StringBuffer b = new StringBuffer();
     b.append("<ui:UiBinder xmlns:ui='" + BINDER_URI + "'");

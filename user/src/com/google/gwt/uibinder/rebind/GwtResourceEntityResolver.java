@@ -15,85 +15,70 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Sets;
 
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.StringReader;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * Does special handling of external entities encountered by sax xml parser,
- * e.g. the uri in
- * 
- * <pre>
- * &lt;!DOCTYPE gwt:UiBinder
-  SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent"></pre>
+ * Makes the sax xml parser use the {@link ResourceOracle}.
  * <p>
- * Specifically, if the requested uri starts with
- * <code>http://google-web-toolkit.googlecode.com/files</code>, provide the
- * contents from a built in resource rather than allowing sax to make a network
- * request.
+ * Does special case handling of GWT specific DTDs to be fetched from our
+ * download site. If the requested uri starts with
+ * <code>http://dl.google.com/gwt/DTD/</code> (or one or two others), provides
+ * the contents from a built in resource rather than allowing sax to make a
+ * network request.
  */
 class GwtResourceEntityResolver implements EntityResolver {
-  interface ResourceLoader {
-    InputStream fetch(String name);
-  }
-
   private static final Set<String> EXTERNAL_PREFIXES = Collections.unmodifiableSet(Sets.create(new String[] {
       "http://google-web-toolkit.googlecode.com/files/",
-      "http://dl.google.com/gwt/DTD/",
-      "https://dl-ssl.google.com/gwt/DTD/"
-      }));
+      "http://dl.google.com/gwt/DTD/", "https://dl-ssl.google.com/gwt/DTD/"}));
 
   private static final String RESOURCES = "com/google/gwt/uibinder/resources/";
 
-  private final ResourceLoader resourceLoader;
+  private String pathBase;
 
-  public GwtResourceEntityResolver() {
-    this(new ResourceLoader() {
-      public InputStream fetch(String name) {
-        return UiBinderGenerator.class.getClassLoader().getResourceAsStream(
-            name);
-      }
-    });
+  private final ResourceOracle resourceOracle;
+
+  public GwtResourceEntityResolver(ResourceOracle resourceOracle,
+      String pathBase) {
+    this.resourceOracle = resourceOracle;
+    this.pathBase = pathBase;
   }
 
-  /**
-   * For testing.
-   */
-  GwtResourceEntityResolver(ResourceLoader resourceLoader) {
-    this.resourceLoader = resourceLoader;
-  }
-
-  public InputSource resolveEntity(String publicId, String systemId)
-      throws SAXException, IOException {
+  public InputSource resolveEntity(String publicId, String systemId) {
     String matchingPrefix = findMatchingPrefix(systemId);
-    if (matchingPrefix == null) {
-      // Not our problem, return null and sax will find it
-      return null;
+
+    Resource resource = null;
+    Map<String, Resource> map = resourceOracle.getResourceMap();
+    if (matchingPrefix != null) {
+      resource = map.get(RESOURCES
+          + systemId.substring(matchingPrefix.length()));
     }
 
-    String name = RESOURCES
-        + systemId.substring(matchingPrefix.length());
-    InputStream resourceStream = resourceLoader.fetch(name);
-
-    if (resourceStream == null) {
-      /*
-       * They're asking for another DTD resource that we don't short circuit,
-       * Return null and let Sax find it on the interweb.
-       */
-      return null;
+    if (resource == null) {
+      resource = map.get(pathBase + systemId);
     }
 
-    InputSource inputSource = new InputSource(resourceStream);
-    inputSource.setPublicId(publicId);
-    inputSource.setSystemId(systemId);
-    return inputSource;
+    if (resource != null) {
+      String content = Util.readStreamAsString(resource.openContents());
+      InputSource inputSource = new InputSource(new StringReader(content));
+      inputSource.setPublicId(publicId);
+      inputSource.setSystemId(resource.getPath());
+      return inputSource;
+    }
+    /*
+     * Let Sax find it on the interweb.
+     */
+    return null;
   }
 
   private String findMatchingPrefix(String systemId) {

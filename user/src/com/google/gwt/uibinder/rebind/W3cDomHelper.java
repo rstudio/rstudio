@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.resource.ResourceOracle;
 
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -23,9 +24,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
-import java.net.URL;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -38,38 +37,31 @@ import javax.xml.parsers.SAXParserFactory;
 public class W3cDomHelper {
   private final SAXParserFactory factory;
   private final TreeLogger logger;
+  private final ResourceOracle resourceOracle;
 
-  public W3cDomHelper(final TreeLogger logger) {
+  public W3cDomHelper(TreeLogger logger, ResourceOracle resourceOracle) {
     this.logger = logger;
+    this.resourceOracle = resourceOracle;
     factory = SAXParserFactory.newInstance();
     factory.setNamespaceAware(true);
   }
 
   /**
-   * Creates an XML document model with the given contents. Nice for testing.
-   * 
-   * @param string the document contents
+   * Creates an XML document model with the given contents.
    */
-  public Document documentFor(String string) throws SAXException, IOException {
+  public Document documentFor(String string, String resourcePath)
+      throws SAXParseException {
     try {
-      W3cDocumentBuilder handler = new W3cDocumentBuilder(logger);
+      if (resourcePath != null) {
+        int pos = resourcePath.lastIndexOf('/');
+        resourcePath = (pos < 0) ? "" : resourcePath.substring(0, pos + 1);
+      }
+      W3cDocumentBuilder handler = new W3cDocumentBuilder(logger, resourcePath,
+          resourceOracle);
       SAXParser parser = factory.newSAXParser();
-      parser.parse(new InputSource(new StringReader(string)), handler);
-      return handler.getDocument();
-    } catch (ParserConfigurationException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Document documentFor(URL url) throws SAXParseException {
-    try {
-      W3cDocumentBuilder handler = new W3cDocumentBuilder(logger);
-      SAXParser parser = factory.newSAXParser();
-      InputStream stream = url.openStream();
-      InputSource input = new InputSource(stream);
-      input.setSystemId(url.toExternalForm());
+      InputSource input = new InputSource(new StringReader(string));
+      input.setSystemId(resourcePath);
       parser.parse(input, handler);
-
       return handler.getDocument();
     } catch (SAXParseException e) {
       // Let SAXParseExceptions through.

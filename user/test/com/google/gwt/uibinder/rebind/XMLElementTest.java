@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
+import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.elementparsers.NullInterpreter;
@@ -30,9 +31,8 @@ import junit.framework.TestCase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
-import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,7 +44,7 @@ public class XMLElementTest extends TestCase {
   private static final String STRING_WITH_DOUBLEQUOTE = "I have a \" quote in me";
 
   private static final W3cDomHelper docHelper = new W3cDomHelper(
-      TreeLogger.NULL);
+      TreeLogger.NULL, new MockResourceOracle());
 
   private static TreeLogger createCompileLogger() {
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
@@ -54,9 +54,10 @@ public class XMLElementTest extends TestCase {
   }
 
   private Document doc;
-  private Element item;
-  private XMLElement elm;
   private XMLElementProvider elemProvider;
+  private XMLElement elm;
+  private Element item;
+
   private TypeOracle types;
 
   private MockMortalLogger logger;
@@ -77,7 +78,7 @@ public class XMLElementTest extends TestCase {
     init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
   }
 
-  public void testAssertNoAttributes() throws SAXException, IOException {
+  public void testAssertNoAttributes() throws SAXParseException {
     init("<doc>\n\n<elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
     assertNull(logger.died);
     try {
@@ -92,7 +93,7 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testAssertNoBody() throws SAXException, IOException {
+  public void testAssertNoBody() throws SAXParseException {
     init("<doc>\n\n<elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
     assertNull(logger.died);
     try {
@@ -105,7 +106,7 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testAssertNoText() throws SAXException, IOException {
+  public void testAssertNoText() throws SAXParseException {
     init("<doc>\n\n<elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
     assertNull(logger.died);
     try {
@@ -118,7 +119,7 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testConsumeBoolean() throws SAXException, IOException,
+  public void testConsumeBoolean() throws SAXParseException,
       UnableToCompleteException {
     init("<doc>\n\n<elm yes='true' no='false' "
         + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
@@ -143,7 +144,7 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testConsumeBooleanConstant() throws SAXException, IOException,
+  public void testConsumeBooleanConstant() throws SAXParseException,
       UnableToCompleteException {
     init("<doc>\n\n<elm yes='true' no='false' "
         + "fnord='fnord' ref='{foo.bar.baz}' empty=''/></doc>");
@@ -183,7 +184,7 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testConsumeBooleanDefault() throws SAXException, IOException,
+  public void testConsumeBooleanDefault() throws SAXParseException,
       UnableToCompleteException {
     init("<doc>\n\n<elm yes='true' no='false' "
         + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
@@ -210,8 +211,7 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testConsumeChildrenNoTextAllowed() throws SAXException,
-      IOException {
+  public void testConsumeChildrenNoTextAllowed() throws SAXParseException {
     init("<doc>\n\n<elm><child>Hi.</child> Stray text is bad</elm></doc>");
     assertNull(logger.died);
     try {
@@ -267,7 +267,7 @@ public class XMLElementTest extends TestCase {
   }
 
   public void testConsumeRequiredDouble() throws UnableToCompleteException,
-      SAXException, IOException {
+      SAXParseException {
     init("<doc>\n\n<elm minus='-123.45' plus='123.45' minus-one='-1' "
         + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}'/></doc>");
     assertEquals("1", elm.consumeRequiredDoubleAttribute("plus-one"));
@@ -305,8 +305,8 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testConsumeSingleChildElementEmpty() throws SAXException,
-      IOException, UnableToCompleteException {
+  public void testConsumeSingleChildElementEmpty() throws SAXParseException,
+      UnableToCompleteException {
     assertNull(logger.died);
     try {
       elm.consumeSingleChildElement();
@@ -361,8 +361,8 @@ public class XMLElementTest extends TestCase {
     assertEquals(2, seen.size());
   }
 
-  public void testNoEndTags() throws SAXException, IOException {
-    doc = docHelper.documentFor("<doc><br/></doc>");
+  public void testNoEndTags() throws SAXParseException {
+    doc = docHelper.documentFor("<doc><br/></doc>", null);
     Element documentElement = doc.getDocumentElement();
     Element item = (Element) documentElement.getElementsByTagName("br").item(0);
     XMLElement elm = elemProvider.get(item);
@@ -375,8 +375,8 @@ public class XMLElementTest extends TestCase {
     item.appendChild(t);
   }
 
-  private void init(final String domString) throws SAXException, IOException {
-    doc = docHelper.documentFor(domString);
+  private void init(final String domString) throws SAXParseException {
+    doc = docHelper.documentFor(domString, null);
     item = (Element) doc.getDocumentElement().getElementsByTagName("elm").item(
         0);
     elm = elemProvider.get(item);
