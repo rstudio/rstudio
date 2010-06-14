@@ -72,7 +72,7 @@ public class JavaAstConstructor {
       code.append("public final class Class<T> {\n");
       code.append("  static <T> Class<T> createForArray(String packageName, String className, String seedName, Class<?> componentType) { return new Class<T>(); }\n");
       code.append("  static <T> Class<T> createForClass(String packageName, String className, String seedName, Class<? super T> superclass) { return new Class<T>(); }\n");
-      code.append("  static <T> Class<T> createForEnum(String packageName, String className, String seedName, Class<? super T> superclass, JavaScriptObject enumConstantsFunc) { return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForEnum(String packageName, String className, String seedName, Class<? super T> superclass, JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) { return new Class<T>(); }\n");
       code.append("  static <T> Class<T> createForInterface(String packageName, String className) { return new Class<T>(); }\n");
       code.append("  static <T> Class<T> createForPrimitive(String packageName, String className, String jni) { return new Class<T>(); }\n");
       code.append("  static boolean isClassMetadataEnabled() { return true; }\n");
