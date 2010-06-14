@@ -45,4 +45,8 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
     return name;
   }
 
+  public boolean isExternal() {
+    return false;
+  }
+
 }

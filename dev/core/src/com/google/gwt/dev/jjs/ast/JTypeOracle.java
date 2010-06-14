@@ -611,7 +611,7 @@ public class JTypeOracle implements Serializable {
 
   private void computeClinitTarget(JDeclaredType type,
       Set<JDeclaredType> computed) {
-    if (!type.hasClinit() || computed.contains(type)) {
+    if (type.isExternal() || !type.hasClinit() || computed.contains(type)) {
       return;
     }
     if (type.getSuperClass() != null) {
@@ -875,6 +875,18 @@ public class JTypeOracle implements Serializable {
   private boolean isInstantiatedType(JReferenceType type,
       Set<JReferenceType> instantiatedTypes) {
     type = program.getRunTimeType(type);
+
+    if (type.isExternal()) {
+      // TODO(tobyr) I don't know under what situations it is safe to assume
+      // that an external type won't be instantiated. For example, if we
+      // assumed that an external exception weren't instantiated, because we
+      // didn't see it constructed in our code, dead code elimination would
+      // incorrectly elide any catch blocks for that exception.
+      //
+      // We should see how this effects optimization and if we can limit its
+      // impact if necessary.
+      return true;
+    }
 
     if (instantiatedTypes == null) {
       return true;

@@ -103,6 +103,13 @@ public class Finalizer {
     }
 
     @Override
+    public boolean visit(JClassType x, Context ctx) {
+      // Don't visit external types, because we can't change their final
+      // specifiers.
+      return !x.isExternal();
+    }
+
+    @Override
     public boolean visit(JMethodBody x, Context ctx) {
       for (JLocal local : x.getLocals()) {
         maybeFinalize(local);
@@ -178,6 +185,13 @@ public class Finalizer {
       if (x.isLvalue()) {
         recordAssignment(x);
       }
+    }
+
+    @Override
+    public boolean visit(JClassType x, Context ctx) {
+      // Don't visit external types, because we can't change their final
+      // specifiers.
+      return !x.isExternal();
     }
 
     private void recordAssignment(JExpression lhs) {

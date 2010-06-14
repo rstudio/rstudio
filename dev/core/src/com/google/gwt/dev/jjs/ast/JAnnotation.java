@@ -240,13 +240,8 @@ public class JAnnotation extends JNode implements JAnnotationArgument {
     return null;
   }
 
-  private final JType type;
+  private final JInterfaceType type;
   private List<Property> properties = Lists.create();
-
-  public JAnnotation(SourceInfo sourceInfo, JExternalType type) {
-    super(sourceInfo);
-    this.type = type;
-  }
 
   public JAnnotation(SourceInfo sourceInfo, JInterfaceType type) {
     super(sourceInfo);
@@ -277,7 +272,7 @@ public class JAnnotation extends JNode implements JAnnotationArgument {
     return null;
   }
 
-  public JType getType() {
+  public JInterfaceType getType() {
     return type;
   }
 

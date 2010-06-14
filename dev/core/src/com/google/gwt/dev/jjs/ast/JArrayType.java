@@ -80,6 +80,11 @@ public class JArrayType extends JReferenceType {
     return false;
   }
 
+  @Override
+  public boolean isExternal() {
+    return elementType.isExternal();
+  }
+
   public boolean isFinal() {
     return leafType.isFinal();
   }

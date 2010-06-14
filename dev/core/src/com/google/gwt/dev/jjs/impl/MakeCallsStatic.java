@@ -250,6 +250,15 @@ public class MakeCallsStatic {
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
 
+      if (method.getEnclosingType() != null) {
+        if (method.getEnclosingType().isExternal()) {
+          // Staticifying a method requires modifying the type, which we can't
+          // do for external types. Theoretically we could put the static method
+          // in some generated code, but what does that really buy us?
+          return;
+        }
+      }
+
       // Did we already do this one?
       if (program.getStaticImpl(method) != null
           || toBeMadeStatic.contains(method)) {

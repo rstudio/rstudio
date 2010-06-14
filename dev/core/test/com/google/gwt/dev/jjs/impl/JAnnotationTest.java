@@ -20,7 +20,6 @@ import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JAnnotation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.jjs.ast.JExternalType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -231,7 +230,7 @@ public class JAnnotationTest extends JJSTestBase {
     JAnnotation a = JAnnotation.findAnnotation(useDefaults,
         BinaryAnnotation.class.getName());
     assertNotNull(a);
-    assertTrue(a.getType() instanceof JExternalType);
+    assertTrue(a.getType().isExternal());
 
     BinaryAnnotation instance = JAnnotation.createAnnotation(
         BinaryAnnotation.class, a);
@@ -265,7 +264,8 @@ public class JAnnotationTest extends JJSTestBase {
 
     Property p = a.getProperty("value");
     JClassLiteral literal = (JClassLiteral) p.getSingleValue();
-    JExternalType externalType = (JExternalType) literal.getRefType();
-    assertEquals(JAnnotationTest.class.getName(), externalType.getName());
+    JDeclaredType type = (JDeclaredType) literal.getRefType();
+    assertTrue(type.isExternal());
+    assertEquals(JAnnotationTest.class.getName(), type.getName());
   }
 }

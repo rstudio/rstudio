@@ -131,7 +131,7 @@ public class JClassLiteral extends JLiteral implements JAnnotationArgument {
       JClassLiteral componentLiteral = program.getLiteralClass(arrayType.getElementType());
       call.addArg(componentLiteral);
     } else {
-      assert (type instanceof JExternalType || type instanceof JInterfaceType || type instanceof JPrimitiveType);
+      assert (type instanceof JInterfaceType || type instanceof JPrimitiveType);
     }
     assert call.getArgs().size() == method.getParams().size() : "Argument / param mismatch "
         + call.toString() + " versus " + method.toString();

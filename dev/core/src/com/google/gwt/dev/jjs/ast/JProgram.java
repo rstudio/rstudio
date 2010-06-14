@@ -303,8 +303,6 @@ public class JProgram extends JNode {
    */
   private final ArrayList<HashMap<JType, JArrayType>> dimensions = new ArrayList<HashMap<JType, JArrayType>>();
 
-  private final Map<String, JExternalType> externalTypes = new HashMap<String, JExternalType>();
-
   private final Map<String, JField> indexedFields = new HashMap<String, JField>();
 
   private final Map<String, JMethod> indexedMethods = new HashMap<String, JMethod>();
@@ -478,20 +476,6 @@ public class JProgram extends JNode {
 
     JEnumField x = new JEnumField(info, name, ordinal, enclosingType, type);
     enclosingType.addField(x);
-    return x;
-  }
-
-  public JExternalType createExternalType(SourceInfo info, String name) {
-    JExternalType x;
-    x = externalTypes.get(name);
-    if (x != null) {
-      return x;
-    }
-
-    x = new JExternalType(info, name);
-    if (INDEX_TYPES_SET.contains(name)) {
-      indexedTypes.put(x.getShortName(), x);
-    }
     return x;
   }
 

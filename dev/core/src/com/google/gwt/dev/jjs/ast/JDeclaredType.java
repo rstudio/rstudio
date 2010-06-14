@@ -67,6 +67,14 @@ public abstract class JDeclaredType extends JReferenceType implements
   private JDeclaredType enclosingType;
 
   /**
+   * True if this class is provided externally to the program by the program's
+   * host execution environment. For example, while compiling for the JVM, JRE
+   * types are external types. External types definitions are provided by class
+   * files which are considered opaque by the GWT compiler.
+   */
+  private boolean isExternal;
+
+  /**
    * This type's super class.
    */
   private JClassType superClass;
@@ -226,10 +234,16 @@ public abstract class JDeclaredType extends JReferenceType implements
     return clinitTarget != null;
   }
 
+  @Override
+  public boolean isExternal() {
+    return isExternal;
+  }
+
   /**
    * Removes the field at the specified index.
    */
   public void removeField(int i) {
+    assert !isExternal() : "External types can not be modiified.";
     fields = Lists.remove(fields, i);
   }
 
@@ -237,6 +251,7 @@ public abstract class JDeclaredType extends JReferenceType implements
    * Removes the method at the specified index.
    */
   public void removeMethod(int i) {
+    assert !isExternal() : "External types can not be modiified.";
     methods = Lists.remove(methods, i);
   }
 
@@ -247,6 +262,10 @@ public abstract class JDeclaredType extends JReferenceType implements
    */
   public void setEnclosingType(JDeclaredType enclosingType) {
     this.enclosingType = enclosingType;
+  }
+
+  public void setExternal(boolean isExternal) {
+    this.isExternal = isExternal;
   }
 
   /**

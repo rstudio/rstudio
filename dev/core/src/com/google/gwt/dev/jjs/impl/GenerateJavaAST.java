@@ -48,7 +48,6 @@ import com.google.gwt.dev.jjs.ast.JEnumField;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
-import com.google.gwt.dev.jjs.ast.JExternalType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
@@ -2011,12 +2010,9 @@ public class GenerateJavaAST {
       }
     }
 
-    private void addThrownExceptions(MethodBinding methodBinding,
-        JMethod method) {
-      for (ReferenceBinding exceptionReference : 
-        methodBinding.thrownExceptions) {
-        method.addThrownException((JClassType) 
-            typeMap.get(exceptionReference.erasure()));
+    private void addThrownExceptions(MethodBinding methodBinding, JMethod method) {
+      for (ReferenceBinding exceptionReference : methodBinding.thrownExceptions) {
+        method.addThrownException((JClassType) typeMap.get(exceptionReference.erasure()));
       }
     }
 
@@ -2239,6 +2235,17 @@ public class GenerateJavaAST {
       return (SourceTypeBinding) typeBinding;
     }
 
+    private JInterfaceType getOrCreateExternalType(SourceInfo info,
+        char[][] compoundName) {
+      String name = BuildTypeMap.dotify(compoundName);
+      JInterfaceType external = (JInterfaceType) program.getFromTypeMap(name);
+      if (external == null) {
+        external = program.createInterface(info, name);
+        external.setExternal(true);
+      }
+      return external;
+    }
+
     /**
      * Get a new label of a particular name, or create a new one if it doesn't
      * exist already.
@@ -2450,25 +2457,26 @@ public class GenerateJavaAST {
 
       for (ElementValuePair pair : elementValuePairs) {
         String name = CharOperation.charToString(pair.getName());
-        List<JAnnotationArgument> values = processAnnotationPropertyValue(sourceInfo,
-            pair.getValue());
+        List<JAnnotationArgument> values = processAnnotationPropertyValue(
+            sourceInfo, pair.getValue());
         annotation.addValue(new Property(sourceInfo, name, values));
       }
     }
 
-    private List<JAnnotationArgument> processAnnotationPropertyValue(SourceInfo info,
-        Object value) {
+    private List<JAnnotationArgument> processAnnotationPropertyValue(
+        SourceInfo info, Object value) {
       if (value instanceof TypeBinding) {
         JType type = (JType) typeMap.tryGet((TypeBinding) value);
         if (type == null) {
           // Indicates a binary-only class literal
-          type = program.createExternalType(info,
-              BuildTypeMap.dotify(((ReferenceBinding) value).compoundName));
+          type = getOrCreateExternalType(info,
+              ((ReferenceBinding) value).compoundName);
         }
         return Lists.<JAnnotationArgument> create(program.getLiteralClass(type));
 
       } else if (value instanceof Constant) {
-        return Lists.create((JAnnotationArgument) dispatch("processConstant", value));
+        return Lists.create((JAnnotationArgument) dispatch("processConstant",
+            value));
 
       } else if (value instanceof Object[]) {
         Object[] array = (Object[]) value;
@@ -2487,8 +2495,8 @@ public class GenerateJavaAST {
         if (type != null) {
           toReturn = new JAnnotation(info, type);
         } else {
-          JExternalType external = program.createExternalType(info,
-              BuildTypeMap.dotify(annotationType.compoundName));
+          JInterfaceType external = getOrCreateExternalType(info,
+              annotationType.compoundName);
           toReturn = new JAnnotation(info, external);
         }
 
@@ -2554,8 +2562,8 @@ public class GenerateJavaAST {
           annotation = new JAnnotation(x.getSourceInfo(), annotationType);
         } else {
           // Indicates a binary-only annotation type
-          JExternalType externalType = program.createExternalType(
-              x.getSourceInfo(), BuildTypeMap.dotify(binding.compoundName));
+          JInterfaceType externalType = getOrCreateExternalType(
+              x.getSourceInfo(), binding.compoundName);
           annotation = new JAnnotation(x.getSourceInfo(), externalType);
         }
         processAnnotationProperties(x.getSourceInfo(), annotation,
@@ -2805,7 +2813,7 @@ public class GenerateJavaAST {
         JDeclarationStatement declStmt = new JDeclarationStatement(sourceInfo,
             valuesRef, newExpr);
         JBlock clinitBlock = ((JMethodBody) type.getMethods().get(0).getBody()).getBlock();
-        
+
         /*
          * HACKY: the $VALUES array must be initialized immediately after all of
          * the enum fields, but before any user initialization (which might rely

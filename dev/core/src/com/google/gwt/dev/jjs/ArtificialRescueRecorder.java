@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JAnnotation;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -124,12 +125,12 @@ public class ArtificialRescueRecorder {
     new ArtificialRescueRecorder(program).execImpl();
   }
 
-  private final JDeclaredType artificialRescueType;
+  private final JInterfaceType artificialRescueType;
   private final JProgram program;
 
   private ArtificialRescueRecorder(JProgram program) {
     this.program = program;
-    artificialRescueType = program.getFromTypeMap(ArtificialRescue.class.getName());
+    artificialRescueType = (JInterfaceType) program.getFromTypeMap(ArtificialRescue.class.getName());
   }
 
   private void execImpl() {

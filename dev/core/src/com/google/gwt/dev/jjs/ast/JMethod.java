@@ -148,6 +148,7 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
   }
 
   public JAbstractMethodBody getBody() {
+    assert !enclosingType.isExternal() : "External types do not have method bodies.";
     return body;
   }
 
