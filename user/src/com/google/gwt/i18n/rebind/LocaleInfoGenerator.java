@@ -228,8 +228,8 @@ public class LocaleInfoGenerator extends Generator {
       factory.addImport("com.google.gwt.i18n.client.LocaleInfo");
       factory.addImport("com.google.gwt.i18n.client.constants.NumberConstants");
       factory.addImport("com.google.gwt.i18n.client.constants.NumberConstantsImpl");
-      factory.addImport("com.google.gwt.i18n.client.constants.DateTimeConstants");
-      factory.addImport("com.google.gwt.i18n.client.constants.DateTimeConstantsImpl");
+      factory.addImport("com.google.gwt.i18n.client.DateTimeFormatInfo");
+      factory.addImport("com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl");
       SourceWriter writer = factory.createSourceWriter(context, pw);
       writer.println("@Override");
       writer.println("public String getLocaleName() {");
@@ -243,13 +243,13 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("}");
       writer.println();
       writer.println("@Override");
-      writer.println("public DateTimeConstants getDateTimeConstants() {");
+      writer.println("public DateTimeFormatInfo getDateTimeFormatInfo() {");
       LocalizableGenerator localizableGenerator = new LocalizableGenerator();
       // Avoid warnings for trying to create the same type multiple times
       GeneratorContext subContext = new CachedGeneratorContext(context);
       generateConstantsLookup(logger, subContext, writer, localizableGenerator,
           runtimeLocales, locale,
-          "com.google.gwt.i18n.client.constants.DateTimeConstantsImpl");
+          "com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl");
       writer.println("}");
       writer.println();
       writer.println("@Override");

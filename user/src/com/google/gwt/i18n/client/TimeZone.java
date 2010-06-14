@@ -43,6 +43,25 @@ public class TimeZone {
   private static final int DLT_LONG_NAME = 3;
 
   /**
+   * This factory method provides a decent fallback to create a time zone object
+   * just based on a given time zone offset.
+   * 
+   * @param timeZoneOffsetInMinutes time zone offset in minutes
+   * @return a new time zone object
+   */
+  public static TimeZone createTimeZone(int timeZoneOffsetInMinutes) {
+    TimeZone tz = new TimeZone();
+    tz.standardOffset = timeZoneOffsetInMinutes;
+    tz.timezoneID = composePOSIXTimeZoneID(timeZoneOffsetInMinutes);
+    tz.tzNames = new String[2]; 
+    tz.tzNames[0] = composeUTCString(timeZoneOffsetInMinutes);
+    tz.tzNames[1] = composeUTCString(timeZoneOffsetInMinutes);
+    tz.transitionPoints = null;
+    tz.adjustments = null;
+    return tz;
+  }
+
+  /**
    * This factory method creates a time zone instance from a JSON string that
    * contains the time zone information for desired time zone. Applications can
    * get such a string from the TimeZoneConstants class, or it can request the
@@ -50,8 +69,8 @@ public class TimeZone {
    * string from the data provided in the TimeZoneConstant.properties file,
    * which was carefully prepared from CLDR and Olson time zone database.
    * 
-   * @param tzJSON JSON string that contains time zone data.
-   * @return a new time zone object. 
+   * @param tzJSON JSON string that contains time zone data
+   * @return a new time zone object
    */
   public static TimeZone createTimeZone(String tzJSON) {
     TimeZoneInfo tzData = TimeZoneInfo.buildTimeZoneData(tzJSON);
@@ -88,25 +107,6 @@ public class TimeZone {
         tz.adjustments[i] = transitions.get(i * 2 + 1);
       }
     }
-    return tz;
-  }
-
-  /**
-   * This factory method provides a decent fallback to create a time zone object
-   * just based on a given time zone offset.
-   * 
-   * @param timeZoneOffsetInMinutes time zone offset in minutes.
-   * @return a new time zone object.
-   */
-  public static TimeZone createTimeZone(int timeZoneOffsetInMinutes) {
-    TimeZone tz = new TimeZone();
-    tz.standardOffset = timeZoneOffsetInMinutes;
-    tz.timezoneID = composePOSIXTimeZoneID(timeZoneOffsetInMinutes);
-    tz.tzNames = new String[2]; 
-    tz.tzNames[0] = composeUTCString(timeZoneOffsetInMinutes);
-    tz.tzNames[1] = composeUTCString(timeZoneOffsetInMinutes);
-    tz.transitionPoints = null;
-    tz.adjustments = null;
     return tz;
   }
 
@@ -181,8 +181,8 @@ public class TimeZone {
    * date. If daylight savings time is in effect on the given date, the number
    * will be positive, otherwise 0.
    * 
-   * @param date the date to check.
-   * @return offset amount.
+   * @param date the date to check
+   * @return offset amount
    */
   public int getDaylightAdjustment(Date date) {
     if (transitionPoints == null) {
@@ -201,7 +201,7 @@ public class TimeZone {
    * Return the GMT representation of this time zone object.
    * 
    * @param date The date from which the time information should be extracted
-   * @return A GMT representation of the time given by the date.
+   * @return A GMT representation of the time given by the date
    */
   public String getGMTString(Date date) {
     return composeGMTString(getOffset(date));
@@ -212,10 +212,30 @@ public class TimeZone {
    * been instantiated from a time zone offset, the POSIX time zone id will be
    * returned.
    * 
-   * @return time zone id.
+   * @return time zone id
    */
   public String getID() {
     return timezoneID;
+  }
+
+  /**
+   * To get ISO-style (+00:00) representation of the time zone for given date.
+   *
+   * @param date The date for which time to retrieve RFC time zone string
+   * @return ISO-style time zone string
+   */
+  public String getISOTimeZoneString(Date date) {
+    int offset = -getOffset(date);
+    char data[] = {'+', '0', '0', ':', '0', '0'};
+    if (offset < 0) {
+      data[0] = '-';
+      offset = -offset; // suppress the '-' sign for text display.
+    }
+    data[1] += (offset / 60) / 10;
+    data[2] += (offset / 60) % 10;
+    data[4] += (offset % 60) / 10;
+    data[5] += offset % 10;
+    return new String(data);
   }
 
   /**
@@ -224,7 +244,7 @@ public class TimeZone {
    * effect.
    * 
    * @param date The date for which the long time zone name is returned
-   * @return long time zone name.
+   * @return long time zone name
    */
   public String getLongName(Date date) {
     return tzNames[isDaylightTime(date) ? DLT_LONG_NAME : STD_LONG_NAME]; 
@@ -235,8 +255,8 @@ public class TimeZone {
    * To be consistent with JDK/Javascript API, west of Greenwich will be
    * positive.
    * 
-   *  @param date The date for which time to retrieve time zone offset.
-   *  @return time zone offset in minutes. 
+   *  @param date The date for which time to retrieve time zone offset
+   *  @return time zone offset in minutes
    */
   public int getOffset(Date date) {
     return standardOffset - getDaylightAdjustment(date);
@@ -244,8 +264,8 @@ public class TimeZone {
 
   /**
    * To get RFC representation of certain time zone name for given date.
-   * @param date The date for which time to retrieve RFC time zone string.
-   * @return RFC time zone string.
+   * @param date The date for which time to retrieve RFC time zone string
+   * @return RFC time zone string
    */
   public String getRFCTimeZoneString(Date date) {
     int offset = -getOffset(date);
@@ -264,17 +284,15 @@ public class TimeZone {
   /**
    * Returns the short time zone name for a given date.
    * 
-   * @param date The date for which time to retrieve short time zone.
-   * @return short time zone name.
+   * @param date The date for which time to retrieve short time zone
+   * @return short time zone name
    */
   public String getShortName(Date date) {
     return tzNames[isDaylightTime(date) ? DLT_SHORT_NAME : STD_SHORT_NAME]; 
   }
 
   /**
-   * Returns the standard time zone offset in minutes.
-   * 
-   * @return the standard time zone offset, in minutes
+   * @return the standard time zone offset, in minutes.
    */
   public int getStandardOffset() {
     return standardOffset;
@@ -284,8 +302,8 @@ public class TimeZone {
    * Check whether the given date and time falls within a daylight savings time
    * period.
    * 
-   * @param date and time to check.
-   * @return true if daylight savings time is in effect.
+   * @param date and time to check
+   * @return true if daylight savings time is in effect
    */
   public boolean isDaylightTime(Date date) {
     return getDaylightAdjustment(date) > 0;

@@ -1,0 +1,327 @@
+/*
+ * Copyright 2010 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.i18n.client.impl.cldr;
+
+// DO NOT EDIT - GENERATED FROM CLDR DATA
+
+/**
+ * Implementation of DateTimeFormatInfo for locale "ru".
+ */
+public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
+
+  @Override
+  public String dateFormatFull() {
+    return "EEEE, d MMMM y 'г'.";
+  }
+
+  @Override
+  public String dateFormatLong() {
+    return "d MMMM y 'г'.";
+  }
+
+  @Override
+  public String dateFormatMedium() {
+    return "dd.MM.yyyy";
+  }
+
+  @Override
+  public String dateFormatShort() {
+    return "dd.MM.yy";
+  }
+
+  @Override
+  public String[] erasFull() {
+    return new String[] { 
+        "до н.э.",
+        "н.э."
+    };
+  }
+
+  @Override
+  public String[] erasShort() {
+    return new String[] { 
+        "до н.э.",
+        "н.э."
+    };
+  }
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 1;
+  }
+
+  @Override
+  public String formatHour24Minute() {
+    return "H:mm";
+  }
+
+  @Override
+  public String formatHour24MinuteSecond() {
+    return "H:mm:ss";
+  }
+
+  @Override
+  public String formatMonthAbbrevDay() {
+    return "d MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "d MMMM";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE d MMMM";
+  }
+
+  @Override
+  public String formatMonthNumDay() {
+    return "d.M";
+  }
+
+  @Override
+  public String formatYearMonthAbbrev() {
+    return "LLL y";
+  }
+
+  @Override
+  public String formatYearMonthAbbrevDay() {
+    return "d MMM y 'г'.";
+  }
+
+  @Override
+  public String formatYearMonthFull() {
+    return "LLLL y";
+  }
+
+  @Override
+  public String formatYearMonthFullDay() {
+    return "d MMMM y 'г'.";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "M.y";
+  }
+
+  @Override
+  public String formatYearMonthNumDay() {
+    return "d.M.y";
+  }
+
+  @Override
+  public String formatYearMonthWeekdayDay() {
+    return "EEE, d MMM y 'г'.";
+  }
+
+  @Override
+  public String[] monthsFull() {
+    return new String[] { 
+        "января",
+        "февраля",
+        "марта",
+        "апреля",
+        "мая",
+        "июня",
+        "июля",
+        "августа",
+        "сентября",
+        "октября",
+        "ноября",
+        "декабря"
+    };
+  }
+
+  @Override
+  public String[] monthsFullStandalone() {
+    return new String[] { 
+        "Январь",
+        "Февраль",
+        "Март",
+        "Апрель",
+        "Май",
+        "Июнь",
+        "Июль",
+        "Август",
+        "Сентябрь",
+        "Октябрь",
+        "Ноябрь",
+        "Декабрь"
+    };
+  }
+
+  @Override
+  public String[] monthsNarrow() {
+    return new String[] { 
+        "Я",
+        "Ф",
+        "М",
+        "А",
+        "М",
+        "И",
+        "И",
+        "А",
+        "С",
+        "О",
+        "Н",
+        "Д"
+    };
+  }
+
+  @Override
+  public String[] monthsNarrowStandalone() {
+    return monthsNarrow();
+  }
+
+  @Override
+  public String[] monthsShort() {
+    return new String[] { 
+        "янв.",
+        "февр.",
+        "марта",
+        "апр.",
+        "мая",
+        "июня",
+        "июля",
+        "авг.",
+        "сент.",
+        "окт.",
+        "нояб.",
+        "дек."
+    };
+  }
+
+  @Override
+  public String[] monthsShortStandalone() {
+    return new String[] { 
+        "янв.",
+        "февр.",
+        "март",
+        "апр.",
+        "май",
+        "июнь",
+        "июль",
+        "авг.",
+        "сент.",
+        "окт.",
+        "нояб.",
+        "дек."
+    };
+  }
+
+  @Override
+  public String[] quartersFull() {
+    return new String[] { 
+        "1-й квартал",
+        "2-й квартал",
+        "3-й квартал",
+        "4-й квартал"
+    };
+  }
+
+  @Override
+  public String[] quartersShort() {
+    return new String[] { 
+        "1-й кв.",
+        "2-й кв.",
+        "3-й кв.",
+        "4-й кв."
+    };
+  }
+
+  @Override
+  public String timeFormatFull() {
+    return "H:mm:ss zzzz";
+  }
+
+  @Override
+  public String timeFormatLong() {
+    return "H:mm:ss z";
+  }
+
+  @Override
+  public String timeFormatMedium() {
+    return "H:mm:ss";
+  }
+
+  @Override
+  public String timeFormatShort() {
+    return "H:mm";
+  }
+
+  @Override
+  public String[] weekdaysFull() {
+    return new String[] { 
+        "воскресенье",
+        "понедельник",
+        "вторник",
+        "среда",
+        "четверг",
+        "пятница",
+        "суббота"
+    };
+  }
+
+  @Override
+  public String[] weekdaysFullStandalone() {
+    return new String[] { 
+        "Воскресенье",
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота"
+    };
+  }
+
+  @Override
+  public String[] weekdaysNarrow() {
+    return new String[] { 
+        "В",
+        "П",
+        "В",
+        "С",
+        "Ч",
+        "П",
+        "С"
+    };
+  }
+
+  @Override
+  public String[] weekdaysNarrowStandalone() {
+    return weekdaysNarrow();
+  }
+
+  @Override
+  public String[] weekdaysShort() {
+    return new String[] { 
+        "Вс",
+        "Пн",
+        "Вт",
+        "Ср",
+        "Чт",
+        "Пт",
+        "Сб"
+    };
+  }
+
+  @Override
+  public String[] weekdaysShortStandalone() {
+    return weekdaysShort();
+  }
+}
