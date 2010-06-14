@@ -27,11 +27,11 @@ public final class Math {
   private static final double PI_UNDER_180 = 180.0 / PI;
 
   public static double abs(double x) {
-    return x < 0 ? -x : x;
+    return (x <= 0.0) ? 0.0 - x : x;
   }
 
   public static float abs(float x) {
-    return x < 0 ? -x : x;
+    return (x <= 0.0F) ? 0.0F - x : x;
   }
 
   public static int abs(int x) {
@@ -253,7 +253,7 @@ public final class Math {
   }-*/;
 
   public static native double sinh(double x) /*-{
-    return Math.sinh(x);
+    return (Math.exp(x) - Math.exp(-x)) / 2.0;
   }-*/;
 
   public static native double sqrt(double x) /*-{
@@ -265,7 +265,11 @@ public final class Math {
   }-*/;
 
   public static native double tanh(double x) /*-{
-    return Math.tanh(x);
+    if (x == Infinity) {
+      return 1.0;
+    }
+    var e2x = Math.exp(2.0 * x);
+    return (e2x - 1) / (e2x + 1);
   }-*/;
 
   public static double toDegrees(double x) {
