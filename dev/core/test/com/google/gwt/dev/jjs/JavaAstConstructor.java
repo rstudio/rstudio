@@ -77,6 +77,7 @@ public class JavaAstConstructor {
       code.append("  static <T> Class<T> createForPrimitive(String packageName, String className, String jni) { return new Class<T>(); }\n");
       code.append("  static boolean isClassMetadataEnabled() { return true; }\n");
       code.append("  public boolean desiredAssertionStatus() { return true; }\n");
+      code.append("  public String getName() { return null; }\n");
       code.append("}\n");
       return code;
     }
@@ -155,7 +156,7 @@ public class JavaAstConstructor {
     }
 
     JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);
-    
+
     CorrelationFactory correlator = new DummyCorrelationFactory();
     JProgram jprogram = new JProgram(correlator);
     JsProgram jsProgram = new JsProgram(correlator);
