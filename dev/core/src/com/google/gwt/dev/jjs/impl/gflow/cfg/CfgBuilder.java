@@ -51,6 +51,7 @@ import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.util.Preconditions;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -225,9 +226,10 @@ public class CfgBuilder {
     }
 
     /**
-     * All exits at this point of interpretation.
+     * All exits at this point of interpretation tabulated by their reason.
      */
-    private List<Exit> currentExits = new ArrayList<Exit>();
+    private final EnumMap<Exit.Reason, ArrayList<Exit>> currentExitsByReason =
+      new EnumMap<Exit.Reason, ArrayList<Exit>>(Exit.Reason.class);
 
     /**
      * Artificial cfg end node.
@@ -264,6 +266,10 @@ public class CfgBuilder {
     public BuilderVisitor(JProgram program) {
       this.program = program;
       this.typeOracle = program.typeOracle;
+
+      for (Exit.Reason reason : Exit.Reason.values()) {
+        this.currentExitsByReason.put(reason, new ArrayList<Exit>());
+      }
     }
 
     /**
@@ -278,18 +284,23 @@ public class CfgBuilder {
       addNode(endNode);
 
       // Wire all remaining exits to end node.
-      for (Exit exit : currentExits) {
-        switch (exit.reason) {
+      for (Exit.Reason reason : Exit.Reason.values()) {
+        switch (reason) {
           case CONTINUE:
           case BREAK:
           case CASE_ELSE:
           case CASE_THEN:
-            // This shouldn't happen.
-            throw new IllegalArgumentException("Unhandled exit: " + exit.reason);
+            if (!currentExitsByReason.get(reason).isEmpty()) {
+              // This shouldn't happen.
+              throw new IllegalArgumentException("Unhandled exit: " + reason);
+            }
+            break;
           case NORMAL:
           case RETURN:
           case THROW: {
-            addEdge(exit, endNode);
+            for (Exit exit : currentExitsByReason.get(reason)) {
+              addEdge(exit, endNode);
+            }
             break;
           }
         }
@@ -306,9 +317,10 @@ public class CfgBuilder {
       accept(expression);
       addNode(endNode);
 
-      Preconditions.checkArgument(currentExits.isEmpty(), 
-          "Unhandled exits %s", 
-          currentExits);
+      for (Exit.Reason reason : Exit.Reason.values()) {
+        Preconditions.checkArgument(currentExitsByReason.get(reason).isEmpty(),
+          "Unhandled exits %s", reason);
+      }
 
       return graph;
     }
@@ -720,8 +732,7 @@ public class CfgBuilder {
 
       // Process all blocks and determine their exits
 
-      List<Exit> tryBlockExits = currentExits;
-      currentExits = new ArrayList<Exit>();
+      List<Exit> tryBlockExits = removeCurrentExits();
 
       List<Integer> catchBlockPos = new ArrayList<Integer>();
       List<List<Exit>> catchExits = new ArrayList<List<Exit>>();
@@ -729,16 +740,14 @@ public class CfgBuilder {
       for (JBlock b : x.getCatchBlocks()) {
         catchBlockPos.add(nodes.size());
         accept(b);
-        catchExits.add(currentExits);
-        currentExits = new ArrayList<Exit>();
+        catchExits.add(removeCurrentExits());
       }
 
       int finallyPos = nodes.size();
       if (x.getFinallyBlock() != null) {
         accept(x.getFinallyBlock());
       }
-      List<Exit> finallyExits = currentExits;
-      currentExits = new ArrayList<Exit>();
+      List<Exit> finallyExits = removeCurrentExits();
 
       // Actual work goes here. We are citing JLS to make it easier to follow.
       // We prefer to have duplicated code for finally block handling just
@@ -1038,11 +1047,13 @@ public class CfgBuilder {
     }
 
     private void addExit(Exit exit) {
-      currentExits.add(exit);
+      currentExitsByReason.get(exit.reason).add(exit);
     }
 
     private void addExits(List<Exit> exits) {
-      currentExits.addAll(exits);
+      for (Exit exit : exits) {
+        currentExitsByReason.get(exit.reason).add(exit);
+      }
     }
 
     /**
@@ -1052,13 +1063,10 @@ public class CfgBuilder {
       nodes.add(node);
       graph.addNode(node);
 
-      // Route all normal exits to this node.
-      for (Iterator<Exit> i = currentExits.iterator(); i.hasNext();) {
-        Exit exit = i.next();
-        if (exit.isNormal()) {
-          i.remove();
-          addEdge(exit, node);
-        }
+      ArrayList<Exit> normalExits =
+        currentExitsByReason.put(Exit.Reason.NORMAL, new ArrayList<Exit>());
+      for (Exit exit : normalExits) {
+        addEdge(exit, node);
       }
 
       // Simplify all the code, add normal exit for CfgSimplNode automatically.
@@ -1087,8 +1095,16 @@ public class CfgBuilder {
       return node;
     }
 
+    private List<Exit> removeCurrentExits() {
+      ArrayList<Exit> result = new ArrayList<Exit>();
+      for (Exit.Reason reason : Exit.Reason.values()) {
+        result.addAll(currentExitsByReason.put(reason, new ArrayList<Exit>()));
+      }
+      return result;
+    }
+
     private List<Exit> removeExits(Exit.Reason reason) {
-      return removeExits(currentExits, reason);
+      return currentExitsByReason.put(reason, new ArrayList<Exit>());
     }
 
     private List<Exit> removeExits(List<Exit> exits, Exit.Reason reason) {
@@ -1107,28 +1123,31 @@ public class CfgBuilder {
      * Remove all loop exits to specified label.
      */
     private List<Exit> removeLoopExits(Exit.Reason reason, String label) {
-      List<Exit> result = new ArrayList<Exit>();
-      for (Iterator<Exit> i = currentExits.iterator(); i.hasNext();) {
-        Exit exit = i.next();
-        if (exit.reason == reason
-            && (exit.getLabel() == null || exit.getLabel().equals(label))) {
-          i.remove();
-          result.add(exit);
+      ArrayList<Exit> removedExits = new ArrayList<Exit>();
+      ArrayList<Exit> remainingExits = new ArrayList<Exit>();
+
+      for (Exit exit : currentExitsByReason.get(reason)) {
+        if (exit.getLabel() == null || exit.getLabel().equals(label)) {
+          removedExits.add(exit);
+        } else {
+          remainingExits.add(exit);
         }
       }
-      return result;
+      currentExitsByReason.put(reason, remainingExits);
+
+      return removedExits;
     }
 
     /**
      * Remove all normal exits from current exit list.
      */
     private List<Exit> removeNormalExits() {
-      return removeNormalExits(currentExits);
+      return currentExitsByReason.put(Exit.Reason.NORMAL, new ArrayList<Exit>());
     }
 
-      private List<Exit> removeNormalExits(List<Exit> exits) {
-        return removeExits(exits, Exit.Reason.NORMAL);
-      }
+    private List<Exit> removeNormalExits(List<Exit> exits) {
+      return removeExits(exits, Exit.Reason.NORMAL);
+    }
   }
 
   /**
