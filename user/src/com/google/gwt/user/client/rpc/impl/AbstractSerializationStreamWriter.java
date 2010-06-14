@@ -44,6 +44,11 @@ public abstract class AbstractSerializationStreamWriter extends
   public static double[] getAsDoubleArray(long value) {
     int lowBits = (int) (value & 0xffffffff);
     int highBits = (int) (value >> 32);
+    return makeLongComponents(lowBits, highBits);
+  }
+  
+  // Equivalent to getAsDoubleArray((long) highBits << 32 | lowBits);
+  protected static double[] makeLongComponents(int lowBits, int highBits) {
     double high = highBits * TWO_PWR_32_DBL;
     double low = lowBits;
     if (lowBits < 0) {
