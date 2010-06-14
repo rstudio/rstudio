@@ -28,6 +28,7 @@ import com.google.gwt.resources.css.CssRtlTest;
 import com.google.gwt.resources.css.ExtractClassNamesVisitorTest;
 import com.google.gwt.resources.css.UnknownAtRuleTest;
 import com.google.gwt.resources.ext.ResourceGeneratorUtilTest;
+import com.google.gwt.resources.rg.CssClassNamesTestCase;
 
 import junit.framework.Test;
 
@@ -38,6 +39,7 @@ public class ResourcesSuite {
   public static Test suite() {
 
     GWTTestSuite suite = new GWTTestSuite("Test for com.google.gwt.resources");
+    suite.addTestSuite(CssClassNamesTestCase.class);
     suite.addTestSuite(CssExternalTest.class);
     suite.addTestSuite(CSSResourceTest.class);
     suite.addTestSuite(CssReorderTest.class);

@@ -102,11 +102,15 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
    * A lookup table of base-32 chars we use to encode CSS idents. Because CSS
    * class selectors may be case-insensitive, we don't have enough characters to
    * use a base-64 encoding.
+   * <p>
+   * Note that the character {@value #RESERVED_IDENT_CHAR} is intentionally
+   * missing from this array. It is used to prefix identifiers produced by
+   * {@link #makeIdent} if they conflict with reserved class-name prefixes.
    */
-  private static final char[] BASE32_CHARS = new char[] {
+  static final char[] BASE32_CHARS = new char[] {
       'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-      'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '-', '0',
-      '1', '2', '3', '4'};
+      'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', '-', '0', '1',
+      '2', '3', '4', '5'};
 
   /**
    * This value is used by {@link #concatOp} to help create a more balanced AST
@@ -118,10 +122,16 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
    * These constants are used to cache obfuscated class names.
    */
   private static final String KEY_BY_CLASS_AND_METHOD = "classAndMethod";
-  private static final String KEY_HAS_CACHED_DATA = "hasCachedData";
-  private static final String KEY_SHARED_METHODS = "sharedMethods";
   private static final String KEY_CLASS_PREFIX = "prefix";
   private static final String KEY_CLASS_COUNTER = "counter";
+  private static final String KEY_HAS_CACHED_DATA = "hasCachedData";
+  private static final String KEY_SHARED_METHODS = "sharedMethods";
+  private static final String KEY_RESERVED_PREFIXES = "CssResource.reservedClassPrefixes";
+
+  /**
+   * This character must not appear in {@link #BASE32_CHARS}.
+   */
+  private static final char RESERVED_IDENT_CHAR = 'Z';
 
   /**
    * Returns the import prefix for a type, including the trailing hyphen.
@@ -187,6 +197,40 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     for (int i = 0; i < 1000; i++) {
       System.out.println(makeIdent(i));
     }
+  }
+
+  /**
+   * Compute an obfuscated CSS class name that is guaranteed not to conflict
+   * with a set of reserved prefixes. Visible for testing.
+   */
+  static String computeObfuscatedClassName(String classPrefix,
+      Counter classCounter, SortedSet<String> reservedPrefixes) {
+    String obfuscatedClassName = classPrefix + makeIdent(classCounter.next());
+
+    /*
+     * Ensure that the name won't conflict with any reserved prefixes. We can't
+     * just keep incrementing the counter, because that could take an
+     * arbitrarily long amount of time to return a good value.
+     */
+    String conflict = stringStartsWithAny(obfuscatedClassName, reservedPrefixes);
+    while (conflict != null) {
+      Adler32 hash = new Adler32();
+      hash.update(Util.getBytes(conflict));
+      /*
+       * Compute a new prefix for the identifier to mask the prefix and add the
+       * reserved identifier character to prevent conflicts with makeIdent().
+       * 
+       * Assuming "gwt-" is a reserved prefix: gwt-A -> ab32ZA
+       */
+      String newPrefix = makeIdent(hash.getValue()).substring(0,
+          conflict.length())
+          + RESERVED_IDENT_CHAR;
+      obfuscatedClassName = newPrefix
+          + obfuscatedClassName.substring(conflict.length());
+      conflict = stringStartsWithAny(obfuscatedClassName, reservedPrefixes);
+    }
+
+    return obfuscatedClassName;
   }
 
   /**
@@ -315,6 +359,33 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     }
 
     return b.toString();
+  }
+
+  /**
+   * Returns <code>true</code> if <code>target</code> starts with any of the
+   * prefixes in the supplied set. The check is performed in a case-insensitive
+   * manner, assuming that the values in <code>prefixes</code> have already been
+   * converted to lower-case.
+   */
+  private static String stringStartsWithAny(String target,
+      SortedSet<String> prefixes) {
+    if (prefixes.isEmpty()) {
+      return null;
+    }
+    /*
+     * The headSet() method returns values strictly less than the search value,
+     * so we want to append a trailing character to the end of the search in
+     * case the obfuscated class name is exactly equal to one of the prefixes.
+     */
+    String search = target.toString().toLowerCase() + " ";
+    SortedSet<String> headSet = prefixes.headSet(search);
+    if (!headSet.isEmpty()) {
+      String prefix = headSet.last();
+      if (search.startsWith(prefix)) {
+        return prefix;
+      }
+    }
+    return null;
   }
 
   /**
@@ -485,8 +556,14 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     (new RequirementsCollector(logger, requirements)).accept(sheet);
   }
 
+  /**
+   * Determine the class prefix that will be used. If a value is automatically
+   * computed, the <code>reservedPrefixes</code> set will be cleared because the
+   * returned value is guaranteed to not conflict with any reserved prefixes.
+   */
   private String computeClassPrefix(String classPrefix,
-      SortedSet<JClassType> cssResourceSubtypes) {
+      SortedSet<JClassType> cssResourceSubtypes,
+      TreeSet<String> reservedPrefixes) {
     if ("default".equals(classPrefix)) {
       classPrefix = null;
     } else if ("empty".equals(classPrefix)) {
@@ -502,8 +579,17 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       for (JClassType type : cssResourceSubtypes) {
         checksum.update(Util.getBytes(type.getQualifiedSourceName()));
       }
-      classPrefix = "G"
-          + Long.toString(checksum.getValue(), Character.MAX_RADIX);
+
+      final int seed = Math.abs((int) checksum.getValue());
+      classPrefix = "G" + computeObfuscatedClassName("", new Counter() {
+        @Override
+        int next() {
+          return seed;
+        }
+      }, reservedPrefixes);
+
+      // No conflicts are possible now
+      reservedPrefixes.clear();
     }
 
     return classPrefix;
@@ -515,7 +601,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
    * interface that is tagged with {@code @Shared}.
    */
   private void computeObfuscatedNames(TreeLogger logger, String classPrefix,
-      Set<JClassType> cssResourceSubtypes) {
+      SortedSet<String> reservedPrefixes, Set<JClassType> cssResourceSubtypes) {
     logger = logger.branch(TreeLogger.DEBUG, "Computing CSS class replacements");
 
     for (JClassType type : cssResourceSubtypes) {
@@ -539,8 +625,9 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
           name = classNameOverride.value();
         }
 
-        String obfuscatedClassName = classPrefix
-            + makeIdent(classCounter.next());
+        String obfuscatedClassName = computeObfuscatedClassName(classPrefix,
+            classCounter, reservedPrefixes);
+
         if (prettyOutput) {
           obfuscatedClassName += "-"
               + type.getQualifiedSourceName().replaceAll("[.$]", "-") + "-"
@@ -682,14 +769,42 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     SortedSet<JClassType> cssResourceSubtypes = computeOperableTypes(logger);
 
     if (context.getCachedData(KEY_HAS_CACHED_DATA, Boolean.class) != Boolean.TRUE) {
-      context.putCachedData(KEY_CLASS_COUNTER, new Counter());
+
+      ConfigurationProperty prop;
+      TreeSet<String> reservedPrefixes = new TreeSet<String>();
+      try {
+        prop = context.getGeneratorContext().getPropertyOracle().getConfigurationProperty(
+            KEY_RESERVED_PREFIXES);
+        for (String value : prop.getValues()) {
+          value = value.trim();
+          if (value.length() == 0) {
+            logger.log(TreeLogger.WARN,
+                "Ignoring nonsensical empty string value for "
+                    + KEY_RESERVED_PREFIXES + " configuration property");
+            continue;
+          }
+
+          // Strip leading dots
+          if (value.startsWith(".")) {
+            value = value.substring(1);
+          }
+          reservedPrefixes.add(value.toLowerCase());
+        }
+      } catch (BadPropertyValueException e) {
+        // Do nothing. Unexpected, but we can live with it.
+      }
+
+      String computedPrefix = computeClassPrefix(classPrefix,
+          cssResourceSubtypes, reservedPrefixes);
+
       context.putCachedData(KEY_BY_CLASS_AND_METHOD,
           new IdentityHashMap<JClassType, Map<JMethod, String>>());
+      context.putCachedData(KEY_CLASS_PREFIX, computedPrefix);
+      context.putCachedData(KEY_CLASS_COUNTER, new Counter());
+      context.putCachedData(KEY_HAS_CACHED_DATA, Boolean.TRUE);
+      context.putCachedData(KEY_RESERVED_PREFIXES, reservedPrefixes);
       context.putCachedData(KEY_SHARED_METHODS,
           new IdentityHashMap<JMethod, String>());
-      context.putCachedData(KEY_CLASS_PREFIX, computeClassPrefix(classPrefix,
-          cssResourceSubtypes));
-      context.putCachedData(KEY_HAS_CACHED_DATA, Boolean.TRUE);
     }
 
     classCounter = context.getCachedData(KEY_CLASS_COUNTER, Counter.class);
@@ -697,9 +812,13 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
         KEY_BY_CLASS_AND_METHOD, Map.class);
     replacementsForSharedMethods = context.getCachedData(KEY_SHARED_METHODS,
         Map.class);
-    classPrefix = context.getCachedData(KEY_CLASS_PREFIX, String.class);
 
-    computeObfuscatedNames(logger, classPrefix, cssResourceSubtypes);
+    classPrefix = context.getCachedData(KEY_CLASS_PREFIX, String.class);
+    SortedSet<String> reservedPrefixes = context.getCachedData(
+        KEY_RESERVED_PREFIXES, SortedSet.class);
+
+    computeObfuscatedNames(logger, classPrefix, reservedPrefixes,
+        cssResourceSubtypes);
   }
 
   /**

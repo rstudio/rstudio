@@ -71,6 +71,11 @@
   <define-configuration-property name="CssResource.obfuscationPrefix" is-multi-valued="false" />
   <set-configuration-property name="CssResource.obfuscationPrefix" value="default" />
 
+  <!-- A multi-valued configuration property that defines class name prefixes -->
+  <!-- the CssResource obfuscator should not use. -->
+  <define-configuration-property name="CssResource.reservedClassPrefixes" is-multi-valued="true" />
+  <extend-configuration-property name="CssResource.reservedClassPrefixes" value="gwt-" />
+
   <!-- This can be used to make CssResource produce human-readable CSS -->
   <define-configuration-property name="CssResource.style" is-multi-valued="false" />
   <set-configuration-property name="CssResource.style" value="obf" />
