@@ -18,17 +18,17 @@ package com.google.gwt.lang;
 import com.google.gwt.core.client.UnsafeNativeLong;
 
 final class LongEmul {
-  int l, m, h; // Used only when RUN_IN_JVM is true
-  
   public static LongEmul getInstance() {
     return new LongEmul();
   }
+
+  int l, m, h; // Used only when RUN_IN_JVM is true
 }
 
 /**
  * Implements a Java <code>long</code> in a way that can be translated to
- * JavaScript.  Methods that are meant to be called from outside this package
- * are located in {@link LongLib}.
+ * JavaScript. Methods that are meant to be called from outside this package are
+ * located in {@link LongLib}.
  */
 class LongLibBase {
   // Force the class to exist
@@ -37,11 +37,11 @@ class LongLibBase {
   /*
    * Implementation: A LongEmul containing three values {l, m, h} (low, middle,
    * high) such that (x.l + ((long) x.m << 22) + ((long) x.h << 44)) is equal to
-   * the original long integer.  The constant 22 is chosen since some browsers
+   * the original long integer. The constant 22 is chosen since some browsers
    * are faster when operating on integers of 24 bits or less.
    * 
-   * By convention, we expect and maintain that the upper bits of each word
-   * be zeroed.
+   * By convention, we expect and maintain that the upper bits of each word be
+   * zeroed.
    * 
    * Note that this class must be careful using type "long". Being the
    * implementation of the long type for web mode, any place it uses a long is
@@ -49,29 +49,34 @@ class LongLibBase {
    * LongLib#getAsIntArray}.
    */
 
-  // Note that the 'mul' method implicitly depends on the specific value
-  // BITS == 22
+  // Note that the {@link LonghLib#mul} method implicitly depends on the
+  // specific value BITS == 22
   protected static final int BITS = 22;
   protected static final int BITS01 = 2 * BITS;
   protected static final int BITS2 = 64 - BITS01;
   protected static final int MASK = (1 << BITS) - 1;
   protected static final int MASK_2 = (1 << BITS2) - 1;
   protected static LongEmul remainder;
-  
+
   /**
-   * Allow a standalone Java test such as LongLibJreTest to run this code.
+   * Allow standalone Java tests such as LongLibTest/LongLibJreTest to run this
+   * code.
    */
   protected static boolean RUN_IN_JVM = false;
-  
+
   protected static final int SIGN_BIT = BITS2 - 1;
   protected static final int SIGN_BIT_VALUE = 1 << SIGN_BIT;
   protected static final double TWO_PWR_15_DBL = 0x8000;
   protected static final double TWO_PWR_16_DBL = 0x10000;
   protected static final double TWO_PWR_22_DBL = 0x400000;
-  protected static final double TWO_PWR_31_DBL = TWO_PWR_16_DBL * TWO_PWR_15_DBL;
-  protected static final double TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
-  protected static final double TWO_PWR_44_DBL = TWO_PWR_22_DBL * TWO_PWR_22_DBL;
-  protected static final double TWO_PWR_63_DBL = TWO_PWR_32_DBL * TWO_PWR_31_DBL;
+  protected static final double TWO_PWR_31_DBL = TWO_PWR_16_DBL
+      * TWO_PWR_15_DBL;
+  protected static final double TWO_PWR_32_DBL = TWO_PWR_16_DBL
+      * TWO_PWR_16_DBL;
+  protected static final double TWO_PWR_44_DBL = TWO_PWR_22_DBL
+      * TWO_PWR_22_DBL;
+  protected static final double TWO_PWR_63_DBL = TWO_PWR_32_DBL
+      * TWO_PWR_31_DBL;
 
   /**
    * Web mode implementation; the int array is already the right object.
@@ -80,13 +85,13 @@ class LongLibBase {
   protected static native long asLong(LongEmul value) /*-{
     return value;
   }-*/;
-  
+
   protected static LongEmul create(int value) {
     int a0 = value & MASK;
     int a1 = (value >> BITS) & MASK;
     int a2 = (value < 0) ? MASK_2 : 0;
 
-    if (RUN_IN_JVM ) {
+    if (RUN_IN_JVM) {
       LongEmul a = new LongEmul();
       a.l = a0;
       a.m = a1;
@@ -95,7 +100,7 @@ class LongLibBase {
     }
     return create0(a0, a1, a2);
   }
-  
+
   protected static LongEmul create(int a0, int a1, int a2) {
     if (RUN_IN_JVM) {
       LongEmul a = new LongEmul();
@@ -106,8 +111,9 @@ class LongLibBase {
     }
     return create0(a0, a1, a2);
   }
-  
-  protected static LongEmul divMod(LongEmul a, LongEmul b, boolean computeRemainder) {
+
+  protected static LongEmul divMod(LongEmul a, LongEmul b,
+      boolean computeRemainder) {
     if (isZero(b)) {
       throw new ArithmeticException("divide by zero");
     }
@@ -140,19 +146,18 @@ class LongLibBase {
     boolean aIsMinValue = false;
 
     /*
-     * Normalize a to a positive value, keeping track of the sign change
-     * in 'negative' (which tracks the sign of both a and b and is used to
-     * determine the sign of the quotient) and 'aIsNegative' (which is used
-     * to determine the sign of the remainder).
+     * Normalize a to a positive value, keeping track of the sign change in
+     * 'negative' (which tracks the sign of both a and b and is used to
+     * determine the sign of the quotient) and 'aIsNegative' (which is used to
+     * determine the sign of the remainder).
      * 
-     * For all values of a except MIN_VALUE, we can just negate a and
-     * modify negative and aIsNegative appropriately.  When a == MIN_VALUE,
-     * negation is not possible without overflowing 64 bits, so instead
-     * of computing abs(MIN_VALUE) / abs(b) we compute
-     * (abs(MIN_VALUE) - 1) / abs(b).  The only circumstance under which
-     * these quotients differ is when b is a power of two, which will
-     * divide abs(MIN_VALUE) == 2^64 exactly.  In this case, we can get
-     * the proper result by shifting MIN_VALUE in unsigned fashion.
+     * For all values of a except MIN_VALUE, we can just negate a and modify
+     * negative and aIsNegative appropriately. When a == MIN_VALUE, negation is
+     * not possible without overflowing 64 bits, so instead of computing
+     * abs(MIN_VALUE) / abs(b) we compute (abs(MIN_VALUE) - 1) / abs(b). The
+     * only circumstance under which these quotients differ is when b is a power
+     * of two, which will divide abs(MIN_VALUE) == 2^64 exactly. In this case,
+     * we can get the proper result by shifting MIN_VALUE in unsigned fashion.
      * 
      * We make a single copy of a before the first operation that needs to
      * modify its value.
@@ -186,11 +191,10 @@ class LongLibBase {
     }
 
     // Now both a and b are non-negative
-    
+
     // If b is a power of two, just shift
     if (bpower != -1) {
-      return divModByShift(a, bpower, negative, aIsNegative,
-          computeRemainder);
+      return divModByShift(a, bpower, negative, aIsNegative, computeRemainder);
     }
 
     // if a < b, the quotient is 0 and the remainder is a
@@ -204,10 +208,10 @@ class LongLibBase {
       }
       return create(); // zero
     }
-    
+
     // Generate the quotient using bit-at-a-time long division
-    return divModHelper(aIsCopy ? a : create(a), b, negative,
-        aIsNegative, aIsMinValue, computeRemainder);
+    return divModHelper(aIsCopy ? a : create(a), b, negative, aIsNegative,
+        aIsMinValue, computeRemainder);
   }
 
   protected static int getH(LongEmul a) {
@@ -275,6 +279,24 @@ class LongLibBase {
   }
 
   /**
+   * Return the number of leading zeros of a long value.
+   */
+  // package-private for testing
+  static int numberOfLeadingZeros(LongEmul a) {
+    int b2 = Integer.numberOfLeadingZeros(getH(a));
+    if (b2 == 32) {
+      int b1 = Integer.numberOfLeadingZeros(getM(a));
+      if (b1 == 32) {
+        return Integer.numberOfLeadingZeros(getL(a)) + 32;
+      } else {
+        return b1 + BITS2 - (32 - BITS);
+      }
+    } else {
+      return b2 - (32 - BITS2);
+    }
+  }
+
+  /**
    * Creates a long instance equal to 0.
    */
   private static LongEmul create() {
@@ -299,7 +321,8 @@ class LongLibBase {
   }
 
   private static native LongEmul create0(int l, int m, int h) /*-{
-    return (a = @com.google.gwt.lang.LongEmul::getInstance()(), a.l = l, a.m = m, a.h = h, a);
+    return (a = @com.google.gwt.lang.LongEmul::getInstance()(),
+        a.l = l, a.m = m, a.h = h, a);
   }-*/;
 
   private static LongEmul divModByMinValue(LongEmul a, boolean computeRemainder) {
@@ -316,7 +339,7 @@ class LongLibBase {
     }
     return create(); // zero
   }
-  
+
   private static LongEmul divModByShift(LongEmul a, int bpower,
       boolean negative, boolean aIsNegative, boolean computeRemainder) {
     LongEmul c = LongLib.shr(a, bpower);
@@ -335,8 +358,9 @@ class LongLibBase {
     return c;
   }
 
-  private static LongEmul divModHelper(LongEmul a, LongEmul b, boolean negative,
-      boolean aIsNegative, boolean aIsMinValue, boolean computeRemainder) {
+  private static LongEmul divModHelper(LongEmul a, LongEmul b,
+      boolean negative, boolean aIsNegative, boolean aIsMinValue,
+      boolean computeRemainder) {
     // Align the leading one bits of a and b by shifting b left
     int shift = numberOfLeadingZeros(b) - numberOfLeadingZeros(a);
     LongEmul bshift = LongLib.shl(b, shift);
@@ -407,24 +431,7 @@ class LongLibBase {
   }
 
   /**
-   * Return the number of leading zeros of a long value.
-   */
-  private static int numberOfLeadingZeros(LongEmul a) {
-    int b2 = Integer.numberOfLeadingZeros(getH(a));
-    if (b2 == 32) {
-      int b1 = Integer.numberOfLeadingZeros(getM(a));
-      if (b1 == 32) {
-        return Integer.numberOfLeadingZeros(getL(a)) + BITS2 + 2 * BITS - 32;
-      } else {
-        return b1 + BITS2 - (32 - BITS);
-      }
-    } else {
-      return b2 - (32 - BITS2);
-    }
-  }
-
-  /**
-   * Return the exact log base 2 of a, or -1 if a is not a power of two: 
+   * Return the exact log base 2 of a, or -1 if a is not a power of two:
    * 
    * <pre>
    * if (x == 2^n) {
@@ -483,15 +490,15 @@ class LongLibBase {
       }
     }
   }
-  
+
   private static native void setBitH(LongEmul a, int bit) /*-{
     a.h |= 1 << bit;
   }-*/;
-  
+
   private static native void setBitL(LongEmul a, int bit) /*-{
     a.l |= 1 << bit;
   }-*/;
-  
+
   private static native void setBitM(LongEmul a, int bit) /*-{
     a.m |= 1 << bit;
   }-*/;
@@ -509,7 +516,7 @@ class LongLibBase {
   }-*/;
 
   /**
-   * a >>= 1.  Assumes a >= 0.
+   * a >>= 1. Assumes a >= 0.
    */
   private static void toShru1(LongEmul a) {
     int a1 = getM(a);
