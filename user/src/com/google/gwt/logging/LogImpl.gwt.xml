@@ -1,0 +1,17 @@
+<module>
+  <source path="impl" />
+  
+  <!-- Set up and handle the gwt.logging property -->
+  <define-property name="gwt.logging.enabled" values="TRUE, FALSE" />
+  <replace-with class="com.google.gwt.logging.impl.LoggerImplRegular">
+    <when-type-is class="com.google.gwt.logging.impl.LoggerImplNull"/>
+    <when-property-is name="gwt.logging.enabled" value="TRUE" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.impl.LevelImplRegular">
+    <when-type-is class="com.google.gwt.logging.impl.LevelImplNull"/>
+    <when-property-is name="gwt.logging.enabled" value="TRUE" />
+  </replace-with>
+  
+  <set-property name="gwt.logging.enabled" value="FALSE"/> 
+  
+</module>

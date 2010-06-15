@@ -1,0 +1,98 @@
+<!--                                                                        -->
+<!-- Copyright 2010 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!-- regular expressions support.                                           -->
+<module>
+  <inherits name="com.google.gwt.logging.LogImpl"/>
+  
+  <replace-with class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplRegular">
+    <when-type-is class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplNull"/>
+    <when-property-is name="gwt.logging.enabled" value="TRUE" />
+  </replace-with>
+
+  
+  <!-- Set up and handle the gwt.logging.logLevel property -->
+  <define-property name="gwt.logging.logLevel" values="ALL, FINEST, FINER, FINE, CONFIG, INFO, WARNING, SEVERE" />
+  <replace-with class="com.google.gwt.logging.client.DefaultLevel.All">
+    <when-type-is class="com.google.gwt.logging.client.DefaultLevel" />
+    <when-property-is name="gwt.logging.logLevel" value="ALL" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.client.DefaultLevel.Finest">
+    <when-type-is class="com.google.gwt.logging.client.DefaultLevel" />
+    <when-property-is name="gwt.logging.logLevel" value="FINEST" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.client.DefaultLevel.Finer">
+    <when-type-is class="com.google.gwt.logging.client.DefaultLevel" />
+    <when-property-is name="gwt.logging.logLevel" value="FINER" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.client.DefaultLevel.Fine">
+    <when-type-is class="com.google.gwt.logging.client.DefaultLevel" />
+    <when-property-is name="gwt.logging.logLevel" value="FINE" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.client.DefaultLevel.Config">
+    <when-type-is class="com.google.gwt.logging.client.DefaultLevel" />
+    <when-property-is name="gwt.logging.logLevel" value="CONFIG" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.client.DefaultLevel.Info">
+    <when-type-is class="com.google.gwt.logging.client.DefaultLevel" />
+    <when-property-is name="gwt.logging.logLevel" value="INFO" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.client.DefaultLevel.Warning">
+    <when-type-is class="com.google.gwt.logging.client.DefaultLevel" />
+    <when-property-is name="gwt.logging.logLevel" value="WARNING" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.client.DefaultLevel.Severe">
+    <when-type-is class="com.google.gwt.logging.client.DefaultLevel" />
+    <when-property-is name="gwt.logging.logLevel" value="SEVERE" />
+  </replace-with>
+  
+  
+  <!-- Set up and handle the gwt.logging.xxxHandler properties -->
+  <define-property name="gwt.logging.consoleHandler" values="ENABLED, DISABLED" />
+  <replace-with class="com.google.gwt.logging.client.NullLogHandler">
+    <when-type-is class="com.google.gwt.logging.client.ConsoleLogHandler" />
+    <when-property-is name="gwt.logging.consoleHandler" value="DISABLED" />
+  </replace-with>
+  <define-property name="gwt.logging.developmentModeHandler" values="ENABLED, DISABLED" />
+  <replace-with class="com.google.gwt.logging.client.NullLogHandler">
+    <when-type-is class="com.google.gwt.logging.client.DevelopmentModeLogHandler" />
+    <when-property-is name="gwt.logging.developmentModeHandler" value="DISABLED" />
+  </replace-with>
+  <define-property name="gwt.logging.firebugHandler" values="ENABLED, DISABLED" />
+  <replace-with class="com.google.gwt.logging.client.NullLogHandler">
+    <when-type-is class="com.google.gwt.logging.client.FirebugLogHandler" />
+    <when-property-is name="gwt.logging.firebugHandler" value="DISABLED" />
+  </replace-with>
+  <define-property name="gwt.logging.systemHandler" values="ENABLED, DISABLED" />
+  <replace-with class="com.google.gwt.logging.client.NullLogHandler">
+    <when-type-is class="com.google.gwt.logging.client.SystemLogHandler" />
+    <when-property-is name="gwt.logging.systemHandler" value="DISABLED" />
+  </replace-with>
+  <define-property name="gwt.logging.popupHandler" values="ENABLED, DISABLED" />
+  <replace-with class="com.google.gwt.logging.client.NullLoggingPopup">
+    <when-type-is class="com.google.gwt.logging.client.BasicLoggingPopup" />
+    <when-property-is name="gwt.logging.popupHandler" value="DISABLED" />
+  </replace-with>
+ 
+  <!-- Default values for all properties -->
+  <set-property name="gwt.logging.enabled" value="TRUE"/> 
+  <set-property name="gwt.logging.logLevel" value="INFO"/>
+  <set-property name="gwt.logging.consoleHandler" value="ENABLED" />
+  <set-property name="gwt.logging.developmentModeHandler" value="ENABLED" />
+  <set-property name="gwt.logging.firebugHandler" value="ENABLED" />
+  <set-property name="gwt.logging.popupHandler" value="ENABLED" />
+  <set-property name="gwt.logging.systemHandler" value="ENABLED" />
+  
+  <entry-point class="com.google.gwt.logging.client.LogConfiguration"/>
+</module>

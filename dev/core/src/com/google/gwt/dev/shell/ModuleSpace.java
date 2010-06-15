@@ -303,7 +303,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       type = TreeLogger.ERROR;
     }
     // Log at the top level for visibility.
-    getLogger().log(type, message, e);
+    TreeLogger t = getLogger();
+    if (t != null) {
+      getLogger().log(type, message, e);
+    }
   }
 
   /**
