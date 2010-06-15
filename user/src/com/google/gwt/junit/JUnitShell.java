@@ -944,6 +944,11 @@ public class JUnitShell extends DevMode {
   }
 
   @Override
+  protected void inferStartupUrls() {
+    // do nothing -- JUnitShell isn't expected to have startup URLs
+  }
+
+  @Override
   protected ModuleDef loadModule(TreeLogger logger, String moduleName,
       boolean refresh) throws UnableToCompleteException {
     // Never refresh modules in JUnit.
