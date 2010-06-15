@@ -256,7 +256,10 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
   }
 
   public Record create(String token) {
-    assert !used;
+    if (used) {
+      throw new IllegalStateException(
+          "create can only be called on an un-used DeltaValueStore");
+    }
     String futureId = futureIdGenerator.getFutureId();
 
     RecordSchema<? extends Record> schema = recordToTypeMap.getType(token);
@@ -270,8 +273,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
   }
 
   public void delete(Record record) {
-    assert !used;
-    assert record instanceof RecordImpl;
+    checkArgumentsAndState(record, "delete");
     RecordImpl recordImpl = (RecordImpl) record;
     RecordKey recordKey = new RecordKey(recordImpl);
     WriteOperation priorOperation = operations.get(recordKey);
@@ -312,8 +314,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
   }
 
   public <V> void set(Property<V> property, Record record, V value) {
-    assert !used;
-    assert record instanceof RecordImpl;
+    checkArgumentsAndState(record, "set");
     RecordImpl recordImpl = (RecordImpl) record;
     RecordKey recordKey = new RecordKey(recordImpl);
 
@@ -422,6 +423,17 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
       return true;
     }
     return false;
+  }
+
+  private void checkArgumentsAndState(Record record, String methodName) {
+    if (used) {
+      throw new IllegalStateException(
+          methodName + " can only be called on an un-used DeltaValueStore");
+    }
+    if (!(record instanceof RecordImpl)) {
+      throw new IllegalArgumentException(record + " + must be an instance of "
+          + RecordImpl.class);
+    }
   }
 
   private String getJsonForOperation(WriteOperation writeOperation) {

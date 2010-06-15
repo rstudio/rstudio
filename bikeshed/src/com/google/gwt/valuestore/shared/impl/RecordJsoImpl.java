@@ -51,10 +51,13 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
   }
 
   public static native RecordJsoImpl fromJson(String json) /*-{
-    return eval(json);
+    // TODO: clean this
+    eval("xyz=" + json);
+    return xyz;
   }-*/;
 
-  private static native RecordJsoImpl create() /*-{
+  /* Made protected, for testing */
+  protected static native RecordJsoImpl create() /*-{
     return {};
   }-*/;
 
