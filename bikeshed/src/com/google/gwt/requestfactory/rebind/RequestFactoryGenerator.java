@@ -40,7 +40,6 @@ import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.ServerOperation;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
-import com.google.gwt.user.rebind.PrintWriterManager;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
@@ -95,16 +94,15 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     String packageName = interfaceType.getPackage().getName();
-    PrintWriterManager printWriters = new PrintWriterManager(generatorContext,
-        logger, packageName);
+
     // the replace protects against inner classes
     String implName = interfaceType.getName().replace('.', '_') + "Impl";
-    PrintWriter out = printWriters.tryToMakePrintWriterFor(implName);
+    PrintWriter out = generatorContext.tryCreate(logger, packageName, implName);
 
     // If an implementation already exists, we don't need to do any work
     if (out != null) {
-      generateOnce(logger, generatorContext, printWriters, out, interfaceType,
-          packageName, implName);
+      generateOnce(logger, generatorContext, out, interfaceType, packageName,
+          implName);
     }
 
     return packageName + "." + implName;
@@ -120,9 +118,8 @@ public class RequestFactoryGenerator extends Generator {
   }
 
   private void ensureRecordType(TreeLogger logger,
-      GeneratorContext generatorContext, PrintWriterManager printWriters,
-      String packageName, JClassType publicRecordType)
-      throws UnableToCompleteException {
+      GeneratorContext generatorContext, String packageName,
+      JClassType publicRecordType) throws UnableToCompleteException {
     TypeOracle typeOracle = generatorContext.getTypeOracle();
 
     if (!publicRecordType.isAssignableTo(typeOracle.findType(Record.class.getName()))) {
@@ -134,8 +131,8 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     String recordImplTypeName = publicRecordType.getName() + "Impl";
-    PrintWriter pw = printWriters.tryToMakePrintWriterFor(recordImplTypeName);
-
+    PrintWriter pw = generatorContext.tryCreate(logger, packageName,
+        recordImplTypeName);
     if (pw != null) {
       logger = logger.branch(TreeLogger.DEBUG, "Generating "
           + publicRecordType.getName());
@@ -215,15 +212,16 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.outdent();
       sw.println("}");
+      generatorContext.commit(logger, pw);
     }
 
     generatedRecordTypes.add(publicRecordType);
   }
 
   private void generateOnce(TreeLogger logger,
-      GeneratorContext generatorContext, PrintWriterManager printWriters,
-      PrintWriter out, JClassType interfaceType, String packageName,
-      String implName) throws UnableToCompleteException {
+      GeneratorContext generatorContext, PrintWriter out,
+      JClassType interfaceType, String packageName, String implName)
+      throws UnableToCompleteException {
 
     logger = logger.branch(TreeLogger.DEBUG, String.format(
         "Generating implementation of %s", interfaceType.getName()));
@@ -287,22 +285,22 @@ public class RequestFactoryGenerator extends Generator {
 
     for (JClassType nestedInterface : requestSelectors) {
       String nestedImplName = nestedInterface.getName() + "Impl";
-      PrintWriter pw = printWriters.makePrintWriterFor(nestedImplName);
+      PrintWriter pw = generatorContext.tryCreate(logger, packageName,
+          nestedImplName);
       if (pw != null) {
-        generateRequestSelectorImplementation(logger, generatorContext,
-            printWriters, pw, nestedInterface, interfaceType, packageName,
-            nestedImplName);
+        generateRequestSelectorImplementation(logger, generatorContext, pw,
+            nestedInterface, interfaceType, packageName, nestedImplName);
       }
     }
 
     // generate the mapping type implementation
-    PrintWriter pw = printWriters.makePrintWriterFor(recordToTypeMapName);
+    PrintWriter pw = generatorContext.tryCreate(logger, packageName,
+        recordToTypeMapName);
     if (pw != null) {
       generateRecordToTypeMap(logger, generatorContext, pw,
           recordToTypeInterface, packageName, recordToTypeMapName);
     }
-
-    printWriters.commit();
+    generatorContext.commit(logger, out);
   }
 
   private void generateRecordToTypeMap(TreeLogger logger,
@@ -349,12 +347,13 @@ public class RequestFactoryGenerator extends Generator {
 
     sw.outdent();
     sw.println("}");
+    generatorContext.commit(logger, out);
   }
 
   private void generateRequestSelectorImplementation(TreeLogger logger,
-      GeneratorContext generatorContext, PrintWriterManager printWriters,
-      PrintWriter out, JClassType interfaceType, JClassType mainType,
-      String packageName, String implName) throws UnableToCompleteException {
+      GeneratorContext generatorContext, PrintWriter out,
+      JClassType interfaceType, JClassType mainType, String packageName,
+      String implName) throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG, String.format(
         "Generating implementation of %s", interfaceType.getName()));
 
@@ -383,7 +382,7 @@ public class RequestFactoryGenerator extends Generator {
     for (JMethod method : interfaceType.getMethods()) {
       JClassType returnType = method.getReturnType().isParameterized().getTypeArgs()[0];
 
-      ensureRecordType(logger, generatorContext, printWriters,
+      ensureRecordType(logger, generatorContext,
           returnType.getPackage().getName(), returnType);
 
       ServerOperation annotation = method.getAnnotation(ServerOperation.class);
@@ -433,6 +432,7 @@ public class RequestFactoryGenerator extends Generator {
 
     sw.outdent();
     sw.println("}");
+    generatorContext.commit(logger, out);
   }
 
   /**

@@ -34,7 +34,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.TakesValue;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
-import com.google.gwt.user.rebind.PrintWriterManager;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.valuestore.shared.Property;
 
@@ -120,15 +119,12 @@ public class EditorSupportGenerator extends Generator {
         interfaceType, logger);
     String implName = getImplName(superinterfaceType);
     String packageName = interfaceType.getPackage().getName();
-    PrintWriterManager printWriters = new PrintWriterManager(generatorContext,
-        logger, packageName);
-    PrintWriter out = printWriters.tryToMakePrintWriterFor(implName);
 
+    PrintWriter out = generatorContext.tryCreate(logger, packageName, implName);
     // If an implementation already exists, we don't need to do any work
     if (out != null) {
       generateOnce(logger, generatorContext, out, interfaceType, packageName,
           implName, superinterfaceType);
-      printWriters.commit();
     }
 
     return packageName + "." + implName;
@@ -190,6 +186,7 @@ public class EditorSupportGenerator extends Generator {
 
     sw.outdent();
     sw.println("}");
+    generatorContext.commit(logger, out);
   }
 
   private Collection<JMethod> getAccessibleMethods(JClassType classType) {
