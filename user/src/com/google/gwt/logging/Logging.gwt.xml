@@ -81,7 +81,7 @@
   </replace-with>
   <define-property name="gwt.logging.popupHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLoggingPopup">
-    <when-type-is class="com.google.gwt.logging.client.BasicLoggingPopup" />
+    <when-type-is class="com.google.gwt.logging.client.LoggingPopup" />
     <when-property-is name="gwt.logging.popupHandler" value="DISABLED" />
   </replace-with>
  
