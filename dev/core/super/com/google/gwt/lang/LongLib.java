@@ -30,7 +30,9 @@ public class LongLib extends LongLibBase {
   }
   
   private static LongEmul[] boxedValues;
-  
+
+  private static boolean haveNonZero;
+
   public static LongEmul add(LongEmul a, LongEmul b) {
     int sum0 = getL(a) + getL(b);
     int sum1 = getM(a) + getM(b) + (sum0 >> BITS);
@@ -44,10 +46,65 @@ public class LongLib extends LongLibBase {
   }
 
   /**
+   * Return an optionally single-quoted string containing a base-64 encoded
+   * version of the given long value.
+   */
+  public static String base64Emit(long value, boolean quote) {
+    // Convert to ints early to avoid need for long ops
+    int low = (int) (value & 0xffffffff);
+    int high = (int) (value >> 32);
+
+    StringBuilder sb = new StringBuilder();
+    if (quote) {
+      sb.append('\'');
+    }
+    haveNonZero = false;
+    base64Append(sb, (high >> 28) & 0xf); // bits 63 - 60
+    base64Append(sb, (high >> 22) & 0x3f); // bits 59 - 54
+    base64Append(sb, (high >> 16) & 0x3f); // bits 53 - 48
+    base64Append(sb, (high >> 10) & 0x3f); // bits 47 - 42
+    base64Append(sb, (high >> 4) & 0x3f); // bits 41 - 36
+    int v = ((high & 0xf) << 2) | ((low >> 30) & 0x3);
+    base64Append(sb, v); // bits 35 - 30
+    base64Append(sb, (low >> 24) & 0x3f); // bits 29 - 24
+    base64Append(sb, (low >> 18) & 0x3f); // bits 23 - 18
+    base64Append(sb, (low >> 12) & 0x3f); // bits 17 - 12
+    base64Append(sb, (low >> 6) & 0x3f); // bits 11 - 6
+    haveNonZero = true; // always emit final digit
+    base64Append(sb, low & 0x3f); // bits 5 - 0
+    if (quote) {
+      sb.append('\'');
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Parse a string containing a base-64 encoded version of a long value.
+   */
+  public static long base64Parse(String value) {
+    int pos = 0;
+    char first = value.charAt(pos++);
+    int len = value.length();
+    
+    // Skip surrounding single quotes
+    if (first == '\'') {
+      first = value.charAt(pos++);
+      len--;
+    }
+    long longVal = base64Value(first);
+    while (pos < len) {
+      longVal <<= 6;
+      longVal |= base64Value(value.charAt(pos++));
+    }
+    return longVal;
+  }
+
+  /**
    * Compare the receiver a to the argument b.
    * 
    * @return 0 if they are the same, a positive value if the receiver is
-   * greater, or a negative value if the argument is greater.
+   *         greater, or a negative value if the argument is greater.
    */
   public static int compare(LongEmul a, LongEmul b) {
     int signA = sign(a);
@@ -76,7 +133,7 @@ public class LongLib extends LongLibBase {
   public static LongEmul div(LongEmul a, LongEmul b) {
     return divMod(a, b, false);
   }
-  
+
   public static boolean eq(LongEmul a, LongEmul b) {
     return getL(a) == getL(b) && getM(a) == getM(b) && getH(a) == getH(b);
   }
@@ -130,7 +187,7 @@ public class LongLib extends LongLibBase {
 
     return create(value);
   }
-  
+
   /**
    * Return a triple of ints { low, middle, high } that concatenate bitwise to
    * the given number.
@@ -142,7 +199,7 @@ public class LongLib extends LongLibBase {
     a[2] = (int) ((l >> BITS01) & MASK_2);
     return a;
   }
-  
+
   public static boolean gt(LongEmul a, LongEmul b) {
     int signa = getH(a) >> (BITS2 - 1);
     int signb = getH(b) >> (BITS2 - 1);
@@ -222,7 +279,7 @@ public class LongLib extends LongLibBase {
     int p2 = a2 * b0; // << 26
     int p3 = a3 * b0; // << 39
     int p4 = a4 * b0; // << 52
-    
+
     if (b1 != 0) {
       p1 += a0 * b1;
       p2 += a1 * b1;
@@ -395,56 +452,96 @@ public class LongLib extends LongLibBase {
     }
     return toDoubleHelper(a);
   }
-  
+
   // Assumes Integer.MIN_VALUE <= a <= Integer.MAX_VALUE
   public static int toInt(LongEmul a) {
     return getL(a) | (getM(a) << BITS);
   }
-  
+
   public static String toString(LongEmul a) {
     if (LongLibBase.isZero(a)) {
       return "0";
     }
-  
+
     if (LongLibBase.isMinValue(a)) {
       // Special-case MIN_VALUE because neg(MIN_VALUE) == MIN_VALUE
       return "-9223372036854775808";
     }
-  
+
     if (LongLibBase.isNegative(a)) {
       return "-" + toString(neg(a));
     }
-  
+
     LongEmul rem = a;
     String res = "";
-  
+
     while (!LongLibBase.isZero(rem)) {
       // Do several digits each time through the loop, so as to
       // minimize the calls to the very expensive emulated div.
       final int tenPowerZeroes = 9;
       final int tenPower = 1000000000;
       LongEmul tenPowerLong = fromInt(tenPower);
-  
+
       rem = LongLibBase.divMod(rem, tenPowerLong, true);
       String digits = "" + toInt(LongLibBase.remainder);
-  
+
       if (!LongLibBase.isZero(rem)) {
         int zeroesNeeded = tenPowerZeroes - digits.length();
         for (; zeroesNeeded > 0; zeroesNeeded--) {
           digits = "0" + digits;
         }
       }
-  
+
       res = digits + res;
     }
-  
+
     return res;
   }
-  
+
   public static LongEmul xor(LongEmul a, LongEmul b) {
     return create(getL(a) ^ getL(b), getM(a) ^ getM(b), getH(a) ^ getH(b));
   }
-  
+
+  private static void base64Append(StringBuilder sb, int digit) {
+    if (digit > 0) {
+      haveNonZero = true;
+    }
+    if (haveNonZero) {
+      int c;
+      if (digit < 26) {
+        c = 'A' + digit;
+      } else if (digit < 52) {
+        c = 'a' + digit - 26;
+      } else if (digit < 62) {
+        c = '0' + digit - 52;
+      } else if (digit == 62) {
+        c = '$';
+      } else {
+        c = '_';
+      }
+      sb.append((char) c);
+    }
+  }
+
+  // Assume digit is one of [A-Za-z0-9$_]
+  private static int base64Value(char digit) {
+    if (digit >= 'A' && digit <= 'Z') {
+      return digit - 'A';
+    }
+    // No need to check digit <= 'z'
+    if (digit >= 'a') {
+      return digit - 'a' + 26;
+    }
+    if (digit >= '0' && digit <= '9') {
+      return digit - '0' + 52;
+    }
+    if (digit == '$') {
+      return 62;
+    }
+    // digit == '_'
+    return 63;
+  }
+
   /**
    * Not instantiable.
    */

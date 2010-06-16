@@ -24,6 +24,10 @@ import junit.framework.TestCase;
  * Java println on normal Java longs.
  */
 public class LongLibTestBase extends TestCase {
+    
+  static {
+    LongLibBase.RUN_IN_JVM = true;
+  }
 
   static void assertEquals(LongEmul expected, LongEmul actual) {
     assertTrue("expected=" + LongLib.toString(expected) + "  actual="

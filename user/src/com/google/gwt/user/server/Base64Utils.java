@@ -34,7 +34,7 @@ public class Base64Utils {
 
   /**
    * An array mapping legal base 64 characters [a-zA-Z0-9$_] to their associated 6-bit values.
-   * The source indicies will be given by 7-bit ASCII characters, thus the array size needs to
+   * The source indices will be given by 7-bit ASCII characters, thus the array size needs to
    * be 128 (actually 123 would suffice for the given set of characters in use).
    */
   private static final byte[] base64Values = new byte[128];

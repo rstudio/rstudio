@@ -147,15 +147,6 @@ public final class ClientSerializationStreamWriter extends
     return buffer.toString();
   }
 
-  @Override
-  public void writeLong(long fieldValue) {
-    // Write longs as a pair of doubles for backwards compatibility
-    double[] parts = getAsDoubleArray(fieldValue);
-    assert parts != null && parts.length == 2;
-    writeDouble(parts[0]);
-    writeDouble(parts[1]);
-  }
-
   /**
    * Appends a token to the end of the buffer.
    */
@@ -168,7 +159,7 @@ public final class ClientSerializationStreamWriter extends
   protected String getObjectTypeSignature(Object o) {
     Class<?> clazz = o.getClass();
 
-    if (o instanceof Enum) {
+    if (o instanceof Enum<?>) {
       Enum<?> e = (Enum<?>) o;
       clazz = e.getDeclaringClass();
     }

@@ -406,6 +406,41 @@ public class LongLibTest extends TestCase {
     doTestBinary(OP_AND);
   }
 
+  public static void testBase64() {
+    assertEquals("A", LongLib.base64Emit(0x0L, false));
+    assertEquals(0x0L, LongLib.base64Parse("A"));
+
+    assertEquals("'B'", LongLib.base64Emit(0x1L, true));
+    assertEquals(0x1L, LongLib.base64Parse("B"));
+
+    assertEquals("'BA'", LongLib.base64Emit(0x40L, true));
+    assertEquals(0x40L, LongLib.base64Parse("BA"));
+
+    assertEquals("'P_________A'", LongLib.base64Emit(-0x40L, true));
+    assertEquals(-0x40L, LongLib.base64Parse("P_________A"));
+
+    assertEquals("'P__________'", LongLib.base64Emit(-1L, true));
+    assertEquals(-1L, LongLib.base64Parse("P__________"));
+
+    // Use all types of base 64 chars
+    long value = 0L;
+    value |= 15L << 60; // 'P'
+    value |= 35L << 54; // 'j'
+    value |= 44L << 48; // 's'
+    value |= 62L << 42; // '$'
+    value |= 26L << 36; // 'a'
+    value |=  9L << 30; // 'J'
+    value |= 18L << 24; // 'S'
+    value |= 25L << 18; // 'Z'
+    value |= 52L << 12; // '0'
+    value |= 57L << 6;  // '5'
+    value |= 63L;       // '_'
+
+    String s = "Pjs$aJSZ05_";
+    assertEquals(s, LongLib.base64Emit(value, false));
+    assertEquals(value, LongLib.base64Parse(s));
+  }
+
   public static void testCompare() {
     doTestCompare(OP_COMPARE);
   }
@@ -417,7 +452,7 @@ public class LongLibTest extends TestCase {
   public static void testEq() {
     doTestBoolean(OP_EQ);
   }
-  
+
   public static void testGetAsIntArray() {
     long longVal = 0x123456789abcdef0L;
     int[] array = LongLib.getAsIntArray(longVal);

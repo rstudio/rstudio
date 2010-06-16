@@ -396,7 +396,7 @@ public final class ServerSerializationStreamWriter extends
   private static Class<?> getClassForSerialization(Object instance) {
     assert (instance != null);
 
-    if (instance instanceof Enum) {
+    if (instance instanceof Enum<?>) {
       Enum<?> e = (Enum<?>) instance;
       return e.getDeclaringClass();
     } else {
@@ -554,14 +554,6 @@ public final class ServerSerializationStreamWriter extends
     writeHeader(stream);
 
     return stream.toString();
-  }
-  
-  public void writeLong(long fieldValue) {
-    // Write longs as a pair of doubles for backwards compatibility
-    double[] parts = getAsDoubleArray(fieldValue);
-    assert parts != null && parts.length == 2;
-    writeDouble(parts[0]);
-    writeDouble(parts[1]);
   }
 
   @Override

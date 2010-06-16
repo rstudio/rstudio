@@ -69,6 +69,11 @@ public class RPCTest extends TestCase {
     void method1();
   }
 
+  @SuppressWarnings("rpc-validation")
+  private static interface D extends RemoteService {
+    long echo(long val);
+  }
+
   /**
    * Test error message for an out=of-range int value.
    * 
@@ -183,7 +188,52 @@ public class RPCTest extends TestCase {
       "1\uffff" + // interface name
       "2\uffff" + // method name
       "0\uffff"; // param count
-  
+
+  /**
+   * Call 'D.echo(0xFEDCBA9876543210L);' using V5 long format
+   * (pair of doubles).
+   */
+  private static final String VALID_V5_ENCODED_REQUEST = "" +
+      AbstractSerializationStream.SERIALIZATION_STREAM_MIN_VERSION +
+      RPC_SEPARATOR_CHAR + // version
+      "0" + RPC_SEPARATOR_CHAR + // flags
+      "5" + RPC_SEPARATOR_CHAR + // string table count
+      "moduleBaseUrl" + RPC_SEPARATOR_CHAR + // string table entry #1
+      "whitelistHashCode" + RPC_SEPARATOR_CHAR + // string table entry #2
+      D.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #3
+      "echo" + RPC_SEPARATOR_CHAR + // string table entry #4
+      "J" + RPC_SEPARATOR_CHAR + // string table entry #5
+      "1" + RPC_SEPARATOR_CHAR + // moduleBaseUrl
+      "2" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+      "3" + RPC_SEPARATOR_CHAR + // interface name
+      "4" + RPC_SEPARATOR_CHAR + // method name
+      "1" + RPC_SEPARATOR_CHAR + // param count
+      "5" + RPC_SEPARATOR_CHAR + // 'J' == long param type
+      "1.985229328E9" + RPC_SEPARATOR_CHAR + // low bits of long
+      "-8.1985531201716224E16" + RPC_SEPARATOR_CHAR; // high bits of long
+
+  /**
+   * Call 'D.echo(0xFEDCBA9876543210L);' using V6 long format
+   * (base-64 encoding).
+   */
+  private static final String VALID_V6_ENCODED_REQUEST = "" +
+      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
+      RPC_SEPARATOR_CHAR + // version
+      "0" + RPC_SEPARATOR_CHAR + // flags
+      "5" + RPC_SEPARATOR_CHAR + // string table count
+      "moduleBaseUrl" + RPC_SEPARATOR_CHAR + // string table entry #1
+      "whitelistHashCode" + RPC_SEPARATOR_CHAR + // string table entry #2
+      D.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #3
+      "echo" + RPC_SEPARATOR_CHAR + // string table entry #4
+      "J" + RPC_SEPARATOR_CHAR + // string table entry #5
+      "1" + RPC_SEPARATOR_CHAR + // moduleBaseUrl
+      "2" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+      "3" + RPC_SEPARATOR_CHAR + // interface name
+      "4" + RPC_SEPARATOR_CHAR + // method name
+      "1" + RPC_SEPARATOR_CHAR + // param count
+      "5" + RPC_SEPARATOR_CHAR + // 'J' == long param type
+      "P7cuph2VDIQ" + RPC_SEPARATOR_CHAR; // long in base-64 encoding
+
   /**
    * Tests that out-of-range or other illegal integer values generated
    * by client-side serialization get a nested exception with a reasonable
@@ -388,6 +438,26 @@ public class RPCTest extends TestCase {
       fail("Expected IncompatibleRemoteServiceException");
     } catch (IncompatibleRemoteServiceException e) {
       // should get here
+    }
+  }
+
+  public void testDecodeV5Long() {
+    try {
+      RPCRequest request = RPC.decodeRequest(VALID_V5_ENCODED_REQUEST,
+          D.class, null);
+      assertEquals(0xFEDCBA9876543210L, request.getParameters()[0]);
+    } catch (IncompatibleRemoteServiceException e) {
+      fail();
+    }
+  }
+
+  public void testDecodeV6Long() {
+    try {
+      RPCRequest request = RPC.decodeRequest(VALID_V6_ENCODED_REQUEST,
+          D.class, null);
+      assertEquals(0xFEDCBA9876543210L, request.getParameters()[0]);
+    } catch (IncompatibleRemoteServiceException e) {
+      fail();
     }
   }
 

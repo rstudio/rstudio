@@ -40,9 +40,16 @@ public abstract class AbstractSerializationStream {
   public static final char RPC_SEPARATOR_CHAR = '|';
 
   /**
-   * This is the only supported RPC protocol version.
+   * The current RPC protocol version. This version differs from the previous
+   * one in that primitive long values are represented as single-quoted base-64
+   * strings with an alphabet of [A-Za-z0-9$_], rather than as pairs of doubles.
    */
-  public static final int SERIALIZATION_STREAM_VERSION = 5;
+  public static final int SERIALIZATION_STREAM_VERSION = 6;
+  
+  /**
+   * The oldest supported RPC protocol version.
+   */
+  public static final int SERIALIZATION_STREAM_MIN_VERSION = 5;
 
   /**
    * Indicates that obfuscated type names should be used in the RPC payload.

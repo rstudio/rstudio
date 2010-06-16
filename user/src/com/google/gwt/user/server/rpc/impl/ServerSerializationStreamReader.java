@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc.impl;
 
+import com.google.gwt.lang.LongLib;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamReader;
@@ -415,11 +416,13 @@ public final class ServerSerializationStreamReader extends
       }
       if (idx == 0) {
         throw new IncompatibleRemoteServiceException(
-            "Malformed or old RPC message received - expecting version "
+            "Malformed or old RPC message received - expecting version between "
+                + SERIALIZATION_STREAM_MIN_VERSION + " and "
                 + SERIALIZATION_STREAM_VERSION);
       } else {
         int version = Integer.valueOf(encodedTokens.substring(0, idx));
-        throw new IncompatibleRemoteServiceException("Expecting version "
+        throw new IncompatibleRemoteServiceException("Expecting version between "
+            + SERIALIZATION_STREAM_MIN_VERSION + " and "
             + SERIALIZATION_STREAM_VERSION + " from client, got " + version
             + ".");
       }
@@ -428,8 +431,10 @@ public final class ServerSerializationStreamReader extends
     super.prepareToRead(encodedTokens);
 
     // Check the RPC version number sent by the client
-    if (getVersion() != SERIALIZATION_STREAM_VERSION) {
-      throw new IncompatibleRemoteServiceException("Expecting version "
+    if (getVersion() < SERIALIZATION_STREAM_MIN_VERSION
+        || getVersion() > SERIALIZATION_STREAM_VERSION) {
+      throw new IncompatibleRemoteServiceException("Expecting version between "
+          + SERIALIZATION_STREAM_MIN_VERSION + " and "
           + SERIALIZATION_STREAM_VERSION + " from client, got " + getVersion()
           + ".");
     }
@@ -490,9 +495,11 @@ public final class ServerSerializationStreamReader extends
   }
 
   public long readLong() throws SerializationException {
-    // Keep synchronized with LongLib. The wire format are the two component
-    // parts of the double in the client code.
-    return (long) readDouble() + (long) readDouble();
+    if (getVersion() == SERIALIZATION_STREAM_MIN_VERSION) {
+      return (long) readDouble() + (long) readDouble();
+    } else {
+      return LongLib.base64Parse(extract());
+    }
   }
 
   public short readShort() throws SerializationException {
