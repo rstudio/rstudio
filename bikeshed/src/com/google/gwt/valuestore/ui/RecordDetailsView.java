@@ -19,6 +19,11 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.TakesValue;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Implemented by views that show the details of an object.
  *
  * @param <R> the type of object to show

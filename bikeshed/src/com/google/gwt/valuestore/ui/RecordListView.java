@@ -20,6 +20,11 @@ import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.view.client.PagingListView;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * A view of a list of {@link Records}, which declares which properties it is
  * able to display.
  * <p>

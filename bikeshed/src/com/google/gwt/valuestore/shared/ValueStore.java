@@ -16,6 +16,11 @@
 package com.google.gwt.valuestore.shared;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * A store of records with properties. Each record has a {@link ValuesKey}
  * associated with it to indicate its type.
  */

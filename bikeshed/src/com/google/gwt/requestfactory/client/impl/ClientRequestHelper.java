@@ -20,6 +20,11 @@ import com.google.gwt.core.client.JavaScriptObject;
 import java.util.Map;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * A convenience class to convert a Map<String, String> to a JSON string on the
  * client side.
  */

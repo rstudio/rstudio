@@ -33,6 +33,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * {@link DeltaValueStore} implementation based on {@link ValuesImpl}.
  */
 public class DeltaValueStoreJsonImpl implements DeltaValueStore {

@@ -32,6 +32,11 @@ import java.io.File;
 import java.io.IOException;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Class to populate the datastore with sample data in a JSON file.
  */
 public class SampleDataPopulator {

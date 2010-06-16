@@ -15,10 +15,14 @@
  */
 package com.google.gwt.valuestore.shared;
 
-
 import java.util.Map;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Result per record of a SyncRequest.
  */
 public interface SyncResult {

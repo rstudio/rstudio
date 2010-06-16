@@ -54,6 +54,11 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Handles GWT RequestFactory JSON requests. Configured via servlet context
  * param <code>servlet.serverOperation</code>, which must be set to the name of
  * a default instantiable class implementing

@@ -18,6 +18,11 @@ package com.google.gwt.app.place;
 import com.google.gwt.user.client.ui.IsWidget;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Implemented by objects that control a piece of user interface, with a life
  * cycle managed by an {@link ActivityManager}, in response to
  * {@link PlaceChangeEvent} events as the user navigates through the app.

@@ -21,6 +21,11 @@ import com.google.gwt.valuestore.shared.Record;
 import java.util.Collection;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * A Request that returns specific properties for one or more {@link Record}
  * instances.
  * 

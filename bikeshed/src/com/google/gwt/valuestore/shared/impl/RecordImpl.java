@@ -20,6 +20,11 @@ import com.google.gwt.valuestore.shared.PropertyReference;
 import com.google.gwt.valuestore.shared.Record;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Base class for implementations of {@link Record}. It wraps a
  * {@link RecordJsoImpl} that does all the actual work. This class has little
  * reason to exist except to allow client code to make instanceof checks, and to

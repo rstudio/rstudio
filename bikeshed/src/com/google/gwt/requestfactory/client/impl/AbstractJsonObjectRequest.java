@@ -21,6 +21,11 @@ import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Abstract implementation of
  * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
  * RequestFactory.RequestObject} for requests that return single instances of

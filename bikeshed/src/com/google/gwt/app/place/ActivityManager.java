@@ -20,6 +20,11 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.user.client.ui.IsWidget;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Manages {@link Activity} objects that should be kicked off in response to
  * {@link PlaceChangeEvent} events. Each activity can start itself
  * asynchronously, and provides a widget to be shown when it's ready to run.

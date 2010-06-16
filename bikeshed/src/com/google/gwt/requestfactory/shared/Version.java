@@ -16,6 +16,11 @@
 package com.google.gwt.requestfactory.shared;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Marks the version {@link com.google.gwt.valuestore.shared.Property Property}
  * of an {@link com.google.gwt.valuestore.shared.ValuesKey ValuesKey}.
  */

@@ -20,6 +20,11 @@ import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * The key used to store {@link com.google.gwt.valuestore.shared.Record Record}s
  * in {@link com.google.gwt.valuestore.shared.ValueStore ValueStore}.
  */

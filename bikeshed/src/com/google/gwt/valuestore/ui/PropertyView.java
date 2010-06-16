@@ -21,6 +21,11 @@ import com.google.gwt.valuestore.shared.Record;
 import java.util.Set;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * A view that displays a set of {@link Property} values for a type of
  * {@link Record}.
  * 

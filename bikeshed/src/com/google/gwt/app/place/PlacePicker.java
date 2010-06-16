@@ -20,6 +20,11 @@ import com.google.gwt.input.shared.Renderer;
 import java.util.List;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Presenter that goes to {@link Place}s the user picks.
  *
  * @param <P> the type of places listed

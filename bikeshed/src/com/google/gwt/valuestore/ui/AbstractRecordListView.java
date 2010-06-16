@@ -30,6 +30,11 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Abstract implementation of RecordListView. Subclasses must call {@link #init}
  * with the root widget, its {@link CellTable}, and a list of
  * {@link PropertyColumn}.

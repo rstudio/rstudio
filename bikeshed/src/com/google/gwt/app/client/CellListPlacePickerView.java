@@ -28,6 +28,11 @@ import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 import java.util.List;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Hacky CellList based implementation of PlacePickerView, to be replaced by new
  * data widget, or at least something less ugly.
  * 

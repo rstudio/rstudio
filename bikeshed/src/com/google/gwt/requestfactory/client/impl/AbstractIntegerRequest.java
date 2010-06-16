@@ -16,6 +16,11 @@
 package com.google.gwt.requestfactory.client.impl;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Abstract implementation of
  * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
  * RequestFactory.RequestObject} for requests that return Integer.

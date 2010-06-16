@@ -49,6 +49,11 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Generates implementations of {@link
  * com.google.gwt.app.client.EditorSupport EditorSupport} and its
  * nested interfaces.

@@ -23,6 +23,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Implemented by objects that provide data binding support for 
  * instances of {@link RecordEditView}. 
  * 

@@ -22,6 +22,11 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * View for a {@link PlacePicker}.
  * 
  * @param <P> the type of place displayed

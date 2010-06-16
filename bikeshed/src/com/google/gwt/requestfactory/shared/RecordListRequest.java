@@ -22,6 +22,11 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Implemented by RequestObjects for service methods that return lists of
  * records.
  * 
