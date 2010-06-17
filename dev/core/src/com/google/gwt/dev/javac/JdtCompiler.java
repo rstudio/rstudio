@@ -65,6 +65,32 @@ import java.util.Set;
  * Manages the process of compiling {@link CompilationUnit}s.
  */
 public class JdtCompiler {
+  /**
+   * Provides hooks for changing the behavior of the JdtCompiler when unknown
+   * types are encountered during compilation.  Currently
+   * used for allowing external tools to provide source lazily when
+   * undefined references appear.
+   */
+  public static interface AdditionalTypeProviderDelegate {
+    /**
+     * Checks for additional packages which may contain additional compilation
+     * units.
+     *
+     * @param slashedPackageName the '/' separated name of the package to find
+     * @return <code>true</code> if such a package exists
+     */
+    public boolean doFindAdditionalPackage(String slashedPackageName);
+
+    /**
+     * Finds a new compilation unit on-the-fly for the requested type, if there
+     * is an alternate mechanism for doing so.
+     *
+     * @param binaryName the binary name of the requested type
+     * @return a unit answering the name, or <code>null</code> if no such unit
+     *         can be created
+     */
+    public GeneratedUnit doFindAdditionalType(String binaryName);
+  }
 
   /**
    * A default processor that simply collects build units.
@@ -235,6 +261,14 @@ public class JdtCompiler {
       if (isPackage(binaryName)) {
         return null;
       }
+      if (additionalTypeProviderDelegate != null) {
+        GeneratedUnit unit = additionalTypeProviderDelegate.doFindAdditionalType(binaryName);
+        if (unit != null) {
+          CompilationUnitBuilder b = CompilationUnitBuilder.create(unit);
+          Adapter a = new Adapter(b);
+          return new NameEnvironmentAnswer(a, null);
+        }
+      }
       try {
         URL resource = getClassLoader().getResource(binaryName + ".class");
         if (resource != null) {
@@ -272,6 +306,11 @@ public class JdtCompiler {
         return false;
       }
       String resourceName = slashedPackageName + '/';
+      if ((additionalTypeProviderDelegate != null
+          && additionalTypeProviderDelegate.doFindAdditionalPackage(slashedPackageName))) {
+        addPackages(slashedPackageName);
+        return true;
+      }
       if (getClassLoader().getResource(resourceName) != null) {
         addPackages(slashedPackageName);
         return true;
@@ -385,6 +424,8 @@ public class JdtCompiler {
 
   private final UnitProcessor processor;
 
+  private AdditionalTypeProviderDelegate additionalTypeProviderDelegate;
+
   public JdtCompiler(UnitProcessor processor) {
     this.processor = processor;
   }
@@ -472,6 +513,10 @@ public class JdtCompiler {
 
   public ReferenceBinding resolveType(String typeName) {
     return resolveType(compilerImpl.lookupEnvironment, typeName);
+  }
+
+  public void setAdditionalTypeProviderDelegate(AdditionalTypeProviderDelegate newDelegate) {
+    additionalTypeProviderDelegate = newDelegate;
   }
 
   private void addBinaryTypes(Collection<CompiledClass> compiledClasses) {

@@ -41,7 +41,7 @@ public class UnifiedAst implements Serializable {
   /**
    * Encapsulates the combined programs.
    */
-  static final class AST implements Serializable {
+  public static final class AST implements Serializable {
     private final JProgram jProgram;
     private final JsProgram jsProgram;
 
@@ -50,7 +50,7 @@ public class UnifiedAst implements Serializable {
       this.jsProgram = jsProgram;
     }
 
-    JProgram getJProgram() {
+    public JProgram getJProgram() {
       return jProgram;
     }
 
@@ -124,6 +124,28 @@ public class UnifiedAst implements Serializable {
   }
 
   /**
+   * Return the current AST so that clients can explicitly walk the
+   * Java or JavaScript parse trees.
+   *
+   * @return the current AST object holding the Java and JavaScript trees.
+   */
+  public AST getFreshAst() {
+    synchronized (myLockObject) {
+      if (initialAst != null) {
+        AST result = initialAst;
+        initialAst = null;
+        return result;
+      } else {
+        if (serializedAstToken < 0) {
+          throw new IllegalStateException(
+              "No serialized AST was cached and AST was already consumed.");
+        }
+        return diskCache.readObject(serializedAstToken, AST.class);
+      }
+    }
+  }
+
+  /**
    * Returns the active set of JJS options associated with this compile.
    */
   public JJSOptions getOptions() {
@@ -145,22 +167,6 @@ public class UnifiedAst implements Serializable {
     synchronized (myLockObject) {
       if (initialAst == null) {
         initialAst = diskCache.readObject(serializedAstToken, AST.class);
-      }
-    }
-  }
-
-  AST getFreshAst() {
-    synchronized (myLockObject) {
-      if (initialAst != null) {
-        AST result = initialAst;
-        initialAst = null;
-        return result;
-      } else {
-        if (serializedAstToken < 0) {
-          throw new IllegalStateException(
-              "No serialized AST was cached and AST was already consumed.");
-        }
-        return diskCache.readObject(serializedAstToken, AST.class);
       }
     }
   }

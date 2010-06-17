@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
+import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
@@ -226,7 +227,7 @@ public abstract class JJSTestBase extends TestCase {
     });
     addBuiltinClasses(sourceOracle);
     CompilationState state = CompilationStateBuilder.buildFrom(logger,
-        sourceOracle.getResources());
+        sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
     JProgram program = JavaAstConstructor.construct(logger, state,
         "test.EntryPoint", "com.google.gwt.lang.Exceptions");
     return program;
@@ -259,5 +260,13 @@ public abstract class JJSTestBase extends TestCase {
           "}";
       }
     });
+  }
+  
+  /**
+   * Return an AdditionalTypeProviderDelegate that will be able to provide
+   * new sources for unknown classnames. 
+   */
+  protected AdditionalTypeProviderDelegate getAdditionalTypeProviderDelegate() {
+    return null;
   }
 }

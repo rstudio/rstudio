@@ -18,6 +18,7 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.CompilationUnitBuilder.GeneratedCompilationUnitBuilder;
 import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBuilder;
+import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.resource.Resource;
@@ -122,6 +123,16 @@ public class CompilationStateBuilder {
     private transient Map<String, CompilationUnit> resultUnits;
     private final Set<ContentId> validDependencies = new HashSet<ContentId>();
 
+    /**
+     * Provides compilation unit for unknown classes encountered by the
+     * compiler if desired.
+     */
+    private AdditionalTypeProviderDelegate delegate;
+
+    public CompileMoreLater(AdditionalTypeProviderDelegate delegate) {
+      compiler.setAdditionalTypeProviderDelegate(delegate);
+    }
+    
     public Collection<CompilationUnit> addGeneratedTypes(TreeLogger logger,
         Collection<GeneratedUnit> generatedUnits) {
       return doBuildGeneratedTypes(logger, generatedUnits, this);
@@ -179,7 +190,12 @@ public class CompilationStateBuilder {
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources) {
-    return instance.doBuildFrom(logger, resources);
+    return instance.doBuildFrom(logger, resources, null);
+  }
+
+  public static CompilationState buildFrom(TreeLogger logger,
+      Set<Resource> resources, AdditionalTypeProviderDelegate delegate) {
+    return instance.doBuildFrom(logger, resources, delegate);
   }
 
   public static CompilationStateBuilder get() {
@@ -244,6 +260,15 @@ public class CompilationStateBuilder {
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger,
       Set<Resource> resources) {
+    return doBuildFrom(logger, resources, null);
+  }
+
+  /**
+   * Build a new compilation state from a source oracle.  Allow the caller to specify 
+   * a compiler delegate that will handle undefined names. 
+   */
+  public synchronized CompilationState doBuildFrom(TreeLogger logger,
+      Set<Resource> resources, AdditionalTypeProviderDelegate compilerDelegate) {
     Map<String, CompilationUnit> resultUnits = new HashMap<String, CompilationUnit>();
 
     // For each incoming Java source file...
@@ -265,7 +290,7 @@ public class CompilationStateBuilder {
         resultUnits.values());
 
     // Compile everything else.
-    CompileMoreLater compileMoreLater = new CompileMoreLater();
+    CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate);
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
     for (Resource resource : resources) {
       String typeName = Shared.toTypeName(resource.getPath());
