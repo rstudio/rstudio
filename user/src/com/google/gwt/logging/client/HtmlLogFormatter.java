@@ -18,6 +18,7 @@ package com.google.gwt.logging.client;
 
 import java.util.Date;
 import java.util.logging.Formatter;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
@@ -39,11 +40,14 @@ public class HtmlLogFormatter extends Formatter {
   protected String getHtmlPrefix(LogRecord event) {
     Date date = new Date(event.getMillis());
     StringBuilder prefix = new StringBuilder();
+    prefix.append("<span style='color:");
+    prefix.append(getColor(event.getLevel().intValue()));
+    prefix.append("'>");
     prefix.append("<code>");
     prefix.append(date.toString());
     prefix.append(" ");
     prefix.append(event.getLoggerName());
-    prefix.append("<br/>");
+    prefix.append(" ");
     prefix.append(event.getLevel().getName());
     prefix.append(": ");
     return prefix.toString();
@@ -51,9 +55,37 @@ public class HtmlLogFormatter extends Formatter {
   
   protected String getHtmlSuffix(LogRecord event) {
     // TODO(unnurg): output throwables correctly
-    return "</code>";
+    return "</code></span>";
   }
   
+  private String getColor(int logLevel) {
+    if (logLevel == Level.OFF.intValue()) {
+      return "#000"; // black
+    }
+    if (logLevel >= Level.SEVERE.intValue()) {
+      return "#F00"; // bright red
+    }
+    if (logLevel >= Level.WARNING.intValue()) {
+      return "#E56717"; // dark orange
+    }
+    if (logLevel >= Level.INFO.intValue()) {
+      return "#20b000"; // green
+    }
+    if (logLevel >= Level.CONFIG.intValue()) {
+      return "#2B60DE"; // blue
+    }
+    if (logLevel >= Level.FINE.intValue()) {
+      return "#F0F"; // purple
+    }
+    if (logLevel >= Level.FINER.intValue()) {
+      return "#F0F"; // purple
+    }
+    if (logLevel >= Level.FINEST.intValue()) {
+      return "#F0F"; // purple
+    }
+    return "#000"; // black
+  }
+
   // TODO(unnurg): There must be a cleaner way to do this...
   private String getEscapedMessage(LogRecord event) {
     String text = event.getMessage();
@@ -61,4 +93,5 @@ public class HtmlLogFormatter extends Formatter {
     text = text.replaceAll(">", "&gt;");
     return text;
   }
+
 }

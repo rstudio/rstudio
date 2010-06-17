@@ -98,7 +98,7 @@ public class LogConfiguration implements EntryPoint {
       addHandlerIfNotNull(l, firebug);
       Handler system = GWT.create(SystemLogHandler.class);
       addHandlerIfNotNull(l, system);
-      HasWidgets loggingWidget = GWT.create(BasicLoggingPopup.class);
+      HasWidgets loggingWidget = GWT.create(LoggingPopup.class);
       if (!(loggingWidget instanceof NullLoggingPopup)) {
         addHandlerIfNotNull(l, new HasWidgetsLogHandler(loggingWidget));
       }
