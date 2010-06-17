@@ -14,12 +14,13 @@
  * the License.
  */
 
-package com.google.gwt.i18n.client;
+package com.google.gwt.i18n.benchmarks;
 
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
 import com.google.gwt.benchmarks.client.Operator;
 import com.google.gwt.benchmarks.client.RangeField;
+import com.google.gwt.i18n.client.NumberFormat;
 
 /**
  * Benchmark for number format.
@@ -32,7 +33,7 @@ public class NumberFormatBenchmark extends Benchmark {
    */
   @Override
   public String getModuleName() {
-    return "com.google.gwt.i18n.I18N";
+    return "com.google.gwt.i18n.I18NBenchmarks";
   }
 
   // Required for JUnit

@@ -43,7 +43,6 @@ public class JUnitSuite {
     suite.addTestSuite(FakeMessagesMakerTest.class);
     suite.addTestSuite(JUnitMessageQueueTest.class);
     suite.addTestSuite(GWTTestCaseNoClientTest.class);
-    suite.addTestSuite(BenchmarkNoClientTest.class);
 
     // These two are intended only to be run manually. See class comments
     // suite.addTestSuite(ParallelRemoteTest.class);

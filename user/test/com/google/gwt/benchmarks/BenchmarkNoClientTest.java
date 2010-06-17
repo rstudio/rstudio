@@ -14,9 +14,10 @@
  * the License.
  */
 
-package com.google.gwt.junit;
+package com.google.gwt.benchmarks;
 
 import com.google.gwt.benchmarks.client.Benchmark;
+import com.google.gwt.junit.GWTTestCaseNoClientTest;
 import com.google.gwt.junit.JUnitShell.Strategy;
 
 /**

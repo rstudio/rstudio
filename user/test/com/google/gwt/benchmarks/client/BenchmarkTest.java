@@ -14,16 +14,7 @@
  * the License.
  */
 
-package com.google.gwt.junit.client;
-
-import com.google.gwt.benchmarks.client.Benchmark;
-import com.google.gwt.benchmarks.client.IntRange;
-import com.google.gwt.benchmarks.client.IterationTimeLimit;
-import com.google.gwt.benchmarks.client.Operator;
-import com.google.gwt.benchmarks.client.RangeEnum;
-import com.google.gwt.benchmarks.client.RangeField;
-import com.google.gwt.benchmarks.client.Setup;
-import com.google.gwt.benchmarks.client.Teardown;
+package com.google.gwt.benchmarks.client;
 
 /**
  * Basic Benchmark testing.
@@ -76,7 +67,7 @@ public class BenchmarkTest extends Benchmark {
   }
 
   public String getModuleName() {
-    return "com.google.gwt.junit.JUnit";
+    return "com.google.gwt.benchmarks.Benchmarks";
   }
 
   public void disableTestAutoboxing() {

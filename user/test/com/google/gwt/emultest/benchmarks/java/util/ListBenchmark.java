@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.emultest.java.util;
+package com.google.gwt.emultest.benchmarks.java.util;
 
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
@@ -83,7 +83,7 @@ public abstract class ListBenchmark extends Benchmark {
   int index = 0;
 
   public String getModuleName() {
-    return "com.google.gwt.emultest.EmulSuite";
+    return "com.google.gwt.emultest.EmulSuiteBenchmarks";
   }
 
   /**

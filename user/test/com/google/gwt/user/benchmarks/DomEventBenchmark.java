@@ -13,13 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.ui;
+package com.google.gwt.user.benchmarks;
 
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
 import com.google.gwt.benchmarks.client.Operator;
 import com.google.gwt.benchmarks.client.RangeField;
 import com.google.gwt.benchmarks.client.Setup;
+import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimpleCheckBox;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +53,7 @@ public class DomEventBenchmark extends Benchmark {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.UserBenchmarks";
   }
 
   // Required for JUnit

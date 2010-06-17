@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.emultest.java.util;
+package com.google.gwt.emultest.benchmarks.java.util;
 
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
@@ -36,7 +36,7 @@ public class HashMapBenchmark extends Benchmark {
   private HashMap<Object, Object> map;
 
   public String getModuleName() {
-    return "com.google.gwt.emultest.EmulSuite";
+    return "com.google.gwt.emultest.EmulSuiteBenchmarks";
   }
 
   public void testHashMapContainsValueInt() {

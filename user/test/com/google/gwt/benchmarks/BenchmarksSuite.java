@@ -1,29 +1,38 @@
 /*
- * Copyright 2008 Google Inc.
- *
+ * Copyright 2009 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.emultest.java.util;
+package com.google.gwt.benchmarks;
 
-import java.util.List;
-import java.util.ArrayList;
+import com.google.gwt.junit.tools.GWTTestSuite;
+
+import junit.framework.Test;
 
 /**
- * A {@link ListBenchmark} for {@link ArrayList ArrayLists}.
+ * Tests of the junit package.
  */
-public class ArrayListBenchmark extends ListBenchmark {
+public class BenchmarksSuite {
+  public static Test suite() {
+    GWTTestSuite suite = new GWTTestSuite(
+        "Test for suite for com.google.gwt.benchmarks");
 
-  protected List<String> newList() {
-    return new ArrayList<String>();
+    // client
+    // Suppressed due to flakiness on Linux
+    // suite.addTestSuite(BenchmarkTest.class);
+
+    suite.addTestSuite(BenchmarkNoClientTest.class);
+
+    return suite;
   }
 }

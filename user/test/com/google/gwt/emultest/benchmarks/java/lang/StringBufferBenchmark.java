@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.emultest.java.lang;
+package com.google.gwt.emultest.benchmarks.java.lang;
 
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
@@ -58,23 +58,23 @@ public class StringBufferBenchmark extends Benchmark {
     }
 
     public native void cmd(String cmd) /*-{
-      this.@com.google.gwt.emultest.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.push(cmd, 0);
+      this.@com.google.gwt.emultest.benchmarks.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.push(cmd, 0);
     }-*/;
 
     public native void cmd(String cmd, int a) /*-{
-      this.@com.google.gwt.emultest.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.push(cmd, 1, a);
+      this.@com.google.gwt.emultest.benchmarks.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.push(cmd, 1, a);
     }-*/;
 
     public native void cmd(String cmd, int a, int b) /*-{
-      this.@com.google.gwt.emultest.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.push(cmd, 2, a, b);
+      this.@com.google.gwt.emultest.benchmarks.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.push(cmd, 2, a, b);
     }-*/;
 
     public native void cmd(String cmd, int a, int b, int c) /*-{
-      this.@com.google.gwt.emultest.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.push(cmd, 3, a, b, c);
+      this.@com.google.gwt.emultest.benchmarks.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.push(cmd, 3, a, b, c);
     }-*/;
 
     public native String end() /*-{
-      return this.@com.google.gwt.emultest.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.join('');
+      return this.@com.google.gwt.emultest.benchmarks.java.lang.StringBufferBenchmark$JSArrayDisplayList::jso.join('');
     }-*/;
 
     public void fill() {
@@ -252,7 +252,7 @@ public class StringBufferBenchmark extends Benchmark {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.emultest.EmulSuite";
+    return "com.google.gwt.emultest.EmulSuiteBenchmarks";
   }
 
   /**

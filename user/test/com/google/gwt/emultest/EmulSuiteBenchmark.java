@@ -15,15 +15,15 @@
  */
 package com.google.gwt.emultest;
 
-import com.google.gwt.emultest.java.lang.StringBufferBenchmark;
-import com.google.gwt.emultest.java.lang.StringBufferImplBenchmark;
-import com.google.gwt.emultest.java.util.ArrayListBenchmark;
-import com.google.gwt.emultest.java.util.ArraySortBenchmark;
-import com.google.gwt.emultest.java.util.HashMapBenchmark;
-import com.google.gwt.emultest.java.util.TreeMapBenchmark;
-import com.google.gwt.emultest.java.util.VectorBenchmark;
+import com.google.gwt.emultest.benchmarks.LongBenchmark;
+import com.google.gwt.emultest.benchmarks.java.lang.StringBufferBenchmark;
+import com.google.gwt.emultest.benchmarks.java.lang.StringBufferImplBenchmark;
+import com.google.gwt.emultest.benchmarks.java.util.ArrayListBenchmark;
+import com.google.gwt.emultest.benchmarks.java.util.ArraySortBenchmark;
+import com.google.gwt.emultest.benchmarks.java.util.HashMapBenchmark;
+import com.google.gwt.emultest.benchmarks.java.util.TreeMapBenchmark;
+import com.google.gwt.emultest.benchmarks.java.util.VectorBenchmark;
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.lang.LongBenchmark;
 
 import junit.framework.Test;
 

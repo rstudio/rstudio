@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.gwt.emultest.java.lang;
+package com.google.gwt.emultest.benchmarks.java.lang;
 
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
@@ -75,7 +75,7 @@ public class StringBufferImplBenchmark extends Benchmark {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.emultest.EmulSuite";
+    return "com.google.gwt.emultest.EmulSuiteBenchmarks";
   }
 
   public void testManyAppends() {
