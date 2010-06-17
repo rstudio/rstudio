@@ -46,7 +46,7 @@ public class BrowserInfo {
       return OPERA;
     } else if (lcAgent.contains("webkit") || lcAgent.contains("safari")) {
       return SAFARI;
-    } else if (lcAgent.contains("firefox")) {
+    } else if (lcAgent.contains("firefox") || lcAgent.contains("minefield")) {
       return FIREFOX;
     }
     return UNKNOWN;

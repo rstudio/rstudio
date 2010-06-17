@@ -63,10 +63,14 @@ function getLibFileName() {
       return "ff36";
     }
 
-    throw "Unexpected Firefox version: " + firefoxVersion;
+    if (firefoxVersion == "3.7" || firefoxVersion == "4.0") {
+      return "ff40";
+    }
+
+    throw "Unsupported Firefox version: " + firefoxVersion;
   }
 
-  throw "Unexpected Gecko version: " + geckoVersion;
+  throw "Unsupported Gecko version: " + geckoVersion;
 }
 
 function getPlatform() {

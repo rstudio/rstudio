@@ -26,7 +26,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsXPCOMCID.h"
 
-#ifdef BROWSER_FF3
+#ifdef GECKO_19
 #include "nsIClassInfoImpl.h" // 1.9 only
 #endif
 

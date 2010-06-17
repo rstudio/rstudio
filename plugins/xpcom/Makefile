@@ -56,27 +56,34 @@ endif
 CFLAGS += -DBROWSER=$(BROWSER)
 GECKO_MINOR_VERSION=
 ifeq ($(BROWSER),ff2)
-BROWSER_VERSION   = 1.8
-CFLAGS += -DBROWSER_FF2
+GECKO_VERSION   = 1.8
 else
 ifeq ($(BROWSER),ff3)
-BROWSER_VERSION   = 1.9.0
-CFLAGS += -DBROWSER_FF3
+GECKO_VERSION   = 1.9.0
+CFLAGS += -DGECKO_19
 else
 ifeq ($(BROWSER),ff3+)
-BROWSER_VERSION   = 1.9.0
-CFLAGS += -DBROWSER_FF3
+GECKO_VERSION   = 1.9.0
+CFLAGS += -DGECKO_19
 GECKO_MINOR_VERSION=.10
 else
 ifeq ($(BROWSER),ff35)
-BROWSER_VERSION   = 1.9.1
-CFLAGS += -DBROWSER_FF3
+GECKO_VERSION   = 1.9.1
+CFLAGS += -DGECKO_19
 else
 ifeq ($(BROWSER),ff36)
-BROWSER_VERSION   = 1.9.2
-CFLAGS += -DBROWSER_FF3
+GECKO_VERSION   = 1.9.2
+CFLAGS += -DGECKO_19
 else
-$(error Unrecognized BROWSER of $(BROWSER) - options are ff2, ff3, ff3+, ff35, ff36)
+ifeq ($(BROWSER),ff40)
+GECKO_VERSION   = 1.9.3
+CFLAGS += -DGECKO_19
+ifeq ($(OS),mac)
+DLLFLAGS += -lmozalloc
+endif
+else
+$(error Unrecognized BROWSER of $(BROWSER) - options are ff2, ff3, ff3+, ff35, ff36, ff40)
+endif
 endif
 endif
 endif
@@ -106,7 +113,7 @@ FF_HEADER         = prebuilt/$(BROWSER)/include/IOOPHM.h
 INSTALL_RDF       = $(EXTENSION_OUTDIR)/install.rdf
 
 SDK_PATH          = $(PLUGIN_SDKS)/gecko-sdks
-GECKO_SDK         = $(SDK_PATH)/gecko-$(BROWSER_VERSION)
+GECKO_SDK         = $(SDK_PATH)/gecko-$(GECKO_VERSION)
 GECKO_PLAT_INC    = $(GECKO_SDK)/$(GECKO_PLATFORM)/include
 GECKO_LIBS        = $(GECKO_SDK)/$(GECKO_PLATFORM)/lib$(GECKO_MINOR_VERSION)
 XPIDL             = $(GECKO_SDK)/$(GECKO_PLATFORM)/bin/xpidl
@@ -156,14 +163,18 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff3+ ARCH=x86
 	$(MAKE) lib BROWSER=ff35 ARCH=x86
 	$(MAKE) lib BROWSER=ff36 ARCH=x86
+	$(MAKE) lib BROWSER=ff40 ARCH=x86
 	$(MAKE) lib BROWSER=ff3 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff3+ ARCH=x86_64
 	$(MAKE) lib BROWSER=ff35 ARCH=x86_64
+	$(MAKE) lib BROWSER=ff36 ARCH=x86_64
+	$(MAKE) lib BROWSER=ff40 ARCH=x86_64
 
 macplatforms:
 	$(MAKE) lib BROWSER=ff3
 	$(MAKE) lib BROWSER=ff35
 	$(MAKE) lib BROWSER=ff36
+	$(MAKE) lib BROWSER=ff40
 
 SRCS =	\
 		ExternalWrapper.cpp \
@@ -221,6 +232,7 @@ else
 	@$(MAKE) $@ BROWSER=ff3+
 	@$(MAKE) $@ BROWSER=ff35
 	@$(MAKE) $@ BROWSER=ff36
+	@$(MAKE) $@ BROWSER=ff40
 endif
 
 DEPEND = g++ -MM -MT'$$(OBJ_OUTDIR)/$(patsubst %.cpp,%.o,$(src))' \
