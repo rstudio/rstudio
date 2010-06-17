@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.lang.LongLib;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
@@ -101,17 +100,7 @@ public abstract class AbstractSerializationStreamWriter extends
     append(String.valueOf(fieldValue));
   }
   
-  public void writeLong(long value) {
-    if (getVersion() == SERIALIZATION_STREAM_MIN_VERSION) {
-      // Write longs as a pair of doubles for backwards compatibility
-      double[] parts = getAsDoubleArray(value);
-      assert parts != null && parts.length == 2;
-      writeDouble(parts[0]);
-      writeDouble(parts[1]);
-    } else {
-      append(LongLib.base64Emit(value, true));
-    }
-  }
+  public abstract void writeLong(long value);
 
   public void writeObject(Object instance) throws SerializationException {
     if (instance == null) {

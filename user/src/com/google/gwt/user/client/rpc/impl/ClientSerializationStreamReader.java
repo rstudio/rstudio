@@ -88,7 +88,7 @@ public final class ClientSerializationStreamReader extends
   @UnsafeNativeLong
   public native long readLong() /*-{
     var s = this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-    return @com.google.gwt.lang.LongLib::base64Parse(Ljava/lang/String;)(s);
+    return @com.google.gwt.lang.LongLib::longFromBase64(Ljava/lang/String;)(s);
   }-*/;
 
   public native short readShort() /*-{

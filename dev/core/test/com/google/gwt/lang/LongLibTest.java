@@ -407,20 +407,20 @@ public class LongLibTest extends TestCase {
   }
 
   public static void testBase64() {
-    assertEquals("A", LongLib.base64Emit(0x0L, false));
-    assertEquals(0x0L, LongLib.base64Parse("A"));
+    assertEquals("A", LongLib.toBase64(0x0L));
+    assertEquals(0x0L, LongLib.longFromBase64("A"));
 
-    assertEquals("'B'", LongLib.base64Emit(0x1L, true));
-    assertEquals(0x1L, LongLib.base64Parse("B"));
+    assertEquals("B", LongLib.toBase64(0x1L));
+    assertEquals(0x1L, LongLib.longFromBase64("B"));
 
-    assertEquals("'BA'", LongLib.base64Emit(0x40L, true));
-    assertEquals(0x40L, LongLib.base64Parse("BA"));
+    assertEquals("BA", LongLib.toBase64(0x40L));
+    assertEquals(0x40L, LongLib.longFromBase64("BA"));
 
-    assertEquals("'P_________A'", LongLib.base64Emit(-0x40L, true));
-    assertEquals(-0x40L, LongLib.base64Parse("P_________A"));
+    assertEquals("P_________A", LongLib.toBase64(-0x40L));
+    assertEquals(-0x40L, LongLib.longFromBase64("P_________A"));
 
-    assertEquals("'P__________'", LongLib.base64Emit(-1L, true));
-    assertEquals(-1L, LongLib.base64Parse("P__________"));
+    assertEquals("P__________", LongLib.toBase64(-1L));
+    assertEquals(-1L, LongLib.longFromBase64("P__________"));
 
     // Use all types of base 64 chars
     long value = 0L;
@@ -437,8 +437,8 @@ public class LongLibTest extends TestCase {
     value |= 63L;       // '_'
 
     String s = "Pjs$aJSZ05_";
-    assertEquals(s, LongLib.base64Emit(value, false));
-    assertEquals(value, LongLib.base64Parse(s));
+    assertEquals(s, LongLib.toBase64(value));
+    assertEquals(value, LongLib.longFromBase64(s));
   }
 
   public static void testCompare() {

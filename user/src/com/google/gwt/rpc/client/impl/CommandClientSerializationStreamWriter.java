@@ -103,7 +103,7 @@ public class CommandClientSerializationStreamWriter extends
       extractData(array, value);
       toReturn = array;
 
-    } else if (value instanceof Enum) {
+    } else if (value instanceof Enum<?>) {
       EnumValueCommand e = new EnumValueCommand();
       e.setValue((Enum<?>) value);
       toReturn = e;

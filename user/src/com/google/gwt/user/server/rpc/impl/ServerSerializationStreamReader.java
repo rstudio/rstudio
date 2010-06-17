@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.server.rpc.impl;
 
-import com.google.gwt.lang.LongLib;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamReader;
@@ -498,7 +497,7 @@ public final class ServerSerializationStreamReader extends
     if (getVersion() == SERIALIZATION_STREAM_MIN_VERSION) {
       return (long) readDouble() + (long) readDouble();
     } else {
-      return LongLib.base64Parse(extract());
+      return Base64Utils.longFromBase64(extract());
     }
   }
 

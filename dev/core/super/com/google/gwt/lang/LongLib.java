@@ -31,8 +31,6 @@ public class LongLib extends LongLibBase {
   
   private static LongEmul[] boxedValues;
 
-  private static boolean haveNonZero;
-
   public static LongEmul add(LongEmul a, LongEmul b) {
     int sum0 = getL(a) + getL(b);
     int sum1 = getM(a) + getM(b) + (sum0 >> BITS);
@@ -43,61 +41,6 @@ public class LongLib extends LongLibBase {
 
   public static LongEmul and(LongEmul a, LongEmul b) {
     return create(getL(a) & getL(b), getM(a) & getM(b), getH(a) & getH(b));
-  }
-
-  /**
-   * Return an optionally single-quoted string containing a base-64 encoded
-   * version of the given long value.
-   */
-  public static String base64Emit(long value, boolean quote) {
-    // Convert to ints early to avoid need for long ops
-    int low = (int) (value & 0xffffffff);
-    int high = (int) (value >> 32);
-
-    StringBuilder sb = new StringBuilder();
-    if (quote) {
-      sb.append('\'');
-    }
-    haveNonZero = false;
-    base64Append(sb, (high >> 28) & 0xf); // bits 63 - 60
-    base64Append(sb, (high >> 22) & 0x3f); // bits 59 - 54
-    base64Append(sb, (high >> 16) & 0x3f); // bits 53 - 48
-    base64Append(sb, (high >> 10) & 0x3f); // bits 47 - 42
-    base64Append(sb, (high >> 4) & 0x3f); // bits 41 - 36
-    int v = ((high & 0xf) << 2) | ((low >> 30) & 0x3);
-    base64Append(sb, v); // bits 35 - 30
-    base64Append(sb, (low >> 24) & 0x3f); // bits 29 - 24
-    base64Append(sb, (low >> 18) & 0x3f); // bits 23 - 18
-    base64Append(sb, (low >> 12) & 0x3f); // bits 17 - 12
-    base64Append(sb, (low >> 6) & 0x3f); // bits 11 - 6
-    haveNonZero = true; // always emit final digit
-    base64Append(sb, low & 0x3f); // bits 5 - 0
-    if (quote) {
-      sb.append('\'');
-    }
-
-    return sb.toString();
-  }
-
-  /**
-   * Parse a string containing a base-64 encoded version of a long value.
-   */
-  public static long base64Parse(String value) {
-    int pos = 0;
-    char first = value.charAt(pos++);
-    int len = value.length();
-    
-    // Skip surrounding single quotes
-    if (first == '\'') {
-      first = value.charAt(pos++);
-      len--;
-    }
-    long longVal = base64Value(first);
-    while (pos < len) {
-      longVal <<= 6;
-      longVal |= base64Value(value.charAt(pos++));
-    }
-    return longVal;
   }
 
   /**
@@ -242,6 +185,22 @@ public class LongLib extends LongLibBase {
         return true;
       }
     }
+  }
+
+  /**
+   * Parse a string containing a base-64 encoded version of a long value.
+   * 
+   * Keep this synchronized with the version in Base64Utils.
+   */
+  public static long longFromBase64(String value) {
+    int pos = 0;
+    long longVal = base64Value(value.charAt(pos++));
+    int len = value.length();
+    while (pos < len) {
+      longVal <<= 6;
+      longVal |= base64Value(value.charAt(pos++));
+    }
+    return longVal;
   }
 
   public static boolean lt(LongEmul a, LongEmul b) {
@@ -443,6 +402,34 @@ public class LongLib extends LongLibBase {
     return create(sum0 & MASK, sum1 & MASK, sum2 & MASK_2);
   }
 
+  /**
+   * Return an optionally single-quoted string containing a base-64 encoded
+   * version of the given long value.
+   * 
+   * Keep this synchronized with the version in Base64Utils.
+   */
+  public static String toBase64(long value) {
+    // Convert to ints early to avoid need for long ops
+    int low = (int) (value & 0xffffffff);
+    int high = (int) (value >> 32);
+
+    StringBuilder sb = new StringBuilder();
+    boolean haveNonZero = base64Append(sb, (high >> 28) & 0xf, false);
+    haveNonZero = base64Append(sb, (high >> 22) & 0x3f, haveNonZero);
+    haveNonZero = base64Append(sb, (high >> 16) & 0x3f, haveNonZero);
+    haveNonZero = base64Append(sb, (high >> 10) & 0x3f, haveNonZero);
+    haveNonZero = base64Append(sb, (high >> 4) & 0x3f, haveNonZero);
+    int v = ((high & 0xf) << 2) | ((low >> 30) & 0x3);
+    haveNonZero = base64Append(sb, v, haveNonZero);
+    haveNonZero = base64Append(sb, (low >> 24) & 0x3f, haveNonZero);
+    haveNonZero = base64Append(sb, (low >> 18) & 0x3f, haveNonZero);
+    haveNonZero = base64Append(sb, (low >> 12) & 0x3f, haveNonZero);
+    base64Append(sb, (low >> 6) & 0x3f, haveNonZero);
+    base64Append(sb, low & 0x3f, true);
+
+    return sb.toString();
+  }
+
   public static double toDouble(LongEmul a) {
     if (LongLib.eq(a, Const.MIN_VALUE)) {
       return -9223372036854775808.0;
@@ -502,7 +489,8 @@ public class LongLib extends LongLibBase {
     return create(getL(a) ^ getL(b), getM(a) ^ getM(b), getH(a) ^ getH(b));
   }
 
-  private static void base64Append(StringBuilder sb, int digit) {
+  private static boolean base64Append(StringBuilder sb, int digit,
+      boolean haveNonZero) {
     if (digit > 0) {
       haveNonZero = true;
     }
@@ -521,6 +509,7 @@ public class LongLib extends LongLibBase {
       }
       sb.append((char) c);
     }
+    return haveNonZero;
   }
 
   // Assume digit is one of [A-Za-z0-9$_]

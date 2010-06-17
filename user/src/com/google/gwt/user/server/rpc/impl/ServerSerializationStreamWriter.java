@@ -555,6 +555,23 @@ public final class ServerSerializationStreamWriter extends
 
     return stream.toString();
   }
+  
+  @Override
+  public void writeLong(long value) {
+    if (getVersion() == SERIALIZATION_STREAM_MIN_VERSION) {
+      // Write longs as a pair of doubles for backwards compatibility
+      double[] parts = getAsDoubleArray(value);
+      assert parts != null && parts.length == 2;
+      writeDouble(parts[0]);
+      writeDouble(parts[1]);
+    } else {
+      StringBuilder sb = new StringBuilder();
+      sb.append('\'');
+      sb.append(Base64Utils.toBase64(value));
+      sb.append('\'');
+      append(sb.toString());
+    }
+  }
 
   @Override
   protected void append(String token) {
