@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.core.ext.TreeLogger;
+
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
 import com.gargoylesoftware.htmlunit.javascript.host.WindowProxy;
@@ -140,7 +142,8 @@ public class HostedModePluginObject extends ScriptableObject {
   private Scriptable disconnectMethod;
   private Scriptable initMethod;
   private Window window;
-  private JavaScriptEngine jsEngine;
+  private final JavaScriptEngine jsEngine;
+  private final TreeLogger logger;
 
   private BrowserChannelClient browserChannelClient;
 
@@ -149,8 +152,9 @@ public class HostedModePluginObject extends ScriptableObject {
    * 
    * @param jsEngine The JavaScriptEngine.
    */
-  public HostedModePluginObject(JavaScriptEngine jsEngine) {
+  public HostedModePluginObject(JavaScriptEngine jsEngine, TreeLogger logger) {
     this.jsEngine = jsEngine;
+    this.logger = logger;
   }
 
   /**
@@ -168,6 +172,8 @@ public class HostedModePluginObject extends ScriptableObject {
       String module, String version) {
     String addressParts[] = address.split(":");
     if (addressParts.length < 2) {
+      logger.log(TreeLogger.ERROR, "connect failed because address " + address
+          + " was not of the form foo.com:8080");
       return false;
     }
     // TODO: add whitelist and default-port support?
@@ -181,10 +187,12 @@ public class HostedModePluginObject extends ScriptableObject {
           htmlUnitSessionHandler, browserChannelClient));
       return browserChannelClient.process();
     } catch (BrowserChannelException e) {
-      e.printStackTrace();
+      logger.log(TreeLogger.ERROR,
+          "BrowserChannelException returned from connect " + e.getMessage(), e);
       return false;
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.log(TreeLogger.ERROR, "IOException returned from connect "
+          + e.getMessage(), e);
       return false;
     }
   }
@@ -193,6 +201,8 @@ public class HostedModePluginObject extends ScriptableObject {
     try {
       return browserChannelClient.disconnectFromHost();
     } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "IOException returned from disconnect "
+          + e.getMessage(), e);
       return false;
     }
   }

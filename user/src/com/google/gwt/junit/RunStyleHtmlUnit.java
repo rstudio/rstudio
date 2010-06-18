@@ -116,7 +116,8 @@ public class RunStyleHtmlUnit extends RunStyle {
 
     protected void setupWebClient(WebClient webClient) {
       if (developmentMode) {
-        JavaScriptEngine hostedEngine = new HostedJavaScriptEngine(webClient);
+        JavaScriptEngine hostedEngine = new HostedJavaScriptEngine(webClient,
+            treeLogger);
         webClient.setJavaScriptEngine(hostedEngine);
       }
     }
@@ -130,9 +131,11 @@ public class RunStyleHtmlUnit extends RunStyle {
   private static class HostedJavaScriptEngine extends JavaScriptEngine {
 
     private static final long serialVersionUID = 3594816610842448691L;
+    private final TreeLogger logger;
 
-    public HostedJavaScriptEngine(WebClient webClient) {
+    public HostedJavaScriptEngine(WebClient webClient, TreeLogger logger) {
       super(webClient);
+      this.logger = logger;
     }
 
     @Override
@@ -141,7 +144,7 @@ public class RunStyleHtmlUnit extends RunStyle {
       super.initialize(webWindow);
       Window window = (Window) webWindow.getScriptObject();
       window.defineProperty("__gwt_HostedModePlugin",
-          new HostedModePluginObject(this), ScriptableObject.READONLY);
+          new HostedModePluginObject(this, logger), ScriptableObject.READONLY);
     }
   }
 
