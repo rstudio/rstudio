@@ -60,6 +60,10 @@ public class LevelImplNull implements LevelImpl {
     return null;
   }
 
+  public Level parse(String name) {
+    return null;
+  }
+  
   public void setName(String newName) {
   }
 

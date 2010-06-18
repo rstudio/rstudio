@@ -93,6 +93,29 @@ public class LevelImplRegular implements LevelImpl {
   public Level off() {
     return LevelImplRegular.OFF;
   }
+  
+  public Level parse(String name) {
+    if (name.equalsIgnoreCase(all().getName())) {
+      return all();
+    } else if (name.equalsIgnoreCase(config().getName())) {
+      return config();
+    } else if (name.equalsIgnoreCase(fine().getName())) {
+      return fine();
+    } else if (name.equalsIgnoreCase(finer().getName())) {
+      return finer();
+    } else if (name.equalsIgnoreCase(finest().getName())) {
+      return finest();
+    } else if (name.equalsIgnoreCase(info().getName())) {
+      return info();
+    } else if (name.equalsIgnoreCase(off().getName())) {
+      return off();
+    } else if (name.equalsIgnoreCase(severe().getName())) {
+      return severe();
+    } else if (name.equalsIgnoreCase(warning().getName())) {
+      return warning();
+    } 
+    return null;
+  }
 
   public void setName(String newName) {
     name = newName;

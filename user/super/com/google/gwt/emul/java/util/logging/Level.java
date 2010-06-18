@@ -39,6 +39,10 @@ public class Level implements Serializable {
   public static Level SEVERE = staticImpl.severe(); 
   public static Level WARNING = staticImpl.warning();
   
+  public static Level parse(String name) {
+    return staticImpl.parse(name);
+  } 
+  
   private LevelImpl impl;
 
   protected Level(String name, int value) {
@@ -61,7 +65,6 @@ public class Level implements Serializable {
   }
   
   /* Not Implemented */
-  // public static Level parse(String name) {} 
   // public boolean equals(Object ox) {} 
   // protected Level(String name, int value, String resourceBundleName) {} 
   // public String getLocalizedName() {}

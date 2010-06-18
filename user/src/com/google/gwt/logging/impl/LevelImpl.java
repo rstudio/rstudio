@@ -33,6 +33,7 @@ public interface LevelImpl {
   Level info();
   int  intValue();
   Level off();
+  Level parse(String name);
   void setName(String newName);
   void setValue(int newValue);
   Level severe();
