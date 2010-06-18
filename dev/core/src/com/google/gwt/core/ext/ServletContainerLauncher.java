@@ -70,6 +70,7 @@ public abstract class ServletContainerLauncher {
    * @return true if the arguments were processed successfully
    */
   public boolean processArguments(TreeLogger logger, String arguments) {
+    logger.log(TreeLogger.ERROR, getName() + " does not accept any arguments");
     return false;
   }
 

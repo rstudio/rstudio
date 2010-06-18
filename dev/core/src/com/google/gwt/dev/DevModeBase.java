@@ -1047,12 +1047,23 @@ public abstract class DevModeBase implements DoneCallback {
     started = true;
 
     if (!doStartup()) {
+      /*
+       * TODO (amitmanjhi): Adding this redundant logging to narrow down a
+       * failure. Remove soon.
+       */
+      getTopLogger().log(TreeLogger.ERROR, "shell failed in doStartup method");
       return false;
     }
 
     if (!options.isNoServer()) {
       int resultPort = doStartUpServer();
       if (resultPort < 0) {
+        /*
+         * TODO (amitmanjhi): Adding this redundant logging to narrow down a
+         * failure. Remove soon.
+         */
+        getTopLogger().log(TreeLogger.ERROR,
+            "shell failed in doStartupServer method");
         return false;
       }
       options.setPort(resultPort);
@@ -1074,6 +1085,12 @@ public abstract class DevModeBase implements DoneCallback {
     setStartupUrls(getTopLogger());
 
     if (!doSlowStartup()) {
+      /*
+       * TODO (amitmanjhi): Adding this redundant logging to narrow down a
+       * failure. Remove soon.
+       */
+      getTopLogger().log(TreeLogger.ERROR,
+          "shell failed in doSlowStartup method");
       return false;
     }
 
