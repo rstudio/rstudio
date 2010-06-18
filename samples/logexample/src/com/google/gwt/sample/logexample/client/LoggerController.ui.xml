@@ -1,0 +1,14 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <g:HTMLPanel styleName='oneArea'>
+    You can set the default logging level by setting the "logLevel" url parameter
+    (e.g. logLevel=FINE). You can also configure various aspects in the gwt.xml
+    file, and programatically. Use the controls below to programmatically change
+    the levels of the 3 loggers, and to log messages to them.
+      <g:HorizontalPanel>
+        <g:SimplePanel ui:field="rootControls"/>
+        <g:SimplePanel ui:field="parentControls"/>
+        <g:SimplePanel ui:field="childControls"/>
+      </g:HorizontalPanel>
+  </g:HTMLPanel>
+</ui:UiBinder>

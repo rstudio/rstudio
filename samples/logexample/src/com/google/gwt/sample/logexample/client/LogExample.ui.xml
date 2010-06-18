@@ -1,0 +1,12 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <g:HTMLPanel>
+    <div align='center'>
+      <h1>Logging Example</h1>
+      <g:SimplePanel ui:field="loggerControls"/><br/><br/>
+      <g:SimplePanel ui:field="customLogArea"/><br/><br/>
+      <g:SimplePanel ui:field="handlerControls"/><br/><br/>
+      <g:SimplePanel ui:field="logOnServerButton"/><br/><br/>
+    </div>
+  </g:HTMLPanel>
+</ui:UiBinder>

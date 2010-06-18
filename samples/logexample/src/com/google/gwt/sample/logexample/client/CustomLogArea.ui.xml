@@ -1,0 +1,13 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <g:HTMLPanel styleName='oneArea'>
+    Any existing GWT widget on the page which implements HasWidgets and allows
+    multiple add() calls can be used by the HasWidgetsLogHandler. Here we've
+    created a HasWidgetsLogHandler with a VerticalPanel and added it to the
+    Child logger (so you will only see messages from the Child logger appear
+    here).
+    <g:ScrollPanel styleName='customLogScrollPanel'>
+      <g:VerticalPanel ui:field='customLogArea' styleName='customLogArea'/>
+    </g:ScrollPanel>
+  </g:HTMLPanel>
+</ui:UiBinder>

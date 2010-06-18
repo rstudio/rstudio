@@ -1,0 +1,38 @@
+h1 {
+  font-size: 2em;
+  font-weight: bold;
+  color: #777777;
+  margin: 40px 0px 70px;
+  text-align: center;
+}
+
+.centered {
+  text-align: center;
+}
+
+.oneArea {
+  width: 800px;
+  border-color: #777777;
+  border-width: 1px;
+  border-style: solid;
+  padding: 5px;
+}
+
+.oneLoggerController {
+  text-align: center;
+  border-color: #777777;
+  border-width: 1px;
+  border-style: solid;
+  width: 175px;
+  margin: 5px;
+  padding: 5px;
+}
+
+.customLogScrollPanel {
+  border-color: #777777;
+  border-width: 1px;
+  border-style: solid;
+  width: 700px;
+  height: 100px;
+}
+

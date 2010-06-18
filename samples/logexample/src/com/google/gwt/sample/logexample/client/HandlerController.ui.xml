@@ -1,0 +1,18 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <g:HTMLPanel styleName='oneArea'>
+    The Root Logger comes with a set of handlers added by default. You can
+    configure which handlers are added in the gwt.xml file, and you can also
+    add/remove them programatically. Below, we have greyed out any handlers
+    which are not being added due to gwt.xml file configuration, and
+    checking/unchecking boxes will add/remove them programatically.
+    <br/>
+    <g:CheckBox ui:field='systemCheckbox'> System Handler </g:CheckBox>
+    <g:CheckBox ui:field='consoleCheckbox'> Console Handler </g:CheckBox>
+    <g:CheckBox ui:field='devmodeCheckbox'> Dev Mode Handler </g:CheckBox>
+    <br/>
+    <g:CheckBox ui:field='firebugCheckbox'> Firebug Handler </g:CheckBox>
+    <g:CheckBox ui:field='popupCheckbox'> Popup Handler </g:CheckBox>
+    <g:CheckBox ui:field='remoteCheckbox'> Remote Handler </g:CheckBox>
+  </g:HTMLPanel>
+</ui:UiBinder>

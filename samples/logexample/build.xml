@@ -1,0 +1,5 @@
+<project name="logexample" default="build" basedir=".">
+  <property name="sample.root" value="logexample" />
+  <property name="sample.module" value="LogExample" />
+  <import file="../common.ant.xml" />
+</project>
