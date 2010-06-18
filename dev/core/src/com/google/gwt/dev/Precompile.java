@@ -59,7 +59,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
-import com.google.gwt.dev.util.arg.ArgHandlerShardPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
@@ -107,7 +106,6 @@ public class Precompile {
       registerHandler(new ArgHandlerGenDir(options));
       registerHandler(new ArgHandlerScriptStyle(options));
       registerHandler(new ArgHandlerEnableAssertions(options));
-      registerHandler(new ArgHandlerShardPrecompile());
       registerHandler(new ArgHandlerDisableGeneratingOnShards(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
       registerHandler(new ArgHandlerDisableClassMetadata(options));
