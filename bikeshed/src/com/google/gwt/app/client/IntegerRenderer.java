@@ -13,45 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place;
+package com.google.gwt.app.client;
 
+import com.google.gwt.text.shared.AbstractRenderer;
 import com.google.gwt.text.shared.Renderer;
-import com.google.gwt.user.client.ui.Widget;
-
-import java.util.List;
 
 /**
- * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p>
- * View for a {@link PlacePicker}.
- * 
- * @param <P> the type of place displayed
+ * <p>
+ * Renderer of Integer values.
  */
-public interface PlacePickerView<P extends Place> extends IsWidget {
+public class IntegerRenderer extends AbstractRenderer<Integer> {
+  private static IntegerRenderer INSTANCE;
 
   /**
-   * Implemented by the presenter currently using this view.
+   * @return the instance
    */
-  interface Listener<P> {
-    void placePicked(P place);
+  public static Renderer<Integer> instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new IntegerRenderer();
+    }
+    return INSTANCE;
   }
 
-  void setListener(Listener<P> listener);
+  protected IntegerRenderer() {
+  }
 
-  /**
-   * May throw {@link UnsupportedOperationException}, or return null.
-   * 
-   * @return the receiver as a Widget
-   */
-  Widget asWidget();
-
-  /**
-   * Renders a List of places.
-   * 
-   * @param places
-   */
-  void setValues(List<P> places, Renderer<P> render);
+  public String render(Integer object) {
+    return String.valueOf(object);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,45 +13,32 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place;
+package com.google.gwt.text.shared;
 
-import com.google.gwt.text.shared.Renderer;
-import com.google.gwt.user.client.ui.Widget;
-
-import java.util.List;
+import java.io.IOException;
 
 /**
- * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p>
- * View for a {@link PlacePicker}.
+ * <p>
+ * An object that can render other objects of a particular type into plain-text
+ * form. Allows decoupling that is useful for a dependency-injection
+ * architecture.
  * 
- * @param <P> the type of place displayed
+ * @param <T> the type to render
  */
-public interface PlacePickerView<P extends Place> extends IsWidget {
+public interface Renderer<T> {
 
   /**
-   * Implemented by the presenter currently using this view.
+   * Renders {@code object} as plain text. Should never throw any exceptions!
    */
-  interface Listener<P> {
-    void placePicked(P place);
-  }
-
-  void setListener(Listener<P> listener);
+  String render(T object);
 
   /**
-   * May throw {@link UnsupportedOperationException}, or return null.
-   * 
-   * @return the receiver as a Widget
+   * Renders {@code object} as plain text, appended directly to {@code
+   * appendable}. Should never throw any exceptions except if {@code appendable}
+   * throws an {@code IOException}.
    */
-  Widget asWidget();
-
-  /**
-   * Renders a List of places.
-   * 
-   * @param places
-   */
-  void setValues(List<P> places, Renderer<P> render);
+  void render(T object, Appendable appendable) throws IOException;
 }

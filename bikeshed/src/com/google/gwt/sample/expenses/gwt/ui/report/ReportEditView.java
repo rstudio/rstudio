@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
 import com.google.gwt.app.client.EditorSupport;
+import com.google.gwt.app.place.RecordEditView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
@@ -33,7 +34,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.ui.RecordEditView;
 
 import java.util.Map;
 import java.util.Set;

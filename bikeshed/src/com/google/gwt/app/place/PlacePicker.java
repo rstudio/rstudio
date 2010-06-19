@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.input.shared.Renderer;
+import com.google.gwt.text.shared.Renderer;
 
 import java.util.List;
 

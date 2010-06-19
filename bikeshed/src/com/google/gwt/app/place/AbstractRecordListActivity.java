@@ -19,7 +19,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.WriteOperation;
-import com.google.gwt.valuestore.ui.RecordListView;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.Range;

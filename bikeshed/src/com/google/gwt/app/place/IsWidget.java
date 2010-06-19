@@ -15,43 +15,17 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.List;
-
 /**
- * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p>
- * View for a {@link PlacePicker}.
- * 
- * @param <P> the type of place displayed
+ * <p>
+ * Extended by View interfaces that are likely to be implemented by Widgets.
+ * Provides access to that widget, if it exists, without compromising the
+ * ability to provide mock view instance in JRE unit tests.
  */
-public interface PlacePickerView<P extends Place> extends IsWidget {
-
-  /**
-   * Implemented by the presenter currently using this view.
-   */
-  interface Listener<P> {
-    void placePicked(P place);
-  }
-
-  void setListener(Listener<P> listener);
-
-  /**
-   * May throw {@link UnsupportedOperationException}, or return null.
-   * 
-   * @return the receiver as a Widget
-   */
+public interface IsWidget {
   Widget asWidget();
-
-  /**
-   * Renders a List of places.
-   * 
-   * @param places
-   */
-  void setValues(List<P> places, Renderer<P> render);
 }

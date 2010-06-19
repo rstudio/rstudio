@@ -15,7 +15,6 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.user.client.ui.IsWidget;
 
 /**
  * <p>

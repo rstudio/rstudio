@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
+import com.google.gwt.app.place.AbstractRecordListView;
+import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -22,8 +24,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.valuestore.ui.AbstractRecordListView;
-import com.google.gwt.valuestore.ui.PropertyColumn;
 
 import java.util.ArrayList;
 import java.util.List;

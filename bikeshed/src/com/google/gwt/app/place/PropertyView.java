@@ -15,10 +15,10 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.text.shared.Renderer;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.Record;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -26,32 +26,16 @@ import java.util.List;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * View for a {@link PlacePicker}.
+ * A view that displays a set of {@link Property} values for a type of
+ * {@link Record}.
  * 
- * @param <P> the type of place displayed
+ * @param <R> the type of the record
  */
-public interface PlacePickerView<P extends Place> extends IsWidget {
+public interface PropertyView<R extends Record> {
 
   /**
-   * Implemented by the presenter currently using this view.
+   * @return the set of properties this view displays, which are guaranteed to
+   *         be properties of R
    */
-  interface Listener<P> {
-    void placePicked(P place);
-  }
-
-  void setListener(Listener<P> listener);
-
-  /**
-   * May throw {@link UnsupportedOperationException}, or return null.
-   * 
-   * @return the receiver as a Widget
-   */
-  Widget asWidget();
-
-  /**
-   * Renders a List of places.
-   * 
-   * @param places
-   */
-  void setValues(List<P> places, Renderer<P> render);
+  Set<Property<?>> getProperties();
 }

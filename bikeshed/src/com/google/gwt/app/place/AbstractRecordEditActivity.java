@@ -22,7 +22,6 @@ import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.Value;
-import com.google.gwt.valuestore.ui.RecordEditView;
 
 import java.util.Set;
 

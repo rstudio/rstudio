@@ -17,7 +17,6 @@ package com.google.gwt.app.place;
 
 import com.google.gwt.app.place.Activity.Display;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.user.client.ui.IsWidget;
 
 /**
  * <p>

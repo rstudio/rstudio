@@ -16,7 +16,6 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 import junit.framework.TestCase;

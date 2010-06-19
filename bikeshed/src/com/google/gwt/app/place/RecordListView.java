@@ -15,10 +15,8 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.text.shared.Renderer;
-import com.google.gwt.user.client.ui.Widget;
-
-import java.util.List;
+import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.view.client.PagingListView;
 
 /**
  * <p>
@@ -26,32 +24,29 @@ import java.util.List;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * View for a {@link PlacePicker}.
+ * A view of a list of {@link Records}, which declares which properties it is
+ * able to display.
+ * <p>
+ * It is expected that such views will typically (eventually) be defined largely
+ * in ui.xml files which declare the properties of interest, which is why the
+ * view is a source of a property set rather than a receiver of one.
  * 
- * @param <P> the type of place displayed
+ * @param <R> the type of the records to display
  */
-public interface PlacePickerView<P extends Place> extends IsWidget {
-
+public interface RecordListView<R extends Record> extends IsWidget, PropertyView<R> {
   /**
-   * Implemented by the presenter currently using this view.
+   * Implemented by the owner of a RecordTableView.
+   * 
+   * @param<R> the type of the records to display
    */
-  interface Listener<P> {
-    void placePicked(P place);
+  interface Delegate<R extends Record> {
+    void createClicked();
   }
 
-  void setListener(Listener<P> listener);
-
+  PagingListView<R> asPagingListView();
+  
   /**
-   * May throw {@link UnsupportedOperationException}, or return null.
-   * 
-   * @return the receiver as a Widget
+   * Sets the delegate.
    */
-  Widget asWidget();
-
-  /**
-   * Renders a List of places.
-   * 
-   * @param places
-   */
-  void setValues(List<P> places, Renderer<P> render);
+  void setDelegate(Delegate<R> delegate);
 }

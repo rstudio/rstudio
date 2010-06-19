@@ -13,45 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place;
+package com.google.gwt.app.client;
 
-import com.google.gwt.text.shared.Renderer;
-import com.google.gwt.user.client.ui.Widget;
-
-import java.util.List;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.user.client.ui.ValueBox;
 
 /**
- * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p>
- * View for a {@link PlacePicker}.
- * 
- * @param <P> the type of place displayed
+ * <p>
+ * A ValueBox that uses {@link DoubleParser} and {@link DoubleRenderer}.
  */
-public interface PlacePickerView<P extends Place> extends IsWidget {
+public class DoubleBox extends ValueBox<Double> {
 
-  /**
-   * Implemented by the presenter currently using this view.
-   */
-  interface Listener<P> {
-    void placePicked(P place);
+  public DoubleBox() {
+    super(Document.get().createTextInputElement(), DoubleRenderer.instance(),
+        DoubleParser.instance());
   }
-
-  void setListener(Listener<P> listener);
-
-  /**
-   * May throw {@link UnsupportedOperationException}, or return null.
-   * 
-   * @return the receiver as a Widget
-   */
-  Widget asWidget();
-
-  /**
-   * Renders a List of places.
-   * 
-   * @param places
-   */
-  void setValues(List<P> places, Renderer<P> render);
 }

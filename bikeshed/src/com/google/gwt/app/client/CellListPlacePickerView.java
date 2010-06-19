@@ -18,7 +18,7 @@ package com.google.gwt.app.client;
 import com.google.gwt.app.place.Place;
 import com.google.gwt.app.place.PlacePickerView;
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.input.shared.Renderer;
+import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.view.client.SingleSelectionModel;

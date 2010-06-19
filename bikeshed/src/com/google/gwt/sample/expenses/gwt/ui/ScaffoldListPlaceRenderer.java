@@ -15,16 +15,16 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui;
 
-import com.google.gwt.input.shared.Renderer;
 import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
+import com.google.gwt.text.shared.AbstractRenderer;
 import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Renders {@link ListScaffoldPlace}s for display to users.
  */
-public class ScaffoldListPlaceRenderer implements Renderer<ListScaffoldPlace> {
+public class ScaffoldListPlaceRenderer extends AbstractRenderer<ListScaffoldPlace> {
 
   public String render(ListScaffoldPlace object) {
     // TODO These class comparisons are gross, find a cleaner way.

@@ -19,6 +19,7 @@
 <!--                                                                        -->
 <module>
    <inherits name="com.google.gwt.core.Core"/>
+   <inherits name="com.google.gwt.text.Text"/>
    <inherits name="com.google.gwt.event.Event"/>
    <inherits name="com.google.gwt.animation.Animation"/>
    <inherits name="com.google.gwt.resources.Resources"/>
