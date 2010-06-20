@@ -23,6 +23,12 @@ import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.i18n.client.AutoDirectionHandler;
+import com.google.gwt.i18n.client.BidiPolicy;
+import com.google.gwt.i18n.client.BidiUtils;
+import com.google.gwt.i18n.client.HasDirection;
+import com.google.gwt.i18n.shared.DirectionEstimator;
+import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.text.shared.Parser;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.client.DOM;
@@ -43,9 +49,12 @@ import java.text.ParseException;
  */
 @SuppressWarnings("deprecation")
 public class ValueBoxBase<T> extends FocusWidget implements
-    SourcesChangeEvents, HasChangeHandlers, HasText, HasName, HasValue<T> {
+    SourcesChangeEvents, HasChangeHandlers, HasText, HasName, HasDirection,
+    HasDirectionEstimator, HasValue<T>, AutoDirectionHandler.Target {
 
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
+
+  private AutoDirectionHandler autoDirHandler;
 
   private final Parser<T> parser;
   private final Renderer<T> renderer;
@@ -61,6 +70,8 @@ public class ValueBoxBase<T> extends FocusWidget implements
    */
   protected ValueBoxBase(Element elem, Renderer<T> renderer, Parser<T> parser) {
     super(elem);
+    autoDirHandler = AutoDirectionHandler.addTo(this,
+        BidiPolicy.isBidiEnabled());
     this.renderer = renderer;
     this.parser = parser;
   }
@@ -111,6 +122,17 @@ public class ValueBoxBase<T> extends FocusWidget implements
     return impl.getCursorPos(getElement());
   }
 
+  public Direction getDirection() {
+    return BidiUtils.getDirectionOnElement(getElement());
+  }
+  
+  /**
+   * Gets the direction estimation model of the auto-dir handler.
+   */
+  public DirectionEstimator getDirectionEstimator() {
+    return autoDirHandler.getDirectionEstimator();
+  }
+  
   public String getName() {
     return DOM.getElementProperty(getElement(), "name");
   }
@@ -229,6 +251,24 @@ public class ValueBoxBase<T> extends FocusWidget implements
     setSelectionRange(pos, 0);
   }
 
+  public void setDirection(Direction direction) {
+    BidiUtils.setDirectionOnElement(getElement(), direction);
+  }
+  
+  /**
+   * Toggles on / off direction estimation.
+   */
+  public void setDirectionEstimator(boolean enabled) {
+    autoDirHandler.setDirectionEstimator(enabled);
+  }
+  
+  /**
+   * Sets the direction estimation model of the auto-dir handler.
+   */
+  public void setDirectionEstimator(DirectionEstimator directionEstimator) {
+    autoDirHandler.setDirectionEstimator(directionEstimator);
+  }
+  
   /**
    * If a keyboard event is currently being handled by the text box, this method
    * replaces the unicode character or key code associated with it. This allows
@@ -302,6 +342,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
    */
   public void setText(String text) {
     DOM.setElementProperty(getElement(), "value", text != null ? text : "");
+    autoDirHandler.refreshDirection();
   }
 
   /**
@@ -329,5 +370,11 @@ public class ValueBoxBase<T> extends FocusWidget implements
 
   protected TextBoxImpl getImpl() {
     return impl;
+  }
+  
+  @Override
+  protected void onLoad() {
+    super.onLoad();
+    autoDirHandler.refreshDirection();
   }
 }

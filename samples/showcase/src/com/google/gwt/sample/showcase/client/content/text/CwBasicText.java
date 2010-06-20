@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.i18n.shared.AnyRtlDirectionEstimator;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
@@ -103,6 +104,10 @@ public class CwBasicText extends ContentWidget {
     // Add a normal and disabled text box
     TextBox normalText = new TextBox();
     normalText.ensureDebugId("cwBasicText-textbox");
+    // Set the normal text box to automatically adjust its direction according
+    // to the input text. Use the Any-RTL heuristic, which sets an RTL direction
+    // iff the text contains at least one RTL character.
+    normalText.setDirectionEstimator(AnyRtlDirectionEstimator.get());
     TextBox disabledText = new TextBox();
     disabledText.ensureDebugId("cwBasicText-textbox-disabled");
     disabledText.setText(constants.cwBasicTextReadOnly());

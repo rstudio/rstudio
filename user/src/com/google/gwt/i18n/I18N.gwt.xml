@@ -17,7 +17,7 @@
 <module>
   <inherits name="com.google.gwt.regexp.RegExp"/>
   <source path="" includes="client/,shared/" />
-  
+
   <!-- Browser-sensitive code should use the 'locale' client property. -->
   <!-- 'default' is always defined.                                    -->
   <define-property name="locale" values="default" />
@@ -54,7 +54,7 @@
       } else {
         $wnd['__gwt_Locale'] = locale || defaultLocale;
       }
-      
+
       if (locale == null) {
         return defaultLocale;
       }
@@ -95,7 +95,7 @@
       the locale of the current permutation will actually be included.  Note
       that currently only number/date format constants, locale names, and
       currency data will support runtime locales - everything else will just
-      reference the compile-time locale set in the "locale" property. 
+      reference the compile-time locale set in the "locale" property.
    -->
   <define-configuration-property name="runtime.locales" is-multi-valued="true"/>
   <set-configuration-property name="runtime.locales" value=""/>
@@ -111,4 +111,17 @@
       be generated as the locale specified here.
   -->
   <set-property-fallback name="locale" value="default"/>
+
+  <!-- Force BiDi policy to be enabled -->
+  <define-property name="gwt.forceBidi" values="true, false"/>
+
+  <!-- Default to not forced -->
+  <set-property name="gwt.forceBidi" value="false"/>
+
+  <!-- Replace the BidiPolicyImpl -->
+  <replace-with class="com.google.gwt.i18n.client.BidiPolicy.BidiPolicyImplOn">
+    <when-type-is class="com.google.gwt.i18n.client.BidiPolicy.BidiPolicyImpl"/>
+    <when-property-is name="gwt.forceBidi" value="true"/>
+  </replace-with>
 </module>
+
