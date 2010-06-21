@@ -13,6 +13,5 @@
     <br/>
     <g:CheckBox ui:field='firebugCheckbox'> Firebug Handler </g:CheckBox>
     <g:CheckBox ui:field='popupCheckbox'> Popup Handler </g:CheckBox>
-    <g:CheckBox ui:field='remoteCheckbox'> Remote Handler </g:CheckBox>
   </g:HTMLPanel>
 </ui:UiBinder>

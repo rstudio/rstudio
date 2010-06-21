@@ -65,7 +65,6 @@ public class HandlerController {
   @UiField CheckBox devmodeCheckbox;
   @UiField CheckBox firebugCheckbox;
   @UiField CheckBox popupCheckbox;
-  @UiField CheckBox remoteCheckbox;
   @UiField CheckBox systemCheckbox;
   private Map<String, Handler> handlers;
   private Logger logger;
