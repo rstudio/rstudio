@@ -15,26 +15,22 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.Type;
+import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.JsValueGlue;
-import com.google.gwt.dev.util.Name.BinaryName;
-import com.google.gwt.dev.util.Name.InternalName;
-import com.google.gwt.dev.util.collect.Lists;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * This class performs any and all byte code rewriting needed to make hosted
@@ -42,168 +38,25 @@ import java.util.Set;
  * <ol>
  * <li>Rewrites all native methods into non-native thunks to call JSNI via
  * {@link com.google.gwt.dev.shell.JavaScriptHost}.</li>
- * <li>JavaScriptObject and its subtypes gain a static {@value #REWRAP_METHOD}
- * method and new constructor methods.</li>
- * <li>All uses of <code>==</code> object comparisons gain an explicit cast to
- * Object to force canonicalization.</li>
- * <li>Casts and assignments to Object, JavaScriptObject, and interface types
- * have runtime type-fitting code added to support the not-really-a-type
- * semantic.</li>
- * <li>All interfaces that a JSO may implement have an adjunct class generated
- * that aids the SingleJsoImpl cast operations.</li>
+ * <li>Rewrites all JSO types into an interface type (which retains the original
+ * name) and an implementation type (which has a $ appended).</li>
+ * <li>All JSO interface types are empty and mirror the original type hierarchy.
+ * </li>
+ * <li>All JSO impl types contain the guts of the original type, except that all
+ * instance methods are reimplemented as statics.</li>
+ * <li>Calls sites to JSO types rewritten to dispatch to impl types. Any virtual
+ * calls are also made static. Static field references to JSO types reference
+ * static fields in the the impl class.</li>
+ * <li>JavaScriptObject$ implements all the interface types and is the only
+ * instantiable type.</li>
  * </ol>
  * 
  * @see RewriteJsniMethods
+ * @see RewriteRefsToJsoClasses
+ * @see WriteJsoInterface
  * @see WriteJsoImpl
- * @see RewriteObjectComparisons
- * @see RewriteJsoCasts
- * @see WriteSingleJsoSupportCode
  */
 public class HostedModeClassRewriter {
-
-  /**
-   * An oracle to answer queries from the rewriting passes about the
-   * type-system.
-   */
-  static class RewriterOracle {
-    /**
-     * Used by {@link #getConstructorDisambiguator}.
-     */
-    private static final String[] EMPTY_STRING = new String[0];
-
-    private final Map<String, String[]> arrayDisambiguations = new HashMap<String, String[]>();
-
-    private final JClassType jsoType;
-
-    /**
-     * The TypeOracle for the module being rewritten. We need the typeOracle to
-     * provide a live view of the module's type-system, since Generators may add
-     * new JSO types.
-     */
-    private final TypeOracle typeOracle;
-
-    public RewriterOracle(TypeOracle typeOracle) {
-      this.typeOracle = typeOracle;
-      jsoType = typeOracle.findType(JsValueGlue.JSO_CLASS);
-      assert jsoType != null : "No JavaScriptObject type";
-    }
-
-    /**
-     * Returns <code>true</code> if a given type is potentially assignable from
-     * a JSO subtype.
-     */
-    public boolean couldContainJso(String internalName) {
-      return "java/lang/Object".equals(internalName)
-          || JAVASCRIPTOBJECT_DESC.equals(internalName)
-          || isJsoOrSubtype(internalName)
-          || (!internalName.startsWith("java/") && isInterface(internalName));
-    }
-
-    public String[] getAllSuperInterfaces(String[] interfaces) {
-      Set<String> toReturn = new HashSet<String>();
-      Set<JClassType> seen = new HashSet<JClassType>();
-      List<JClassType> queue = new LinkedList<JClassType>();
-
-      for (String intf : interfaces) {
-        JClassType type = typeOracle.findType(InternalName.toSourceName(intf));
-        if (type == null) {
-          throw new RuntimeException("Unknown type " + intf);
-        }
-        queue.add(type);
-      }
-
-      while (!queue.isEmpty()) {
-        JClassType intf = queue.remove(0);
-        if (seen.contains(intf)) {
-          continue;
-        }
-        seen.add(intf);
-        toReturn.add(BinaryName.toInternalName(intf.getQualifiedBinaryName()));
-        queue.addAll(Arrays.asList(intf.getImplementedInterfaces()));
-      }
-
-      String[] array = toReturn.toArray(new String[toReturn.size()]);
-      Arrays.sort(array);
-      return array;
-    }
-
-    /**
-     * In order to be able to upcast all JSO subtype arrays to JavaScriptObject
-     * arrays, it is necessary to be able to maintain distinguishing method
-     * descriptors. If the given descriptor will be affected by the array upcast
-     * transformation, this method will return an array containing the internal
-     * names of any additional types that should be appended to the descriptor.
-     */
-    public String[] getArrayDisambiguator(String desc) {
-      String[] cached = arrayDisambiguations.get(desc);
-      if (cached != null) {
-        return cached;
-      }
-
-      List<String> toReturn = Lists.create();
-      for (Type t : Type.getArgumentTypes(desc)) {
-        if (t.getSort() == Type.ARRAY
-            && t.getElementType().getSort() == Type.OBJECT) {
-          String leafName = t.getElementType().getInternalName();
-          if (isJsoOrSubtype(leafName)) {
-            String disambiguatotr = DISAMBIGUATOR_TYPE_INTERNAL_NAME + "$"
-                + InternalName.toIdentifier(leafName);
-            toReturn = Lists.add(toReturn, disambiguatotr);
-          }
-        }
-      }
-
-      String[] array;
-      if (toReturn.isEmpty()) {
-        array = EMPTY_STRING;
-      } else {
-        array = toReturn.toArray(new String[toReturn.size()]);
-      }
-      arrayDisambiguations.put(desc, array);
-
-      return array;
-    }
-
-    public boolean isInterface(String internalName) {
-      String sourceName = InternalName.toSourceName(internalName);
-      if (sourceName.contains("$")) {
-        // Anonymous type
-        return false;
-      }
-      JClassType type = typeOracle.findType(sourceName);
-      return type != null && type.isInterface() != null;
-    }
-
-    public boolean isJsoOrSubtype(String internalName) {
-      String sourceName = InternalName.toSourceName(internalName);
-      if (sourceName.contains("$")) {
-        // Anonymous type
-        return false;
-      }
-      JClassType type = typeOracle.findType(sourceName);
-      return type != null && jsoType.isAssignableFrom(type);
-    }
-
-    public boolean isTagInterface(String internalName) {
-      String sourceName = InternalName.toSourceName(internalName);
-      if (sourceName.contains("$")) {
-        // Anonymous type
-        return false;
-      }
-      JClassType type = typeOracle.findType(sourceName);
-      return type != null && type.isInterface() != null
-          && type.getOverridableMethods().length == 0;
-    }
-
-    /**
-     * Returns <code>true</code> if a JSO assigned to a slot/field of this type
-     * requires canonicalizing the JSO wrapper.
-     */
-    public boolean jsoAssignmentRequiresCanonicalization(String internalName) {
-      return "java/lang/Object".equals(internalName);
-    }
-  }
-
   /*
    * Note: this rewriter operates on a class-by-class basis and has no global
    * view on the entire system. However, its operation requires certain global
@@ -212,68 +65,160 @@ public class HostedModeClassRewriter {
    */
 
   /**
-   * Used in CompilingClassLoader to trigger a call to
-   * {@link #writeConstructorDisambiguationType}.
+   * Maps instance methods to the class in which they are declared. This must be
+   * provided by the caller since it requires global program state.
    */
-  public static final String DISAMBIGUATOR_TYPE_NAME = "com.google.gwt.dev.shell.rewrite.$Disambiguator";
+  public interface InstanceMethodOracle {
+
+    /**
+     * For a given instance method and declared enclosing class (which must be a
+     * JSO subtype), find the class in which that method was originally
+     * declared. Methods declared on Object will return "java/lang/Object".
+     * Static methods will always return <code>declaredClass</code>.
+     * 
+     * @param declaredClass a descriptor of the static type of the qualifier
+     * @param signature the binary signature of the method
+     * @return the descriptor of the class in which that method was declared,
+     *         which will either be <code>declaredClass</code> or some
+     *         superclass
+     * @throws IllegalArgumentException if the method could not be found
+     */
+    String findOriginalDeclaringClass(String declaredClass, String signature);
+  }
 
   /**
-   * Used in CompilingClassLoader to trigger a call to
-   * {@link #writeSingleJsoImplAdjunct}.
+   * Contains data about how SingleJsoImpl methods are to be dispatched.
    */
-  public static final String SINGLE_JSO_IMPL_ADJUNCT_SUFFIX = "$$singleJsoImpl";
+  public interface SingleJsoImplData {
+    /**
+     * Returns the method declarations that should be generated for a given
+     * mangled method name. {@link #getDeclarations} and
+     * {@link #getImplementations} maintain a pairwise mapping.
+     */
+    List<Method> getDeclarations(String mangledName);
 
-  static final String CANONICAL_FIELD = "canonicalJso";
+    /**
+     * Returns the implementations that the method declarations above should
+     * delegate to.{@link #getDeclarations} and {@link #getImplementations}
+     * maintain a pairwise mapping.
+     */
+    List<Method> getImplementations(String mangledName);
 
-  static final String DISAMBIGUATOR_TYPE_INTERNAL_NAME = BinaryName.toInternalName(DISAMBIGUATOR_TYPE_NAME);
+    /**
+     * Returns all of the mangled method names for SingleJsoImpl methods.
+     */
+    SortedSet<String> getMangledNames();
 
-  static final boolean EXTRA_DEBUG_DATA = Boolean.getBoolean("gwt.dev.classDump");
+    /**
+     * Returns the internal names of all interface types implemented by JSOs.
+     */
+    Set<String> getSingleJsoIntfTypes();
+  }
 
-  static final String JAVASCRIPTOBJECT_DESC = BinaryName.toInternalName(JsValueGlue.JSO_CLASS);
+  static final String JAVASCRIPTOBJECT_DESC = JsValueGlue.JSO_CLASS.replace(
+      '.', '/');
+
+  static final String JAVASCRIPTOBJECT_IMPL_DESC = JsValueGlue.JSO_IMPL_CLASS.replace(
+      '.', '/');
 
   static final String REFERENCE_FIELD = JsValueGlue.HOSTED_MODE_REFERENCE;
 
-  static final String REWRAP_METHOD = "$rewrap";
+  static String addSyntheticThisParam(String owner, String methodDescriptor) {
+    return "(L" + owner + ";" + methodDescriptor.substring(1);
+  }
 
-  static final String SINGLE_JSO_IMPL_FIELD = "$singleJsoImpl";
-
-  static final String SINGLE_JSO_IMPL_CAST_METHOD = "cast$";
-
-  static final String SINGLE_JSO_IMPL_CAST_TO_OBJECT_METHOD = "castToObject$";
-
-  static final String SINGLE_JSO_IMPL_INSTANCEOF_METHOD = "instanceOf$";
-
-  static final String SINGLE_JSO_IMPL_SUPPORT_CLASS = Type.getInternalName(SingleJsoImplSupport.class);
-
-  static final int SYSTEM_CLASS_VERSION = Double.parseDouble(System.getProperty("java.class.version")) < Opcodes.V1_6
-      ? Opcodes.V1_5 : Opcodes.V1_6;
+  private static String toDescriptor(String jsoSubtype) {
+    return jsoSubtype.replace('.', '/');
+  }
 
   /**
-   * Passed into the rewriting visitors.
+   * An unmodifiable set of descriptors containing the implementation form of
+   * <code>JavaScriptObject</code> and all subclasses.
    */
-  private final RewriterOracle rewriterOracle;
+  private final Set<String> jsoImplDescs;
 
   /**
-   * Creates a new {@link HostedModeClassRewriter}.
+   * An unmodifiable set of descriptors containing the interface form of
+   * <code>JavaScriptObject</code> and all subclasses.
+   */
+  private final Set<String> jsoIntfDescs;
+
+  private final SingleJsoImplData jsoData;
+
+  /**
+   * Records the superclass of every JSO for generating empty JSO interfaces.
+   */
+  private final Map<String, List<String>> jsoSuperDescs;
+
+  /**
+   * Maps methods to the class in which they are declared.
+   */
+  private InstanceMethodOracle mapper;
+
+  /**
+   * Creates a new {@link HostedModeClassRewriter} for a specified set of
+   * subclasses of JavaScriptObject.
    * 
-   * @param typeOracle The TypeOracle for the GWT module that is being rewritten
+   * @param jsoSubtypes a set of binary type names representing JavaScriptObject
+   *          and all of its subtypes of
+   * @param mapper maps methods to the class in which they are declared
    */
-  public HostedModeClassRewriter(TypeOracle typeOracle) {
-    rewriterOracle = new RewriterOracle(typeOracle);
+  public HostedModeClassRewriter(Set<String> jsoSubtypes,
+      Map<String, List<String>> jsoSuperTypes, SingleJsoImplData jsoData,
+      InstanceMethodOracle mapper) {
+    Set<String> buildJsoIntfDescs = new HashSet<String>();
+    Set<String> buildJsoImplDescs = new HashSet<String>();
+    Map<String, List<String>> buildJsoSuperDescs = new HashMap<String, List<String>>();
+    for (String jsoSubtype : jsoSubtypes) {
+      String desc = toDescriptor(jsoSubtype);
+      buildJsoIntfDescs.add(desc);
+      buildJsoImplDescs.add(desc + "$");
+
+      List<String> superTypes = jsoSuperTypes.get(jsoSubtype);
+      assert (superTypes != null);
+      assert (superTypes.size() > 0);
+      for (ListIterator<String> i = superTypes.listIterator(); i.hasNext();) {
+        i.set(toDescriptor(i.next()));
+      }
+      buildJsoSuperDescs.put(desc, Collections.unmodifiableList(superTypes));
+    }
+
+    this.jsoIntfDescs = Collections.unmodifiableSet(buildJsoIntfDescs);
+    this.jsoImplDescs = Collections.unmodifiableSet(buildJsoImplDescs);
+    this.jsoSuperDescs = Collections.unmodifiableMap(buildJsoSuperDescs);
+    this.jsoData = jsoData;
+    this.mapper = mapper;
+  }
+
+  /**
+   * Returns <code>true</code> if the class is the implementation class for a
+   * JSO subtype.
+   */
+  public boolean isJsoImpl(String className) {
+    return jsoImplDescs.contains(toDescriptor(className));
+  }
+
+  /**
+   * Returns <code>true</code> if the class is the interface class for a JSO
+   * subtype.
+   */
+  public boolean isJsoIntf(String className) {
+    return jsoIntfDescs.contains(toDescriptor(className));
   }
 
   /**
    * Performs rewriting transformations on a class.
    * 
+   * @param typeOracle a typeOracle modeling the user classes
    * @param className the name of the class
    * @param classBytes the bytes of the class
    * @param anonymousClassMap a map between the anonymous class names of java
    *          compiler used to compile code and jdt. Emma-specific.
    */
-  public byte[] rewrite(String className, byte[] classBytes,
-      Map<String, String> anonymousClassMap) {
-    classBytes = maybeUpgradeBytecode(classBytes);
-    String desc = BinaryName.toInternalName(className);
+  public byte[] rewrite(TypeOracle typeOracle, String className,
+      byte[] classBytes, Map<String, String> anonymousClassMap) {
+    String desc = toDescriptor(className);
+    assert (!jsoIntfDescs.contains(desc));
 
     // The ASM model is to chain a bunch of visitors together.
     ClassWriter writer = new ClassWriter(0);
@@ -282,75 +227,49 @@ public class HostedModeClassRewriter {
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
-    v = new WriteSingleJsoSupportCode(v, rewriterOracle);
+    v = new RewriteSingleJsoImplDispatches(v, typeOracle, jsoData);
 
-    v = new RewriteJsoCasts(v, rewriterOracle);
+    v = new RewriteRefsToJsoClasses(v, jsoIntfDescs, mapper);
 
-    v = new RewriteJsoArrays(v, rewriterOracle);
-
-    v = new RewriteObjectComparisons(v, rewriterOracle);
-
-    if (rewriterOracle.isJsoOrSubtype(desc)) {
-      v = WriteJsoImpl.create(v, desc);
+    if (jsoImplDescs.contains(desc)) {
+      v = WriteJsoImpl.create(v, desc, jsoIntfDescs, mapper, jsoData);
     }
 
     v = new RewriteJsniMethods(v, anonymousClassMap);
 
-    if (SYSTEM_CLASS_VERSION < Opcodes.V1_6) {
+    if (Double.parseDouble(System.getProperty("java.class.version")) < Opcodes.V1_6) {
       v = new ForceClassVersion15(v);
     }
 
-    // We need EXPAND_FRAMES here for RewriteJsoCasts
-    new ClassReader(classBytes).accept(v, ClassReader.EXPAND_FRAMES);
+    new ClassReader(classBytes).accept(v, 0);
     return writer.toByteArray();
   }
 
-  /**
-   * Synthesize a class file that is used to disambiguate constructors that have
-   * JSO subtype array parameters that have been upcast to JavaScriptObject
-   * arrays.
-   */
-  public byte[] writeConstructorDisambiguationType(String className) {
-    // Keep the synthetic class creation code next to where its consumed
-    return RewriteJsoArrays.writeConstructorDisambiguationType(className);
-  }
+  public byte[] writeJsoIntf(String className) {
+    String desc = toDescriptor(className);
+    assert (jsoIntfDescs.contains(desc));
+    assert (jsoSuperDescs.containsKey(desc));
+    List<String> superDescs = jsoSuperDescs.get(desc);
+    assert (superDescs != null);
+    assert (superDescs.size() > 0);
 
-  /**
-   * Synthesize a class file that implements an interface's SingleJsoImpl
-   * adjunct type.
-   */
-  public byte[] writeSingleJsoImplAdjunct(String className) {
-    // Keep the synthetic class creation code next to where its consumed
-    return WriteSingleJsoSupportCode.writeSingleJsoImplAdjunct(className);
-  }
+    // The ASM model is to chain a bunch of visitors together.
+    ClassWriter writer = new ClassWriter(0);
+    ClassVisitor v = writer;
 
-  /**
-   * AnalyzerAdapter, and thus RewriteJsoCasts, requires StackFrameMap data
-   * which is new in version 50 (Java 1.6) bytecode. This method will only do
-   * work if the input bytecode is less than version 50. This would occur when
-   * running on Java 1.5 or if Emma support is enabled (since Emma is from
-   * 2005).
-   */
-  private byte[] maybeUpgradeBytecode(byte[] classBytes) {
-    // Major version is stored at offset 7 in the class file format
-    if (classBytes[7] < Opcodes.V1_6) {
-      // Get ASM to generate the stack frame data
-      ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-      ClassVisitor v2 = cw;
+    // v = new CheckClassAdapter(v);
+    // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
-      // Upgrade to version 50 class format
-      v2 = new ClassAdapter(v2) {
-        @Override
-        public void visit(int version, int access, String name,
-            String signature, String superName, String[] interfaces) {
-          super.visit(Opcodes.V1_6, access, name, signature, superName,
-              interfaces);
-        }
-      };
-
-      new ClassReader(classBytes).accept(v2, 0);
-      classBytes = cw.toByteArray();
+    String[] interfaces;
+    // TODO(bov): something better than linear?
+    if (superDescs.contains("java/lang/Object")) {
+      interfaces = null;
+    } else {
+      interfaces = superDescs.toArray(new String[superDescs.size()]);
     }
-    return classBytes;
+    v.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE, desc,
+        null, "java/lang/Object", interfaces);
+    v.visitEnd();
+    return writer.toByteArray();
   }
 }

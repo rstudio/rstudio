@@ -15,12 +15,8 @@
  */
 package com.google.gwt.dev.jjs.test;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Tests {@link JavaScriptObject} and subclasses.
@@ -56,7 +52,7 @@ public class JsoTest extends GWTTestCase {
     public static native String staticNative() /*-{
       return "nativeFoo";
     }-*/;
-
+    
     /**
      * Ensure that a supertype can refer to members of a subtype.
      */
@@ -84,7 +80,7 @@ public class JsoTest extends GWTTestCase {
     static String staticValueSub() {
       return "FooSub";
     }
-
+    
     protected FooSub() {
     }
 
@@ -211,20 +207,6 @@ public class JsoTest extends GWTTestCase {
     }
   }
 
-  public static void assertSame(Object o1, Object o2) {
-    assertTrue("Failed double-equals", o1 == o2);
-    assertTrue("Failed o1.equals(o2)", o1.equals(o2));
-    assertTrue("Failed o2.equals(o1)", o2.equals(o1));
-    assertEquals("Hashcode mismatch", o1.hashCode(), o2.hashCode());
-  }
-
-  public static void assertSame(JavaScriptObject o1, JavaScriptObject o2) {
-    assertTrue("Failed double-equals", o1 == o2);
-    assertTrue("Failed o1.equals(o2)", o1.equals(o2));
-    assertTrue("Failed o2.equals(o1)", o2.equals(o1));
-    assertEquals("Hashcode mismatch", o1.hashCode(), o2.hashCode());
-  }
-
   private static native Bar makeBar() /*-{
     return {
       toString:function() {
@@ -275,8 +257,6 @@ public class JsoTest extends GWTTestCase {
     return jso;
   }-*/;
 
-  private Object aField;
-
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -287,54 +267,6 @@ public class JsoTest extends GWTTestCase {
     assertTrue(array[0] instanceof JavaScriptObject);
     assertFalse(array[1] instanceof JavaScriptObject);
     assertFalse(array[2] instanceof JavaScriptObject);
-  }
-
-  public void testArrayJreInteractions() {
-    JavaScriptObject obj = makeJSO();
-    Foo[] foo = new Foo[1];
-    foo[0] = (Foo) obj;
-
-    Bar[] bar = new Bar[1];
-    bar[0] = (Bar) obj;
-
-    assertSame(foo[0], bar[0]);
-
-    List<Foo> fooList = Arrays.asList(foo);
-    List<Bar> barList = Arrays.asList(bar);
-    assertSame(fooList.get(0), barList.get(0));
-    assertSame(fooList.iterator().next(), barList.iterator().next());
-
-    @SuppressWarnings("unchecked")
-    List fooRawList = Arrays.asList(foo);
-    @SuppressWarnings("unchecked")
-    List barRawList = Arrays.asList(bar);
-    assertSame(fooRawList.get(0), barRawList.get(0));
-    assertSame(fooRawList.iterator().next(), barRawList.iterator().next());
-
-    // Test Collection.toArray(), since the behavior depends on the array type
-    Object[] objectArray = fooList.toArray(new Object[0]);
-    assertSame(foo[0], objectArray[0]);
-    JavaScriptObject[] jsArray = fooList.toArray(new JavaScriptObject[0]);
-    assertSame(foo[0], jsArray[0]);
-    Foo[] fooArray = fooList.toArray(new Foo[0]);
-    assertSame(foo[0], fooArray[0]);
-    acceptsFooArray(fooArray, 1);
-
-    // Test System.arrayCopy to make sure cross-JSO cast appears to work
-    Bar[] bar2 = new Bar[1];
-    System.arraycopy(foo, 0, bar2, 0, 1);
-    assertSame(foo[0], bar[0]);
-
-    try {
-      String[] bad = new String[1];
-      System.arraycopy(foo, 0, bad, 0, 1);
-      fail("Should have thrown ArrayStoreException");
-    } catch (ArrayStoreException expected) {
-    }
-  }
-
-  private void acceptsFooArray(Foo[] array, int length) {
-    assertEquals(length, array.length);
   }
 
   public void testArrayStore() {
@@ -442,16 +374,6 @@ public class JsoTest extends GWTTestCase {
       fail("Expected ClassCastException");
     } catch (ClassCastException expected) {
     }
-
-    bar = null;
-    assertFalse(bar instanceof JavaScriptObject);
-    try {
-      assertNull(bar);
-      foo = bar.cast();
-      assertNull(foo);
-    } catch (RuntimeException e) {
-      fail("Should not have thrown exception " + e.getMessage());
-    }
   }
 
   @SuppressWarnings("cast")
@@ -508,10 +430,7 @@ public class JsoTest extends GWTTestCase {
     assertEquals(JavaScriptObject.class, Bar.class);
     assertEquals(Foo.class, Bar.class);
 
-    if (!GWT.isScript()) {
-      assertEquals("com.google.gwt.core.client.JavaScriptObject",
-          JavaScriptObject.class.getName());
-    } else if (!JavaScriptObject.class.getName().startsWith("Class$")) {
+    if (!JavaScriptObject.class.getName().startsWith("Class$")) {
       // Class metadata could be disabled
       assertEquals("com.google.gwt.core.client.JavaScriptObject$",
           JavaScriptObject.class.getName());
@@ -535,10 +454,7 @@ public class JsoTest extends GWTTestCase {
     assertEquals(JavaScriptObject[][].class, Bar[][].class);
     assertEquals(Foo[][].class, Bar[][].class);
 
-    if (!GWT.isScript()) {
-      assertEquals("[[Lcom.google.gwt.core.client.JavaScriptObject;",
-          JavaScriptObject[][].class.getName());
-    } else if (!JavaScriptObject.class.getName().startsWith("Class$")) {
+    if (!JavaScriptObject.class.getName().startsWith("Class$")) {
       // Class metadata could be disabled
       assertEquals("[[Lcom.google.gwt.core.client.JavaScriptObject$;",
           JavaScriptObject[][].class.getName());
@@ -550,19 +466,11 @@ public class JsoTest extends GWTTestCase {
     assertEquals(jso, jso);
 
     JavaScriptObject jso2 = makeJSO();
-    assertNotSame(jso, jso2);
     assertFalse(jso.equals(jso2));
     assertFalse(jso2.equals(jso));
 
     jso2 = returnMe(jso);
-    assertSame(jso, jso2);
-
-    Object aLocal = (Bar) jso;
-    Object aLocal2 = (Foo) jso2;
-    aField = aLocal;
-    assertSame(aLocal, aField);
-    assertSame(jso, aField);
-    assertSame(aLocal, aLocal2);
+    assertEquals(jso, jso2);
   }
 
   public void testGenericsJsos() {
@@ -654,30 +562,6 @@ public class JsoTest extends GWTTestCase {
 
     jso2 = returnMe(jso);
     assertSame(jso, jso2);
-
-    {
-      JavaScriptObject[] arr = new JavaScriptObject[] {jso, jso2};
-      assertSame(arr[0], arr[1]);
-    }
-
-    {
-      JavaScriptObject[] arr = new JavaScriptObject[2];
-      arr[0] = jso;
-      arr[1] = jso2;
-      assertSame(arr[0], arr[1]);
-    }
-
-    {
-      JavaScriptObject[] arr = new JavaScriptObject[] {(Foo) jso, (Bar) jso2};
-      assertSame(arr[0], arr[1]);
-    }
-
-    {
-      JavaScriptObject[] arr = new JavaScriptObject[2];
-      arr[0] = (Foo) jso;
-      arr[1] = (Bar) jso2;
-      assertSame(arr[0], arr[1]);
-    }
   }
 
   public void testInheritance() {
