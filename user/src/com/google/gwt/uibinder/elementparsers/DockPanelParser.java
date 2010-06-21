@@ -74,18 +74,6 @@ public class DockPanelParser implements ElementParser {
       String childFieldName = writer.parseElementToField(widget);
       writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName, childFieldName, translated);
 
-      // And they can optionally have a width.
-      if (child.hasAttribute("width")) {
-        writer.addStatement("%1$s.setCellWidth(%2$s, \"%3$s\");",
-            fieldName, childFieldName, child.consumeRawAttribute("width"));
-      }
-
-      // And they can optionally have a height.
-      if (child.hasAttribute("height")) {
-        writer.addStatement("%1$s.setCellHeight(%2$s, \"%3$s\");",
-            fieldName, childFieldName, child.consumeRawAttribute("height"));
-      }
-
       // Parse the CellPanel-specific attributes on the Dock element.
       CellPanelParser.parseCellAttributes(child, fieldName, childFieldName, writer);
     }
