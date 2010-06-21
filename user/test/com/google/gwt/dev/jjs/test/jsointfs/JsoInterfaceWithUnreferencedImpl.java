@@ -15,10 +15,14 @@
  */
 package com.google.gwt.dev.jjs.test.jsointfs;
 
+import com.google.gwt.core.client.SingleJsoImpl;
+import com.google.gwt.dev.jjs.test.jsoimpls.UnreferencedImplOfJsoInterface;
+
 /**
  * This class exists for the purpose of testing JSO implementation types that
  * aren't specifically referenced in any Java source.
  */
+@SingleJsoImpl(UnreferencedImplOfJsoInterface.class)
 public interface JsoInterfaceWithUnreferencedImpl {
   boolean isOk();
 }

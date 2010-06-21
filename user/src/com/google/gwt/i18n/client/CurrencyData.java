@@ -15,9 +15,13 @@
  */
 package com.google.gwt.i18n.client;
 
+import com.google.gwt.core.client.SingleJsoImpl;
+import com.google.gwt.i18n.client.impl.CurrencyDataImpl;
+
 /**
  * Information about a currency.
  */
+@SingleJsoImpl(CurrencyDataImpl.class)
 public interface CurrencyData {
 
   /**

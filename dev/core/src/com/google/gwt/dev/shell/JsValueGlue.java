@@ -16,6 +16,7 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.shell.rewrite.SingleJsoImplSupport;
 import com.google.gwt.dev.util.TypeInfo;
 
 import java.lang.reflect.Constructor;
@@ -29,11 +30,13 @@ import java.lang.reflect.InvocationTargetException;
 public final class JsValueGlue {
   public static final String HOSTED_MODE_REFERENCE = "hostedModeReference";
   public static final String JSO_CLASS = "com.google.gwt.core.client.JavaScriptObject";
-  public static final String JSO_IMPL_CLASS = "com.google.gwt.core.client.JavaScriptObject$";
 
   /**
-   * Create a JavaScriptObject instance referring to this JavaScript object.
+   * Create a JavaScriptObject instance referring to this JavaScript object,
+   * optionally wrapping the object in the desired JSO facade type.
    * 
+   * @param desiredType the subclass of JavaScriptObject that the calling code
+   *          wishes to see, or <code>null</code>
    * @param classLoader the classLoader to create from
    * @return the constructed JavaScriptObject
    */
@@ -41,23 +44,18 @@ public final class JsValueGlue {
       CompilingClassLoader classLoader) {
     Throwable caught;
     try {
+      Class<?> jsoType = Class.forName(JSO_CLASS, true, classLoader);
+
       // See if there's already a wrapper object (assures identity comparison).
       Object jso = classLoader.getCachedJso(value.getJavaScriptObjectPointer());
-      if (jso != null) {
-        return jso;
+      if (jso == null) {
+        // Instantiate the JSO instance.
+        Constructor<?> ctor = jsoType.getDeclaredConstructor(Object.class);
+        jso = ctor.newInstance(value);
+
+        classLoader.putCachedJso(value.getJavaScriptObjectPointer(), jso);
       }
 
-      // Instantiate the JSO class.
-      Class<?> jsoType = Class.forName(JSO_IMPL_CLASS, true, classLoader);
-      Constructor<?> ctor = jsoType.getDeclaredConstructor();
-      ctor.setAccessible(true);
-      jso = ctor.newInstance();
-
-      // Set the reference field to this JsValue using reflection.
-      Field referenceField = jsoType.getField(HOSTED_MODE_REFERENCE);
-      referenceField.set(jso, value);
-
-      classLoader.putCachedJso(value.getJavaScriptObjectPointer(), jso);
       return jso;
     } catch (InstantiationException e) {
       caught = e;
@@ -73,8 +71,6 @@ public final class JsValueGlue {
       caught = e;
     } catch (ClassNotFoundException e) {
       caught = e;
-    } catch (NoSuchFieldException e) {
-      caught = e;
     }
     throw new RuntimeException("Error creating JavaScript object", caught);
   }
@@ -88,7 +84,7 @@ public final class JsValueGlue {
    * @param msgPrefix a prefix for error/warning messages
    * @return the object reference
    * @throws com.google.gwt.dev.shell.HostedModeException if the JavaScript
-   *     object is not assignable to the supplied type.
+   *           object is not assignable to the supplied type.
    */
   @SuppressWarnings("unchecked")
   public static <T> T get(JsValue value, CompilingClassLoader cl,
@@ -166,7 +162,11 @@ public final class JsValueGlue {
       return type.cast(value.getString());
     }
     if (value.isJavaScriptObject()) {
-      return type.cast(createJavaScriptObject(value, cl));
+      Object jso = createJavaScriptObject(value, cl);
+      if (type != Object.class) {
+        jso = SingleJsoImplSupport.cast(jso, type);
+      }
+      return type.cast(jso);
     }
 
     // Just don't know what do to with this.
@@ -217,8 +217,8 @@ public final class JsValueGlue {
     } else {
       // not a boxed primitive
       try {
-        Class<?> jsoType = Class.forName(JSO_IMPL_CLASS, false, cl);
-        if (jsoType == obj.getClass()) {
+        Class<?> jsoType = Class.forName(JSO_CLASS, false, cl);
+        if (jsoType.isInstance(obj)) {
           JsValue jsObject = getUnderlyingObject(obj);
           value.setValue(jsObject);
           return;
@@ -258,9 +258,10 @@ public final class JsValueGlue {
       }
       intVal = (int) doubleVal;
       if (intVal != doubleVal) {
-        ModuleSpace.getLogger().log(TreeLogger.WARN,
+        ModuleSpace.getLogger().log(
+            TreeLogger.WARN,
             msgPrefix + ": Rounding double (" + doubleVal + ") to int for "
-            + typeName, null);
+                + typeName, null);
       }
     } else {
       throw new HostedModeException(msgPrefix + ": JS value of type "
