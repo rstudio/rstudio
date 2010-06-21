@@ -93,6 +93,22 @@ public class JavaAstConstructor {
       return code;
     }
   };
+  public static final MockJavaResource ENUM = new MockJavaResource(
+      "java.lang.Enum") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("import java.io.Serializable;\n");
+      code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+      code.append("public abstract class Enum<E extends Enum<E>> implements Serializable {\n");
+      code.append("  protected Enum(String name, int ordinal) {}\n");
+      code.append("  protected static <T extends Enum<T>> JavaScriptObject createValueOfMap(T[] enumConstants) { return null; }\n");
+      code.append("  protected static <T extends Enum<T>> T valueOf(JavaScriptObject map, String name) { return null; }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource GWT = new MockJavaResource(
       "com.google.gwt.core.client.GWT") {
     @Override
@@ -209,9 +225,10 @@ public class JavaAstConstructor {
   public static MockJavaResource[] getCompilerTypes() {
     List<MockJavaResource> result = new ArrayList<MockJavaResource>();
     Collections.addAll(result, JavaResourceBase.getStandardResources());
-    // Replace the basic Class with a compiler-specific one.
+    // Replace the basic Class and Enum with a compiler-specific one.
     result.remove(JavaResourceBase.CLASS);
-    Collections.addAll(result, ARRAY, CLASS, CLASSLITERALHOLDER, GWT,
+    result.remove(JavaResourceBase.ENUM);
+    Collections.addAll(result, ARRAY, CLASS, CLASSLITERALHOLDER, ENUM, GWT,
         RUNASYNCCALLBACK);
     return result.toArray(new MockJavaResource[result.size()]);
   }
