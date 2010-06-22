@@ -44,7 +44,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class LoggingPopup extends PopupPanel {
   
   /**
-   * Handles the logic to track click-drag movements with the mouse
+   * Handles the logic to track click-drag movements with the mouse.
    */
   private abstract class MouseDragHandler implements MouseMoveHandler, 
   MouseUpHandler, MouseDownHandler {

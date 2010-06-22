@@ -28,6 +28,8 @@ public class StandardFunctionMember extends AbstractMemberWithDependencies
 
   /**
    * Constructed by {@link MemberFactory#get(JsFunction)}.
+   * 
+   * @param factory a MemberFactory instance
    */
   public StandardFunctionMember(MemberFactory factory, JsFunction function) {
     super(function.getSourceInfo());

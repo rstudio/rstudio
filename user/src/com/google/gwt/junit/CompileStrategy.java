@@ -78,7 +78,6 @@ public abstract class CompileStrategy {
    * 
    * @throws UnableToCompleteException if the compilation fails
    */
-  @SuppressWarnings("unused")
   public void maybeCompileAhead() throws UnableToCompleteException {
   }
 

@@ -157,6 +157,9 @@ public class SizeMapRecorder {
     builder.append(c, lastIndex, len - lastIndex);
   }
   
+  /**
+   * @param logger a TreeLogger
+   */
   public static void recordMap(TreeLogger logger, OutputStream out,
       SizeBreakdown[] sizeBreakdowns, JavaToJavaScriptMap jjsmap,
       Map<JsName, String> obfuscateMap) throws IOException {

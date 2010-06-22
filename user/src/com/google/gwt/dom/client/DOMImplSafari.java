@@ -23,6 +23,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 class DOMImplSafari extends DOMImplStandard {
 
   private static class ClientRect extends JavaScriptObject {
+    
+    @SuppressWarnings("unused")
     protected ClientRect() {
     }
 

@@ -16,7 +16,6 @@
 
 package com.google.gwt.util.regexfilter;
 
-import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
@@ -39,7 +38,6 @@ public abstract class RegexFilter {
 
   public RegexFilter(TreeLogger logger, List<String> values)
       throws UnableToCompleteException {
-    ConfigurationProperty prop;
     this.values = values;
     int size = values.size();
     typePatterns = new ArrayList<Pattern>(size);

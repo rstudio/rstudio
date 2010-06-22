@@ -25,6 +25,9 @@ import com.google.gwt.dev.ui.DevModeUI;
  */
 public class HeadlessUI extends DevModeUI {
 
+  /**
+   * @param options unused
+   */
   public HeadlessUI(HostedModeBaseOptions options) {
   }
 

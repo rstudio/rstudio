@@ -59,9 +59,6 @@ public class ResourceOracleImpl implements ResourceOracle {
     static final Message1String NEW_RESOURCE_FOUND = new Message1String(
         TreeLogger.DEBUG, "Found new resource: $0");
 
-    static final Message0 NO_RESOURCES_CHANGED = new Message0(TreeLogger.DEBUG,
-        "No resources changed");
-
     static final Message0 REFRESHING_RESOURCES = new Message0(TreeLogger.TRACE,
         "Refreshing resources");
 

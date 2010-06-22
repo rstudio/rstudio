@@ -87,7 +87,7 @@ public abstract class DOMImplTrident extends DOMImpl {
 
   @Override
   public native void initEventSystem() /*-{
-    // All GWT apps on the page register themselves with the globelEventArray
+    // All GWT apps on the page register themselves with the globalEventArray
     // so that the first app to handle an event can allow all apps on the page
     // to preview it. See issue 3892 for more details.
     //

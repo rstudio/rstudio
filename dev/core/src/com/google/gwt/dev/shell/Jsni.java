@@ -131,7 +131,7 @@ public class Jsni {
         int paramCount = 0;
         if (member instanceof Method) {
           paramCount = ((Method) member).getParameterTypes().length;
-        } else if (member instanceof Constructor) {
+        } else if (member instanceof Constructor<?>) {
           paramCount = ((Constructor<?>) member).getParameterTypes().length;
         }
 
@@ -187,14 +187,14 @@ public class Jsni {
            * and rewrite the call site as though -1 is a valid dispid.
            */
           if (member == null || member instanceof Method
-              || member instanceof Constructor) {
+              || member instanceof Constructor<?>) {
 
             // Use a clone instead of modifying the original JSNI
             // __gwt_makeJavaInvoke(paramCount)(obj, dispId, args)
             int paramCount = 0;
             if (member instanceof Method) {
               paramCount = ((Method) member).getParameterTypes().length;
-            } else if (member instanceof Constructor) {
+            } else if (member instanceof Constructor<?>) {
               paramCount = ((Constructor<?>) member).getParameterTypes().length;
             }
 
@@ -230,6 +230,8 @@ public class Jsni {
   /**
    * Gets the body of a JSNI method, with Java refs escaped for hosted mode
    * injection.
+   * 
+   * @param logger a TreeLogger
    */
   public static String getJavaScriptForHostedMode(TreeLogger logger,
       DispatchIdOracle dispatchInfo, JsniMethod jsniMethod) {

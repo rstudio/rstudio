@@ -53,7 +53,6 @@ import com.google.gwt.user.client.Timer;
  *
  * @see SplitLayoutPanel
  */
-@SuppressWarnings("deprecation")
 @Deprecated
 public final class VerticalSplitPanel extends SplitPanel {
   /**
@@ -140,7 +139,7 @@ public final class VerticalSplitPanel extends SplitPanel {
      * @param bottomHeight
      */
     protected void updateElements(Element topElem, Element splitElem,
-        Element bottomElem, int topHeight, int bottomTop, @SuppressWarnings("unused") int bottomHeight) {
+        Element bottomElem, int topHeight, int bottomTop, int bottomHeight) {
       setHeight(topElem, topHeight + "px");
 
       setTop(splitElem, topHeight + "px");

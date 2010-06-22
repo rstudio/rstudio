@@ -21,7 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
- * A Handler that prints logs to window.console which is used by Firebug
+ * A Handler that prints logs to window.console which is used by Firebug.
  * Note we are consciously using 'window' rather than '$wnd' to avoid issues
  * similar to http://code.google.com/p/fbug/issues/detail?id=2914
  */

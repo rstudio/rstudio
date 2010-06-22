@@ -24,6 +24,9 @@ public class CommonsLoggerAdapter implements org.apache.commons.logging.Log {
 
   private TreeLogger log;
 
+  /**
+   * @param name unused
+   */
   public CommonsLoggerAdapter(String name) {
     // NOTE: this is ugly, but I don't know of any other way to get a
     // non-static log to which we can delegate.

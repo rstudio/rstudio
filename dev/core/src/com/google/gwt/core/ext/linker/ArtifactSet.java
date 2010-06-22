@@ -103,7 +103,7 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
    * UnsupportedOperationException.
    */
   public void freeze() {
-    if (treeSet instanceof TreeSet) {
+    if (treeSet instanceof TreeSet<?>) {
       treeSet = Collections.unmodifiableSortedSet(treeSet);
     }
   }

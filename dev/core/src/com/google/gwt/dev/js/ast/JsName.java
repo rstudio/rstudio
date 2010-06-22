@@ -32,6 +32,7 @@ public class JsName implements Serializable {
   /**
    * A back-reference to the JsNode that the JsName refers to.
    */
+  @SuppressWarnings("unchecked")
   private JsNode staticRef;
 
   /**
@@ -56,6 +57,7 @@ public class JsName implements Serializable {
     return shortIdent;
   }
 
+  @SuppressWarnings("unchecked")
   public JsNode getStaticRef() {
     return staticRef;
   }
@@ -79,6 +81,7 @@ public class JsName implements Serializable {
   /**
    * Should never be called except on immutable stuff.
    */
+  @SuppressWarnings("unchecked")
   public void setStaticRef(JsNode node) {
     this.staticRef = node;
   }

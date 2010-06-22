@@ -110,13 +110,13 @@ public final class Collections {
         List instance) throws SerializationException {
     }
 
-    @SuppressWarnings({"unused", "unchecked"})
+    @SuppressWarnings("unchecked")
     public static List instantiate(SerializationStreamReader streamReader)
         throws SerializationException {
       return java.util.Collections.singletonList(streamReader.readObject());
     }
 
-    @SuppressWarnings({"unused", "unchecked"})
+    @SuppressWarnings("unchecked")
     public static void serialize(SerializationStreamWriter streamWriter,
         List instance) throws SerializationException {
       streamWriter.writeObject(instance.get(0));

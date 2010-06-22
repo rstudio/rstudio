@@ -830,6 +830,7 @@ public class JsStaticEval {
     return (new JsStaticEval(program)).execImpl();
   }
 
+  @SuppressWarnings("unchecked")
   public static <T extends JsVisitable> T exec(JsProgram program, T node) {
     return (new JsStaticEval(program)).execImpl(node);
   }
@@ -939,6 +940,7 @@ public class JsStaticEval {
     return sev.didChange();
   }
 
+  @SuppressWarnings("unchecked")
   public <T extends JsVisitable> T execImpl(T node) {
     return new StaticEvalVisitor().accept(node);
   }

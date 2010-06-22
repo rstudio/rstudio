@@ -26,7 +26,7 @@ class IdentitySingletonMap<K, V> implements Map<K, V>, Serializable {
 
     @Override
     public boolean equals(Object o) {
-      if (!(o instanceof Entry)) {
+      if (!(o instanceof Entry<?, ?>)) {
         return false;
       }
       Entry<?, ?> entry = (Entry<?, ?>) o;

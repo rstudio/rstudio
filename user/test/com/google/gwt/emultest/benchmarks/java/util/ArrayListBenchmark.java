@@ -15,7 +15,6 @@
  */
 package com.google.gwt.emultest.benchmarks.java.util;
 
-
 import java.util.List;
 import java.util.ArrayList;
 

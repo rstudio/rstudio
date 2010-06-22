@@ -70,7 +70,7 @@ import java.util.List;
    */
   public String postProcess(String consumedText) throws UnableToCompleteException {
     for (XMLElement.Interpreter<T> i : pipe) {
-      if (i instanceof PostProcessingInterpreter) {
+      if (i instanceof PostProcessingInterpreter<?>) {
         consumedText = ((PostProcessingInterpreter<T>) i).postProcess(consumedText);
       }
     }

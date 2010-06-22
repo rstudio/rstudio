@@ -44,6 +44,9 @@ public class WebServerPanel extends JPanel {
     this(serverPort, maxLevel, logFile, null);
   }
 
+  /**
+   * @param serverPort the server port number
+   */
   public WebServerPanel(int serverPort, TreeLogger.Type maxLevel,
       File logFile, final RestartAction restartServerAction) {
     super(new BorderLayout());

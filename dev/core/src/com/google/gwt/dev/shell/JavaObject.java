@@ -44,6 +44,9 @@ public class JavaObject extends ScriptableObject implements Function {
         javaRef.getRefid(), context);
   }
 
+  /**
+   * @param cx the Context
+   */
   static ExceptionOrReturnValue getReturnFromJavaMethod(Context cx,
       HtmlUnitSessionHandler sessionHandler, BrowserChannelClient channel,
       int dispatchId, Value thisValue, Value valueArgs[]) {
@@ -66,6 +69,9 @@ public class JavaObject extends ScriptableObject implements Function {
     }
   }
 
+  /**
+   * @param jsContext the Context
+   */
   static boolean isJavaObject(Context jsContext, ScriptableObject javaObject) {
     return javaObject instanceof JavaObject;
   }

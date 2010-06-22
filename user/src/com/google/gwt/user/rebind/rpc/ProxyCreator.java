@@ -377,6 +377,8 @@ public class ProxyCreator {
 
   /**
    * Generate any fields required by the proxy.
+   * 
+   * @param serializableTypeOracle the type oracle
    */
   protected void generateProxyFields(SourceWriter srcWriter,
       SerializableTypeOracle serializableTypeOracle,
@@ -394,6 +396,8 @@ public class ProxyCreator {
 
   /**
    * Generates the client's asynchronous proxy method.
+   * 
+   * @param serializableTypeOracle the type oracle
    */
   protected void generateProxyMethod(SourceWriter w,
       SerializableTypeOracle serializableTypeOracle, JMethod syncMethod,

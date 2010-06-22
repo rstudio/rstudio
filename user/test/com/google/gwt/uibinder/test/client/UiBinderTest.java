@@ -201,7 +201,7 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("Custom dialog am I", widgetUi.fooDialog.getText());
     Widget body = widgetUi.fooDialog.iterator().next();
     assertTrue(body instanceof Label);
-    assertEquals("body", ((Label)body).getText());
+    assertEquals("body", ((Label) body).getText());
   }
 
   public void testDomAccessAndComputedAttributeOnPlaceholderedElement() {

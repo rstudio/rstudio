@@ -53,7 +53,6 @@ import com.google.gwt.user.client.Timer;
  *
  * @see SplitLayoutPanel
  */
-@SuppressWarnings("deprecation")
 @Deprecated
 public final class HorizontalSplitPanel extends SplitPanel {
   /**
@@ -175,8 +174,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
      * @param rightElem
      * @param newRightWidth
      */
-    public void updateRightWidth(@SuppressWarnings("unused") Element rightElem,
-        @SuppressWarnings("unused") int newRightWidth) {
+    public void updateRightWidth(Element rightElem, int newRightWidth) {
       // No need to update the width of the right side; this will be
       // recomputed automatically by CSS. This is helpful, as we do not
       // have to worry about watching for resize events and adjusting the

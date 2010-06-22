@@ -143,6 +143,9 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
     return htmlPage;
   }
 
+  /**
+   * @param jsContext the Context
+   */
   public Object getToStringTearOff(Context jsContext) {
     return toStringMethod;
   }
@@ -153,6 +156,7 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
         + jsEngine.getWebClient().getBrowserVersion().getUserAgent();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public ExceptionOrReturnValue invoke(BrowserChannelClient channel, Value thisObj,
       String methodName, Value[] args) {
@@ -170,7 +174,7 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
       Object obj = makeJsvalFromValue(jsContext, thisObj);
       if (obj instanceof ScriptableObject) {
         jsThis = (ScriptableObject) obj;
-      } else if (obj instanceof SimpleScriptableProxy) {
+      } else if (obj instanceof SimpleScriptableProxy<?>) {
         jsThis = ((SimpleScriptableProxy<SimpleScriptable>) obj).getDelegee();
       } else {
         logger.log(TreeLogger.ERROR, "Unable to convert " + obj + " to either "
@@ -235,6 +239,9 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
     logger.log(TreeLogger.INFO, "LOAD_JSNI: scriptResult=" + scriptResult);
   }
 
+  /**
+   * @param jsContext the Context
+   */
   public Value makeValueFromJsval(Context jsContext, Object value) {
     if (value == Undefined.instance) {
       return new Value();

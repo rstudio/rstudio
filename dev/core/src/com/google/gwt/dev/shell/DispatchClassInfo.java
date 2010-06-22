@@ -160,7 +160,7 @@ public class DispatchClassInfo {
     } else if (member instanceof Method) {
       name = member.getName();
       paramTypes = ((Method) member).getParameterTypes();
-    } else if (member instanceof Constructor) {
+    } else if (member instanceof Constructor<?>) {
       name = "new";
       paramTypes = ((Constructor<?>) member).getParameterTypes();
     } else {

@@ -66,8 +66,9 @@ public class SerializationUtils {
    * Returns the set of fields that are serializable for a given class type.
    * This method does not consider any superclass fields.
    * 
+   * @param typeOracle the type oracle
    * @param classType the class for which we want serializable fields
-   * @return array of fields that meet the serialization criteria.
+   * @return array of fields that meet the serialization criteria
    */
   public static JField[] getSerializableFields(TypeOracle typeOracle,
       JClassType classType) {

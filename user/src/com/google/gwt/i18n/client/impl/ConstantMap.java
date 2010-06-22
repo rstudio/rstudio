@@ -45,7 +45,7 @@ public class ConstantMap extends AbstractMap<String, String> {
 
     @Override
     public boolean equals(Object o) {
-      if (o instanceof Map.Entry) {
+      if (o instanceof Map.Entry<?, ?>) {
         Map.Entry<?, ?> other = (Map.Entry<?, ?>) o;
         // Key and value known to be non-null.
         if (key.equals(other.getKey()) && value.equals(other.getValue())) {
@@ -123,7 +123,7 @@ public class ConstantMap extends AbstractMap<String, String> {
     return new AbstractSet<Entry<String, String>>() {
       @Override
       public boolean contains(Object o) {
-        if (!(o instanceof Entry)) {
+        if (!(o instanceof Entry<?, ?>)) {
           return false;
         }
         Entry<?, ?> other = (Entry<?, ?>) o;

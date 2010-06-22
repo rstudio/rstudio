@@ -38,6 +38,7 @@ class PrivateMap<V> {
       return JavaScriptObject.createObject().cast();
     }
 
+    @SuppressWarnings("unused")
     protected JsMap() {
     }
 

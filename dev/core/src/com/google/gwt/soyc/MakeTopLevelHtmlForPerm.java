@@ -325,8 +325,7 @@ public class MakeTopLevelHtmlForPerm {
               Set<String> existingSet = sortedClasses.get(curSize);
               existingSet.add(className);
               sortedClasses.put(curSize, existingSet);
-            }
-            else {
+            } else {
               Set<String> newSet = new TreeSet<String>();
               newSet.add(className);
               sortedClasses.put(curSize, newSet);
@@ -352,7 +351,7 @@ public class MakeTopLevelHtmlForPerm {
       for (Integer size : sortedClasses.keySet()) {
         Set<String> classNames = sortedClasses.get(size);
         for (String className : classNames) {
-          float perc = ((float)size / (float)sumSize) * 100;
+          float perc = ((float) size / sumSize) * 100;
           outFile.println("<tr>");
           outFile.println("<td>" + className + "</a></td>");
           outFile.println("<td>");
@@ -433,8 +432,7 @@ public class MakeTopLevelHtmlForPerm {
             Set<String> existingSet = sortedClasses.get(curSize);
             existingSet.add(className);
             sortedClasses.put(curSize, existingSet);
-          }
-          else {
+          } else {
             Set<String> newSet = new TreeSet<String>();
             newSet.add(className);
             sortedClasses.put(curSize, newSet);
@@ -464,7 +462,7 @@ public class MakeTopLevelHtmlForPerm {
         Set<String> classNames = sortedClasses.get(size);
         for (String className : classNames) {
           String drillDownFileName = depLinker.dependencyLinkForClass(className);
-          float perc = ((float)size / (float)sumSize) * 100;
+          float perc = ((float) size / (float) sumSize) * 100;
           outFile.println("<tr>");
           if (drillDownFileName == null) {
             outFile.println("<td>" + className + "</td>");
@@ -575,7 +573,7 @@ public class MakeTopLevelHtmlForPerm {
 
         int size = breakdown.sizeAllCode;
         float perc;
-        perc = ((float)size / (float)maxSize) * 100;
+        perc = ((float) size / (float) maxSize) * 100;
 
         outFile.println("<tr>");
         outFile.println("<td>" + i + "</td>");
@@ -726,8 +724,7 @@ public class MakeTopLevelHtmlForPerm {
           Set<String> existingSet = sortedCodeTypes.get(curSize);
           existingSet.add(codeType);
           sortedCodeTypes.put(curSize, existingSet);
-        }
-        else {
+        } else {
           Set<String> newSet = new TreeSet<String>();
           newSet.add(codeType);
           sortedCodeTypes.put(curSize, newSet);
@@ -755,7 +752,7 @@ public class MakeTopLevelHtmlForPerm {
       for (String codeType : codeTypes) {
         String drillDownFileName = breakdown.getId() + "_" + codeType + "-"
             + getPermutationId() + "Classes.html";
-        float perc = ((float)size / (float)sumSize) * 100;
+        float perc = ((float) size / (float) sumSize) * 100;
         outFile.println("<tr>");
         outFile.println("<td><a href=\"" + drillDownFileName
             + "\" target=\"_top\">" + codeType + "</a></td>");
@@ -897,8 +894,7 @@ public class MakeTopLevelHtmlForPerm {
         Set<String> existingSet = sortedPackages.get(curSize);
         existingSet.add(packageName);
         sortedPackages.put(curSize, existingSet);
-      }
-      else {
+      } else {
         Set<String> newSet = new TreeSet<String>();
         newSet.add(packageName);
         sortedPackages.put(curSize, newSet);
@@ -926,7 +922,7 @@ public class MakeTopLevelHtmlForPerm {
       for (String packageName : packageNames) {
         String drillDownFileName = classesInPackageFileName(breakdown,
             packageName, getPermutationId());
-        float perc = ((float)size / (float)sumSize) * 100;
+        float perc = (size / sumSize) * 100;
         outFile.println("<tr>");
         outFile.println("<td><a href=\"" + drillDownFileName
             + "\" target=\"_top\">" + packageName + "</a></td>");

@@ -328,6 +328,9 @@ public class CodeSplitter {
     return splitPoints.get(0);
   }
 
+  /**
+   * @param numSplitPoints the total number of split points
+   */
   public static int getExclusiveFragmentNumber(int splitPoint,
       int numSplitPoints) {
     return splitPoint;

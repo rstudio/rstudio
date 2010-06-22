@@ -106,7 +106,7 @@ public class JavaDispatchImpl implements JavaDispatch {
     Member m = getMember(dispId);
     if (m instanceof Method) {
       return new MethodAdaptor((Method) m);
-    } else if (m instanceof Constructor) {
+    } else if (m instanceof Constructor<?>) {
       return new MethodAdaptor((Constructor<?>) m);
     } else {
       throw new RuntimeException();
@@ -140,7 +140,7 @@ public class JavaDispatchImpl implements JavaDispatch {
     }
 
     Member m = getMember(dispId);
-    return (m instanceof Method) || (m instanceof Constructor);
+    return (m instanceof Method) || (m instanceof Constructor<?>);
   }
 
   /**

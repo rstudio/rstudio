@@ -226,6 +226,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         + ".nocache.js", lastModified);
   }
 
+  /**
+   * @param logger a TreeLogger
+   * @param context a LinkerContext
+   * @param fragment the fragment number
+   */
   protected String generateDeferredFragment(TreeLogger logger,
       LinkerContext context, int fragment, String js) {
     return js;

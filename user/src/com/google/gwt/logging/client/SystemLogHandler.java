@@ -23,7 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
- * A Handler that prints logs to System.out or System.err
+ * A Handler that prints logs to System.out or System.err.
  */
 public class SystemLogHandler extends Handler {
 

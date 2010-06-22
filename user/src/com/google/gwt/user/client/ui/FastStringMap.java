@@ -47,7 +47,7 @@ class FastStringMap<T> extends AbstractMap<String, T> {
 
     @Override
     public boolean equals(Object a) {
-      if (a instanceof Map.Entry) {
+      if (a instanceof Map.Entry<?, ?>) {
         Map.Entry<?, ?> s = (Map.Entry<?, ?>) a;
         if (equalsWithNullCheck(key, s.getKey())
             && equalsWithNullCheck(value, s.getValue())) {

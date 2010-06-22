@@ -58,7 +58,7 @@ public abstract class Artifact<C extends Artifact<C>> implements
    */
   @Override
   public final boolean equals(Object obj) {
-    if (obj instanceof Artifact) {
+    if (obj instanceof Artifact<?>) {
       return compareTo((Artifact<?>) obj) == 0;
     } else {
       return false;

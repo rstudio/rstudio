@@ -156,7 +156,7 @@ public class TypeSerializerCreator {
     return Collections.unmodifiableMap(typeStrings);
   }
 
-  public String realize(TreeLogger logger) throws UnableToCompleteException {
+  public String realize(TreeLogger logger) {
     logger = logger.branch(TreeLogger.DEBUG,
         "Generating TypeSerializer for service interface '"
             + getTypeSerializerClassName() + "'", null);

@@ -21,7 +21,7 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 /**
- * Formats LogRecords into 2 lines of text
+ * Formats LogRecords into 2 lines of text.
  */
 public class TextLogFormatter extends Formatter {
 

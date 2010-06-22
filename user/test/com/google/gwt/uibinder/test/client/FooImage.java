@@ -18,7 +18,7 @@ package com.google.gwt.uibinder.test.client;
 import com.google.gwt.user.client.ui.Image;
 
 /**
- * Tests that custom Image subclasses work
+ * Tests that custom Image subclasses work.
  */
 public class FooImage extends Image {
   public FooImage() {

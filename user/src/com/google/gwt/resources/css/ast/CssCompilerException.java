@@ -27,6 +27,9 @@ public class CssCompilerException extends RuntimeException {
     super(message, cause);
   }
   
+  /**
+   * @param node TODO
+   */
   // FIXME - what does this do?
   void addNode(CssNode node) {
   }

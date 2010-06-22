@@ -79,7 +79,7 @@ public class JdtCompiler {
      * @param slashedPackageName the '/' separated name of the package to find
      * @return <code>true</code> if such a package exists
      */
-    public boolean doFindAdditionalPackage(String slashedPackageName);
+    boolean doFindAdditionalPackage(String slashedPackageName);
 
     /**
      * Finds a new compilation unit on-the-fly for the requested type, if there
@@ -89,7 +89,7 @@ public class JdtCompiler {
      * @return a unit answering the name, or <code>null</code> if no such unit
      *         can be created
      */
-    public GeneratedUnit doFindAdditionalType(String binaryName);
+    GeneratedUnit doFindAdditionalType(String binaryName);
   }
 
   /**

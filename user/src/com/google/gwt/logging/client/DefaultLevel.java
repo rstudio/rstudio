@@ -25,7 +25,7 @@ import java.util.logging.Level;
  */
 public interface DefaultLevel {
   /**
-   * Returns Level.ALL as the default level
+   * Returns Level.ALL as the default level.
    */
   public class All implements DefaultLevel {
     public Level getLevel() {
@@ -34,7 +34,7 @@ public interface DefaultLevel {
   }
 
   /**
-   * Returns Level.CONFIG as the default level
+   * Returns Level.CONFIG as the default level.
    */
   public class Config implements DefaultLevel {
     public Level getLevel() {
@@ -43,7 +43,7 @@ public interface DefaultLevel {
   }
 
   /**
-   * Returns Level.FINE as the default level
+   * Returns Level.FINE as the default level.
    */
   public class Fine implements DefaultLevel {
     public Level getLevel() {
@@ -52,7 +52,7 @@ public interface DefaultLevel {
   }
 
   /**
-   * Returns Level.FINER as the default level
+   * Returns Level.FINER as the default level.
    */
   public class Finer implements DefaultLevel {
     public Level getLevel() {
@@ -61,7 +61,7 @@ public interface DefaultLevel {
   }
 
   /**
-   * Returns Level.FINEST as the default level
+   * Returns Level.FINEST as the default level.
    */
   public class Finest implements DefaultLevel {
     public Level getLevel() {
@@ -70,7 +70,7 @@ public interface DefaultLevel {
   }
 
   /**
-   * Returns Level.INFO as the default level
+   * Returns Level.INFO as the default level.
    */
   public class Info implements DefaultLevel {
     public Level getLevel() {
@@ -79,7 +79,7 @@ public interface DefaultLevel {
   }
 
   /**
-   * Returns Level.SEVERE as the default level
+   * Returns Level.SEVERE as the default level.
    */
   public class Severe implements DefaultLevel {
     public Level getLevel() {
@@ -88,7 +88,7 @@ public interface DefaultLevel {
   }
 
   /**
-   * Returns Level.WARNING as the default level
+   * Returns Level.WARNING as the default level.
    */
   public class Warning implements DefaultLevel {
     public Level getLevel() {

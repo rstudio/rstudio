@@ -40,6 +40,7 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
       return (IntToIntMap) JavaScriptObject.createArray();
     }
 
+    @SuppressWarnings("unused")
     protected IntToIntMap() {
     }
 
