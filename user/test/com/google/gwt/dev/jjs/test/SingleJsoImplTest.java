@@ -16,12 +16,20 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.SingleJsoImpl;
 import com.google.gwt.dev.jjs.test.SingleJsoImplTest.JsoHasInnerJsoType.InnerType;
 import com.google.gwt.dev.jjs.test.jsointfs.JsoInterfaceWithUnreferencedImpl;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import java.io.IOException;
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Ensures that JavaScriptObjects may implement interfaces with methods.
@@ -67,10 +75,12 @@ public class SingleJsoImplTest extends GWTTestCase {
     String call(int a, int b);
   }
 
+  @SingleJsoImpl(JsoCreatedWithCast.class)
   interface CreatedWithCast {
     String foo();
   }
 
+  @SingleJsoImpl(JsoCreatedWithCastToTag.class)
   interface CreatedWithCastToTag {
   }
 
@@ -509,12 +519,19 @@ public class SingleJsoImplTest extends GWTTestCase {
     return {};
   }-*/;
 
+  private Object asObject;
+
+  private Simple asSimple;
+
+  private Adder asAdder;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
   public void testCallsToInnerTypes() {
+    JsoHasInnerJsoType o = JavaScriptObject.createObject().cast();
     CallsMethodInInnerType a = (CallsMethodInInnerType) JavaScriptObject.createObject();
     InnerType i = (InnerType) JavaScriptObject.createObject();
     assertEquals(5, a.call(i, 5).get());
@@ -522,6 +539,7 @@ public class SingleJsoImplTest extends GWTTestCase {
   }
 
   public void testCallsWithArrays() {
+    JsoUsesArrays toss = JavaScriptObject.createObject().cast();
     UsesArrays a = JavaScriptObject.createObject().<JsoUsesArrays> cast();
     a.acceptIntArray(a.returnIntArray());
     a.acceptInt3Array(a.returnInt3Array());
@@ -539,6 +557,12 @@ public class SingleJsoImplTest extends GWTTestCase {
     a.acceptObject3Array(a.returnString3Array());
   }
 
+  public void testClassLiterals() {
+    JavaScriptObject jso = makeSimple();
+    assertEquals(JavaScriptObject.class, jso.getClass());
+    assertEquals(JavaScriptObject.class, asSimple((JsoSimple) jso).getClass());
+  }
+
   /**
    * Ensure that SingleJSO types that are referred to only via a cast to the
    * interface type are retained. If the JsoCreatedWithCast type isn't rescued
@@ -546,6 +570,7 @@ public class SingleJsoImplTest extends GWTTestCase {
    * compiler would assume there are types that implement the interface.
    */
   public void testCreatedWithCast() {
+    // This can't work in hosted mode, we need something to load the JSO
     try {
       Object a = (CreatedWithCast) JavaScriptObject.createObject();
     } catch (ClassCastException e) {
@@ -556,6 +581,10 @@ public class SingleJsoImplTest extends GWTTestCase {
     } catch (ClassCastException e) {
       fail("b");
     }
+  }
+  
+  public void testDispatchWithWidenedArrays() {
+    acceptsSimpleArrayAndInvokes(makeSimple(), makeSimple(), makeSimple());
   }
 
   public void testDualCase() {
@@ -604,7 +633,7 @@ public class SingleJsoImplTest extends GWTTestCase {
       assertTrue(a instanceof JsoAdder);
       assertFalse(a instanceof JavaAdder);
       // NB: This is unexpected until you consider JSO$ as a roll-up type
-      assertTrue(a instanceof Tag);
+      // assertTrue(a instanceof Tag);
       try {
         ((JavaAdder) a).add(1, 1);
         fail("Should have thrown CCE");
@@ -634,6 +663,269 @@ public class SingleJsoImplTest extends GWTTestCase {
         assertEquals("Hello42", result);
       }
     }, "Hello");
+  }
+
+  /**
+   * Test identity with arrays.
+   */
+  public void testIdentityArrays() {
+    // XXX Really need @SingleJsoImpl annotation here
+    makeDivider(1);
+    makeAdder(1);
+    JavaScriptObject obj = makeSimple();
+    Adder[] adders = {(Adder) obj};
+    Divider[] dividers = {(Divider) obj};
+    assertSame(adders[0], dividers[0]);
+
+    Object[] arr = {adders[0], dividers[0]};
+    assertSame(arr[0], arr[1]);
+
+    List<Adder> adderList = Arrays.asList(adders);
+    List<Divider> dividerList = Arrays.asList(dividers);
+    assertSame(adderList.get(0), dividerList.get(0));
+
+    @SuppressWarnings("unchecked")
+    List adderListRaw = Arrays.asList(adders);
+    @SuppressWarnings("unchecked")
+    List dividerListRaw = Arrays.asList(dividers);
+    assertSame(adderListRaw.get(0), dividerListRaw.get(0));
+  }
+
+  /**
+   * Pass some SingleJsoImpl types into JRE collections.
+   */
+  public void testIdentityJRE() {
+    IdentityHashMap<JavaScriptObject, Boolean> jMap = new IdentityHashMap<JavaScriptObject, Boolean>();
+    IdentityHashMap<Simple, Boolean> sMap = new IdentityHashMap<Simple, Boolean>();
+
+    JsoSimple jso = makeSimple();
+    jMap.put(jso, true);
+    sMap.put(jso, true);
+
+    assertTrue(jMap.get(jso));
+    assertTrue(sMap.get(jso));
+
+    assertTrue(jMap.get(asSimple(jso)));
+    assertTrue(sMap.get(asSimple(jso)));
+    assertTrue(jMap.get(asSimple));
+    assertTrue(sMap.get(asSimple));
+
+    assertTrue(jMap.get(asObject(jso)));
+    assertTrue(sMap.get(asObject(jso)));
+    assertTrue(jMap.get(asObject));
+    assertTrue(sMap.get(asObject));
+
+    assertNull(jMap.get(JavaScriptObject.createObject()));
+    assertNull(sMap.get(JavaScriptObject.createObject()));
+  }
+
+  /**
+   * Pass some SingleJsoImpl types into an IdentityHashMap.
+   */
+  public void testIdentityJRE2() {
+    final JavaScriptObject jso = JavaScriptObject.createObject();
+    IdentityHashMap<Object, Boolean> map = new IdentityHashMap<Object, Boolean>();
+
+    // First with a proper JSO subtype
+    map.putAll(new AbstractMap<JsoAdder, Boolean>() {
+      @Override
+      public Set<Entry<JsoAdder, Boolean>> entrySet() {
+        Entry<JsoAdder, Boolean> entry = new Entry<JsoAdder, Boolean>() {
+          public JsoAdder getKey() {
+            return (JsoAdder) jso;
+          }
+
+          public Boolean getValue() {
+            return true;
+          }
+
+          public Boolean setValue(Boolean value) {
+            throw new RuntimeException("unimplemented");
+          }
+        };
+        return Collections.singleton(entry);
+      }
+    });
+
+    assertEquals(1, map.size());
+    assertNotNull(map.get(jso));
+    assertTrue(map.get(jso));
+    assertTrue(map.get((Adder) jso));
+    assertTrue(map.get(asAdder((Adder) jso)));
+    assertTrue(map.get((JsoAdder) jso));
+    assertTrue(map.get((JsoSimple) jso));
+
+    // Now with an interface type
+    map.putAll(new AbstractMap<Adder, Boolean>() {
+      @Override
+      public Set<Entry<Adder, Boolean>> entrySet() {
+        Entry<Adder, Boolean> entry = new Entry<Adder, Boolean>() {
+          public Adder getKey() {
+            return (Adder) jso;
+          }
+
+          public Boolean getValue() {
+            return false;
+          }
+
+          public Boolean setValue(Boolean value) {
+            throw new RuntimeException("unimplemented");
+          }
+        };
+        return Collections.singleton(entry);
+      }
+    });
+
+    assertEquals(1, map.size());
+    assertNotNull(map.get(jso));
+    assertFalse(map.get(jso));
+
+    assertNull(map.get(JavaScriptObject.createObject()));
+
+    map.put(JavaScriptObject.createObject(), true);
+    assertFalse(map.remove(jso));
+    assertEquals(1, map.size());
+    assertTrue(map.values().iterator().next());
+  }
+
+  public void testIdentityMethodsAndFields() {
+    JsoSimple jso = makeSimple();
+    JsoSimple jso2 = makeSimple();
+    assertNotSame(jso, jso2);
+    assertTrue(jso != jso2);
+    assertFalse(jso == jso2);
+
+    Object o = asObject(jso);
+    Object o2 = asObject(jso2);
+    assertNotSame(o, o2);
+    assertTrue(o != o2);
+    assertFalse(o == o2);
+
+    assertSame(jso, o);
+    assertTrue(jso == o);
+    assertFalse(jso != o);
+
+    assertSame(jso2, o2);
+    assertTrue(jso2 == o2);
+    assertFalse(jso2 != o2);
+
+    assertSame(asObject, jso2);
+    assertTrue(asObject == jso2);
+    assertFalse(asObject != jso2);
+
+    assertSame(asObject, o2);
+    assertTrue(asObject == o2);
+    assertFalse(asObject != o2);
+
+    Simple s = asSimple(jso);
+    Simple s2 = asSimple(jso2);
+    assertNotSame(s, s2);
+    assertTrue(s != s2);
+    assertFalse(s == s2);
+
+    assertSame(jso, s);
+    assertTrue(jso == s);
+    assertFalse(jso != s);
+
+    assertSame(s, o);
+    assertTrue(s == o);
+    assertFalse(s != o);
+
+    assertSame(jso2, s2);
+    assertTrue(jso2 == s2);
+    assertFalse(jso2 != s2);
+
+    assertSame(o2, s2);
+    assertTrue(o2 == s2);
+    assertFalse(o2 != s2);
+
+    assertSame(asSimple, jso2);
+    assertTrue(asSimple == jso2);
+    assertFalse(asSimple != jso2);
+
+    assertSame(asSimple, o2);
+    assertTrue(asSimple == o2);
+    assertFalse(asSimple != o2);
+
+    assertSame(asSimple, s2);
+    assertTrue(asSimple == s2);
+    assertFalse(asSimple != s2);
+
+    JsoRandom r = (JsoRandom) o2;
+    assertSame(r, jso2);
+    // Can't legally compare r == jso2
+
+    assertSame(r, o2);
+    assertTrue(r == o2);
+    assertFalse(r != o2);
+
+    assertSame(r, asObject);
+    assertTrue(r == asObject);
+    assertFalse(r != asObject);
+
+    assertSame(r, s2);
+    // Can't legally compare r == s2
+
+    assertSame(r, asSimple);
+    // Can't legally compare r == asSimple
+  }
+
+  public void testIdentityWithDualTypes() {
+    JsoAdder jso = makeAdder(0);
+    JavaAdder java = new JavaAdder();
+
+    assertNotSame(jso, java);
+
+    IdentityHashMap<Adder, Integer> map = new IdentityHashMap<Adder, Integer>();
+    map.put(jso, 0);
+    map.put(java, 1);
+    assertEquals(2, map.size());
+
+    assertEquals(new Integer(0), map.get(jso));
+    assertEquals(new Integer(1), map.get(java));
+
+    // Use unambiguous dispatch
+    assertEquals(new Integer(0), map.get(asAdder(jso)));
+    assertEquals(new Integer(0), map.get(asAdder));
+    assertEquals(new Integer(1), map.get(asAdder(java)));
+    assertEquals(new Integer(1), map.get(asAdder));
+
+    // Use ambiguous dispatch
+    assertEquals(new Integer(0), map.get(asAdder((Adder) jso)));
+    assertEquals(new Integer(0), map.get(asAdder));
+    assertEquals(new Integer(1), map.get(asAdder((Adder) java)));
+    assertEquals(new Integer(1), map.get(asAdder));
+
+    // Test with plain Object
+    assertEquals(new Integer(0), map.get(asObject(jso)));
+    assertEquals(new Integer(0), map.get(asObject));
+    assertEquals(new Integer(1), map.get(asObject(java)));
+    assertEquals(new Integer(1), map.get(asObject));
+
+    // Behavior of keys
+    for (Map.Entry<Adder, Integer> entry : map.entrySet()) {
+      if (entry.getKey() == jso) {
+        assertEquals(new Integer(0), entry.getValue());
+      }
+      if (entry.getKey() == java) {
+        assertEquals(new Integer(1), entry.getValue());
+      }
+    }
+  }
+
+  public void testIdentityWithNativeMethods() {
+    JsoSimple s = makeSimple();
+    Simple s2 = asSimpleNative(s);
+    assertSame(s, s2);
+    assertSame(s, asSimple);
+    assertSame(s2, asSimple);
+  }
+
+  /**
+   * Called from asSimpleNative to continue the above test.
+   */
+  public void testIdentityWithNativeMethods(JsoSimple o) {
+    assertSame(o, asSimple);
   }
 
   @SuppressWarnings("cast")
@@ -711,6 +1003,7 @@ public class SingleJsoImplTest extends GWTTestCase {
   }
 
   public void testStaticCallsToSubclasses() {
+    JsoCallsStaticMethodInSubclass a = JavaScriptObject.createObject().cast();
     Object o = "String";
     assertEquals(String.class, o.getClass());
     o = JavaScriptObject.createObject();
@@ -791,9 +1084,66 @@ public class SingleJsoImplTest extends GWTTestCase {
     }
   }
 
+  /**
+   * This test relies on the SingleJsoimpl annotation in dev mode.
+   */
   public void testUnreferencedType() {
     JsoInterfaceWithUnreferencedImpl o = (JsoInterfaceWithUnreferencedImpl) JavaScriptObject.createObject();
     assertNotNull(o);
     assertTrue(o.isOk());
   }
+
+  protected Adder asAdder(Adder o) {
+    asAdder = o;
+    return o;
+  }
+
+  /*
+   * These asXYZ methods are to test cast-via-return and cast-via-assignment
+   * rewriting.
+   */
+
+  protected Adder asAdder(JavaAdder o) {
+    asAdder = o;
+    return o;
+  }
+
+  protected Adder asAdder(JsoAdder o) {
+    asAdder = o;
+    return o;
+  }
+
+  protected Object asObject(JavaAdder jso) {
+    asObject = jso;
+    return jso;
+  }
+
+  protected Object asObject(JsoAdder jso) {
+    asObject = jso;
+    return jso;
+  }
+
+  protected Object asObject(JsoSimple jso) {
+    asObject = jso;
+    return jso;
+  }
+
+  protected Simple asSimple(JsoSimple jso) {
+    asSimple = jso;
+    return jso;
+  }
+
+  private void acceptsSimpleArrayAndInvokes(Simple... simples) {
+    assertEquals(3, simples.length);
+    for (Simple s : simples) {
+      assertEquals("a", s.a());
+    }
+  }
+
+  private native Simple asSimpleNative(Object o) /*-{
+    // Make sure glue code does the interface cast
+    this.@com.google.gwt.dev.jjs.test.SingleJsoImplTest::asSimple = o;
+    this.@com.google.gwt.dev.jjs.test.SingleJsoImplTest::testIdentityWithNativeMethods(Lcom/google/gwt/dev/jjs/test/SingleJsoImplTest$JsoSimple;)(o);
+    return o;
+  }-*/;
 }

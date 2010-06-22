@@ -15,8 +15,10 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.dev.shell.rewrite.OriginalJsniSignature;
 import com.google.gwt.dev.util.JsniRef;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -153,6 +155,21 @@ public class DispatchClassInfo {
     String name;
     Class<?>[] paramTypes;
 
+    if (member instanceof AccessibleObject) {
+      AccessibleObject accessibleObject = (AccessibleObject) member;
+      OriginalJsniSignature signature = accessibleObject.getAnnotation(OriginalJsniSignature.class);
+      if (signature != null) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(signature.name());
+        if (wildcardParamList) {
+          sb.append("(*)");
+        } else {
+          sb.append(signature.paramList());
+        }
+        return sb.toString();
+      }
+    }
+
     if (member instanceof Field) {
       return member.getName();
     } else if (member instanceof SyntheticClassMember) {
@@ -168,7 +185,7 @@ public class DispatchClassInfo {
           + member.getClass().getName());
     }
 
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append(name);
     sb.append("(");
     if (wildcardParamList) {
