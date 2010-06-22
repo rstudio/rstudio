@@ -86,9 +86,13 @@ public abstract class DefaultSelectionModel<T> extends
 
   /**
    * Copies the exceptions map into a user-supplied map.
+   * 
+   * @param output the user supplied map
+   * @return the user supplied map
    */
-  protected void getExceptions(Map<Object, Boolean> output) {
+  protected Map<Object, Boolean> getExceptions(Map<Object, Boolean> output) {
     output.clear();
     output.putAll(exceptions);
+    return output;
   }
 }

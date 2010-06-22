@@ -22,7 +22,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.view.client.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.view.client.ListView.Delegate;
 import com.google.gwt.view.client.PagingListView.Pager;
 import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
@@ -196,7 +195,7 @@ public abstract class CellListImpl<T> {
    * @return the range of data being displayed
    */
   public Range getRange() {
-    return new DefaultRange(pageStart, pageSize);
+    return new Range(pageStart, pageSize);
   }
 
   public SelectionModel<? super T> getSelectionModel() {

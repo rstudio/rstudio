@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,14 +15,14 @@
  */
 package com.google.gwt.view.client;
 
-import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * A base implementation of a data source for list views.
- *
+ * 
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
@@ -30,39 +30,6 @@ import java.util.Set;
  * @param <T> the data type of records in the list
  */
 public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
-
-  /**
-   * The range of interest for a single handler.
-   */
-  public static class DefaultRange implements Range, Serializable {
-    private int length;
-    private int start;
-
-    /**
-     * TODO: doc.
-     * 
-     * @param start
-     * @param length
-     */
-    public DefaultRange(int start, int length) {
-      this.start = start;
-      this.length = length;
-    }
-
-    /**
-     * Used by RPC.
-     */
-    DefaultRange() {
-    }
-
-    public int getLength() {
-      return length;
-    }
-
-    public int getStart() {
-      return start;
-    }
-  }
 
   private class Delegate implements ListView.Delegate<T> {
     public void onRangeChanged(ListView<T> view) {
@@ -80,9 +47,9 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   private ProvidesKey<T> keyProvider;
 
   /**
-   * Adds a view to this adapter.  The current range of interest of the view
-   * will be populated with data.
-   *
+   * Adds a view to this adapter. The current range of interest of the view will
+   * be populated with data.
+   * 
    * @param view a {@Link ListView}.
    */
   public void addView(ListView<T> view) {
@@ -97,7 +64,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   /**
    * Get the key for a list item. The default implementation returns the item
    * itself.
-   *
+   * 
    * @param item the list item
    * @return the key that represents the item
    */
@@ -107,7 +74,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
 
   /**
    * Get the {@link ProvidesKey} that provides keys for list items.
-   *
+   * 
    * @return the {@link ProvidesKey}
    */
   public ProvidesKey<T> getKeyProvider() {
@@ -116,7 +83,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
 
   /**
    * Get the current ranges of all views.
-   *
+   * 
    * @return the ranges
    */
   public Range[] getRanges() {
@@ -126,6 +93,15 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
       ranges[i++] = view.getRange();
     }
     return ranges;
+  }
+
+  /**
+   * Get the set of views currently assigned to this adapter.
+   * 
+   * @return the set of {@link ListView}
+   */
+  public Set<ListView<T>> getViews() {
+    return Collections.unmodifiableSet(views);
   }
 
   public void removeView(ListView<T> view) {
@@ -138,7 +114,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
 
   /**
    * Set the {@link ProvidesKey} that provides keys for list items.
-   *
+   * 
    * @param keyProvider the {@link ProvidesKey}
    */
   public void setKeyProvider(ProvidesKey<T> keyProvider) {
@@ -147,14 +123,14 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
 
   /**
    * Called when a view changes its range of interest.
-   *
+   * 
    * @param view the view whose range has changed
    */
   protected abstract void onRangeChanged(ListView<T> view);
 
   /**
    * Inform the views of the total number of items that are available.
-   *
+   * 
    * @param size the new size
    * @param exact true if the size is exact, false if it is a guess
    */
@@ -166,7 +142,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
 
   /**
    * Inform the views of the new data.
-   *
+   * 
    * @param start the start index
    * @param length the length of the data
    * @param values the data values
@@ -179,13 +155,14 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
 
   /**
    * Informs a single view of new data.
-   *
+   * 
    * @param view the view to be updated
    * @param start the start index
    * @param length the length of the data
    * @param values the data values
    */
-  protected void updateViewData(ListView<T> view, int start, int length, List<T> values) {
+  protected void updateViewData(ListView<T> view, int start, int length,
+      List<T> values) {
     int end = start + length;
     Range range = view.getRange();
     int curStart = range.getStart();
@@ -196,8 +173,8 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
       int realStart = curStart < start ? start : curStart;
       int realEnd = curEnd > end ? end : curEnd;
       int realLength = realEnd - realStart;
-      List<T> realValues = values.subList(realStart - start, realStart
-          - start + realLength);
+      List<T> realValues = values.subList(realStart - start, realStart - start
+          + realLength);
       view.setData(realStart, realLength, realValues);
     }
   }
