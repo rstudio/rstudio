@@ -61,7 +61,7 @@ public class LoggerImplRegular implements LoggerImpl {
   
   public Handler[] getHandlers() {
     if (handlers.size() > 0) {
-      return (Handler[]) handlers.toArray();
+      return handlers.toArray(new Handler[handlers.size()]);
     }
     return null;
   }
