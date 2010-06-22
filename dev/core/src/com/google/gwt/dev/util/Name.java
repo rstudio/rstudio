@@ -165,12 +165,7 @@ public class Name {
         assert isInternalName(internalName);
         return internalName.replace('/', '.');
       }
-
-      public static String toIdentifier(String internalName) {
-        assert isInternalName(internalName);
-        return internalName.replace("_", "_1").replace('/', '_');
-      }
-
+      
       public static String toSourceName(String internalName) {
         assert isInternalName(internalName);
         // don't change a trailing $ or slash to a .

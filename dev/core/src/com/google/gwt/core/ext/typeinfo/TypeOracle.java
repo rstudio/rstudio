@@ -328,7 +328,7 @@ public class TypeOracle {
    * @return <code>null</code> if the type is not found
    */
   public JClassType findType(String name) {
-    assert Name.isSourceName(name) : name + " is not a source name";
+    assert Name.isSourceName(name);
     return allTypes.get(name);
   }
 
