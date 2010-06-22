@@ -95,6 +95,7 @@ import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
+import com.google.gwt.dev.js.JsCoerceIntShift;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsInliner;
@@ -302,6 +303,13 @@ public class JavaToJavaScriptCompiler {
        */
       JsStackEmulator.exec(jsProgram, propertyOracles);
 
+      /*
+       * Work around Safari 5 bug by rewriting a >> b as ~~a >> b.
+       * 
+       * No shifts may be generated after this point.
+       */
+      JsCoerceIntShift.exec(jsProgram, logger, propertyOracles);
+      
       // (10) Split up the program into fragments
       SyntheticArtifact dependencies = null;
       if (options.isRunAsyncEnabled()) {
