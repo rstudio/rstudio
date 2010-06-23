@@ -33,8 +33,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Generate the source code, css styles, and raw source used in the Showcase
@@ -65,6 +67,12 @@ public class ShowcaseGenerator extends Generator {
    * The {@link TreeLogger} used to log messages.
    */
   private TreeLogger logger = null;
+
+  /**
+   * The set of raw files that have already been generated. Raw files can be
+   * reused by different examples, but we only generate them once.
+   */
+  private Set<String> rawFiles = new HashSet<String>();
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
@@ -115,15 +123,22 @@ public class ShowcaseGenerator extends Generator {
    * @param partialPath the path to the file relative to the public directory
    * @param contents the file contents
    */
-  private void createPublicResource(String partialPath, String contents) {
+  private void createPublicResource(String partialPath, String contents)
+      throws UnableToCompleteException {
     try {
       OutputStream outStream = context.tryCreateResource(logger, partialPath);
+      if (outStream == null) {
+        String message = "Attempting to generate duplicate public resource: "
+            + partialPath
+            + ".\nAll generated source files must have unique names.";
+        logger.log(TreeLogger.ERROR, message);
+        throw new UnableToCompleteException();
+      }
       outStream.write(contents.getBytes());
       context.commitResource(logger, outStream);
-    } catch (UnableToCompleteException e) {
-      logger.log(TreeLogger.ERROR, "Failed while writing", e);
     } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Failed while writing", e);
+      logger.log(TreeLogger.ERROR, "Error writing file: " + partialPath, e);
+      throw new UnableToCompleteException();
     }
   }
 
@@ -146,6 +161,13 @@ public class ShowcaseGenerator extends Generator {
     // Generate each raw source file
     String[] filenames = type.getAnnotation(ShowcaseRaw.class).value();
     for (String filename : filenames) {
+      // Check if the file has already been generated.
+      String path = pkgName + filename;
+      if (rawFiles.contains(path)) {
+        continue;
+      }
+      rawFiles.add(path);
+
       // Get the file contents
       String fileContents = getResourceContents(pkgPath + filename);
 
@@ -230,7 +252,7 @@ public class ShowcaseGenerator extends Generator {
    * @param outDir the output directory
    */
   private void generateStyleFiles(JClassType type, String styleDefs,
-      String outDir) {
+      String outDir) throws UnableToCompleteException {
     // Look for annotation
     if (!type.isAnnotationPresent(ShowcaseStyle.class)) {
       return;
