@@ -74,7 +74,7 @@ public class ReportEditActivity extends
   }
   
   @Override
-  protected String getRecordToken() {
-    return ReportRecord.TOKEN;
+  protected Class getRecordClass() {
+    return ReportRecord.class;
   }
 }

@@ -58,11 +58,12 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   @Override
   public void gwtSetUp() {
     valueStore = new ValueStoreJsonImpl(null, new RecordToTypeMap() {
-      public RecordSchema<? extends Record> getType(String token) {
-        if (token.equals(SimpleFooRecordImpl.TOKEN)) {
+      public RecordSchema<? extends Record> getType(Class<? extends Record>
+          recordClass) {
+        if (recordClass.equals(SimpleFooRecord.class)) {
           return SimpleFooRecordImpl.SCHEMA;
         }
-        throw new IllegalArgumentException("Unknown token " + token);
+        throw new IllegalArgumentException("Unknown token " + recordClass);
       }
 
     });
@@ -81,7 +82,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   public void testCreate() {
     DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
-    Record created = deltaValueStore.create(SimpleFooRecordImpl.TOKEN);
+    Record created = deltaValueStore.create(SimpleFooRecord.class);
     assertNotNull(created.getId());
     assertNotNull(created.getVersion());
 
@@ -91,7 +92,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   public void testCreateDelete() {
     DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
-    Record created = deltaValueStore.create(SimpleFooRecordImpl.TOKEN);
+    Record created = deltaValueStore.create(SimpleFooRecord.class);
     assertTrue(deltaValueStore.isChanged());
     deltaValueStore.delete(created);
     assertFalse(deltaValueStore.isChanged());
@@ -102,7 +103,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   public void testCreateUpdate() {
     DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
-    Record created = deltaValueStore.create(SimpleFooRecordImpl.TOKEN);
+    Record created = deltaValueStore.create(SimpleFooRecord.class);
     assertTrue(deltaValueStore.isChanged());
     deltaValueStore.set(SimpleFooRecord.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
@@ -202,9 +203,9 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
     JSONObject recordWithName = writeOperationArray.get(0).isObject();
     assertEquals(1, recordWithName.size());
-    assertTrue(recordWithName.containsKey(SimpleFooRecordImpl.TOKEN));
+    assertTrue(recordWithName.containsKey(SimpleFooRecord.class.getName()));
 
-    JSONObject record = recordWithName.get(SimpleFooRecordImpl.TOKEN).isObject();
+    JSONObject record = recordWithName.get(SimpleFooRecord.class.getName()).isObject();
     assertTrue(record.containsKey("id"));
     assertTrue(record.containsKey("version"));
 

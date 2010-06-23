@@ -15,9 +15,8 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import com.google.gwt.requestfactory.shared.DataTransferObject;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.ServerType;
-import com.google.gwt.requestfactory.shared.RequestFactory.Config;
 import com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.valuestore.shared.Property;
@@ -92,8 +91,6 @@ public class RequestFactoryServlet extends HttpServlet {
 
   private static final Set<String> BLACK_LIST = initBlackList();
 
-  private static final String SERVER_OPERATION_CONTEXT_PARAM = "servlet.serverOperation";
-
   private static Set<String> initBlackList() {
     Set<String> blackList = new HashSet<String>();
     for (String str : new String[] {"password"}) {
@@ -102,9 +99,7 @@ public class RequestFactoryServlet extends HttpServlet {
     return Collections.unmodifiableSet(blackList);
   }
 
-  private Config config = null;
-
-  protected Map<String, EntityRecordPair> tokenToEntityRecord;
+  private OperationRegistry operationRegistry;
 
   @SuppressWarnings("unchecked")
   @Override
@@ -208,8 +203,9 @@ public class RequestFactoryServlet extends HttpServlet {
       JSONObject recordObject, WriteOperation writeOperation) {
 
     try {
-      Class<?> entity = tokenToEntityRecord.get(recordToken).entity;
-      Class<? extends Record> record = tokenToEntityRecord.get(recordToken).record;
+      Class<? extends Record> record = getRecordFromClassToken(recordToken);
+      Class<?> entity = getEntityFromRecordAnnotation(record);
+
       Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(record);
       validateKeys(recordObject, propertiesInRecord.keySet());
       updatePropertyTypes(propertiesInRecord, entity);
@@ -277,70 +273,8 @@ public class RequestFactoryServlet extends HttpServlet {
 
   @SuppressWarnings("unchecked")
   private void ensureConfig() {
-    if (config == null) {
-      synchronized (this) {
-        if (config != null) {
-          return;
-        }
-        try {
-          final String serverOperation = getServletContext().getInitParameter(
-              SERVER_OPERATION_CONTEXT_PARAM);
-          if (null == serverOperation) {
-            failConfig();
-          }
-          Class<?> clazz = Class.forName(serverOperation);
-          if (Config.class.isAssignableFrom(clazz)) {
-            config = ((Class<? extends Config>) clazz).newInstance();
-
-            // initialize tokenToEntity map
-            tokenToEntityRecord = new HashMap<String, EntityRecordPair>();
-            for (Class<? extends Record> recordClass : config.recordTypes()) {
-              ServerType serverType = recordClass.getAnnotation(ServerType.class);
-              String token = (String) recordClass.getField("TOKEN").get(null);
-              if (token == null) {
-                throw new IllegalStateException("TOKEN field on "
-                    + recordClass.getName() + " can not be null");
-              }
-              EntityRecordPair previousValue = tokenToEntityRecord.get(token);
-              if (previousValue != null) {
-                throw new IllegalStateException(
-                    "TOKEN fields have to be unique. TOKEN fields for both "
-                        + recordClass.getName() + " and "
-                        + previousValue.record.getName()
-                        + " have the same value, value = " + token);
-              }
-              tokenToEntityRecord.put(token, new EntityRecordPair(
-                  serverType.type(), recordClass));
-            }
-          }
-
-        } catch (ClassNotFoundException e) {
-          failConfig(e);
-        } catch (InstantiationException e) {
-          failConfig(e);
-        } catch (IllegalAccessException e) {
-          failConfig(e);
-        } catch (SecurityException e) {
-          failConfig(e);
-        } catch (ClassCastException e) {
-          failConfig(e);
-        } catch (NoSuchFieldException e) {
-          failConfig(e);
-        }
-      }
-    }
-  }
-
-  private void failConfig() {
-    failConfig(null);
-  }
-
-  private void failConfig(Throwable e) {
-    final String message = String.format("Context parameter \"%s\" must name "
-        + "a default instantiable configuration class implementing %s",
-        SERVER_OPERATION_CONTEXT_PARAM, RequestFactory.Config.class.getName());
-
-    throw new IllegalStateException(message, e);
+    operationRegistry = new ReflectionBasedOperationRegistry(
+        new DefaultSecurityProvider());
   }
 
   private String getContent(HttpServletRequest request) throws IOException {
@@ -359,6 +293,16 @@ public class RequestFactoryServlet extends HttpServlet {
     } finally {
       bis.close();
     }
+  }
+
+  private Class<Object> getEntityFromRecordAnnotation(
+      Class<? extends Record> record) {
+    DataTransferObject dtoAnn = record.getAnnotation(DataTransferObject.class);
+    if (dtoAnn != null) {
+      return (Class<Object>) dtoAnn.value();
+    }
+    throw new IllegalArgumentException("Record class " + record.getName()
+        + " missing DataTransferObject annotation");
   }
 
   private Object getEntityInstance(WriteOperation writeOperation,
@@ -432,7 +376,7 @@ public class RequestFactoryServlet extends HttpServlet {
 
   private RequestDefinition getOperation(String operationName) {
     RequestDefinition operation;
-    operation = config.requestDefinitions().get(operationName);
+    operation = operationRegistry.getOperation(operationName);
     if (null == operation) {
       throw new IllegalArgumentException("Unknown operation " + operationName);
     }
@@ -516,6 +460,21 @@ public class RequestFactoryServlet extends HttpServlet {
       return new Date((long) recordObject.getDouble(key));
     }
     return recordObject.get(key);
+  }
+
+  private Class<Record> getRecordFromClassToken(String recordToken) {
+    try {
+      Class<?> clazz = Class.forName(recordToken, false,
+          getClass().getClassLoader());
+      if (Record.class.isAssignableFrom(clazz)) {
+        return (Class<Record>) clazz;
+      }
+      throw new SecurityException(
+          "Attempt to access non-record class " + recordToken);
+    } catch (ClassNotFoundException e) {
+      throw new IllegalArgumentException(
+          "Non-existent record class " + recordToken);
+    }
   }
 
   private JSONObject getReturnRecord(WriteOperation writeOperation,

@@ -85,7 +85,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
   public void create(Long reporterId) {
     deltas = requestFactory.getValueStore().spawnDeltaView();
 
-    report = (ReportRecord) deltas.create(ReportRecord.TOKEN);
+    report = (ReportRecord) deltas.create(ReportRecord.class);
     deltas.set(ReportRecord.reporterKey, report, reporterId.toString());
     displayReport();
   }

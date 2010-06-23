@@ -75,7 +75,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
   public void create(String reportId) {
     deltas = requestFactory.getValueStore().spawnDeltaView();
 
-    expense = (ExpenseRecord) deltas.create(ExpenseRecord.TOKEN);
+    expense = (ExpenseRecord) deltas.create(ExpenseRecord.class);
     deltas.set(ExpenseRecord.reportId, expense, reportId);
     displayExpense();
   }

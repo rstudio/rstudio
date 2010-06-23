@@ -15,12 +15,16 @@
  */
 package com.google.gwt.valuestore.shared;
 
+import com.google.gwt.requestfactory.server.SimpleFoo;
+import com.google.gwt.requestfactory.shared.DataTransferObject;
+
 import java.util.Date;
 
 /**
  * A simple entity used for testing. Has an int field and date field. Add other
  * data types as their support gets built in.
  */
+@DataTransferObject(SimpleFoo.class)
 public interface SimpleFooRecord extends Record {
 
   String TOKEN = "SimpleFooRecord";

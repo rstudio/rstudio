@@ -132,7 +132,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     if (creating) {
       // TODO shouldn't have to cast like this. Let's get something better than
       // a string token
-      R tempRecord = (R) deltas.create(getRecordToken());
+      R tempRecord = (R) deltas.create(getRecordClass());
       futureId = tempRecord.getId();
       doStart(display, tempRecord);
     } else {
@@ -169,7 +169,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
    * Called to fetch the string token needed to get a new record via
    * {@link DeltaValueStore#create}.
    */
-  protected abstract String getRecordToken();
+  protected abstract Class getRecordClass();
 
   private void doStart(final Display display, R record) {
     view.setEnabled(true);

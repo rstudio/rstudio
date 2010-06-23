@@ -64,8 +64,8 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
       return null;
     }
 
-    public String getToken() {
-      return SimpleFooRecord.TOKEN; // special field
+    public Class<? extends Record> getToken() {
+      return SimpleFooRecord.class; // special field
     }
   }
 

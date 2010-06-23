@@ -75,7 +75,7 @@ public class EmployeeEditActivity extends
   }
 
   @Override
-  protected String getRecordToken() {
-    return EmployeeRecord.TOKEN;
+  protected Class getRecordClass() {
+    return EmployeeRecord.class;
   }
 }

@@ -17,11 +17,7 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
-import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.ValueStore;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * <p>
@@ -34,18 +30,6 @@ import java.util.Set;
 public interface RequestFactory {
 
   // TODO all these inner interfaces are clutter, move them to their own files
-
-  /**
-   * Implemented by the configuration class used by
-   * {@link com.google.gwt.requestfactory.server.RequestFactoryServlet
-   * RequestFactoryServlet}.
-   */
-  interface Config {
-    Map<String, RequestDefinition> requestDefinitions();
-
-    Set<Class<? extends Record>> recordTypes();
-  }
-
   /**
    * Implemented by enums that define the mapping between request objects and
    * service methods.

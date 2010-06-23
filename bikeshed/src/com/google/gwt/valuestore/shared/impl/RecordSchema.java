@@ -62,6 +62,6 @@ public abstract class RecordSchema<R extends Record> {
     return createChangeEvent(record, writeOperation);
   }
 
-  public abstract String getToken();
+  public abstract Class<? extends Record> getToken();
 
 }

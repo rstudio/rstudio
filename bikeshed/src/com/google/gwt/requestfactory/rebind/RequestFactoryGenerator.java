@@ -35,9 +35,9 @@ import com.google.gwt.requestfactory.client.impl.AbstractJsonObjectRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
 import com.google.gwt.requestfactory.client.impl.ClientRequestHelper;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
+import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
-import com.google.gwt.requestfactory.shared.ServerOperation;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -322,16 +322,11 @@ public class RequestFactoryGenerator extends Generator {
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
 
-    sw.println("public RecordSchema<? extends Record> getType(String token) {");
+    sw.println("public RecordSchema<? extends Record> getType(Class token) {");
     sw.indent();
     for (JClassType publicRecordType : generatedRecordTypes) {
-      if (publicRecordType.getField("TOKEN") == null) {
-        logger.log(TreeLogger.ERROR, "Record type "
-            + publicRecordType.getQualifiedSourceName()
-            + " should have a field TOKEN");
-        throw new UnableToCompleteException();
-      }
-      sw.println("if (token == " + publicRecordType.getName() + ".TOKEN) {");
+
+      sw.println("if (token == " + publicRecordType.getName() + ".class) {");
       sw.indent();
       sw.println("return " + publicRecordType.getName() + "Impl.SCHEMA;");
       sw.outdent();
@@ -385,12 +380,8 @@ public class RequestFactoryGenerator extends Generator {
       ensureRecordType(logger, generatorContext,
           returnType.getPackage().getName(), returnType);
 
-      ServerOperation annotation = method.getAnnotation(ServerOperation.class);
-      if (annotation == null) {
-        logger.log(TreeLogger.ERROR, "no annotation on the service method "
-            + method);
-        throw new UnableToCompleteException();
-      }
+      String operationName = interfaceType.getQualifiedSourceName()
+          + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR + method.getName();
 
       JClassType requestType = method.getReturnType().isClassOrInterface();
       String requestClassName = null;
@@ -420,7 +411,7 @@ public class RequestFactoryGenerator extends Generator {
       sw.indent();
       sw.println("return " + ClientRequestHelper.class.getSimpleName()
           + ".getRequestString(" + RequestDataManager.class.getSimpleName()
-          + ".getRequestMap(\"" + annotation.value() + "\", "
+          + ".getRequestMap(\"" + operationName + "\", "
           + getParametersAsString(method) + ", null));");
       sw.outdent();
       sw.println("}");
@@ -617,12 +608,10 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
 
     sw.println();
-    sw.println("public String getToken() {");
+    sw.println("public Class getToken() {");
     sw.indent();
-    String fieldName = "TOKEN";
-    validateTokenField(publicRecordType, fieldName, typeOracle, logger);
-    sw.println("return " + publicRecordType.getName() + "." + fieldName
-        + "; // special field");
+    sw.println("return " + publicRecordType.getQualifiedSourceName() + ".class;"
+        + " // special field");
     sw.outdent();
     sw.println("}");
 

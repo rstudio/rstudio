@@ -260,7 +260,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     return syncResults;
   }
 
-  public Record create(String token) {
+  public Record create(Class token) {
     if (used) {
       throw new IllegalStateException(
           "create can only be called on an un-used DeltaValueStore");
@@ -456,7 +456,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
       } else {
         requestData.append(",");
       }
-      requestData.append("{\"" + entry.getValue().getSchema().getToken()
+      requestData.append("{\"" + entry.getValue().getSchema().getToken().getName()
           + "\":");
       if (writeOperation != WriteOperation.DELETE) {
         requestData.append(impl.toJson());

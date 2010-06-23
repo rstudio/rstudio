@@ -31,7 +31,7 @@ public interface DeltaValueStore extends ValueStore {
    */
   void clearUsed();
 
-  Record create(String token);
+  Record create(Class token);
 
   void delete(Record record);
 
