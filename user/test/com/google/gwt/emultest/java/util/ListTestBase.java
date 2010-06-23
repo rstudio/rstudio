@@ -31,7 +31,7 @@ import java.util.ListIterator;
 public abstract class ListTestBase extends TestArrayList {
 
   private static volatile boolean NO_OPTIMIZE_FALSE = false;
-  
+
   public void testAddAll() {
     assertFalse(makeEmptyList().addAll(makeEmptyList()));
     assertTrue(makeEmptyList().addAll(makeFullList()));
@@ -42,7 +42,7 @@ public abstract class ListTestBase extends TestArrayList {
     assertFalse(makeFullList().addAll(1, makeEmptyList()));
     assertTrue(makeFullList().addAll(1, makeFullList()));
   }
-  
+
   public void testAddWatch() {
     List s = makeEmptyList();
     s.add("watch");
@@ -107,6 +107,10 @@ public abstract class ListTestBase extends TestArrayList {
     assertTrue(i.hasPrevious());
   }
 
+  public void testListIteratorRemove() {
+    // TODO(jat): implement
+  }
+
   public void testListIteratorSetInSeveralPositions() {
     List l = makeEmptyList();
     for (int n = 0; n < 5; n += 2) {
@@ -121,10 +125,6 @@ public abstract class ListTestBase extends TestArrayList {
     }
   }
 
-  public void testListIteratorRemove() {
-    // TODO(jat): implement
-  }
-
   public void testRemoveAllDuplicates() {
     Collection c = makeCollection();
     c.add("a");
@@ -133,6 +133,162 @@ public abstract class ListTestBase extends TestArrayList {
     d.add("a");
     assertTrue(c.removeAll(d));
     assertEquals(0, c.size());
+  }
+
+  public void testSubList() {
+    List<Integer> wrappedList = createListWithContent(new int[] {1, 2, 3, 4, 5});
+    List<Integer> testList = wrappedList.subList(1, 4);
+    assertEquals(3, testList.size());
+
+    assertEquals(testList, Arrays.asList(2, 3, 4));
+    checkListSizeAndContent(testList, 2, 3, 4);
+    testList.add(1, 6);
+    assertEquals(testList, Arrays.asList(2, 6, 3, 4));
+    checkListSizeAndContent(testList, 2, 6, 3, 4);
+    assertEquals(wrappedList, Arrays.asList(1, 2, 6, 3, 4, 5));
+    checkListSizeAndContent(wrappedList, 1, 2, 6, 3, 4, 5);
+    testList.remove(2);
+    assertEquals(testList, Arrays.asList(2, 6, 4));
+    checkListSizeAndContent(testList, 2, 6, 4);
+
+    try {
+      testList.remove(3);
+      fail("Expected remove to fail");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    checkListSizeAndContent(wrappedList, 1, 2, 6, 4, 5);
+    testList.set(0, 7);
+    checkListSizeAndContent(testList, 7, 6, 4);
+    checkListSizeAndContent(wrappedList, 1, 7, 6, 4, 5);
+
+    try {
+      wrappedList.subList(-1, 5);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 15);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(5, 1);
+      fail("expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 1).add(2, 5);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 1).add(-1, 5);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 1).get(1);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 1).get(-1);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 1).set(2, 2);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 1).set(-1, 5);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+  }
+
+  /**
+   * Test add() method for list returned by List<E>.subList() method.
+   */
+  public void testSubListAdd() {
+    List<Integer> baseList = createListWithContent(new int[] {1, 2, 3, 4, 5});
+    List<Integer> sublist = baseList.subList(1, 3);
+    assertEquals(2, sublist.size());
+
+    sublist.add(33);
+    sublist.add(34);
+
+    assertEquals(4, sublist.size());
+    assertEquals(7, baseList.size());
+
+    /*
+     * Assert correct values are found right before and after insertion. We're
+     * checking the original list (baseList) even though the changes were made
+     * in the sublist. That is because modifications made to the list returned
+     * by sublist method should reflect in the original list.
+     */
+    assertEquals(3, (int) baseList.get(2));
+    assertEquals(33, (int) baseList.get(3));
+    assertEquals(34, (int) baseList.get(4));
+    assertEquals(4, (int) baseList.get(5));
+
+    /*
+     * Assert that it is possible to add element at the beginning of the
+     * sublist.
+     */
+    sublist.add(0, 22);
+    sublist.add(0, 21);
+    checkListSizeAndContent(sublist, 21, 22, 2, 3, 33, 34);
+    checkListSizeAndContent(baseList, 1, 21, 22, 2, 3, 33, 34, 4, 5);
+
+    // check adding at the end by specifying the index
+    sublist.add(6, 35);
+    checkListSizeAndContent(sublist, 21, 22, 2, 3, 33, 34, 35);
+    checkListSizeAndContent(baseList, 1, 21, 22, 2, 3, 33, 34, 35, 4, 5);
+
+    /*
+     * Assert adding to underlying list after the sublist view has been defined.
+     * After such an action behavior of sublist is undefined.
+     */
+    baseList.add(9, 44);
+    baseList.add(55);
+    baseList.add(0, 10);
+    checkListSizeAndContent(baseList, 10, 1, 21, 22, 2, 3, 33, 34, 35, 4, 44, 5, 55);
+  }
+
+  public void testSubListRemove() {
+    List<Integer> baseList = createListWithContent(new int[] {1, 2, 3, 4, 5});
+    List<Integer> sublist = baseList.subList(1, 3);
+
+    sublist.remove(0);
+    assertEquals(4, baseList.size());
+    assertEquals(3, baseList.get(1).intValue());
+
+    try {
+      sublist.remove(1);
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException expected) {
+    }
+    
+    assertFalse(sublist.remove(Integer.valueOf(4)));
+    
+    assertTrue(sublist.remove(Integer.valueOf(3)));
+    
+    assertEquals(0, sublist.size());
+    assertEquals(3, baseList.size());
+    
+    sublist.add(6);
+    checkListSizeAndContent(baseList, 1, 6, 4, 5);
   }
 
   public void testToArray() {
@@ -196,95 +352,13 @@ public abstract class ListTestBase extends TestArrayList {
     }
   }
 
-  public void testSubList() {
-    List<Integer> wrappedList = createListWithContent(new int[]{1, 2, 3, 4, 5});
-    List<Integer> testList = wrappedList.subList(1, 4);
-    assertEquals(3, testList.size());
-    
-    assertEquals(testList, Arrays.asList(2, 3, 4));
-    checkListSizeAndContent(testList, new int[]{2, 3, 4});
-    testList.add(1, 6);
-    assertEquals(testList, Arrays.asList(2, 6, 3, 4));
-    checkListSizeAndContent(testList, new int[]{2, 6, 3, 4});
-    assertEquals(wrappedList, Arrays.asList(1, 2, 6, 3, 4, 5));
-    checkListSizeAndContent(wrappedList, new int[]{1, 2, 6, 3, 4, 5});
-    testList.remove(2);
-    assertEquals(testList, Arrays.asList(2, 6, 4));
-    checkListSizeAndContent(testList, new int[]{2, 6, 4});
-
-    try {
-      testList.remove(3);
-      fail("Expected remove to fail");
-    } catch (IndexOutOfBoundsException e) {
-    }
-
-    checkListSizeAndContent(wrappedList, new int[]{1, 2, 6, 4, 5});
-    testList.set(0, 7);
-    checkListSizeAndContent(testList, new int[]{7, 6, 4});
-    checkListSizeAndContent(wrappedList, new int[]{1, 7, 6, 4, 5}); 
-    
-    try {
-      wrappedList.subList(-1, 5);
-      fail("expected IndexOutOfBoundsException");
-    } catch (IndexOutOfBoundsException e) {
-    }
-
-    try {
-      wrappedList.subList(0, 15);
-      fail("expected IndexOutOfBoundsException");
-    } catch (IndexOutOfBoundsException e) {
-    }
-    
-    try {
-      wrappedList.subList(5, 1);
-      fail("expected IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-    }
- 
-    try {
-      wrappedList.subList(0, 1).add(2, 5);
-      fail("expected IndexOutOfBoundsException");
-    } catch (IndexOutOfBoundsException e) {
-    }
-    
-    try {
-      wrappedList.subList(0, 1).add(-1, 5);
-      fail("expected IndexOutOfBoundsException");
-    } catch (IndexOutOfBoundsException e) {
-    }
-
-    try {
-      wrappedList.subList(0, 1).get(1);
-      fail("expected IndexOutOfBoundsException");
-    } catch (IndexOutOfBoundsException e) {
-    }
-    
-    try {
-      wrappedList.subList(0, 1).get(-1);
-      fail("expected IndexOutOfBoundsException");
-    } catch (IndexOutOfBoundsException e) {
-    }
-    
-    try {
-      wrappedList.subList(0, 1).set(2, 2);
-      fail("expected IndexOutOfBoundsException");
-    } catch (IndexOutOfBoundsException e) {
-    }
-
-    try {
-      wrappedList.subList(0, 1).set(-1, 5);
-      fail("expected IndexOutOfBoundsException");
-    } catch (IndexOutOfBoundsException e) {
-    }
-  }
-  
-  private void checkListSizeAndContent(List<Integer> in, int[] expected) {
+  private void checkListSizeAndContent(List<Integer> in, int... expected) {
     assertEquals(expected.length, in.size());
     for (int i = 0; i < expected.length; i++) {
       assertEquals(expected[i], (int) in.get(i));
     }
   }
-  
+
   private List<Integer> createListWithContent(int[] in) {
     List<Integer> results = new ArrayList<Integer>();
     for (int i = 0; i < in.length; i++) {

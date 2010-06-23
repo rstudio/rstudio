@@ -170,7 +170,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     }
         
     private void checkIndexForAdd(int index) {
-      checkIndex(index, size - 1);
+      checkIndex(index, size + 1);
     }
 
     private int getSize(int fromIndex, int toIndex) {
