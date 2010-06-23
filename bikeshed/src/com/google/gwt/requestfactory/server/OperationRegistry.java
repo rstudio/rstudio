@@ -18,6 +18,11 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Maps operation name to {RequestDefinition}.
  */
 public interface OperationRegistry {

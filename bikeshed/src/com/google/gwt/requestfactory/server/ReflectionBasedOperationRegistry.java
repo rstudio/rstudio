@@ -27,6 +27,11 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * OperationRegistry which uses the operation name as a convention for
  * reflection to a method on a class, and returns an appropriate {@link
  * com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition}.

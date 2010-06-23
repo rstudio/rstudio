@@ -16,6 +16,11 @@
 package com.google.gwt.requestfactory.server;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * Enforces security policy for operations and classes, as well as permitting
  * request obfuscation.
  */
