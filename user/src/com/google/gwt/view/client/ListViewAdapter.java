@@ -47,7 +47,23 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
      */
     private final class WrappedListIterator implements ListIterator<T> {
 
-      int i = 0, last = -1;
+      /**
+       * The error message when {@link #add(Object)} or {@link #remove()} is
+       * called more than once per call to {@link #next()} or
+       * {@link #previous()}.
+       */
+      private static final String IMPERMEABLE_EXCEPTION = "Cannot call add/remove more than once per call to next/previous.";
+
+      /**
+       * The index of the object that will be returned by {@link #next()}.
+       */
+      private int i = 0;
+
+      /**
+       * The index of the last object accessed through {@link #next()} or
+       * {@link #previous()}.
+       */
+      private int last = -1;
 
       private WrappedListIterator() {
       }
@@ -62,6 +78,9 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       }
 
       public void add(T o) {
+        if (last < 0) {
+          throw new IllegalStateException(IMPERMEABLE_EXCEPTION);
+        }
         ListWrapper.this.add(i++, o);
         last = -1;
       }
@@ -98,7 +117,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
       public void remove() {
         if (last < 0) {
-          throw new IllegalStateException();
+          throw new IllegalStateException(IMPERMEABLE_EXCEPTION);
         }
         ListWrapper.this.remove(last);
         i = last;
@@ -119,6 +138,16 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     private int curSize = 0;
 
     /**
+     * The delegate wrapper.
+     */
+    private final ListWrapper delegate;
+
+    /**
+     * Set to true if the pending flush has been cancelled.
+     */
+    private boolean flushCancelled;
+
+    /**
      * We wait until the end of the current event loop before flushing changes
      * so that we don't spam the views. This also allows users to clear and
      * replace all of the data without forcing the view back to page 0.
@@ -126,21 +155,11 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     private Command flushCommand = new Command() {
       public void execute() {
         flushPending = false;
-
-        int newSize = list.size();
-        if (curSize != newSize) {
-          curSize = newSize;
-          updateDataSize(curSize, true);
+        if (flushCancelled) {
+          flushCancelled = false;
+          return;
         }
-
-        if (modified) {
-          int length = maxModified - minModified;
-          updateViewData(minModified, length, list.subList(minModified,
-              maxModified));
-          modified = false;
-        }
-        minModified = Integer.MAX_VALUE;
-        maxModified = Integer.MIN_VALUE;
+        flushNow();
       }
     };
 
@@ -155,14 +174,19 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     private List<T> list;
 
     /**
+     * If this is a sublist, the offset it the index relative to the main list.
+     */
+    private final int offset;
+
+    /**
      * If modified is true, the smallest modified index.
      */
-    private int maxModified;
+    private int maxModified = Integer.MIN_VALUE;
 
     /**
      * If modified is true, one past the largest modified index.
      */
-    private int minModified;
+    private int minModified = Integer.MAX_VALUE;
 
     /**
      * True if the list data has been modified.
@@ -170,10 +194,21 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     private boolean modified;
 
     public ListWrapper(List<T> list) {
+      this(list, null, 0);
+    }
+
+    /**
+     * Construct a new {@link ListWrapper} that delegates flush calls to the
+     * specified delegate.
+     * 
+     * @param list the list to wrap
+     * @param delegate the delegate
+     * @param offset the offset of this list
+     */
+    private ListWrapper(List<T> list, ListWrapper delegate, int offset) {
       this.list = list;
-      minModified = 0;
-      maxModified = list.size();
-      modified = true;
+      this.delegate = delegate;
+      this.offset = offset;
     }
 
     public void add(int index, T element) {
@@ -193,7 +228,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       minModified = Math.min(minModified, size() - 1);
       maxModified = size();
       modified = true;
-      return flush(toRet);
+      flush();
+      return toRet;
     }
 
     public boolean addAll(Collection<? extends T> c) {
@@ -201,7 +237,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       boolean toRet = list.addAll(c);
       maxModified = size();
       modified = true;
-      return flush(toRet);
+      flush();
+      return toRet;
     }
 
     public boolean addAll(int index, Collection<? extends T> c) {
@@ -210,7 +247,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
         minModified = Math.min(minModified, index);
         maxModified = size();
         modified = true;
-        return flush(toRet);
+        flush();
+        return toRet;
       } catch (IndexOutOfBoundsException e) {
         throw new IndexOutOfBoundsException(e.getMessage());
       }
@@ -254,8 +292,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     }
 
     public Iterator<T> iterator() {
-      // TODO(jlabanca): Wrap the iterator
-      return list.iterator();
+      return listIterator();
     }
 
     public int lastIndexOf(Object o) {
@@ -297,7 +334,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       minModified = 0;
       maxModified = size();
       modified = true;
-      return flush(toRet);
+      flush();
+      return toRet;
     }
 
     public boolean retainAll(Collection<?> c) {
@@ -305,7 +343,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       minModified = 0;
       maxModified = size();
       modified = true;
-      return flush(toRet);
+      flush();
+      return toRet;
     }
 
     public T set(int index, T element) {
@@ -322,8 +361,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     }
 
     public List<T> subList(int fromIndex, int toIndex) {
-      // TODO(jlabanca): wrap the sublist
-      return list.subList(fromIndex, toIndex);
+      return new ListWrapper(list.subList(fromIndex, toIndex), this, fromIndex);
     }
 
     public Object[] toArray() {
@@ -338,6 +376,18 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
      * Flush the data to the model.
      */
     private void flush() {
+      // Defer to the delegate.
+      if (delegate != null) {
+        delegate.minModified = Math.min(minModified + offset,
+            delegate.minModified);
+        delegate.maxModified = Math.max(maxModified + offset,
+            delegate.maxModified);
+        delegate.modified = modified || delegate.modified;
+        delegate.flush();
+        return;
+      }
+
+      flushCancelled = false;
       if (!flushPending) {
         flushPending = true;
         DeferredCommand.addCommand(flushCommand);
@@ -345,13 +395,28 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     }
 
     /**
-     * Flush the data to the model and return the boolean.
-     * 
-     * @param toRet the boolean to return
+     * Flush pending list changes to the views. By default,
      */
-    private boolean flush(boolean toRet) {
-      flush();
-      return toRet;
+    private void flushNow() {
+      // Cancel any pending flush command.
+      if (flushPending) {
+        flushCancelled = true;
+      }
+
+      int newSize = list.size();
+      if (curSize != newSize) {
+        curSize = newSize;
+        updateDataSize(curSize, true);
+      }
+
+      if (modified) {
+        int length = maxModified - minModified;
+        updateViewData(minModified, length, list.subList(minModified,
+            maxModified));
+        modified = false;
+      }
+      minModified = Integer.MAX_VALUE;
+      maxModified = Integer.MIN_VALUE;
     }
   }
 
@@ -374,6 +439,18 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
    */
   public ListViewAdapter(List<T> wrappee) {
     listWrapper = new ListWrapper(wrappee);
+  }
+
+  /**
+   * Flush pending list changes to the views. By default, views are informed of
+   * modifications to the underlying list at the end of the current event loop,
+   * which makes it possible to perform multiple operations synchronously
+   * without repeatedly refreshing the views. This method can be called to flush
+   * the changes immediately instead of waiting until the end of the current
+   * event loop.
+   */
+  public void flush() {
+    listWrapper.flushNow();
   }
 
   /**
@@ -400,7 +477,10 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
    */
   public void setList(List<T> wrappee) {
     listWrapper = new ListWrapper(wrappee);
-    listWrapper.flush();
+    listWrapper.minModified = 0;
+    listWrapper.maxModified = listWrapper.size();
+    listWrapper.modified = true;
+    flush();
   }
 
   @Override
