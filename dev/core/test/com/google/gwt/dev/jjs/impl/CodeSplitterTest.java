@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
 /**
@@ -28,19 +27,6 @@ public class CodeSplitterTest extends JJSTestBase {
    * live.
    */
   public void testArrayIsInitial() throws UnableToCompleteException {
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Array") {
-      @Override
-      protected CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package com.google.gwt.lang;\n");
-        code.append("public class Array {\n");
-        code.append("  private Class type;\n");
-        code.append("  public Class getClass() { return type; }\n");
-        code.append("}\n");
-        return code;
-      }
-    });
-
     JProgram program = compileSnippet("void", "");
     ControlFlowAnalyzer cfa = CodeSplitter.computeInitiallyLive(program);
 

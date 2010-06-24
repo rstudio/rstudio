@@ -81,6 +81,7 @@ import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
+import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -450,8 +451,7 @@ public class GenerateJavaAST {
 
         // Write the body of the getClass() override.
         if (currentClass instanceof JClassType
-            && currentClass != program.getTypeJavaLangObject()
-            && currentClass != program.getIndexedType("Array")) {
+            && currentClass != program.getTypeJavaLangObject()) {
           JMethod method = currentClass.getMethods().get(2);
           assert ("getClass".equals(method.getName()));
 
@@ -461,7 +461,15 @@ public class GenerateJavaAST {
             currentClass.getMethods().remove(2);
           } else {
             tryFindUpRefs(method);
-            implementMethod(method, program.getLiteralClass(currentClass));
+            if (currentClass == program.getIndexedType("Array")) {
+              // Special implementation: return this.arrayClass
+              SourceInfo info = method.getSourceInfo();
+              implementMethod(method, new JFieldRef(info, new JThisRef(info,
+                  program.getNonNullType(currentClass)),
+                  program.getIndexedField("Array.arrayClass"), currentClass));
+            } else {
+              implementMethod(method, program.getLiteralClass(currentClass));
+            }
           }
         }
 

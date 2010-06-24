@@ -58,6 +58,8 @@ public class Object {
    * Magic; unlike the real JRE, we don't spec this method as final. The
    * compiler will generate a polymorphic override on every other class which
    * will return the correct class object.
+   * 
+   * TODO(scottb): declare this final, but have the compiler fix it up.
    */
   public Class<? extends Object> getClass() {
     return Object.class;

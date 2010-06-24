@@ -564,8 +564,7 @@ public class BuildTypeMap {
       try {
         // Create an override for getClass().
         if (type instanceof JClassType
-            && type != program.getTypeJavaLangObject()
-            && type != program.getIndexedType("Array")) {
+            && type != program.getTypeJavaLangObject()) {
           JMethod getClassMethod = program.createMethod(
               type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
                   "Synthetic getClass()"), "getClass", type,

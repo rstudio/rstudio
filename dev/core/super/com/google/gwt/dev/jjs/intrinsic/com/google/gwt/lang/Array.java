@@ -130,7 +130,7 @@ public final class Array {
    * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
    * @return the new array
    */
-  public static Array initDim(Class arrayClass, int typeId, int queryId,
+  public static Array initDim(Class<?> arrayClass, int typeId, int queryId,
       int length, int seedType) {
     Array result = createFromSeed(seedType, length);
     initValues(arrayClass, typeId, queryId, result);
@@ -148,7 +148,7 @@ public final class Array {
    * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
    * @return the new array
    */
-  public static Array initDims(Class arrayClasses[], int[] typeIdExprs,
+  public static Array initDims(Class<?> arrayClasses[], int[] typeIdExprs,
       int[] queryIdExprs, int[] dimExprs, int count, int seedType) {
     return initDims(arrayClasses, typeIdExprs, queryIdExprs, dimExprs, 0,
         count, seedType);
@@ -164,7 +164,7 @@ public final class Array {
    * @param array the JSON array that will be transformed into a GWT array
    * @return values; having wrapped it for GWT
    */
-  public static Array initValues(Class arrayClass, int typeId, int queryId,
+  public static Array initValues(Class<?> arrayClass, int typeId, int queryId,
       Array array) {
     ExpandoWrapper.wrapArray(array);
     array.arrayClass = arrayClass;
@@ -235,7 +235,7 @@ public final class Array {
     return array;
   }-*/;
 
-  private static Array initDims(Class arrayClasses[], int[] typeIdExprs,
+  private static Array initDims(Class<?> arrayClasses[], int[] typeIdExprs,
       int[] queryIdExprs, int[] dimExprs, int index, int count, int seedType) {
     int length = dimExprs[index];
     boolean isLastDim = (index == (count - 1));
@@ -265,12 +265,24 @@ public final class Array {
    * Explicitly initialize all fields to JS false values; see comment in
    * ExpandoWrapper.initExpandos().
    */
+  
+  /**
+   * Represents the array length. References to this field are magically
+   * translated.
+   */
   public volatile int length = 0;
-  protected Class arrayClass = null;
-  protected int queryId = 0;
 
-  @Override
-  public Class getClass() {
-    return arrayClass;
-  }
+  /**
+   * Holds the real type-specific Class object for a given array instance. The
+   * compiler produces a magic implementation of getClass() which returns this
+   * field directly.
+   */
+  protected Class<?> arrayClass = null;
+
+  /**
+   * The necessary cast target for objects stored into this array. Attempting to
+   * store an object that cannot satisfy the query id throws and
+   * {@link ArrayStoreException}.
+   */
+  protected int queryId = 0;
 }
