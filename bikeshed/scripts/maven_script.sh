@@ -20,7 +20,7 @@ ant clean dist-bikeshed
 
 MAVEN_REPO=~/.m2/repository
 
-for i in dev user servlet bikeshed 
+for i in dev user servlet
 do
    mvn install:install-file -DgroupId=com.google.gwt -DartifactId=gwt-${i} -Dversion=2.1.0.M1 -Dpackaging=jar -Dfile=build/lib/gwt-${i}.jar -DgeneratePom=true
 done 
