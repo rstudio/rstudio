@@ -7,7 +7,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdt-3.4.2.jar" sourcepath="/GWT_TOOLS/lib/eclipse/jdt-3.4.2-src.zip"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-6.1.11.jar" sourcepath="/GWT_TOOLS/lib/jetty/jetty-6.1.11-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-7.0.2.v20100331/jetty-7.0.2.v20100331.jar" sourcepath="GWT_TOOLS/lib/jetty/jetty-7.0.2.v20100331/jetty-7.0.2.v20100331-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/ant-launcher-1.6.5.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/catalina-1.0.jar"/>
@@ -37,8 +37,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-jk2-2.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-util-5.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/sun/swingworker/swing-worker-1.1.jar"/>
-        <classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607-sources.jar"/>
-        <classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

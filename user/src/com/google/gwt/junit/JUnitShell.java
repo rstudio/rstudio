@@ -58,8 +58,9 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.webapp.WebAppContext;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -538,7 +539,7 @@ public class JUnitShell extends DevMode {
         {
           // Prevent file locking on Windows; pick up file changes.
           getInitParams().put(
-              "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
+              "org.eclipse.jetty.servlet.Default.useFileMappedBuffer", "false");
 
           // Prefer the parent class loader so that JUnit works.
           setParentLoaderPriority(true);
@@ -880,8 +881,8 @@ public class JUnitShell extends DevMode {
   private int tries;
 
   /**
-   * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
-   * server mode and disables processing extra arguments as URLs to be shown.
+   * Enforce the singleton pattern. The call to GWTShell's ctor forces server
+   * mode and disables processing extra arguments as URLs to be shown.
    */
   private JUnitShell() {
     setRunTomcat(true);
@@ -1081,15 +1082,14 @@ public class JUnitShell extends DevMode {
       String servletClass = module.findServletForPath(path);
       path = '/' + module.getName() + path;
       if (!servletClass.equals(loadedServletsByPath.get(path))) {
-        try {
-          Class<?> clazz = wac.loadClass(servletClass);
-          wac.addServlet(clazz, path);
+        ServletHolder holder = wac.addServlet(servletClass, path);
+        if (holder.isAvailable()) {
           loadedServletsByPath.put(path, servletClass);
-        } catch (ClassNotFoundException e) {
+        } else {
           getTopLogger().log(
               TreeLogger.WARN,
               "Failed to load servlet class '" + servletClass
-                  + "' declared in '" + module.getName() + "'", e);
+                  + "' declared in '" + module.getName() + "'");
         }
       }
     }

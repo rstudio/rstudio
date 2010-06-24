@@ -53,7 +53,7 @@
           <include name="apache/tapestry-util-text-4.0.2.jar" />
           <include name="apache/ant-1.6.5.jar" />
           <include name="eclipse/jdt-3.4.2.jar" />
-          <include name="jetty/jetty-6.1.11.jar" />
+          <include name="jetty/jetty-7.0.2.v20100331/jetty-7.0.2.v20100331.jar" />
           <include name="icu4j/icu4j-4_4_1.jar" />
           <include name="protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
           <include name="tomcat/ant-launcher-1.6.5.jar" />
@@ -110,7 +110,8 @@
           <zipfileset src="${gwt.tools.lib}/apache/tapestry-util-text-4.0.2.jar" />
           <zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
           <zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.4.2.jar" />
-          <zipfileset src="${gwt.tools.lib}/jetty/jetty-6.1.11.jar" />
+          <zipfileset src="${gwt.tools.lib}/jetty/jetty-7.0.2.v20100331/jetty-7.0.2.v20100331.jar"
+            />
           <zipfileset src="${gwt.tools.lib}/icu4j/icu4j-4_4_1.jar" />
           <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/ant-launcher-1.6.5.jar" />
