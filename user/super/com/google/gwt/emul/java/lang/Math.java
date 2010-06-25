@@ -19,6 +19,21 @@ package java.lang;
  * Math utility methods and constants.
  */
 public final class Math {
+  // The following methods are not implemented because JS doesn't provide the
+  // necessary pieces:
+  //   public static double ulp (double x)
+  //   public static float ulp (float x)
+  //   public static int getExponent (double d)
+  //   public static int getExponent (float f)
+  //   public static double IEEEremainder(double f1, double f2)
+  //   public static double nextAfter(double start, double direction)
+  //   public static float nextAfter(float start, float direction)
+  //   public static double nextUp(double start) {
+  //     return nextAfter(start, 1.0d);
+  //   }
+  //   public static float nextUp(float start) {
+  //     return nextAfter(start,1.0f);
+  //   }
 
   public static final double E = 2.7182818284590452354;
   public static final double PI = 3.14159265358979323846;
@@ -27,11 +42,14 @@ public final class Math {
   private static final double PI_UNDER_180 = 180.0 / PI;
 
   public static double abs(double x) {
-    return (x <= 0.0) ? 0.0 - x : x;
+    // This is implemented this way so that either positive or negative zeroes
+    // get converted to positive zeros.
+    // See http://www.concentric.net/~Ttwang/tech/javafloat.htm for details.
+    return x <= 0 ? 0.0 - x : x;
   }
 
   public static float abs(float x) {
-    return (x <= 0.0F) ? 0.0F - x : x;
+    return (float) abs((double) x);
   }
 
   public static int abs(int x) {
@@ -107,21 +125,9 @@ public final class Math {
     return Math.floor(x);
   }-*/;
 
-  /* NYI: Java 1.5 includes this, but JS doesn't give us the ingredients.
-  public static int getExponent (double d) {
-  }
-
-  public static int getExponent (float f) {
-  }
-  */
-
   public static double hypot(double x, double y) {
     return sqrt(x * x + y * y);
   }
-
-  /* NYI: Java 1.5 includes this, but JS doesn't give us the ingredients.
-  public static double IEEEremainder(double f1, double f2) {
-  } */
 
   public static native double log(double x) /*-{
     return Math.log(x);
@@ -166,19 +172,6 @@ public final class Math {
   public static long min(long x, long y) {
     return x < y ? x : y;
   }
-
-  /* NYI: Java 1.5 includes this, but JS doesn't give us the ingredients.
-  public static double nextAfter(double start, double direction) {
-  }
-  public static float nextAfter(float start, float direction) {
-  }
-  public static double nextUp(double start) {
-    return nextAfter(start, 1.0d);
-  }
-  public static float nextUp(float start) {
-    return nextAfter(start,1.0f);
-  }
-  */
 
   public static native double pow(double x, double exp) /*-{
     return Math.pow(x, exp);
@@ -283,11 +276,4 @@ public final class Math {
   private static native double round0(double x) /*-{
     return Math.round(x);
   }-*/;
-
-  /* NYI: Java 1.5 includes this, but JS doesn't give us the ingredients.
-  public static double ulp (double x) {
-  };
-  public static float ulp (float x) {
-  };
-  */
 }

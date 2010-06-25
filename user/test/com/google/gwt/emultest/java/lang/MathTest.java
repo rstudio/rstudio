@@ -25,6 +25,15 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class MathTest extends GWTTestCase {
 
+  private static native boolean isNegativeZero(double x) /*-{
+    var v = 1 / x;
+    return v == Number.NEGATIVE_INFINITY;
+  }-*/;
+  
+  private static native double makeNegativeZero() /*-{
+    return 1 / Number.NEGATIVE_INFINITY;
+  }-*/;
+  
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
@@ -32,11 +41,14 @@ public class MathTest extends GWTTestCase {
   
   public void testAbs() {
     double v = Math.abs(-1.0);
+    double negativeZero = makeNegativeZero();
+    assertTrue(isNegativeZero(negativeZero));
     assertEquals(1.0, v);
     v = Math.abs(1.0);
     assertEquals(1.0, v);
-    v = Math.abs(-0.0);
+    v = Math.abs(negativeZero);
     assertEquals(0.0, v);
+    assertFalse(isNegativeZero(v));
     v = Math.abs(0.0);
     assertEquals(0.0, v);
     v = Math.abs(Double.NEGATIVE_INFINITY);

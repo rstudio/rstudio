@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
@@ -28,6 +29,8 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     addSnippetClassDecl("static volatile boolean b1;");
     addSnippetClassDecl("static volatile int i;");
     addSnippetClassDecl("static volatile long l;");
+    addSnippetClassDecl("static volatile float f;");
+    addSnippetClassDecl("static volatile double d;");
   }
 
   public void testConditionalOptimizations() throws Exception {
@@ -103,6 +106,17 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
         "do {",
         "  break;",
         "} while (false);");
+  }
+
+  public void testSubtractFromZero() throws Exception {
+    optimize("int", "return 0 - i;").intoString("return -EntryPoint.i;");
+    optimize("long", "return 0 - l;").intoString("return -EntryPoint.l;");
+    // Verify that float/double subtracts from zero aren't replaced, since they
+    // are needed for obscure IEEE754 functionality -- specifically, converting
+    // 0.0 - v into -v means the sign of the result is the opposite of the input
+    // rathe than always being positive.
+    optimize("float", "return 0.0F - f;").intoString("return 0.0f - EntryPoint.f;");
+    optimize("double", "return 0.0 - d;").intoString("return 0.0 - EntryPoint.d;");
   }
 
   @Override

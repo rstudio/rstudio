@@ -1485,7 +1485,7 @@ public class DeadCodeElimination {
         ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
       }
-      if (isLiteralZero(lhs)) {
+      if (isLiteralZero(lhs) && !isTypeFloatOrDouble(type)) {
         ctx.replaceMe(simplifyNegate(simplifier.cast(type, rhs)));
         return true;
       }
