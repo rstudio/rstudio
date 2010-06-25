@@ -113,10 +113,6 @@
      <call-subproject subproject="tools" subtarget="build"/>
      <call-subproject subproject="jni" subtarget="build"/>
      <call-subproject subproject="samples" subtarget="build"/>
-
-     <!-- TODO: GWT 2.1.0 M1 SDK requires gwt-bikeshed.jar to be included. This
-                can be removed once bikeshed is merged into other JARs. -->
-     <call-subproject subproject="bikeshed" subtarget="build" />
   </target>
 
   <target name="checkstyle" description="[action] Does static analysis of GWT source">
