@@ -480,6 +480,7 @@ public class DateTimeFormat {
   private static final String WHITE_SPACE = " \t\r\n";
 
   private static final String GMT = "GMT";
+  private static final String UTC = "UTC";
 
   private static final int MINUTES_PER_HOUR = 60;
 
@@ -2222,6 +2223,11 @@ public class DateTimeFormat {
     // GMT.
     if (text.startsWith(GMT, start)) {
       pos[0] = start + GMT.length();
+      return parseTimeZoneOffset(text, pos, cal);
+    }
+    // Likewise for UTC.
+    if (text.startsWith(UTC, start)) {
+      pos[0] = start + UTC.length();
       return parseTimeZoneOffset(text, pos, cal);
     }
 

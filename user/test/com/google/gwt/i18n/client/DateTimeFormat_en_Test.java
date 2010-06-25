@@ -464,6 +464,10 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     assertEquals("02/27/2006 05:10:10 Pacific Standard Time",
         DateTimeFormat.getFormat("MM/dd/yyyy HH:mm:ss zzzz").format(date,
             usPacific));
+    
+    // test that we can reparse the formatted output
+    DateTimeFormat format = DateTimeFormat.getFormat("MMM d, yyyy h:mm:ss a z");
+    assertEquals(date, format.parse(format.format(date)));
   }
 
   public void test_timezoneZ() {
