@@ -16,7 +16,7 @@
 
 
 # This script should be run from the trunk dir.
-ant clean dist-bikeshed
+ant clean dist-dev
 
 MAVEN_REPO=~/.m2/repository
 
