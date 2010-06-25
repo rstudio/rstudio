@@ -22,7 +22,7 @@
 MAVEN_REPO=~/.m2/repository
 
 NEW_CLASSPATH=$MAVEN_REPO/org/json/json/20090211/json-20090211.jar
-for i in dev user servlet bikeshed
+for i in dev user servlet 
 do 
   NEW_CLASSPATH=$MAVEN_REPO/com/google/gwt/gwt-${i}/2.1.0.M1/gwt-${i}-2.1.0.M1.jar:$NEW_CLASSPATH
 done

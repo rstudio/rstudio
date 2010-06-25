@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.valuestore.shared.WriteOperation;
@@ -29,7 +28,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * <p>
@@ -108,9 +109,49 @@ public class SampleDataPopulator {
     return jsonObject;
   }
 
-  private String readFileAsString(String filePathName) {
+  // ugly method, refactor later when cleaning up this class.
+  private byte[] readFileAsBytes(String filePathName) {
     File file = new File(filePathName);
-    return Util.readFileAsString(file);
+    FileInputStream fileInputStream = null;
+    byte bytes[] = null;
+    try {
+      fileInputStream = new FileInputStream(file);
+      int byteLength = (int) file.length();
+      bytes = new byte[byteLength];
+      int byteOffset = 0;
+      while (byteOffset < byteLength) {
+        int bytesReadCount = fileInputStream.read(bytes, byteOffset, byteLength
+            - byteOffset);
+        if (bytesReadCount == -1) {
+          return null;
+        }
+        byteOffset += bytesReadCount;
+      }
+    } catch (IOException e) {
+      // Ignored.
+    } finally {
+      try {
+        if (fileInputStream != null) {
+          fileInputStream.close();
+        }
+      } catch (IOException e) {
+        // ignored
+      }
+    }
+    return bytes;
+  }
+  
+  private String readFileAsString(String filePathName) {
+    byte bytes[] = readFileAsBytes(filePathName);
+    if (bytes != null) {
+      try {
+        return new String(bytes, "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        // Ignored.
+      }
+      return null;
+    }
+    return null;
   }
 
 }
