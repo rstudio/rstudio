@@ -671,7 +671,7 @@ public class JUnitShell extends DevMode {
       try {
         unitTestShell.options.setConnectAddress(InetAddress.getLocalHost().getHostAddress());
       } catch (UnknownHostException e) {
-        throw new JUnitFatalLaunchException("Unable to resolve my address");
+        throw new JUnitFatalLaunchException("Unable to resolve my address", e);
       }
       if (!unitTestShell.startUp()) {
         throw new JUnitFatalLaunchException("Shell failed to start");
