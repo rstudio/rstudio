@@ -73,12 +73,11 @@ public abstract class DefaultSelectionModel<T> extends
    */
   public void setSelected(T object, boolean selected) {
     Object key = getKey(object);
-    Boolean currentlySelected = exceptions.get(key);
-    if (currentlySelected != null
-        && currentlySelected.booleanValue() != selected) {
-      exceptions.remove(key);
-    } else {
+    if (isDefaultSelected(object) != selected) {
+      // If the state is different than the default state, add an exception.
       exceptions.put(key, selected);
+    } else {
+      exceptions.remove(key);
     }
 
     scheduleSelectionChangeEvent();

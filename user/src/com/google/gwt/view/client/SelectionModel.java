@@ -111,6 +111,11 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
     private final HandlerManager handlerManager = new HandlerManager(this);
 
     /**
+     * Set to true if the next scheduled event should be cancelled.
+     */
+    private boolean isEventCancelled;
+
+    /**
      * Set to true if an event is scheduled to be fired.
      */
     private boolean isEventScheduled;
@@ -146,17 +151,29 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
       this.keyProvider = keyProvider;
     }
 
+    protected void fireSelectionChangeEvent() {
+      if (isEventScheduled) {
+        isEventCancelled = true;
+      }
+      SelectionChangeEvent.fire(AbstractSelectionModel.this);
+    }
+
     /**
      * Schedules a {@link SelectionModel.SelectionChangeEvent} to fire at the
      * end of the current event loop.
      */
     protected void scheduleSelectionChangeEvent() {
+      isEventCancelled = false;
       if (!isEventScheduled) {
         isEventScheduled = true;
         Scheduler.get().scheduleFinally(new ScheduledCommand() {
           public void execute() {
             isEventScheduled = false;
-            SelectionChangeEvent.fire(AbstractSelectionModel.this);
+            if (isEventCancelled) {
+              isEventCancelled = false;
+              return;
+            }
+            fireSelectionChangeEvent();
           }
         });
       }
