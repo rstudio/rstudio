@@ -44,43 +44,36 @@ public abstract class Column<T, C> implements HasViewData, HasCell<T, C> {
 
   /**
    * A {@link ValueUpdater} used by the {@link Column} to delay the field update
-   * until after the view data has been set.
-   * 
-   * @param <C> the type of data
+   * until after the view data has been set. After the view data has been set,
+   * the delay is revoked and we pass updates directly to the
+   * {@link FieldUpdater}.
    */
-  private static class DelayedValueUpdater<C> implements ValueUpdater<C> {
-    private C newValue;
+  private class DelayedValueUpdater implements ValueUpdater<C> {
+
     private boolean hasNewValue;
+    private boolean isDelayed = true;
+    private C newValue;
+    private final int rowIndex;
+    private final T rowObject;
 
-    /**
-     * Get the new value.
-     * 
-     * @return the new value
-     */
-    public C getNewValue() {
-      return newValue;
+    public DelayedValueUpdater(int rowIndex, T rowObject) {
+      this.rowIndex = rowIndex;
+      this.rowObject = rowObject;
     }
 
-    /**
-     * Check if the value has been updated.
-     * 
-     * @return true if updated, false if not
-     */
-    public boolean hasNewValue() {
-      return hasNewValue;
-    }
-
-    /**
-     * Reset this updater so it can be reused.
-     */
-    public void reset() {
-      newValue = null;
-      hasNewValue = false;
+    public void flush() {
+      isDelayed = false;
+      if (hasNewValue && fieldUpdater != null) {
+        fieldUpdater.update(rowIndex, rowObject, newValue);
+      }
     }
 
     public void update(C value) {
       hasNewValue = true;
       newValue = value;
+      if (!isDelayed) {
+        flush();
+      }
     }
   }
 
@@ -89,11 +82,6 @@ public abstract class Column<T, C> implements HasViewData, HasCell<T, C> {
   protected FieldUpdater<T, C> fieldUpdater;
 
   protected Map<Object, Object> viewDataMap = new HashMap<Object, Object>();
-
-  /**
-   * The {@link DelayedValueUpdater} singleton.
-   */
-  private final DelayedValueUpdater<C> delayedValueUpdater = new DelayedValueUpdater<C>();
 
   public Column(Cell<C> cell) {
     this.cell = cell;
@@ -134,9 +122,10 @@ public abstract class Column<T, C> implements HasViewData, HasCell<T, C> {
       NativeEvent event, ProvidesKey<T> providesKey) {
     Object key = getKey(object, providesKey);
     Object viewData = getViewData(key);
-    delayedValueUpdater.reset();
+    DelayedValueUpdater valueUpdater = (fieldUpdater == null) ? null
+        : new DelayedValueUpdater(index, object);
     Object newViewData = cell.onBrowserEvent(elem, getValue(object), viewData,
-        event, fieldUpdater == null ? null : delayedValueUpdater);
+        event, valueUpdater);
 
     // We have to save the view data before calling the field updater, or the
     // view data will not be available.
@@ -146,8 +135,8 @@ public abstract class Column<T, C> implements HasViewData, HasCell<T, C> {
     }
 
     // Call the FieldUpdater after setting the view data.
-    if (delayedValueUpdater.hasNewValue()) {
-      fieldUpdater.update(index, object, delayedValueUpdater.getNewValue());
+    if (valueUpdater != null) {
+      valueUpdater.flush();
     }
   }
 
