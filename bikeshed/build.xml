@@ -52,8 +52,6 @@
     <mkdir dir="${javac.out}" />
     <gwt.javac excludes="**/sample/**">
       <classpath>
-        <pathelement location="${gwt.tools.redist}/json/r2_20080312/json.jar" />
-        <pathelement location="${gwt.root}/bikeshed/war/temp-libs/validation-api-1.0.0.GA.jar" />
         <pathelement location="${gwt.dev.jar}" />
         <pathelement location="${gwt.user.jar}" />
       </classpath>

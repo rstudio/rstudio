@@ -33,7 +33,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-7.0.2.v20100331/jetty-7.0.2.v20100331.jar" sourcepath="GWT_TOOLS/lib/jetty/jetty-7.0.2.v20100331/jetty-7.0.2.v20100331-src.zip"/>
-	<classpathentry kind="var" path="GWT_TOOLS/redist/json/r2_20080312/json.jar" sourcepath="/GWT_TOOLS/redist/json/r2_20080312/json-src.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/redist/json/r2_20080312/json-1.5.jar" sourcepath="/GWT_TOOLS/redist/json/r2_20080312/json-src.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA.jar" sourcepath="/GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
