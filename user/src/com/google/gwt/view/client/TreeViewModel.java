@@ -46,7 +46,7 @@ public interface TreeViewModel {
      * @param cell the {@link Cell} used to render the child values
      */
     public DefaultNodeInfo(AbstractListViewAdapter<T> adapter, Cell<T> cell) {
-      this(adapter, cell, new SingleSelectionModel<T>(), null);
+      this(adapter, cell, null, null);
     }
 
     /**
