@@ -23,6 +23,7 @@ import com.google.gwt.logging.client.ConsoleLogHandler;
 import com.google.gwt.logging.client.DevelopmentModeLogHandler;
 import com.google.gwt.logging.client.FirebugLogHandler;
 import com.google.gwt.logging.client.HasWidgetsLogHandler;
+import com.google.gwt.logging.client.SimpleRemoteLogHandler;
 import com.google.gwt.logging.client.SystemLogHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -66,6 +67,7 @@ public class HandlerController {
   @UiField CheckBox firebugCheckbox;
   @UiField CheckBox popupCheckbox;
   @UiField CheckBox systemCheckbox;
+  @UiField CheckBox remoteCheckbox;
   private Map<String, Handler> handlers;
   private Logger logger;
   private Panel panel;
@@ -86,6 +88,7 @@ public class HandlerController {
     setupHandler(DevelopmentModeLogHandler.class.getName(), devmodeCheckbox);
     setupHandler(FirebugLogHandler.class.getName(), firebugCheckbox);
     setupHandler(HasWidgetsLogHandler.class.getName(), popupCheckbox);
+    setupHandler(SimpleRemoteLogHandler.class.getName(), remoteCheckbox);
   }
   
   public Panel getPanel() {

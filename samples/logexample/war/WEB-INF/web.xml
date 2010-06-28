@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+  <!-- Servlets -->
+  <servlet>
+    <servlet-name>logServlet</servlet-name>
+    <servlet-class>com.google.gwt.sample.logexample.server.LoggingServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>logServlet</servlet-name>
+    <url-pattern>/logexample/log</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>remoteLoggingServlet</servlet-name>
+    <servlet-class>com.google.gwt.logging.server.RemoteLoggingServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>remoteLoggingServlet</servlet-name>
+    <url-pattern>logexample/remote_logging</url-pattern>
+  </servlet-mapping>
+
+  
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>LogExample.html</welcome-file>
+  </welcome-file-list>
+
+</web-app>

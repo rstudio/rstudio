@@ -12,9 +12,10 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- regular expressions support.                                           -->
 <module>
   <inherits name="com.google.gwt.logging.LogImpl"/>
+  <source path="client" />
+  <source path="shared" />
   
   <replace-with class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplRegular">
     <when-type-is class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplNull"/>
@@ -79,6 +80,11 @@
     <when-type-is class="com.google.gwt.logging.client.SystemLogHandler" />
     <when-property-is name="gwt.logging.systemHandler" value="DISABLED" />
   </replace-with>
+  <define-property name="gwt.logging.simpleRemoteHandler" values="ENABLED, DISABLED" />
+  <replace-with class="com.google.gwt.logging.client.NullLogHandler">
+    <when-type-is class="com.google.gwt.logging.client.SimpleRemoteLogHandler" />
+    <when-property-is name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
+  </replace-with>
   <define-property name="gwt.logging.popupHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLoggingPopup">
     <when-type-is class="com.google.gwt.logging.client.LoggingPopup" />
@@ -93,6 +99,7 @@
   <set-property name="gwt.logging.firebugHandler" value="ENABLED" />
   <set-property name="gwt.logging.popupHandler" value="ENABLED" />
   <set-property name="gwt.logging.systemHandler" value="ENABLED" />
+  <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
   
   <entry-point class="com.google.gwt.logging.client.LogConfiguration"/>
 </module>
