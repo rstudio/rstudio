@@ -26,7 +26,9 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Tests for {@link TabLayoutPanel}.
@@ -39,7 +41,8 @@ public class TabLayoutPanelTest extends GWTTestCase {
     }
   }
 
-  private class TestSelectionHandler implements BeforeSelectionHandler<Integer>, SelectionHandler<Integer> {
+  private class TestSelectionHandler implements
+      BeforeSelectionHandler<Integer>, SelectionHandler<Integer> {
     private boolean onBeforeSelectionFired;
     private boolean onSelectionFired;
 
@@ -275,6 +278,30 @@ public class TabLayoutPanelTest extends GWTTestCase {
   }
 
   /**
+   * For legacy reasons, {@link TabLayoutPanel#selectTab(Widget)} should call
+   * {@link TabLayoutPanel#selectTab(int)}.
+   */
+  public void testSelectTabLegacy() {
+    final List<Integer> called = new ArrayList<Integer>();
+    TabLayoutPanel panel = new TabLayoutPanel(100.0, Unit.PX) {
+      @Override
+      public void selectTab(int index) {
+        called.add(index);
+        super.selectTab(index);
+      }
+    };
+    Label tab1 = new Label("Tab 1");
+    panel.add(new Label("Tab 0"), "Tab 0");
+    panel.add(tab1, "Tab 1");
+    panel.add(new Label("Tab 2"), "Tab 2");
+    called.clear();
+
+    panel.selectTab(tab1);
+    assertEquals(1, called.size());
+    assertEquals(1, called.get(0).intValue());
+  }
+
+  /**
    * Tests that tabs actually line up properly (see issue 4447).
    */
   @DoNotRunWith(Platform.HtmlUnitLayout)
@@ -285,8 +312,7 @@ public class TabLayoutPanelTest extends GWTTestCase {
     p.add(new Button("foo"), new Label("foo"));
     p.add(new Button("bar"), new Label("bar"));
 
-    assertEquals(
-        p.getTabWidget(0).getElement().getOffsetTop(),
-        p.getTabWidget(1).getElement().getOffsetTop());
+    assertEquals(p.getTabWidget(0).getElement().getOffsetTop(), p.getTabWidget(
+        1).getElement().getOffsetTop());
   }
 }

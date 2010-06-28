@@ -341,6 +341,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     };
   }
 
+  @Override
   public void onResize() {
     layoutPanel.onResize();
   }
@@ -439,7 +440,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param child the child widget to be shown.
    */
   public void showWidget(Widget child) {
-    showWidget(child, true);
+    showWidget(getWidgetIndex(child));
   }
 
   /**

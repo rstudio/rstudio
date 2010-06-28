@@ -420,7 +420,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * @param child the child whose tab is to be selected
    */
   public void selectTab(Widget child) {
-    selectTab(child, true);
+    selectTab(getWidgetIndex(child));
   }
 
   /**

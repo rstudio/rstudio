@@ -21,7 +21,9 @@ import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Tests for {@link StackLayoutPanel}.
@@ -197,6 +199,30 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     p.showWidget(1, false);
     handler.assertOnBeforeSelectionFired(false);
     handler.assertOnSelectionFired(false);
+  }
+
+  /**
+   * For legacy reasons, {@link StackLayoutPanel#showWidget(Widget)} should call
+   * {@link StackLayoutPanel#showWidget(int)}.
+   */
+  public void testShowWidgetLegacy() {
+    final List<Integer> called = new ArrayList<Integer>();
+    StackLayoutPanel panel = new StackLayoutPanel(Unit.PX) {
+      @Override
+      public void showWidget(int index) {
+        called.add(index);
+        super.showWidget(index);
+      }
+    };
+    Label stack1 = new Label("Stack 1");
+    panel.add(new Label("Stack 0"), "Stack 0", 100);
+    panel.add(stack1, "Stack 1", 100);
+    panel.add(new Label("Stack 2"), "Stack 2", 100);
+    called.clear();
+
+    panel.showWidget(stack1);
+    assertEquals(1, called.size());
+    assertEquals(1, called.get(0).intValue());
   }
 
   public void testVisibleWidget() {
