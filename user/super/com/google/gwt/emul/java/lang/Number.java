@@ -345,7 +345,7 @@ public abstract class Number implements Serializable {
     var floatRegex = @java.lang.Number::floatRegex;
     if (!floatRegex) {
       // Disallow '.' with no digits on either side
-      floatRegex = @java.lang.Number::floatRegex = /^\s*[+-]?((\d+\.?\d*)|(\.\d+))([eE][+-]?\d+)?\s*$/i;
+      floatRegex = @java.lang.Number::floatRegex = /^\s*[+-]?((\d+\.?\d*)|(\.\d+))([eE][+-]?\d+)?[dDfF]?\s*$/i;
     }
     if (floatRegex.test(str)) {
       return parseFloat(str);

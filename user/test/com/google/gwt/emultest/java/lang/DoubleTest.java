@@ -151,5 +151,11 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(-2.56789e1 == Double.parseDouble("  -2.56789E1"));
     assertTrue(-2.56789e1 == Double.parseDouble("-2.56789e+01   "));
     assertTrue(-2.56789e1 == Double.parseDouble("   -2.56789E1   "));
+    
+    // Test that a float/double type suffix is allowed
+    assertEquals(1.0d, Double.parseDouble("1.0f"), 0.0);
+    assertEquals(1.0d, Double.parseDouble("1.0F"), 0.0);
+    assertEquals(1.0d, Double.parseDouble("1.0d"), 0.0);
+    assertEquals(1.0d, Double.parseDouble("1.0D"), 0.0);
   }
 }

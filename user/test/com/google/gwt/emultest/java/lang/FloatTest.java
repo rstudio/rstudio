@@ -78,6 +78,13 @@ public class FloatTest extends GWTTestCase {
     assertEquals(-1.5f, Float.parseFloat("-1.5"), 0.0);
     assertEquals(3.0f, Float.parseFloat("3."), 0.0);
     assertEquals(0.5f, Float.parseFloat(".5"), 0.0);
+
+    // Test that a float/double type suffix is allowed
+    assertEquals(1.0f, Float.parseFloat("1.0f"), 0.0);
+    assertEquals(1.0f, Float.parseFloat("1.0F"), 0.0);
+    assertEquals(1.0f, Float.parseFloat("1.0d"), 0.0);
+    assertEquals(1.0f, Float.parseFloat("1.0D"), 0.0);
+
     // TODO(jat): it isn't safe to parse MAX/MIN_VALUE because we also want to
     // be able to get POSITIVE/NEGATIVE_INFINITY for out-of-range values, and
     // since all math in JS is done in double we can't rely on getting the
