@@ -15,7 +15,6 @@
  */
 package com.google.gwt.json.client;
 
-import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Set;
@@ -141,7 +140,7 @@ public class JSONTest extends GWTTestCase {
       arr.set(i, new JSONNumber(i));
     }
     String s = arr.toString();
-    JSONValue v = parseStrictVsLenient(s);
+    JSONValue v = JSONParser.parse(s);
     JSONArray array = v.isArray();
     assertTrue("v must be an array", array != null);
     assertEquals("Array size must be 10", 10, array.size());
@@ -155,17 +154,17 @@ public class JSONTest extends GWTTestCase {
     assertTrue(JSONBoolean.getInstance(true).booleanValue());
     assertFalse(JSONBoolean.getInstance(false).booleanValue());
 
-    JSONValue trueVal = parseStrictVsLenient("true");
+    JSONValue trueVal = JSONParser.parse("true");
     assertEquals(trueVal, trueVal.isBoolean());
     assertTrue(trueVal.isBoolean().booleanValue());
 
-    JSONValue falseVal = parseStrictVsLenient("false");
+    JSONValue falseVal = JSONParser.parse("false");
     assertEquals(falseVal, falseVal.isBoolean());
     assertFalse(falseVal.isBoolean().booleanValue());
   }
 
   public void testEquals() {
-    JSONArray array = parseStrictVsLenient("[]").isArray();
+    JSONArray array = JSONParser.parse("[]").isArray();
     assertEquals(array, new JSONArray(array.getJavaScriptObject()));
 
     assertEquals(JSONBoolean.getInstance(false), JSONBoolean.getInstance(false));
@@ -175,10 +174,32 @@ public class JSONTest extends GWTTestCase {
 
     assertEquals(new JSONNumber(3.1), new JSONNumber(3.1));
 
-    JSONObject object = parseStrictVsLenient("{}").isObject();
+    JSONObject object = JSONParser.parse("{}").isObject();
     assertEquals(object, new JSONObject(object.getJavaScriptObject()));
 
     assertEquals(new JSONString("foo"), new JSONString("foo"));
+  }
+  
+  public void testHashCode() {
+    JSONArray array = JSONParser.parse("[]").isArray();
+    assertHashCodeEquals(array, new JSONArray(array.getJavaScriptObject()));
+
+    assertHashCodeEquals(JSONBoolean.getInstance(false), JSONBoolean.getInstance(false));
+    assertHashCodeEquals(JSONBoolean.getInstance(true), JSONBoolean.getInstance(true));
+
+    assertHashCodeEquals(JSONNull.getInstance(), JSONNull.getInstance());
+
+    assertHashCodeEquals(new JSONNumber(3.1), new JSONNumber(3.1));
+
+    JSONObject object = JSONParser.parse("{}").isObject();
+    assertHashCodeEquals(object, new JSONObject(object.getJavaScriptObject()));
+
+    assertHashCodeEquals(new JSONString("foo"), new JSONString("foo"));
+  }
+
+  private void assertHashCodeEquals(Object expected, Object actual) {
+    assertEquals("hashCodes are not equal", expected.hashCode(),
+        actual.hashCode());
   }
 
   // Null characters do not work in hosted mode
@@ -217,23 +238,6 @@ public class JSONTest extends GWTTestCase {
         + "\"c39\":\"/\", \"c40\":\"\\u2028\", \"c41\":\"\\u2029\"}", o.toString());
   }
 
-  public void testHashCode() {
-    JSONArray array = parseStrictVsLenient("[]").isArray();
-    assertHashCodeEquals(array, new JSONArray(array.getJavaScriptObject()));
-
-    assertHashCodeEquals(JSONBoolean.getInstance(false), JSONBoolean.getInstance(false));
-    assertHashCodeEquals(JSONBoolean.getInstance(true), JSONBoolean.getInstance(true));
-
-    assertHashCodeEquals(JSONNull.getInstance(), JSONNull.getInstance());
-
-    assertHashCodeEquals(new JSONNumber(3.1), new JSONNumber(3.1));
-
-    JSONObject object = parseStrictVsLenient("{}").isObject();
-    assertHashCodeEquals(object, new JSONObject(object.getJavaScriptObject()));
-
-    assertHashCodeEquals(new JSONString("foo"), new JSONString("foo"));
-  }
-
   public void testLargeArrays() {
     JSONArray arr = null;
     for (int j = 1; j < 500; j *= 2) {
@@ -242,33 +246,8 @@ public class JSONTest extends GWTTestCase {
     }
   }
 
-  public void testLenientAndStrict() {
-    String jsonString = "{ a:27, 'b': 'value' }";
-    
-    // parseLenient should succeed
-    JSONValue value = JSONParser.parseLenient(jsonString);
-    JSONObject object = value.isObject();
-    assertEquals(27.0, object.get("a").isNumber().doubleValue());
-    assertEquals("value", object.get("b").isString().stringValue());
-    
-    // parseStrict should fail
-    try {
-      parseStrictVsLenient(jsonString);
-      fail();
-    } catch (JSONException e) {
-    }
-    
-    // Must fail even on browsers that lack JSON.parse()
-    jsonString = "function f() { return 5; }";
-    try {
-      parseStrictVsLenient(jsonString);
-      fail();
-    } catch (JSONException e) {
-    }
-  }
-  
   public void testMenu() {
-    JSONObject v = (JSONObject) parseStrictVsLenient(menuTest);
+    JSONObject v = (JSONObject) JSONParser.parse(menuTest);
     assertTrue(v.containsKey("menu"));
     JSONObject menu = ((JSONObject) v.get("menu"));
     assertEquals(3, menu.keySet().size());
@@ -278,7 +257,7 @@ public class JSONTest extends GWTTestCase {
     JSONObject obj = new JSONObject();
     nestedAux(obj, 3);
     String s1 = obj.toString();
-    String s2 = parseStrictVsLenient(s1).toString();
+    String s2 = JSONParser.parse(s1).toString();
     assertEquals(s1, s2);
     assertEquals(
         "{\"string3\":\"s3\", \"Number3\":3.1, \"Boolean3\":false, "
@@ -352,7 +331,7 @@ public class JSONTest extends GWTTestCase {
       obj.put("Object " + i, new JSONNumber(i));
     }
     String s = obj.toString();
-    JSONValue v = parseStrictVsLenient(s);
+    JSONValue v = JSONParser.parse(s);
     JSONObject objIn = v.isObject();
     assertTrue("v must be an object", objIn != null);
     assertEquals("Object size must be 10", 10, objIn.keySet().size());
@@ -372,27 +351,27 @@ public class JSONTest extends GWTTestCase {
     } catch (NullPointerException t) {
     }
     try {
-      parseStrictVsLenient(null);
+      JSONParser.parse(null);
       fail();
     } catch (NullPointerException t) {
     }
     try {
-      parseStrictVsLenient("");
+      JSONParser.parse("");
       fail();
     } catch (IllegalArgumentException t) {
     }
     try {
-      parseStrictVsLenient("{\"menu\": {\n" + "  \"id\": \"file\",\n");
+      JSONParser.parse("{\"menu\": {\n" + "  \"id\": \"file\",\n");
       fail();
     } catch (JSONException e) {
     }
     assertEquals("\"null\" should be null JSONValue", JSONNull.getInstance(),
-        parseStrictVsLenient("null"));
+        JSONParser.parse("null"));
     assertEquals("5 should be JSONNumber 5", 5d,
-        parseStrictVsLenient("5").isNumber().doubleValue(), 0.001);
+        JSONParser.parse("5").isNumber().doubleValue(), 0.001);
     assertEquals("\"null\" should be null JSONValue", JSONNull.getInstance(),
-        parseStrictVsLenient("null"));
-    JSONValue somethingHello = parseStrictVsLenient("[{\"something\":\"hello\"}]");
+        JSONParser.parse("null"));
+    JSONValue somethingHello = JSONParser.parse("[{\"something\":\"hello\"}]");
     JSONArray somethingHelloArray = somethingHello.isArray();
     assertTrue("somethingHello must be a JSONArray",
         somethingHelloArray != null);
@@ -414,106 +393,9 @@ public class JSONTest extends GWTTestCase {
 
     String toString = obj.toString();
     assertEquals("{\"a\":42, \"\\\\\":43.5, \"\\\"\":44}", toString.trim());
-    JSONValue parseResponse = parseStrictVsLenient(toString);
+    JSONValue parseResponse = JSONParser.parse(toString);
     JSONObject obj2 = parseResponse.isObject();
     assertJSONObjectEquals(obj, obj2);
-  }
-
-  // Break up long test into smaller chunks
-  public void testParseUnescaped0() {
-    for (int i = 0x20; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped1() {
-    for (int i = 0x20 + 1; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped2() {
-    for (int i = 0x20 + 2; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped3() {
-    for (int i = 0x20 + 3; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped4() {
-    for (int i = 0x20 + 4; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped5() {
-    for (int i = 0x20 + 5; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped6() {
-    for (int i = 0x20 + 6; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped7() {
-    for (int i = 0x20 + 7; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped8() {
-    for (int i = 0x20 + 8; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescaped9() {
-    for (int i = 0x20 + 9; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescapeda() {
-    for (int i = 0x20 + 10; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescapedb() {
-    for (int i = 0x20 + 11; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescapedc() {
-    for (int i = 0x20 + 12; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescapedd() {
-    for (int i = 0x20 + 13; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescapede() {
-    for (int i = 0x20 + 14; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
-  }
-
-  public void testParseUnescapedf() {
-    for (int i = 0x20 + 15; i <= 0xffff; i += 16) {
-      doTestParseUnescaped(i);
-    }
   }
 
   public void testSimpleNested() {
@@ -551,7 +433,7 @@ public class JSONTest extends GWTTestCase {
   }
 
   public void testStringTypes() {
-    JSONObject object = parseStrictVsLenient("{\"a\":\"b\",\"null\":\"foo\"}").isObject();
+    JSONObject object = JSONParser.parse("{\"a\":\"b\",\"null\":\"foo\"}").isObject();
     assertNotNull(object);
 
     assertEquals("b",
@@ -570,7 +452,7 @@ public class JSONTest extends GWTTestCase {
   }
 
   public void testUndefined() {
-    JSONObject o = parseStrictVsLenient("{\"foo\":\"foo\",\"bar\":null}").isObject();
+    JSONObject o = JSONParser.parse("{foo:'foo',bar:null}").isObject();
     assertEquals(new JSONString("foo"), o.get("foo"));
     assertEquals(JSONNull.getInstance(), o.get("bar"));
     assertNull(o.get("baz"));
@@ -580,7 +462,7 @@ public class JSONTest extends GWTTestCase {
     o.put("foo", null);
     assertNull(o.get("foo"));
 
-    JSONArray array = parseStrictVsLenient("[\"foo\",null]").isArray();
+    JSONArray array = JSONParser.parse("['foo',null]").isArray();
     assertEquals(new JSONString("foo"), array.get(0));
     assertEquals(JSONNull.getInstance(), array.get(1));
     assertNull(array.get(2));
@@ -591,61 +473,8 @@ public class JSONTest extends GWTTestCase {
     assertNull(array.get(0));
   }
 
-  public void testUnicodeSeparators() {
-    /*
-     * ECMAScript 5 allows unescaped U+2028 (line separator) and U+2029
-     * (paragraph separator) characters to occur inside strings.
-     */
-    String jsonString = "{ \"name\": \"miles\u2028da\u2029vis\", \"ins\u2028tru\u2029ment\": \"trumpet\" }";
-    try {
-      JSONValue parsed = parseStrictVsLenient(jsonString);
-      JSONObject result = parsed.isObject();
-      assertNotNull(result);
-
-      JSONValue nameValue = result.get("name");
-      assertNotNull(nameValue);
-      JSONString nameJsonString = nameValue.isString();
-      assertNotNull(nameJsonString);
-      String nameString = nameJsonString.stringValue();
-      assertEquals("miles\u2028da\u2029vis", nameString);
-      String nameStringQuoted = nameJsonString.toString();
-      assertEquals("\"miles\\u2028da\\u2029vis\"", nameStringQuoted);
-
-      JSONValue instrumentValue = result.get("ins\u2028tru\u2029ment");
-      assertNotNull(instrumentValue);
-      JSONValue instrumentValue2 = result.get("instrument");
-      assertNull(instrumentValue2); // check no name collision
-      JSONString instrumentJsonString = instrumentValue.isString();
-      assertNotNull(instrumentJsonString);
-      String instrumentString = instrumentJsonString.stringValue();
-      assertEquals("trumpet", instrumentString);
-    } catch (JSONException e) {
-      fail(e.getMessage());
-    }
-
-    // U+2028 and U+2029 should not appear outside a string
-    jsonString = "{ \"name\": \"miles davis\",\u2028\"instrument\": \"trumpet\" }";
-    try {
-      parseStrictVsLenient(jsonString);
-      fail();
-    } catch (JSONException e) {
-    }
-
-    jsonString = "{ \"name\":\u2029\"miles davis\", \"instrument\": \"trumpet\" }";
-    try {
-      parseStrictVsLenient(jsonString);
-      fail();
-    } catch (JSONException e) {
-    }
-  }
-
-  public void testUnsafeEval() {
-    JsonUtils.unsafeEval("{\"name\":\"value\"}");
-    JsonUtils.unsafeEval("[0,1,2,3,4]");
-  }
-  
   public void testWidget() {
-    JSONObject v = (JSONObject) parseStrictVsLenient(widgetTest);
+    JSONObject v = (JSONObject) JSONParser.parse(widgetTest);
     JSONObject widget = (JSONObject) v.get("widget");
     JSONObject window = (JSONObject) widget.get("window");
     JSONValue title = window.get("title");
@@ -654,13 +483,8 @@ public class JSONTest extends GWTTestCase {
     assertNotNull(hOffSet.isNumber());
   }
 
-  private void assertHashCodeEquals(Object expected, Object actual) {
-    assertEquals("hashCodes are not equal", expected.hashCode(),
-        actual.hashCode());
-  }
-
   private void checkRoundTripJsonText(String jsonText, String normaltext) {
-    JSONString parsed = parseStrictVsLenient(jsonText).isString();
+    JSONString parsed = JSONParser.parse(jsonText).isString();
     assertEquals(normaltext, parsed.stringValue());
     assertEquals(jsonText, parsed.toString());
   }
@@ -671,36 +495,6 @@ public class JSONTest extends GWTTestCase {
       arr.set(i, new JSONNumber(i));
     }
     return arr;
-  }
-
-  private void doTestParseUnescaped(int i) {
-    // Skip surrogate pairs
-    if (i >= 0xD800 && i <= 0xDFFF) {
-      return;
-    }
-    char c = (char) i;
-    if (c == '\"' || c == '\\') {
-      return;
-    }
-
-    String key = "na" + c + "me";
-    String value = "miles" + c + "davis";
-    String jsonString = "{ \"" + key + "\": \"" + value + "\"}";
-    try {
-      JSONValue parsed = parseStrictVsLenient(jsonString);
-      JSONObject result = parsed.isObject();
-      assertNotNull("i = " + i, result);
-      Set<String> keys = result.keySet();
-      assertTrue("i = " + i, keys.contains(key));
-      JSONValue nameValue = result.get(key);
-      assertNotNull("i = " + i, nameValue);
-      JSONString nameJsonString = nameValue.isString();
-      assertNotNull("i = " + i, nameJsonString);
-      String nameString = nameJsonString.stringValue();
-      assertEquals("i = " + i, value, nameString);
-    } catch (JSONException e) {
-      fail("i = " + i + ", e = " + e.getMessage());
-    }
   }
 
   private void nestedAux(JSONObject obj, int i) {
@@ -724,14 +518,6 @@ public class JSONTest extends GWTTestCase {
     }
     array.set(4, newObj);
     obj.put("Array" + i, array);
-  }
-
-  // Check that parseLenient produces the same results as parseStrict
-  private JSONValue parseStrictVsLenient(String jsonString) {
-    JSONValue strictValue = JSONParser.parseStrict(jsonString);
-    JSONValue lenientValue = JSONParser.parseLenient(jsonString);
-    assertJSONValueEquals(strictValue, lenientValue);
-    return strictValue;
   }
 
   private JSONArray populateRecursiveArray(int numElements, int recursion) {
