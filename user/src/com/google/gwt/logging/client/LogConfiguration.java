@@ -29,9 +29,10 @@ import java.util.logging.Logger;
  * Configures client side logging using the query params and gwt.xml settings.
  */
 public class LogConfiguration implements EntryPoint {
-  
+    
   private interface LogConfigurationImpl {
     void configureClientSideLogging();
+    boolean loggingIsEnabled();
   }
   
   /** 
@@ -40,6 +41,10 @@ public class LogConfiguration implements EntryPoint {
   private static class LogConfigurationImplNull
   implements LogConfigurationImpl {
     public void configureClientSideLogging() { }
+
+    public boolean loggingIsEnabled() {
+      return false;
+    }
   }
   
   /** 
@@ -54,12 +59,16 @@ public class LogConfiguration implements EntryPoint {
       setDefaultHandlers(root);
     }
   
+    public boolean loggingIsEnabled() {
+      return true;
+    }
+   
     private void addHandlerIfNotNull(Logger l, Handler h) {
       if (!(h instanceof NullLogHandler)) {
         l.addHandler(h);
       }
     }
-   
+    
     private Level parseLevel(String s) {
       if (s == null) {
         return null;
@@ -85,7 +94,7 @@ public class LogConfiguration implements EntryPoint {
       }
       return null;
     }
-    
+  
     private void setDefaultHandlers(Logger l) {
       // Add the default handlers. If users want some of these disabled, they
       // will specify that in the gwt.xml file, which will replace the handler
@@ -105,7 +114,7 @@ public class LogConfiguration implements EntryPoint {
         addHandlerIfNotNull(l, new HasWidgetsLogHandler(loggingWidget));
       }
     }
-  
+
     private void setLevels(Logger l) {
       // try to pull the log level from the query param
       Level paramLevel = parseLevel(Location.getParameter("logLevel"));
@@ -121,9 +130,12 @@ public class LogConfiguration implements EntryPoint {
   
   private static LogConfigurationImpl impl =
     GWT.create(LogConfigurationImplNull.class);
+  
+  public static boolean loggingIsEnabled() {
+    return impl.loggingIsEnabled();
+  }
 
   public void onModuleLoad() {
     impl.configureClientSideLogging();
   }
-
 }

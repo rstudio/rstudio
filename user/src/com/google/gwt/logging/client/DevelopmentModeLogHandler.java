@@ -48,10 +48,8 @@ public class DevelopmentModeLogHandler extends Handler {
     if (!isSupported() || !isLoggable(record)) {
       return;
     }
-
-    // TODO(unnurg): pass in the throwable here since GWT.log can handle it
     String msg = getFormatter().format(record);
-    GWT.log(msg);
+    GWT.log(msg, record.getThrown());
   }
   
   private boolean isSupported() {

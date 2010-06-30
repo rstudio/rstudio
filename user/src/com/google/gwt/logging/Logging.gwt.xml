@@ -63,40 +63,70 @@
   <define-property name="gwt.logging.consoleHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLogHandler">
     <when-type-is class="com.google.gwt.logging.client.ConsoleLogHandler" />
-    <when-property-is name="gwt.logging.consoleHandler" value="DISABLED" />
+    <any>
+      <when-property-is name="gwt.logging.enabled" value="FALSE" />
+      <when-property-is name="gwt.logging.consoleHandler" value="DISABLED" />
+    </any>
   </replace-with>
   <define-property name="gwt.logging.developmentModeHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLogHandler">
     <when-type-is class="com.google.gwt.logging.client.DevelopmentModeLogHandler" />
-    <when-property-is name="gwt.logging.developmentModeHandler" value="DISABLED" />
+    <any>
+      <when-property-is name="gwt.logging.enabled" value="FALSE" />
+      <when-property-is name="gwt.logging.developmentModeHandler" value="DISABLED" />
+    </any>
   </replace-with>
   <define-property name="gwt.logging.firebugHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLogHandler">
     <when-type-is class="com.google.gwt.logging.client.FirebugLogHandler" />
-    <when-property-is name="gwt.logging.firebugHandler" value="DISABLED" />
+    <any>
+      <when-property-is name="gwt.logging.enabled" value="FALSE" />
+      <when-property-is name="gwt.logging.firebugHandler" value="DISABLED" />
+    </any>
   </replace-with>
   <define-property name="gwt.logging.systemHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLogHandler">
     <when-type-is class="com.google.gwt.logging.client.SystemLogHandler" />
-    <when-property-is name="gwt.logging.systemHandler" value="DISABLED" />
+    <any>
+      <when-property-is name="gwt.logging.enabled" value="FALSE" />
+      <when-property-is name="gwt.logging.systemHandler" value="DISABLED" />
+    </any>
   </replace-with>
   <define-property name="gwt.logging.simpleRemoteHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLogHandler">
     <when-type-is class="com.google.gwt.logging.client.SimpleRemoteLogHandler" />
-    <when-property-is name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
+    <any>
+      <when-property-is name="gwt.logging.enabled" value="FALSE" />
+      <when-property-is name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
+    </any>
   </replace-with>
+  <define-property name="gwt.logging.hasWidgetsHandler" values="ENABLED, DISABLED" />
+  <replace-with class="com.google.gwt.logging.client.NullLogHandler">
+    <when-type-is class="com.google.gwt.logging.client.HasWidgetsLogHandler" />
+    <any>
+      <when-property-is name="gwt.logging.enabled" value="FALSE" />
+      <when-property-is name="gwt.logging.hasWidgetsHandler" value="DISABLED" />
+    </any>
+  </replace-with>
+
+
   <define-property name="gwt.logging.popupHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLoggingPopup">
     <when-type-is class="com.google.gwt.logging.client.LoggingPopup" />
-    <when-property-is name="gwt.logging.popupHandler" value="DISABLED" />
+    <any>
+      <when-property-is name="gwt.logging.enabled" value="FALSE" />
+      <when-property-is name="gwt.logging.popupHandler" value="DISABLED" />
+    </any>
   </replace-with>
- 
+
+
   <!-- Default values for all properties -->
   <set-property name="gwt.logging.enabled" value="TRUE"/> 
   <set-property name="gwt.logging.logLevel" value="INFO"/>
   <set-property name="gwt.logging.consoleHandler" value="ENABLED" />
   <set-property name="gwt.logging.developmentModeHandler" value="ENABLED" />
   <set-property name="gwt.logging.firebugHandler" value="ENABLED" />
+  <set-property name="gwt.logging.hasWidgetsHandler" value="ENABLED" />
   <set-property name="gwt.logging.popupHandler" value="ENABLED" />
   <set-property name="gwt.logging.systemHandler" value="ENABLED" />
   <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
