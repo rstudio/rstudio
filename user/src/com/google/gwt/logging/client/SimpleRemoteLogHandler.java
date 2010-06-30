@@ -41,7 +41,7 @@ public final class SimpleRemoteLogHandler extends Handler {
       logger.severe("Remote logging failed: " + caught.toString());
     }
     public void onSuccess(String result) {
-      if (!result.isEmpty()) {
+      if (result.length() > 0) {
         logger.severe("Remote logging failed: " + result);
       } else {
         logger.finest("Remote logging message acknowledged");
