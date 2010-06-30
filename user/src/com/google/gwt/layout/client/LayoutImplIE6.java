@@ -59,10 +59,6 @@ class LayoutImplIE6 extends LayoutImplIE8 {
     });
   }
 
-  private static native boolean isIE6() /*-{
-    return @com.google.gwt.dom.client.DOMImplIE6::isIE6()();
-  }-*/;
-
   @SuppressWarnings("unused") // called from JSNI
   private static native void measureDecoration(Element elem) /*-{
     var ruler = elem.__styleRuler;
@@ -119,10 +115,6 @@ class LayoutImplIE6 extends LayoutImplIE8 {
 
   @Override
   public Element attachChild(Element parent, Element child, Element before) {
-    if (!isIE6()) {
-      return super.attachChild(parent, child, before);
-    }
-
     DivElement container = Document.get().createDivElement();
     container.appendChild(child);
 
@@ -145,21 +137,11 @@ class LayoutImplIE6 extends LayoutImplIE8 {
 
   @Override
   public void fillParent(Element elem) {
-    if (!isIE6()) {
-      super.fillParent(elem);
-      return;
-    }
-
     fillParentImpl(elem);
   }
 
   @Override
   public void finalizeLayout(Element parent) {
-    if (!isIE6()) {
-      super.finalizeLayout(parent);
-      return;
-    }
-
     resizeRelativeToParent(parent);
     resizeHandler(parent, true);
   }
@@ -167,40 +149,28 @@ class LayoutImplIE6 extends LayoutImplIE8 {
   @Override
   public void initParent(Element parent) {
     super.initParent(parent);
-
-    if (isIE6()) {
-      setPropertyElement(parent, "__styleRuler", createStyleRuler(parent));
-    }
+    setPropertyElement(parent, "__styleRuler", createStyleRuler(parent));
   }
 
   @Override
   public void layout(Layer layer) {
-    if (!isIE6()) {
-      super.layout(layer);
-      return;
-    }
-
     Element elem = layer.getContainerElement();
     setLayer(elem, layer);
   }
 
   @Override
   public void onAttach(Element parent) {
-    if (isIE6()) {
-      // No need to re-connect layer refs. This will be taken care of
-      // automatically in layout().
-      initResizeHandler(parent);
-      initUnitChangeHandler(parent, relativeRuler);
-    }
+    // No need to re-connect layer refs. This will be taken care of
+    // automatically in layout().
+    initResizeHandler(parent);
+    initUnitChangeHandler(parent, relativeRuler);
   }
 
   @Override
   public void onDetach(Element parent) {
-    if (isIE6()) {
-      removeLayerRefs(parent);
-      removeResizeHandler(parent);
-      removeUnitChangeHandler(relativeRuler);
-    }
+    removeLayerRefs(parent);
+    removeResizeHandler(parent);
+    removeUnitChangeHandler(relativeRuler);
   }
 
   private native void fillParentImpl(Element elem) /*-{

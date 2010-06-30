@@ -28,6 +28,7 @@ import com.google.gwt.layout.client.Layout.Layer;
  */
 public class LayoutImplIE8 extends LayoutImpl {
 
+  @Override
   public void layout(Layer layer) {
     Style style = layer.container.getStyle();
 
