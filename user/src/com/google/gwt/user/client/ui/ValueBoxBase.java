@@ -178,7 +178,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
   /**
    * Return the parsed value, or null if the field is empty.
    * 
-   * @throws ParseFailedException if the value cannot be parsed
+   * @throws ParseException if the value cannot be parsed
    */
   public T getValueOrThrow() throws ParseException {
     String text = getText().trim();
