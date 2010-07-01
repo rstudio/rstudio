@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -44,23 +44,23 @@ public class HandlerController {
   private class CheckboxHandler implements ValueChangeHandler<Boolean> {
     private CheckBox checkbox;
     private Handler handler;
-    
+
     public CheckboxHandler(CheckBox checkbox, Handler handler) {
       this.checkbox = checkbox;
       this.handler = handler;
     }
-    
+
     public void onValueChange(ValueChangeEvent<Boolean> event) {
       if (checkbox.getValue()) {
         logger.addHandler(handler);
       } else {
         logger.removeHandler(handler);
       }
-    } 
+    }
   }
-  
+
   interface MyUiBinder extends UiBinder<HTMLPanel, HandlerController> { }
-  
+
   private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
   @UiField CheckBox consoleCheckbox;
   @UiField CheckBox devmodeCheckbox;
@@ -71,11 +71,10 @@ public class HandlerController {
   private Map<String, Handler> handlers;
   private Logger logger;
   private Panel panel;
-  
+
   public HandlerController(final Logger logger) {
     this.logger = logger;
     panel = uiBinder.createAndBindUi(this);
-
     Handler[] handlersArray = logger.getHandlers();
     handlers = new HashMap<String, Handler>();
     if (handlersArray != null) {
@@ -83,20 +82,20 @@ public class HandlerController {
         handlers.put(h.getClass().getName(), h);
       }
     }
-    setupHandler(SystemLogHandler.class.getName(), systemCheckbox);
-    setupHandler(ConsoleLogHandler.class.getName(), consoleCheckbox);
-    setupHandler(DevelopmentModeLogHandler.class.getName(), devmodeCheckbox);
-    setupHandler(FirebugLogHandler.class.getName(), firebugCheckbox);
-    setupHandler(HasWidgetsLogHandler.class.getName(), popupCheckbox);
-    setupHandler(SimpleRemoteLogHandler.class.getName(), remoteCheckbox);
+    setupHandler(SystemLogHandler.class, systemCheckbox);
+    setupHandler(ConsoleLogHandler.class, consoleCheckbox);
+    setupHandler(DevelopmentModeLogHandler.class, devmodeCheckbox);
+    setupHandler(FirebugLogHandler.class, firebugCheckbox);
+    setupHandler(HasWidgetsLogHandler.class, popupCheckbox);
+    setupHandler(SimpleRemoteLogHandler.class, remoteCheckbox);
   }
-  
+
   public Panel getPanel() {
     return panel;
   }
-  
-  void setupHandler(String name, CheckBox checkbox) {
-    Handler h = handlers.get(name);
+
+  void setupHandler(Class clazz, CheckBox checkbox) {
+    Handler h = handlers.get(clazz.getName());
     if (h == null) {
       checkbox.setEnabled(false);
     } else {

@@ -3,21 +3,23 @@
   <g:HTMLPanel styleName='oneArea'>
     <table><tr><td class='centered'>
     GWT logging is configured separately from server side logging.
-    Clicking this button will trigger a logging call on the server, which
-    will be output by the loggers and handlers which are set up on the server.
+    Clicking this button will trigger a method on the server, which
+    uses loggers and handlers which are set up on the server.
     <br/>
-    <g:Button ui:field='serverLogButton'>
-      Trigger Server Log
+    <g:Button ui:field='serverMethodButton'>
+      Trigger Server Method
     </g:Button>
     </td><td class='centered'>
     In shared code libraries, the log messages will be handled by the loggers
-    and handlers of the calling code. Clicking these buttons will trigger a
-    shared logging library from the server or client code.
+    and handlers of the calling code. Clicking these buttons will trigger
+    methods that call a shared library.  The loggers and handlers used by the
+    shared library is determined by whether the library was called from the
+    server or client code.
     <br/>
-    <g:Button ui:field='serverSharedLogButton'>
+    <g:Button ui:field='serverSharedMethodButton'>
       From Server
     </g:Button>
-    <g:Button ui:field='clientSharedLogButton'>
+    <g:Button ui:field='clientSharedMethodButton'>
       From Client
     </g:Button>
     </td></tr></table>

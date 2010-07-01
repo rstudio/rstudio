@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -43,22 +43,18 @@ public class OneLoggerController {
   private Logger logger;
   private Panel panel;
 
-  public OneLoggerController(Logger logger) {
+  public OneLoggerController(Logger logger, String name) {
     this.logger = logger;
     panel = uiBinder.createAndBindUi(this);
-    String name = logger.getName();
-    if (name.isEmpty()) {
-      name = "RootLogger";
-    }
     loggerName.setInnerText(name);
     addLevelButtons();
     addLogButtons();
   }
-  
+
   public Panel getPanel() {
     return panel;
   }
-  
+
   @UiHandler("levelTextBox")
   void handleClick(ChangeEvent e) {
     Level level = Level.parse(levelTextBox.getItemText(
@@ -67,14 +63,24 @@ public class OneLoggerController {
         "Setting level to: " + level.getName());
     logger.setLevel(level);
   }
-  
+
   @UiHandler("logButton")
   void handleLogClick(ClickEvent e) {
     Level level = Level.parse(logTextBox.getItemText(
         logTextBox.getSelectedIndex()));
     logger.log(level, "This is a client log message");
   }
-  
+
+  @UiHandler("exceptionButton")
+  void handleExceptionClick(ClickEvent e) {
+    try {
+      Level n = null;
+      n.getName();
+    } catch (NullPointerException ex) {
+      logger.log(Level.SEVERE, "Null Exception Hit", ex);
+    }
+  }
+
   private void addLevelButtons() {
     levelTextBox.addItem("OFF");
     levelTextBox.addItem("SEVERE");
@@ -92,7 +98,7 @@ public class OneLoggerController {
       }
     }
   }
-  
+
   private void addLogButtons() {
     logTextBox.addItem("SEVERE");
     logTextBox.addItem("WARNING");
@@ -108,11 +114,14 @@ public class OneLoggerController {
       }
     }
   }
-  
+
   private String getLevel(Logger logger) {
-    if (logger.getLevel() != null) {
-      return logger.getLevel().getName();
+    if (logger != null) {
+      if (logger.getLevel() != null) {
+        return logger.getLevel().getName();
+      }
+      return getLevel(logger.getParent());
     }
-    return getLevel(logger.getParent());
+    return "";
   }
 }

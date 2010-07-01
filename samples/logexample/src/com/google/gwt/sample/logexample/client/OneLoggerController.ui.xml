@@ -5,10 +5,14 @@
     <br/>
       Level is:
       <g:ListBox ui:field='levelTextBox'/>
-      <br/>
+      <br/><br/>
       Log a message:
       <br/>
       <g:ListBox ui:field='logTextBox'/>
       <g:Button ui:field='logButton'>Log</g:Button>
+      <br/><br/>
+      <g:Button ui:field='exceptionButton'>
+        Trigger Exception
+      </g:Button>
   </g:HTMLPanel>
 </ui:UiBinder>

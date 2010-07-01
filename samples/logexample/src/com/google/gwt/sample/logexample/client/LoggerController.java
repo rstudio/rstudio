@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,11 +40,14 @@ public class LoggerController {
   public LoggerController(Logger rootLogger, Logger parentLogger,
       Logger childLogger) {
     panel = uiBinder.createAndBindUi(this);
-    rootControls.setWidget(new OneLoggerController(rootLogger).getPanel());
-    parentControls.setWidget(new OneLoggerController(parentLogger).getPanel());
-    childControls.setWidget(new OneLoggerController(childLogger).getPanel());
+    rootControls.setWidget(
+        new OneLoggerController(rootLogger, "Root Logger").getPanel());
+    parentControls.setWidget(
+        new OneLoggerController(parentLogger, "ParentLogger").getPanel());
+    childControls.setWidget(
+        new OneLoggerController(childLogger, "ParentLogger.Child").getPanel());
   }
-  
+
   public Panel getPanel() {
     return panel;
   }

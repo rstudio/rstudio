@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,7 +47,7 @@ public class LogExample implements EntryPoint {
   public void onModuleLoad() {
     HTMLPanel p = uiBinder.createAndBindUi(this);
     RootPanel.get().add(p);
-    
+
     loggerControls.setWidget(new LoggerController(
         rootLogger, parentLogger, childLogger).getPanel());
     handlerControls.setWidget(new HandlerController(rootLogger).getPanel());
@@ -56,15 +56,16 @@ public class LogExample implements EntryPoint {
     
     // This is kind of hacky, but we want the user to see this explanation
     // in the popup when the page starts up, so we pull out the popup handler
-    // and publish a message directly to it. Most applications should not need
-    // to do this.
+    // and publish a message directly to it. Most applications should not
+    // do this.
     Handler[] handlers = Logger.getLogger("").getHandlers();
-    for (Handler h : handlers) {
-      if (h instanceof HasWidgetsLogHandler) {
-        String msg = "This popup can be resized, moved and minimized";
-        h.publish(new LogRecord(Level.SEVERE, msg));
+    if (handlers != null) {
+      for (Handler h : handlers) {
+        if (h instanceof HasWidgetsLogHandler) {
+          String msg = "This popup can be resized, moved and minimized";
+          h.publish(new LogRecord(Level.SEVERE, msg));
+        }
       }
     }
   }
 }
-
