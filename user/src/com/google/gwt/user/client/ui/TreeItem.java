@@ -38,6 +38,12 @@ import java.util.List;
  * </p>
  */
 public class TreeItem extends UIObject implements HasHTML {
+
+  /**
+   * The margin applied to child items.
+   */
+  private static final double CHILD_MARGIN = 16.0;
+
   /**
    * Implementation class for {@link TreeItem}.
    */
@@ -247,6 +253,12 @@ public class TreeItem extends UIObject implements HasHTML {
 
   private ArrayList<TreeItem> children;
   private Element contentElem, childSpanElem, imageHolder;
+
+  /**
+   * Indicates that this item is a root item in a tree.
+   */
+  private boolean isRoot;
+
   private boolean open;
   private TreeItem parent;
   private boolean selected;
@@ -261,10 +273,7 @@ public class TreeItem extends UIObject implements HasHTML {
    * Creates an empty tree item.
    */
   public TreeItem() {
-    Element elem = DOM.clone(BASE_BARE_ELEM, true);
-    setElement(elem);
-    contentElem = DOM.getFirstChild(elem);
-    DOM.setElementAttribute(contentElem, "id", DOM.createUniqueId());
+    this(false);
   }
 
   /**
@@ -288,6 +297,24 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   /**
+   * Creates an empty tree item.
+   * 
+   * @param isRoot true if this item is the root of a tree
+   */
+  TreeItem(boolean isRoot) {
+    this.isRoot = isRoot;
+    Element elem = DOM.clone(BASE_BARE_ELEM, true);
+    setElement(elem);
+    contentElem = DOM.getFirstChild(elem);
+    DOM.setElementAttribute(contentElem, "id", DOM.createUniqueId());
+
+    // The root item always has children.
+    if (isRoot) {
+      initChildren();
+    }
+  }
+
+  /**
    * Adds a child tree item containing the specified text.
    * 
    * @param itemText the text to be added
@@ -305,6 +332,9 @@ public class TreeItem extends UIObject implements HasHTML {
    * @param item the item to be added
    */
   public void addItem(TreeItem item) {
+    // If this is the item's parent, removing the item will affect the child
+    // count.
+    maybeRemoveItemFromParent(item);
     insertItem(getChildCount(), item);
   }
 
@@ -441,9 +471,7 @@ public class TreeItem extends UIObject implements HasHTML {
   public void insertItem(int beforeIndex, TreeItem item)
       throws IndexOutOfBoundsException {
     // Detach item from existing parent.
-    if ((item.getParentItem() != null) || (item.getTree() != null)) {
-      item.remove();
-    }
+    maybeRemoveItemFromParent(item);
 
     // Check the index after detaching in case this item was already the parent.
     int childCount = getChildCount();
@@ -456,28 +484,32 @@ public class TreeItem extends UIObject implements HasHTML {
     }
 
     // Set the margin.
+    // Use no margin on top-most items.
+    double margin = isRoot ? 0.0 : CHILD_MARGIN;
     if (LocaleInfo.getCurrentLocale().isRTL()) {
-      item.getElement().getStyle().setMarginRight(16.0, Unit.PX);
+      item.getElement().getStyle().setMarginRight(margin, Unit.PX);
     } else {
-      item.getElement().getStyle().setMarginLeft(16.0, Unit.PX);
+      item.getElement().getStyle().setMarginLeft(margin, Unit.PX);
     }
 
     // Physical attach.
+    Element childContainer = isRoot ? tree.getElement() : childSpanElem;
     if (beforeIndex == childCount) {
-      childSpanElem.appendChild(item.getElement());
+      childContainer.appendChild(item.getElement());
     } else {
       Element beforeElem = getChild(beforeIndex).getElement();
-      childSpanElem.insertBefore(item.getElement(), beforeElem);
+      childContainer.insertBefore(item.getElement(), beforeElem);
     }
 
     // Logical attach.
-    item.setParentItem(this);
-    children.add(item);
+    // Explicitly set top-level items' parents to null if this is root.
+    item.setParentItem(isRoot ? null : this);
+    children.add(beforeIndex, item);
 
     // Adopt.
     item.setTree(tree);
 
-    if (children.size() == 1) {
+    if (!isRoot && children.size() == 1) {
       updateState(false, false);
     }
   }
@@ -534,16 +566,21 @@ public class TreeItem extends UIObject implements HasHTML {
     }
 
     // Orphan.
+    Tree oldTree = tree;
     item.setTree(null);
 
     // Physical detach.
-    DOM.removeChild(childSpanElem, item.getElement());
+    if (isRoot) {
+      oldTree.getElement().removeChild(item.getElement());
+    } else {
+      childSpanElem.removeChild(item.getElement());
+    }
 
     // Logical detach.
     item.setParentItem(null);
     children.remove(item);
 
-    if (children.size() == 0) {
+    if (!isRoot && children.size() == 0) {
       updateState(false, false);
     }
   }
@@ -773,6 +810,17 @@ public class TreeItem extends UIObject implements HasHTML {
 
   boolean isFullNode() {
     return imageHolder != null;
+  }
+
+  /**
+   * Remove a tree item from its parent if it has one.
+   * 
+   * @param item the tree item to remove from its parent
+   */
+  void maybeRemoveItemFromParent(TreeItem item) {
+    if ((item.getParentItem() != null) || (item.getTree() != null)) {
+      item.remove();
+    }
   }
 
   void setParentItem(TreeItem parent) {

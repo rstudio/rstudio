@@ -180,18 +180,32 @@ public class TreeTest extends GWTTestCase {
   public void testRootInsert() {
     Tree t = new Tree();
     TreeItem b = t.addItem("b");
+    assertEquals(1, t.getItemCount());
+    assertEquals(b, t.getItem(0));
 
     // Insert at zero.
     TreeItem a = t.insertItem(0, "a");
+    assertEquals(2, t.getItemCount());
+    assertEquals(a, t.getItem(0));
+    assertEquals(b, t.getItem(1));
     assertEquals(a.getElement().getNextSiblingElement(), b.getElement());
 
     // Insert at end.
     TreeItem d = t.insertItem(2, new Label("d"));
+    assertEquals(3, t.getItemCount());
+    assertEquals(a, t.getItem(0));
+    assertEquals(b, t.getItem(1));
+    assertEquals(d, t.getItem(2));
     assertEquals(b.getElement().getNextSiblingElement(), d.getElement());
 
     // Insert in the middle.
     TreeItem c = new TreeItem("c");
     t.insertItem(2, c);
+    assertEquals(4, t.getItemCount());
+    assertEquals(a, t.getItem(0));
+    assertEquals(b, t.getItem(1));
+    assertEquals(c, t.getItem(2));
+    assertEquals(d, t.getItem(3));
     assertEquals(b.getElement().getNextSiblingElement(), c.getElement());
   }
 

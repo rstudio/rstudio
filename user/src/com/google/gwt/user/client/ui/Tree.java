@@ -999,60 +999,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     // The 'root' item is invisible and serves only as a container
     // for all top-level items.
-    root = new TreeItem() {
-      @Override
-      public void insertItem(int beforeIndex, TreeItem item)
-          throws IndexOutOfBoundsException {
-        // Check the index.
-        int childCount = getChildCount();
-        if (beforeIndex < 0 || beforeIndex > childCount) {
-          throw new IndexOutOfBoundsException();
-        }
-
-        // If this element already belongs to a tree or tree item, remove it.
-        if ((item.getParentItem() != null) || (item.getTree() != null)) {
-          item.remove();
-        }
-
-        // Physical attach.
-        Element treeElem = Tree.this.getElement();
-        if (beforeIndex == childCount) {
-          treeElem.appendChild(item.getElement());
-        } else {
-          Element beforeElem = getChild(beforeIndex).getElement();
-          treeElem.insertBefore(item.getElement(), beforeElem);
-        }
-
-        // Logical attach.
-        item.setTree(this.getTree());
-
-        // Explicitly set top-level items' parents to null.
-        item.setParentItem(null);
-        getChildren().add(item);
-
-        // Use no margin on top-most items.
-        if (LocaleInfo.getCurrentLocale().isRTL()) {
-          DOM.setIntStyleAttribute(item.getElement(), "marginRight", 0);
-        } else {
-          DOM.setIntStyleAttribute(item.getElement(), "marginLeft", 0);
-        }
-      }
-
-      @Override
-      public void removeItem(TreeItem item) {
-        if (!getChildren().contains(item)) {
-          return;
-        }
-
-        // Update Item state.
-        item.setTree(null);
-        item.setParentItem(null);
-        getChildren().remove(item);
-
-        DOM.removeChild(Tree.this.getElement(), item.getElement());
-      }
-    };
-    root.initChildren();
+    root = new TreeItem(true);
     root.setTree(this);
     setStyleName("gwt-Tree");
 
