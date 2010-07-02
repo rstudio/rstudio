@@ -30,6 +30,66 @@ public class MockPagingListView<T> implements PagingListView<T> {
 
   private static final int DEFAULT_PAGE_SIZE = 10;
 
+  /**
+   * A mock delegate used for testing.
+   * 
+   * @param <T> the data type of each row
+   */
+  public static class MockDelegate<T> implements Delegate<T> {
+
+    private ListView<T> listView;
+
+    /**
+     * Clear the last list view.
+     */
+    public void clearListView() {
+      this.listView = null;
+    }
+
+    /**
+     * Get the last list view to use the delegate.
+     * 
+     * @return the last {@link ListView}
+     */
+    public ListView<T> getLastListView() {
+      return listView;
+    }
+
+    public void onRangeChanged(ListView<T> listView) {
+      this.listView = listView;
+    }
+  }
+
+  /**
+   * A mock pager used for testing.
+   * 
+   * @param <T> the data type of each row
+   */
+  public static class MockPager<T> implements Pager<T> {
+
+    private ListView<T> listView;
+
+    /**
+     * Clear the last list view.
+     */
+    public void clearListView() {
+      this.listView = null;
+    }
+
+    /**
+     * Get the last list view to use the pager.
+     * 
+     * @return the last {@link ListView}
+     */
+    public ListView<T> getLastListView() {
+      return listView;
+    }
+
+    public void onRangeOrSizeChanged(PagingListView<T> listView) {
+      this.listView = listView;
+    }
+  }
+
   private int dataSize;
   private boolean dataSizeExact;
   private Delegate<T> delegate;
@@ -71,14 +131,6 @@ public class MockPagingListView<T> implements PagingListView<T> {
     return lastRange;
   }
 
-  public int getPageSize() {
-    return pageSize;
-  }
-
-  public int getPageStart() {
-    return pageStart;
-  }
-
   public Range getRange() {
     return new Range(pageStart, pageSize);
   }
@@ -111,14 +163,6 @@ public class MockPagingListView<T> implements PagingListView<T> {
 
   public void setPager(Pager<T> pager) {
     this.pager = pager;
-  }
-
-  public void setPageSize(int pageSize) {
-    setRange(pageStart, pageSize);
-  }
-
-  public void setPageStart(int pageStart) {
-    setRange(pageStart, pageSize);
   }
 
   public void setRange(int start, int length) {

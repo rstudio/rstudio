@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.Range;
 
 /**
  * A pager for controlling a PagingListView that uses a series of buttons for
@@ -58,7 +59,7 @@ public class SimplePager<T> extends AbstractPager<T> implements ClickHandler {
    * additional rows to be displayed.
    */
   public boolean canAddRows(int rows) {
-    return view.getDataSize() - view.getPageSize() >= rows;
+    return view.getDataSize() - getPageSize() >= rows;
   }
 
   /**
@@ -66,7 +67,7 @@ public class SimplePager<T> extends AbstractPager<T> implements ClickHandler {
    * to be removed.
    */
   public boolean canRemoveRows(int rows) {
-    return view.getPageSize() > rows;
+    return getPageSize() > rows;
   }
 
   public void onClick(ClickEvent event) {
@@ -91,7 +92,7 @@ public class SimplePager<T> extends AbstractPager<T> implements ClickHandler {
   }
 
   private void addRows(int rows) {
-    view.setPageSize(view.getPageSize() + rows);
+    setPageSize(getPageSize() + rows);
   }
 
   private Button makeButton(String label, String id) {
@@ -102,7 +103,7 @@ public class SimplePager<T> extends AbstractPager<T> implements ClickHandler {
   }
 
   private void removeRows(int rows) {
-    view.setPageSize(view.getPageSize() - rows);
+    setPageSize(getPageSize() - rows);
   }
 
   private void updateButtons() {
@@ -111,11 +112,13 @@ public class SimplePager<T> extends AbstractPager<T> implements ClickHandler {
     prevPageButton.setEnabled(hasPreviousPage());
     nextPageButton.setEnabled(hasNextPage());
 
-    int page = (view.getPageStart() / view.getPageSize()) + 1;
-    int numPages = (view.getDataSize() + view.getPageSize() - 1)
-        / view.getPageSize();
+    Range range = view.getRange();
+    int pageStart = range.getStart();
+    int pageSize = range.getLength();
+    int page = (pageStart / pageSize) + 1;
+    int numPages = (view.getDataSize() + pageSize - 1) / pageSize;
     infoLabel.setText("Page " + page + " of " + numPages + ": Page Start = "
-        + view.getPageStart() + ", Page Size = " + view.getPageSize()
-        + ", Data Size = " + view.getDataSize());
+        + pageStart + ", Page Size = " + pageSize + ", Data Size = "
+        + view.getDataSize());
   }
 }

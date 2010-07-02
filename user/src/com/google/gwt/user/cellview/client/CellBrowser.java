@@ -617,7 +617,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
    * @return the {@link Pager}
    */
   protected <C> Pager<C> createPager(PagingListView<C> listView) {
-    return new PageSizePager<C>(listView, listView.getPageSize());
+    return new PageSizePager<C>(listView, listView.getRange().getLength());
   }
 
   /**

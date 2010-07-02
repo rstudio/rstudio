@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.view.client.TreeViewModel;
 import com.google.gwt.view.client.PagingListView;
@@ -33,8 +34,10 @@ import com.google.gwt.view.client.TreeViewModel.NodeInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A view of a tree node.
@@ -98,214 +101,258 @@ class CellTreeNodeView<T> extends UIObject {
    * 
    * @param <C> the child item type
    */
-  private static class NodeListView<C> implements PagingListView<C> {
+  private static class NodeCellList<C> implements PagingListView<C> {
 
+    /**
+     * The view used by the NodeCellList.
+     */
+    private class View extends PagingListViewPresenter.DefaultView<C> {
+
+      public View(Element childContainer) {
+        super(childContainer);
+      }
+
+      public boolean dependsOnSelection() {
+        return cell.dependsOnSelection();
+      }
+
+      public void render(StringBuilder sb, List<C> values, int start,
+          SelectionModel<? super C> selectionModel) {
+        // Cache the style names that will be used for each child.
+        CellTree.Style style = nodeView.tree.getStyle();
+        String selectedStyle = style.selectedItem();
+        String itemStyle = style.item();
+        String itemImageValueStyle = style.itemImageValue();
+        String itemValueStyle = style.itemValue();
+        String openStyle = style.openItem();
+        String topStyle = style.topItem();
+        String topImageValueStyle = style.topItemImageValue();
+        boolean isRootNode = nodeView.isRootNode();
+        String openImage = nodeView.tree.getOpenImageHtml(isRootNode);
+        String closedImage = nodeView.tree.getClosedImageHtml(isRootNode);
+        int imageWidth = nodeView.tree.getImageWidth();
+        int paddingLeft = imageWidth * nodeView.depth;
+
+        // Create a set of currently open nodes.
+        Set<Object> openNodes = new HashSet<Object>();
+        int childCount = nodeView.getChildCount();
+        int end = start + values.size();
+        for (int i = start; i < end && i < childCount; i++) {
+          CellTreeNodeView<?> child = nodeView.getChildNode(i);
+          // Ignore child nodes that are closed.
+          if (child.isOpen()) {
+            openNodes.add(child.getValueKey());
+          }
+        }
+
+        // Render the child nodes.
+        ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
+        TreeViewModel model = nodeView.tree.getTreeViewModel();
+        for (C value : values) {
+          Object key = providesKey.getKey(value);
+          boolean isOpen = openNodes.contains(key);
+
+          // Outer div contains image, value, and children (when open).
+          sb.append("<div>");
+
+          // The selection pads the content based on the depth.
+          sb.append("<div style='padding-left:");
+          sb.append(paddingLeft);
+          sb.append("px;' class='").append(itemStyle);
+          if (isOpen) {
+            sb.append(" ").append(openStyle);
+          }
+          if (isRootNode) {
+            sb.append(" ").append(topStyle);
+          }
+          if (selectionModel != null && selectionModel.isSelected(value)) {
+            sb.append(" ").append(selectedStyle);
+          }
+          sb.append("'>");
+
+          // Inner div contains image and value.
+          sb.append("<div onclick='' style='position:relative;padding-left:");
+          sb.append(imageWidth);
+          sb.append("px;' class='").append(itemImageValueStyle);
+          if (isRootNode) {
+            sb.append(" ").append(topImageValueStyle);
+          }
+          sb.append("'>");
+
+          // Add the open/close icon.
+          if (isOpen) {
+            sb.append(openImage);
+          } else if (model.isLeaf(value)) {
+            sb.append(LEAF_IMAGE);
+          } else {
+            sb.append(closedImage);
+          }
+
+          // Content div contains value.
+          sb.append("<div class='").append(itemValueStyle).append("'>");
+          cell.render(value, null, sb);
+          sb.append("</div></div></div></div>");
+        }
+      }
+
+      @Override
+      public void replaceAllChildren(List<C> values, String html) {
+        // Hide the child container so we can animate it.
+        if (nodeView.tree.isAnimationEnabled()) {
+          nodeView.ensureAnimationFrame().getStyle().setDisplay(Display.NONE);
+        }
+
+        // Replace the child nodes.
+        Map<Object, CellTreeNodeView<?>> savedViews = saveChildState(values, 0);
+        super.replaceAllChildren(values, html);
+        loadChildState(values, 0, savedViews);
+
+        // Animate the child container open.
+        if (nodeView.tree.isAnimationEnabled()) {
+          nodeView.tree.maybeAnimateTreeNode(nodeView);
+        }
+      }
+
+      @Override
+      public void replaceChildren(List<C> values, int start, String html) {
+        Map<Object, CellTreeNodeView<?>> savedViews = saveChildState(values, 0);
+        super.replaceChildren(values, start, html);
+        loadChildState(values, 0, savedViews);
+      }
+
+      public void setLoadingState(LoadingState state) {
+        nodeView.updateImage(state == LoadingState.LOADING);
+        showOrHide(nodeView.emptyMessageElem, state == LoadingState.EMPTY);
+      }
+
+      @Override
+      protected void setSelected(Element elem, boolean selected) {
+        setStyleName(getSelectionElement(elem),
+            nodeView.tree.getStyle().selectedItem(), selected);
+      }
+
+      /**
+       * Reload the open children after rendering new items in this node.
+       * 
+       * @param values the values being replaced
+       * @param start the start index
+       * @param savedViews the open nodes
+       */
+      private void loadChildState(List<C> values, int start,
+          Map<Object, CellTreeNodeView<?>> savedViews) {
+        int len = values.size();
+        int end = start + len;
+        int childCount = nodeView.getChildCount();
+        ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
+        Element childElem = nodeView.ensureChildContainer().getFirstChildElement();
+        for (int i = start; i < end; i++) {
+          C childValue = values.get(i - start);
+          CellTreeNodeView<C> child = nodeView.createTreeNodeView(nodeInfo,
+              childElem, childValue, null);
+          CellTreeNodeView<?> savedChild = savedViews.remove(providesKey.getKey(childValue));
+          // Copy the saved child's state into the new child
+          if (savedChild != null) {
+            child.animationFrame = savedChild.animationFrame;
+            child.contentContainer = savedChild.contentContainer;
+            child.childContainer = savedChild.childContainer;
+            child.children = savedChild.children;
+            child.emptyMessageElem = savedChild.emptyMessageElem;
+            child.nodeInfo = savedChild.nodeInfo;
+            child.nodeInfoLoaded = savedChild.nodeInfoLoaded;
+            child.open = savedChild.open;
+            child.showMoreElem = savedChild.showMoreElem;
+
+            // Swap the node view in the child. We reuse the same NodeListView
+            // so that we don't have to unset and register a new view with the
+            // NodeInfo.
+            savedChild.listView.setNodeView(child);
+
+            // Copy the child container element to the new child
+            child.getElement().appendChild(savedChild.ensureAnimationFrame());
+          }
+
+          if (childCount > i) {
+            if (savedChild == null) {
+              // Cleanup the child node if we aren't going to reuse it.
+              nodeView.children.get(i).cleanup();
+            }
+            nodeView.children.set(i, child);
+          } else {
+            nodeView.children.add(child);
+          }
+          childElem = childElem.getNextSiblingElement();
+        }
+      }
+
+      /**
+       * Save the state of the open child nodes within the range of the
+       * specified values. Use {@link #loadChildState(List, int, Map)} to
+       * re-attach the open nodes after they have been replaced.
+       * 
+       * @param values the values being replaced
+       * @param start the start index
+       * @return the map of open nodes
+       */
+      private Map<Object, CellTreeNodeView<?>> saveChildState(List<C> values,
+          int start) {
+        // Ensure that we have a children array.
+        if (nodeView.children == null) {
+          nodeView.children = new ArrayList<CellTreeNodeView<?>>();
+        }
+
+        // Construct a map of former child views based on their value keys.
+        int len = values.size();
+        int end = start + len;
+        int childCount = nodeView.getChildCount();
+        Map<Object, CellTreeNodeView<?>> openNodes = new HashMap<Object, CellTreeNodeView<?>>();
+        for (int i = start; i < end && i < childCount; i++) {
+          CellTreeNodeView<?> child = nodeView.getChildNode(i);
+          // Ignore child nodes that are closed.
+          if (child.isOpen()) {
+            openNodes.put(child.getValueKey(), child);
+          }
+        }
+
+        // Trim the saved views down to the children that still exists.
+        ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
+        Map<Object, CellTreeNodeView<?>> savedViews = new HashMap<Object, CellTreeNodeView<?>>();
+        for (C childValue : values) {
+          // Remove any child elements that correspond to prior children
+          // so the call to setInnerHtml will not destroy them
+          Object key = providesKey.getKey(childValue);
+          CellTreeNodeView<?> savedView = openNodes.remove(key);
+          if (savedView != null) {
+            savedView.ensureAnimationFrame().removeFromParent();
+            savedViews.put(key, savedView);
+          }
+        }
+        return savedViews;
+      }
+    }
+
+    private final Cell<C> cell;
     private final int defaultPageSize;
-    private final CellListImpl<C> impl;
+    private final NodeInfo<C> nodeInfo;
     private CellTreeNodeView<?> nodeView;
-    private Map<Object, CellTreeNodeView<?>> savedViews;
+    private final PagingListViewPresenter<C> presenter;
 
-    public NodeListView(final NodeInfo<C> nodeInfo,
+    public NodeCellList(final NodeInfo<C> nodeInfo,
         final CellTreeNodeView<?> nodeView, int pageSize) {
       this.defaultPageSize = pageSize;
+      this.nodeInfo = nodeInfo;
       this.nodeView = nodeView;
+      cell = nodeInfo.getCell();
 
-      final Cell<C> cell = nodeInfo.getCell();
-      impl = new CellListImpl<C>(this, pageSize,
-          nodeView.ensureChildContainer()) {
-
-        @Override
-        public void setData(List<C> values, int start) {
-          nodeView.updateImage(false);
-
-          // Ensure that we have a children array.
-          if (nodeView.children == null) {
-            nodeView.children = new ArrayList<CellTreeNodeView<?>>();
-          }
-
-          // Construct a map of former child views based on their value keys.
-          int len = values.size();
-          int end = start + len;
-          int childCount = nodeView.getChildCount();
-          Map<Object, CellTreeNodeView<?>> openNodes = new HashMap<Object, CellTreeNodeView<?>>();
-          for (int i = start; i < end && i < childCount; i++) {
-            CellTreeNodeView<?> child = nodeView.getChildNode(i);
-            // Ignore child nodes that are closed.
-            if (child.isOpen()) {
-              openNodes.put(child.getValueKey(), child);
-            }
-          }
-
-          // Hide the child container so we can animate it.
-          if (nodeView.tree.isAnimationEnabled()) {
-            nodeView.ensureAnimationFrame().getStyle().setDisplay(Display.NONE);
-          }
-
-          // Trim the saved views down to the children that still exists.
-          ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
-          savedViews = new HashMap<Object, CellTreeNodeView<?>>();
-          for (C childValue : values) {
-            // Remove any child elements that correspond to prior children
-            // so the call to setInnerHtml will not destroy them
-            Object key = providesKey.getKey(childValue);
-            CellTreeNodeView<?> savedView = openNodes.remove(key);
-            if (savedView != null) {
-              savedView.ensureAnimationFrame().removeFromParent();
-              savedViews.put(key, savedView);
-            }
-          }
-
-          // Create the new cells.
-          super.setData(values, start);
-
-          // Create the child TreeNodeViews from the new elements.
-          Element childElem = nodeView.ensureChildContainer().getFirstChildElement();
-          for (int i = start; i < end; i++) {
-            C childValue = values.get(i - start);
-            CellTreeNodeView<C> child = nodeView.createTreeNodeView(nodeInfo,
-                childElem, childValue, null);
-            CellTreeNodeView<?> savedChild = savedViews.remove(providesKey.getKey(childValue));
-            // Copy the saved child's state into the new child
-            if (savedChild != null) {
-              child.animationFrame = savedChild.animationFrame;
-              child.contentContainer = savedChild.contentContainer;
-              child.childContainer = savedChild.childContainer;
-              child.children = savedChild.children;
-              child.emptyMessageElem = savedChild.emptyMessageElem;
-              child.nodeInfo = savedChild.nodeInfo;
-              child.nodeInfoLoaded = savedChild.nodeInfoLoaded;
-              child.open = savedChild.open;
-              child.showMoreElem = savedChild.showMoreElem;
-
-              // Swap the node view in the child. We reuse the same NodeListView
-              // so that we don't have to unset and register a new view with the
-              // NodeInfo.
-              savedChild.listView.setNodeView(child);
-
-              // Copy the child container element to the new child
-              child.getElement().appendChild(savedChild.ensureAnimationFrame());
-            }
-
-            if (childCount > i) {
-              if (savedChild == null) {
-                // Cleanup the child node if we aren't going to reuse it.
-                nodeView.children.get(i).cleanup();
-              }
-              nodeView.children.set(i, child);
-            } else {
-              nodeView.children.add(child);
-            }
-            childElem = childElem.getNextSiblingElement();
-          }
-
-          // Clear temporary state.
-          savedViews = null;
-
-          // Animate the child container open.
-          if (nodeView.tree.isAnimationEnabled()) {
-            nodeView.tree.maybeAnimateTreeNode(nodeView);
-          }
-        }
-
-        @Override
-        protected boolean dependsOnSelection() {
-          return cell.dependsOnSelection();
-        }
-
-        @Override
-        protected void emitHtml(StringBuilder sb, List<C> values, int start,
-            SelectionModel<? super C> selectionModel) {
-          // Cache the style names that will be used for each child.
-          CellTree.Style style = nodeView.tree.getStyle();
-          String selectedStyle = style.selectedItem();
-          String itemStyle = style.item();
-          String itemImageValueStyle = style.itemImageValue();
-          String itemValueStyle = style.itemValue();
-          String openStyle = style.openItem();
-          String topStyle = style.topItem();
-          String topImageValueStyle = style.topItemImageValue();
-          boolean isRootNode = nodeView.isRootNode();
-          String openImage = nodeView.tree.getOpenImageHtml(isRootNode);
-          String closedImage = nodeView.tree.getClosedImageHtml(isRootNode);
-          int imageWidth = nodeView.tree.getImageWidth();
-          int paddingLeft = imageWidth * nodeView.depth;
-
-          // Render the child nodes.
-          ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
-          TreeViewModel model = nodeView.tree.getTreeViewModel();
-          for (C value : values) {
-            Object key = providesKey.getKey(value);
-            boolean isOpen = savedViews.containsKey(key);
-
-            // Outer div contains image, value, and children (when open).
-            sb.append("<div>");
-
-            // The selection pads the content based on the depth.
-            sb.append("<div style='padding-left:");
-            sb.append(paddingLeft);
-            sb.append("px;' class='").append(itemStyle);
-            if (isOpen) {
-              sb.append(" ").append(openStyle);
-            }
-            if (isRootNode) {
-              sb.append(" ").append(topStyle);
-            }
-            if (selectionModel != null && selectionModel.isSelected(value)) {
-              sb.append(" ").append(selectedStyle);
-            }
-            sb.append("'>");
-
-            // Inner div contains image and value.
-            sb.append("<div onclick='' style='position:relative;padding-left:");
-            sb.append(imageWidth);
-            sb.append("px;' class='").append(itemImageValueStyle);
-            if (isRootNode) {
-              sb.append(" ").append(topImageValueStyle);
-            }
-            sb.append("'>");
-
-            // Add the open/close icon.
-            if (isOpen) {
-              sb.append(openImage);
-            } else if (model.isLeaf(value)) {
-              sb.append(LEAF_IMAGE);
-            } else {
-              sb.append(closedImage);
-            }
-
-            // Content div contains value.
-            sb.append("<div class='").append(itemValueStyle).append("'>");
-            cell.render(value, null, sb);
-            sb.append("</div></div></div></div>");
-          }
-        }
-
-        @Override
-        protected void removeLastItem() {
-          CellTreeNodeView<?> child = nodeView.children.remove(nodeView.children.size() - 1);
-          child.cleanup();
-          super.removeLastItem();
-        }
-
-        @Override
-        protected void setSelected(Element elem, boolean selected) {
-          setStyleName(getSelectionElement(elem),
-              nodeView.tree.getStyle().selectedItem(), selected);
-        }
-      };
+      presenter = new PagingListViewPresenter<C>(this, new View(
+          nodeView.ensureChildContainer()), pageSize);
 
       // Use a pager to update buttons.
-      impl.setPager(new Pager<C>() {
+      presenter.setPager(new Pager<C>() {
         public void onRangeOrSizeChanged(PagingListView<C> listView) {
           // Assumes a page start of 0.
-          int dataSize = impl.getDataSize();
-          showOrHide(nodeView.showMoreElem, dataSize > impl.getPageSize());
-          if (dataSize == 0) {
-            showOrHide(nodeView.emptyMessageElem, true);
-            nodeView.updateImage(false);
-          } else {
-            showOrHide(nodeView.emptyMessageElem, false);
-          }
+          int dataSize = presenter.getDataSize();
+          int pageSize = getRange().getLength();
+          showOrHide(nodeView.showMoreElem, dataSize > pageSize);
         }
       });
     }
@@ -314,59 +361,47 @@ class CellTreeNodeView<T> extends UIObject {
      * Cleanup this node view.
      */
     public void cleanup() {
-      impl.setSelectionModel(null, false);
+      presenter.clearSelectionModel();
     }
-    
+
     public int getDataSize() {
-      return impl.getDataSize();
+      return presenter.getDataSize();
     }
 
     public int getDefaultPageSize() {
       return defaultPageSize;
     }
 
-    public int getPageSize() {
-      return impl.getPageSize();
-    }
-
-    public int getPageStart() {
-      return impl.getPageStart();
-    }
-
     public Range getRange() {
-      return impl.getRange();
+      return presenter.getRange();
     }
 
     public boolean isDataSizeExact() {
-      return impl.dataSizeIsExact();
+      return presenter.isDataSizeExact();
     }
 
     public void setData(int start, int length, List<C> values) {
-      impl.setData(values, start);
+      presenter.setData(start, length, values);
     }
 
     public void setDataSize(int size, boolean isExact) {
-      impl.setDataSize(size, isExact);
+      presenter.setDataSize(size, isExact);
     }
 
     public void setDelegate(Delegate<C> delegate) {
-      impl.setDelegate(delegate);
+      presenter.setDelegate(delegate);
     }
 
     public void setPager(Pager<C> pager) {
-      impl.setPager(pager);
+      presenter.setPager(pager);
     }
 
-    public void setPageSize(int pageSize) {
-      impl.setPageSize(pageSize);
-    }
-
-    public void setPageStart(int pageStart) {
-      impl.setPageStart(pageStart);
+    public void setRange(int start, int length) {
+      presenter.setRange(start, length);
     }
 
     public void setSelectionModel(final SelectionModel<? super C> selectionModel) {
-      impl.setSelectionModel(selectionModel, true);
+      presenter.setSelectionModel(selectionModel);
     }
 
     /**
@@ -422,7 +457,7 @@ class CellTreeNodeView<T> extends UIObject {
   /**
    * The list view used to display the nodes.
    */
-  private NodeListView<?> listView;
+  private NodeCellList<?> listView;
 
   /**
    * The info about children of this node.
@@ -539,7 +574,6 @@ class CellTreeNodeView<T> extends UIObject {
           setStyleName(getCellParent(), tree.getStyle().openItem(), true);
         }
         ensureAnimationFrame().getStyle().setProperty("display", "");
-        updateImage(true);
         onOpen(nodeInfo);
       }
     } else {
@@ -643,7 +677,7 @@ class CellTreeNodeView<T> extends UIObject {
    * @param <C> the child data type of the node
    */
   protected <C> void onOpen(final NodeInfo<C> nodeInfo) {
-    NodeListView<C> view = new NodeListView<C>(nodeInfo, this,
+    NodeCellList<C> view = new NodeCellList<C>(nodeInfo, this,
         tree.getDefaultNodeSize());
     listView = view;
     view.setSelectionModel(nodeInfo.getSelectionModel());
@@ -720,15 +754,17 @@ class CellTreeNodeView<T> extends UIObject {
   }
 
   void showFewer() {
+    Range range = listView.getRange();
     int defaultPageSize = listView.getDefaultPageSize();
-    int maxSize = Math.max(defaultPageSize, listView.impl.getPageSize()
-        - defaultPageSize);
-    listView.impl.setPageSize(maxSize);
+    int maxSize = Math.max(defaultPageSize, range.getLength() - defaultPageSize);
+    listView.setRange(range.getStart(), maxSize);
   }
 
   void showMore() {
-    listView.impl.setPageSize(listView.impl.getPageSize()
-        + listView.getDefaultPageSize());
+    Range range = listView.getRange();
+    int pageSize = listView.getRange().getLength()
+        + listView.getDefaultPageSize();
+    listView.setRange(range.getStart(), pageSize);
   }
 
   /**

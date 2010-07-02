@@ -27,6 +27,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.PagingListView;
@@ -83,6 +84,51 @@ public class CellList<T> extends Widget implements PagingListView<T> {
   }
 
   /**
+   * The view used by the presenter.
+   */
+  private class View extends PagingListViewPresenter.DefaultView<T> {
+
+    public View(Element childContainer) {
+      super(childContainer);
+    }
+
+    public boolean dependsOnSelection() {
+      return cell.dependsOnSelection();
+    }
+
+    public void render(StringBuilder sb, List<T> values, int start,
+        SelectionModel<? super T> selectionModel) {
+      int length = values.size();
+      int end = start + length;
+      for (int i = start; i < end; i++) {
+        T value = values.get(i - start);
+        boolean isSelected = selectionModel == null ? false
+            : selectionModel.isSelected(value);
+        // TODO(jlabanca): Factor out __idx because rows can move.
+        sb.append("<div onclick='' __idx='").append(i).append("'");
+        sb.append(" class='");
+        sb.append(i % 2 == 0 ? style.evenItem() : style.oddItem());
+        if (isSelected) {
+          sb.append(" ").append(style.selectedItem());
+        }
+        sb.append("'>");
+        cell.render(value, null, sb);
+        sb.append("</div>");
+      }
+    }
+
+    public void setLoadingState(LoadingState state) {
+      showOrHide(emptyMessageElem, state == LoadingState.EMPTY);
+      // TODO(jlabanca): Add a loading icon.
+    }
+
+    @Override
+    protected void setSelected(Element elem, boolean selected) {
+      setStyleName(elem, style.selectedItem(), selected);
+    }
+  }
+
+  /**
    * The default page size.
    */
   private static final int DEFAULT_PAGE_SIZE = 25;
@@ -100,9 +146,10 @@ public class CellList<T> extends Widget implements PagingListView<T> {
   private final Element childContainer;
   private String emptyListMessage = "";
   private final Element emptyMessageElem;
-  private final CellListImpl<T> impl;
+  private final PagingListViewPresenter<T> presenter;
   private final Style style;
   private ValueUpdater<T> valueUpdater;
+  private final View view;
 
   /**
    * Construct a new {@link CellList}.
@@ -139,49 +186,12 @@ public class CellList<T> extends Widget implements PagingListView<T> {
     sinkEvents(Event.ONCLICK | Event.ONCHANGE | Event.MOUSEEVENTS);
 
     // Create the implementation.
-    impl = new CellListImpl<T>(this, DEFAULT_PAGE_SIZE, childContainer) {
-
-      @Override
-      protected boolean dependsOnSelection() {
-        return cell.dependsOnSelection();
-      }
-
-      @Override
-      protected void emitHtml(StringBuilder sb, List<T> values, int start,
-          SelectionModel<? super T> selectionModel) {
-        int length = values.size();
-        int end = start + length;
-        for (int i = start; i < end; i++) {
-          T value = values.get(i - start);
-          boolean isSelected = selectionModel == null ? false
-              : selectionModel.isSelected(value);
-          sb.append("<div onclick='' __idx='").append(i).append("'");
-          sb.append(" class='");
-          sb.append(i % 2 == 0 ? style.evenItem() : style.oddItem());
-          if (isSelected) {
-            sb.append(" ").append(style.selectedItem());
-          }
-          sb.append("'>");
-          cell.render(value, null, sb);
-          sb.append("</div>");
-        }
-      }
-
-      @Override
-      protected void onSizeChanged() {
-        super.onSizeChanged();
-        showOrHide(emptyMessageElem, impl.getDataSize() == 0);
-      }
-
-      @Override
-      protected void setSelected(Element elem, boolean selected) {
-        setStyleName(elem, style.selectedItem(), selected);
-      }
-    };
+    view = new View(childContainer);
+    presenter = new PagingListViewPresenter<T>(this, view, DEFAULT_PAGE_SIZE);
   }
 
   public int getDataSize() {
-    return impl.getDataSize();
+    return presenter.getDataSize();
   }
 
   /**
@@ -192,11 +202,11 @@ public class CellList<T> extends Widget implements PagingListView<T> {
    */
   public T getDisplayedItem(int indexOnPage) {
     checkRowBounds(indexOnPage);
-    return impl.getData().get(indexOnPage);
+    return presenter.getData().get(indexOnPage);
   }
 
   public List<T> getDisplayedItems() {
-    return new ArrayList<T>(impl.getData());
+    return new ArrayList<T>(presenter.getData());
   }
 
   /**
@@ -208,16 +218,16 @@ public class CellList<T> extends Widget implements PagingListView<T> {
     return emptyListMessage;
   }
 
-  public int getPageSize() {
-    return impl.getPageSize();
+  public final int getPageSize() {
+    return getRange().getLength();
   }
 
-  public int getPageStart() {
-    return impl.getPageStart();
+  public final int getPageStart() {
+    return getRange().getStart();
   }
 
   public Range getRange() {
-    return impl.getRange();
+    return presenter.getRange();
   }
 
   /**
@@ -238,7 +248,7 @@ public class CellList<T> extends Widget implements PagingListView<T> {
   }
 
   public boolean isDataSizeExact() {
-    return impl.dataSizeIsExact();
+    return presenter.isDataSizeExact();
   }
 
   @Override
@@ -254,10 +264,10 @@ public class CellList<T> extends Widget implements PagingListView<T> {
     }
     if (idxString.length() > 0) {
       int idx = Integer.parseInt(idxString);
-      T value = impl.getData().get(idx - impl.getPageStart());
+      T value = presenter.getData().get(idx - getPageStart());
       cell.onBrowserEvent(target, value, null, event, valueUpdater);
       if (event.getTypeInt() == Event.ONCLICK && !cell.consumesEvents()) {
-        SelectionModel<? super T> selectionModel = impl.getSelectionModel();
+        SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
         if (selectionModel != null) {
           selectionModel.setSelected(value, true);
         }
@@ -269,26 +279,19 @@ public class CellList<T> extends Widget implements PagingListView<T> {
    * Redraw the list using the existing data.
    */
   public void redraw() {
-    impl.redraw();
-  }
-
-  /**
-   * Redraw the list, requesting data from the delegate.
-   */
-  public void refresh() {
-    impl.refresh();
+    presenter.redraw();
   }
 
   public void setData(int start, int length, List<T> values) {
-    impl.setData(values, start);
+    presenter.setData(start, length, values);
   }
 
   public void setDataSize(int size, boolean isExact) {
-    impl.setDataSize(size, isExact);
+    presenter.setDataSize(size, isExact);
   }
 
   public void setDelegate(Delegate<T> delegate) {
-    impl.setDelegate(delegate);
+    presenter.setDelegate(delegate);
   }
 
   /**
@@ -302,19 +305,33 @@ public class CellList<T> extends Widget implements PagingListView<T> {
   }
 
   public void setPager(Pager<T> pager) {
-    impl.setPager(pager);
+    presenter.setPager(pager);
   }
 
-  public void setPageSize(int pageSize) {
-    impl.setPageSize(pageSize);
+  /**
+   * Set the page size.
+   * 
+   * @param pageSize the new page size
+   */
+  public final void setPageSize(int pageSize) {
+    setRange(getPageStart(), pageSize);
   }
 
-  public void setPageStart(int pageStart) {
-    impl.setPageStart(pageStart);
+  /**
+   * Set the page start index.
+   * 
+   * @param pageStart the new page start
+   */
+  public final void setPageStart(int pageStart) {
+    setRange(pageStart, getPageSize());
+  }
+
+  public void setRange(int start, int length) {
+    presenter.setRange(start, length);
   }
 
   public void setSelectionModel(final SelectionModel<? super T> selectionModel) {
-    impl.setSelectionModel(selectionModel, true);
+    presenter.setSelectionModel(selectionModel);
   }
 
   /**
@@ -333,10 +350,10 @@ public class CellList<T> extends Widget implements PagingListView<T> {
    * @throws IndexOutOfBoundsException
    */
   protected void checkRowBounds(int row) {
-    int rowSize = impl.getDisplayedItemCount();
-    if ((row >= rowSize) || (row < 0)) {
+    int rowCount = view.getChildCount();
+    if ((row >= rowCount) || (row < 0)) {
       throw new IndexOutOfBoundsException("Row index: " + row + ", Row size: "
-          + rowSize);
+          + rowCount);
     }
   }
 

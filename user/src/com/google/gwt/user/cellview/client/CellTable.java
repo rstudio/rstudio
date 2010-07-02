@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -30,6 +31,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.PagingListView;
@@ -236,7 +238,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Implementation of {@link CellTable} used by IE. Table sections do not
-   * support setInnerHtml in IE, so we need to replace the entire elements.
+   * support setInnerHtml in IE, so we need to replace the entire element.
    */
   @SuppressWarnings("unused")
   private static class ImplTrident extends Impl {
@@ -248,6 +250,112 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
           section.getTagName(), html);
       section.getParentElement().replaceChild(newSection, section);
       return newSection;
+    }
+  }
+
+  /**
+   * The view used by the presenter.
+   */
+  private class View extends PagingListViewPresenter.DefaultView<T> {
+
+    public View(Element childContainer) {
+      super(childContainer);
+    }
+
+    public boolean dependsOnSelection() {
+      for (Column<T, ?> column : columns) {
+        if (column.dependsOnSelection()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public void onUpdateSelection() {
+      // Refresh headers.
+      for (Header<?> header : headers) {
+        if (header != null && header.dependsOnSelection()) {
+          createHeaders(false);
+          break;
+        }
+      }
+
+      // Refresh footers.
+      for (Header<?> footer : footers) {
+        if (footer != null && footer.dependsOnSelection()) {
+          createHeaders(true);
+          break;
+        }
+      }
+    }
+
+    public void render(StringBuilder sb, List<T> values, int start,
+        SelectionModel<? super T> selectionModel) {
+      createHeadersAndFooters();
+
+      String firstColumnStyle = style.firstColumn();
+      String lastColumnStyle = style.lastColumn();
+      int columnCount = columns.size();
+      int length = values.size();
+      int end = start + length;
+      for (int i = start; i < end; i++) {
+        T value = values.get(i - start);
+        boolean isSelected = (selectionModel == null || value == null) ? false
+            : selectionModel.isSelected(value);
+        sb.append("<tr onclick=''");
+        sb.append(" class='");
+        sb.append(i % 2 == 0 ? style.evenRow() : style.oddRow());
+        if (isSelected) {
+          sb.append(" ").append(style.selectedRow());
+        }
+        sb.append("'>");
+        int curColumn = 0;
+        for (Column<T, ?> column : columns) {
+          // TODO(jlabanca): How do we sink ONFOCUS and ONBLUR?
+          sb.append("<td class='").append(style.cell());
+          if (curColumn == 0) {
+            sb.append(" ").append(firstColumnStyle);
+          }
+          // The first and last column could be the same column.
+          if (curColumn == columnCount - 1) {
+            sb.append(" ").append(lastColumnStyle);
+          }
+          sb.append("'>");
+          int bufferLength = sb.length();
+          if (value != null) {
+            column.render(value, providesKey, sb);
+          }
+
+          // Add blank space to ensure empty rows aren't squished.
+          if (bufferLength == sb.length()) {
+            sb.append("&nbsp");
+          }
+          sb.append("</td>");
+          curColumn++;
+        }
+        sb.append("</tr>");
+      }
+    }
+
+    @Override
+    public void replaceAllChildren(List<T> values, String html) {
+      Element section = TABLE_IMPL.renderSectionContents(tbody, html);
+      setChildContainer(section);
+    }
+
+    public void setLoadingState(LoadingState state) {
+      setLoadingIconVisible(state == LoadingState.LOADING);
+    }
+
+    @Override
+    protected Element convertToElements(String html) {
+      return TABLE_IMPL.convertToSectionElement("tbody", html);
+    }
+
+    @Override
+    protected void setSelected(Element elem, boolean selected) {
+      setStyleName(elem, style.selectedRow(), selected);
     }
   }
 
@@ -281,7 +389,6 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   private boolean headersStale;
 
   private TableRowElement hoveringRow;
-  private final CellListImpl<T> impl;
 
   /**
    * If true, enable selection via the mouse.
@@ -289,9 +396,38 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   private boolean isSelectionEnabled;
 
   /**
+   * The presenter.
+   */
+  private final PagingListViewPresenter<T> presenter;
+
+  /**
    * If null, each T will be used as its own key.
    */
   private ProvidesKey<T> providesKey;
+
+  /**
+   * Indicates whether or not the scheduled redraw has been cancelled.
+   */
+  private boolean redrawCancelled;
+
+  /**
+   * The command used to redraw the table after adding columns.
+   */
+  private final Scheduler.ScheduledCommand redrawCommand = new Scheduler.ScheduledCommand() {
+    public void execute() {
+      redrawScheduled = false;
+      if (redrawCancelled) {
+        redrawCancelled = false;
+        return;
+      }
+      redraw();
+    }
+  };
+
+  /**
+   * Indicates whether or not a redraw is scheduled.
+   */
+  private boolean redrawScheduled;
 
   private final Style style;
   private final TableElement table;
@@ -299,6 +435,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   private final TableSectionElement tbodyLoading;
   private TableSectionElement tfoot;
   private TableSectionElement thead;
+  private final View view;
 
   /**
    * Constructs a table with a default page size of 15.
@@ -351,110 +488,8 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
     }
 
     // Create the implementation.
-    this.impl = new CellListImpl<T>(this, pageSize, tbody) {
-
-      @Override
-      public void setData(List<T> values, int start) {
-        createHeadersAndFooters();
-        super.setData(values, start);
-      }
-
-      @Override
-      protected Element convertToElements(String html) {
-        return TABLE_IMPL.convertToSectionElement("tbody", html);
-      }
-
-      @Override
-      protected boolean dependsOnSelection() {
-        for (Column<T, ?> column : columns) {
-          if (column.dependsOnSelection()) {
-            return true;
-          }
-        }
-        return false;
-      }
-
-      @Override
-      protected void emitHtml(StringBuilder sb, List<T> values, int start,
-          SelectionModel<? super T> selectionModel) {
-        setLoadingIconVisible(false);
-
-        String firstColumnStyle = style.firstColumn();
-        String lastColumnStyle = style.lastColumn();
-        int columnCount = columns.size();
-        int length = values.size();
-        int end = start + length;
-        for (int i = start; i < end; i++) {
-          T value = values.get(i - start);
-          boolean isSelected = (selectionModel == null || value == null)
-              ? false : selectionModel.isSelected(value);
-          sb.append("<tr onclick='' __idx='").append(i).append("'");
-          sb.append(" class='");
-          sb.append(i % 2 == 0 ? style.evenRow() : style.oddRow());
-          if (isSelected) {
-            sb.append(" ").append(style.selectedRow());
-          }
-          sb.append("'>");
-          int curColumn = 0;
-          for (Column<T, ?> column : columns) {
-            // TODO(jlabanca): How do we sink ONFOCUS and ONBLUR?
-            sb.append("<td class='").append(style.cell());
-            if (curColumn == 0) {
-              sb.append(" ").append(firstColumnStyle);
-            }
-            // The first and last column could be the same column.
-            if (curColumn == columnCount - 1) {
-              sb.append(" ").append(lastColumnStyle);
-            }
-            sb.append("'>");
-            int bufferLength = sb.length();
-            if (value != null) {
-              column.render(value, providesKey, sb);
-            }
-
-            // Add blank space to ensure empty rows aren't squished.
-            if (bufferLength == sb.length()) {
-              sb.append("&nbsp");
-            }
-            sb.append("</td>");
-            curColumn++;
-          }
-          sb.append("</tr>");
-        }
-      }
-
-      @Override
-      protected Element renderChildContents(String html) {
-        return (tbody = TABLE_IMPL.renderSectionContents(tbody, html));
-      }
-
-      @Override
-      protected void setSelected(Element elem, boolean selected) {
-        setStyleName(elem, style.selectedRow(), selected);
-      }
-
-      @Override
-      protected void updateSelection() {
-        // Refresh headers.
-        for (Header<?> header : headers) {
-          if (header != null && header.dependsOnSelection()) {
-            createHeaders(false);
-            break;
-          }
-        }
-
-        // Refresh footers.
-        for (Header<?> footer : footers) {
-          if (footer != null && footer.dependsOnSelection()) {
-            createHeaders(true);
-            break;
-          }
-        }
-
-        // Update data.
-        super.updateSelection();
-      }
-    };
+    view = new View(tbody);
+    this.presenter = new PagingListViewPresenter<T>(this, view, pageSize);
 
     setPageSize(pageSize);
 
@@ -462,9 +497,6 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
     // those events actually needed by cells.
     sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS
         | Event.ONCHANGE | Event.FOCUSEVENTS);
-
-    // Show the loading indicator by default.
-    setLoadingIconVisible(true);
   }
 
   /**
@@ -489,7 +521,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
     footers.add(footer);
     columns.add(col);
     headersStale = true;
-    redraw();
+    scheduleRedraw();
   }
 
   /**
@@ -506,8 +538,6 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
       String footerString) {
     addColumn(col, new TextHeader(headerString), new TextHeader(footerString));
   }
-
-  // TODO: remove(Column)
 
   /**
    * Add a style name to the {@link TableColElement} at the specified index,
@@ -526,16 +556,16 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   }
 
   public int getDataSize() {
-    return impl.getDataSize();
+    return presenter.getDataSize();
   }
 
   public T getDisplayedItem(int indexOnPage) {
     checkRowBounds(indexOnPage);
-    return impl.getData().get(indexOnPage);
+    return presenter.getData().get(indexOnPage);
   }
 
   public List<T> getDisplayedItems() {
-    return new ArrayList<T>(impl.getData());
+    return new ArrayList<T>(presenter.getData());
   }
 
   public int getHeaderHeight() {
@@ -547,20 +577,16 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
     return providesKey;
   }
 
-  public int getNumDisplayedItems() {
-    return impl.getDisplayedItemCount();
+  public final int getPageSize() {
+    return getRange().getLength();
   }
 
-  public int getPageSize() {
-    return impl.getPageSize();
-  }
-
-  public int getPageStart() {
-    return impl.getPageStart();
+  public final int getPageStart() {
+    return getRange().getStart();
   }
 
   public Range getRange() {
-    return impl.getRange();
+    return presenter.getRange();
   }
 
   /**
@@ -578,12 +604,8 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
     return rows.getLength() > row ? rows.getItem(row) : null;
   }
 
-  public int getSize() {
-    return impl.getDataSize();
-  }
-
   public boolean isDataSizeExact() {
-    return impl.dataSizeIsExact();
+    return presenter.isDataSizeExact();
   }
 
   /**
@@ -637,14 +659,14 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
         tr.removeClassName(style.hoveredRow());
       }
 
-      T value = impl.getData().get(row);
+      T value = presenter.getData().get(row);
       Column<T, ?> column = columns.get(col);
-      column.onBrowserEvent(cell, impl.getPageStart() + row, value, event,
+      column.onBrowserEvent(cell, getPageStart() + row, value, event,
           providesKey);
 
       // Update selection.
       if (isSelectionEnabled && event.getTypeInt() == Event.ONCLICK) {
-        SelectionModel<? super T> selectionModel = impl.getSelectionModel();
+        SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
         if (selectionModel != null) {
           selectionModel.setSelected(value, true);
         }
@@ -656,24 +678,49 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
    * Redraw the table using the existing data.
    */
   public void redraw() {
-    setLoadingIconVisible(false);
-    impl.redraw();
+    if (redrawScheduled) {
+      redrawCancelled = true;
+    }
+    presenter.redraw();
   }
 
-  /**
-   * Redraw the table, requesting data from the delegate.
-   */
-  public void refresh() {
-    setLoadingIconVisible(true);
-    impl.refresh();
-  }
-
-  public void refreshFooters() {
+  public void redrawFooters() {
     createHeaders(true);
   }
 
-  public void refreshHeaders() {
+  public void redrawHeaders() {
     createHeaders(false);
+  }
+
+  /**
+   * Remove a column.
+   * 
+   * @param index the column index
+   */
+  public void removeColumn(int index) {
+    if (index < 0 || index >= columns.size()) {
+      throw new IndexOutOfBoundsException(
+          "The specified column index is out of bounds.");
+    }
+    columns.remove(index);
+    headers.remove(index);
+    footers.remove(index);
+    headersStale = true;
+    scheduleRedraw();
+  }
+
+  /**
+   * Remove a column.
+   * 
+   * @param col the column to remove
+   */
+  public void removeColumn(Column<T, ?> col) {
+    int index = columns.indexOf(col);
+    if (index < 0) {
+      throw new IllegalArgumentException(
+          "The specified column is not part of this table.");
+    }
+    removeColumn(index);
   }
 
   /**
@@ -690,20 +737,15 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   }
 
   public void setData(int start, int length, List<T> values) {
-    impl.setData(values, start);
+    presenter.setData(start, length, values);
   }
 
   public void setDataSize(int size, boolean isExact) {
-    impl.setDataSize(size, isExact);
-
-    // If there is no data, then we are done loading.
-    if (size <= 0) {
-      setLoadingIconVisible(false);
-    }
+    presenter.setDataSize(size, isExact);
   }
 
   public void setDelegate(Delegate<T> delegate) {
-    impl.setDelegate(delegate);
+    presenter.setDelegate(delegate);
   }
 
   /**
@@ -719,7 +761,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   }
 
   public void setPager(PagingListView.Pager<T> pager) {
-    impl.setPager(pager);
+    presenter.setPager(pager);
   }
 
   /**
@@ -729,8 +771,8 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
    * 
    * @throws IllegalArgumentException if pageSize is negative or 0
    */
-  public void setPageSize(int pageSize) {
-    impl.setPageSize(pageSize);
+  public final void setPageSize(int pageSize) {
+    setRange(getPageStart(), pageSize);
   }
 
   /**
@@ -740,9 +782,12 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
    * @param pageStart the index of the row that should appear at the start of
    *          the page
    */
-  public void setPageStart(int pageStart) {
-    setLoadingIconVisible(true);
-    impl.setPageStart(pageStart);
+  public final void setPageStart(int pageStart) {
+    setRange(pageStart, getPageSize());
+  }
+
+  public void setRange(int start, int length) {
+    presenter.setRange(start, length);
   }
 
   /**
@@ -755,7 +800,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   }
 
   public void setSelectionModel(SelectionModel<? super T> selectionModel) {
-    impl.setSelectionModel(selectionModel, true);
+    presenter.setSelectionModel(selectionModel);
   }
 
   /**
@@ -765,10 +810,10 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
    * @throws IndexOutOfBoundsException
    */
   protected void checkRowBounds(int row) {
-    int rowSize = impl.getDisplayedItemCount();
-    if ((row >= rowSize) || (row < 0)) {
+    int rowCount = view.getChildCount();
+    if ((row >= rowCount) || (row < 0)) {
       throw new IndexOutOfBoundsException("Row index: " + row + ", Row size: "
-          + rowSize);
+          + rowCount);
     }
   }
 
@@ -861,6 +906,17 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   private native int getClientHeight(Element element) /*-{
     return element.clientHeight;
   }-*/;
+
+  /**
+   * Schedule a redraw for the end of the event loop.
+   */
+  private void scheduleRedraw() {
+    redrawCancelled = false;
+    if (!redrawScheduled) {
+      redrawScheduled = true;
+      Scheduler.get().scheduleFinally(redrawCommand);
+    }
+  }
 
   /**
    * Show or hide the loading icon.

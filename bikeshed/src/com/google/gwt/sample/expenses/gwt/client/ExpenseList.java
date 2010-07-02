@@ -372,7 +372,7 @@ public class ExpenseList extends Composite implements
 
     // Refresh the table.
     pager.setPageStart(0);
-    table.refresh();
+    requestReports(false);
   }
 
   public void setListener(Listener listener) {
@@ -432,7 +432,7 @@ public class ExpenseList extends Composite implements
             otherHeader.setReverseSort(true);
           }
         }
-        table.refreshHeaders();
+        table.redrawHeaders();
 
         // Request sorted rows.
         orderBy = property.getName();
@@ -441,7 +441,7 @@ public class ExpenseList extends Composite implements
         }
         searchBox.resetDefaultText();
         searchRegExp = null;
-        
+
         // Go to the first page of the newly-sorted results
         pager.firstPage();
         requestReports(false);
@@ -560,7 +560,7 @@ public class ExpenseList extends Composite implements
         header.setSorted(false);
         header.setReverseSort(false);
       }
-      table.refreshHeaders();
+      table.redrawHeaders();
     }
 
     // Request the total data size.

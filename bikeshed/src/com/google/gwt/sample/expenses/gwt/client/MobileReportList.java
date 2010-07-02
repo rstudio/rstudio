@@ -125,7 +125,7 @@ public class MobileReportList extends Composite implements MobilePage {
     if (clear) {
       reportAdapter.updateDataSize(0, true);
     }
-    reportList.refresh();
+    requestReports();
   }
 
   private Collection<Property<?>> getReportColumns() {

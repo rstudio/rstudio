@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.PagingListView.Pager;
 
 /**
@@ -55,15 +56,17 @@ public class PageSizePager<T> extends Composite implements Pager<T> {
     // Show more button.
     showMoreButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        int pageSize = Math.min(listView.getPageSize() + increment,
+        Range range = listView.getRange();
+        int pageSize = Math.min(range.getLength() + increment,
             listView.getDataSize());
-        listView.setPageSize(pageSize);
+        listView.setRange(range.getStart(), pageSize);
       }
     });
     showLessButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        int pageSize = Math.max(listView.getPageSize() - increment, increment);
-        listView.setPageSize(pageSize);
+        Range range = listView.getRange();
+        int pageSize = Math.max(range.getLength() - increment, increment);
+        listView.setRange(range.getStart(), pageSize);
       }
     });
 
@@ -79,8 +82,9 @@ public class PageSizePager<T> extends Composite implements Pager<T> {
 
   public void onRangeOrSizeChanged(PagingListView<T> listView) {
     // Assumes a page start index of 0.
-    boolean hasLess = listView.getPageSize() > increment;
-    boolean hasMore = listView.getPageSize() < listView.getDataSize();
+    int pageSize = listView.getRange().getLength();
+    boolean hasLess = pageSize > increment;
+    boolean hasMore = pageSize < listView.getDataSize();
     showLessButton.setVisible(hasLess);
     showMoreButton.setVisible(hasMore);
     layout.setText(0, 1, (hasLess && hasMore) ? " | " : "");

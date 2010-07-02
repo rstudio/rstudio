@@ -73,7 +73,7 @@ public class ScrollbarPager<T> extends Composite implements PagingListView.Pager
   }
 
   public void onRangeOrSizeChanged(PagingListView<T> listView) {
-    this.pageSize = listView.getPageSize();
+    this.pageSize = listView.getRange().getLength();
     this.dataSize = listView.getDataSize();
     
     this.height = view.getBodyHeight();

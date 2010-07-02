@@ -180,7 +180,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
     if (clear) {
       expenseAdapter.updateDataSize(0, true);
     }
-    expenseList.refresh();
+    requestExpenses();
   }
 
   public void show(ReportRecord report) {

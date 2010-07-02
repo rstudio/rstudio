@@ -36,15 +36,17 @@ public interface ListView<T> {
   public interface Delegate<T> {
     void onRangeChanged(ListView<T> listView);
   }
-  
+
   /**
-   * Returns the value of the 'isExact' parameter of the most recent call
-   * to {@link #setDataSize(int, boolean)}.
+   * Returns the value of the 'isExact' parameter of the most recent call to
+   * {@link #setDataSize(int, boolean)}.
    */
   boolean isDataSizeExact();
 
   /**
-   * TODO: doc.
+   * Get the range that this view is displaying.
+   * 
+   * @return the range
    */
   Range getRange();
 
@@ -58,17 +60,17 @@ public interface ListView<T> {
   void setData(int start, int length, List<T> values);
 
   /**
-   * TODO: doc.
+   * Set the total data size of the underlying data.
    * 
-   * @param size
-   * @param isExact
+   * @param size the total data size
+   * @param isExact true if the size is exact, false if it is an estimate
    */
   void setDataSize(int size, boolean isExact);
 
   /**
-   * TODO: doc.
+   * Set the {@link Delegate} that responds to changes in the range.
    * 
-   * @param delegate
+   * @param delegate the {@link Delegate}
    */
   void setDelegate(Delegate<T> delegate);
 

@@ -180,12 +180,12 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
         PagingListView<R> table = getView().asPagingListView();
         int rows = response.intValue();
         table.setDataSize(rows, true);
-        int pageSize = table.getPageSize();
+        int pageSize = table.getRange().getLength();
         int remnant = rows % pageSize;
         if (remnant == 0) {
-          table.setPageStart(rows - pageSize);
+          table.setRange(rows - pageSize, pageSize);
         } else {
-          table.setPageStart(rows - remnant);
+          table.setRange(rows - remnant, pageSize);
         }
         onRangeChanged(table);
       }

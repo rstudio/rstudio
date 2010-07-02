@@ -17,6 +17,7 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.PagingListView.Pager;
 
 /**
@@ -32,15 +33,21 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
   private boolean isRangeLimited = true;
 
   /**
+   * The last data size.
+   */
+  private int lastDataSize;
+
+  /**
    * The {@link PagingListView} being paged.
    */
   private final PagingListView<T> view;
 
   public AbstractPager(PagingListView<T> view) {
     this.view = view;
+    this.lastDataSize = view.getDataSize();
     view.setPager(this);
   }
-  
+
   /**
    * Go to the first page.
    */
@@ -58,8 +65,9 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    * @return the page index
    */
   public int getPage() {
-    int pageSize = view.getPageSize();
-    return (view.getPageStart() + pageSize - 1) / pageSize;
+    Range range = view.getRange();
+    int pageSize = range.getLength();
+    return (range.getStart() + pageSize - 1) / pageSize;
   }
 
   /**
@@ -68,8 +76,26 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    * @return the page count
    */
   public int getPageCount() {
-    int pageSize = view.getPageSize();
+    int pageSize = getPageSize();
     return (view.getDataSize() + pageSize - 1) / pageSize;
+  }
+
+  /**
+   * Get the page size.
+   * 
+   * @return the page size
+   */
+  public int getPageSize() {
+    return view.getRange().getLength();
+  }
+
+  /**
+   * Get the page start index.
+   * 
+   * @return the page start index
+   */
+  public int getPageStart() {
+    return view.getRange().getStart();
   }
 
   /**
@@ -80,7 +106,7 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
   public PagingListView<T> getPagingListView() {
     return view;
   }
-  
+
   /**
    * Returns true if there is enough data such that a call to
    * {@link #nextPage()} will succeed in moving the starting point of the table
@@ -90,7 +116,8 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
     if (!view.isDataSizeExact()) {
       return true;
     }
-    return view.getPageStart() + view.getPageSize() < view.getDataSize();
+    Range range = view.getRange();
+    return range.getStart() + range.getLength() < view.getDataSize();
   }
 
   /**
@@ -98,7 +125,8 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    * additional pages.
    */
   public boolean hasNextPages(int pages) {
-    return view.getPageStart() + pages * view.getPageSize() < view.getDataSize();
+    Range range = view.getRange();
+    return range.getStart() + pages * range.getLength() < view.getDataSize();
   }
 
   /**
@@ -106,7 +134,7 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    * range.
    */
   public boolean hasPage(int index) {
-    return view.getPageSize() * index < view.getDataSize();
+    return getPageSize() * index < view.getDataSize();
   }
 
   /**
@@ -115,7 +143,16 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    * table backward.
    */
   public boolean hasPreviousPage() {
-    return view.getPageStart() > 0 && view.getDataSize() > 0;
+    return getPageStart() > 0 && view.getDataSize() > 0;
+  }
+
+  /**
+   * Returns true if there is enough data to display a given number of previous
+   * pages.
+   */
+  public boolean hasPreviousPages(int pages) {
+    Range range = view.getRange();
+    return (pages - 1) * range.getLength() < range.getStart();
   }
 
   /**
@@ -139,19 +176,25 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    * Set the page start to the last index that will still show a full page.
    */
   public void lastPageStart() {
-    setPageStart(view.getDataSize() - view.getPageSize());
+    setPageStart(view.getDataSize() - getPageSize());
   }
 
   /**
    * Advance the starting row by 'pageSize' rows.
    */
   public void nextPage() {
-    setPageStart(view.getPageStart() + view.getPageSize());
+    Range range = view.getRange();
+    setPageStart(range.getStart() + range.getLength());
   }
 
   public void onRangeOrSizeChanged(PagingListView<T> listView) {
-    if (isRangeLimited) {
-      setPageStart(view.getPageStart());
+    int oldDataSize = lastDataSize;
+    lastDataSize = listView.getDataSize();
+
+    // If the data size has changed, limit the range. If the page start or size
+    // was changed through the pager, it will already be limited.
+    if (isRangeLimited && oldDataSize != lastDataSize) {
+      setPageStart(getPageStart());
     }
   }
 
@@ -159,7 +202,8 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    * Move the starting row back by 'pageSize' rows.
    */
   public void previousPage() {
-    setPageStart(view.getPageStart() - view.getPageSize());
+    Range range = view.getRange();
+    setPageStart(range.getStart() - range.getLength());
   }
 
   /**
@@ -169,10 +213,27 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    */
   public void setPage(int index) {
     if (!isRangeLimited || !view.isDataSizeExact() || hasPage(index)) {
-      // We don't use the local version of setPageStart because the user
-      // probably wants to use absolute page indexes.
-      view.setPageStart(view.getPageSize() * index);
+      // We don't use the local version of setPageStart because it would
+      // constrain the index, but the user probably wants to use absolute page
+      // indexes.
+      int pageSize = getPageSize();
+      view.setRange(pageSize * index, pageSize);
     }
+  }
+
+  /**
+   * Set the page size of the view.
+   * 
+   * @param pageSize the new page size
+   */
+  public void setPageSize(int pageSize) {
+    Range range = view.getRange();
+    int pageStart = range.getStart();
+    if (isRangeLimited && view.isDataSizeExact()) {
+      pageStart = Math.min(pageStart, view.getDataSize() - pageSize);
+    }
+    pageStart = Math.max(0, pageStart);
+    view.setRange(pageStart, pageSize);
   }
 
   /**
@@ -181,12 +242,14 @@ public abstract class AbstractPager<T> extends Composite implements Pager<T> {
    * @param index the index
    */
   public void setPageStart(int index) {
+    Range range = view.getRange();
+    int pageSize = range.getLength();
     if (isRangeLimited && view.isDataSizeExact()) {
-      index = Math.min(index, view.getDataSize() - view.getPageSize());
+      index = Math.min(index, view.getDataSize() - pageSize);
     }
     index = Math.max(0, index);
-    if (index != view.getPageStart()) {
-      view.setPageStart(index);
+    if (index != range.getStart()) {
+      view.setRange(index, pageSize);
     }
   }
 

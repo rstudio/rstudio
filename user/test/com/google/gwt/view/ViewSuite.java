@@ -21,6 +21,7 @@ import com.google.gwt.view.client.AbstractSelectionModelTest;
 import com.google.gwt.view.client.AsyncListViewAdapterTest;
 import com.google.gwt.view.client.DefaultNodeInfoTest;
 import com.google.gwt.view.client.DefaultSelectionModelTest;
+import com.google.gwt.view.client.ListViewAdapterTest;
 import com.google.gwt.view.client.MultiSelectionModelTest;
 import com.google.gwt.view.client.RangeTest;
 import com.google.gwt.view.client.SingleSelectionModelTest;
@@ -39,6 +40,7 @@ public class ViewSuite {
     suite.addTestSuite(AsyncListViewAdapterTest.class);
     suite.addTestSuite(DefaultNodeInfoTest.class);
     suite.addTestSuite(DefaultSelectionModelTest.class);
+    suite.addTestSuite(ListViewAdapterTest.class);
     suite.addTestSuite(MultiSelectionModelTest.class);
     suite.addTestSuite(RangeTest.class);
     suite.addTestSuite(SingleSelectionModelTest.class);

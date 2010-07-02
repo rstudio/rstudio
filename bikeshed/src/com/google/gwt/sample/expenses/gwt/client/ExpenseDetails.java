@@ -548,7 +548,7 @@ public class ExpenseDetails extends Composite implements
     }
     allHeaders.get(0).setSorted(true);
     allHeaders.get(0).setReverseSort(false);
-    table.refreshHeaders();
+    table.redrawHeaders();
 
     // Request the expenses.
     requestExpenses();
@@ -731,7 +731,7 @@ public class ExpenseDetails extends Composite implements
 
         sortExpenses(items.getList(), header.getReverseSort() ? descComparator
             : ascComparator);
-        table.refreshHeaders();
+        table.redrawHeaders();
       }
     });
     table.addColumn(column, header);

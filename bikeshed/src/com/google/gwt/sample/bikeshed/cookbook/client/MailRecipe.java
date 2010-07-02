@@ -21,6 +21,7 @@ import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.DatePickerCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.ListBoxCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -30,6 +31,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -42,6 +44,7 @@ import com.google.gwt.view.client.DefaultSelectionModel;
 import com.google.gwt.view.client.ListViewAdapter;
 import com.google.gwt.view.client.ProvidesKey;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -308,12 +311,19 @@ public class MailRecipe extends Recipe implements ClickHandler {
 
   @Override
   protected Widget createWidget() {
-    ListViewAdapter<Message> adapter = new ListViewAdapter<Message>();
+    final ListViewAdapter<Message> adapter = new ListViewAdapter<Message>();
     messages = adapter.getList();
 
     addMessages(10);
 
     table = new CellTable<Message>(10);
+    new Timer() {
+      @Override
+      public void run() {
+        table.redraw();
+        schedule(4000);
+      }
+    }.schedule(4000);
     table.setSelectionModel(selectionModel);
     adapter.addView(table);
 
@@ -342,12 +352,11 @@ public class MailRecipe extends Recipe implements ClickHandler {
     });
     table.addColumn(selectedColumn, selectedHeader);
 
-    addColumn(table, "ID", new TextCell(),
-        new GetValue<Message, String>() {
-          public String getValue(Message object) {
-            return "" + object.id;
-          }
-        }, idComparator);
+    addColumn(table, "ID", new TextCell(), new GetValue<Message, String>() {
+      public String getValue(Message object) {
+        return "" + object.id;
+      }
+    }, idComparator);
 
     addColumn(table, "Read", new GetValue<Message, String>() {
       public String getValue(Message object) {
@@ -365,7 +374,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
       public void update(int index, Message object, Date value) {
         Window.alert("Changed date from " + object.date + " to " + value);
         object.date = value;
-        table.refresh();
+        table.redraw();
       }
     });
 
@@ -395,6 +404,40 @@ public class MailRecipe extends Recipe implements ClickHandler {
       }
     });
     table.addColumn(toggleColumn, "Toggle Read/Unread");
+
+    final ListViewAdapter<String> monthAdapter = new ListViewAdapter<String>();
+    final List<String> monthList = monthAdapter.getList();
+    monthList.add("January");
+    monthList.add("February");
+    monthList.add("March");
+    monthList.add("April");
+    monthList.add("May");
+    monthList.add("June");
+    monthList.add("July");
+    monthList.add("August");
+    monthList.add("September");
+    monthList.add("October");
+    monthList.add("November");
+    monthList.add("December");
+    ListBoxCell<String> listBoxCell = new ListBoxCell<String>(new TextCell());
+    monthAdapter.addView(listBoxCell);
+    Column<Message, List<String>> monthColumn = new Column<Message, List<String>>(
+        listBoxCell) {
+      @Override
+      public List<String> getValue(Message object) {
+        List<String> l = new ArrayList<String>();
+        l.add(monthList.get(object.getDate().getMonth()));
+        return l;
+      }
+    };
+    monthColumn.setFieldUpdater(new FieldUpdater<Message, List<String>>() {
+      public void update(int index, Message object, List<String> values) {
+        int month = monthList.indexOf(values.get(0));
+        object.getDate().setMonth(month);
+        adapter.refresh();
+      }
+    });
+    table.addColumn(monthColumn, "Month");
 
     ScrollbarPager<Message> pager = new ScrollbarPager<Message>(table);
 
@@ -434,9 +477,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
   }
 
   private <C extends Comparable<C>> Column<Message, C> addColumn(
-      CellTable<Message> table, final String text,
-      final Cell<C> cell, final GetValue<Message, C> getter,
-      final Comparator<Message> comparator) {
+      CellTable<Message> table, final String text, final Cell<C> cell,
+      final GetValue<Message, C> getter, final Comparator<Message> comparator) {
     Column<Message, C> column = new Column<Message, C>(cell) {
       @Override
       public C getValue(Message object) {
@@ -469,9 +511,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
     return column;
   }
 
-  private Column<Message, String> addColumn(
-      CellTable<Message> table, final String text,
-      final GetValue<Message, String> getter) {
+  private Column<Message, String> addColumn(CellTable<Message> table,
+      final String text, final GetValue<Message, String> getter) {
     return addColumn(table, text, new TextCell(), getter, null);
   }
 

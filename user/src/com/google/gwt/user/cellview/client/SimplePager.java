@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.Range;
 
 /**
  * A pager for controlling a {@link PagingListView} that only supports simple
@@ -51,7 +52,7 @@ public class SimplePager<T> extends AbstractPager<T> {
      * The disabled "fast forward" image.
      */
     ImageResource simplePagerFastForwardDisabled();
-    
+
     /**
      * The image used to go to the first page.
      */
@@ -135,7 +136,7 @@ public class SimplePager<T> extends AbstractPager<T> {
     }
     return DEFAULT_RESOURCES;
   }
-  
+
   private final Image fastForward;
 
   private final int fastForwardPages;
@@ -196,7 +197,7 @@ public class SimplePager<T> extends AbstractPager<T> {
   // Hack for Google I/O demo
   public SimplePager(PagingListView<T> view, TextLocation location) {
     this(view, location, getDefaultResources(), true,
-        1000 / view.getPageSize(), false);
+        1000 / view.getRange().getLength(), false);
   }
 
   /**
@@ -212,8 +213,7 @@ public class SimplePager<T> extends AbstractPager<T> {
    */
   public SimplePager(final PagingListView<T> view, TextLocation location,
       Resources resources, boolean showFastForwardButton,
-      final int fastForwardPages,
-      boolean showLastPageButton) {
+      final int fastForwardPages, boolean showLastPageButton) {
     super(view);
     this.resources = resources;
     this.showFastForwardButton = showFastForwardButton;
@@ -232,7 +232,8 @@ public class SimplePager<T> extends AbstractPager<T> {
     // Add handlers.
     fastForward.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        setPageStart(view.getPageStart() + view.getPageSize() * fastForwardPages);
+        Range range = view.getRange();
+        setPageStart(range.getStart() + range.getLength() * fastForwardPages);
       }
     });
     firstPage.addClickHandler(new ClickHandler() {
@@ -337,14 +338,14 @@ public class SimplePager<T> extends AbstractPager<T> {
               style.disabledButton());
         }
       }
-      
+
       if (showFastForwardButton) {
         if (hasNextPages(fastForwardPages)) {
-          fastForward.setResource(resources.simplePagerFastForward()); 
+          fastForward.setResource(resources.simplePagerFastForward());
           fastForward.getElement().getParentElement().removeClassName(
-              style.disabledButton()); 
+              style.disabledButton());
         } else {
-          fastForward.setResource(resources.simplePagerFastForwardDisabled()); 
+          fastForward.setResource(resources.simplePagerFastForwardDisabled());
           fastForward.getElement().getParentElement().addClassName(
               style.disabledButton());
         }
@@ -371,8 +372,9 @@ public class SimplePager<T> extends AbstractPager<T> {
     // Default text is 1 based.
     NumberFormat formatter = NumberFormat.getFormat("#,###");
     PagingListView<T> view = getPagingListView();
-    int pageStart = view.getPageStart() + 1;
-    int pageSize = view.getPageSize();
+    Range range = view.getRange();
+    int pageStart = range.getStart() + 1;
+    int pageSize = range.getLength();
     int dataSize = view.getDataSize();
     int endIndex = Math.min(dataSize, pageStart + pageSize - 1);
     endIndex = Math.max(pageStart, endIndex);
