@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.regex.Matcher;
@@ -27,13 +28,12 @@ import java.util.regex.Pattern;
  */
 public class LengthAttributeParser implements AttributeParser {
 
-  static final String UNIT = "com.google.gwt.dom.client.Style.Unit";
+  static final String UNIT = Unit.class.getCanonicalName();
 
   // This regular expression matches CSS length patterns of the form
   // (value)(unit), where the two may be separated by whitespace. Either part
   // can be a {class.method} expression.
-  private static final Pattern pattern = Pattern.compile(
-      "((?:\\{[\\w\\.]+\\})|[\\d\\.]+)\\s*(\\{?[\\w\\.\\%]*\\}?)?");
+  private static final Pattern pattern = Pattern.compile("((?:\\{[\\w\\.]+\\})|[\\d\\.]+)\\s*(\\{?[\\w\\.\\%]*\\}?)?");
 
   private final MortalLogger logger;
   private final DoubleAttributeParser doubleParser;

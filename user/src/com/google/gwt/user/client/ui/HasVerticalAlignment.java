@@ -22,15 +22,18 @@ package com.google.gwt.user.client.ui;
  * <h3>Use in UiBinder Templates</h3>
  * 
  * <p>
- * The names of the static members of {@link VerticalAlignmentConstant} can
- * be used as values for a <code>verticalAlignment</code> attribute of any
- * widget that implements this interface. (In fact, this will work for any
- * widget method that takes a single VerticalAlignmentConstant value.)
+ * The names of the static members of {@link VerticalAlignmentConstant}, as well
+ * as simple alignment names (<code>top</code>, <code>middle</code>,
+ * <code>bottom</code>), can be used as values for a
+ * <code>verticalAlignment</code> attribute of any widget that implements this
+ * interface. (In fact, this will work for any widget method that takes a single
+ * VerticalAlignmentConstant value.)
  * <p>
  * For example,
  * 
  * <pre>
  * &lt;g:VerticalPanel verticalAlignment='ALIGN_BOTTOM' />
+ * &lt;g:VerticalPanel verticalAlignment='bottom' />
  * </pre>
  */
 public interface HasVerticalAlignment {
@@ -39,7 +42,7 @@ public interface HasVerticalAlignment {
    * Horizontal alignment constant.
    */
   public static class VerticalAlignmentConstant {
-    private String verticalAlignString;
+    private final String verticalAlignString;
 
     private VerticalAlignmentConstant(String verticalAlignString) {
       this.verticalAlignString = verticalAlignString;
@@ -59,19 +62,18 @@ public interface HasVerticalAlignment {
    * Specifies that the widget's contents should be aligned to the bottom.
    */
   VerticalAlignmentConstant ALIGN_BOTTOM = new VerticalAlignmentConstant(
-    "bottom");
+      "bottom");
 
   /**
    * Specifies that the widget's contents should be aligned in the middle.
    */
   VerticalAlignmentConstant ALIGN_MIDDLE = new VerticalAlignmentConstant(
-    "middle");
+      "middle");
 
   /**
    * Specifies that the widget's contents should be aligned to the top.
    */
-  VerticalAlignmentConstant ALIGN_TOP = new VerticalAlignmentConstant(
-    "top");
+  VerticalAlignmentConstant ALIGN_TOP = new VerticalAlignmentConstant("top");
 
   /**
    * Gets the vertical alignment.

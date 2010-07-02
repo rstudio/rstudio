@@ -25,13 +25,18 @@ import com.google.gwt.i18n.client.LocaleInfo;
  * <h3>Use in UiBinder Templates</h3>
  * 
  * <p>
- * The names of the static members of {@link HorizontalAlignmentConstant}
- * can be used as values for a <code>horizontalAlignment</code> attribute
- * of any widget that implements this interface. (In fact, this will work 
- * for any widget method that takes a single  HorizontalAlignmentConstant value.)
+ * The names of the static members of {@link HorizontalAlignmentConstant}, as
+ * well as simple alignment names (<code>left</code>, <code>center</code>,
+ * <code>right</code>), can be used as values for a
+ * <code>horizontalAlignment</code> attribute of any widget that implements this
+ * interface. (In fact, this will work for any widget method that takes a single
+ * HorizontalAlignmentConstant value.)
  * <p>
- * For example,<pre>
+ * For example,
+ * 
+ * <pre>
  * &lt;g:Label horizontalAlignment='ALIGN_RIGHT'>Hi there.&lt;/g:Label>
+ * &lt;g:Label horizontalAlignment='right'>Hi there.&lt;/g:Label>
  * </pre>
  */
 public interface HasHorizontalAlignment {
@@ -40,7 +45,7 @@ public interface HasHorizontalAlignment {
    * Horizontal alignment constant.
    */
   public static class HorizontalAlignmentConstant {
-    private String textAlignString;
+    private final String textAlignString;
 
     private HorizontalAlignmentConstant(String textAlignString) {
       this.textAlignString = textAlignString;
@@ -75,14 +80,13 @@ public interface HasHorizontalAlignment {
       "right");
 
   /**
-   * In a RTL layout, specifies that the widget's contents should be aligned
-   * to the right. In a LTR layout, specifies that the widget's constants 
-   * should be aligned to the left.
+   * In a RTL layout, specifies that the widget's contents should be aligned to
+   * the right. In a LTR layout, specifies that the widget's constants should be
+   * aligned to the left.
    */
-  HorizontalAlignmentConstant ALIGN_DEFAULT = 
-      (GWT.isClient() && (LocaleInfo.getCurrentLocale().isRTL()))
-        ? ALIGN_RIGHT : ALIGN_LEFT;
-      
+  HorizontalAlignmentConstant ALIGN_DEFAULT = GWT.isClient()
+      && LocaleInfo.getCurrentLocale().isRTL() ? ALIGN_RIGHT : ALIGN_LEFT;
+
   /**
    * Gets the horizontal alignment.
    * 

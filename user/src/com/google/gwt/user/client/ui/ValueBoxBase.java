@@ -45,6 +45,21 @@ import java.text.ParseException;
  * <p>
  * Abstract base class for all text entry widgets.
  * 
+ * <h3>Use in UiBinder Templates</h3>
+ * 
+ * <p>
+ * The names of the static members of {@link TextBoxBase}, as well as simple
+ * alignment names (<code>left</code>, <code>center</code>, <code>right</code>,
+ * <code>justify</code>), can be used as values for a <code>textAlignment</code>
+ * attribute.
+ * <p>
+ * For example,
+ * 
+ * <pre>
+ * &lt;g:TextBox textAlignment='ALIGN_RIGHT'/&gt;
+ * &lt;g:TextBox textAlignment='right'/&gt;
+ * </pre>
+ * 
  * @param <T> the value type
  */
 @SuppressWarnings("deprecation")
@@ -54,7 +69,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
 
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 
-  private AutoDirectionHandler autoDirHandler;
+  private final AutoDirectionHandler autoDirHandler;
 
   private final Parser<T> parser;
   private final Renderer<T> renderer;
@@ -125,14 +140,14 @@ public class ValueBoxBase<T> extends FocusWidget implements
   public Direction getDirection() {
     return BidiUtils.getDirectionOnElement(getElement());
   }
-  
+
   /**
    * Gets the direction estimation model of the auto-dir handler.
    */
   public DirectionEstimator getDirectionEstimator() {
     return autoDirHandler.getDirectionEstimator();
   }
-  
+
   public String getName() {
     return DOM.getElementProperty(getElement(), "name");
   }
@@ -182,7 +197,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
    */
   public T getValueOrThrow() throws ParseException {
     String text = getText().trim();
-    
+
     if ("".equals(text)) {
       return null;
     }
@@ -254,21 +269,21 @@ public class ValueBoxBase<T> extends FocusWidget implements
   public void setDirection(Direction direction) {
     BidiUtils.setDirectionOnElement(getElement(), direction);
   }
-  
+
   /**
    * Toggles on / off direction estimation.
    */
   public void setDirectionEstimator(boolean enabled) {
     autoDirHandler.setDirectionEstimator(enabled);
   }
-  
+
   /**
    * Sets the direction estimation model of the auto-dir handler.
    */
   public void setDirectionEstimator(DirectionEstimator directionEstimator) {
     autoDirHandler.setDirectionEstimator(directionEstimator);
   }
-  
+
   /**
    * If a keyboard event is currently being handled by the text box, this method
    * replaces the unicode character or key code associated with it. This allows
@@ -324,7 +339,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
       throw new IndexOutOfBoundsException(
           "Length must be a positive integer. Length: " + length);
     }
-    if ((pos < 0) || (length + pos > getText().length())) {
+    if (pos < 0 || length + pos > getText().length()) {
       throw new IndexOutOfBoundsException("From Index: " + pos + "  To Index: "
           + (pos + length) + "  Text Length: " + getText().length());
     }
@@ -371,7 +386,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
   protected TextBoxImpl getImpl() {
     return impl;
   }
-  
+
   @Override
   protected void onLoad() {
     super.onLoad();

@@ -19,8 +19,12 @@ import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
+import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
+import com.google.gwt.user.client.ui.TextBoxBase.TextAlignConstant;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,15 +33,14 @@ import java.util.Map;
  * Managers access to all implementations of {@link AttributeParser}.
  */
 public class AttributeParsers {
-  private static final String VERT_CONSTANT = "com.google.gwt.user.client.ui.HasVerticalAlignment."
-      + "VerticalAlignmentConstant";
-  private static final String HORIZ_CONSTANT = "com.google.gwt.user.client.ui.HasHorizontalAlignment."
-      + "HorizontalAlignmentConstant";
+  private static final String HORIZ_CONSTANT = HorizontalAlignmentConstant.class.getCanonicalName();
+  private static final String VERT_CONSTANT = VerticalAlignmentConstant.class.getCanonicalName();
+  private static final String TEXT_ALIGN_CONSTANT = TextAlignConstant.class.getCanonicalName();
   private static final String INT = "int";
   private static final String STRING = String.class.getCanonicalName();
   private static final String DOUBLE = "double";
   private static final String BOOLEAN = "boolean";
-  private static final String UNIT = "com.google.gwt.dom.client.Style.Unit";
+  private static final String UNIT = Unit.class.getCanonicalName();
 
   private final MortalLogger logger;
   private final FieldReferenceConverter converter;
@@ -58,26 +61,29 @@ public class AttributeParsers {
           types.parse(BOOLEAN), logger);
       addAttributeParser(BOOLEAN, boolParser);
       addAttributeParser(Boolean.class.getCanonicalName(), boolParser);
-      
+
       IntAttributeParser intParser = new IntAttributeParser(converter,
           types.parse(INT), logger);
       addAttributeParser(INT, intParser);
       addAttributeParser(Integer.class.getCanonicalName(), intParser);
-      
+
       DoubleAttributeParser doubleParser = new DoubleAttributeParser(converter,
           types.parse(DOUBLE), logger);
       addAttributeParser(DOUBLE, doubleParser);
       addAttributeParser(Double.class.getCanonicalName(), doubleParser);
-      
-      addAttributeParser("int,int", new IntPairAttributeParser(intParser, logger));
-      
+
+      addAttributeParser("int,int", new IntPairAttributeParser(intParser,
+          logger));
+
       addAttributeParser(HORIZ_CONSTANT, new HorizontalAlignmentConstantParser(
           converter, types.parse(HORIZ_CONSTANT), logger));
       addAttributeParser(VERT_CONSTANT, new VerticalAlignmentConstantParser(
           converter, types.parse(VERT_CONSTANT), logger));
-      
-      addAttributeParser(STRING, new StringAttributeParser(converter,
-          types.parse(STRING)));
+      addAttributeParser(TEXT_ALIGN_CONSTANT, new TextAlignConstantParser(
+          converter, types.parse(TEXT_ALIGN_CONSTANT), logger));
+
+      addAttributeParser(STRING,
+          new StringAttributeParser(converter, types.parse(STRING)));
 
       EnumAttributeParser unitParser = new EnumAttributeParser(converter,
           (JEnumType) types.parse(UNIT), logger);

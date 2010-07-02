@@ -304,6 +304,19 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource TEXT_BOX_BASE = new MockJavaResource(
+      "com.google.gwt.user.client.ui.TextBoxBase") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class TextBoxBase {\n");
+      code.append("  public static class TextAlignConstant {\n");
+      code.append("  }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource UI_BINDER = new MockJavaResource(
       "com.google.gwt.uibinder.client.UiBinder") {
     @Override
@@ -380,6 +393,7 @@ public class UiJavaResources {
     rtn.add(STACK_LAYOUT_PANEL);
     rtn.add(STYLE);
     rtn.add(TAB_LAYOUT_PANEL);
+    rtn.add(TEXT_BOX_BASE);
     rtn.add(UI_OBJECT);
     rtn.add(UI_BINDER);
     rtn.add(UI_FACTORY);

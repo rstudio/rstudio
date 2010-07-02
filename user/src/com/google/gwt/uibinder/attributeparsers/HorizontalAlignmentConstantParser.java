@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.attributeparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 
 import java.util.HashMap;
 
@@ -28,15 +29,17 @@ import java.util.HashMap;
  */
 class HorizontalAlignmentConstantParser extends StrictAttributeParser {
 
+  private static final String PREFIX = HasHorizontalAlignment.class.getCanonicalName()
+      + ".ALIGN_";
   private static final HashMap<String, String> values = new HashMap<String, String>();
 
   static {
-    values.put("ALIGN_LEFT",
-        "com.google.gwt.user.client.ui.HasHorizontalAlignment.ALIGN_LEFT");
-    values.put("ALIGN_RIGHT",
-        "com.google.gwt.user.client.ui.HasHorizontalAlignment.ALIGN_RIGHT");
-    values.put("ALIGN_CENTER",
-        "com.google.gwt.user.client.ui.HasHorizontalAlignment.ALIGN_CENTER");
+    values.put("LEFT", PREFIX + "LEFT");
+    values.put("CENTER", PREFIX + "CENTER");
+    values.put("RIGHT", PREFIX + "RIGHT");
+    values.put("ALIGN_LEFT", PREFIX + "LEFT");
+    values.put("ALIGN_CENTER", PREFIX + "CENTER");
+    values.put("ALIGN_RIGHT", PREFIX + "RIGHT");
   }
 
   HorizontalAlignmentConstantParser(FieldReferenceConverter converter,
@@ -44,8 +47,9 @@ class HorizontalAlignmentConstantParser extends StrictAttributeParser {
     super(converter, type, logger);
   }
 
+  @Override
   public String parse(String value) throws UnableToCompleteException {
-    String translated = values.get(value);
+    String translated = values.get(value.toUpperCase());
     if (translated != null) {
       return translated;
     }
