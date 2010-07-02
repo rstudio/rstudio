@@ -25,8 +25,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.view.client.AsyncListViewAdapter;
 import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
 
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class MobileReportList extends Composite implements MobilePage {
   private final Listener listener;
   private final CellList<ReportRecord> reportList;
   private final AsyncListViewAdapter<ReportRecord> reportAdapter;
-  private final SingleSelectionModel<ReportRecord> reportSelection;
+  private final NoSelectionModel<ReportRecord> reportSelection;
   private final ExpensesRequestFactory requestFactory;
 
   public MobileReportList(final Listener listener,
@@ -79,11 +79,11 @@ public class MobileReportList extends Composite implements MobilePage {
       }
     });
 
-    reportSelection = new SingleSelectionModel<ReportRecord>();
+    reportSelection = new NoSelectionModel<ReportRecord>();
     reportSelection.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
     reportSelection.addSelectionChangeHandler(new SelectionModel.SelectionChangeHandler() {
       public void onSelectionChange(SelectionChangeEvent event) {
-        listener.onReportSelected(reportSelection.getSelectedObject());
+        listener.onReportSelected(reportSelection.getLastSelectedObject());
       }
     });
 

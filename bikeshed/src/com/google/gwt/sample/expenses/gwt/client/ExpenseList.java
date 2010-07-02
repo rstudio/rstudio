@@ -54,8 +54,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.view.client.AsyncListViewAdapter;
 import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.Range;
-import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 
@@ -465,12 +465,12 @@ public class ExpenseList extends Composite implements
     table.addColumnStyleName(5, common.spacerColumn());
 
     // Add a selection model.
-    final SingleSelectionModel<ReportRecord> selectionModel = new SingleSelectionModel<ReportRecord>();
+    final NoSelectionModel<ReportRecord> selectionModel = new NoSelectionModel<ReportRecord>();
     table.setSelectionModel(selectionModel);
     table.setSelectionEnabled(true);
     selectionModel.addSelectionChangeHandler(new SelectionChangeHandler() {
       public void onSelectionChange(SelectionChangeEvent event) {
-        Object selected = selectionModel.getSelectedObject();
+        Object selected = selectionModel.getLastSelectedObject();
         if (selected != null && listener != null) {
           listener.onReportSelected((ReportRecord) selected);
         }

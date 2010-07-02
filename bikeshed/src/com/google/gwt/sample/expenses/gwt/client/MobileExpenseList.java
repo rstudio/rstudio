@@ -27,8 +27,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.view.client.AsyncListViewAdapter;
 import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
 
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
   private final ExpensesRequestFactory requestFactory;
   private final CellList<ExpenseRecord> expenseList;
   private final AsyncListViewAdapter<ExpenseRecord> expenseAdapter;
-  private final SingleSelectionModel<ExpenseRecord> expenseSelection;
+  private final NoSelectionModel<ExpenseRecord> expenseSelection;
 
   /**
    * The set of Expense keys that we already know are denied. When a new key is
@@ -136,11 +136,11 @@ public class MobileExpenseList extends Composite implements MobilePage {
 
     expenseList = new CellList<ExpenseRecord>(new ExpenseCell());
 
-    expenseSelection = new SingleSelectionModel<ExpenseRecord>();
+    expenseSelection = new NoSelectionModel<ExpenseRecord>();
     expenseList.setSelectionModel(expenseSelection);
     expenseSelection.addSelectionChangeHandler(new SelectionModel.SelectionChangeHandler() {
       public void onSelectionChange(SelectionChangeEvent event) {
-        listener.onExpenseSelected(expenseSelection.getSelectedObject());
+        listener.onExpenseSelected(expenseSelection.getLastSelectedObject());
       }
     });
 
