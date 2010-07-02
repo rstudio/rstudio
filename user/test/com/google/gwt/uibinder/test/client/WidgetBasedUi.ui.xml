@@ -443,35 +443,35 @@
       <h2>Localization and character escaping</h2>
       <p ui:field="funnyCharsParagraph">Templates can be marked up for <b>localization</b>,
       which presents alls kinds of exciting opportunities for bugs related to
-      character escaping. Consider these funny characters " &quot; ' &#39; &amp; &lt; &gt; > { },
+      character escaping. Consider these funny characters \ " &quot; ' &#39; &amp; &lt; &gt; > { },
       and the various places they might make your life miserable, like this
       untranslated paragraph.</p>
       <p ui:field="funnyCharsMessageParagraph"><ui:msg>They might show up
-      in body text that has been <b>marked for translation</b>: funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:msg></p>
-      <p><ui:msg>Or perhaps in a subelement with a ui:field: <span ui:field='funnyCharsMessageChildSpan'>funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</span></ui:msg></p>
-      <p ui:field="funnyCharsProtectedMessageParagraph"><ui:msg>Don't forget about protected untranslatable blocks: <ui:ph name='francine'>funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:ph></ui:msg></p>
-      <p ui:field="funnyCharsMessageDomAttributeParagraph" title="funny characters &quot; ' &#39; &amp; &lt; &gt; > { }">
+      in body text that has been <b>marked for translation</b>: funny characters \ " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:msg></p>
+      <p><ui:msg>Or perhaps in a subelement with a ui:field: <span ui:field='funnyCharsMessageChildSpan'>funny characters \ " &quot; ' &#39; &amp; &lt; &gt; > { }</span></ui:msg></p>
+      <p ui:field="funnyCharsProtectedMessageParagraph"><ui:msg>Don't forget about protected untranslatable blocks: <ui:ph name='francine'>funny characters \ " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:ph></ui:msg></p>
+      <p ui:field="funnyCharsMessageDomAttributeParagraph" title="funny characters \ &quot; ' &#39; &amp; &lt; &gt; > { }">
         <ui:attribute name="title"/>
         Attributes of dom elements can be translated too, like the
         tooltip of this paragraph, which features the challenging characters.
       </p>
       <p ui:field="funnyCharsDomAttributeParagraph"
-        title="funny characters &quot; ' &#39; &amp; &lt; &gt; > { }">
+        title="funny characters \ &quot; ' &#39; &amp; &lt; &gt; > { }">
         They might also appear in an unstranslated attribute of a dom element, like
         the tooltip for this paragraph.
       </p>
       <p>And all the cases above apply to widgets as well:</p>
-      <gwt:Label>I am an untranslatable HasText with funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</gwt:Label>
-      <gwt:HTML>I am an untranslatable HasHTML with funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</gwt:HTML>
-      <gwt:Label><ui:msg>I am a translatable <ui:ph name="widgetType" example="myWidget">HasText</ui:ph> with funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:msg></gwt:Label>
-      <gwt:HTML><ui:msg>I am a translatable <ui:ph name="widgetType" example="myWidget">HasHTML</ui:ph> with funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:msg></gwt:HTML>
+      <gwt:Label>I am an untranslatable HasText with funny characters \ " &quot; ' &#39; &amp; &lt; &gt; > { }</gwt:Label>
+      <gwt:HTML>I am an untranslatable HasHTML with funny characters \ " &quot; ' &#39; &amp; &lt; &gt; > { }</gwt:HTML>
+      <gwt:Label><ui:msg>I am a translatable <ui:ph name="widgetType" example="myWidget">HasText</ui:ph> with funny characters \ " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:msg></gwt:Label>
+      <gwt:HTML><ui:msg>I am a translatable <ui:ph name="widgetType" example="myWidget">HasHTML</ui:ph> with funny characters \ " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:msg></gwt:HTML>
       <demo:ClickyLink ui:field="funnyCharsAttributeWidget"
-        popupText="funny characters &quot; ' &#39; &amp; &lt; &gt; > { }">
+        popupText="funny characters \ &quot; ' &#39; &amp; &lt; &gt; > { }">
         Click to see my untranslatable text passed by attribute
       </demo:ClickyLink>
       <br/>
       <demo:ClickyLink ui:field="funnyCharsMessageAttributeWidget"
-        popupText="funny characters &quot; ' &#39; &amp; &lt; &gt; > { }">
+        popupText="funny characters \ &quot; ' &#39; &amp; &lt; &gt; > { }">
         <ui:attribute name="popupText"/>
         Click to see my translatable text passed by attribute
       </demo:ClickyLink>

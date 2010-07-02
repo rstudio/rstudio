@@ -113,11 +113,12 @@ public class UiBinderWriter {
 
   /**
    * Escape characters that would mess up interpretation of this string as a
-   * string literal in generated code (that is, protect \n and " ).
+   * string literal in generated code (that is, protect \, \n and " ).
    */
   public static String escapeTextForJavaStringLiteral(String text) {
-    text = text.replaceAll("\"", "\\\\\"");
-    text = text.replaceAll("\n", "\\\\n");
+    text = text.replace("\\", "\\\\");
+    text = text.replace("\"", "\\\"");
+    text = text.replace("\n", "\\n");
 
     return text;
   }

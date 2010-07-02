@@ -231,19 +231,19 @@ public class UiBinderTest extends GWTTestCase {
   public void testDomAttributeMessageWithFunnyChars() {
     ParagraphElement p = widgetUi.funnyCharsMessageDomAttributeParagraph;
     String t = p.getAttribute("title");
-    assertEquals("funny characters \" ' ' & < > > { }", t);
+    assertEquals("funny characters \\ \" ' ' & < > > { }", t);
   }
 
   public void testDomAttributeNoMessageWithFunnyChars() {
     ParagraphElement p = widgetUi.funnyCharsDomAttributeParagraph;
     String t = p.getAttribute("title");
-    assertEquals("funny characters \" ' ' & < > > { }", t);
+    assertEquals("funny characters \\ \" ' ' & < > > { }", t);
   }
 
   public void testDomTextMessageWithFunnyChars() {
     String t = widgetUi.funnyCharsMessageParagraph.getInnerText();
     assertEquals("They might show up in body text that has been marked for "
-        + "translation: funny characters \" \" ' ' & < > > { }", t);
+        + "translation: funny characters \\ \" \" ' ' & < > > { }", t);
   }
   
   public void testEmptyAttributesOkay() {
@@ -275,12 +275,12 @@ public class UiBinderTest extends GWTTestCase {
   public void testProtectedDomTextMessageWithFunnyChars() {
     String t = widgetUi.funnyCharsProtectedMessageParagraph.getInnerText();
     assertEquals("Don't forget about protected untranslatable blocks: "
-        + "funny characters \" \" ' ' & < > > { }", t);
+        + "funny characters \\ \" \" ' ' & < > > { }", t);
   }
 
   public void testDomTextInNamedElementMessageWithFunnyChars() {
     String t = widgetUi.funnyCharsMessageChildSpan.getInnerText();
-    assertEquals("funny characters \" \" ' ' & < > > { }", t);
+    assertEquals("funny characters \\ \" \" ' ' & < > > { }", t);
   }
 
   public void suppressedForSafari3Fail_testDomTextNoMessageWithFunnyChars() {
@@ -289,7 +289,7 @@ public class UiBinderTest extends GWTTestCase {
     String t = p.getInnerHTML().replace("\n", " ").toLowerCase();
     String expected = "Templates can be marked up for <b>localization</b>, which presents alls "
         + "kinds of exciting opportunities for bugs related to character escaping. "
-        + "Consider these funny characters \" \" ' ' &amp; &lt; &gt; &gt; { }, and "
+        + "Consider these funny characters \\ \" \" ' ' &amp; &lt; &gt; &gt; { }, and "
         + "the various places they might make your life miserable, like this "
         + "untranslated paragraph.";
     expected = expected.toLowerCase();
@@ -448,13 +448,13 @@ public class UiBinderTest extends GWTTestCase {
   public void testWidgetAttributeMessageWithFunnyChars() {
     ClickyLink clicky = widgetUi.funnyCharsMessageAttributeWidget;
     String t = clicky.getPopupText();
-    assertEquals("funny characters \" ' ' & < > > { }", t);
+    assertEquals("funny characters \\ \" ' ' & < > > { }", t);
   }
 
   public void testWidgetAttributeNoMessageWithFunnyChars() {
     ClickyLink clicky = widgetUi.funnyCharsAttributeWidget;
     String t = clicky.getPopupText();
-    assertEquals("funny characters \" ' ' & < > > { }", t);
+    assertEquals("funny characters \\ \" ' ' & < > > { }", t);
   }
 
   public void testCustomImageClass() {
