@@ -95,6 +95,33 @@ public class InheritanceTest extends RpcTestBase {
   }
 
   /**
+   * Tests that a serialized type can be sent again on the wire.
+   */
+  public void testResendJavaSerializableClass() {
+    final InheritanceTestServiceAsync service = getServiceAsync();
+    final InheritanceTestSetFactory.JavaSerializableClass first =
+        new InheritanceTestSetFactory.JavaSerializableClass(3);
+    AsyncCallback<Object> resendCallback = new AsyncCallback<Object>() {
+        private boolean resend = true;
+        public void onFailure(Throwable caught) {
+          TestSetValidator.rethrowException(caught);
+        }
+
+        public void onSuccess(Object result) {
+          assertEquals(first, result);
+          if (resend) {
+            resend = false;
+            service.echo((InheritanceTestSetFactory.JavaSerializableClass) result, this);
+          } else {
+            finishTest();
+          }
+        }
+    };
+    delayTestFinishForRpc();
+    service.echo(first, resendCallback);
+  }
+
+  /**
    * Test that non-static inner classes are not serializable.
    */
   public void testNonStaticInnerClass() {

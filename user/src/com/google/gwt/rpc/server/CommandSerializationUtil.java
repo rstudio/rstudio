@@ -103,8 +103,20 @@ public class CommandSerializationUtil {
 
       @Override
       public void set(Object instance, long offset, Object value) {
-        theUnsafe.putBoolean(instance, offset, ((Boolean) value));
+        theUnsafe.putBoolean(instance, offset, toBoolean(value));
       }
+
+      private boolean toBoolean(Object value) {
+        if (value instanceof Number) {
+          return ((Number) value).intValue() != 0;
+        } else if (value instanceof String) {
+          return Boolean.valueOf((String) value);
+        } else {
+          // returns false if the value is null.
+          return Boolean.TRUE.equals(value);
+        }
+      }
+
     },
     BYTE {
       @Override

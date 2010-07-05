@@ -72,6 +72,23 @@ public class InheritanceTestSetFactory {
     public JavaSerializableBaseClass(int field1) {
       this.field1 = field1;
     }
+
+    @Override
+    public int hashCode() {
+      return field1;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      JavaSerializableBaseClass other = (JavaSerializableBaseClass) obj;
+      return field1 == other.field1;
+    }
   }
 
   /**
@@ -79,12 +96,30 @@ public class InheritanceTestSetFactory {
    */
   public static class JavaSerializableClass extends JavaSerializableBaseClass {
     private int field2 = -2;
+    private boolean field3 = true;
 
     public JavaSerializableClass() {
     }
 
     public JavaSerializableClass(int field2) {
       this.field2 = field2;
+    }
+
+    @Override
+    public int hashCode() {
+      return super.hashCode() << 19 + field2;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      JavaSerializableClass other = (JavaSerializableClass) obj;
+      return super.equals(other) && field2 == other.field2 && field3 == other.field3;
     }
   }
 
