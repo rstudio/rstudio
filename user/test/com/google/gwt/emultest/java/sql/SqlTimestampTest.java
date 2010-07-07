@@ -15,7 +15,6 @@
  */
 package com.google.gwt.emultest.java.sql;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.sql.Timestamp;
@@ -59,16 +58,9 @@ public class SqlTimestampTest extends GWTTestCase {
     assertEquals("d2, t", d2, t);
     assertEquals("hashcode", d2.hashCode(), t.hashCode());
     assertFalse("t.equals(d2)", t.equals(d2));
-
-    if (GWT.isScript()) {
-      // It looks like not all JVMs will throw the CCE, just check web mode.
-      try {
-        t.compareTo(d2);
-        fail("Should throw ClassCastException");
-      } catch (ClassCastException e) {
-        // Correct
-      }
-    }
+    
+    // t is later then d2 by some number of nanoseconds
+    assertEquals(1, t.compareTo(d2));
 
     Timestamp t2 = new Timestamp(d.getTime());
     t2.setNanos(t.getNanos() + 1);

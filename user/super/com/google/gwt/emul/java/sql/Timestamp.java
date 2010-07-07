@@ -108,8 +108,11 @@ public class Timestamp extends java.util.Date {
 
   @Override
   public int compareTo(java.util.Date o) {
-    // JavaDoc says a ClassCastException is correct behavior
-    return compareTo((Timestamp) o);
+    if (o instanceof Timestamp) {
+      return compareTo((Timestamp) o);
+    } else {
+      return compareTo(new Timestamp(o.getTime()));
+    }
   }
 
   public int compareTo(Timestamp o) {
