@@ -18,6 +18,8 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JBinaryOperation;
+import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -31,9 +33,8 @@ import com.google.gwt.dev.jjs.ast.JType;
  */
 public class TempLocalVisitorTest extends JJSTestBase {
   /**
-   * NOTE: for testing purposes only! This transform does not even try to
-   * preserve language semantics, such as evaluation order. It's purely meant as
-   * an exercise for TempLocalVisitor.
+   * Replaces expressions with assignment-to-temp. Does not replace lvalues, or
+   * the top level expression in an expression statement.
    */
   private static final class AlwaysReplacer extends TempLocalVisitor {
     /**
@@ -53,8 +54,8 @@ public class TempLocalVisitorTest extends JJSTestBase {
         SourceInfo info = x.getSourceInfo();
         JType type = x.getType();
         JLocal local = createTempLocal(info, type);
-        local.getDeclarationStatement().initializer = x;
-        ctx.replaceMe(new JLocalRef(info, local));
+        ctx.replaceMe(new JBinaryOperation(info, type, JBinaryOperator.ASG,
+            new JLocalRef(info, local), x));
       }
     }
   }
@@ -78,12 +79,12 @@ public class TempLocalVisitorTest extends JJSTestBase {
   }
 
   public void testBasic() throws Exception {
-    assertTransform("int i = 3;").into("int $t0 = 3; int i = $t0;");
+    assertTransform("int i = 3;").into("int $t0; int i = $t0 = 3;");
   }
 
   public void testExisting() throws Exception {
-    assertTransform("int $t0 = 3; int i = $t0;").into(
-        "int $t1 = 3; int $t0 = $t1; int $t2 = $t0; int i = $t2;");
+    assertTransform("int $t0; int i = $t0 = 3;").into(
+        "int $t0; int $t1; int $t2; int i = $t2 = $t0 = $t1 = 3;");
   }
 
   public void testForStatement() throws Exception {
@@ -95,9 +96,9 @@ public class TempLocalVisitorTest extends JJSTestBase {
      * TODO(scottb): technically $t1 and $t2 could be part of the for
      * statement's initializer list.
      */
-    expected.append("boolean $t1 = true;");
-    expected.append("int $t2 = 1;");
-    expected.append("for (int $t0 = 0, i = $t0; $t1; i += $t2);");
+    expected.append("boolean $t1;");
+    expected.append("int $t2;");
+    expected.append("for (int $t0, i = $t0 = 0; $t1 = true; i += $t2 = 1);");
 
     assertTransform(original.toString()).into(expected.toString());
   }
@@ -109,20 +110,20 @@ public class TempLocalVisitorTest extends JJSTestBase {
     original.append("int j = 4;");
 
     StringBuilder expected = new StringBuilder();
-    expected.append("boolean $t0 = false;");
-    expected.append("boolean f = $t0;");
-    expected.append("boolean $t2 = f;");
-    expected.append("for (int $t1 = 3, i = $t1; $t2; );");
+    expected.append("boolean $t0;");
+    expected.append("boolean f = $t0 = false;");
+    expected.append("boolean $t2;");
+    expected.append("for (int $t1, i = $t1 = 3; $t2 = f; );");
     /*
      * TODO(scottb): technically we could reuse $t1 here as a minor improvement.
      */
-    expected.append("int $t3 = 4; int j = $t3;");
+    expected.append("int $t3; int j = $t3 = 4;");
 
     assertTransform(original.toString()).into(expected.toString());
   }
 
   public void testNested() throws Exception {
-    assertTransform("{ int i = 3; } ").into("{ int $t0 = 3; int i = $t0; }");
+    assertTransform("{ int i = 3; } ").into("{ int $t0; int i = $t0 = 3; }");
   }
 
   public void testNestedPost() throws Exception {
@@ -131,8 +132,8 @@ public class TempLocalVisitorTest extends JJSTestBase {
     original.append("{ int j = 4; }");
 
     StringBuilder expected = new StringBuilder();
-    expected.append("int $t0 = 3; int i = $t0;");
-    expected.append("{ int $t1 = 4; int j = $t1; }");
+    expected.append("int $t0; int i = $t0 = 3;");
+    expected.append("{ int $t1; int j = $t1 = 4; }");
 
     assertTransform(original.toString()).into(expected.toString());
   }
@@ -143,8 +144,8 @@ public class TempLocalVisitorTest extends JJSTestBase {
     original.append("int j = 4;");
 
     StringBuilder expected = new StringBuilder();
-    expected.append("{ int $t0 = 3; int i = $t0; }");
-    expected.append("int $t1 = 4; int j = $t1;");
+    expected.append("{ int $t0; int i = $t0 = 3; }");
+    expected.append("int $t1; int j = $t1 = 4;");
 
     assertTransform(original.toString()).into(expected.toString());
   }
@@ -155,8 +156,8 @@ public class TempLocalVisitorTest extends JJSTestBase {
     original.append("{ int j = 4; }");
 
     StringBuilder expected = new StringBuilder();
-    expected.append("{ int $t0 = 3; int i = $t0; }");
-    expected.append("{ int $t0 = 4; int j = $t0; }");
+    expected.append("{ int $t0; int i = $t0 = 3; }");
+    expected.append("{ int $t0; int j = $t0 = 4; }");
 
     assertTransform(original.toString()).into(expected.toString());
   }
@@ -167,8 +168,8 @@ public class TempLocalVisitorTest extends JJSTestBase {
     original.append("{ int i = 3; int j = 4; }");
 
     StringBuilder expected = new StringBuilder();
-    expected.append("{ int $t0 = 3; int i = $t0; int $t1 = 4; int j = $t1; }");
-    expected.append("{ int $t0 = 3; int i = $t0; int $t1 = 4; int j = $t1; }");
+    expected.append("{ int $t0; int i = $t0 = 3; int $t1; int j = $t1 = 4; }");
+    expected.append("{ int $t0; int i = $t0 = 3; int $t1; int j = $t1 = 4; }");
 
     assertTransform(original.toString()).into(expected.toString());
   }
@@ -182,11 +183,11 @@ public class TempLocalVisitorTest extends JJSTestBase {
     original.append("int c = 2;");
 
     StringBuilder expected = new StringBuilder();
-    expected.append("int $t0 = 0; int a = $t0;");
-    expected.append("{ int $t1 = 3; int i = $t1; int $t2 = 4; int j = $t2; }");
-    expected.append("int $t3 = 1; int b = $t3;");
-    expected.append("{ int $t1 = 3; int i = $t1; int $t2 = 4; int j = $t2; }");
-    expected.append("int $t4 = 2; int c = $t4;");
+    expected.append("int $t0; int a = $t0 = 0;");
+    expected.append("{ int $t1; int i = $t1 = 3; int $t2; int j = $t2 = 4; }");
+    expected.append("int $t3; int b = $t3 = 1;");
+    expected.append("{ int $t1; int i = $t1 = 3; int $t2; int j = $t2 = 4; }");
+    expected.append("int $t4; int c = $t4 = 2;");
 
     assertTransform(original.toString()).into(expected.toString());
   }
