@@ -683,11 +683,10 @@ public class GenerateJavaAST {
         if (!hasExplicitThis) {
           ReferenceBinding declaringClass = x.binding.declaringClass;
           if (declaringClass instanceof NestedTypeBinding) {
-            Iterator<JParameter> paramIt = getSyntheticsIterator();
+            Iterator<JParameter> paramIt = currentMethod.getParams().iterator();
             NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
             if (nestedBinding.enclosingInstances != null) {
-              for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-                SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
+              for (SyntheticArgumentBinding arg : nestedBinding.enclosingInstances) {
                 JParameter param = paramIt.next();
                 if (arg.matchingField != null) {
                   JField field = (JField) typeMap.get(arg);
@@ -698,9 +697,9 @@ public class GenerateJavaAST {
               }
             }
 
+            paramIt = getSyntheticLocalsIterator();
             if (nestedBinding.outerLocalVariables != null) {
-              for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-                SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
+              for (SyntheticArgumentBinding arg : nestedBinding.outerLocalVariables) {
                 JParameter param = paramIt.next();
                 JField field = (JField) typeMap.get(arg);
                 block.addStmt(JProgram.createAssignmentStmt(info,
@@ -804,25 +803,28 @@ public class GenerateJavaAST {
             program.getLiteralInt(x.enumConstant.binding.original().id));
       }
 
-      // Plain old regular user arguments
-      addCallArgs(x.arguments, call, b);
-
       // Synthetic args for inner classes
       ReferenceBinding targetBinding = b.declaringClass;
       if (targetBinding.isNestedType() && !targetBinding.isStatic()) {
         NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(targetBinding);
         // Synthetic this args for inner classes
         if (nestedBinding.enclosingInstances != null) {
-          for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
+          for (SyntheticArgumentBinding arg : nestedBinding.enclosingInstances) {
             JClassType syntheticThisType = (JClassType) typeMap.get(arg.type);
             call.addArg(createThisRef(info, syntheticThisType));
           }
         }
+      }
+
+      // Plain old regular user arguments
+      addCallArgs(x.arguments, call, b);
+
+      // Synthetic args for inner classes
+      if (targetBinding.isNestedType() && !targetBinding.isStatic()) {
+        NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(targetBinding);
         // Synthetic locals for local classes
         if (nestedBinding.outerLocalVariables != null) {
-          for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
+          for (SyntheticArgumentBinding arg : nestedBinding.outerLocalVariables) {
             JVariable variable = (JVariable) typeMap.get(arg.actualOuterLocalVariable);
             call.addArg(createVariableRef(info, variable,
                 arg.actualOuterLocalVariable));
@@ -1233,25 +1235,26 @@ public class GenerateJavaAST {
         qualList.add(implicitOuter);
       }
 
-      // Plain old regular arguments
-      addCallArgs(x.arguments, newInstance, b);
-
-      // Synthetic args for inner classes
+      // Synthetic this args for inner classes
       ReferenceBinding targetBinding = b.declaringClass;
       if (targetBinding.isNestedType() && !targetBinding.isStatic()) {
         NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(targetBinding);
-        // Synthetic this args for inner classes
         if (nestedBinding.enclosingInstances != null) {
-          for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
+          for (SyntheticArgumentBinding arg : nestedBinding.enclosingInstances) {
             JClassType syntheticThisType = (JClassType) typeMap.get(arg.type);
             newInstance.addArg(createThisRef(syntheticThisType, qualList));
           }
         }
-        // Synthetic locals for local classes
+      }
+
+      // Plain old regular arguments
+      addCallArgs(x.arguments, newInstance, b);
+
+      // Synthetic locals for local classes
+      if (targetBinding.isNestedType() && !targetBinding.isStatic()) {
+        NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(targetBinding);
         if (nestedBinding.outerLocalVariables != null) {
-          for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
+          for (SyntheticArgumentBinding arg : nestedBinding.outerLocalVariables) {
             JVariable variable = (JVariable) typeMap.get(arg.actualOuterLocalVariable);
             newInstance.addArg(createVariableRef(info, variable,
                 arg.actualOuterLocalVariable));
@@ -1852,8 +1855,6 @@ public class GenerateJavaAST {
       JExpression trueQualifier = createThisRef(info, currentClass);
       JMethodCall call = new JMethodCall(info, trueQualifier, ctor);
 
-      addCallArgs(x.arguments, call, x.binding);
-
       // We have to find and pass through any synthetics our supertype needs
       ReferenceBinding superClass = x.binding.declaringClass;
       if (superClass.isNestedType() && !superClass.isStatic()) {
@@ -1875,7 +1876,7 @@ public class GenerateJavaAST {
                * check each one to see if any will make a suitable this ref.
                */
               List<JExpression> workList = new ArrayList<JExpression>();
-              Iterator<JParameter> paramIt = getSyntheticsIterator();
+              Iterator<JParameter> paramIt = currentMethod.getParams().iterator();
               for (ReferenceBinding b : myBinding.syntheticEnclosingInstanceTypes()) {
                 workList.add(createVariableRef(info, paramIt.next()));
               }
@@ -1885,6 +1886,13 @@ public class GenerateJavaAST {
             }
           }
         }
+      }
+
+      addCallArgs(x.arguments, call, x.binding);
+
+      // We have to find and pass through any synthetics our supertype needs
+      if (superClass.isNestedType() && !superClass.isStatic()) {
+        ReferenceBinding superBinding = superClass;
 
         // outer locals
         if (superBinding.syntheticOuterLocalVariables() != null) {
@@ -1893,8 +1901,7 @@ public class GenerateJavaAST {
             JType varType = (JType) typeMap.get(arg.type);
             String varName = String.valueOf(arg.name);
             JParameter param = null;
-            for (int i = 0; i < currentMethod.getParams().size(); ++i) {
-              JParameter paramIt = currentMethod.getParams().get(i);
+            for (JParameter paramIt : currentMethod.getParams()) {
               if (varType == paramIt.getType()
                   && varName.equals(paramIt.getName())) {
                 param = paramIt;
@@ -1920,18 +1927,24 @@ public class GenerateJavaAST {
 
       assert (x.qualification == null);
 
-      addCallArgs(x.arguments, call, x.binding);
-
-      // All synthetics must be passed through to the target ctor
+      // All synthetic this args must be passed through to the target ctor
       ReferenceBinding declaringClass = x.binding.declaringClass;
       if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
-        Iterator<JParameter> paramIt = getSyntheticsIterator();
+        Iterator<JParameter> paramIt = currentMethod.getParams().iterator();
         NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(declaringClass);
         if (nestedBinding.enclosingInstances != null) {
-          for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
+          for (SyntheticArgumentBinding unused : nestedBinding.enclosingInstances) {
             call.addArg(createVariableRef(info, paramIt.next()));
           }
         }
+      }
+
+      addCallArgs(x.arguments, call, x.binding);
+
+      // All synthetic locals must be passed through to the target ctor
+      if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
+        Iterator<JParameter> paramIt = getSyntheticLocalsIterator();
+        NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(declaringClass);
         if (nestedBinding.outerLocalVariables != null) {
           for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
             call.addArg(createVariableRef(info, paramIt.next()));
@@ -2302,14 +2315,11 @@ public class GenerateJavaAST {
 
     /**
      * Gets a JParameter iterator for a constructor method over its synthetic
-     * parameters.
+     * local parameters.
      */
-    private Iterator<JParameter> getSyntheticsIterator() {
-      Iterator<JParameter> it = currentMethod.getParams().iterator();
-      for (int i = 0, c = currentMethod.getOriginalParamTypes().size(); i < c; ++i) {
-        it.next();
-      }
-      return it;
+    private Iterator<JParameter> getSyntheticLocalsIterator() {
+      return currentMethod.getParams().listIterator(
+          currentMethod.getOriginalParamTypes().size());
     }
 
     private void implementMethod(JMethod method, JExpression returnValue) {

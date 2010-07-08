@@ -77,7 +77,6 @@ import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -177,19 +176,11 @@ public class BuildTypeMap {
               program.getTypePrimitiveInt(), true, false, newCtor);
         }
 
-        // user args
-        mapParameters(newCtor, ctorDecl);
-        addThrownExceptions(ctorDecl.binding, newCtor);
-        // original params are now frozen
-
-        info.addCorrelation(program.getCorrelator().by(newCtor));
-
-        int syntheticParamCount = 0;
         ReferenceBinding declaringClass = b.declaringClass;
+        Set<String> alreadyNamedVariables = new HashSet<String>();
         if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
-          // add synthetic args for outer this and locals
+          // add synthetic args for outer this
           NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
-          Set<String> alreadyNamedVariables = new HashSet<String>();
           if (nestedBinding.enclosingInstances != null) {
             for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
               SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
@@ -198,11 +189,22 @@ public class BuildTypeMap {
                 argName += "_" + i;
               }
               createParameter(arg, argName, newCtor);
-              ++syntheticParamCount;
               alreadyNamedVariables.add(argName);
             }
           }
+        }
 
+        // user args
+        mapParameters(newCtor, ctorDecl);
+        // original params are now frozen
+
+        addThrownExceptions(ctorDecl.binding, newCtor);
+
+        info.addCorrelation(program.getCorrelator().by(newCtor));
+
+        if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
+          // add synthetic args for locals
+          NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
           if (nestedBinding.outerLocalVariables != null) {
             for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
               SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
@@ -211,7 +213,6 @@ public class BuildTypeMap {
                 argName += "_" + i;
               }
               createParameter(arg, argName, newCtor);
-              ++syntheticParamCount;
               alreadyNamedVariables.add(argName);
             }
           }
@@ -222,11 +223,7 @@ public class BuildTypeMap {
         // Now let's implicitly create a static function called 'new' that will
         // allow construction from JSNI methods
         if (!enclosingType.isAbstract()) {
-          ReferenceBinding enclosingBinding = ctorDecl.binding.declaringClass.enclosingType();
-          JReferenceType outerType = enclosingBinding == null ? null
-              : (JReferenceType) typeMap.get(enclosingBinding);
-          createSyntheticConstructor(newCtor,
-              ctorDecl.binding.declaringClass.isStatic(), outerType);
+          createSyntheticConstructor(newCtor);
         }
 
         return true;
@@ -402,8 +399,7 @@ public class BuildTypeMap {
      *          constructed. This may be <code>null</code> if the class is a
      *          top-level type.
      */
-    private JMethod createSyntheticConstructor(JConstructor constructor,
-        boolean staticClass, JReferenceType enclosingType) {
+    private JMethod createSyntheticConstructor(JConstructor constructor) {
       JClassType type = constructor.getEnclosingType();
 
       // Define the method
@@ -420,41 +416,17 @@ public class BuildTypeMap {
               "new instance"), constructor, type);
 
       /*
-       * If the type isn't static, make the first parameter a reference to the
-       * instance of the enclosing class. It's the first instance to allow the
-       * JSNI qualifier to be moved without affecting evaluation order.
-       */
-      JParameter enclosingInstance = null;
-      if (!staticClass) {
-        enclosingInstance = JProgram.createParameter(
-            synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                "outer instance"), "this$outer", enclosingType, false, false,
-            synthetic);
-      }
-
-      /*
        * In one pass, add the parameters to the synthetic constructor and
        * arguments to the method call.
        */
-      for (Iterator<JParameter> i = constructor.getParams().iterator(); i.hasNext();) {
-        JParameter param = i.next();
-        /*
-         * This supports x.new Inner() by passing the enclosing instance
-         * implicitly as the last argument to the constructor.
-         */
-        if (enclosingInstance != null && !i.hasNext()) {
-          newInstance.addArg(new JParameterRef(
-              synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                  "enclosing instance"), enclosingInstance));
-        } else {
-          JParameter syntheticParam = JProgram.createParameter(
-              synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                  "Argument " + param.getName()), param.getName(),
-              param.getType(), true, false, synthetic);
-          newInstance.addArg(new JParameterRef(
-              syntheticParam.getSourceInfo().makeChild(
-                  BuildDeclMapVisitor.class, "reference"), syntheticParam));
-        }
+      for (JParameter param : constructor.getParams()) {
+        JParameter syntheticParam = JProgram.createParameter(
+            synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+                "Argument " + param.getName()), param.getName(),
+            param.getType(), true, false, synthetic);
+        newInstance.addArg(new JParameterRef(
+            syntheticParam.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+                "reference"), syntheticParam));
       }
 
       // Lock the method.
