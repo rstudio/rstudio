@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -28,10 +29,12 @@ import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.util.collect.HashSet;
 
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -204,6 +207,12 @@ public abstract class TempLocalVisitor extends JModVisitor {
    */
   private static final String PREFIX = "$t";
 
+  /**
+   * A set of statements we cannot insert declaration statements into. Currently
+   * this is just the "increments" list of a JForStatement.
+   */
+  private Set<JStatement> banList = new HashSet<JStatement>();
+
   private JMethodBody curMethodBody = null;
   private Scope curScope = null;
   private final Stack<Context> insertionStack = new Stack<Context>();
@@ -225,8 +234,10 @@ public abstract class TempLocalVisitor extends JModVisitor {
   @Override
   public final void endVisit(JStatement x, Context ctx) {
     if (ctx.canInsert()) {
-      Context popped = insertionStack.pop();
-      assert popped == ctx;
+      if (!banList.remove(x)) {
+        Context popped = insertionStack.pop();
+        assert popped == ctx;
+      }
     }
     super.endVisit(x, ctx);
   }
@@ -247,8 +258,13 @@ public abstract class TempLocalVisitor extends JModVisitor {
 
   @Override
   public final boolean visit(JStatement x, Context ctx) {
-    if (ctx.canInsert()) {
+    if (ctx.canInsert() && !banList.contains(x)) {
       insertionStack.push(ctx);
+    }
+    if (x instanceof JForStatement) {
+      // Cannot add decl statements to a for statement increments list.
+      JForStatement forStmt = (JForStatement) x;
+      banList.addAll(forStmt.getIncrements());
     }
     return super.visit(x, ctx);
   }

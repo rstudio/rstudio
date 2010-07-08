@@ -32,6 +32,37 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class JVisitor {
 
+  protected static final Context LVALUE_CONTEXT = new Context() {
+
+    public boolean canInsert() {
+      return false;
+    }
+
+    public boolean canRemove() {
+      return false;
+    }
+
+    public void insertAfter(JNode node) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void insertBefore(JNode node) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean isLvalue() {
+      return true;
+    }
+
+    public void removeMe() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void replaceMe(JNode node) {
+      throw new UnsupportedOperationException();
+    }
+  };
+
   protected static final Context UNMODIFIABLE_CONTEXT = new Context() {
 
     public boolean canInsert() {
@@ -48,6 +79,10 @@ public class JVisitor {
 
     public void insertBefore(JNode node) {
       throw new UnsupportedOperationException();
+    }
+
+    public boolean isLvalue() {
+      return false;
     }
 
     public void removeMe() {
@@ -83,7 +118,7 @@ public class JVisitor {
   public JNode accept(JNode node) {
     return accept(node, false);
   }
-  
+
   public JNode accept(JNode node, boolean allowRemove) {
     try {
       node.traverse(this, UNMODIFIABLE_CONTEXT);
@@ -115,6 +150,15 @@ public class JVisitor {
   public <T extends JNode> List<T> acceptImmutable(List<T> list) {
     accept(list);
     return list;
+  }
+
+  public JExpression acceptLvalue(JExpression expr) {
+    try {
+      expr.traverse(this, LVALUE_CONTEXT);
+      return expr;
+    } catch (Throwable e) {
+      throw translateException(expr, e);
+    }
   }
 
   public <T extends JNode> void acceptWithInsertRemove(List<T> list) {

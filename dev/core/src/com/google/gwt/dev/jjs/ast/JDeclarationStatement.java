@@ -44,7 +44,7 @@ public class JDeclarationStatement extends JStatement {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      variableRef = (JVariableRef) visitor.accept(variableRef);
+      variableRef = (JVariableRef) visitor.acceptLvalue(variableRef);
       if (initializer != null) {
         initializer = visitor.accept(initializer);
       }

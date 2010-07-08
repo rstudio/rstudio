@@ -30,6 +30,8 @@ public interface Context {
 
   void insertBefore(JNode node);
 
+  boolean isLvalue();
+
   void removeMe();
 
   void replaceMe(JNode node);

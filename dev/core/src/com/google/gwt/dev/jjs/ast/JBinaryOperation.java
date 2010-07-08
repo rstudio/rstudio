@@ -74,7 +74,11 @@ public class JBinaryOperation extends JExpression {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      lhs = visitor.accept(lhs);
+      if (isAssignment()) {
+        lhs = visitor.acceptLvalue(lhs);
+      } else {
+        lhs = visitor.accept(lhs);
+      }
       rhs = visitor.accept(rhs);
     }
     visitor.endVisit(this, ctx);

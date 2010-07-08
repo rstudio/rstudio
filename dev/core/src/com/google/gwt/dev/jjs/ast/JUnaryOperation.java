@@ -50,6 +50,10 @@ public abstract class JUnaryOperation extends JExpression {
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
-    arg = visitor.accept(arg);
+    if (getOp().isModifying()) {
+      arg = visitor.acceptLvalue(arg);
+    } else {
+      arg = visitor.accept(arg);
+    }
   }
 }

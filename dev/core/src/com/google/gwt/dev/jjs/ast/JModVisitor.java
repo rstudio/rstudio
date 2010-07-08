@@ -60,6 +60,10 @@ public class JModVisitor extends JVisitor {
       ctxDidChange = true;
     }
 
+    public boolean isLvalue() {
+      return false;
+    }
+
     public void removeMe() {
       checkState();
       list.remove(index--);
@@ -138,6 +142,10 @@ public class JModVisitor extends JVisitor {
       ctxDidChange = true;
     }
 
+    public boolean isLvalue() {
+      return false;
+    }
+
     public void removeMe() {
       checkState();
       list = Lists.remove(list, index--);
@@ -181,6 +189,17 @@ public class JModVisitor extends JVisitor {
     }
   }
 
+  private class LvalueContext extends NodeContext {
+    public LvalueContext() {
+      super(false);
+    }
+
+    @Override
+    public boolean isLvalue() {
+      return true;
+    }
+  }
+
   private static class NodeContext implements Context {
     boolean canRemove;
     boolean didChange;
@@ -190,7 +209,7 @@ public class JModVisitor extends JVisitor {
     public NodeContext(boolean canRemove) {
       this.canRemove = canRemove;
     }
-    
+
     public boolean canInsert() {
       return false;
     }
@@ -207,11 +226,15 @@ public class JModVisitor extends JVisitor {
       throw new UnsupportedOperationException("Can't insert before " + node);
     }
 
+    public boolean isLvalue() {
+      return false;
+    }
+
     public void removeMe() {
       if (!canRemove) {
         throw new UnsupportedOperationException("Can't remove " + node);
       }
-      
+
       this.node = null;
       didChange = true;
     }
@@ -242,7 +265,7 @@ public class JModVisitor extends JVisitor {
   public JNode accept(JNode node) {
     return accept(node, false);
   }
-  
+
   @Override
   public JNode accept(JNode node, boolean allowRemove) {
     NodeContext ctx = new NodeContext(allowRemove);
@@ -292,6 +315,18 @@ public class JModVisitor extends JVisitor {
       return list;
     } catch (Throwable e) {
       throw translateException(ctx.node, e);
+    }
+  }
+
+  public JExpression acceptLvalue(JExpression expr) {
+    LvalueContext ctx = new LvalueContext();
+    try {
+      ctx.node = expr;
+      traverse(expr, ctx);
+      didChange |= ctx.didChange;
+      return (JExpression) ctx.node;
+    } catch (Throwable e) {
+      throw translateException(expr, e);
     }
   }
 

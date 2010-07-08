@@ -18,14 +18,11 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JBinaryOperation;
-import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JPostfixOperation;
-import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 
@@ -34,54 +31,31 @@ import com.google.gwt.dev.jjs.ast.JType;
  */
 public class TempLocalVisitorTest extends JJSTestBase {
   /**
-   * For testing purposes; replaces all non-lvalue expressions with a temp.
+   * NOTE: for testing purposes only! This transform does not even try to
+   * preserve language semantics, such as evaluation order. It's purely meant as
+   * an exercise for TempLocalVisitor.
    */
   private static final class AlwaysReplacer extends TempLocalVisitor {
+    /**
+     * Don't bother replacing entire JExpressionStatements with a temp.
+     */
+    private JExpression dontBother;
+
+    @Override
+    public boolean visit(JExpressionStatement x, Context ctx) {
+      dontBother = x.getExpr();
+      return super.visit(x, ctx);
+    }
+
     @Override
     public void endVisit(JExpression x, Context ctx) {
-      SourceInfo info = x.getSourceInfo();
-      JType type = x.getType();
-      JLocal local = createTempLocal(info, type);
-      local.getDeclarationStatement().initializer = x;
-      ctx.replaceMe(new JLocalRef(info, local));
-    }
-
-    @Override
-    public boolean visit(JBinaryOperation x, Context ctx) {
-      super.visit(x, ctx);
-      if (x.getRhs() != null) {
-        JExpression newRhs = accept(x.getRhs());
-        if (newRhs != x.getRhs()) {
-          ctx.replaceMe(new JBinaryOperation(x.getSourceInfo(), x.getType(),
-              x.getOp(), x.getLhs(), newRhs));
-        }
+      if (x != dontBother && !ctx.isLvalue()) {
+        SourceInfo info = x.getSourceInfo();
+        JType type = x.getType();
+        JLocal local = createTempLocal(info, type);
+        local.getDeclarationStatement().initializer = x;
+        ctx.replaceMe(new JLocalRef(info, local));
       }
-      return false;
-    }
-
-    @Override
-    public boolean visit(JDeclarationStatement x, Context ctx) {
-      super.visit(x, ctx);
-      if (x.initializer != null) {
-        x.initializer = accept(x.initializer);
-      }
-      return false;
-    }
-
-    @Override
-    public boolean visit(JPostfixOperation x, Context ctx) {
-      if (x.getOp().isModifying()) {
-        return false;
-      }
-      return true;
-    }
-
-    @Override
-    public boolean visit(JPrefixOperation x, Context ctx) {
-      if (x.getOp().isModifying()) {
-        return false;
-      }
-      return true;
     }
   }
 
@@ -114,15 +88,16 @@ public class TempLocalVisitorTest extends JJSTestBase {
 
   public void testForStatement() throws Exception {
     StringBuilder original = new StringBuilder();
-    original.append("for (int i = 3; true; );");
+    original.append("for (int i = 0; true; i += 1);");
 
     StringBuilder expected = new StringBuilder();
     /*
-     * TODO(scottb): technically $t1 could be part of the for statement's
-     * initializer list.
+     * TODO(scottb): technically $t1 and $t2 could be part of the for
+     * statement's initializer list.
      */
     expected.append("boolean $t1 = true;");
-    expected.append("for (int $t0 = 3, i = $t0; $t1; );");
+    expected.append("int $t2 = 1;");
+    expected.append("for (int $t0 = 0, i = $t0; $t1; i += $t2);");
 
     assertTransform(original.toString()).into(expected.toString());
   }
