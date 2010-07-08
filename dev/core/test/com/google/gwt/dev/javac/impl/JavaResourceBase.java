@@ -42,6 +42,40 @@ public class JavaResourceBase {
       return code;
     }
   };
+  public static final MockJavaResource BYTE = new MockJavaResource(
+      "java.lang.Byte") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("public class Byte extends Number {\n");
+      code.append("  private byte value;\n");
+      code.append("  public Byte(byte value) {\n");
+      code.append("    this.value = value;\n");
+      code.append("  }\n");
+      code.append("  public static Byte valueOf(byte b) { return new Byte(b); }\n");
+      code.append("  public byte byteValue() { return value; }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource CHARACTER = new MockJavaResource(
+      "java.lang.Character") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("public class Character {\n");
+      code.append("  private char value;\n");
+      code.append("  public Character(char value) {\n");
+      code.append("    this.value = value;\n");
+      code.append("  }\n");
+      code.append("  public static Character valueOf(char c) { return new Character(c); }\n");
+      code.append("  public char charValue() { return value; }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource CLASS = new MockJavaResource(
       "java.lang.Class") {
     @Override
@@ -88,7 +122,7 @@ public class JavaResourceBase {
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
-      code.append("public class Double {\n");
+      code.append("public class Double extends Number {\n");
       code.append("  private double value;\n");
       code.append("  public Double(double value) {\n");
       code.append("    this.value = value;\n");
@@ -141,7 +175,7 @@ public class JavaResourceBase {
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
-      code.append("public class Float {\n");
+      code.append("public class Float extends Number {\n");
       code.append("  private float value;\n");
       code.append("  public Float(float value) {\n");
       code.append("    this.value = value;\n");
@@ -169,7 +203,7 @@ public class JavaResourceBase {
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
-      code.append("public class Integer {\n");
+      code.append("public class Integer extends Number {\n");
       code.append("  private int value;\n");
       code.append("  public Integer(int value) {\n");
       code.append("    this.value = value;\n");
@@ -226,6 +260,18 @@ public class JavaResourceBase {
       return code;
     }
   };
+  public static final MockJavaResource NUMBER = new MockJavaResource(
+      "java.lang.Number") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("public class Number implements java.io.Serializable {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+
   public static final MockJavaResource OBJECT = new MockJavaResource(
       "java.lang.Object") {
     @Override
@@ -247,6 +293,23 @@ public class JavaResourceBase {
       StringBuffer code = new StringBuffer();
       code.append("package java.io;\n");
       code.append("public interface Serializable { }\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource SHORT = new MockJavaResource(
+      "java.lang.Short") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("public class Short extends Number {\n");
+      code.append("  private short value;\n");
+      code.append("  public Short(short value) {\n");
+      code.append("    this.value = value;\n");
+      code.append("  }\n");
+      code.append("  public static Short valueOf(short s) { return new Short(s); }\n");
+      code.append("  public short shortValue() { return value; }\n");
+      code.append("}\n");
       return code;
     }
   };
@@ -317,9 +380,10 @@ public class JavaResourceBase {
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[] {
-        ANNOTATION, CLASS, CLASS_NOT_FOUND_EXCEPTION, COLLECTION, DOUBLE, ENUM,
-        EXCEPTION, ERROR, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT,
-        MAP, NO_CLASS_DEF_FOUND_ERROR, OBJECT, SERIALIZABLE, STRING,
-        STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE};
+        ANNOTATION, BYTE, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION,
+        COLLECTION, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT, INTEGER,
+        IS_SERIALIZABLE, JAVASCRIPTOBJECT, MAP, NO_CLASS_DEF_FOUND_ERROR,
+        NUMBER, OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,
+        SUPPRESS_WARNINGS, THROWABLE};
   }
 }
