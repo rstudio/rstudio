@@ -63,18 +63,20 @@ public class JProgram extends JNode {
   }
 
   public static final Set<String> CODEGEN_TYPES_SET = new LinkedHashSet<String>(
-      Arrays.asList(new String[] {
+      Arrays.asList(
           "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
           "com.google.gwt.lang.CollapsedPropertyHolder",
           "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.LongLib",
-          "com.google.gwt.lang.Stats",}));
+          "com.google.gwt.lang.Stats"));
 
   public static final Set<String> INDEX_TYPES_SET = new LinkedHashSet<String>(
-      Arrays.asList(new String[] {
+      Arrays.asList(
           "java.io.Serializable", "java.lang.Object", "java.lang.String",
           "java.lang.Class", "java.lang.CharSequence", "java.lang.Cloneable",
           "java.lang.Comparable", "java.lang.Enum", "java.lang.Iterable",
-          "java.util.Iterator", "java.lang.AssertionError",
+          "java.util.Iterator", "java.lang.AssertionError", "java.lang.Boolean",
+          "java.lang.Byte", "java.lang.Character", "java.lang.Short",
+          "java.lang.Integer", "java.lang.Float", "java.lang.Double",
           "com.google.gwt.core.client.GWT",
           "com.google.gwt.core.client.JavaScriptObject",
           "com.google.gwt.lang.ClassLiteralHolder",
@@ -82,7 +84,7 @@ public class JProgram extends JNode {
           "com.google.gwt.core.client.impl.AsyncFragmentLoader",
           "com.google.gwt.core.client.impl.Impl",
           "com.google.gwt.lang.EntryMethodHolder",
-          "com.google.gwt.core.client.prefetch.RunAsyncCode",}));
+          "com.google.gwt.core.client.prefetch.RunAsyncCode"));
 
   /**
    * Only annotations defined in the following packages or sub-packages thereof
