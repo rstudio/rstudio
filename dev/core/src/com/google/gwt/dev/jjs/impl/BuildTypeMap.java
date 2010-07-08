@@ -28,13 +28,10 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
-import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
-import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
@@ -219,13 +216,6 @@ public class BuildTypeMap {
         }
 
         typeMap.put(b, newCtor);
-
-        // Now let's implicitly create a static function called 'new' that will
-        // allow construction from JSNI methods
-        if (!enclosingType.isAbstract()) {
-          createSyntheticConstructor(newCtor);
-        }
-
         return true;
       } catch (Throwable e) {
         throw translateException(ctorDecl, e);
@@ -386,63 +376,6 @@ public class BuildTypeMap {
               "Parameter " + argName), argName, type, true, false,
           enclosingMethod);
       return param;
-    }
-
-    /**
-     * Create a method that invokes the specified constructor. This is done as
-     * an aid to JSNI users to be able to invoke a Java constructor via a method
-     * named ::new.
-     * 
-     * @param constructor the constructor to invoke
-     * @param staticClass indicates if the class being constructed is static
-     * @param enclosingType the type that encloses the type that is to be
-     *          constructed. This may be <code>null</code> if the class is a
-     *          top-level type.
-     */
-    private JMethod createSyntheticConstructor(JConstructor constructor) {
-      JClassType type = constructor.getEnclosingType();
-
-      // Define the method
-      JMethod synthetic = program.createMethod(type.getSourceInfo().makeChild(
-          BuildDeclMapVisitor.class, "Synthetic constructor"), "new", type,
-          program.getNonNullType(type), false, true, true, false, false);
-      synthetic.setSynthetic();
-
-      synthetic.addThrownExceptions(constructor.getThrownExceptions());
-
-      // new Foo() : Create the instance
-      JNewInstance newInstance = new JNewInstance(
-          type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-              "new instance"), constructor, type);
-
-      /*
-       * In one pass, add the parameters to the synthetic constructor and
-       * arguments to the method call.
-       */
-      for (JParameter param : constructor.getParams()) {
-        JParameter syntheticParam = JProgram.createParameter(
-            synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                "Argument " + param.getName()), param.getName(),
-            param.getType(), true, false, synthetic);
-        newInstance.addArg(new JParameterRef(
-            syntheticParam.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                "reference"), syntheticParam));
-      }
-
-      // Lock the method.
-      synthetic.freezeParamTypes();
-
-      // return new Foo() : The only statement in the function
-      JReturnStatement ret = new JReturnStatement(
-          synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-              "Return statement"), newInstance);
-
-      // Add the return statement to the method body
-      JMethodBody body = (JMethodBody) synthetic.getBody();
-      body.getBlock().addStmt(ret);
-
-      // Done
-      return synthetic;
     }
 
     private JMethodBody findEnclosingMethod(BlockScope scope) {

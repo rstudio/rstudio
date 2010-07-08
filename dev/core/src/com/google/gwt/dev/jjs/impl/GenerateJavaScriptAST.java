@@ -1323,15 +1323,41 @@ public class GenerateJavaScriptAST {
 
     @Override
     public boolean visit(JsniMethodBody x, Context ctx) {
-      JsFunction jsFunc = x.getFunc();
+      final JsFunction jsFunc = x.getFunc();
 
       // replace all JSNI idents with a real JsName now that we know it
       new JsModVisitor() {
 
+        /**
+         * Marks a ctor that is a direct child of an invocation. Instead of
+         * replacing the ctor with a tear-off, we replace the invocation with a
+         * new operation.
+         */
+        private JsNameRef dontReplaceCtor;
+
+        public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+          // Replace invocation to ctor with a new op.
+          if (x.getQualifier() instanceof JsNameRef) {
+            JsNameRef ref = (JsNameRef) x.getQualifier();
+            String ident = ref.getIdent();
+            if (isJsniIdent(ident)) {
+              HasEnclosingType node = program.jsniMap.get(ident);
+              assert node instanceof JConstructor;
+              assert ref.getQualifier() == null;
+              JsName jsName = names.get(node);
+              assert (jsName != null);
+              ref.resolve(jsName);
+              JsNew jsNew = new JsNew(x.getSourceInfo(), ref);
+              jsNew.getArguments().addAll(x.getArguments());
+              ctx.replaceMe(jsNew);
+            }
+          }
+        }
+
         @Override
         public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
           String ident = x.getIdent();
-          if (ident.charAt(0) == '@') {
+          if (isJsniIdent(ident)) {
             HasEnclosingType node = program.jsniMap.get(ident);
             assert (node != null);
             if (node instanceof JField) {
@@ -1345,6 +1371,31 @@ public class GenerateJavaScriptAST {
               if (clinitCall != null) {
                 JsExpression commaExpr = createCommaExpression(clinitCall, x);
                 ctx.replaceMe(commaExpr);
+              }
+            } else if (node instanceof JConstructor) {
+              if (x == dontReplaceCtor) {
+                // Do nothing, parent will handle.
+              } else {
+                // Replace with a local closure function.
+                // function(a,b,c){return new Obj(a,b,c);}
+                JConstructor ctor = (JConstructor) node;
+                JsName jsName = names.get(ctor);
+                assert (jsName != null);
+                x.resolve(jsName);
+                SourceInfo info = x.getSourceInfo();
+                JsFunction closureFunc = new JsFunction(info, jsFunc.getScope());
+                for (JParameter p : ctor.getParams()) {
+                  JsName name = closureFunc.getScope().declareName(p.getName());
+                  closureFunc.getParameters().add(new JsParameter(info, name));
+                }
+                JsNew jsNew = new JsNew(info, x);
+                for (JsParameter p : closureFunc.getParameters()) {
+                  jsNew.getArguments().add(p.getName().makeRef(info));
+                }
+                JsBlock block = new JsBlock(info);
+                block.getStatements().add(new JsReturn(info, jsNew));
+                closureFunc.setBody(block);
+                ctx.replaceMe(closureFunc);
               }
             } else {
               JMethod method = (JMethod) node;
@@ -1363,6 +1414,17 @@ public class GenerateJavaScriptAST {
               }
             }
           }
+        }
+
+        public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+          if (x.getQualifier() instanceof JsNameRef) {
+            dontReplaceCtor = (JsNameRef) x.getQualifier();
+          }
+          return true;
+        }
+
+        private boolean isJsniIdent(String ident) {
+          return ident.charAt(0) == '@';
         }
       }.accept(jsFunc);
 
@@ -1900,6 +1962,9 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JsniMethodRef x, Context ctx) {
+      if (x.getTarget() instanceof JConstructor) {
+        liveCtors.add((JConstructor) x.getTarget());
+      }
       endVisit((JMethodCall) x, ctx);
     }
 

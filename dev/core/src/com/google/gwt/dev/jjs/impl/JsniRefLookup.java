@@ -19,9 +19,11 @@ import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -103,7 +105,7 @@ public class JsniRefLookup {
       return null;
     } else {
       // look for a method
-      LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig = new LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>>();
+      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig = new LinkedHashMap<String, LinkedHashMap<String, JMethod>>();
       String methodName = ref.memberName();
       String jsniSig = ref.memberSignature();
       if (type == null) {
@@ -111,9 +113,9 @@ public class JsniRefLookup {
           return program.getNullMethod();
         }
       } else {
-        findMostDerivedMembers(matchesBySig, (JDeclaredType) type,
-            ref.memberName(), true);
-        LinkedHashMap<String, HasEnclosingType> matches = matchesBySig.get(jsniSig);
+        findMostDerivedMembers(matchesBySig, (JDeclaredType) type, methodName,
+            true);
+        LinkedHashMap<String, JMethod> matches = matchesBySig.get(jsniSig);
         if (matches != null && matches.size() == 1) {
           /*
            * Backward compatibility: allow accessing bridge methods with full
@@ -165,11 +167,11 @@ public class JsniRefLookup {
    * @param fullSig The fully qualified signature for that member
    */
   private static void addMember(
-      LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig,
-      HasEnclosingType member, String refSig, String fullSig) {
-    LinkedHashMap<String, HasEnclosingType> matchesByFullSig = matchesBySig.get(refSig);
+      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig,
+      JMethod member, String refSig, String fullSig) {
+    LinkedHashMap<String, JMethod> matchesByFullSig = matchesBySig.get(refSig);
     if (matchesByFullSig == null) {
-      matchesByFullSig = new LinkedHashMap<String, HasEnclosingType>();
+      matchesByFullSig = new LinkedHashMap<String, JMethod>();
       matchesBySig.put(refSig, matchesByFullSig);
     }
     matchesByFullSig.put(fullSig, member);
@@ -182,7 +184,7 @@ public class JsniRefLookup {
    * methods.
    */
   private static void findMostDerivedMembers(
-      LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig,
+      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig,
       JDeclaredType targetType, String memberName,
       boolean addConstructorsAndPrivates) {
     /*
@@ -202,74 +204,41 @@ public class JsniRefLookup {
 
     // Get the methods on this class/interface.
     for (JMethod method : targetType.getMethods()) {
-      if (method.getName().equals(memberName)) {
+      if (method instanceof JConstructor && JsniRef.NEW.equals(memberName)) {
         if (!addConstructorsAndPrivates) {
-          if (method.getName().equals(JsniRef.NEW)) {
-            continue;
-          }
-          if (method.isPrivate()) {
-            continue;
-          }
+          continue;
         }
-        String fullSig = getJsniSignature(method, false);
-        String wildcardSig = getJsniSignature(method, true);
+        StringBuilder sb = new StringBuilder();
+        sb.append(JsniRef.NEW);
+        sb.append("(");
+        for (JParameter param : method.getParams()) {
+          sb.append(param.getType().getJsniSignatureName());
+        }
+        sb.append(")");
+        String fullSig = sb.toString();
+        String wildcardSig = JsniRef.NEW + "(" + JsniRef.WILDCARD_PARAM_LIST + ")";
+        addMember(matchesBySig, method, fullSig, fullSig);
+        addMember(matchesBySig, method, wildcardSig, fullSig);
+      } else if (method.getName().equals(memberName)) {
+        if (!addConstructorsAndPrivates && method.isPrivate()) {
+          continue;
+        }
+        String fullSig = JProgram.getJsniSig(method, false);
+        String wildcardSig = method.getName() + "("
+            + JsniRef.WILDCARD_PARAM_LIST + ")";
         addMember(matchesBySig, method, fullSig, fullSig);
         addMember(matchesBySig, method, wildcardSig, fullSig);
       }
     }
-
-    // Get the fields on this class/interface.
-    for (JField field : targetType.getFields()) {
-      if (field.getName().equals(memberName)) {
-        addMember(matchesBySig, field, field.getName(), field.getName());
-      }
-    }
-  }
-
-  /**
-   * Return the JSNI signature for a member. Leave off the return type for a
-   * method signature, so as to match what a user would type in as a JsniRef.
-   */
-  private static String getJsniSignature(HasEnclosingType member,
-      boolean wildcardParams) {
-    if (member instanceof JField) {
-      return ((JField) member).getName();
-    }
-    JMethod method = (JMethod) member;
-
-    if (wildcardParams) {
-      return method.getName() + "(" + JsniRef.WILDCARD_PARAM_LIST + ")";
-    } else {
-      return JProgram.getJsniSig(method, false);
-    }
-  }
-
-  private static boolean isNewMethod(HasEnclosingType member) {
-    if (member instanceof JMethod) {
-      JMethod method = (JMethod) member;
-      return method.getName().equals(JsniRef.NEW);
-    }
-
-    assert member instanceof JField;
-    return false;
-  }
-
-  private static boolean isSynthetic(HasEnclosingType member) {
-    if (member instanceof JMethod) {
-      return ((JMethod) member).isSynthetic();
-    }
-
-    assert member instanceof JField;
-    return false;
   }
 
   private static void removeSyntheticMembers(
-      LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig) {
-    for (LinkedHashMap<String, HasEnclosingType> matchesByFullSig : matchesBySig.values()) {
+      LinkedHashMap<String, LinkedHashMap<String, JMethod>> matchesBySig) {
+    for (LinkedHashMap<String, JMethod> matchesByFullSig : matchesBySig.values()) {
       Set<String> toRemove = new LinkedHashSet<String>();
       for (String fullSig : matchesByFullSig.keySet()) {
-        HasEnclosingType member = matchesByFullSig.get(fullSig);
-        if (isSynthetic(member) && !isNewMethod(member)) {
+        JMethod member = matchesByFullSig.get(fullSig);
+        if (member.isSynthetic()) {
           toRemove.add(fullSig);
         }
       }

@@ -698,7 +698,7 @@ public class JVisitor {
   }
 
   public boolean visit(JsniMethodRef x, Context ctx) {
-    /* NOTE: Skip JMethodRef */
+    /* NOTE: Skip JMethodCall */
     return visit((JExpression) x, ctx);
   }
 

@@ -233,7 +233,7 @@ public class JsniRefLookupTest extends JJSTestBase {
       JMethod res = (JMethod) lookup("test.Foo::new()", errors);
       errors.assertNoError();
       assertEquals("test.Foo", res.getEnclosingType().getName());
-      assertEquals("new", res.getName());
+      assertEquals("Foo", res.getName());
     }
 
     {
@@ -292,7 +292,7 @@ public class JsniRefLookupTest extends JJSTestBase {
       JMethod res = (JMethod) lookup("test.Foo::new()", errors);
       errors.assertNoError();
       assertEquals("test.Foo", res.getEnclosingType().getName());
-      assertEquals("new", res.getName());
+      assertEquals("Foo", res.getName());
       assertEquals(0, res.getParams().size());
     }
     {
@@ -300,7 +300,7 @@ public class JsniRefLookupTest extends JJSTestBase {
       JMethod res = (JMethod) lookup("test.Foo::new(I)", errors);
       errors.assertNoError();
       assertEquals("test.Foo", res.getEnclosingType().getName());
-      assertEquals("new", res.getName());
+      assertEquals("Foo", res.getName());
       assertEquals(1, res.getParams().size());
       assertSame(JPrimitiveType.INT, res.getParams().get(0).getType());
     }
@@ -315,7 +315,7 @@ public class JsniRefLookupTest extends JJSTestBase {
       JMethod res = (JMethod) lookup("test.Bar::new()", errors);
       errors.assertNoError();
       assertEquals("test.Bar", res.getEnclosingType().getName());
-      assertEquals("new", res.getName());
+      assertEquals("Bar", res.getName());
       assertEquals(0, res.getParams().size());
     }
     {
@@ -323,7 +323,7 @@ public class JsniRefLookupTest extends JJSTestBase {
       JMethod res = (JMethod) lookup("test.Bar::new(*)", errors);
       errors.assertNoError();
       assertEquals("test.Bar", res.getEnclosingType().getName());
-      assertEquals("new", res.getName());
+      assertEquals("Bar", res.getName());
       assertEquals(0, res.getParams().size());
     }
     {

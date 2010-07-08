@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -367,7 +368,7 @@ public class ControlFlowAnalyzer {
     @Override
     public boolean visit(JNewInstance x, Context ctx) {
       // rescue and instantiate the target class!
-      rescue(x.getClassType(), true, true);
+      rescueAndInstantiate(x.getClassType());
       return super.visit(x, ctx);
     }
 
@@ -420,7 +421,12 @@ public class ControlFlowAnalyzer {
          */
         rescue(param);
       }
-      // JsniMethodRef rescues as JMethodCall
+      // JsniMethodRef rescues as a JMethodCall
+      if (x.getTarget() instanceof JConstructor) {
+        // But if a constructor is targeted, there is an implicit 'new' op.
+        JConstructor ctor = (JConstructor) x.getTarget();
+        rescueAndInstantiate(ctor.getEnclosingType());
+      }
       return visit((JMethodCall) x, ctx);
     }
 
@@ -602,6 +608,10 @@ public class ControlFlowAnalyzer {
           }
         }
       }
+    }
+
+    private void rescueAndInstantiate(JClassType type) {
+      rescue(type, true, true);
     }
 
     /**

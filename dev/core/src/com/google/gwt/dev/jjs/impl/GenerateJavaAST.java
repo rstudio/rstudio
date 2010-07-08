@@ -2953,11 +2953,11 @@ public class GenerateJavaAST {
                     + jsoImplType.getName()
                     + "'. Use a stronger type in the JSNI "
                     + "identifier or a Java trampoline method.");
-          } else if (method.isStatic() && nameRef.getQualifier() != null) {
+          } else if (!method.needsVtable() && nameRef.getQualifier() != null) {
             JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot make a qualified reference to the static method "
                     + method.getName());
-          } else if (!method.isStatic() && nameRef.getQualifier() == null) {
+          } else if (method.needsVtable() && nameRef.getQualifier() == null) {
             JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot make an unqualified reference to the instance method "
                     + method.getName());
