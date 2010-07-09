@@ -27,7 +27,6 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
 
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
@@ -45,7 +44,7 @@ import java.util.Set;
  * references. If {@link #beSloppy()} is called, then it will run much more
  * quickly but it will return a superset of the actual JSNI references.
  */
-public class FindJsniRefVisitor extends ASTVisitor {
+public class FindJsniRefVisitor extends SafeASTVisitor {
   private final Set<String> jsniRefs = new LinkedHashSet<String>();
 
   public Set<String> getJsniRefs() {

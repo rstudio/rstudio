@@ -18,7 +18,6 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.dev.javac.GWTProblem;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
@@ -38,7 +37,7 @@ import java.util.Map;
  * find <code>GWT.create()</code> class so that we can eagerly complain about
  * deferred binding problems.
  */
-public class FindDeferredBindingSitesVisitor extends ASTVisitor {
+public class FindDeferredBindingSitesVisitor extends SafeASTVisitor {
 
   /**
    * Information about the site at which a rebind request was found, used to

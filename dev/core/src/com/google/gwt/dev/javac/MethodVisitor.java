@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.util.Name.InternalName;
 
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -27,8 +27,8 @@ import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 
 /**
- * Base class of things that walk methods in a CUD and collect things
- * about interesting methods.
+ * Base class of things that walk methods in a CUD and collect things about
+ * interesting methods.
  */
 public abstract class MethodVisitor {
 
@@ -55,12 +55,7 @@ public abstract class MethodVisitor {
    * @param cud
    */
   public final void collect(final CompilationUnitDeclaration cud) {
-    cud.traverse(new ASTVisitor() {
-      @Override
-      public void endVisit(TypeDeclaration type, BlockScope scope) {
-        collectMethods(cud, type);
-      }
-
+    cud.traverse(new SafeASTVisitor() {
       @Override
       public void endVisit(TypeDeclaration type, ClassScope scope) {
         collectMethods(cud, type);
@@ -68,6 +63,11 @@ public abstract class MethodVisitor {
 
       @Override
       public void endVisit(TypeDeclaration type, CompilationUnitScope scope) {
+        collectMethods(cud, type);
+      }
+
+      @Override
+      public void endVisitValid(TypeDeclaration type, BlockScope scope) {
         collectMethods(cud, type);
       }
     }, cud.scope);
@@ -81,11 +81,10 @@ public abstract class MethodVisitor {
    * @param method
    * @return true if processMethod should be called on this method
    */
-  protected abstract boolean interestingMethod(
-      AbstractMethodDeclaration method);
+  protected abstract boolean interestingMethod(AbstractMethodDeclaration method);
 
   /**
-   * Provided by a subclass to process a method definition.  Methods which have
+   * Provided by a subclass to process a method definition. Methods which have
    * no name are not passed to this method, even if {@link #interestingMethod}
    * returns true.
    * 
@@ -100,7 +99,7 @@ public abstract class MethodVisitor {
   /**
    * Collect data about interesting methods on a particular type in a
    * compilation unit.
-   *  
+   * 
    * @param cud
    * @param typeDecl
    */
@@ -122,13 +121,7 @@ public abstract class MethodVisitor {
       }
 
       if (!lazyInitialized) {
-        char[] constantPoolName = typeDecl.binding.constantPoolName();
-        if (constantPoolName == null) {
-          // Unreachable local type
-          return;
-        }
-        enclosingType = InternalName.toBinaryName(String.valueOf(
-            constantPoolName));
+        enclosingType = InternalName.toBinaryName(String.valueOf(typeDecl.binding.constantPoolName()));
         loc = String.valueOf(cud.getFileName());
         lazyInitialized = true;
       }

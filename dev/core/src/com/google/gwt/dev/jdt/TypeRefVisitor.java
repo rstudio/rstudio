@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.jdt;
 
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
+
 import org.eclipse.jdt.internal.compiler.ast.ArrayQualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.ArrayTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -41,7 +41,7 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 /**
  * Walks the AST to determine every location from which a type is referenced.
  */
-public abstract class TypeRefVisitor extends ASTVisitor {
+public abstract class TypeRefVisitor extends SafeASTVisitor {
 
   private final CompilationUnitDeclaration cud;
 

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.javac.JsniCollector;
+import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -41,7 +42,6 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.AllocationExpression;
@@ -102,7 +102,7 @@ public class BuildTypeMap {
    * Note that methods and fields are not added to their classes here, that
    * isn't done until {@link GenerateJavaAST}.
    */
-  private static class BuildDeclMapVisitor extends ASTVisitor {
+  private static class BuildDeclMapVisitor extends SafeASTVisitor {
 
     private String currentFileName;
 
@@ -281,11 +281,6 @@ public class BuildTypeMap {
     }
 
     @Override
-    public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
-      return process(localTypeDeclaration);
-    }
-
-    @Override
     public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
       return process(memberTypeDeclaration);
     }
@@ -294,6 +289,12 @@ public class BuildTypeMap {
     public boolean visit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       return process(typeDeclaration);
+    }
+
+    @Override
+    public boolean visitValid(TypeDeclaration localTypeDeclaration,
+        BlockScope scope) {
+      return process(localTypeDeclaration);
     }
 
     private void addThrownExceptions(MethodBinding methodBinding, JMethod method) {
@@ -457,14 +458,6 @@ public class BuildTypeMap {
       currentSeparatorPositions = compResult.lineSeparatorPositions;
       currentFileName = String.valueOf(compResult.fileName);
       SourceTypeBinding binding = typeDeclaration.binding;
-
-      if (binding.constantPoolName() == null) {
-        /*
-         * Weird case: if JDT determines that this local class is totally
-         * uninstantiable, it won't bother allocating a local name.
-         */
-        return false;
-      }
       JDeclaredType type = (JDeclaredType) typeMap.get(binding);
       try {
         // Create an override for getClass().
@@ -637,7 +630,7 @@ public class BuildTypeMap {
    * there could be forward references, it is not possible to set up super
    * types; it must be done is a subsequent pass.
    */
-  private static class BuildTypeMapVisitor extends ASTVisitor {
+  private static class BuildTypeMapVisitor extends SafeASTVisitor {
 
     private final JProgram program;
 
@@ -649,12 +642,6 @@ public class BuildTypeMap {
     }
 
     @Override
-    public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
-      assert (TypeDeclaration.kind(localTypeDeclaration.modifiers) != TypeDeclaration.INTERFACE_DECL);
-      return process(localTypeDeclaration);
-    }
-
-    @Override
     public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
       return process(memberTypeDeclaration);
     }
@@ -663,6 +650,13 @@ public class BuildTypeMap {
     public boolean visit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       return process(typeDeclaration);
+    }
+
+    @Override
+    public boolean visitValid(TypeDeclaration localTypeDeclaration,
+        BlockScope scope) {
+      assert (TypeDeclaration.kind(localTypeDeclaration.modifiers) != TypeDeclaration.INTERFACE_DECL);
+      return process(localTypeDeclaration);
     }
 
     private SourceInfo makeSourceInfo(TypeDeclaration typeDecl) {
@@ -677,18 +671,10 @@ public class BuildTypeMap {
 
     private boolean process(TypeDeclaration typeDeclaration) {
       try {
-        String name = dotify(typeDeclaration.binding.compoundName);
         SourceTypeBinding binding = typeDeclaration.binding;
+        String name = dotify(binding.compoundName);
         if (binding instanceof LocalTypeBinding) {
           char[] localName = binding.constantPoolName();
-          if (localName == null) {
-            /*
-             * Weird case: if JDT determines that this local class is totally
-             * uninstantiable, it won't bother allocating a local name.
-             */
-            return false;
-          }
-
           name = new String(localName).replace('/', '.');
         }
 

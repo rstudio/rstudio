@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AllocationExpression;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -78,7 +78,7 @@ public class JSORestrictionsChecker {
     }
   }
 
-  private class JSORestrictionsVisitor extends ASTVisitor implements
+  private class JSORestrictionsVisitor extends SafeASTVisitor implements
       ClassFileConstants {
 
     private final Stack<Boolean> isJsoStack = new Stack<Boolean>();
@@ -150,11 +150,6 @@ public class JSORestrictionsChecker {
     }
 
     @Override
-    public void endVisit(TypeDeclaration type, BlockScope scope) {
-      popIsJso();
-    }
-
-    @Override
     public void endVisit(TypeDeclaration type, ClassScope scope) {
       popIsJso();
     }
@@ -165,9 +160,8 @@ public class JSORestrictionsChecker {
     }
 
     @Override
-    public boolean visit(TypeDeclaration type, BlockScope scope) {
-      pushIsJso(checkType(type));
-      return true;
+    public void endVisitValid(TypeDeclaration type, BlockScope scope) {
+      popIsJso();
     }
 
     @Override
@@ -178,6 +172,12 @@ public class JSORestrictionsChecker {
 
     @Override
     public boolean visit(TypeDeclaration type, CompilationUnitScope scope) {
+      pushIsJso(checkType(type));
+      return true;
+    }
+
+    @Override
+    public boolean visitValid(TypeDeclaration type, BlockScope scope) {
       pushIsJso(checkType(type));
       return true;
     }

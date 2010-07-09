@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
@@ -23,7 +24,6 @@ import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
@@ -192,26 +192,11 @@ public class JdtCompiler {
     }
   }
 
-  private class FindTypesInCud extends ASTVisitor {
+  private class FindTypesInCud extends SafeASTVisitor {
     Map<SourceTypeBinding, CompiledClass> map = new IdentityHashMap<SourceTypeBinding, CompiledClass>();
 
     public List<CompiledClass> getClasses() {
       return new ArrayList<CompiledClass>(map.values());
-    }
-
-    @Override
-    public boolean visit(TypeDeclaration typeDecl, BlockScope scope) {
-      /*
-       * Weird case: if JDT determines that this local class is totally
-       * uninstantiable, it won't bother allocating a local name.
-       */
-      if (typeDecl.binding.constantPoolName() != null) {
-        CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
-        assert (enclosingClass != null);
-        CompiledClass newClass = new CompiledClass(typeDecl, enclosingClass);
-        map.put(typeDecl.binding, newClass);
-      }
-      return true;
     }
 
     @Override
@@ -227,6 +212,15 @@ public class JdtCompiler {
     public boolean visit(TypeDeclaration typeDecl, CompilationUnitScope scope) {
       assert (typeDecl.binding.enclosingType() == null);
       CompiledClass newClass = new CompiledClass(typeDecl, null);
+      map.put(typeDecl.binding, newClass);
+      return true;
+    }
+
+    @Override
+    public boolean visitValid(TypeDeclaration typeDecl, BlockScope scope) {
+      CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
+      assert (enclosingClass != null);
+      CompiledClass newClass = new CompiledClass(typeDecl, enclosingClass);
       map.put(typeDecl.binding, newClass);
       return true;
     }

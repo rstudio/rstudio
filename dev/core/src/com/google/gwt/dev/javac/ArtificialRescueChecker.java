@@ -16,13 +16,13 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.client.impl.ArtificialRescue;
+import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -54,15 +54,10 @@ import java.util.List;
  * </ul>
  */
 public class ArtificialRescueChecker {
-  private class Visitor extends ASTVisitor {
+  private class Visitor extends SafeASTVisitor {
 
     {
       assert collectTypes || reportErrors : "No work to be done";
-    }
-
-    @Override
-    public void endVisit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
-      processType(localTypeDeclaration);
     }
 
     @Override
@@ -74,6 +69,11 @@ public class ArtificialRescueChecker {
     public void endVisit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       processType(typeDeclaration);
+    }
+
+    @Override
+    public void endVisitValid(TypeDeclaration localTypeDeclaration, BlockScope scope) {
+      processType(localTypeDeclaration);
     }
 
     private void processArtificialRescue(Annotation rescue) {
@@ -349,11 +349,11 @@ public class ArtificialRescueChecker {
 
   private boolean collectTypes;
 
-  private boolean reportErrors;
-
   private final CompilationUnitDeclaration cud;
 
   private List<String> referencedTypes;
+
+  private boolean reportErrors;
 
   private ArtificialRescueChecker(CompilationUnitDeclaration cud) {
     allowArtificialRescue = true;
