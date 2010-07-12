@@ -584,7 +584,14 @@ public class TypeOracle {
    */
   public JClassType[] getTypes() {
     Collection<JRealClassType> values = allTypes.values();
-    return values.toArray(new JClassType[values.size()]);
+    JClassType[] result = values.toArray(new JClassType[values.size()]);
+    Arrays.sort(result, new Comparator<JClassType>() {
+      public int compare(JClassType o1, JClassType o2) {
+        return o1.getQualifiedSourceName().compareTo(
+            o2.getQualifiedSourceName());
+      }
+    });
+    return result;
   }
 
   public JWildcardType getWildcardType(JWildcardType.BoundType boundType,

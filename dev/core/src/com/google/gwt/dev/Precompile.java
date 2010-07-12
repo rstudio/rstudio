@@ -472,11 +472,6 @@ public class Precompile {
               module.getActiveLinkerNames()), genDir);
       // Allow GC later.
       compilationState = null;
-      if (dumpSignatureFile != null) {
-        // Dump early to avoid generated types.
-        SignatureDumper.dumpSignatures(logger,
-            compilationState.getTypeOracle(), dumpSignatureFile);
-      }
       // Never optimize on a validation run.
       jjsOptions.setOptimizePrecompile(false);
       getCompiler(module).precompile(logger, module, rpo, declEntryPts,
