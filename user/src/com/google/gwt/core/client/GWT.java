@@ -184,6 +184,16 @@ public final class GWT {
   }
 
   /**
+   * Returns <code>true</code> when running in production mode. Returns
+   * <code>false</code> when running either in development mode, or when running
+   * in a plain JVM.
+   */
+  public static boolean isProdMode() {
+    // Replaced with "true" by GWT compiler.
+    return false;
+  }
+
+  /**
    * Determines whether or not the running program is script or bytecode.
    */
   public static boolean isScript() {

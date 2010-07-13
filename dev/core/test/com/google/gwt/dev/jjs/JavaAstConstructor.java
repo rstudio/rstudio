@@ -118,6 +118,7 @@ public class JavaAstConstructor {
       code.append("package com.google.gwt.core.client;\n");
       code.append("public final class GWT {\n");
       code.append("  public boolean isClient() { return true; };\n");
+      code.append("  public boolean isProdMode() { return true; };\n");
       code.append("  public boolean isScript() { return true; };\n");
       code.append("  public static void runAsync(RunAsyncCallback callback) { }\n");
       code.append("  public static void runAsync(Class<?> name, RunAsyncCallback callback) { }\n");

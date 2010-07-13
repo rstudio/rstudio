@@ -30,6 +30,7 @@ public class GWTTest extends GWTTestCase {
   }-*/;
 
   private static void jvmTests() {
+    assertFalse(GWT.isProdMode());
     assertFalse(GWT.isScript());
     try {
       canCallNativeMethod();
@@ -73,6 +74,20 @@ public class GWTTest extends GWTTestCase {
   public void testIsClient() {
     assertTrue(GWT.isClient());
     assertTrue(canCallNativeMethod());
+  }
+
+  @SuppressWarnings("unused")
+  public void testIsProdMode() {
+    if (GWT.isScript()) {
+      assertTrue(GWT.isProdMode());
+    }
+    try {
+      double d = seven / zero;
+      if (!GWT.isProdMode()) {
+        fail("Expected ArithmeticException");
+      }
+    } catch (ArithmeticException expected) {
+    }
   }
 
   @SuppressWarnings("unused")
