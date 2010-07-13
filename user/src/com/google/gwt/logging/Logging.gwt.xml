@@ -129,7 +129,7 @@
   <set-property name="gwt.logging.hasWidgetsHandler" value="ENABLED" />
   <set-property name="gwt.logging.popupHandler" value="ENABLED" />
   <set-property name="gwt.logging.systemHandler" value="ENABLED" />
-  <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
+  <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
   
   <entry-point class="com.google.gwt.logging.client.LogConfiguration"/>
 </module>
