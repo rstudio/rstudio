@@ -17,7 +17,6 @@ package com.google.gwt.uibinder.test.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
@@ -28,13 +27,11 @@ import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.uibinder.test.client.EnumeratedLabel.Suffix;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.DisclosurePanel;
-import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -44,7 +41,8 @@ import com.google.gwt.user.client.ui.Widget;
 public class UiBinderTest extends GWTTestCase {
   private WidgetBasedUi widgetUi;
   private DomBasedUi domUi;
-  private DockPanel root;
+  @SuppressWarnings("deprecation")
+  private com.google.gwt.user.client.ui.DockPanel root;
 
   @Override
   public String getModuleName() {
@@ -54,22 +52,12 @@ public class UiBinderTest extends GWTTestCase {
   @Override
   public void gwtSetUp() throws Exception {
     super.gwtSetUp();
-    RootPanel.get().clear();
-    domUi = new DomBasedUi("Cherished User");
-    Document.get().getBody().appendChild(domUi.root);
-
-    widgetUi = new WidgetBasedUi();
+    UiBinderTestApp app = UiBinderTestApp.getInstance();
+    widgetUi = app.getWidgetUi();
+    domUi = app.getDomUi();
     root = widgetUi.root;
-    RootPanel.get().add(widgetUi);
   }
 
-  @Override
-  public void gwtTearDown() throws Exception {
-    domUi.root.getParentElement().removeChild(domUi.root);
-    RootPanel.get().clear();
-    super.gwtTearDown();
-  }
-  
   public void testTableWithColumns() {
     assertEquals("col", domUi.narrowColumn.getTagName().toLowerCase());
     assertEquals("tr", domUi.tr.getTagName().toLowerCase());
@@ -168,11 +156,12 @@ public class UiBinderTest extends GWTTestCase {
         widgetUi.bundledDivLegacy.getClassName());
   }
 
+  @SuppressWarnings("deprecation")
   public void testCenter() {
     // TODO(rjrjr) More of a test of HTMLPanelParser
 
     Widget center = getCenter();
-    assertEquals(DockPanel.CENTER, root.getWidgetDirection(center));
+    assertEquals(com.google.gwt.user.client.ui.DockPanel.CENTER, root.getWidgetDirection(center));
     assertEquals(HTMLPanel.class, center.getClass());
     String html = center.getElement().getInnerHTML();
     assertTrue(html.contains("main area"));
@@ -355,9 +344,8 @@ public class UiBinderTest extends GWTTestCase {
 
   public void testNoOverrideInheritedSharedCssClasses() {
     Bundle bundle = GWT.create(Bundle.class);
-    WidgetBasedUi ui = GWT.create(WidgetBasedUi.class);
     String publicStyle = bundle.style().menuBar();
-    String privateStyle = ui.myStyle.menuBar();
+    String privateStyle = widgetUi.myStyle.menuBar();
     assertEquals(publicStyle, privateStyle);
   }
 
@@ -370,9 +358,10 @@ public class UiBinderTest extends GWTTestCase {
     assertTrue(innerHTML.endsWith("</span>&nbsp;\u261C"));
   }
 
+  @SuppressWarnings("deprecation")
   public void testNorth() {
     Widget north = root.getWidget(0);
-    assertEquals(DockPanel.NORTH, root.getWidgetDirection(north));
+    assertEquals(com.google.gwt.user.client.ui.DockPanel.NORTH, root.getWidgetDirection(north));
     assertEquals(HTML.class, north.getClass());
     assertTrue(((HTML) north).getHTML().contains("Title area"));
   }
@@ -437,9 +426,10 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("100%", root.getElement().getStyle().getProperty("width"));
   }
 
+  @SuppressWarnings("deprecation")
   public void testWest() {
     Widget west = root.getWidget(1);
-    assertEquals(DockPanel.WEST, root.getWidgetDirection(west));
+    assertEquals(com.google.gwt.user.client.ui.DockPanel.WEST, root.getWidgetDirection(west));
     assertEquals(HTML.class, west.getClass());
     String html = ((HTML) west).getHTML();
     assertTrue(html.contains("side bar"));

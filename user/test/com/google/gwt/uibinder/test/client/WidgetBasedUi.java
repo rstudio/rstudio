@@ -33,7 +33,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DisclosurePanel;
-import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHTML;
@@ -100,7 +99,8 @@ public class WidgetBasedUi extends Composite {
   @UiField Widget myDisclosurePanelItem;
   @UiField Tree myTree;
   @UiField Element nonStandardElement;
-  @UiField DockPanel root;
+  @SuppressWarnings("deprecation")
+  @UiField com.google.gwt.user.client.ui.DockPanel root;
   @UiField Widget sideBarWidget;
   @UiField DivElement sideBar;
   @UiField SpanElement spanInMsg;
