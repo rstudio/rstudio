@@ -25,6 +25,7 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.AttributeMessage;
+import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.gwt.uibinder.rebind.model.OwnerFieldClass;
 
 import java.util.Collection;
@@ -57,16 +58,25 @@ public class BeanParser implements ElementParser {
     final OwnerFieldClass ownerFieldClass = OwnerFieldClass.getFieldClass(type,
         writer.getLogger());
 
-    // See if there's a factory method
-    JAbstractMethod creator = writer.getOwnerClass().getUiFactoryMethod(type);
-    if (creator == null) {
-      // If not, see if there's a @UiConstructor
-      creator = ownerFieldClass.getUiConstructor();
-    }
+    /*
+     * Handle @UiFactory and @UiConstructor, but only if the user
+     * hasn't provided an instance via @UiField(provided = true) 
+     */
+    
+    JAbstractMethod creator = null;
+    OwnerField uiField = writer.getOwnerClass().getUiField(fieldName);
+    if ((uiField == null) || (!uiField.isProvided())) {
+      // See if there's a factory method
+      creator = writer.getOwnerClass().getUiFactoryMethod(type);
+      if (creator == null) {
+        // If not, see if there's a @UiConstructor
+        creator = ownerFieldClass.getUiConstructor();
+      }
 
-    if (creator != null) {
-      for (JParameter param : creator.getParameters()) {
-        unfilledRequiredParams.put(param.getName(), param.getType());
+      if (creator != null) {
+        for (JParameter param : creator.getParameters()) {
+          unfilledRequiredParams.put(param.getName(), param.getType());
+        }
       }
     }
 

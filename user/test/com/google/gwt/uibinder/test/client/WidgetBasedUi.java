@@ -109,6 +109,9 @@ public class WidgetBasedUi extends Composite {
   @UiField SpanElement trimmedMessage;
   @UiField NeedlesslyAnnotatedLabel needlessLabel;
   @UiField AnnotatedStrictLabel strictLabel;
+  @UiField(provided = true)
+  AnnotatedStrictLabel providedStrictLabel = new AnnotatedStrictLabel(
+      "likewise");
   @UiField AnnotatedStrictLabel translatedStrictLabel;
   @UiField StrictLabel veryStrictLabel;
   @UiField StrictLabel translatedVeryStrictLabel;

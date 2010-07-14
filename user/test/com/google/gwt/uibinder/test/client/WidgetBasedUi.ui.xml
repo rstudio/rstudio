@@ -510,6 +510,7 @@
       </demo:StrictLabel></p>
       <p><demo:NeedlesslyAnnotatedLabel ui:field="needlessLabel"
         text="Sometimes people do things they don't need to do. Don't punish them."/></p>
+      <demo:AnnotatedStrictLabel ui:field="providedStrictLabel">ditto</demo:AnnotatedStrictLabel>
 
       <demo:FooLabel ui:field='theFoo' pojo="{values.pojo}"/>
 
