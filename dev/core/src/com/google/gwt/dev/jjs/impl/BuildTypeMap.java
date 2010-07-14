@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -34,12 +35,13 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsAbstractSymbolResolver;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsProgram;
 
 import org.eclipse.jdt.internal.compiler.CompilationResult;
@@ -102,22 +104,11 @@ public class BuildTypeMap {
    * Note that methods and fields are not added to their classes here, that
    * isn't done until {@link GenerateJavaAST}.
    */
-  private static class BuildDeclMapVisitor extends SafeASTVisitor {
+  private class BuildDeclMapVisitor extends SafeASTVisitor {
 
     private String currentFileName;
-
     private int[] currentSeparatorPositions;
-
-    private final JsProgram jsProgram;
-    private JProgram program;
     private List<TypeDeclaration> typeDecls = new ArrayList<TypeDeclaration>();
-    private final TypeMap typeMap;
-
-    public BuildDeclMapVisitor(TypeMap typeMap, JsProgram jsProgram) {
-      this.typeMap = typeMap;
-      program = this.typeMap.getProgram();
-      this.jsProgram = jsProgram;
-    }
 
     public TypeDeclaration[] getTypeDeclarataions() {
       return typeDecls.toArray(new TypeDeclaration[typeDecls.size()]);
@@ -502,8 +493,7 @@ public class BuildTypeMap {
         }
 
         ReferenceBinding[] superInterfaces = binding.superInterfaces();
-        for (int i = 0; i < superInterfaces.length; ++i) {
-          ReferenceBinding superInterfaceBinding = superInterfaces[i];
+        for (ReferenceBinding superInterfaceBinding : superInterfaces) {
           assert (superInterfaceBinding.isInterface());
           JInterfaceType superInterface = (JInterfaceType) typeMap.get(superInterfaceBinding);
           type.addImplements(superInterface);
@@ -630,16 +620,7 @@ public class BuildTypeMap {
    * there could be forward references, it is not possible to set up super
    * types; it must be done is a subsequent pass.
    */
-  private static class BuildTypeMapVisitor extends SafeASTVisitor {
-
-    private final JProgram program;
-
-    private final TypeMap typeMap;
-
-    public BuildTypeMapVisitor(TypeMap typeMap) {
-      this.typeMap = typeMap;
-      program = this.typeMap.getProgram();
-    }
+  private class BuildTypeMapVisitor extends SafeASTVisitor {
 
     @Override
     public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
@@ -693,7 +674,7 @@ public class BuildTypeMap {
             newType = program.createEnum(info, name, binding.isAbstract());
           }
         } else {
-          assert (false);
+          assert false;
           return false;
         }
         info.addCorrelation(program.getCorrelator().by(newType));
@@ -760,9 +741,12 @@ public class BuildTypeMap {
         JsName name = getScope().findExistingName(x.getIdent());
 
         // Ensure that we're resolving a name from the function's parameters
-        if (name != null
-            && jsFunction.getParameters().contains(name.getStaticRef())) {
-          x.resolve(name);
+        JsNode node = name == null ? null : name.getStaticRef();
+        if (node instanceof JsParameter) {
+          JsParameter param = (JsParameter) node;
+          if (jsFunction.getParameters().contains(param)) {
+            x.resolve(name);
+          }
         }
       }
     }
@@ -770,8 +754,9 @@ public class BuildTypeMap {
 
   public static TypeDeclaration[] exec(TypeMap typeMap,
       CompilationUnitDeclaration[] unitDecls, JsProgram jsProgram) {
-    createPeersForTypes(unitDecls, typeMap);
-    return createPeersForNonTypeDecls(unitDecls, typeMap, jsProgram);
+    BuildTypeMap btm = new BuildTypeMap(typeMap, jsProgram, unitDecls);
+    btm.createPeersForTypes();
+    return btm.createPeersForNonTypeDecls();
   }
 
   static String dotify(char[][] name) {
@@ -786,24 +771,34 @@ public class BuildTypeMap {
     return result.toString();
   }
 
-  private static TypeDeclaration[] createPeersForNonTypeDecls(
-      CompilationUnitDeclaration[] unitDecls, TypeMap typeMap,
-      JsProgram jsProgram) {
+  private final JsProgram jsProgram;
+  private final JProgram program;
+  private final TypeMap typeMap;
+  private final CompilationUnitDeclaration[] unitDecls;
+
+  private BuildTypeMap(TypeMap typeMap, JsProgram jsProgram,
+      CompilationUnitDeclaration[] unitDecls) {
+    this.typeMap = typeMap;
+    this.program = typeMap.getProgram();
+    this.jsProgram = jsProgram;
+    this.unitDecls = unitDecls;
+  }
+
+  private TypeDeclaration[] createPeersForNonTypeDecls() {
     // Traverse again to create our JNode peers for each method, field,
     // parameter, and local
-    BuildDeclMapVisitor v2 = new BuildDeclMapVisitor(typeMap, jsProgram);
-    for (int i = 0; i < unitDecls.length; ++i) {
-      unitDecls[i].traverse(v2, unitDecls[i].scope);
+    BuildDeclMapVisitor v2 = new BuildDeclMapVisitor();
+    for (CompilationUnitDeclaration unitDecl : unitDecls) {
+      unitDecl.traverse(v2, unitDecl.scope);
     }
     return v2.getTypeDeclarataions();
   }
 
-  private static void createPeersForTypes(
-      CompilationUnitDeclaration[] unitDecls, TypeMap typeMap) {
+  private void createPeersForTypes() {
     // Traverse once to create our JNode peers for each type
-    BuildTypeMapVisitor v1 = new BuildTypeMapVisitor(typeMap);
-    for (int i = 0; i < unitDecls.length; ++i) {
-      unitDecls[i].traverse(v1, unitDecls[i].scope);
+    BuildTypeMapVisitor v1 = new BuildTypeMapVisitor();
+    for (CompilationUnitDeclaration unitDecl : unitDecls) {
+      unitDecl.traverse(v1, unitDecl.scope);
     }
   }
 }
