@@ -58,7 +58,7 @@ import java.util.Map;
  * TODO(rjrjr): Line numbers in error messages.
  */
 @SuppressWarnings("deprecation")
-public class UiBinderWriter {
+public class UiBinderWriter implements Statements {
   private static final String PACKAGE_URI_SCHEME = "urn:import:";
 
   // TODO(rjrjr) Another place that we need a general anonymous field
@@ -1180,5 +1180,6 @@ public class UiBinderWriter {
   private void writeStatics(IndentedWriter w) {
     writeStaticMessagesInstance(w);
     writeStaticBundleInstances(w);
+    DesignTimeUtils.addDeclarations(w);
   }
 }

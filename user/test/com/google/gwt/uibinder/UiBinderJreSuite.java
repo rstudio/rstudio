@@ -34,6 +34,7 @@ import com.google.gwt.uibinder.elementparsers.ListBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.UIObjectParserTest;
+import com.google.gwt.uibinder.rebind.DesignTimeUtilsTest;
 import com.google.gwt.uibinder.rebind.FieldWriterOfGeneratedCssResourceTest;
 import com.google.gwt.uibinder.rebind.GwtResourceEntityResolverTest;
 import com.google.gwt.uibinder.rebind.HandlerEvaluatorTest;
@@ -59,6 +60,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(HandlerEvaluatorTest.class);
     suite.addTestSuite(TokenatorTest.class);
     suite.addTestSuite(XMLElementTest.class);
+    suite.addTestSuite(DesignTimeUtilsTest.class);
 
     // model
     suite.addTestSuite(OwnerClassTest.class);

@@ -115,7 +115,7 @@ public class XMLElement {
 
   private static final Set<String> NO_END_TAG = new HashSet<String>();
 
-  private static final String[] EMPTY = new String[] {};
+  private static final String[] EMPTY = new String[]{};
 
   private static void clearChildren(Element elem) {
     // TODO(rjrjr) I'm nearly positive that anywhere this is called
@@ -257,7 +257,7 @@ public class XMLElement {
    */
   public String consumeAttributeWithDefault(String name, String defaultValue,
       JType type) throws UnableToCompleteException {
-    return consumeAttributeWithDefault(name, defaultValue, new JType[] {type});
+    return consumeAttributeWithDefault(name, defaultValue, new JType[]{type});
   }
 
   /**
@@ -494,7 +494,7 @@ public class XMLElement {
    */
   public String consumeLengthAttribute(String name)
       throws UnableToCompleteException {
-    return consumeAttributeWithDefault(name, null, new JType[] {
+    return consumeAttributeWithDefault(name, null, new JType[]{
         getDoubleType(), getUnitType()});
   }
 
@@ -752,6 +752,14 @@ public class XMLElement {
       return "";
     }
     return String.format("</%s>", elem.getTagName());
+  }
+
+  /**
+   * @return the design time path of this element, in form of indexes from root,
+   *         such as "0/0/1/0".
+   */
+  public String getDesignTimePath() {
+    return DesignTimeUtils.getPath(elem);
   }
 
   /**

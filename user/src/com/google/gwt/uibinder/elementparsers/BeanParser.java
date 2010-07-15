@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.uibinder.rebind.DesignTimeUtils;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -105,8 +106,7 @@ public class BeanParser implements ElementParser {
 
         if (setter == null || !(params.length == 1)
             || !isString(writer, params[0].getType())) {
-          writer.die(elem, "No method found to apply message attribute %s",
-              key);
+          writer.die(elem, "No method found to apply message attribute %s", key);
         } else {
           setterValues.put(key, value);
         }
@@ -178,9 +178,12 @@ public class BeanParser implements ElementParser {
       }
     }
 
-    for (String propertyName : setterValues.keySet()) {
+    for (Map.Entry<String, String> entry : setterValues.entrySet()) {
+      String propertyName = entry.getKey();
+      String value = entry.getValue();
       writer.addStatement("%s.set%s(%s);", fieldName, initialCap(propertyName),
-          setterValues.get(propertyName));
+          value);
+      DesignTimeUtils.putAttribute(writer, elem, propertyName, value);
     }
   }
 

@@ -99,6 +99,8 @@ public class UiBinderGenerator extends Generator {
     }
 
     String implName = interfaceType.getName().replace('.', '_') + "Impl";
+    implName = DesignTimeUtils.getImplName(implName);
+
     String packageName = interfaceType.getPackage().getName();
     PrintWriterManager writers = new PrintWriterManager(genCtx, logger,
         packageName);
@@ -126,6 +128,7 @@ public class UiBinderGenerator extends Generator {
         messages);
 
     Document doc = getW3cDoc(logger, resourceOracle, templatePath);
+    DesignTimeUtils.rememberPathForElements(doc);
 
     uiBinderWriter.parseDocument(doc, binderPrintWriter);
 
@@ -144,19 +147,22 @@ public class UiBinderGenerator extends Generator {
       throws UnableToCompleteException {
 
     Resource resource = resourceOracle.getResourceMap().get(templatePath);
-
     if (null == resource) {
       logger.die("Unable to find resource: " + templatePath);
     }
 
     Document doc = null;
     try {
-      String content = Util.readStreamAsString(resource.openContents());
-      doc = new W3cDomHelper(logger.getTreeLogger(), resourceOracle).documentFor(content,
-          resource.getPath());
+      String content = DesignTimeUtils.getTemplateContent(templatePath);
+      if (content == null) {
+        content = Util.readStreamAsString(resource.openContents());
+      }
+      doc = new W3cDomHelper(logger.getTreeLogger(), resourceOracle).documentFor(
+          content, resource.getPath());
     } catch (SAXParseException e) {
-      logger.die("Error parsing XML (line " + e.getLineNumber() + "): "
-          + e.getMessage(), e);
+      logger.die(
+          "Error parsing XML (line " + e.getLineNumber() + "): "
+              + e.getMessage(), e);
     }
     return doc;
   }
