@@ -15,47 +15,19 @@
  */
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
-import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.sample.bikeshed.cookbook.client.ValidatableField.DefaultValidatableField;
-import com.google.gwt.view.client.HasViewData;
 
 /**
- * A String {@link AbstractCell} that supports validation using a
+ * A String {@link AbstractEditableCell} that supports validation using a
  * {@link ValidatableField}.
  */
-public class ValidatableInputCell extends AbstractCell<String> {
-
-  /**
-   * Marks the cell as invalid.
-   * 
-   * @param container the viewData provider (usually a column or list view)
-   * @param key the key identifying this item
-   * @param value the new, invalid value
-   */
-  @SuppressWarnings("unchecked") // cast to ValidatableField<String>
-  public static void invalidate(HasViewData container, Object key, String value) {
-    ValidatableField<String> vf = (ValidatableField<String>) container.getViewData(key);
-    if (vf == null) {
-      vf = new DefaultValidatableField<String>(value);
-    }
-
-    vf.setInvalid(true);
-    container.setViewData(key, vf);
-  }
-
-  /**
-   * Marks the cell as valid.
-   * 
-   * @param container the viewData provider (usually a column or list view)
-   * @param key the key identifying this item
-   */
-  public static void validate(HasViewData container, Object key) {
-    container.setViewData(key, null);
-  }
+public class ValidatableInputCell extends AbstractEditableCell<
+    String, ValidatableField<String>> {
 
   @Override
   public boolean consumesEvents() {
@@ -63,11 +35,9 @@ public class ValidatableInputCell extends AbstractCell<String> {
   }
 
   @Override
-  @SuppressWarnings("unchecked") // cast to ValidatableField<String>
-  public Object onBrowserEvent(Element parent, String value,
-      Object viewData, NativeEvent event,
-      ValueUpdater<String> valueUpdater) {
-    ValidatableField<String> vf = (ValidatableField<String>) viewData;
+  public void onBrowserEvent(Element parent, String value, Object key,
+      NativeEvent event, ValueUpdater<String> valueUpdater) {
+    ValidatableField<String> vf = getViewData(key);
 
     if (event.getType().equals("change")) {
       InputElement input = parent.getFirstChild().cast();
@@ -78,18 +48,21 @@ public class ValidatableInputCell extends AbstractCell<String> {
       // Create a new ValidatableField if needed
       if (vf == null) {
         vf = new DefaultValidatableField<String>(input.getValue());
+        setViewData(key, vf);
       }
       vf.setValue(input.getValue());
       valueUpdater.update(vf.getValue());
     }
-
-    return vf;
   }
 
   @Override
-  @SuppressWarnings("unchecked") // cast to ValidatableField<String>
-  public void render(String value, Object viewData, StringBuilder sb) {
-    ValidatableField<String> vf = (ValidatableField<String>) viewData;
+  public void render(String value, Object key, StringBuilder sb) {
+    // Get the view data.
+    ValidatableField<String> vf = getViewData(key);
+    if (vf != null && vf.getValue().equals(value)) {
+      clearViewData(key);
+      vf = null;
+    }
 
     /*
      * If viewData is null, just paint the contents black. If it is non-null,

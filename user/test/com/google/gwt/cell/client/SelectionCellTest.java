@@ -18,22 +18,18 @@ package com.google.gwt.cell.client;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Tests for {@link TextInputCell}.
+ * Tests for {@link SelectionCell}.
  */
-public class TextInputCellTest extends EditableCellTestBase<String, String> {
+public class SelectionCellTest extends EditableCellTestBase<String, String> {
 
-  public void testOnBrowserEventChange() {
+  public void testOnBrowser() {
     NativeEvent event = Document.get().createChangeEvent();
-    testOnBrowserEvent(
-        getExpectedInnerHtml(), event, "oldValue", null, "hello", "hello");
-  }
-
-  public void testOnBrowserEventKeyUp() {
-    NativeEvent event = Document.get().createKeyUpEvent(
-        false, false, false, false, 0);
-    testOnBrowserEvent(
-        getExpectedInnerHtml(), event, "oldValue", null, null, "hello");
+    testOnBrowserEvent(getExpectedInnerHtml(), event, "option 0", null,
+        "option 1", "option 1");
   }
 
   @Override
@@ -42,18 +38,22 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
   }
 
   @Override
-  protected TextInputCell createCell() {
-    return new TextInputCell();
+  protected SelectionCell createCell() {
+    List<String> options = new ArrayList<String>();
+    for (int i = 0; i < 3; i++) {
+      options.add("option " + i);
+    }
+    return new SelectionCell(options);
   }
 
   @Override
   protected String createCellValue() {
-    return "hello";
+    return "option 1";
   }
 
   @Override
   protected String createCellViewData() {
-    return "newValue";
+    return "option 2";
   }
 
   @Override
@@ -63,16 +63,16 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<input type='text' value='hello'></input>";
+    return "<select><option>option 0</option><option selected='selected'>option 1</option><option>option 2</option></select>";
   }
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    return "<input type='text'></input>";
+    return "<select><option>option 0</option><option>option 1</option><option>option 2</option></select>";
   }
 
   @Override
   protected String getExpectedInnerHtmlViewData() {
-    return "<input type='text' value='newValue'></input>";
+    return "<select><option>option 0</option><option>option 1</option><option selected='selected'>option 2</option></select>";
   }
 }

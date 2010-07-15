@@ -15,26 +15,15 @@
  */
 package com.google.gwt.cell.client;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+
+import java.util.Date;
 
 /**
- * Tests for {@link TextInputCell}.
+ * Tests for {@link DatePickerCell}.
  */
-public class TextInputCellTest extends EditableCellTestBase<String, String> {
-
-  public void testOnBrowserEventChange() {
-    NativeEvent event = Document.get().createChangeEvent();
-    testOnBrowserEvent(
-        getExpectedInnerHtml(), event, "oldValue", null, "hello", "hello");
-  }
-
-  public void testOnBrowserEventKeyUp() {
-    NativeEvent event = Document.get().createKeyUpEvent(
-        false, false, false, false, 0);
-    testOnBrowserEvent(
-        getExpectedInnerHtml(), event, "oldValue", null, null, "hello");
-  }
+public class DatePickerCellTest extends EditableCellTestBase<Date, Date> {
 
   @Override
   protected boolean consumesEvents() {
@@ -42,18 +31,21 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
   }
 
   @Override
-  protected TextInputCell createCell() {
-    return new TextInputCell();
+  protected DatePickerCell createCell() {
+    return new DatePickerCell(
+        DateTimeFormat.getFormat(PredefinedFormat.DATE_MEDIUM));
   }
 
   @Override
-  protected String createCellValue() {
-    return "hello";
+  @SuppressWarnings("deprecation")
+  protected Date createCellValue() {
+    return new Date(2010 - 1900, 0, 1);
   }
 
   @Override
-  protected String createCellViewData() {
-    return "newValue";
+  @SuppressWarnings("deprecation")
+  protected Date createCellViewData() {
+    return new Date(2010 - 1900, 0, 3);
   }
 
   @Override
@@ -63,16 +55,16 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<input type='text' value='hello'></input>";
+    return "Jan 1, 2010";
   }
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    return "<input type='text'></input>";
+    return "";
   }
 
   @Override
   protected String getExpectedInnerHtmlViewData() {
-    return "<input type='text' value='newValue'></input>";
+    return "Jan 3, 2010";
   }
 }

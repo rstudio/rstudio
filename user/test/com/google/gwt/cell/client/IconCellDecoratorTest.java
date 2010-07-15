@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -42,14 +42,14 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
    */
   public void testOnBrowserEvent() {
     NativeEvent event = Document.get().createChangeEvent();
-    testOnBrowserEvent(getExpectedInnerHtml(), event, null, "helloworld",
-        "newValueFromInnerCell");
+    testOnBrowserEvent(
+        getExpectedInnerHtml(), event, "helloworld", "newValueFromInnerCell");
   }
 
   public void testRenderNoImage() {
     Images images = getImages();
-    MockCell<String> innerCell = new MockCell<String>(true, true,
-        "newValueFromInnerCell");
+    MockCell<String> innerCell = new MockCell<String>(
+        true, true, "newValueFromInnerCell");
     IconCellDecorator<String> cell = new IconCellDecorator<String>(
         images.prettyPiccy(), innerCell) {
       @Override
@@ -64,8 +64,8 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
 
     // Compare the expected render string.
     String expected = "<div style='position:relative;padding-left:64px;'>";
-    expected += cell.getImageHtml(images.prettyPiccy(),
-        HasVerticalAlignment.ALIGN_MIDDLE, true);
+    expected += cell.getImageHtml(
+        images.prettyPiccy(), HasVerticalAlignment.ALIGN_MIDDLE, true);
     expected += "<div>helloworld</div>";
     expected += "</div>";
     assertEquals(expected, sb.toString());
@@ -75,8 +75,8 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
     Cell<String> cell = createCell();
     Element parent = Document.get().createDivElement();
     parent.setInnerHTML(getExpectedInnerHtml());
-    assertEquals("helloworld", Element.as(
-        parent.getFirstChildElement().getChild(1)).getInnerHTML());
+    assertEquals("helloworld",
+        Element.as(parent.getFirstChildElement().getChild(1)).getInnerHTML());
     cell.setValue(parent, "test", null);
     assertEquals("test",
         Element.as(parent.getFirstChildElement().getChild(1)).getInnerHTML());
@@ -89,8 +89,8 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
 
   @Override
   protected IconCellDecorator<String> createCell() {
-    MockCell<String> innerCell = new MockCell<String>(true, true,
-        "newValueFromInnerCell");
+    MockCell<String> innerCell = new MockCell<String>(
+        true, true, "newValueFromInnerCell");
     IconCellDecorator<String> iconCell = new IconCellDecorator<String>(
         getImages().prettyPiccy(), innerCell);
     return iconCell;

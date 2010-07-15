@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -85,7 +85,7 @@ public class CompositeCellTest extends CellTestBase<String> {
    */
   public void testOnBrowserEventNoCell() {
     NativeEvent event = Document.get().createChangeEvent();
-    testOnBrowserEvent(getExpectedInnerHtml(), event, null, "test", null);
+    testOnBrowserEvent(getExpectedInnerHtml(), event, "test", null);
   }
 
   /**
@@ -106,15 +106,15 @@ public class CompositeCellTest extends CellTestBase<String> {
     // Add an event listener.
     EventListener listener = new EventListener() {
       public void onBrowserEvent(Event event) {
-        cell.onBrowserEvent(parent, "test", null, event, null);
+        cell.onBrowserEvent(parent, "test", DEFAULT_KEY, event, null);
       }
     };
     DOM.sinkEvents(parent, Event.ONCLICK);
     DOM.setEventListener(parent, listener);
 
     // Fire the event on one of the inner cells.
-    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
-        false, false, false);
+    NativeEvent event = Document.get().createClickEvent(
+        0, 0, 0, 0, 0, false, false, false, false);
     Element.as(parent.getChild(1)).dispatchEvent(event);
     innerCell.assertLastEventValue("test-1");
 
@@ -167,7 +167,7 @@ public class CompositeCellTest extends CellTestBase<String> {
 
   /**
    * Create an array of {@link HasCell}.
-   * 
+   *
    * @param count the number of cells to create
    * @return the list of cells
    */
@@ -175,8 +175,8 @@ public class CompositeCellTest extends CellTestBase<String> {
     List<HasCell<String, ?>> cells = new ArrayList<HasCell<String, ?>>();
     for (int i = 0; i < count; i++) {
       final int index = i;
-      final MockCell<String> inner = new MockCell<String>(false, false,
-          "fromCell" + i);
+      final MockCell<String> inner = new MockCell<String>(
+          false, false, "fromCell" + i);
       cells.add(new HasCell<String, String>() {
         public Cell<String> getCell() {
           return inner;

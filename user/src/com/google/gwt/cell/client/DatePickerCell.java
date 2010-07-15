@@ -43,12 +43,12 @@ import java.util.Date;
  * if a single DatePickerCell is used as the cell for a column in a table, only
  * one entry in that column will be editable at a given time.
  * </p>
- * 
+ *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
  */
-public class DatePickerCell extends AbstractCell<Date> {
+public class DatePickerCell extends AbstractEditableCell<Date, Date> {
 
   private static final int ESCAPE = 27;
 
@@ -56,13 +56,17 @@ public class DatePickerCell extends AbstractCell<Date> {
   private final DateTimeFormat format;
   private int offsetX = 10;
   private int offsetY = 10;
+  private Object lastKey;
+  private Element lastParent;
+  private Date lastValue;
   private PopupPanel panel;
   private ValueUpdater<Date> valueUpdater;
 
   /**
-   * Constructs a new DatePickerCell that uses the date/time format
-   * given by {@link DateTimeFormat#getFullDateFormat}.
+   * Constructs a new DatePickerCell that uses the date/time format given by
+   * {@link DateTimeFormat#getFullDateFormat}.
    */
+  @SuppressWarnings("deprecation")
   public DatePickerCell() {
     this(DateTimeFormat.getFullDateFormat());
   }
@@ -91,19 +95,34 @@ public class DatePickerCell extends AbstractCell<Date> {
     datePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         panel.hide();
-        valueUpdater.update(event.getValue());
+        Date date = event.getValue();
+        setViewData(lastKey, date);
+        setValue(lastParent, lastValue, lastKey);
+        if (valueUpdater != null) {
+          valueUpdater.update(date);
+        }
       }
     });
   }
 
   @Override
-  public Object onBrowserEvent(final Element parent, Date value, Object viewData,
+  public boolean consumesEvents() {
+    return true;
+  }
+
+  @Override
+  public void onBrowserEvent(final Element parent, Date value, Object key,
       NativeEvent event, ValueUpdater<Date> valueUpdater) {
-    if (event.getType().equals("click")) {
+    if (value != null && event.getType().equals("click")) {
+      this.lastKey = key;
+      this.lastParent = parent;
+      this.lastValue = value;
       this.valueUpdater = valueUpdater;
 
-      datePicker.setCurrentMonth(value);
-      datePicker.setValue(value);
+      Date viewData = getViewData(key);
+      Date date = (viewData == null) ? value : viewData;
+      datePicker.setCurrentMonth(date);
+      datePicker.setValue(date);
       panel.setPopupPositionAndShow(new PositionCallback() {
         public void setPosition(int offsetWidth, int offsetHeight) {
           panel.setPopupPosition(parent.getAbsoluteLeft() + offsetX,
@@ -111,12 +130,20 @@ public class DatePickerCell extends AbstractCell<Date> {
         }
       });
     }
-    return viewData;
   }
 
   @Override
-  public void render(Date value, Object viewData, StringBuilder sb) {
-    if (value != null) {
+  public void render(Date value, Object key, StringBuilder sb) {
+    // Get the view data.
+    Date viewData = getViewData(key);
+    if (viewData != null && viewData.equals(value)) {
+      clearViewData(key);
+      viewData = null;
+    }
+
+    if (viewData != null) {
+      sb.append(format.format(viewData));
+    } else if (value != null) {
       sb.append(format.format(value));
     }
   }

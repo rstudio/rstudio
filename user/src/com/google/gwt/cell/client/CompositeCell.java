@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,25 +26,25 @@ import java.util.List;
  * <p>
  * A {@link Cell} that is composed of other {@link Cell}s.
  * </p>
- * 
+ *
  * <p>
  * When this cell is rendered, it will render each component {@link Cell} inside
  * a span. If the component {@link Cell} uses block level elements (such as a
  * Div), the component cells will stack vertically.
  * </p>
- * 
+ *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
- * 
+ *
  * @param <C> the type that this Cell represents
  */
 public class CompositeCell<C> extends AbstractCell<C> {
 
   /**
    * The cells that compose this {@link Cell}.
-   * 
-   * NOTE: Do not add add/insert/remove hasCells methods to the API. This cell
+   *
+   *  NOTE: Do not add add/insert/remove hasCells methods to the API. This cell
    * assumes that the index of the cellParent corresponds to the index in the
    * hasCells array.
    */
@@ -52,7 +52,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
 
   /**
    * Construct a new {@link CompositeCell}.
-   * 
+   *
    * @param hasCells the cells that makeup the composite
    */
   public CompositeCell(List<HasCell<C, ?>> hasCells) {
@@ -83,7 +83,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
   }
 
   @Override
-  public Object onBrowserEvent(Element parent, C value, Object viewData,
+  public void onBrowserEvent(Element parent, C value, Object key,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     int index = 0;
     EventTarget eventTarget = event.getEventTarget();
@@ -92,43 +92,42 @@ public class CompositeCell<C> extends AbstractCell<C> {
       Element wrapper = parent.getFirstChildElement();
       while (wrapper != null) {
         if (wrapper.isOrHasChild(target)) {
-          return onBrowserEventImpl(wrapper, value, viewData, event,
-              valueUpdater, hasCells.get(index));
+          onBrowserEventImpl(
+              wrapper, value, key, event, valueUpdater, hasCells.get(index));
         }
 
         index++;
         wrapper = wrapper.getNextSiblingElement();
       }
     }
-    return viewData;
   }
 
   @Override
-  public void render(C value, Object viewData, StringBuilder sb) {
+  public void render(C value, Object key, StringBuilder sb) {
     for (HasCell<C, ?> hasCell : hasCells) {
-      render(value, viewData, sb, hasCell);
+      render(value, key, sb, hasCell);
     }
   }
 
   @Override
-  public void setValue(Element parent, C object, Object viewData) {
+  public void setValue(Element parent, C object, Object key) {
     Element curChild = parent.getFirstChildElement();
     for (HasCell<C, ?> hasCell : hasCells) {
-      setValueImpl(curChild, object, viewData, hasCell);
+      setValueImpl(curChild, object, key, hasCell);
       curChild = curChild.getNextSiblingElement();
     }
   }
 
-  protected <X> void render(C value, Object viewData, StringBuilder sb,
-      HasCell<C, X> hasCell) {
+  protected <X> void render(
+      C value, Object key, StringBuilder sb, HasCell<C, X> hasCell) {
     Cell<X> cell = hasCell.getCell();
     sb.append("<span>");
-    cell.render(hasCell.getValue(value), viewData, sb);
+    cell.render(hasCell.getValue(value), key, sb);
     sb.append("</span>");
   }
 
-  private <X> Object onBrowserEventImpl(Element parent, final C object,
-      Object viewData, NativeEvent event, final ValueUpdater<C> valueUpdater,
+  private <X> void onBrowserEventImpl(Element parent, final C object,
+      Object key, NativeEvent event, final ValueUpdater<C> valueUpdater,
       final HasCell<C, X> hasCell) {
     ValueUpdater<X> tempUpdater = null;
     final FieldUpdater<C, X> fieldUpdater = hasCell.getFieldUpdater();
@@ -143,12 +142,12 @@ public class CompositeCell<C> extends AbstractCell<C> {
       };
     }
     Cell<X> cell = hasCell.getCell();
-    return cell.onBrowserEvent(parent, hasCell.getValue(object), viewData,
-        event, tempUpdater);
+    cell.onBrowserEvent(
+        parent, hasCell.getValue(object), key, event, tempUpdater);
   }
 
-  private <X> void setValueImpl(Element cellParent, C object, Object viewData,
-      HasCell<C, X> hasCell) {
-    hasCell.getCell().setValue(cellParent, hasCell.getValue(object), viewData);
+  private <X> void setValueImpl(
+      Element cellParent, C object, Object key, HasCell<C, X> hasCell) {
+    hasCell.getCell().setValue(cellParent, hasCell.getValue(object), key);
   }
 }

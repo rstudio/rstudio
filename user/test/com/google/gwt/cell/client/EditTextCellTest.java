@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.cell.client.EditTextCell.ViewData;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
@@ -24,51 +25,77 @@ import com.google.gwt.event.dom.client.KeyCodes;
 /**
  * Tests for {@link EditTextCell}.
  */
-public class EditTextCellTest extends CellTestBase<String> {
-
-  public void testRenderViewData() {
-    Cell<String> cell = createCell();
-    StringBuilder sb = new StringBuilder();
-    cell.render("test", "editing", sb);
-    assertEquals("<input type='text' value='editing'></input>", sb.toString());
-  }
+public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
 
   public void testEdit() {
     EditTextCell cell = createCell();
     Element parent = Document.get().createDivElement();
     parent.setInnerHTML("<input type='text' value='editing'></input>");
-    cell.edit(parent, "editing");
+    ViewData viewData = new ViewData("originalValue");
+    viewData.setText("newValue");
+    cell.setViewData(DEFAULT_KEY, viewData);
+    cell.edit(parent, "originalValue", DEFAULT_KEY);
 
     // Verify the input element.
     Element child = parent.getFirstChildElement();
     assertTrue(InputElement.is(child));
     InputElement input = child.cast();
-    assertEquals("editing", input.getValue());
+    assertEquals("newValue", input.getValue());
   }
 
   /**
    * Cancel and switch to read only mode.
    */
   public void testOnBrowserEventCancel() {
-    NativeEvent event = Document.get().createKeyDownEvent(false, false, false,
-        false, KeyCodes.KEY_ESCAPE);
+    NativeEvent event = Document.get().createKeyDownEvent(
+        false, false, false, false, KeyCodes.KEY_ESCAPE);
+    ViewData viewData = new ViewData("originalValue");
+    viewData.setText("newValue");
     Element parent = testOnBrowserEvent(
         "<input type='text' value='newValue'></input>", event, "originalValue",
-        "originalValue", null);
+        viewData, null, null);
 
     // Verify the input element is gone.
     assertEquals("originalValue", parent.getInnerHTML());
   }
 
   /**
+   * Cancel and switch to read only mode after committing once.
+   */
+  public void testOnBrowserEventCancelSecondEdit() {
+    NativeEvent event = Document.get().createKeyDownEvent(
+        false, false, false, false, KeyCodes.KEY_ESCAPE);
+    ViewData viewData = new ViewData("originalValue");
+    viewData.setText("newValue");
+    viewData.setEditing(false); // commit.
+    viewData.setEditing(true);
+    assertEquals("newValue", viewData.getOriginal());
+    assertEquals("newValue", viewData.getText());
+    viewData.setText("newValue2");
+    Element parent = testOnBrowserEvent(
+        "<input type='text' value='newValue2'></input>", event, "originalValue",
+        viewData, null, viewData);
+    assertEquals("newValue", viewData.getOriginal());
+    assertEquals("newValue", viewData.getText());
+    assertFalse(viewData.isEditing());
+
+    // Verify the input element is gone.
+    assertEquals("newValue", parent.getInnerHTML());
+  }
+
+  /**
    * Commit and switch to read only mode.
    */
   public void testOnBrowserEventCommit() {
-    NativeEvent event = Document.get().createKeyDownEvent(false, false, false,
-        false, KeyCodes.KEY_ENTER);
+    NativeEvent event = Document.get().createKeyDownEvent(
+        false, false, false, false, KeyCodes.KEY_ENTER);
+    ViewData viewData = new ViewData("originalValue");
+    viewData.setText("newValue");
+    assertTrue(viewData.isEditing());
     Element parent = testOnBrowserEvent(
         "<input type='text' value='newValue'></input>", event, "originalValue",
-        "originalValue", "newValue");
+        viewData, "newValue", viewData);
+    assertFalse(viewData.isEditing());
 
     // Verify the input element is gone.
     assertEquals("newValue", parent.getInnerHTML());
@@ -78,16 +105,62 @@ public class EditTextCellTest extends CellTestBase<String> {
    * Test switching into edit mode from onBrowserEvent.
    */
   public void testOnBrowserEventEdit() {
-    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
-        false, false, false);
-    Element parent = testOnBrowserEvent("helloworld", event, null, "editing",
-        null);
+    NativeEvent event = Document.get().createClickEvent(
+        0, 0, 0, 0, 0, false, false, false, false);
+    ViewData expectedViewData = new ViewData("editing");
+    Element parent = testOnBrowserEvent(
+        "helloWorld", event, "editing", null, null, expectedViewData);
 
     // Verify the input element.
     Element child = parent.getFirstChildElement();
     assertTrue(InputElement.is(child));
     InputElement input = child.cast();
     assertEquals("editing", input.getValue());
+  }
+
+  /**
+   * Test rendering the cell with a valid value and view data, but without
+   * editing.
+   */
+  public void testRenderViewDataDoneEditing() {
+    EditTextCell cell = createCell();
+    ViewData viewData = new ViewData("originalValue");
+    viewData.setText("newValue");
+    viewData.setEditing(false);
+    cell.setViewData(DEFAULT_KEY, viewData);
+    StringBuilder sb = new StringBuilder();
+    cell.render("originalValue", DEFAULT_KEY, sb);
+    assertEquals("newValue", sb.toString());
+  }
+
+  public void testViewData() {
+    // Start in edit mode.
+    ViewData viewData = new ViewData("originalValue");
+    assertEquals("originalValue", viewData.getOriginal());
+    assertEquals("originalValue", viewData.getText());
+    assertTrue(viewData.isEditing());
+    assertFalse(viewData.isEditingAgain());
+
+    // Change the text.
+    viewData.setText("newValue");
+    assertEquals("originalValue", viewData.getOriginal());
+    assertEquals("newValue", viewData.getText());
+    assertTrue(viewData.isEditing());
+    assertFalse(viewData.isEditingAgain());
+
+    // Stop editing.
+    viewData.setEditing(false);
+    assertEquals("originalValue", viewData.getOriginal());
+    assertEquals("newValue", viewData.getText());
+    assertFalse(viewData.isEditing());
+    assertFalse(viewData.isEditingAgain());
+
+    // Edit again.
+    viewData.setEditing(true);
+    assertEquals("newValue", viewData.getOriginal());
+    assertEquals("newValue", viewData.getText());
+    assertTrue(viewData.isEditing());
+    assertTrue(viewData.isEditingAgain());
   }
 
   @Override
@@ -106,6 +179,11 @@ public class EditTextCellTest extends CellTestBase<String> {
   }
 
   @Override
+  protected ViewData createCellViewData() {
+    return new ViewData("newValue");
+  }
+
+  @Override
   protected boolean dependsOnSelection() {
     return false;
   }
@@ -118,5 +196,10 @@ public class EditTextCellTest extends CellTestBase<String> {
   @Override
   protected String getExpectedInnerHtmlNull() {
     return "";
+  }
+
+  @Override
+  protected String getExpectedInnerHtmlViewData() {
+    return "<input type='text' value='newValue'></input>";
   }
 }

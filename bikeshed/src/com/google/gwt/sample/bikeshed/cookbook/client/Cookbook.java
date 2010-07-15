@@ -96,7 +96,7 @@ public class Cookbook implements EntryPoint {
   @UiField LayoutPanel container;
 
   private RecipeTreeModel recipeTreeModel;
-  private CellListRecipe defaultRecipe;
+  private Recipe defaultRecipe;
   private Recipe curRecipe;
 
   public void onModuleLoad() {
@@ -129,7 +129,8 @@ public class Cookbook implements EntryPoint {
 
     cats.add(new Category("Lists", new Recipe[] {defaultRecipe}));
     cats.add(new Category("Tables", new Recipe[] {
-        new BasicTableRecipe(), new EditableTableRecipe(),}));
+        new BasicTableRecipe(), new EditableTableRecipe(),
+        new CellSamplerRecipe()}));
     cats.add(new Category("Trees", new Recipe[] {
         new CellTreeRecipe(), new CellBrowserRecipe(),}));
     cats.add(new Category("Other", new Recipe[] {

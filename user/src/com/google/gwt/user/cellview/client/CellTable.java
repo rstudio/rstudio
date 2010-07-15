@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,6 +34,7 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.HasKeyProvider;
 import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
@@ -44,10 +45,11 @@ import java.util.List;
 
 /**
  * A list view that supports paging and columns.
- * 
+ *
  * @param <T> the data type of each row
  */
-public class CellTable<T> extends Widget implements PagingListView<T> {
+public class CellTable<T> extends Widget
+    implements PagingListView<T>, HasKeyProvider<T> {
 
   /**
    * A cleaner version of the table that uses less graphics.
@@ -194,13 +196,13 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
     /**
      * Convert the rowHtml into Elements wrapped by the specifeid table section.
-     * 
+     *
      * @param sectionTag the table section tag
      * @param rowHtml the Html for the rows
      * @return the section element
      */
-    protected TableSectionElement convertToSectionElement(String sectionTag,
-        String rowHtml) {
+    protected TableSectionElement convertToSectionElement(
+        String sectionTag, String rowHtml) {
       // Render the rows into a table.
       // IE doesn't support innerHtml on a TableSection or Table element, so we
       // generate the entire table.
@@ -218,13 +220,13 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
       } else if ("tfoot".equals(sectionTag)) {
         return tableElem.getTFoot();
       }
-      throw new IllegalArgumentException("Invalid table section tag: "
-          + sectionTag);
+      throw new IllegalArgumentException(
+          "Invalid table section tag: " + sectionTag);
     }
 
     /**
      * Render and replace a table section in the table.
-     * 
+     *
      * @param section the {@link TableSectionElement} to replace
      * @param html the html to render
      * @return the new section element
@@ -301,8 +303,8 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
       int end = start + length;
       for (int i = start; i < end; i++) {
         T value = values.get(i - start);
-        boolean isSelected = (selectionModel == null || value == null) ? false
-            : selectionModel.isSelected(value);
+        boolean isSelected = (selectionModel == null || value == null)
+            ? false : selectionModel.isSelected(value);
         sb.append("<tr onclick=''");
         sb.append(" class='");
         sb.append(i % 2 == 0 ? style.evenRow() : style.oddRow());
@@ -413,16 +415,17 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   /**
    * The command used to redraw the table after adding columns.
    */
-  private final Scheduler.ScheduledCommand redrawCommand = new Scheduler.ScheduledCommand() {
-    public void execute() {
-      redrawScheduled = false;
-      if (redrawCancelled) {
-        redrawCancelled = false;
-        return;
-      }
-      redraw();
-    }
-  };
+  private final Scheduler.ScheduledCommand redrawCommand =
+      new Scheduler.ScheduledCommand() {
+        public void execute() {
+          redrawScheduled = false;
+          if (redrawCancelled) {
+            redrawCancelled = false;
+            return;
+          }
+          redraw();
+        }
+      };
 
   /**
    * Indicates whether or not a redraw is scheduled.
@@ -446,7 +449,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Constructs a table with the given page size.
-   * 
+   *
    * @param pageSize the page size
    */
   public CellTable(final int pageSize) {
@@ -456,7 +459,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   /**
    * Constructs a table with the given page size with the specified
    * {@link Resources}.
-   * 
+   *
    * @param pageSize the page size
    * @param resources the resources to use for this widget
    */
@@ -495,8 +498,9 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
     // TODO: Total hack. It would almost definitely be preferable to sink only
     // those events actually needed by cells.
-    sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS
-        | Event.ONCHANGE | Event.FOCUSEVENTS);
+    sinkEvents(
+        Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS | Event.ONCHANGE
+            | Event.FOCUSEVENTS);
   }
 
   /**
@@ -534,15 +538,15 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   /**
    * Adds a column to the table with an associated String header and footer.
    */
-  public void addColumn(Column<T, ?> col, String headerString,
-      String footerString) {
+  public void addColumn(
+      Column<T, ?> col, String headerString, String footerString) {
     addColumn(col, new TextHeader(headerString), new TextHeader(footerString));
   }
 
   /**
    * Add a style name to the {@link TableColElement} at the specified index,
    * creating it if necessary.
-   * 
+   *
    * @param index the column index
    * @param styleName the style name to add
    */
@@ -592,7 +596,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   /**
    * Get the {@link TableRowElement} for the specified row. If the row element
    * has not been created, null is returned.
-   * 
+   *
    * @param row the row index
    * @return the row element, or null if it doesn't exists
    * @throws IndexOutOfBoundsException if the row index is outside of the
@@ -610,7 +614,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Check whether or not mouse selection is enabled.
-   * 
+   *
    * @return true if enabled, false if disabled
    */
   public boolean isSelectionEnabled() {
@@ -661,12 +665,12 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
       T value = presenter.getData().get(row);
       Column<T, ?> column = columns.get(col);
-      column.onBrowserEvent(cell, getPageStart() + row, value, event,
-          providesKey);
+      column.onBrowserEvent(
+          cell, getPageStart() + row, value, event, providesKey);
 
       // Update selection.
       if (isSelectionEnabled && event.getTypeInt() == Event.ONCLICK) {
-        SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
+            SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
         if (selectionModel != null) {
           selectionModel.setSelected(value, true);
         }
@@ -694,7 +698,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Remove a column.
-   * 
+   *
    * @param index the column index
    */
   public void removeColumn(int index) {
@@ -711,7 +715,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Remove a column.
-   * 
+   *
    * @param col the column to remove
    */
   public void removeColumn(Column<T, ?> col) {
@@ -725,7 +729,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Remove a style from the {@link TableColElement} at the specified index.
-   * 
+   *
    * @param index the column index
    * @param styleName the style name to remove
    */
@@ -748,16 +752,8 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
     presenter.setDelegate(delegate);
   }
 
-  /**
-   * Sets the {@link ProvidesKey} instance that will be used to generate keys
-   * for each record object as needed.
-   * 
-   * @param providesKey an instance of {@link ProvidesKey} used to generate keys
-   *          for record objects.
-   */
-  // TODO - when is this valid? Do we rehash column view data if it changes?
-  public void setKeyProvider(ProvidesKey<T> providesKey) {
-    this.providesKey = providesKey;
+  public void setKeyProvider(ProvidesKey<T> keyProvider) {
+    this.providesKey = keyProvider;
   }
 
   public void setPager(PagingListView.Pager<T> pager) {
@@ -766,9 +762,9 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Set the number of rows per page and refresh the table.
-   * 
+   *
    * @param pageSize the page size
-   * 
+   *
    * @throws IllegalArgumentException if pageSize is negative or 0
    */
   public final void setPageSize(int pageSize) {
@@ -778,7 +774,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   /**
    * Set the starting index of the current visible page. The actual page start
    * will be clamped in the range [0, getSize() - 1].
-   * 
+   *
    * @param pageStart the index of the row that should appear at the start of
    *          the page
    */
@@ -792,7 +788,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Enable mouse and keyboard selection.
-   * 
+   *
    * @param isSelectionEnabled true to enable, false to disable
    */
   public void setSelectionEnabled(boolean isSelectionEnabled) {
@@ -805,21 +801,21 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Checks that the row is within the correct bounds.
-   * 
+   *
    * @param row row index to check
    * @throws IndexOutOfBoundsException
    */
   protected void checkRowBounds(int row) {
     int rowCount = view.getChildCount();
     if ((row >= rowCount) || (row < 0)) {
-      throw new IndexOutOfBoundsException("Row index: " + row + ", Row size: "
-          + rowCount);
+      throw new IndexOutOfBoundsException(
+          "Row index: " + row + ", Row size: " + rowCount);
     }
   }
 
   /**
    * Render the header of footer.
-   * 
+   *
    * @param isFooter true if this is the footer table, false if the header table
    */
   private void createHeaders(boolean isFooter) {
@@ -836,14 +832,14 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
       sb.append("<th class='").append(className);
       if (curColumn == 0) {
         sb.append(" ");
-        sb.append(isFooter ? style.firstColumnFooter()
-            : style.firstColumnHeader());
+        sb.append(
+            isFooter ? style.firstColumnFooter() : style.firstColumnHeader());
       }
       // The first and last columns could be the same column.
       if (curColumn == columnCount - 1) {
         sb.append(" ");
-        sb.append(isFooter ? style.lastColumnFooter()
-            : style.lastColumnHeader());
+        sb.append(
+            isFooter ? style.lastColumnFooter() : style.lastColumnHeader());
       }
       sb.append("'>");
       if (header != null) {
@@ -878,7 +874,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
   /**
    * Get the {@link TableColElement} at the specified index, creating it if
    * necessary.
-   * 
+   *
    * @param index the column index
    * @return the {@link TableColElement}
    */
@@ -920,7 +916,7 @@ public class CellTable<T> extends Widget implements PagingListView<T> {
 
   /**
    * Show or hide the loading icon.
-   * 
+   *
    * @param visible true to show, false to hide.
    */
   private void setLoadingIconVisible(boolean visible) {

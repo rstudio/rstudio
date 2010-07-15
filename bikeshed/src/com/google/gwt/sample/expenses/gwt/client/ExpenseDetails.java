@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,11 +15,11 @@
  */
 package com.google.gwt.sample.expenses.gwt.client;
 
+import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.DateCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;
-import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -87,8 +87,8 @@ import java.util.Set;
  * Details about the current expense report on the right side of the app,
  * including the list of expenses.
  */
-public class ExpenseDetails extends Composite implements
-    ExpenseRecordChanged.Handler, ReportRecordChanged.Handler {
+public class ExpenseDetails extends Composite
+    implements ExpenseRecordChanged.Handler, ReportRecordChanged.Handler {
 
   /**
    * The maximum amount that can be approved for a given report.
@@ -131,31 +131,38 @@ public class ExpenseDetails extends Composite implements
   /**
    * The cell used for approval status.
    */
-  private class ApprovalCell extends SelectionCell {
+  private class ApprovalCell extends AbstractEditableCell<
+      String, ApprovalViewData> {
 
     private final String approvedText = Expenses.Approval.APPROVED.getText();
     private final String deniedText = Expenses.Approval.DENIED.getText();
     private final String errorIconHtml;
     private final String pendingIconHtml;
 
-    public ApprovalCell(List<String> options) {
-      super(options);
-
+    public ApprovalCell() {
       // Cache the html string for the error icon.
       ImageResource errorIcon = Styles.resources().errorIcon();
-      AbstractImagePrototype errorImg = AbstractImagePrototype.create(errorIcon);
+      AbstractImagePrototype errorImg = AbstractImagePrototype.create(
+          errorIcon);
       errorIconHtml = errorImg.getHTML();
 
       // Cache the html string for the pending icon.
       ImageResource pendingIcon = Styles.resources().pendingCommit();
-      AbstractImagePrototype pendingImg = AbstractImagePrototype.create(pendingIcon);
+      AbstractImagePrototype pendingImg = AbstractImagePrototype.create(
+          pendingIcon);
       pendingIconHtml = pendingImg.getHTML();
     }
 
     @Override
-    public Object onBrowserEvent(Element parent, String value, Object viewData,
+    public boolean consumesEvents() {
+      return true;
+    }
+
+    @Override
+    public void onBrowserEvent(Element parent, String value, Object key,
         NativeEvent event, ValueUpdater<String> valueUpdater) {
       String type = event.getType();
+      ApprovalViewData viewData = getViewData(key);
       if ("change".equals(type)) {
         // Disable the select box.
         SelectElement select = parent.getFirstChild().cast();
@@ -172,6 +179,12 @@ public class ExpenseDetails extends Composite implements
         int index = select.getSelectedIndex();
         String pendingValue = select.getOptions().getItem(index).getValue();
         viewData = new ApprovalViewData(pendingValue);
+        setViewData(key, viewData);
+
+        // Update the value updater.
+        if (valueUpdater != null) {
+          valueUpdater.update(pendingValue);
+        }
       } else if ("click".equals(type) && viewData != null
           && parent.getChildCount() >= 3) {
         // Alert the user of the error
@@ -179,37 +192,37 @@ public class ExpenseDetails extends Composite implements
         Element anchor = img.getNextSiblingElement();
         if (anchor.isOrHasChild(Element.as(event.getEventTarget().cast()))) {
           // Alert the user of the error.
-          ApprovalViewData avd = (ApprovalViewData) viewData;
-          showErrorPopup(avd.getRejectionText());
+          showErrorPopup(viewData.getRejectionText());
 
           // Clear the view data now that we've viewed the message.
-          viewData = null;
+          clearViewData(key);
           parent.removeChild(anchor);
           parent.removeChild(img);
         }
       }
-      super.onBrowserEvent(parent, value, viewData, event, valueUpdater);
-      return viewData;
     }
 
     @Override
-    public void render(String value, Object viewData, StringBuilder sb) {
+    public void render(String value, Object key, StringBuilder sb) {
       // Get the view data.
+      ApprovalViewData viewData = getViewData(key);
+      if (viewData != null && viewData.getPendingApproval().equals(value)) {
+        clearViewData(key);
+        viewData = null;
+      }
+
       boolean isRejected = false;
       boolean isDisabled = false;
       String pendingValue = null;
       String renderValue = value;
       if (viewData != null) {
-        ApprovalViewData avd = (ApprovalViewData) viewData;
-        if (!avd.getPendingApproval().equals(value)) {
-          isRejected = avd.isRejected();
-          pendingValue = avd.getPendingApproval();
-          if (!isRejected) {
-            renderValue = pendingValue;
-            // If there is a delta value that has not been rejected, then the
-            // combo box should remain disabled.
-            isDisabled = true;
-          }
+        isRejected = viewData.isRejected();
+        pendingValue = viewData.getPendingApproval();
+        if (!isRejected) {
+          renderValue = pendingValue;
+          // If there is a delta value that has not been rejected, then the
+          // combo box should remain disabled.
+          isDisabled = true;
         }
       }
       boolean isApproved = approvedText.equals(renderValue);
@@ -244,7 +257,8 @@ public class ExpenseDetails extends Composite implements
       if (isRejected) {
         // Add error icon if viewData does not match.
         sb.append(errorIconHtml);
-        sb.append("<a style='padding-left:3px;color:red;' href='javascript:;'>Error!</a>");
+        sb.append(
+            "<a style='padding-left:3px;color:red;' href='javascript:;'>Error!</a>");
       } else if (pendingValue != null) {
         // Add refresh icon if pending.
         sb.append(pendingIconHtml);
@@ -340,7 +354,8 @@ public class ExpenseDetails extends Composite implements
     TableStyle cellTableStyle();
   }
 
-  private static ExpenseDetailsUiBinder uiBinder = GWT.create(ExpenseDetailsUiBinder.class);
+  private static ExpenseDetailsUiBinder uiBinder = GWT.create(
+      ExpenseDetailsUiBinder.class);
 
   @UiField
   Element approvedLabel;
@@ -379,7 +394,7 @@ public class ExpenseDetails extends Composite implements
 
   private List<SortableHeader> allHeaders = new ArrayList<SortableHeader>();
 
-  private Column<ExpenseRecord, String> approvalColumn;
+  private ApprovalCell approvalCell;
 
   /**
    * The default {@link Comparator} used for sorting.
@@ -490,7 +505,7 @@ public class ExpenseDetails extends Composite implements
         list.set(index, newRecord);
 
         // Update the view data if the approval has been updated.
-        ApprovalViewData avd = (ApprovalViewData) approvalColumn.getViewData(newKey);
+        ApprovalViewData avd = approvalCell.getViewData(newKey);
         if (avd != null
             && avd.getPendingApproval().equals(newRecord.getApproval())) {
           syncCommit(newRecord, null);
@@ -520,13 +535,13 @@ public class ExpenseDetails extends Composite implements
 
   /**
    * Set the {@link ReportRecord} to show.
-   * 
+   *
    * @param report the {@link ReportRecord}
    * @param department the selected department
    * @param employee the selected employee
    */
-  public void setReportRecord(ReportRecord report, String department,
-      EmployeeRecord employee) {
+  public void setReportRecord(
+      ReportRecord report, String department, EmployeeRecord employee) {
     this.report = report;
     knownExpenseKeys = null;
     reportName.setInnerText(report.getPurpose());
@@ -557,7 +572,8 @@ public class ExpenseDetails extends Composite implements
   @UiFactory
   CellTable<ExpenseRecord> createTable() {
     CellTable.Resources resources = GWT.create(TableResources.class);
-    CellTable<ExpenseRecord> view = new CellTable<ExpenseRecord>(100, resources);
+    CellTable<ExpenseRecord> view = new CellTable<ExpenseRecord>(
+        100, resources);
     Styles.Common common = Styles.common();
     view.addColumnStyleName(0, common.spacerColumn());
     view.addColumnStyleName(1, common.expenseDetailsDateColumn());
@@ -575,7 +591,8 @@ public class ExpenseDetails extends Composite implements
     });
 
     // Created column.
-    GetValue<ExpenseRecord, Date> createdGetter = new GetValue<ExpenseRecord, Date>() {
+    GetValue<ExpenseRecord, Date> createdGetter = new GetValue<
+        ExpenseRecord, Date>() {
       public Date getValue(ExpenseRecord object) {
         return object.getCreated();
       }
@@ -583,8 +600,8 @@ public class ExpenseDetails extends Composite implements
     defaultComparator = createColumnComparator(createdGetter, false);
     Comparator<ExpenseRecord> createdDesc = createColumnComparator(
         createdGetter, true);
-    addColumn(view, "Created", new DateCell(
-        DateTimeFormat.getFormat("MMM dd yyyy")), createdGetter,
+    addColumn(view, "Created",
+        new DateCell(DateTimeFormat.getFormat("MMM dd yyyy")), createdGetter,
         defaultComparator, createdDesc);
     lastComparator = defaultComparator;
 
@@ -605,15 +622,16 @@ public class ExpenseDetails extends Composite implements
         });
 
     // Amount column.
-    final GetValue<ExpenseRecord, Double> amountGetter = new GetValue<ExpenseRecord, Double>() {
+    final GetValue<ExpenseRecord, Double> amountGetter = new GetValue<
+        ExpenseRecord, Double>() {
       public Double getValue(ExpenseRecord object) {
         return object.getAmount();
       }
     };
-    Comparator<ExpenseRecord> amountAsc = createColumnComparator(amountGetter,
-        false);
-    Comparator<ExpenseRecord> amountDesc = createColumnComparator(amountGetter,
-        true);
+    Comparator<ExpenseRecord> amountAsc = createColumnComparator(
+        amountGetter, false);
+    Comparator<ExpenseRecord> amountDesc = createColumnComparator(
+        amountGetter, true);
     addColumn(view, "Amount", new NumberCell(NumberFormat.getCurrencyFormat()),
         new GetValue<ExpenseRecord, Number>() {
           public Number getValue(ExpenseRecord object) {
@@ -637,17 +655,13 @@ public class ExpenseDetails extends Composite implements
     });
 
     // Approval column.
-    List<String> options = new ArrayList<String>();
-    // TODO(rice): I18N
-    options.add("");
-    options.add("Approved");
-    options.add("Denied");
-    approvalColumn = addColumn(view, "Approval Status", new ApprovalCell(
-        options), new GetValue<ExpenseRecord, String>() {
-      public String getValue(ExpenseRecord object) {
-        return object.getApproval();
-      }
-    });
+    approvalCell = new ApprovalCell();
+    Column<ExpenseRecord, String> approvalColumn = addColumn(view,
+        "Approval Status", approvalCell, new GetValue<ExpenseRecord, String>() {
+          public String getValue(ExpenseRecord object) {
+            return object.getApproval();
+          }
+        });
     approvalColumn.setFieldUpdater(new FieldUpdater<ExpenseRecord, String>() {
       public void update(int index, final ExpenseRecord object, String value) {
         if ("Denied".equals(value)) {
@@ -673,7 +687,7 @@ public class ExpenseDetails extends Composite implements
 
   /**
    * Add a column of a {@link Comparable} type using default comparators.
-   * 
+   *
    * @param <C> the column type
    * @param table the table
    * @param text the header text
@@ -684,13 +698,14 @@ public class ExpenseDetails extends Composite implements
   private <C extends Comparable<C>> Column<ExpenseRecord, C> addColumn(
       final CellTable<ExpenseRecord> table, final String text,
       final Cell<C> cell, final GetValue<ExpenseRecord, C> getter) {
-    return addColumn(table, text, cell, getter, createColumnComparator(getter,
-        false), createColumnComparator(getter, true));
+    return addColumn(table, text, cell, getter,
+        createColumnComparator(getter, false),
+        createColumnComparator(getter, true));
   }
 
   /**
    * Add a column with the specified comparators.
-   * 
+   *
    * @param <C> the column type
    * @param table the table
    * @param text the header text
@@ -729,8 +744,8 @@ public class ExpenseDetails extends Composite implements
           }
         }
 
-        sortExpenses(items.getList(), header.getReverseSort() ? descComparator
-            : ascComparator);
+        sortExpenses(items.getList(),
+            header.getReverseSort() ? descComparator : ascComparator);
         table.redrawHeaders();
       }
     });
@@ -740,13 +755,14 @@ public class ExpenseDetails extends Composite implements
 
   /**
    * Create a comparator for the column.
-   * 
+   *
    * @param <C> the column type
    * @param getter the {@link GetValue} used to get the cell value
    * @param descending true if descending, false if ascending
    * @return the comparator
    */
-  private <C extends Comparable<C>> Comparator<ExpenseRecord> createColumnComparator(
+  private <C extends Comparable<C>> Comparator<
+      ExpenseRecord> createColumnComparator(
       final GetValue<ExpenseRecord, C> getter, final boolean descending) {
     return new Comparator<ExpenseRecord>() {
       public int compare(ExpenseRecord o1, ExpenseRecord o2) {
@@ -781,7 +797,8 @@ public class ExpenseDetails extends Composite implements
   private void createErrorPopup() {
     errorPopup.setGlassEnabled(true);
     errorPopup.setStyleName(Styles.common().popupPanel());
-    errorPopupMessage.addStyleName(Styles.common().expenseDetailsErrorPopupMessage());
+    errorPopupMessage.addStyleName(
+        Styles.common().expenseDetailsErrorPopupMessage());
 
     Button closeButton = new Button("Dismiss", new ClickHandler() {
       public void onClick(ClickEvent event) {
@@ -799,7 +816,7 @@ public class ExpenseDetails extends Composite implements
 
   /**
    * Return a formatted currency string.
-   * 
+   *
    * @param amount the amount in dollars
    * @return a formatted string
    */
@@ -827,7 +844,7 @@ public class ExpenseDetails extends Composite implements
 
   /**
    * Get the error message from a sync operation.
-   * 
+   *
    * @param response the response of the operation
    * @return the error message, or an empty string if no error.
    */
@@ -937,7 +954,7 @@ public class ExpenseDetails extends Composite implements
     setNotesEditState(false, true, pendingNotes);
 
     // Submit the delta.
-    DeltaValueStore deltas = expensesRequestFactory.getValueStore().spawnDeltaView();
+        DeltaValueStore deltas = expensesRequestFactory.getValueStore().spawnDeltaView();
     deltas.set(ReportRecord.notes, report, pendingNotes);
     expensesRequestFactory.syncRequest(deltas).to(
         new Receiver<Set<SyncResult>>() {
@@ -954,13 +971,13 @@ public class ExpenseDetails extends Composite implements
 
   /**
    * Set the state of the notes section.
-   * 
+   *
    * @param editable true for edit state, false for view state
    * @param pending true if changes are pending, false if not
    * @param notesText the current notes
    */
-  private void setNotesEditState(boolean editable, boolean pending,
-      String notesText) {
+  private void setNotesEditState(
+      boolean editable, boolean pending, String notesText) {
     notesBox.setText(notesText);
     notes.setInnerText(notesText);
 
@@ -973,7 +990,7 @@ public class ExpenseDetails extends Composite implements
 
   /**
    * Show the error popup.
-   * 
+   *
    * @param errorMessage the error message
    */
   private void showErrorPopup(String errorMessage) {
@@ -981,35 +998,33 @@ public class ExpenseDetails extends Composite implements
     errorPopup.center();
   }
 
-  private void sortExpenses(List<ExpenseRecord> list,
-      final Comparator<ExpenseRecord> comparator) {
+  private void sortExpenses(
+      List<ExpenseRecord> list, final Comparator<ExpenseRecord> comparator) {
     lastComparator = comparator;
     Collections.sort(list, comparator);
   }
 
   /**
    * Update the state of a pending approval change.
-   * 
+   *
    * @param record the {@link ExpenseRecord} to sync
    * @param message the error message if rejected, or null if accepted
    */
   private void syncCommit(ExpenseRecord record, String message) {
     final Object key = items.getKey(record);
     if (message != null) {
-      final ApprovalViewData avd = (ApprovalViewData) approvalColumn.getViewData(key);
+      final ApprovalViewData avd = approvalCell.getViewData(key);
       if (avd != null) {
         avd.reject(message);
       }
-    } else {
-      approvalColumn.setViewData(key, null);
     }
 
     // Redraw the table so the changes are applied.
     table.redraw();
   }
 
-  private void updateExpenseRecord(final ExpenseRecord record, String approval,
-      String reasonDenied) {
+  private void updateExpenseRecord(
+      final ExpenseRecord record, String approval, String reasonDenied) {
     // Verify that the total is under the cap.
     if (Expenses.Approval.APPROVED.is(approval)
         && !Expenses.Approval.APPROVED.is(record.getApproval())) {
@@ -1023,7 +1038,7 @@ public class ExpenseDetails extends Composite implements
     }
 
     // Create a delta and sync with the value store.
-    DeltaValueStore deltas = expensesRequestFactory.getValueStore().spawnDeltaView();
+        DeltaValueStore deltas = expensesRequestFactory.getValueStore().spawnDeltaView();
     deltas.set(ExpenseRecord.approval, record, approval);
     deltas.set(ExpenseRecord.reasonDenied, record, reasonDenied);
     expensesRequestFactory.syncRequest(deltas).to(
@@ -1031,8 +1046,8 @@ public class ExpenseDetails extends Composite implements
           public void onSuccess(Set<SyncResult> response) {
             String errorMessage = getErrorMessageFromSync(response);
             if (errorMessage.length() > 0) {
-              syncCommit(record, errorMessage.length() > 0 ? errorMessage
-                  : null);
+              syncCommit(
+                  record, errorMessage.length() > 0 ? errorMessage : null);
             }
           }
         }).fire();

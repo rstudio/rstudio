@@ -22,6 +22,7 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.ProvidesKey;
 
 import java.util.List;
 
@@ -73,7 +74,7 @@ public class ValidationRecipe extends Recipe {
 
   @Override
   protected Widget createWidget() {
-    ListViewAdapter<Address> adapter = new ListViewAdapter<Address>();
+    final ListViewAdapter<Address> adapter = new ListViewAdapter<Address>();
     final List<Address> list = adapter.getList();
     for (int i = 10; i < 50; i++) {
       if (zipInvalid(30000 + i)) {
@@ -84,7 +85,13 @@ public class ValidationRecipe extends Recipe {
       list.add(new Address("GA", zip));
     }
 
+    final ProvidesKey<Address> keyProvider = new ProvidesKey<Address>() {
+      public Object getKey(Address item) {
+        return item.key;
+      }
+    };
     CellTable<Address> table = new CellTable<Address>(10);
+    table.setKeyProvider(keyProvider);
     adapter.addView(table);
     TextColumn<Address> stateColumn = new TextColumn<Address>() {
       @Override
@@ -93,16 +100,17 @@ public class ValidationRecipe extends Recipe {
       }
     };
 
-    final Column<Address, String> zipColumn =
-      new Column<Address, String>(new ValidatableInputCell()) {
+    final ValidatableInputCell zipCell = new ValidatableInputCell();
+    Column<Address, String> zipColumn = new Column<Address, String>(
+        zipCell) {
       @Override
       public String getValue(Address object) {
         return object.zip;
       }
     };
     zipColumn.setFieldUpdater(new FieldUpdater<Address, String>() {
-      public void update(final int index, final Address address,
-          final String value) {
+      public void update(
+          final int index, final Address address, final String value) {
         // Perform validation after a 2-second delay
         new Timer() {
           @Override
@@ -118,14 +126,16 @@ public class ValidationRecipe extends Recipe {
 
             // Update the value.
             final Address newAddress = new Address(address);
-            newAddress.zip = value;
             newAddress.zipInvalid = zipInvalid;
-
             if (zipInvalid) {
-              ValidatableInputCell.invalidate(zipColumn, newAddress,
-                  newAddress.zip);
+              // Update the view data to mark the pending value as invalid.
+              ValidatableField<String> vf = zipCell.getViewData(
+                  keyProvider.getKey(address));
+              vf.setInvalid(true);
+              adapter.refresh();
             } else {
-              ValidatableInputCell.validate(zipColumn, newAddress);
+              // The cell will clear the view data when it sees the updated zip.
+              newAddress.zip = value;
             }
 
             list.set(index, newAddress);

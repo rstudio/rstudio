@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -58,8 +58,8 @@ import java.util.List;
  * A "browsable" view of a tree in which only a single node per level may be
  * open at one time.
  */
-public class CellBrowser extends Composite implements ProvidesResize,
-    RequiresResize, HasAnimation {
+public class CellBrowser extends Composite
+    implements ProvidesResize, RequiresResize, HasAnimation {
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -138,7 +138,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * A wrapper around a cell that adds an open button.
-   * 
+   *
    * @param <C> the data type of the cell
    */
   private class CellDecorator<C> extends AbstractCell<C> {
@@ -170,7 +170,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
     /**
      * Construct a new {@link CellDecorator}.
-     * 
+     *
      * @param nodeInfo the {@link NodeInfo} associated with the cell
      * @param level the level of items rendered by this decorator
      */
@@ -192,12 +192,12 @@ public class CellBrowser extends Composite implements ProvidesResize,
     }
 
     @Override
-    public Object onBrowserEvent(Element parent, C value, Object viewData,
+    public void onBrowserEvent(Element parent, C value, Object key,
         NativeEvent event, ValueUpdater<C> valueUpdater) {
 
       // Fire the event to the inner cell.
-      viewData = cell.onBrowserEvent(getCellParent(parent), value, viewData,
-          event, valueUpdater);
+      cell.onBrowserEvent(
+          getCellParent(parent), value, key, event, valueUpdater);
 
       // Open child nodes.
       if (Event.getTypeInt(event.getType()) == Event.ONMOUSEDOWN) {
@@ -220,16 +220,14 @@ public class CellBrowser extends Composite implements ProvidesResize,
           }
         }
       }
-
-      return viewData;
     }
 
     @Override
     public void render(C value, Object viewData, StringBuilder sb) {
-      boolean isOpen = (openKey == null) ? false
-          : openKey.equals(providesKey.getKey(value));
-      boolean isSelected = (selectionModel == null) ? false
-          : selectionModel.isSelected(value);
+      boolean isOpen = (openKey == null) ? false : openKey.equals(
+          providesKey.getKey(value));
+      boolean isSelected = (selectionModel == null)
+          ? false : selectionModel.isSelected(value);
       sb.append("<div style='position:relative;padding-right:");
       sb.append(imageWidth);
       sb.append("px;'");
@@ -264,7 +262,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
     /**
      * Get the parent element of the decorated cell.
-     * 
+     *
      * @param parent the parent of this cell
      * @return the decorated cell's parent
      */
@@ -274,7 +272,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
     /**
      * Get the image element of the decorated cell.
-     * 
+     *
      * @param parent the parent of this cell
      * @return the image element
      */
@@ -284,7 +282,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
     /**
      * Get the ID of the open element.
-     * 
+     *
      * @return the ID
      */
     private String getOpenId() {
@@ -294,7 +292,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
     /**
      * Replace the image element of a cell and update the styles associated with
      * the open state.
-     * 
+     *
      * @param parent the parent element of the cell
      * @param open true if open, false if closed
      */
@@ -362,7 +360,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * A node in the tree.
-   * 
+   *
    * @param <C> the data type of the children of the node
    */
   private class TreeNode<C> {
@@ -373,7 +371,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
     /**
      * Construct a new {@link TreeNode}.
-     * 
+     *
      * @param nodeInfo the nodeInfo for the children nodes
      * @param listView the list view assocated with the node
      * @param widget the widget that represents the list view
@@ -388,7 +386,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
     /**
      * Get the {@link CellDecorator} used to render the node.
-     * 
+     *
      * @return the cell decorator
      */
     public CellDecorator<C> getCell() {
@@ -408,7 +406,8 @@ public class CellBrowser extends Composite implements ProvidesResize,
   /**
    * The element used in place of an image when a node has no children.
    */
-  private static final String LEAF_IMAGE = "<div style='position:absolute;display:none;'></div>";
+  private static final String LEAF_IMAGE =
+      "<div style='position:absolute;display:none;'></div>";
 
   private static Resources DEFAULT_RESOURCES;
 
@@ -496,7 +495,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Construct a new {@link CellBrowser}.
-   * 
+   *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
@@ -507,14 +506,14 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Construct a new {@link CellBrowser} with the specified {@link Resources}.
-   * 
+   *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
    * @param resources the {@link Resources} used for images
    */
-  public <T> CellBrowser(TreeViewModel viewModel, T rootValue,
-      Resources resources) {
+  public <T> CellBrowser(
+      TreeViewModel viewModel, T rootValue, Resources resources) {
     this.viewModel = viewModel;
     this.style = resources.cellBrowserStyle();
     this.style.ensureInjected();
@@ -551,7 +550,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Get the default width of new columns.
-   * 
+   *
    * @return the default width in pixels
    */
   public int getDefaultColumnWidth() {
@@ -560,7 +559,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Get the minimum width of columns.
-   * 
+   *
    * @return the minimum width in pixels
    */
   public int getMinimumColumnWidth() {
@@ -592,7 +591,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Set the default width of new columns.
-   * 
+   *
    * @param width the default width in pixels
    */
   public void setDefaultColumnWidth(int width) {
@@ -601,7 +600,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Set the minimum width of columns.
-   * 
+   *
    * @param minWidth the minimum width in pixels
    */
   public void setMinimumColumnWidth(int minWidth) {
@@ -611,7 +610,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
   /**
    * Create a Pager to control the list view. The {@link ListView} must extend
    * {@link Widget}.
-   * 
+   *
    * @param <C> the item type in the list view
    * @param listView the list view to add paging too
    * @return the {@link Pager}
@@ -623,16 +622,17 @@ public class CellBrowser extends Composite implements ProvidesResize,
   /**
    * Create a {@link PagingListView} that will display items. The
    * {@link PagingListView} must extend {@link Widget}.
-   * 
+   *
    * @param <C> the item type in the list view
    * @param nodeInfo the node info with child data
    * @param cell the cell to use in the list view
    * @return the {@link ListView}
    */
-  protected <C> PagingListView<C> createPagingListView(NodeInfo<C> nodeInfo,
-      Cell<C> cell) {
+  protected <C> PagingListView<C> createPagingListView(
+      NodeInfo<C> nodeInfo, Cell<C> cell) {
     CellList<C> pagingListView = new CellList<C>(cell, getCellListResources());
     pagingListView.setValueUpdater(nodeInfo.getValueUpdater());
+    pagingListView.setKeyProvider(nodeInfo.getProvidesKey());
     return pagingListView;
   }
 
@@ -652,7 +652,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Create a new {@link TreeNode} and append it to the end of the LayoutPanel.
-   * 
+   *
    * @param <C> the data type of the children
    * @param nodeInfo the info about the node
    */
@@ -726,8 +726,8 @@ public class CellBrowser extends Composite implements ProvidesResize,
     };
 
     // Create a TreeNode.
-    TreeNode<C> treeNode = new TreeNode<C>(nodeInfo, listViewDelegate, cell,
-        scrollable);
+    TreeNode<C> treeNode = new TreeNode<C>(
+        nodeInfo, listViewDelegate, cell, scrollable);
     treeNodes.add(treeNode);
 
     // Attach the view to the selection model and node info.
@@ -746,7 +746,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Get the HTML representation of an image.
-   * 
+   *
    * @param res the {@link ImageResource} to render as HTML
    * @return the rendered HTML
    */
@@ -767,7 +767,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Get the {@link SplitLayoutPanel} used to lay out the views.
-   * 
+   *
    * @return the {@link SplitLayoutPanel}
    */
   private SplitLayoutPanel getSplitLayoutPanel() {
@@ -776,7 +776,7 @@ public class CellBrowser extends Composite implements ProvidesResize,
 
   /**
    * Reduce the number of {@link ListView}s down to the specified level.
-   * 
+   *
    * @param level the level to trim to
    */
   private void trimToLevel(int level) {

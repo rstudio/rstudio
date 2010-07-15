@@ -16,12 +16,13 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 
 import java.util.Date;
 
 /**
  * A {@link Cell} used to render {@link Date}s.
- * 
+ *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
@@ -31,23 +32,24 @@ public class DateCell extends AbstractCell<Date> {
   private final DateTimeFormat format;
 
   /**
-   * TODO: doc.
+   * Construct a new {@link DateCell} using the format
+   * {@link PredefinedFormat#DATE_FULL}.
    */
   public DateCell() {
-    this(DateTimeFormat.getFullDateFormat());
+    this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL));
   }
 
   /**
-   * TODO: doc.
-   * 
-   * @param format
+   * Construct a new {@link DateCell} using the specified format.
+   *
+   * @param format the {@link DateTimeFormat} used to render the date
    */
   public DateCell(DateTimeFormat format) {
     this.format = format;
   }
 
   @Override
-  public void render(Date value, Object viewData, StringBuilder sb) {
+  public void render(Date value, Object key, StringBuilder sb) {
     if (value != null) {
       sb.append(format.format(value));
     }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,7 +30,9 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.HasKeyProvider;
 import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
 
@@ -39,10 +41,11 @@ import java.util.List;
 
 /**
  * A single column list of cells.
- * 
+ *
  * @param <T> the data type of list items
  */
-public class CellList<T> extends Widget implements PagingListView<T> {
+public class CellList<T> extends Widget
+    implements PagingListView<T>, HasKeyProvider<T> {
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -102,8 +105,8 @@ public class CellList<T> extends Widget implements PagingListView<T> {
       int end = start + length;
       for (int i = start; i < end; i++) {
         T value = values.get(i - start);
-        boolean isSelected = selectionModel == null ? false
-            : selectionModel.isSelected(value);
+        boolean isSelected = selectionModel == null
+            ? false : selectionModel.isSelected(value);
         // TODO(jlabanca): Factor out __idx because rows can move.
         sb.append("<div onclick='' __idx='").append(i).append("'");
         sb.append(" class='");
@@ -146,6 +149,7 @@ public class CellList<T> extends Widget implements PagingListView<T> {
   private final Element childContainer;
   private String emptyListMessage = "";
   private final Element emptyMessageElem;
+  private ProvidesKey<T> keyProvider;
   private final PagingListViewPresenter<T> presenter;
   private final Style style;
   private ValueUpdater<T> valueUpdater;
@@ -153,7 +157,7 @@ public class CellList<T> extends Widget implements PagingListView<T> {
 
   /**
    * Construct a new {@link CellList}.
-   * 
+   *
    * @param cell the cell used to render each item
    */
   public CellList(final Cell<T> cell) {
@@ -162,11 +166,10 @@ public class CellList<T> extends Widget implements PagingListView<T> {
 
   /**
    * Construct a new {@link CellList} with the specified {@link Resources}.
-   * 
+   *
    * @param cell the cell used to render each item
    * @param resources the resources used for this widget
    */
-  // TODO(jlabanca): Should cell support ViewData?
   public CellList(final Cell<T> cell, Resources resources) {
     this.cell = cell;
     this.style = resources.cellListStyle();
@@ -196,7 +199,7 @@ public class CellList<T> extends Widget implements PagingListView<T> {
 
   /**
    * Get the value of a displayed item.
-   * 
+   *
    * @param indexOnPage the index on the page
    * @return the value
    */
@@ -211,11 +214,15 @@ public class CellList<T> extends Widget implements PagingListView<T> {
 
   /**
    * Get the message that is displayed when there is no data.
-   * 
+   *
    * @return the empty message
    */
   public String getEmptyListMessage() {
     return emptyListMessage;
+  }
+
+  public ProvidesKey<T> getKeyProvider() {
+    return keyProvider;
   }
 
   public final int getPageSize() {
@@ -233,7 +240,7 @@ public class CellList<T> extends Widget implements PagingListView<T> {
   /**
    * Get the {@link Element} for the specified index. If the element has not
    * been created, null is returned.
-   * 
+   *
    * @param indexOnPage the index on the page
    * @return the element, or null if it doesn't exists
    * @throws IndexOutOfBoundsException if the index is outside of the current
@@ -265,9 +272,10 @@ public class CellList<T> extends Widget implements PagingListView<T> {
     if (idxString.length() > 0) {
       int idx = Integer.parseInt(idxString);
       T value = presenter.getData().get(idx - getPageStart());
-      cell.onBrowserEvent(target, value, null, event, valueUpdater);
+      cell.onBrowserEvent(target, value, getKey(value), event, valueUpdater);
+
       if (event.getTypeInt() == Event.ONCLICK && !cell.consumesEvents()) {
-        SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
+            SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
         if (selectionModel != null) {
           selectionModel.setSelected(value, true);
         }
@@ -296,12 +304,16 @@ public class CellList<T> extends Widget implements PagingListView<T> {
 
   /**
    * Set the message to display when there is no data.
-   * 
+   *
    * @param html the message to display when there are no results
    */
   public void setEmptyListMessage(String html) {
     this.emptyListMessage = html;
     emptyMessageElem.setInnerHTML(html);
+  }
+
+  public void setKeyProvider(ProvidesKey<T> keyProvider) {
+    this.keyProvider = keyProvider;
   }
 
   public void setPager(Pager<T> pager) {
@@ -310,7 +322,7 @@ public class CellList<T> extends Widget implements PagingListView<T> {
 
   /**
    * Set the page size.
-   * 
+   *
    * @param pageSize the new page size
    */
   public final void setPageSize(int pageSize) {
@@ -319,7 +331,7 @@ public class CellList<T> extends Widget implements PagingListView<T> {
 
   /**
    * Set the page start index.
-   * 
+   *
    * @param pageStart the new page start
    */
   public final void setPageStart(int pageStart) {
@@ -330,13 +342,14 @@ public class CellList<T> extends Widget implements PagingListView<T> {
     presenter.setRange(start, length);
   }
 
-  public void setSelectionModel(final SelectionModel<? super T> selectionModel) {
+  public void setSelectionModel(
+      final SelectionModel<? super T> selectionModel) {
     presenter.setSelectionModel(selectionModel);
   }
 
   /**
    * Set the value updater to use when cells modify items.
-   * 
+   *
    * @param valueUpdater the {@link ValueUpdater}
    */
   public void setValueUpdater(ValueUpdater<T> valueUpdater) {
@@ -345,21 +358,32 @@ public class CellList<T> extends Widget implements PagingListView<T> {
 
   /**
    * Checks that the row is within the correct bounds.
-   * 
+   *
    * @param row row index to check
    * @throws IndexOutOfBoundsException
    */
   protected void checkRowBounds(int row) {
     int rowCount = view.getChildCount();
     if ((row >= rowCount) || (row < 0)) {
-      throw new IndexOutOfBoundsException("Row index: " + row + ", Row size: "
-          + rowCount);
+      throw new IndexOutOfBoundsException(
+          "Row index: " + row + ", Row size: " + rowCount);
     }
   }
 
   /**
+   * Get the key for a given value. Defaults to the value if new
+   * {@link ProvidesKey} is specified.
+   *
+   * @param value the value
+   * @return the key for the value
+   */
+  private Object getKey(T value) {
+    return keyProvider == null ? value : keyProvider.getKey(value);
+  }
+
+  /**
    * Show or hide an element.
-   * 
+   *
    * @param element the element
    * @param show true to show, false to hide
    */

@@ -42,7 +42,8 @@ public abstract class Header<H> {
   public abstract H getValue();
 
   public void onBrowserEvent(Element elem, NativeEvent event) {
-    cell.onBrowserEvent(elem, getValue(), null, event, updater);
+    H value = getValue();
+    cell.onBrowserEvent(elem, value, getKey(), event, updater);
   }
 
   public void render(StringBuilder sb) {
@@ -51,5 +52,15 @@ public abstract class Header<H> {
 
   public void setUpdater(ValueUpdater<H> updater) {
     this.updater = updater;
+  }
+
+  /**
+   * Get the key for the header value. By default, the key is the same as the
+   * value. Override this method to return a custom key.
+   *
+   * @return the key associated with the value
+   */
+  protected Object getKey() {
+    return getValue();
   }
 }

@@ -17,6 +17,7 @@ package com.google.gwt.user.cellview;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.user.cellview.client.AbstractPagerTest;
+import com.google.gwt.user.cellview.client.ColumnTest;
 import com.google.gwt.user.cellview.client.PagingListViewPresenterTest;
 import com.google.gwt.user.cellview.client.SimplePagerTest;
 
@@ -30,6 +31,7 @@ public class CellViewSuite {
     GWTTestSuite suite = new GWTTestSuite("Test suite for all cellview classes");
 
     suite.addTestSuite(AbstractPagerTest.class);
+    suite.addTestSuite(ColumnTest.class);
     suite.addTestSuite(PagingListViewPresenterTest.class);
     suite.addTestSuite(SimplePagerTest.class);
     return suite;

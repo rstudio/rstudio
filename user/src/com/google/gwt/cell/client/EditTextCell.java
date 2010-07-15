@@ -22,16 +22,104 @@ import com.google.gwt.event.dom.client.KeyCodes;
 
 /**
  * An editable text cell. Click to edit, escape to cancel, return to commit.
- * 
+ *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
- * 
+ *
  * Important TODO: This cell still treats its value as HTML for rendering
  * purposes, which is entirely wrong. It should be able to treat it as a proper
  * string (especially since that's all the user can enter).
  */
-public class EditTextCell extends AbstractCell<String> {
+public class EditTextCell extends AbstractEditableCell<
+    String, EditTextCell.ViewData> {
+
+  /**
+   * The view data object used by this cell. We need to store both the text and
+   * the state because this cell is rendered differently in edit mode. If we did
+   * not store the edit state, refreshing the cell with view data would always
+   * put us in to edit state, rendering a text box instead of the new text
+   * string.
+   */
+  static class ViewData {
+    /**
+     * Keep track of the original value at the start of the edit, which might be
+     * the edited value from the previous edit and NOT the actual value.
+     */
+    private String original;
+    private String text;
+    private boolean isEditing;
+
+    /**
+     * If true, this is not the first edit.
+     */
+    private boolean isEditingAgain;
+
+    /**
+     * Construct a new ViewData in editing mode.
+     *
+     * @param text the text to edit
+     */
+    public ViewData(String text) {
+      this.original = text;
+      this.text = text;
+      this.isEditing = true;
+      this.isEditingAgain = false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null) {
+        return false;
+      }
+      ViewData vd = (ViewData) o;
+      return equalsOrBothNull(original, vd.original)
+          && equalsOrBothNull(text, vd.text) && isEditing == vd.isEditing
+          && isEditingAgain == vd.isEditingAgain;
+    }
+
+    public String getOriginal() {
+      return original;
+    }
+
+    public String getText() {
+      return text;
+    }
+
+    @Override
+    public int hashCode() {
+      return original.hashCode() + text.hashCode()
+          + Boolean.valueOf(isEditing).hashCode() * 29
+          + Boolean.valueOf(isEditingAgain).hashCode();
+    }
+
+    public boolean isEditing() {
+      return isEditing;
+    }
+
+    public boolean isEditingAgain() {
+      return isEditingAgain;
+    }
+
+    public void setEditing(boolean isEditing) {
+      boolean wasEditing = this.isEditing;
+      this.isEditing = isEditing;
+
+      // This is a subsequent edit, so start from where we left off.
+      if (!wasEditing && isEditing) {
+        isEditingAgain = true;
+        original = text;
+      }
+    }
+
+    public void setText(String text) {
+      this.text = text;
+    }
+
+    private boolean equalsOrBothNull(Object o1, Object o2) {
+      return (o1 == null) ? o2 == null : o1.equals(o2);
+    }
+  }
 
   @Override
   public boolean consumesEvents() {
@@ -39,60 +127,124 @@ public class EditTextCell extends AbstractCell<String> {
   }
 
   @Override
-  public String onBrowserEvent(Element parent, String value, Object viewData,
+  public void onBrowserEvent(Element parent, String value, Object key,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
-    if (viewData != null) {
-      return editEvent(parent, value, (String) viewData, event, valueUpdater);
+    ViewData viewData = getViewData(key);
+    if (viewData != null && viewData.isEditing()) {
+      // Handle the edit event.
+      editEvent(parent, key, viewData, event, valueUpdater);
+    } else if ("click".equals(event.getType())) {
+      // Go into edit mode.
+      if (viewData == null) {
+        viewData = new ViewData(value);
+        setViewData(key, viewData);
+      } else {
+        viewData.setEditing(true);
+      }
+      edit(parent, value, key);
     }
-    return nonEditEvent(parent, value, event);
   }
 
   @Override
-  public void render(String value, Object viewData, StringBuilder sb) {
+  public void render(String value, Object key, StringBuilder sb) {
+    // Get the view data.
+    ViewData viewData = getViewData(key);
+    if (viewData != null && !viewData.isEditing() && value != null
+        && value.equals(viewData.getText())) {
+      clearViewData(key);
+      viewData = null;
+    }
+
     if (viewData != null) {
-      sb.append("<input type='text' value='" + viewData + "'></input>");
+      if (viewData.isEditing()) {
+        sb.append(
+            "<input type='text' value='" + viewData.getText() + "'></input>");
+      } else {
+        // The user pressed enter, but view data still exists.
+        sb.append(viewData.getText());
+      }
     } else if (value != null) {
       sb.append(value);
     }
   }
 
-  protected String edit(Element parent, String value) {
-    setValue(parent, value, value);
+  /**
+   * Convert the cell to edit mode.
+   *
+   * @param parent the parent element
+   * @param value the current value
+   * @param key the key of the row object
+   */
+  protected void edit(Element parent, String value, Object key) {
+    setValue(parent, value, key);
     InputElement input = (InputElement) parent.getFirstChild();
     input.focus();
     input.select();
-    return value;
   }
 
-  private String cancel(Element parent, String value) {
+  /**
+   * Convert the cell to non-edit mode.
+   *
+   * @param parent the parent element
+   * @param value the current value
+   */
+  private void cancel(Element parent, String value) {
     setValue(parent, value, null);
-    return null;
   }
 
-  private String commit(Element parent, ValueUpdater<String> valueUpdater) {
+  /**
+   * Commit the current value.
+   *
+   * @param parent the parent element
+   * @param viewData the {@link ViewData} object
+   * @param valueUpdater the {@link ValueUpdater}
+   */
+  private void commit(
+      Element parent, ViewData viewData, ValueUpdater<String> valueUpdater) {
+    String value = updateViewData(parent, viewData, false);
+    setValue(parent, value, viewData);
+    valueUpdater.update(value);
+  }
+
+  private void editEvent(Element parent, Object key, ViewData viewData,
+      NativeEvent event, ValueUpdater<String> valueUpdater) {
+    String type = event.getType();
+    if ("keydown".equals(type)) {
+      int keyCode = event.getKeyCode();
+      if (keyCode == KeyCodes.KEY_ENTER) {
+        // Commit the change.
+        commit(parent, viewData, valueUpdater);
+      } else if (keyCode == KeyCodes.KEY_ESCAPE) {
+        // Cancel edit mode.
+        String originalText = viewData.getOriginal();
+        if (viewData.isEditingAgain()) {
+          viewData.setText(originalText);
+          viewData.setEditing(false);
+        } else {
+          setViewData(key, null);
+        }
+        cancel(parent, originalText);
+      }
+    } else if ("keyup".equals(type)) {
+      // Update the text in the view data on each key.
+      updateViewData(parent, viewData, true);
+    }
+  }
+
+  /**
+   * Update the view data based on the current value.
+   *
+   * @param parent the parent element
+   * @param viewData the {@link ViewData} object to update
+   * @param isEditing true if in edit mode
+   * @return the new value
+   */
+  private String updateViewData(
+      Element parent, ViewData viewData, boolean isEditing) {
     InputElement input = (InputElement) parent.getFirstChild();
     String value = input.getValue();
-    valueUpdater.update(value);
-    return cancel(parent, value);
-  }
-
-  private String editEvent(Element parent, String value, String viewData,
-      NativeEvent event, ValueUpdater<String> valueUpdater) {
-    if ("keydown".equals(event.getType())) {
-      if (event.getKeyCode() == KeyCodes.KEY_ENTER) {
-        return commit(parent, valueUpdater);
-      }
-      if (event.getKeyCode() == KeyCodes.KEY_ESCAPE) {
-        return cancel(parent, value);
-      }
-    }
-    return viewData;
-  }
-
-  private String nonEditEvent(Element parent, String value, NativeEvent event) {
-    if ("click".equals(event.getType())) {
-      return edit(parent, value);
-    }
-    return null;
+    viewData.setText(value);
+    viewData.setEditing(isEditing);
+    return value;
   }
 }
