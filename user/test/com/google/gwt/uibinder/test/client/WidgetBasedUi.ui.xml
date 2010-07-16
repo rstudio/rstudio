@@ -606,17 +606,6 @@
      <gwt:item>bar</gwt:item>
      <gwt:item value='bar2'>bar 2</gwt:item>
    </gwt:ListBox>
-   
-   <gwt:Grid ui:field='fooGrid'>
-     <gwt:row>
-       <gwt:customCell>
-	     <gwt:Label>foo</gwt:Label>
-	   </gwt:customCell>
-	   <gwt:customCell>
-	     <gwt:Button>bar</gwt:Button>
-	   </gwt:customCell>
-     </gwt:row>
-   </gwt:Grid>
 
    </gwt:HTMLPanel>
   </gwt:Dock>

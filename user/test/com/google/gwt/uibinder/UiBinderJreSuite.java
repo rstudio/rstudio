@@ -27,7 +27,6 @@ import com.google.gwt.uibinder.attributeparsers.TextAlignConstantParserTest;
 import com.google.gwt.uibinder.attributeparsers.VerticalAlignmentConstantParserTest;
 import com.google.gwt.uibinder.elementparsers.DialogBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.DockLayoutPanelParserTest;
-import com.google.gwt.uibinder.elementparsers.GridParserTest;
 import com.google.gwt.uibinder.elementparsers.ImageParserTest;
 import com.google.gwt.uibinder.elementparsers.IsEmptyParserTest;
 import com.google.gwt.uibinder.elementparsers.LayoutPanelParserTest;
@@ -83,7 +82,6 @@ public class UiBinderJreSuite {
     // elementparsers
     suite.addTestSuite(DialogBoxParserTest.class);
     suite.addTestSuite(DockLayoutPanelParserTest.class);
-    suite.addTestSuite(GridParserTest.class);
     suite.addTestSuite(ImageParserTest.class);
     suite.addTestSuite(IsEmptyParserTest.class);
     suite.addTestSuite(LayoutPanelParserTest.class);

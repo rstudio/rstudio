@@ -33,7 +33,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DisclosurePanel;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHTML;
@@ -161,7 +160,6 @@ public class WidgetBasedUi extends Composite {
   @UiField HTML styleLess;
   @UiField FooDialog fooDialog;
   @UiField ListBox fooListBox;
-  @UiField Grid fooGrid;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();
