@@ -980,6 +980,7 @@ public class UiBinderWriter implements Statements {
     addWidgetParser("TabLayoutPanel");
     addWidgetParser("Image");
     addWidgetParser("ListBox");
+    addWidgetParser("Grid");
   }
 
   /**

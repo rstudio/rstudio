@@ -1,0 +1,16 @@
+***************
+*** 34,39 ****
+  import com.google.gwt.user.client.ui.Composite;
+  import com.google.gwt.user.client.ui.DisclosurePanel;
+  import com.google.gwt.user.client.ui.DockPanel;
+  import com.google.gwt.user.client.ui.HTML;
+  import com.google.gwt.user.client.ui.HTMLPanel;
+  import com.google.gwt.user.client.ui.HasHTML;
+--- 34,40 ----
+  import com.google.gwt.user.client.ui.Composite;
+  import com.google.gwt.user.client.ui.DisclosurePanel;
+  import com.google.gwt.user.client.ui.DockPanel;
++ import com.google.gwt.user.client.ui.Grid;
+  import com.google.gwt.user.client.ui.HTML;
+  import com.google.gwt.user.client.ui.HTMLPanel;
+  import com.google.gwt.user.client.ui.HasHTML;
