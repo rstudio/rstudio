@@ -24,7 +24,9 @@ import com.google.gwt.event.shared.GwtEvent;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Event thrown when the user may go to a new place in the app. May be rejected.
+ * Event thrown when the user may go to a new place in the app, or tries to
+ * leave it. Receivers can call {@link #setWarning(String)} request that the
+ * user be prompted to confirm the change.
  * 
  * @param <P> the type of the requested place
  */
@@ -33,6 +35,7 @@ public class PlaceChangeRequestedEvent<P extends Place> extends
 
   /**
    * Implemented by handlers of PlaceChangeRequestedEvent.
+   * 
    * @param <P> the type of the requested Place
    */
   public interface Handler<P extends Place> extends EventHandler {
@@ -41,7 +44,7 @@ public class PlaceChangeRequestedEvent<P extends Place> extends
 
   public static final Type<Handler<?>> TYPE = new Type<Handler<?>>();
 
-  private boolean rejected = false;
+  private String warning;
 
   private final P newPlace;
 
@@ -56,16 +59,36 @@ public class PlaceChangeRequestedEvent<P extends Place> extends
     return (Type) TYPE;
   }
 
+  /**
+   * @return the place we may navigate to, or null on window close
+   */
   public P getNewPlace() {
     return newPlace;
   }
 
-  public boolean isRejected() {
-    return rejected;
+  /**
+   * @return the warning message to show the user before allowing the place
+   *         change, or null if none has been set
+   */
+  public String getWarning() {
+    return warning;
   }
 
-  public void reject() {
-    this.rejected = true;
+  /**
+   * Set a message to warn the user that it might be unwise to navigate away
+   * from the current place, e.g. due to unsaved changes. If the user clicks
+   * okay to that message, navigation will be canceled.
+   * <p>
+   * Calling with a null warning is the same as not calling the method at all --
+   * the user will not be prompted.
+   * <p>
+   * Only the first non-null call to setWarning has any effect. That is, once
+   * the warning message has been set it cannot be cleared.
+   */
+  public void setWarning(String warning) {
+    if (this.warning == null) {
+      this.warning = warning;
+    }
   }
 
   @Override

@@ -37,6 +37,14 @@ public interface Activity {
   }
 
   /**
+   * Called when the user is trying to navigate away from this activity.
+   * 
+   * @return A message to display to the user, e.g. to warn of unsaved work, 
+   * or null to say nothing
+   */
+  String mayStop();
+
+  /**
    * Called when {@link #start} has not yet replied to its callback, but the
    * user has lost interest.
    */
@@ -56,6 +64,4 @@ public interface Activity {
    * @param panel the panel to display this activity's widget when it is ready
    */
   void start(Display panel);
-
-  boolean willStop();
 }

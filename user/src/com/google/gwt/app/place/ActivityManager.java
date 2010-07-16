@@ -123,22 +123,8 @@ public class ActivityManager<P extends Place> implements
    * @see PlaceChangeRequestedEvent.Handler#onPlaceChangeRequested(PlaceChangeRequestedEvent)
    */
   public void onPlaceChangeRequested(PlaceChangeRequestedEvent<P> event) {
-    if (!event.isRejected()) {
-
-      /*
-       * TODO Allow asynchronous willClose check? Could have the event object
-       * vend callbacks. Place change doesn't happen until all vended callbacks,
-       * if any, reply with yes. Would likely need to add onPlaceChangeCanceled?
-       * 
-       * Complicated, but I really want to keep AM and PC isolated. Alternative
-       * is to mash them together and take place conversation off the event bus.
-       * And it's still complicated, just very slightly less so.
-       * 
-       * Let's see if a real use case pops up.
-       */
-      if (currentActivity != null && !currentActivity.willStop()) {
-        event.reject();
-      }
+    if (currentActivity != null) {
+      event.setWarning(currentActivity.mayStop());
     }
   }
 

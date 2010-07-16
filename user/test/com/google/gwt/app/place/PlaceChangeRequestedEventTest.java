@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,24 +15,25 @@
  */
 package com.google.gwt.app.place;
 
+import junit.framework.TestCase;
+
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
- * Simple Activity implementation that is always willing to stop,
- * and does nothing onStop and onCancel.
+ * Eponymous test class.
  */
-public abstract class AbstractActivity implements Activity {
+public class PlaceChangeRequestedEventTest extends TestCase {
+  private static final String W1 = "foo";
 
-  public String mayStop() {
-    return null;
-  }
+  public void testNoClobberWarning() {
+    PlaceChangeRequestedEvent<Place> e = new PlaceChangeRequestedEvent<Place>(
+        new Place() {
+        });
 
-  public void onCancel() {
-  }
-
-  public void onStop() {
+    assertNull(e.getWarning());
+    e.setWarning(W1);
+    assertEquals(W1, e.getWarning());
+    e.setWarning("bar");
+    assertEquals(W1, e.getWarning());
+    e.setWarning(null);
+    assertEquals(W1, e.getWarning());
   }
 }

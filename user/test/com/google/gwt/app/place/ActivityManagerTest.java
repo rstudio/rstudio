@@ -60,7 +60,7 @@ public class ActivityManagerTest extends TestCase {
     boolean canceled = false;
     boolean stopped = false;
     Display display = null;
-    boolean willStop = true;
+    String stopWarning = null;
     MyView view;
 
     SyncActivity(MyView view) {
@@ -80,8 +80,8 @@ public class ActivityManagerTest extends TestCase {
       display.showActivityWidget(view);
     }
 
-    public boolean willStop() {
-      return willStop;
+    public String mayStop() {
+      return stopWarning;
     }
   }
 
@@ -133,7 +133,7 @@ public class ActivityManagerTest extends TestCase {
     PlaceChangeRequestedEvent<MyPlace> event = new PlaceChangeRequestedEvent<MyPlace>(
         place1);
     eventBus.fireEvent(event);
-    assertFalse(event.isRejected());
+    assertNull(event.getWarning());
     assertNull(realDisplay.widget);
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
@@ -152,7 +152,7 @@ public class ActivityManagerTest extends TestCase {
 
     event = new PlaceChangeRequestedEvent<MyPlace>(place2);
     eventBus.fireEvent(event);
-    assertFalse(event.isRejected());
+    assertNull(event.getWarning());
     assertEquals(asyncActivity1.view, realDisplay.widget);
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
@@ -199,7 +199,7 @@ public class ActivityManagerTest extends TestCase {
     PlaceChangeRequestedEvent<MyPlace> event = new PlaceChangeRequestedEvent<MyPlace>(
         place1);
     eventBus.fireEvent(event);
-    assertFalse(event.isRejected());
+    assertNull(event.getWarning());
     assertNull(realDisplay.widget);
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
@@ -213,7 +213,7 @@ public class ActivityManagerTest extends TestCase {
 
     event = new PlaceChangeRequestedEvent<MyPlace>(place2);
     eventBus.fireEvent(event);
-    assertFalse(event.isRejected());
+    assertNull(event.getWarning());
     assertNull(realDisplay.widget);
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
@@ -251,12 +251,12 @@ public class ActivityManagerTest extends TestCase {
   public void testRejected() {
     manager.setDisplay(realDisplay);
 
-    activity1.willStop = false;
+    activity1.stopWarning = "Stop fool!";
 
     PlaceChangeRequestedEvent<MyPlace> event = new PlaceChangeRequestedEvent<MyPlace>(
         place1);
     eventBus.fireEvent(event);
-    assertFalse(event.isRejected());
+    assertNull(event.getWarning());
     assertNull(realDisplay.widget);
 
     eventBus.fireEvent(new PlaceChangeEvent<Place>(place1));
@@ -264,7 +264,7 @@ public class ActivityManagerTest extends TestCase {
 
     event = new PlaceChangeRequestedEvent<MyPlace>(place2);
     eventBus.fireEvent(event);
-    assertTrue(event.isRejected());
+    assertEquals(activity1.stopWarning, event.getWarning());
     assertEquals(activity1.view, realDisplay.widget);
     assertFalse(activity1.stopped);
     assertFalse(activity1.canceled);
@@ -276,7 +276,7 @@ public class ActivityManagerTest extends TestCase {
     PlaceChangeRequestedEvent<MyPlace> event = new PlaceChangeRequestedEvent<MyPlace>(
         place1);
     eventBus.fireEvent(event);
-    assertFalse(event.isRejected());
+    assertNull(event.getWarning());
     assertNull(realDisplay.widget);
     assertFalse(activity1.stopped);
     assertFalse(activity1.canceled);
@@ -288,7 +288,7 @@ public class ActivityManagerTest extends TestCase {
 
     event = new PlaceChangeRequestedEvent<MyPlace>(place2);
     eventBus.fireEvent(event);
-    assertFalse(event.isRejected());
+    assertNull(event.getWarning());
     assertEquals(activity1.view, realDisplay.widget);
     assertFalse(activity1.stopped);
     assertFalse(activity1.canceled);

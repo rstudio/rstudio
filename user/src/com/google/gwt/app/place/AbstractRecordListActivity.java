@@ -80,6 +80,10 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
     return view;
   }
 
+  public String mayStop() {
+    return null;
+  }
+
   public void onCancel() {
     onStop();
   }
@@ -162,10 +166,6 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
         getLastPage();
         break;
     }
-  }
-
-  public boolean willStop() {
-    return true;
   }
 
   protected abstract RecordListRequest<R> createRangeRequest(Range range);

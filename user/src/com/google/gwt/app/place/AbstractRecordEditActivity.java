@@ -57,14 +57,23 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   }
 
   public void cancelClicked() {
-    if (willStop()) {
-      deltas = null; // silence the next willStop() call when place changes
+    String unsavedChangesWarning = mayStop();
+    if ((unsavedChangesWarning == null) || Window.confirm(unsavedChangesWarning)) {
+      deltas = null; // silence the next mayStop() call when place changes
       if (creating) {
         display.showActivityWidget(null);
       } else {
         exit();
       }
     }
+  }
+
+  public String mayStop() {
+    if (deltas != null && deltas.isChanged()) {
+      return "Are you sure you want to abandon your changes?";
+    }
+
+    return null;
   }
 
   public void onCancel() {
@@ -144,11 +153,6 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
         }
       });
     }
-  }
-
-  public boolean willStop() {
-    return deltas == null || !deltas.isChanged()
-        || Window.confirm("Are you sure you want to abandon your changes?");
   }
 
   /**
