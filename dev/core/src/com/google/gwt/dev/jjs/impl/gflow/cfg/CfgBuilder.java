@@ -627,7 +627,7 @@ public class CfgBuilder {
       // We don't want to mess with other case exits here
       List<Exit> oldCaseElseExits = removeExits(Exit.Reason.CASE_ELSE);
       List<Exit> oldCaseThenExits = removeExits(Exit.Reason.CASE_THEN);
-      List<Exit> oldBreakExits = removeExits(Exit.Reason.BREAK);
+      List<Exit> oldBreakExits = removeUnlabeledBreaks();
       switchStatement = x;
 
       // Goto to the first non-default node.
@@ -673,7 +673,7 @@ public class CfgBuilder {
           }
         }
         accept(s);
-        breakExits.addAll(removeExits(Exit.Reason.BREAK));
+        breakExits.addAll(removeUnlabeledBreaks());
       }
 
       if (gotoExit != null) {
@@ -1106,7 +1106,7 @@ public class CfgBuilder {
     private List<Exit> removeExits(Exit.Reason reason) {
       return currentExitsByReason.put(reason, new ArrayList<Exit>());
     }
-
+    
     private List<Exit> removeExits(List<Exit> exits, Exit.Reason reason) {
       List<Exit> result = new ArrayList<Exit>();
       for (Iterator<Exit> i = exits.iterator(); i.hasNext();) {
@@ -1147,6 +1147,21 @@ public class CfgBuilder {
 
     private List<Exit> removeNormalExits(List<Exit> exits) {
       return removeExits(exits, Exit.Reason.NORMAL);
+    }
+
+    private List<Exit> removeUnlabeledBreaks() {
+      List<Exit> breakExits = removeExits(Exit.Reason.BREAK);
+      List<Exit> labeledBreaks = new ArrayList<Exit>();
+      
+      for (Iterator<Exit> i = breakExits.iterator(); i.hasNext();) {
+        Exit exit = i.next();
+        if (exit.getLabel() != null) {
+          i.remove();
+          labeledBreaks.add(exit);
+        }
+      }
+      addExits(labeledBreaks);
+      return breakExits;
     }
   }
 

@@ -1429,6 +1429,62 @@ public class CfgBuilderTest extends JJSTestBase {
             "3: END");
   }
   
+  public void testBreakLoopAndSwitch() throws Exception {
+    assertCfg("void",
+        "loop: while (b) {",
+        "  switch (i) {",
+        "    case 1: ",
+        "      if (j == 1) {",
+        "        break loop;",
+        "      }",
+        "      break;",
+        "    default: ",
+        "      return;",
+        "    case 2: ",
+        "      break loop;",
+        "    case 3: ",
+        "      break;",
+        "  }",
+        "  i++;",
+        "}",
+        "k++;"
+    ).is(
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "1: READ(b) -> [*]",
+        "COND (EntryPoint.b) -> [THEN=*, ELSE=7]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "READ(i) -> [*]",
+        "GOTO -> [*]",
+        "STMT -> [*]",
+        "COND (EntryPoint.i == 1) -> [THEN=*, ELSE=4]",
+        "STMT -> [*]",
+        "READ(j) -> [*]",
+        "COND (EntryPoint.j == 1) -> [THEN=*, ELSE=2]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "GOTO -> [7]",
+        "2: STMT -> [*]",
+        "GOTO -> [6]",
+        "3: STMT -> [*]",
+        "STMT -> [*]",
+        "GOTO -> [8]",
+        "4: STMT -> [*]",
+        "COND (EntryPoint.i == 2) -> [THEN=*, ELSE=5]",
+        "STMT -> [*]",
+        "GOTO -> [7]",
+        "5: STMT -> [*]",
+        "COND (EntryPoint.i == 3) -> [THEN=*, ELSE=3]",
+        "STMT -> [*]",
+        "GOTO -> [*]",
+        "6: STMT -> [*]",
+        "READWRITE(i, null) -> [1]",
+        "7: STMT -> [*]",
+        "READWRITE(k, null) -> [*]",
+        "8: END");
+  }
+  
   private CfgBuilderResult assertCfg(String returnType, String ...codeSnippet)
       throws UnableToCompleteException {
     JProgram program = compileSnippet(returnType, 
