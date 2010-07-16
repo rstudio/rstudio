@@ -635,9 +635,22 @@ public class CellTable<T> extends Widget
       return;
     }
 
+    // Determine if we are in the header, footer, or body. Its possible that
+    // the table has been refreshed before the current event fired (ex. change
+    // event refreshes before mouseup fires), so we need to check each parent
+    // element.
+    Element trElem = cell.getParentElement();
+    if (trElem == null) {
+      return;
+    }
+    TableRowElement tr = TableRowElement.as(trElem);
+    Element sectionElem = tr.getParentElement();
+    if (sectionElem == null) {
+      return;
+    }
+    TableSectionElement section = TableSectionElement.as(sectionElem);
+
     // Forward the event to the associated header, footer, or column.
-    TableRowElement tr = TableRowElement.as(cell.getParentElement());
-    TableSectionElement section = TableSectionElement.as(tr.getParentElement());
     int col = cell.getCellIndex();
     if (section == thead) {
       Header<?> header = headers.get(col);
