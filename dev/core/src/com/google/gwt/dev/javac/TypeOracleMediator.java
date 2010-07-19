@@ -489,7 +489,7 @@ public class TypeOracleMediator {
       return clazz.asSubclass(Annotation.class);
     } catch (ClassNotFoundException e) {
       logger.log(TreeLogger.WARN, "Ignoring unresolvable annotation type "
-          + type.getClassName(), e);
+          + type.getClassName());
       return null;
     }
   }
