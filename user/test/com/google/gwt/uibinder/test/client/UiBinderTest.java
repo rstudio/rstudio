@@ -26,7 +26,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.uibinder.test.client.EnumeratedLabel.Suffix;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -292,13 +291,6 @@ public class UiBinderTest extends GWTTestCase {
 
   public void testFieldInPlaceholderedElement() {
     assertEquals("named portions", widgetUi.spanInMsg.getInnerText());
-  }
-  
-  public void testGrid() {
-    assertTrue(widgetUi.fooGrid.getWidget(0, 0) instanceof Label);
-    assertTrue(widgetUi.fooGrid.getWidget(0, 1) instanceof Button);
-    assertEquals(2, widgetUi.fooGrid.getColumnCount());
-    assertEquals(1, widgetUi.fooGrid.getRowCount());
   }
   
   public void testListBox() {

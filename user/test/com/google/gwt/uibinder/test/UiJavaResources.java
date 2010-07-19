@@ -106,17 +106,6 @@ public class UiJavaResources {
       return code;
     }
   };
-  public static final MockJavaResource GRID = new MockJavaResource(
-    "com.google.gwt.user.client.ui.Grid") {
-  @Override
-  protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package com.google.gwt.user.client.ui;\n");
-      code.append("public class Grid extends Widget {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
   public static final MockJavaResource GWT_EVENT = new MockJavaResource(
       "com.google.gwt.event.shared.GwtEvent") {
     @Override
@@ -388,7 +377,6 @@ public class UiJavaResources {
     rtn.add(DIALOG_BOX);
     rtn.add(DOCK_LAYOUT_PANEL);
     rtn.add(EVENT_HANDLER);
-    rtn.add(GRID);
     rtn.add(GWT_EVENT);
     rtn.add(IMAGE);
     rtn.add(IMAGE_RESOURCE);

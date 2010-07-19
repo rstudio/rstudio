@@ -593,26 +593,19 @@
     <tr><td>Lately, anyway.</td></tr>
   </gwt:HTMLPanel>
 
-  <gwt:DialogBox autoHide="true" modal="true">
-    <gwt:caption>Hello, I <b>caption</b> you.</gwt:caption>
-    <gwt:HTMLPanel>
-      And your little dog, too!
-      <gwt:Button ui:field='cancel'>Cancel</gwt:Button>
-      <gwt:Button ui:field='ok'>Okay</gwt:Button>
-    </gwt:HTMLPanel>
-  </gwt:DialogBox>
+   <gwt:DialogBox autoHide="true" modal="true">
+     <gwt:caption>Hello, I <b>caption</b> you.</gwt:caption>
+     <gwt:HTMLPanel>
+       And your little dog, too!
+       <gwt:Button ui:field='cancel'>Cancel</gwt:Button>
+       <gwt:Button ui:field='ok'>Okay</gwt:Button>
+     </gwt:HTMLPanel>
+   </gwt:DialogBox>
 
-  <gwt:ListBox ui:field='fooListBox'>
-    <gwt:item>bar</gwt:item>
-    <gwt:item value='bar2'>bar 2</gwt:item>
-  </gwt:ListBox>
-
-  <gwt:Grid ui:field='fooGrid'>
-    <gwt:row>
-      <gwt:customCell><gwt:Label>foo</gwt:Label></gwt:customCell>
-      <gwt:customCell><gwt:Button>bar</gwt:Button></gwt:customCell>
-    </gwt:row>
-  </gwt:Grid>
+   <gwt:ListBox ui:field='fooListBox'>
+     <gwt:item>bar</gwt:item>
+     <gwt:item value='bar2'>bar 2</gwt:item>
+   </gwt:ListBox>
 
    </gwt:HTMLPanel>
   </gwt:Dock>
