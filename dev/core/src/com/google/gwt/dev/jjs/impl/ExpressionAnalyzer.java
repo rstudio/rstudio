@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
@@ -144,16 +145,14 @@ public class ExpressionAnalyzer extends JVisitor {
       return;
     }
 
-    /*
-     * We don't have enough information at this point to determine that a field
-     * reference is guaranteed to be safe.
-     * 
-     * If a field reference is static, it can throw exceptions via a clinit().
-     * 
-     * If a field is not static and isn't accessed using "this", the instance
-     * expression may be null.
-     */
-    canThrowException = true;
+    if (x.getField().isStatic()) {
+      // Can throw exceptions IFF a clinit is triggered.
+      canThrowException = x.hasClinit();
+    } else {
+      // Can throw exceptions IFF the instance is null.
+      JReferenceType refType = (JReferenceType) instance.getType();
+      canThrowException = refType.canBeNull();
+    }
   }
 
   @Override
