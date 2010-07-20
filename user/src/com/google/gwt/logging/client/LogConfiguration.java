@@ -52,9 +52,14 @@ public class LogConfiguration implements EntryPoint {
    */
   private static class LogConfigurationImplRegular
   implements LogConfigurationImpl {
-  
+    // Keep a reference to the root logger after we configure it because
+    // if we don't, the JRE implementation of LogManager (which is used in
+    // Dev Mode) will sometimes garbage collect it, since they only keep
+    // weak references to the loggers that are created.
+    private Logger root;
+
     public void configureClientSideLogging() {
-      Logger root = Logger.getLogger("");
+      root = Logger.getLogger("");
       setLevels(root);
       setDefaultHandlers(root);
     }
