@@ -226,7 +226,7 @@ public class FragmentExtractor {
       SourceInfo sourceInfo = jsprogram.getSourceInfo().makeChild(
           FragmentExtractor.class, "call to entry function " + splitPoint);
       JsInvocation call = new JsInvocation(sourceInfo);
-      call.setQualifier(name.makeRef(sourceInfo));
+      call.setQualifier(wrapWithEntry(name.makeRef(sourceInfo)));
       callStats.add(call.makeStmt());
     }
     return callStats;
@@ -244,7 +244,7 @@ public class FragmentExtractor {
         FragmentExtractor.class,
         "call to browserLoaderLeftoversFragmentHasLoaded ");
     JsInvocation call = new JsInvocation(sourceInfo);
-    call.setQualifier(loadedMethodName.makeRef(sourceInfo));
+    call.setQualifier(wrapWithEntry(loadedMethodName.makeRef(sourceInfo)));
     List<JsStatement> newStats = Collections.<JsStatement> singletonList(call.makeStmt());
     return newStats;
   }
@@ -630,4 +630,16 @@ public class FragmentExtractor {
     return null;
   }
 
+  /**
+   * Wrap an expression with a call to $entry.
+   */
+  private JsInvocation wrapWithEntry(JsExpression exp) {
+    SourceInfo sourceInfo = exp.getSourceInfo().makeChild(
+        FragmentExtractor.class, "wrapping with a call to $entry");
+    JsInvocation call = new JsInvocation(sourceInfo);
+    JsName entryFunctionName = jsprogram.getScope().findExistingName("$entry");
+    call.setQualifier(entryFunctionName.makeRef(sourceInfo));
+    call.getArguments().add(exp);
+    return call;
+  }
 }

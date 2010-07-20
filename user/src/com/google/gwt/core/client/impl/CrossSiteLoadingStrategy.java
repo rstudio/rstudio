@@ -104,8 +104,10 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearOnSuccess(*)(fragment);
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearCallbacks(*)(tag);
        head.removeChild(tag);
-       loadFinishedHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler::loadTerminated(*)(
-         exception);
+       function callLoadTerminated() {
+         loadFinishedHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler::loadTerminated(*)(exception);
+       }
+       $entry(callLoadTerminated)();
      }
    }-*/;
 

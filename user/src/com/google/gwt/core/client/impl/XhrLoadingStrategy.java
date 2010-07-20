@@ -199,7 +199,7 @@ public class XhrLoadingStrategy implements LoadingStrategy {
     function loadFailed(e) {
       loadErrorHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader$LoadTerminatedHandler::loadTerminated(*)(e);
     }
-    return __gwtStartLoadingFragment(fragment, loadFailed);
+    return __gwtStartLoadingFragment(fragment, $entry(loadFailed));
   }-*/;
 
   /**
