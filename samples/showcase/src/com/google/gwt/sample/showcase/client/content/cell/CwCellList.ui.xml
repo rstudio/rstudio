@@ -1,0 +1,57 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c='urn:import:com.google.gwt.user.cellview.client'
+  xmlns:s="urn:import:com.google.gwt.sample.showcase.client.content.cell">
+
+  <ui:style>
+    .scrollPanel {
+      height: 400px;
+      width: 250px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    
+    .contactFormCell {
+      padding-left: 20px;
+    }
+  </ui:style>
+
+  <g:HTMLPanel>
+    <table>
+      <tr>
+        <td
+          valign='top'>
+          <g:ScrollPanel
+            addStyleNames='{style.scrollPanel}'
+            ui:field='scrollPanel'>
+            <c:CellList
+              pageSize='40'
+              ui:field='cellList' />
+          </g:ScrollPanel>
+        </td>
+        <td
+          class='{style.contactFormCell}'
+          valign='top'
+          align='center'>
+          <s:ContactInfoForm
+            ui:field='contactForm' />
+          <br />
+          <g:Button
+            ui:field='generateButton'>
+            <ui:msg
+              key='cwCellListGenerateButton'>Generate 50 Contacts</ui:msg>
+          </g:Button>
+        </td>
+      </tr>
+      <tr>
+        <td
+          align='center'>
+          <s:ShowMorePagerPanel
+            ui:field='pager' />
+        </td>
+      </tr>
+    </table>
+  </g:HTMLPanel>
+</ui:UiBinder>

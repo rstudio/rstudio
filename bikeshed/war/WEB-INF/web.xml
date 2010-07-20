@@ -12,11 +12,6 @@
   </servlet>
 
   <servlet>
-    <servlet-name>treeServlet</servlet-name>
-    <servlet-class>com.google.gwt.sample.bikeshed.cookbook.server.TreeServiceImpl</servlet-class>
-  </servlet>
-  
-  <servlet>
     <servlet-name>dataGeneration</servlet-name>
     <servlet-class>com.google.gwt.sample.expenses.gwt.server.DataGenerationServiceImpl</servlet-class>
   </servlet>
@@ -24,11 +19,6 @@
   <servlet-mapping>
     <servlet-name>requestFactoryServlet</servlet-name>
     <url-pattern>/gwtRequest</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
-    <servlet-name>treeServlet</servlet-name>
-    <url-pattern>/cookbook/tree</url-pattern>
   </servlet-mapping>
 
   <servlet-mapping>

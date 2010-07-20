@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
+
+  <g:HTMLPanel>
+    <c:CellTable
+      ui:field='cellTable' />
+    <g:Button
+      ui:field='redrawButton'>
+      <ui:msg
+        key='cwCellSampleRedrawButton'>Redraw Table</ui:msg>
+    </g:Button>
+    <g:Button
+      ui:field='commitButton'>
+      <ui:msg
+        key='cwCellSampleCommitButton'>Commit Changes</ui:msg>
+    </g:Button>
+  </g:HTMLPanel>
+</ui:UiBinder>

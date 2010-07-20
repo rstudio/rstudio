@@ -1,0 +1,36 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c="urn:import:com.google.gwt.user.cellview.client">
+
+  <ui:style>
+    .cellTable {
+      height: 400px;
+      width: 600px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+  </ui:style>
+
+  <g:HTMLPanel>
+    <table>
+      <tr>
+        <td
+          valign='top'>
+          <c:CellTable
+            addStyleNames='{style.cellTable}'
+            pageSize='15'
+            ui:field='cellTable' />
+        </td>
+      </tr>
+      <tr>
+        <td
+          align='center'>
+          <c:SimplePager
+            ui:field='pager' />
+        </td>
+      </tr>
+    </table>
+  </g:HTMLPanel>
+</ui:UiBinder>

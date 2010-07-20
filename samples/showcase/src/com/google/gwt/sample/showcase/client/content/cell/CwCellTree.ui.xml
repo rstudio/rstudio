@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
+
+  <ui:style>
+    .tree {
+      width: 500px;
+      border: 1px solid #ccc;
+    }
+    
+    .selectedLabel {
+      padding-left: 15px;
+    }
+  </ui:style>
+
+  <g:HTMLPanel>
+    <table>
+      <tr>
+        <td
+          valign='top'>
+          <c:CellTree
+            addStyleNames='{style.tree}'
+            ui:field='cellTree' />
+        </td>
+        <td
+          valign='top'>
+          <b>
+            <ui:msg
+              key='cwCellTreeSelected'>Selected:</ui:msg>
+          </b>
+          <br />
+          <g:Label
+            addStyleNames='{style.selectedLabel}'
+            ui:field='selectedLabel' />
+        </td>
+      </tr>
+    </table>
+  </g:HTMLPanel>
+</ui:UiBinder>

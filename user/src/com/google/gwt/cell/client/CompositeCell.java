@@ -89,7 +89,8 @@ public class CompositeCell<C> extends AbstractCell<C> {
     EventTarget eventTarget = event.getEventTarget();
     if (Element.is(eventTarget)) {
       Element target = eventTarget.cast();
-      Element wrapper = parent.getFirstChildElement();
+      Element container = getContainerElement(parent);
+      Element wrapper = container.getFirstChildElement();
       while (wrapper != null) {
         if (wrapper.isOrHasChild(target)) {
           onBrowserEventImpl(
@@ -116,6 +117,18 @@ public class CompositeCell<C> extends AbstractCell<C> {
       setValueImpl(curChild, object, key, hasCell);
       curChild = curChild.getNextSiblingElement();
     }
+  }
+
+  /**
+   * Get the element that acts as the container for all children. If children
+   * are added directly to the parent, the parent is the container. If children
+   * are added in a table row, the row is the parent.
+   *
+   * @param parent the parent element of the cell
+   * @return the container element
+   */
+  protected Element getContainerElement(Element parent) {
+    return parent;
   }
 
   protected <X> void render(

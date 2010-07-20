@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,6 +29,12 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellBrowser;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellList;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellSampler;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellTable;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellTree;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellValidation;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsWithLookupExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwDateTimeFormat;
@@ -92,14 +98,19 @@ import java.util.Map;
  * first time the {@link Widget} is added to the page.. The data in the source
  * and css tabs are loaded using an RPC call to the server.
  * </p>
- * <h3>CSS Style Rules</h3> <ul class="css"> <li>.sc-ContentWidget { Applied to
- * the entire widget }</li> <li>.sc-ContentWidget-tabBar { Applied to the TabBar
- * }</li> <li>.sc-ContentWidget-deckPanel { Applied to the DeckPanel }</li> <li>
- * .sc-ContentWidget-name { Applied to the name }</li> <li>
- * .sc-ContentWidget-description { Applied to the description }</li> </ul>
+ * <h3>CSS Style Rules</h3>
+ * <ul class="css">
+ * <li>.sc-ContentWidget { Applied to the entire widget }</li>
+ * <li>.sc-ContentWidget-tabBar { Applied to the TabBar</li>
+ * <li>.sc-ContentWidget-deckPanel { Applied to the DeckPanel }</li>
+ * <li>
+ * .sc-ContentWidget-name { Applied to the name }</li>
+ * <li>
+ * .sc-ContentWidget-description { Applied to the description }</li>
+ * </ul>
  */
-public abstract class ContentWidget extends LazyPanel implements
-    SelectionHandler<Integer> {
+public abstract class ContentWidget extends LazyPanel
+    implements SelectionHandler<Integer> {
   /**
    * The constants used in this Content Widget.
    */
@@ -109,6 +120,39 @@ public abstract class ContentWidget extends LazyPanel implements
     String contentWidgetSource();
 
     String contentWidgetStyle();
+  }
+
+  /**
+   * Information about the raw source files to include with the example.
+   */
+  private static class RawSourceInfo {
+    private final String filename;
+    private boolean isLoaded;
+    private HTML html;
+
+    public RawSourceInfo(String filename) {
+      this.filename = filename;
+    }
+
+    public String getFilename() {
+      return filename;
+    }
+
+    public HTML getHtml() {
+      return html;
+    }
+
+    public boolean isLoaded() {
+      return isLoaded;
+    }
+
+    public void markLoaded() {
+      this.isLoaded = true;
+    }
+
+    public void setHtml(HTML html) {
+      this.html = html;
+    }
   }
 
   /**
@@ -143,6 +187,11 @@ public abstract class ContentWidget extends LazyPanel implements
    * The deck panel with the contents.
    */
   private DeckPanel deckPanel = null;
+
+  /**
+   * A list of raw source files to load.
+   */
+  private List<RawSourceInfo> rawSourceInfo;
 
   /**
    * A boolean indicating whether or not the RPC request for the source code has
@@ -182,7 +231,7 @@ public abstract class ContentWidget extends LazyPanel implements
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public ContentWidget(CwConstants constants) {
@@ -193,7 +242,7 @@ public abstract class ContentWidget extends LazyPanel implements
   /**
    * Add an item to this content widget. Should not be called before
    * {@link #onInitializeComplete} has been called.
-   * 
+   *
    * @param w the widget to add
    * @param tabText the text to display in the tab
    */
@@ -210,14 +259,14 @@ public abstract class ContentWidget extends LazyPanel implements
 
   /**
    * Get the description of this example.
-   * 
+   *
    * @return a description for this example
    */
   public abstract String getDescription();
 
   /**
    * Get the name of this example to use as a title.
-   * 
+   *
    * @return a name for this example
    */
   public abstract String getName();
@@ -231,7 +280,7 @@ public abstract class ContentWidget extends LazyPanel implements
 
   /**
    * Returns true if this widget has a source section.
-   * 
+   *
    * @return true if source tab available
    */
   public boolean hasSource() {
@@ -240,7 +289,7 @@ public abstract class ContentWidget extends LazyPanel implements
 
   /**
    * Returns true if this widget has a style section.
-   * 
+   *
    * @return true if style tab available
    */
   public boolean hasStyle() {
@@ -251,7 +300,7 @@ public abstract class ContentWidget extends LazyPanel implements
    * When the widget is first initialized, this method is called. If it returns
    * a Widget, the widget will be added as the first tab. Return null to disable
    * the first tab.
-   * 
+   *
    * @return the widget to add to the first tab
    */
   public abstract Widget onInitialize();
@@ -274,8 +323,9 @@ public abstract class ContentWidget extends LazyPanel implements
       sourceLoaded = true;
       String className = this.getClass().getName();
       className = className.substring(className.lastIndexOf(".") + 1);
-      requestSourceContents(ShowcaseConstants.DST_SOURCE_EXAMPLE + className
-          + ".html", sourceWidget, null);
+      requestSourceContents(
+          ShowcaseConstants.DST_SOURCE_EXAMPLE + className + ".html",
+          sourceWidget, null);
     }
 
     // Load the style definitions
@@ -301,22 +351,36 @@ public abstract class ContentWidget extends LazyPanel implements
         }
         String className = this.getClass().getName();
         className = className.substring(className.lastIndexOf(".") + 1);
-        requestSourceContents(srcPath + "/" + className + ".html", styleWidget,
-            callback);
+        requestSourceContents(
+            srcPath + "/" + className + ".html", styleWidget, callback);
+      }
+    }
+
+    // Load the source files.
+    if (rawSourceInfo != null) {
+      for (RawSourceInfo info : rawSourceInfo) {
+        String filename = info.getFilename();
+        if (!info.isLoaded() && tabHTML.equals(filename)) {
+          info.markLoaded();
+          requestSourceContents(
+              ShowcaseConstants.DST_SOURCE_RAW + filename + ".html",
+              info.getHtml(), null);
+        }
       }
     }
   }
 
   /**
    * Select a tab.
-   * 
+   *
    * @param index the tab index
    */
   public void selectTab(int index) {
     tabBar.selectTab(index);
   }
 
-  protected abstract void asyncOnInitialize(final AsyncCallback<Widget> callback);
+  protected abstract void asyncOnInitialize(
+      final AsyncCallback<Widget> callback);
 
   /**
    * Initialize this widget by creating the elements that should be added to the
@@ -373,6 +437,14 @@ public abstract class ContentWidget extends LazyPanel implements
     }
   }
 
+  protected void prefetchCellWidgets() {
+    Prefetcher.prefetch(
+        list(runAsyncCode(CwCellBrowser.class), runAsyncCode(CwCellList.class),
+            runAsyncCode(CwCellSampler.class), runAsyncCode(CwCellTable.class),
+            runAsyncCode(CwCellTree.class),
+            runAsyncCode(CwCellValidation.class)));
+  }
+
   protected void prefetchInternationalization() {
     Prefetcher.prefetch(list(runAsyncCode(CwNumberFormat.class),
         runAsyncCode(CwDateTimeFormat.class),
@@ -384,57 +456,130 @@ public abstract class ContentWidget extends LazyPanel implements
   }
 
   protected void prefetchListsAndMenus() {
-    Prefetcher.prefetch(list(runAsyncCode(CwListBox.class),
-        runAsyncCode(CwSuggestBox.class), runAsyncCode(CwTree.class),
-        runAsyncCode(CwMenuBar.class), runAsyncCode(CwStackPanel.class)));
+    Prefetcher.prefetch(
+        list(runAsyncCode(CwListBox.class), runAsyncCode(CwSuggestBox.class),
+            runAsyncCode(CwTree.class), runAsyncCode(CwMenuBar.class),
+            runAsyncCode(CwStackPanel.class)));
   }
 
   protected void prefetchOther() {
-    Prefetcher.prefetch(list(runAsyncCode(CwAnimation.class),
-        runAsyncCode(CwCookies.class)));
+    Prefetcher.prefetch(
+        list(runAsyncCode(CwAnimation.class), runAsyncCode(CwCookies.class)));
   }
 
   protected void prefetchPanels() {
     Prefetcher.prefetch(list(runAsyncCode(CwDecoratorPanel.class),
-        runAsyncCode(CwFlowPanel.class), runAsyncCode(CwHorizontalPanel.class),
+        runAsyncCode(CwFlowPanel.class),
+        runAsyncCode(CwHorizontalPanel.class),
         runAsyncCode(CwVerticalPanel.class),
-        runAsyncCode(CwAbsolutePanel.class), runAsyncCode(CwDockPanel.class),
-        runAsyncCode(CwDisclosurePanel.class), runAsyncCode(CwTabPanel.class),
+        runAsyncCode(CwAbsolutePanel.class),
+        runAsyncCode(CwDockPanel.class),
+        runAsyncCode(CwDisclosurePanel.class),
+        runAsyncCode(CwTabPanel.class),
         runAsyncCode(CwHorizontalSplitPanel.class),
         runAsyncCode(CwVerticalSplitPanel.class)));
   }
 
   protected void prefetchPopups() {
-    Prefetcher.prefetch(list(runAsyncCode(CwBasicPopup.class),
-        runAsyncCode(CwDialogBox.class)));
+    Prefetcher.prefetch(list(
+        runAsyncCode(CwBasicPopup.class), runAsyncCode(CwDialogBox.class)));
   }
 
   protected void prefetchTables() {
-    Prefetcher.prefetch(list(runAsyncCode(CwGrid.class),
-        runAsyncCode(CwFlexTable.class)));
+    Prefetcher.prefetch(
+        list(runAsyncCode(CwGrid.class), runAsyncCode(CwFlexTable.class)));
   }
 
   protected void prefetchTextInput() {
-    Prefetcher.prefetch(list(runAsyncCode(CwBasicText.class),
-        runAsyncCode(CwRichText.class)));
+    Prefetcher.prefetch(
+        list(runAsyncCode(CwBasicText.class), runAsyncCode(CwRichText.class)));
   }
 
   protected void prefetchWidgets() {
     Prefetcher.prefetch(list(runAsyncCode(CwRadioButton.class),
-        runAsyncCode(CwBasicButton.class), runAsyncCode(CwCustomButton.class),
+        runAsyncCode(CwBasicButton.class),
+        runAsyncCode(CwCustomButton.class),
         runAsyncCode(CwFileUpload.class), runAsyncCode(CwDatePicker.class),
         runAsyncCode(CwHyperlink.class)));
   }
 
   /**
+   * Register a source file. The raw code of the source file will be available
+   * as a tab option.
+   *
+   * @param filename the name of the source file
+   */
+  protected void registerSource(String filename) {
+    if (widgetInitializing || widgetInitialized) {
+      throw new IllegalStateException(
+          "Cannot register source after initializing the widget.");
+    }
+
+    // Add the source info for now.
+    if (rawSourceInfo == null) {
+      rawSourceInfo = new ArrayList<RawSourceInfo>();
+    }
+    rawSourceInfo.add(new RawSourceInfo(filename));
+  }
+
+  /**
+   * Start prefetches for this widget that are likely to show up after this
+   * widget is clicked.
+   */
+  protected abstract void setRunAsyncPrefetches();
+
+  /**
+   * Ensure that the demo widget has been initialized. Note that initialization
+   * can fail if there is a network failure.
+   */
+  private void ensureWidgetInitialized(final VerticalPanel vPanel) {
+    if (widgetInitializing || widgetInitialized) {
+      return;
+    }
+
+    widgetInitializing = true;
+
+    // Add tabs for the registered source files.
+    if (rawSourceInfo != null) {
+      for (RawSourceInfo info : rawSourceInfo) {
+        tabBar.addTab(info.getFilename());
+        HTML html = new HTML();
+        info.setHtml(html);
+        deckPanel.add(html);
+      }
+    }
+
+    asyncOnInitialize(new AsyncCallback<Widget>() {
+      public void onFailure(Throwable reason) {
+        widgetInitializing = false;
+        Window.alert(
+            "Failed to download code for this widget (" + reason + ")");
+      }
+
+      public void onSuccess(Widget result) {
+        widgetInitializing = false;
+        widgetInitialized = true;
+
+        Widget widget = result;
+        if (widget != null) {
+          vPanel.add(widget);
+        }
+        onInitializeComplete();
+      }
+    });
+
+    setRunAsyncPrefetches();
+  }
+
+  /**
    * Load the contents of a remote file into the specified widget.
-   * 
+   *
    * @param url a partial path relative to the module base URL
    * @param target the target Widget to place the contents
    * @param callback the callback when the call completes
    */
-  protected void requestSourceContents(String url, final HTML target,
-      final RequestCallback callback) {
+  private void requestSourceContents(
+      String url, final HTML target, final RequestCallback callback) {
     // Show the loading image
     if (loadingImage == null) {
       loadingImage = "<img src=\"" + GWT.getModuleBaseURL()
@@ -445,8 +590,8 @@ public abstract class ContentWidget extends LazyPanel implements
     target.setHTML("&nbsp;&nbsp;" + loadingImage);
 
     // Request the contents of the file
-    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-        GWT.getModuleBaseURL() + url);
+    RequestBuilder builder = new RequestBuilder(
+        RequestBuilder.GET, GWT.getModuleBaseURL() + url);
     RequestCallback realCallback = new RequestCallback() {
       public void onError(Request request, Throwable exception) {
         target.setHTML("Cannot find resource");
@@ -470,43 +615,5 @@ public abstract class ContentWidget extends LazyPanel implements
     } catch (RequestException e) {
       realCallback.onError(null, e);
     }
-  }
-
-  /**
-   * Start prefetches for this widget that are likely to show up after this
-   * widget is clicked.
-   */
-  protected abstract void setRunAsyncPrefetches();
-
-  /**
-   * Ensure that the demo widget has been initialized. Note that initialization
-   * can fail if there is a network failure.
-   */
-  private void ensureWidgetInitialized(final VerticalPanel vPanel) {
-    if (widgetInitializing || widgetInitialized) {
-      return;
-    }
-
-    widgetInitializing = true;
-
-    asyncOnInitialize(new AsyncCallback<Widget>() {
-      public void onFailure(Throwable reason) {
-        widgetInitializing = false;
-        Window.alert("Failed to download code for this widget (" + reason + ")");
-      }
-
-      public void onSuccess(Widget result) {
-        widgetInitializing = false;
-        widgetInitialized = true;
-
-        Widget widget = result;
-        if (widget != null) {
-          vPanel.add(widget);
-        }
-        onInitializeComplete();
-      }
-    });
-
-    setRunAsyncPrefetches();
   }
 }

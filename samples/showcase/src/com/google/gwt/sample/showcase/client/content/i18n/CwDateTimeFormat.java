@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
@@ -47,8 +48,8 @@ public class CwDateTimeFormat extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants
+      extends Constants, ContentWidget.CwConstants {
     String cwDateTimeFormatDescription();
 
     String cwDateTimeFormatFailedToParseInput();
@@ -103,7 +104,7 @@ public class CwDateTimeFormat extends ContentWidget {
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwDateTimeFormat(CwConstants constants) {
@@ -206,7 +207,7 @@ public class CwDateTimeFormat extends ContentWidget {
 
   /**
    * Show an error message. Pass in null to clear the error message.
-   * 
+   *
    * @param errorMsg the error message
    */
   @ShowcaseSource
@@ -248,69 +249,73 @@ public class CwDateTimeFormat extends ContentWidget {
     switch (patternList.getSelectedIndex()) {
       // Date + Time
       case 0:
-        activeFormat = DateTimeFormat.getFullDateTimeFormat();
+        activeFormat = DateTimeFormat.getFormat(
+            PredefinedFormat.DATE_TIME_FULL);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
 
       case 1:
-        activeFormat = DateTimeFormat.getLongDateTimeFormat();
+        activeFormat = DateTimeFormat.getFormat(
+            PredefinedFormat.DATE_TIME_LONG);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
       case 2:
-        activeFormat = DateTimeFormat.getMediumDateTimeFormat();
+        activeFormat = DateTimeFormat.getFormat(
+            PredefinedFormat.DATE_TIME_MEDIUM);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
       case 3:
-        activeFormat = DateTimeFormat.getShortDateTimeFormat();
+        activeFormat = DateTimeFormat.getFormat(
+            PredefinedFormat.DATE_TIME_SHORT);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
 
       // Date only
       case 4:
-        activeFormat = DateTimeFormat.getFullDateFormat();
+        activeFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
 
       case 5:
-        activeFormat = DateTimeFormat.getLongDateFormat();
+        activeFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_LONG);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
       case 6:
-        activeFormat = DateTimeFormat.getMediumDateFormat();
+        activeFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_MEDIUM);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
       case 7:
-        activeFormat = DateTimeFormat.getShortDateFormat();
+        activeFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_SHORT);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
 
       // Time only
       case 8:
-        activeFormat = DateTimeFormat.getFullTimeFormat();
+        activeFormat = DateTimeFormat.getFormat(PredefinedFormat.TIME_FULL);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
 
       case 9:
-        activeFormat = DateTimeFormat.getLongTimeFormat();
+        activeFormat = DateTimeFormat.getFormat(PredefinedFormat.TIME_LONG);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
       case 10:
-        activeFormat = DateTimeFormat.getMediumTimeFormat();
+        activeFormat = DateTimeFormat.getFormat(PredefinedFormat.TIME_MEDIUM);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;
       case 11:
-        activeFormat = DateTimeFormat.getShortTimeFormat();
+        activeFormat = DateTimeFormat.getFormat(PredefinedFormat.TIME_SHORT);
         patternBox.setText(activeFormat.getPattern());
         patternBox.setEnabled(false);
         break;

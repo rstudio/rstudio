@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,6 +32,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -54,7 +55,7 @@ import java.util.TreeMap;
 /**
  * A recipe for mail-like selection features.
  */
-public class MailRecipe extends Recipe implements ClickHandler {
+public class MailRecipe extends Composite implements ClickHandler {
 
   static interface GetValue<T, C> {
     C getValue(T object);
@@ -69,7 +70,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
       }
     }
 
-    private static ProvidesKey<Message> keyProvider = new ProvidesKey<Message>() {
+    private static ProvidesKey<Message> keyProvider = new ProvidesKey<
+        Message>() {
       public Object getKey(Message item) {
         return Integer.valueOf(item.id);
       }
@@ -153,8 +155,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
       super.scheduleSelectionChangeEvent();
     }
 
-    private void appendExceptions(StringBuilder sb,
-        Map<Object, Boolean> exceptions, boolean selected) {
+    private void appendExceptions(
+        StringBuilder sb, Map<Object, Boolean> exceptions, boolean selected) {
       boolean first = true;
       for (Map.Entry<Object, Boolean> entry : exceptions.entrySet()) {
         if (entry.getValue() != selected) {
@@ -227,8 +229,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
 
     @Override
     public String toString() {
-      return "Message [id=" + id + ", sender=" + sender + ", subject="
-          + subject + ", read=" + isRead + ", date=" + date + "]";
+      return "Message [id=" + id + ", sender=" + sender + ", subject=" + subject
+          + ", read=" + isRead + ", date=" + date + "]";
     }
   }
 
@@ -284,7 +286,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
   private CellTable<Message> table;
 
   public MailRecipe() {
-    super("Mail");
+    initWidget(createWidget());
   }
 
   // Handle events for all buttons here in order to avoid creating multiple
@@ -306,7 +308,6 @@ public class MailRecipe extends Recipe implements ClickHandler {
     }
   }
 
-  @Override
   protected Widget createWidget() {
     ListViewAdapter<Message> adapter = new ListViewAdapter<Message>();
     messages = adapter.getList();
@@ -354,8 +355,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
       }
     });
 
-    Column<Message, Date> dateColumn = addColumn(table, "Date",
-        new DatePickerCell(), new GetValue<Message, Date>() {
+    Column<Message, Date> dateColumn = addColumn(
+        table, "Date", new DatePickerCell(), new GetValue<Message, Date>() {
           public Date getValue(Message object) {
             return object.date;
           }
@@ -480,8 +481,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
       long dateOffset = rand.nextInt(60 * 60 * 24 * 90) * 1000L;
       Message message = new Message(messageId++,
           senders[rand.nextInt(senders.length)],
-          subjects[rand.nextInt(subjects.length)], new Date(now.getTime()
-              - dateOffset));
+          subjects[rand.nextInt(subjects.length)],
+          new Date(now.getTime() - dateOffset));
       message.isRead = rand.nextBoolean();
       messages.add(message);
     }
@@ -504,7 +505,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
     }
   }
 
-  private void sortMessages(final Comparator<Message> comparator, boolean sortUp) {
+  private void sortMessages(
+      final Comparator<Message> comparator, boolean sortUp) {
     lastComparator = comparator;
     lastSortUp = sortUp;
     if (sortUp) {

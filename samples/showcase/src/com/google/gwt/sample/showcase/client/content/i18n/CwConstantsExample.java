@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,35 +19,33 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
-import com.google.gwt.sample.showcase.client.ShowcaseConstants;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 
 import java.util.Map;
 
 /**
  * Example file.
  */
-@ShowcaseRaw( {"ExampleConstants.java", "ExampleConstants.properties"})
+@ShowcaseRaw({"ExampleConstants.java", "ExampleConstants.properties"})
 public class CwConstantsExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants
+      extends Constants, ContentWidget.CwConstants {
     String cwConstantsExampleDescription();
 
     String cwConstantsExampleLinkText();
@@ -62,35 +60,15 @@ public class CwConstantsExample extends ContentWidget {
   private CwConstants constants;
 
   /**
-   * Indicates whether or not we have loaded the {@link ExampleConstants} java
-   * source yet.
-   */
-  private boolean javaLoaded = false;
-
-  /**
-   * The widget used to display {@link ExampleConstants} java source.
-   */
-  private HTML javaWidget = null;
-
-  /**
-   * Indicates whether or not we have loaded the {@link ExampleConstants}
-   * properties source yet.
-   */
-  private boolean propertiesLoaded = false;
-
-  /**
-   * The widget used to display {@link ExampleConstants} properties source.
-   */
-  private HTML propertiesWidget = null;
-
-  /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwConstantsExample(CwConstants constants) {
     super(constants);
     this.constants = constants;
+    registerSource("ExampleConstants.java");
+    registerSource("ExampleConstants.properties");
   }
 
   @Override
@@ -167,33 +145,6 @@ public class CwConstantsExample extends ContentWidget {
   }
 
   @Override
-  public void onInitializeComplete() {
-    addConstantsTab();
-  }
-
-  @Override
-  public void onSelection(SelectionEvent<Integer> event) {
-    super.onSelection(event);
-
-    int tabIndex = event.getSelectedItem().intValue();
-    if (!javaLoaded && tabIndex == 2) {
-      // Load ErrorMessages.java
-      javaLoaded = true;
-      String className = ExampleConstants.class.getName();
-      className = className.substring(className.lastIndexOf(".") + 1);
-      requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
-          + ".java.html", javaWidget, null);
-    } else if (!propertiesLoaded && tabIndex == 3) {
-      // Load ErrorMessages.properties
-      propertiesLoaded = true;
-      String className = ExampleConstants.class.getName();
-      className = className.substring(className.lastIndexOf(".") + 1);
-      requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
-          + ".properties.html", propertiesWidget, null);
-    }
-  }
-
-  @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
     GWT.runAsync(CwConstantsExample.class, new RunAsyncCallback() {
 
@@ -210,18 +161,5 @@ public class CwConstantsExample extends ContentWidget {
   @Override
   protected void setRunAsyncPrefetches() {
     prefetchInternationalization();
-  }
-
-  /**
-   * Add a tab to this example to show the messages interface.
-   */
-  private void addConstantsTab() {
-    // Add a tab to show the interface
-    javaWidget = new HTML();
-    add(javaWidget, "ExampleConstants.java");
-
-    // Add a tab to show the properties
-    propertiesWidget = new HTML();
-    add(propertiesWidget, "ExampleConstants.properties");
   }
 }

@@ -33,6 +33,12 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellBrowser;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellList;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellSampler;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellTable;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellTree;
+import com.google.gwt.sample.showcase.client.content.cell.CwCellValidation;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsWithLookupExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwDateTimeFormat;
@@ -367,6 +373,21 @@ public class Showcase implements EntryPoint {
     setupMainMenuOption(catTables, new CwGrid(constants), images.catTables());
     setupMainMenuOption(catTables, new CwFlexTable(constants),
         images.catTables());
+
+    // Cell Widgets.
+    TreeItem catCells = mainMenu.addItem(constants.categoryCells());
+    setupMainMenuOption(
+        catCells, new CwCellList(constants), images.catTables());
+    setupMainMenuOption(
+        catCells, new CwCellTable(constants), images.catTables());
+    setupMainMenuOption(
+        catCells, new CwCellTree(constants), images.catTables());
+    setupMainMenuOption(
+        catCells, new CwCellBrowser(constants), images.catTables());
+    setupMainMenuOption(
+        catCells, new CwCellSampler(constants), images.catTables());
+    setupMainMenuOption(
+        catCells, new CwCellValidation(constants), images.catTables());
 
     // Internationalization
     TreeItem catI18N = mainMenu.addItem(constants.categoryI18N());
