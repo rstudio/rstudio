@@ -20,15 +20,19 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -188,6 +192,16 @@ public class TestSetFactory {
   public static final class MarkerTypeSingleton extends MarkerBase {
     MarkerTypeSingleton() {
       super("singleton");
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * unmodifiable collections.
+   */
+  public static final class MarkerTypeUnmodifiable extends MarkerBase {
+    MarkerTypeUnmodifiable() {
+      super("unmodifiable");
     }
   }
 
@@ -588,6 +602,10 @@ public class TestSetFactory {
     return java.util.Collections.singletonList(new MarkerTypeSingleton());
   }
 
+  public static Map<Integer, MarkerTypeSingleton> createSingletonMap() {
+    return java.util.Collections.singletonMap(2, new MarkerTypeSingleton());
+  }
+
   public static java.sql.Date[] createSqlDateArray() {
     return new java.sql.Date[] {
         new java.sql.Date(500L), new java.sql.Date(500000000L)};
@@ -642,6 +660,50 @@ public class TestSetFactory {
     set.add(new MarkerTypeTreeSet("bal"));
     set.add(new MarkerTypeTreeSet("w00t"));
     return set;
+  }
+
+  public static Collection<MarkerTypeUnmodifiable> createUnmodifiableCollection() {
+    List<MarkerTypeUnmodifiable> list = new LinkedList<MarkerTypeUnmodifiable>();
+    list.add(new MarkerTypeUnmodifiable());
+    return java.util.Collections.unmodifiableCollection(list);
+  }
+
+  public static List<MarkerTypeUnmodifiable> createUnmodifiableList() {
+    List<MarkerTypeUnmodifiable> list = new LinkedList<MarkerTypeUnmodifiable>();
+    list.add(new MarkerTypeUnmodifiable());
+    return java.util.Collections.unmodifiableList(list);
+  }
+
+  public static Map<Integer, MarkerTypeUnmodifiable> createUnmodifiableMap() {
+    Map<Integer, MarkerTypeUnmodifiable> map =
+      new HashMap<Integer, MarkerTypeUnmodifiable>();
+    map.put(1, new MarkerTypeUnmodifiable());
+    return java.util.Collections.unmodifiableMap(map);
+  }
+
+  public static Map<Integer, MarkerTypeUnmodifiable> createUnmodifiableSortedMap() {
+    SortedMap<Integer, MarkerTypeUnmodifiable> map =
+      new TreeMap<Integer, MarkerTypeUnmodifiable>();
+    map.put(1, new MarkerTypeUnmodifiable());
+    return java.util.Collections.unmodifiableSortedMap(map);
+  }
+
+  public static List<MarkerTypeUnmodifiable> createUnmodifiableRandomAccessList() {
+    List<MarkerTypeUnmodifiable> list = new ArrayList<MarkerTypeUnmodifiable>();
+    list.add(new MarkerTypeUnmodifiable());
+    return java.util.Collections.unmodifiableList(list);
+  }
+
+  public static Set<MarkerTypeUnmodifiable> createUnmodifiableSet() {
+    Set<MarkerTypeUnmodifiable> set = new HashSet<MarkerTypeUnmodifiable>();
+    set.add(new MarkerTypeUnmodifiable());
+    return java.util.Collections.unmodifiableSet(set);
+  }
+
+  public static Set<MarkerTypeUnmodifiable> createUnmodifiableSortedSet() {
+    SortedSet<MarkerTypeUnmodifiable> set = new TreeSet<MarkerTypeUnmodifiable>();
+    set.add(new MarkerTypeUnmodifiable());
+    return java.util.Collections.unmodifiableSortedSet(set);
   }
 
   public static Vector<MarkerTypeVector> createVector() {

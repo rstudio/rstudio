@@ -25,12 +25,14 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeUnmodifiable;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 import com.google.gwt.user.client.rpc.core.java.util.LinkedHashMap_CustomFieldSerializer;
 
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -582,6 +584,23 @@ public class CollectionsTest extends RpcTestBase {
         });
   }
 
+  public void testSingletonMap() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoSingletonMap(TestSetFactory.createSingletonMap(),
+        new AsyncCallback<Map<Integer, MarkerTypeSingleton>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Map<Integer, MarkerTypeSingleton> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidSingletonMap(result));
+            finishTest();
+          }
+        });
+  }
+
   public void testSqlDateArray() {
     CollectionsTestServiceAsync service = getServiceAsync();
     final java.sql.Date[] expected = TestSetFactory.createSqlDateArray();
@@ -705,6 +724,125 @@ public class CollectionsTest extends RpcTestBase {
             }
           });
     }
+  }
+
+  public void testUnmodifiableCollection() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoUnmodifiableCollection(TestSetFactory.createUnmodifiableCollection(),
+        new AsyncCallback<Collection<MarkerTypeUnmodifiable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Collection<MarkerTypeUnmodifiable> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidUnmodifiableCollection(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testUnmodifiableList() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoUnmodifiableList(TestSetFactory.createUnmodifiableList(),
+        new AsyncCallback<List<MarkerTypeUnmodifiable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(List<MarkerTypeUnmodifiable> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidUnmodifiableList(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testUnmodifiableMap() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoUnmodifiableMap(TestSetFactory.createUnmodifiableMap(),
+        new AsyncCallback<Map<Integer, MarkerTypeUnmodifiable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Map<Integer, MarkerTypeUnmodifiable> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidUnmodifiableMap(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testUnmodifiableRandomAccessList() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoUnmodifiableList(TestSetFactory.createUnmodifiableRandomAccessList(),
+        new AsyncCallback<List<MarkerTypeUnmodifiable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(List<MarkerTypeUnmodifiable> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidUnmodifiableRandomAccessList(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testUnmodifiableSet() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoUnmodifiableSet(TestSetFactory.createUnmodifiableSet(),
+        new AsyncCallback<Set<MarkerTypeUnmodifiable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Set<MarkerTypeUnmodifiable> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidUnmodifiableSet(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testUnmodifiableSortedMap() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoUnmodifiableMap(TestSetFactory.createUnmodifiableSortedMap(),
+        new AsyncCallback<Map<Integer, MarkerTypeUnmodifiable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Map<Integer, MarkerTypeUnmodifiable> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidUnmodifiableSortedMap(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testUnmodifiableSortedSet() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoUnmodifiableSet(TestSetFactory.createUnmodifiableSortedSet(),
+        new AsyncCallback<Set<MarkerTypeUnmodifiable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Set<MarkerTypeUnmodifiable> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidUnmodifiableSortedSet(result));
+            finishTest();
+          }
+        });
   }
 
   public void testVector() {

@@ -134,12 +134,122 @@ public class Collections {
     }
   }
 
-  /*
-   * TODO: make the unmodifiable collections serializable.
+  /**
+   * A Map containing exactly one key/value pair, used to implement
+   * the singletonMap(K key, V value) method.  The map is unmodifiable
+   * and attempt to modify it directly, by iterators, or using the
+   * sets returned from keySet(), entrySet(), or values() will fail
+   * with an UnsupportedOperationException.  Null keys and values are
+   * allowed.
    */
+  private static final class SingletonMap<K, V> extends AbstractMap<K, V> implements Serializable {
+    Set<Map.Entry<K, V>> entrySet = null;
+    final K key;
+    Set<K> keySet = null;
+    final V value;
+    Set<V> valueSet = null;
+
+    public SingletonMap(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    public void clear() {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean containsKey(Object key) {
+      return Utility.equalsWithNullCheck(this.key, key);
+    }
+
+    public boolean containsValue(Object value) {
+      return Utility.equalsWithNullCheck(this.value, value);
+    }
+
+    public Set<Map.Entry<K, V>> entrySet() {
+      if (entrySet == null) {
+        HashSet set = new HashSet();
+        set.add(new AbstractMapEntry<K, V>() {
+          public K getKey() {
+            return key;
+          }
+
+          public V getValue() {
+            return value;
+          }
+
+          public V setValue(V value) {
+            throw new UnsupportedOperationException();
+          }
+        });
+        entrySet = unmodifiableSet(set);
+      }
+      return entrySet;
+    }
+
+    public boolean equals(Object o) {
+      if (!(o instanceof Map)) {
+        return false;
+      }
+      Map other = (Map) o;
+      return other.size() == 1
+        && other.containsKey(key)
+        && Utility.equalsWithNullCheck(other.get(key), value);
+    }
+
+    public V get(Object key) {
+      return Utility.equalsWithNullCheck(this.key, key) ? value : null;
+    }
+
+    public boolean isEmpty() {
+      return false;
+    }
+
+    public Set<K> keySet() {
+      if (keySet == null) {
+        HashSet<K> set = new HashSet<K>();
+        set.add(key);
+        keySet = unmodifiableSet(set);
+      }
+      return keySet;
+    }
+
+    public V put(K key, V value) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void putAll(Map<? extends K, ? extends V> t) {
+      if (t.size() > 0) {
+        throw new UnsupportedOperationException();
+      }
+    }
+
+    public V remove(Object key) {
+      if (Utility.equalsWithNullCheck(this.key, key)) {
+        throw new UnsupportedOperationException();
+      }
+      return null;
+    }
+
+    public int size() {
+      return 1;
+    }
+
+    public Collection<V> values() {
+      if (valueSet == null) {
+        HashSet<V> set = new HashSet<V>();
+        set.add(value);
+        valueSet = unmodifiableSet(set);
+      }
+      return valueSet;
+    }
+  }
 
   static class UnmodifiableCollection<T> implements Collection<T> {
-    protected final Collection<? extends T> coll;
+    protected Collection<? extends T> coll;
+
+    public UnmodifiableCollection() {
+    }
 
     public UnmodifiableCollection(Collection<? extends T> coll) {
       this.coll = coll;
@@ -203,8 +313,11 @@ public class Collections {
   }
 
   static class UnmodifiableList<T> extends UnmodifiableCollection<T> implements
-      List<T> {
-    private final List<? extends T> list;
+      List<T>, Serializable {
+    private List<? extends T> list;
+
+    public UnmodifiableList() {
+    }
 
     public UnmodifiableList(List<? extends T> list) {
       super(list);
@@ -267,7 +380,7 @@ public class Collections {
     }
   }
 
-  static class UnmodifiableMap<K, V> implements Map<K, V> {
+  static class UnmodifiableMap<K, V> implements Map<K, V>, Serializable {
 
     static class UnmodifiableEntrySet<K, V> extends
         UnmodifiableSet<Map.Entry<K, V>> {
@@ -373,8 +486,11 @@ public class Collections {
 
     private transient UnmodifiableSet<Map.Entry<K, V>> entrySet;
     private transient UnmodifiableSet<K> keySet;
-    private final Map<? extends K, ? extends V> map;
+    private Map<? extends K, ? extends V> map;
     private transient UnmodifiableCollection<V> values;
+
+    public UnmodifiableMap() {
+    }
 
     public UnmodifiableMap(Map<? extends K, ? extends V> map) {
       this.map = map;
@@ -454,14 +570,22 @@ public class Collections {
   }
 
   static class UnmodifiableRandomAccessList<T> extends UnmodifiableList<T>
-      implements RandomAccess {
+      implements RandomAccess, Serializable {
+
+    public UnmodifiableRandomAccessList() {
+    }
+
     public UnmodifiableRandomAccessList(List<? extends T> list) {
       super(list);
     }
   }
 
   static class UnmodifiableSet<T> extends UnmodifiableCollection<T> implements
-      Set<T> {
+      Set<T>, Serializable {
+
+    public UnmodifiableSet() {
+    }
+
     public UnmodifiableSet(Set<? extends T> set) {
       super(set);
     }
@@ -478,9 +602,12 @@ public class Collections {
   }
 
   static class UnmodifiableSortedMap<K, V> extends UnmodifiableMap<K, V>
-      implements SortedMap<K, V> {
+      implements SortedMap<K, V>, Serializable {
 
     private SortedMap<K, ? extends V> sortedMap;
+
+    public UnmodifiableSortedMap() {
+    }
 
     public UnmodifiableSortedMap(SortedMap<K, ? extends V> sortedMap) {
       super(sortedMap);
@@ -523,8 +650,11 @@ public class Collections {
   }
 
   static class UnmodifiableSortedSet<E> extends UnmodifiableSet<E> implements
-      SortedSet<E> {
+      SortedSet<E>, Serializable {
     private SortedSet<E> sortedSet;
+
+    public UnmodifiableSortedSet() {
+    }
 
     @SuppressWarnings("unchecked")
     public UnmodifiableSortedSet(SortedSet<? extends E> sortedSet) {
@@ -939,9 +1069,7 @@ public class Collections {
   }
 
   public static <K, V> Map<K, V> singletonMap(K key, V value) {
-    Map<K, V> map = new HashMap<K, V>(1);
-    map.put(key, value);
-    return unmodifiableMap(map);
+    return new SingletonMap<K, V>(key, value);
   }
 
   public static <T> void sort(List<T> target) {

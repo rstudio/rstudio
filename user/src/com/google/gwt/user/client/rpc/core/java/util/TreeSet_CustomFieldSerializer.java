@@ -23,7 +23,7 @@ import java.util.Comparator;
 import java.util.TreeSet;
 
 /**
- * Custom field serializer for {@link java.util.TreeMap}.
+ * Custom field serializer for {@link java.util.TreeSet}.
  */
 @SuppressWarnings("unchecked")
 public class TreeSet_CustomFieldSerializer {

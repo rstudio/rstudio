@@ -17,6 +17,7 @@ package com.google.gwt.emultest.java.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -154,6 +155,116 @@ public class CollectionsTest extends EmulTestBase {
     Collections.reverse(b);
     Collections.reverse(b);
     assertEquals(b, createRandomList());
+  }
+
+  public void testSingletonMap() {
+    Map<String, Integer> map = Collections.singletonMap("two", 2);
+    assertEquals(1, map.size());
+    assertFalse(map.isEmpty());
+    assertEquals(Integer.valueOf(2), map.get("two"));
+    assertTrue(map.containsKey("two"));
+    assertFalse(map.containsKey("three"));
+    assertTrue(map.containsValue(2));
+    assertFalse(map.containsValue(3));
+
+    try {
+      map.clear();
+      fail();
+    } catch (UnsupportedOperationException e) {
+    }
+
+    try {
+      map.put("three", 3);
+      fail();
+    } catch (UnsupportedOperationException e) {
+    }
+
+    try {
+      HashMap<String, Integer> m = new HashMap<String, Integer>();
+      map.putAll(m);
+    } catch (UnsupportedOperationException e) {
+      fail();
+    }
+
+    try {
+      HashMap<String, Integer> m = new HashMap<String, Integer>();
+      m.put("three", 3);
+      map.putAll(m);
+      fail();
+    } catch (UnsupportedOperationException e) {
+    }
+
+    try {
+      map.remove("three");
+    } catch (UnsupportedOperationException e) {
+      fail();
+    }
+
+    try {
+      map.remove("two");
+      fail();
+    } catch (UnsupportedOperationException e) {
+    }
+
+    // Test equals, hashCode, keySet, entrySet and values against a
+    // HashMap
+    HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+    hashMap.put("two", 2);
+    assertEquals(hashMap, map);
+    assertEquals(hashMap.hashCode(), map.hashCode());
+    assertEquals(hashMap.keySet(), map.keySet());
+    assertEquals(hashMap.entrySet(), map.entrySet());
+
+    Collection<Integer> values = map.values();
+    assertNotNull(values);
+    assertEquals(1, values.size());
+    assertEquals(Integer.valueOf(2), values.iterator().next());
+    try {
+      values.add(3);
+      fail();
+    } catch (UnsupportedOperationException e) {
+    }
+
+    // null key
+    map = Collections.singletonMap(null, 2);
+    assertEquals(1, map.size());
+    assertFalse(map.isEmpty());
+    assertEquals(Integer.valueOf(2), map.get(null));
+    assertTrue(map.containsKey(null));
+    assertFalse(map.containsKey("three"));
+    assertTrue(map.containsValue(2));
+    assertFalse(map.containsValue(3));
+
+    // null value
+    map = Collections.singletonMap("null", null);
+    assertEquals(1, map.size());
+    assertFalse(map.isEmpty());
+    assertNull(map.get("null"));
+    assertTrue(map.containsKey("null"));
+    assertFalse(map.containsKey("three"));
+    assertTrue(map.containsValue(null));
+    assertFalse(map.containsValue(3));
+
+    // null key and value
+    map = Collections.singletonMap(null, null);
+    assertEquals(1, map.size());
+    assertFalse(map.isEmpty());
+    assertNull(map.get(null));
+    assertTrue(map.containsKey(null));
+    assertFalse(map.containsKey("three"));
+    assertTrue(map.containsValue(null));
+    assertFalse(map.containsValue(3));
+
+    // Equality for maps with a null value
+    Map<Integer, String> map2 = Collections.singletonMap(Integer.valueOf(2), null);
+    HashMap<Integer, String> hashMap2 = new HashMap<Integer, String>();
+    assertFalse(map2.equals(hashMap2));
+    hashMap2.put(Integer.valueOf(1), null);
+    assertFalse(map2.equals(hashMap2));
+    hashMap2.put(Integer.valueOf(2), null);
+    assertFalse(map2.equals(hashMap2));
+    hashMap2.remove(Integer.valueOf(1));
+    assertTrue(map2.equals(hashMap2));
   }
 
   public void testSort() {
