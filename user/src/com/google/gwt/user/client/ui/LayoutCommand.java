@@ -26,7 +26,7 @@ import com.google.gwt.layout.client.Layout.Layer;
  * ever performed for a panel within a given user event.
  * 
  * <p>
- * Note: This class assumes that {@link Layout.Layer#getUserObject()} will
+ * Note: This class assumes that {@link com.google.gwt.layout.client.Layout.Layer#getUserObject Layer.getUserObject()} will
  * return the widget associated with a given layer.
  * </p>
  */
@@ -48,7 +48,7 @@ public class LayoutCommand implements ScheduledCommand {
 
   /**
    * Cancels this command. A subsequent call to
-   * {@link #schedule(int, AnimationCallback)} will re-enable it.
+   * {@link #schedule(int, Layout.AnimationCallback)} will re-enable it.
    */
   public void cancel() {
     // There's no way to "unschedule" a command, so we use a canceled flag.

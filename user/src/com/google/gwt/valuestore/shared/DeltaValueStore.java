@@ -45,9 +45,7 @@ public interface DeltaValueStore extends ValueStore {
   <V> void set(Property<V> property, Record record, V value);
 
   /**
-   * Returns true if all validations have passed. May notify subscribers that
-   * implement {@link com.google.gwt.user.client.ui.HasErrors HasErrors} of new
-   * validation errors.
+   * Returns true if all validations have passed.
    */
   boolean validate();
 }

@@ -58,7 +58,7 @@ public interface AnimatedLayout {
    * </p>
    * 
    * @see #animate(int)
-   * @see #animate(int, AnimationCallback)
+   * @see #animate(int, Layout.AnimationCallback)
    */
   void forceLayout();
 }

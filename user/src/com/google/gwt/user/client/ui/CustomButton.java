@@ -25,7 +25,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
- * Custom Button is a base button class with built in support for a set number
+ * CustomButton is a base button class with built in support for a set number
  * of button faces.
  * 
  * Each face has its own style modifier. For example, the state for down and
@@ -117,7 +117,7 @@ import com.google.gwt.user.client.Event;
  * 
  * Each face element can take an optional <code>image</code> attribute
  * and an html body. For example:<pre>
- * &lt;ui:image field='downButton'/> &lt;!-- define an {@link ImageResource} -->
+ * &lt;ui:image field='downButton'/> &lt;!-- define an {@link com.google.gwt.resources.client.ImageResource ImageResource} -->
  *
  * &lt;g:PushButton ui:field='pushButton' enabled='true'>
  *   &lt;g:upFace>

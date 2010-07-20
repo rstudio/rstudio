@@ -387,7 +387,7 @@ public class BidiFormatter {
   }
 
   /**
-   * Like {@link #spanWrapWithKnownDir(Direction, String, boolean, boolean)},
+   * Like {@link #spanWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code isHtml} is false and {@code dirReset} is true.
    * 
    * @param dir {@code str}'s direction
@@ -399,7 +399,7 @@ public class BidiFormatter {
   }
 
   /**
-   * Like {@link #spanWrapWithKnownDir(Direction, String, boolean, boolean)},
+   * Like {@link #spanWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code dirReset} is true.
    * 
    * @param dir {@code str}'s direction
@@ -523,7 +523,7 @@ public class BidiFormatter {
   }
 
   /**
-   * Like {@link #unicodeWrapWithKnownDir(Direction, String, boolean, boolean)},
+   * Like {@link #unicodeWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code isHtml} is false and {@code dirReset} is true.
    * 
    * @param dir {@code str}'s direction
@@ -535,7 +535,7 @@ public class BidiFormatter {
   }
 
   /**
-   * Like {@link #unicodeWrapWithKnownDir(Direction, String, boolean, boolean)},
+   * Like {@link #unicodeWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code dirReset} is true.
    * 
    * @param dir {@code str}'s direction

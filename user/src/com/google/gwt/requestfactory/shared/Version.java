@@ -22,7 +22,7 @@ package com.google.gwt.requestfactory.shared;
  * </span>
  * </p>
  * Marks the version {@link com.google.gwt.valuestore.shared.Property Property}
- * of an {@link com.google.gwt.valuestore.shared.ValuesKey ValuesKey}.
+ * of an entity.
  */
 public @interface Version {
   // TODO prove the servlet will use this info

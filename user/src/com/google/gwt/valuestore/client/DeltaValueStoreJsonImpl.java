@@ -38,7 +38,7 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * {@link DeltaValueStore} implementation based on {@link ValuesImpl}.
+ * {@link DeltaValueStore} implementation.
  */
 public class DeltaValueStoreJsonImpl implements DeltaValueStore {
 

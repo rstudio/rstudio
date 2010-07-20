@@ -62,8 +62,7 @@ public class ActivityManager<P extends Place> implements
   private boolean startingNext = false;
 
   /**
-   * Create an ActivityManager. Next call {@link #setDisplay} and
-   * {@link #activate}.
+   * Create an ActivityManager. Next call {@link #setDisplay}.
    * 
    * @param mapper finds the {@link Activity} for a given {@link Place}
    * @param eventBus source of {@link PlaceChangeEvent} and

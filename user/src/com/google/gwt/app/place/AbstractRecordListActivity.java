@@ -35,7 +35,7 @@ import java.util.Map;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract activity for requesting and displaying a list of {@Record}.
+ * Abstract activity for requesting and displaying a list of {@link Record}.
  * <p>
  * Subclasses must:
  * 

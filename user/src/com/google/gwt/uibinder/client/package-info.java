@@ -20,12 +20,12 @@
  * <p>
  * This package contains the classes and interfaces that allow you to define
  * user interfaces from ui.xml template files, managed by generated
- * implementations of the {@link UiBinder} interface. UiBinder templates allow
- * you to lay out your widgets and design new ones via HTML, CSS and Image
- * resources (the last two via generated {@link com.google.gwt.resources.client
- * ClientBundles}) with a minimum of coding. They also have extensive support
- * for internationalization, by generating
- * {@link com.google.gwt.i18n.client.Messages Messages}.
+ * implementations of the {@link com.google.gwt.uibinder.client.UiBinder UiBinder}
+ * interface. UiBinder templates allow you to lay out your widgets and design
+ * new ones via HTML, CSS and Image resources (the last two via generated
+ * {@link com.google.gwt.resources.client.ClientBundle ClientBundles}) with a
+ * minimum of coding. They also have extensive support for internationalization,
+ * by generating {@link com.google.gwt.i18n.client.Messages Messages}.
  * </p>
  * 
  * <p>

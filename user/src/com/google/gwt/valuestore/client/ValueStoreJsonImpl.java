@@ -31,7 +31,7 @@ import java.util.Map;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * {@link ValueStore} implementation based on {@link ValuesImpl}.
+ * {@link ValueStore} implementation.
  */
 public class ValueStoreJsonImpl implements ValueStore {
   // package protected fields for use by DeltaValueStoreJsonImpl
@@ -61,9 +61,6 @@ public class ValueStoreJsonImpl implements ValueStore {
     }
   }
 
-  /**
-   * @return
-   */
   public DeltaValueStoreJsonImpl spawnDeltaView() {
     return new DeltaValueStoreJsonImpl(this, map);
   }

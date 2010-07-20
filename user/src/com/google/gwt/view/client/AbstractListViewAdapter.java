@@ -50,7 +50,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    * Adds a view to this adapter. The current range of interest of the view will
    * be populated with data.
    * 
-   * @param view a {@Link ListView}.
+   * @param view a {@link ListView}.
    */
   public void addView(ListView<T> view) {
     if (views.contains(view)) {

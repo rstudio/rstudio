@@ -24,7 +24,7 @@ import com.google.gwt.view.client.PagingListView;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * A view of a list of {@link Records}, which declares which properties it is
+ * A view of a list of {@link Record}s, which declares which properties it is
  * able to display.
  * <p>
  * It is expected that such views will typically (eventually) be defined largely
@@ -37,7 +37,7 @@ public interface RecordListView<R extends Record> extends IsWidget, PropertyView
   /**
    * Implemented by the owner of a RecordTableView.
    * 
-   * @param<R> the type of the records to display
+   * @param <R> the type of the records to display
    */
   interface Delegate<R extends Record> {
     void createClicked();

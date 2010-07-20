@@ -23,8 +23,8 @@ import java.lang.annotation.Target;
 
 /**
  * Marks fields in a UiBinder client that must be filled by the binder's
- * {@link UiBinder#bindUi} method. If provided is true the field creation is
- * delegated to the client (owner).
+ * {@link UiBinder#createAndBindUi} method. If provided is true the field
+ * creation is delegated to the client (owner).
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

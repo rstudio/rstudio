@@ -28,15 +28,16 @@ public interface HasDirectionEstimator {
   /**
    * Toggles on / off direction estimation.
    * 
-   * @param enabled Whether to enable direction estimation. If {@true}, sets the
-   *        DirectionEstimator object to a default {@DirectionEstimator}.
+   * @param enabled Whether to enable direction estimation. If {@code true},
+   *          sets the {@link DirectionEstimator} object to a default
+   *          {@code DirectionEstimator}.
    */
   void setDirectionEstimator(boolean enabled);
   
   /**
-   * Sets the DirectionEstimator object.
+   * Sets the {@link DirectionEstimator} object.
    * 
-   * @param directionEstimator The {@code directionEstimator} to be set. {@code
+   * @param directionEstimator The {code DirectionEstimator} to be set. {@code
    *        null} means turning off direction estimation.
    */
   void setDirectionEstimator(DirectionEstimator directionEstimator);

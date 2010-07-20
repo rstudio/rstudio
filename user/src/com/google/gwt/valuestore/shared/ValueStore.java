@@ -21,14 +21,11 @@ package com.google.gwt.valuestore.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * A store of records with properties. Each record has a {@link ValuesKey}
- * associated with it to indicate its type.
+ * A store of records with properties.
  */
 public interface ValueStore {
   /**
-   * Most validations are per field or per id and set via annotation. Note that
-   * validations are only actually enforced by in {@link DeltaValueStore}
-   * instances spawned by {@link #forEditContext(Object)}
+   * Most validations are per field or per id and set via annotation.
    */
   void addValidation(/* what's a validation. JSR 303? Learn from Pectin? */);
 

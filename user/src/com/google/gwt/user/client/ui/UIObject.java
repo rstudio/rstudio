@@ -108,7 +108,7 @@ import com.google.gwt.user.client.DOM;
  * 
  * There is also special case handling for two common method signatures,
  * <code>(int, int)</code> and <code>(double, {@link 
- * com.google.gwt.dom.clientStyle.Unit Unit})</code>
+ * com.google.gwt.dom.client.Style.Unit Unit})</code>
  * 
  * <pre>
  * &lt;g:Label pixelSize='100, 100'>Hello there&lt;/g:Label></pre>
@@ -425,7 +425,7 @@ public abstract class UIObject {
    *
    * <p>
    * The code can also be simplified with
-   * {@link setStyleDependentName(String, boolean}:
+   * {@link #setStyleDependentName(String, boolean)}:
    * </p>
    *
    * <pre class="code">
