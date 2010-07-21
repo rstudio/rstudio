@@ -122,9 +122,26 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
   private final Map<String, SerializationPolicy> serializationPolicyCache = new HashMap<String, SerializationPolicy>();
 
   /**
-   * The default constructor.
+   * The implementation of the service.
+   */
+  private final Object delegate;
+
+  /**
+   * The default constructor used by service implementations that
+   * extend this class.  The servlet will delegate AJAX requests to
+   * the appropriate method in the subclass.
    */
   public RemoteServiceServlet() {
+    this.delegate = this;
+  }
+
+  /**
+   * The wrapping constructor used by service implementations that are
+   * separate from this class.  The servlet will delegate AJAX
+   * requests to the appropriate method in the given object.
+   */
+  public RemoteServiceServlet(Object delegate) {
+    this.delegate = delegate;
   }
 
   public final SerializationPolicy getSerializationPolicy(String moduleBaseURL,
@@ -185,9 +202,9 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
     checkPermutationStrongName();
 
     try {
-      RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass(), this);
+      RPCRequest rpcRequest = RPC.decodeRequest(payload, delegate.getClass(), this);
       onAfterRequestDeserialized(rpcRequest);
-      return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),
+      return RPC.invokeAndEncodeResponse(delegate, rpcRequest.getMethod(),
           rpcRequest.getParameters(), rpcRequest.getSerializationPolicy(),
           rpcRequest.getFlags());
     } catch (IncompatibleRemoteServiceException ex) {

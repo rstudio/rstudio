@@ -56,9 +56,26 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
   private final Map<String, SoftReference<ClientOracle>> clientOracleCache = new HashMap<String, SoftReference<ClientOracle>>();
 
   /**
-   * The default constructor.
+   * The implementation of the service.
+   */
+  private final Object delegate;
+
+  /**
+   * The default constructor used by service implementations that
+   * extend this class.  The servlet will delegate AJAX requests to
+   * the appropriate method in the subclass.
    */
   public RpcServlet() {
+    this.delegate = this;
+  }
+
+  /**
+   * The wrapping constructor used by service implementations that are
+   * separate from this class.  The servlet will delegate AJAX
+   * requests to the appropriate method in the given object.
+   */
+  public RpcServlet(Object delegate) {
+    this.delegate = delegate;
   }
 
   /**
@@ -138,10 +155,10 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
     assert stream != null : "stream";
 
     try {
-      RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass(),
+      RPCRequest rpcRequest = RPC.decodeRequest(payload, delegate.getClass(),
           clientOracle);
       onAfterRequestDeserialized(rpcRequest);
-      RPC.invokeAndStreamResponse(this, rpcRequest.getMethod(),
+      RPC.invokeAndStreamResponse(delegate, rpcRequest.getMethod(),
           rpcRequest.getParameters(), clientOracle, stream);
     } catch (RemoteException ex) {
       throw new SerializationException("An exception was sent from the client",
