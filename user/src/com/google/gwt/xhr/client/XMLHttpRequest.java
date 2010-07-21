@@ -81,13 +81,16 @@ public class XMLHttpRequest extends JavaScriptObject {
    * @return the created object
    */
   public static native XMLHttpRequest create() /*-{
+    // Don't check window.XMLHttpRequest, because it can
+    // cause cross-site problems on IE8 if window's URL
+    // is javascript:'' .
     if ($wnd.XMLHttpRequest) {
-      return new XMLHttpRequest();
+      return new $wnd.XMLHttpRequest();
     } else {
       try {
-        return new ActiveXObject('MSXML2.XMLHTTP.3.0');
+        return new $wnd.ActiveXObject('MSXML2.XMLHTTP.3.0');
       } catch (e) {
-        return new ActiveXObject("Microsoft.XMLHTTP");
+        return new $wnd.ActiveXObject("Microsoft.XMLHTTP");
       }
     }
   }-*/;
