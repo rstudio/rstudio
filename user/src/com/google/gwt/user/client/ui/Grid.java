@@ -29,6 +29,40 @@ import com.google.gwt.user.client.Element;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.GridExample}
  * </p>
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * Grid widget consists of &lt;g:row> elements. Each &lt;g:row> element
+ * can contain one or more &lt;g:cell> or &lt;g:customCell> elements.
+ * Using &lt;g:cell> attribute it is possible to place pure HTML content. 
+ * &lt;g:customCell> is used as a container for 
+ * {@link com.google.gwt.user.client.ui.Widget} type objects. (Note that the
+ * tags of the row, cell and customCell elements are not capitalized. This
+ * is meant to signal that the item is not a runtime object, and so cannot
+ * have a <code>ui:field</code> attribute.)
+ * <p>
+ * For example:
+ * 
+ * <pre>
+ * &lt;g:Grid>
+ *  &lt;g:row>
+ *    &lt;g:customCell>
+ *      &lt;g:Label>foo&lt;/g:Label>
+ *    &lt;/g:customCell>
+ *    &lt;g:customCell>
+ *      &lt;g:Label>bar&lt;/g:Label>
+ *    &lt;/g:customCell>
+ *  &lt;/g:row>
+ *  &lt;g:row>
+ *    &lt;g:cell>
+ *      &lt;div>foo&lt;/div>
+ *    &lt;/g:cell>
+ *    &lt;g:cell>
+ *      &lt;div>bar&lt;/div>
+ *    &lt;/g:cell>
+ *  &lt;/g:row>
+ * &lt;/g:Grid>
+ * </pre>
  */
 public class Grid extends HTMLTable {
 
