@@ -26,6 +26,7 @@ import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
+import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
@@ -160,8 +161,6 @@ public class GenerateJavaScriptAST {
 
   private class CreateNamesAndScopesVisitor extends JVisitor {
 
-    private final JField arrayLengthField = program.getIndexedField("Array.length");
-
     /**
      * Cache of computed Java source file names to URI strings for symbol
      * export. By using a cache we also ensure the miminum number of String
@@ -193,10 +192,7 @@ public class GenerateJavaScriptAST {
         recordSymbol(x, jsName);
       } else {
         JsName jsName;
-        if (x == arrayLengthField) {
-          jsName = peek().declareName(name);
-          jsName.setObfuscatable(false);
-        } else if (belongsToSpecialObfuscatedType(x)) {
+        if (belongsToSpecialObfuscatedType(x)) {
           jsName = peek().declareName(mangleNameSpecialObfuscate(x));
           jsName.setObfuscatable(false);
         } else {
@@ -516,6 +512,8 @@ public class GenerateJavaScriptAST {
      */
     private Map<JMethod, Integer> entryMethodToIndex;
 
+    private final JsName arrayLength = objectScope.declareName("length");
+    
     private final JsName globalTemp = topScope.declareName("_");
 
     private final JsName prototype = objectScope.declareName("prototype");
@@ -523,6 +521,7 @@ public class GenerateJavaScriptAST {
     {
       globalTemp.setObfuscatable(false);
       prototype.setObfuscatable(false);
+      arrayLength.setObfuscatable(false);
     }
 
     public GenerateJavaScriptVisitor() {
@@ -532,6 +531,15 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JAbsentArrayDimension x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
+    }
+
+    @Override
+    public void endVisit(JArrayLength x, Context ctx) {
+      assert x.getInstance() != null : "Can't access the length of a null array";
+      JsExpression qualifier = (JsExpression) pop();
+      JsNameRef ref = arrayLength.makeRef(x.getSourceInfo());
+      ref.setQualifier(qualifier);
+      push(ref);
     }
 
     @Override

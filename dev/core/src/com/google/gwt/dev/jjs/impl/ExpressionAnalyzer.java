@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
@@ -91,6 +92,15 @@ public class ExpressionAnalyzer extends JVisitor {
 
   public boolean createsObject() {
     return createsObject;
+  }
+
+  @Override
+  public void endVisit(JArrayLength x, Context ctx) {
+    // TODO: Is setting accessesField necessary for array.length access?
+    accessesField = true;
+    // Can throw an NPE when the array instance is null at runtime.
+    JReferenceType refType = (JReferenceType) x.getInstance().getType();
+    canThrowException = refType.canBeNull();    
   }
 
   @Override

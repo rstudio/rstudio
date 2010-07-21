@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.HasType;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JAnnotation;
+import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
@@ -185,6 +186,16 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
         print('}');
         break;
     }
+    return false;
+  }
+
+  @Override
+  public boolean visit(JArrayLength x, Context ctx) {
+    JExpression instance = x.getInstance();
+    parenPush(x, instance);
+    accept(instance);
+    parenPop(x, instance);
+    print(".length");
     return false;
   }
 

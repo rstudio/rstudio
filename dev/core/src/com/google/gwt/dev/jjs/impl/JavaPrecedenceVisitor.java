@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
+import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
@@ -71,6 +72,12 @@ class JavaPrecedenceVisitor extends JVisitor {
 
   @Override
   public boolean visit(JAbsentArrayDimension x, Context ctx) {
+    answer = 0;
+    return false;
+  }
+
+  @Override
+  public boolean visit(JArrayLength x, Context ctx) {
     answer = 0;
     return false;
   }

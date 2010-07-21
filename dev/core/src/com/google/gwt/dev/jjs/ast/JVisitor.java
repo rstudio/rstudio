@@ -190,6 +190,10 @@ public class JVisitor {
     endVisit((JNode) x, ctx);
   }
 
+  public void endVisit(JArrayLength x, Context ctx) {
+    endVisit((JExpression) x, ctx);
+  }
+
   public void endVisit(JArrayRef x, Context ctx) {
     endVisit((JExpression) x, ctx);
   }
@@ -504,6 +508,10 @@ public class JVisitor {
 
   public boolean visit(JAnnotation.Property x, Context ctx) {
     return visit((JNode) x, ctx);
+  }
+
+  public boolean visit(JArrayLength x, Context ctx) {
+    return visit((JExpression) x, ctx);
   }
 
   public boolean visit(JArrayRef x, Context ctx) {

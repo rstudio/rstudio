@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
+import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
@@ -95,6 +96,13 @@ public class CloneExpressionVisitor extends JVisitor {
   @Override
   public boolean visit(JAbsentArrayDimension x, Context ctx) {
     expression = x;
+    return false;
+  }
+
+  @Override
+  public boolean visit(JArrayLength x, Context ctx) {
+    expression = new JArrayLength(x.getSourceInfo(), cloneExpression(
+        x.getInstance()));
     return false;
   }
 

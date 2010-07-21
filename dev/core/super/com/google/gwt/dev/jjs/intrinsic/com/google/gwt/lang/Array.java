@@ -267,12 +267,6 @@ public final class Array {
    */
   
   /**
-   * Represents the array length. References to this field are magically
-   * translated.
-   */
-  public volatile int length = 0;
-
-  /**
    * Holds the real type-specific Class object for a given array instance. The
    * compiler produces a magic implementation of getClass() which returns this
    * field directly.

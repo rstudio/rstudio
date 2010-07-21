@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.HasAnnotations;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JAnnotation;
 import com.google.gwt.dev.jjs.ast.JAnnotationArgument;
+import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
@@ -230,6 +231,13 @@ public class GenerateJavaAST {
   // Reflective invocation causes unused warnings.
   @SuppressWarnings("unused")
   private static class JavaASTGenerationVisitor {
+
+    /**
+     * The literal for the JLS identifier that represents the length
+     * field on an array.
+     */
+    private static final String ARRAY_LENGTH_FIELD = "length";
+
     private static InternalCompilerException translateException(JNode node,
         Throwable e) {
       if (e instanceof VirtualMachineError) {
@@ -1074,19 +1082,18 @@ public class GenerateJavaAST {
 
     JExpression processExpression(FieldReference x) {
       FieldBinding fieldBinding = x.binding;
-      JField field;
-      if (fieldBinding.declaringClass == null) {
-        // probably array.length
-        field = program.getIndexedField("Array.length");
-        if (!field.getName().equals(String.valueOf(fieldBinding.name))) {
-          throw new InternalCompilerException("Error matching fieldBinding.");
-        }
-      } else {
-        field = (JField) typeMap.get(fieldBinding);
-      }
       SourceInfo info = makeSourceInfo(x);
       JExpression instance = dispProcessExpression(x.receiver);
-      JExpression fieldRef = new JFieldRef(info, instance, field, currentClass);
+      JExpression expr;
+      if (fieldBinding.declaringClass == null) {
+        if (!ARRAY_LENGTH_FIELD.equals(String.valueOf(fieldBinding.name))) {
+          throw new InternalCompilerException("Expected [array].length.");
+        }
+        expr = new JArrayLength(info, instance);
+      } else {
+        JField field = (JField) typeMap.get(fieldBinding);
+        expr = new JFieldRef(info, instance, field, currentClass);
+      }
 
       if (x.genericCast != null) {
         JType castType = (JType) typeMap.get(x.genericCast);
@@ -1094,9 +1101,9 @@ public class GenerateJavaAST {
          * Note, this may result in an invalid AST due to an LHS cast operation.
          * We fix this up in FixAssignmentToUnbox.
          */
-        return maybeCast(castType, fieldRef);
+        return maybeCast(castType, expr);
       }
-      return fieldRef;
+      return expr;
     }
 
     JExpression processExpression(InstanceOfExpression x) {
@@ -1291,18 +1298,16 @@ public class GenerateJavaAST {
       if (x.otherBindings != null) {
         for (int i = 0; i < x.otherBindings.length; ++i) {
           FieldBinding fieldBinding = x.otherBindings[i];
-          JField field;
           if (fieldBinding.declaringClass == null) {
             // probably array.length
-            field = program.getIndexedField("Array.length");
-            if (!field.getName().equals(String.valueOf(fieldBinding.name))) {
-              throw new InternalCompilerException(
-                  "Error matching fieldBinding.");
+            if (!ARRAY_LENGTH_FIELD.equals(String.valueOf(fieldBinding.name))) {
+              throw new InternalCompilerException("Expected [array].length.");
             }
+            curRef = new JArrayLength(info, curRef);
           } else {
-            field = (JField) typeMap.get(fieldBinding);
+            JField field = (JField) typeMap.get(fieldBinding);
+            curRef = new JFieldRef(info, curRef, field, currentClass);
           }
-          curRef = new JFieldRef(info, curRef, field, currentClass);
           if (x.otherGenericCasts != null && x.otherGenericCasts[i] != null) {
             JType castType = (JType) typeMap.get(x.otherGenericCasts[i]);
             curRef = maybeCast(castType, curRef);
@@ -1615,9 +1620,8 @@ public class GenerateJavaAST {
         initializers.add(createDeclaration(info, indexVar,
             program.getLiteralInt(0)));
         // int i$max = i$array.length
-        initializers.add(createDeclaration(info, maxVar, new JFieldRef(info,
-            createVariableRef(info, arrayVar),
-            program.getIndexedField("Array.length"), currentClass)));
+        initializers.add(createDeclaration(info, maxVar, new JArrayLength(info,
+            new JLocalRef(info, arrayVar))));
 
         // i$index < i$max
         JExpression condition = new JBinaryOperation(info,
