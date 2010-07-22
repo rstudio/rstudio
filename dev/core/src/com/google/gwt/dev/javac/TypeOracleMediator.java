@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -54,8 +54,9 @@ import com.google.gwt.dev.javac.asm.ResolveTypeSignature;
 import com.google.gwt.dev.javac.asm.CollectAnnotationData.AnnotationData;
 import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
 import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Name.InternalName;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
@@ -92,9 +93,9 @@ public class TypeOracleMediator {
   /**
    * Returns the binary name of a type. This is the same name that would be
    * returned by {@link Class#getName()} for this type.
-   * 
+   *
    * @param type TypeOracle type to get the name for
-   * @return binary name for a type 
+   * @return binary name for a type
    */
   public static String computeBinaryClassName(JType type) {
     JPrimitiveType primitiveType = type.isPrimitive();
@@ -185,9 +186,9 @@ public class TypeOracleMediator {
 
   /**
    * Returns true if this class is a non-static class inside a generic class.
-   * 
+   *
    * TODO(jat): do we need to consider the entire hierarchy?
-   * 
+   *
    * @param classData
    * @param enclosingClassData
    * @return true if this class is a non-static class inside a generic class
@@ -203,7 +204,7 @@ public class TypeOracleMediator {
 
   /**
    * Substitute the raw type if the supplied type is generic.
-   * 
+   *
    * @param type
    * @return original type or its raw type if it is generic
    */
@@ -246,7 +247,7 @@ public class TypeOracleMediator {
 
   /**
    * Construct a TypeOracleMediator.
-   * 
+   *
    * @param typeOracle TypeOracle instance to use, or null to create a new one
    */
   // @VisibleForTesting
@@ -286,13 +287,13 @@ public class TypeOracleMediator {
 
   /**
    * Adds new units to an existing TypeOracle.
-   * 
+   *
    * @param logger logger to use
-   * @param units collection of compilation units to process 
+   * @param units collection of compilation units to process
    */
   public void addNewUnits(TreeLogger logger,
       Collection<CompilationUnit> units) {
-    PerfLogger.start("TypeOracleMediator.addNewUnits");
+    SpeedTracerLogger.get().start(CompilerEventType.TYPE_ORACLE_MEDIATOR);
     // First collect all class data.
     classMap = new HashMap<String, CollectClassData>();
     for (CompilationUnit unit : units) {
@@ -362,7 +363,7 @@ public class TypeOracleMediator {
     allMethodArgs = null;
     classMap = null;
     classMapType = null;
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.TYPE_ORACLE_MEDIATOR);
   }
 
   /**
@@ -523,7 +524,7 @@ public class TypeOracleMediator {
 
   /**
    * Map a bitset onto a different bitset.
-   * 
+   *
    * @param mapping int array containing a sequence of from/to pairs, each from
    *          entry should have exactly one bit set
    * @param input bitset to map

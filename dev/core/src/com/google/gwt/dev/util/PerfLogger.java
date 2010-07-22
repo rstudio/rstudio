@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,17 +21,17 @@ import java.util.List;
 /**
  * Performs basic recording/logging of performance metrics for internal
  * development purposes.
- * 
+ *
  * <p>
  * This class differs from {@link com.google.gwt.core.ext.TreeLogger TreeLogger}
  * by providing an interface more suitable for metrics-oriented logging.
  * </p>
- * 
+ *
  * <p>
  * Performance logging can be enabled by setting the system property,
  * {@code gwt.perflog=true}.
  * </p>
- * 
+ *
  */
 public class PerfLogger {
 
@@ -69,6 +69,7 @@ public class PerfLogger {
   private static boolean enabled = Boolean.parseBoolean(System.getProperty("gwt.perflog"));
 
   private static ThreadLocal<Timing> currentTiming = new ThreadLocal<Timing>() {
+    @Override
     protected Timing initialValue() {
       return new Timing();
     }
@@ -99,7 +100,7 @@ public class PerfLogger {
 
   /**
    * Logs a message without explicitly including timer information.
-   * 
+   *
    * @param message a not <code>null</code> message
    */
   public static void log(String message) {
@@ -114,7 +115,7 @@ public class PerfLogger {
    * Starts a new timing corresponding to {@code message}. You must call {@link
    * #end} for each corresponding call to {@code start}. You may nest timing
    * calls.
-   * 
+   *
    * @param message a not <code>null</code> message.
    */
   public static void start(String message) {

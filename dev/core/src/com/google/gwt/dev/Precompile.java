@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -44,7 +44,6 @@ import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.CollapsedPropertyKey;
 import com.google.gwt.dev.util.Memory;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerCompileReport;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
@@ -69,6 +68,8 @@ import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.OptionValidateOnly;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.io.File;
 import java.io.Serializable;
@@ -379,6 +380,7 @@ public class Precompile {
    */
   public static void main(String[] args) {
     Memory.initialize();
+    SpeedTracerLogger.init();
     if (System.getProperty("gwt.jjs.dumpAst") != null) {
       System.out.println("Will dump AST to: "
           + System.getProperty("gwt.jjs.dumpAst"));
@@ -417,7 +419,7 @@ public class Precompile {
 
   /**
    * Precompiles the given module.
-   * 
+   *
    * @param logger a logger to use
    * @param jjsOptions a set of compiler options
    * @param module the module to compile
@@ -436,7 +438,7 @@ public class Precompile {
 
   /**
    * Validates the given module can be compiled.
-   * 
+   *
    * @param logger a logger to use
    * @param jjsOptions a set of compiler options
    * @param module the module to compile
@@ -506,10 +508,10 @@ public class Precompile {
           module, compilationState, generatedArtifacts, allPermutations, genDir);
       // Allow GC later.
       compilationState = null;
-      PerfLogger.start("Precompile");
+      SpeedTracerLogger.get().start(CompilerEventType.PRECOMPILE);
       UnifiedAst unifiedAst = getCompiler(module).precompile(logger, module,
           rpo, declEntryPts, null, jjsOptions, rpo.getPermuationCount() == 1);
-      PerfLogger.end();
+      SpeedTracerLogger.get().end(CompilerEventType.PRECOMPILE);
 
       // Merge all identical permutations together.
       List<Permutation> permutations = new ArrayList<Permutation>(

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -118,11 +118,11 @@ import com.google.gwt.dev.util.AbstractTextOutput;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Memory;
-import com.google.gwt.dev.util.PerfCounter;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 
@@ -208,7 +208,7 @@ public class JavaToJavaScriptCompiler {
 
   /**
    * Compiles a particular permutation, based on a precompiled unified AST.
-   * 
+   *
    * @param logger the logger to use
    * @param unifiedAst the result of a
    *          {@link #precompile(TreeLogger, ModuleDef, RebindPermutationOracle, String[], String[], JJSOptions, boolean)}
@@ -237,8 +237,8 @@ public class JavaToJavaScriptCompiler {
       JProgram jprogram = ast.getJProgram();
       JsProgram jsProgram = ast.getJsProgram();
       JJSOptions options = unifiedAst.getOptions();
-      Map<StandardSymbolData, JsName> symbolTable =
-          new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
+      Map<StandardSymbolData, JsName> symbolTable = new TreeMap<StandardSymbolData, JsName>(
+          new SymbolData.ClassIdentComparator());
 
       ResolveRebinds.exec(jprogram, permutation.getOrderedRebindAnswers());
 
@@ -305,11 +305,11 @@ public class JavaToJavaScriptCompiler {
 
       /*
        * Work around Safari 5 bug by rewriting a >> b as ~~a >> b.
-       * 
+       *
        * No shifts may be generated after this point.
        */
       JsCoerceIntShift.exec(jsProgram, logger, propertyOracles);
-      
+
       // (10) Split up the program into fragments
       SyntheticArtifact dependencies = null;
       if (options.isRunAsyncEnabled()) {
@@ -414,7 +414,7 @@ public class JavaToJavaScriptCompiler {
 
   /**
    * Performs a precompilation, returning a unified AST.
-   * 
+   *
    * @param logger the logger to use
    * @param module the module to compile
    * @param rpo the RebindPermutationOracle
@@ -480,7 +480,6 @@ public class JavaToJavaScriptCompiler {
     //
     checkForErrors(logger, goldenCuds, false);
 
-    PerfLogger.start("Build AST");
     CorrelationFactory correlator = options.isSoycExtra()
         ? new RealCorrelationFactory() : new DummyCorrelationFactory();
     JProgram jprogram = new JProgram(correlator);
@@ -553,7 +552,7 @@ public class JavaToJavaScriptCompiler {
 
       /*
        * 4) Possibly optimize some.
-       * 
+       *
        * Don't optimizing early if this is a draft compile, or if there's only
        * one permutation.
        */
@@ -587,7 +586,6 @@ public class JavaToJavaScriptCompiler {
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
     } finally {
-      PerfLogger.end();
     }
   }
 
@@ -603,25 +601,29 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
-    PerfLogger.start("draft optimize");
+    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE);
 
-    PerfLogger.start("Finalizer");
+    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
+        "finalizer");
     Finalizer.exec(jprogram);
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
 
-    PerfLogger.start("MakeCallsStatic");
+    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
+        "makeCallsStatic");
     MakeCallsStatic.exec(jprogram);
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
 
-    PerfLogger.start("recomputeAfterOptimizations");
+    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
+        "recomputeAfterOptimizations");
     jprogram.typeOracle.recomputeAfterOptimizations();
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
 
-    PerfLogger.start("DeadCodeElimination");
+    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
+        "deadCodeElimination");
     DeadCodeElimination.exec(jprogram);
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
 
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
   }
 
   protected static void optimize(JJSOptions options, JProgram jprogram)
@@ -633,11 +635,10 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
-    PerfCounter.start("JavaToJavaScriptCompiler.optimize");
-    PerfLogger.start("optimize");
+    SpeedTracerLogger.get().start(CompilerEventType.OPTIMIZE);
     do {
       if (Thread.interrupted()) {
-        PerfLogger.end();
+        SpeedTracerLogger.get().end(CompilerEventType.OPTIMIZE);
         throw new InterruptedException();
       }
       maybeDumpAST(jprogram);
@@ -647,16 +648,12 @@ public class JavaToJavaScriptCompiler {
       // Just run it once, because it is very time consuming
       DataflowOptimizer.exec(jprogram);
     }
-
-    PerfCounter.end("JavaToJavaScriptCompiler.optimize");
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.OPTIMIZE);
   }
 
   protected static boolean optimizeLoop(JProgram jprogram,
       boolean isAggressivelyOptimize) {
-    PerfLogger.start("optimize loop");
-    PerfCounter.start("JavaToJavaScriptCompiler.optimizeLoop");
-
+    SpeedTracerLogger.get().start(CompilerEventType.OPTIMIZE, "phase", "loop");
     // Recompute clinits each time, they can become empty.
     jprogram.typeOracle.recomputeAfterOptimizations();
     // jprogram.methodOracle = MethodOracleBuilder.buildMethodOracle(jprogram);
@@ -693,9 +690,8 @@ public class JavaToJavaScriptCompiler {
 
     // prove that any types that have been culled from the main tree are
     // unreferenced due to type tightening?
+    SpeedTracerLogger.get().end(CompilerEventType.OPTIMIZE);
 
-    PerfCounter.end("JavaToJavaScriptCompiler.optimizeLoop");
-    PerfLogger.end();
     return didChange;
   }
 
@@ -899,7 +895,7 @@ public class JavaToJavaScriptCompiler {
   /**
    * Generate JavaScript code from the given JavaScript ASTs. Also produces
    * information about that transformation.
-   * 
+   *
    * @param options The options this compiler instance is running with
    * @param jsProgram The AST to convert to source code
    * @param jjsMap A map between the JavaScript AST and the Java AST it came
@@ -1009,35 +1005,39 @@ public class JavaToJavaScriptCompiler {
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-    PerfLogger.start("Recording compile report output");
+    SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS);
 
-    PerfLogger.start("Record split points");
+    SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
+        "phase", "recordSplitPoints");
     SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
     SyntheticArtifact splitPoints = new SyntheticArtifact(
         SoycReportLinker.class, "splitPoints" + permutationId + ".xml.gz",
         baos.toByteArray());
     soycArtifacts.add(splitPoints);
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
+
 
     SyntheticArtifact sizeMaps = null;
     if (sizeBreakdowns != null) {
-      PerfLogger.start("Record size map");
+      SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
+          "phase", "recordSizeMap");
       baos.reset();
       SizeMapRecorder.recordMap(logger, baos, sizeBreakdowns, jjsmap,
           obfuscateMap);
       sizeMaps = new SyntheticArtifact(SoycReportLinker.class, "stories"
           + permutationId + ".xml.gz", baos.toByteArray());
       soycArtifacts.add(sizeMaps);
-      PerfLogger.end();
+      SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
     }
 
     if (sourceInfoMaps != null) {
-      PerfLogger.start("Record detailed stories");
+      SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
+          "phase", "recordStories");
       baos.reset();
       StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
       soycArtifacts.add(new SyntheticArtifact(SoycReportLinker.class,
           "detailedStories" + permutationId + ".xml.gz", baos.toByteArray()));
-      PerfLogger.end();
+      SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
     }
 
     if (dependencies != null) {
@@ -1048,10 +1048,10 @@ public class JavaToJavaScriptCompiler {
     for (SyntheticArtifact soycArtifact : soycArtifacts) {
       soycArtifact.setPrivate(true);
     }
-    PerfLogger.end();
 
     if (sizeBreakdowns != null) {
-      PerfLogger.start("Generating compile report");
+      SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
+          "phase", "generateCompileReport");
       ArtifactsOutputDirectory outDir = new ArtifactsOutputDirectory();
       SoycDashboard dashboard = new SoycDashboard(outDir);
       dashboard.startNewPermutation(Integer.toString(permutationId));
@@ -1074,15 +1074,17 @@ public class JavaToJavaScriptCompiler {
       }
       dashboard.generateForOnePermutation();
       soycArtifacts.addAll(outDir.getArtifacts());
-      PerfLogger.end();
+      SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
     }
+
+    SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
 
     return soycArtifacts;
   }
 
   /**
    * Create a variable assignment to invoke a call to the statistics collector.
-   * 
+   *
    * <pre>
    * Stats.isStatsAvailable() &&
    *   Stats.onModuleStart("mainClassName");

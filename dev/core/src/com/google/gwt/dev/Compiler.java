@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,12 +29,13 @@ import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Memory;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -127,6 +128,8 @@ public class Compiler {
           + System.getProperty("gwt.jjs.dumpAst"));
     }
 
+    SpeedTracerLogger.init();
+
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
      * non-daemon threads that were started in Generators. Typically, this is to
@@ -168,14 +171,16 @@ public class Compiler {
     ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
     int i = 0;
     for (String moduleName : options.getModuleNames()) {
+      SpeedTracerLogger.get().start(CompilerEventType.MODULE_DEF, "phase", "loadFromClassPath", "moduleName", moduleName);
       modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName, true);
+      SpeedTracerLogger.get().end(CompilerEventType.MODULE_DEF);
     }
     return run(logger, modules);
   }
 
   public boolean run(TreeLogger logger, ModuleDef... modules)
       throws UnableToCompleteException {
-    PerfLogger.start("compile");
+    SpeedTracerLogger.get().start(CompilerEventType.COMPILE);
     boolean tempWorkDir = false;
     try {
       if (options.getWorkDir() == null) {
@@ -200,25 +205,29 @@ public class Compiler {
 
           // Optimize early since permutation compiles will run in process.
           options.setOptimizePrecompile(true);
+          SpeedTracerLogger.get().start(CompilerEventType.PRECOMPILE);
           Precompilation precompilation = Precompile.precompile(branch,
               options, module, options.getGenDir(),
               options.getDumpSignatureFile());
-
+          SpeedTracerLogger.get().end(CompilerEventType.PRECOMPILE);
           if (precompilation == null) {
             return false;
           }
 
+          SpeedTracerLogger.get().start(CompilerEventType.COMPILE_PERMUTATIONS);
           Permutation[] allPerms = precompilation.getPermutations();
           List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
               options.getCompilerWorkDir(moduleName), allPerms);
           CompilePerms.compile(branch, precompilation, allPerms,
               options.getLocalWorkers(), resultFiles);
+          SpeedTracerLogger.get().end(CompilerEventType.COMPILE_PERMUTATIONS);
 
           ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
           JJSOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
 
           precompilation = null; // No longer needed, so save the memory
 
+          SpeedTracerLogger.get().start(CompilerEventType.LINK);
           File absPath = new File(options.getWarDir(), module.getName());
           absPath = absPath.getAbsoluteFile();
 
@@ -233,6 +242,7 @@ public class Compiler {
               generatedArtifacts, allPerms, resultFiles, options.getWarDir(),
               options.getExtraDir(), precompileOptions);
 
+          SpeedTracerLogger.get().end(CompilerEventType.LINK);
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;
           branch.log(TreeLogger.INFO, "Compilation succeeded -- "
@@ -245,7 +255,7 @@ public class Compiler {
           e);
       return false;
     } finally {
-      PerfLogger.end();
+      SpeedTracerLogger.get().end(CompilerEventType.COMPILE);
       if (tempWorkDir) {
         Util.recursiveDelete(options.getWorkDir(), false);
       }

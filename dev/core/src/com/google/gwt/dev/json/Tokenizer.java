@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.json;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 
@@ -71,7 +70,7 @@ class Tokenizer {
   private final Reader reader;
 
   Tokenizer(Reader reader) {
-    this.reader = new BufferedReader(reader);
+    this.reader = reader;
   }
 
   void back(char c) {

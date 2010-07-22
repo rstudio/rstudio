@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -53,9 +53,10 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -74,7 +75,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * GWT.runAsync()}. The remaining code should be downloadable via
  * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#inject(int)}.
  * </p>
- * 
+ *
  * <p>
  * The precise way the program is fragmented is an implementation detail that is
  * subject to change. Whenever the fragment strategy changes,
@@ -85,7 +86,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * sequence are reached before any call not in the sequence. Further, any call
  * in the sequence is reached before any call later in the sequence.
  * </p>
- * 
+ *
  * <p>
  * The fragment for a split point contains different things depending on whether
  * it is in the initial load sequence or not. If it's in the initial load
@@ -359,7 +360,7 @@ public class CodeSplitter {
    * other split points. As a side effect, modifies
    * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#initialLoadSequence}
    * in the program being compiled.
-   * 
+   *
    * @throws UnableToCompleteException If the module specifies a bad load order
    */
   public static void pickInitialLoadSequence(TreeLogger logger,
@@ -404,7 +405,7 @@ public class CodeSplitter {
    * scripts that are downloaded for that sequence. The maximum total script
    * size is the maximum such size for all possible sequences of split points.
    * </p>
-   * 
+   *
    * @param jsLengths The lengths of the fragments for the compilation of one
    *          permutation
    */
@@ -492,12 +493,12 @@ public class CodeSplitter {
   /**
    * Installs the initial load sequence into the
    * AsyncFragmentLoader.BROWSER_LOADER. The initializer looks like this:
-   * 
+   *
    * <pre>
        public static AsyncFragmentLoader BROWSER_LOADER = new AsyncFragmentLoader(1,
          new int[] {}, new StandardLoadingStrategy(), new StandardLogger());
      </pre>
-   * 
+   *
    * The second argument (<code>new int[]</code>) gets replaced by an array
    * corresponding to <code>initialLoadSequence</code>.
    */
@@ -685,7 +686,7 @@ public class CodeSplitter {
 
   /**
    * Create a new fragment and add it to the table of fragments.
-   * 
+   *
    * @param splitPoint The split point to associate this code with
    * @param alreadyLoaded The code that should be assumed to have already been
    *          loaded
@@ -784,7 +785,7 @@ public class CodeSplitter {
   }
 
   private void execImpl() {
-    PerfLogger.start("CodeSplitter");
+    SpeedTracerLogger.get().start(CompilerEventType.CODE_SPLITTER);
     Map<Integer, List<JsStatement>> fragmentStats = new HashMap<Integer, List<JsStatement>>();
 
     {
@@ -864,7 +865,7 @@ public class CodeSplitter {
       fragBlock.getStatements().addAll(fragmentStats.get(i));
     }
 
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.CODE_SPLITTER);
   }
 
   /**
@@ -874,7 +875,7 @@ public class CodeSplitter {
    * violated when an atom is mapped to 0 as a leftover, but it has some
    * load-order dependency on an atom that was put in an exclusive fragment.
    * </p>
-   * 
+   *
    * <p>
    * In general, it might be possible to split things better by considering load
    * order dependencies when building the fragment map. However, fixing them

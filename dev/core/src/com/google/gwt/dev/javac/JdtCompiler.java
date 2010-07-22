@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,10 +17,11 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -67,9 +68,8 @@ import java.util.Set;
 public class JdtCompiler {
   /**
    * Provides hooks for changing the behavior of the JdtCompiler when unknown
-   * types are encountered during compilation.  Currently
-   * used for allowing external tools to provide source lazily when
-   * undefined references appear.
+   * types are encountered during compilation. Currently used for allowing
+   * external tools to provide source lazily when undefined references appear.
    */
   public static interface AdditionalTypeProviderDelegate {
     /**
@@ -300,8 +300,7 @@ public class JdtCompiler {
         return false;
       }
       String resourceName = slashedPackageName + '/';
-      if ((additionalTypeProviderDelegate != null
-          && additionalTypeProviderDelegate.doFindAdditionalPackage(slashedPackageName))) {
+      if ((additionalTypeProviderDelegate != null && additionalTypeProviderDelegate.doFindAdditionalPackage(slashedPackageName))) {
         addPackages(slashedPackageName);
         return true;
       }
@@ -496,11 +495,11 @@ public class JdtCompiler {
       return false;
     }
 
-    PerfLogger.start("JdtCompiler.compile");
+    SpeedTracerLogger.get().start(CompilerEventType.JDT_COMPILER, "phase", "compile");
     compilerImpl = new CompilerImpl();
     compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     compilerImpl = null;
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.JDT_COMPILER);
     lazyContentIdMap = null;
     return true;
   }
@@ -509,7 +508,8 @@ public class JdtCompiler {
     return resolveType(compilerImpl.lookupEnvironment, typeName);
   }
 
-  public void setAdditionalTypeProviderDelegate(AdditionalTypeProviderDelegate newDelegate) {
+  public void setAdditionalTypeProviderDelegate(
+      AdditionalTypeProviderDelegate newDelegate) {
     additionalTypeProviderDelegate = newDelegate;
   }
 

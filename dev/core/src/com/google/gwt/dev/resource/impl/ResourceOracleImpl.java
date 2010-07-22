@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,7 +18,8 @@ package com.google.gwt.dev.resource.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
-import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
 
@@ -137,7 +138,7 @@ public class ResourceOracleImpl implements ResourceOracle {
       // Compare priorities of the path prefixes, high number == high priority.
       return this.pathPrefix.getPriority() - other.pathPrefix.getPriority();
     }
-    
+
     @Override
     public boolean equals(Object o) {
       if (!(o instanceof ResourceData)) {
@@ -147,7 +148,7 @@ public class ResourceOracleImpl implements ResourceOracle {
       return this.pathPrefix.getPriority() == other.pathPrefix.getPriority()
           && this.resource.wasRerooted() == other.resource.wasRerooted();
     }
-    
+
     @Override
     public int hashCode() {
       return (pathPrefix.getPriority() << 1) + (resource.wasRerooted() ? 1 : 0);
@@ -315,11 +316,11 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   /**
    * Rescans the associated paths to recompute the available resources.
-   * 
+   *
    * @param logger status and error details are written here
    */
   public void refresh(TreeLogger logger) {
-    PerfLogger.start("ResourceOracleImpl.refresh");
+    SpeedTracerLogger.get().start(CompilerEventType.RESOURCE_ORACLE, "phase", "refresh");
     TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger,
         null);
 
@@ -336,7 +337,7 @@ public class ResourceOracleImpl implements ResourceOracle {
      * a resource that has already been added to the new map under construction
      * to create the effect that resources founder earlier on the classpath take
      * precedence.
-     * 
+     *
      * Exceptions: super has priority over non-super; and if there are two super
      * resources with the same path, the one with the higher-priority path
      * prefix wins.
@@ -365,7 +366,7 @@ public class ResourceOracleImpl implements ResourceOracle {
     /*
      * Update the newInternalMap to preserve identity for any resources that
      * have not changed; also record whether or not there are ANY changes.
-     * 
+     *
      * There's definitely a change if the sizes don't match; even if the sizes
      * do match, every new resource must match an old resource for there to be
      * no changes.
@@ -386,7 +387,7 @@ public class ResourceOracleImpl implements ResourceOracle {
 
     if (!didChange) {
       // Nothing to do, keep the same identities.
-      PerfLogger.end();
+      SpeedTracerLogger.get().end(CompilerEventType.RESOURCE_ORACLE);
       return;
     }
 
@@ -405,7 +406,7 @@ public class ResourceOracleImpl implements ResourceOracle {
     exposedResources = Collections.unmodifiableSet(externalSet);
     exposedResourceMap = Collections.unmodifiableMap(externalMap);
     exposedPathNames = Collections.unmodifiableSet(externalMap.keySet());
-    PerfLogger.end();
+    SpeedTracerLogger.get().end(CompilerEventType.RESOURCE_ORACLE);
   }
 
   public void setPathPrefixes(PathPrefixSet pathPrefixSet) {
