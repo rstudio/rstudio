@@ -59,7 +59,7 @@ public class WindowImplIE extends WindowImpl {
   @Override
   public native String getHash() /*-{
     var href = $wnd.location.href;
-    var hashLoc = href.lastIndexOf("#");
+    var hashLoc = href.indexOf("#");
     return (hashLoc > 0) ? href.substring(hashLoc) : "";
   }-*/;
 
@@ -70,12 +70,12 @@ public class WindowImplIE extends WindowImpl {
   @Override
   public native String getQueryString() /*-{
     var href = $wnd.location.href;
-    var hashLoc = href.lastIndexOf("#");
+    var hashLoc = href.indexOf("#");
     if (hashLoc >= 0) {
       // strip off any hash first
       href = href.substring(0, hashLoc);
     }
-    var questionLoc = href.lastIndexOf("?");
+    var questionLoc = href.indexOf("?");
     return (questionLoc > 0) ? href.substring(questionLoc) : "";
   }-*/;
 
