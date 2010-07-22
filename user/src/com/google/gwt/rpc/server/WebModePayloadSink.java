@@ -887,14 +887,6 @@ public class WebModePayloadSink extends CommandSink {
    */
   @Override
   public void finish() throws SerializationException {
-    if (finished) {
-      return;
-    }
-    try {
-      out.flush();
-    } catch (IOException e) {
-      throw new SerializationException("Could not flush stream", e);
-    }
     finished = true;
   }
 

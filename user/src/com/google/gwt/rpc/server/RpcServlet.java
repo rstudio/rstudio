@@ -218,7 +218,6 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
 
     // Invoke the core dispatching logic, which returns the serialized result.
     processCall(clientOracle, requestPayload, out);
-    out.close();
 
     if (DUMP_PAYLOAD) {
       byte[] bytes = ((ByteArrayOutputStream) out).toByteArray();
