@@ -29,21 +29,23 @@ public class XMLElementProviderImpl implements XMLElementProvider {
   private final AttributeParsers attributeParsers;
   // bundleParsers for legacy templates
   private final BundleAttributeParsers bundleParsers;
-  private final MortalLogger logger;
   private final TypeOracle oracle;
+  private final MortalLogger logger;
+  private final DesignTimeUtils designTime;
 
   // bundleParsers for legacy templates
   public XMLElementProviderImpl(AttributeParsers attributeParsers,
       BundleAttributeParsers bundleParsers, TypeOracle oracle,
-      MortalLogger logger) {
+      MortalLogger logger, DesignTimeUtils designTime) {
     this.attributeParsers = attributeParsers;
     this.bundleParsers = bundleParsers;
     this.oracle = oracle;
     this.logger = logger;
+    this.designTime = designTime;
   }
 
   public XMLElement get(Element e) {
     return new XMLElement(e, attributeParsers, bundleParsers, oracle, logger,
-        this);
+        designTime, this);
   }
 }

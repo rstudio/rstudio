@@ -17,7 +17,6 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.uibinder.rebind.DesignTimeUtils;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
@@ -55,16 +54,12 @@ public class CellPanelParser implements ElementParser {
       String value = cellElem.consumeAttribute(HALIGN_ATTR, hAlignConstantType);
       writer.addStatement("%1$s.setCellHorizontalAlignment(%2$s, %3$s);",
           fieldName, childFieldName, value);
-      DesignTimeUtils.putAttribute(writer, cellElem, "*Cell." + HALIGN_ATTR,
-          value);
     }
 
     if (cellElem.hasAttribute(VALIGN_ATTR)) {
       String value = cellElem.consumeAttribute(VALIGN_ATTR, vAlignConstantType);
       writer.addStatement("%1$s.setCellVerticalAlignment(%2$s, %3$s);",
           fieldName, childFieldName, value);
-      DesignTimeUtils.putAttribute(writer, cellElem, "*Cell." + VALIGN_ATTR,
-          value);
     }
 
     // Parse width and height attributes.
@@ -72,16 +67,12 @@ public class CellPanelParser implements ElementParser {
       String value = cellElem.consumeStringAttribute(WIDTH_ATTR);
       writer.addStatement("%1$s.setCellWidth(%2$s, %3$s);", fieldName,
           childFieldName, value);
-      DesignTimeUtils.putAttribute(writer, cellElem, "*Cell." + WIDTH_ATTR,
-          value);
     }
 
     if (cellElem.hasAttribute(HEIGHT_ATTR)) {
       String value = cellElem.consumeStringAttribute(HEIGHT_ATTR);
       writer.addStatement("%1$s.setCellHeight(%2$s, %3$s);", fieldName,
           childFieldName, value);
-      DesignTimeUtils.putAttribute(writer, cellElem, "*Cell." + HEIGHT_ATTR,
-          value);
     }
   }
 

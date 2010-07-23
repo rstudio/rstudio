@@ -23,6 +23,7 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.elementparsers.NullInterpreter;
 import com.google.gwt.uibinder.test.UiJavaResources;
 
@@ -34,7 +35,9 @@ import org.w3c.dom.Text;
 import org.xml.sax.SAXParseException;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -53,14 +56,14 @@ public class XMLElementTest extends TestCase {
     return logger;
   }
 
+  private TypeOracle types;
+  private MockMortalLogger logger;
+  private BundleAttributeParsers attributeParsers;
+
   private Document doc;
   private XMLElementProvider elemProvider;
   private XMLElement elm;
   private Element item;
-
-  private TypeOracle types;
-
-  private MockMortalLogger logger;
 
   @SuppressWarnings("deprecation")
   @Override
@@ -70,12 +73,10 @@ public class XMLElementTest extends TestCase {
         createCompileLogger(), UiJavaResources.getUiResources());
     types = state.getTypeOracle();
     logger = new MockMortalLogger();
-    elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
-        logger),
-        new com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers(
-            types, logger, null, "templatePath", null), types, logger);
-
-    init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
+    attributeParsers = new BundleAttributeParsers(types, logger, null,
+        "templatePath", null);
+    init(DesignTimeUtilsStub.EMPTY,
+        "<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
   }
 
   public void testAssertNoAttributes() throws SAXParseException {
@@ -211,6 +212,61 @@ public class XMLElementTest extends TestCase {
     }
   }
 
+  /**
+   * Test that {@link XMLElement#consumeBooleanAttribute(String, boolean)} calls
+   * {@link DesignTimeUtils}.
+   */
+  public void testConsumeBooleanDefault_designTime() throws Exception {
+    DesignTimeUtilsImpl designTime = new DesignTimeUtilsImpl();
+    init(designTime,
+        "<doc><elm yes='true' no='false' ref='{foo.bar.baz}'/></doc>");
+    // consume attributes
+    assertEquals("true", elm.consumeBooleanAttribute("foo", true));
+    assertEquals("true", elm.consumeBooleanAttribute("yes"));
+    assertEquals("false", elm.consumeBooleanAttribute("no"));
+    assertEquals("foo.bar().baz()", elm.consumeBooleanAttribute("ref"));
+    // validate
+    Map<String, String> attributes = designTime.getAttributes();
+    assertEquals(4, attributes.size());
+    assertEquals("true", attributes.get("0/0 foo.default"));
+    assertEquals("true", attributes.get("0/0 yes"));
+    assertEquals("false", attributes.get("0/0 no"));
+    assertEquals("foo.bar().baz()", attributes.get("0/0 ref"));
+  }
+
+  /**
+   * Test for {@link XMLElement#consumeStringArrayAttribute(String)}.
+   */
+  public void testConsumeStringArray() throws Exception {
+    init("<doc>\n\n<elm spaces='a b c' commas='a,b,c' mixed='a, b, c'/></doc>");
+
+    String[] expected = new String[]{"\"a\"", "\"b\"", "\"c\""};
+    assertTrue(Arrays.equals(new String[]{},
+        elm.consumeStringArrayAttribute("no-such-attribute")));
+    assertTrue(Arrays.equals(expected,
+        elm.consumeStringArrayAttribute("spaces")));
+    assertTrue(Arrays.equals(expected,
+        elm.consumeStringArrayAttribute("commas")));
+    assertTrue(Arrays.equals(expected, elm.consumeStringArrayAttribute("mixed")));
+  }
+
+  /**
+   * Test that {@link XMLElement#consumeStringArrayAttribute(String)} calls
+   * {@link DesignTimeUtils}.
+   */
+  public void testConsumeStringArray_designTime() throws Exception {
+    DesignTimeUtilsImpl designTime = new DesignTimeUtilsImpl();
+    init(designTime, "<doc>\n\n<elm attr='a b c'/></doc>");
+    // consume attributes
+    String[] expected = new String[]{"\"a\"", "\"b\"", "\"c\""};
+    assertTrue(Arrays.equals(expected, elm.consumeStringArrayAttribute("attr")));
+    // validate
+    Map<String, String> attributes = designTime.getAttributes();
+    assertEquals(1, attributes.size());
+    assertEquals("new String[] {\"a\", \"b\", \"c\"}",
+        attributes.get("0/0 attr"));
+  }
+
   public void testConsumeChildrenNoTextAllowed() throws SAXParseException {
     init("<doc>\n\n<elm><child>Hi.</child> Stray text is bad</elm></doc>");
     assertNull(logger.died);
@@ -246,8 +302,8 @@ public class XMLElementTest extends TestCase {
   public void testConsumeRawAttributeWithDefault() {
     assertEquals("attr1Value", elm.consumeRawAttribute("attr1", "default"));
     assertEquals("default", elm.consumeRawAttribute("attr1", "default"));
-    assertEquals("otherDefault", elm.consumeRawAttribute("unsetthing",
-        "otherDefault"));
+    assertEquals("otherDefault",
+        elm.consumeRawAttribute("unsetthing", "otherDefault"));
   }
 
   public void testConsumeRequiredRaw() throws UnableToCompleteException {
@@ -262,8 +318,27 @@ public class XMLElementTest extends TestCase {
   }
 
   public void testConsumeRequired() throws UnableToCompleteException {
-    assertEquals("\"attr1Value\"", elm.consumeRequiredAttribute("attr1",
-        types.findType("java.lang.String")));
+    assertEquals(
+        "\"attr1Value\"",
+        elm.consumeRequiredAttribute("attr1",
+            types.findType("java.lang.String")));
+  }
+
+  /**
+   * Test that {@link XMLElement#consumeRequiredAttribute(String)} calls
+   * {@link DesignTimeUtils}.
+   */
+  public void testConsumeRequired_designTime() throws Exception {
+    DesignTimeUtilsImpl designTime = new DesignTimeUtilsImpl();
+    init(designTime, "<doc><elm attr='val'/></doc>");
+    // consume attributes
+    assertEquals(
+        "\"val\"",
+        elm.consumeRequiredAttribute("attr", types.findType("java.lang.String")));
+    // validate
+    Map<String, String> attributes = designTime.getAttributes();
+    assertEquals(1, attributes.size());
+    assertEquals("\"val\"", attributes.get("0/0 attr"));
   }
 
   public void testConsumeRequiredDouble() throws UnableToCompleteException,
@@ -301,6 +376,40 @@ public class XMLElementTest extends TestCase {
       fail("Should throw UnableToCompleteException on no such attribute");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
+    }
+  }
+
+  /**
+   * Test for {@link XMLElement#consumeRequiredIntAttribute(String)}.
+   */
+  public void testConsumeRequiredInt() throws UnableToCompleteException,
+      SAXParseException {
+    init("<doc>\n\n<elm plus='123' minus='-123'"
+        + " fnord='fnord' ref='{foo.bar.baz}'/></doc>");
+    assertEquals("123", elm.consumeRequiredIntAttribute("plus"));
+    assertEquals("-123", elm.consumeRequiredIntAttribute("minus"));
+    assertEquals("(int)foo.bar().baz()", elm.consumeRequiredIntAttribute("ref"));
+
+    assertNull(logger.died);
+    try {
+      elm.consumeRequiredDoubleAttribute("fnord");
+      fail("Should throw UnableToCompleteException on misparse");
+    } catch (UnableToCompleteException c) {
+      assertNotNull(logger.died);
+      assertTrue("Expect attribute",
+          logger.died.contains("Cannot parse attribute \"fnord\""));
+      assertTrue("Expect line number", logger.died.contains("Unknown:3"));
+    }
+
+    logger.died = null;
+    try {
+      elm.consumeRequiredDoubleAttribute("empty");
+      fail("Should throw UnableToCompleteException on no such attribute");
+    } catch (UnableToCompleteException c) {
+      assertNotNull(logger.died);
+      assertTrue("Expect attribute",
+          logger.died.contains("Missing required attribute \"empty\""));
       assertTrue("Expect line number", logger.died.contains("Unknown:3"));
     }
   }
@@ -375,7 +484,22 @@ public class XMLElementTest extends TestCase {
     item.appendChild(t);
   }
 
-  private void init(final String domString) throws SAXParseException {
+  /**
+   * Initializes {@link #elemProvider} and parses DOM string.
+   */
+  private void init(DesignTimeUtils designTime, String domString)
+      throws SAXParseException {
+    elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
+        logger), attributeParsers, types, logger, designTime);
+    init(domString);
+    designTime.rememberPathForElements(doc);
+  }
+
+  /**
+   * Parses specified DOM string into {@link #doc}, extract first element into
+   * {@link #item} and prepares its {@link XMLElement} into {@link #elm}.
+   */
+  private void init(String domString) throws SAXParseException {
     doc = docHelper.documentFor(domString, null);
     item = (Element) doc.getDocumentElement().getElementsByTagName("elm").item(
         0);

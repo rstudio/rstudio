@@ -20,7 +20,15 @@ package com.google.gwt.uibinder.rebind;
  */
 public interface Statements {
 
-  Statements EMPTY = new Statements() {
+  /**
+   * Instance of {@link Statements} which does nothing.
+   */
+  Statements EMPTY = new Empty();
+
+  /**
+   * Implementation of {@link Statements} which does nothing.
+   */
+  class Empty implements Statements {
 
     public void addDetachStatement(String format, Object... args) {
     }

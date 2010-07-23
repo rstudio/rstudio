@@ -17,7 +17,6 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.uibinder.rebind.DesignTimeUtils;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -31,7 +30,7 @@ public class UIObjectParser implements ElementParser {
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
 
-    DesignTimeUtils.handleUIObject(writer, elem, fieldName);
+    writer.getDesignTime().handleUIObject(writer, elem, fieldName);
 
     String debugId = elem.consumeStringAttribute("debugId", null);
     if (null != debugId) {

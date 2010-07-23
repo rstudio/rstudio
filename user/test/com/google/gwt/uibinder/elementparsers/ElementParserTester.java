@@ -26,6 +26,7 @@ import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.rebind.DesignTimeUtilsStub;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.MockMortalLogger;
@@ -80,7 +81,8 @@ class ElementParserTester {
   final JClassType parsedType;
   final MockMortalLogger logger = new MockMortalLogger();
 
-  final W3cDomHelper docHelper = new W3cDomHelper(createLogger(), new MockResourceOracle());
+  final W3cDomHelper docHelper = new W3cDomHelper(createLogger(),
+      new MockResourceOracle());
   final TypeOracle types;
   final XMLElementProvider elemProvider;
   final MockUiBinderWriter writer;
@@ -104,7 +106,7 @@ class ElementParserTester {
     com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers bundleParsers = new com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers(
         types, logger, null, templatePath, null);
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
-        logger), bundleParsers, types, logger);
+        logger), bundleParsers, types, logger, DesignTimeUtilsStub.EMPTY);
 
     fieldManager = new FieldManager(types, logger);
     JClassType baseType = types.findType("my.Ui.BaseClass");
@@ -121,8 +123,9 @@ class ElementParserTester {
     Document doc = docHelper.documentFor(string, null);
     Element w3cElem = (Element) doc.getDocumentElement().getElementsByTagName(
         tag).item(0);
-    Assert.assertNotNull(String.format(
-        "Expected to find <%s> element in test DOM", tag), w3cElem);
+    Assert.assertNotNull(
+        String.format("Expected to find <%s> element in test DOM", tag),
+        w3cElem);
     XMLElement elem = elemProvider.get(w3cElem);
     return elem;
   }

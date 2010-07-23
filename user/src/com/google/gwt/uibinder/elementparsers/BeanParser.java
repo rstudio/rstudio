@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.uibinder.rebind.DesignTimeUtils;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -183,7 +182,6 @@ public class BeanParser implements ElementParser {
       String value = entry.getValue();
       writer.addStatement("%s.set%s(%s);", fieldName, initialCap(propertyName),
           value);
-      DesignTimeUtils.putAttribute(writer, elem, propertyName, value);
     }
   }
 
