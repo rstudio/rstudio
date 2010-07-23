@@ -23,17 +23,8 @@ function __MODULE_FUNC__() {
   ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
   ,$sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null
 
-  // Whether the document body element has finished loading
-  ,bodyDone
-  
-  // The downloaded script code, once it arrives
-  ,downloadedScript
-  
-  // Whether the main script has been injected yet
-  ,scriptInjected
-  
-  // The iframe holding the app's code
-  ,scriptFrame
+  // These variables gate calling gwtOnLoad; all must be true to start
+  ,gwtOnLoad, bodyDone
 
   // If non-empty, an alternate base url for this module
   ,base = ''
@@ -94,55 +85,25 @@ function __MODULE_FUNC__() {
     return result;
   }
   
-  // Called when the body has been finished and when the script
-  // to install is available. These can happen in either order.
-  // When both have happened, create the code-holding iframe.
+  // Called by onScriptLoad() and onload(). It causes
+  // the specified module to be cranked up.
   //
-  function maybeCreateFrame() {
-    if (bodyDone && downloadedScript && !scriptInjected) {
-    	scriptInjected = true;
-
-    	// Create the script frame, making sure it's invisible, but not
-    	// "display:none", which keeps some browsers from running code in it.
-    	scriptFrame = $doc.createElement('iframe');
-        scriptFrame.src = 'javascript:""';
-        scriptFrame.id = '__MODULE_NAME__';
-        scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none';
-        scriptFrame.tabIndex = -1;
-        document.body.appendChild(scriptFrame);
-
-        // For some reason, adding this setTimeout makes code installation
-        // more reliable.
-        setTimeout(function() {
-          installCode(downloadedScript);
-        })
+  function maybeStartModule() {
+    // TODO: it may not be necessary to check gwtOnLoad here.
+    if (gwtOnLoad && bodyDone) {
+      gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base, softPermutationId);
+      // Record when the module EntryPoints return.
+      $stats && $stats({
+        moduleName: '__MODULE_NAME__',
+        sessionId: $sessionId,
+        subSystem: 'startup',
+        evtGroup: 'moduleStartup',
+        millis:(new Date()).getTime(),
+        type: 'end',
+      });
     }
   }
 
-  // Install code into scriptFrame
-  //
-  function installCode(code) {
-    var doc = scriptFrame.contentDocument;
-    if (!doc) {
-      doc = scriptFrame.contentWindow.document;
-    }
-    
-    var dochead = doc.getElementsByTagName('head')[0];
-		
-    // Inject the fetched script into the script frame.
-    // The script will call onScriptLoad.
-    var script = doc.createElement('script');
-    script.language='javascript';
-    script.text = code;
-
-    dochead.appendChild(script);
-	  
-    // Remove the tag to shrink the DOM a little.
-    // It should have installed its code immediately after being added.
-    dochead.removeChild(script);
-  }
-
-  
   __COMPUTE_SCRIPT_BASE__
   __PROCESS_METAS__
 
@@ -205,32 +166,14 @@ function __MODULE_FUNC__() {
 
   // --------------- EXPOSED FUNCTIONS ----------------
 
-  // Called when the initial script code has been downloaded
-  __MODULE_FUNC__.onScriptDownloaded = function(code) {
-	downloadedScript = code;
-	maybeCreateFrame();
-  }
-  
-  // Called when the compiled script has been installed
+  // Called when the compiled script identified by moduleName is done loading.
   //
-  __MODULE_FUNC__.onScriptInstalled = function(gwtOnLoadFunc) {
+  __MODULE_FUNC__.onScriptLoad = function(gwtOnLoadFunc) {
     // remove the callback to prevent it being called twice
-    __MODULE_FUNC__.onScriptInstalled = null;
-    gwtOnLoadFunc(onLoadErrorFunc, '__MODULE_NAME__', base, softPermutationId);
-    // Record when the module EntryPoints return.
-    $stats && $stats({
-      moduleName: '__MODULE_NAME__',
-      sessionId: $sessionId,
-      subSystem: 'startup',
-      evtGroup: 'moduleStartup',
-      millis:(new Date()).getTime(),
-      type: 'end',
-    });
+    __MODULE_FUNC__.onScriptLoad = null;
+    gwtOnLoad = gwtOnLoadFunc;
+    maybeStartModule();
   }
-  
-  // Install code pulled in via runAsync
-  //
-  __MODULE_FUNC__.installCode = installCode;
 
   // --------------- STRAIGHT-LINE CODE ---------------
 
@@ -277,7 +220,7 @@ function __MODULE_FUNC__() {
 // __MODULE_STYLES_BEGIN__
      // Style resources are injected here to prevent operation aborted errors on ie
 // __MODULE_STYLES_END__
-      maybeCreateFrame();
+      maybeStartModule();
 
       if ($doc.removeEventListener) {
         $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);

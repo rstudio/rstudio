@@ -21,4 +21,8 @@
       class="com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy" />
     <when-linker-added name="xs" />
   </replace-with>
+
+  <set-property name="compiler.predeclare.cross.fragment.references" value="true">
+    <when-linker-added name="xs" />
+  </set-property>
 </module>
