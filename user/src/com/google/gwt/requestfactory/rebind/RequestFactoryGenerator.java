@@ -38,6 +38,7 @@ import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -101,8 +102,9 @@ public class RequestFactoryGenerator extends Generator {
 
     // If an implementation already exists, we don't need to do any work
     if (out != null) {
-      generateOnce(logger, generatorContext, out, interfaceType, packageName,
-          implName);
+      generateOnce(
+          typeOracle.findType(RequestFactory.class.getCanonicalName()), logger,
+          generatorContext, out, interfaceType, packageName, implName);
     }
 
     return packageName + "." + implName;
@@ -170,7 +172,7 @@ public class RequestFactoryGenerator extends Generator {
       sw.println();
 
       JClassType propertyType = printSchema(typeOracle, publicRecordType,
-          recordImplTypeName, eventType, sw, logger);
+          recordImplTypeName, eventType, sw);
 
       sw.println();
       String simpleImplName = publicRecordType.getSimpleSourceName() + "Impl";
@@ -218,7 +220,7 @@ public class RequestFactoryGenerator extends Generator {
     generatedRecordTypes.add(publicRecordType);
   }
 
-  private void generateOnce(TreeLogger logger,
+  private void generateOnce(JClassType requestFactoryType, TreeLogger logger,
       GeneratorContext generatorContext, PrintWriter out,
       JClassType interfaceType, String packageName, String implName)
       throws UnableToCompleteException {
@@ -237,40 +239,36 @@ public class RequestFactoryGenerator extends Generator {
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
 
-    // the return types tell us what request selector interfaces
-    // to implement
-    Set<JClassType> requestSelectors = new LinkedHashSet<JClassType>();
-    for (JMethod methodType : interfaceType.getMethods()) {
-      JType returnType = methodType.getReturnType();
+    // Find the requestSelector methods
+    // TODO allow getRequest type methods to live directly on the factory, w/o
+    // requiring a selector to get to them
+    // TODO rename variable this requestBuilders, holding off to avoid merge
+    // hell
+    Set<JMethod> requestSelectors = new LinkedHashSet<JMethod>();
+    for (JMethod method : interfaceType.getOverridableMethods()) {
+      if (method.getEnclosingType().equals(requestFactoryType)) {
+        continue;
+      }
+      JType returnType = method.getReturnType();
       if (null == returnType) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Illegal return type for %s. Methods of %s must return interfaces",
-            methodType.getName(), interfaceType.getName()));
+        logger.log(
+            TreeLogger.ERROR,
+            String.format(
+                "Illegal return type for %s. Methods of %s must return interfaces, found void",
+                method.getName(), interfaceType.getName()));
         throw new UnableToCompleteException();
       }
       JClassType asInterface = returnType.isInterface();
       if (null == asInterface) {
         logger.log(TreeLogger.ERROR, String.format(
             "Illegal return type for %s. Methods of %s must return interfaces",
-            methodType.getName(), interfaceType.getName()));
+            method.getName(), interfaceType.getName()));
         throw new UnableToCompleteException();
       }
-      requestSelectors.add(asInterface);
-    }
-        
-    // write a method for each sub-interface
-    for (JClassType requestSelector : requestSelectors) {
-      String qualifiedSourceName = requestSelector.getQualifiedSourceName();
-      String simpleSourceName = requestSelector.getSimpleSourceName();
-      sw.println("public " + qualifiedSourceName + " "
-          + getMethodName(simpleSourceName) + "() {");
-      sw.indent();
-      sw.println("return new " + qualifiedSourceName + "Impl(this);");
-      sw.outdent();
-      sw.println("}");
-      sw.println();
+      requestSelectors.add(method);
     }
 
+    // write init()
     JClassType recordToTypeInterface = generatorContext.getTypeOracle().findType(
         RecordToTypeMap.class.getName());
     String recordToTypeMapName = recordToTypeInterface.getName() + "Impl";
@@ -280,21 +278,31 @@ public class RequestFactoryGenerator extends Generator {
     sw.outdent();
     sw.println("}");
 
-    sw.outdent();
-    sw.println("}");
+    // write a method for each request builder and generate it
+    for (JMethod requestSelector : requestSelectors) {
+      String returnTypeName = requestSelector.getReturnType().getQualifiedSourceName();
+      String nestedImplName = requestSelector.getName().replace('.', '_')
+          + "Impl";
 
-    // generate an implementation for each request selector
+      sw.println("public " + returnTypeName + " " + requestSelector.getName()
+          + "() {");
+      sw.indent();
+      sw.println("return new " + nestedImplName + "(this);");
+      sw.outdent();
+      sw.println("}");
+      sw.println();
 
-    for (JClassType nestedInterface : requestSelectors) {
-      String nestedImplName = nestedInterface.getName() + "Impl";
-      String nestedImplPackage = nestedInterface.getPackage().getName();
-      PrintWriter pw = generatorContext.tryCreate(logger, nestedImplPackage,
+      PrintWriter pw = generatorContext.tryCreate(logger, packageName,
           nestedImplName);
       if (pw != null) {
         generateRequestSelectorImplementation(logger, generatorContext, pw,
-            nestedInterface, interfaceType, nestedImplPackage, nestedImplName);
+            requestSelector, interfaceType, packageName, nestedImplName);
       }
     }
+
+    // close the class
+    sw.outdent();
+    sw.println("}");
 
     // generate the mapping type implementation
     PrintWriter pw = generatorContext.tryCreate(logger, packageName,
@@ -308,8 +316,7 @@ public class RequestFactoryGenerator extends Generator {
 
   private void generateRecordToTypeMap(TreeLogger logger,
       GeneratorContext generatorContext, PrintWriter out,
-      JClassType interfaceType, String packageName, String implName)
-      throws UnableToCompleteException {
+      JClassType interfaceType, String packageName, String implName) {
     logger = logger.branch(TreeLogger.DEBUG, String.format(
         "Generating implementation of %s", interfaceType.getName()));
 
@@ -318,6 +325,7 @@ public class RequestFactoryGenerator extends Generator {
     f.addImport(interfaceType.getQualifiedSourceName());
     f.addImport(Record.class.getName());
     f.addImport(RecordSchema.class.getName());
+    f.addImport(interfaceType.getQualifiedSourceName());
     f.addImplementedInterface(interfaceType.getName());
 
     f.addImplementedInterface(interfaceType.getName());
@@ -350,17 +358,18 @@ public class RequestFactoryGenerator extends Generator {
 
   private void generateRequestSelectorImplementation(TreeLogger logger,
       GeneratorContext generatorContext, PrintWriter out,
-      JClassType interfaceType, JClassType mainType, String packageName,
+      JMethod selectorMethod, JClassType mainType, String packageName,
       String implName) throws UnableToCompleteException {
+    JClassType selectorInterface = selectorMethod.getReturnType().isInterface();
     logger = logger.branch(TreeLogger.DEBUG, String.format(
-        "Generating implementation of %s", interfaceType.getName()));
+        "Generating implementation of %s", selectorInterface.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
     f.addImport(ClientRequestHelper.class.getName());
     f.addImport(RequestDataManager.class.getName());
 
-    f.addImplementedInterface(interfaceType.getQualifiedSourceName());
+    f.addImplementedInterface(selectorInterface.getName());
 
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
@@ -377,13 +386,13 @@ public class RequestFactoryGenerator extends Generator {
     sw.println();
 
     // write each method.
-    for (JMethod method : interfaceType.getMethods()) {
+    for (JMethod method : selectorInterface.getOverridableMethods()) {
       JClassType returnType = method.getReturnType().isParameterized().getTypeArgs()[0];
 
       ensureRecordType(logger, generatorContext,
           returnType.getPackage().getName(), returnType);
 
-      String operationName = interfaceType.getQualifiedSourceName()
+      String operationName = selectorInterface.getQualifiedBinaryName()
           + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR + method.getName();
 
       JClassType requestType = method.getReturnType().isClassOrInterface();
@@ -455,13 +464,6 @@ public class RequestFactoryGenerator extends Generator {
     }
     sb.append(")");
     return sb.toString();
-  }
-
-  private String getMethodName(String simpleSourceName) {
-    int length = simpleSourceName.length();
-    assert length > 0;
-    return Character.toLowerCase(simpleSourceName.charAt(0))
-        + simpleSourceName.substring(1, length);
   }
 
   /**
@@ -552,8 +554,7 @@ public class RequestFactoryGenerator extends Generator {
    */
   private JClassType printSchema(TypeOracle typeOracle,
       JClassType publicRecordType, String recordImplTypeName,
-      JClassType eventType, SourceWriter sw, TreeLogger logger)
-      throws UnableToCompleteException {
+      JClassType eventType, SourceWriter sw) {
     sw.println(String.format(
         "public static class MySchema extends RecordSchema<%s> {",
         recordImplTypeName));
@@ -613,25 +614,13 @@ public class RequestFactoryGenerator extends Generator {
     sw.println();
     sw.println("public Class getToken() {");
     sw.indent();
-    sw.println("return " + publicRecordType.getQualifiedSourceName() + ".class;"
-        + " // special field");
+    sw.println("return " + publicRecordType.getQualifiedSourceName()
+        + ".class;" + " // special field");
     sw.outdent();
     sw.println("}");
 
     sw.outdent();
     sw.println("}");
     return propertyType;
-  }
-
-  private void validateTokenField(JClassType publicRecordType,
-      String fieldName, TypeOracle typeOracle, TreeLogger logger)
-      throws UnableToCompleteException {
-    JField field = publicRecordType.getField(fieldName);
-    if (field == null
-        || field.getType() != typeOracle.findType("java.lang.String")) {
-      logger.log(TreeLogger.ERROR, "The field " + fieldName
-          + " of type String must be defined on " + publicRecordType.getName());
-      throw new UnableToCompleteException();
-    }
   }
 }

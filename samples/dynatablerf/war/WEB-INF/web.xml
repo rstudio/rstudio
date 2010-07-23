@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>DynaTableRf.html</welcome-file>
+  </welcome-file-list>
+
+  <servlet>
+    <servlet-name>requestFactoryServlet</servlet-name>
+    <servlet-class>com.google.gwt.requestfactory.server.RequestFactoryServlet</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>requestFactoryServlet</servlet-name>
+    <url-pattern>/gwtRequest</url-pattern>
+  </servlet-mapping>
+
+</web-app>

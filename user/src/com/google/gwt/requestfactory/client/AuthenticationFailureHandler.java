@@ -31,7 +31,6 @@ import com.google.gwt.user.client.Window.Location;
 public class AuthenticationFailureHandler implements RequestEvent.Handler {
   private String lastSeenUser = null;
   
-  @Override
   public void onRequestEvent(RequestEvent requestEvent) {
     if (requestEvent.getState() == State.RECEIVED) {
       Response response = requestEvent.getResponse();

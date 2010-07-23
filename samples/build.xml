@@ -10,6 +10,10 @@
     <gwt.ant dir="dynatable" />
   </target>
 
+  <target name="dynatablerf" description="Build dynatablerf">
+    <gwt.ant dir="dynatablerf" />
+  </target>
+
   <target name="hello" description="Build hello">
     <gwt.ant dir="hello" />
   </target>

@@ -64,11 +64,11 @@ import javax.validation.ValidatorFactory;
  * URL the user should be sent in to login. If authentication fails, a header
  * named "userId" is returned, which will be unique to the user (so the app
  * can react if the signed in user has changed).
- *  
+ *
  * Configured via servlet init params.
  * <p>
  * e.g. - in order to use GAE authentication:
- * 
+ *
  * <pre>  &lt;init-param>
     &lt;param-name>userInfoClass&lt;/param-name>
     &lt;param-value>com.google.gwt.sample.expenses.server.domain.GaeUserInformation&lt;/param-value>
@@ -179,8 +179,6 @@ public class RequestFactoryServlet extends HttpServlet {
       throw new IllegalArgumentException(e);
     } catch (IllegalArgumentException e) {
       throw new RuntimeException(e);
-    } catch (InstantiationException e) {
-      throw new RuntimeException(e);
     }
   }
 
@@ -191,7 +189,7 @@ public class RequestFactoryServlet extends HttpServlet {
    * @param key the key of the record field
    * @return the ID of the new record, or null to auto generate
    */
-  protected Long generateIdForCreate(String key) {
+  protected Long generateIdForCreate(@SuppressWarnings("unused") String key) {
     // ignored. id is assigned by default.
     return null;
   }
@@ -283,7 +281,6 @@ public class RequestFactoryServlet extends HttpServlet {
     return rtn;
   }
 
-  @SuppressWarnings("unchecked")
   private void ensureConfig() {
     operationRegistry = new ReflectionBasedOperationRegistry(
         new DefaultSecurityProvider());
@@ -323,6 +320,7 @@ public class RequestFactoryServlet extends HttpServlet {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private Class<Object> getEntityFromRecordAnnotation(
       Class<? extends Record> record) {
     DataTransferObject dtoAnn = record.getAnnotation(DataTransferObject.class);
@@ -490,6 +488,7 @@ public class RequestFactoryServlet extends HttpServlet {
     return recordObject.get(key);
   }
 
+  @SuppressWarnings("unchecked")
   private Class<Record> getRecordFromClassToken(String recordToken) {
     try {
       Class<?> clazz = Class.forName(recordToken, false,
@@ -619,8 +618,7 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   private void sync(String content, PrintWriter writer)
-      throws SecurityException, NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException, InstantiationException {
+      throws SecurityException {
 
     try {
       JSONObject jsonObject = new JSONObject(content);

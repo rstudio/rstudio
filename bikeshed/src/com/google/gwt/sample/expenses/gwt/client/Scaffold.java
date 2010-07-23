@@ -84,14 +84,13 @@ public class Scaffold implements EntryPoint {
     /* Add a login widget to the page */
     
     final LoginWidget login = shell.getLoginWidget();
-    Receiver reciever = new Receiver<UserInformationRecord>() {
-      @Override
+    Receiver<UserInformationRecord> receiver = new Receiver<UserInformationRecord>() {
       public void onSuccess(UserInformationRecord userInformationRecord) {
         login.setUserInformation(userInformationRecord);
       }       
      };
      requestFactory.userInformationRequest()
-       .getCurrentUserInformation().to(reciever).fire();
+       .getCurrentUserInformation().to(receiver).fire();
 
     /* Left side lets us pick from all the types of entities */
 

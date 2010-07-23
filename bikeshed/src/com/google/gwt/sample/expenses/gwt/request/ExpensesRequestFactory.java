@@ -41,16 +41,9 @@ public interface ExpensesRequestFactory extends RequestFactory {
    * @return a request selector
    */
   ReportRequest reportRequest();
-  
+
   /**
    * @return a request selector
    */
   UserInformationRequest userInformationRequest();
-
-  // todo: probably will also need something like this to support custom service
-  // methods
-  // that do mutations, not just find:
-  // public ReportRequest reportRequest(DeltaValueStore deltas) {
-  // return new ReportRequestImpl(this);
-  // }
 }
