@@ -25,12 +25,16 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
+import com.google.gwt.requestfactory.client.LoginWidget;
+import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesEntityTypesProcessor;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
+import com.google.gwt.sample.expenses.gwt.request.UserInformationRecord;
 import com.google.gwt.sample.expenses.gwt.ui.ListActivitiesMapper;
 import com.google.gwt.sample.expenses.gwt.ui.ScaffoldListPlaceRenderer;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -72,6 +76,22 @@ public class Scaffold implements EntryPoint {
         }
       }
     });
+    
+    /* Check for Authentication failures or mismatches */
+    
+    eventBus.addHandler(RequestEvent.TYPE, new AuthenticationFailureHandler());
+
+    /* Add a login widget to the page */
+    
+    final LoginWidget login = shell.getLoginWidget();
+    Receiver reciever = new Receiver<UserInformationRecord>() {
+      @Override
+      public void onSuccess(UserInformationRecord userInformationRecord) {
+        login.setUserInformation(userInformationRecord);
+      }       
+     };
+     requestFactory.userInformationRequest()
+       .getCurrentUserInformation().to(reciever).fire();
 
     /* Left side lets us pick from all the types of entities */
 

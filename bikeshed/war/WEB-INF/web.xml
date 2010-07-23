@@ -9,6 +9,10 @@
   <servlet>
     <servlet-name>requestFactoryServlet</servlet-name>
     <servlet-class>com.google.gwt.requestfactory.server.RequestFactoryServlet</servlet-class>
+    <init-param>
+      <param-name>userInfoClass</param-name>
+      <param-value>com.google.gwt.sample.expenses.server.domain.GaeUserInformation</param-value>
+    </init-param>
   </servlet>
 
   <servlet>

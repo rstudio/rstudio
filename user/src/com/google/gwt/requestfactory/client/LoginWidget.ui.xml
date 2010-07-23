@@ -1,0 +1,10 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+  <g:HTMLPanel>
+    <div>
+      <span ui:field="name">Not logged in</span> |
+      <g:InlineLabel ui:field="logoutLink">Sign out</g:InlineLabel>
+    </div>
+  </g:HTMLPanel>
+</ui:UiBinder>

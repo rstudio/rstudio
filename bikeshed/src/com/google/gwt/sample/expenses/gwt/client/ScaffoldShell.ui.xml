@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:r='urn:import:com.google.gwt.requestfactory.client'
   xmlns:a='urn:import:com.google.gwt.app.client'>
 
   <ui:image field='gwtLogo'></ui:image>
@@ -43,6 +44,14 @@
       right: 12%;
       text-align: center;
       background-color: red;
+    }
+
+    .login {
+      position: absolute;
+      left: 75%;
+      right: 0%;
+      text-align: center;
+      background-color: yellow;
     }
 
     .users {
@@ -106,12 +115,13 @@
  
   <g:DockLayoutPanel unit='EM'>
     <g:north size='6'>
-      <g:HTML styleName='{style.centered}'>
+      <g:HTMLPanel styleName='{style.centered}'>
         <div class='{style.banner}'>
           <div class='{style.error}' ui:field='error'></div>
           <span class='{style.title}'><h2>Data Browser</h2></span>
+          <r:LoginWidget styleName='{style.login}' ui:field="loginWidget"/>
         </div>
-      </g:HTML>
+      </g:HTMLPanel>
     </g:north>
     <g:south size='2'>
       <g:HTML>

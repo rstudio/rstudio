@@ -257,13 +257,15 @@ public class RequestFactoryGenerator extends Generator {
       }
       requestSelectors.add(asInterface);
     }
+        
     // write a method for each sub-interface
     for (JClassType requestSelector : requestSelectors) {
+      String qualifiedSourceName = requestSelector.getQualifiedSourceName();
       String simpleSourceName = requestSelector.getSimpleSourceName();
-      sw.println("public " + simpleSourceName + " "
+      sw.println("public " + qualifiedSourceName + " "
           + getMethodName(simpleSourceName) + "() {");
       sw.indent();
-      sw.println("return new " + simpleSourceName + "Impl(this);");
+      sw.println("return new " + qualifiedSourceName + "Impl(this);");
       sw.outdent();
       sw.println("}");
       sw.println();
@@ -285,11 +287,12 @@ public class RequestFactoryGenerator extends Generator {
 
     for (JClassType nestedInterface : requestSelectors) {
       String nestedImplName = nestedInterface.getName() + "Impl";
-      PrintWriter pw = generatorContext.tryCreate(logger, packageName,
+      String nestedImplPackage = nestedInterface.getPackage().getName();
+      PrintWriter pw = generatorContext.tryCreate(logger, nestedImplPackage,
           nestedImplName);
       if (pw != null) {
         generateRequestSelectorImplementation(logger, generatorContext, pw,
-            nestedInterface, interfaceType, packageName, nestedImplName);
+            nestedInterface, interfaceType, nestedImplPackage, nestedImplName);
       }
     }
 
@@ -325,10 +328,10 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("public RecordSchema<? extends Record> getType(Class token) {");
     sw.indent();
     for (JClassType publicRecordType : generatedRecordTypes) {
-
-      sw.println("if (token == " + publicRecordType.getName() + ".class) {");
+      String qualifiedSourceName = publicRecordType.getQualifiedSourceName();
+      sw.println("if (token == " + qualifiedSourceName + ".class) {");
       sw.indent();
-      sw.println("return " + publicRecordType.getName() + "Impl.SCHEMA;");
+      sw.println("return " + qualifiedSourceName + "Impl.SCHEMA;");
       sw.outdent();
       sw.println("}");
     }
@@ -357,7 +360,7 @@ public class RequestFactoryGenerator extends Generator {
     f.addImport(ClientRequestHelper.class.getName());
     f.addImport(RequestDataManager.class.getName());
 
-    f.addImplementedInterface(interfaceType.getName());
+    f.addImplementedInterface(interfaceType.getQualifiedSourceName());
 
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();

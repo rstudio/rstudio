@@ -58,17 +58,21 @@ import javax.validation.ValidatorFactory;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Handles GWT RequestFactory JSON requests. Configured via servlet context
- * param <code>servlet.serverOperation</code>, which must be set to the name of
- * a default instantiable class implementing
- * com.google.gwt.requestfactory.shared.RequestFactory.Config.
+ * Handles GWT RequestFactory JSON requests.
+ * Does user authentication on every request, returning SC_UNAUTHORIZED if
+ * authentication fails, as well as a header named "login" which contains the
+ * URL the user should be sent in to login. If authentication fails, a header
+ * named "userId" is returned, which will be unique to the user (so the app
+ * can react if the signed in user has changed).
+ *  
+ * Configured via servlet init params.
  * <p>
- * e.g.
+ * e.g. - in order to use GAE authentication:
  * 
- * <pre>  &lt;context-param>
-    &lt;param-name>servlet.serverOperation&lt;/param-name>
-    &lt;param-value>com.myco.myapp.MyAppServerSideOperations&lt;/param-value>
-  &lt;/context-param>
+ * <pre>  &lt;init-param>
+    &lt;param-name>userInfoClass&lt;/param-name>
+    &lt;param-value>com.google.gwt.sample.expenses.server.domain.GaeUserInformation&lt;/param-value>
+  &lt;/init-param>
 
  * </pre>
  */
@@ -98,7 +102,8 @@ public class RequestFactoryServlet extends HttpServlet {
     }
     return Collections.unmodifiableSet(blackList);
   }
-
+  
+  private UserInformationImpl userInfo;
   private OperationRegistry operationRegistry;
 
   @SuppressWarnings("unchecked")
@@ -110,48 +115,55 @@ public class RequestFactoryServlet extends HttpServlet {
 
     RequestDefinition operation = null;
     try {
-      response.setStatus(HttpServletResponse.SC_OK);
-      PrintWriter writer = response.getWriter();
-      JSONObject topLevelJsonObject = new JSONObject(getContent(request));
-      String operationName = topLevelJsonObject.getString(RequestDataManager.OPERATION_TOKEN);
-      if (operationName.equals(RequestFactory.SYNC)) {
-        sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
-            writer);
+      // Check that user is logged in before proceeding
+      if (!userInfo.isUserLoggedIn()) {
+        response.setHeader("login", userInfo.getLoginUrl());
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
       } else {
-        operation = getOperation(operationName);
-        Class<?> domainClass = Class.forName(operation.getDomainClassName());
-        Method domainMethod = domainClass.getMethod(
-            operation.getDomainMethodName(), operation.getParameterTypes());
-        if (!Modifier.isStatic(domainMethod.getModifiers())) {
-          throw new IllegalArgumentException("the " + domainMethod.getName()
-              + " is not static");
-        }
-        Object args[] = RequestDataManager.getObjectsFromParameterMap(
-            getParameterMap(topLevelJsonObject),
-            domainMethod.getParameterTypes());
-        Object result = invokeStaticDomainMethod(domainMethod, args);
-
-        if ((result instanceof List<?>) != operation.isReturnTypeList()) {
-          throw new IllegalArgumentException(String.format(
-              "Type mismatch, expected %s%s, but %s returns %s",
-              operation.isReturnTypeList() ? "list of " : "",
-              operation.getReturnType(), domainMethod,
-              domainMethod.getReturnType()));
-        }
-
-        if (result instanceof List<?>) {
-          JSONArray jsonArray = getJsonArray((List<?>) result,
-              (Class<? extends Record>) operation.getReturnType());
-          writer.print(jsonArray.toString());
-        } else if (result instanceof Number) {
-          writer.print(result.toString());
+        response.setHeader("userId", String.format("%d", userInfo.getId()));
+        response.setStatus(HttpServletResponse.SC_OK);
+        PrintWriter writer = response.getWriter();
+        JSONObject topLevelJsonObject = new JSONObject(getContent(request));
+        String operationName = topLevelJsonObject.getString(RequestDataManager.OPERATION_TOKEN);
+        if (operationName.equals(RequestFactory.SYNC)) {
+          sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
+              writer);
         } else {
-          JSONObject jsonObject = getJsonObject(result,
-              (Class<? extends Record>) operation.getReturnType());
-          writer.print("(" + jsonObject.toString() + ")");
+          operation = getOperation(operationName);
+          Class<?> domainClass = Class.forName(operation.getDomainClassName());
+          Method domainMethod = domainClass.getMethod(
+              operation.getDomainMethodName(), operation.getParameterTypes());
+          if (!Modifier.isStatic(domainMethod.getModifiers())) {
+            throw new IllegalArgumentException("the " + domainMethod.getName()
+                + " is not static");
+          }
+          Object args[] = RequestDataManager.getObjectsFromParameterMap(
+              getParameterMap(topLevelJsonObject),
+              domainMethod.getParameterTypes());
+          Object result = invokeStaticDomainMethod(domainMethod, args);
+
+          if ((result instanceof List<?>) != operation.isReturnTypeList()) {
+            throw new IllegalArgumentException(String.format(
+                "Type mismatch, expected %s%s, but %s returns %s",
+                operation.isReturnTypeList() ? "list of " : "",
+                operation.getReturnType(), domainMethod,
+                domainMethod.getReturnType()));
+          }
+
+          if (result instanceof List<?>) {
+            JSONArray jsonArray = getJsonArray((List<?>) result,
+                (Class<? extends Record>) operation.getReturnType());
+            writer.print(jsonArray.toString());
+          } else if (result instanceof Number) {
+            writer.print(result.toString());
+          } else {
+            JSONObject jsonObject = getJsonObject(result,
+                (Class<? extends Record>) operation.getReturnType());
+            writer.print("(" + jsonObject.toString() + ")");
+          }
         }
+        writer.flush();
       }
-      writer.flush();
       // TODO: clean exception handling code below.
     } catch (ClassNotFoundException e) {
       throw new IllegalArgumentException(e);
@@ -275,6 +287,22 @@ public class RequestFactoryServlet extends HttpServlet {
   private void ensureConfig() {
     operationRegistry = new ReflectionBasedOperationRegistry(
         new DefaultSecurityProvider());
+    
+    // Instantiate a class for authentication, using either the default
+    // UserInfo class, or a subclass if the web.xml specifies one. This allows
+    // clients to use a Google App Engine based authentication class without
+    // adding GAE dependencies to GWT.
+    String userInfoClass = getServletConfig().getInitParameter("userInfoClass");
+    if (userInfoClass != null) {
+      try {
+        userInfo = (UserInformationImpl) Class.forName(userInfoClass).newInstance();
+      } catch (Exception e) {
+        e.printStackTrace();
+      } 
+    }
+    if (userInfo == null) {
+      userInfo = new UserInformationImpl();
+    }
   }
 
   private String getContent(HttpServletRequest request) throws IOException {

@@ -46,9 +46,9 @@ import java.util.Set;
  */
 public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
-  private ValueStoreJsonImpl valueStore;
-
   private HandlerManager handlerManager;
+  
+  private ValueStoreJsonImpl valueStore;
 
   public void fire(final RequestObject<?> requestObject) {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
@@ -57,7 +57,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
-        postRequestEvent(State.RECEIVED);
+        postRequestEvent(State.RECEIVED, null);
         // shell.error.setInnerText(SERVER_ERROR);
       }
 
@@ -69,14 +69,14 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
           // shell.error.setInnerText(SERVER_ERROR + " ("
           // + response.getStatusText() + ")");
         }
-        postRequestEvent(State.RECEIVED);
+        postRequestEvent(State.RECEIVED, response);
       }
 
     });
 
     try {
       builder.send();
-      postRequestEvent(State.SENT);
+      postRequestEvent(State.SENT, null);
     } catch (RequestException e) {
       // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
       // ")");
@@ -105,7 +105,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {
-            postRequestEvent(State.RECEIVED);
+            postRequestEvent(State.RECEIVED, null);
             // shell.error.setInnerText(SERVER_ERROR);
           }
 
@@ -117,13 +117,13 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
               // shell.error.setInnerText(SERVER_ERROR + " ("
               // + response.getStatusText() + ")");
             }
-            postRequestEvent(State.RECEIVED);
+            postRequestEvent(State.RECEIVED, response);
           }
         });
 
         try {
           builder.send();
-          postRequestEvent(State.SENT);
+          postRequestEvent(State.SENT, null);
         } catch (RequestException e) {
           // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
           // ")");
@@ -145,7 +145,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     this.handlerManager = handlerManager;
   }
 
-  private void postRequestEvent(State received) {
-    handlerManager.fireEvent(new RequestEvent(received));
+  private void postRequestEvent(State received, Response response) {
+    handlerManager.fireEvent(new RequestEvent(received, response));
   }
 }
