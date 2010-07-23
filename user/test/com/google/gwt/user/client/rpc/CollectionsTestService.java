@@ -25,13 +25,11 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeUnmodifiable;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -157,26 +155,5 @@ public interface CollectionsTestService extends RemoteService {
 
   // For Collections.singletonList()
   List<MarkerTypeSingleton> echoSingletonList(List<MarkerTypeSingleton> value)
-      throws CollectionsTestServiceException;
-
-  // For Collections.singletonMap()
-  Map<Integer, MarkerTypeSingleton> echoSingletonMap(Map<Integer, MarkerTypeSingleton> value)
-      throws CollectionsTestServiceException;
-
-  // For Collections.unmodifiableCollection()
-  Collection<MarkerTypeUnmodifiable> echoUnmodifiableCollection(Collection<MarkerTypeUnmodifiable> value)
-      throws CollectionsTestServiceException;
-
-  // For Collections.unmodifiableList()
-  List<MarkerTypeUnmodifiable> echoUnmodifiableList(List<MarkerTypeUnmodifiable> value)
-      throws CollectionsTestServiceException;
-
-  // For Collections.unmodifiableMap()
-  Map<Integer, MarkerTypeUnmodifiable> echoUnmodifiableMap(
-      Map<Integer, MarkerTypeUnmodifiable> value)
-      throws CollectionsTestServiceException;
-
-  // For Collections.unmodifiableSet()
-  Set<MarkerTypeUnmodifiable> echoUnmodifiableSet(Set<MarkerTypeUnmodifiable> value)
       throws CollectionsTestServiceException;
 }

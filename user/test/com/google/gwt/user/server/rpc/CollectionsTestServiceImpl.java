@@ -28,14 +28,12 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeUnmodifiable;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -435,51 +433,6 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
   public List<MarkerTypeSingleton> echoSingletonList(
       List<MarkerTypeSingleton> value) throws CollectionsTestServiceException {
     if (!TestSetValidator.isValidSingletonList(value)) {
-      throw new CollectionsTestServiceException();
-    }
-
-    return value;
-  }
-
-  public Map<Integer, MarkerTypeSingleton> echoSingletonMap(
-      Map<Integer, MarkerTypeSingleton> value) throws CollectionsTestServiceException {
-    if (!TestSetValidator.isValidSingletonMap(value)) {
-      throw new CollectionsTestServiceException();
-    }
-
-    return value;
-  }
-
-  public Collection<MarkerTypeUnmodifiable> echoUnmodifiableCollection(
-      Collection<MarkerTypeUnmodifiable> value) throws CollectionsTestServiceException {
-    if (!TestSetValidator.isValidUnmodifiableCollection(value)) {
-      throw new CollectionsTestServiceException();
-    }
-
-    return value;
-  }
-
-  public List<MarkerTypeUnmodifiable> echoUnmodifiableList(
-      List<MarkerTypeUnmodifiable> value) throws CollectionsTestServiceException {
-    if (!TestSetValidator.isValidUnmodifiableList(value)) {
-      throw new CollectionsTestServiceException();
-    }
-
-    return value;
-  }
-
-  public Map<Integer, MarkerTypeUnmodifiable> echoUnmodifiableMap(
-      Map<Integer, MarkerTypeUnmodifiable> value) throws CollectionsTestServiceException {
-    if (!TestSetValidator.isValidUnmodifiableMap(value)) {
-      throw new CollectionsTestServiceException();
-    }
-
-    return value;
-  }
-
-  public Set<MarkerTypeUnmodifiable> echoUnmodifiableSet(
-      Set<MarkerTypeUnmodifiable> value) throws CollectionsTestServiceException {
-    if (!TestSetValidator.isValidUnmodifiableSet(value)) {
       throw new CollectionsTestServiceException();
     }
 

@@ -19,7 +19,6 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeUnmodifiable;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
@@ -31,7 +30,6 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertSame;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,10 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.RandomAccess;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -556,27 +551,6 @@ public class TestSetValidator {
     return true;
   }
 
-  public static boolean isValidSingletonMap(Map<Integer, MarkerTypeSingleton> map) {
-    if (map == null || map.size() != 1) {
-      return false;
-    }
-    try {
-      map.put(3, new MarkerTypeSingleton());
-      return false;
-    } catch (UnsupportedOperationException e) {
-    }
-    Object value = map.get(2);
-    // Perform instanceof check in case RPC did the wrong thing
-    if (!(value instanceof MarkerTypeSingleton)) {
-      return false;
-    }
-    MarkerTypeSingleton singleton = (MarkerTypeSingleton) value;
-    if (!"singleton".equals(singleton.getValue())) {
-      return false;
-    }
-    return true;
-  }
-
   public static boolean isValidTrivialCyclicGraph(
       SerializableDoublyLinkedNode actual) {
     if (actual == null) {
@@ -601,169 +575,6 @@ public class TestSetValidator {
       return false;
     }
 
-    return true;
-  }
-
-  public static boolean isValidUnmodifiableCollection(Collection<MarkerTypeUnmodifiable> collection) {
-    if (collection == null || collection.size() != 1) {
-      return false;
-    }
-    try {
-      collection.add(new MarkerTypeUnmodifiable());
-      return false;
-    } catch (UnsupportedOperationException e) {
-    }
-
-    Object value = collection.iterator().next();
-    // Perform instanceof check in case RPC did the wrong thing
-    if (!(value instanceof MarkerTypeUnmodifiable)) {
-      return false;
-    }
-    MarkerTypeUnmodifiable v = (MarkerTypeUnmodifiable) value;
-    if (!"unmodifiable".equals(v.getValue())) {
-      return false;
-    }
-    return true;
-  }
-
-  public static boolean isValidUnmodifiableList(List<MarkerTypeUnmodifiable> list) {
-    if (list == null || list.size() != 1) {
-      return false;
-    }
-    try {
-      list.add(new MarkerTypeUnmodifiable());
-      return false;
-    } catch (UnsupportedOperationException e) {
-    }
-
-    Object value = list.get(0);
-    // Perform instanceof check in case RPC did the wrong thing
-    if (!(value instanceof MarkerTypeUnmodifiable)) {
-      return false;
-    }
-    MarkerTypeUnmodifiable v = (MarkerTypeUnmodifiable) value;
-    if (!"unmodifiable".equals(v.getValue())) {
-      return false;
-    }
-    return true;
-  }
-
-  public static boolean isValidUnmodifiableMap(Map<Integer, MarkerTypeUnmodifiable> map) {
-    if (map == null || map.size() != 1) {
-      return false;
-    }
-    try {
-      map.put(2, new MarkerTypeUnmodifiable());
-      return false;
-    } catch (UnsupportedOperationException e) {
-    }
-
-    Object value = map.get(1);
-    // Perform instanceof check in case RPC did the wrong thing
-    if (!(value instanceof MarkerTypeUnmodifiable)) {
-      return false;
-    }
-    MarkerTypeUnmodifiable v = (MarkerTypeUnmodifiable) value;
-    if (!"unmodifiable".equals(v.getValue())) {
-      return false;
-    }
-    return true;
-  }
-
-  public static boolean isValidUnmodifiableRandomAccessList(List<MarkerTypeUnmodifiable> list) {
-    if (list == null || list.size() != 1) {
-      return false;
-    }
-    if (!(list instanceof RandomAccess)) {
-      return false;
-    }
-    try {
-      list.add(new MarkerTypeUnmodifiable());
-      return false;
-    } catch (UnsupportedOperationException e) {
-    }
-
-    Object value = list.get(0);
-    // Perform instanceof check in case RPC did the wrong thing
-    if (!(value instanceof MarkerTypeUnmodifiable)) {
-      return false;
-    }
-    MarkerTypeUnmodifiable v = (MarkerTypeUnmodifiable) value;
-    if (!"unmodifiable".equals(v.getValue())) {
-      return false;
-    }
-    return true;
-  }
-
-  public static boolean isValidUnmodifiableSet(Set<MarkerTypeUnmodifiable> set) {
-    if (set == null || set.size() != 1) {
-      return false;
-    }
-    try {
-      set.add(new MarkerTypeUnmodifiable());
-      return false;
-    } catch (UnsupportedOperationException e) {
-    }
-
-    Object value = set.iterator().next();
-    // Perform instanceof check in case RPC did the wrong thing
-    if (!(value instanceof MarkerTypeUnmodifiable)) {
-      return false;
-    }
-    MarkerTypeUnmodifiable v = (MarkerTypeUnmodifiable) value;
-    if (!"unmodifiable".equals(v.getValue())) {
-      return false;
-    }
-    return true;
-  }
-
-  public static boolean isValidUnmodifiableSortedMap(Map<Integer, MarkerTypeUnmodifiable> map) {
-    if (map == null || map.size() != 1) {
-      return false;
-    }
-    if (!(map instanceof SortedMap<?, ?>)) {
-      return false;
-    }
-    try {
-      map.put(2, new MarkerTypeUnmodifiable());
-      return false;
-    } catch (UnsupportedOperationException e) {
-    }
-
-    Object value = map.get(1);
-    // Perform instanceof check in case RPC did the wrong thing
-    if (!(value instanceof MarkerTypeUnmodifiable)) {
-      return false;
-    }
-    MarkerTypeUnmodifiable v = (MarkerTypeUnmodifiable) value;
-    if (!"unmodifiable".equals(v.getValue())) {
-      return false;
-    }
-    return true;
-  }
-
-  public static boolean isValidUnmodifiableSortedSet(Set<MarkerTypeUnmodifiable> set) {
-    if (set == null || set.size() != 1) {
-      return false;
-    }
-    if (!(set instanceof SortedSet<?>)) {
-      return false;
-    }
-    try {
-      set.add(new MarkerTypeUnmodifiable());
-      return false;
-    } catch (UnsupportedOperationException e) {
-    }
-
-    Object value = set.iterator().next();
-    // Perform instanceof check in case RPC did the wrong thing
-    if (!(value instanceof MarkerTypeUnmodifiable)) {
-      return false;
-    }
-    MarkerTypeUnmodifiable v = (MarkerTypeUnmodifiable) value;
-    if (!"unmodifiable".equals(v.getValue())) {
-      return false;
-    }
     return true;
   }
 

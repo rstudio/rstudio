@@ -25,13 +25,11 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeUnmodifiable;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -139,24 +137,4 @@ public interface CollectionsTestServiceAsync {
   // For Collections.singletonList()
   void echoSingletonList(List<MarkerTypeSingleton> value,
       AsyncCallback<List<MarkerTypeSingleton>> callback);
-
-  // For Collections.singletonMap()
-  void echoSingletonMap(Map<Integer, MarkerTypeSingleton> value,
-      AsyncCallback<Map<Integer, MarkerTypeSingleton>> callback);
-
-  // For Collections.unmodifiableCollection()
-  void echoUnmodifiableCollection(Collection<MarkerTypeUnmodifiable> value,
-      AsyncCallback<Collection<MarkerTypeUnmodifiable>> callback);
-
-  // For Collections.unmodifiableList()
-  void echoUnmodifiableList(List<MarkerTypeUnmodifiable> value,
-      AsyncCallback<List<MarkerTypeUnmodifiable>> callback);
-
-  // For Collections.unmodifiableMap()
-  void echoUnmodifiableMap(Map<Integer, MarkerTypeUnmodifiable> value,
-      AsyncCallback<Map<Integer, MarkerTypeUnmodifiable>> callback);
-
-  // For Collections.unmodifiableSet()
-  void echoUnmodifiableSet(Set<MarkerTypeUnmodifiable> value,
-      AsyncCallback<Set<MarkerTypeUnmodifiable>> callback);
 }
