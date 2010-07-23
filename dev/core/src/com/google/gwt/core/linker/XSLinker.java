@@ -17,6 +17,7 @@ package com.google.gwt.core.linker;
 
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
@@ -24,6 +25,8 @@ import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.js.JsToStringGenerationVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.dev.util.Util;
 
 /**
  * Generates a cross-site compatible bootstrap sequence.
@@ -40,6 +43,7 @@ public class XSLinker extends SelectionScriptLinker {
   protected String generateDeferredFragment(TreeLogger logger,
       LinkerContext context, int fragment, String js) {
     StringBuilder sb = new StringBuilder();
+    sb.append("$wnd.");
     sb.append(context.getModuleFunctionName());
     sb.append(".runAsyncCallback");
     sb.append(fragment);
@@ -47,6 +51,27 @@ public class XSLinker extends SelectionScriptLinker {
     sb.append(JsToStringGenerationVisitor.javaScriptString(js));
     sb.append(");\n");
     return sb.toString();
+  }
+
+  @Override
+  protected byte[] generatePrimaryFragment(TreeLogger logger,
+      LinkerContext context, CompilationResult result, String[] js) {
+    // Wrap the script code with its prefix and suffix
+    TextOutput script = new DefaultTextOutput(context.isOutputCompact());
+    script.print(getModulePrefix(context, result.getStrongName(), js.length > 1));
+    script.print(js[0]);
+    script.print(getModuleSuffix(logger, context));
+
+    // Rewrite the code so it can be installed with
+    // __MODULE_FUNC__.onScriptDownloaded
+
+    StringBuffer out = new StringBuffer();
+    out.append(context.getModuleFunctionName());
+    out.append(".onScriptDownloaded(");
+    out.append(JsToStringGenerationVisitor.javaScriptString(script.toString()));
+    out.append(")");
+
+    return Util.getBytes(out.toString());
   }
 
   @Override
@@ -58,13 +83,13 @@ public class XSLinker extends SelectionScriptLinker {
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
       String strongName) {
-    return getModulePrefix(context, strongName, true);
+    throw new UnsupportedOperationException("Should not be called");
   }
 
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
       String strongName, int numFragments) {
-    return getModulePrefix(context, strongName, numFragments > 1);
+    throw new UnsupportedOperationException("Should not be called");
   }
 
   @Override
@@ -78,11 +103,9 @@ public class XSLinker extends SelectionScriptLinker {
 
     // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();
-    out.print("if (" + context.getModuleFunctionName() + " && "
-        + context.getModuleFunctionName() + ".onScriptLoad)"
-        + context.getModuleFunctionName() + ".onScriptLoad(gwtOnLoad);");
-    out.newlineOpt();
-    out.print("})();");
+    out.print("if ($wnd." + context.getModuleFunctionName() + " && $wnd."
+        + context.getModuleFunctionName() + ".onScriptInstalled) $wnd."
+        + context.getModuleFunctionName() + ".onScriptInstalled(gwtOnLoad);");
     out.newlineOpt();
 
     return out.toString();
@@ -96,16 +119,11 @@ public class XSLinker extends SelectionScriptLinker {
 
   private String getModulePrefix(LinkerContext context, String strongName,
       boolean supportRunAsync) {
-    DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
-
-    out.print("(function(){");
-    out.newlineOpt();
-
-    // Setup the well-known variables.
-    //
+    TextOutput out = new DefaultTextOutput(context.isOutputCompact());
+    
     out.print("var $gwt_version = \"" + About.getGwtVersionNum() + "\";");
     out.newlineOpt();
-    out.print("var $wnd = window;");
+    out.print("var $wnd = window.parent;");
     out.newlineOpt();
     out.print("var $doc = $wnd.document;");
     out.newlineOpt();
@@ -125,13 +143,10 @@ public class XSLinker extends SelectionScriptLinker {
     out.newlineOpt();
 
     if (supportRunAsync) {
-      out.print(context.getModuleFunctionName());
-      out.print(".installCode = function(code) { eval(code) };");
-      out.newlineOpt();
-      out.print("var __gwtModuleFunction = ");
+      out.print("var __gwtModuleFunction = $wnd.");
       out.print(context.getModuleFunctionName());
       out.print(";");
-      out.newline();
+      out.newlineOpt();
     }
 
     return out.toString();

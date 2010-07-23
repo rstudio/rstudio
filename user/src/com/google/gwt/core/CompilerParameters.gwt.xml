@@ -22,17 +22,6 @@
   <define-configuration-property name='compiler.splitpoint.initial.sequence'
     is-multi-valued='true' />
 
-  <!--
-    Whether or not the compiler should predeclare variables that are defined
-    outside the initial download and are referenced from a different code
-    fragment than the one defining them. This is usually determined by which
-    linker is used and is not directly meaningful to users.
-  -->
-  <define-property name="compiler.predeclare.cross.fragment.references"
-    values="true,false" />
-  <set-property name="compiler.predeclare.cross.fragment.references"
-    value="false" />
-
   <!-- From here down, the properties are unsupported and are only available for test cases -->
 
   <!--
