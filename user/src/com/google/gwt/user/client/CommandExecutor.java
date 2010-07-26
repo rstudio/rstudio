@@ -315,16 +315,10 @@ class CommandExecutor {
 
         } finally {
           wasCanceled = iterator.wasRemoved();
-          if (wasCanceled) {
-            /*
-             * The iterator may have already had its remove method called, if it
-             * has, then we need to exit without updating any state
-             */
-            return;
-          }
-
-          if (removeCommand) {
-            iterator.remove();
+          if (!wasCanceled) {
+            if (removeCommand) {
+              iterator.remove();
+            }
           }
         }
 
