@@ -267,6 +267,17 @@ public class RequestFactoryGenerator extends Generator {
       }
       requestSelectors.add(method);
     }
+    
+    // In addition to the request selectors in the generated interface, there
+    // are a few which are in RequestFactory which also need to have
+    // implementations generated. Hard coding the addition of these here for now
+    JClassType t = generatorContext.getTypeOracle().findType(
+        RequestFactory.class.getName());
+    try {
+      requestSelectors.add(t.getMethod("loggingRequest", new JType[0]));
+    } catch (NotFoundException e) {
+      e.printStackTrace();
+    }
 
     // write init()
     JClassType recordToTypeInterface = generatorContext.getTypeOracle().findType(
@@ -368,8 +379,8 @@ public class RequestFactoryGenerator extends Generator {
         packageName, implName);
     f.addImport(ClientRequestHelper.class.getName());
     f.addImport(RequestDataManager.class.getName());
-
-    f.addImplementedInterface(selectorInterface.getName());
+    f.addImport(mainType.getQualifiedSourceName() + "Impl");
+    f.addImplementedInterface(selectorInterface.getQualifiedSourceName());
 
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();

@@ -18,7 +18,22 @@
 <module rename-to="scaffold">
   <inherits name="com.google.gwt.user.User" />
   <inherits name="com.google.gwt.user.theme.standard.Standard" />
+  <inherits name="com.google.gwt.logging.Logging"/>
 
   <inherits name="com.google.gwt.sample.expenses.gwt.ExpensesCommon" />
   <entry-point class="com.google.gwt.sample.expenses.gwt.client.Scaffold" />
+
+  <!-- Logging Configuration -->
+  <!-- Right now, App Engine Dev Mode logging is borken for everything other
+       than the system handler, so only that one is enabled for now -->
+  <set-property name="gwt.logging.enabled" value="TRUE"/> 
+  <set-property name="gwt.logging.logLevel" value="INFO"/>
+  <set-property name="gwt.logging.consoleHandler" value="DISABLED" />
+  <set-property name="gwt.logging.developmentModeHandler" value="DISABLED" />
+  <set-property name="gwt.logging.firebugHandler" value="DISABLED" />
+  <set-property name="gwt.logging.hasWidgetsHandler" value="DISABLED" />
+  <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+  <set-property name="gwt.logging.systemHandler" value="ENABLED" />
+  <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
+
 </module>

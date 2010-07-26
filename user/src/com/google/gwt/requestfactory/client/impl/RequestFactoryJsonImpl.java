@@ -22,11 +22,12 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.requestfactory.client.RequestFactoryLogHandler;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
+import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncRequest;
-import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.valuestore.client.DeltaValueStoreJsonImpl;
 import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
@@ -35,6 +36,8 @@ import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * <p>
@@ -46,10 +49,15 @@ import java.util.Set;
  */
 public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
+  private static Logger logger =
+    Logger.getLogger(RequestFactory.class.getName());
+  
+  private static String SERVER_ERROR = "Server Error";
+  
   private HandlerManager handlerManager;
   
   private ValueStoreJsonImpl valueStore;
-
+  
   public void fire(final RequestObject<?> requestObject) {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         GWT.getHostPageBaseURL() + RequestFactory.URL);
@@ -58,16 +66,16 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
       public void onError(Request request, Throwable exception) {
         postRequestEvent(State.RECEIVED, null);
-        // shell.error.setInnerText(SERVER_ERROR);
+        logger.log(Level.SEVERE, SERVER_ERROR, exception);
       }
 
       public void onResponseReceived(Request request, Response response) {
+        logger.finest("Response received");
         if (200 == response.getStatusCode()) {
           String text = response.getText();
           requestObject.handleResponseText(text);
         } else {
-          // shell.error.setInnerText(SERVER_ERROR + " ("
-          // + response.getStatusText() + ")");
+          logger.severe(SERVER_ERROR + " (" + response.getStatusText() + ")");
         }
         postRequestEvent(State.RECEIVED, response);
       }
@@ -75,11 +83,11 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     });
 
     try {
+      logger.finest("Sending fire request");
       builder.send();
       postRequestEvent(State.SENT, null);
     } catch (RequestException e) {
-      // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
-      // ")");
+      logger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() +  ")", e);
     }
   }
 
@@ -106,27 +114,27 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
           public void onError(Request request, Throwable exception) {
             postRequestEvent(State.RECEIVED, null);
-            // shell.error.setInnerText(SERVER_ERROR);
+            logger.log(Level.SEVERE, SERVER_ERROR, exception);
           }
 
           public void onResponseReceived(Request request, Response response) {
+            logger.finest("Response received");
             if (200 == response.getStatusCode()) {
               // parse the return value.
               receiver.onSuccess(jsonDeltas.commit(response.getText()));
             } else {
-              // shell.error.setInnerText(SERVER_ERROR + " ("
-              // + response.getStatusText() + ")");
+              logger.severe(SERVER_ERROR + " (" + response.getStatusText() + ")");
             }
             postRequestEvent(State.RECEIVED, response);
           }
         });
 
         try {
+          logger.finest("Sending sync request");
           builder.send();
           postRequestEvent(State.SENT, null);
         } catch (RequestException e) {
-          // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
-          // ")");
+          logger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() +  ")", e);
         }
       }
 
@@ -143,6 +151,16 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   protected void init(HandlerManager handlerManager, RecordToTypeMap map) {
     this.valueStore = new ValueStoreJsonImpl(handlerManager, map);
     this.handlerManager = handlerManager;
+    // This Handler should really get added to the Root Logger here, but until
+    // App Engine Dev Mode logging is fixed, we can't use client side handlers
+    // on the Root Logger. Instead, just add it to our own logger as a proof of
+    // concept, and then log a Severe message to it to prove that it's working
+    // All the "finest" messages that this class normally logs are not logged
+    // to this handler since it would cause an infinite loop.
+    // TODO(unnurg): Once this is all set up, ensure that the severe messages
+    // in this class do not cause infinite loops during legitimate errors.
+    logger.addHandler(new RequestFactoryLogHandler(this));
+    logger.severe("Successful initialization!");
   }
 
   private void postRequestEvent(State received, Response response) {
