@@ -542,6 +542,9 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
     assertEquals("055", DateTimeFormat.getFormat("SSS").format(date, utc));
     assertEquals("06", DateTimeFormat.getFormat("SS").format(date, utc));
     assertEquals("1", DateTimeFormat.getFormat("S").format(date, utc));
+    
+    date = new Date(midnight);
+    assertEquals("000", DateTimeFormat.getFormat("SSS").format(date, utc));
   }
   
   public void testZeroPadYear() {

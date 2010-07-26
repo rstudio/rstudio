@@ -1254,6 +1254,9 @@ public class DateTimeFormat {
     int value;
     if (time < 0) {
       value = 1000 - (int) (-time % 1000);
+      if (value == 1000) {
+        value = 0;
+      }
     } else {
       value = (int) (time % 1000);
     }
