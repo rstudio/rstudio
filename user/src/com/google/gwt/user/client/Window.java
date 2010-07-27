@@ -821,9 +821,9 @@ public class Window {
   }-*/;
 
   /**
-   * Sets the status text for the window. Calling this method in Firefox has no
-   * effect.
-   * 
+   * Sets the status text for the window, if permitted by the browser's
+   * settings.
+   *
    * @param status the new message to display.
    */
   public static native void setStatus(String status) /*-{
