@@ -18,6 +18,8 @@ package com.google.gwt.cell.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
+import java.util.Set;
+
 /**
  * A light weight representation of a renderable object.
  *
@@ -30,17 +32,34 @@ import com.google.gwt.dom.client.NativeEvent;
 public interface Cell<C> {
 
   /**
-   * Returns true if the cell is interested in browser events. The default
-   * implementation returns false.
-   */
-  boolean consumesEvents();
-
-  /**
    * Check if this cell depends on the selection state.
    *
    * @return true if dependent on selection, false if not
    */
   boolean dependsOnSelection();
+
+  /**
+   * <p>
+   * Get the set of events that this cell consumes. The container that uses this
+   * cell should only pass these events to {@link #onBrowserEvent(Element,
+   * Object, Object, NativeEvent, ValueUpdater)}.
+   * </p>
+   * <p>
+   * The returned value should not be modified, and may be an unmodifiable set.
+   * Changes to the return value may not be reflected in the cell.
+   * </p>
+   *
+   * @return the consumed events, or null if no events are consumed
+   */
+  Set<String> getConsumedEvents();
+
+  /**
+   * Check if this cell handles selection. If the cell handles selection, then
+   * its container should not automatically handle selection.
+   *
+   * @return true if the cell handles selection, false if not
+   */
+  boolean handlesSelection();
 
   /**
    * Handle a browser event that took place within the cell. The default

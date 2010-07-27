@@ -33,11 +33,6 @@ public class SelectionCellTest extends EditableCellTestBase<String, String> {
   }
 
   @Override
-  protected boolean consumesEvents() {
-    return true;
-  }
-
-  @Override
   protected SelectionCell createCell() {
     List<String> options = new ArrayList<String>();
     for (int i = 0; i < 3; i++) {
@@ -59,6 +54,11 @@ public class SelectionCellTest extends EditableCellTestBase<String, String> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return new String[]{"change"};
   }
 
   @Override

@@ -38,6 +38,7 @@ import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A single column list of cells.
@@ -149,6 +150,7 @@ public class CellList<T> extends Widget
   private final Element childContainer;
   private String emptyListMessage = "";
   private final Element emptyMessageElem;
+
   private ProvidesKey<T> keyProvider;
   private final PagingListViewPresenter<T> presenter;
   private final Style style;
@@ -181,12 +183,23 @@ public class CellList<T> extends Widget
     emptyMessageElem = Document.get().createDivElement();
     showOrHide(emptyMessageElem, false);
 
-    // TODO: find some way for cells to communicate what they're interested in.
     DivElement outerDiv = Document.get().createDivElement();
     outerDiv.appendChild(childContainer);
     outerDiv.appendChild(emptyMessageElem);
     setElement(outerDiv);
-    sinkEvents(Event.ONCLICK | Event.ONCHANGE | Event.MOUSEEVENTS);
+
+    // Sink events that the cell consumes.
+    int eventsToSink = Event.ONCLICK;
+    Set<String> consumedEvents = cell.getConsumedEvents();
+    if (consumedEvents != null) {
+      for (String typeName : consumedEvents) {
+        int typeInt = Event.getTypeInt(typeName);
+        if (typeInt > 0) {
+          eventsToSink |= typeInt;
+        }
+      }
+    }
+    sinkEvents(eventsToSink);
 
     // Create the implementation.
     view = new View(childContainer);
@@ -270,15 +283,22 @@ public class CellList<T> extends Widget
       target = target.getParentElement();
     }
     if (idxString.length() > 0) {
+      // Select the item if the cell does not consume events. Selection occurs
+      // before firing the event to the cell in case the cell operates on the
+      // currently selected item.
+      String eventType = event.getType();
       int idx = Integer.parseInt(idxString);
       T value = presenter.getData().get(idx - getPageStart());
-      cell.onBrowserEvent(target, value, getKey(value), event, valueUpdater);
+      SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
+      if (selectionModel != null && "click".equals(eventType)
+          && !cell.handlesSelection()) {
+        selectionModel.setSelected(value, true);
+      }
 
-      if (event.getTypeInt() == Event.ONCLICK && !cell.consumesEvents()) {
-            SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
-        if (selectionModel != null) {
-          selectionModel.setSelected(value, true);
-        }
+      // Fire the event to the cell.
+      Set<String> consumedEvents = cell.getConsumedEvents();
+      if (consumedEvents != null && consumedEvents.contains(eventType)) {
+        cell.onBrowserEvent(target, value, getKey(value), event, valueUpdater);
       }
     }
   }

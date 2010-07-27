@@ -28,9 +28,8 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public class ClickableTextCell extends AbstractCell<String> {
 
-  @Override
-  public boolean consumesEvents() {
-    return true;
+  public ClickableTextCell() {
+    super("click");
   }
 
   @Override

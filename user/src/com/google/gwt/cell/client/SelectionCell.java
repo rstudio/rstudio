@@ -39,19 +39,15 @@ public class SelectionCell extends AbstractEditableCell<String, String> {
   /**
    * Construct a new {@link SelectionCell} with the specified options.
    *
-   * @param options the options in the cell.s
+   * @param options the options in the cell
    */
   public SelectionCell(List<String> options) {
+    super("change");
     this.options = new ArrayList<String>(options);
     int index = 0;
     for (String option : options) {
       indexForOption.put(option, index++);
     }
-  }
-
-  @Override
-  public boolean consumesEvents() {
-    return true;
   }
 
   @Override

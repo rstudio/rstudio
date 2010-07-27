@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.Set;
+
 /**
  * Base class for testing {@link Cell}.
  *
@@ -39,15 +41,14 @@ public abstract class CellTestBase<T> extends GWTTestCase {
    */
   static class MockCell<T> extends AbstractCell<T> {
 
-    private final boolean consumesEvents;
-    private final boolean dependsOnSelection;
+    private final boolean isSelectable;
     private T lastEventValue;
     private final T updateValue;
 
     public MockCell(
-        boolean consumesEvents, boolean dependsOnSelection, T updateValue) {
-      this.consumesEvents = consumesEvents;
-      this.dependsOnSelection = dependsOnSelection;
+        boolean isSelectable, T updateValue, String... consumedEvents) {
+      super(consumedEvents);
+      this.isSelectable = isSelectable;
       this.updateValue = updateValue;
     }
 
@@ -56,13 +57,13 @@ public abstract class CellTestBase<T> extends GWTTestCase {
     }
 
     @Override
-    public boolean consumesEvents() {
-      return consumesEvents;
+    public boolean dependsOnSelection() {
+      return isSelectable;
     }
 
     @Override
-    public boolean dependsOnSelection() {
-      return dependsOnSelection;
+    public boolean handlesSelection() {
+      return isSelectable;
     }
 
     @Override
@@ -106,12 +107,25 @@ public abstract class CellTestBase<T> extends GWTTestCase {
     return "com.google.gwt.cell.Cell";
   }
 
-  public void testConsumesEvents() {
-    assertEquals(consumesEvents(), createCell().consumesEvents());
-  }
-
   public void testDependsOnSelection() {
     assertEquals(dependsOnSelection(), createCell().dependsOnSelection());
+  }
+
+  public void testGetConsumedEvents() {
+    Set<String> consumedEvents = createCell().getConsumedEvents();
+    String[] expected = getConsumedEvents();
+    if (consumedEvents == null && expected == null) {
+      return;
+    }
+    assertEquals(expected.length, consumedEvents.size());
+    for (String typeName : expected) {
+      assertTrue(consumedEvents.contains(typeName));
+    }
+  }
+
+  public void testHandlesSelection() {
+    // None of the provided cells handle selection.
+    assertFalse(createCell().handlesSelection());
   }
 
   public void testOnBrowserEventNullValueUpdater() {
@@ -148,11 +162,11 @@ public abstract class CellTestBase<T> extends GWTTestCase {
   }
 
   /**
-   * Does the cell type consume events? Default to false.
+   * Get the expected events that the cell should consume.
    *
-   * @return true expected value of consumesEvents
+   * @return the consumed events.
    */
-  protected abstract boolean consumesEvents();
+  protected abstract String[] getConsumedEvents();
 
   /**
    * Create a new cell to test.

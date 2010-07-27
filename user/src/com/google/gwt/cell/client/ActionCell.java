@@ -49,13 +49,9 @@ public class ActionCell<C> extends AbstractCell<C> {
    * @param delegate the delegate that will handle events
    */
   public ActionCell(String message, Delegate<C> delegate) {
+    super("click");
     this.message = message;
     this.delegate = delegate;
-  }
-
-  @Override
-  public boolean consumesEvents() {
-    return true;
   }
 
   @Override

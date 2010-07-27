@@ -73,17 +73,6 @@ public class ColumnTest extends GWTTestCase {
     return "com.google.gwt.user.cellview.CellView";
   }
 
-  public void testConsumesEvents() {
-    TextCell cell = new TextCell() {
-      @Override
-      public boolean consumesEvents() {
-        return true;
-      }
-    };
-    Column<String, String> column = new IdentityColumn<String>(cell);
-    assertTrue(column.consumesEvents());
-  }
-
   /**
    * Test that a cell can hold onto the {@link ValueUpdater} and update it
    * later.

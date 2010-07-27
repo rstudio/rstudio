@@ -26,11 +26,6 @@ import java.util.Date;
 public class DatePickerCellTest extends EditableCellTestBase<Date, Date> {
 
   @Override
-  protected boolean consumesEvents() {
-    return true;
-  }
-
-  @Override
   protected DatePickerCell createCell() {
     return new DatePickerCell(
         DateTimeFormat.getFormat(PredefinedFormat.DATE_MEDIUM));
@@ -51,6 +46,11 @@ public class DatePickerCellTest extends EditableCellTestBase<Date, Date> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return new String[]{"click"};
   }
 
   @Override

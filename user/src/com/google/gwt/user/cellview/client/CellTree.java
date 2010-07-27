@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -67,7 +67,7 @@ public class CellTree extends Composite implements HasAnimation {
 
     /**
      * Animate a tree node into its new state.
-     * 
+     *
      * @param node the node to animate
      * @param isAnimationEnabled true to animate
      */
@@ -114,7 +114,7 @@ public class CellTree extends Composite implements HasAnimation {
 
     /**
      * Create a new {@link RevealAnimation}.
-     * 
+     *
      * @return the new animation
      */
     public static RevealAnimation create() {
@@ -181,7 +181,7 @@ public class CellTree extends Composite implements HasAnimation {
 
     /**
      * Animate a {@link CellTreeNodeView} into its new state.
-     * 
+     *
      * @param node the {@link CellTreeNodeView} to animate
      * @param isAnimationEnabled true to animate
      */
@@ -235,7 +235,7 @@ public class CellTree extends Composite implements HasAnimation {
   public static class SlideAnimation extends RevealAnimation {
     /**
      * Create a new {@link RevealAnimation}.
-     * 
+     *
      * @return the new animation
      */
     public static SlideAnimation create() {
@@ -444,7 +444,7 @@ public class CellTree extends Composite implements HasAnimation {
 
   /**
    * Construct a new {@link CellTree}.
-   * 
+   *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
@@ -455,13 +455,14 @@ public class CellTree extends Composite implements HasAnimation {
 
   /**
    * Construct a new {@link CellTree}.
-   * 
+   *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
    * @param resources the resources used to render the tree
    */
-  public <T> CellTree(TreeViewModel viewModel, T rootValue, Resources resources) {
+  public <T> CellTree(
+      TreeViewModel viewModel, T rootValue, Resources resources) {
     this.viewModel = viewModel;
     this.style = resources.cellTreeStyle();
     this.style.ensureInjected();
@@ -484,11 +485,11 @@ public class CellTree extends Composite implements HasAnimation {
     setAnimation(SlideAnimation.create());
 
     // Add event handlers.
-    sinkEvents(Event.ONCLICK | Event.ONCHANGE | Event.MOUSEEVENTS);
+    sinkEvents(Event.ONCLICK);
 
     // Associate a view with the item.
-    CellTreeNodeView<T> root = new CellTreeNodeView<T>(this, null, null,
-        getElement(), rootValue);
+    CellTreeNodeView<T> root = new CellTreeNodeView<T>(
+        this, null, null, getElement(), rootValue);
     rootNode = root;
     root.setOpen(true);
   }
@@ -496,7 +497,7 @@ public class CellTree extends Composite implements HasAnimation {
   /**
    * Get the animation used to open and close nodes in this tree if animations
    * are enabled.
-   * 
+   *
    * @return the animation
    * @see #isAnimationEnabled()
    */
@@ -506,7 +507,7 @@ public class CellTree extends Composite implements HasAnimation {
 
   /**
    * Get the default maximum number of children to display under each tree node.
-   * 
+   *
    * @return the default node size
    */
   public int getDefaultNodeSize() {
@@ -546,10 +547,7 @@ public class CellTree extends Composite implements HasAnimation {
 
       // Forward the event to the cell.
       if (nodeView.getCellParent().isOrHasChild(target)) {
-        boolean consumesEvent = nodeView.fireEventToCell(event);
-        if (!consumesEvent && "click".equals(event.getType())) {
-          nodeView.select();
-        }
+        nodeView.fireEventToCell(event);
       }
     }
   }
@@ -557,7 +555,7 @@ public class CellTree extends Composite implements HasAnimation {
   /**
    * Set the animation used to open and close nodes in this tree. You must call
    * {@link #setAnimationEnabled(boolean)} to enable or disable animation.
-   * 
+   *
    * @param animation a {@link NodeAnimation}
    * @see #setAnimationEnabled(boolean)
    */
@@ -578,7 +576,7 @@ public class CellTree extends Composite implements HasAnimation {
    * more nodes are available, a button will appear at the end of the list
    * allowing the user to show more items. Changing this value will not affect
    * tree nodes that are already open.
-   * 
+   *
    * @param defaultNodeSize the max
    */
   public void setDefaultNodeSize(int defaultNodeSize) {
@@ -587,7 +585,7 @@ public class CellTree extends Composite implements HasAnimation {
 
   /**
    * Get the HTML to render the closed image.
-   * 
+   *
    * @param isTop true if the top element, false if not
    * @return the HTML string
    */
@@ -597,7 +595,7 @@ public class CellTree extends Composite implements HasAnimation {
 
   /**
    * Get the width required for the images.
-   * 
+   *
    * @return the maximum width required for images.
    */
   int getImageWidth() {
@@ -613,7 +611,7 @@ public class CellTree extends Composite implements HasAnimation {
 
   /**
    * Get the HTML to render the open image.
-   * 
+   *
    * @param isTop true if the top element, false if not
    * @return the HTML string
    */
@@ -630,21 +628,21 @@ public class CellTree extends Composite implements HasAnimation {
 
   /**
    * Animate the current state of a {@link CellTreeNodeView} in this tree.
-   * 
+   *
    * @param node the node to animate
    */
   void maybeAnimateTreeNode(CellTreeNodeView<?> node) {
     if (animation != null) {
-      animation.animate(node, node.consumeAnimate() && isAnimationEnabled()
-          && !node.isRootNode());
+      animation.animate(node,
+          node.consumeAnimate() && isAnimationEnabled() && !node.isRootNode());
     }
   }
 
   /**
    * Collects parents going up the element tree, terminated at the tree root.
    */
-  private void collectElementChain(ArrayList<Element> chain, Element hRoot,
-      Element hElem) {
+  private void collectElementChain(
+      ArrayList<Element> chain, Element hRoot, Element hElem) {
     if ((hElem == null) || (hElem == hRoot)) {
       return;
     }
@@ -653,8 +651,8 @@ public class CellTree extends Composite implements HasAnimation {
     chain.add(hElem);
   }
 
-  private CellTreeNodeView<?> findItemByChain(ArrayList<Element> chain,
-      int idx, CellTreeNodeView<?> parent) {
+  private CellTreeNodeView<?> findItemByChain(
+      ArrayList<Element> chain, int idx, CellTreeNodeView<?> parent) {
     if (idx == chain.size()) {
       return parent;
     }
@@ -676,7 +674,7 @@ public class CellTree extends Composite implements HasAnimation {
 
   /**
    * Get the HTML representation of an image.
-   * 
+   *
    * @param res the {@link ImageResource} to render as HTML
    * @param isTop true if the image is for a top level element.
    * @return the rendered HTML

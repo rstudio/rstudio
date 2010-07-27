@@ -16,7 +16,6 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.animation.client.Animation;
-import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -44,15 +43,17 @@ import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.PagingListView.Pager;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
-import com.google.gwt.view.client.PagingListView.Pager;
 import com.google.gwt.view.client.TreeViewModel.NodeInfo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A "browsable" view of a tree in which only a single node per level may be
@@ -141,12 +142,17 @@ public class CellBrowser extends Composite
    *
    * @param <C> the data type of the cell
    */
-  private class CellDecorator<C> extends AbstractCell<C> {
+  private class CellDecorator<C> implements Cell<C> {
 
     /**
      * The cell used to render the inner contents.
      */
     private final Cell<C> cell;
+
+    /**
+     * The events consumed by this cell.
+     */
+    private final Set<String> consumedEvents = new HashSet<String>();
 
     /**
      * The level of this list view.
@@ -179,19 +185,27 @@ public class CellBrowser extends Composite
       this.level = level;
       this.providesKey = nodeInfo.getProvidesKey();
       this.selectionModel = nodeInfo.getSelectionModel();
+
+      // Save the consumed events.
+      consumedEvents.add("mousedown");
+      Set<String> cellEvents = cell.getConsumedEvents();
+      if (cellEvents != null) {
+        consumedEvents.addAll(cellEvents);
+      }
     }
 
-    @Override
-    public boolean consumesEvents() {
-      return cell.consumesEvents();
-    }
-
-    @Override
     public boolean dependsOnSelection() {
       return cell.dependsOnSelection();
     }
 
-    @Override
+    public Set<String> getConsumedEvents() {
+      return consumedEvents;
+    }
+
+    public boolean handlesSelection() {
+      return cell.handlesSelection();
+    }
+
     public void onBrowserEvent(Element parent, C value, Object key,
         NativeEvent event, ValueUpdater<C> valueUpdater) {
 
@@ -222,7 +236,6 @@ public class CellBrowser extends Composite
       }
     }
 
-    @Override
     public void render(C value, Object viewData, StringBuilder sb) {
       boolean isOpen = (openKey == null) ? false : openKey.equals(
           providesKey.getKey(value));
@@ -255,7 +268,6 @@ public class CellBrowser extends Composite
       sb.append("</div></div>");
     }
 
-    @Override
     public void setValue(Element parent, C value, Object viewData) {
       cell.setValue(getCellParent(parent), value, viewData);
     }

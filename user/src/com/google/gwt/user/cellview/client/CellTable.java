@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
@@ -42,6 +43,7 @@ import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A list view that supports paging and columns.
@@ -265,19 +267,14 @@ public class CellTable<T> extends Widget
     }
 
     public boolean dependsOnSelection() {
-      for (Column<T, ?> column : columns) {
-        if (column.dependsOnSelection()) {
-          return true;
-        }
-      }
-      return false;
+      return dependsOnSelection;
     }
 
     @Override
     public void onUpdateSelection() {
       // Refresh headers.
       for (Header<?> header : headers) {
-        if (header != null && header.dependsOnSelection()) {
+        if (header != null && header.getCell().dependsOnSelection()) {
           createHeaders(false);
           break;
         }
@@ -285,7 +282,7 @@ public class CellTable<T> extends Widget
 
       // Refresh footers.
       for (Header<?> footer : footers) {
-        if (footer != null && footer.dependsOnSelection()) {
+        if (footer != null && footer.getCell().dependsOnSelection()) {
           createHeaders(true);
           break;
         }
@@ -382,7 +379,9 @@ public class CellTable<T> extends Widget
 
   private final TableColElement colgroup;
   private List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
+  private boolean dependsOnSelection;
   private List<Header<?>> footers = new ArrayList<Header<?>>();
+  private boolean handlesSelection;
   private List<Header<?>> headers = new ArrayList<Header<?>>();
 
   /**
@@ -391,11 +390,6 @@ public class CellTable<T> extends Widget
   private boolean headersStale;
 
   private TableRowElement hoveringRow;
-
-  /**
-   * If true, enable selection via the mouse.
-   */
-  private boolean isSelectionEnabled;
 
   /**
    * The presenter.
@@ -496,11 +490,8 @@ public class CellTable<T> extends Widget
 
     setPageSize(pageSize);
 
-    // TODO: Total hack. It would almost definitely be preferable to sink only
-    // those events actually needed by cells.
-    sinkEvents(
-        Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS | Event.ONCHANGE
-            | Event.FOCUSEVENTS);
+    // Sink events.
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
   }
 
   /**
@@ -524,6 +515,20 @@ public class CellTable<T> extends Widget
     headers.add(header);
     footers.add(footer);
     columns.add(col);
+    updateDependsOnSelection();
+
+    // Sink events used by the new column.
+    int eventsToSink = getEventBits(col.getCell().getConsumedEvents());
+    if (header != null) {
+      eventsToSink |= getEventBits(header.getCell().getConsumedEvents());
+    }
+    if (footer != null) {
+      eventsToSink |= getEventBits(footer.getCell().getConsumedEvents());
+    }
+    if (eventsToSink > 0) {
+      sinkEvents(eventsToSink);
+    }
+
     headersStale = true;
     scheduleRedraw();
   }
@@ -612,15 +617,6 @@ public class CellTable<T> extends Widget
     return presenter.isDataSizeExact();
   }
 
-  /**
-   * Check whether or not mouse selection is enabled.
-   *
-   * @return true if enabled, false if disabled
-   */
-  public boolean isSelectionEnabled() {
-    return isSelectionEnabled;
-  }
-
   @Override
   public void onBrowserEvent(Event event) {
     super.onBrowserEvent(event);
@@ -651,42 +647,48 @@ public class CellTable<T> extends Widget
     TableSectionElement section = TableSectionElement.as(sectionElem);
 
     // Forward the event to the associated header, footer, or column.
+    String eventType = event.getType();
     int col = cell.getCellIndex();
     if (section == thead) {
       Header<?> header = headers.get(col);
-      if (header != null) {
+      if (header != null
+          && cellConsumesEventType(header.getCell(), eventType)) {
         header.onBrowserEvent(cell, event);
       }
     } else if (section == tfoot) {
       Header<?> footer = footers.get(col);
-      if (footer != null) {
+      if (footer != null
+          && cellConsumesEventType(footer.getCell(), eventType)) {
         footer.onBrowserEvent(cell, event);
       }
     } else if (section == tbody) {
+      // Update the hover state.
       int row = tr.getSectionRowIndex();
-
-      if (event.getType().equals("mouseover")) {
+      if ("mouseover".equals(eventType)) {
         if (hoveringRow != null) {
           hoveringRow.removeClassName(style.hoveredRow());
         }
         hoveringRow = tr;
         tr.addClassName(style.hoveredRow());
-      } else if (event.getType().equals("mouseout")) {
+      } else if ("mouseout".equals(eventType)) {
         hoveringRow = null;
         tr.removeClassName(style.hoveredRow());
       }
 
+      // Update selection. Selection occurs before firing the event to the cell
+      // in case the cell operates on the currently selected item.
       T value = presenter.getData().get(row);
+      SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
       Column<T, ?> column = columns.get(col);
-      column.onBrowserEvent(
-          cell, getPageStart() + row, value, event, providesKey);
+      if (selectionModel != null && "click".equals(eventType)
+          && !handlesSelection) {
+        selectionModel.setSelected(value, true);
+      }
 
-      // Update selection.
-      if (isSelectionEnabled && event.getTypeInt() == Event.ONCLICK) {
-            SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
-        if (selectionModel != null) {
-          selectionModel.setSelected(value, true);
-        }
+      // Fire the event to the cell.
+      if (cellConsumesEventType(column.getCell(), eventType)) {
+        column.onBrowserEvent(
+            cell, getPageStart() + row, value, event, providesKey);
       }
     }
   }
@@ -722,8 +724,12 @@ public class CellTable<T> extends Widget
     columns.remove(index);
     headers.remove(index);
     footers.remove(index);
+    updateDependsOnSelection();
     headersStale = true;
     scheduleRedraw();
+
+    // We don't unsink events because other handlers or user code may have sunk
+    // them intentionally.
   }
 
   /**
@@ -799,15 +805,6 @@ public class CellTable<T> extends Widget
     presenter.setRange(start, length);
   }
 
-  /**
-   * Enable mouse and keyboard selection.
-   *
-   * @param isSelectionEnabled true to enable, false to disable
-   */
-  public void setSelectionEnabled(boolean isSelectionEnabled) {
-    this.isSelectionEnabled = isSelectionEnabled;
-  }
-
   public void setSelectionModel(SelectionModel<? super T> selectionModel) {
     presenter.setSelectionModel(selectionModel);
   }
@@ -824,6 +821,18 @@ public class CellTable<T> extends Widget
       throw new IndexOutOfBoundsException(
           "Row index: " + row + ", Row size: " + rowCount);
     }
+  }
+
+  /**
+   * Check if a cell consumes the specified event type.
+   *
+   * @param cell the cell
+   * @param eventType the event type to check
+   * @return true if consumed, false if not
+   */
+  private boolean cellConsumesEventType(Cell<?> cell, String eventType) {
+    Set<String> consumedEvents = cell.getConsumedEvents();
+    return consumedEvents != null && consumedEvents.contains(eventType);
   }
 
   /**
@@ -917,6 +926,24 @@ public class CellTable<T> extends Widget
   }-*/;
 
   /**
+   * Get the event bits for the specified set of event types.
+   *
+   * @param consumedEvents the events to sink
+   */
+  private int getEventBits(Set<String> consumedEvents) {
+    int eventsToSink = 0;
+    if (consumedEvents != null) {
+      for (String typeName : consumedEvents) {
+        int typeId = Event.getTypeInt(typeName);
+        if (typeId > 0) {
+          eventsToSink |= typeId;
+        }
+      }
+    }
+    return eventsToSink;
+  }
+
+  /**
    * Schedule a redraw for the end of the event loop.
    */
   private void scheduleRedraw() {
@@ -943,5 +970,22 @@ public class CellTable<T> extends Widget
         0);
     td.setColSpan(Math.max(1, columns.size()));
     setVisible(tbodyLoading, visible);
+  }
+
+  /**
+   * Update the dependsOnSelection and handlesSelection booleans.
+   */
+  private void updateDependsOnSelection() {
+    dependsOnSelection = false;
+    handlesSelection = false;
+    for (Column<T, ?> column : columns) {
+      Cell<?> cell = column.getCell();
+      if (cell.dependsOnSelection()) {
+        dependsOnSelection = true;
+      }
+      if (cell.handlesSelection()) {
+        handlesSelection = true;
+      }
+    }
   }
 }

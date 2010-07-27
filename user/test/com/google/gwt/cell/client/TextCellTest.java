@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,11 +21,6 @@ package com.google.gwt.cell.client;
 public class TextCellTest extends CellTestBase<String> {
 
   @Override
-  protected boolean consumesEvents() {
-    return false;
-  }
-
-  @Override
   protected Cell<String> createCell() {
     return new TextCell();
   }
@@ -38,6 +33,11 @@ public class TextCellTest extends CellTestBase<String> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return null;
   }
 
   @Override

@@ -28,9 +28,33 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
 
+  private final boolean isSelectBox;
+
+  /**
+   * Construct a new {@link CheckboxCell}.
+   */
+  public CheckboxCell() {
+    this(false);
+  }
+
+  /**
+   * Construct a new {@link CheckboxCell} that optionally controls selection.
+   *
+   * @param isSelectBox true if the cell controls the selection state
+   */
+  public CheckboxCell(boolean isSelectBox) {
+    super("change");
+    this.isSelectBox = isSelectBox;
+  }
+
   @Override
-  public boolean consumesEvents() {
-    return true;
+  public boolean dependsOnSelection() {
+    return isSelectBox;
+  }
+
+  @Override
+  public boolean handlesSelection() {
+    return isSelectBox;
   }
 
   @Override

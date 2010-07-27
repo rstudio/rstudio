@@ -28,9 +28,8 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public class TextInputCell extends AbstractEditableCell<String, String> {
 
-  @Override
-  public boolean consumesEvents() {
-    return true;
+  public TextInputCell() {
+    super("change", "keyup");
   }
 
   @Override

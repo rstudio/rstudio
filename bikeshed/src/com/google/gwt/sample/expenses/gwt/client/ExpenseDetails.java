@@ -140,6 +140,8 @@ public class ExpenseDetails extends Composite
     private final String pendingIconHtml;
 
     public ApprovalCell() {
+      super("change", "click");
+
       // Cache the html string for the error icon.
       ImageResource errorIcon = Styles.resources().errorIcon();
       AbstractImagePrototype errorImg = AbstractImagePrototype.create(
@@ -151,11 +153,6 @@ public class ExpenseDetails extends Composite
       AbstractImagePrototype pendingImg = AbstractImagePrototype.create(
           pendingIcon);
       pendingIconHtml = pendingImg.getHTML();
-    }
-
-    @Override
-    public boolean consumesEvents() {
-      return true;
     }
 
     @Override

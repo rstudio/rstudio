@@ -121,9 +121,8 @@ public class EditTextCell extends AbstractEditableCell<
     }
   }
 
-  @Override
-  public boolean consumesEvents() {
-    return true;
+  public EditTextCell() {
+    super("click", "keydown", "keyup");
   }
 
   @Override

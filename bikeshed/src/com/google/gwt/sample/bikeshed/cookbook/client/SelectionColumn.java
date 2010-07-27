@@ -21,17 +21,17 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.SelectionModel;
 
 /**
- * A column that displays a checkbox that is synchronized with a given
- * selection model.
- * 
+ * A column that displays a checkbox that is synchronized with a given selection
+ * model.
+ *
  * @param <T> the record data type, used by the row and the selection model
  */
 public class SelectionColumn<T> extends Column<T, Boolean> {
-  
+
   private final SelectionModel<T> selectionModel;
 
   public SelectionColumn(final SelectionModel<T> selectionModel) {
-    super(new CheckboxCell());
+    super(new CheckboxCell(true));
     setFieldUpdater(new FieldUpdater<T, Boolean>() {
       public void update(int index, T object, Boolean value) {
         selectionModel.setSelected(object, value);
@@ -40,11 +40,6 @@ public class SelectionColumn<T> extends Column<T, Boolean> {
     this.selectionModel = selectionModel;
   }
 
-  @Override
-  public boolean dependsOnSelection() {
-    return true;
-  }
-  
   @Override
   public Boolean getValue(T object) {
     return object != null && selectionModel.isSelected(object);

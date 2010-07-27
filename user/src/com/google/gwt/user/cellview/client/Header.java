@@ -35,8 +35,8 @@ public abstract class Header<H> {
     this.cell = cell;
   }
 
-  public boolean dependsOnSelection() {
-    return false;
+  public Cell<H> getCell() {
+    return cell;
   }
 
   public abstract H getValue();
@@ -47,7 +47,7 @@ public abstract class Header<H> {
   }
 
   public void render(StringBuilder sb) {
-    cell.render(getValue(), null, sb);
+    cell.render(getValue(), getKey(), sb);
   }
 
   public void setUpdater(ValueUpdater<H> updater) {

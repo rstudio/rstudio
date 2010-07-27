@@ -93,12 +93,8 @@ public class CwCellValidation extends ContentWidget {
     private String errorMessage;
 
     public ValidatableInputCell(String errorMessage) {
+      super("change");
       this.errorMessage = errorMessage;
-    }
-
-    @Override
-    public boolean consumesEvents() {
-      return true;
     }
 
     @Override

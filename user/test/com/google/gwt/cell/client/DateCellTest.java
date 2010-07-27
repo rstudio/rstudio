@@ -26,11 +26,6 @@ import java.util.Date;
 public class DateCellTest extends CellTestBase<Date> {
 
   @Override
-  protected boolean consumesEvents() {
-    return false;
-  }
-
-  @Override
   protected Cell<Date> createCell() {
     return new DateCell(DateTimeFormat.getFormat(PredefinedFormat.DATE_MEDIUM));
   }
@@ -44,6 +39,11 @@ public class DateCellTest extends CellTestBase<Date> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return null;
   }
 
   @Override

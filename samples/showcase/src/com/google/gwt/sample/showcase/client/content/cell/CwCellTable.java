@@ -189,7 +189,7 @@ public class CwCellTable extends ContentWidget {
     // Alternatively, you can call cellTable.setSelectionEnabled(true) to enable
     // mouse selection.
     Column<ContactInfo, Boolean> checkColumn = new Column<ContactInfo, Boolean>(
-        new CheckboxCell()) {
+        new CheckboxCell(true)) {
       @Override
       public Boolean getValue(ContactInfo object) {
         // Get the value from the selection model.

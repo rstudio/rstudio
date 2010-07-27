@@ -18,6 +18,10 @@ package com.google.gwt.cell.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A default implementation of the {@link Cell} interface.
  *
@@ -29,14 +33,56 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public abstract class AbstractCell<C> implements Cell<C> {
 
-  public boolean consumesEvents() {
-    return false;
+  /**
+   * The unmodifiable set of events consumed by this cell.
+   */
+  private Set<String> consumedEvents;
+
+  /**
+   * Construct a new {@link AbstractCell} with the specified consumed events.
+   * The input arguments are passed by copy.
+   *
+   * @param consumedEvents the events that this cell consumes
+   */
+  public AbstractCell(String... consumedEvents) {
+    Set<String> events = null;
+    if (consumedEvents != null && consumedEvents.length > 0) {
+      events = new HashSet<String>();
+      for (String event : consumedEvents) {
+        events.add(event);
+      }
+    }
+    init(events);
+  }
+
+  /**
+   * Construct a new {@link AbstractCell} with the specified consumed events.
+   *
+   * @param consumedEvents the events that this cell consumes
+   */
+  public AbstractCell(Set<String> consumedEvents) {
+    init(consumedEvents);
   }
 
   public boolean dependsOnSelection() {
     return false;
   }
 
+  public Set<String> getConsumedEvents() {
+    return consumedEvents;
+  }
+
+  public boolean handlesSelection() {
+    return false;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * This method is a no-op in {@link AbstractCell}. If you override this method
+   * to add support for events, remember to pass the event types that the cell
+   * expects into the constructor.
+   */
   public void onBrowserEvent(Element parent, C value, Object key,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
   }
@@ -47,5 +93,16 @@ public abstract class AbstractCell<C> implements Cell<C> {
     StringBuilder sb = new StringBuilder();
     render(value, key, sb);
     parent.setInnerHTML(sb.toString());
+  }
+
+  /**
+   * Initialize the cell.
+   *
+   * @param consumedEvents the events that the cell consumes
+   */
+  private void init(Set<String> consumedEvents) {
+    if (consumedEvents != null) {
+      this.consumedEvents = Collections.unmodifiableSet(consumedEvents);
+    }
   }
 }

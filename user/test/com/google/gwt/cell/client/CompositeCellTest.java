@@ -31,37 +31,13 @@ import java.util.List;
 public class CompositeCellTest extends CellTestBase<String> {
 
   /**
-   * Test consumesEvent when one inner cell consumes events.
-   */
-  public void testConsumesEventTrue() {
-    // Add one cell that consumes events.
-    List<HasCell<String, ?>> cells = createHasCells(3);
-    final MockCell<String> mock = new MockCell<String>(true, false, null);
-    cells.add(new HasCell<String, String>() {
-      public Cell<String> getCell() {
-        return mock;
-      }
-
-      public FieldUpdater<String, String> getFieldUpdater() {
-        return null;
-      }
-
-      public String getValue(String object) {
-        return object;
-      }
-    });
-    CompositeCell<String> cell = new CompositeCell<String>(cells);
-    assertTrue(cell.consumesEvents());
-    assertFalse(cell.dependsOnSelection());
-  }
-
-  /**
-   * Test dependsOnSelection when one inner cell dependsOnSelection.
+   * Test dependsOnSelection and handlesSelection when one inner cell returns
+   * true for each of these.
    */
   public void testDependsOnSelectionTrue() {
     // Add one cell that consumes events.
     List<HasCell<String, ?>> cells = createHasCells(3);
-    final MockCell<String> mock = new MockCell<String>(false, true, null);
+    final MockCell<String> mock = new MockCell<String>(true, null);
     cells.add(new HasCell<String, String>() {
       public Cell<String> getCell() {
         return mock;
@@ -76,8 +52,34 @@ public class CompositeCellTest extends CellTestBase<String> {
       }
     });
     CompositeCell<String> cell = new CompositeCell<String>(cells);
-    assertFalse(cell.consumesEvents());
+    assertNull(cell.getConsumedEvents());
     assertTrue(cell.dependsOnSelection());
+  }
+
+  /**
+   * Test getConsumedEvents when one inner cell consumes events.
+   */
+  public void testGetConsumedEventsTrue() {
+    // Add one cell that consumes events.
+    List<HasCell<String, ?>> cells = createHasCells(3);
+    final MockCell<String> mock = new MockCell<String>(false, null, "click");
+    cells.add(new HasCell<String, String>() {
+      public Cell<String> getCell() {
+        return mock;
+      }
+
+      public FieldUpdater<String, String> getFieldUpdater() {
+        return null;
+      }
+
+      public String getValue(String object) {
+        return object;
+      }
+    });
+    CompositeCell<String> cell = new CompositeCell<String>(cells);
+    assertEquals(1, cell.getConsumedEvents().size());
+    assertTrue(cell.getConsumedEvents().contains("click"));
+    assertFalse(cell.dependsOnSelection());
   }
 
   /**
@@ -136,11 +138,6 @@ public class CompositeCellTest extends CellTestBase<String> {
   }
 
   @Override
-  protected boolean consumesEvents() {
-    return false;
-  }
-
-  @Override
   protected CompositeCell<String> createCell() {
     return new CompositeCell<String>(createHasCells(3));
   }
@@ -153,6 +150,11 @@ public class CompositeCellTest extends CellTestBase<String> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return null;
   }
 
   @Override
@@ -176,7 +178,7 @@ public class CompositeCellTest extends CellTestBase<String> {
     for (int i = 0; i < count; i++) {
       final int index = i;
       final MockCell<String> inner = new MockCell<String>(
-          false, false, "fromCell" + i);
+          false, "fromCell" + i);
       cells.add(new HasCell<String, String>() {
         public Cell<String> getCell() {
           return inner;

@@ -54,11 +54,6 @@ public class ActionCellTest extends CellTestBase<String> {
   }
 
   @Override
-  protected boolean consumesEvents() {
-    return true;
-  }
-
-  @Override
   protected Cell<String> createCell() {
     Delegate<String> delegate = new MockDelegate<String>();
     return new ActionCell<String>("clickme", delegate);
@@ -72,6 +67,11 @@ public class ActionCellTest extends CellTestBase<String> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return new String[]{"click"};
   }
 
   @Override

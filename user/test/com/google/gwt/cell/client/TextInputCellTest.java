@@ -37,11 +37,6 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
   }
 
   @Override
-  protected boolean consumesEvents() {
-    return true;
-  }
-
-  @Override
   protected TextInputCell createCell() {
     return new TextInputCell();
   }
@@ -59,6 +54,11 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return new String[]{"change", "keyup"};
   }
 
   @Override

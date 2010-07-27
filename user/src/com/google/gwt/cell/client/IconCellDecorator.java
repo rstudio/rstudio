@@ -21,6 +21,8 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
+import java.util.Set;
+
 /**
  * A {@link Cell} decorator that adds an icon to another {@link Cell}.
  *
@@ -30,7 +32,7 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConst
  *
  * @param <C> the type that this Cell represents
  */
-public class IconCellDecorator<C> extends AbstractCell<C> {
+public class IconCellDecorator<C> implements Cell<C> {
 
   private final Cell<C> cell;
   private final String iconHtml;
@@ -64,23 +66,23 @@ public class IconCellDecorator<C> extends AbstractCell<C> {
     this.placeHolderHtml = getImageHtml(icon, valign, true);
   }
 
-  @Override
-  public boolean consumesEvents() {
-    return cell.consumesEvents();
-  }
-
-  @Override
   public boolean dependsOnSelection() {
     return cell.dependsOnSelection();
   }
 
-  @Override
+  public Set<String> getConsumedEvents() {
+    return cell.getConsumedEvents();
+  }
+
+  public boolean handlesSelection() {
+    return cell.handlesSelection();
+  }
+
   public void onBrowserEvent(Element parent, C value, Object key,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
     cell.onBrowserEvent(getCellParent(parent), value, key, event, valueUpdater);
   }
 
-  @Override
   public void render(C value, Object key, StringBuilder sb) {
     sb.append("<div style='position:relative;padding-left:");
     sb.append(imageWidth);
@@ -95,7 +97,6 @@ public class IconCellDecorator<C> extends AbstractCell<C> {
     sb.append("</div></div>");
   }
 
-  @Override
   public void setValue(Element parent, C value, Object key) {
     cell.setValue(getCellParent(parent), value, key);
   }

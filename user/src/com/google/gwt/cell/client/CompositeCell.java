@@ -20,7 +20,10 @@ import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -42,6 +45,21 @@ import java.util.List;
 public class CompositeCell<C> extends AbstractCell<C> {
 
   /**
+   * The events consumed by this cell.
+   */
+  private Set<String> consumedEvents;
+
+  /**
+   * Indicates whether or not this cell depends on selection.
+   */
+  private boolean dependsOnSelection;
+
+  /**
+   * Indicates whether or not this cell handles selection.
+   */
+  private boolean handlesSelection;
+
+  /**
    * The cells that compose this {@link Cell}.
    *
    *  NOTE: Do not add add/insert/remove hasCells methods to the API. This cell
@@ -58,28 +76,43 @@ public class CompositeCell<C> extends AbstractCell<C> {
   public CompositeCell(List<HasCell<C, ?>> hasCells) {
     // Create a new array so cells cannot be added or removed.
     this.hasCells = new ArrayList<HasCell<C, ?>>(hasCells);
-  }
 
-  @Override
-  public boolean consumesEvents() {
-    // TODO(jlabanca): Should we cache this value? Can it change?
+    // Get the consumed events and depends on selection.
+    Set<String> theConsumedEvents = null;
     for (HasCell<C, ?> hasCell : hasCells) {
-      if (hasCell.getCell().consumesEvents()) {
-        return true;
+      Cell<?> cell = hasCell.getCell();
+      Set<String> events = cell.getConsumedEvents();
+      if (events != null) {
+        if (theConsumedEvents == null) {
+          theConsumedEvents = new HashSet<String>();
+        }
+        theConsumedEvents.addAll(events);
+      }
+      if (cell.dependsOnSelection()) {
+        dependsOnSelection = true;
+      }
+      if (cell.handlesSelection()) {
+        handlesSelection = true;
       }
     }
-    return false;
+    if (theConsumedEvents != null) {
+      this.consumedEvents = Collections.unmodifiableSet(theConsumedEvents);
+    }
   }
 
   @Override
   public boolean dependsOnSelection() {
-    // TODO(jlabanca): Should we cache this value? Can it change?
-    for (HasCell<C, ?> hasCell : hasCells) {
-      if (hasCell.getCell().dependsOnSelection()) {
-        return true;
-      }
-    }
-    return false;
+    return dependsOnSelection;
+  }
+
+  @Override
+  public Set<String> getConsumedEvents() {
+    return consumedEvents;
+  }
+
+  @Override
+  public boolean handlesSelection() {
+    return handlesSelection;
   }
 
   @Override

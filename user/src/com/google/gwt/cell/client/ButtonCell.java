@@ -27,9 +27,8 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public class ButtonCell extends AbstractCell<String> {
 
-  @Override
-  public boolean consumesEvents() {
-    return true;
+  public ButtonCell() {
+    super("mouseup");
   }
 
   @Override

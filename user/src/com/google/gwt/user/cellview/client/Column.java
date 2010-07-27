@@ -42,19 +42,6 @@ public abstract class Column<T, C> implements HasCell<T, C> {
     this.cell = cell;
   }
 
-  public boolean consumesEvents() {
-    return cell.consumesEvents();
-  }
-
-  /**
-   * Returns true if the contents of the column may depend on the current state
-   * of the selection model associated with the table that is displaying this
-   * column. The default implementation returns false.
-   */
-  public boolean dependsOnSelection() {
-    return false;
-  }
-
   public Cell<C> getCell() {
     return cell;
   }

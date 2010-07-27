@@ -75,6 +75,7 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
    * Constructs a new DatePickerCell that uses the given date/time format.
    */
   public DatePickerCell(DateTimeFormat format) {
+    super("click");
     this.format = format;
 
     this.datePicker = new DatePicker();
@@ -103,11 +104,6 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
         }
       }
     });
-  }
-
-  @Override
-  public boolean consumesEvents() {
-    return true;
   }
 
   @Override

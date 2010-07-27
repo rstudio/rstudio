@@ -164,11 +164,6 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
   }
 
   @Override
-  protected boolean consumesEvents() {
-    return true;
-  }
-
-  @Override
   protected EditTextCell createCell() {
     return new EditTextCell();
   }
@@ -186,6 +181,11 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return new String[]{"click", "keydown", "keyup"};
   }
 
   @Override

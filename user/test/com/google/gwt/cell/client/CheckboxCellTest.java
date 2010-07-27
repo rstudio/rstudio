@@ -23,6 +23,12 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public class CheckboxCellTest extends EditableCellTestBase<Boolean, Boolean> {
 
+  public void testIsSelectBox() {
+    CheckboxCell cell = new CheckboxCell(true);
+    assertTrue(cell.dependsOnSelection());
+    assertTrue(cell.handlesSelection());
+  }
+
   public void testOnBrowserEventChecked() {
     NativeEvent event = Document.get().createChangeEvent();
     testOnBrowserEvent("<input type=\"checkbox\" checked/>", event, false, null,
@@ -33,11 +39,6 @@ public class CheckboxCellTest extends EditableCellTestBase<Boolean, Boolean> {
     NativeEvent event = Document.get().createChangeEvent();
     testOnBrowserEvent(
         "<input type=\"checkbox\"/>", event, true, null, Boolean.FALSE, false);
-  }
-
-  @Override
-  protected boolean consumesEvents() {
-    return true;
   }
 
   @Override
@@ -58,6 +59,11 @@ public class CheckboxCellTest extends EditableCellTestBase<Boolean, Boolean> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return new String[]{"change"};
   }
 
   @Override

@@ -49,7 +49,7 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
   public void testRenderNoImage() {
     Images images = getImages();
     MockCell<String> innerCell = new MockCell<String>(
-        true, true, "newValueFromInnerCell");
+        true, "newValueFromInnerCell", "click");
     IconCellDecorator<String> cell = new IconCellDecorator<String>(
         images.prettyPiccy(), innerCell) {
       @Override
@@ -71,6 +71,15 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
     assertEquals(expected, sb.toString());
   }
 
+  public void testSelectableDelegate() {
+    MockCell<String> innerCell = new MockCell<String>(
+        true, "newValueFromInnerCell", "click");
+    IconCellDecorator<String> iconCell = new IconCellDecorator<String>(
+        getImages().prettyPiccy(), innerCell);
+    assertTrue(iconCell.dependsOnSelection());
+    assertTrue(iconCell.handlesSelection());
+  }
+
   public void testSetValue() {
     Cell<String> cell = createCell();
     Element parent = Document.get().createDivElement();
@@ -83,14 +92,9 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
   }
 
   @Override
-  protected boolean consumesEvents() {
-    return true;
-  }
-
-  @Override
   protected IconCellDecorator<String> createCell() {
     MockCell<String> innerCell = new MockCell<String>(
-        true, true, "newValueFromInnerCell");
+        false, "newValueFromInnerCell", "click");
     IconCellDecorator<String> iconCell = new IconCellDecorator<String>(
         getImages().prettyPiccy(), innerCell);
     return iconCell;
@@ -103,7 +107,12 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
 
   @Override
   protected boolean dependsOnSelection() {
-    return true;
+    return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return new String[]{"click"};
   }
 
   @Override

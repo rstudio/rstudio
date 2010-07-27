@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.ProvidesKey;
@@ -542,16 +543,6 @@ class CellTreeNodeView<T> extends UIObject {
   }
 
   /**
-   * Select this node.
-   */
-  public void select() {
-        SelectionModel<? super T> selectionModel = parentNodeInfo.getSelectionModel();
-    if (selectionModel != null) {
-      selectionModel.setSelected(value, true);
-    }
-  }
-
-  /**
    * Sets whether this item's children are displayed.
    *
    * @param open whether the item is open
@@ -568,6 +559,21 @@ class CellTreeNodeView<T> extends UIObject {
       if (!nodeInfoLoaded) {
         nodeInfoLoaded = true;
         nodeInfo = tree.getTreeViewModel().getNodeInfo(value);
+
+        // Sink events for the new node.
+        if (nodeInfo != null) {
+          Set<String> consumedEvents = nodeInfo.getCell().getConsumedEvents();
+          if (consumedEvents != null) {
+            int eventsToSink = 0;
+            for (String typeName : consumedEvents) {
+              int typeId = Event.getTypeInt(typeName);
+              if (typeId > 0) {
+                eventsToSink |= typeId;
+              }
+            }
+            tree.sinkEvents(eventsToSink);
+          }
+        }
       }
 
       // If we don't have any nodeInfo, we must be a leaf node.
@@ -638,18 +644,29 @@ class CellTreeNodeView<T> extends UIObject {
    * Fire an event to the {@link com.google.gwt.cell.client.AbstractCell}.
    *
    * @param event the native event
-   * @return true if the cell consumes the event, false if not
    */
-  protected boolean fireEventToCell(NativeEvent event) {
+  protected void fireEventToCell(NativeEvent event) {
     if (parentNodeInfo != null) {
-      Element cellParent = getCellParent();
       Cell<T> parentCell = parentNodeInfo.getCell();
+      String eventType = event.getType();
+      SelectionModel<? super T> selectionModel = parentNodeInfo.getSelectionModel();
+
+      // Update selection.
+      if (selectionModel != null && "click".equals(eventType)
+          && !parentCell.handlesSelection()) {
+        // TODO(jlabanca): Should we toggle? Only when ctrl is pressed?
+        selectionModel.setSelected(value, true);
+      }
+
+      // Forward the event to the cell.
+      Element cellParent = getCellParent();
       Object key = getValueKey();
-      parentCell.onBrowserEvent(
-          cellParent, value, key, event, parentNodeInfo.getValueUpdater());
-      return parentCell.consumesEvents();
+      Set<String> consumedEvents = parentCell.getConsumedEvents();
+      if (consumedEvents != null && consumedEvents.contains(eventType)) {
+        parentCell.onBrowserEvent(
+            cellParent, value, key, event, parentNodeInfo.getValueUpdater());
+      }
     }
-    return false;
   }
 
   /**

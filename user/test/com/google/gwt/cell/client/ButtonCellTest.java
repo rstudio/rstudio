@@ -30,11 +30,6 @@ public class ButtonCellTest extends CellTestBase<String> {
   }
 
   @Override
-  protected boolean consumesEvents() {
-    return true;
-  }
-
-  @Override
   protected Cell<String> createCell() {
     return new ButtonCell();
   }
@@ -47,6 +42,11 @@ public class ButtonCellTest extends CellTestBase<String> {
   @Override
   protected boolean dependsOnSelection() {
     return false;
+  }
+
+  @Override
+  protected String[] getConsumedEvents() {
+    return new String[]{"mouseup"};
   }
 
   @Override

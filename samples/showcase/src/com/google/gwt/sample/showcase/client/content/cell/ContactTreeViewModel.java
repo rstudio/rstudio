@@ -150,12 +150,7 @@ public class ContactTreeViewModel implements TreeViewModel {
         HasCell<ContactInfo, ?>>();
     hasCells.add(new HasCell<ContactInfo, Boolean>() {
       public Cell<Boolean> getCell() {
-        return new CheckboxCell() {
-          @Override
-          public boolean dependsOnSelection() {
-            return true;
-          }
-        };
+        return new CheckboxCell(true);
       }
 
       public FieldUpdater<ContactInfo, Boolean> getFieldUpdater() {

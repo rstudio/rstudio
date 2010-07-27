@@ -467,7 +467,6 @@ public class ExpenseList extends Composite implements
     // Add a selection model.
     final NoSelectionModel<ReportRecord> selectionModel = new NoSelectionModel<ReportRecord>();
     table.setSelectionModel(selectionModel);
-    table.setSelectionEnabled(true);
     selectionModel.addSelectionChangeHandler(new SelectionChangeHandler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         Object selected = selectionModel.getLastSelectedObject();

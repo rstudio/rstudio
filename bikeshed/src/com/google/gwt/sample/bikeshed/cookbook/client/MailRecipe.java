@@ -321,12 +321,8 @@ public class MailRecipe extends Composite implements ClickHandler {
     // The state of the checkbox is synchronized with the selection model
     SelectionColumn<Message> selectedColumn = new SelectionColumn<Message>(
         selectionModel);
-    Header<Boolean> selectedHeader = new Header<Boolean>(new CheckboxCell()) {
-      @Override
-      public boolean dependsOnSelection() {
-        return true;
-      }
-
+    Header<Boolean> selectedHeader = new Header<Boolean>(new CheckboxCell(
+        true)) {
       @Override
       public Boolean getValue() {
         return selectionModel.getType().equals("ALL");

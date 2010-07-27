@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.NativeEvent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A default implementation of the {@link Cell} interface used for editable
@@ -32,12 +33,32 @@ import java.util.Map;
  * @param <C> the type that this Cell represents
  * @param <V> the data type of the view data state
  */
-public abstract class AbstractEditableCell<C, V> implements Cell<C> {
+public abstract class AbstractEditableCell<C, V> extends AbstractCell<C> {
 
   /**
    * The map of value keys to the associated view data.
    */
   private final Map<Object, V> viewDataMap = new HashMap<Object, V>();
+
+  /**
+   * Construct a new {@link AbstractEditableCell} with the specified consumed
+   * events.
+   *
+   * @param consumedEvents the events that this cell consumes
+   */
+  public AbstractEditableCell(String... consumedEvents) {
+    super(consumedEvents);
+  }
+
+  /**
+   * Construct a new {@link AbstractEditableCell} with the specified consumed
+   * events.
+   *
+   * @param consumedEvents the events that this cell consumes
+   */
+  public AbstractEditableCell(Set<String> consumedEvents) {
+    super(consumedEvents);
+  }
 
   /**
    * Clear the view data associated with the specified key.
@@ -50,12 +71,6 @@ public abstract class AbstractEditableCell<C, V> implements Cell<C> {
     }
   }
 
-  public abstract boolean consumesEvents();
-
-  public boolean dependsOnSelection() {
-    return false;
-  }
-
   /**
    * Get the view data associated with the specified key.
    *
@@ -66,16 +81,9 @@ public abstract class AbstractEditableCell<C, V> implements Cell<C> {
     return (key == null) ? null : viewDataMap.get(key);
   }
 
+  @Override
   public abstract void onBrowserEvent(Element parent, C value, Object key,
       NativeEvent event, ValueUpdater<C> valueUpdater);
-
-  public abstract void render(C value, Object key, StringBuilder sb);
-
-  public void setValue(Element parent, C value, Object key) {
-    StringBuilder sb = new StringBuilder();
-    render(value, key, sb);
-    parent.setInnerHTML(sb.toString());
-  }
 
   /**
    * Associate view data with the specified key. If the key is null, the view
