@@ -203,12 +203,14 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
     response.setCharacterEncoding("UTF-8");
 
     // Configure the OutputStream based on configuration and capabilities
+    boolean canCompress = RPCServletUtils.acceptsGzipEncoding(request)
+        && shouldCompressResponse(request, response);
+
     OutputStream out;
     if (DUMP_PAYLOAD) {
       out = new ByteArrayOutputStream();
 
-    } else if (RPCServletUtils.acceptsGzipEncoding(request)
-        && shouldCompressResponse(request, response)) {
+    } else if (canCompress) {
       RPCServletUtils.setGzipEncodingHeader(response);
       out = new GZIPOutputStream(response.getOutputStream());
 
@@ -223,6 +225,13 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
       byte[] bytes = ((ByteArrayOutputStream) out).toByteArray();
       System.out.println(new String(bytes, "UTF-8"));
       response.getOutputStream().write(bytes);
+    } else if (canCompress) {
+      /*
+       * We want to write the end of the gzip data, but not close the underlying
+       * OutputStream in case there are servlet filters that want to write
+       * headers after processPost().
+       */
+      ((GZIPOutputStream) out).finish();
     }
   }
 
