@@ -22,7 +22,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.requestfactory.client.RequestFactoryLogHandler;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
@@ -159,7 +158,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     // to this handler since it would cause an infinite loop.
     // TODO(unnurg): Once this is all set up, ensure that the severe messages
     // in this class do not cause infinite loops during legitimate errors.
-    logger.addHandler(new RequestFactoryLogHandler(this));
+    // logger.addHandler(new RequestFactoryLogHandler(this));
     logger.severe("Successful initialization!");
   }
 
