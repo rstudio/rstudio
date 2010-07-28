@@ -478,6 +478,7 @@ public class BuildTypeMap {
       this.jsFunction = jsFunction;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void resolve(JsNameRef x) {
       // Only resolve unqualified names
@@ -503,7 +504,6 @@ public class BuildTypeMap {
 
   private class ExternalTypeCreator implements ExternalTypeTask {
 
-    @Override
     public void process(String klass, BinaryTypeBinding binding) {
       if (program.getFromTypeMap(klass) == null) {
         // NB(tobyr) There are a few cases where certain compiler intrinsic
@@ -517,7 +517,6 @@ public class BuildTypeMap {
 
   private class ExternalTypeResolver implements ExternalTypeTask {
 
-    @Override
     public void process(String klass, BinaryTypeBinding binding) {
       if (binding != null) {
         JDeclaredType type = program.getFromTypeMap(klass);
