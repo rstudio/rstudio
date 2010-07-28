@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.client;
+package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
@@ -59,10 +59,6 @@ public class ValueStoreJsonImpl implements ValueStore {
       RecordJsoImpl newRecord = newRecords.get(i);
       setRecordInList(newRecord, i, newRecords);
     }
-  }
-
-  public DeltaValueStoreJsonImpl spawnDeltaView() {
-    return new DeltaValueStoreJsonImpl(this, map);
   }
 
   /**

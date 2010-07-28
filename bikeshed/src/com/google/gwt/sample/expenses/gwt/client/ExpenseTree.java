@@ -15,12 +15,12 @@
  */
 package com.google.gwt.sample.expenses.gwt.client;
 
-import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.IconCellDecorator;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.bikeshed.style.client.Styles;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
@@ -28,19 +28,21 @@ import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
-import com.google.gwt.view.client.TreeViewModel;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.ListViewAdapter;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SingleSelectionModel;
+import com.google.gwt.view.client.TreeViewModel;
 import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The employee tree located on the left of the app.
@@ -114,15 +116,15 @@ public class ExpenseTree extends Composite {
       super.addView(view);
 
       // Request the count anytime a view is added.
-      requestFactory.employeeRequest().countEmployeesByDepartment(department).to(
+      requestFactory.employeeRequest().countEmployeesByDepartment(department).fire(
           new Receiver<Long>() {
-            public void onSuccess(Long response) {
+            public void onSuccess(Long response, Set<SyncResult> syncResults) {
               updateDataSize(response.intValue(), true);
             }
-          }).fire();
+          });
     }
 
-    public void onSuccess(List<EmployeeRecord> response) {
+    public void onSuccess(List<EmployeeRecord> response, Set<SyncResult> syncResults) {
       updateViewData(0, response.size(), response);
     }
 
@@ -131,7 +133,7 @@ public class ExpenseTree extends Composite {
       Range range = view.getRange();
       requestFactory.employeeRequest().findEmployeeEntriesByDepartment(
           department, range.getStart(), range.getLength()).forProperties(
-          getEmployeeMenuProperties()).to(this).fire();
+          getEmployeeMenuProperties()).fire(this);
     }
   }
 

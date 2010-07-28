@@ -36,7 +36,7 @@ public class RecordJsoImplTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.valuestore.ValueStoreTest";
+    return "com.google.gwt.valuestore.ValueStore";
   }
 
   public void testEmptyCopy() {

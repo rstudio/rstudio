@@ -13,11 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.client;
+package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.requestfactory.shared.DeltaValueStore;
+import com.google.gwt.valuestore.client.SyncResultImpl;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
@@ -134,7 +135,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
 
   private final Map<RecordKey, WriteOperation> operations = new HashMap<RecordKey, WriteOperation>();
 
-  DeltaValueStoreJsonImpl(ValueStoreJsonImpl master,
+  public DeltaValueStoreJsonImpl(ValueStoreJsonImpl master,
       RecordToTypeMap recordToTypeMap) {
     this.master = master;
     this.recordToTypeMap = recordToTypeMap;

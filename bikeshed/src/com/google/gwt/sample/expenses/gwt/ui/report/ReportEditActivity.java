@@ -58,7 +58,7 @@ public class ReportEditActivity extends
   public ReportEditActivity(String id, RecordEditView<ReportRecord> view,
       ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
-    super(view, id, requests);
+    super(view, id, requests, requests.reportRequest().persist());
     this.requests = requests;
     this.placeController = placeController;
   }
@@ -70,7 +70,7 @@ public class ReportEditActivity extends
   @Override
   protected void fireFindRequest(Value<String> id,
       Receiver<ReportRecord> callback) {
-    requests.reportRequest().findReport(id).to(callback).fire();
+    requests.reportRequest().findReport(id).fire(callback);
   }
   
   @Override

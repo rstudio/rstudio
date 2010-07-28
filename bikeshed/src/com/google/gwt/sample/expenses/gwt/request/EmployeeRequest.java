@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.request;
 
+import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
@@ -64,4 +65,18 @@ public interface EmployeeRequest {
    */
   RecordListRequest<EmployeeRecord> findEmployeeEntriesByDepartment(
       String department, int firstResult, int maxResults);
+
+  // TODO: a hack for now...
+  /**
+   * @return a request object
+   */
+  @Instance
+  RequestFactory.RequestObject<Void> persist();
+
+  // TODO: a hack for now.
+ /**
+  * @return a request object
+  */
+  @Instance
+  RequestFactory.RequestObject<Void> remove();
 }

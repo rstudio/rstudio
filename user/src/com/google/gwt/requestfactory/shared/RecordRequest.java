@@ -37,6 +37,4 @@ public interface RecordRequest<R extends Record> extends
   RecordRequest<R> forProperties(Collection<Property<?>> properties);
 
   RecordRequest<R> forProperty(Property<?> property);
-
-  RecordRequest<R> to(Receiver<R> target);
 }

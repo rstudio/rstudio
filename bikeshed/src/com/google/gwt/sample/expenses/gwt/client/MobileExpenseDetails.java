@@ -29,8 +29,10 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.PropertyReference;
+import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * TODO: doc.
@@ -108,13 +110,13 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
     PropertyReference<String> idRef = new PropertyReference<String>(expense,
         ExpenseRecord.id);
 
-    requestFactory.expenseRequest().findExpense(idRef).to(
+    requestFactory.expenseRequest().findExpense(idRef).fire(
         new Receiver<List<ExpenseRecord>>() {
-          public void onSuccess(List<ExpenseRecord> response) {
+          public void onSuccess(List<ExpenseRecord> response, Set<SyncResult> syncResults) {
             assert response.size() == 1;
             show(response.get(0));
           }
-        }).fire();
+        });
   }
 
   public void show(ExpenseRecord expense) {

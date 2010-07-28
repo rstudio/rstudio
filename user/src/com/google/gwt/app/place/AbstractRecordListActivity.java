@@ -18,6 +18,7 @@ package com.google.gwt.app.place;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.WriteOperation;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.PagingListView;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -95,7 +97,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
     final Range range = listView.getRange();
 
     final Receiver<List<R>> callback = new Receiver<List<R>>() {
-      public void onSuccess(List<R> values) {
+      public void onSuccess(List<R> values, Set<SyncResult> syncResults) {
         if (view == null) {
           // This activity is dead
           return;
@@ -115,8 +117,8 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
       }
     };
 
-    createRangeRequest(range).forProperties(getView().getProperties()).to(
-        callback).fire();
+    createRangeRequest(range).forProperties(getView().getProperties()).fire(
+        callback);
   }
 
   public void onStop() {
@@ -176,7 +178,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
 
   private void getLastPage() {
     fireCountRequest(new Receiver<Long>() {
-      public void onSuccess(Long response) {
+      public void onSuccess(Long response, Set<SyncResult> syncResults) {
         PagingListView<R> table = getView().asPagingListView();
         int rows = response.intValue();
         table.setDataSize(rows, true);
@@ -194,7 +196,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
 
   private void init() {
     fireCountRequest(new Receiver<Long>() {
-      public void onSuccess(Long response) {
+      public void onSuccess(Long response, Set<SyncResult> syncResults) {
         getView().asPagingListView().setDataSize(response.intValue(), true);
         onRangeChanged(view.asPagingListView());
       }

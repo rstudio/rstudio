@@ -16,7 +16,7 @@
   the License.
 -->
 <module>
-  <inherits name='com.google.gwt.valuestore.ValueStore'/>
+  <inherits name='com.google.gwt.requestfactory.RequestFactory'/>
   <!-- use this old inefficient JSON library just for the time being, replace soon -->
   <inherits name='com.google.gwt.json.JSON'/>
 </module>

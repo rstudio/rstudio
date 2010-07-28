@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.client;
+package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.valuestore.shared.impl.RecordImpl;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;

@@ -13,16 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.client;
+package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SimpleFooRecord;
-import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.WriteOperation;
 import com.google.gwt.valuestore.shared.impl.RecordImpl;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
@@ -52,7 +51,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   RecordJsoImpl jso = null;
 
   public String getModuleName() {
-    return "com.google.gwt.valuestore.ValueStoreTest";
+    return "com.google.gwt.requestfactory.RequestFactoryTest";
   }
 
   @Override
@@ -81,7 +80,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testCreate() {
-    DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
     Record created = deltaValueStore.create(SimpleFooRecord.class);
     assertNotNull(created.getId());
     assertNotNull(created.getVersion());
@@ -91,7 +90,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testCreateDelete() {
-    DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
     Record created = deltaValueStore.create(SimpleFooRecord.class);
     assertTrue(deltaValueStore.isChanged());
     deltaValueStore.delete(created);
@@ -102,7 +101,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testCreateUpdate() {
-    DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
     Record created = deltaValueStore.create(SimpleFooRecord.class);
     assertTrue(deltaValueStore.isChanged());
     deltaValueStore.set(SimpleFooRecord.userName, created, "harry");
@@ -113,14 +112,14 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testDelete() {
-    DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
     deltaValueStore.delete(new MyRecordImpl(jso));
     assertTrue(deltaValueStore.isChanged());
     testAndGetChangeRecord(deltaValueStore.toJson(), WriteOperation.DELETE);
   }
 
   public void testDeleteUpdate() {
-    DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
     deltaValueStore.delete(new MyRecordImpl(jso));
     assertTrue(deltaValueStore.isChanged());
 
@@ -134,7 +133,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testOperationAfterJson() {
-    DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
     deltaValueStore.delete(new MyRecordImpl(jso));
     assertTrue(deltaValueStore.isChanged());
 
@@ -154,7 +153,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testUpdate() {
-    DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
     deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
         "harry");
     assertTrue(deltaValueStore.isChanged());
@@ -164,7 +163,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testUpdateDelete() {
-    DeltaValueStoreJsonImpl deltaValueStore = valueStore.spawnDeltaView();
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
     deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
         "harry");
     assertTrue(deltaValueStore.isChanged());
@@ -176,8 +175,8 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testValidation() {
-    ValueStore dummyValueStore = new ValueStoreJsonImpl(null, null);
-    DeltaValueStore deltaValueStore = dummyValueStore.spawnDeltaView();
+    ValueStoreJsonImpl dummyValueStore = new ValueStoreJsonImpl(null, null);
+    DeltaValueStore deltaValueStore = new DeltaValueStoreJsonImpl(dummyValueStore, null);
 
     try {
       deltaValueStore.addValidation();

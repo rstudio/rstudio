@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.request;
 
+import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
@@ -56,7 +57,8 @@ public interface ReportRequest {
   /**
    * @return a request object
    */
-  RecordListRequest<ReportRecord> findReportEntries(int firstResult, int maxResults);
+  RecordListRequest<ReportRecord> findReportEntries(int firstResult,
+      int maxResults);
 
   /**
    * @return a request object
@@ -71,4 +73,16 @@ public interface ReportRequest {
   RecordListRequest<ReportRecord> findReportsByEmployee(
       PropertyReference<String> id);
 
+  // TODO: persist() and remove() methods are hacks for now.
+  /**
+   * @return a request object
+   */
+  @Instance
+  RequestFactory.RequestObject<Void> persist();
+
+  /**
+   * @return a request object
+   */
+  @Instance
+  RequestFactory.RequestObject<Void> remove();
 }

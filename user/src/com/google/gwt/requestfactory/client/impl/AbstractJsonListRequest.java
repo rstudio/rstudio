@@ -18,10 +18,12 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,6 +61,6 @@ AbstractJsonListRequest<T extends Record, R extends AbstractJsonListRequest<T, R
     }
 
     requestFactory.getValueStore().setRecords(valueJsos);
-    receiver.onSuccess(valueList);
+    receiver.onSuccess(valueList, Collections.<SyncResult> emptySet());
   }
 }

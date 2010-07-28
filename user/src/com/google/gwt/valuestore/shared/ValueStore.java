@@ -29,5 +29,4 @@ public interface ValueStore {
    */
   void addValidation(/* what's a validation. JSR 303? Learn from Pectin? */);
 
-  DeltaValueStore spawnDeltaView();
 }

@@ -23,6 +23,7 @@ import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.NoSelectionModel;
@@ -32,6 +33,7 @@ import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * TODO: doc.
@@ -140,7 +142,7 @@ public class MobileReportList extends Composite implements MobilePage {
       return;
     }
     lastReceiver = new Receiver<List<ReportRecord>>() {
-      public void onSuccess(List<ReportRecord> newValues) {
+      public void onSuccess(List<ReportRecord> newValues, Set<SyncResult> syncResults) {
         int size = newValues.size();
         reportAdapter.updateDataSize(size, true);
         reportAdapter.updateViewData(0, size, newValues);
@@ -148,6 +150,6 @@ public class MobileReportList extends Composite implements MobilePage {
     };
     requestFactory.reportRequest().findReportEntriesBySearch(employeeId, "",
         "", ReportRecord.created.getName() + " DESC", 0, 25).forProperties(
-        getReportColumns()).to(lastReceiver).fire();
+        getReportColumns()).fire(lastReceiver);
   }
 }

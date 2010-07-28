@@ -39,10 +39,12 @@ import com.google.gwt.sample.expenses.gwt.ui.ListActivitiesMapper;
 import com.google.gwt.sample.expenses.gwt.ui.ScaffoldListPlaceRenderer;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Application for browsing the entities of the Expenses app.
@@ -85,12 +87,11 @@ public class Scaffold implements EntryPoint {
     
     final LoginWidget login = shell.getLoginWidget();
     Receiver<UserInformationRecord> receiver = new Receiver<UserInformationRecord>() {
-      public void onSuccess(UserInformationRecord userInformationRecord) {
+      public void onSuccess(UserInformationRecord userInformationRecord, Set<SyncResult> syncResults) {
         login.setUserInformation(userInformationRecord);
       }       
      };
-     requestFactory.userInformationRequest().getCurrentUserInformation().to(
-        receiver).fire();
+     requestFactory.userInformationRequest().getCurrentUserInformation().fire(receiver);
 
     /* Left side lets us pick from all the types of entities */
 

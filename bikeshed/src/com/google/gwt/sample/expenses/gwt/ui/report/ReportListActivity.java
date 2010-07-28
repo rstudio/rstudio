@@ -102,6 +102,6 @@ public final class ReportListActivity extends
 
   @Override
   protected void fireCountRequest(Receiver<Long> callback) {
-    requests.reportRequest().countReports().to(callback).fire();
+    requests.reportRequest().countReports().fire(callback);
   }
 }

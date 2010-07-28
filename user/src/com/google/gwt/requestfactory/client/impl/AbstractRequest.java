@@ -15,9 +15,11 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.Record;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +32,8 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract implementation of {@link RequestFactory.RequestObject}.
+ * Abstract implementation of {@link RequestFactory.RequestObject}. Each request
+ * stores a {@link DeltaValueStore}.
  * 
  * @param <T> return type
  * @param <R> type of this request object
@@ -39,16 +42,21 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     implements RequestFactory.RequestObject<T> {
 
   protected final RequestFactoryJsonImpl requestFactory;
+  protected DeltaValueStore deltaValueStore;
   protected Receiver<T> receiver;
 
   private final Set<Property<?>> properties = new HashSet<Property<?>>();
 
   public AbstractRequest(RequestFactoryJsonImpl requestFactory) {
     this.requestFactory = requestFactory;
+    ValueStoreJsonImpl valueStore = requestFactory.getValueStore();
+    this.deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
   }
 
-  public void fire() {
-    assert null != receiver : "to(Receiver) was not called";
+  public void fire(Receiver<T> receiver) {
+    // TODO: do something with deltaValueStore.
+    assert null != receiver : "receiver cannot be null";
+    this.receiver = receiver;
     requestFactory.fire(this);
   }
 
@@ -62,6 +70,10 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     return getThis();
   }
 
+  public DeltaValueStore getDeltaValueStore() {
+    return deltaValueStore;
+  }
+
   /**
    * @return the properties
    */
@@ -69,9 +81,13 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     return Collections.unmodifiableSet(properties);
   }
 
-  public R to(Receiver<T> target) {
-    this.receiver = target;
-    return getThis();
+  public void reset() {
+    ValueStoreJsonImpl valueStore = requestFactory.getValueStore();
+    deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
+  }
+
+  public <V> void set(Property<V> property, Record record, V value) {
+    deltaValueStore.set(property, record, value);
   }
 
   /**

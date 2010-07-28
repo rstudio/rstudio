@@ -16,7 +16,8 @@
 package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
@@ -72,20 +73,27 @@ public interface RequestFactory {
    * Implemented by the request objects created by this factory.
    */
   interface RequestObject<T> {
-    // TODO merge fire() and to(), s.t. compiler enforces providing a callback
-    void fire();
+    // reset the DeltaValueStore.
+    void reset();
+
+    void fire(Receiver<T> receiver);
+
+    // can get access to a DeltaValueStore only in the context of a RequestObject.
+    DeltaValueStore getDeltaValueStore();
 
     String getRequestData();
 
     void handleResponseText(String responseText);
-
-    RequestObject<T> to(Receiver<T> receiver);
+    
+    <V> void set(Property<V> property, Record record, V value);
   }
 
   // TODO: this must be configurable
   String URL = "gwtRequest";
 
   String SYNC = "SYNC";
+
+  Record create(Class token);
 
   ValueStore getValueStore();
 
@@ -97,7 +105,4 @@ public interface RequestFactory {
   // needs to be manually added to the requestSelectors list in
   // RequestFactoryGenerator.java
   LoggingRequest loggingRequest();
-  
-  SyncRequest syncRequest(DeltaValueStore deltaValueStore);
-  
 }

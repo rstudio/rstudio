@@ -52,6 +52,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.NoSelectionModel;
@@ -569,7 +570,7 @@ public class ExpenseList extends Composite implements
         pager.startLoading();
       }
       lastDataSizeReceiver = new Receiver<Long>() {
-        public void onSuccess(Long response) {
+        public void onSuccess(Long response, Set<SyncResult> syncResults) {
           if (this == lastDataSizeReceiver) {
             int count = response.intValue();
             // Treat count == 1000 as inexact due to AppEngine limitation
@@ -578,12 +579,12 @@ public class ExpenseList extends Composite implements
         }
       };
       requestFactory.reportRequest().countReportsBySearch(employeeId, dept,
-          startsWith).to(lastDataSizeReceiver).fire();
+          startsWith).fire(lastDataSizeReceiver);
     }
 
     // Request reports in the current range.
     lastDataReceiver = new Receiver<List<ReportRecord>>() {
-      public void onSuccess(List<ReportRecord> newValues) {
+      public void onSuccess(List<ReportRecord> newValues, Set<SyncResult> syncResults) {
         if (this == lastDataReceiver) {
           int size = newValues.size();
           if (size < table.getPageSize()) {
@@ -614,7 +615,7 @@ public class ExpenseList extends Composite implements
 
     requestFactory.reportRequest().findReportEntriesBySearch(employeeId, dept,
         startsWith, orderBy, range.getStart(), range.getLength()).forProperties(
-        reportColumns).to(lastDataReceiver).fire();
+        reportColumns).fire(lastDataReceiver);
   }
 
   /**

@@ -25,6 +25,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.NoSelectionModel;
@@ -206,7 +207,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
       return;
     }
     lastReceiver = new Receiver<List<ExpenseRecord>>() {
-      public void onSuccess(List<ExpenseRecord> newValues) {
+      public void onSuccess(List<ExpenseRecord> newValues, Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
           int size = newValues.size();
           expenseAdapter.updateDataSize(size, true);
@@ -236,7 +237,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
       }
     };
     requestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(ReportRecord.id)).forProperties(getExpenseColumns()).to(
-        lastReceiver).fire();
+        report.getRef(ReportRecord.id)).forProperties(getExpenseColumns()).fire(
+        lastReceiver);
   }
 }

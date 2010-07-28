@@ -17,7 +17,9 @@ package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
@@ -27,7 +29,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.Date;
@@ -61,7 +62,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
   private ReportRecord report;
   private final ExpensesRequestFactory requestFactory;
   private final Listener listener;
-  private DeltaValueStore deltas;
+  private RequestFactory.RequestObject<Void> requestObject;
 
   public MobileReportEntry(Listener listener,
       ExpensesRequestFactory requestFactory) {
@@ -83,8 +84,8 @@ public class MobileReportEntry extends Composite implements MobilePage {
   }
 
   public void create(Long reporterId) {
-    deltas = requestFactory.getValueStore().spawnDeltaView();
-
+    requestObject = requestFactory.reportRequest().persist();
+    DeltaValueStore deltas = requestObject.getDeltaValueStore();
     report = (ReportRecord) deltas.create(ReportRecord.class);
     deltas.set(ReportRecord.reporterKey, report, reporterId.toString());
     displayReport();
@@ -111,6 +112,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
+    DeltaValueStore deltas = requestObject.getDeltaValueStore();
     deltas.set(ReportRecord.purpose, report, purposeText.getText());
     deltas.set(ReportRecord.notes, report, notesText.getText());
     deltas.set(ReportRecord.department, report,
@@ -122,8 +124,8 @@ public class MobileReportEntry extends Composite implements MobilePage {
     deltas.set(ExpenseRecord.created, report, date);
 
     // TODO: wait throbber
-    requestFactory.syncRequest(deltas).to(new Receiver<Set<SyncResult>>() {
-      public void onSuccess(Set<SyncResult> response) {
+    requestObject.fire(new Receiver<Void>() {
+      public void onSuccess(Void ignore, Set<SyncResult> response) {
         // Check for commit errors.
         String errorMessage = "";
         for (SyncResult result : response) {
@@ -140,14 +142,13 @@ public class MobileReportEntry extends Composite implements MobilePage {
           listener.onReportUpdated();
         }
       }
-    }).fire();
+    });
   }
 
   public void onRefresh(boolean clear) {
   }
 
   public void show(ReportRecord report) {
-    deltas = requestFactory.getValueStore().spawnDeltaView();
     this.report = report;
     displayReport();
   }

@@ -15,6 +15,10 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.valuestore.shared.SyncResult;
+
+import java.util.Set;
+
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -26,5 +30,5 @@ package com.google.gwt.requestfactory.shared;
  * @param <V> value type
  */
 public interface Receiver<V> {
-  void onSuccess(V response);
+  void onSuccess(V response, Set<SyncResult> syncResults);
 }

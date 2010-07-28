@@ -15,10 +15,10 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.Value;
@@ -38,28 +38,31 @@ import java.util.Set;
 public abstract class AbstractRecordEditActivity<R extends Record> implements
     Activity, RecordEditView.Delegate {
 
+  // TODO(amitmanjhi): get rid of the requests field.
   private final RequestFactory requests;
   private final boolean creating;
   private final RecordEditView<R> view;
 
   private String id;
   private String futureId;
-  private DeltaValueStore deltas;
   private Display display;
+  private RequestFactory.RequestObject<Void> requestObject;
 
   public AbstractRecordEditActivity(RecordEditView<R> view, String id,
-      RequestFactory requests) {
+      RequestFactory requests, RequestFactory.RequestObject<Void> requestObject) {
     this.view = view;
     this.creating = "".equals(id);
     this.id = id;
     this.requests = requests;
-    this.deltas = requests.getValueStore().spawnDeltaView();
+    this.requestObject = requestObject;
   }
 
   public void cancelClicked() {
     String unsavedChangesWarning = mayStop();
-    if ((unsavedChangesWarning == null) || Window.confirm(unsavedChangesWarning)) {
-      deltas = null; // silence the next mayStop() call when place changes
+    if ((unsavedChangesWarning == null)
+        || Window.confirm(unsavedChangesWarning)) {
+      requestObject.reset(); // silence the next mayStop() call when place
+                             // changes
       if (creating) {
         display.showActivityWidget(null);
       } else {
@@ -69,7 +72,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   }
 
   public String mayStop() {
-    if (deltas != null && deltas.isChanged()) {
+    if (requestObject != null && requestObject.getDeltaValueStore().isChanged()) {
       return "Are you sure you want to abandon your changes?";
     }
 
@@ -85,68 +88,66 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   }
 
   public void saveClicked() {
-    if (deltas.isChanged()) {
-      view.setEnabled(false);
+    DeltaValueStore deltas = requestObject.getDeltaValueStore();
+    if (!deltas.isChanged()) {
+      return;
+    }
+    view.setEnabled(false);
 
-      final DeltaValueStore toCommit = deltas;
-      deltas = null;
+    final RequestFactory.RequestObject<Void> toCommit = requestObject;
+    requestObject = null;
 
-      Receiver<Set<SyncResult>> receiver = new Receiver<Set<SyncResult>>() {
-        public void onSuccess(Set<SyncResult> response) {
-          if (display == null) {
-            return;
-          }
-          boolean hasViolations = false;
-          for (SyncResult syncResult : response) {
-            Record syncRecord = syncResult.getRecord();
-            if (creating) {
-              if (futureId == null
-                  || !futureId.equals(syncResult.getFutureId())) {
-                continue;
-              }
-              id = syncRecord.getId();
-            } else {
-              if (!syncRecord.getId().equals(id)) {
-                continue;
-              }
+    Receiver<Void> receiver = new Receiver<Void>() {
+      public void onSuccess(Void ignore, Set<SyncResult> response) {
+        if (display == null) {
+          return;
+        }
+        boolean hasViolations = false;
+        for (SyncResult syncResult : response) {
+          Record syncRecord = syncResult.getRecord();
+          if (creating) {
+            if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
+              continue;
             }
-            if (syncResult.hasViolations()) {
-              hasViolations = true;
-              view.showErrors(syncResult.getViolations());
-            }
-          }
-          if (!hasViolations) {
-            exit();
+            id = syncRecord.getId();
           } else {
-            deltas = toCommit;
-            deltas.clearUsed();
-            view.setEnabled(true);
-            deltas.clearUsed();
+            if (!syncRecord.getId().equals(id)) {
+              continue;
+            }
+          }
+          if (syncResult.hasViolations()) {
+            hasViolations = true;
+            view.showErrors(syncResult.getViolations());
           }
         }
+        if (!hasViolations) {
+          exit();
+        } else {
+          requestObject = toCommit;
+          requestObject.getDeltaValueStore().clearUsed();
+          view.setEnabled(true);
+        }
+      }
 
-      };
-      requests.syncRequest(toCommit).to(receiver).fire();
-    }
+    };
+    toCommit.fire(receiver);
   }
 
   @SuppressWarnings("unchecked")
   public void start(Display display) {
     this.display = display;
-    
+
     view.setDelegate(this);
-    view.setDeltaValueStore(deltas);
+    view.setDeltaValueStore(requestObject.getDeltaValueStore());
     view.setCreating(creating);
 
     if (creating) {
-      // TODO shouldn't have to cast like this. Let's get something better than
-      // a string token
-      R tempRecord = (R) deltas.create(getRecordClass());
+      R tempRecord = (R) requestObject.getDeltaValueStore().create(getRecordClass());
       futureId = tempRecord.getId();
       doStart(display, tempRecord);
     } else {
       fireFindRequest(Value.of(id), new Receiver<R>() {
-        public void onSuccess(R record) {
+        public void onSuccess(R record, Set<SyncResult> syncResults) {
           if (AbstractRecordEditActivity.this.display != null) {
             doStart(AbstractRecordEditActivity.this.display, record);
           }

@@ -103,6 +103,6 @@ public class EmployeeListActivity extends
 
   @Override
   protected void fireCountRequest(Receiver<Long> callback) {
-    requests.employeeRequest().countEmployees().to(callback).fire();
+    requests.employeeRequest().countEmployees().fire(callback);
   }
 }

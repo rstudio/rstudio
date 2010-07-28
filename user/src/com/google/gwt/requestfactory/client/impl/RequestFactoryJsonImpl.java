@@ -22,18 +22,16 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
-import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.SyncRequest;
+import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
-import com.google.gwt.valuestore.client.DeltaValueStoreJsonImpl;
-import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
-import com.google.gwt.valuestore.shared.SyncResult;
+import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
+import com.google.gwt.valuestore.shared.impl.RecordSchema;
 import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,19 +46,59 @@ import java.util.logging.Logger;
  */
 public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
+  private static class FutureIdGenerator {
+    Set<String> idsInTransit = new HashSet<String>();
+    int maxId = 1;
+
+    void delete(String id) {
+      idsInTransit.remove(id);
+    }
+
+    String getFutureId() {
+      int futureId = maxId++;
+      if (maxId == Integer.MAX_VALUE) {
+        maxId = 1;
+      }
+      assert !idsInTransit.contains(futureId);
+      return new String(futureId + "");
+    }
+  }
+  
   private static Logger logger =
     Logger.getLogger(RequestFactory.class.getName());
   
   private static String SERVER_ERROR = "Server Error";
-  
-  private HandlerManager handlerManager;
-  
+    
+  private static final Integer INITIAL_VERSION = 1;
+
   private ValueStoreJsonImpl valueStore;
-  
+
+  private HandlerManager handlerManager;
+
+  private final FutureIdGenerator futureIdGenerator = new FutureIdGenerator();
+
+  public com.google.gwt.valuestore.shared.Record create(
+      Class<? extends Record> token, RecordToTypeMap recordToTypeMap) {
+    String futureId = futureIdGenerator.getFutureId();
+
+    RecordSchema<? extends Record> schema = recordToTypeMap.getType(token);
+    RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
+        schema);
+    return schema.create(newRecord);
+  }
+
   public void fire(final RequestObject<?> requestObject) {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         GWT.getHostPageBaseURL() + RequestFactory.URL);
-    builder.setRequestData(requestObject.getRequestData());
+    // TODO: do something better here...
+    if (requestObject.getDeltaValueStore().isChanged()) {
+      builder.setRequestData(ClientRequestHelper.getRequestString(RequestDataManager.getRequestMap(
+          RequestFactory.SYNC,
+          null,
+          ((DeltaValueStoreJsonImpl) requestObject.getDeltaValueStore()).toJson())));
+    } else {
+      builder.setRequestData(requestObject.getRequestData());
+    }
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
@@ -92,56 +130,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   public ValueStoreJsonImpl getValueStore() {
     return valueStore;
-  }
-
-  public SyncRequest syncRequest(DeltaValueStore deltas) {
-    assert deltas instanceof DeltaValueStoreJsonImpl;
-    final DeltaValueStoreJsonImpl jsonDeltas = (DeltaValueStoreJsonImpl) deltas;
-
-    return new SyncRequest() {
-
-      Receiver<Set<SyncResult>> receiver = null;
-      public void fire() {
-        assert null != receiver : "to(Receiver) was not called";
-
-        RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
-            GWT.getHostPageBaseURL() + RequestFactory.URL);
-
-        builder.setRequestData(ClientRequestHelper.getRequestString(RequestDataManager.getRequestMap(
-            RequestFactory.SYNC, null, jsonDeltas.toJson())));
-        builder.setCallback(new RequestCallback() {
-
-          public void onError(Request request, Throwable exception) {
-            postRequestEvent(State.RECEIVED, null);
-            logger.log(Level.SEVERE, SERVER_ERROR, exception);
-          }
-
-          public void onResponseReceived(Request request, Response response) {
-            logger.finest("Response received");
-            if (200 == response.getStatusCode()) {
-              // parse the return value.
-              receiver.onSuccess(jsonDeltas.commit(response.getText()));
-            } else {
-              logger.severe(SERVER_ERROR + " (" + response.getStatusText() + ")");
-            }
-            postRequestEvent(State.RECEIVED, response);
-          }
-        });
-
-        try {
-          logger.finest("Sending sync request");
-          builder.send();
-          postRequestEvent(State.SENT, null);
-        } catch (RequestException e) {
-          logger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() +  ")", e);
-        }
-      }
-
-      public SyncRequest to(Receiver<Set<SyncResult>> receiver) {
-        this.receiver = receiver;
-        return this;
-      }
-    };
   }
 
   /**

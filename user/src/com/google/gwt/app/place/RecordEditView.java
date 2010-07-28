@@ -15,8 +15,8 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.user.client.ui.TakesValue;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Record;
 
 import java.util.Map;

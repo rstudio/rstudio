@@ -15,6 +15,10 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.valuestore.shared.SyncResult;
+
+import java.util.Collections;
+
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -33,7 +37,8 @@ public abstract class AbstractLongRequest extends
   }
 
   public void handleResponseText(String responseText) {
-    receiver.onSuccess(Long.valueOf(responseText));
+    receiver.onSuccess(Long.valueOf(responseText),
+        Collections.<SyncResult> emptySet());
   }
 
   @Override

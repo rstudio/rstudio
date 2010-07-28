@@ -33,6 +33,7 @@ import com.google.gwt.requestfactory.client.impl.AbstractIntegerRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonListRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonObjectRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractVoidRequest;
 import com.google.gwt.requestfactory.client.impl.ClientRequestHelper;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
@@ -233,6 +234,7 @@ public class RequestFactoryGenerator extends Generator {
     f.addImport(HandlerManager.class.getName());
     f.addImport(RequestFactoryJsonImpl.class.getName());
     f.addImport(interfaceType.getQualifiedSourceName());
+    f.addImport(RecordToTypeMap.class.getName());
     f.addImplementedInterface(interfaceType.getName());
     f.setSuperclass(RequestFactoryJsonImpl.class.getSimpleName());
 
@@ -288,7 +290,13 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("super.init(handlerManager, new " + recordToTypeMapName + "());");
     sw.outdent();
     sw.println("}");
-
+    sw.println();
+    sw.println("public " + Record.class.getName() + " create(Class token) {");
+    sw.indent();
+    sw.println("return create(token, new " + recordToTypeMapName + "());");
+    sw.outdent();
+    sw.println("}");
+    
     // write a method for each request builder and generate it
     for (JMethod requestSelector : requestSelectors) {
       String returnTypeName = requestSelector.getReturnType().getQualifiedSourceName();
@@ -420,6 +428,8 @@ public class RequestFactoryGenerator extends Generator {
         requestClassName = AbstractIntegerRequest.class.getName();
       } else if (isDoubleRequest(typeOracle, requestType)) {
         requestClassName = AbstractDoubleRequest.class.getName();
+      } else if (isVoidRequest(typeOracle, requestType)) {
+        requestClassName = AbstractVoidRequest.class.getName();
       } else {
         logger.log(TreeLogger.ERROR, "Return type " + requestType
             + " is not yet supported");
@@ -517,6 +527,10 @@ public class RequestFactoryGenerator extends Generator {
 
   private boolean isRecordRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isAssignableTo(typeOracle.findType(RecordRequest.class.getName()));
+  }
+
+  private boolean isVoidRequest(TypeOracle typeOracle, JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Void.class.getName()));
   }
 
   /**

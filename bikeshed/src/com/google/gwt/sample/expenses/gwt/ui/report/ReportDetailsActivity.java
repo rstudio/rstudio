@@ -18,13 +18,14 @@ package com.google.gwt.sample.expenses.gwt.ui.report;
 import com.google.gwt.app.place.AbstractActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordDetailsView;
+import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestFactory.RequestObject;
 import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.Value;
 
@@ -78,11 +79,13 @@ public class ReportDetailsActivity extends AbstractActivity implements
       return;
     }
     
-    DeltaValueStore deltas = requests.getValueStore().spawnDeltaView();
+    RequestObject<Void> deleteRequest = requests.reportRequest().remove();
+    // TODO: fix this.
+    DeltaValueStore deltas = deleteRequest.getDeltaValueStore();
     deltas.delete(view.getValue());
-    requests.syncRequest(deltas).to(new Receiver<Set<SyncResult>>() {
+    deleteRequest.fire(new Receiver<Void>() {
 
-      public void onSuccess(Set<SyncResult> response) {
+      public void onSuccess(Void ignore, Set<SyncResult> response) {
         if (display == null) {
           // This activity is dead
           return;
@@ -90,7 +93,7 @@ public class ReportDetailsActivity extends AbstractActivity implements
         
         display.showActivityWidget(null);
       }
-    }).fire();
+    });
   }
 
   public void editClicked() {
@@ -109,7 +112,7 @@ public class ReportDetailsActivity extends AbstractActivity implements
   public void start(final Display displayIn) {
     this.display = displayIn;
     Receiver<ReportRecord> callback = new Receiver<ReportRecord>() {
-      public void onSuccess(ReportRecord record) {
+      public void onSuccess(ReportRecord record, Set<SyncResult> syncResults) {
         if (display == null) {
           return;
         }
@@ -117,6 +120,6 @@ public class ReportDetailsActivity extends AbstractActivity implements
         display.showActivityWidget(view);
       }
     };
-    requests.reportRequest().findReport(Value.of(id)).to(callback).fire();
+    requests.reportRequest().findReport(Value.of(id)).fire(callback);
   }
 }

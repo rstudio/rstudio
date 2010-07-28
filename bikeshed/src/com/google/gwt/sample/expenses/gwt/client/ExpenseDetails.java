@@ -39,7 +39,9 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestFactory.RequestObject;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.sample.bikeshed.style.client.Styles;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
@@ -67,7 +69,6 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
@@ -899,7 +900,7 @@ public class ExpenseDetails extends Composite
     // Cancel the timer since we are about to send a request.
     refreshTimer.cancel();
     lastReceiver = new Receiver<List<ExpenseRecord>>() {
-      public void onSuccess(List<ExpenseRecord> newValues) {
+      public void onSuccess(List<ExpenseRecord> newValues, Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
           List<ExpenseRecord> list = new ArrayList<ExpenseRecord>(newValues);
           sortExpenses(list, lastComparator);
@@ -932,8 +933,7 @@ public class ExpenseDetails extends Composite
       }
     };
     expensesRequestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(Record.id)).forProperties(getExpenseColumns()).to(
-        lastReceiver).fire();
+        report.getRef(Record.id)).forProperties(getExpenseColumns()).fire(lastReceiver);
   }
 
   /**
@@ -951,11 +951,11 @@ public class ExpenseDetails extends Composite
     setNotesEditState(false, true, pendingNotes);
 
     // Submit the delta.
-        DeltaValueStore deltas = expensesRequestFactory.getValueStore().spawnDeltaView();
+    RequestObject<Void> editRequest = expensesRequestFactory.reportRequest().persist();
+    DeltaValueStore deltas = editRequest.getDeltaValueStore();
     deltas.set(ReportRecord.notes, report, pendingNotes);
-    expensesRequestFactory.syncRequest(deltas).to(
-        new Receiver<Set<SyncResult>>() {
-          public void onSuccess(Set<SyncResult> response) {
+    editRequest.fire(new Receiver<Void>() {
+          public void onSuccess(Void ignore, Set<SyncResult> response) {
             // We expect onReportChanged to be called if there are no errors.
             String errorMessage = getErrorMessageFromSync(response);
             if (errorMessage.length() > 0) {
@@ -963,7 +963,7 @@ public class ExpenseDetails extends Composite
               setNotesEditState(false, false, report.getNotes());
             }
           }
-        }).fire();
+        });
   }
 
   /**
@@ -1035,18 +1035,18 @@ public class ExpenseDetails extends Composite
     }
 
     // Create a delta and sync with the value store.
-        DeltaValueStore deltas = expensesRequestFactory.getValueStore().spawnDeltaView();
+    RequestObject<Void> editRequest = expensesRequestFactory.expenseRequest().persist();
+    DeltaValueStore deltas = editRequest.getDeltaValueStore();
     deltas.set(ExpenseRecord.approval, record, approval);
     deltas.set(ExpenseRecord.reasonDenied, record, reasonDenied);
-    expensesRequestFactory.syncRequest(deltas).to(
-        new Receiver<Set<SyncResult>>() {
-          public void onSuccess(Set<SyncResult> response) {
+    editRequest.fire(new Receiver<Void>() {
+          public void onSuccess(Void ignore, Set<SyncResult> response) {
             String errorMessage = getErrorMessageFromSync(response);
             if (errorMessage.length() > 0) {
               syncCommit(
                   record, errorMessage.length() > 0 ? errorMessage : null);
             }
           }
-        }).fire();
+        });
   }
 }

@@ -24,7 +24,7 @@
 
   <!-- Logging Configuration -->
   <!-- Right now, App Engine Dev Mode logging is borken for everything other
-       than the system handler, so only that one is enabled for now
+       than the system handler, so only that one is enabled for now 
   <set-property name="gwt.logging.enabled" value="TRUE"/> 
   <set-property name="gwt.logging.logLevel" value="INFO"/>
   <set-property name="gwt.logging.consoleHandler" value="DISABLED" />
@@ -34,5 +34,5 @@
   <set-property name="gwt.logging.popupHandler" value="DISABLED" />
   <set-property name="gwt.logging.systemHandler" value="ENABLED" />
   <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
- -->
+-->
 </module>

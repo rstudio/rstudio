@@ -18,9 +18,11 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -31,8 +33,7 @@ import java.util.logging.Logger;
  */
 public class RequestFactoryLogHandler extends Handler {
   class LoggingReceiver implements Receiver<Long> {
-
-    public void onSuccess(Long response) {
+    public void onSuccess(Long response, Set<SyncResult> syncResults) {
       if (response > 0) {
         logger.finest("Remote logging successful");
       } else {
@@ -81,11 +82,11 @@ public class RequestFactoryLogHandler extends Handler {
       // something more complex than Strings to the logMessage function, then
       // we can do batching here.
       for (LogRecord record : records) {
-        Receiver loggingReciever = new LoggingReceiver();
+        Receiver<Long> loggingReciever = new LoggingReceiver();
         requestFactory.loggingRequest().logMessage(
             record.getLevel().toString(),
             record.getLoggerName(),
-            record.getMessage()).to(loggingReciever).fire();
+            record.getMessage()).fire(loggingReciever);
       }
     }
   }

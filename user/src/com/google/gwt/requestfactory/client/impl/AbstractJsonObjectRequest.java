@@ -17,8 +17,11 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
+
+import java.util.Collections;
 
 /**
  * <p>
@@ -50,6 +53,7 @@ AbstractJsonObjectRequest<T extends Record, R extends AbstractJsonObjectRequest<
     jso.setSchema(schema);
 
     requestFactory.getValueStore().setRecord(jso);
-    receiver.onSuccess(schema.create(jso));
+    receiver.onSuccess(schema.create(jso),
+        Collections.<SyncResult> emptySet());
   }
 }

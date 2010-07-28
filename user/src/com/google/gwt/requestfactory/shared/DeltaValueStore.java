@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,9 +17,7 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
-
-import java.util.Collection;
-import java.util.List;
+import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
  * <p>
@@ -27,15 +25,31 @@ import java.util.List;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Implemented by RequestObjects for service methods that return lists of
- * records.
- * 
- * @param <R> The type held by the returned list
+ * Set of changes to a ValueStore.
  */
-public interface RecordListRequest<R extends Record> extends
-    RequestFactory.RequestObject<List<R>> {
+public interface DeltaValueStore extends ValueStore {
 
-  RecordListRequest<R> forProperties(Collection<Property<?>> properties);
+  /**
+   * Enable a DeltaValueStore to be reused again. For example, when the edit
+   * fails on the server.
+   */
+  void clearUsed();
 
-  RecordListRequest<R> forProperty(Property<?> property);
+  Record create(Class token);
+
+  void delete(Record record);
+
+  /**
+   * Return true if there are outstanding changes that have not been
+   * communicated to the server yet. Note that it is illegal to call this method
+   * after a request using it has been fired.
+   */
+  boolean isChanged();
+
+  <V> void set(Property<V> property, Record record, V value);
+
+  /**
+   * Returns true if all validations have passed.
+   */
+  boolean validate();
 }
