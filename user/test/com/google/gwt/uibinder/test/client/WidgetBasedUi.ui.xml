@@ -614,12 +614,6 @@
     </gwt:row>
   </gwt:Grid>
 
-  <gwt:AbsolutePanel ui:field='myAbsolutePanel'>
-    <gwt:child left='1' top='2'>
-      <gwt:Button ui:field='myAbsolutePanelItem'>AbsolutePanel item</gwt:Button>
-    </gwt:child>
-  </gwt:AbsolutePanel>
-
    </gwt:HTMLPanel>
   </gwt:Dock>
 </gwt:DockPanel>

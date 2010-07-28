@@ -50,7 +50,7 @@ import com.google.gwt.layout.client.Layout.Layer;
  * 
  * <p>
  * Precisely zero or two constraints are required for each axis (horizontal and
- * vertical). Specifying no constraints implies that the child should fill that
+ * vertial). Specifying no constraints implies that the child should fill that
  * axis completely.
  * 
  * <p>
