@@ -30,6 +30,7 @@ import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DisclosurePanel;
@@ -162,6 +163,8 @@ public class WidgetBasedUi extends Composite {
   @UiField FooDialog fooDialog;
   @UiField ListBox fooListBox;
   @UiField Grid fooGrid;
+  @UiField AbsolutePanel myAbsolutePanel;
+  @UiField Widget myAbsolutePanelItem;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();

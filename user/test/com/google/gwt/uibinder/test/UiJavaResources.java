@@ -29,6 +29,17 @@ import java.util.Set;
  */
 public class UiJavaResources {
 
+  public static final MockJavaResource ABSOLUTE_PANEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.AbsolutePanel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class AbsolutePanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource BUTTON = new MockJavaResource(
       "com.google.gwt.user.client.ui.Button") {
     @Override
@@ -107,9 +118,9 @@ public class UiJavaResources {
     }
   };
   public static final MockJavaResource GRID = new MockJavaResource(
-    "com.google.gwt.user.client.ui.Grid") {
-  @Override
-  protected CharSequence getContent() {
+      "com.google.gwt.user.client.ui.Grid") {
+    @Override
+    protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class Grid extends Widget {\n");
@@ -382,6 +393,7 @@ public class UiJavaResources {
   public static Set<Resource> getUiResources() {
     Set<Resource> rtn = new HashSet<Resource>(
         Arrays.asList(JavaResourceBase.getStandardResources()));
+    rtn.add(ABSOLUTE_PANEL);
     rtn.add(BUTTON);
     rtn.add(CLICK_EVENT);
     rtn.add(CLICK_HANDLER);
