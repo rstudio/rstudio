@@ -38,7 +38,7 @@ public class BinaryTypeBinding extends ReferenceBinding {
 	protected ReferenceBinding[] superInterfaces;
 	protected FieldBinding[] fields;
 	protected MethodBinding[] methods;
-	protected MethodBinding[] bridgeMethods;
+	protected MethodBinding[] bridgeMethods = Binding.NO_METHODS;
 	protected ReferenceBinding[] memberTypes;
 	protected TypeVariableBinding[] typeVariables;
 
