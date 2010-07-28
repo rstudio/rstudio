@@ -116,6 +116,7 @@
   </target>
 
   <target name="checkstyle" description="[action] Does static analysis of GWT source">
+    <call-subproject subproject="bikeshed" subtarget="checkstyle" />
     <call-subproject subproject="buildtools" subtarget="checkstyle" />
     <call-subproject subproject="dev" subtarget="checkstyle" />
     <call-subproject subproject="user" subtarget="checkstyle" />

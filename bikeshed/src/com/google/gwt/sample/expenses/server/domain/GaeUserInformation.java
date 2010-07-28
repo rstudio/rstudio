@@ -23,7 +23,7 @@ import com.google.gwt.requestfactory.server.UserInformationImpl;
 
 /**
  * A user information class that uses the Google App Engine authentication
- * framework
+ * framework.
  */
 public class GaeUserInformation extends UserInformationImpl {
   private static UserService userService = UserServiceFactory.getUserService();
@@ -40,6 +40,14 @@ public class GaeUserInformation extends UserInformationImpl {
     return user.getEmail();
   }
 
+  public Long getId() {
+    User user = userService.getCurrentUser();
+    if (user == null) {
+      return 0L;
+    }
+    return new Long(user.hashCode());
+  }
+  
   public String getLoginUrl() {
     return userService.createLoginURL("RETURN_URL");
   }
@@ -54,14 +62,6 @@ public class GaeUserInformation extends UserInformationImpl {
       return "";
     }
     return user.getNickname();
-  }
-  
-  public Long getId() {
-    User user = userService.getCurrentUser();
-    if (user == null) {
-      return 0L;
-    }
-    return new Long(user.hashCode());
   }
   
   public boolean isUserLoggedIn() {

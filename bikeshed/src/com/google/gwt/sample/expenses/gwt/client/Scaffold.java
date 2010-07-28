@@ -89,8 +89,8 @@ public class Scaffold implements EntryPoint {
         login.setUserInformation(userInformationRecord);
       }       
      };
-     requestFactory.userInformationRequest()
-       .getCurrentUserInformation().to(receiver).fire();
+     requestFactory.userInformationRequest().getCurrentUserInformation().to(
+        receiver).fire();
 
     /* Left side lets us pick from all the types of entities */
 

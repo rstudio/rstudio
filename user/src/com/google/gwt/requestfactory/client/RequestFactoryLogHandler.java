@@ -27,11 +27,11 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
- * A Handler that does Remote Logging for applications using Request Factory
+ * A Handler that does Remote Logging for applications using Request Factory.
  */
 public class RequestFactoryLogHandler extends Handler {
   class LoggingReceiver implements Receiver<Long> {
-    @Override
+
     public void onSuccess(Long response) {
       if (response > 0) {
         logger.finest("Remote logging successful");

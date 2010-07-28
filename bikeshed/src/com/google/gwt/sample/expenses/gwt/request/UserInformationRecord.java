@@ -39,7 +39,9 @@ public interface UserInformationRecord extends Record, UserInformation {
   Property<String> name =
     new Property<String>("name", "Name", String.class);
   
-  // Most of the actual getXxx calls come from the UserInformationProvider
-  // interface
+  /* Most of the actual getXxx calls come from the UserInformationProvider
+   * interface. Redeclare this method, even though it is already in Record.java
+   * so checkstyle does not complain about an interface with no methods */
+  String getId();
 
 }
