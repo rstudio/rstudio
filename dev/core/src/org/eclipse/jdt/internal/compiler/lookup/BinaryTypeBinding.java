@@ -38,6 +38,7 @@ public class BinaryTypeBinding extends ReferenceBinding {
 	protected ReferenceBinding[] superInterfaces;
 	protected FieldBinding[] fields;
 	protected MethodBinding[] methods;
+	protected MethodBinding[] bridgeMethods;
 	protected ReferenceBinding[] memberTypes;
 	protected TypeVariableBinding[] typeVariables;
 
@@ -526,61 +527,46 @@ private MethodBinding createMethod(IBinaryMethod method, long sourceLevel, char[
 /**
  * Create method bindings for binary type, filtering out <clinit> and synthetics
  */
-private void createMethods(IBinaryMethod[] iMethods, long sourceLevel, char[][][] missingTypeNames) {
-	int total = 0, initialTotal = 0, iClinit = -1;
-	int[] toSkip = null;
-	if (iMethods != null) {
-		total = initialTotal = iMethods.length;
-		boolean keepBridgeMethods = sourceLevel < ClassFileConstants.JDK1_5
-			&& this.environment.globalOptions.complianceLevel >= ClassFileConstants.JDK1_5;
-		for (int i = total; --i >= 0;) {
-			IBinaryMethod method = iMethods[i];
-			if ((method.getModifiers() & ClassFileConstants.AccSynthetic) != 0) {
-				if (keepBridgeMethods && (method.getModifiers() & ClassFileConstants.AccBridge) != 0)
-					continue; // want to see bridge methods as real methods
-				// discard synthetics methods
-				if (toSkip == null) toSkip = new int[iMethods.length];
-				toSkip[i] = -1;
-				total--;
-			} else if (iClinit == -1) {
-				char[] methodName = method.getSelector();
-				if (methodName.length == 8 && methodName[0] == '<') {
-					// discard <clinit>
-					iClinit = i;
-					total--;
-				}
+private void createMethods(IBinaryMethod[] iMethods, long sourceLevel, char[][][] missingTypeNames) { 
+	if (iMethods == null) {
+		this.methods = this.bridgeMethods = Binding.NO_METHODS;
+		return;
+	}  
+	ArrayList<MethodBinding> methodBindings = new ArrayList<MethodBinding>(iMethods.length);
+	ArrayList<MethodBinding> bridgeBindings = new ArrayList<MethodBinding>(iMethods.length);
+	boolean isViewedAsDeprecated = isViewedAsDeprecated();
+	boolean hasRestrictedAccess = hasRestrictedAccess();  
+	boolean discardedClinit = false;
+  
+	for (int i = 0; i < iMethods.length; ++i) {
+		IBinaryMethod method = iMethods[i];
+		boolean isBridge = (method.getModifiers() & ClassFileConstants.AccBridge) != 0;
+		if (!isBridge && (method.getModifiers() & ClassFileConstants.AccSynthetic) != 0) {
+			continue;
+		}
+		if (!discardedClinit) {
+			char[] methodName = method.getSelector();
+			if (methodName.length == 8 && methodName[0] == '<') {
+				discardedClinit = true;
+				continue;
 			}
 		}
-	}
-	if (total == 0) {
-		this.methods = Binding.NO_METHODS;
-		return;
+		MethodBinding newMethod = createMethod(iMethods[i], sourceLevel, missingTypeNames);
+		if (isViewedAsDeprecated && !newMethod.isDeprecated())
+			newMethod.modifiers |= ExtraCompilerModifiers.AccDeprecatedImplicitly;
+		if (hasRestrictedAccess)
+			newMethod.modifiers |= ExtraCompilerModifiers.AccRestrictedAccess;
+		if (isBridge)
+			bridgeBindings.add(newMethod);
+		else
+			methodBindings.add(newMethod);
 	}
 
-	boolean isViewedAsDeprecated = isViewedAsDeprecated();
-	boolean hasRestrictedAccess = hasRestrictedAccess();
-	this.methods = new MethodBinding[total];
-	if (total == initialTotal) {
-		for (int i = 0; i < initialTotal; i++) {
-			MethodBinding method = createMethod(iMethods[i], sourceLevel, missingTypeNames);
-			if (isViewedAsDeprecated && !method.isDeprecated())
-				method.modifiers |= ExtraCompilerModifiers.AccDeprecatedImplicitly;
-			if (hasRestrictedAccess)
-				method.modifiers |= ExtraCompilerModifiers.AccRestrictedAccess;
-			this.methods[i] = method;
-		}
-	} else {
-		for (int i = 0, index = 0; i < initialTotal; i++) {
-			if (iClinit != i && (toSkip == null || toSkip[i] != -1)) {
-				MethodBinding method = createMethod(iMethods[i], sourceLevel, missingTypeNames);
-				if (isViewedAsDeprecated && !method.isDeprecated())
-					method.modifiers |= ExtraCompilerModifiers.AccDeprecatedImplicitly;
-				if (hasRestrictedAccess)
-					method.modifiers |= ExtraCompilerModifiers.AccRestrictedAccess;
-				this.methods[index++] = method;
-			}
-		}
-	}
+	if (sourceLevel < ClassFileConstants.JDK1_5 && this.environment.globalOptions.complianceLevel >= ClassFileConstants.JDK1_5)
+		methodBindings.addAll(bridgeBindings);
+
+	this.methods = methodBindings.size() == 0 ? Binding.NO_METHODS : methodBindings.toArray(new MethodBinding[methodBindings.size()]);
+	this.bridgeMethods = bridgeBindings.size() == 0 ? Binding.NO_METHODS : bridgeBindings.toArray(new MethodBinding[bridgeBindings.size()]);
 }
 private TypeVariableBinding[] createTypeVariables(SignatureWrapper wrapper, boolean assignVariables, char[][][] missingTypeNames) {
 	// detect all type variables first
@@ -868,7 +854,7 @@ public int kind() {
 	if (this.typeVariables != Binding.NO_TYPE_VARIABLES)
 		return Binding.GENERIC_TYPE;
 	return Binding.TYPE;
-}	
+}
 // NOTE: member types of binary types are resolved when needed
 public ReferenceBinding[] memberTypes() {
  	if ((this.tagBits & TagBits.HasUnresolvedMemberTypes) == 0)
@@ -880,22 +866,34 @@ public ReferenceBinding[] memberTypes() {
 	return this.memberTypes;
 }
 // NOTE: the return type, arg & exception types of each method of a binary type are resolved when needed
-public MethodBinding[] methods() {
+private void lazyInitMethods() {
 	if ((this.tagBits & TagBits.AreMethodsComplete) != 0)
-		return methods;
+		return;
 
 	// lazily sort methods
 	if ((this.tagBits & TagBits.AreMethodsSorted) == 0) {
 		int length = this.methods.length;
 		if (length > 1)
 			ReferenceBinding.sortMethods(this.methods, 0, length);
+		length = this.bridgeMethods.length;
+		if (length > 1)
+			ReferenceBinding.sortMethods(this.bridgeMethods, 0, length);
 		this.tagBits |= TagBits.AreMethodsSorted;
 	}
 	for (int i = methods.length; --i >= 0;)
 		resolveTypesFor(methods[i]);
-	this.tagBits |= TagBits.AreMethodsComplete;
+	for (int i = bridgeMethods.length; --i >= 0;)
+		resolveTypesFor(bridgeMethods[i]);  
+	this.tagBits |= TagBits.AreMethodsComplete;  
+}
+public MethodBinding[] methods() {
+	lazyInitMethods();
 	return methods;
 }
+public MethodBinding[] bridgeMethods() {
+	lazyInitMethods();
+	return bridgeMethods;
+}  
 private FieldBinding resolveTypeFor(FieldBinding field) {
 	if ((field.modifiers & ExtraCompilerModifiers.AccUnresolved) == 0)
 		return field;

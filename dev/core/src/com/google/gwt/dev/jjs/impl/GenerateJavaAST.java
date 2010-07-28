@@ -349,7 +349,7 @@ public class GenerateJavaAST {
     }
 
     public void processEnumType(JEnumType type) {
-      // Generate the synthetic values() and valueOf() methods.
+      // Generate the synthetic values() method.
       JField valuesField = null;
       for (JMethod method : type.getMethods()) {
         currentMethod = method;
@@ -363,21 +363,23 @@ public class GenerateJavaAST {
         currentMethodBody = null;
         currentMethod = null;
       }
-      // Generate the synthetic values() and valueOf() methods.
-      for (JMethod method : type.getMethods()) {
-        currentMethod = method;
-        if ("valueOf".equals(method.getName())) {
-          if (method.getParams().size() != 1) {
-            continue;
+      // Generate the synthetic valueOf() method.
+      if (isScript(program)) {
+        for (JMethod method : type.getMethods()) {
+          currentMethod = method;
+          if ("valueOf".equals(method.getName())) {
+            if (method.getParams().size() != 1) {
+              continue;
+            }
+            if (method.getParams().get(0).getType() != program.getTypeJavaLangString()) {
+              continue;
+            }
+            currentMethodBody = (JMethodBody) method.getBody();
+            writeEnumValueOfMethod(type, valuesField);
           }
-          if (method.getParams().get(0).getType() != program.getTypeJavaLangString()) {
-            continue;
-          }
-          currentMethodBody = (JMethodBody) method.getBody();
-          writeEnumValueOfMethod(type, valuesField);
+          currentMethodBody = null;
+          currentMethod = null;
         }
-        currentMethodBody = null;
-        currentMethod = null;
       }
     }
 
@@ -469,7 +471,7 @@ public class GenerateJavaAST {
             currentClass.getMethods().remove(2);
           } else {
             tryFindUpRefs(method);
-            if (currentClass == program.getIndexedType("Array")) {
+            if (isScript(program) && currentClass == program.getIndexedType("Array")) {
               // Special implementation: return this.arrayClass
               SourceInfo info = method.getSourceInfo();
               implementMethod(method, new JFieldRef(info, new JThisRef(info,
@@ -490,7 +492,7 @@ public class GenerateJavaAST {
           implementMethod(method, program.getLiteralBoolean(true));
 
           method = program.getIndexedMethod("GWT.isScript");
-          implementMethod(method, program.getLiteralBoolean(true));
+          implementMethod(method, program.getLiteralBoolean(isScript(program)));
         }
 
         // Implement various methods on Class
@@ -528,6 +530,7 @@ public class GenerateJavaAST {
       }
 
       try {
+        // TODO: This is really slow! Cache or otherwise fix.
         Method method = getClass().getDeclaredMethod(name, child.getClass());
         return (JNode) method.invoke(this, child);
       } catch (Throwable e) {
@@ -763,7 +766,7 @@ public class GenerateJavaAST {
 
     JExpression processExpression(AllocationExpression x) {
       SourceInfo info = makeSourceInfo(x);
-      SourceTypeBinding typeBinding = erasure(x.resolvedType);
+      TypeBinding typeBinding = erasure(x.resolvedType);
       if (typeBinding.constantPoolName() == null) {
         /*
          * Weird case: if JDT determines that this local class is totally
@@ -776,7 +779,7 @@ public class GenerateJavaAST {
       JConstructor ctor = (JConstructor) typeMap.get(b);
       JMethodCall call;
       JClassType javaLangString = program.getTypeJavaLangString();
-      if (newType == javaLangString) {
+      if (newType == javaLangString && !newType.isExternal()) {
         /*
          * MAGIC: java.lang.String is implemented as a JavaScript String
          * primitive with a modified prototype. This requires funky handling of
@@ -1673,6 +1676,7 @@ public class GenerateJavaAST {
         if (elementVar.getType() != program.getTypeJavaLangObject()) {
           TypeBinding collectionType;
           try {
+            // TODO: This is slow! Cache lookup. 
             Field privateField = ForeachStatement.class.getDeclaredField("collectionElementType");
             privateField.setAccessible(true);
             collectionType = (TypeBinding) privateField.get(x);
@@ -2256,11 +2260,11 @@ public class GenerateJavaAST {
       return createVariableRef(info, variable);
     }
 
-    private SourceTypeBinding erasure(TypeBinding typeBinding) {
+    private TypeBinding erasure(TypeBinding typeBinding) {
       if (typeBinding instanceof ParameterizedTypeBinding) {
-        typeBinding = ((ParameterizedTypeBinding) typeBinding).erasure();
+        typeBinding = typeBinding.erasure();
       }
-      return (SourceTypeBinding) typeBinding;
+      return typeBinding;
     }
 
     private JInterfaceType getOrCreateExternalType(SourceInfo info,
@@ -2964,7 +2968,8 @@ public class GenerateJavaAST {
             JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot make a qualified reference to the static method "
                     + method.getName());
-          } else if (method.needsVtable() && nameRef.getQualifier() == null) {
+          } else if (method.needsVtable() && nameRef.getQualifier() == null
+              && !(method instanceof JConstructor)) {
             JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot make an unqualified reference to the instance method "
                     + method.getName());
@@ -3098,11 +3103,15 @@ public class GenerateJavaAST {
     if (condition != null) {
       Constant cst = condition.optimizedBooleanConstant();
       if (cst != Constant.NotAConstant) {
-        if (cst.booleanValue() == true) {
+        if (cst.booleanValue()) {
           return true;
         }
       }
     }
     return false;
+  }
+
+  private static boolean isScript(JProgram program) {
+    return !program.getTypeJavaLangObject().isExternal();
   }
 }

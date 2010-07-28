@@ -89,6 +89,7 @@ import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
+import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
@@ -461,7 +462,8 @@ public class JavaToJavaScriptCompiler {
     // Compile the source and get the compiler so we can get the parse tree
     //
     CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
-        logger, allRootTypes.toArray(new String[allRootTypes.size()]), rpo);
+        logger, allRootTypes.toArray(new String[allRootTypes.size()]), rpo, 
+        TypeLinker.NULL_TYPE_LINKER).compiledUnits;
 
     // Free up memory.
     rpo.clear();

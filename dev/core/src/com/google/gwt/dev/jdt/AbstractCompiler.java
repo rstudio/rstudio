@@ -22,6 +22,7 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.GWTProblem;
 import com.google.gwt.dev.javac.JdtCompiler;
 import com.google.gwt.dev.javac.Shared;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.CharArrayComparator;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.PerfLogger;
@@ -38,26 +39,60 @@ import org.eclipse.jdt.internal.compiler.IProblemFactory;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
+import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
+import org.eclipse.jdt.internal.compiler.env.IBinaryType;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
+import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.PackageBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
+import org.eclipse.jdt.internal.compiler.util.Messages;
 
+import java.io.IOException;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * A facade around the JDT compiler to manage on-demand compilation, caching
  * smartly where possible.
  */
 public abstract class AbstractCompiler {
+
+  /**
+   * Contains the results of a compilation run. Includes both the compiled
+   * source units and the type bindings for binary types that were looked up
+   * during the compilation.
+   */
+  public static class CompilationResults {
+    /**
+     * Bindings for binary types looked up during compilation.
+     */
+    public final Map<String, BinaryTypeBinding> binaryBindings;
+
+    /**
+     * Compiled source units.
+     */
+    public final CompilationUnitDeclaration[] compiledUnits;
+
+    public CompilationResults(CompilationUnitDeclaration[] compiledUnits,
+        Map<String, BinaryTypeBinding> binaryBindings) {
+      this.compiledUnits = compiledUnits;
+      this.binaryBindings = binaryBindings;
+    }
+  }
 
   /**
    * Adapts a {@link CompilationUnit} for a JDT compile.
@@ -109,12 +144,27 @@ public abstract class AbstractCompiler {
     private class CompilerImpl extends Compiler {
 
       private Set<CompilationUnitDeclaration> cuds;
+      private Map<String,BinaryTypeBinding> bindings;
       private long jdtProcessNanos;
 
       public CompilerImpl(INameEnvironment environment,
           IErrorHandlingPolicy policy, CompilerOptions compilerOptions,
           ICompilerRequestor requestor, IProblemFactory problemFactory) {
         super(environment, policy, compilerOptions, requestor, problemFactory);
+      }
+
+      @Override
+      public void accept(IBinaryType binaryType, PackageBinding packageBinding, AccessRestriction accessRestriction) {
+        // Do the same thing as super.accept(), but record the BinaryTypeBinding
+        // that is generated from lookupEnvironment.
+        if (this.options.verbose) {
+          out.println(Messages.bind(Messages.compilation_loadBinary, new String(binaryType.getName())));
+        }
+        BinaryTypeBinding binding = lookupEnvironment.createBinaryTypeFrom(binaryType, packageBinding, accessRestriction);
+        String name = CharOperation.toString(binding.compoundName);
+        if (bindings != null) {
+          bindings.put(name, binding);
+        }
       }
 
       @Override
@@ -165,7 +215,6 @@ public abstract class AbstractCompiler {
           long generateStart = System.currentTimeMillis();
           this.stats.analyzeTime += generateStart - analyzeStart;
 
-          // code generation
           // code generation
           if (doGenerateBytes) {
             unit.generateCode();
@@ -219,8 +268,7 @@ public abstract class AbstractCompiler {
        * its back to ask for the compilation unit from the source oracle.
        */
       private void addAdditionalTypes(TreeLogger logger, String[] typeNames) {
-        for (int i = 0; i < typeNames.length; i++) {
-          String typeName = typeNames[i];
+        for (String typeName : typeNames) {
           final String msg = "Need additional type '" + typeName + "'";
           logger.log(TreeLogger.SPAM, msg, null);
 
@@ -229,7 +277,9 @@ public abstract class AbstractCompiler {
       }
 
       private void compile(ICompilationUnit[] units,
-          Set<CompilationUnitDeclaration> cuds) {
+          Set<CompilationUnitDeclaration> cuds,
+          Map<String,BinaryTypeBinding> bindings) {
+        this.bindings = bindings;
         this.cuds = cuds;
         compile(units);
       }
@@ -256,9 +306,7 @@ public abstract class AbstractCompiler {
           String msg = "Errors in '" + fn + "'";
           TreeLogger branch = logger.branch(TreeLogger.ERROR, msg, null);
 
-          for (int i = 0; i < errors.length; i++) {
-            IProblem error = errors[i];
-
+          for (IProblem error : errors) {
             // Strip the initial code from each error.
             //
             msg = error.toString();
@@ -282,6 +330,47 @@ public abstract class AbstractCompiler {
             }
             branch.log(TreeLogger.ERROR, msgBuf.toString(), null, helpInfo);
           }
+        }
+      }
+    }
+
+    static class JreIndex {
+      private static Set<String> packages = readPackages();
+
+      private static void addPackageRecursively(Set<String> packages, String pkg) {
+        if (!packages.add(pkg)) {
+          return;
+        }
+
+        int i = pkg.lastIndexOf('.');
+        if (i != -1) {
+          addPackageRecursively(packages, pkg.substring(0, i));
+        }
+      }
+      
+      public static boolean contains(String name) {
+        return packages.contains(name);
+      }
+
+      private static Set<String> readPackages() {
+        HashSet<String> pkgs = new HashSet<String>();
+        String klass = "java/lang/Object.class";
+        URL url = ClassLoader.getSystemClassLoader().getResource(klass);
+        try {
+          JarURLConnection connection = (JarURLConnection) url.openConnection();
+          JarFile f = connection.getJarFile();
+          Enumeration<JarEntry> entries = f.entries();
+          while (entries.hasMoreElements()) {
+            JarEntry e = entries.nextElement();
+            String name = e.getName();
+            if (name.endsWith(".class")) {
+              String pkg = Shared.getPackageNameFromBinary(name);
+              addPackageRecursively(pkgs, pkg);
+            }
+          }
+          return pkgs;
+        } catch (IOException e) {
+          throw new InternalCompilerException("Unable to find JRE", e);
         }
       }
     }
@@ -336,9 +425,8 @@ public abstract class AbstractCompiler {
              */
             if (isBinaryType(classLoader, className)) {
               byte[] classBytes = Util.readURLAsBytes(resourceURL);
-              ClassFileReader cfr;
               try {
-                cfr = new ClassFileReader(classBytes, null);
+                ClassFileReader cfr = new ClassFileReader(classBytes, null);
                 return new NameEnvironmentAnswer(cfr, null);
               } catch (ClassFormatException e) {
                 // Ignored.
@@ -390,6 +478,13 @@ public abstract class AbstractCompiler {
 
       private boolean isPackage(ClassLoader classLoader, String packageName) {
         String packageAsPath = packageName.replace('.', '/');
+
+        // Test the JRE explicitly first, because the following method does
+        // not work for JRE classes.
+        if (JreIndex.contains(packageName)) {
+          return true;
+        }
+
         return classLoader.getResource(packageAsPath) != null;
       }
 
@@ -429,10 +524,15 @@ public abstract class AbstractCompiler {
 
     public void clear() {
       outer = null;
-      logger = null;
+      logger = TreeLogger.NULL;
+      compiler.bindings = null;
     }
 
     private CompilationUnit findCompilationUnit(String qname) {
+      if (outer == null) {
+        return null;
+      }
+
       // Build the initial set of compilation units.
       Map<String, CompilationUnit> unitMap = outer.compilationState.getCompilationUnitMap();
       CompilationUnit unit = unitMap.get(qname);
@@ -509,20 +609,20 @@ public abstract class AbstractCompiler {
     this.sandbox = new Sandbox(this, doGenerateBytes);
   }
 
-  protected final CompilationUnitDeclaration[] compile(TreeLogger logger,
+  protected final CompilationResults compile(TreeLogger logger,
       ICompilationUnit[] units) {
 
     // Any additional compilation units that are found to be needed will be
-    // pulled in while procssing compilation units. See CompilerImpl.process().
+    // pulled in while processing compilation units. See CompilerImpl.process().
     //
     sandbox.logger = logger;
     try {
-      Set<CompilationUnitDeclaration> cuds = new TreeSet<CompilationUnitDeclaration>(
-          CUD_COMPARATOR);
-      sandbox.compiler.compile(units, cuds);
-      int size = cuds.size();
-      CompilationUnitDeclaration[] cudArray = new CompilationUnitDeclaration[size];
-      return cuds.toArray(cudArray);
+      Set<CompilationUnitDeclaration> cuds = new TreeSet<CompilationUnitDeclaration>(CUD_COMPARATOR);
+      LinkedHashMap<String,BinaryTypeBinding> bindings =
+          new LinkedHashMap<String,BinaryTypeBinding>();
+      sandbox.compiler.compile(units, cuds, bindings);
+      return new CompilationResults(cuds.toArray(
+          new CompilationUnitDeclaration[cuds.size()]), bindings);
     } finally {
       sandbox.clear();
       sandbox = null;

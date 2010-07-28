@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.jdt.AbstractCompiler.CompilationResults;
 import com.google.gwt.dev.jdt.BasicWebModeCompiler;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
@@ -28,12 +29,12 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
+import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.util.Empty;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
@@ -151,14 +152,23 @@ public class JavaAstConstructor {
 
   public static JProgram construct(TreeLogger logger, CompilationState state,
       String... entryPoints) throws UnableToCompleteException {
+    return construct(logger, state, TypeLinker.NULL_TYPE_LINKER,
+        entryPoints);
+  }
 
+  public static JProgram construct(TreeLogger logger, CompilationState state,
+      TypeLinker linker, String... entryPoints)
+      throws UnableToCompleteException {
     Set<String> allRootTypes = new TreeSet<String>(Arrays.asList(entryPoints));
     for (MockJavaResource resource : getCompilerTypes()) {
       allRootTypes.add(resource.getTypeName());
     }
 
-    CompilationUnitDeclaration[] goldenCuds = BasicWebModeCompiler.getCompilationUnitDeclarations(
-        logger, state, allRootTypes.toArray(Empty.STRINGS));
+    CompilationResults units = 
+        BasicWebModeCompiler.getCompilationUnitDeclarations(logger, state,
+        linker, allRootTypes.toArray(new String[allRootTypes.size()]));
+
+    CompilationUnitDeclaration[] goldenCuds = units.compiledUnits;
 
     // Check for compilation problems. We don't log here because any problems
     // found here will have already been logged by AbstractCompiler.
@@ -186,7 +196,7 @@ public class JavaAstConstructor {
      */
     TypeMap typeMap = new TypeMap(jprogram);
     TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap,
-        goldenCuds, jsProgram);
+        units, jsProgram, linker);
 
     // BuildTypeMap can uncover syntactic JSNI errors; report & abort
     JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);

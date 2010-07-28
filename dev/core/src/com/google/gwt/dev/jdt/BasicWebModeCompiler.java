@@ -22,7 +22,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
-import com.google.gwt.dev.util.Empty;
+import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Memory;
 
@@ -41,25 +41,30 @@ import java.util.Set;
  */
 public class BasicWebModeCompiler extends AbstractCompiler {
 
-  public static CompilationUnitDeclaration[] getCompilationUnitDeclarations(
-      TreeLogger logger, CompilationState state, String... seedTypeNames)
+  public static CompilationResults getCompilationUnitDeclarations(
+      TreeLogger logger, CompilationState state, 
+      TypeLinker linker, String... seedTypeNames)
       throws UnableToCompleteException {
-    return new BasicWebModeCompiler(state).getCompilationUnitDeclarations(
-        logger, seedTypeNames);
+    return new BasicWebModeCompiler(state,
+        linker).getCompilationUnitDeclarations(logger, seedTypeNames);
   }
 
+  private TypeLinker linker;
+  
   /**
    * Construct a BasicWebModeCompiler.
    */
-  public BasicWebModeCompiler(CompilationState compilationState) {
+  public BasicWebModeCompiler(CompilationState compilationState,
+      TypeLinker linker) {
     super(compilationState, false);
+    this.linker = linker;
   }
 
   /**
    * Build the initial set of compilation units.
    */
-  public CompilationUnitDeclaration[] getCompilationUnitDeclarations(
-      TreeLogger logger, String[] seedTypeNames)
+  public CompilationResults getCompilationUnitDeclarations(
+      TreeLogger logger, String[] seedTypeNames) 
       throws UnableToCompleteException {
 
     TypeOracle oracle = compilationState.getTypeOracle();
@@ -81,6 +86,10 @@ public class BasicWebModeCompiler extends AbstractCompiler {
       CompilationUnit unit = getUnitForType(logger, classMapBySource,
           seedTypeName);
 
+      if (unit == null) {
+        continue;
+      }
+      
       if (alreadyAdded.add(unit)) {
         icus.add(new CompilationUnitAdapter(unit));
       } else {
@@ -109,10 +118,10 @@ public class BasicWebModeCompiler extends AbstractCompiler {
      * Compile, which will pull in everything else via the
      * doFindAdditionalTypesUsingFoo() methods.
      */
-    CompilationUnitDeclaration[] cuds = compile(logger,
-        icus.toArray(new ICompilationUnit[icus.size()]));
+    CompilationResults units = compile(logger, icus.toArray(
+        new ICompilationUnit[icus.size()]));
     Memory.maybeDumpMemory("WebModeCompiler");
-    return cuds;
+    return units;
   }
 
   /**
@@ -132,7 +141,7 @@ public class BasicWebModeCompiler extends AbstractCompiler {
         dependentTypeNames.add(parsed.className());
       }
     }
-    return dependentTypeNames.toArray(Empty.STRINGS);
+    return dependentTypeNames.toArray(new String[dependentTypeNames.size()]);
   }
 
   /**
@@ -145,6 +154,9 @@ public class BasicWebModeCompiler extends AbstractCompiler {
 
     CompiledClass compiledClass = classMapBySource.get(typeName);
     if (compiledClass == null) {
+      if (linker.isExternalType(typeName)) {
+        return null;
+      }
       logger.log(TreeLogger.ERROR, "Unable to find compilation unit for type '"
           + typeName + "'");
       throw new UnableToCompleteException();

@@ -17,21 +17,33 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JArrayType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.util.collect.IdentityHashSet;
 
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
-import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
+import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedFieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.TypeVariableBinding;
 import org.eclipse.jdt.internal.compiler.lookup.WildcardBinding;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,6 +56,8 @@ public class TypeMap {
    */
   private final Map<Binding, JNode> crossRefMap = new IdentityHashMap<Binding, JNode>();
 
+  private final Map<String, JDeclaredType> externalTypesByName = new HashMap<String, JDeclaredType>();
+
   /**
    * Centralizes creation and singleton management.
    */
@@ -54,24 +68,75 @@ public class TypeMap {
   }
 
   public JNode get(Binding binding) {
+    return get(binding, true);
+  }
+
+  public JProgram getProgram() {
+    return program;
+  }
+  
+  public void put(Binding binding, JNode to) {
+    if (binding == null) {
+      throw new InternalCompilerException("Trying to put null into typeMap.");
+    }
+
+    Object old = crossRefMap.put(binding, to);
+    assert (old == null);
+
+    if (to instanceof JDeclaredType) {
+      JDeclaredType type = (JDeclaredType) to;
+      if (type.isExternal()) {
+        externalTypesByName.put(type.getName(), type);
+      }
+    }
+  }
+
+  public JNode tryGet(Binding binding) {
+    return get(binding, false);
+  }
+
+  private boolean equals(MethodBinding binding, JMethod method) {
+    if (!(method instanceof JConstructor && binding.isConstructor()) &&
+        !method.getName().equals(String.valueOf(binding.constantPoolName()))) {
+      return false;
+    }
+
+    List<JType> paramTypes = method.getOriginalParamTypes();
+    TypeBinding[] bindingParams = binding.parameters;
+
+    if (paramTypes.size() != bindingParams.length) {
+      return false;
+    }
+
+    for (int i = 0; i < bindingParams.length; ++i) {
+      TypeBinding bindingParam = bindingParams[i];
+      if (paramTypes.get(i) != get(bindingParam)) {
+        return false;
+      }
+    }
+
+    return method.getType() == get(binding.returnType);
+  }
+
+  private JNode get(Binding binding, boolean failOnNull) {
     if (binding instanceof TypeVariableBinding) {
       TypeVariableBinding tvb = (TypeVariableBinding) binding;
-      return get(tvb.erasure());
+      return get(tvb.erasure(), failOnNull);
     } else if (binding instanceof ParameterizedTypeBinding) {
       ParameterizedTypeBinding ptb = (ParameterizedTypeBinding) binding;
-      return get(ptb.erasure());
+      return get(ptb.erasure(), failOnNull);
     } else if (binding instanceof ParameterizedMethodBinding) {
       ParameterizedMethodBinding pmb = (ParameterizedMethodBinding) binding;
-      return get(pmb.original());
+      return get(pmb.original(), failOnNull);
     } else if (binding instanceof ParameterizedFieldBinding) {
       ParameterizedFieldBinding pfb = (ParameterizedFieldBinding) binding;
-      return get(pfb.original());
+      return get(pfb.original(), failOnNull);
     } else if (binding instanceof WildcardBinding) {
       WildcardBinding wcb = (WildcardBinding) binding;
-      return get(wcb.erasure());
+      return get(wcb.erasure(), failOnNull);
     }
-    JNode result = internalGet(binding);
-    if (result == null) {
+    JNode result = internalGet(binding, failOnNull);
+    if (result == null && failOnNull) {
       InternalCompilerException ice = new InternalCompilerException(
           "Failed to get JNode");
       ice.addNode(binding.getClass().getName(), binding.toString(), null);
@@ -80,27 +145,45 @@ public class TypeMap {
     return result;
   }
 
-  public JProgram getProgram() {
-    return program;
-  }
-
-  public void put(Binding binding, JNode to) {
-    if (binding == null) {
-      throw new InternalCompilerException("Trying to put null into typeMap.");
+  private JField getFieldForBinding(JDeclaredType type, FieldBinding binding) {
+    for (JField field : type.getFields()) {
+      if (field.getName().equals(String.valueOf(binding.name))) {
+        return field;
+      }
     }
 
-    Object old = crossRefMap.put(binding, to);
-    assert (old == null);
+    return null;
   }
 
-  public JNode tryGet(Binding binding) {
-    return internalGet(binding);
+  private JMethod getMethodForBinding(JDeclaredType type, MethodBinding binding) {
+    for (JMethod method : type.getMethods()) {
+      if (equals(binding, method)) {
+        return method;
+      }
+    }
+
+    return null;
   }
 
-  private JNode internalGet(Binding binding) {
+  /**
+   * Returns a list of JNodes that have the same name as the JDT Binding.
+   * This method is only used during debugging sessions from the interactive
+   * expression evaluator.
+   */
+  @SuppressWarnings("unused")
+  private List<JNode> haveSameName(Binding binding) {
+    IdentityHashSet<JNode> nodes = new IdentityHashSet<JNode>();
+    for (Binding b : crossRefMap.keySet()) {
+      if (String.valueOf(b.readableName()).equals(String.valueOf(binding.readableName()))) {
+        nodes.add(crossRefMap.get(b));
+      }
+    }
+    return new ArrayList<JNode>(nodes);
+  }
+  
+  private JNode internalGet(Binding binding, boolean failOnNull) {
     JNode cached = crossRefMap.get(binding);
     if (cached != null) {
-      // Already seen this one.
       return cached;
     } else if (binding instanceof BaseTypeBinding) {
       BaseTypeBinding baseTypeBinding = (BaseTypeBinding) binding;
@@ -140,17 +223,67 @@ public class TypeMap {
       ArrayBinding arrayBinding = (ArrayBinding) binding;
 
       // Compute the JType for the leaf type
-      JType leafType = (JType) get(arrayBinding.leafComponentType);
+      JType leafType = (JType) get(arrayBinding.leafComponentType, failOnNull);
 
+      if (leafType == null) {
+        return null;
+      }
+      
       // Don't create a new JArrayType; use TypeMap to get the singleton
       // instance
       JArrayType arrayType = program.getTypeArray(leafType,
           arrayBinding.dimensions);
 
       return arrayType;
-    } else {
-      return null;
-    }
-  }
+    } else if (binding instanceof BinaryTypeBinding) {
+      BinaryTypeBinding binaryBinding = (BinaryTypeBinding) binding;
+      String name = BuildTypeMap.dotify(binaryBinding.compoundName);
 
+      // There may be many BinaryTypeBindings for a single binary type
+      JDeclaredType type = externalTypesByName.get(name);
+      if (type != null) {
+        put(binding, type);
+      }
+      return type;
+    } else if (binding instanceof MethodBinding) {
+      MethodBinding b = (MethodBinding) binding;
+      JMethod cachedMethod = (JMethod) crossRefMap.get(b);
+      if (cachedMethod == null) {
+        JDeclaredType type = (JDeclaredType) get(b.declaringClass, failOnNull);
+        if (type == null) {
+          return type;
+        }
+        cachedMethod = getMethodForBinding(type, b);
+        if (cachedMethod != null) {
+          put(b, cachedMethod);
+        }
+      } else {
+        // Happens sometimes when looking up the type to resolve the binding
+        // causes us to also resolve the binding.
+      }
+
+      return cachedMethod;
+    } else if (binding instanceof FieldBinding) {
+      FieldBinding b = (FieldBinding) binding;
+      JField cachedField = (JField) crossRefMap.get(b);
+
+      if (cachedField == null) {
+        JDeclaredType type = (JDeclaredType) get(b.declaringClass, failOnNull);
+        if (type == null) {
+          return null;
+        }
+        cachedField = getFieldForBinding(type, b);
+        if (cachedField != null) {
+          put(b, cachedField);
+        }
+      } else {
+        // Happens sometimes when looking up the type to resolve the binding
+        // causes us to also resolve the binding.
+      }
+
+      return cachedField;
+    }
+
+    return null;
+  }
 }

@@ -67,7 +67,7 @@ public class JProgram extends JNode {
           "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
           "com.google.gwt.lang.CollapsedPropertyHolder",
           "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.LongLib",
-          "com.google.gwt.lang.Stats"));
+          "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util"));
 
   public static final Set<String> INDEX_TYPES_SET = new LinkedHashSet<String>(
       Arrays.asList(
@@ -860,8 +860,9 @@ public class JProgram extends JNode {
 
       // Create the allocation expression FIRST since this may be recursive on
       // super type (this forces the super type classLit to be created first).
-      JExpression alloc = JClassLiteral.computeClassObjectAllocation(this,
-          info, type);
+      boolean isObjectExternal = getTypeJavaLangObject().isExternal();
+      JExpression alloc = isObjectExternal ? null :
+          JClassLiteral.computeClassObjectAllocation(this,info, type);
 
       // Create a field in the class literal holder to hold the object.
       JField field = new JField(info, type.getJavahSignatureName()
@@ -870,13 +871,15 @@ public class JProgram extends JNode {
       typeSpecialClassLiteralHolder.addField(field);
 
       // Initialize the field.
-      JFieldRef fieldRef = new JFieldRef(info, null, field,
-          typeSpecialClassLiteralHolder);
-      JDeclarationStatement decl = new JDeclarationStatement(info, fieldRef,
-          alloc);
-      JMethodBody clinitBody = (JMethodBody) typeSpecialClassLiteralHolder.getMethods().get(
-          0).getBody();
-      clinitBody.getBlock().addStmt(decl);
+      if (alloc != null) {
+        JFieldRef fieldRef = new JFieldRef(info, null, field,
+            typeSpecialClassLiteralHolder);
+        JDeclarationStatement decl = new JDeclarationStatement(info, fieldRef,
+            alloc);
+        JMethodBody clinitBody = (JMethodBody)
+            typeSpecialClassLiteralHolder.getMethods().get(0).getBody();
+        clinitBody.getBlock().addStmt(decl);
+      }
 
       SourceInfo literalInfo = createSourceInfoSynthetic(JProgram.class,
           "class literal for " + type.getName());
