@@ -16,10 +16,12 @@
 package com.google.gwt.sample.dynatablerf.client;
 
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
+import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
+import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.List;
+import java.util.Set;
 
 /**
    * A data provider that bridges the provides row level updates from the data
@@ -57,18 +59,18 @@ import java.util.List;
       // Fetch the data remotely.
       //
 
-      requests.schoolCalendarRequest().getPeople(startRow, maxRows).to(new Receiver<List<PersonProxy>>() {
+      requests.schoolCalendarRequest().getPeople(startRow, maxRows).fire(new Receiver<List<PersonProxy>>() {
         
         // TODO onError call RowDataAcceptor#fail, not yet provided by RF
         
-        public void onSuccess(List<PersonProxy> response) {
+        public void onSuccess(List<PersonProxy> response, Set<SyncResult> syncResults) {
           lastStartRow = startRow;
           lastMaxRows = maxRows;
           lastPeople = response.toArray(new PersonProxy[response.size()]);
           PersonProxy[] result = response.toArray(new PersonProxy[response.size()]);
           pushResults(acceptor, startRow, result);
         }
-      }).fire();
+      });
     }
     
     private void pushResults(RowDataAcceptor acceptor, int startRow,

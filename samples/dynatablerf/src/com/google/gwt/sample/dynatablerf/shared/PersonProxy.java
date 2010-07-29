@@ -33,7 +33,7 @@ public interface PersonProxy extends Record {
   Property<String> description = new Property<String>("description", "Description", String.class);
   Property<String> schedule = new Property<String>("schedule", "Schedule", String.class);
 
-  public String getSchedule();
+  String getSchedule();
 
   String getDescription();
 
