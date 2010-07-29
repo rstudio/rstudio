@@ -495,11 +495,11 @@ public class JdtCompiler {
       return false;
     }
 
-    SpeedTracerLogger.get().start(CompilerEventType.JDT_COMPILER, "phase", "compile");
+    SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER, "phase", "compile");
     compilerImpl = new CompilerImpl();
     compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     compilerImpl = null;
-    SpeedTracerLogger.get().end(CompilerEventType.JDT_COMPILER);
+    SpeedTracerLogger.end(CompilerEventType.JDT_COMPILER);
     lazyContentIdMap = null;
     return true;
   }

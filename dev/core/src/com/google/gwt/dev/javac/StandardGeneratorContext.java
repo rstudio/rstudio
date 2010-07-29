@@ -423,7 +423,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     setCurrentGenerator(generatorClass);
 
     long before = System.currentTimeMillis();
-    SpeedTracerLogger.get().start(CompilerEventType.GENERATOR, "class",
+    SpeedTracerLogger.start(CompilerEventType.GENERATOR, "class",
         generator.getClass().getName(), "type", typeName);
     try {
       String className = generator.generate(logger, this, typeName);
@@ -446,7 +446,7 @@ public class StandardGeneratorContext implements GeneratorContext {
           + "' threw an exception while rebinding '" + typeName + "'", e);
       throw new UnableToCompleteException();
     } finally {
-      SpeedTracerLogger.get().end(CompilerEventType.GENERATOR);
+      SpeedTracerLogger.end(CompilerEventType.GENERATOR);
     }
   }
 

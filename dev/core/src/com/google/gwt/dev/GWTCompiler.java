@@ -163,7 +163,7 @@ public class GWTCompiler {
    */
   public boolean run(TreeLogger logger, ModuleDef... modules)
       throws UnableToCompleteException {
-    SpeedTracerLogger.get().start(CompilerEventType.COMPILE);
+    SpeedTracerLogger.start(CompilerEventType.COMPILE);
     boolean tempWorkDir = false;
     try {
       if (options.getWorkDir() == null) {
@@ -214,13 +214,12 @@ public class GWTCompiler {
               + String.format("%.3f", delta / 1000d) + "s");
         }
       }
-
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to create compiler work directory",
           e);
       return false;
     } finally {
-      SpeedTracerLogger.get().end(CompilerEventType.COMPILE);
+      SpeedTracerLogger.end(CompilerEventType.COMPILE);
       if (tempWorkDir) {
         Util.recursiveDelete(options.getWorkDir(), false);
       }

@@ -19,10 +19,10 @@ import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.dev.util.collect.Lists;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.BlockingQueue;
@@ -57,27 +57,25 @@ public final class SpeedTracerLogger {
    * Represents a node in a tree of SpeedTracer events.
    */
   private class Event {
-
-    final List<Event> children = new ArrayList<Event>();
-
-    final List<String> data = new ArrayList<String>();
-
+    List<Event> children = Lists.create();
+    List<String> data;
     long durationNanos;
-
     final long startTimeNanos;
-
     final EventType type;
 
-    Event(Event parent, EventType type, String[] data) {
+    Event() {
+      data = Lists.create();
+      this.startTimeNanos = normalizedTimeNanos();
+      this.type = null;
+    }
+
+    Event(Event parent, EventType type, String... data) {
       if (parent != null) {
-        parent.children.add(this);
+        parent.children = Lists.add(parent.children, this);
       }
       this.type = type;
-      if (data != null) {
-        for (int i = 0; i < data.length; i++) {
-          this.data.add(data[i]);
-        }
-      }
+      assert (data.length % 2 == 0);
+      this.data = Lists.create(data);
       this.startTimeNanos = normalizedTimeNanos();
     }
 
@@ -86,9 +84,8 @@ public final class SpeedTracerLogger {
      */
     public void addData(String[] data) {
       if (data != null) {
-        for (int i = 0; i < data.length; i++) {
-          this.data.add(data[i]);
-        }
+        assert (data.length % 2 == 0);
+        this.data = Lists.addAll(this.data, data);
       }
     }
 
@@ -99,7 +96,6 @@ public final class SpeedTracerLogger {
 
     JsonObject toJson() {
       JsonObject json = JsonObject.create();
-
       json.put("type", -2);
       json.put("typeName", type.getName());
       json.put("color", type.getColor());
@@ -129,11 +125,18 @@ public final class SpeedTracerLogger {
   }
 
   /**
+   * Initializes the singleton on demand.
+   */
+  private static class LazySpeedTracerLoggerHolder {
+    public static SpeedTracerLogger singleton = new SpeedTracerLogger();
+  }
+
+  /**
    * Thread that converts log requests to JSON in the background.
    */
   private class LogWriterThread extends Thread {
-    private final BlockingQueue<Event> threadEventQueue;
     private final String fileName;
+    private final BlockingQueue<Event> threadEventQueue;
     private final Writer writer;
 
     public LogWriterThread(Writer writer, String fileName,
@@ -176,21 +179,22 @@ public final class SpeedTracerLogger {
     }
   }
 
-  private static SpeedTracerLogger singleton;
+  /**
+   * Annotate the current event on the top of the stack with more information.
+   * The method expects key, value pairs, so there must be an even number of
+   * parameters.
+   *
+   * @param data JSON property, value pair to add to current event.
+   */
+  public static void addData(String... data) {
+    SpeedTracerLogger.get().addDataImpl(data);
+  }
 
   /**
-   * For accessing the logger as a singleton, you can retrieve the global
-   * instance. You must first initialize the singleton with a call to
-   * {@link #init()} or {@link #init(Writer)}.
-   *
-   * @return the current instance if one already exists from a previous call to
-   *         {@link #init()}
+   * Signals the end of the current event.
    */
-  public static synchronized SpeedTracerLogger get() {
-    if (singleton == null) {
-      init();
-    }
-    return singleton;
+  public static void end(EventType type, String... data) {
+    SpeedTracerLogger.get().endImpl(type, data);
   }
 
   /**
@@ -198,48 +202,33 @@ public final class SpeedTracerLogger {
    * log to be opened if the default logging is turned on with the
    * <code>-Dgwt.speedtracerlog</code> VM property.
    *
-   * This method is only intended to be called once (except for unit testing).
+   * This method is only intended to be called once.
    */
-  public static synchronized void init() {
-    if (singleton != null) {
-      singleton.flush();
-    }
-    singleton = newInstance();
+  public static void init() {
+    get();
   }
 
   /**
-   * Creates a new instance and assigns it to the global instance.
+   * Signals that a new event has started. You must call {@link #end} for each
+   * corresponding call to {@code start}. You may nest timing calls.
    *
-   * This method is only intended to be called once (except for unit testing).
-   *
-   * @param writer The writer to use for logging messages.
+   * @param type the type of event
+   * @data a set of key-value pairs (each key is followed by its value) that
+   *       contain additional information about the event
    */
-  public static synchronized void init(Writer writer) {
-    if (singleton != null) {
-      singleton.flush();
-    }
-    singleton = newInstance(writer);
+  public static void start(EventType type, String... data) {
+    SpeedTracerLogger.get().startImpl(type, data);
   }
 
   /**
-   * Allocates a new instance of the logger. The global instance returned by
-   * init() or get() is not affected.
+   * For accessing the logger as a singleton, you can retrieve the global
+   * instance. It is prudent, but not necessary to first initialize the
+   * singleton with a call to {@link #init()} to set the base time.
    *
-   * @return a new {@link SpeedTracerLogger} instance.
+   * @return the current global {@link SpeedTracerLogger} instance.
    */
-  public static SpeedTracerLogger newInstance() {
-    return new SpeedTracerLogger();
-  }
-
-  /**
-   * Allocates a new instance of the logger. The global instance returned by
-   * {@link #init()} or {@link #get()} is not affected.
-   *
-   * @param writer The writer to use for logging messages.
-   * @return a new {@link SpeedTracerLogger} instance.
-   */
-  public static SpeedTracerLogger newInstance(Writer writer) {
-    return new SpeedTracerLogger(writer);
+  private static SpeedTracerLogger get() {
+    return LazySpeedTracerLoggerHolder.singleton;
   }
 
   private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>();
@@ -248,7 +237,7 @@ public final class SpeedTracerLogger {
 
   private CountDownLatch flushLatch;
 
-  private final Event flushSentinel = new Event(null, null, null);
+  private final Event flushSentinel = new Event();
 
   private final ThreadLocal<Stack<Event>> pendingEvents = new ThreadLocal<Stack<Event>>() {
     @Override
@@ -259,22 +248,35 @@ public final class SpeedTracerLogger {
 
   private final CountDownLatch shutDownLatch = new CountDownLatch(1);
 
-  private final Event shutDownSentinel = new Event(null, null, null);
+  private final Event shutDownSentinel = new Event();
 
   private final long zeroTimeNanos = System.nanoTime();
+
+  /**
+   * Constructor intended for unit testing.
+   *
+   * @param writer alternative {@link Writer} to send speed tracer output.
+   */
+  SpeedTracerLogger(Writer writer) {
+    eventsToWrite = openLogWriter(writer, "");
+  }
 
   private SpeedTracerLogger() {
     eventsToWrite = openDefaultLogWriter();
   }
 
-  private SpeedTracerLogger(Writer writer) {
-    eventsToWrite = openLogWriter(writer, "");
+  public void addDataImpl(String... data) {
+    Stack<Event> threadPendingEvents = pendingEvents.get();
+    if (threadPendingEvents.isEmpty()) {
+      throw new IllegalStateException(
+          "Tried to add data to an event that never started!");
+    }
+
+    Event currentEvent = threadPendingEvents.peek();
+    currentEvent.addData(data);
   }
 
-  /**
-   * Signals the end of the current event.
-   */
-  public void end(EventType type, String... data) {
+  void endImpl(EventType type, String... data) {
     if (eventsToWrite == null) {
       return;
     }
@@ -320,7 +322,7 @@ public final class SpeedTracerLogger {
   /**
    * Notifies the background thread to finish processing all data in the queue.
    */
-  public void flush() {
+  void flush() {
     try {
       // Wait for the other thread to drain the queue.
       flushLatch = new CountDownLatch(1);
@@ -331,15 +333,7 @@ public final class SpeedTracerLogger {
     }
   }
 
-  /**
-   * Signals that a new event has started. You must call {@link #end} for each
-   * corresponding call to {@code start}. You may nest timing calls.
-   *
-   * @param type the type of event
-   * @data a set of key-value pairs (each key is followed by its value) that
-   *       contain additional information about the event
-   */
-  public void start(EventType type, String... data) {
+  void startImpl(EventType type, String... data) {
     if (eventsToWrite == null) {
       return;
     }
@@ -368,7 +362,7 @@ public final class SpeedTracerLogger {
     if (logFile != null) {
 
       try {
-        writer = new FileWriter(logFile);
+        writer = new BufferedWriter(new FileWriter(logFile));
         return openLogWriter(writer, logFile);
       } catch (IOException e) {
         System.err.println("Unable to open gwt.speedtracerlog '" + logFile
@@ -389,7 +383,7 @@ public final class SpeedTracerLogger {
           + "<a href=\"http://code.google.com/speedtracer\">SpeedTracer</a> "
           + "extension under the <a href=\"http://chrome.google.com/\">Chrome</a> browser.</div>"
           + "<p><span id=\"info\">(You must install the SpeedTracer extension to open this file)</span></p>"
-          + "<div style=\"display: none\" id=\"traceData\" version=\"0.13\">\n");
+          + "<div style=\"display: none\" id=\"traceData\" version=\"0.17\">\n");
     } catch (IOException e) {
       System.err.println("Unable to write to gwt.speedtracerlog '"
           + (fileName == null ? "" : fileName) + "'");

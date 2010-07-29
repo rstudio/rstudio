@@ -388,7 +388,7 @@ public class ModuleDef implements PublicOracle {
   }
 
   public synchronized void refresh(TreeLogger logger) {
-    SpeedTracerLogger.get().start(CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
+    SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
     logger = logger.branch(TreeLogger.DEBUG, "Refreshing module '" + getName()
         + "'");
 
@@ -399,7 +399,7 @@ public class ModuleDef implements PublicOracle {
     if (lazyResourcesOracle != null) {
       lazyResourcesOracle.refresh(logger);
     }
-    SpeedTracerLogger.get().end(CompilerEventType.MODULE_DEF);
+    SpeedTracerLogger.end(CompilerEventType.MODULE_DEF);
   }
 
   /**
@@ -438,7 +438,7 @@ public class ModuleDef implements PublicOracle {
    * @param logger Logs the activity.
    */
   synchronized void normalize(TreeLogger logger) {
-    SpeedTracerLogger.get().start(CompilerEventType.MODULE_DEF, "phase", "normalize");
+    SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "normalize");
     // Normalize property providers.
     //
     for (Property current : getProperties()) {
@@ -484,7 +484,7 @@ public class ModuleDef implements PublicOracle {
           "No source path entries; expect subsequent failures", null);
     }
 
-    SpeedTracerLogger.get().end(CompilerEventType.MODULE_DEF);
+    SpeedTracerLogger.end(CompilerEventType.MODULE_DEF);
   }
 
   private void checkForSeedTypes(TreeLogger logger,

@@ -785,7 +785,7 @@ public class CodeSplitter {
   }
 
   private void execImpl() {
-    SpeedTracerLogger.get().start(CompilerEventType.CODE_SPLITTER);
+    SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER);
     Map<Integer, List<JsStatement>> fragmentStats = new HashMap<Integer, List<JsStatement>>();
 
     {
@@ -865,7 +865,7 @@ public class CodeSplitter {
       fragBlock.getStatements().addAll(fragmentStats.get(i));
     }
 
-    SpeedTracerLogger.get().end(CompilerEventType.CODE_SPLITTER);
+    SpeedTracerLogger.end(CompilerEventType.CODE_SPLITTER);
   }
 
   /**

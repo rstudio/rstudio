@@ -171,16 +171,16 @@ public class Compiler {
     ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
     int i = 0;
     for (String moduleName : options.getModuleNames()) {
-      SpeedTracerLogger.get().start(CompilerEventType.MODULE_DEF, "phase", "loadFromClassPath", "moduleName", moduleName);
+      SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "loadFromClassPath", "moduleName", moduleName);
       modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName, true);
-      SpeedTracerLogger.get().end(CompilerEventType.MODULE_DEF);
+      SpeedTracerLogger.end(CompilerEventType.MODULE_DEF);
     }
     return run(logger, modules);
   }
 
   public boolean run(TreeLogger logger, ModuleDef... modules)
       throws UnableToCompleteException {
-    SpeedTracerLogger.get().start(CompilerEventType.COMPILE);
+    SpeedTracerLogger.start(CompilerEventType.COMPILE);
     boolean tempWorkDir = false;
     try {
       if (options.getWorkDir() == null) {
@@ -205,29 +205,29 @@ public class Compiler {
 
           // Optimize early since permutation compiles will run in process.
           options.setOptimizePrecompile(true);
-          SpeedTracerLogger.get().start(CompilerEventType.PRECOMPILE);
+          SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
           Precompilation precompilation = Precompile.precompile(branch,
               options, module, options.getGenDir(),
               options.getDumpSignatureFile());
-          SpeedTracerLogger.get().end(CompilerEventType.PRECOMPILE);
+          SpeedTracerLogger.end(CompilerEventType.PRECOMPILE);
           if (precompilation == null) {
             return false;
           }
 
-          SpeedTracerLogger.get().start(CompilerEventType.COMPILE_PERMUTATIONS);
+          SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
           Permutation[] allPerms = precompilation.getPermutations();
           List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
               options.getCompilerWorkDir(moduleName), allPerms);
           CompilePerms.compile(branch, precompilation, allPerms,
               options.getLocalWorkers(), resultFiles);
-          SpeedTracerLogger.get().end(CompilerEventType.COMPILE_PERMUTATIONS);
+          SpeedTracerLogger.end(CompilerEventType.COMPILE_PERMUTATIONS);
 
           ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
           JJSOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
 
           precompilation = null; // No longer needed, so save the memory
 
-          SpeedTracerLogger.get().start(CompilerEventType.LINK);
+          SpeedTracerLogger.start(CompilerEventType.LINK);
           File absPath = new File(options.getWarDir(), module.getName());
           absPath = absPath.getAbsoluteFile();
 
@@ -242,7 +242,7 @@ public class Compiler {
               generatedArtifacts, allPerms, resultFiles, options.getWarDir(),
               options.getExtraDir(), precompileOptions);
 
-          SpeedTracerLogger.get().end(CompilerEventType.LINK);
+          SpeedTracerLogger.end(CompilerEventType.LINK);
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;
           branch.log(TreeLogger.INFO, "Compilation succeeded -- "
@@ -255,7 +255,7 @@ public class Compiler {
           e);
       return false;
     } finally {
-      SpeedTracerLogger.get().end(CompilerEventType.COMPILE);
+      SpeedTracerLogger.end(CompilerEventType.COMPILE);
       if (tempWorkDir) {
         Util.recursiveDelete(options.getWorkDir(), false);
       }

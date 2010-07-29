@@ -603,29 +603,29 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
-    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE);
+    SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE);
 
-    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
+    SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
         "finalizer");
     Finalizer.exec(jprogram);
-    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
+    SpeedTracerLogger.end(CompilerEventType.DRAFT_OPTIMIZE);
 
-    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
+    SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
         "makeCallsStatic");
     MakeCallsStatic.exec(jprogram);
-    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
+    SpeedTracerLogger.end(CompilerEventType.DRAFT_OPTIMIZE);
 
-    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
+    SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
         "recomputeAfterOptimizations");
     jprogram.typeOracle.recomputeAfterOptimizations();
-    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
+    SpeedTracerLogger.end(CompilerEventType.DRAFT_OPTIMIZE);
 
-    SpeedTracerLogger.get().start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
+    SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
         "deadCodeElimination");
     DeadCodeElimination.exec(jprogram);
-    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
+    SpeedTracerLogger.end(CompilerEventType.DRAFT_OPTIMIZE);
 
-    SpeedTracerLogger.get().end(CompilerEventType.DRAFT_OPTIMIZE);
+    SpeedTracerLogger.end(CompilerEventType.DRAFT_OPTIMIZE);
   }
 
   protected static void optimize(JJSOptions options, JProgram jprogram)
@@ -637,10 +637,10 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
-    SpeedTracerLogger.get().start(CompilerEventType.OPTIMIZE);
+    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
     do {
       if (Thread.interrupted()) {
-        SpeedTracerLogger.get().end(CompilerEventType.OPTIMIZE);
+        SpeedTracerLogger.end(CompilerEventType.OPTIMIZE);
         throw new InterruptedException();
       }
       maybeDumpAST(jprogram);
@@ -650,12 +650,12 @@ public class JavaToJavaScriptCompiler {
       // Just run it once, because it is very time consuming
       DataflowOptimizer.exec(jprogram);
     }
-    SpeedTracerLogger.get().end(CompilerEventType.OPTIMIZE);
+    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE);
   }
 
   protected static boolean optimizeLoop(JProgram jprogram,
       boolean isAggressivelyOptimize) {
-    SpeedTracerLogger.get().start(CompilerEventType.OPTIMIZE, "phase", "loop");
+    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "loop");
     // Recompute clinits each time, they can become empty.
     jprogram.typeOracle.recomputeAfterOptimizations();
     // jprogram.methodOracle = MethodOracleBuilder.buildMethodOracle(jprogram);
@@ -692,7 +692,7 @@ public class JavaToJavaScriptCompiler {
 
     // prove that any types that have been culled from the main tree are
     // unreferenced due to type tightening?
-    SpeedTracerLogger.get().end(CompilerEventType.OPTIMIZE);
+    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE);
 
     return didChange;
   }
@@ -1007,21 +1007,21 @@ public class JavaToJavaScriptCompiler {
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-    SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS);
+    SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS);
 
-    SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
+    SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
         "phase", "recordSplitPoints");
     SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
     SyntheticArtifact splitPoints = new SyntheticArtifact(
         SoycReportLinker.class, "splitPoints" + permutationId + ".xml.gz",
         baos.toByteArray());
     soycArtifacts.add(splitPoints);
-    SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
+    SpeedTracerLogger.end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
 
 
     SyntheticArtifact sizeMaps = null;
     if (sizeBreakdowns != null) {
-      SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
+      SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
           "phase", "recordSizeMap");
       baos.reset();
       SizeMapRecorder.recordMap(logger, baos, sizeBreakdowns, jjsmap,
@@ -1029,17 +1029,17 @@ public class JavaToJavaScriptCompiler {
       sizeMaps = new SyntheticArtifact(SoycReportLinker.class, "stories"
           + permutationId + ".xml.gz", baos.toByteArray());
       soycArtifacts.add(sizeMaps);
-      SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
+      SpeedTracerLogger.end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
     }
 
     if (sourceInfoMaps != null) {
-      SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
+      SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
           "phase", "recordStories");
       baos.reset();
       StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
       soycArtifacts.add(new SyntheticArtifact(SoycReportLinker.class,
           "detailedStories" + permutationId + ".xml.gz", baos.toByteArray()));
-      SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
+      SpeedTracerLogger.end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
     }
 
     if (dependencies != null) {
@@ -1052,7 +1052,7 @@ public class JavaToJavaScriptCompiler {
     }
 
     if (sizeBreakdowns != null) {
-      SpeedTracerLogger.get().start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
+      SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS,
           "phase", "generateCompileReport");
       ArtifactsOutputDirectory outDir = new ArtifactsOutputDirectory();
       SoycDashboard dashboard = new SoycDashboard(outDir);
@@ -1076,10 +1076,10 @@ public class JavaToJavaScriptCompiler {
       }
       dashboard.generateForOnePermutation();
       soycArtifacts.addAll(outDir.getArtifacts());
-      SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
+      SpeedTracerLogger.end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
     }
 
-    SpeedTracerLogger.get().end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
+    SpeedTracerLogger.end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
 
     return soycArtifacts;
   }

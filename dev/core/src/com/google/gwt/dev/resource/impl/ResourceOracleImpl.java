@@ -320,7 +320,7 @@ public class ResourceOracleImpl implements ResourceOracle {
    * @param logger status and error details are written here
    */
   public void refresh(TreeLogger logger) {
-    SpeedTracerLogger.get().start(CompilerEventType.RESOURCE_ORACLE, "phase", "refresh");
+    SpeedTracerLogger.start(CompilerEventType.RESOURCE_ORACLE, "phase", "refresh");
     TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger,
         null);
 
@@ -387,7 +387,7 @@ public class ResourceOracleImpl implements ResourceOracle {
 
     if (!didChange) {
       // Nothing to do, keep the same identities.
-      SpeedTracerLogger.get().end(CompilerEventType.RESOURCE_ORACLE);
+      SpeedTracerLogger.end(CompilerEventType.RESOURCE_ORACLE);
       return;
     }
 
@@ -406,7 +406,7 @@ public class ResourceOracleImpl implements ResourceOracle {
     exposedResources = Collections.unmodifiableSet(externalSet);
     exposedResourceMap = Collections.unmodifiableMap(externalMap);
     exposedPathNames = Collections.unmodifiableSet(externalMap.keySet());
-    SpeedTracerLogger.get().end(CompilerEventType.RESOURCE_ORACLE);
+    SpeedTracerLogger.end(CompilerEventType.RESOURCE_ORACLE);
   }
 
   public void setPathPrefixes(PathPrefixSet pathPrefixSet) {

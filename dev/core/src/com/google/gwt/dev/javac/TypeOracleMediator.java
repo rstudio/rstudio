@@ -293,7 +293,7 @@ public class TypeOracleMediator {
    */
   public void addNewUnits(TreeLogger logger,
       Collection<CompilationUnit> units) {
-    SpeedTracerLogger.get().start(CompilerEventType.TYPE_ORACLE_MEDIATOR);
+    SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR);
     // First collect all class data.
     classMap = new HashMap<String, CollectClassData>();
     for (CompilationUnit unit : units) {
@@ -363,7 +363,7 @@ public class TypeOracleMediator {
     allMethodArgs = null;
     classMap = null;
     classMapType = null;
-    SpeedTracerLogger.get().end(CompilerEventType.TYPE_ORACLE_MEDIATOR);
+    SpeedTracerLogger.end(CompilerEventType.TYPE_ORACLE_MEDIATOR);
   }
 
   /**

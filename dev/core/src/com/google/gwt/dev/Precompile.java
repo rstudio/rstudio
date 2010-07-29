@@ -508,10 +508,10 @@ public class Precompile {
           module, compilationState, generatedArtifacts, allPermutations, genDir);
       // Allow GC later.
       compilationState = null;
-      SpeedTracerLogger.get().start(CompilerEventType.PRECOMPILE);
+      SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
       UnifiedAst unifiedAst = getCompiler(module).precompile(logger, module,
           rpo, declEntryPts, null, jjsOptions, rpo.getPermuationCount() == 1);
-      SpeedTracerLogger.get().end(CompilerEventType.PRECOMPILE);
+      SpeedTracerLogger.end(CompilerEventType.PRECOMPILE);
 
       // Merge all identical permutations together.
       List<Permutation> permutations = new ArrayList<Permutation>(

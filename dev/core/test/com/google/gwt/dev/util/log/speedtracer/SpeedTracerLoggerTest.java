@@ -13,12 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.util.log;
+package com.google.gwt.dev.util.log.speedtracer;
 
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonException;
 import com.google.gwt.dev.json.JsonObject;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 
 import junit.framework.TestCase;
@@ -54,17 +53,19 @@ public class SpeedTracerLoggerTest extends TestCase {
   private class TestLoggerThreadedThread extends Thread {
 
     private final EventType event;
+    private final SpeedTracerLogger logger;
 
-    public TestLoggerThreadedThread(EventType event) {
+    public TestLoggerThreadedThread(EventType event, SpeedTracerLogger logger) {
       super();
       this.event = event;
+      this.logger = logger;
     }
 
     @Override
     public void run() {
       for (int i = 0; i < MAX_EVENT_LOGS; i++) {
-        SpeedTracerLogger.get().start(event);
-        SpeedTracerLogger.get().end(event);
+        logger.startImpl(event);
+        logger.endImpl(event);
       }
     }
   }
@@ -79,14 +80,14 @@ public class SpeedTracerLoggerTest extends TestCase {
 
   public void testSpeedTracerLogger() throws IOException, JsonException {
     Writer writer = new StringWriter();
-    SpeedTracerLogger.init(writer);
-    SpeedTracerLogger.get().start(dummyOne);
-    SpeedTracerLogger.get().start(dummyTwo);
-    SpeedTracerLogger.get().end(dummyTwo);
-    SpeedTracerLogger.get().start(dummyThree);
-    SpeedTracerLogger.get().end(dummyThree);
-    SpeedTracerLogger.get().end(dummyOne);
-    SpeedTracerLogger.get().flush();
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer);
+    logger.startImpl(dummyOne);
+    logger.startImpl(dummyTwo);
+    logger.endImpl(dummyTwo);
+    logger.startImpl(dummyThree);
+    logger.endImpl(dummyThree);
+    logger.endImpl(dummyOne);
+    logger.flush();
 
     Reader jsonReader = extractJsonFromWriter(writer);
     JsonObject parsedObject = JsonObject.parse(jsonReader);
@@ -109,27 +110,34 @@ public class SpeedTracerLoggerTest extends TestCase {
   public void testSpeedTracerLoggerExtraData() throws IOException,
       JsonException {
     Writer writer = new StringWriter();
-    SpeedTracerLogger.init(writer);
-    SpeedTracerLogger.get().start(dummyOne, "extraStart", "valueStart");
-    SpeedTracerLogger.get().end(dummyOne, "extraEnd", "valueEnd");
-    SpeedTracerLogger.get().flush();
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer);
+    logger.startImpl(dummyOne, "extraStart", "valueStart");
+    logger.addDataImpl("extraMiddle", "valueMiddle");
+    logger.endImpl(dummyOne, "extraEnd", "valueEnd");
+    logger.flush();
 
     Reader jsonReader = extractJsonFromWriter(writer);
     JsonObject parsedObject = JsonObject.parse(jsonReader);
-    assertEquals("valueStart", parsedObject.get("data").asObject().get("extraStart").asString().getString());
-    assertEquals("valueEnd", parsedObject.get("data").asObject().get("extraEnd").asString().getString());
+    assertEquals("valueStart", parsedObject.get("data").asObject().get(
+        "extraStart").asString().getString());
+    assertEquals(
+        "valueMiddle",
+        parsedObject.get("data").asObject().get("extraMiddle").asString().getString());
+    assertEquals(
+        "valueEnd",
+        parsedObject.get("data").asObject().get("extraEnd").asString().getString());
   }
 
   public void testSpeedTracerLoggerMultiple() throws IOException, JsonException {
     Writer writer = new StringWriter();
-    SpeedTracerLogger.init(writer);
-    SpeedTracerLogger.get().start(dummyOne);
-    SpeedTracerLogger.get().end(dummyOne);
-    SpeedTracerLogger.get().start(dummyTwo);
-    SpeedTracerLogger.get().end(dummyTwo);
-    SpeedTracerLogger.get().start(dummyThree);
-    SpeedTracerLogger.get().end(dummyThree);
-    SpeedTracerLogger.get().flush();
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer);
+    logger.startImpl(dummyOne);
+    logger.endImpl(dummyOne);
+    logger.startImpl(dummyTwo);
+    logger.endImpl(dummyTwo);
+    logger.startImpl(dummyThree);
+    logger.endImpl(dummyThree);
+    logger.flush();
 
     Reader jsonReader = extractJsonFromWriter(writer);
     JsonObject dummyOneObject = JsonObject.parse(jsonReader).asObject();
@@ -145,18 +153,18 @@ public class SpeedTracerLoggerTest extends TestCase {
       IOException {
     final int NUM_THREADS = 3;
     Writer writer = new StringWriter();
-    SpeedTracerLogger.init(writer);
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer);
     Thread threads[] = new Thread[NUM_THREADS];
-    threads[0] = new TestLoggerThreadedThread(dummyOne);
-    threads[1] = new TestLoggerThreadedThread(dummyTwo);
-    threads[2] = new TestLoggerThreadedThread(dummyThree);
+    threads[0] = new TestLoggerThreadedThread(dummyOne, logger);
+    threads[1] = new TestLoggerThreadedThread(dummyTwo, logger);
+    threads[2] = new TestLoggerThreadedThread(dummyThree, logger);
     for (int i = 0; i < NUM_THREADS; i++) {
       threads[i].start();
     }
     for (int i = 0; i < NUM_THREADS; i++) {
       threads[i].join();
     }
-    SpeedTracerLogger.get().flush();
+    logger.flush();
     BufferedReader jsonReader = extractJsonFromWriter(writer);
 
     int tally[] = new int[NUM_THREADS];
