@@ -24,6 +24,29 @@ import java.io.IOException;
 
 public class FileResourceTest extends TestCase {
 
+  public void testBasic() {
+    File f = null;
+    try {
+      f = File.createTempFile("com.google.gwt.dev.javac.impl.FileResourceTest",
+          ".tmp");
+      f.deleteOnExit();
+      Util.writeStringAsFile(f, "contents 1");
+    } catch (IOException e) {
+      fail("Failed to create test file");
+    }
+
+    File dir = f.getParentFile();
+    DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(dir);
+    FileResource r = new FileResource(cpe, f.getName(), f);
+    assertEquals(f.getAbsoluteFile().toURI().toString(), r.getLocation());
+
+    /*
+     * In this case, there's no subdirectory, so the path should match the
+     * simple filename.
+     */
+    assertEquals(f.getName(), r.getPath());
+  }
+
   public void testDeletion() {
     File f = null;
     try {
@@ -46,50 +69,8 @@ public class FileResourceTest extends TestCase {
      */
     assertEquals(f.getName(), r.getPath());
 
-    // Shouldn't be stale yet.
-    assertFalse(r.isStale());
-
-    /*
-     * Touch the file at more than one second to ensure there's a noticeable
-     * difference on every platform.
-     */
-    // Ignore failure of setLastModified 
-    f.setLastModified(f.lastModified() + 1500);
-
-    // Should be stale now.
-    assertTrue(r.isStale());
-  }
-
-  public void testModification() {
-    File f = null;
-    try {
-      f = File.createTempFile("com.google.gwt.dev.javac.impl.FileResourceTest",
-          ".tmp");
-      f.deleteOnExit();
-      Util.writeStringAsFile(f, "contents 1");
-    } catch (IOException e) {
-      fail("Failed to create test file");
-    }
-
-    File dir = f.getParentFile();
-    DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(dir);
-    FileResource r = new FileResource(cpe, f.getName(), f);
-    assertEquals(f.getAbsoluteFile().toURI().toString(), r.getLocation());
-
-    /*
-     * In this case, there's no subdirectory, so the path should match the
-     * simple filename.
-     */
-    assertEquals(f.getName(), r.getPath());
-
-    // Shouldn't be stale yet.
-    assertFalse(r.isStale());
-
     // Delete the file.
     f.delete();
-
-    // Should be stale now.
-    assertTrue(r.isStale());
 
     // Get can't contents anymore, either.
     assertNull(r.openContents());
