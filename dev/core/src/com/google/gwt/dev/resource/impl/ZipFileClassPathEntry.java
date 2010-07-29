@@ -23,12 +23,10 @@ import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.dev.util.msg.Message1String;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 /**
@@ -57,8 +55,8 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
   }
 
   private static class ZipFileSnapshot {
-    private final Map<AbstractResource, PathPrefix> cachedAnswers;
     private final int prefixSetSize;
+    private final Map<AbstractResource, PathPrefix> cachedAnswers;
 
     ZipFileSnapshot(int prefixSetSize,
         Map<AbstractResource, PathPrefix> cachedAnswers) {
@@ -74,14 +72,11 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
    */
   private final Map<PathPrefixSet, ZipFileSnapshot> cachedSnapshots = new IdentityHashMap<PathPrefixSet, ZipFileSnapshot>();
 
-  private final String location;
-
+  private String cachedLocation;
   private final ZipFile zipFile;
 
-  public ZipFileClassPathEntry(File zipFile) throws ZipException, IOException {
-    assert zipFile.isAbsolute();
-    this.zipFile = new ZipFile(zipFile);
-    this.location = zipFile.toURI().toString();
+  public ZipFileClassPathEntry(ZipFile zipFile) {
+    this.zipFile = zipFile;
   }
 
   /**
@@ -106,7 +101,10 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
 
   @Override
   public String getLocation() {
-    return location;
+    if (cachedLocation == null) {
+      cachedLocation = new File(zipFile.getName()).toURI().toString();
+    }
+    return cachedLocation;
   }
 
   public ZipFile getZipFile() {
@@ -129,7 +127,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
         continue;
       }
       ZipFileResource zipResource = new ZipFileResource(this,
-          zipEntry.getName(), zipEntry.getTime());
+          zipEntry.getName());
       results.add(zipResource);
       Messages.READ_ZIP_ENTRY.log(logger, zipEntry.getName(), null);
     }

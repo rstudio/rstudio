@@ -13,21 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.resource.impl;
+package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.resource.Resource;
 
 /**
- * TODO(bruce): write me.
+ * Abstracts the process of querying for public files.
+ * 
+ * @deprecated with no replacement, just use {@link ModuleDef} directly
  */
-public abstract class AbstractResource extends Resource {
+@Deprecated
+public interface PublicOracle {
 
   /**
-   * Accesses the path root under which this resource was found. Only available
-   * within this package.
+   * Finds a file on the public path.
+   * 
+   * @param partialPath a file path relative to the root of any public package
+   * @return the url of the file, or <code>null</code> if no such file exists
    */
-  public abstract ClassPathEntry getClassPathEntry();
+  Resource findPublicFile(String partialPath);
 
-  public abstract boolean isStale();
+  /**
+   * Returns all available public files.
+   * 
+   * @return an array containing the partial path to each available public file
+   */
+  String[] getAllPublicFiles();
 }
-

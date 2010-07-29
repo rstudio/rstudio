@@ -20,7 +20,6 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,8 +29,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -120,9 +117,9 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     }
 
     public void assertSameCollections(ResourceOracleSnapshot other) {
-      assertResourcesEqual(resourceMap, other.resourceMap);
-      assertResourcesEqual(resources, other.resources);
-      assertEquals(pathNames, other.pathNames);
+      assertSame(resourceMap, other.resourceMap);
+      assertSame(resources, other.resources);
+      assertSame(pathNames, other.pathNames);
     }
 
     public AbstractResource findResourceWithPath(String path) {
@@ -135,29 +132,11 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     }
   }
 
-  public static void assertResourcesEqual(Collection<Resource> expected,
-      Collection<Resource> actual) {
-    Set<String> expectedLocs = new HashSet<String>();
-    for (Resource resource : expected) {
-      expectedLocs.add(resource.getLocation());
-    }
-    Set<String> actualLocs = new HashSet<String>();
-    for (Resource resource : actual) {
-      actualLocs.add(resource.getLocation());
-    }
-    assertEquals(expectedLocs, actualLocs);
-  }
-
-  public static void assertResourcesEqual(Map<String, Resource> expected,
-      Map<String, Resource> actual) {
-    assertResourcesEqual(expected.values(), actual.values());
-  }
-
   public void testCachingOfJarResources() throws IOException,
       URISyntaxException {
     TreeLogger logger = createTestTreeLogger();
-    File jarFile = findJarFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
-    ClassPathEntry cpe1jar = new ZipFileClassPathEntry(jarFile);
+    ClassPathEntry cpe1jar = new ZipFileClassPathEntry(new JarFile(
+        findJarFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar")));
 
     // test basic caching
     PathPrefixSet pps1 = new PathPrefixSet();
@@ -197,8 +176,8 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
 
-    ClassPathEntry[] cp12 = new ClassPathEntry[]{cpe1jar, cpe2jar};
-    ClassPathEntry[] cp21 = new ClassPathEntry[]{cpe2jar, cpe1jar};
+    ClassPathEntry[] cp12 = new ClassPathEntry[] {cpe1jar, cpe2jar};
+    ClassPathEntry[] cp21 = new ClassPathEntry[] {cpe2jar, cpe1jar};
     String resKeyNormal = "org/example/bar/client/BarClient2.txt";
     String resKeyReroot = "/BarClient2.txt";
     PathPrefix pathPrefixNormal = new PathPrefix("org/example/bar/client",
@@ -235,8 +214,8 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
 
-    ClassPathEntry[] cp12 = new ClassPathEntry[]{cpe1jar, cpe2jar};
-    ClassPathEntry[] cp21 = new ClassPathEntry[]{cpe2jar, cpe1jar};
+    ClassPathEntry[] cp12 = new ClassPathEntry[] {cpe1jar, cpe2jar};
+    ClassPathEntry[] cp21 = new ClassPathEntry[] {cpe2jar, cpe1jar};
 
     String keyReroot = "/BarClient1.txt";
 
@@ -285,7 +264,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     TreeLogger logger = createTestTreeLogger();
     URL cpe1 = findJarUrl("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
     URL cpe2 = findJarUrl("com/google/gwt/dev/resource/impl/testdata/cpe2.jar");
-    URLClassLoader classLoader = new URLClassLoader(new URL[]{
+    URLClassLoader classLoader = new URLClassLoader(new URL[] {
         cpe1, cpe2, cpe2, cpe1, cpe2,}, null);
     ResourceOracleImpl oracle = new ResourceOracleImpl(logger, classLoader);
     List<ClassPathEntry> classPath = oracle.getClassPath();
@@ -382,7 +361,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     PathPrefix pp1 = new PathPrefix("org/example/bar/client", null, false);
     PathPrefix pp2 = new PathPrefix("org/example/bar", null, false);
     testResourceInCPE(logger, "org/example/bar/client/BarClient2.txt", cpe1,
-        new ClassPathEntry[]{cpe1, cpe2}, pp1, pp2);
+        new ClassPathEntry[] {cpe1, cpe2}, pp1, pp2);
   }
 
   /**
@@ -403,15 +382,15 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
     // Ensure the translatable overrides the basic despite swapping CPE order.
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[]{cpe1, cpe2}, pp1, pp2);
+        new ClassPathEntry[] {cpe1, cpe2}, pp1, pp2);
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[]{cpe2, cpe1}, pp1, pp2);
+        new ClassPathEntry[] {cpe2, cpe1}, pp1, pp2);
 
     // Ensure the translatable overrides the basic despite swapping PPS order.
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[]{cpe1, cpe2}, pp2, pp1);
+        new ClassPathEntry[] {cpe1, cpe2}, pp2, pp1);
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[]{cpe2, cpe1}, pp2, pp1);
+        new ClassPathEntry[] {cpe2, cpe1}, pp2, pp1);
   }
 
   /**
