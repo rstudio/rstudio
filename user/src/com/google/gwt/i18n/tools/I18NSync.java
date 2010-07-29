@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,9 +23,7 @@ import com.google.gwt.i18n.rebind.AbstractLocalizableInterfaceCreator;
 import com.google.gwt.i18n.rebind.ConstantsInterfaceCreator;
 import com.google.gwt.i18n.rebind.LocalizableGenerator;
 import com.google.gwt.i18n.rebind.MessagesInterfaceCreator;
-import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerExtra;
-import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.ToolBase;
 
@@ -128,7 +126,7 @@ public class I18NSync extends ToolBase {
   /**
    * Creates a <code>Constants</code> interface from a class name. The
    * resource file needed to create the class must be on your class path.
-   * 
+   *
    * @param className the name of the Constants class to be created
    * @param outDir source dir root
    * @throws IOException
@@ -141,7 +139,7 @@ public class I18NSync extends ToolBase {
   /**
    * Creates a <code>ConstantsWithLookup</code> interface from a class name.
    * The resource file needed to create the class must be on your class path.
-   * 
+   *
    * @param className the name of the Constants class to be created
    * @throws IOException
    */
@@ -154,7 +152,7 @@ public class I18NSync extends ToolBase {
   /**
    * Creates a <code>ConstantsWithLookup</code> interface from a class name.
    * The resource file needed to create the class must be on your class path.
-   * 
+   *
    * @param className the name of the Constants class to be created
    * @param sourceDir source dir root
    * @throws IOException
@@ -192,7 +190,7 @@ public class I18NSync extends ToolBase {
   /**
    * Creates a <code>Messages</code> interface from a class name. The resource
    * file needed to create the class must be on your class path.
-   * 
+   *
    * @param className the name of the Constants class to be created
    * @throws IOException
    */
@@ -200,11 +198,11 @@ public class I18NSync extends ToolBase {
       throws IOException {
     createMessagesInterfaceFromClassName(className, null);
   }
-  
+
   /**
    * Creates a <code>Messages</code> interface from a class name. The resource
    * file needed to create the class must be on your class path.
-   * 
+   *
    * @param className the name of the Constants class to be created
    * @param sourceDir source directory root
    * @throws IOException
@@ -236,7 +234,7 @@ public class I18NSync extends ToolBase {
 
   /**
    * Creates Messages and Constants java source files.
-   * 
+   *
    * @param args arguments for generation
    */
   public static void main(String[] args) {
@@ -354,7 +352,7 @@ public class I18NSync extends ToolBase {
 
   /**
    * Creates the interface.
-   * 
+   *
    * @return whether the interface was created
    */
   protected boolean run() {
@@ -366,99 +364,5 @@ public class I18NSync extends ToolBase {
       System.err.println(e.getMessage());
       return false;
     }
-  }
-}
-
-/**
- * This class holds the '-createConstantsWithLookup' and '-createMessages'
- * ArgHandler classes.  It is shared by both I18NSync and I18NCreator classes.
- *        
- * To use this class, call the getConstantsWithLookupArgHandler()
- * and getMessagesArgHandler() methods and add the returned ArgHandler 
- * instances to a ToolBase registerHandler() method.  When parsing the arguments
- * is complete, you can retrieve the selected type by calling getArgValue().
- */
-class ArgHandlerValueChooser {
-
-  private  Class<? extends Localizable> argValue = Constants.class;
-  private ArgHandler cwlArgHandler;
-  private ArgHandler messagesArgHandler;
-
-  /**
-   * Returns one on "Messages.class", "ConstantsWithLookup.class", or
-   * "Constants.class" depending on which argument handlers fired.
-   *
-   * @return A class literal, returns "Constants.class" by default.
-   */
-  Class<? extends Localizable> getArgValue() {
-    return argValue;
-  }
-
-  /**
-   * Retrieve the argument handler for -createConstantsWithLookup.
-   * 
-   * @return a flag argument handler
-   */
-   ArgHandler getConstantsWithLookupArgHandler() {
-    if (cwlArgHandler == null) {
-      cwlArgHandler = new ArgHandlerFlag() {
-
-        @Override
-        public String getPurpose() {
-          return "Create scripts for a ConstantsWithLookup interface "
-              + "rather than a Constants one";
-        }
-
-        @Override
-        public String getTag() {
-          return "-createConstantsWithLookup";
-        }
-
-        @Override
-        public boolean setFlag() {
-          if (argValue == Messages.class) {
-            System.err.println("-createMessages cannot be used with -createConstantsWithLookup");
-            return false;
-          }
-          argValue = ConstantsWithLookup.class;
-          return true;
-        }
-      };
-    }
-    return cwlArgHandler;
-  }
-
-  /**
-   * Retrieves the -createMessages argument handler.
-   * 
-   * @return a flag argument handler
-   */
-  ArgHandler getMessagesArgHandler() {
-    if (messagesArgHandler == null) {
-      messagesArgHandler = new ArgHandlerFlag() {
-
-        @Override
-        public String getPurpose() {
-          return "Create scripts for a Messages interface "
-              + "rather than a Constants one";
-        }
-
-        @Override
-        public String getTag() {
-          return "-createMessages";
-        }
-
-        @Override
-        public boolean setFlag() {
-          if (argValue == ConstantsWithLookup.class) {
-            System.err.println("-createMessages cannot be used with -createConstantsWithLookup");
-            return false;
-          }
-          argValue = Messages.class;
-          return true;
-        }
-      };
-    }
-    return messagesArgHandler;
   }
 }

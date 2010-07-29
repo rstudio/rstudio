@@ -1345,7 +1345,7 @@ public class Arrays {
    */
   @UnsafeNativeLong
   private static native void nativeLongSort(Object array) /*-{
-    array.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongEmul;Lcom/google/gwt/lang/LongEmul;));
+    array.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongLibBase$LongEmul;Lcom/google/gwt/lang/LongLibBase$LongEmul;));
   }-*/;
 
   /**
@@ -1355,7 +1355,7 @@ public class Arrays {
   private static native void nativeLongSort(Object array, int fromIndex,
       int toIndex) /*-{
     var temp = array.slice(fromIndex, toIndex);
-    temp.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongEmul;Lcom/google/gwt/lang/LongEmul;));
+    temp.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongLibBase$LongEmul;Lcom/google/gwt/lang/LongLibBase$LongEmul;));
     var n = toIndex - fromIndex;
     // Do the equivalent of array.splice(fromIndex, n, temp) except
     // flattening the temp slice.

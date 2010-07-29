@@ -1,6 +1,6 @@
 package com.google.gwt.lang;
 
-import com.google.gwt.lang.LongEmul;
+import com.google.gwt.lang.LongLibBase.LongEmul;
 
 import junit.framework.TestCase;
 

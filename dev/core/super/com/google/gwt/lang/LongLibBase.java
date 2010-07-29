@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,20 +17,20 @@ package com.google.gwt.lang;
 
 import com.google.gwt.core.client.UnsafeNativeLong;
 
-final class LongEmul {
-  public static LongEmul getInstance() {
-    return new LongEmul();
-  }
-
-  int l, m, h; // Used only when RUN_IN_JVM is true
-}
-
 /**
  * Implements a Java <code>long</code> in a way that can be translated to
  * JavaScript. Methods that are meant to be called from outside this package are
  * located in {@link LongLib}.
  */
 class LongLibBase {
+  static final class LongEmul {
+    public static LongEmul getInstance() {
+      return new LongEmul();
+    }
+
+    int l, m, h; // Used only when RUN_IN_JVM is true
+  }
+
   // Force the class to exist
   public static LongEmul instance = new LongEmul();
 
@@ -39,10 +39,10 @@ class LongLibBase {
    * high) such that (x.l + ((long) x.m << 22) + ((long) x.h << 44)) is equal to
    * the original long integer. The constant 22 is chosen since some browsers
    * are faster when operating on integers of 24 bits or less.
-   * 
+   *
    * By convention, we expect and maintain that the upper bits of each word be
    * zeroed.
-   * 
+   *
    * Note that this class must be careful using type "long". Being the
    * implementation of the long type for web mode, any place it uses a long is
    * not usable in web mode. There is currently one such method: {@link
@@ -150,7 +150,7 @@ class LongLibBase {
      * 'negative' (which tracks the sign of both a and b and is used to
      * determine the sign of the quotient) and 'aIsNegative' (which is used to
      * determine the sign of the remainder).
-     * 
+     *
      * For all values of a except MIN_VALUE, we can just negate a and modify
      * negative and aIsNegative appropriately. When a == MIN_VALUE, negation is
      * not possible without overflowing 64 bits, so instead of computing
@@ -158,7 +158,7 @@ class LongLibBase {
      * only circumstance under which these quotients differ is when b is a power
      * of two, which will divide abs(MIN_VALUE) == 2^64 exactly. In this case,
      * we can get the proper result by shifting MIN_VALUE in unsigned fashion.
-     * 
+     *
      * We make a single copy of a before the first operation that needs to
      * modify its value.
      */
@@ -321,7 +321,7 @@ class LongLibBase {
   }
 
   private static native LongEmul create0(int l, int m, int h) /*-{
-    return (a = @com.google.gwt.lang.LongEmul::getInstance()(),
+    return (a = @com.google.gwt.lang.LongLibBase$LongEmul::getInstance()(),
         a.l = l, a.m = m, a.h = h, a);
   }-*/;
 
@@ -432,7 +432,7 @@ class LongLibBase {
 
   /**
    * Return the exact log base 2 of a, or -1 if a is not a power of two:
-   * 
+   *
    * <pre>
    * if (x == 2^n) {
    *   return n;
@@ -536,7 +536,7 @@ class LongLibBase {
 
   /**
    * Attempt to subtract b from a if a >= b:
-   * 
+   *
    * <pre>
    * if (a >= b) {
    *   a -= b;
