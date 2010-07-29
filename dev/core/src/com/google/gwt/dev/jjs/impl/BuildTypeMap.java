@@ -478,7 +478,6 @@ public class BuildTypeMap {
       this.jsFunction = jsFunction;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void resolve(JsNameRef x) {
       // Only resolve unqualified names
