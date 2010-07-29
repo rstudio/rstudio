@@ -26,6 +26,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.uibinder.test.client.EnumeratedLabel.Suffix;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -65,12 +66,12 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("th", domUi.th1.getTagName().toLowerCase());
     assertEquals("th", domUi.th2.getTagName().toLowerCase());
   }
-  
+
   public void testTableWithExplicitTbody() {
     assertEquals("tbody", domUi.tbody.getTagName().toLowerCase());
     assertEquals("th", domUi.th4.getTagName().toLowerCase());
   }
-  
+
   public void testAutoboxingFieldRef() {
     FakeBundle fakeBundle = new FakeBundle();
 
@@ -84,7 +85,8 @@ public class UiBinderTest extends GWTTestCase {
 
     assertEquals(new Integer((int) fakeBundle.aDouble()),
         widgetUi.mismatchPrimitiveIntoObject.getObjectInteger());
-    assertEquals((int) fakeBundle.aDouble(), widgetUi.allMismatchPrimitive.getRawInt());
+    assertEquals((int) fakeBundle.aDouble(),
+        widgetUi.allMismatchPrimitive.getRawInt());
 
     assertEquals(new Boolean(fakeBundle.aBoolean()),
         widgetUi.primitiveBooleanIntoObject.getObjectBoolean());
@@ -92,26 +94,28 @@ public class UiBinderTest extends GWTTestCase {
         widgetUi.objectBooleanIntoPrimitive.getRawBoolean());
     assertEquals(fakeBundle.aBooleanObject(),
         widgetUi.allObjectBoolean.getObjectBoolean());
-    assertEquals(fakeBundle.aBoolean(), widgetUi.allPrimitiveBoolean.getRawBoolean());
+    assertEquals(fakeBundle.aBoolean(),
+        widgetUi.allPrimitiveBoolean.getRawBoolean());
   }
 
   public void testAccessToNonStandardElement() {
     Element elm = widgetUi.nonStandardElement;
     assertEquals("I", elm.getTagName());
   }
-  
+
   public void testAddStyleNamesAndDebugId() {
     Label l = widgetUi.lblDebugId;
     assertEquals("gwt-debug-joe", l.getElement().getId());
 
     assertEquals("styleName", l.getStylePrimaryName());
-    
+
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     assertTrue(l.getStyleName().contains("newStyle"));
     assertTrue(l.getStyleName().contains("anotherStyle"));
     assertTrue(l.getStyleName().contains("styleName-dependentStyle"));
     assertTrue(l.getStyleName().contains("styleName-anotherDependentStyle"));
-    assertTrue(l.getStyleName().contains("styleName-" + resources.style().prettyText()));
+    assertTrue(l.getStyleName().contains(
+        "styleName-" + resources.style().prettyText()));
   }
 
   // TODO(rjrjr) The direction stuff in these tests really belongs in
@@ -131,7 +135,8 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(getCenter(), widgetUi.bundledLabel.getParent());
     assertEquals(new FakeBundle().helloText(), widgetUi.bundledLabel.getText());
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
-    assertEquals(resources.style().prettyText(), widgetUi.bundledLabel.getStyleName());
+    assertEquals(resources.style().prettyText(),
+        widgetUi.bundledLabel.getStyleName());
 
     Element pretty = DOM.getElementById("prettyPara");
     assertEquals(resources.style().prettyText(), pretty.getClassName());
@@ -141,7 +146,7 @@ public class UiBinderTest extends GWTTestCase {
     foo.setPojo(pojo);
     assertEquals(foo.getText(), widgetUi.theFoo.getText());
   }
-  
+
   public void testBundleLegacyBeansText() {
     assertEquals(widgetUi.legacyValuesForBeans.helloText(),
         widgetUi.bundledLabelLegacy.getText());
@@ -162,7 +167,8 @@ public class UiBinderTest extends GWTTestCase {
     // TODO(rjrjr) More of a test of HTMLPanelParser
 
     Widget center = getCenter();
-    assertEquals(com.google.gwt.user.client.ui.DockPanel.CENTER, root.getWidgetDirection(center));
+    assertEquals(com.google.gwt.user.client.ui.DockPanel.CENTER,
+        root.getWidgetDirection(center));
     assertEquals(HTMLPanel.class, center.getClass());
     String html = center.getElement().getInnerHTML();
     assertTrue(html.contains("main area"));
@@ -182,11 +188,11 @@ public class UiBinderTest extends GWTTestCase {
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     assertEquals(resources.style().tmText(), widgetUi.tmElement.getClassName());
   }
-  
+
   public void testCustomButtonBody() {
     assertEquals("Hi mom", widgetUi.toggle.getText());
   }
-  
+
   public void testCustomDialogBox() {
     assertEquals("Custom dialog am I", widgetUi.fooDialog.getText());
     Widget body = widgetUi.fooDialog.iterator().next();
@@ -235,16 +241,18 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("They might show up in body text that has been marked for "
         + "translation: funny characters \\ \" \" ' ' & < > > { }", t);
   }
-  
+
   public void testEmptyAttributesOkay() {
     assertEquals("", widgetUi.styleLess.getStyleName());
   }
 
   public void testMixOfWidgetsAndElementsInUiMsg() {
-    assertEquals("single translatable message", widgetUi.mixedMessageWidget.getText());
-    assertEquals("exciting and subtle", widgetUi.mixedMessageSpan.getInnerText());
+    assertEquals("single translatable message",
+        widgetUi.mixedMessageWidget.getText());
+    assertEquals("exciting and subtle",
+        widgetUi.mixedMessageSpan.getInnerText());
   }
-  
+
   public void testEnums() {
     Suffix expected = EnumeratedLabel.Suffix.tail;
     assertTrue("Should end with suffix \"" + expected + "\"",
@@ -261,7 +269,7 @@ public class UiBinderTest extends GWTTestCase {
         widgetUi.pushButton.getUpHoveringFace().getHTML().toLowerCase());
     // Can't test the images at all :-P
   }
-  
+
   public void testProtectedDomTextMessageWithFunnyChars() {
     String t = widgetUi.funnyCharsProtectedMessageParagraph.getInnerText();
     assertEquals("Don't forget about protected untranslatable blocks: "
@@ -293,14 +301,14 @@ public class UiBinderTest extends GWTTestCase {
   public void testFieldInPlaceholderedElement() {
     assertEquals("named portions", widgetUi.spanInMsg.getInnerText());
   }
-  
+
   public void testGrid() {
     assertTrue(widgetUi.fooGrid.getWidget(0, 0) instanceof Label);
     assertTrue(widgetUi.fooGrid.getWidget(0, 1) instanceof Button);
     assertEquals(2, widgetUi.fooGrid.getColumnCount());
     assertEquals(1, widgetUi.fooGrid.getRowCount());
   }
-  
+
   public void testListBox() {
     assertEquals(2, widgetUi.fooListBox.getItemCount());
     assertEquals("bar", widgetUi.fooListBox.getItemText(0));
@@ -369,7 +377,8 @@ public class UiBinderTest extends GWTTestCase {
   @SuppressWarnings("deprecation")
   public void testNorth() {
     Widget north = root.getWidget(0);
-    assertEquals(com.google.gwt.user.client.ui.DockPanel.NORTH, root.getWidgetDirection(north));
+    assertEquals(com.google.gwt.user.client.ui.DockPanel.NORTH,
+        root.getWidgetDirection(north));
     assertEquals(HTML.class, north.getClass());
     assertTrue(((HTML) north).getHTML().contains("Title area"));
   }
@@ -422,6 +431,38 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("Panel contains widget", w, p.getContent());
   }
 
+  public void testAbsolutePanel() {
+    AbsolutePanel p = widgetUi.myAbsolutePanel;
+    assertNotNull("Panel exists", p);
+
+    assertEquals("Panel contains exactly 3 widgets", 3, p.getWidgetCount());
+    assertEquals("Panel contains expected itemA",
+        widgetUi.myAbsolutePanelItemA, p.getWidget(0));
+    assertEquals("Panel contains expected itemB",
+        widgetUi.myAbsolutePanelItemB, p.getWidget(1));
+    assertEquals("Panel contains expected itemC",
+        widgetUi.myAbsolutePanelItemC, p.getWidget(2));
+
+    /*
+     * The following fails on Safari 3, off by a few pixels. The coverage in
+     * AbsolutePanelParserTest and AbsolutePanelTest are enough to make up for
+     * the lack. Leaving this here as a warning to the next guy.
+     */
+//    {
+//      Widget w = widgetUi.myAbsolutePanelItemA;
+//      assertNotNull("Widget exists", w);
+//      assertEquals("Widget has left", 1, p.getWidgetLeft(w));
+//      assertEquals("Widget has top", 2, p.getWidgetTop(w));
+//    }
+//
+//    {
+//      Widget w = widgetUi.myAbsolutePanelItemC;
+//      assertNotNull("Widget exists", w);
+//      assertEquals("Widget has left", 10, p.getWidgetLeft(w));
+//      assertEquals("Widget has top", 20, p.getWidgetTop(w));
+//    }
+  }
+
   public void testStringAttributeIgnoresStaticSetter() {
     // Assumes setPopupText() is overloaded such that there is a static
     // setPopupText(Foo, String) method.
@@ -437,7 +478,8 @@ public class UiBinderTest extends GWTTestCase {
   @SuppressWarnings("deprecation")
   public void testWest() {
     Widget west = root.getWidget(1);
-    assertEquals(com.google.gwt.user.client.ui.DockPanel.WEST, root.getWidgetDirection(west));
+    assertEquals(com.google.gwt.user.client.ui.DockPanel.WEST,
+        root.getWidgetDirection(west));
     assertEquals(HTML.class, west.getClass());
     String html = ((HTML) west).getHTML();
     assertTrue(html.contains("side bar"));
@@ -463,7 +505,7 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(resource.getTop(), widget.getOriginTop());
     assertEquals(resource.getLeft(), widget.getOriginLeft());
   }
-  
+
   public void testImageResourceInImageWidget() {
     ImageResource resource = widgetUi.prettyImage;
     Image widget = widgetUi.babyWidget;
@@ -471,7 +513,7 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(resource.getHeight(), widget.getOffsetHeight());
     assertEquals(resource.getTop(), widget.getOriginTop());
     assertEquals(resource.getLeft(), widget.getOriginLeft());
-    
+
     assertEquals("expected alt text", widget.getAltText());
     assertEquals("expected style name", widget.getStyleName());
   }
@@ -480,7 +522,7 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(100, widgetUi.sideBarWidget.getOffsetWidth());
     assertEquals(150, widgetUi.sideBarWidget.getOffsetHeight());
   }
-  
+
   public void testDataResource() {
     assertNotNull(widgetUi.heartCursorResource.getUrl());
   }

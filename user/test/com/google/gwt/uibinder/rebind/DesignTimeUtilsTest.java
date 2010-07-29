@@ -38,11 +38,6 @@ public class DesignTimeUtilsTest extends TestCase {
   private final DesignTimeUtils stub = DesignTimeUtilsStub.EMPTY;
   private final DesignTimeUtilsImpl impl = new DesignTimeUtilsImpl();
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // addDeclarations()
-  //
-  ///////////////////////////////////////////////////////////////////////////
   /**
    * Test for {@link DesignTimeUtils#addDeclarations(IndentedWriter)}.
    */
@@ -76,11 +71,6 @@ public class DesignTimeUtilsTest extends TestCase {
     assertTrue(subString, content.contains(subString));
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // getImplName()
-  //
-  ///////////////////////////////////////////////////////////////////////////
   /**
    * Test for {@link DesignTimeUtils#getImplName(String)}.
    */
@@ -105,11 +95,6 @@ public class DesignTimeUtilsTest extends TestCase {
     assertTrue(Math.abs(delta) < 1000 * 3600);
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // Path
-  //
-  ///////////////////////////////////////////////////////////////////////////
   /**
    * Test for {@link DesignTimeUtils#getPath(Element)} and related methods.
    */
@@ -137,11 +122,6 @@ public class DesignTimeUtilsTest extends TestCase {
     assertEquals("0/1/0", impl.getPath(subSecond));
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // getTemplateContent()
-  //
-  ///////////////////////////////////////////////////////////////////////////
   /**
    * Test for {@link DesignTimeUtils#getTemplateContent(String)}.
    */
@@ -165,11 +145,6 @@ public class DesignTimeUtilsTest extends TestCase {
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // handleUIObject()
-  //
-  ///////////////////////////////////////////////////////////////////////////
   /**
    * Test for
    * {@link DesignTimeUtils#handleUIObject(IUiBinderWriterStatements, XMLElement, String)}
@@ -209,11 +184,6 @@ public class DesignTimeUtilsTest extends TestCase {
         statements.get(0));
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // putAttribute(String)
-  //
-  ///////////////////////////////////////////////////////////////////////////
   /**
    * Test for {@link DesignTimeUtils#putAttribute(XMLElement, String, String)}
    * and {@link DesignTimeUtils#writeAttributes(Statements)}.
@@ -257,11 +227,6 @@ public class DesignTimeUtilsTest extends TestCase {
     return statements;
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // putAttribute(String[])
-  //
-  ///////////////////////////////////////////////////////////////////////////
   /**
    * Test for {@link DesignTimeUtils#putAttribute(XMLElement, String, String[])}
    * .
@@ -317,12 +282,6 @@ public class DesignTimeUtilsTest extends TestCase {
     return statements;
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // Utilities
-  //
-  ///////////////////////////////////////////////////////////////////////////
-
   /**
    * @return the only child {@link Element} with given tag name.
    */
@@ -340,11 +299,6 @@ public class DesignTimeUtilsTest extends TestCase {
     return new XMLElement(elem, null, null, null, null, designTime, null);
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  //
-  // WriterStatements
-  //
-  ///////////////////////////////////////////////////////////////////////////
   /**
    * Implementation of {@link IUiBinderWriterStatements} for simple statements.
    */

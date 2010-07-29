@@ -33,6 +33,26 @@ import com.google.gwt.user.client.Element;
  * "owns" the positioning of the widget. Any existing positioning attributes on
  * the widget may be modified by the panel.
  * </p>
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * AbsolutePanel elements in {@link com.google.gwt.uibinder.client.UiBinder
+ * UiBinder} templates lay out their children with absolute position, using
+ * &lt;g:at> elements. Each at element should have <code>left</code> and
+ * <code>top</code> attributes in pixels. They also can contain
+ * widget children directly, with no position specified.
+ * 
+ * <p>
+ * For example:
+ * 
+ * <pre>
+ * &lt;g:AbsolutePanel>
+ *   &lt;g:at left='10' top='20'>
+ *     &lt;g:Label>Lorem ipsum...&lt;/g:Label>
+ *   &lt;/g:at>
+ *   &lt;g:Label>...dolores est.&lt;/g:Label>
+ * &lt;/g:AbsolutePanel>
+ * </pre>
  */
 public class AbsolutePanel extends ComplexPanel implements InsertPanel {
 
@@ -179,7 +199,7 @@ public class AbsolutePanel extends ComplexPanel implements InsertPanel {
 
   protected void setWidgetPositionImpl(Widget w, int left, int top) {
     Element h = w.getElement();
-    if ((left == -1) && (top == -1)) {
+    if (left == -1 && top == -1) {
       changeToStaticPositioning(h);
     } else {
       DOM.setStyleAttribute(h, "position", "absolute");
