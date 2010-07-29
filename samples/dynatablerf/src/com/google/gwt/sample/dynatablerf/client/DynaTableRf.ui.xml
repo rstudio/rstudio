@@ -1,0 +1,30 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client'>
+  <ui:style>
+    body {
+    	background-color: white;
+    	color: black;
+    	font-family: Arial, sans-serif;
+    	font-size: small;
+    	margin: 8px;
+    	margin-top: 3px;
+    }
+    
+    .header {
+    	font-weight: bold;
+    	font-size: 200%;
+    }
+  </ui:style>
+  <g:DockLayoutPanel unit="EX">
+    <g:north size="5">
+      <g:HTML styleName="{style.header}">School Schedule for Professors and Students
+      </g:HTML>
+    </g:north>
+    <g:east size="30">
+      <dt:DayFilterWidget ui:field="filter" />
+    </g:east>
+    <g:center>
+      <dt:SchoolCalendarWidget ui:field="calendar" />
+    </g:center>
+  </g:DockLayoutPanel>
+</ui:UiBinder>

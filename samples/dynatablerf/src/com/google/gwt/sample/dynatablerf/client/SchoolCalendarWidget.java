@@ -32,9 +32,7 @@ public class SchoolCalendarWidget extends Composite {
   private Command pendingRefresh;
 
   public SchoolCalendarWidget(DynaTableDataProvider calProvider, int visibleRows) {
-    String[] columns = new String[] {"Name", "Description", "Schedule"};
-    String[] styles = new String[] {"name", "desc", "sched"};
-    dynaTable = new DynaTableWidget(calProvider, columns, styles, visibleRows);
+    dynaTable = new DynaTableWidget(calProvider, visibleRows);
     initWidget(dynaTable);
   }
 

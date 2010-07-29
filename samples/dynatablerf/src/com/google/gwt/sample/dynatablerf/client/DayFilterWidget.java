@@ -15,18 +15,14 @@
  */
 package com.google.gwt.sample.dynatablerf.client;
 
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.FontStyle;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -35,90 +31,61 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class DayFilterWidget extends Composite {
 
-  private class DayCheckBox extends CheckBox {
-    public final int day;
+  interface Binder extends UiBinder<Widget, DayFilterWidget> {
+  };
 
-    public DayCheckBox(String caption, int day) {
-      super(caption);
-      
-      setEnabled(false);
+  @UiField(provided = true)
+  final SchoolCalendarWidget calendar;
 
-      // Remember custom data for this widget.
-      this.day = day;
+  @UiField
+  DayCheckBox sunday;
+  @UiField
+  DayCheckBox monday;
+  @UiField
+  DayCheckBox tuesday;
+  @UiField
+  DayCheckBox wednesday;
+  @UiField
+  DayCheckBox thursday;
+  @UiField
+  DayCheckBox friday;
+  @UiField
+  DayCheckBox saturday;
+  @UiField
+  Button all;
+  @UiField
+  Button none;
 
-      // Use a shared handler to save memory.
-      addClickHandler(dayCheckBoxHandler);
-
-      // Initialize based on the calendar's current value.
-      setValue(calendar.getDayIncluded(day));
-    }
-  }
-
-  private class DayCheckBoxHandler implements ClickHandler {
-    
-    public void onClick(ClickEvent event) {
-      onClick((DayCheckBox) event.getSource());
-    }
-
-    public void onClick(DayCheckBox dayCheckBox) {
-      calendar.setDayIncluded(dayCheckBox.day, dayCheckBox.getValue());
-    }
-  }
-
-  private final SchoolCalendarWidget calendar;
-
-  private final VerticalPanel outer = new VerticalPanel();
-
-  private final DayCheckBoxHandler dayCheckBoxHandler = new DayCheckBoxHandler();
+  private final DayCheckBox[] allDays;
 
   public DayFilterWidget(SchoolCalendarWidget calendar) {
     this.calendar = calendar;
-    initWidget(outer);
-    setStyleName("DynaTable-DayFilterWidget");
-    outer.add(new DayCheckBox("Sunday", 0));
-    outer.add(new DayCheckBox("Monday", 1));
-    outer.add(new DayCheckBox("Tuesday", 2));
-    outer.add(new DayCheckBox("Wednesday", 3));
-    outer.add(new DayCheckBox("Thursday", 4));
-    outer.add(new DayCheckBox("Friday", 5));
-    outer.add(new DayCheckBox("Saturday", 6));
+    initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
+    allDays = new DayCheckBox[] {
+        sunday, monday, tuesday, wednesday, thursday, friday, saturday};
+  }
 
-    Button buttonAll = new Button("All", new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        setAllCheckBoxes(true);
-      }
-    });
-    buttonAll.setEnabled(false);
+  @UiHandler(value = {"all", "none"})
+  public void handleAllNoneClick(ClickEvent e) {
+    setAllCheckBoxes(all == e.getSource());
+  }
 
-    Button buttonNone = new Button("None", new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        setAllCheckBoxes(false);
-      }
-    });
-    buttonNone.setEnabled(false);
+  @UiHandler(value = {
+      "sunday", "monday", "tuesday", "wednesday", "thursday", "friday",
+      "saturday"})
+  public void handleClick(ValueChangeEvent<Boolean> e) {
+    DayCheckBox box = (DayCheckBox) e.getSource();
+    onToggle(box);
+  }
 
-    HorizontalPanel hp = new HorizontalPanel();
-    hp.setHorizontalAlignment(HasAlignment.ALIGN_CENTER);
-    hp.add(buttonAll);
-    hp.add(buttonNone);
-
-    outer.add(hp);
-    Label stayTuned = new Label("Not yet implemented");
-    Style style = stayTuned.getElement().getStyle();
-    style.setFontSize(0.8, Unit.EM);
-    style.setFontStyle(FontStyle.ITALIC);
-    outer.add(stayTuned);
-    outer.setCellVerticalAlignment(hp, HasAlignment.ALIGN_BOTTOM);
-    outer.setCellHorizontalAlignment(hp, HasAlignment.ALIGN_CENTER);
+  private void onToggle(DayCheckBox box) {
+    calendar.setDayIncluded(box.getDay(), box.getValue());
   }
 
   private void setAllCheckBoxes(boolean checked) {
-    for (int i = 0, n = outer.getWidgetCount(); i < n; ++i) {
-      Widget w = outer.getWidget(i);
-      if (w instanceof DayCheckBox) {
-        ((DayCheckBox) w).setValue(checked);
-        dayCheckBoxHandler.onClick((DayCheckBox) w);
-      }
+    for (DayCheckBox box : allDays) {
+      box.setValue(checked);
+      onToggle(box);
     }
   }
 }

@@ -19,7 +19,10 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * The entry point class which performs the initial loading of the DynaTableRf
@@ -27,25 +30,25 @@ import com.google.gwt.user.client.ui.RootPanel;
  */
 public class DynaTableRf implements EntryPoint {
 
-  public void onModuleLoad() {
-    // Find the slot for the calendar widget.
-    //
-    RootPanel slot = RootPanel.get("calendar");
-    if (slot != null) {
-      HandlerManager eventBus = new HandlerManager(null);
-      DynaTableRequestFactory requests = GWT.create(DynaTableRequestFactory.class);
-      requests.init(eventBus);
-      CalendarProvider calProvider = new CalendarProvider(requests);
-      SchoolCalendarWidget calendar = new SchoolCalendarWidget(calProvider, 15);
-      slot.add(calendar);
+  interface Binder extends UiBinder<Widget, DynaTableRf> {
+  }
 
-      // Find the slot for the days filter widget.
-      //
-      slot = RootPanel.get("days");
-      if (slot != null) {
-        DayFilterWidget filter = new DayFilterWidget(calendar);
-        slot.add(filter);
-      }
-    }
+  @UiField(provided = true)
+  SchoolCalendarWidget calendar;
+
+  @UiField(provided = true)
+  DayFilterWidget filter;
+
+  public void onModuleLoad() {
+    HandlerManager eventBus = new HandlerManager(null);
+
+    DynaTableRequestFactory requests = GWT.create(DynaTableRequestFactory.class);
+    requests.init(eventBus);
+
+    calendar = new SchoolCalendarWidget(new CalendarProvider(requests), 15);
+    filter = new DayFilterWidget(calendar);
+
+    RootLayoutPanel.get().add(
+        GWT.<Binder> create(Binder.class).createAndBindUi(this));
   }
 }

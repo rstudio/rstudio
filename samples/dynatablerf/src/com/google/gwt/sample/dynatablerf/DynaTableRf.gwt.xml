@@ -19,4 +19,6 @@
   <inherits name='com.google.gwt.user.User' />
   <inherits name='com.google.gwt.requestfactory.RequestFactory' />
   <entry-point class='com.google.gwt.sample.dynatablerf.client.DynaTableRf' />
+  
+  <set-configuration-property name="CssResource.obfuscationPrefix" value="empty" />
 </module>

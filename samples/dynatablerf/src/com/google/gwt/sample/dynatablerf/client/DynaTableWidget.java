@@ -15,24 +15,76 @@
  */
 package com.google.gwt.sample.dynatablerf.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.sample.dynatablerf.client.DynaTableDataProvider.RowDataAcceptor;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DialogBox;
-import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A composite Widget that implements the main interface for the dynamic table,
  * including the data table, status indicators, and paging buttons.
  */
 public class DynaTableWidget extends Composite {
+
+  class NavBar extends Composite {
+
+    @UiField
+    Button gotoFirst;
+
+    @UiField
+    Button gotoNext;
+
+    @UiField
+    Button gotoPrev;
+
+    @UiField
+    DivElement status;
+
+    public NavBar() {
+      NavBarBinder b = GWT.create(NavBarBinder.class);
+      initWidget(b.createAndBindUi(this));
+    }
+
+    @UiHandler("gotoFirst")
+    void onFirst(ClickEvent event) {
+      startRow = 0;
+      refresh();
+    }
+
+    @UiHandler("gotoNext")
+    void onNext(ClickEvent event) {
+      startRow += getDataRowCount();
+      refresh();
+    }
+
+    @UiHandler("gotoPrev")
+    void onPrev(ClickEvent event) {
+      startRow -= getDataRowCount();
+      if (startRow < 0) {
+        startRow = 0;
+      }
+      refresh();
+    }
+  }
+
+  interface Binder extends UiBinder<Widget, DynaTableWidget> {
+  }
+
+  @UiTemplate("NavBar.ui.xml")
+  interface NavBarBinder extends UiBinder<Widget, NavBar> {
+  }
 
   /**
    * A dialog box for displaying an error.
@@ -57,57 +109,6 @@ public class DynaTableWidget extends Composite {
 
     public void setBody(String html) {
       body.setHTML(html);
-    }
-  }
-
-  private class NavBar extends Composite implements ClickHandler {
-
-    @SuppressWarnings("deprecation")
-    public final DockPanel bar = new DockPanel();
-    public final Button gotoFirst = new Button("&lt;&lt;", this);
-    public final Button gotoNext = new Button("&gt;", this);
-    public final Button gotoPrev = new Button("&lt;", this);
-    public final HTML status = new HTML();
-
-    @SuppressWarnings("deprecation")
-    public NavBar() {
-      initWidget(bar);
-      bar.setStyleName("navbar");
-      status.setStyleName("status");
-
-      HorizontalPanel buttons = new HorizontalPanel();
-      buttons.add(gotoFirst);
-      buttons.add(gotoPrev);
-      buttons.add(gotoNext);
-      bar.add(buttons, DockPanel.EAST);
-      bar.setCellHorizontalAlignment(buttons, DockPanel.ALIGN_RIGHT);
-      bar.add(status, DockPanel.CENTER);
-      bar.setVerticalAlignment(DockPanel.ALIGN_MIDDLE);
-      bar.setCellHorizontalAlignment(status, HasAlignment.ALIGN_RIGHT);
-      bar.setCellVerticalAlignment(status, HasAlignment.ALIGN_MIDDLE);
-      bar.setCellWidth(status, "100%");
-
-      // Initialize prev & first button to disabled.
-      //
-      gotoPrev.setEnabled(false);
-      gotoFirst.setEnabled(false);
-    }
-
-    public void onClick(ClickEvent event) {
-      Object source = event.getSource();
-      if (source == gotoNext) {
-        startRow += getDataRowCount();
-        refresh();
-      } else if (source == gotoPrev) {
-        startRow -= getDataRowCount();
-        if (startRow < 0) {
-          startRow = 0;
-        }
-        refresh();
-      } else if (source == gotoFirst) {
-        startRow = 0;
-        refresh();
-      }
     }
   }
 
@@ -171,46 +172,28 @@ public class DynaTableWidget extends Composite {
       + "DynaTableRf.  Try running DynaTable in development mode to see the demo "
       + "in action.</p> ";
 
-
   private final RowDataAcceptor acceptor = new RowDataAcceptorImpl();
 
-  private final Grid grid = new Grid();
+  @UiField
+  Grid grid;
 
-  private final NavBar navbar = new NavBar();
+  @UiField(provided = true)
+  NavBar navbar = new NavBar();
 
   private ErrorDialog errorDialog = null;
-
-  @SuppressWarnings("deprecation")
-  private final DockPanel outer = new DockPanel();
 
   private final DynaTableDataProvider provider;
 
   private int startRow = 0;
 
-  @SuppressWarnings("deprecation")
-  public DynaTableWidget(DynaTableDataProvider provider, String[] columns,
-      String[] columnStyles, int rowCount) {
-
-    if (columns.length == 0) {
-      throw new IllegalArgumentException(
-          "expecting a positive number of columns");
-    }
-
-    if (columnStyles != null && columns.length != columnStyles.length) {
-      throw new IllegalArgumentException("expecting as many styles as columns");
-    }
-
+  public DynaTableWidget(DynaTableDataProvider provider, int rowCount) {
     this.provider = provider;
-    initWidget(outer);
-    grid.setStyleName("table");
-    outer.add(navbar, DockPanel.NORTH);
-    outer.add(grid, DockPanel.CENTER);
-    initTable(columns, columnStyles, rowCount);
-    setStyleName("DynaTable-DynaTableWidget");
+    initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
+    initTable(rowCount);
   }
 
   public void clearStatusText() {
-    navbar.status.setHTML("&nbsp;");
+    navbar.status.setInnerHTML("&nbsp;");
   }
 
   public void refresh() {
@@ -229,22 +212,16 @@ public class DynaTableWidget extends Composite {
   }
 
   public void setStatusText(String text) {
-    navbar.status.setText(text);
+    navbar.status.setInnerText(text);
   }
 
   private int getDataRowCount() {
     return grid.getRowCount() - 1;
   }
 
-  private void initTable(String[] columns, String[] columnStyles, int rowCount) {
+  private void initTable(int rowCount) {
     // Set up the header row. It's one greater than the number of visible rows.
     //
-    grid.resize(rowCount + 1, columns.length);
-    for (int i = 0, n = columns.length; i < n; i++) {
-      grid.setText(0, i, columns[i]);
-      if (columnStyles != null) {
-        grid.getCellFormatter().setStyleName(0, i, columnStyles[i] + " header");
-      }
-    }
+    grid.resizeRows(rowCount + 1);
   }
 }
