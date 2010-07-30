@@ -31,6 +31,11 @@ import javax.servlet.http.HttpServletResponse;
  * the RPC system.
  */
 public class RPCServletUtils {
+  /**
+   * Package protected for use in tests.
+   */
+  static final int BUFFER_SIZE = 4096;
+
   private static final String ACCEPT_ENCODING = "Accept-Encoding";
 
   private static final String ATTACHMENT = "attachment";
@@ -156,39 +161,32 @@ public class RPCServletUtils {
    *         the UTF-8 charset
    * @throws IOException if the requests input stream cannot be accessed, read
    *           from or closed
-   * @throws ServletException if the content length of the request is not
-   *           specified of if the request's content type is not
-   *           'text/x-gwt-rpc' and 'charset=utf-8'
+   * @throws ServletException if the request's content type is not
+   *         'text/x-gwt-rpc' and 'charset=utf-8'
    */
   public static String readContentAsUtf8(HttpServletRequest request,
       boolean checkHeaders) throws IOException, ServletException {
-    int contentLength = request.getContentLength();
-    if (contentLength == -1) {
-      // Content length must be known.
-      throw new ServletException("Content-Length must be specified");
-    }
-
     if (checkHeaders) {
       checkContentType(request);
       checkCharacterEncoding(request);
     }
 
+    /*
+     * Need to support 'Transfer-Encoding: chunked', so do not rely on
+     * presence of a 'Content-Length' request header.
+     */
     InputStream in = request.getInputStream();
+    byte[] buffer = new byte[BUFFER_SIZE];
+    ByteArrayOutputStream out = new  ByteArrayOutputStream(BUFFER_SIZE);
     try {
-      byte[] payload = new byte[contentLength];
-      int offset = 0;
-      int len = contentLength;
-      int byteCount;
-      while (offset < contentLength) {
-        byteCount = in.read(payload, offset, len);
+      while (true) {
+        int byteCount = in.read(buffer);
         if (byteCount == -1) {
-          throw new ServletException("Client did not send " + contentLength
-              + " bytes as expected");
+          break;
         }
-        offset += byteCount;
-        len -= byteCount;
+        out.write(buffer, 0, byteCount);
       }
-      return new String(payload, CHARSET_UTF8);
+      return out.toString(CHARSET_UTF8);
     } finally {
       if (in != null) {
         in.close();

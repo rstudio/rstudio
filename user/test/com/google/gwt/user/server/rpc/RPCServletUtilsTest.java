@@ -16,9 +16,13 @@
 
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
+
 import junit.framework.TestCase;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -34,11 +38,17 @@ public class RPCServletUtilsTest extends TestCase {
    * Mocks a request with the specified Content-Type.
    */
   class MockReqContentType extends MockHttpServletRequest {
-    String mockContent = "abcdefg";
+    final String mockContent;
     final String mockContentType;
 
+
     public MockReqContentType(String contentType) {
+      this(contentType, "abcdefg");
+    }
+
+    public MockReqContentType(String contentType, String content) {
       this.mockContentType = contentType;
+      this.mockContent = content;
     }
 
     @Override
@@ -58,12 +68,9 @@ public class RPCServletUtilsTest extends TestCase {
 
     @Override
     public String getHeader(String name) {
-      if (name.toLowerCase().equals("Content-Type")) {
-        return mockContentType;
-      }
-      return "";
+      return null;
     }
-
+      
     @SuppressWarnings("unused")
     @Override
     public ServletInputStream getInputStream() throws IOException {
@@ -72,11 +79,10 @@ public class RPCServletUtilsTest extends TestCase {
   }
 
   static class MockServletInputStream extends ServletInputStream {
-    private boolean readOnce = false;
-    final private String value;
+    private ByteArrayInputStream realStream;
 
-    MockServletInputStream(String value) {
-      this.value = value;
+    MockServletInputStream(String mockContent) throws UnsupportedEncodingException {
+      realStream = new ByteArrayInputStream(mockContent.getBytes("UTF-8"));
     }
 
     @Override
@@ -86,33 +92,77 @@ public class RPCServletUtilsTest extends TestCase {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-      if (readOnce) {
-        // simulate EOF
-        return -1;
-      }
-      readOnce = true;
-
-      int pos = 0;
-      int i;
-      for (i = off; i < len; ++i, ++pos) {
-        b[i] = (byte) (this.value.charAt(pos) % 0xff);
-      }
-      return i;
-    }
-
-    @Override
-    public int readLine(byte[] b, int off, int len) throws IOException {
-      return read(b, off, len);
+      return realStream.read(b, off, len);
     }
   }
 
   /**
-   * Content type doesn't match x-gwt-rpc, but ignore it.
+   * Large content length should be read correctly.
    */
-  public void testIgnoreContentType() throws IOException, ServletException {
-    HttpServletRequest m = new MockReqContentType(
-        "application/www-form-encoded");
-    RPCServletUtils.readContentAsUtf8(m, false);
+  public void testContentLengthLarge() throws IOException, ServletException {
+    // Choose a non trivial size RPC payload
+    int contentLength = 50000;
+    String content = UnicodeEscapingTest.getStringContainingCharacterRange(0, contentLength);
+    String result = readContentAsUtf8(content);
+    assertEquals(content, result);
+  }
+
+  /**
+   * Content length smaller than the buffer size should be read correctly.
+   */
+  public void testContentLengthLessThanBufferSize() throws IOException, ServletException {
+    // Choose a value smaller than the buffer
+    int contentLength = RPCServletUtils.BUFFER_SIZE - 1;
+    String content = UnicodeEscapingTest.getStringContainingCharacterRange(0, contentLength);
+    String result = readContentAsUtf8(content);
+    assertEquals(content, result);
+  }
+
+  /**
+   * Content length which is an integer multiple of buffer size should be read
+   * correctly.
+   */
+  public void testContentLengthMultipleOfBufferSize() throws IOException, ServletException {
+    // Choose a value which is not a multiple of the buffer size
+    int contentLength = RPCServletUtils.BUFFER_SIZE * 3;
+    String content = UnicodeEscapingTest.getStringContainingCharacterRange(0, contentLength);
+    String result = readContentAsUtf8(content);
+    assertEquals(content, result);
+  }
+
+  /**
+   * Content length which is not an integer multiple of buffer size should be
+   * read correctly.
+   */
+  public void testContentLengthNotMultipleOfBufferSize() throws IOException, ServletException {
+    // Choose a value which is not a multiple of the buffer size
+    int contentLength = RPCServletUtils.BUFFER_SIZE * 3 + 1;
+    String content = UnicodeEscapingTest.getStringContainingCharacterRange(0, contentLength);
+    String result = readContentAsUtf8(content);
+    assertEquals(content, result);
+  }
+
+  /**
+   * Content length smaller than the buffer size should be read correctly.
+   */
+  public void testContentLengthSlightlyLargerThanBufferSize() throws IOException, ServletException {
+    // Choose a value slightly larger than the buffer
+    int contentLength = RPCServletUtils.BUFFER_SIZE + 1;
+    String content = UnicodeEscapingTest.getStringContainingCharacterRange(0, contentLength);
+    String result = readContentAsUtf8(content);
+    assertEquals(content, result);
+  }
+
+  /**
+   * Zero content length is never expected, but being able to correctly read
+   * zero length content is a useful boundary condition test.
+   */
+  public void testContentLengthZero() throws IOException, ServletException {
+    // While zero content length is not actually useful, a test
+    int contentLength = 0;
+    String content = UnicodeEscapingTest.getStringContainingCharacterRange(0, contentLength);
+    String result = readContentAsUtf8(content);
+    assertEquals(content, result);
   }
 
   /**
@@ -128,6 +178,14 @@ public class RPCServletUtilsTest extends TestCase {
       }
     };
 
+    RPCServletUtils.readContentAsUtf8(m, false);
+  }
+
+  /**
+   * Content type doesn't match x-gwt-rpc, but ignore it.
+   */
+  public void testIgnoreContentType() throws IOException, ServletException {
+    HttpServletRequest m = new MockReqContentType("application/www-form-encoded");
     RPCServletUtils.readContentAsUtf8(m, false);
   }
 
@@ -228,5 +286,10 @@ public class RPCServletUtilsTest extends TestCase {
     if (!gotException) {
       fail("Expected exception from null content type");
     }
+  }
+
+  private String readContentAsUtf8(String content) throws IOException, ServletException {
+    HttpServletRequest m = new MockReqContentType("text/x-gwt-rpc", content);
+    return RPCServletUtils.readContentAsUtf8(m, false);
   }
 }
