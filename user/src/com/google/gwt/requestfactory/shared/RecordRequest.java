@@ -32,7 +32,7 @@ import java.util.Collection;
  * @param <R> return type
  */
 public interface RecordRequest<R extends Record> extends
-    RequestFactory.RequestObject<R> {
+    RequestObject<R> {
 
   RecordRequest<R> forProperties(Collection<Property<?>> properties);
 

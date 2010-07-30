@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.valuestore.shared.SimpleFooRecord;
 
 import junit.framework.TestCase;
@@ -35,7 +34,7 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
   }
 
   public void testGetOperationListNoArgs() {
-    RequestFactory.RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.server.SimpleFooRequest::findAll");
+    RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.server.SimpleFooRequest::findAll");
     assert request != null;
     assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
         request.getDomainClassName());
@@ -46,7 +45,7 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
   }
 
   public void testGetOperationScalarNoArgs() {
-    RequestFactory.RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.server.SimpleFooRequest::countSimpleFoo");
+    RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.server.SimpleFooRequest::countSimpleFoo");
     assert request != null;
     assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
         request.getDomainClassName());
@@ -57,7 +56,7 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
   }
 
   public void testGetOpertionScalarWithArgs() {
-    RequestFactory.RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.server.SimpleFooRequest::findSimpleFooById");
+    RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.server.SimpleFooRequest::findSimpleFooById");
     assert request != null;
     assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
         request.getDomainClassName());
@@ -86,7 +85,7 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
   }
 
   public void testPrivateMethodFails() {
-    RequestFactory.RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.server.SimpleFooRequest::privateMethod");
+    RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.server.SimpleFooRequest::privateMethod");
     assert request == null;
   }
 }

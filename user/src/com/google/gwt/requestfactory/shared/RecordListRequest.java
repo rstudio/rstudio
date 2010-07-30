@@ -33,7 +33,7 @@ import java.util.List;
  * @param <R> The type held by the returned list
  */
 public interface RecordListRequest<R extends Record> extends
-    RequestFactory.RequestObject<List<R>> {
+    RequestObject<List<R>> {
 
   RecordListRequest<R> forProperties(Collection<Property<?>> properties);
 

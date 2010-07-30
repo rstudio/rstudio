@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.RecordListRequest;
-import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.valuestore.shared.SimpleFooRecord;
 
@@ -25,8 +25,8 @@ import com.google.gwt.valuestore.shared.SimpleFooRecord;
  */
 @Service(com.google.gwt.requestfactory.server.SimpleFoo.class)
 public interface SimpleFooRequest {
-  RequestFactory.RequestObject<Long> countSimpleFoo();
+  RequestObject<Long> countSimpleFoo();
   RecordListRequest<SimpleFooRecord> findAll();
-  RequestFactory.RequestObject<SimpleFooRecord> findSimpleFooById(Long id);
-  RequestFactory.RequestObject<Integer> privateMethod();
+  RequestObject<SimpleFooRecord> findSimpleFooById(Long id);
+  RequestObject<Integer> privateMethod();
 }

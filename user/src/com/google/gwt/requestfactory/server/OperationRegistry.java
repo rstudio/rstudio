@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.RequestFactory;
 
 /**
  * <p>
@@ -27,5 +26,5 @@ import com.google.gwt.requestfactory.shared.RequestFactory;
  */
 public interface OperationRegistry {
 
-  RequestFactory.RequestDefinition getOperation(String operationName);
+  RequestDefinition getOperation(String operationName);
 }

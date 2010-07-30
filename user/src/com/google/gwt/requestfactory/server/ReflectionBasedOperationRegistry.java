@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.DataTransferObject;
-import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.valuestore.shared.Record;
 
@@ -34,12 +34,12 @@ import java.util.List;
  * </p>
  * OperationRegistry which uses the operation name as a convention for
  * reflection to a method on a class, and returns an appropriate {@link
- * com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition}.
+ * com.google.gwt.requestfactory.server.RequestDefinition}.
  */
 public class ReflectionBasedOperationRegistry implements OperationRegistry {
 
   class ReflectiveRequestDefinition
-      implements RequestFactory.RequestDefinition {
+      implements RequestDefinition {
 
     private Class<?> requestClass;
 
@@ -110,7 +110,7 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
         ParameterizedType pType = (ParameterizedType) type;
         Class<?> rawType = (Class<?>) pType.getRawType();
         if (List.class.isAssignableFrom(rawType)
-            || RequestFactory.RequestObject.class.isAssignableFrom(rawType)) {
+            || RequestObject.class.isAssignableFrom(rawType)) {
           Class<?> rType = getTypeArgument(pType);
           if (rType != null) {
             if (List.class.isAssignableFrom(rType)) {
@@ -154,7 +154,7 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
    * Turns an operation in the form of package.requestClass::method into a
    * RequestDefinition via reflection.
    */
-  public RequestFactory.RequestDefinition getOperation(String operationName) {
+  public RequestDefinition getOperation(String operationName) {
     String decodedOperationName = securityProvider.mapOperation(operationName);
     String parts[] = decodedOperationName.split(SCOPE_SEPARATOR);
     final String reqClassName = parts[0];

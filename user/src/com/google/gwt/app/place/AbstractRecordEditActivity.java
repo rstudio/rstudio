@@ -17,7 +17,7 @@ package com.google.gwt.app.place;
 
 import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
@@ -38,22 +38,19 @@ import java.util.Set;
 public abstract class AbstractRecordEditActivity<R extends Record> implements
     Activity, RecordEditView.Delegate {
 
-  // TODO(amitmanjhi): get rid of the requests field.
-  private final RequestFactory requests;
   private final boolean creating;
   private final RecordEditView<R> view;
 
   private String id;
   private String futureId;
   private Display display;
-  private RequestFactory.RequestObject<Void> requestObject;
+  private RequestObject<Void> requestObject;
 
   public AbstractRecordEditActivity(RecordEditView<R> view, String id,
-      RequestFactory requests, RequestFactory.RequestObject<Void> requestObject) {
+      RequestObject<Void> requestObject) {
     this.view = view;
     this.creating = "".equals(id);
     this.id = id;
-    this.requests = requests;
     this.requestObject = requestObject;
   }
 
@@ -94,7 +91,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     }
     view.setEnabled(false);
 
-    final RequestFactory.RequestObject<Void> toCommit = requestObject;
+    final RequestObject<Void> toCommit = requestObject;
     requestObject = null;
 
     Receiver<Void> receiver = new Receiver<Void>() {

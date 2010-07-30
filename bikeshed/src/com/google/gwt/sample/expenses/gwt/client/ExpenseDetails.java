@@ -41,7 +41,7 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestFactory.RequestObject;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.sample.bikeshed.style.client.Styles;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;

@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -56,7 +56,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
   private ExpenseRecord expense;
   private final ExpensesRequestFactory requestFactory;
   private final Listener listener;
-  private RequestFactory.RequestObject<Void> requestObject;
+  private RequestObject<Void> requestObject;
 
   public MobileExpenseEntry(Listener listener,
       ExpensesRequestFactory requestFactory) {

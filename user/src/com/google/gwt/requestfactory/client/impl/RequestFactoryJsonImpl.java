@@ -24,6 +24,7 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.valuestore.shared.Record;

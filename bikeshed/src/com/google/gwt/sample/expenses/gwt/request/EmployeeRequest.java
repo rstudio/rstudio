@@ -18,7 +18,7 @@ package com.google.gwt.sample.expenses.gwt.request;
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
-import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Employee;
 import com.google.gwt.valuestore.shared.PropertyReference;
@@ -36,12 +36,12 @@ public interface EmployeeRequest {
   /**
    * @return a request object
    */
-  RequestFactory.RequestObject<Long> countEmployees();
+  RequestObject<Long> countEmployees();
 
   /**
    * @return a request object
    */
-  RequestFactory.RequestObject<Long> countEmployeesByDepartment(
+  RequestObject<Long> countEmployeesByDepartment(
       String department);
 
   /**
@@ -71,12 +71,12 @@ public interface EmployeeRequest {
    * @return a request object
    */
   @Instance
-  RequestFactory.RequestObject<Void> persist();
+  RequestObject<Void> persist();
 
   // TODO: a hack for now.
  /**
   * @return a request object
   */
   @Instance
-  RequestFactory.RequestObject<Void> remove();
+  RequestObject<Void> remove();
 }

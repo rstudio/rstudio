@@ -31,7 +31,7 @@ public interface LoggingRequest {
   // supported for now, so using it as a boolean.
   // Should also be passing something better than a series of strings, but
   // that's the only possibility for now.
-  RequestFactory.RequestObject<Long> logMessage(
+  RequestObject<Long> logMessage(
       String level, String loggerName, String message);
  
 }

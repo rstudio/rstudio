@@ -20,7 +20,7 @@ import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordDetailsView;
 import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestFactory.RequestObject;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;

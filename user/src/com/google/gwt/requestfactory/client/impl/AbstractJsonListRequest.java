@@ -33,7 +33,7 @@ import java.util.List;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
+ * {@link com.google.gwt.requestfactory.shared.RequestObject
  * RequestFactory.RequestObject} for requests that return lists of
  * {@link Record}.
  * 

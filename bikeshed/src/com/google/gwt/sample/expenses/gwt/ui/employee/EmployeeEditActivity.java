@@ -58,7 +58,7 @@ public class EmployeeEditActivity extends
   public EmployeeEditActivity(String id, RecordEditView<EmployeeRecord> view,
       ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
-    super(view, id, requests, requests.employeeRequest().persist());
+    super(view, id, requests.employeeRequest().persist());
     this.requests = requests;
     this.placeController = placeController;
   }

@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 
@@ -32,14 +32,14 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract implementation of {@link RequestFactory.RequestObject}. Each request
+ * Abstract implementation of {@link RequestObject}. Each request
  * stores a {@link DeltaValueStore}.
  * 
  * @param <T> return type
  * @param <R> type of this request object
  */
 public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
-    implements RequestFactory.RequestObject<T> {
+    implements RequestObject<T> {
 
   protected final RequestFactoryJsonImpl requestFactory;
   protected DeltaValueStore deltaValueStore;

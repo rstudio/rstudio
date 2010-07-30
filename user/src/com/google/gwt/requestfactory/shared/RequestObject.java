@@ -15,9 +15,8 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
  * <p>
@@ -25,25 +24,21 @@ import com.google.gwt.valuestore.shared.ValueStore;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Marker interface for the RequestFactory code generator.
+ * Implemented by the request objects created by this factory.
+ * @param <T> The return type of objects in the corresponding response.
  */
-public interface RequestFactory {
+public interface RequestObject<T> {
+  // reset the DeltaValueStore.
+  void reset();
 
-  // TODO: this must be configurable
-  String URL = "gwtRequest";
+  void fire(Receiver<T> receiver);
 
-  String SYNC = "SYNC";
+  // can get access to a DeltaValueStore only in the context of a RequestObject.
+  DeltaValueStore getDeltaValueStore();
 
-  Record create(Class token);
+  String getRequestData();
 
-  ValueStore getValueStore();
-
-  void init(HandlerManager eventBus);
-
-  // The following methods match the format for the generated sub-interfaces
-  // and implementations are generated using the same code we use to generate
-  // those. In order to ensure this happens, each of the request selectors
-  // needs to be manually added to the requestSelectors list in
-  // RequestFactoryGenerator.java
-  LoggingRequest loggingRequest();
+  void handleResponseText(String responseText);
+  
+  <V> void set(Property<V> property, Record record, V value);
 }
