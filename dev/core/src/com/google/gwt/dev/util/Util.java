@@ -643,6 +643,10 @@ public final class Util {
     File tmpSrc;
     Throwable caught = null;
     try {
+      // The tempFile prefix must be at least 3 characters
+      while (typeName.length() < 3) {
+        typeName = "_" + typeName;
+      }
       tmpSrc = File.createTempFile(typeName, ".java");
       writeStringAsFile(tmpSrc, source);
       String dumpPath = tmpSrc.getAbsolutePath();
