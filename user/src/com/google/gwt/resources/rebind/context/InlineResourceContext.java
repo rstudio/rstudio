@@ -33,18 +33,18 @@ class InlineResourceContext extends StaticResourceContext {
 
   @Override
   public String deploy(String suggestedFileName, String mimeType, byte[] data,
-      boolean forceExternal) throws UnableToCompleteException {
+      boolean xhrCompatible) throws UnableToCompleteException {
     TreeLogger logger = getLogger();
 
     // data: URLs are not compatible with XHRs on FF and Safari browsers
-    if ((!forceExternal) && (data.length < MAX_INLINE_SIZE)) {
+    if ((!xhrCompatible) && (data.length < MAX_INLINE_SIZE)) {
       logger.log(TreeLogger.DEBUG, "Inlining", null);
 
       String base64Contents = toBase64(data);
 
       // CHECKSTYLE_OFF
-      String encoded = "\"data:" + mimeType.replaceAll("\"", "\\\\\"")
-          + ";base64," + base64Contents + "\"";
+      String encoded = "\"data:" + mimeType + ";base64," + base64Contents
+          + "\"";
       // CHECKSTYLE_ON
 
       /*

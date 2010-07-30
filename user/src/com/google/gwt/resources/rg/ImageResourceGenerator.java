@@ -53,7 +53,6 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
    * Represents a file that contains multiple image regions.
    */
   static class BundledImage extends DisplayedImage {
-    private static final String MIME_TYPE_IMAGE_PNG = "image/png";
     private final ImageBundleBuilder builder;
     private boolean dirty = false;
     private Map<LocalizedImage, ImageRect> images;
@@ -109,7 +108,6 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       return images.get(localizedByImageResource.get(image));
     }
 
-    @Override
     public void render(TreeLogger logger, ResourceContext context,
         ClientBundleFields fields, RepeatStyle repeatStyle)
         throws UnableToCompleteException {
@@ -137,9 +135,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
             logger.log(TreeLogger.ERROR, "Unknown RepeatStyle " + repeatStyle);
             throw new UnableToCompleteException();
         }
-        URL normalContents = renderToTempPngFile(logger, builder, arranger);
-        normalContentsUrlExpression = context.deploy(
-            normalContents, MIME_TYPE_IMAGE_PNG, false);
+        URL normalContents = renderToTempFile(logger, builder, arranger);
+        normalContentsUrlExpression = context.deploy(normalContents, false);
 
         if (!rtlImages.isEmpty()) {
           for (LocalizedImage rtlImage : rtlImages) {
@@ -149,11 +146,10 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
             tx.setTransform(-1, 0, 0, 1, imageRect.getWidth(), 0);
             imageRect.setTransform(tx);
           }
-          URL rtlContents = renderToTempPngFile(logger, builder,
+          URL rtlContents = renderToTempFile(logger, builder,
               new ImageBundleBuilder.IdentityArranger());
           assert rtlContents != null;
-          rtlContentsUrlExpression = context.deploy(
-              rtlContents, MIME_TYPE_IMAGE_PNG, false);
+          rtlContentsUrlExpression = context.deploy(rtlContents, false);
         }
 
         dirty = false;
@@ -297,19 +293,17 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       this.rect = rect;
     }
 
-    @Override
     public ImageRect getImageRect(ImageResourceDeclaration image) {
       return this.image.equals(image) ? rect : null;
     }
 
-    @Override
     public void render(TreeLogger logger, ResourceContext context,
         ClientBundleFields fields, RepeatStyle repeatStyle)
         throws UnableToCompleteException {
       JClassType stringType = context.getGeneratorContext().getTypeOracle().findType(
           String.class.getCanonicalName());
 
-      String contentsExpression = context.deploy(localized.getUrl(), null, false);
+      String contentsExpression = context.deploy(localized.getUrl(), false);
       normalContentsFieldName = fields.define(stringType, "externalImage",
           contentsExpression, true, true);
 
@@ -327,7 +321,6 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       }
     }
 
-    @Override
     public void setRtlImage(LocalizedImage localized) {
       if (this.localized.equals(localized)) {
         isRtl = true;
@@ -432,7 +425,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
   /**
    * Re-encode an image as a PNG to strip random header data.
    */
-  private static URL renderToTempPngFile(TreeLogger logger,
+  private static URL renderToTempFile(TreeLogger logger,
       ImageBundleBuilder builder, Arranger arranger)
       throws UnableToCompleteException {
     try {

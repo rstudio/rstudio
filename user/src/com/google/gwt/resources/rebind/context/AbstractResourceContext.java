@@ -89,18 +89,13 @@ public abstract class AbstractResourceContext implements ResourceContext {
     this.cache = getCache(context.getTypeOracle());
   }
 
-  @Deprecated
-  public String deploy(URL resource, boolean forceExternal) throws UnableToCompleteException {
-    return deploy(resource, null, forceExternal);
-  }
-  
-  public String deploy(URL resource, String mimeType, boolean forceExternal)
+  public String deploy(URL resource, boolean xhrCompatible)
       throws UnableToCompleteException {
     String fileName = ResourceGeneratorUtil.baseName(resource);
     byte[] bytes = Util.readURLAsBytes(resource);
     try {
-      String finalMimeType = (mimeType != null) ? mimeType : resource.openConnection().getContentType();
-      return deploy(fileName, finalMimeType, bytes, forceExternal);
+      return deploy(fileName, resource.openConnection().getContentType(),
+          bytes, xhrCompatible);
     } catch (IOException e) {
       getLogger().log(TreeLogger.ERROR,
           "Unable to determine mime type of resource", e);

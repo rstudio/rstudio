@@ -64,7 +64,7 @@ public class MhtmlResourceContext extends StaticResourceContext {
 
   @Override
   public String deploy(String suggestedFileName, String mimeType, byte[] data,
-      boolean forceExternal) throws UnableToCompleteException {
+      boolean xhrCompatible) throws UnableToCompleteException {
 
     String strongName = Util.computeStrongName(data);
     String toReturn = strongNameToExpressions.get(strongName);
@@ -80,13 +80,13 @@ public class MhtmlResourceContext extends StaticResourceContext {
      * as a fallback.
      */
     String staticLocation = super.deploy(suggestedFileName, mimeType, data,
-        forceExternal);
+        xhrCompatible);
 
     /*
      * ie6 doesn't treat XHRs to mhtml as cross-site, but ie8 does, so we'll
      * play it safe here.
      */
-    if (forceExternal || data.length > MAX_INLINE_SIZE) {
+    if (xhrCompatible || data.length > MAX_INLINE_SIZE) {
       return staticLocation;
     }
 

@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class CssTestCase extends TestCase {
   /*
-   * NB: This class is in the resources.rg package so that it can access
+   * NB: This class is in the resources.rg package so that it can acess
    * package-protected methods in CssResourceGenerator.
    */
 
@@ -79,17 +79,11 @@ public class CssTestCase extends TestCase {
    */
   private static class FakeContext implements ResourceContext {
     public String deploy(String suggestedFileName, String mimeType,
-        byte[] data, boolean forceExternal) throws UnableToCompleteException {
+        byte[] data, boolean xhrCompatible) throws UnableToCompleteException {
       return null;
     }
 
-    @Deprecated
-    public String deploy(URL resource, boolean forceExternal)
-        throws UnableToCompleteException {
-      return null;
-    }
-
-    public String deploy(URL resource, String mimeType, boolean forceExternal)
+    public String deploy(URL resource, boolean xhrCompatible)
         throws UnableToCompleteException {
       return null;
     }
@@ -176,10 +170,10 @@ public class CssTestCase extends TestCase {
         + "/";
     URL testUrl = getClass().getClassLoader().getResource(
         packagePath + testName + "_test.css");
-    assertNotNull("Could not find testUrl", testUrl);
+    assertNotNull("Cauld not find testUrl", testUrl);
     URL expectedUrl = getClass().getClassLoader().getResource(
         packagePath + testName + "_expected.css");
-    assertNotNull("Could not find testUrl", expectedUrl);
+    assertNotNull("Cauld not find testUrl", expectedUrl);
 
     test(logger, testUrl, expectedUrl, visitors);
 
