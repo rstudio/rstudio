@@ -40,7 +40,7 @@ class StaticResourceContext extends AbstractResourceContext {
   }
 
   public String deploy(String suggestedFileName, String mimeType, byte[] data,
-      boolean xhrCompatible) throws UnableToCompleteException {
+      boolean forceExternal) throws UnableToCompleteException {
     TreeLogger logger = getLogger();
     GeneratorContext context = getGeneratorContext();
     PropertyOracle propertyOracle = context.getPropertyOracle();

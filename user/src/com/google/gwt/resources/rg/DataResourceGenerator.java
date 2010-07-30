@@ -18,7 +18,9 @@ package com.google.gwt.resources.rg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.resources.client.DataResource.MimeType;
 import com.google.gwt.resources.client.DataResource;
+import com.google.gwt.resources.client.DataResource.DoNotEmbed;
 import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
@@ -44,8 +46,18 @@ public final class DataResourceGenerator extends AbstractResourceGenerator {
       throw new UnableToCompleteException();
     }
 
+    // Determine if a MIME Type has been specified
+    MimeType mimeTypeAnnotation = method.getAnnotation(MimeType.class);
+    String mimeType = mimeTypeAnnotation != null
+        ? mimeTypeAnnotation.value() : null;
+
+    // Determine if resource should not be embedded
+    DoNotEmbed doNotEmbed = method.getAnnotation(DoNotEmbed.class);
+    boolean forceExternal = (doNotEmbed != null);
+
     URL resource = resources[0];
-    String outputUrlExpression = context.deploy(resource, false);
+    String outputUrlExpression = context.deploy(
+        resource, mimeType, forceExternal);
 
     SourceWriter sw = new StringSourceWriter();
     // Write the expression to create the subtype.

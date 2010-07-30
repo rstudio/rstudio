@@ -31,9 +31,10 @@ import java.net.URL;
  * Depending on the optimizations made by the implementation of {@link #deploy},
  * the resulting URL may or may not be compatible with standard
  * {@link com.google.gwt.http.client.RequestBuilder} / XMLHttpRequest security
- * semantics. If the resource is intended to be used with XHR, the
- * <code>xhrCompatible</code> paramater should be set to <code>true</code> when
- * invoking {@link #deploy}.
+ * semantics. If the resource is intended to be used with XHR, or if there are
+ * other reasons why embedding the resource is undesirable such as known
+ * incompatibilities, the <code>forceExternal</code> parameter should be set to
+ * <code>true</code> when invoking {@link #deploy}.
  * </p>
  */
 public interface ResourceContext {
@@ -43,18 +44,39 @@ public interface ResourceContext {
    * compiled output. The return value of this method is a Java expression which
    * will evaluate to the location of the resource at runtime. The exact format
    * should not be depended upon.
-   * 
+   *
    * @param suggestedFileName an unobfuscated filename to possibly use for the
    *          resource
    * @param mimeType the MIME type of the data being provided
    * @param data the bytes to add to the output
-   * @param xhrCompatible enforces compatibility with security restrictions if
-   *          the resource is intended to be accessed via an XMLHttpRequest.
+   * @param forceExternal prevents embedding of the resource, e.g. in case of
+   *          known incompatibilities or for example to enforce compatibility
+   *          with security restrictions if the resource is intended to be
+   *          accessed via an XMLHttpRequest
    * @return a Java expression which will evaluate to the location of the
-   *         provided resource at runtime.
+   *         provided resource at runtime
    */
   String deploy(String suggestedFileName, String mimeType, byte[] data,
-      boolean xhrCompatible) throws UnableToCompleteException;
+      boolean forceExternal) throws UnableToCompleteException;
+
+  /**
+   * Cause a specific collection of bytes to be available in the program's
+   * compiled output. The return value of this method is a Java expression which
+   * will evaluate to the location of the resource at runtime. The exact format
+   * should not be depended upon.
+   *
+   * @param resource the resource to add to the compiled output
+   * @param forceExternal prevents embedding of the resource, e.g. in case of
+   *          known incompatibilities or for example to enforce compatibility
+   *          with security restrictions if the resource is intended to be
+   *          accessed via an XMLHttpRequest
+   * @return a Java expression which will evaluate to the location of the
+   *         provided resource at runtime
+   * @deprecated use {@link #deploy(URL, String, boolean)} instead
+   */
+  @Deprecated
+  String deploy(URL resource, boolean forceExternal)
+      throws UnableToCompleteException;
 
   /**
    * Cause a specific collection of bytes to be available in the program's
@@ -63,12 +85,15 @@ public interface ResourceContext {
    * should not be depended upon.
    * 
    * @param resource the resource to add to the compiled output
-   * @param xhrCompatible enforces compatibility with security restrictions if
-   *          the resource is intended to be accessed via an XMLHttpRequest.
+   * @param mimeType optional MIME Type to be used for an embedded resource
+   * @param forceExternal prevents embedding of the resource, e.g. in case of
+   *          known incompatibilities or for example to enforce compatibility
+   *          with security restrictions if the resource is intended to be
+   *          accessed via an XMLHttpRequest
    * @return a Java expression which will evaluate to the location of the
-   *         provided resource at runtime.
+   *         provided resource at runtime
    */
-  String deploy(URL resource, boolean xhrCompatible)
+  String deploy(URL resource, String mimeType, boolean forceExternal)
       throws UnableToCompleteException;
 
   /**
