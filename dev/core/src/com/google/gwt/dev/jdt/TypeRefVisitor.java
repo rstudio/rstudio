@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jdt;
 
-
 import org.eclipse.jdt.internal.compiler.ast.ArrayQualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.ArrayTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;

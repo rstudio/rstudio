@@ -189,7 +189,7 @@ public class RequestFactoryServlet extends HttpServlet {
    * @param key the key of the record field
    * @return the ID of the new record, or null to auto generate
    */
-  protected Long generateIdForCreate(@SuppressWarnings("unused") String key) {
+  protected Long generateIdForCreate(String key) {
     // ignored. id is assigned by default.
     return null;
   }

@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 
 /**
  * Server side object that handles log messages sent by
- * {@RequestFactoryLogHandler}
+ * {@link RequestFactoryLogHandler}.
  */
 public class Logging {
   private static Logger logger = Logger.getLogger(Logging.class.getName());

@@ -530,7 +530,6 @@ public class JUnitShell extends DevMode {
      * system classloader to dominate. This makes JUnitHostImpl live in the
      * right classloader (mine).
      */
-    @SuppressWarnings("unchecked")
     @Override
     protected WebAppContext createWebAppContext(TreeLogger logger,
         File appRootDir) {

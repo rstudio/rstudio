@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.i18n.client.BidiUtils;
-import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.text.shared.Parser;
 import com.google.gwt.text.shared.Renderer;
 
@@ -32,7 +31,7 @@ import com.google.gwt.text.shared.Renderer;
  * 
  * @param <T> the value type
  */
-public class ValueBox<T> extends ValueBoxBase<T> implements HasDirection {
+public class ValueBox<T> extends ValueBoxBase<T> {
 
   /**
    * Creates a ValueBox widget that wraps an existing &lt;input type='text'&gt;

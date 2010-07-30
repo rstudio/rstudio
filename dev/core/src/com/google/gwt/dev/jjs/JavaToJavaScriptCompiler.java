@@ -1018,7 +1018,6 @@ public class JavaToJavaScriptCompiler {
     soycArtifacts.add(splitPoints);
     SpeedTracerLogger.end(CompilerEventType.MAKE_SOYC_ARTIFACTS);
 
-
     SyntheticArtifact sizeMaps = null;
     if (sizeBreakdowns != null) {
       SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS,

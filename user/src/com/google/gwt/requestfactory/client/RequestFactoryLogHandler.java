@@ -29,7 +29,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
- * A Handler that does Remote Logging for applications using Request Factory.
+ * A Handler that does remote logging for applications using RequestFactory.
  */
 public class RequestFactoryLogHandler extends Handler {
   class LoggingReceiver implements Receiver<Long> {
@@ -82,11 +82,11 @@ public class RequestFactoryLogHandler extends Handler {
       // something more complex than Strings to the logMessage function, then
       // we can do batching here.
       for (LogRecord record : records) {
-        Receiver<Long> loggingReciever = new LoggingReceiver();
+        Receiver<Long> loggingReceiver = new LoggingReceiver();
         requestFactory.loggingRequest().logMessage(
             record.getLevel().toString(),
             record.getLoggerName(),
-            record.getMessage()).fire(loggingReciever);
+            record.getMessage()).fire(loggingReceiver);
       }
     }
   }

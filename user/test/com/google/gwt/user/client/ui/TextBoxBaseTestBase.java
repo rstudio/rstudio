@@ -133,7 +133,7 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
   }
 
   /**
-   * Failed in all modes due to HtmlUnit bug:
+   * Failed in all modes due to HtmlUnit bug.
    */
   @DoNotRunWith({Platform.HtmlUnitBug})
   public void testValueChangeEvent() {

@@ -33,7 +33,6 @@ public class BidiPolicy {
   /**
    * Implementation class for {@link BidiPolicy} used when bidi is always on.
    */
-  @SuppressWarnings("unused")
   public static class BidiPolicyImplOn extends BidiPolicyImpl {
     @Override
     public boolean isBidiEnabled() {
