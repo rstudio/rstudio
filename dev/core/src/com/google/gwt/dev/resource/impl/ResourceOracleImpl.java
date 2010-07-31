@@ -41,8 +41,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
-import java.util.jar.JarFile;
-import java.util.zip.ZipFile;
 
 /**
  * The normal implementation of {@link ResourceOracle}.
@@ -102,11 +100,6 @@ public class ResourceOracleImpl implements ResourceOracle {
     @Override
     public String getPath() {
       return path;
-    }
-
-    @Override
-    public boolean isStale() {
-      return resource.isStale();
     }
 
     @Override
@@ -170,18 +163,14 @@ public class ResourceOracleImpl implements ResourceOracle {
       if (f.isDirectory()) {
         return new DirectoryClassPathEntry(f);
       } else if (f.isFile() && lowerCaseFileName.endsWith(".jar")) {
-        return new ZipFileClassPathEntry(new JarFile(f));
+        return new ZipFileClassPathEntry(f);
       } else if (f.isFile() && lowerCaseFileName.endsWith(".zip")) {
-        return new ZipFileClassPathEntry(new ZipFile(f));
+        return new ZipFileClassPathEntry(f);
       } else {
         // It's a file ending in neither jar nor zip, speculatively try to
         // open as jar/zip anyway.
         try {
-          return new ZipFileClassPathEntry(new JarFile(f));
-        } catch (Exception ignored) {
-        }
-        try {
-          return new ZipFileClassPathEntry(new ZipFile(f));
+          return new ZipFileClassPathEntry(f);
         } catch (Exception ignored) {
         }
         logger.log(TreeLogger.TRACE, "Unexpected entry in classpath; " + f
@@ -258,8 +247,6 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   private Set<Resource> exposedResources = Collections.emptySet();
 
-  private Map<String, ResourceData> internalMap = Collections.emptyMap();
-
   private PathPrefixSet pathPrefixSet = new PathPrefixSet();
 
   /**
@@ -295,7 +282,6 @@ public class ResourceOracleImpl implements ResourceOracle {
     exposedPathNames = Collections.emptySet();
     exposedResourceMap = Collections.emptyMap();
     exposedResources = Collections.emptySet();
-    internalMap = Collections.emptyMap();
   }
 
   public Set<String> getPathNames() {
@@ -363,39 +349,9 @@ public class ResourceOracleImpl implements ResourceOracle {
       }
     }
 
-    /*
-     * Update the newInternalMap to preserve identity for any resources that
-     * have not changed; also record whether or not there are ANY changes.
-     *
-     * There's definitely a change if the sizes don't match; even if the sizes
-     * do match, every new resource must match an old resource for there to be
-     * no changes.
-     */
-    boolean didChange = internalMap.size() != newInternalMap.size();
-    for (Map.Entry<String, ResourceData> entry : newInternalMap.entrySet()) {
-      String resourcePath = entry.getKey();
-      ResourceData newData = entry.getValue();
-      ResourceData oldData = internalMap.get(resourcePath);
-      if (shouldUseNewResource(logger, oldData, newData)) {
-        didChange = true;
-      } else {
-        if (oldData.resource != newData.resource) {
-          newInternalMap.put(resourcePath, oldData);
-        }
-      }
-    }
-
-    if (!didChange) {
-      // Nothing to do, keep the same identities.
-      SpeedTracerLogger.end(CompilerEventType.RESOURCE_ORACLE);
-      return;
-    }
-
-    internalMap = newInternalMap;
-
     Map<String, Resource> externalMap = new HashMap<String, Resource>();
     Set<Resource> externalSet = new HashSet<Resource>();
-    for (Entry<String, ResourceData> entry : internalMap.entrySet()) {
+    for (Entry<String, ResourceData> entry : newInternalMap.entrySet()) {
       String path = entry.getKey();
       ResourceData data = entry.getValue();
       externalMap.put(path, data.resource);
@@ -416,32 +372,5 @@ public class ResourceOracleImpl implements ResourceOracle {
   // @VisibleForTesting
   List<ClassPathEntry> getClassPath() {
     return classPath;
-  }
-
-  private boolean shouldUseNewResource(TreeLogger logger, ResourceData oldData,
-      ResourceData newData) {
-    AbstractResource newResource = newData.resource;
-    String resourcePath = newResource.getPath();
-    if (oldData != null) {
-      // Test 1: Is the resource found in a different location than before?
-      AbstractResource oldResource = oldData.resource;
-      if (oldResource.getClassPathEntry() == newResource.getClassPathEntry()) {
-        // Test 2: Has the resource changed since we last found it?
-        if (!oldResource.isStale()) {
-          // The resource has not changed.
-          return false;
-        } else {
-          Messages.RESOURCE_BECAME_INVALID_BECAUSE_IT_IS_STALE.log(logger,
-              resourcePath, null);
-        }
-      } else {
-        Messages.RESOURCE_BECAME_INVALID_BECAUSE_IT_MOVED.log(logger,
-            resourcePath, null);
-      }
-    } else {
-      Messages.NEW_RESOURCE_FOUND.log(logger, resourcePath, null);
-    }
-
-    return true;
   }
 }

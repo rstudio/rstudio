@@ -27,10 +27,13 @@ public class ZipFileResource extends AbstractResource {
 
   private final ZipFileClassPathEntry classPathEntry;
   private final String path;
+  private long lastModified;
 
-  public ZipFileResource(ZipFileClassPathEntry classPathEntry, String path) {
+  public ZipFileResource(ZipFileClassPathEntry classPathEntry, String path,
+      long lastModified) {
     this.classPathEntry = classPathEntry;
     this.path = path;
+    this.lastModified = lastModified;
   }
 
   @Override
@@ -40,7 +43,7 @@ public class ZipFileResource extends AbstractResource {
 
   @Override
   public long getLastModified() {
-    return getEntry().getTime();
+    return lastModified;
   }
 
   @Override
@@ -57,19 +60,10 @@ public class ZipFileResource extends AbstractResource {
     return path;
   }
 
-  /**
-   * Since we don't dynamically reload zips during a run, zip-based resources
-   * cannot become stale.
-   */
-  @Override
-  public boolean isStale() {
-    return false;
-  }
-
   @Override
   public InputStream openContents() {
     try {
-      return classPathEntry.getZipFile().getInputStream(getEntry());
+      return classPathEntry.getZipFile().getInputStream(new ZipEntry(path));
     } catch (IOException e) {
       // The spec for this method says it can return null.
       return null;
@@ -79,9 +73,5 @@ public class ZipFileResource extends AbstractResource {
   @Override
   public boolean wasRerooted() {
     return false;
-  }
-
-  private ZipEntry getEntry() {
-    return classPathEntry.getZipFile().getEntry(path);
   }
 }

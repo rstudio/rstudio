@@ -27,37 +27,15 @@ import java.util.Set;
  * <code>com/google/gwt/blah.txt</code>.
  * 
  * <p>
- * The identity of the returned sets and maps will change exactly when the
- * underlying module is refreshed.
- * </p>
- * 
- * <p>
- * Even when the identity of a returned set changes, the identity of any
- * contained {@link Resource} values is guaranteed to differ from a previous
- * result exactly when that particular resource becomes invalid.
- * </p>
- * 
- * <p>
- * A resource could become invalid for various reasons, including:
- * <ul>
- * <li>the underlying file was deleted or modified</li>
- * <li>another file with the same logical name superceded it on the classpath</li>
- * <li>the underlying module changed to exclude this file or supercede it with
- * another file</li>
- * </ul>
- * </p>
- * 
- * <p>
- * After a refresh, a client can reliably detect changes by checking which of
- * its cached resource is still contained in the new result of
- * {@link #getResources()}.
+ * The identity of the returned sets and maps will change when the underlying
+ * module is refreshed.
  * </p>
  */
 public interface ResourceOracle {
 
   /**
    * Frees up all existing resources and transient internal state. All returned
-   * collections will be empty after this call until this ResoruceOracle is
+   * collections will be empty after this call until this ResourceOracle is
    * refreshed.
    */
   void clear();
