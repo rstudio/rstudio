@@ -13,23 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore;
+package com.google.gwt.valuestore.shared;
 
-import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.valuestore.client.RequestFactoryTest;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImplTest;
-
-import junit.framework.Test;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 
 /**
- *
+ * Creates SimpleFooRequests.
  */
-public class ValueStoreSuite {
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for all valuestore code.");
-    suite.addTestSuite(RecordJsoImplTest.class);
-    suite.addTestSuite(RequestFactoryTest.class);
-    return suite;
-  }
+public interface SimpleRequestFactory extends RequestFactory {
+  SimpleFooRequest simpleFooRequest();
 }

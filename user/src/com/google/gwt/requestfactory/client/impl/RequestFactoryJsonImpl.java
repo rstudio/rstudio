@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,7 @@ import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
-import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
+import com.google.gwt.requestfactory.shared.impl.JsonRequestDataUtil;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
@@ -64,12 +64,11 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       return new String(futureId + "");
     }
   }
-  
-  private static Logger logger =
-    Logger.getLogger(RequestFactory.class.getName());
-  
+
+  private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
+
   private static String SERVER_ERROR = "Server Error";
-    
+
   private static final Integer INITIAL_VERSION = 1;
 
   private ValueStoreJsonImpl valueStore;
@@ -83,8 +82,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     String futureId = futureIdGenerator.getFutureId();
 
     RecordSchema<? extends Record> schema = recordToTypeMap.getType(token);
-    RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
-        schema);
+    RecordJsoImpl newRecord = RecordJsoImpl.create(Long.valueOf(futureId),
+        INITIAL_VERSION, schema);
     return schema.create(newRecord);
   }
 
@@ -93,7 +92,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         GWT.getHostPageBaseURL() + RequestFactory.URL);
     // TODO: do something better here...
     if (requestObject.getDeltaValueStore().isChanged()) {
-      builder.setRequestData(ClientRequestHelper.getRequestString(RequestDataManager.getRequestMap(
+      builder.setRequestData(ClientRequestHelper.getRequestString(JsonRequestDataUtil.getRequestMap(
           RequestFactory.SYNC,
           null,
           ((DeltaValueStoreJsonImpl) requestObject.getDeltaValueStore()).toJson())));
@@ -125,7 +124,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       builder.send();
       postRequestEvent(State.SENT, null);
     } catch (RequestException e) {
-      logger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() +  ")", e);
+      logger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() + ")", e);
     }
   }
 

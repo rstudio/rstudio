@@ -47,7 +47,7 @@ public class ReportEditActivity extends
   /**
    * Creates an activity that uses the default singleton view instance.
    */
-  public ReportEditActivity(String id, ExpensesRequestFactory requests,
+  public ReportEditActivity(Long id, ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
     this(id, getDefaultView(), requests, placeController);
   }
@@ -55,7 +55,7 @@ public class ReportEditActivity extends
   /**
    * Creates an activity that uses its own view instance.
    */
-  public ReportEditActivity(String id, RecordEditView<ReportRecord> view,
+  public ReportEditActivity(Long id, RecordEditView<ReportRecord> view,
       ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
     super(view, id, requests.reportRequest().persist());
@@ -68,7 +68,7 @@ public class ReportEditActivity extends
   }
 
   @Override
-  protected void fireFindRequest(Value<String> id,
+  protected void fireFindRequest(Value<Long> id,
       Receiver<ReportRecord> callback) {
     requests.reportRequest().findReport(id).fire(callback);
   }

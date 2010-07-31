@@ -41,13 +41,13 @@ public interface ExpenseRequest {
    * @return a request object
    */
   RecordListRequest<ExpenseRecord> findExpense(
-      PropertyReference<String> id);
+      PropertyReference<Long> id);
 
   /**
    * @return a request object
    */
   RecordListRequest<ExpenseRecord> findExpensesByReport(
-      PropertyReference<String> reportId);
+      PropertyReference<Long> reportId);
 
   // TODO: persist() and remove() methods are hacks for now.
   /**

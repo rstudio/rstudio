@@ -15,7 +15,7 @@
  */
 package com.google.gwt.valuestore.shared;
 
-import com.google.gwt.requestfactory.server.SimpleFoo;
+import com.google.gwt.valuestore.server.SimpleFoo;
 import com.google.gwt.requestfactory.shared.DataTransferObject;
 
 import java.util.Date;
@@ -27,14 +27,17 @@ import java.util.Date;
 @DataTransferObject(SimpleFoo.class)
 public interface SimpleFooRecord extends Record {
 
-  String TOKEN = "SimpleFooRecord";
-
   Property<String> userName = new Property<String>("userName", "User Name",
       String.class);
   Property<String> password = new Property<String>("password", "Password",
       String.class);
   Property<Integer> intId = new Property<Integer>("intId", Integer.class);
   Property<Date> created = new Property<Date>("created", Date.class);
+  Property<Long> longField = new Property<Long>("longField", Long.class);
+  Property<com.google.gwt.valuestore.shared.SimpleEnum> enumField =
+      new EnumProperty<com.google.gwt.valuestore.shared.SimpleEnum>("enumField",
+          com.google.gwt.valuestore.shared.SimpleEnum.class, SimpleEnum.values());
+
 
   Date getCreated();
 
@@ -43,4 +46,9 @@ public interface SimpleFooRecord extends Record {
   String getPassword();
 
   String getUserName();
+
+  Long getLongField();
+
+  com.google.gwt.valuestore.shared.SimpleEnum getEnumField();
+
 }

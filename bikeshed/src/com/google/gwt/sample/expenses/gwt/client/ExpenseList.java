@@ -343,7 +343,7 @@ public class ExpenseList extends Composite implements
 
   public void onReportChanged(ReportRecordChanged event) {
     ReportRecord changed = event.getRecord();
-    String changedId = changed.getId();
+    Long changedId = changed.getId();
     List<ReportRecord> records = table.getDisplayedItems();
     int i = 0;
     for (ReportRecord record : records) {

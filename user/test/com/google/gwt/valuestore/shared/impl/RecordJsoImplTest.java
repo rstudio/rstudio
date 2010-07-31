@@ -26,24 +26,25 @@ import java.util.Date;
  */
 public class RecordJsoImplTest extends GWTTestCase {
 
+  private static final String ALL_PROPERTIES_JSON = "{\"id\":\"42\",\"version\":1,\"userName\":\"bovik\",\"password\":\"bovik\",\"intId\":4,\"created\":\"400\"}";
   private static final String EMPTY_JSON = "{}";
   private static final String ID_VERSION_JSON = "{\"id\":\"42\",\"version\":1}";
   private static final String ID_VERSION_JSON2 = "{\"id\":\"43\",\"version\":1}";
-  private static final String ALL_PROPERTIES_JSON = "{\"id\":\"42\",\"version\":1,\"userName\":\"bovik\",\"password\":\"bovik\",\"intId\":4,\"created\":400}";
-  
+
   private static final boolean SCHEMA_ABSENT = false;
   private static final boolean SCHEMA_PRESENT = true;
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.valuestore.ValueStore";
+    return "com.google.gwt.valuestore.ValueStoreSuite";
   }
 
   public void testEmptyCopy() {
-    RecordJsoImpl emptyCopy = RecordJsoImpl.emptyCopy(new RecordImpl(getPopulatedJso()));
+    RecordJsoImpl emptyCopy = RecordJsoImpl.emptyCopy(new RecordImpl(
+        getPopulatedJso()));
     testMinimalJso(emptyCopy, SCHEMA_PRESENT);
   }
-  
+
   public void testFromJson() {
     testEmptyJso(RecordJsoImpl.fromJson(EMPTY_JSON), SCHEMA_ABSENT);
     testMinimalJso(RecordJsoImpl.fromJson(ID_VERSION_JSON), SCHEMA_ABSENT);
@@ -91,7 +92,7 @@ public class RecordJsoImplTest extends GWTTestCase {
   }
 
   private RecordJsoImpl getMinimalJso() {
-    return RecordJsoImpl.create("42", 1, SimpleFooRecordImpl.SCHEMA);
+    return RecordJsoImpl.create(42L, 1, SimpleFooRecordImpl.SCHEMA);
   }
 
   private RecordJsoImpl getPopulatedJso() {
@@ -102,33 +103,34 @@ public class RecordJsoImplTest extends GWTTestCase {
     jso.set(SimpleFooRecord.created, new Date(400));
     return jso;
   }
-  
+
   private void testEmptyJso(RecordJsoImpl jso, boolean schemaPresent) {
     assertFalse(jso.isDefined(SimpleFooRecord.id.getName()));
     assertFalse(jso.isDefined(SimpleFooRecord.version.getName()));
     assertEquals("{}", jso.toJson());
     testSchema(jso, schemaPresent);
   }
-  
+
   private void testMinimalJso(RecordJsoImpl jso, boolean schemaPresent) {
-    for (String property : new String[] {"id", "version"}) {
+    for (String property : new String[]{"id", "version"}) {
       assertTrue(jso.isDefined(property));
     }
-    for (String property : new String[] {
+    for (String property : new String[]{
         "created", "intId", "userName", "password"}) {
       assertFalse(jso.isDefined(property));
       assertNull(jso.get(property));
     }
-    assertEquals("42", jso.getId());
+    assertEquals((Long) 42L, jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
     testSchema(jso, schemaPresent);
   }
-  
+
   private void testPopulatedJso(RecordJsoImpl jso, boolean schemaPresent) {
-    for (String property : new String[] {"id", "version", "created", "intId", "userName", "password"}) {
+    for (String property : new String[]{
+        "id", "version", "created", "intId", "userName", "password"}) {
       assertTrue(jso.isDefined(property));
     }
-    assertEquals("42", jso.getId());
+    assertEquals((Long) 42L, jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
     assertEquals("bovik", jso.get(SimpleFooRecord.userName));
     assertEquals("bovik", jso.get(SimpleFooRecord.password));
@@ -144,5 +146,5 @@ public class RecordJsoImplTest extends GWTTestCase {
       assertNull(jso.getSchema());
     }
   }
-  
+
 }

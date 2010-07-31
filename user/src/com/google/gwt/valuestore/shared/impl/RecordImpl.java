@@ -47,7 +47,7 @@ public class RecordImpl implements Record {
     return jso.get(property);
   }
 
-  public String getId() {
+  public Long getId() {
     return jso.getId();
   }
 

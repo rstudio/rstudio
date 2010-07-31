@@ -36,7 +36,7 @@ public interface ExpenseRecord extends Record {
   Property<Date> created = new Property<Date>("created", "Created", Date.class);
   Property<String> description = new Property<String>("description", "Description", String.class);
   Property<String> reasonDenied = new Property<String>("reasonDenied", "Reason Denied", String.class);
-  Property<String> reportId = new Property<String>("reportId", "Report Id", String.class);
+  Property<Long> reportId = new Property<Long>("reportId", "Report Id", Long.class);
 
   Double getAmount();
   
@@ -48,9 +48,9 @@ public interface ExpenseRecord extends Record {
 
   String getDescription();
 
-  String getId();
+  Long getId();
 
   String getReasonDenied();
 
-  String getReportId();
+  Long getReportId();
 }

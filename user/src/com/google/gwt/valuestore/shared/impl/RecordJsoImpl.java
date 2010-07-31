@@ -18,10 +18,13 @@ package com.google.gwt.valuestore.shared.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.valuestore.shared.EnumProperty;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.PropertyReference;
 import com.google.gwt.valuestore.shared.Record;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Date;
 
 /**
@@ -38,7 +41,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return eval(json);
   }-*/;
 
-  public static RecordJsoImpl create(String id, Integer version,
+  public static RecordJsoImpl create(Long id, Integer version,
       final RecordSchema<?> schema) {
     RecordJsoImpl copy = create();
     copy.setSchema(schema);
@@ -48,7 +51,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
   }
 
   public static RecordJsoImpl emptyCopy(RecordImpl from) {
-    String id = from.get(Record.id);
+    Long id = from.get(Record.id);
     Integer version = from.get(Record.version);
     final RecordSchema<?> schema = from.getSchema();
 
@@ -81,8 +84,26 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     // "Cannot ask for a property before setting it: "
     // + property.getName();
 
+    if (Byte.class.equals(property.getType())) {
+      return (V) Byte.valueOf((byte) getInt(property.getName()));
+    }
+    if (Short.class.equals(property.getType())) {
+      return (V) Short.valueOf((short) getInt(property.getName()));
+    }
+    if (Float.class.equals(property.getType())) {
+      return (V) Float.valueOf((float) getDouble(property.getName()));
+    }
+    if (BigInteger.class.equals(property.getType())) {
+      return (V) new BigDecimal((String) get(property.getName())).toBigInteger();
+    }
+    if (BigDecimal.class.equals(property.getType())) {
+      return (V) new BigDecimal((String) get(property.getName()));
+    }
     if (Integer.class.equals(property.getType())) {
       return (V) Integer.valueOf(getInt(property.getName()));
+    }
+    if (Long.class.equals(property.getType())) {
+      return (V) Long.valueOf((String) get(property.getName()));
     }
     if (Double.class.equals(property.getType())) {
       if (!isDefined(property.getName())) {
@@ -93,7 +114,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     if (Date.class.equals(property.getType())) {
       double millis = new Date().getTime();
       if (isDefined(property.getName())) {
-        millis = getDouble(property.getName());
+        millis = Double.parseDouble((String) get(property.getName()));
       }
       if (GWT.isScript()) {
         return (V) dateForDouble(millis);
@@ -103,6 +124,17 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       }
     }
 
+    if (property instanceof EnumProperty) {
+      EnumProperty<V> eProperty = (EnumProperty<V>) property;
+      Enum[] values = (Enum[]) eProperty.getValues();
+      int ordinal = getInt(property.getName());
+      for (Enum value : values) {
+        if (ordinal == value.ordinal()) {
+          return (V) value;
+        }
+      }
+    }
+    
     // Sun JDK compile fails without this cast
     return (V) get(property.getName());
   }
@@ -111,7 +143,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return this[propertyName];
   }-*/;
 
-  public final String getId() {
+  public final Long getId() {
     return this.get(id);
   }
 
@@ -162,19 +194,31 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       setString(property.getName(), (String) value);
       return;
     }
-    if (value instanceof Integer) {
-      setInt(property.getName(), (Integer) value);
+    if (value instanceof Long || value instanceof BigDecimal || value instanceof BigInteger) {
+      setString(property.getName(), String.valueOf(value));
       return;
     }
+
+    if (value instanceof Integer || value instanceof Short || value instanceof Byte) {
+      setInt(property.getName(), ((Number) value).intValue());
+      return;
+    }
+
     if (value instanceof Date) {
       double millis = ((Date) value).getTime();
-      setDouble(property.getName(), millis);
+      setString(property.getName(), String.valueOf(millis));
       return;
     }
-    if (value instanceof Double) {
-      setDouble(property.getName(), (Double) value);
+    if (value instanceof Double || value instanceof Float) {
+      setDouble(property.getName(), ((Number) value).doubleValue());
       return;
     }
+
+    if (value instanceof Enum) {
+      setInt(property.getName(), ((Enum) value).ordinal());
+      return;
+    }
+
     throw new UnsupportedOperationException("Can't yet set properties of type "
         + value.getClass().getName());
   }
@@ -236,7 +280,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   private native Date dateForDouble(double millis) /*-{
     return @java.util.Date::createFrom(D)(millis);
-  }-*/;;
+  }-*/;
 
   private native double getDouble(String name) /*-{
     return this[name];

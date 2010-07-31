@@ -45,6 +45,8 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
       set.add(password);
       set.add(intId);
       set.add(created);
+      set.add(longField);
+      set.add(enumField);
       allProperties = Collections.unmodifiableSet(set);
     }
 
@@ -79,8 +81,16 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
     return get(created);
   }
 
+  public com.google.gwt.valuestore.shared.SimpleEnum getEnumField() {
+    return get(enumField);
+  }
+
   public java.lang.Integer getIntId() {
     return get(intId);
+  }
+
+  public java.lang.Long getLongField() {
+    return get(longField);
   }
 
   public java.lang.String getPassword() {

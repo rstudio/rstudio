@@ -44,6 +44,6 @@ public interface UserInformationRecord extends Record, UserInformation {
    * interface. Redeclare this method, even though it is already in Record.java
    * so checkstyle does not complain about an interface with no methods
    */
-  String getId();
+  Long getId();
 
 }

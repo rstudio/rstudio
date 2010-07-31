@@ -145,7 +145,7 @@ public class ExpensesMobileShell extends Composite {
   private void showExpenseList(ReportRecord report) {
     if (expenseList == null) {
       expenseList = new MobileExpenseList(new MobileExpenseList.Listener() {
-        public void onCreateExpense(String reportId) {
+        public void onCreateExpense(Long reportId) {
           showNewExpenseEntry(reportId);
         }
 
@@ -163,7 +163,7 @@ public class ExpensesMobileShell extends Composite {
     pushPage(expenseList);
   }
 
-  private void showNewExpenseEntry(String reportId) {
+  private void showNewExpenseEntry(Long reportId) {
     if (expenseEntry == null) {
       expenseEntry = new MobileExpenseEntry(new MobileExpenseEntry.Listener() {
         public void onExpenseUpdated() {

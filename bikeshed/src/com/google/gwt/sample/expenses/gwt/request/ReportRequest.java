@@ -52,7 +52,7 @@ public interface ReportRequest {
   /**
    * @return a request object
    */
-  RecordRequest<ReportRecord> findReport(PropertyReference<String> id);
+  RecordRequest<ReportRecord> findReport(PropertyReference<Long> id);
 
   /**
    * @return a request object

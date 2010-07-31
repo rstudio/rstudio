@@ -41,15 +41,18 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   private final boolean creating;
   private final RecordEditView<R> view;
 
-  private String id;
-  private String futureId;
+  private Long id;
+  private Long futureId;
+  private DeltaValueStore deltas;
+
   private Display display;
   private RequestObject<Void> requestObject;
 
-  public AbstractRecordEditActivity(RecordEditView<R> view, String id,
+  public AbstractRecordEditActivity(RecordEditView<R> view, Long id,
       RequestObject<Void> requestObject) {
+
     this.view = view;
-    this.creating = "".equals(id);
+    this.creating = 0L == id;
     this.id = id;
     this.requestObject = requestObject;
   }
@@ -59,7 +62,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     if ((unsavedChangesWarning == null)
         || Window.confirm(unsavedChangesWarning)) {
       requestObject.reset(); // silence the next mayStop() call when place
-                             // changes
+      // changes
       if (creating) {
         display.showActivityWidget(null);
       } else {
@@ -85,8 +88,8 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   }
 
   public void saveClicked() {
-    DeltaValueStore deltas = requestObject.getDeltaValueStore();
-    if (!deltas.isChanged()) {
+    DeltaValueStore theDeltas = requestObject.getDeltaValueStore();
+    if (!theDeltas.isChanged()) {
       return;
     }
     view.setEnabled(false);
@@ -139,7 +142,8 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     view.setCreating(creating);
 
     if (creating) {
-      R tempRecord = (R) requestObject.getDeltaValueStore().create(getRecordClass());
+      R tempRecord = (R) requestObject.getDeltaValueStore().create(
+          getRecordClass());
       futureId = tempRecord.getId();
       doStart(display, tempRecord);
     } else {
@@ -161,9 +165,9 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   /**
    * Called to fetch the details of the edited record.
    */
-  protected abstract void fireFindRequest(Value<String> id, Receiver<R> callback);
+  protected abstract void fireFindRequest(Value<Long> id, Receiver<R> callback);
 
-  protected String getId() {
+  protected Long getId() {
     return id;
   }
 

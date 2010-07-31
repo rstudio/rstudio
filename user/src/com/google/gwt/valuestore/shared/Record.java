@@ -24,8 +24,8 @@ package com.google.gwt.valuestore.shared;
  * An entry in a {@link com.google.gwt.valuestore.shared.ValueStore ValueStore}.
  */
 public interface Record {
-  Property<String> id = new Property<String>("id", String.class);
-
+  Property<Long> id = new Property<Long>("id", Long.class);
+                                                                                                                                            
   Property<Integer> version = new Property<Integer>("version", Integer.class);
 
   /**
@@ -43,7 +43,7 @@ public interface Record {
   /**
    * @return the id of this Record
    */
-  String getId();
+  Long getId();
 
   /**
    * Get a "pointer" to value of this property in the receiver, useful for

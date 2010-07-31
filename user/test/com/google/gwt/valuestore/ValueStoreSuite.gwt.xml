@@ -21,6 +21,8 @@
   <!-- use this old inefficient JSON library just for the time being, replace soon -->
   <inherits name='com.google.gwt.junit.JUnit'/>
   <inherits name='com.google.gwt.json.JSON'/>
+  <source path='client'/>
+  <source path='shared'/>
   <servlet path='/gwtRequest'
     class='com.google.gwt.requestfactory.server.RequestFactoryServlet' />
 </module>

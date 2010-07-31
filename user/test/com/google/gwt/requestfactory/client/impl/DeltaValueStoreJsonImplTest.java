@@ -69,7 +69,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
     // add a record
     jso = RecordJsoImpl.fromJson("{}");
-    jso.set(SimpleFooRecord.id, "42");
+    jso.set(SimpleFooRecord.id, 42L);
     jso.set(SimpleFooRecord.version, 1);
     jso.set(SimpleFooRecord.userName, "bovik");
     jso.set(SimpleFooRecord.password, "bovik");

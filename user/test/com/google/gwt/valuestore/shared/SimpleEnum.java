@@ -13,23 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore;
-
-import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.valuestore.client.RequestFactoryTest;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImplTest;
-
-import junit.framework.Test;
+package com.google.gwt.valuestore.shared;
 
 /**
- *
+ * Test enum class.
  */
-public class ValueStoreSuite {
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for all valuestore code.");
-    suite.addTestSuite(RecordJsoImplTest.class);
-    suite.addTestSuite(RequestFactoryTest.class);
-    return suite;
-  }
+public enum SimpleEnum {
+  FOO, BAR
 }

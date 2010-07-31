@@ -27,7 +27,7 @@ public class ReportScaffoldPlace extends ScaffoldRecordPlace {
     super(record.getId(), operation);
   }
 
-  public ReportScaffoldPlace(String id, Operation operation) {
+  public ReportScaffoldPlace(Long id, Operation operation) {
     super(id, operation);
   }
 

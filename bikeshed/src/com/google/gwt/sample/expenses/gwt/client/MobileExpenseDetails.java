@@ -107,7 +107,7 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
   }
 
   public void onRefresh(boolean clear) {
-    PropertyReference<String> idRef = new PropertyReference<String>(expense,
+    PropertyReference<Long> idRef = new PropertyReference<Long>(expense,
         ExpenseRecord.id);
 
     requestFactory.expenseRequest().findExpense(idRef).fire(

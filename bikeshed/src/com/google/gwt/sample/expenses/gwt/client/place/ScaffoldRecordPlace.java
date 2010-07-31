@@ -28,14 +28,14 @@ public abstract class ScaffoldRecordPlace extends ScaffoldPlace {
   public enum Operation {
     EDIT, DETAILS
   }
-  private final String id;
+  private final Long id;
 
   private final Operation operation;
 
   /**
    * @param record
    */
-  public ScaffoldRecordPlace(String id, Operation operation) {
+  public ScaffoldRecordPlace(Long id, Operation operation) {
     assert null != id;
     assert null != operation;
 
@@ -72,7 +72,7 @@ public abstract class ScaffoldRecordPlace extends ScaffoldPlace {
   /**
    * @return the id for this record
    */
-  public String getId() {
+  public Long getId() {
     return id;
   }
 

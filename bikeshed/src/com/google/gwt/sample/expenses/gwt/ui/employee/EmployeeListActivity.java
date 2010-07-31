@@ -73,7 +73,7 @@ public class EmployeeListActivity extends
   }
 
   public void createClicked() {
-    placeController.goTo(new EmployeeScaffoldPlace("", Operation.EDIT));
+    placeController.goTo(new EmployeeScaffoldPlace(0L, Operation.EDIT));
   }
 
   @Override

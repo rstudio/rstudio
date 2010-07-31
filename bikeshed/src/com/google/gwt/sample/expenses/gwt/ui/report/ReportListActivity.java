@@ -73,7 +73,7 @@ public final class ReportListActivity extends
   }
 
   public void createClicked() {
-    placeController.goTo(new ReportScaffoldPlace("", Operation.EDIT));
+    placeController.goTo(new ReportScaffoldPlace(0L, Operation.EDIT));
   }
 
   @Override

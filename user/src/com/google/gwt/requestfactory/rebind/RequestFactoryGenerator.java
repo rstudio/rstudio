@@ -28,11 +28,19 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.requestfactory.client.impl.AbstractBigDecimalRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractBigIntegerRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractByteRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractCharacterRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractDateRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractDoubleRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractEnumRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractFloatRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractIntegerRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonListRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonObjectRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractShortRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractVoidRequest;
 import com.google.gwt.requestfactory.client.impl.ClientRequestHelper;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
@@ -40,7 +48,7 @@ import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
+import com.google.gwt.requestfactory.shared.impl.JsonRequestDataUtil;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.valuestore.shared.Property;
@@ -53,7 +61,10 @@ import com.google.gwt.valuestore.shared.impl.RecordSchema;
 import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -386,7 +397,7 @@ public class RequestFactoryGenerator extends Generator {
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
     f.addImport(ClientRequestHelper.class.getName());
-    f.addImport(RequestDataManager.class.getName());
+    f.addImport(JsonRequestDataUtil.class.getName());
     f.addImport(mainType.getQualifiedSourceName() + "Impl");
     f.addImplementedInterface(selectorInterface.getQualifiedSourceName());
 
@@ -418,6 +429,8 @@ public class RequestFactoryGenerator extends Generator {
       String requestClassName = null;
 
       TypeOracle typeOracle = generatorContext.getTypeOracle();
+      String enumArgument = "";
+      // TODO: refactor this into some kind of extensible map lookup
       if (isRecordListRequest(typeOracle, requestType)) {
         requestClassName = asInnerImplClass("ListRequestImpl", returnType);
       } else if (isRecordRequest(typeOracle, requestType)) {
@@ -428,6 +441,24 @@ public class RequestFactoryGenerator extends Generator {
         requestClassName = AbstractIntegerRequest.class.getName();
       } else if (isDoubleRequest(typeOracle, requestType)) {
         requestClassName = AbstractDoubleRequest.class.getName();
+      } else if (isByteRequest(typeOracle, requestType)) {
+        requestClassName = AbstractByteRequest.class.getName();
+      } else if (isShortRequest(typeOracle, requestType)) {
+        requestClassName = AbstractShortRequest.class.getName();
+      } else if (isFloatRequest(typeOracle, requestType)) {
+        requestClassName = AbstractFloatRequest.class.getName();
+      } else if (isCharacterRequest(typeOracle, requestType)) {
+        requestClassName = AbstractCharacterRequest.class.getName();
+      } else if (isDateRequest(typeOracle, requestType)) {
+        requestClassName = AbstractDateRequest.class.getName();
+      } else if (isBigDecimalRequest(typeOracle, requestType)) {
+        requestClassName = AbstractBigDecimalRequest.class.getName();
+      } else if (isBigIntegerRequest(typeOracle, requestType)) {
+        requestClassName = AbstractBigIntegerRequest.class.getName();
+      } else if (isEnumRequest(typeOracle, requestType)) {
+        requestClassName = AbstractEnumRequest.class.getName();
+        enumArgument = ", " + requestType.isParameterized().getTypeArgs()[0]
+            + ".values()";
       } else if (isVoidRequest(typeOracle, requestType)) {
         requestClassName = AbstractVoidRequest.class.getName();
       } else {
@@ -438,12 +469,13 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println(getMethodDeclaration(method) + " {");
       sw.indent();
-      sw.println("return new " + requestClassName + "(factory) {");
+      sw.println("return new " + requestClassName + "(factory" + enumArgument
+          + ") {");
       sw.indent();
       sw.println("public String getRequestData() {");
       sw.indent();
       sw.println("return " + ClientRequestHelper.class.getSimpleName()
-          + ".getRequestString(" + RequestDataManager.class.getSimpleName()
+          + ".getRequestString(" + JsonRequestDataUtil.class.getSimpleName()
           + ".getRequestMap(\"" + operationName + "\", "
           + getParametersAsString(method) + ", null));");
       sw.outdent();
@@ -508,8 +540,39 @@ public class RequestFactoryGenerator extends Generator {
     return "new Object[] {" + sb.toString() + "}";
   }
 
+  private boolean isBigDecimalRequest(TypeOracle typeOracle,
+      JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(BigDecimal.class.getName()));
+  }
+
+  private boolean isBigIntegerRequest(TypeOracle typeOracle,
+      JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(BigInteger.class.getName()));
+  }
+
+  private boolean isByteRequest(TypeOracle typeOracle, JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Byte.class.getName()));
+  }
+
+  private boolean isCharacterRequest(TypeOracle typeOracle,
+      JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Character.class.getName()));
+  }
+
+  private boolean isDateRequest(TypeOracle typeOracle, JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Date.class.getName()));
+  }
+
   private boolean isDoubleRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Double.class.getName()));
+  }
+
+  private boolean isEnumRequest(TypeOracle typeOracle, JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Enum.class.getName()));
+  }
+
+  private boolean isFloatRequest(TypeOracle typeOracle, JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Float.class.getName()));
   }
 
   private boolean isIntegerRequest(TypeOracle typeOracle, JClassType requestType) {
@@ -529,6 +592,10 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isAssignableTo(typeOracle.findType(RecordRequest.class.getName()));
   }
 
+  private boolean isShortRequest(TypeOracle typeOracle, JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Short.class.getName()));
+  }
+  
   private boolean isVoidRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Void.class.getName()));
   }

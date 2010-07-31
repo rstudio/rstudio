@@ -52,7 +52,7 @@ public interface EmployeeRequest {
   /**
    * @return a request object
    */
-  RecordRequest<EmployeeRecord> findEmployee(PropertyReference<String> id);
+  RecordRequest<EmployeeRecord> findEmployee(PropertyReference<Long> id);
 
   /**
    * @return a request object

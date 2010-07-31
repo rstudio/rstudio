@@ -53,8 +53,8 @@ import java.util.Set;
  */
 public abstract class AbstractRecordListActivity<R extends Record> implements
     Activity, RecordListView.Delegate<R>, ListView.Delegate<R> {
-  private final Map<String, Integer> recordToRow = new HashMap<String, Integer>();
-  private final Map<String, R> idToRecord = new HashMap<String, R>();
+  private final Map<Long, Integer> recordToRow = new HashMap<Long, Integer>();
+  private final Map<Long, R> idToRecord = new HashMap<Long, R>();
   private final SingleSelectionModel<R> selectionModel;
 
   private RecordListView<R> view;
@@ -131,8 +131,8 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
    * Select the record if it happens to be visible, or clear the selection if
    * called with null or "".
    */
-  public void select(String id) {
-    if (id == null || "".equals(id)) {
+  public void select(Long id) {
+    if (id == null || 0 == id) {
       R selected = selectionModel.getSelectedObject();
       if (selected != null) {
         selectionModel.setSelected(selected, false);

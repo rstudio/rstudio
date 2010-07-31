@@ -182,15 +182,16 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
 
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : creates.entrySet()) {
         final RecordKey futureKey = entry.getKey();
-        Map<String, String> violations = violationsMap.get(futureKey.id);
+        // TODO change violationsMap to <Long, String>
+        Map<String, String> violations = violationsMap.get(futureKey.id.toString());
         assert violations != null;
         if (violations == NULL_VIOLATIONS) {
-          Object datastoreId = futureToDatastoreId.get(futureKey.id);
+          Object datastoreId = futureToDatastoreId.get(futureKey.id.toString());
           assert datastoreId != null;
           futureIdGenerator.delete(futureKey.id.toString());
           final RecordKey key = new RecordKey(datastoreId, futureKey.schema);
           RecordJsoImpl value = entry.getValue();
-          value.set(Record.id, datastoreId.toString());
+          value.set(Record.id, Long.parseLong(datastoreId.toString()));
           RecordJsoImpl masterRecord = master.records.get(key);
           assert masterRecord == null;
           master.records.put(key, value);
@@ -216,7 +217,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
       Map<String, Map<String, String>> violationsMap = getViolationsMap(deletedRecords);
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : deletes.entrySet()) {
         final RecordKey key = entry.getKey();
-        Map<String, String> violations = violationsMap.get(key.id);
+        Map<String, String> violations = violationsMap.get(key.id.toString());
         assert violations != null;
         if (violations == NULL_VIOLATIONS) {
           RecordJsoImpl masterRecord = master.records.get(key);
@@ -241,7 +242,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
       Map<String, Map<String, String>> violationsMap = getViolationsMap(updatedRecords);
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : updates.entrySet()) {
         final RecordKey key = entry.getKey();
-        Map<String, String> violations = violationsMap.get(key.id);
+        Map<String, String> violations = violationsMap.get(key.id.toString());
         assert violations != null;
         if (violations == NULL_VIOLATIONS) {
           RecordJsoImpl masterRecord = master.records.get(key);
@@ -269,7 +270,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     String futureId = futureIdGenerator.getFutureId();
 
     RecordSchema<? extends Record> schema = recordToTypeMap.getType(token);
-    RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
+    RecordJsoImpl newRecord = RecordJsoImpl.create(Long.parseLong(futureId), INITIAL_VERSION,
         schema);
     RecordKey recordKey = new RecordKey(newRecord);
     assert operations.get(recordKey) == null;

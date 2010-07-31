@@ -50,13 +50,13 @@ public class ReportDetailsActivity extends AbstractActivity implements
   private final ExpensesRequestFactory requests;
   private final PlaceController<ScaffoldPlace> placeController;
   private final RecordDetailsView<ReportRecord> view;
-  private String id;
+  private Long id;
   private Display display;
 
   /**
    * Creates an activity that uses the default singleton view instance.
    */
-  public ReportDetailsActivity(String id, ExpensesRequestFactory requests,
+  public ReportDetailsActivity(Long id, ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
     this(id, requests, placeController, getDefaultView());
   }
@@ -64,7 +64,7 @@ public class ReportDetailsActivity extends AbstractActivity implements
   /**
    * Creates an activity that uses its own view instance.
    */
-  public ReportDetailsActivity(String id, ExpensesRequestFactory requests,
+  public ReportDetailsActivity(Long id, ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController,
       RecordDetailsView<ReportRecord> view) {
     this.placeController = placeController;
