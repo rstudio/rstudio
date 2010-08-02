@@ -81,7 +81,7 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
   private void descendToFindResources(TreeLogger logger,
       PathPrefixSet pathPrefixSet, Map<AbstractResource, PathPrefix> resources,
       File dir, String dirPath) {
-    assert (dir.isDirectory());
+    assert (dir.isDirectory()) : dir + " is not a directory";
 
     // Assert: this directory is included in the path prefix set.
 
@@ -99,7 +99,7 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
           Messages.NOT_DESCENDING_INTO_DIR.log(logger, child.getAbsolutePath(),
               null);
         }
-      } else {
+      } else if (child.isFile()) {
         PathPrefix prefix = null;
         if ((prefix = pathPrefixSet.includesResource(childPath)) != null) {
           Messages.INCLUDING_FILE.log(logger, childPath, null);
@@ -108,6 +108,8 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
         } else {
           Messages.EXCLUDING_FILE.log(logger, childPath, null);
         }
+      } else {
+        Messages.EXCLUDING_FILE.log(logger, childPath, null);
       }
     }
   }
