@@ -40,10 +40,9 @@ public class RequestFactoryTest extends GWTTestCase {
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooRecord>() {
-          @Override
           public void onSuccess(SimpleFooRecord response,
               Set<SyncResult> syncResult) {
-            assertEquals((int) 42, (int) response.getIntId());
+            assertEquals(42, (int) response.getIntId());
             assertEquals("GWT", response.getUserName());
             assertEquals(8L, (long) response.getLongField());
             assertEquals(com.google.gwt.valuestore.shared.SimpleEnum.FOO,

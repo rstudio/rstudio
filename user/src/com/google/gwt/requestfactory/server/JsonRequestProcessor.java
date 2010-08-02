@@ -94,7 +94,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return rtn;
   }
 
-  @Override
   public String decodeAndInvokeRequest(String encodedRequest) throws Exception {
     try {
       return processJsonRequest(encodedRequest).toString();
@@ -524,7 +523,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return !BLACK_LIST.contains(p.getName());
   }
 
-  @Override
   public void setOperationRegistry(OperationRegistry operationRegistry) {
     this.operationRegistry = operationRegistry;
   }

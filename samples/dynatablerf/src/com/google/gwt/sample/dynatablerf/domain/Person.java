@@ -19,20 +19,24 @@ package com.google.gwt.sample.dynatablerf.domain;
  * Hold relevant data for Person.
  */
 public abstract class Person {
+  private static Long serial = 1L;
 
   private String description = "DESC";
 
   private String name;
+  
+  private final Long id;
 
   public Person() {
+    id = serial++;
   }
 
   public String getDescription() {
     return description;
   }
   
-  public String getId() {
-    return name;
+  public Long getId() {
+    return id;
   }
   
   public String getName() {
