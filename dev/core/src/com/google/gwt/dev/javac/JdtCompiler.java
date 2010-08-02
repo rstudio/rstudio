@@ -112,9 +112,6 @@ public class JdtCompiler {
           compiler.computeDependencies(cud),
           Collections.<JsniMethod> emptyList(), new MethodArgNamesLookup(),
           cud.compilationResult().getProblems());
-      if (cud.compilationResult().hasErrors()) {
-        unit = new ErrorCompilationUnit(unit);
-      }
       results.add(unit);
     }
 

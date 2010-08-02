@@ -27,9 +27,10 @@ abstract class CompilationUnitImpl extends CompilationUnit {
 
   private final Set<ContentId> dependencies;
   private final List<CompiledClass> exposedCompiledClasses;
+  private final boolean hasErrors;
   private final List<JsniMethod> jsniMethods;
-  private final CategorizedProblem[] problems;
   private final MethodArgNamesLookup methodArgs;
+  private final CategorizedProblem[] problems;
 
   public CompilationUnitImpl(List<CompiledClass> compiledClasses,
       Set<ContentId> dependencies,
@@ -40,6 +41,15 @@ abstract class CompilationUnitImpl extends CompilationUnit {
     this.jsniMethods = Lists.create(jsniMethods.toArray(new JsniMethod[jsniMethods.size()]));
     this.methodArgs = methodArgs;
     this.problems = problems;
+    boolean hasAnyErrors = false;
+    if (problems != null) {
+      for (CategorizedProblem problem : problems) {
+        if (problem.isError()) {
+          hasAnyErrors = true;
+        }
+      }
+    }
+    this.hasErrors = hasAnyErrors;
     for (CompiledClass cc : compiledClasses) {
       cc.initUnit(this);
     }
@@ -53,6 +63,16 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   @Override
   public MethodArgNamesLookup getMethodArgs() {
     return methodArgs;
+  }
+
+  @Override
+  public boolean isCompiled() {
+    return !hasErrors;
+  }
+
+  @Override
+  public boolean isError() {
+    return hasErrors;
   }
 
   /**

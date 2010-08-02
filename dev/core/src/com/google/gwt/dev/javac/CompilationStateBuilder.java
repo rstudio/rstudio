@@ -85,9 +85,7 @@ public class CompilationStateBuilder {
         CompilationUnit unit = builder.build(compiledClasses, dependencies,
             jsniMethods.values(), methodArgs,
             cud.compilationResult().getProblems());
-        if (cud.compilationResult().hasErrors()) {
-          unit = new ErrorCompilationUnit(unit);
-        } else {
+        if (!unit.isError()) {
           addValidUnit(unit);
 
           // Cache the valid unit for future compiles.
