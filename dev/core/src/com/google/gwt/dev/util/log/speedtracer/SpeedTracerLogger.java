@@ -82,7 +82,7 @@ public final class SpeedTracerLogger {
     /**
      * @param data key/value pairs to add to JSON object.
      */
-    public void addData(String[] data) {
+    public void addData(String  ...data) {
       if (data != null) {
         assert (data.length % 2 == 0);
         this.data = Lists.addAll(this.data, data);
@@ -296,26 +296,21 @@ public final class SpeedTracerLogger {
     assert (endTimeNanos >= currentEvent.startTimeNanos);
     currentEvent.durationNanos = endTimeNanos - currentEvent.startTimeNanos;
 
-    List<Event> missedEvents = Lists.create();
-
-    // TODO(zundel): Why not just assert in this case?
     while (currentEvent.type != type && !threadPendingEvents.isEmpty()) {
       // Missed a closing end for one or more frames! Try to sync back up.
-      missedEvents = Lists.add(missedEvents, currentEvent);
+      currentEvent.addData("Missed", "This event was closed without an explicit call to SpeedTracerLogger.end()"); 
       currentEvent = threadPendingEvents.pop();
+      assert (endTimeNanos >= currentEvent.startTimeNanos);
       currentEvent.durationNanos = endTimeNanos - currentEvent.startTimeNanos;
     }
+    
+    if (threadPendingEvents.isEmpty() && currentEvent.type != type) {
+      currentEvent.addData("Missed", "Fell off the end of the threadPending events");
+    }
+    
     currentEvent.addData(data);
     if (threadPendingEvents.isEmpty()) {
       eventsToWrite.add(currentEvent);
-    }
-    if (missedEvents.size() > 0) {
-      StringBuilder sb = new StringBuilder();
-      sb.append("SpeedTracerLogger missing end() calls for the following events: ");
-      for (Event event : missedEvents) {
-        sb.append(event.type.getName());
-      }
-      throw new IllegalStateException(sb.toString());
     }
   }
 
