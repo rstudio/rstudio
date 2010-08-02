@@ -111,8 +111,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       throw new IllegalArgumentException(e);
     } catch (IllegalArgumentException e) {
       throw new RuntimeException(e);
-    } catch (InstantiationException e) {
-      throw new RuntimeException(e);
     }
   }
 
@@ -160,12 +158,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         Logger.getLogger(this.getClass().getName()).severe(
             "Type is " + parameterType + " valuesMethod " + valuesMethod);
 
-        valuesMethod.setAccessible(true);
         if (valuesMethod != null) {
-          Enum[] values = (Enum[]) valuesMethod.invoke(null);
+          valuesMethod.setAccessible(true);
+          Enum<?>[] values = (Enum<?>[]) valuesMethod.invoke(null);
           // we use ordinal serialization instead of name since future compiler
           // opts may remove names
-          for (Enum e : values) {
+          for (Enum<?> e : values) {
             if (ordinal == e.ordinal()) {
               return e;
             }
@@ -197,7 +195,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       return String.valueOf(((Date) value).getTime());
     }
     if (Enum.class.isAssignableFrom(type)) {
-      return Double.valueOf(((Enum) value).ordinal());
+      return Double.valueOf(((Enum<?>) value).ordinal());
     }
     if (BigDecimal.class == type || BigInteger.class == type
         || Long.class == type) {
@@ -229,11 +227,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * @param key the key of the record field
    * @return the ID of the new record, or null to auto generate
    */
-  public Long generateIdForCreate(String key) {
+  public Long generateIdForCreate(@SuppressWarnings("unused") String key) {
     // ignored. id is assigned by default.
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   public Class<Object> getEntityFromRecordAnnotation(
       Class<? extends Record> record) {
     DataTransferObject dtoAnn = record.getAnnotation(DataTransferObject.class);
@@ -377,6 +376,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return decodeParameterValue(propertyType, recordObject.get(key).toString());
   }
 
+  @SuppressWarnings("unchecked")
   public Class<Record> getRecordFromClassToken(String recordToken) {
     try {
       Class<?> clazz = Class.forName(recordToken, false,
@@ -469,7 +469,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public Object processJsonRequest(String jsonRequestString)
       throws JSONException, NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException, InstantiationException, ClassNotFoundException {
+      InvocationTargetException, ClassNotFoundException {
     RequestDefinition operation;
     JSONObject topLevelJsonObject = new JSONObject(jsonRequestString);
 
@@ -497,16 +497,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       }
 
       if (result instanceof List<?>) {
-        JSONArray jsonArray = getJsonArray((List<?>) result,
-            (Class<? extends Record>) operation.getReturnType());
-        return jsonArray;
+        return toJsonArray(operation, result);
       } else if (result instanceof Number
           && !(result instanceof BigDecimal || result instanceof BigInteger)) {
         return result;
       } else {
-
-        JSONObject jsonObject = getJsonObject(result,
-            (Class<? extends Record>) operation.getReturnType());
+        JSONObject jsonObject = toJsonObject(operation, result);
         return jsonObject;
       }
     }
@@ -527,9 +523,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     this.operationRegistry = operationRegistry;
   }
 
-  public JSONObject sync(String content) throws SecurityException,
-      NoSuchMethodException, IllegalAccessException, InvocationTargetException,
-      InstantiationException {
+  public JSONObject sync(String content) throws SecurityException {
 
     try {
       JSONObject jsonObject = new JSONObject(content);
@@ -665,8 +659,20 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   @SuppressWarnings("unchecked")
-  private void ensureConfig() {
-    operationRegistry = new ReflectionBasedOperationRegistry(
-        new DefaultSecurityProvider());
+  private Object toJsonArray(RequestDefinition operation, Object result)
+      throws IllegalAccessException, JSONException, NoSuchMethodException,
+      InvocationTargetException {
+    JSONArray jsonArray = getJsonArray((List<?>) result,
+        (Class<? extends Record>) operation.getReturnType());
+    return jsonArray;
+  }
+
+  @SuppressWarnings("unchecked")
+  private JSONObject toJsonObject(RequestDefinition operation, Object result)
+      throws JSONException, NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException {
+    JSONObject jsonObject = getJsonObject(result,
+        (Class<? extends Record>) operation.getReturnType());
+    return jsonObject;
   }
 }
