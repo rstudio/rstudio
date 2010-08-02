@@ -149,8 +149,11 @@ public class ContactTreeViewModel implements TreeViewModel {
     List<HasCell<ContactInfo, ?>> hasCells = new ArrayList<
         HasCell<ContactInfo, ?>>();
     hasCells.add(new HasCell<ContactInfo, Boolean>() {
+
+      private CheckboxCell cell = new CheckboxCell(true);
+
       public Cell<Boolean> getCell() {
-        return new CheckboxCell(true);
+        return cell;
       }
 
       public FieldUpdater<ContactInfo, Boolean> getFieldUpdater() {
@@ -166,8 +169,11 @@ public class ContactTreeViewModel implements TreeViewModel {
       }
     });
     hasCells.add(new HasCell<ContactInfo, ContactInfo>() {
+
+      private ContactCell cell = new ContactCell(images.contact());
+
       public Cell<ContactInfo> getCell() {
-        return new ContactCell(images.contact());
+        return cell;
       }
 
       public FieldUpdater<ContactInfo, ContactInfo> getFieldUpdater() {

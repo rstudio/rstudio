@@ -185,7 +185,7 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"click", "keydown", "keyup"};
+    return new String[]{"click", "keydown", "keyup", "blur"};
   }
 
   @Override

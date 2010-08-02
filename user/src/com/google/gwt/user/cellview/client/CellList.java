@@ -37,6 +37,7 @@ import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -93,7 +94,7 @@ public class CellList<T> extends Widget
   private class View extends PagingListViewPresenter.DefaultView<T> {
 
     public View(Element childContainer) {
-      super(childContainer);
+      super(CellList.this, childContainer);
     }
 
     public boolean dependsOnSelection() {
@@ -189,17 +190,13 @@ public class CellList<T> extends Widget
     setElement(outerDiv);
 
     // Sink events that the cell consumes.
-    int eventsToSink = Event.ONCLICK;
+    Set<String> eventsToSink = new HashSet<String>();
+    eventsToSink.add("click");
     Set<String> consumedEvents = cell.getConsumedEvents();
     if (consumedEvents != null) {
-      for (String typeName : consumedEvents) {
-        int typeInt = Event.getTypeInt(typeName);
-        if (typeInt > 0) {
-          eventsToSink |= typeInt;
-        }
-      }
+      eventsToSink.addAll(consumedEvents);
     }
-    sinkEvents(eventsToSink);
+    CellBasedWidgetImpl.get().sinkEvents(this, eventsToSink);
 
     // Create the implementation.
     view = new View(childContainer);
@@ -273,6 +270,7 @@ public class CellList<T> extends Widget
 
   @Override
   public void onBrowserEvent(Event event) {
+    CellBasedWidgetImpl.get().onBrowserEvent(this, event);
     super.onBrowserEvent(event);
 
     // Forward the event to the cell.

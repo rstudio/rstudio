@@ -26,6 +26,7 @@ import com.google.gwt.cell.client.DatePickerCell;
 import com.google.gwt.cell.client.EditTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.IconCellDecorator;
+import com.google.gwt.cell.client.ImageCell;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.TextCell;
@@ -406,6 +407,13 @@ public class CwCellSampler extends ContentWidget {
             return contact.getCategory().getDisplayName();
           }
         }, null);
+
+    // ImageCell.
+    addColumn(new ImageCell(), "Image", new GetValue<String>() {
+      public String getValue(ContactInfo contact) {
+        return "contact.jpg";
+      }
+    }, null);
 
     // SelectionCell.
     List<String> options = new ArrayList<String>();

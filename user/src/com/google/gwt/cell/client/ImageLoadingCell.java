@@ -1,0 +1,198 @@
+/*
+ * Copyright 2010 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.cell.client;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.text.shared.AbstractRenderer;
+import com.google.gwt.text.shared.Renderer;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
+
+/**
+ * A {@link AbstractCell} used to render an image. A loading indicator is used
+ * until the image is fully loaded. The String value is the url of the image.
+ */
+public class ImageLoadingCell extends AbstractCell<String> {
+
+  /**
+   * The renderers used by this cell.
+   */
+  public interface Renderers {
+
+    /**
+     * Get the renderer used to render an error message when the image does not
+     * load. By default, the broken image is rendered.
+     *
+     * @return the {@link Renderer} used when the image doesn't load
+     */
+    Renderer<String> getErrorRenderer();
+
+    /**
+     * Get the renderer used to render the image. This renderer must render an
+     * <code>img</code> element, which triggers the <code>load</code> or <code>
+     * error</code> event that this cell handles.
+     *
+     * @return the {@link Renderer} used to render the image
+     */
+    Renderer<String> getImageRenderer();
+
+    /**
+     * Get the renderer used to render a loading message. By default, an
+     * animated loading icon is rendered.
+     *
+     * @return the {@link Renderer} used to render the loading html
+     */
+    Renderer<String> getLoadingRenderer();
+  }
+
+  /**
+   * The default {@link Renderers}.
+   */
+  public static class DefaultRenderers implements Renderers {
+
+    private static Renderer<String> IMAGE_RENDERER;
+    private static Renderer<String> LOADING_RENDERER;
+
+    public DefaultRenderers() {
+      if (IMAGE_RENDERER == null) {
+        IMAGE_RENDERER = new AbstractRenderer<String>() {
+          public String render(String object) {
+            return "<img src='" + object + "'/>";
+          }
+        };
+      }
+      if (LOADING_RENDERER == null) {
+        Resources resources = GWT.create(Resources.class);
+        ImageResource res = resources.loading();
+        final String loadingHtml = AbstractImagePrototype.create(res).getHTML();
+        LOADING_RENDERER = new AbstractRenderer<String>() {
+          public String render(String object) {
+            return loadingHtml;
+          }
+        };
+      }
+    }
+
+    public Renderer<String> getErrorRenderer() {
+      // Show the broken image on error.
+      return getImageRenderer();
+    }
+
+    public Renderer<String> getImageRenderer() {
+      return IMAGE_RENDERER;
+    }
+
+    public Renderer<String> getLoadingRenderer() {
+      return LOADING_RENDERER;
+    }
+  }
+
+  /**
+   * The images used by the {@link DefaultRenderers}.
+   */
+  interface Resources extends ClientBundle {
+    ImageResource loading();
+  }
+
+  private final Renderer<String> errorRenderer;
+  private final Renderer<String> imageRenderer;
+  private final Renderer<String> loadingRenderer;
+
+  /**
+   * <p>
+   * Construct an {@link ImageResourceCell} using the {@link DefaultRenderers}.
+   * </p>
+   * <p>
+   * The {@link DefaultRenderers} will be constructed using
+   * {@link GWT#create(Class)}, which allows you to replace the class using a
+   * deferred binding.
+   * </p>
+   */
+  public ImageLoadingCell() {
+    this(GWT.<DefaultRenderers> create(DefaultRenderers.class));
+  }
+
+  /**
+   * Construct an {@link ImageResourceCell} using the specified
+   * {@link Renderers}.
+   *
+   */
+  public ImageLoadingCell(Renderers renderers) {
+    super("load", "error");
+    this.errorRenderer = renderers.getErrorRenderer();
+    this.imageRenderer = renderers.getImageRenderer();
+    this.loadingRenderer = renderers.getLoadingRenderer();
+  }
+
+  @Override
+  public void onBrowserEvent(Element parent, String value, Object key,
+      NativeEvent event, ValueUpdater<String> valueUpdater) {
+    // The loading indicator can fire its own load or error event, so we check
+    // that the event actually occurred on the main image.
+    String type = event.getType();
+    if ("load".equals(type) && eventOccurredOnImage(event, parent)) {
+      // Remove the loading indicator.
+      parent.getFirstChildElement().getStyle().setDisplay(Display.NONE);
+
+      // Show the image.
+      Element imgWrapper = parent.getChild(1).cast();
+      imgWrapper.getStyle().setProperty("height", "auto");
+      imgWrapper.getStyle().setProperty("width", "auto");
+      imgWrapper.getStyle().setProperty("overflow", "auto");
+    } else if ("error".equals(type) && eventOccurredOnImage(event, parent)) {
+      // Replace the loading indicator with an error message.
+      parent.getFirstChildElement().setInnerHTML(errorRenderer.render(value));
+    }
+  }
+
+  @Override
+  public void render(String value, Object key, StringBuilder sb) {
+    // We can't use ViewData because we don't know the caching policy of the
+    // browser. The browser may fetch the image every time we render.
+    if (value != null) {
+      sb.append("<div>");
+      sb.append(loadingRenderer.render(value));
+      sb.append("</div><div style='height:0px;width:0px;overflow:hidden;'>");
+      sb.append(imageRenderer.render(value));
+      sb.append("</div>");
+    }
+  }
+
+  /**
+   * Check whether or not an event occurred within the wrapper around the image
+   * element.
+   *
+   * @param event the event
+   * @param parent the parent element
+   * @return true if the event targets the image
+   */
+  private boolean eventOccurredOnImage(NativeEvent event, Element parent) {
+    EventTarget eventTarget = event.getEventTarget();
+    if (!Element.is(eventTarget)) {
+      return false;
+    }
+    Element target = eventTarget.cast();
+
+    // Make sure the target occurred within the div around the image.
+    Element imgWrapper = parent.getFirstChildElement().getNextSiblingElement();
+    return imgWrapper.isOrHasChild(target);
+  }
+}

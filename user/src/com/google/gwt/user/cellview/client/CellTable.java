@@ -33,6 +33,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasKeyProvider;
@@ -42,6 +43,7 @@ import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -194,17 +196,23 @@ public class CellTable<T> extends Widget
    */
   private static class Impl {
 
-    final Element tmpElem = Document.get().createDivElement();
+    private final com.google.gwt.user.client.Element tmpElem =
+        Document.get().createDivElement().cast();
 
     /**
-     * Convert the rowHtml into Elements wrapped by the specifeid table section.
+     * Convert the rowHtml into Elements wrapped by the specified table section.
      *
+     * @param table the {@link CellTable}
      * @param sectionTag the table section tag
      * @param rowHtml the Html for the rows
      * @return the section element
      */
     protected TableSectionElement convertToSectionElement(
-        String sectionTag, String rowHtml) {
+        CellTable<?> table, String sectionTag, String rowHtml) {
+      // Attach an event listener so we can catch synchronous load events from
+      // cached images.
+      DOM.setEventListener(tmpElem, table);
+
       // Render the rows into a table.
       // IE doesn't support innerHtml on a TableSection or Table element, so we
       // generate the entire table.
@@ -213,6 +221,9 @@ public class CellTable<T> extends Widget
           + sectionTag + "></table>";
       tmpElem.setInnerHTML(innerHtml);
       TableElement tableElem = tmpElem.getFirstChildElement().cast();
+
+      // Detach the event listener.
+      DOM.setEventListener(tmpElem, null);
 
       // Get the section out of the table.
       if ("tbody".equals(sectionTag)) {
@@ -227,33 +238,61 @@ public class CellTable<T> extends Widget
     }
 
     /**
-     * Render and replace a table section in the table.
+     * Render a table section in the table.
      *
+     * @param table the {@link CellTable}
      * @param section the {@link TableSectionElement} to replace
      * @param html the html to render
-     * @return the new section element
      */
-    protected TableSectionElement renderSectionContents(
-        TableSectionElement section, String html) {
+    protected void replaceAllRows(
+        CellTable<?> table, TableSectionElement section, String html) {
+      // If the widget is not attached, attach an event listener so we can catch
+      // synchronous load events from cached images.
+      if (!table.isAttached()) {
+        DOM.setEventListener(table.getElement(), table);
+      }
+
+      // Render the html.
       section.setInnerHTML(html);
-      return section;
+
+      // Detach the event listener.
+      if (!table.isAttached()) {
+        DOM.setEventListener(table.getElement(), null);
+      }
     }
   }
 
   /**
-   * Implementation of {@link CellTable} used by IE. Table sections do not
-   * support setInnerHtml in IE, so we need to replace the entire element.
+   * Implementation of {@link CellTable} used by IE.
    */
   @SuppressWarnings("unused")
   private static class ImplTrident extends Impl {
 
+    /**
+     * IE doesn't support innerHTML on tbody, nor does it support removing or
+     * replacing a tbody. The only solution is to remove and replace the rows
+     * themselves.
+     */
     @Override
-    protected TableSectionElement renderSectionContents(
-        TableSectionElement section, String html) {
+    protected void replaceAllRows(
+        CellTable<?> table, TableSectionElement section, String html) {
+      // Remove all children.
+      Element child = section.getFirstChildElement();
+      while (child != null) {
+        Element next = child.getNextSiblingElement();
+        section.removeChild(child);
+        child = next;
+      }
+
+      // Add new child elements.
       TableSectionElement newSection = convertToSectionElement(
-          section.getTagName(), html);
-      section.getParentElement().replaceChild(newSection, section);
-      return newSection;
+          table, section.getTagName(), html);
+      child = newSection.getFirstChildElement();
+      while (child != null) {
+        Element next = child.getNextSiblingElement();
+        section.appendChild(child);
+        child = next;
+      }
     }
   }
 
@@ -263,7 +302,7 @@ public class CellTable<T> extends Widget
   private class View extends PagingListViewPresenter.DefaultView<T> {
 
     public View(Element childContainer) {
-      super(childContainer);
+      super(CellTable.this, childContainer);
     }
 
     public boolean dependsOnSelection() {
@@ -339,8 +378,8 @@ public class CellTable<T> extends Widget
 
     @Override
     public void replaceAllChildren(List<T> values, String html) {
-      Element section = TABLE_IMPL.renderSectionContents(tbody, html);
-      setChildContainer(section);
+      TABLE_IMPL.replaceAllRows(
+          CellTable.this, tbody, CellBasedWidgetImpl.get().processHtml(html));
     }
 
     public void setLoadingState(LoadingState state) {
@@ -349,7 +388,7 @@ public class CellTable<T> extends Widget
 
     @Override
     protected Element convertToElements(String html) {
-      return TABLE_IMPL.convertToSectionElement("tbody", html);
+      return TABLE_IMPL.convertToSectionElement(CellTable.this, "tbody", html);
     }
 
     @Override
@@ -428,10 +467,10 @@ public class CellTable<T> extends Widget
 
   private final Style style;
   private final TableElement table;
-  private TableSectionElement tbody;
+  private final TableSectionElement tbody;
   private final TableSectionElement tbodyLoading;
-  private TableSectionElement tfoot;
-  private TableSectionElement thead;
+  private final TableSectionElement tfoot;
+  private final TableSectionElement thead;
   private final View view;
 
   /**
@@ -518,16 +557,26 @@ public class CellTable<T> extends Widget
     updateDependsOnSelection();
 
     // Sink events used by the new column.
-    int eventsToSink = getEventBits(col.getCell().getConsumedEvents());
+    Set<String> consumedEvents = new HashSet<String>();
+    {
+      Set<String> cellEvents = col.getCell().getConsumedEvents();
+      if (cellEvents != null) {
+        consumedEvents.addAll(cellEvents);
+      }
+    }
     if (header != null) {
-      eventsToSink |= getEventBits(header.getCell().getConsumedEvents());
+      Set<String> headerEvents = header.getCell().getConsumedEvents();
+      if (headerEvents != null) {
+        consumedEvents.addAll(headerEvents);
+      }
     }
     if (footer != null) {
-      eventsToSink |= getEventBits(footer.getCell().getConsumedEvents());
+      Set<String> footerEvents = footer.getCell().getConsumedEvents();
+      if (footerEvents != null) {
+        consumedEvents.addAll(footerEvents);
+      }
     }
-    if (eventsToSink > 0) {
-      sinkEvents(eventsToSink);
-    }
+    CellBasedWidgetImpl.get().sinkEvents(this, consumedEvents);
 
     headersStale = true;
     scheduleRedraw();
@@ -619,6 +668,7 @@ public class CellTable<T> extends Widget
 
   @Override
   public void onBrowserEvent(Event event) {
+    CellBasedWidgetImpl.get().onBrowserEvent(this, event);
     super.onBrowserEvent(event);
 
     // Find the cell where the event occurred.
@@ -873,13 +923,8 @@ public class CellTable<T> extends Widget
     }
     sb.append("</tr>");
 
-    // Render and replace the table section.
-    section = TABLE_IMPL.renderSectionContents(section, sb.toString());
-    if (isFooter) {
-      tfoot = section;
-    } else {
-      thead = section;
-    }
+    // Render the section contents.
+    TABLE_IMPL.replaceAllRows(this, section, sb.toString());
 
     // If the section isn't used, hide it.
     setVisible(section, hasHeader);
@@ -924,24 +969,6 @@ public class CellTable<T> extends Widget
   private native int getClientHeight(Element element) /*-{
     return element.clientHeight;
   }-*/;
-
-  /**
-   * Get the event bits for the specified set of event types.
-   *
-   * @param consumedEvents the events to sink
-   */
-  private int getEventBits(Set<String> consumedEvents) {
-    int eventsToSink = 0;
-    if (consumedEvents != null) {
-      for (String typeName : consumedEvents) {
-        int typeId = Event.getTypeInt(typeName);
-        if (typeId > 0) {
-          eventsToSink |= typeId;
-        }
-      }
-    }
-    return eventsToSink;
-  }
 
   /**
    * Schedule a redraw for the end of the event loop.

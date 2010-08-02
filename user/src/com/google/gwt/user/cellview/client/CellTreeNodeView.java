@@ -24,7 +24,6 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.ProvidesKey;
@@ -112,7 +111,7 @@ class CellTreeNodeView<T> extends UIObject {
     private class View extends PagingListViewPresenter.DefaultView<C> {
 
       public View(Element childContainer) {
-        super(childContainer);
+        super(nodeView.tree, childContainer);
       }
 
       public boolean dependsOnSelection() {
@@ -564,14 +563,7 @@ class CellTreeNodeView<T> extends UIObject {
         if (nodeInfo != null) {
           Set<String> consumedEvents = nodeInfo.getCell().getConsumedEvents();
           if (consumedEvents != null) {
-            int eventsToSink = 0;
-            for (String typeName : consumedEvents) {
-              int typeId = Event.getTypeInt(typeName);
-              if (typeId > 0) {
-                eventsToSink |= typeId;
-              }
-            }
-            tree.sinkEvents(eventsToSink);
+            CellBasedWidgetImpl.get().sinkEvents(tree, consumedEvents);
           }
         }
       }

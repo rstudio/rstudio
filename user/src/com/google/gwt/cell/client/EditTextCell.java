@@ -16,6 +16,7 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -122,7 +123,7 @@ public class EditTextCell extends AbstractEditableCell<
   }
 
   public EditTextCell() {
-    super("click", "keydown", "keyup");
+    super("click", "keydown", "keyup", "blur");
   }
 
   @Override
@@ -227,6 +228,16 @@ public class EditTextCell extends AbstractEditableCell<
     } else if ("keyup".equals(type)) {
       // Update the text in the view data on each key.
       updateViewData(parent, viewData, true);
+    } else if ("blur".equals(type)) {
+      // Commit the change. Ensure that we are blurring the input element and
+      // not the parent element itself.
+      EventTarget eventTarget = event.getEventTarget();
+      if (Element.is(eventTarget)) {
+        Element target = Element.as(eventTarget);
+        if ("input".equals(target.getTagName().toLowerCase())) {
+          commit(parent, viewData, valueUpdater);
+        }
+      }
     }
   }
 

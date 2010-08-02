@@ -524,6 +524,7 @@ public class CellTree extends Composite implements HasAnimation {
 
   @Override
   public void onBrowserEvent(Event event) {
+    CellBasedWidgetImpl.get().onBrowserEvent(this, event);
     super.onBrowserEvent(event);
 
     Element target = event.getEventTarget().cast();

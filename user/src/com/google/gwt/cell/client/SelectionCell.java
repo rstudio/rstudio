@@ -77,11 +77,11 @@ public class SelectionCell extends AbstractEditableCell<String, String> {
     sb.append("<select>");
     int index = 0;
     for (String option : options) {
+      sb.append("<option value='").append(option).append("'");
       if (index++ == selectedIndex) {
-        sb.append("<option selected='selected'>");
-      } else {
-        sb.append("<option>");
+        sb.append(" selected='selected'");
       }
+      sb.append(">");
       sb.append(option);
       sb.append("</option>");
     }
