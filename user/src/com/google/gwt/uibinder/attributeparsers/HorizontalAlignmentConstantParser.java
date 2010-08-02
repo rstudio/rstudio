@@ -37,9 +37,11 @@ class HorizontalAlignmentConstantParser extends StrictAttributeParser {
     values.put("LEFT", PREFIX + "LEFT");
     values.put("CENTER", PREFIX + "CENTER");
     values.put("RIGHT", PREFIX + "RIGHT");
+    values.put("JUSTIFY", PREFIX + "JUSTIFY");
     values.put("ALIGN_LEFT", PREFIX + "LEFT");
     values.put("ALIGN_CENTER", PREFIX + "CENTER");
     values.put("ALIGN_RIGHT", PREFIX + "RIGHT");
+    values.put("ALIGN_JUSTIFY", PREFIX + "JUSTIFY");
   }
 
   HorizontalAlignmentConstantParser(FieldReferenceConverter converter,

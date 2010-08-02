@@ -17,6 +17,7 @@
 package com.google.gwt.i18n.shared;
 
 import com.google.gwt.i18n.client.HasDirection.Direction;
+import com.google.gwt.i18n.client.LocaleInfo;
 
 /**
  * Utility class for formatting text for display in a potentially
@@ -182,7 +183,31 @@ public class BidiFormatter {
       boolean alwaysSpan) {
     return new BidiFormatter(contextDir, alwaysSpan);
   }
+  
+  /**
+   * Factory for creating an instance of BidiFormatter whose context direction
+   * matches the current locale's direction. The default behavior of {@link
+   * #spanWrap} and its variations is set to avoid span wrapping unless it's
+   * necessary ('dir' attribute needs to be set).
+   */
+  public static BidiFormatter getInstanceForCurrentLocale() {
+    return getInstanceForCurrentLocale(false);
+  }  
 
+  /**
+   * Factory for creating an instance of BidiFormatter whose context direction
+   * matches the current locale's direction, and given the desired span wrapping
+   * behavior (see below).
+   *
+   * @param alwaysSpan Whether {@link #spanWrap} (and its variations) should
+   *          always use a 'span' tag, even when the input direction is neutral
+   *          or matches the context, so that the DOM structure of the output
+   *          does not depend on the combination of directions
+   */
+  public static BidiFormatter getInstanceForCurrentLocale(boolean alwaysSpan) {
+    return getInstance(LocaleInfo.getCurrentLocale().isRTL(), alwaysSpan);
+  }  
+  
   private boolean alwaysSpan;
   private Direction contextDir;
 
@@ -623,3 +648,4 @@ public class BidiFormatter {
     return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>");
   }
 }
+

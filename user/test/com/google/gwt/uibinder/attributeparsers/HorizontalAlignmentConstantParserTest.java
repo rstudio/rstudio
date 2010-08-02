@@ -49,16 +49,19 @@ public class HorizontalAlignmentConstantParserTest extends TestCase {
     assertEquals(HHA + ".ALIGN_LEFT", parser.parse("left"));
     assertEquals(HHA + ".ALIGN_CENTER", parser.parse("center"));
     assertEquals(HHA + ".ALIGN_RIGHT", parser.parse("right"));
+    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse("justify"));
     // capitalized
     assertEquals(HHA + ".ALIGN_LEFT", parser.parse("Left"));
     assertEquals(HHA + ".ALIGN_CENTER", parser.parse("Center"));
     assertEquals(HHA + ".ALIGN_RIGHT", parser.parse("Right"));
+    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse("Justify"));
   }
 
   public void testUglyNames() throws UnableToCompleteException {
     assertEquals(HHA + ".ALIGN_LEFT", parser.parse("ALIGN_LEFT"));
     assertEquals(HHA + ".ALIGN_CENTER", parser.parse("ALIGN_CENTER"));
     assertEquals(HHA + ".ALIGN_RIGHT", parser.parse("ALIGN_RIGHT"));
+    assertEquals(HHA + ".ALIGN_JUSTIFY", parser.parse("ALIGN_JUSTIFY"));
   }
 
   public void testBad() {
