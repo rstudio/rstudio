@@ -50,8 +50,6 @@ import javax.servlet.http.HttpServletResponse;
 @SuppressWarnings("serial")
 public class RequestFactoryServlet extends HttpServlet {
 
-  private UserInformationImpl userInfo;
-
   @SuppressWarnings("unchecked")
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -64,6 +62,7 @@ public class RequestFactoryServlet extends HttpServlet {
 
     try {
       // Check that user is logged in before proceeding
+      UserInformation userInfo = UserInformation.getCurrentUserInformation();
       if (!userInfo.isUserLoggedIn()) {
         response.setHeader("login", userInfo.getLoginUrl());
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -89,14 +88,7 @@ public class RequestFactoryServlet extends HttpServlet {
     // adding GAE dependencies to GWT.
     String userInfoClass = getServletConfig().getInitParameter("userInfoClass");
     if (userInfoClass != null) {
-      try {
-        userInfo = (UserInformationImpl) Class.forName(userInfoClass).newInstance();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-    if (userInfo == null) {
-      userInfo = new UserInformationImpl();
+      UserInformation.setUserInformationImplClass(userInfoClass);
     }
   }
 

@@ -313,20 +313,22 @@ public class RequestFactoryGenerator extends Generator {
       String returnTypeName = requestSelector.getReturnType().getQualifiedSourceName();
       String nestedImplName = requestSelector.getName().replace('.', '_')
           + "Impl";
+      String nestedImplPackage =
+        generatorContext.getTypeOracle().findType(returnTypeName).getPackage().getName();
 
       sw.println("public " + returnTypeName + " " + requestSelector.getName()
           + "() {");
       sw.indent();
-      sw.println("return new " + nestedImplName + "(this);");
+      sw.println("return new " + nestedImplPackage + "." + nestedImplName + "(this);");
       sw.outdent();
       sw.println("}");
       sw.println();
 
-      PrintWriter pw = generatorContext.tryCreate(logger, packageName,
+      PrintWriter pw = generatorContext.tryCreate(logger, nestedImplPackage,
           nestedImplName);
       if (pw != null) {
         generateRequestSelectorImplementation(logger, generatorContext, pw,
-            requestSelector, interfaceType, packageName, nestedImplName);
+            requestSelector, interfaceType, nestedImplPackage, nestedImplName);
       }
     }
 

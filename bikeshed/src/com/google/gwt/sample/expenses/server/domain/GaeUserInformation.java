@@ -19,13 +19,13 @@ package com.google.gwt.sample.expenses.server.domain;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
-import com.google.gwt.requestfactory.server.UserInformationImpl;
+import com.google.gwt.requestfactory.server.UserInformation;
 
 /**
  * A user information class that uses the Google App Engine authentication
  * framework.
  */
-public class GaeUserInformation extends UserInformationImpl {
+public class GaeUserInformation extends UserInformation {
   private static UserService userService = UserServiceFactory.getUserService();
 
   public static GaeUserInformation getCurrentUserInformation() {
@@ -66,6 +66,14 @@ public class GaeUserInformation extends UserInformationImpl {
   
   public boolean isUserLoggedIn() {
     return userService.isUserLoggedIn();
+  }
+
+  /**
+   * Does nothing since in GAE authentication, the unique ID is provided by
+   * the user service and is based on a hash in the User object.
+   */
+  public void setId(Long id) {
+    // Do nothing
   }
   
 }

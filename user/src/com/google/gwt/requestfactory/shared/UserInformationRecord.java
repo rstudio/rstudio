@@ -16,13 +16,27 @@
 
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.requestfactory.server.UserInformation;
+import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.Record;
+
 /**
- * The information which is made available to the {@link LoginWidget} and other
- * UI elements that are interested in user information.
+ * "API Generated" DTO interface based on {@link UserInformation}.
  */
-public interface UserInformation {
+@DataTransferObject(UserInformation.class)
+public interface UserInformationRecord extends Record  {
+  Property<String> email =
+    new Property<String>("email", "Email", String.class);
+  Property<String> loginUrl =
+    new Property<String>("loginUrl", "LoginUrl", String.class);
+  Property<String> logoutUrl =
+    new Property<String>("logoutUrl", "LogoutUrl", String.class);
+  Property<String> name =
+    new Property<String>("name", "Name", String.class);
+
   String getEmail();
   String getLoginUrl();
   String getLogoutUrl();
   String getName();
+
 }

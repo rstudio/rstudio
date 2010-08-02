@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.UserInformationRequest;
 
 /**
  * "API generated" factory interface to build request objects for the methods of
@@ -46,4 +47,5 @@ public interface ExpensesRequestFactory extends RequestFactory {
    * @return a request selector
    */
   UserInformationRequest userInformationRequest();
+
 }
