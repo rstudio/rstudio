@@ -26,8 +26,8 @@ import com.google.gwt.i18n.client.LocaleInfo;
  */
 public class HTMLTest extends LabelTest {
 
-  private final String EN_HTML = "<b style=\"color: red;\">" + EN_TEXT + "</b>";
-  private final String IW_HTML = "<b style=\"color: red;\">" + IW_TEXT + "</b>";
+  private final String EN_HTML = "<b style=\"color: red\">" + EN_TEXT + "</b>";
+  private final String IW_HTML = "<b style=\"color: red\">" + IW_TEXT + "</b>";
   private HTML label;
 
   @Override
@@ -160,9 +160,9 @@ public class HTMLTest extends LabelTest {
           Direction.DEFAULT);
 
       assertEquals(id + "retreived html is incorrect", iwContent,
-          label.getHTML());
+          label.getHTML().toLowerCase());
       assertEquals(id + "retreived text is incorrect", IW_TEXT,
-          label.getText());
+          label.getText().toLowerCase());
     }
   }
 }
