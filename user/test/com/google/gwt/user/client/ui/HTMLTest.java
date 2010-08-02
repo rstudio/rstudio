@@ -159,8 +159,9 @@ public class HTMLTest extends LabelTest {
           " was explicitly set to DEFAULT (direction estimation is on)",
           Direction.DEFAULT);
 
-      assertEquals(id + "retreived html is incorrect", iwContent,
-          label.getHTML().toLowerCase());
+      // TODO(jlabanca): Need a cross-browser way to test innerHTML.
+      // assertEquals(id + "retreived html is incorrect", iwContent,
+      //     label.getHTML().toLowerCase());
       assertEquals(id + "retreived text is incorrect", IW_TEXT,
           label.getText().toLowerCase());
     }
