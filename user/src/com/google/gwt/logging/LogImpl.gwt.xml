@@ -3,8 +3,13 @@
   
   <!-- Set up and handle the gwt.logging property -->
   <define-property name="gwt.logging.enabled" values="TRUE, FALSE" />
+
   <replace-with class="com.google.gwt.logging.impl.LoggerImplRegular">
     <when-type-is class="com.google.gwt.logging.impl.LoggerImplNull"/>
+    <when-property-is name="gwt.logging.enabled" value="TRUE" />
+  </replace-with>
+  <replace-with class="com.google.gwt.logging.impl.LogManagerImplRegular">
+    <when-type-is class="com.google.gwt.logging.impl.LogManagerImplNull"/>
     <when-property-is name="gwt.logging.enabled" value="TRUE" />
   </replace-with>
   <replace-with class="com.google.gwt.logging.impl.LevelImplRegular">
