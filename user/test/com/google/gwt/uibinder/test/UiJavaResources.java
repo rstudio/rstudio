@@ -83,6 +83,18 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource COMMAND = new MockJavaResource(
+      "com.google.gwt.user.client.Command") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client;\n");
+      code.append("public interface Command {\n");
+      code.append("  void execute();\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource DIALOG_BOX = new MockJavaResource(
       "com.google.gwt.user.client.ui.DialogBox") {
     @Override
@@ -102,6 +114,17 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class DockLayoutPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource ELEMENT = new MockJavaResource(
+      "com.google.gwt.dom.client.Element") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.dom.client;\n");
+      code.append("public class Element {\n");
       code.append("}\n");
       return code;
     }
@@ -256,6 +279,43 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource MENU_BAR = new MockJavaResource(
+      "com.google.gwt.user.client.ui.MenuBar") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class MenuBar extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource MENU_ITEM = new MockJavaResource(
+      "com.google.gwt.user.client.ui.MenuItem") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("import com.google.gwt.user.client.Command;\n");
+      code.append("public class MenuItem extends UIObject {\n");
+      code.append("  public MenuItem(String text, Command command) {\n");
+      code.append("  }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource MENU_ITEM_SEPARATOR = new MockJavaResource(
+      "com.google.gwt.user.client.ui.MenuItemSeparator") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("import com.google.gwt.user.client.Command;\n");
+      code.append("public class MenuItemSeparator extends UIObject {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource MOUSE_OVER_EVENT = new MockJavaResource(
       "com.google.gwt.event.dom.client.MouseOverEvent") {
     @Override
@@ -397,8 +457,10 @@ public class UiJavaResources {
     rtn.add(BUTTON);
     rtn.add(CLICK_EVENT);
     rtn.add(CLICK_HANDLER);
+    rtn.add(COMMAND);
     rtn.add(DIALOG_BOX);
     rtn.add(DOCK_LAYOUT_PANEL);
+    rtn.add(ELEMENT);
     rtn.add(EVENT_HANDLER);
     rtn.add(GRID);
     rtn.add(GWT_EVENT);
@@ -411,6 +473,9 @@ public class UiJavaResources {
     rtn.add(LABEL);
     rtn.add(LAYOUT_PANEL);
     rtn.add(LIST_BOX);
+    rtn.add(MENU_BAR);
+    rtn.add(MENU_ITEM);
+    rtn.add(MENU_ITEM_SEPARATOR);
     rtn.add(MOUSE_OVER_EVENT);
     rtn.add(MOUSE_OVER_HANDLER);
     rtn.add(SPLIT_LAYOUT_PANEL);

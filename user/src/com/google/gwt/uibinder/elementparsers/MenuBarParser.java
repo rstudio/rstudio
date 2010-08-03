@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,38 +20,53 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.MenuItemSeparator;
 
 /**
  * Parses {@link com.google.gwt.user.client.ui.MenuBar} widgets.
  */
 public class MenuBarParser implements ElementParser {
-  private static final String TAG_MENUITEM = "MenuItem";
+
+  static final String BAD_CHILD = "Only MenuItem or MenuItemSeparator subclasses are valid children";
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
     // Generate instantiation (Vertical MenuBars require a ctor param).
-    if (elem.hasAttribute("vertical")) {
-      String vertical = elem.consumeBooleanAttribute("vertical");
-      writer.setFieldInitializerAsConstructor(fieldName,
-          writer.getOracle().findType(MenuBar.class.getName()), vertical);
+    if (MenuBar.class.getName().equals(type.getQualifiedSourceName())) {
+      if (elem.hasAttribute("vertical")) {
+        String vertical = elem.consumeBooleanAttribute("vertical");
+        writer.setFieldInitializerAsConstructor(fieldName,
+            writer.getOracle().findType(MenuBar.class.getName()), vertical);
+      }
     }
+
+    // Prepare base types.
+    JClassType itemType = writer.getOracle().findType(MenuItem.class.getName());
+    JClassType separatorType = writer.getOracle().findType(
+        MenuItemSeparator.class.getName());
 
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
-      // MenuBar can only contain MenuItem elements.
-      {
-        String ns = child.getNamespaceUri();
-        String tagName = child.getLocalName();
+      JClassType childType = writer.findFieldType(child);
 
-        if (!elem.getNamespaceUri().equals(ns) || !tagName.equals(TAG_MENUITEM)) {
-          writer.die(child, "Only <%s:%s> are valid children",
-              elem.getPrefix(), TAG_MENUITEM);
-        }
+      // MenuItem+
+      if (itemType.isAssignableFrom(childType)) {
+        String childFieldName = writer.parseElementToField(child);
+        writer.addStatement("%1$s.addItem(%2$s);", fieldName, childFieldName);
+        continue;
       }
 
-      String itemFieldName = writer.parseElementToField(child);
+      // MenuItemSeparator+
+      if (separatorType.isAssignableFrom(childType)) {
+        String childFieldName = writer.parseElementToField(child);
+        writer.addStatement("%1$s.addSeparator(%2$s);", fieldName,
+            childFieldName);
+        continue;
+      }
 
-      writer.addStatement("%1$s.addItem(%2$s);", fieldName, itemFieldName);
+      // Fail
+      writer.die(child, BAD_CHILD);
     }
   }
 }

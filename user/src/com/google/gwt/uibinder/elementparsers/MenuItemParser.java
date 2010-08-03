@@ -30,9 +30,14 @@ public class MenuItemParser implements ElementParser {
 
   public void parse(final XMLElement elem, String fieldName, JClassType type,
       final UiBinderWriter writer) throws UnableToCompleteException {
-    writer.setFieldInitializerAsConstructor(fieldName,
-        writer.getOracle().findType(MenuItem.class.getName()), "\"\"",
-        "(com.google.gwt.user.client.Command) null");
+
+    // Use special initializer for standard MenuItem,
+    // custom subclass should have default constructor.
+    if (MenuItem.class.getName().equals(type.getQualifiedSourceName())) {
+      writer.setFieldInitializerAsConstructor(fieldName,
+          writer.getOracle().findType(MenuItem.class.getName()), "\"\"",
+          "(com.google.gwt.user.client.Command) null");
+    }
 
     final JClassType menuBarType = writer.getOracle().findType(
         MenuBar.class.getCanonicalName());
@@ -55,7 +60,7 @@ public class MenuItemParser implements ElementParser {
       }
 
       boolean isMenuBar(XMLElement child) throws UnableToCompleteException {
-        return menuBarType.equals(writer.findFieldType(child));
+        return menuBarType.isAssignableFrom(writer.findFieldType(child));
       }
     }
 
