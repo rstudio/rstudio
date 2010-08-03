@@ -50,6 +50,11 @@ public final class MockAbstractResource extends AbstractResource {
   }
 
   @Override
+  public boolean isStale() {
+    return isStale;
+  }
+
+  @Override
   public InputStream openContents() {
     Assert.fail("Not implemented");
     return null;

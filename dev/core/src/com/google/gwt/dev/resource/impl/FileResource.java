@@ -28,6 +28,7 @@ public class FileResource extends AbstractResource {
   private final String abstractPathName;
   private final DirectoryClassPathEntry classPathEntry;
   private final File file;
+  private final long modificationSeconds;
 
   public FileResource(DirectoryClassPathEntry classPathEntry,
       String abstractPathName, File file) {
@@ -35,6 +36,7 @@ public class FileResource extends AbstractResource {
     this.classPathEntry = classPathEntry;
     this.abstractPathName = abstractPathName;
     this.file = file;
+    this.modificationSeconds = lastModifiedSeconds(file);
   }
 
   @Override
@@ -49,12 +51,27 @@ public class FileResource extends AbstractResource {
 
   @Override
   public String getLocation() {
-    return file.toURI().toString();
+    return file.getAbsoluteFile().toURI().toString();
   }
 
   @Override
   public String getPath() {
     return abstractPathName;
+  }
+
+  @Override
+  public boolean isStale() {
+    if (!file.exists()) {
+      // File was deleted. Always stale.
+      return true;
+    }
+
+    long currentModificationSeconds = lastModifiedSeconds(file);
+    /*
+     * We use != instead of > because the point is to reflect what's actually on
+     * the file system, not to worry about freshness per se.
+     */
+    return (currentModificationSeconds != modificationSeconds);
   }
 
   @Override
@@ -70,4 +87,9 @@ public class FileResource extends AbstractResource {
   public boolean wasRerooted() {
     return false;
   }
+
+  private long lastModifiedSeconds(File file) {
+    return file.lastModified() / 1000;
+  }
+
 }
