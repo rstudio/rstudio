@@ -304,6 +304,26 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
     return removed;
   }
+  
+  /**
+   * Updates the size of the widget passed in as long as it is not the center
+   * widget and updates the layout of the dock.
+   *
+   * @param widget the widget that needs to update its size
+   * @param size the size to update the widget to
+   */
+  public void setWidgetSize(Widget widget, double size) {
+    assertIsChild(widget);
+    LayoutData data = (LayoutData) widget.getLayoutData();
+
+    assert data.direction != Direction.CENTER :
+        "The size of the center widget can not be updated.";
+
+    data.size = size;
+
+    // Update the layout.
+    animate(0);
+  }
 
   protected Widget getCenter() {
     return center;
