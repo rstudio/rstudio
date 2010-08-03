@@ -13,23 +13,21 @@
     	margin-left: 5px;
     }
   </ui:style>
-  <ui:with type="com.google.gwt.sample.dynatablerf.client.SchoolCalendarWidget"
-    field="calendar"></ui:with>
   <g:FlowPanel>
-    <dt:DayCheckBox ui:field="sunday" calendar="{calendar}"
-      caption="Sunday" day="0" styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="monday" calendar="{calendar}"
-      caption="Monday" day="0" styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="tuesday" calendar="{calendar}"
-      caption="Tuesday" day="0" styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="wednesday" calendar="{calendar}"
-      caption="Wednesday" day="0" styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="thursday" calendar="{calendar}"
-      caption="Thursday" day="0" styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="friday" calendar="{calendar}"
-      caption="Friday" day="0" styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="saturday" calendar="{calendar}"
-      caption="Saturday" day="0" styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="sunday" caption="Sunday" day="0"
+      styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="monday" caption="Monday" day="0"
+      styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="tuesday" caption="Tuesday" day="0"
+      styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="wednesday" caption="Wednesday" day="0"
+      styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="thursday" caption="Thursday" day="0"
+      styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="friday" caption="Friday" day="0"
+      styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="saturday" caption="Saturday" day="0"
+      styleName="{style.cb}" />
 
     <g:Button ui:field="all" enabled="false" styleName="{style.all}">All</g:Button>
     <g:Button ui:field="none" enabled="false" styleName="{style.none}">None</g:Button>

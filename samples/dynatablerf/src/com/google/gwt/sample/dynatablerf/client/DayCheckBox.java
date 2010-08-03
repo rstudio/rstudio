@@ -15,9 +15,11 @@
  */
 package com.google.gwt.sample.dynatablerf.client;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.uibinder.client.UiConstructor;
+import com.google.gwt.sample.dynatablerf.client.events.FilterChangeEvent;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 
@@ -25,26 +27,21 @@ import com.google.gwt.user.client.ui.Composite;
  * Used by DayFilterWidget.
  */
 class DayCheckBox extends Composite {
-  public final int day;
-  private final CheckBox cb;
+  private final CheckBox cb = new CheckBox();
+  private int day;
+  private final HandlerManager eventBus;
+  private HandlerRegistration filterRegistration;
 
-  @UiConstructor
-  public DayCheckBox(SchoolCalendarWidget calendar, String caption, int day) {
-    cb = new CheckBox(caption);
+  public DayCheckBox(HandlerManager eventBus) {
+    this.eventBus = eventBus;
     initWidget(cb);
-
     cb.setEnabled(false);
-
-    // Remember custom data for this widget.
-    this.day = day;
-
-    // Initialize based on the calendar's current value.
-    cb.setValue(calendar.getDayIncluded(day));
-  }
-
-  public HandlerRegistration addValueChangeHandler(
-      ValueChangeHandler<Boolean> handler) {
-    return cb.addValueChangeHandler(handler);
+    cb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+      public void onValueChange(ValueChangeEvent<Boolean> event) {
+        DayCheckBox.this.eventBus.fireEvent(new FilterChangeEvent(getDay(),
+            getValue()));
+      }
+    });
   }
 
   public int getDay() {
@@ -55,7 +52,36 @@ class DayCheckBox extends Composite {
     return cb.getValue();
   }
 
+  public void setCaption(String caption) {
+    cb.setText(caption);
+  }
+
+  public void setDay(int day) {
+    this.day = day;
+  }
+
   public void setValue(boolean value) {
     cb.setValue(value);
+  }
+
+  /**
+   * Attach to the event bus only when the widget is actually attached to the
+   * DOM.
+   */
+  @Override
+  protected void onLoad() {
+    filterRegistration = eventBus.addHandler(FilterChangeEvent.TYPE,
+        new FilterChangeEvent.Handler() {
+          public void onFilterChanged(FilterChangeEvent e) {
+            if (e.getDay() == getDay()) {
+              setValue(e.isSelected());
+            }
+          }
+        });
+  }
+
+  @Override
+  protected void onUnload() {
+    filterRegistration.removeHandler();
   }
 }

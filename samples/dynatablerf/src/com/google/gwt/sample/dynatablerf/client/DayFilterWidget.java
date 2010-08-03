@@ -17,8 +17,11 @@ package com.google.gwt.sample.dynatablerf.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.sample.dynatablerf.client.events.FilterChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiConstructor;
+import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
@@ -33,9 +36,6 @@ public class DayFilterWidget extends Composite {
 
   interface Binder extends UiBinder<Widget, DayFilterWidget> {
   };
-
-  @UiField(provided = true)
-  final SchoolCalendarWidget calendar;
 
   @UiField
   DayCheckBox sunday;
@@ -56,13 +56,12 @@ public class DayFilterWidget extends Composite {
   @UiField
   Button none;
 
-  private final DayCheckBox[] allDays;
+  private final HandlerManager eventBus;
 
-  public DayFilterWidget(SchoolCalendarWidget calendar) {
-    this.calendar = calendar;
+  @UiConstructor
+  public DayFilterWidget(HandlerManager eventBus) {
+    this.eventBus = eventBus;
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
-    allDays = new DayCheckBox[] {
-        sunday, monday, tuesday, wednesday, thursday, friday, saturday};
   }
 
   @UiHandler(value = {"all", "none"})
@@ -70,22 +69,14 @@ public class DayFilterWidget extends Composite {
     setAllCheckBoxes(all == e.getSource());
   }
 
-  @UiHandler(value = {
-      "sunday", "monday", "tuesday", "wednesday", "thursday", "friday",
-      "saturday"})
-  public void handleClick(ValueChangeEvent<Boolean> e) {
-    DayCheckBox box = (DayCheckBox) e.getSource();
-    onToggle(box);
-  }
-
-  private void onToggle(DayCheckBox box) {
-    calendar.setDayIncluded(box.getDay(), box.getValue());
+  @UiFactory
+  DayCheckBox makeDayCheckBox() {
+    return new DayCheckBox(eventBus);
   }
 
   private void setAllCheckBoxes(boolean checked) {
-    for (DayCheckBox box : allDays) {
-      box.setValue(checked);
-      onToggle(box);
+    for (int day = 0; day < 7; day++) {
+      eventBus.fireEvent(new FilterChangeEvent(day, checked));
     }
   }
 }

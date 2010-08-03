@@ -15,8 +15,8 @@
  */
 package com.google.gwt.sample.dynatablerf.client;
 
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.Composite;
 
 /**
@@ -29,10 +29,10 @@ public class SchoolCalendarWidget extends Composite {
 
   private final DynaTableWidget dynaTable;
 
-  private Command pendingRefresh;
+  private ScheduledCommand pendingRefresh;
 
-  public SchoolCalendarWidget(DynaTableDataProvider calProvider, int visibleRows) {
-    dynaTable = new DynaTableWidget(calProvider, visibleRows);
+  public SchoolCalendarWidget(CalendarProvider provider, int visibleRows) {
+    dynaTable = new DynaTableWidget(provider, visibleRows);
     initWidget(dynaTable);
   }
 
@@ -54,13 +54,13 @@ public class SchoolCalendarWidget extends Composite {
 
     daysFilter[day] = included;
     if (pendingRefresh == null) {
-      pendingRefresh = new Command() {
+      pendingRefresh = new ScheduledCommand() {
         public void execute() {
           pendingRefresh = null;
           dynaTable.refresh();
         }
       };
-      DeferredCommand.addCommand(pendingRefresh);
+      Scheduler.get().scheduleDeferred(pendingRefresh);
     }
   }
 }

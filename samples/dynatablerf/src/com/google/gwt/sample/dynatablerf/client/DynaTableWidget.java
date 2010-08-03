@@ -16,14 +16,15 @@
 package com.google.gwt.sample.dynatablerf.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.sample.dynatablerf.client.DynaTableDataProvider.RowDataAcceptor;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.sample.dynatablerf.client.events.NavigationEvent;
+import com.google.gwt.sample.dynatablerf.client.events.DataAvailableEvent;
+import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DialogBox;
@@ -32,58 +33,15 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
 /**
  * A composite Widget that implements the main interface for the dynamic table,
  * including the data table, status indicators, and paging buttons.
  */
 public class DynaTableWidget extends Composite {
 
-  class NavBar extends Composite {
-
-    @UiField
-    Button gotoFirst;
-
-    @UiField
-    Button gotoNext;
-
-    @UiField
-    Button gotoPrev;
-
-    @UiField
-    DivElement status;
-
-    public NavBar() {
-      NavBarBinder b = GWT.create(NavBarBinder.class);
-      initWidget(b.createAndBindUi(this));
-    }
-
-    @UiHandler("gotoFirst")
-    void onFirst(ClickEvent event) {
-      startRow = 0;
-      refresh();
-    }
-
-    @UiHandler("gotoNext")
-    void onNext(ClickEvent event) {
-      startRow += getDataRowCount();
-      refresh();
-    }
-
-    @UiHandler("gotoPrev")
-    void onPrev(ClickEvent event) {
-      startRow -= getDataRowCount();
-      if (startRow < 0) {
-        startRow = 0;
-      }
-      refresh();
-    }
-  }
-
   interface Binder extends UiBinder<Widget, DynaTableWidget> {
-  }
-
-  @UiTemplate("NavBar.ui.xml")
-  interface NavBarBinder extends UiBinder<Widget, NavBar> {
   }
 
   /**
@@ -112,57 +70,8 @@ public class DynaTableWidget extends Composite {
     }
   }
 
-  private class RowDataAcceptorImpl implements RowDataAcceptor {
-    public void accept(int startRow, String[][] data) {
-
-      int destRowCount = getDataRowCount();
-      int destColCount = grid.getCellCount(0);
-      assert (data.length <= destRowCount) : "Too many rows";
-
-      int srcRowIndex = 0;
-      int srcRowCount = data.length;
-      int destRowIndex = 1; // skip navbar row
-      for (; srcRowIndex < srcRowCount; ++srcRowIndex, ++destRowIndex) {
-        String[] srcRowData = data[srcRowIndex];
-        assert (srcRowData.length == destColCount) : " Column count mismatch";
-        for (int srcColIndex = 0; srcColIndex < destColCount; ++srcColIndex) {
-          String cellHTML = srcRowData[srcColIndex];
-          grid.setText(destRowIndex, srcColIndex, cellHTML);
-        }
-      }
-
-      // Clear remaining table rows.
-      //
-      boolean isLastPage = false;
-      for (; destRowIndex < destRowCount + 1; ++destRowIndex) {
-        isLastPage = true;
-        for (int destColIndex = 0; destColIndex < destColCount; ++destColIndex) {
-          grid.clearCell(destRowIndex, destColIndex);
-        }
-      }
-
-      // Synchronize the nav buttons.
-      navbar.gotoNext.setEnabled(!isLastPage);
-      navbar.gotoFirst.setEnabled(startRow > 0);
-      navbar.gotoPrev.setEnabled(startRow > 0);
-
-      // Update the status message.
-      //
-      setStatusText((startRow + 1) + " - " + (startRow + srcRowCount));
-    }
-
-    public void failed(Throwable caught) {
-      setStatusText("Error");
-      if (errorDialog == null) {
-        errorDialog = new ErrorDialog();
-      }
-      errorDialog.setText("Unexcepted Error processing remote call");
-      errorDialog.setBody(caught.getMessage());
-
-      errorDialog.center();
-    }
-  }
-
+  // TODO: Re-add error handling
+  @SuppressWarnings("unused")
   private static final String NO_CONNECTION_MESSAGE = "<p>The DynaTableRf example uses a "
       + "RequestFactory "
       + "to request data from the server.  In order for the RequestFactory to "
@@ -172,23 +81,24 @@ public class DynaTableWidget extends Composite {
       + "DynaTableRf.  Try running DynaTable in development mode to see the demo "
       + "in action.</p> ";
 
-  private final RowDataAcceptor acceptor = new RowDataAcceptorImpl();
-
   @UiField
   Grid grid;
 
-  @UiField(provided = true)
-  NavBar navbar = new NavBar();
+  @UiField
+  NavBar navbar;
 
   private ErrorDialog errorDialog = null;
 
-  private final DynaTableDataProvider provider;
-
   private int startRow = 0;
 
-  public DynaTableWidget(DynaTableDataProvider provider, int rowCount) {
+  private final CalendarProvider provider;
+
+  private HandlerRegistration rowDataRegistration;
+
+  public DynaTableWidget(CalendarProvider provider, int rowCount) {
     this.provider = provider;
-    initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
+    Binder binder = GWT.create(Binder.class);
+    initWidget(binder.createAndBindUi(this));
     initTable(rowCount);
   }
 
@@ -204,7 +114,7 @@ public class DynaTableWidget extends Composite {
     navbar.gotoNext.setEnabled(false);
 
     setStatusText("Please wait...");
-    provider.updateRowData(startRow, grid.getRowCount() - 1, acceptor);
+    provider.updateRowData(startRow, grid.getRowCount() - 1);
   }
 
   public void setRowCount(int rows) {
@@ -213,6 +123,87 @@ public class DynaTableWidget extends Composite {
 
   public void setStatusText(String text) {
     navbar.status.setInnerText(text);
+  }
+
+  /**
+   * Attach to the event bus only when the widget is attached to the DOM.
+   */
+  @Override
+  protected void onLoad() {
+    rowDataRegistration = provider.addRowDataHandler(new DataAvailableEvent.Handler() {
+      public void onRowData(DataAvailableEvent event) {
+        accept(event.getStartRow(), event.getPeople());
+      }
+    });
+  }
+
+  @Override
+  protected void onUnload() {
+    rowDataRegistration.removeHandler();
+  }
+
+  @UiHandler("navbar")
+  void onNavigation(NavigationEvent e) {
+    switch (e.getDirection()) {
+      case BACKWARD:
+        startRow -= getDataRowCount();
+        break;
+      case FORWARD:
+        startRow += getDataRowCount();
+        break;
+      case START:
+        startRow = 0;
+        break;
+    }
+    refresh();
+  }
+
+  private void accept(int startRow, List<PersonProxy> people) {
+
+    int destRowCount = getDataRowCount();
+    int destColCount = grid.getCellCount(0);
+    assert (people.size() <= destRowCount) : "Too many rows";
+
+    int srcRowIndex = 0;
+    int srcRowCount = people.size();
+    int destRowIndex = 1; // skip navbar row
+    for (; srcRowIndex < srcRowCount; ++srcRowIndex, ++destRowIndex) {
+      PersonProxy p = people.get(srcRowIndex);
+      grid.setText(destRowIndex, 0, p.getName());
+      grid.setText(destRowIndex, 1, p.getDescription());
+      grid.setText(destRowIndex, 2, p.getSchedule());
+    }
+
+    // Clear remaining table rows.
+    //
+    boolean isLastPage = false;
+    for (; destRowIndex < destRowCount + 1; ++destRowIndex) {
+      isLastPage = true;
+      for (int destColIndex = 0; destColIndex < destColCount; ++destColIndex) {
+        grid.clearCell(destRowIndex, destColIndex);
+      }
+    }
+
+    // Synchronize the nav buttons.
+    navbar.gotoNext.setEnabled(!isLastPage);
+    navbar.gotoFirst.setEnabled(startRow > 0);
+    navbar.gotoPrev.setEnabled(startRow > 0);
+
+    // Update the status message.
+    setStatusText((startRow + 1) + " - " + (startRow + srcRowCount));
+  }
+
+  // TODO: Re-add error handling
+  @SuppressWarnings("unused")
+  private void failed(Throwable caught) {
+    setStatusText("Error");
+    if (errorDialog == null) {
+      errorDialog = new ErrorDialog();
+    }
+    errorDialog.setText("Unexcepted Error processing remote call");
+    errorDialog.setBody(caught.getMessage());
+
+    errorDialog.center();
   }
 
   private int getDataRowCount() {

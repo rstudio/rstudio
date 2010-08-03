@@ -25,7 +25,7 @@
   </ui:style>
   <g:DockLayoutPanel unit="EX">
     <g:north size="5">
-      <g:Widget ui:field="navbar" />
+      <dt:NavBar ui:field="navbar" />
     </g:north>
     <g:center>
       <g:Grid ui:field="grid" styleName="{style.grid}">

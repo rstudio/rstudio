@@ -36,17 +36,20 @@ public class DynaTableRf implements EntryPoint {
   @UiField(provided = true)
   SchoolCalendarWidget calendar;
 
+  HandlerManager eventBus = new HandlerManager(null);
+
   @UiField(provided = true)
   DayFilterWidget filter;
 
   public void onModuleLoad() {
-    HandlerManager eventBus = new HandlerManager(null);
 
     DynaTableRequestFactory requests = GWT.create(DynaTableRequestFactory.class);
     requests.init(eventBus);
 
-    calendar = new SchoolCalendarWidget(new CalendarProvider(requests), 15);
-    filter = new DayFilterWidget(calendar);
+    CalendarProvider provider = new CalendarProvider(requests);
+
+    calendar = new SchoolCalendarWidget(provider, 15);
+    filter = new DayFilterWidget(eventBus);
 
     RootLayoutPanel.get().add(
         GWT.<Binder> create(Binder.class).createAndBindUi(this));
