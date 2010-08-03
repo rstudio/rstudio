@@ -15,10 +15,13 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import java.io.BufferedInputStream;
+import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.user.server.rpc.RPCServletUtils;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -49,14 +52,17 @@ import javax.servlet.http.HttpServletResponse;
  */
 @SuppressWarnings("serial")
 public class RequestFactoryServlet extends HttpServlet {
-
+  private static final String JSON_CHARSET = "UTF-8";
+  private static final String JSON_CONTENT_TYPE = "application/json";
+  
   @SuppressWarnings("unchecked")
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+      throws IOException, ServletException {
 
     ensureConfig();
-    String jsonRequestString = getContent(request);
+    String jsonRequestString = RPCServletUtils.readContent(
+        request, JSON_CONTENT_TYPE, JSON_CHARSET);
     response.setStatus(HttpServletResponse.SC_OK);
     PrintWriter writer = response.getWriter();
 
@@ -72,6 +78,8 @@ public class RequestFactoryServlet extends HttpServlet {
         JsonRequestProcessor requestProcessor = new JsonRequestProcessor();
         requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(
             new DefaultSecurityProvider()));
+        response.setHeader(
+            "Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
         writer.print(requestProcessor.decodeAndInvokeRequest(jsonRequestString));
         writer.flush();
       }
@@ -89,24 +97,6 @@ public class RequestFactoryServlet extends HttpServlet {
     String userInfoClass = getServletConfig().getInitParameter("userInfoClass");
     if (userInfoClass != null) {
       UserInformation.setUserInformationImplClass(userInfoClass);
-    }
-  }
-
-  private String getContent(HttpServletRequest request) throws IOException {
-    int contentLength = request.getContentLength();
-    byte contentBytes[] = new byte[contentLength];
-    BufferedInputStream bis = new BufferedInputStream(request.getInputStream());
-    try {
-      int contentBytesOffset = 0;
-      int readLen;
-      while ((readLen = bis.read(contentBytes, contentBytesOffset,
-          contentLength - contentBytesOffset)) > 0) {
-        contentBytesOffset += readLen;
-      }
-      // TODO: encoding issues?
-      return new String(contentBytes);
-    } finally {
-      bis.close();
     }
   }
 }

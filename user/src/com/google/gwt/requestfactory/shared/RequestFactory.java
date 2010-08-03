@@ -28,11 +28,13 @@ import com.google.gwt.valuestore.shared.ValueStore;
  * Marker interface for the RequestFactory code generator.
  */
 public interface RequestFactory {
+  public static final String JSON_CONTENT_TYPE_UTF8 =
+    "application/json; charset=utf-8";
+
+  String SYNC = "SYNC";
 
   // TODO: this must be configurable
   String URL = "gwtRequest";
-
-  String SYNC = "SYNC";
 
   Record create(Class token);
 

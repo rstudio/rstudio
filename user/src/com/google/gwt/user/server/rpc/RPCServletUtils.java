@@ -40,6 +40,9 @@ public class RPCServletUtils {
 
   private static final String ATTACHMENT = "attachment";
 
+  /**
+   * Used both as expected request charset and encoded response charset.
+   */
   private static final String CHARSET_UTF8 = "UTF-8";
 
   private static final String CONTENT_DISPOSITION = "Content-Disposition";
@@ -50,11 +53,9 @@ public class RPCServletUtils {
 
   private static final String CONTENT_TYPE_APPLICATION_JSON_UTF8 = "application/json; charset=utf-8";
 
-  private static final String EXPECTED_CHARSET = "charset=utf-8";
-
-  private static final String EXPECTED_CONTENT_TYPE = "text/x-gwt-rpc";
-
   private static final String GENERIC_FAILURE_MSG = "The call failed on the server; see server log for details";
+
+  private static final String GWT_RPC_CONTENT_TYPE = "text/x-gwt-rpc";
 
   /**
    * Controls the compression threshold at and below which no compression will
@@ -132,43 +133,34 @@ public class RPCServletUtils {
 
   /**
    * Returns the content of an {@link HttpServletRequest} by decoding it using
-   * the UTF-8 charset.
+   * <code>expectedCharSet</code>, or <code>UTF-8</code> if
+   * <code>expectedCharSet</code> is <code>null</null>.
    * 
    * @param request the servlet request whose content we want to read
+   * @param expectedContentType the expected content (i.e. 'type/subtype' only)
+   *          in the Content-Type request header, or <code>null</code> if no
+   *          validation is to be performed, and you are willing to allow for
+   *          some types of cross type security attacks
+   * @param expectedCharSet the expected request charset, or <code>null</code>
+   *          if no charset validation is to be performed and <code>UTF-8</code>
+   *          should be assumed
    * @return the content of an {@link HttpServletRequest} by decoding it using
-   *         the UTF-8 charset
-   * @throws IOException if the requests input stream cannot be accessed, read
-   *           from or closed
-   * @throws ServletException if the content length of the request is not
-   *           specified of if the request's content type is not
-   *           'text/x-gwt-rpc' and 'charset=utf-8'
+   *         <code>expectedCharSet</code>, or <code>UTF-8</code> if
+   *         <code>expectedCharSet</code> is <code>null</null>
+   * @throws IOException if the request's input stream cannot be accessed, read
+   *         from or closed
+   * @throws ServletException if the request's content type does not
+   *         equal the supplied <code>expectedContentType</code> or
+   *         <code>expectedCharSet</code>
    */
-  public static String readContentAsUtf8(HttpServletRequest request)
+  public static String readContent(HttpServletRequest request,
+      String expectedContentType, String expectedCharSet)
       throws IOException, ServletException {
-    return readContentAsUtf8(request, true);
-  }
-
-  /**
-   * Returns the content of an {@link HttpServletRequest} by decoding it using
-   * the UTF-8 charset.
-   * 
-   * @param request the servlet request whose content we want to read
-   * @param checkHeaders Specify 'true' to check the Content-Type header to see
-   *          that it matches the expected value 'text/x-gwt-rpc' and the
-   *          content encoding is UTF-8. Disabling this check may allow some
-   *          types of cross type security attacks.
-   * @return the content of an {@link HttpServletRequest} by decoding it using
-   *         the UTF-8 charset
-   * @throws IOException if the requests input stream cannot be accessed, read
-   *           from or closed
-   * @throws ServletException if the request's content type is not
-   *         'text/x-gwt-rpc' and 'charset=utf-8'
-   */
-  public static String readContentAsUtf8(HttpServletRequest request,
-      boolean checkHeaders) throws IOException, ServletException {
-    if (checkHeaders) {
-      checkContentType(request);
-      checkCharacterEncoding(request);
+    if (expectedContentType != null) {
+      checkContentTypeIgnoreCase(request, expectedContentType);
+    }
+    if (expectedCharSet != null) {
+      checkCharacterEncodingIgnoreCase(request, expectedCharSet);
     }
 
     /*
@@ -186,12 +178,31 @@ public class RPCServletUtils {
         }
         out.write(buffer, 0, byteCount);
       }
-      return out.toString(CHARSET_UTF8);
+      String contentCharSet = expectedCharSet != null
+          ? expectedCharSet : CHARSET_UTF8;
+      return out.toString(contentCharSet);
     } finally {
       if (in != null) {
         in.close();
       }
     }
+  }
+  
+  /**
+   * Returns the content of an {@link HttpServletRequest}, after verifying a
+   * <code>gwt/x-gwt-rpc; charset=utf-8</code> content type.
+   * 
+   * @param request the servlet request whose content we want to read
+   * @return the content of an {@link HttpServletRequest} by decoding it using
+   *         <code>UTF-8</code>
+   * @throws IOException if the request's input stream cannot be accessed, read
+   *         from or closed
+   * @throws ServletException if the request's content type is not
+   *         <code>gwt/x-gwt-rpc; charset=utf-8</code>, ignoring case
+   */
+  public static String readContentAsGwtRpc(HttpServletRequest request)
+      throws IOException, ServletException {
+      return readContent(request, GWT_RPC_CONTENT_TYPE, CHARSET_UTF8);
   }
 
   /**
@@ -307,12 +318,15 @@ public class RPCServletUtils {
   }
 
   /**
-   * Performs validation of the character encoding.
+   * Performs validation of the character encoding, ignoring case.
    * 
-   * @param request the incoming request.
-   * @throws ServletException if requests encoding is not UTF-8
+   * @param request the incoming request
+   * @param expectedCharSet the expected charset of the request
+   * @throws ServletException if requests encoding is not <code>null</code> and
+   *         does not equal, ignoring case, <code>expectedCharSet</code>
    */
-  private static void checkCharacterEncoding(HttpServletRequest request)
+  private static void checkCharacterEncodingIgnoreCase(
+      HttpServletRequest request, String expectedCharSet)
       throws ServletException {
     boolean encodingOkay = false;
     String characterEncoding = request.getCharacterEncoding();
@@ -323,7 +337,8 @@ public class RPCServletUtils {
        * properly parsed character encoding string if we decide to make this
        * change.
        */
-      if (characterEncoding.toLowerCase().indexOf(CHARSET_UTF8.toLowerCase()) != -1) {
+      if (characterEncoding.toLowerCase().indexOf(expectedCharSet.toLowerCase())
+          != -1) {
         encodingOkay = true;
       }
     }
@@ -331,18 +346,24 @@ public class RPCServletUtils {
     if (!encodingOkay) {
       throw new ServletException("Character Encoding is '"
           + (characterEncoding == null ? "(null)" : characterEncoding)
-          + "'.  Expected '" + EXPECTED_CHARSET + "'");
+          + "'.  Expected '" + expectedCharSet + "'");
     }
   }
 
   /**
-   * Performs Content-Type validation of the incoming request.
-   * 
-   * @param request the incoming request.
+   * Performs Content-Type validation of the incoming request, ignoring case
+   * and any <code>charset</code> parameter.
+   *
+   * @see   #checkCharacterEncodingIgnoreCase(HttpServletRequest, String)
+   * @param request the incoming request
+   * @param expectedContentType the expected Content-Type for the incoming
+   *        request
    * @throws ServletException if the request's content type is not
-   *           'text/x-gwt-rpc'
+   *         <code>null</code> and does not, ignoring case, equal
+   *         <code>expectedContentType</code>,
    */
-  private static void checkContentType(HttpServletRequest request)
+  private static void checkContentTypeIgnoreCase(
+      HttpServletRequest request, String expectedContentType)
       throws ServletException {
     String contentType = request.getContentType();
     boolean contentTypeIsOkay = false;
@@ -350,12 +371,10 @@ public class RPCServletUtils {
     if (contentType != null) {
       contentType = contentType.toLowerCase();
       /*
-       * The Content-Type must be text/x-gwt-rpc.
-       * 
        * NOTE:We use startsWith because some servlet engines, i.e. Tomcat, do
        * not remove the charset component but others do.
        */
-      if (contentType.startsWith(EXPECTED_CONTENT_TYPE)) {
+      if (contentType.startsWith(expectedContentType.toLowerCase())) {
         contentTypeIsOkay = true;
       }
     }
@@ -363,7 +382,7 @@ public class RPCServletUtils {
     if (!contentTypeIsOkay) {
       throw new ServletException("Content-Type was '"
           + (contentType == null ? "(null)" : contentType) + "'. Expected '"
-          + EXPECTED_CONTENT_TYPE + "'.");
+          + expectedContentType + "'.");
     }
   }
 

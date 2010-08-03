@@ -178,7 +178,7 @@ public class RPCServletUtilsTest extends TestCase {
       }
     };
 
-    RPCServletUtils.readContentAsUtf8(m, false);
+    RPCServletUtils.readContent(m, null, null);
   }
 
   /**
@@ -186,7 +186,7 @@ public class RPCServletUtilsTest extends TestCase {
    */
   public void testIgnoreContentType() throws IOException, ServletException {
     HttpServletRequest m = new MockReqContentType("application/www-form-encoded");
-    RPCServletUtils.readContentAsUtf8(m, false);
+    RPCServletUtils.readContent(m, null, null);
   }
 
   /**
@@ -203,7 +203,7 @@ public class RPCServletUtilsTest extends TestCase {
     boolean gotException = false;
 
     try {
-      RPCServletUtils.readContentAsUtf8(m);
+      RPCServletUtils.readContentAsGwtRpc(m);
     } catch (ServletException se) {
       if (se.getMessage().indexOf("Character Encoding") != 0) {
         fail(" Unexpected exception " + se);
@@ -224,7 +224,7 @@ public class RPCServletUtilsTest extends TestCase {
         "application/www-form-encoded");
     boolean gotException = false;
     try {
-      RPCServletUtils.readContentAsUtf8(m);
+      RPCServletUtils.readContentAsGwtRpc(m);
     } catch (ServletException se) {
       if (se.getMessage().indexOf("Content-Type") != 0) {
         fail(" Unexpected exception " + se);
@@ -241,7 +241,16 @@ public class RPCServletUtilsTest extends TestCase {
    */
   public void testReadGoodContentType() throws IOException, ServletException {
     HttpServletRequest m = new MockReqContentType("text/x-gwt-rpc");
-    RPCServletUtils.readContentAsUtf8(m);
+    RPCServletUtils.readContentAsGwtRpc(m);
+  }
+
+  /**
+   * Content-Type validation should ignore case.
+   */
+  public void testReadGoodContentTypeIgnoreCase()
+      throws IOException, ServletException {
+    HttpServletRequest m = new MockReqContentType("tExt/X-gwt-rPc");
+    RPCServletUtils.readContentAsGwtRpc(m);
   }
 
   /**
@@ -257,7 +266,7 @@ public class RPCServletUtilsTest extends TestCase {
     };
     boolean gotException = false;
     try {
-      RPCServletUtils.readContentAsUtf8(m);
+      RPCServletUtils.readContentAsGwtRpc(m);
     } catch (ServletException se) {
       if (se.getMessage().indexOf("Character Encoding") != 0) {
         fail(" Unexpected exception " + se);
@@ -276,7 +285,7 @@ public class RPCServletUtilsTest extends TestCase {
     HttpServletRequest m = new MockReqContentType(null);
     boolean gotException = false;
     try {
-      RPCServletUtils.readContentAsUtf8(m);
+      RPCServletUtils.readContentAsGwtRpc(m);
     } catch (ServletException se) {
       if (se.getMessage().indexOf("Content-Type") != 0) {
         fail(" Unexpected exception " + se);
@@ -289,7 +298,8 @@ public class RPCServletUtilsTest extends TestCase {
   }
 
   private String readContentAsUtf8(String content) throws IOException, ServletException {
-    HttpServletRequest m = new MockReqContentType("text/x-gwt-rpc", content);
-    return RPCServletUtils.readContentAsUtf8(m, false);
+    HttpServletRequest m = new MockReqContentType(null, content);
+    // ignore Content-Type, read as UTF-8
+    return RPCServletUtils.readContent(m, null, null);
   }
 }

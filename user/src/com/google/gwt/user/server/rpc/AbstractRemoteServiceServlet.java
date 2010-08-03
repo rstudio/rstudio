@@ -169,14 +169,17 @@ public abstract class AbstractRemoteServiceServlet extends HttpServlet {
    * request. For example, you may want to bypass the check of the Content-Type
    * and character encoding headers in the request, as some proxies re-write the
    * request headers. Note that bypassing these checks may expose the servlet to
-   * some cross-site vulnerabilities.
+   * some cross-site vulnerabilities. Your implementation should comply with the
+   * HTTP/1.1 specification, which includes handling both requests which include
+   * a Content-Length header and requests utilizing <code>Transfer-Encoding:
+   * chuncked</code>.
    * 
    * @param request the incoming request
    * @return the content of the incoming request encoded as a string.
    */
   protected String readContent(HttpServletRequest request)
       throws ServletException, IOException {
-    return RPCServletUtils.readContentAsUtf8(request, true);
+    return RPCServletUtils.readContentAsGwtRpc(request);
   }
 
   /**

@@ -90,6 +90,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   public void fire(final RequestObject<?> requestObject) {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         GWT.getHostPageBaseURL() + RequestFactory.URL);
+    builder.setHeader(
+        "Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
     // TODO: do something better here...
     if (requestObject.getDeltaValueStore().isChanged()) {
       builder.setRequestData(ClientRequestHelper.getRequestString(JsonRequestDataUtil.getRequestMap(

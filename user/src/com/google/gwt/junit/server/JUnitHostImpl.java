@@ -144,7 +144,7 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
       HttpServletResponse response) throws ServletException, IOException {
     String requestURI = request.getRequestURI();
     if (requestURI.endsWith("/junithost/loadError")) {
-      String requestPayload = RPCServletUtils.readContentAsUtf8(request);
+      String requestPayload = RPCServletUtils.readContentAsGwtRpc(request);
       JUnitResult result = new JUnitResult();
       initResult(request, result);
       result.setException(new JUnitFatalLaunchException(requestPayload));
