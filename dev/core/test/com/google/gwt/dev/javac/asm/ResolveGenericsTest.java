@@ -29,7 +29,6 @@ import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.signature.SignatureReader;
 import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.javac.Resolver;
-import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.TypeParameterLookup;
 import com.google.gwt.dev.javac.asm.CollectClassData.ClassType;
@@ -39,12 +38,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Tests for {@link ResolveClassSignature} and
- * {@link ResolveMethodSignature}.
+ * Tests for {@link ResolveClassSignature} and {@link ResolveMethodSignature}.
  */
 public class ResolveGenericsTest extends AsmTestCase {
 
@@ -116,22 +115,19 @@ public class ResolveGenericsTest extends AsmTestCase {
 
   private static final TreeLogger failTreeLogger = new FailErrorTreeLogger();
 
-  private static final String OUTER_CLASS_SIG
-      = "<H:Lcom/google/gwt/dev/javac/asm/TestHandler;>Ljava/lang/Object;";
+  private static final String OUTER_CLASS_SIG = "<H:Lcom/google/gwt/dev/javac/asm/TestHandler;>Ljava/lang/Object;";
   private static final String OUTER_METHOD_SIG = "(TH;)V";
 
-  private static final String OUTER1_CLASS_SIG
-      = "<V:Ljava/lang/Object;>Lcom/google/gwt/dev/javac/asm/TestOuter0<"
-        + "Lcom/google/gwt/dev/javac/asm/TestHandler1<TV;>;>;";
-  private static final String OUTER1_METHOD_SIG
-      = "(Lcom/google/gwt/dev/javac/asm/TestHandler1<TV;>;)V";
+  private static final String OUTER1_CLASS_SIG = "<V:Ljava/lang/Object;>Lcom/google/gwt/dev/javac/asm/TestOuter0<"
+      + "Lcom/google/gwt/dev/javac/asm/TestHandler1<TV;>;>;";
+  private static final String OUTER1_METHOD_SIG = "(Lcom/google/gwt/dev/javac/asm/TestHandler1<TV;>;)V";
 
-  private static final String OUTER2_CLASS_SIG
-      = "Lcom/google/gwt/dev/javac/asm/TestOuter1<Ljava/lang/String;>;";
-  private static final String OUTER2_METHOD_SIG
-      = "(Lcom/google/gwt/dev/javac/asm/TestHandler1<Ljava/lang/String;>;)V";
+  private static final String OUTER2_CLASS_SIG = "Lcom/google/gwt/dev/javac/asm/TestOuter1<Ljava/lang/String;>;";
+  private static final String OUTER2_METHOD_SIG = "(Lcom/google/gwt/dev/javac/asm/TestHandler1<Ljava/lang/String;>;)V";
 
-  private ResolverMockTypeOracle oracle = new ResolverMockTypeOracle();
+  private final Map<String, JRealClassType> binaryMapper;
+  
+  private final TypeOracle oracle;
 
   @SuppressWarnings("unused")
   private JRealClassType testHandler;
@@ -151,13 +147,13 @@ public class ResolveGenericsTest extends AsmTestCase {
 
   private Resolver resolver = new Resolver() {
     public Map<String, JRealClassType> getBinaryMapper() {
-      return oracle.getBinaryMapper();
+      return binaryMapper;
     }
-    
+
     public TypeOracle getTypeOracle() {
       return oracle;
     }
-    
+
     public boolean resolveAnnotations(TreeLogger logger,
         List<CollectAnnotationData> annotations,
         Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
@@ -175,11 +171,8 @@ public class ResolveGenericsTest extends AsmTestCase {
     }
   };
 
-
   public ResolveGenericsTest() {
-    TypeOracleMediator mediator = new TypeOracleMediator(oracle);
-    TypeOracleTestingUtils.buildStandardTypeOracleWith(mediator,
-        failTreeLogger);
+    oracle = TypeOracleTestingUtils.buildStandardTypeOracleWith(failTreeLogger);
     createUnresolvedClass(Object.class, null);
     createUnresolvedClass(String.class, null);
     testHandler = createUnresolvedClass(TestHandler.class, null);
@@ -194,6 +187,13 @@ public class ResolveGenericsTest extends AsmTestCase {
         "dispatch", TestHandler.class);
     testOuter2dispatch = createUnresolvedMethod(testOuter2, TestOuter2.class,
         "dispatch", TestHandler.class);
+    binaryMapper = new LinkedHashMap<String, JRealClassType>();
+    for (JClassType type : oracle.getTypes()) {
+      if (type instanceof JRealClassType) {
+        binaryMapper.put(type.getQualifiedBinaryName().replace('.', '/'),
+            (JRealClassType) type);
+      }
+    }
   }
 
   public void testOuter0Class() {
@@ -206,7 +206,7 @@ public class ResolveGenericsTest extends AsmTestCase {
     resolveMethodSignature(testOuter0dispatch, OUTER_METHOD_SIG);
     // TODO(jat): meaningful tests besides no errors?
   }
-  
+
   public void testOuter1Class() {
     resolveClassSignature(testOuter1, OUTER1_CLASS_SIG);
     JClassType superClass = testOuter1.getSuperclass();
@@ -214,7 +214,7 @@ public class ResolveGenericsTest extends AsmTestCase {
     assertNotNull(superClass.isParameterized());
     // TODO(jat): additional checks?
   }
-  
+
   public void testOuter1Method() {
     resolveMethodSignature(testOuter1dispatch, OUTER1_METHOD_SIG);
     // TODO(jat): meaningful tests besides no errors?
@@ -232,7 +232,7 @@ public class ResolveGenericsTest extends AsmTestCase {
     resolveMethodSignature(testOuter2dispatch, OUTER2_METHOD_SIG);
     // TODO(jat): meaningful tests besides no errors?
   }
-  
+
   private JTypeParameter[] createTypeParams(TypeVariable<?>[] typeParams) {
     int n = typeParams.length;
     JTypeParameter[] params = new JTypeParameter[n];
@@ -254,8 +254,8 @@ public class ResolveGenericsTest extends AsmTestCase {
       enclosingTypeName = enclosingType.getName();
     }
     if (n == 0) {
-      type = new JRealClassType(oracle, pkg, enclosingTypeName,
-        false, clazz.getSimpleName(), clazz.isInterface());
+      type = new JRealClassType(oracle, pkg, enclosingTypeName, false,
+          clazz.getSimpleName(), clazz.isInterface());
     } else {
       JTypeParameter[] params = createTypeParams(typeParams);
       type = new JGenericType(oracle, pkg, enclosingTypeName, false,
@@ -264,8 +264,8 @@ public class ResolveGenericsTest extends AsmTestCase {
     return type;
   }
 
-  private ReflectedMethod createUnresolvedMethod(JClassType type, Class<?> clazz,
-      String methodName, Class<?>... paramTypes) {
+  private ReflectedMethod createUnresolvedMethod(JClassType type,
+      Class<?> clazz, String methodName, Class<?>... paramTypes) {
     Method method = null;
     try {
       method = clazz.getMethod(methodName, paramTypes);
@@ -275,13 +275,12 @@ public class ResolveGenericsTest extends AsmTestCase {
       fail("Exception " + e + " creating method " + methodName + " on " + clazz);
     }
     JTypeParameter[] typeParams = createTypeParams(method.getTypeParameters());
-    Map<Class<? extends Annotation>, Annotation> emptyMap
-        = Collections.emptyMap();
+    Map<Class<? extends Annotation>, Annotation> emptyMap = Collections.emptyMap();
     return new ReflectedMethod(type, methodName, emptyMap, typeParams, method);
   }
 
   private void resolveClassSignature(JRealClassType type, String signature) {
-    Map<String, JRealClassType> binaryMapper = oracle.getBinaryMapper();
+    Map<String, JRealClassType> binaryMapper = resolver.getBinaryMapper();
     TypeParameterLookup lookup = new TypeParameterLookup();
     lookup.pushEnclosingScopes(type);
     ResolveClassSignature classResolver = new ResolveClassSignature(resolver,
@@ -290,8 +289,7 @@ public class ResolveGenericsTest extends AsmTestCase {
     classResolver.finish();
   }
 
-  private void resolveMethodSignature(ReflectedMethod method,
-      String signature) {
+  private void resolveMethodSignature(ReflectedMethod method, String signature) {
     TypeParameterLookup lookup = new TypeParameterLookup();
     lookup.pushEnclosingScopes(method.getEnclosingType());
     lookup.pushScope(method.getTypeParameters());
@@ -307,9 +305,9 @@ public class ResolveGenericsTest extends AsmTestCase {
       argNames[i] = "arg" + i;
       argTypes[i] = Type.getType(paramTypes[i]);
     }
-    ResolveMethodSignature methodResolver = new ResolveMethodSignature(resolver,
-        failTreeLogger, method, lookup, true, methodData, argTypes, argNames,
-        false, new MethodArgNamesLookup());
+    ResolveMethodSignature methodResolver = new ResolveMethodSignature(
+        resolver, failTreeLogger, method, lookup, true, methodData, argTypes,
+        argNames, false, new MethodArgNamesLookup());
     new SignatureReader(signature).accept(methodResolver);
     methodResolver.finish();
   }

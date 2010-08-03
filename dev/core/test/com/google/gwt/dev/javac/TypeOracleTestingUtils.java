@@ -48,17 +48,6 @@ public class TypeOracleTestingUtils {
         generatedUnits);
   }
 
-  public static void buildStandardTypeOracleWith(TypeOracleMediator mediator,
-      TreeLogger logger, Resource... resources) {
-    buildStandardTypeOracleWith(mediator, logger, new HashSet<Resource>(
-        Arrays.asList(resources)));
-  }
-
-  public static void buildStandardTypeOracleWith(TypeOracleMediator mediator,
-      TreeLogger logger, Set<Resource> resources) {
-    buildTypeOracle(mediator, logger, standardBuildersPlus(resources));
-  }
-
   public static TypeOracle buildTypeOracle(TreeLogger logger,
       Set<Resource> resources) {
     return buildTypeOracle(logger, resources,
@@ -71,13 +60,6 @@ public class TypeOracleTestingUtils {
         resources);
     state.addGeneratedCompilationUnits(logger, generatedUnits);
     return state.getTypeOracle();
-  }
-
-  public static void buildTypeOracle(TypeOracleMediator mediator,
-      TreeLogger logger, Set<Resource> resources) {
-    CompilationState state = CompilationStateBuilder.buildFrom(logger,
-        resources);
-    mediator.addNewUnits(logger, state.getCompilationUnits());
   }
 
   /**
