@@ -57,8 +57,9 @@ public class PageSizePager<T> extends Composite implements Pager<T> {
     showMoreButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         Range range = listView.getRange();
-        int pageSize = Math.min(range.getLength() + increment,
-            listView.getDataSize());
+        int pageSize = Math.min(
+            range.getLength() + increment,
+            listView.getDataSize() + (listView.isDataSizeExact() ? 0 : increment));
         listView.setRange(range.getStart(), pageSize);
       }
     });
@@ -84,7 +85,7 @@ public class PageSizePager<T> extends Composite implements Pager<T> {
     // Assumes a page start index of 0.
     int pageSize = listView.getRange().getLength();
     boolean hasLess = pageSize > increment;
-    boolean hasMore = pageSize < listView.getDataSize();
+    boolean hasMore = !listView.isDataSizeExact() || pageSize < listView.getDataSize();
     showLessButton.setVisible(hasLess);
     showMoreButton.setVisible(hasMore);
     layout.setText(0, 1, (hasLess && hasMore) ? " | " : "");
