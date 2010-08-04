@@ -23,16 +23,25 @@ package com.google.gwt.user.client.rpc;
  */
 public class StatusCodeException extends InvocationException {
   private final int statusCode;
+  private final String encodedResponse;
 
   /**
    * Construct an exception with the given status code and description.
    * 
    * @param statusCode the HTTP status code to report
-   * @param message a message to report
+   * @param encodedResponse the HTTP response message to report
    */
-  public StatusCodeException(int statusCode, String message) {
-    super(message);
+  public StatusCodeException(int statusCode, String encodedResponse) {
+    super(statusCode + " " + encodedResponse);
     this.statusCode = statusCode;
+    this.encodedResponse = encodedResponse;
+  }
+
+  /**
+   * Returns the response message associated with the failed request.
+   */
+  public String getEncodedResponse() {
+    return encodedResponse;
   }
 
   /**
@@ -42,4 +51,3 @@ public class StatusCodeException extends InvocationException {
     return statusCode;
   }
 }
-
