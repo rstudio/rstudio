@@ -20,8 +20,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.valuestore.shared.SyncResult;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -46,59 +44,51 @@ public class RequestFactoryLogHandler extends Handler {
     Logger.getLogger(RequestFactoryLogHandler.class.getName());
   
   private boolean closed;
-  private List<LogRecord> records;
   private RequestFactory requestFactory;
-  
-  public RequestFactoryLogHandler(RequestFactory requestFactory) {
-    this(requestFactory, Level.INFO);
-  }
+  private String ignoredLoggerSubstring;
   
   /**
    * Since records from this handler go accross the wire, it should only be
    * used for important messages, and it's Level will often be higher than the
-   * Level being used app-wide.
-   * Do not set the level of this handler below FINER messages, since it logs
-   * messages at that level to acknowledge success/failure, and would cause
-   * an infinite loop.
+   * Level being used app-wide. This handler also takes a string which it will
+   * use to exclude the messages from some loggers. This usually includes the
+   * name of the logger(s) which will be used to log acknowledgements of
+   * activity going accross the wire. If we did not exclude these loggers, an
+   * infinite loop would occur.
    */
-  public RequestFactoryLogHandler(RequestFactory requestFactory, Level level) {
+  public RequestFactoryLogHandler(RequestFactory requestFactory, Level level,
+      String ignoredLoggerSubstring) {
     this.requestFactory = requestFactory;
+    this.ignoredLoggerSubstring = ignoredLoggerSubstring;
     closed = false;
-    records = new ArrayList<LogRecord>();
     setLevel(level);
   }
 
   @Override
   public void close() {
-    flush();
     closed = true;
   }
   
   @Override
   public void flush() {
-    if (!closed) {
-      // We go ahead and just send a request for every message. The request
-      // factory will take care of the batching for us. Once we can send
-      // something more complex than Strings to the logMessage function, then
-      // we can do batching here.
-      for (LogRecord record : records) {
-        Receiver<Long> loggingReceiver = new LoggingReceiver();
-        requestFactory.loggingRequest().logMessage(
-            record.getLevel().toString(),
-            record.getLoggerName(),
-            record.getMessage()).fire(loggingReceiver);
-      }
-    }
+    // Do nothing
   }
 
   @Override
   public void publish(LogRecord record) {
-    if (!closed && isLoggable(record)) {
-      records.add(record);
-      // For now, just flush every time since a new request is sent for every
-      // record anyway.
-      flush();
+    if (closed || !isLoggable(record)) {
+      return;
     }
+    
+    if (record.getLoggerName().contains(ignoredLoggerSubstring)) {
+      return;
+    }
+    
+    Receiver<Long> loggingReceiver = new LoggingReceiver();
+    requestFactory.loggingRequest().logMessage(
+        record.getLevel().toString(),
+        record.getLoggerName(),
+        record.getMessage()).fire(loggingReceiver);
   }
 
 }

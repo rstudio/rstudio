@@ -6,6 +6,7 @@
   <inherits name='com.google.gwt.sample.bikeshed.style.Style'/>
   <inherits name='com.google.gwt.mobile.Mobile'/>
   <inherits name='com.google.gwt.user.cellview.CellView'/>
+  <inherits name='com.google.gwt.logging.Logging'/>
 
   <source path='client'/>
   <source path='request'/>
@@ -15,4 +16,16 @@
   <!-- Default Locale. -->
   <extend-property name="locale" values="en"/>
   <set-property-fallback name="locale" value="en"/>
+  
+  <!-- Logging Configuration -->
+  <set-property name="gwt.logging.enabled" value="TRUE"/> 
+  <set-property name="gwt.logging.logLevel" value="INFO"/>
+  <set-property name="gwt.logging.consoleHandler" value="ENABLED" />
+  <set-property name="gwt.logging.developmentModeHandler" value="ENABLED" />
+  <set-property name="gwt.logging.firebugHandler" value="ENABLED" />
+  <set-property name="gwt.logging.hasWidgetsHandler" value="DISABLED" />
+  <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+  <set-property name="gwt.logging.systemHandler" value="ENABLED" />
+  <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
+
 </module>

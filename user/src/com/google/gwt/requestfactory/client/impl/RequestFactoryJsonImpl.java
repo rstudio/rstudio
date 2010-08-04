@@ -22,6 +22,7 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.requestfactory.client.RequestFactoryLogHandler;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -66,7 +67,14 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
   }
 
-  private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
+  private static Logger logger =
+    Logger.getLogger(RequestFactory.class.getName());
+  
+  // A separate logger for wire activity, which does not get logged by the
+  // remote log handler, so we avoid infinite loops. All log messages that
+  // could happen every time a request is made from the server should be logged
+  // to this logger.
+  private static Logger wireLogger = Logger.getLogger("WireActivityLogger");
 
   private static String SERVER_ERROR = "Server Error";
 
@@ -107,16 +115,22 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
       public void onError(Request request, Throwable exception) {
         postRequestEvent(State.RECEIVED, null);
-        logger.log(Level.SEVERE, SERVER_ERROR, exception);
+        wireLogger.log(Level.SEVERE, SERVER_ERROR, exception);
       }
 
       public void onResponseReceived(Request request, Response response) {
-        logger.finest("Response received");
+        wireLogger.finest("Response received");
         if (200 == response.getStatusCode()) {
           String text = response.getText();
           requestObject.handleResponseText(text);
-        } else {
-          logger.severe(SERVER_ERROR + " (" + response.getStatusText() + ")");
+        } else if (response.SC_UNAUTHORIZED == response.getStatusCode()) {
+          wireLogger.finest("Need to log in");
+        } else if (response.getStatusCode() > 0) {
+          // During the redirection for logging in, we get a response with no
+          // status code, but it's not an error, so we only log errors with
+          // bad status codes here.
+          wireLogger.severe(SERVER_ERROR + " " + response.getStatusCode() + 
+              " " + response.getText());
         }
         postRequestEvent(State.RECEIVED, response);
       }
@@ -124,11 +138,11 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     });
 
     try {
-      logger.finest("Sending fire request");
+      wireLogger.finest("Sending fire request");
       builder.send();
       postRequestEvent(State.SENT, null);
     } catch (RequestException e) {
-      logger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() + ")", e);
+      wireLogger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() + ")", e);
     }
   }
 
@@ -142,16 +156,9 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   protected void init(HandlerManager handlerManager, RecordToTypeMap map) {
     this.valueStore = new ValueStoreJsonImpl(handlerManager, map);
     this.handlerManager = handlerManager;
-    // This Handler should really get added to the Root Logger here, but until
-    // App Engine Dev Mode logging is fixed, we can't use client side handlers
-    // on the Root Logger. Instead, just add it to our own logger as a proof of
-    // concept, and then log a Severe message to it to prove that it's working
-    // All the "finest" messages that this class normally logs are not logged
-    // to this handler since it would cause an infinite loop.
-    // TODO(unnurg): Once this is all set up, ensure that the severe messages
-    // in this class do not cause infinite loops during legitimate errors.
-    // logger.addHandler(new RequestFactoryLogHandler(this));
-    logger.severe("Successful initialization!");
+    Logger.getLogger("").addHandler(new RequestFactoryLogHandler(
+        this, Level.WARNING, wireLogger.getName()));
+    logger.fine("Successfully initialized RequestFactory");
   }
 
   private void postRequestEvent(State received, Response response) {
