@@ -16,9 +16,7 @@
 
 package java.util.logging;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.logging.impl.LogManagerImpl;
-import com.google.gwt.logging.impl.LogManagerImplNull;
+import java.util.HashMap;
 
 /**
  *  An emulation of the java.util.logging.LogManager class. See 
@@ -26,25 +24,76 @@ import com.google.gwt.logging.impl.LogManagerImplNull;
  *  The Java API doc for details</a>
  */
 public class LogManager {
-  private static LogManagerImpl staticImpl =
-    GWT.create(LogManagerImplNull.class);
+  /** 
+   * Since the Logger constructor is protected, the LogManager cannot create
+   * one directly, so we create a RootLogger which has an exposed constructor.
+   */
+  private class RootLogger extends Logger {
+    public RootLogger() {
+      super("", null);
+      setLevel(Level.ALL);
+    }
+  }
 
+  private static LogManager singleton;
+  
   public static LogManager getLogManager() {
-    return staticImpl.getLogManager();
+    if (singleton == null) {
+      singleton = new LogManager();
+    }
+    return singleton;
   }
   
-  private LogManagerImpl impl;
+  private HashMap<String, Logger> loggerList;
+  private Logger rootLogger;
   
   protected LogManager() {
-    impl = GWT.create(LogManagerImplNull.class);
+    loggerList = new HashMap<String, Logger>();
+    rootLogger = new RootLogger();
+    loggerList.put("", rootLogger);
   }
   
   public boolean addLogger(Logger logger) {
-    return impl.addLogger(logger);
+    if (getLogger(logger.getName()) != null) {
+      return false;
+    }
+    addLoggerWithoutDuplicationChecking(logger);
+    return true;
   }
 
   public Logger getLogger(String name) {
-    return impl.getLogger(name);
+    return loggerList.get(name);
+  }
+  
+  /**
+   *  Helper function to add a logger when we have already determined that it
+   *  does not exist.  When we add a logger, we recursively add all of it's
+   *  ancestors. Since loggers do not get removed, logger creation is cheap, 
+   *  and there are not usually too many loggers in an ancestry chain,
+   *  this is a simple way to ensure that the parent/child relationships are
+   *  always correctly set up.
+   */
+  private void addLoggerWithoutDuplicationChecking(Logger logger) {
+    String name = logger.getName();
+    String parentName = name.substring(0, Math.max(0, name.lastIndexOf('.')));
+    Logger parent = getOrAddLogger(parentName);
+    loggerList.put(logger.getName(), logger);
+    logger.setParent(parent);
+  }
+  
+  /**
+   *  Helper function to create a logger if it does not exist since the public
+   *  APIs for getLogger and addLogger make it difficult to use those functions
+   *  for this.
+   */ 
+  private Logger getOrAddLogger(String name) {
+    Logger logger = getLogger(name);
+    if (logger == null) {
+      Logger newLogger = new Logger(name, null);
+      addLoggerWithoutDuplicationChecking(newLogger);
+      return newLogger;
+    }
+    return logger;
   }
   
   /* Not Implemented */
