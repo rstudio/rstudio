@@ -22,6 +22,8 @@ import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.JsValueGlue;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -217,6 +219,7 @@ public class HostedModeClassRewriter {
    */
   public byte[] rewrite(TypeOracle typeOracle, String className,
       byte[] classBytes, Map<String, String> anonymousClassMap) {
+    SpeedTracerLogger.start(DevModeEventType.CLASS_BYTES_REWRITE);
     String desc = toDescriptor(className);
     assert (!jsoIntfDescs.contains(desc));
 
@@ -244,6 +247,7 @@ public class HostedModeClassRewriter {
     }
 
     new ClassReader(classBytes).accept(v, 0);
+    SpeedTracerLogger.end(DevModeEventType.CLASS_BYTES_REWRITE);
     return writer.toByteArray();
   }
 

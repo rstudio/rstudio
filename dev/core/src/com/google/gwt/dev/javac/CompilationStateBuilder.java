@@ -22,6 +22,8 @@ import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import org.apache.commons.collections.map.AbstractReferenceMap;
 import org.apache.commons.collections.map.ReferenceIdentityMap;
@@ -54,7 +56,6 @@ public class CompilationStateBuilder {
 
       public void process(CompilationUnitBuilder builder,
           CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
-
         Map<AbstractMethodDeclaration, JsniMethod> jsniMethods = JsniCollector.collectJsniMethods(
             cud, builder.getSource(), jsProgram);
 
@@ -133,7 +134,12 @@ public class CompilationStateBuilder {
     
     public Collection<CompilationUnit> addGeneratedTypes(TreeLogger logger,
         Collection<GeneratedUnit> generatedUnits) {
-      return doBuildGeneratedTypes(logger, generatedUnits, this);
+      SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+      try {
+        return doBuildGeneratedTypes(logger, generatedUnits, this);
+      } finally {
+        SpeedTracerLogger.end(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+      }
     }
 
     void addValidUnit(CompilationUnit unit) {
@@ -188,12 +194,22 @@ public class CompilationStateBuilder {
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources) {
-    return instance.doBuildFrom(logger, resources, null);
+     SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+     try {
+       return instance.doBuildFrom(logger, resources, null);
+     } finally {
+       SpeedTracerLogger.end(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+     }
   }
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources, AdditionalTypeProviderDelegate delegate) {
-    return instance.doBuildFrom(logger, resources, delegate);
+    SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    try {
+      return instance.doBuildFrom(logger, resources, delegate);
+    } finally {
+      SpeedTracerLogger.end(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    }
   }
 
   public static CompilationStateBuilder get() {
@@ -267,46 +283,52 @@ public class CompilationStateBuilder {
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger,
       Set<Resource> resources, AdditionalTypeProviderDelegate compilerDelegate) {
-    Map<String, CompilationUnit> resultUnits = new HashMap<String, CompilationUnit>();
+    SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    
+    try {
+      Map<String, CompilationUnit> resultUnits = new HashMap<String, CompilationUnit>();
 
-    // For each incoming Java source file...
-    for (Resource resource : resources) {
-      // Try to get an existing unit from the cache.
-      String location = resource.getLocation();
-      ResourceTag tag = resourceContentCache.get(location);
-      if (tag != null && tag.getLastModified() == resource.getLastModified()) {
-        ContentId contentId = tag.getContentId();
-        CompilationUnit existingUnit = unitCache.get(contentId);
-        if (existingUnit != null && existingUnit.isCompiled()) {
-          resultUnits.put(existingUnit.getTypeName(), existingUnit);
+      // For each incoming Java source file...
+      for (Resource resource : resources) {
+        // Try to get an existing unit from the cache.
+        String location = resource.getLocation();
+        ResourceTag tag = resourceContentCache.get(location);
+        if (tag != null && tag.getLastModified() == resource.getLastModified()) {
+          ContentId contentId = tag.getContentId();
+          CompilationUnit existingUnit = unitCache.get(contentId);
+          if (existingUnit != null && existingUnit.isCompiled()) {
+            resultUnits.put(existingUnit.getTypeName(), existingUnit);
+          }
         }
       }
-    }
 
-    // Winnow the reusable set of units down to those still valid.
-    CompilationUnitInvalidator.retainValidUnits(TreeLogger.NULL,
-        resultUnits.values());
+      // Winnow the reusable set of units down to those still valid.
+      CompilationUnitInvalidator.retainValidUnits(TreeLogger.NULL,
+                                                  resultUnits.values());
 
-    // Compile everything else.
-    CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate);
-    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
-    for (Resource resource : resources) {
-      String typeName = Shared.toTypeName(resource.getPath());
-      CompilationUnit validUnit = resultUnits.get(typeName);
-      if (validUnit != null) {
-        compileMoreLater.addValidUnit(validUnit);
-        // Report any existing errors as if the unit were recompiled.
-        CompilationUnitInvalidator.reportErrors(logger, validUnit);
-      } else {
-        builders.add(new ResourceCompilationUnitBuilder(typeName, resource));
+      // Compile everything else.
+      CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate);
+      List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
+      for (Resource resource : resources) {
+        String typeName = Shared.toTypeName(resource.getPath());
+        CompilationUnit validUnit = resultUnits.get(typeName);
+        if (validUnit != null) {
+          compileMoreLater.addValidUnit(validUnit);
+          // Report any existing errors as if the unit were recompiled.
+          CompilationUnitInvalidator.reportErrors(logger, validUnit);
+        } else {
+          builders.add(new ResourceCompilationUnitBuilder(typeName, resource));
+        }
       }
-    }
-    compileMoreLater.compile(logger, builders, resultUnits);
+      compileMoreLater.compile(logger, builders, resultUnits);
 
-    // Invalidate units with invalid refs.
-    invalidateUnitsWithInvalidRefs(logger, resultUnits,
-        Collections.<ContentId> emptySet());
-    return new CompilationState(logger, resultUnits.values(), compileMoreLater);
+      // Invalidate units with invalid refs.
+      invalidateUnitsWithInvalidRefs(logger, resultUnits,
+                                     Collections.<ContentId> emptySet());
+      return new CompilationState(logger, resultUnits.values(), compileMoreLater);
+    } finally {
+      SpeedTracerLogger.end(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    }
   }
 
   /**

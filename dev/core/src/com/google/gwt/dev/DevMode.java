@@ -34,6 +34,8 @@ import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
@@ -362,23 +364,26 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     TreeLogger branch = getTopLogger().branch(TreeLogger.TRACE,
         "Loading modules");
-    for (String moduleName : options.getModuleNames()) {
-      TreeLogger moduleBranch = branch.branch(TreeLogger.TRACE, moduleName);
-      try {
-        ModuleDef module = loadModule(moduleBranch, moduleName, false);
-        // Create a hard reference to the module to avoid gc-ing it until we
-        // actually load the module from the browser.
-        startupModules.put(module.getName(), module);
-        if (!options.isNoServer()) {
-          validateServletTags(moduleBranch, servletValidator, module, webXml);
-        }
-        TreeLogger loadLogger = moduleBranch.branch(TreeLogger.DEBUG,
-            "Bootstrap link for command-line module '" + moduleName + "'");
-        link(loadLogger, module);
-      } catch (UnableToCompleteException e) {
-        // Already logged.
-        return false;
+    SpeedTracerLogger.start(DevModeEventType.SLOW_STARTUP);
+    try {
+      for (String moduleName : options.getModuleNames()) {
+        TreeLogger moduleBranch = branch.branch(TreeLogger.TRACE, moduleName);
+          ModuleDef module = loadModule(moduleBranch, moduleName, false);
+          // Create a hard reference to the module to avoid gc-ing it until we
+          // actually load the module from the browser.
+          startupModules.put(module.getName(), module);
+          if (!options.isNoServer()) {
+            validateServletTags(moduleBranch, servletValidator, module, webXml);
+          }
+          TreeLogger loadLogger = moduleBranch.branch(TreeLogger.DEBUG,
+              "Bootstrap link for command-line module '" + moduleName + "'");
+          link(loadLogger, module);
       }
+    } catch (UnableToCompleteException e) {
+      // Already logged.
+      return false;
+    } finally {
+      SpeedTracerLogger.end(DevModeEventType.SLOW_STARTUP);
     }
     return true;
   }
@@ -393,6 +398,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       return -1;
     }
 
+    SpeedTracerLogger.start(DevModeEventType.JETTY_STARTUP);
     boolean clearCallback = true;
     try {
       ui.setCallback(RestartServerEvent.getType(), this);
@@ -435,6 +441,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       System.err.println("Unable to start embedded HTTP server");
       e.printStackTrace();
     } finally {
+      SpeedTracerLogger.end(DevModeEventType.JETTY_STARTUP);
       if (clearCallback) {
         // Clear the callback if we failed to start the server
         ui.setCallback(RestartServerEvent.getType(), null);

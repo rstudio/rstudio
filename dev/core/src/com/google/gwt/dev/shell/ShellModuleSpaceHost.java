@@ -22,6 +22,8 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.io.File;
 
@@ -82,31 +84,36 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       throws UnableToCompleteException {
     this.space = readySpace;
 
-    // Establish an environment for JavaScript property providers to run.
-    //
-    ModuleSpacePropertyOracle propOracle = new ModuleSpacePropertyOracle(
-        module.getProperties(), module.getActiveLinkerNames(), readySpace);
+    SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_HOST_READY);
+    try {
+      // Establish an environment for JavaScript property providers to run.
+      //
+      ModuleSpacePropertyOracle propOracle = new ModuleSpacePropertyOracle(
+          module.getProperties(), module.getActiveLinkerNames(), readySpace);
 
-    // Set up the rebind oracle for the module.
-    // It has to wait until now because we need to inject javascript.
-    //
-    Rules rules = module.getRules();
-    StandardGeneratorContext genCtx = new StandardGeneratorContext(
-        compilationState, module, genDir, new ArtifactSet());
-    rebindOracle = new StandardRebindOracle(propOracle, rules, genCtx);
+      // Set up the rebind oracle for the module.
+      // It has to wait until now because we need to inject javascript.
+      //
+      Rules rules = module.getRules();
+      StandardGeneratorContext genCtx = new StandardGeneratorContext(
+          compilationState, module, genDir, new ArtifactSet());
+      rebindOracle = new StandardRebindOracle(propOracle, rules, genCtx);
 
-    // Create a completely isolated class loader which owns all classes
-    // associated with a particular module. This effectively builds a
-    // separate 'domain' for each running module, so that they all behave as
-    // though they are running separately. This allows the shell to run
-    // multiple modules, both in succession and simultaneously, without getting
-    // confused.
-    //
-    // Note that the compiling class loader has no parent. This keeps it from
-    // accidentally 'escaping' its domain and loading classes from the system
-    // class loader (the one that loaded the shell itself).
-    //
-    classLoader = new CompilingClassLoader(logger, compilationState, readySpace);
+      // Create a completely isolated class loader which owns all classes
+      // associated with a particular module. This effectively builds a
+      // separate 'domain' for each running module, so that they all behave as
+      // though they are running separately. This allows the shell to run
+      // multiple modules, both in succession and simultaneously, without getting
+      // confused.
+      //
+      // Note that the compiling class loader has no parent. This keeps it from
+      // accidentally 'escaping' its domain and loading classes from the system
+      // class loader (the one that loaded the shell itself).
+      //
+      classLoader = new CompilingClassLoader(logger, compilationState, readySpace);
+    } finally {
+      SpeedTracerLogger.end(DevModeEventType.MODULE_SPACE_HOST_READY);
+    }
   }
 
   public String rebind(TreeLogger logger, String sourceTypeName)

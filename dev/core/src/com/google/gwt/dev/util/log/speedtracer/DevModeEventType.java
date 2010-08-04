@@ -22,26 +22,25 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
  * {@link com.google.gwt.dev.DevMode}
  */
 public enum DevModeEventType implements EventType {
-  CLASS_BYTES_REWRITE("Class bytes rewrite", "DarkBlue"), // foil Eclipse
+  CLASS_BYTES_REWRITE("Class bytes rewrite", "DarkBlue"), //
   COMPILATION_STATE_BUILDER_PROCESS("CompilationStateBuilder process",
-      "CornflowerBlue"), //
+      "Teal"), //
   CREATE_UI("Create UI", "BlueViolet"), //
-  GENERATED_UNITS_ADD("Generated units add", "FireBrick"), //
-  GENERATOR_RUN("Generator run", "Red"), //
-  JAVA_TO_JS_CALL("Java to JS call", "LightSteelBlue"), //
-  JDT_COMPILE("JDT compile", "Blue"), //
-  JETTY_STARTUP("Jetty startup", "Chartreuse"), //
-  JS_TO_JAVA_CALL("JS to Java call", "LightSlateGray"), //
-  MODULE_DEF_LOAD("ModuleDef load", "Yellow"), //
-  MODULE_DEF_NORMALIZE("ModuleDef normalize", "GoldenRod"), //
-  MODULE_DEF_REFRESH("ModuleDef refresh", "GoldenRod"), //
-  MODULE_INIT("Module init", "LightGoldenRodYellow"), //
+  GENERATED_UNITS_ADD("Generated units add", "Brown"), //
+  GENERATOR_RUN("Generator run", "Tomato"), //
+  JAVA_TO_JS_CALL("Java to JS call", "LightSkyBlue"), //
+  JETTY_STARTUP("Jetty startup", "Orchid"), //
+  JS_TO_JAVA_CALL("JS to Java call", "OrangeRed"), //
+  MODULE_DEF_LOAD("ModuleDef load", "Peru"), //
+  MODULE_DEF_NORMALIZE("ModuleDef normalize", "DarkKhaki"), //
+  MODULE_DEF_REFRESH("ModuleDef refresh", "DarkKhaki"), //
+  MODULE_INIT("Module init", "Khaki"), //
   MODULE_SPACE_CLASS_LOAD("ModuleSpace class load", "Ivory"), //
-  MODULE_SPACE_HOST_CREATE("ModuleSpaceHost create", "Yellow"), //
-  MODULE_SPACE_HOST_READY("ModuleSpaceHost ready", "Moccasin"), //
+  MODULE_SPACE_HOST_CREATE("ModuleSpaceHost create", "Peachpuff"), //
+  MODULE_SPACE_HOST_READY("ModuleSpaceHost ready", "Linen"), //
   MODULE_SPACE_LOAD("ModuleSpace load", "LemonChiffon"), //
   MODULE_SPACE_REBIND_AND_CREATE("ModuleSpace rebindAndCreate", "Crimson"), //
-  ON_MODULE_LOAD("onModuleLoad", "LawnGreen"), //
+  ON_MODULE_LOAD("onModuleLoad", "LightGreen"), //
   REBIND("Rebind", "Tomato"), //
   REBOUND_TYPE_CREATE("Rebound type create", "Crimson"), //
   RESOURCE_ORACLE_REFRESH("ResourceOracle refresh", "Orange"), //

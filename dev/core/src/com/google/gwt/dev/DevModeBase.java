@@ -42,6 +42,8 @@ import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
@@ -87,6 +89,7 @@ public abstract class DevModeBase implements DoneCallback {
 
     public ModuleSpaceHost createModuleSpaceHost(ModuleHandle module,
         String moduleName) throws UnableToCompleteException {
+      SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_HOST_CREATE);
       // TODO(jat): add support for closing an active module
       TreeLogger logger = module.getLogger();
       try {
@@ -101,6 +104,8 @@ public abstract class DevModeBase implements DoneCallback {
         logger.log(TreeLogger.ERROR, "Exception initializing module", e);
         module.unload();
         throw e;
+      } finally {
+        SpeedTracerLogger.end(DevModeEventType.MODULE_SPACE_HOST_CREATE);
       }
     }
   }
@@ -1025,6 +1030,7 @@ public abstract class DevModeBase implements DoneCallback {
       throw new IllegalStateException("Startup code has already been run");
     }
 
+    SpeedTracerLogger.start(DevModeEventType.STARTUP);
     // See if there was a UI specified by command-line args
     ui = createUI();
 
@@ -1035,6 +1041,7 @@ public abstract class DevModeBase implements DoneCallback {
        * TODO (amitmanjhi): Adding this redundant logging to narrow down a
        * failure. Remove soon.
        */
+      SpeedTracerLogger.end(DevModeEventType.STARTUP);
       getTopLogger().log(TreeLogger.ERROR, "shell failed in doStartup method");
       return false;
     }
@@ -1073,11 +1080,13 @@ public abstract class DevModeBase implements DoneCallback {
        * TODO (amitmanjhi): Adding this redundant logging to narrow down a
        * failure. Remove soon.
        */
+      SpeedTracerLogger.end(DevModeEventType.STARTUP);
       getTopLogger().log(TreeLogger.ERROR,
           "shell failed in doSlowStartup method");
       return false;
     }
 
+    SpeedTracerLogger.end(DevModeEventType.STARTUP);
     return true;
   }
 
@@ -1104,6 +1113,8 @@ public abstract class DevModeBase implements DoneCallback {
   private DevModeUI createUI() {
     DevModeUI newUI = null;
 
+    SpeedTracerLogger.start(DevModeEventType.CREATE_UI);
+
     if (headlessMode) {
       newUI = new HeadlessUI(options);
     } else {
@@ -1128,6 +1139,7 @@ public abstract class DevModeBase implements DoneCallback {
       baseLogLevelForUI = TreeLogger.Type.INFO;
     }
 
+    SpeedTracerLogger.end(DevModeEventType.CREATE_UI);
     return newUI;
   }
 

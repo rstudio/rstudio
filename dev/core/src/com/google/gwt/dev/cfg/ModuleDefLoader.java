@@ -18,6 +18,8 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.util.tools.Utility;
 
@@ -127,18 +129,24 @@ public final class ModuleDefLoader {
    */
   public static ModuleDef loadFromClassPath(TreeLogger logger,
       String moduleName, boolean refresh) throws UnableToCompleteException {
-    // Look up the module's physical name; if null, we are either encountering
-    // the module for the first time, or else the name is already physical
-    String physicalName = moduleEffectiveNameToPhysicalName.get(moduleName);
-    if (physicalName != null) {
-      moduleName = physicalName;
+    SpeedTracerLogger.start(
+        CompilerEventType.MODULE_DEF, "phase", "loadFromClassPath", "moduleName", moduleName);
+    try {
+      // Look up the module's physical name; if null, we are either encountering
+      // the module for the first time, or else the name is already physical
+      String physicalName = moduleEffectiveNameToPhysicalName.get(moduleName);
+      if (physicalName != null) {
+        moduleName = physicalName;
+      }
+      ModuleDef moduleDef = tryGetLoadedModule(logger, moduleName, refresh);
+      if (moduleDef != null) {
+        return moduleDef;
+      }
+      ModuleDefLoader loader = new ModuleDefLoader();
+      return loader.doLoadModule(logger, moduleName);
+    } finally {
+      SpeedTracerLogger.end(CompilerEventType.MODULE_DEF);
     }
-    ModuleDef moduleDef = tryGetLoadedModule(logger, moduleName, refresh);
-    if (moduleDef != null) {
-      return moduleDef;
-    }
-    ModuleDefLoader loader = new ModuleDefLoader();
-    return loader.doLoadModule(logger, moduleName);
   }
 
   private static ModuleDef tryGetLoadedModule(TreeLogger logger,

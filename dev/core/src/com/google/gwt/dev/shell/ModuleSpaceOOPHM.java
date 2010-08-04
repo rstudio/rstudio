@@ -18,6 +18,8 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.List;
 import java.util.Set;
@@ -102,6 +104,8 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
       Object[] args) throws Throwable {
     TreeLogger branch = host.getLogger().branch(TreeLogger.SPAM,
         "Invoke native method " + name, null);
+    SpeedTracerLogger.start(DevModeEventType.JAVA_TO_JS_CALL);
+
     CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
     JsValueOOPHM jsthis = new JsValueOOPHM();
     Class<?> jthisType = (jthis == null) ? Object.class : jthis.getClass();
@@ -120,11 +124,13 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
       channel.invokeJavascript(isolatedClassLoader, jsthis, name, argv,
           returnVal);
       branch.log(TreeLogger.SPAM, "  returned " + returnVal);
+      return returnVal;
     } catch (Throwable t) {
       branch.log(TreeLogger.SPAM, "exception thrown", t);
       throw t;
+    } finally {
+      SpeedTracerLogger.end(DevModeEventType.JAVA_TO_JS_CALL);
     }
-    return returnVal;
   }
 
   @Override

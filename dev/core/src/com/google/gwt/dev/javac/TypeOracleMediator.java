@@ -56,6 +56,7 @@ import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.io.PrintWriter;
@@ -546,6 +547,8 @@ public class TypeOracleMediator {
    * creating JRealClassType/JGenericType objects.
    */
   private CollectClassData processClass(CompiledClass compiledClass) {
+    SpeedTracerLogger.start(DevModeEventType.VISIT_CLASS_FILE);
+    
     byte[] classBytes = compiledClass.getBytes();
     ClassReader reader = new ClassReader(classBytes);
     CollectClassData mcv = new CollectClassData();
@@ -554,6 +557,8 @@ public class TypeOracleMediator {
       cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
     }
     reader.accept(cv, 0);
+    
+    SpeedTracerLogger.end(DevModeEventType.VISIT_CLASS_FILE);    
     return mcv;
   }
 

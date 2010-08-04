@@ -24,6 +24,8 @@ import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,20 +51,24 @@ public class StandardRebindOracle implements RebindOracle {
 
     public String rebind(TreeLogger logger, String typeName,
         ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
-
-      genCtx.setPropertyOracle(propOracle);
-      String result = tryRebind(logger, typeName);
-      if (artifactAcceptor != null) {
-        // Go ahead and call finish() to accept new artifacts.
-        ArtifactSet newlyGeneratedArtifacts = genCtx.finish(logger);
-        if (!newlyGeneratedArtifacts.isEmpty()) {
-          artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
+      SpeedTracerLogger.start(DevModeEventType.REBIND);
+      try {
+        genCtx.setPropertyOracle(propOracle);
+        String result = tryRebind(logger, typeName);
+        if (artifactAcceptor != null) {
+          // Go ahead and call finish() to accept new artifacts.
+          ArtifactSet newlyGeneratedArtifacts = genCtx.finish(logger);
+          if (!newlyGeneratedArtifacts.isEmpty()) {
+            artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
+          }
         }
+        if (result == null) {
+          result = typeName;
+        }
+        return result;
+      } finally {
+        SpeedTracerLogger.end(DevModeEventType.REBIND);
       }
-      if (result == null) {
-        result = typeName;
-      }
-      return result;
     }
 
     private String tryRebind(TreeLogger logger, String typeName)

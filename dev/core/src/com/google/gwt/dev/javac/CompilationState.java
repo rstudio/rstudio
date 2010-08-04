@@ -18,6 +18,8 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationStateBuilder.CompileMoreLater;
+import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -81,11 +83,17 @@ public class CompilationState {
 
   public void addGeneratedCompilationUnits(TreeLogger logger,
       Collection<GeneratedUnit> generatedUnits) {
-    logger = logger.branch(TreeLogger.DEBUG, "Adding '" + generatedUnits.size()
-        + "' new generated units");
-    Collection<CompilationUnit> newUnits = compileMoreLater.addGeneratedTypes(
-        logger, generatedUnits);
-    assimilateUnits(logger, newUnits);
+    SpeedTracerLogger.start(DevModeEventType.GENERATED_UNITS_ADD);
+
+    try {
+      logger = logger.branch(TreeLogger.DEBUG, "Adding '"
+          + generatedUnits.size() + "' new generated units");
+      Collection<CompilationUnit> newUnits = compileMoreLater.addGeneratedTypes(
+          logger, generatedUnits);
+      assimilateUnits(logger, newUnits);
+    } finally {
+      SpeedTracerLogger.end(DevModeEventType.GENERATED_UNITS_ADD);
+    }
   }
 
   /**

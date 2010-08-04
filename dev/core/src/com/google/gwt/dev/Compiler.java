@@ -171,9 +171,7 @@ public class Compiler {
     ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
     int i = 0;
     for (String moduleName : options.getModuleNames()) {
-      SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "loadFromClassPath", "moduleName", moduleName);
       modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName, true);
-      SpeedTracerLogger.end(CompilerEventType.MODULE_DEF);
     }
     return run(logger, modules);
   }

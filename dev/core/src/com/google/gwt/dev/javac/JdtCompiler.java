@@ -317,11 +317,17 @@ public class JdtCompiler {
    */
   public static List<CompilationUnit> compile(
       Collection<CompilationUnitBuilder> builders) {
-    DefaultUnitProcessor processor = new DefaultUnitProcessor();
-    JdtCompiler compiler = new JdtCompiler(processor);
-    processor.setCompiler(compiler);
-    compiler.doCompile(builders);
-    return processor.getResults();
+    SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER);
+
+    try {
+      DefaultUnitProcessor processor = new DefaultUnitProcessor();
+      JdtCompiler compiler = new JdtCompiler(processor);
+      processor.setCompiler(compiler);
+      compiler.doCompile(builders);
+      return processor.getResults();
+    } finally {
+      SpeedTracerLogger.end(CompilerEventType.JDT_COMPILER);
+    }
   }
 
   public static CompilerOptions getCompilerOptions() {
