@@ -1,7 +1,9 @@
 cd cpe1
 find . -type f | grep -v "\.svn" | xargs jar cvf ../cpe1.jar
+find . -type f | grep -v "\.svn" | xargs zip ../cpe1.zip
 cd ..
 cd cpe2
 find . -type f | grep -v "\.svn" | xargs jar cvf ../cpe2.jar
+find . -type f | grep -v "\.svn" | xargs zip ../cpe2.zip
 cd ..
 

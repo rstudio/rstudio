@@ -23,7 +23,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
- * TODO(bruce): write me.
+ * A {@link ClassPathEntry} for a directory on the file system.
  */
 public class DirectoryClassPathEntry extends ClassPathEntry {
 
@@ -41,10 +41,20 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
         TreeLogger.DEBUG, "Including file: $0");
   }
 
+  /**
+   * Absolute directory.
+   */
   private final File dir;
 
+  private final String location;
+
+  /**
+   * @param dir an absolute directory
+   */
   public DirectoryClassPathEntry(File dir) {
+    assert (dir.isAbsolute());
     this.dir = dir;
+    this.location = dir.toURI().toString();
   }
 
   @Override
@@ -57,7 +67,7 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
 
   @Override
   public String getLocation() {
-    return dir.getAbsoluteFile().toURI().toString();
+    return location;
   }
 
   /**

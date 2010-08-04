@@ -28,7 +28,6 @@ import java.net.URL;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarFile;
 
 /**
  * Shared abstract class for tests that rely on well-known test data.
@@ -154,8 +153,8 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
     return file;
   }
 
-  protected File findJarFile(String name) throws URISyntaxException {
-    URL url = findJarUrl(name);
+  protected File findFile(String name) throws URISyntaxException {
+    URL url = findUrl(name);
     assertNotNull(
         "Expecting on the classpath: "
             + name
@@ -170,7 +169,7 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
    * @param name
    * @return
    */
-  protected URL findJarUrl(String name) {
+  protected URL findUrl(String name) {
     ClassLoader classLoader = getClass().getClassLoader();
     return classLoader.getResource(name);
   }
@@ -193,9 +192,13 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
 
   protected ClassPathEntry getClassPathEntry1AsJar() throws IOException,
       URISyntaxException {
-    File file = findJarFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
-    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(new JarFile(
-        file)));
+    File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
+    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(file));
+  }
+  
+  protected ClassPathEntry getClassPathEntry1AsZip() throws IOException, URISyntaxException {
+    File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe1.zip");
+    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(file));
   }
 
   protected ClassPathEntry getClassPathEntry1AsMock() {
@@ -210,9 +213,13 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
 
   protected ClassPathEntry getClassPathEntry2AsJar() throws URISyntaxException,
       IOException {
-    File file = findJarFile("com/google/gwt/dev/resource/impl/testdata/cpe2.jar");
-    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(new JarFile(
-        file)));
+    File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe2.jar");
+    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(file));
+  }
+  
+  protected ClassPathEntry getClassPathEntry2AsZip() throws URISyntaxException, IOException {
+    File file = findFile("com/google/gwt/dev/resource/impl/testdata/cpe2.zip");
+    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(file));
   }
 
   protected ClassPathEntry getClassPathEntry2AsMock() {

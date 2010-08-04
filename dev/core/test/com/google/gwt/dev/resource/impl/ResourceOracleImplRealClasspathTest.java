@@ -20,6 +20,8 @@ import com.google.gwt.dev.resource.Resource;
 
 import java.util.Map;
 
+import static com.google.gwt.dev.resource.impl.ResourceOracleImplTest.assertResourcesEqual;
+
 /**
  * Tests {@link ResourceOracleImpl} using the real class path.
  * 
@@ -56,6 +58,7 @@ public class ResourceOracleImplRealClasspathTest extends
       });
 
   private final TreeLogger logger = createTestTreeLogger();
+
   private final ResourceOracleImpl resourceOracle = new ResourceOracleImpl(
       logger);
 
@@ -80,12 +83,12 @@ public class ResourceOracleImplRealClasspathTest extends
 
     // Plain refresh should have no effect.
     resourceOracle.refresh(logger);
-    assertSame(resourceMap, resourceOracle.getResourceMap());
+    assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Setting same path entries should have no effect.
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.refresh(logger);
-    assertSame(resourceMap, resourceOracle.getResourceMap());
+    assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Setting identical path entries should have no effect.
     pathPrefixSet = new PathPrefixSet();
@@ -93,18 +96,16 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(THIS_CLASS_PREFIX);
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.refresh(logger);
-    assertSame(resourceMap, resourceOracle.getResourceMap());
+    assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Setting identical result should have no effect.
     pathPrefixSet.add(JUNIT_PREFIX_DUP);
     resourceOracle.refresh(logger);
-    assertSame(resourceMap, resourceOracle.getResourceMap());
+    assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Actually change the working set.
     pathPrefixSet.add(THIS_CLASS_PREFIX_PLUS);
     resourceOracle.refresh(logger);
-    Map<String, Resource> newResourceMap = resourceOracle.getResourceMap();
-    assertNotSame(resourceMap, newResourceMap);
-    assertEquals(3, newResourceMap.size());
+    assertEquals(3, resourceOracle.getResourceMap().size());
   }
 }

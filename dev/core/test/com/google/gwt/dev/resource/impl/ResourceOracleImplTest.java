@@ -17,9 +17,11 @@ package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,6 +31,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,9 +121,9 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     }
 
     public void assertSameCollections(ResourceOracleSnapshot other) {
-      assertSame(resourceMap, other.resourceMap);
-      assertSame(resources, other.resources);
-      assertSame(pathNames, other.pathNames);
+      assertResourcesEqual(resourceMap, other.resourceMap);
+      assertResourcesEqual(resources, other.resources);
+      assertEquals(pathNames, other.pathNames);
     }
 
     public AbstractResource findResourceWithPath(String path) {
@@ -130,13 +134,47 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
       }
       return null;
     }
+    
+    public void assertResourcesGetURL() {
+      for (Resource resource : resources) {
+        URL url = resource.getURL();
+        assertNotNull("Resource " + resource + " had a null getURL()", url);
+        
+        InputStream is = resource.openContents();
+        assertNotNull(is);
+
+        String urlString = Util.readURLAsString(url);
+        String inputString = Util.readStreamAsString(is);
+        assertEquals(urlString, inputString);
+        assertNotNull(urlString);
+        assertNotNull(inputString);
+      }
+    }
+  }
+
+  public static void assertResourcesEqual(Collection<Resource> expected,
+      Collection<Resource> actual) {
+    Set<String> expectedLocs = new HashSet<String>();
+    for (Resource resource : expected) {
+      expectedLocs.add(resource.getLocation());
+    }
+    Set<String> actualLocs = new HashSet<String>();
+    for (Resource resource : actual) {
+      actualLocs.add(resource.getLocation());
+    }
+    assertEquals(expectedLocs, actualLocs);
+  }
+
+  public static void assertResourcesEqual(Map<String, Resource> expected,
+      Map<String, Resource> actual) {
+    assertResourcesEqual(expected.values(), actual.values());
   }
 
   public void testCachingOfJarResources() throws IOException,
       URISyntaxException {
     TreeLogger logger = createTestTreeLogger();
-    ClassPathEntry cpe1jar = new ZipFileClassPathEntry(new JarFile(
-        findJarFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar")));
+    File jarFile = findFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
+    ClassPathEntry cpe1jar = new ZipFileClassPathEntry(jarFile);
 
     // test basic caching
     PathPrefixSet pps1 = new PathPrefixSet();
@@ -162,6 +200,31 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     assertSame(resourceMap2, cpe1jar.findApplicableResources(logger, pps1));
     assertSame(resourceMap3, cpe1jar.findApplicableResources(logger, pps2));
   }
+  
+  public void testGetUrlOnResources() throws URISyntaxException, IOException {
+    ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
+    ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
+    ClassPathEntry cpe1zip = getClassPathEntry1AsZip();
+
+    ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
+    ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
+    ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
+    
+    testGetURLOnResourcesInCPE(cpe1jar);
+    testGetURLOnResourcesInCPE(cpe1dir);
+    testGetURLOnResourcesInCPE(cpe1zip);
+    testGetURLOnResourcesInCPE(cpe2jar);
+    testGetURLOnResourcesInCPE(cpe2dir);
+    testGetURLOnResourcesInCPE(cpe2zip);
+  }
+  
+  private void testGetURLOnResourcesInCPE(ClassPathEntry cpe) {
+    TreeLogger logger = createTestTreeLogger();
+    
+    ResourceOracleImpl oracle = createResourceOracle(cpe);
+    ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
+    s.assertResourcesGetURL();
+  }
 
   /**
    * Test that ResourceOracleImpl preserves the order in which the same logical
@@ -176,8 +239,8 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
 
-    ClassPathEntry[] cp12 = new ClassPathEntry[] {cpe1jar, cpe2jar};
-    ClassPathEntry[] cp21 = new ClassPathEntry[] {cpe2jar, cpe1jar};
+    ClassPathEntry[] cp12 = new ClassPathEntry[]{cpe1jar, cpe2jar};
+    ClassPathEntry[] cp21 = new ClassPathEntry[]{cpe2jar, cpe1jar};
     String resKeyNormal = "org/example/bar/client/BarClient2.txt";
     String resKeyReroot = "/BarClient2.txt";
     PathPrefix pathPrefixNormal = new PathPrefix("org/example/bar/client",
@@ -214,8 +277,8 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
 
-    ClassPathEntry[] cp12 = new ClassPathEntry[] {cpe1jar, cpe2jar};
-    ClassPathEntry[] cp21 = new ClassPathEntry[] {cpe2jar, cpe1jar};
+    ClassPathEntry[] cp12 = new ClassPathEntry[]{cpe1jar, cpe2jar};
+    ClassPathEntry[] cp21 = new ClassPathEntry[]{cpe2jar, cpe1jar};
 
     String keyReroot = "/BarClient1.txt";
 
@@ -242,15 +305,23 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
   public void testReadingResource() throws IOException, URISyntaxException {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
+    ClassPathEntry cpe1zip = getClassPathEntry1AsZip();
 
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
     ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
+    ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
 
     testReadingResource(cpe1jar, cpe2jar);
     testReadingResource(cpe1dir, cpe2jar);
-
+    testReadingResource(cpe1zip, cpe2jar);
+    
     testReadingResource(cpe1jar, cpe2dir);
     testReadingResource(cpe1dir, cpe2dir);
+    testReadingResource(cpe1zip, cpe2dir);
+    
+    testReadingResource(cpe1jar, cpe2zip);
+    testReadingResource(cpe1dir, cpe2zip);
+    testReadingResource(cpe1zip, cpe2zip);
   }
 
   /**
@@ -262,15 +333,15 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
    */
   public void testRemoveDuplicates() throws MalformedURLException {
     TreeLogger logger = createTestTreeLogger();
-    URL cpe1 = findJarUrl("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
-    URL cpe2 = findJarUrl("com/google/gwt/dev/resource/impl/testdata/cpe2.jar");
-    URLClassLoader classLoader = new URLClassLoader(new URL[] {
+    URL cpe1 = findUrl("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
+    URL cpe2 = findUrl("com/google/gwt/dev/resource/impl/testdata/cpe2.zip");
+    URLClassLoader classLoader = new URLClassLoader(new URL[]{
         cpe1, cpe2, cpe2, cpe1, cpe2,}, null);
     ResourceOracleImpl oracle = new ResourceOracleImpl(logger, classLoader);
     List<ClassPathEntry> classPath = oracle.getClassPath();
     assertEquals(2, classPath.size());
     assertJarEntry(classPath.get(0), "cpe1.jar");
-    assertJarEntry(classPath.get(1), "cpe2.jar");
+    assertJarEntry(classPath.get(1), "cpe2.zip");
     oracle = new ResourceOracleImpl(logger, classLoader);
     List<ClassPathEntry> classPath2 = oracle.getClassPath();
     assertEquals(2, classPath2.size());
@@ -283,66 +354,96 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry cpe1mock = getClassPathEntry1AsMock();
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
+    ClassPathEntry cpe1zip = getClassPathEntry1AsZip();
 
     ClassPathEntry cpe2mock = getClassPathEntry2AsMock();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
     ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
+    ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
 
     testResourceAddition(cpe1jar, cpe2jar);
     testResourceAddition(cpe1dir, cpe2jar);
     testResourceAddition(cpe1mock, cpe2jar);
+    testResourceAddition(cpe1zip, cpe2jar);
 
     testResourceAddition(cpe1jar, cpe2dir);
     testResourceAddition(cpe1dir, cpe2dir);
     testResourceAddition(cpe1mock, cpe2dir);
+    testResourceAddition(cpe1zip, cpe2dir);
 
     testResourceAddition(cpe1jar, cpe2mock);
     testResourceAddition(cpe1dir, cpe2mock);
     testResourceAddition(cpe1mock, cpe2mock);
+    testResourceAddition(cpe1zip, cpe2mock);
+    
+    testResourceAddition(cpe1jar, cpe2zip);
+    testResourceAddition(cpe1dir, cpe2zip);
+    testResourceAddition(cpe1mock, cpe2zip);
+    testResourceAddition(cpe1zip, cpe2zip);
   }
 
   public void testResourceDeletion() throws IOException, URISyntaxException {
     ClassPathEntry cpe1mock = getClassPathEntry1AsMock();
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
+    ClassPathEntry cpe1zip = getClassPathEntry1AsZip();
 
     ClassPathEntry cpe2mock = getClassPathEntry2AsMock();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
     ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
+    ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
 
     testResourceDeletion(cpe1jar, cpe2jar);
     testResourceDeletion(cpe1dir, cpe2jar);
     testResourceDeletion(cpe1mock, cpe2jar);
+    testResourceDeletion(cpe1zip, cpe2jar);
 
     testResourceDeletion(cpe1jar, cpe2dir);
     testResourceDeletion(cpe1dir, cpe2dir);
     testResourceDeletion(cpe1mock, cpe2dir);
+    testResourceDeletion(cpe1zip, cpe2dir);
 
     testResourceDeletion(cpe1jar, cpe2mock);
     testResourceDeletion(cpe1dir, cpe2mock);
     testResourceDeletion(cpe1mock, cpe2mock);
+    testResourceDeletion(cpe1zip, cpe2mock);
+    
+    testResourceDeletion(cpe1jar, cpe2zip);
+    testResourceDeletion(cpe1dir, cpe2zip);
+    testResourceDeletion(cpe1mock, cpe2zip);
+    testResourceDeletion(cpe1zip, cpe2zip);
   }
 
   public void testResourceModification() throws IOException, URISyntaxException {
     ClassPathEntry cpe1mock = getClassPathEntry1AsMock();
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
+    ClassPathEntry cpe1zip = getClassPathEntry1AsZip();
 
     ClassPathEntry cpe2mock = getClassPathEntry2AsMock();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
     ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
+    ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
 
     testResourceModification(cpe1jar, cpe2jar);
     testResourceModification(cpe1dir, cpe2jar);
     testResourceModification(cpe1mock, cpe2jar);
+    testResourceModification(cpe1zip, cpe2jar);
 
     testResourceModification(cpe1jar, cpe2dir);
     testResourceModification(cpe1dir, cpe2dir);
     testResourceModification(cpe1mock, cpe2dir);
+    testResourceModification(cpe1zip, cpe2dir);
 
     testResourceModification(cpe1jar, cpe2mock);
     testResourceModification(cpe1dir, cpe2mock);
     testResourceModification(cpe1mock, cpe2mock);
+    testResourceModification(cpe1zip, cpe2mock);
+    
+    testResourceModification(cpe1jar, cpe2zip);
+    testResourceModification(cpe1dir, cpe2zip);
+    testResourceModification(cpe1mock, cpe2zip);
+    testResourceModification(cpe1zip, cpe2zip);
 
     /*
      * TODO(bruce): figure out a good way to test real resource modifications of
@@ -361,7 +462,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     PathPrefix pp1 = new PathPrefix("org/example/bar/client", null, false);
     PathPrefix pp2 = new PathPrefix("org/example/bar", null, false);
     testResourceInCPE(logger, "org/example/bar/client/BarClient2.txt", cpe1,
-        new ClassPathEntry[] {cpe1, cpe2}, pp1, pp2);
+        new ClassPathEntry[]{cpe1, cpe2}, pp1, pp2);
   }
 
   /**
@@ -382,15 +483,15 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
     // Ensure the translatable overrides the basic despite swapping CPE order.
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[] {cpe1, cpe2}, pp1, pp2);
+        new ClassPathEntry[]{cpe1, cpe2}, pp1, pp2);
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[] {cpe2, cpe1}, pp1, pp2);
+        new ClassPathEntry[]{cpe2, cpe1}, pp1, pp2);
 
     // Ensure the translatable overrides the basic despite swapping PPS order.
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[] {cpe1, cpe2}, pp2, pp1);
+        new ClassPathEntry[]{cpe1, cpe2}, pp2, pp1);
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[] {cpe2, cpe1}, pp2, pp1);
+        new ClassPathEntry[]{cpe2, cpe1}, pp2, pp1);
   }
 
   /**

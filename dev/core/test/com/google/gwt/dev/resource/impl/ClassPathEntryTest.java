@@ -26,49 +26,80 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
   public void testAllCpe1FilesFound() throws URISyntaxException, IOException {
     testAllCpe1FilesFound(getClassPathEntry1AsJar());
     testAllCpe1FilesFound(getClassPathEntry1AsDirectory());
+    testAllCpe1FilesFound(getClassPathEntry1AsZip());
   }
 
   public void testAllCpe2FilesFound() throws URISyntaxException, IOException {
     testAllCpe2FilesFound(getClassPathEntry2AsJar());
     testAllCpe2FilesFound(getClassPathEntry2AsDirectory());
+    testAllCpe2FilesFound(getClassPathEntry2AsZip());
   }
 
   public void testPathPrefixSetChanges() throws IOException, URISyntaxException {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
+    ClassPathEntry cpe1zip = getClassPathEntry1AsZip();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
     ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
+    ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
 
     testPathPrefixSetChanges(cpe1jar, cpe2jar);
+    testPathPrefixSetChanges(cpe1dir, cpe2jar);
+    testPathPrefixSetChanges(cpe1zip, cpe2jar);
+    
     testPathPrefixSetChanges(cpe1dir, cpe2dir);
     testPathPrefixSetChanges(cpe1jar, cpe2dir);
-    testPathPrefixSetChanges(cpe1dir, cpe2jar);
+    testPathPrefixSetChanges(cpe1zip, cpe2dir);
+    
+    testPathPrefixSetChanges(cpe1dir, cpe2zip);
+    testPathPrefixSetChanges(cpe1jar, cpe2zip);
+    testPathPrefixSetChanges(cpe1zip, cpe2zip);
   }
 
   public void testUseOfPrefixesWithFiltering() throws IOException,
       URISyntaxException {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
+    ClassPathEntry cpe1zip = getClassPathEntry1AsZip();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
     ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
+    ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
 
+    testUseOfPrefixesWithFiltering(cpe1dir, cpe2jar);
     testUseOfPrefixesWithFiltering(cpe1jar, cpe2jar);
+    testUseOfPrefixesWithFiltering(cpe1dir, cpe2jar);
+    testUseOfPrefixesWithFiltering(cpe1zip, cpe2jar);
+    
     testUseOfPrefixesWithFiltering(cpe1dir, cpe2dir);
     testUseOfPrefixesWithFiltering(cpe1jar, cpe2dir);
-    testUseOfPrefixesWithFiltering(cpe1dir, cpe2jar);
+    testUseOfPrefixesWithFiltering(cpe1zip, cpe2dir);
+    
+    testUseOfPrefixesWithFiltering(cpe1dir, cpe2zip);
+    testUseOfPrefixesWithFiltering(cpe1jar, cpe2zip);
+    testUseOfPrefixesWithFiltering(cpe1zip, cpe2zip);
   }
 
   public void testUseOfPrefixesWithoutFiltering() throws URISyntaxException,
       IOException {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
+    ClassPathEntry cpe1zip = getClassPathEntry1AsZip();
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
     ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
+    ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
 
+    testUseOfPrefixesWithoutFiltering(cpe1dir, cpe2jar);
     testUseOfPrefixesWithoutFiltering(cpe1jar, cpe2jar);
+    testUseOfPrefixesWithoutFiltering(cpe1dir, cpe2jar);
+    testUseOfPrefixesWithoutFiltering(cpe1zip, cpe2jar);
+    
     testUseOfPrefixesWithoutFiltering(cpe1dir, cpe2dir);
     testUseOfPrefixesWithoutFiltering(cpe1jar, cpe2dir);
-    testUseOfPrefixesWithoutFiltering(cpe1dir, cpe2jar);
+    testUseOfPrefixesWithoutFiltering(cpe1zip, cpe2dir);
+    
+    testUseOfPrefixesWithoutFiltering(cpe1dir, cpe2zip);
+    testUseOfPrefixesWithoutFiltering(cpe1jar, cpe2zip);
+    testUseOfPrefixesWithoutFiltering(cpe1zip, cpe2zip);
   }
 
   public void testUseOfPrefixesWithoutFiltering(ClassPathEntry cpe1,

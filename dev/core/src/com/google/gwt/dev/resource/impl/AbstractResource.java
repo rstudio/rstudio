@@ -27,7 +27,5 @@ public abstract class AbstractResource extends Resource {
    * within this package.
    */
   public abstract ClassPathEntry getClassPathEntry();
-
-  public abstract boolean isStale();
 }
 
