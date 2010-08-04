@@ -43,7 +43,6 @@ public class AuthenticationFailureHandler implements RequestEvent.Handler {
       }
       if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
         String loginUrl = response.getHeader("login");
-        loginUrl = loginUrl.replace("RETURN_URL", Location.getHref());
         Location.replace(loginUrl);
       }
       String newUser = response.getHeader("userId");

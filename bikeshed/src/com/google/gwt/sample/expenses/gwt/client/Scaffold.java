@@ -37,6 +37,7 @@ import com.google.gwt.sample.expenses.gwt.request.ExpensesEntityTypesProcessor;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.ui.ListActivitiesMapper;
 import com.google.gwt.sample.expenses.gwt.ui.ScaffoldListPlaceRenderer;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
@@ -91,7 +92,8 @@ public class Scaffold implements EntryPoint {
         login.setUserInformation(userInformationRecord);
       }       
      };
-     requestFactory.userInformationRequest().getCurrentUserInformation().fire(receiver);
+     requestFactory.userInformationRequest().getCurrentUserInformation(
+         Location.getHref()).fire(receiver);
 
     /* Left side lets us pick from all the types of entities */
 

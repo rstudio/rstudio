@@ -35,7 +35,9 @@ import javax.servlet.http.HttpServletResponse;
  * Handles GWT RequestFactory JSON requests. Does user authentication on every
  * request, returning SC_UNAUTHORIZED if authentication fails, as well as a
  * header named "login" which contains the URL the user should be sent in to
- * login. If authentication fails, a header named "userId" is returned, which
+ * login. Note that the servlet expects a "pageurl" header in the request,
+ * indicating the page to redirect to after authentication.
+ * If authentication succeeds, a header named "userId" is returned, which
  * will be unique to the user (so the app can react if the signed in user has
  * changed).
  * 
@@ -68,7 +70,8 @@ public class RequestFactoryServlet extends HttpServlet {
 
     try {
       // Check that user is logged in before proceeding
-      UserInformation userInfo = UserInformation.getCurrentUserInformation();
+      UserInformation userInfo =
+        UserInformation.getCurrentUserInformation(request.getHeader("pageurl"));
       if (!userInfo.isUserLoggedIn()) {
         response.setHeader("login", userInfo.getLoginUrl());
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED);

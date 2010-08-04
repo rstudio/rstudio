@@ -44,7 +44,6 @@ public class LoginWidget extends Composite {
   public void setUserInformation(UserInformationRecord info) {
     name.setInnerText(info.getName());
     logoutUrl = info.getLogoutUrl();
-    logoutUrl = logoutUrl.replace("RETURN_URL", Location.getHref());    
   }
   
   @UiHandler("logoutLink")

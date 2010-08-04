@@ -27,7 +27,12 @@ public abstract class UserInformation {
    * without any information.
    */
   private static class UserInformationSimpleImpl extends UserInformation {
+
     private Long id = 0L;
+
+    public UserInformationSimpleImpl(String redirectUrl) {
+      super(redirectUrl);
+    }
   
     public String getEmail() {
       return "";
@@ -60,18 +65,19 @@ public abstract class UserInformation {
   
   private static String userInformationImplClass = "";
   
-  public static UserInformation getCurrentUserInformation() {
+  public static UserInformation getCurrentUserInformation(String redirectUrl) {
     UserInformation userInfo = null;
     if (!userInformationImplClass.isEmpty()) {
       try {
-        userInfo = 
-          (UserInformation) Class.forName(userInformationImplClass).newInstance();
+        userInfo = (UserInformation) Class.forName(
+            userInformationImplClass).getConstructor(
+                String.class).newInstance(redirectUrl);
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
     if (userInfo == null) {
-      userInfo = new UserInformationSimpleImpl();
+      userInfo = new UserInformationSimpleImpl(redirectUrl);
     }
     return userInfo;
   }
@@ -80,7 +86,14 @@ public abstract class UserInformation {
     userInformationImplClass = clazz;
   }
 
+  protected String redirectUrl = "";
   private Integer version = 0;
+  
+  public UserInformation(String redirectUrl) {
+    if (redirectUrl != null) {
+      this.redirectUrl = redirectUrl;
+    }
+  }
 
   public abstract String getEmail();
   public abstract Long getId();

@@ -27,6 +27,7 @@ import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.impl.JsonRequestDataUtil;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
@@ -101,6 +102,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     } else {
       builder.setRequestData(requestObject.getRequestData());
     }
+    builder.setHeader("pageurl", Location.getHref());
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {

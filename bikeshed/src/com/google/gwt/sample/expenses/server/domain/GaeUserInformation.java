@@ -28,8 +28,12 @@ import com.google.gwt.requestfactory.server.UserInformation;
 public class GaeUserInformation extends UserInformation {
   private static UserService userService = UserServiceFactory.getUserService();
 
-  public static GaeUserInformation getCurrentUserInformation() {
-    return new GaeUserInformation();
+  public static GaeUserInformation getCurrentUserInformation(String redirectUrl) {
+    return new GaeUserInformation(redirectUrl);
+  }
+  
+  public GaeUserInformation(String redirectUrl) {
+    super(redirectUrl);
   }
   
   public String getEmail() {
@@ -49,11 +53,11 @@ public class GaeUserInformation extends UserInformation {
   }
   
   public String getLoginUrl() {
-    return userService.createLoginURL("RETURN_URL");
+    return userService.createLoginURL(redirectUrl);
   }
   
   public String getLogoutUrl() {
-    return userService.createLogoutURL("RETURN_URL");
+    return userService.createLogoutURL(redirectUrl);
   }
   
   public String getName() {
