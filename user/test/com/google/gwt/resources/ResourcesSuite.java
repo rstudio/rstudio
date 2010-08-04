@@ -20,6 +20,8 @@ import com.google.gwt.resources.client.CSSResourceTest;
 import com.google.gwt.resources.client.ImageResourceNoInliningTest;
 import com.google.gwt.resources.client.ImageResourceTest;
 import com.google.gwt.resources.client.NestedBundleTest;
+import com.google.gwt.resources.client.DataResourceDoNotEmbedTest;
+import com.google.gwt.resources.client.DataResourceMimeTypeTest;
 import com.google.gwt.resources.client.TextResourceTest;
 import com.google.gwt.resources.css.CssExternalTest;
 import com.google.gwt.resources.css.CssNodeClonerTest;
@@ -49,7 +51,9 @@ public class ResourcesSuite {
     suite.addTestSuite(ImageResourceTest.class);
     suite.addTestSuite(ImageResourceNoInliningTest.class);
     suite.addTestSuite(NestedBundleTest.class);
+    suite.addTestSuite(DataResourceDoNotEmbedTest.class);
     suite.addTestSuite(ResourceGeneratorUtilTest.class);
+    suite.addTestSuite(DataResourceMimeTypeTest.class);
     suite.addTestSuite(TextResourceTest.class);
     suite.addTestSuite(UnknownAtRuleTest.class);
     return suite;
