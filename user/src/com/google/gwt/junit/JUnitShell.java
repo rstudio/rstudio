@@ -1015,7 +1015,8 @@ public class JUnitShell extends DevMode {
                 + testBatchingMethodTimeoutMillis
                 + "ms.\n  We have no results from:\n"
                 + messageQueue.getWorkingClients(currentTestInfo)
-                + "Actual time elapsed: " + elapsed + " seconds.\n");
+                + "Actual time elapsed: " + elapsed + " seconds.\n"
+                + "Try increasing this timeout using the '-testMethodTimeout minutes' option\n");
       }
     } else if (testBeginTimeout < currentTimeMillis) {
       double elapsed = (currentTimeMillis - testBeginTime) / 1000.0;
@@ -1023,7 +1024,9 @@ public class JUnitShell extends DevMode {
           "The browser did not contact the server within "
               + baseTestBeginTimeoutMillis + "ms.\n"
               + messageQueue.getUnretrievedClients(currentTestInfo)
-              + "\n Actual time elapsed: " + elapsed + " seconds.\n");
+              + "\n Actual time elapsed: " + elapsed + " seconds.\n"
+              + "Try increasing this timeout using the '-testBeginTimeout minutes' option\n"
+              + "The default value of minutes is 1, i.e., the server waits 1 minute or 60 seconds.\n");
     }
 
     // Check that we haven't lost communication with a remote host.
