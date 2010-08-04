@@ -35,7 +35,7 @@ class GWTDummyBridge extends GWTBridge {
   public <T> T create(Class<?> classLiteral) {
     return null;
   }
-
+      
   /**
    * @return the current version of GWT ({@link About#getGwtVersionNum()})
    */

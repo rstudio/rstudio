@@ -22,6 +22,15 @@ import com.google.gwt.dev.About;
  * This class is the hosted-mode peer for {@link com.google.gwt.core.client.GWT}.
  */
 public class GWTBridgeImpl extends GWTBridge {
+      
+  protected static ThreadLocal<String> uniqueID =
+    new ThreadLocal<String>() {
+    private int counter = 0;
+        
+    public String initialValue() {
+      return "DevModeThread" + ++counter;
+    }
+  };
 
   private final ShellJavaScriptHost host;
 
@@ -42,6 +51,13 @@ public class GWTBridgeImpl extends GWTBridge {
           + "' (did you forget to inherit a required module?)";
       throw new RuntimeException(msg, e);
     }
+  }
+
+  @Override
+  public String getThreadUniqueID() {
+    // TODO(unnurg): Remove this function once Dev Mode rewriting classes are
+    // in gwt-dev.
+    return uniqueID.get();
   }
 
   @Override

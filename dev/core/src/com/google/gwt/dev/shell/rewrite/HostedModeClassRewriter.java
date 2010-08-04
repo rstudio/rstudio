@@ -227,6 +227,8 @@ public class HostedModeClassRewriter {
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
+    v = new UseMirroredClasses(v, className);
+    
     v = new RewriteSingleJsoImplDispatches(v, typeOracle, jsoData);
 
     v = new RewriteRefsToJsoClasses(v, jsoIntfDescs, mapper);

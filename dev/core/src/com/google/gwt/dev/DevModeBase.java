@@ -710,19 +710,6 @@ public abstract class DevModeBase implements DoneCallback {
     return buf.toString();
   }
   
-  /**
-   * Set up the system to use a DevModeLogManager, which will delegate to
-   * different LogManager instances for client and server code.
-   */
-  protected static void setLogManager() {
-    String oldLogManager = System.getProperty("java.util.logging.manager");
-    if (oldLogManager != null) {
-      System.setProperty("java.util.logging.oldLogManager", oldLogManager);
-    }
-    System.setProperty("java.util.logging.manager",
-        "com.google.gwt.dev.shell.DevModeLogManager");
-  }
-
   protected TreeLogger.Type baseLogLevelForUI = null;
 
   protected String bindAddress;
@@ -797,9 +784,6 @@ public abstract class DevModeBase implements DoneCallback {
     try {
       // Eager AWT init for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.initGui();
-
-      // Ensure that client and server logging does not share a root logger
-      setLogManager();
 
       boolean success = startUp();
 

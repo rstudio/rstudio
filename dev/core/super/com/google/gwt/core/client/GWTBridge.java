@@ -23,6 +23,10 @@ public abstract class GWTBridge {
 
   public abstract <T> T create(Class<?> classLiteral);
 
+  public String getThreadUniqueID() {
+    return "";
+  }
+  
   public abstract String getVersion();
 
   public abstract boolean isClient();

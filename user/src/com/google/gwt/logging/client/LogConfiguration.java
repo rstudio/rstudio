@@ -60,6 +60,10 @@ public class LogConfiguration implements EntryPoint {
 
     public void configureClientSideLogging() {
       root = Logger.getLogger("");
+      // In DevMode, this root logger will have a parent and we do not want this
+      // root logger to pass messages to it's parent, so we set
+      // useParentHandlers to false here.
+      root.setUseParentHandlers(false);
       setLevels(root);
       setDefaultHandlers(root);
     }

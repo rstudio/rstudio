@@ -164,6 +164,23 @@ public final class GWT {
     return sUncaughtExceptionHandler;
   }
 
+  /**
+   * Returns the empty string when running in web mode, but returns a unique
+   * string for each thread in hosted mode (for example, different windows
+   * accessing the dev mode server will each have a unique id, and hitting
+   * refresh without restarting dev mode will result in a new unique id for
+   * a particular window.
+   * 
+   * TODO(unnurg): Remove this function once Dev Mode rewriting classes are
+   * in gwt-dev.
+   */
+  public static String getUniqueThreadId() {
+    if (sGWTBridge != null) {
+      return sGWTBridge.getThreadUniqueID();
+    }
+    return "";
+  }
+
   public static String getVersion() {
     if (sGWTBridge == null) {
       return getVersion0();
