@@ -9,9 +9,9 @@
       position: absolute;
       left:0;
       right:0;
-      top:0;
+      top: 3px;
       height: 2em;
-      margin-left: 12em;
+      margin-left: 15px;
     }
     @sprite .createButton {
       gwt-image: 'createButton';
@@ -30,6 +30,9 @@
      }
     .controls button {
        display:inline;       
+     }
+     .listView {
+       position: relative;
      }
      .listView > table {
        table-layout:fixed;
