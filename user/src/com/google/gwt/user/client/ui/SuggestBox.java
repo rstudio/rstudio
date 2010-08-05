@@ -276,6 +276,14 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
      * partner.
      */
     private SuggestBox lastSuggestBox = null;
+    
+    /**
+     * Sub-classes making use of {@link decorateSuggestionList} to add 
+     * elements to the suggestion popup _may_ want those elements to show even 
+     * when there are 0 suggestions. An example would be showing a "No 
+     * matches" message.
+     */
+    private boolean hideWhenEmpty = true;
 
     /**
      * Construct a new {@link DefaultSuggestionDisplay}.
@@ -293,6 +301,16 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
 
     public boolean isAnimationEnabled() {
       return suggestionPopup.isAnimationEnabled();
+    }
+
+    /**
+     * Check whether or not the suggestion list is hidden when there are no 
+     * suggestions to display.
+     * 
+     * @return true if hidden when empty, false if not
+     */
+    public boolean isSuggestionListHiddenWhenEmpty() {
+      return hideWhenEmpty;
     }
 
     /**
@@ -318,6 +336,16 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       suggestionPopup.setStyleName(style);
     }
 
+    /**
+     * Set whether or not the suggestion list should be hidden when there are 
+     * no suggestions to display. Defaults to true.
+     *
+     * @param hideWhenEmpty true to hide when empty, false not to
+     */
+    public void setSuggestionListHiddenWhenEmpty(boolean hideWhenEmpty) {
+      this.hideWhenEmpty = hideWhenEmpty;
+    }
+    
     /**
      * Create the PopupPanel that will hold the list of suggestions.
      * 
@@ -412,7 +440,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
         boolean isDisplayStringHTML, boolean isAutoSelectEnabled,
         final SuggestionCallback callback) {
       // Hide the popup if there are no suggestions to display.
-      if (suggestions == null || suggestions.size() == 0) {
+      boolean anySuggestions = (suggestions != null && suggestions.size() > 0);
+      if (!anySuggestions && hideWhenEmpty) {
         hideSuggestions();
         return;
       }
@@ -438,7 +467,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
         suggestionMenu.addItem(menuItem);
       }
 
-      if (isAutoSelectEnabled) {
+      if (isAutoSelectEnabled && anySuggestions) {
         // Select the first item in the suggestion menu.
         suggestionMenu.selectItem(0);
       }
