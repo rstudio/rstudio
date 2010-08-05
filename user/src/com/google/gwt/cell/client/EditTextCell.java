@@ -123,7 +123,12 @@ public class EditTextCell extends AbstractEditableCell<
   }
 
   public EditTextCell() {
-    super("click", "keydown", "keyup", "blur");
+    super("click", "keyup", "keydown", "blur");
+  }
+
+  public boolean isEditing(Element element, String value, Object key) {
+    ViewData viewData = getViewData(key);
+    return viewData == null ? false : viewData.isEditing();
   }
 
   @Override
@@ -133,15 +138,21 @@ public class EditTextCell extends AbstractEditableCell<
     if (viewData != null && viewData.isEditing()) {
       // Handle the edit event.
       editEvent(parent, key, viewData, event, valueUpdater);
-    } else if ("click".equals(event.getType())) {
-      // Go into edit mode.
-      if (viewData == null) {
-        viewData = new ViewData(value);
-        setViewData(key, viewData);
-      } else {
-        viewData.setEditing(true);
+    } else {
+      String type = event.getType();
+      int keyCode = event.getKeyCode();
+      boolean enterPressed = "keyup".equals(type) &&
+        keyCode == KeyCodes.KEY_ENTER;
+      if ("click".equals(type) || enterPressed) {
+        // Go into edit mode.
+        if (viewData == null) {
+          viewData = new ViewData(value);
+          setViewData(key, viewData);
+        } else {
+          viewData.setEditing(true);
+        }
+        edit(parent, value, key);
       }
-      edit(parent, value, key);
     }
   }
 
@@ -209,12 +220,14 @@ public class EditTextCell extends AbstractEditableCell<
   private void editEvent(Element parent, Object key, ViewData viewData,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
     String type = event.getType();
-    if ("keydown".equals(type)) {
+    boolean keyUp = "keyup".equals(type);
+    boolean keyDown = "keydown".equals(type);
+    if (keyUp || keyDown) {
       int keyCode = event.getKeyCode();
-      if (keyCode == KeyCodes.KEY_ENTER) {
+      if (keyUp && keyCode == KeyCodes.KEY_ENTER) {
         // Commit the change.
         commit(parent, viewData, valueUpdater);
-      } else if (keyCode == KeyCodes.KEY_ESCAPE) {
+      } else if (keyUp && keyCode == KeyCodes.KEY_ESCAPE) {
         // Cancel edit mode.
         String originalText = viewData.getOriginal();
         if (viewData.isEditingAgain()) {
@@ -224,10 +237,10 @@ public class EditTextCell extends AbstractEditableCell<
           setViewData(key, null);
         }
         cancel(parent, originalText);
+      } else {
+        // Update the text in the view data on each key.
+        updateViewData(parent, viewData, true);
       }
-    } else if ("keyup".equals(type)) {
-      // Update the text in the view data on each key.
-      updateViewData(parent, viewData, true);
     } else if ("blur".equals(type)) {
       // Commit the change. Ensure that we are blurring the input element and
       // not the parent element itself.

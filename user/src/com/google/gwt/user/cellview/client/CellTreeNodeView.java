@@ -222,6 +222,9 @@ class CellTreeNodeView<T> extends UIObject {
         loadChildState(values, 0, savedViews);
       }
 
+      public void resetFocus() {
+      }
+
       public void setLoadingState(LoadingState state) {
         nodeView.updateImage(state == LoadingState.LOADING);
         showOrHide(nodeView.emptyMessageElem, state == LoadingState.EMPTY);

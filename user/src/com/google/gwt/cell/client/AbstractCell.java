@@ -77,6 +77,14 @@ public abstract class AbstractCell<C> implements Cell<C> {
   }
 
   /**
+   * Returns false. Subclasses that support editing should override this method
+   * to return the current editing status.
+   */
+  public boolean isEditing(Element element, C value, Object key) {
+    return false;
+  }
+
+  /**
    * {@inheritDoc}
    *
    * This method is a no-op in {@link AbstractCell}. If you override this method

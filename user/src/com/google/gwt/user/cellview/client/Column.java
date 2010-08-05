@@ -70,7 +70,6 @@ public abstract class Column<T, C> implements HasCell<T, C> {
 
   /**
    * Render the object into the cell.
-   *
    * @param object the object to render
    * @param keyProvider the {@link ProvidesKey} for the object
    * @param sb the buffer to render into
@@ -85,7 +84,7 @@ public abstract class Column<T, C> implements HasCell<T, C> {
   }
 
   /**
-   * Get the view keu for the object given the {@link ProvidesKey}. If the
+   * Get the view key for the object given the {@link ProvidesKey}. If the
    * {@link ProvidesKey} is null, the object is used as the key.
    *
    * @param object the row object

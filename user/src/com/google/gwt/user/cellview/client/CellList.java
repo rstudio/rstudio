@@ -122,6 +122,9 @@ public class CellList<T> extends Widget
       }
     }
 
+    public void resetFocus() {
+    }
+
     public void setLoadingState(LoadingState state) {
       showOrHide(emptyMessageElem, state == LoadingState.EMPTY);
       // TODO(jlabanca): Add a loading icon.

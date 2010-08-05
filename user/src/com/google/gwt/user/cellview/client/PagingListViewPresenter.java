@@ -298,6 +298,11 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
     void replaceChildren(List<T> values, int start, String html);
 
     /**
+     * Re-establish focus on an element within the view if desired.
+     */
+    void resetFocus();
+    
+    /**
      * Set the current loading state of the data.
      *
      * @param state the loading state
@@ -495,6 +500,9 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
       view.replaceChildren(
           boundedValues, boundedStart - pageStart, sb.toString());
     }
+    
+    // Allow the view to reestablish focus after being re-rendered
+    view.resetFocus();
 
     // Reset the pageStartChanged boolean.
     pageStartChangedSinceRender = false;

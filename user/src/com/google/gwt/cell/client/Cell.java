@@ -62,6 +62,18 @@ public interface Cell<C> {
   boolean handlesSelection();
 
   /**
+   * Returns true if the cell is currently editing the data identified by the
+   * given element and key. While a cell is editing, widgets containing the cell
+   * may chooses to pass keystrokes directly to the cell rather than using them
+   * for navigation purposes.
+   * 
+   * @param parent the parent Element
+   * @param value the value associated with the cell
+   * @param key the unique key associated with the row object
+   */
+  boolean isEditing(Element parent, C value, Object key);
+
+  /**
    * Handle a browser event that took place within the cell. The default
    * implementation returns null.
    *
@@ -77,7 +89,6 @@ public interface Cell<C> {
   /**
    * Render a cell as HTML into a StringBuilder, suitable for passing to
    * {@link Element#setInnerHTML} on a container element.
-   *
    * @param value the cell value to be rendered
    * @param key the unique key associated with the row object
    * @param sb the StringBuilder to be written to

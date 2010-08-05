@@ -90,7 +90,6 @@ public class PagingListViewPresenterTest extends TestCase {
    * @param <T> the data type
    */
   private static class MockView<T> implements View<T> {
-
     private int childCount;
     private boolean dependsOnSelection;
     private String lastHtml;
@@ -173,6 +172,9 @@ public class PagingListViewPresenterTest extends TestCase {
 
     public void setDependsOnSelection(boolean dependsOnSelection) {
       this.dependsOnSelection = dependsOnSelection;
+    }
+    
+    public void resetFocus() {
     }
 
     public void setLoadingState(LoadingState state) {

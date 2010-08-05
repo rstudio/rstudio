@@ -205,6 +205,10 @@ public class CellBrowser extends Composite
     public boolean handlesSelection() {
       return cell.handlesSelection();
     }
+    
+    public boolean isEditing(Element element, C value, Object key) {
+      return cell.isEditing(element, value, key);
+    }
 
     public void onBrowserEvent(Element parent, C value, Object key,
         NativeEvent event, ValueUpdater<C> valueUpdater) {

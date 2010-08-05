@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -159,6 +160,16 @@ public class CellTable<T> extends Widget
      * Applied to the hovered row.
      */
     String hoveredRow();
+
+    /**
+     * Applied to the keyboard selected cell.
+     */
+    String keyboardSelectedCell();
+
+    /**
+     * Applied to the keyboard selected row.
+     */
+    String keyboardSelectedRow();
 
     /**
      * Applied to the last column.
@@ -381,6 +392,19 @@ public class CellTable<T> extends Widget
       TABLE_IMPL.replaceAllRows(
           CellTable.this, tbody, CellBasedWidgetImpl.get().processHtml(html));
     }
+    
+    public void resetFocus() {
+      int pageStart = getPageStart();
+      int offset = keyboardSelectedRow - pageStart;
+      if (offset >= 0 && offset < getPageSize()) {
+        TableRowElement tr = getRowElement(offset);
+        TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
+        tr.addClassName(style.keyboardSelectedRow());
+        td.addClassName(style.keyboardSelectedCell());
+        td.setTabIndex(0);
+        td.focus(); // TODO (rice) only focus if we were focused previously
+      }
+    }
 
     public void setLoadingState(LoadingState state) {
       setLoadingIconVisible(state == LoadingState.LOADING);
@@ -416,11 +440,17 @@ public class CellTable<T> extends Widget
     return DEFAULT_RESOURCES;
   }
 
+  private boolean cellIsEditing;
   private final TableColElement colgroup;
+
   private List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
+
   private boolean dependsOnSelection;
+
   private List<Header<?>> footers = new ArrayList<Header<?>>();
+ 
   private boolean handlesSelection;
+
   private List<Header<?>> headers = new ArrayList<Header<?>>();
 
   /**
@@ -429,6 +459,10 @@ public class CellTable<T> extends Widget
   private boolean headersStale;
 
   private TableRowElement hoveringRow;
+
+  private int keyboardSelectedColumn = 0;
+
+  private int keyboardSelectedRow = 0;
 
   /**
    * The presenter.
@@ -504,6 +538,7 @@ public class CellTable<T> extends Widget
     this.style.ensureInjected();
 
     setElement(table = Document.get().createTableElement());
+
     table.setCellSpacing(0);
     colgroup = Document.get().createColGroupElement();
     table.appendChild(colgroup);
@@ -530,7 +565,8 @@ public class CellTable<T> extends Widget
     setPageSize(pageSize);
 
     // Sink events.
-    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT |
+        Event.ONKEYUP | Event.ONKEYDOWN);
   }
 
   /**
@@ -670,14 +706,28 @@ public class CellTable<T> extends Widget
   public void onBrowserEvent(Event event) {
     CellBasedWidgetImpl.get().onBrowserEvent(this, event);
     super.onBrowserEvent(event);
-
+    
+    String eventType = event.getType();
+    boolean keyUp = "keyup".equals(eventType);
+    boolean keyDown = "keydown".equals(eventType);
+    
+    // Ignore keydown events unless the cell is in edit mode
+    if (keyDown && !cellIsEditing) {
+      return;
+    }
+    if (keyUp && !cellIsEditing) {
+      if (handleKey(event)) {
+        return;
+      }
+    }
+    
     // Find the cell where the event occurred.
     EventTarget eventTarget = event.getEventTarget();
-    TableCellElement cell = null;
+    TableCellElement tableCell = null;
     if (eventTarget != null && Element.is(eventTarget)) {
-      cell = findNearestParentCell(Element.as(eventTarget));
+      tableCell = findNearestParentCell(Element.as(eventTarget));
     }
-    if (cell == null) {
+    if (tableCell == null) {
       return;
     }
 
@@ -685,7 +735,7 @@ public class CellTable<T> extends Widget
     // the table has been refreshed before the current event fired (ex. change
     // event refreshes before mouseup fires), so we need to check each parent
     // element.
-    Element trElem = cell.getParentElement();
+    Element trElem = tableCell.getParentElement();
     if (trElem == null) {
       return;
     }
@@ -697,19 +747,18 @@ public class CellTable<T> extends Widget
     TableSectionElement section = TableSectionElement.as(sectionElem);
 
     // Forward the event to the associated header, footer, or column.
-    String eventType = event.getType();
-    int col = cell.getCellIndex();
+    int col = tableCell.getCellIndex();
     if (section == thead) {
       Header<?> header = headers.get(col);
       if (header != null
           && cellConsumesEventType(header.getCell(), eventType)) {
-        header.onBrowserEvent(cell, event);
+        header.onBrowserEvent(tableCell, event);
       }
     } else if (section == tfoot) {
       Header<?> footer = footers.get(col);
       if (footer != null
           && cellConsumesEventType(footer.getCell(), eventType)) {
-        footer.onBrowserEvent(cell, event);
+        footer.onBrowserEvent(tableCell, event);
       }
     } else if (section == tbody) {
       // Update the hover state.
@@ -724,22 +773,17 @@ public class CellTable<T> extends Widget
         hoveringRow = null;
         tr.removeClassName(style.hoveredRow());
       }
-
+      
       // Update selection. Selection occurs before firing the event to the cell
       // in case the cell operates on the currently selected item.
       T value = presenter.getData().get(row);
       SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
-      Column<T, ?> column = columns.get(col);
       if (selectionModel != null && "click".equals(eventType)
           && !handlesSelection) {
         selectionModel.setSelected(value, true);
       }
-
-      // Fire the event to the cell.
-      if (cellConsumesEventType(column.getCell(), eventType)) {
-        column.onBrowserEvent(
-            cell, getPageStart() + row, value, event, providesKey);
-      }
+      
+      fireEventToCell(event, eventType, tableCell, value, col, row);
     }
   }
 
@@ -764,6 +808,20 @@ public class CellTable<T> extends Widget
   /**
    * Remove a column.
    *
+   * @param col the column to remove
+   */
+  public void removeColumn(Column<T, ?> col) {
+    int index = columns.indexOf(col);
+    if (index < 0) {
+      throw new IllegalArgumentException(
+          "The specified column is not part of this table.");
+    }
+    removeColumn(index);
+  }
+
+  /**
+   * Remove a column.
+   *
    * @param index the column index
    */
   public void removeColumn(int index) {
@@ -780,20 +838,6 @@ public class CellTable<T> extends Widget
 
     // We don't unsink events because other handlers or user code may have sunk
     // them intentionally.
-  }
-
-  /**
-   * Remove a column.
-   *
-   * @param col the column to remove
-   */
-  public void removeColumn(Column<T, ?> col) {
-    int index = columns.indexOf(col);
-    if (index < 0) {
-      throw new IllegalArgumentException(
-          "The specified column is not part of this table.");
-    }
-    removeColumn(index);
   }
 
   /**
@@ -886,7 +930,7 @@ public class CellTable<T> extends Widget
   }
 
   /**
-   * Render the header of footer.
+   * Render the header or footer.
    *
    * @param isFooter true if this is the footer table, false if the header table
    */
@@ -966,9 +1010,89 @@ public class CellTable<T> extends Widget
     return null;
   }
 
+  @SuppressWarnings("unchecked")
+  private <C> void fireEventToCell(Event event, String eventType,
+      TableCellElement tableCell, T value, int col, int row) {
+    Column<T, C> column = (Column<T, C>) columns.get(col);
+    Cell<C> cell = column.getCell();
+    if (cellConsumesEventType(cell, eventType)) {
+      C cellValue = column.getValue(value);
+      Object key = providesKey == null ? value : providesKey.getKey(value);
+      boolean cellWasEditing = cell.isEditing(tableCell, cellValue, key);
+      column.onBrowserEvent(
+          tableCell, getPageStart() + row, value, event, providesKey);
+      cellIsEditing = cell.isEditing(tableCell, cellValue, key);
+      if (cellWasEditing && !cellIsEditing) {
+        view.resetFocus();
+      }
+    }
+  }
+
   private native int getClientHeight(Element element) /*-{
     return element.clientHeight;
   }-*/;
+
+  private boolean handleKey(Event event) {
+    int keyCode = event.getKeyCode();
+    int oldColumn = keyboardSelectedColumn;
+    int oldRow = keyboardSelectedRow;
+    int numColumns = columns.size();
+    int numRows = getDataSize();
+    switch (keyCode) {
+      case KeyCodes.KEY_UP:
+        if (keyboardSelectedRow > 0) {
+          --keyboardSelectedRow;
+        }
+        break;
+      case KeyCodes.KEY_DOWN:
+        if (keyboardSelectedRow < numRows - 1) {
+          ++keyboardSelectedRow;
+        }
+        break;
+      case KeyCodes.KEY_LEFT:
+        if (keyboardSelectedColumn == 0 && keyboardSelectedRow > 0) {
+          keyboardSelectedColumn = numColumns - 1;
+          --keyboardSelectedRow;
+        } else if (keyboardSelectedColumn > 0) {
+          --keyboardSelectedColumn;
+        }
+        break;
+      case KeyCodes.KEY_RIGHT:
+        if (keyboardSelectedColumn == numColumns - 1
+            && keyboardSelectedRow < numRows - 1) {
+          keyboardSelectedColumn = 0;
+          ++keyboardSelectedRow;
+        } else if (keyboardSelectedColumn < numColumns - 1) {
+          ++keyboardSelectedColumn;
+        }
+        break;
+    }
+
+    if (keyboardSelectedColumn != oldColumn || keyboardSelectedRow != oldRow) {
+      int pageStart = getPageStart();
+      int pageSize = getPageSize();
+
+      // Remove old selection markers
+      TableRowElement row = getRowElement(oldRow - pageStart);
+      row.removeClassName(style.keyboardSelectedRow());
+      TableCellElement td = row.getCells().getItem(oldColumn);
+      td.removeClassName(style.keyboardSelectedCell());
+      td.removeAttribute("tabIndex");
+
+      // Move page start if needed
+      if (keyboardSelectedRow >= pageStart + pageSize) {
+        setPageStart(keyboardSelectedRow - pageSize + 1);
+      } else if (keyboardSelectedRow < pageStart) {
+        setPageStart(keyboardSelectedRow);
+      }
+
+      // Add new selection markers and re-establish focus
+      view.resetFocus();
+      return true;
+    }
+
+    return false;
+  }
 
   /**
    * Schedule a redraw for the end of the event loop.

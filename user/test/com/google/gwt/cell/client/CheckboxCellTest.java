@@ -63,7 +63,7 @@ public class CheckboxCellTest extends EditableCellTestBase<Boolean, Boolean> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"change"};
+    return new String[]{"change", "keyup"};
   }
 
   @Override

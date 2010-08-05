@@ -47,7 +47,7 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
    * Cancel and switch to read only mode.
    */
   public void testOnBrowserEventCancel() {
-    NativeEvent event = Document.get().createKeyDownEvent(
+    NativeEvent event = Document.get().createKeyUpEvent(
         false, false, false, false, KeyCodes.KEY_ESCAPE);
     ViewData viewData = new ViewData("originalValue");
     viewData.setText("newValue");
@@ -63,7 +63,7 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
    * Cancel and switch to read only mode after committing once.
    */
   public void testOnBrowserEventCancelSecondEdit() {
-    NativeEvent event = Document.get().createKeyDownEvent(
+    NativeEvent event = Document.get().createKeyUpEvent(
         false, false, false, false, KeyCodes.KEY_ESCAPE);
     ViewData viewData = new ViewData("originalValue");
     viewData.setText("newValue");
@@ -87,7 +87,7 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
    * Commit and switch to read only mode.
    */
   public void testOnBrowserEventCommit() {
-    NativeEvent event = Document.get().createKeyDownEvent(
+    NativeEvent event = Document.get().createKeyUpEvent(
         false, false, false, false, KeyCodes.KEY_ENTER);
     ViewData viewData = new ViewData("originalValue");
     viewData.setText("newValue");
@@ -185,7 +185,7 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"click", "keydown", "keyup", "blur"};
+    return new String[]{"click", "keyup", "keydown", "blur"};
   }
 
   @Override

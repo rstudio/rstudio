@@ -18,9 +18,11 @@ package com.google.gwt.cell.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 
 /**
- * A {@link Cell} used to render a checkbox.
+ * A {@link Cell} used to render a checkbox.  The value of the checkbox
+ * may be toggled using the ENTER key as well as via mouse click.
  *
  * <p>
  * Note: This class is new and its interface subject to change.
@@ -43,7 +45,7 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
    * @param isSelectBox true if the cell controls the selection state
    */
   public CheckboxCell(boolean isSelectBox) {
-    super("change");
+    super("change", "keyup");
     this.isSelectBox = isSelectBox;
   }
 
@@ -61,9 +63,19 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
   public void onBrowserEvent(Element parent, Boolean value, Object key,
       NativeEvent event, ValueUpdater<Boolean> valueUpdater) {
     String type = event.getType();
-    if ("change".equals(type)) {
+    
+    boolean enterPressed = "keyup".equals(type) &&
+        event.getKeyCode() == KeyCodes.KEY_ENTER;
+    if ("change".equals(type) || enterPressed) {
       InputElement input = parent.getFirstChild().cast();
       Boolean isChecked = input.isChecked();
+      
+      // If the enter key was pressed, toggle the value
+      if (enterPressed) {
+        isChecked = !isChecked;
+        input.setChecked(isChecked);
+      }
+      
       setViewData(key, isChecked);
       if (valueUpdater != null) {
         valueUpdater.update(isChecked);
