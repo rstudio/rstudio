@@ -53,7 +53,7 @@ public class RPCServletUtilsTest extends TestCase {
 
     @Override
     public String getCharacterEncoding() {
-      return "charset=utf-8";
+      return "utf-8";
     }
 
     @Override
@@ -174,7 +174,7 @@ public class RPCServletUtilsTest extends TestCase {
 
       @Override
       public String getCharacterEncoding() {
-        return "charset=EBCDIC-US";
+        return "EBCDIC-US";
       }
     };
 
@@ -197,7 +197,7 @@ public class RPCServletUtilsTest extends TestCase {
 
       @Override
       public String getCharacterEncoding() {
-        return "charset=EBCDIC-US";
+        return "EBCDIC-US";
       }
     };
     boolean gotException = false;
