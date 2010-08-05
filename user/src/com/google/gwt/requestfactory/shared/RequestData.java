@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared.impl;
+package com.google.gwt.requestfactory.shared;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,36 +24,46 @@ import java.util.Map;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * An utility class to manage the encoding and decoding of parameters and
- * methodNames.
+ * A class that encapsulates the parameters and method name to be invoked on the
+ * server.
  * 
  * TODO: add appropriate unit tests.
  */
-public class JsonRequestDataUtil {
+public class RequestData {
 
   public static final String CONTENT_TOKEN = "contentData";
   public static final String OPERATION_TOKEN = "operation";
   public static final String PARAM_TOKEN = "param";
 
+  // TODO: non-final is a hack for now.
+  private String operation;
+  private final Object[] parameters;
+
+  public RequestData(String operation, Object[] parameters) {
+    this.operation = operation;
+    this.parameters = parameters;
+  }
+
   /**
    * Returns the string that encodes the request data.
    * 
    */
-  public static Map<String, String> getRequestMap(String operation,
-      Object values[], String content) {
+  public Map<String, String> getRequestMap(String contentData) {
     Map<String, String> requestMap = new HashMap<String, String>();
+    // nasty hack, remove.
+    if (operation.endsWith("persist") || operation.endsWith("remove")) {
+      operation = RequestFactory.SYNC;
+    }
     requestMap.put(OPERATION_TOKEN, operation);
-    if (values != null) {
-      for (int i = 0; i < values.length; i++) {
-        Object value = values[i];
+    if (parameters != null) {
+      for (int i = 0; i < parameters.length; i++) {
+        Object value = parameters[i];
         requestMap.put(PARAM_TOKEN + i, value.toString());
       }
     }
-    if (content != null) {
-      requestMap.put(CONTENT_TOKEN, content);
+    if (contentData != null) {
+      requestMap.put(CONTENT_TOKEN, contentData);
     }
     return requestMap;
   }
-
-
 }

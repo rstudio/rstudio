@@ -951,7 +951,7 @@ public class ExpenseDetails extends Composite
     setNotesEditState(false, true, pendingNotes);
 
     // Submit the delta.
-    RequestObject<Void> editRequest = expensesRequestFactory.reportRequest().persist();
+    RequestObject<Void> editRequest = expensesRequestFactory.reportRequest().persist(report);
     DeltaValueStore deltas = editRequest.getDeltaValueStore();
     deltas.set(ReportRecord.notes, report, pendingNotes);
     editRequest.fire(new Receiver<Void>() {

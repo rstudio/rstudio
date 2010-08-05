@@ -66,17 +66,15 @@ public interface EmployeeRequest {
   RecordListRequest<EmployeeRecord> findEmployeeEntriesByDepartment(
       String department, int firstResult, int maxResults);
 
-  // TODO: a hack for now...
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist();
+  RequestObject<Void> persist(EmployeeRecord record);
 
-  // TODO: a hack for now.
  /**
   * @return a request object
   */
   @Instance
-  RequestObject<Void> remove();
+  RequestObject<Void> remove(EmployeeRecord record);
 }

@@ -58,7 +58,7 @@ public class EmployeeEditActivity extends
   public EmployeeEditActivity(Long id, RecordEditView<EmployeeRecord> view,
       ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
-    super(view, id, requests, requests.employeeRequest().persist());
+    super(view, id, requests);
     this.requests = requests;
     this.placeController = placeController;
   }
@@ -77,5 +77,9 @@ public class EmployeeEditActivity extends
   @Override
   protected Class getRecordClass() {
     return EmployeeRecord.class;
+  }
+
+  protected void setRequestObject(EmployeeRecord record) {
+    requestObject = requests.employeeRequest().persist(record);
   }
 }

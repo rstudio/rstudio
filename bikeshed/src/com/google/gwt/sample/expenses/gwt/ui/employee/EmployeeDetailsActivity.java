@@ -79,7 +79,7 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
       return;
     }
     
-    RequestObject<Void> deleteRequest = requests.employeeRequest().remove();
+    RequestObject<Void> deleteRequest = requests.employeeRequest().remove(view.getValue());
     DeltaValueStore deltas = deleteRequest.getDeltaValueStore();
     deltas.delete(view.getValue());
     deleteRequest.fire(new Receiver<Void>() {

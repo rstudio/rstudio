@@ -79,7 +79,7 @@ public class ReportDetailsActivity extends AbstractActivity implements
       return;
     }
     
-    RequestObject<Void> deleteRequest = requests.reportRequest().remove();
+    RequestObject<Void> deleteRequest = requests.reportRequest().remove(view.getValue());
     // TODO: fix this.
     DeltaValueStore deltas = deleteRequest.getDeltaValueStore();
     deltas.delete(view.getValue());

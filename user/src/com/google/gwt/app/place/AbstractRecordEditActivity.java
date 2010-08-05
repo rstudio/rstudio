@@ -39,6 +39,8 @@ import java.util.Set;
 public abstract class AbstractRecordEditActivity<R extends Record> implements
     Activity, RecordEditView.Delegate {
 
+  protected RequestObject<Void> requestObject;
+
   private final boolean creating;
   private final RecordEditView<R> view;
 
@@ -47,23 +49,22 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   private final RequestFactory requests;
 
   private Display display;
-  private RequestObject<Void> requestObject;
 
   public AbstractRecordEditActivity(RecordEditView<R> view, Long id,
-      RequestFactory requests, RequestObject<Void> requestObject) {
-
+      RequestFactory requests) {
     this.view = view;
     this.creating = 0L == id;
     this.id = id;
     this.requests = requests;
-    this.requestObject = requestObject;
   }
 
   public void cancelClicked() {
     String unsavedChangesWarning = mayStop();
     if ((unsavedChangesWarning == null)
         || Window.confirm(unsavedChangesWarning)) {
-      requestObject.reset(); // silence the next mayStop() call when place
+      if (requestObject != null) {
+        requestObject.reset(); // silence the next mayStop() call when place
+      }
       // changes
       if (creating) {
         display.showActivityWidget(null);
@@ -90,6 +91,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   }
 
   public void saveClicked() {
+    assert requestObject != null;
     DeltaValueStore theDeltas = requestObject.getDeltaValueStore();
     if (!theDeltas.isChanged()) {
       return;
@@ -140,7 +142,6 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     this.display = display;
 
     view.setDelegate(this);
-    view.setDeltaValueStore(requestObject.getDeltaValueStore());
     view.setCreating(creating);
 
     if (creating) {
@@ -178,10 +179,14 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
    */
   protected abstract Class<? extends Record> getRecordClass();
 
+  protected abstract void setRequestObject(R record);
+
   private void doStart(final Display display, R record) {
+    setRequestObject(record);
     view.setEnabled(true);
     view.setValue(record);
     view.showErrors(null);
     display.showActivityWidget(view);
+    view.setDeltaValueStore(requestObject.getDeltaValueStore());
   }
 }

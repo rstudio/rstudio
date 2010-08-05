@@ -15,8 +15,8 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.impl.JsonRequestDataUtil;
 import com.google.gwt.valuestore.server.SimpleFoo;
 import com.google.gwt.valuestore.shared.SimpleEnum;
 import com.google.gwt.valuestore.shared.SimpleFooRecord;
@@ -95,10 +95,10 @@ public class JsonRequestProcessorTest extends TestCase {
     try {
       // fetch object
       JSONObject foo = (JSONObject) requestProcessor.processJsonRequest("{ \""
-          + JsonRequestDataUtil.OPERATION_TOKEN + "\": \""
+          + RequestData.OPERATION_TOKEN + "\": \""
           + com.google.gwt.valuestore.shared.SimpleFooRequest.class.getName()
           + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
-          + "findSimpleFooById\", " + "\"" + JsonRequestDataUtil.PARAM_TOKEN
+          + "findSimpleFooById\", " + "\"" + RequestData.PARAM_TOKEN
           + "0\": \"999\" }");
       assertEquals(foo.getInt("id"), 999);
       assertEquals(foo.getInt("intId"), 42);
@@ -124,8 +124,8 @@ public class JsonRequestProcessorTest extends TestCase {
       JSONObject operation = new JSONObject();
       operation.put(WriteOperation.UPDATE.toString(), arr);
       JSONObject sync = new JSONObject();
-      sync.put(JsonRequestDataUtil.OPERATION_TOKEN, RequestFactory.SYNC);
-      sync.put(JsonRequestDataUtil.CONTENT_TOKEN, operation.toString());
+      sync.put(RequestData.OPERATION_TOKEN, RequestFactory.SYNC);
+      sync.put(RequestData.CONTENT_TOKEN, operation.toString());
       JSONObject result = (JSONObject) requestProcessor.processJsonRequest(sync.toString());
 
       // check modified fields and no violations

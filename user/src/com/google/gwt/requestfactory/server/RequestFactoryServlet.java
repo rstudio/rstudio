@@ -54,6 +54,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @SuppressWarnings("serial")
 public class RequestFactoryServlet extends HttpServlet {
+
   private static final String JSON_CHARSET = "UTF-8";
   private static final String JSON_CONTENT_TYPE = "application/json";
   
@@ -78,7 +79,7 @@ public class RequestFactoryServlet extends HttpServlet {
       } else {
         response.setHeader("userId", String.format("%d", userInfo.getId()));
         response.setStatus(HttpServletResponse.SC_OK);
-        JsonRequestProcessor requestProcessor = new JsonRequestProcessor();
+        RequestProcessor<String> requestProcessor = new JsonRequestProcessor();
         requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(
             new DefaultSecurityProvider()));
         response.setHeader(

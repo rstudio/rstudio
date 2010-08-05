@@ -16,8 +16,8 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.DataTransferObject;
+import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.impl.JsonRequestDataUtil;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.WriteOperation;
@@ -349,7 +349,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Iterator<?> keys = jsonObject.keys();
     while (keys.hasNext()) {
       String key = keys.next().toString();
-      if (key.startsWith(JsonRequestDataUtil.PARAM_TOKEN)) {
+      if (key.startsWith(RequestData.PARAM_TOKEN)) {
         parameterMap.put(key, jsonObject.getString(key));
       }
     }
@@ -479,9 +479,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     RequestDefinition operation;
     JSONObject topLevelJsonObject = new JSONObject(jsonRequestString);
 
-    String operationName = topLevelJsonObject.getString(JsonRequestDataUtil.OPERATION_TOKEN);
+    String operationName = topLevelJsonObject.getString(RequestData.OPERATION_TOKEN);
     if (operationName.equals(RequestFactory.SYNC)) {
-      return sync(topLevelJsonObject.getString(JsonRequestDataUtil.CONTENT_TOKEN));
+      return sync(topLevelJsonObject.getString(RequestData.CONTENT_TOKEN));
     } else {
       operation = getOperation(operationName);
       Class<?> domainClass = Class.forName(operation.getDomainClassName());

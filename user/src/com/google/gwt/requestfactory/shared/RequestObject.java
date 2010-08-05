@@ -36,7 +36,7 @@ public interface RequestObject<T> {
   // can get access to a DeltaValueStore only in the context of a RequestObject.
   DeltaValueStore getDeltaValueStore();
 
-  String getRequestData();
+  RequestData getRequestData();
 
   void handleResponseText(String responseText);
   

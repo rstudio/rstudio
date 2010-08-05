@@ -43,13 +43,12 @@ import com.google.gwt.requestfactory.client.impl.AbstractJsonObjectRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractShortRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractVoidRequest;
-import com.google.gwt.requestfactory.client.impl.ClientRequestHelper;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
+import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.impl.JsonRequestDataUtil;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.valuestore.shared.Property;
@@ -281,7 +280,7 @@ public class RequestFactoryGenerator extends Generator {
       }
       requestSelectors.add(method);
     }
-    
+
     // In addition to the request selectors in the generated interface, there
     // are a few which are in RequestFactory which also need to have
     // implementations generated. Hard coding the addition of these here for now
@@ -296,25 +295,27 @@ public class RequestFactoryGenerator extends Generator {
     // write create(Class..)
     JClassType recordToTypeInterface = generatorContext.getTypeOracle().findType(
         RecordToTypeMap.class.getName());
-    String recordToTypeMapName = recordToTypeInterface.getName() + "Impl";    
+    String recordToTypeMapName = recordToTypeInterface.getName() + "Impl";
     sw.println("public " + Record.class.getName() + " create(Class token) {");
     sw.indent();
     sw.println("return create(token, new " + recordToTypeMapName + "());");
     sw.outdent();
     sw.println("}");
-    
+
     // write a method for each request builder and generate it
     for (JMethod requestSelector : requestSelectors) {
       String returnTypeName = requestSelector.getReturnType().getQualifiedSourceName();
-      String nestedImplName = requestSelector.getName().replace('.', '_')
+      String nestedImplName = capitalize(requestSelector.getName().replace('.',
+          '_'))
           + "Impl";
-      String nestedImplPackage =
-        generatorContext.getTypeOracle().findType(returnTypeName).getPackage().getName();
+      String nestedImplPackage = generatorContext.getTypeOracle().findType(
+          returnTypeName).getPackage().getName();
 
       sw.println("public " + returnTypeName + " " + requestSelector.getName()
           + "() {");
       sw.indent();
-      sw.println("return new " + nestedImplPackage + "." + nestedImplName + "(this);");
+      sw.println("return new " + nestedImplPackage + "." + nestedImplName
+          + "(this);");
       sw.outdent();
       sw.println("}");
       sw.println();
@@ -393,8 +394,7 @@ public class RequestFactoryGenerator extends Generator {
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
-    f.addImport(ClientRequestHelper.class.getName());
-    f.addImport(JsonRequestDataUtil.class.getName());
+    f.addImport(RequestData.class.getName());
     f.addImport(mainType.getQualifiedSourceName() + "Impl");
     f.addImplementedInterface(selectorInterface.getQualifiedSourceName());
 
@@ -471,12 +471,11 @@ public class RequestFactoryGenerator extends Generator {
       sw.println("return new " + requestClassName + "(factory" + enumArgument
           + ") {");
       sw.indent();
-      sw.println("public String getRequestData() {");
+      String requestDataName = RequestData.class.getSimpleName();
+      sw.println("public " + requestDataName + " getRequestData() {");
       sw.indent();
-      sw.println("return " + ClientRequestHelper.class.getSimpleName()
-          + ".getRequestString(" + JsonRequestDataUtil.class.getSimpleName()
-          + ".getRequestMap(\"" + operationName + "\", "
-          + getParametersAsString(method) + ", null));");
+      sw.println("return new " + requestDataName + "(\"" + operationName
+          + "\", " + getParametersAsString(method, typeOracle) + ");");
       sw.outdent();
       sw.println("}");
       sw.outdent();
@@ -522,7 +521,7 @@ public class RequestFactoryGenerator extends Generator {
    * Returns the string representation of the parameters to be passed to the
    * server side method.
    */
-  private String getParametersAsString(JMethod method) {
+  private String getParametersAsString(JMethod method, TypeOracle typeOracle) {
     StringBuilder sb = new StringBuilder();
     for (JParameter parameter : method.getParameters()) {
       if (sb.length() > 0) {
@@ -534,6 +533,11 @@ public class RequestFactoryGenerator extends Generator {
       // to be dereferenced server side, not client side.
       if ("com.google.gwt.valuestore.shared.PropertyReference".equals(parameter.getType().getQualifiedBinaryName())) {
         sb.append(".get()");
+      }
+      JClassType classType = parameter.getType().isClass();
+      if (classType != null
+          && classType.isAssignableTo(typeOracle.findType(Record.class.getName()))) {
+        sb.append(".getId()");
       }
     }
     return "new Object[] {" + sb.toString() + "}";
@@ -598,7 +602,7 @@ public class RequestFactoryGenerator extends Generator {
   private boolean isShortRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Short.class.getName()));
   }
-  
+
   private boolean isVoidRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Void.class.getName()));
   }

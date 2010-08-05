@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,10 +30,6 @@ import java.util.Map;
  */
 public class RequestDataManager {
 
-  public static final String CONTENT_TOKEN = "contentData";
-  public static final String OPERATION_TOKEN = "operation";
-  public static final String PARAM_TOKEN = "param";
-
   public static Object[] getObjectsFromParameterMap(
       Map<String, String> parameterMap, Class<?> parameterClasses[]) {
     assert parameterClasses != null;
@@ -44,26 +39,6 @@ public class RequestDataManager {
           parameterMap.get("param" + i));
     }
     return args;
-  }
-
-  /**
-   * Returns the string that encodes the request data.
-   * 
-   */
-  public static Map<String, String> getRequestMap(String operation,
-      Object values[], String content) {
-    Map<String, String> requestMap = new HashMap<String, String>();
-    requestMap.put(OPERATION_TOKEN, operation);
-    if (values != null) {
-      for (int i = 0; i < values.length; i++) {
-        Object value = values[i];
-        requestMap.put(PARAM_TOKEN + i, value.toString());
-      }
-    }
-    if (content != null) {
-      requestMap.put(CONTENT_TOKEN, content);
-    }
-    return requestMap;
   }
 
   /**

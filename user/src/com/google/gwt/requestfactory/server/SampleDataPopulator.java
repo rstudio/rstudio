@@ -15,8 +15,8 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.impl.JsonRequestDataUtil;
 import com.google.gwt.valuestore.shared.WriteOperation;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -88,8 +88,8 @@ public class SampleDataPopulator {
       IOException, JSONException {
     PostMethod post = new PostMethod(url);
     JSONObject request = new JSONObject();
-    request.put(JsonRequestDataUtil.OPERATION_TOKEN, RequestFactory.SYNC);
-    request.put(JsonRequestDataUtil.CONTENT_TOKEN, contentData);
+    request.put(RequestData.OPERATION_TOKEN, RequestFactory.SYNC);
+    request.put(RequestData.CONTENT_TOKEN, contentData);
     post.setRequestBody(request.toString());
     HttpClient client = new HttpClient();
     int status = client.executeMethod(post);

@@ -27,7 +27,6 @@ import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
-import com.google.gwt.requestfactory.shared.impl.JsonRequestDataUtil;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
@@ -107,16 +106,9 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         GWT.getHostPageBaseURL() + RequestFactory.URL);
     builder.setHeader(
         "Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
-    // TODO: do something better here...
-    if (requestObject.getDeltaValueStore().isChanged()) {
-      builder.setRequestData(ClientRequestHelper.getRequestString(JsonRequestDataUtil.getRequestMap(
-          RequestFactory.SYNC,
-          null,
-          ((DeltaValueStoreJsonImpl) requestObject.getDeltaValueStore()).toJson())));
-    } else {
-      builder.setRequestData(requestObject.getRequestData());
-    }
     builder.setHeader("pageurl", Location.getHref());
+    builder.setRequestData(ClientRequestHelper.getRequestString(requestObject.getRequestData().getRequestMap(
+        ((DeltaValueStoreJsonImpl) requestObject.getDeltaValueStore()).toJson())));
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {

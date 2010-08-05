@@ -73,16 +73,15 @@ public interface ReportRequest {
   RecordListRequest<ReportRecord> findReportsByEmployee(
       PropertyReference<String> id);
 
-  // TODO: persist() and remove() methods are hacks for now.
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist();
+  RequestObject<Void> persist(ReportRecord record);
 
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> remove();
+  RequestObject<Void> remove(ReportRecord record);
 }
