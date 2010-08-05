@@ -57,6 +57,9 @@ public class JsonRequestProcessorTest extends TestCase {
     assertTypeAndValueEquals(Float.class, 1.234f, "1.234");
     assertTypeAndValueEquals(Double.class, 1.234567, "1.234567");
     assertTypeAndValueEquals(Long.class, 1234L, "1234");
+    assertTypeAndValueEquals(Boolean.class, true, "true");
+    assertTypeAndValueEquals(Boolean.class, false, "false");
+
     // dates
     Date now = new Date();
     assertTypeAndValueEquals(Date.class, now, "" + now.getTime());
@@ -83,6 +86,8 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEncodedType(String.class, new BigInteger("1"));
     assertEncodedType(String.class, new Date());
     assertEncodedType(Double.class, Foo.BAR);
+    assertEncodedType(Boolean.class, true);
+    assertEncodedType(Boolean.class, false);
   }
 
   public void testEndToEnd() {
@@ -101,6 +106,7 @@ public class JsonRequestProcessorTest extends TestCase {
       assertEquals(foo.getLong("longField"), 8L);
       assertEquals(foo.getInt("enumField"), 0);
       assertEquals(foo.getInt("version"), 1);
+      assertEquals(foo.getBoolean("boolField"), true);
       assertTrue(foo.has("created"));
 
       // modify fields and sync
@@ -108,6 +114,7 @@ public class JsonRequestProcessorTest extends TestCase {
       foo.put("userName", "JSC");
       foo.put("longField", "" + 9L);
       foo.put("enumField", SimpleEnum.BAR.ordinal());
+      foo.put("boolField", false);
       Date now = new Date();
       foo.put("created", "" + now.getTime());
       JSONObject recordWithSchema = new JSONObject();
@@ -131,6 +138,7 @@ public class JsonRequestProcessorTest extends TestCase {
       assertEquals(9L, (long) fooResult.getLongField());
       assertEquals(com.google.gwt.valuestore.shared.SimpleEnum.BAR,
           fooResult.getEnumField());
+      assertEquals(false, (boolean)fooResult.getBoolField());
     } catch (Exception e) {
       fail(e.toString());
     }

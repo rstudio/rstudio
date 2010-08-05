@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.requestfactory.client.impl.AbstractBooleanRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractBigDecimalRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractBigIntegerRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractByteRequest;
@@ -445,6 +446,8 @@ public class RequestFactoryGenerator extends Generator {
         requestClassName = AbstractDoubleRequest.class.getName();
       } else if (isByteRequest(typeOracle, requestType)) {
         requestClassName = AbstractByteRequest.class.getName();
+      } else if (isBooleanRequest(typeOracle, requestType)) {
+        requestClassName = AbstractBooleanRequest.class.getName();
       } else if (isShortRequest(typeOracle, requestType)) {
         requestClassName = AbstractShortRequest.class.getName();
       } else if (isFloatRequest(typeOracle, requestType)) {
@@ -550,6 +553,10 @@ public class RequestFactoryGenerator extends Generator {
   private boolean isBigIntegerRequest(TypeOracle typeOracle,
       JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(BigInteger.class.getName()));
+  }
+
+  private boolean isBooleanRequest(TypeOracle typeOracle, JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Boolean.class.getName()));
   }
 
   private boolean isByteRequest(TypeOracle typeOracle, JClassType requestType) {

@@ -83,45 +83,55 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     // assert isDefined(property.getName()) :
     // "Cannot ask for a property before setting it: "
     // + property.getName();
-
-    if (Byte.class.equals(property.getType())) {
-      return (V) Byte.valueOf((byte) getInt(property.getName()));
+    if (isNull(property.getName())) {
+      return null;
     }
-    if (Short.class.equals(property.getType())) {
-      return (V) Short.valueOf((short) getInt(property.getName()));
-    }
-    if (Float.class.equals(property.getType())) {
-      return (V) Float.valueOf((float) getDouble(property.getName()));
-    }
-    if (BigInteger.class.equals(property.getType())) {
-      return (V) new BigDecimal((String) get(property.getName())).toBigInteger();
-    }
-    if (BigDecimal.class.equals(property.getType())) {
-      return (V) new BigDecimal((String) get(property.getName()));
-    }
-    if (Integer.class.equals(property.getType())) {
-      return (V) Integer.valueOf(getInt(property.getName()));
-    }
-    if (Long.class.equals(property.getType())) {
-      return (V) Long.valueOf((String) get(property.getName()));
-    }
-    if (Double.class.equals(property.getType())) {
-      if (!isDefined(property.getName())) {
-        return (V) new Double(0.0);
+    try {
+      if (Boolean.class.equals(property.getType())) {
+      return (V) Boolean.valueOf((String) get(property.getName()));
       }
-      return (V) Double.valueOf(getDouble(property.getName()));
-    }
-    if (Date.class.equals(property.getType())) {
-      double millis = new Date().getTime();
-      if (isDefined(property.getName())) {
-        millis = Double.parseDouble((String) get(property.getName()));
+      if (Byte.class.equals(property.getType())) {
+        return (V) Byte.valueOf((byte) getInt(property.getName()));
       }
-      if (GWT.isScript()) {
-        return (V) dateForDouble(millis);
-      } else {
-        // In dev mode, we're using real JRE dates
-        return (V) new Date((long) millis);
+      if (Short.class.equals(property.getType())) {
+        return (V) Short.valueOf((short) getInt(property.getName()));
       }
+      if (Float.class.equals(property.getType())) {
+        return (V) Float.valueOf((float) getDouble(property.getName()));
+      }
+      if (BigInteger.class.equals(property.getType())) {
+        return (V) new BigDecimal((String) get(property.getName())).toBigInteger();
+      }
+      if (BigDecimal.class.equals(property.getType())) {
+        return (V) new BigDecimal((String) get(property.getName()));
+      }
+      if (Integer.class.equals(property.getType())) {
+        return (V) Integer.valueOf(getInt(property.getName()));
+      }
+      if (Long.class.equals(property.getType())) {
+        return (V) Long.valueOf((String) get(property.getName()));
+      }
+      if (Double.class.equals(property.getType())) {
+        if (!isDefined(property.getName())) {
+          return (V) new Double(0.0);
+        }
+        return (V) Double.valueOf(getDouble(property.getName()));
+      }
+      if (Date.class.equals(property.getType())) {
+        double millis = new Date().getTime();
+        if (isDefined(property.getName())) {
+          millis = Double.parseDouble((String) get(property.getName()));
+        }
+        if (GWT.isScript()) {
+          return (V) dateForDouble(millis);
+        } else {
+          // In dev mode, we're using real JRE dates
+          return (V) new Date((long) millis);
+        }
+      }
+    } catch (final Exception ex) {
+      throw new IllegalStateException("Property  " + property.getName() + " has invalid " +
+      " value " + get(property.getName()) + " for type " + property.getType());
     }
 
     if (property instanceof EnumProperty) {
@@ -175,6 +185,13 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     }
     return true;
   }
+
+  /**
+   * @param name
+   */
+  public final native boolean isNull(String name)/*-{
+    return this[name] === null;
+  }-*/;
 
   public final boolean merge(RecordJsoImpl from) {
     assert getSchema() == from.getSchema();

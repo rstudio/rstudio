@@ -123,6 +123,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (String.class == parameterType) {
       return parameterValue;
     }
+    if (Boolean.class == parameterType || boolean.class == parameterType) {
+      return Boolean.valueOf(parameterValue);
+    }
     if (Integer.class == parameterType || int.class == parameterType) {
       return new Integer(parameterValue);
     }
@@ -191,6 +194,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       return value;
     }
     Class<?> type = value.getClass();
+    if (Boolean.class == type) {
+      return value;
+    }
     if (Date.class == type) {
       return String.valueOf(((Date) value).getTime());
     }

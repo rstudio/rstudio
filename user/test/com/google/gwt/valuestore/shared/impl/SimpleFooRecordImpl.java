@@ -43,6 +43,7 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
       set.addAll(super.allProperties());
       set.add(userName);
       set.add(password);
+      set.add(boolField);
       set.add(intId);
       set.add(created);
       set.add(longField);
@@ -77,6 +78,10 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
     super(jso);
   }
 
+  public Boolean getBoolField() {
+    return get(boolField);
+  }
+  
   public java.util.Date getCreated() {
     return get(created);
   }

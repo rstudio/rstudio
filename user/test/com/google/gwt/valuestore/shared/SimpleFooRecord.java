@@ -31,6 +31,7 @@ public interface SimpleFooRecord extends Record {
       String.class);
   Property<String> password = new Property<String>("password", "Password",
       String.class);
+  Property<Boolean> boolField = new Property<Boolean>("boolField", Boolean.class);
   Property<Integer> intId = new Property<Integer>("intId", Integer.class);
   Property<Date> created = new Property<Date>("created", Date.class);
   Property<Long> longField = new Property<Long>("longField", Long.class);
@@ -39,6 +40,8 @@ public interface SimpleFooRecord extends Record {
           com.google.gwt.valuestore.shared.SimpleEnum.class, SimpleEnum.values());
 
 
+  Boolean getBoolField();
+  
   Date getCreated();
 
   Integer getIntId();

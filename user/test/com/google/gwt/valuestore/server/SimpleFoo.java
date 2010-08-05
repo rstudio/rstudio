@@ -57,6 +57,8 @@ public class SimpleFoo {
     return 0;
   }
   Integer version = 1;
+
+  private Boolean boolField;
   private Date created;
   private SimpleEnum enumField;
   @Id
@@ -75,6 +77,11 @@ public class SimpleFoo {
     longField = 8L;
     enumField = SimpleEnum.FOO;
     created = new Date();
+    boolField = true;
+  }
+
+  public Boolean getBoolField() {
+    return boolField;
   }
 
   public Date getCreated() {
@@ -108,6 +115,10 @@ public class SimpleFoo {
   public void persist() {
   }
 
+  public void setBoolField(Boolean bool) {
+    boolField = bool;
+  }
+  
   public void setCreated(Date created) {
     this.created = created;
   }
