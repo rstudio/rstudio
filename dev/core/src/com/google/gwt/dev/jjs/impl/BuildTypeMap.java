@@ -16,8 +16,8 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.javac.JsniCollector;
-import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jdt.AbstractCompiler.CompilationResults;
+import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -44,6 +44,8 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -106,7 +108,7 @@ public class BuildTypeMap {
    * corresponding JNode for each created method and variable. 4) Maps all
    * synthetic arguments and fields for nested and local classes. 5) Slurps in
    * JSNI code for native methods as an opaque string.
-   * 
+   *
    * Note that methods and fields are not added to their classes here, that
    * isn't done until {@link GenerateJavaAST}.
    */
@@ -251,7 +253,7 @@ public class BuildTypeMap {
         BlockScope scope) {
       return process(localTypeDeclaration);
     }
-    
+
     private JField createEnumField(SourceInfo info, FieldBinding binding,
         JReferenceType enclosingType) {
       JType type = getType(binding.type);
@@ -537,9 +539,12 @@ public class BuildTypeMap {
       CompilationResults results, JsProgram jsProgram, TypeLinker linker) {
     BuildTypeMap btm = new BuildTypeMap(typeMap, jsProgram, linker,
         results.compiledUnits);
+    SpeedTracerLogger.start(CompilerEventType.BUILD_TYPE_MAP);
     btm.createPeersForUnits();
     btm.resolveExternalTypes(results.binaryBindings);
-    return btm.createPeersForNonTypeDecls();
+    TypeDeclaration[] result = btm.createPeersForNonTypeDecls();
+    SpeedTracerLogger.end(CompilerEventType.BUILD_TYPE_MAP);
+    return result;
   }
 
   static String dotify(char[][] name) {
@@ -767,7 +772,7 @@ public class BuildTypeMap {
     ReferenceBinding refBinding = (ReferenceBinding) binding;
     String name = dotify(refBinding.compoundName);
     if (!linker.isExternalType(name)) {
-      // typeMap.get() will fail with an appropriate exception 
+      // typeMap.get() will fail with an appropriate exception
       return (JType) typeMap.get(binding);
     }
 
@@ -927,7 +932,7 @@ public class BuildTypeMap {
       mapParameters(newCtor, decl, info);
     }
     // original params are now frozen
-    
+
     addThrownExceptions(b, newCtor);
 
     info.addCorrelation(program.getCorrelator().by(newCtor));
@@ -990,9 +995,9 @@ public class BuildTypeMap {
       processConstructor(binding, null, type.getSourceInfo());
     } else {
       createMethod(binding, type.getSourceInfo());
-    }    
+    }
   }
-  
+
   private JMethod processMethodBinding(MethodBinding b,
       JDeclaredType enclosingType, SourceInfo info) {
     JType returnType = getType(b.returnType);

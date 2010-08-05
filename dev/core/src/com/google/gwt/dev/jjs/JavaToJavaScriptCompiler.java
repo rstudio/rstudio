@@ -61,6 +61,7 @@ import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
@@ -92,7 +93,6 @@ import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
-import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
@@ -221,6 +221,7 @@ public class JavaToJavaScriptCompiler {
   public static PermutationResult compilePermutation(TreeLogger logger,
       UnifiedAst unifiedAst, Permutation permutation)
       throws UnableToCompleteException {
+    SpeedTracerLogger.start(CompilerEventType.JJS_COMPILE_PERMUTATION);
     InternalCompilerException.preload();
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
@@ -410,6 +411,8 @@ public class JavaToJavaScriptCompiler {
       return toReturn;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
+    } finally {
+      SpeedTracerLogger.end(CompilerEventType.JJS_COMPILE_PERMUTATION);
     }
   }
 
@@ -462,7 +465,7 @@ public class JavaToJavaScriptCompiler {
     // Compile the source and get the compiler so we can get the parse tree
     //
     CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
-        logger, allRootTypes.toArray(new String[allRootTypes.size()]), rpo, 
+        logger, allRootTypes.toArray(new String[allRootTypes.size()]), rpo,
         TypeLinker.NULL_TYPE_LINKER).compiledUnits;
 
     // Free up memory.
@@ -583,8 +586,11 @@ public class JavaToJavaScriptCompiler {
       Set<String> rebindRequests = new HashSet<String>();
       RecordRebinds.exec(jprogram, rebindRequests);
 
-      return new UnifiedAst(options, new AST(jprogram, jsProgram),
+      SpeedTracerLogger.start(CompilerEventType.CREATE_UNIFIED_AST);
+      UnifiedAst result = new UnifiedAst(options, new AST(jprogram, jsProgram),
           singlePermutation, rebindRequests);
+      SpeedTracerLogger.end(CompilerEventType.CREATE_UNIFIED_AST);
+      return result;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
     } finally {
@@ -630,6 +636,7 @@ public class JavaToJavaScriptCompiler {
 
   protected static void optimize(JJSOptions options, JProgram jprogram)
       throws InterruptedException {
+    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
     /*
      * Record the beginning of optimizations; this turns on certain checks that
      * guard against problematic late construction of things like class
@@ -637,7 +644,6 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
-    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
     do {
       if (Thread.interrupted()) {
         SpeedTracerLogger.end(CompilerEventType.OPTIMIZE);
@@ -700,6 +706,7 @@ public class JavaToJavaScriptCompiler {
   static void checkForErrors(TreeLogger logger,
       CompilationUnitDeclaration[] cuds, boolean itemizeErrors)
       throws UnableToCompleteException {
+    SpeedTracerLogger.start(CompilerEventType.CHECK_FOR_ERRORS);
     boolean compilationFailed = false;
     if (cuds.length == 0) {
       compilationFailed = true;
@@ -740,6 +747,7 @@ public class JavaToJavaScriptCompiler {
         }
       }
     }
+    SpeedTracerLogger.end(CompilerEventType.CHECK_FOR_ERRORS);
     if (compilationFailed) {
       logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors",
           null);
@@ -810,6 +818,7 @@ public class JavaToJavaScriptCompiler {
   private static void findEntryPoints(TreeLogger logger,
       RebindPermutationOracle rpo, String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
+    SpeedTracerLogger.start(CompilerEventType.FIND_ENTRY_POINTS);
     SourceInfo sourceInfo = program.createSourceInfoSynthetic(
         JavaToJavaScriptCompiler.class, "Bootstrap method");
     JMethod bootStrapMethod = program.createMethod(sourceInfo, "init",
@@ -871,6 +880,7 @@ public class JavaToJavaScriptCompiler {
       }
     }
     program.addEntryMethod(bootStrapMethod);
+    SpeedTracerLogger.end(CompilerEventType.FIND_ENTRY_POINTS);
   }
 
   private static JMethod findMainMethod(JDeclaredType declaredType) {
@@ -929,6 +939,7 @@ public class JavaToJavaScriptCompiler {
        * Reorder function decls to improve compression ratios. Also restructures
        * the top level blocks into sub-blocks if they exceed 32767 statements.
        */
+      SpeedTracerLogger.start(CompilerEventType.FUNCTION_CLUSTER);
       JsFunctionClusterer clusterer = new JsFunctionClusterer(out.toString(),
           v.getStatementRanges());
       // only cluster for obfuscated mode
@@ -936,6 +947,7 @@ public class JavaToJavaScriptCompiler {
           && options.getOutput() == JsOutputOption.OBFUSCATED) {
         clusterer.exec();
       }
+      SpeedTracerLogger.end(CompilerEventType.FUNCTION_CLUSTER);
       // rewrite top-level blocks to limit the number of statements
       JsIEBlockTextTransformer ieXformer = new JsIEBlockTextTransformer(
           clusterer);

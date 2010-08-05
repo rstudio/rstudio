@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,8 @@ package com.google.gwt.dev.util;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.util.tools.Utility;
 
 import org.w3c.dom.Attr;
@@ -134,7 +136,7 @@ public final class Util {
 
   /**
    * Computes the MD5 hash for the specified byte array.
-   * 
+   *
    * @return a big fat string encoding of the MD5 for the content, suitably
    *         formatted for use as a file name
    */
@@ -144,7 +146,7 @@ public final class Util {
 
   /**
    * Computes the MD5 hash of the specified byte arrays.
-   * 
+   *
    * @return a big fat string encoding of the MD5 for the content, suitably
    *         formatted for use as a file name
    */
@@ -312,13 +314,13 @@ public final class Util {
     escapeXml(unescaped, 0, unescaped.length(), true, builder);
     return builder.toString();
   }
-  
+
   /**
    * Escapes '&', '<', '>', '"', and optionally ''' to their XML entity
    * equivalents. The portion of the input string between start (inclusive) and
    * end (exclusive) is scanned.  The output is appended to the given
    * StringBuilder.
-   * 
+   *
    * @param code the input String
    * @param start the first character position to scan.
    * @param end the character position following the last character to scan.
@@ -331,7 +333,7 @@ public final class Util {
     int lastIndex = 0;
     int len = end - start;
     char[] c = new char[len];
-    
+
     code.getChars(start, end, c, 0);
     for (int i = 0; i < len; i++) {
       switch (c[i]) {
@@ -425,7 +427,7 @@ public final class Util {
 
   /**
    * Gets the contents of a file.
-   * 
+   *
    * @param relativePath relative path within the install directory
    * @return the contents of the file, or null if an error occurred
    */
@@ -447,7 +449,7 @@ public final class Util {
 
   /**
    * This method invokes an inaccessible method in another class.
-   * 
+   *
    * @param targetClass the class owning the method
    * @param methodName the name of the method
    * @param argumentTypes the types of the parameters to the method call
@@ -565,7 +567,7 @@ public final class Util {
 
   /**
    * Attempts to make a path relative to a particular directory.
-   * 
+   *
    * @param from the directory from which 'to' should be relative
    * @param to an absolute path which will be returned so that it is relative to
    *          'from'
@@ -720,7 +722,7 @@ public final class Util {
 
   /**
    * Reads the next non-empty line.
-   * 
+   *
    * @return a non-empty string that has been trimmed or null if the reader is
    *         exhausted
    */
@@ -837,7 +839,7 @@ public final class Util {
 
   /**
    * Deletes a file or recursively deletes a directory.
-   * 
+   *
    * @param file the file to delete, or if this is a directory, the directory
    *          that serves as the root of a recursive deletion
    * @param childrenOnly if <code>true</code>, only the children of a
@@ -853,7 +855,7 @@ public final class Util {
   /**
    * Selectively deletes a file or recursively deletes a directory.  Note that
    * it is possible that files remain if file.delete() fails.
-   * 
+   *
    * @param file the file to delete, or if this is a directory, the directory
    *          that serves as the root of a recursive deletion
    * @param childrenOnly if <code>true</code>, only the children of a
@@ -886,7 +888,7 @@ public final class Util {
   /**
    * Recursively lists a directory, returning the partial paths of the child
    * files.
-   * 
+   *
    * @param parent the directory to start from
    * @param includeDirs whether or not to include directories in the results
    * @return all partial paths descending from the parent file
@@ -987,7 +989,7 @@ public final class Util {
    * Creates an array from a collection of the specified component type and
    * size. You can definitely downcast the result to T[] if T is the specified
    * component type.
-   * 
+   *
    * Class<? super T> is used to allow creation of generic types, such as
    * Map.Entry<K,V> since we can only pass in Map.Entry.class.
    */
@@ -1018,7 +1020,7 @@ public final class Util {
   /**
    * Returns a string representation of the byte array as a series of
    * hexadecimal characters.
-   * 
+   *
    * @param bytes byte array to convert
    * @return a string representation of the byte array as a series of
    *         hexadecimal characters
@@ -1139,7 +1141,7 @@ public final class Util {
 
   /**
    * Attempts to find the canonical form of a file path.
-   * 
+   *
    * @return the canonical version of the file path, if it could be computed;
    *         otherwise, the original file is returned unmodified
    */
@@ -1211,6 +1213,7 @@ public final class Util {
    */
   public static void writeObjectAsFile(TreeLogger logger, File file,
       Object... objects) throws UnableToCompleteException {
+    SpeedTracerLogger.start(CompilerEventType.WRITE_OBJECT_AS_FILE);
     FileOutputStream stream = null;
     try {
       // No need to check mkdirs result because an IOException will occur anyway
@@ -1223,6 +1226,7 @@ public final class Util {
       throw new UnableToCompleteException();
     } finally {
       Utility.close(stream);
+      SpeedTracerLogger.end(CompilerEventType.WRITE_OBJECT_AS_FILE);
     }
   }
 
@@ -1238,7 +1242,7 @@ public final class Util {
     }
     objectStream.flush();
   }
-  
+
   public static boolean writeStringAsFile(File file, String string) {
     FileOutputStream stream = null;
     OutputStreamWriter writer = null;
@@ -1288,7 +1292,7 @@ public final class Util {
       writer.write(string);
       writer.close();
   }
-  
+
   /**
    * Writes the contents of a StringBuilder to an OutputStream, encoding
    * each character using the UTF-* encoding.  Unicode characters between
@@ -1305,7 +1309,7 @@ public final class Util {
     int buflen = 1024;
     char[] inBuf = new char[buflen];
     byte[] outBuf = new byte[4 * buflen];
-    
+
     int length = builder.length();
     int start = 0;
 
@@ -1345,14 +1349,14 @@ public final class Util {
             outBuf[index++] = (byte) (0x80 | ((z << 4) & 0x30) | (y >> 4));
             outBuf[index++] = (byte) (0x80 | ((y << 2) & 0x3c) | (x >> 6));
             outBuf[index++] = (byte) (0x80 | (x & 0x3f));
-            
+
             i++; // char has been consumed
           }
         }
       }
       out.write(outBuf, 0, index);
       start = end;
-    } 
+    }
   }
 
   // /**
@@ -1383,7 +1387,7 @@ public final class Util {
 
   /**
    * Reads the specified number of bytes from the {@link InputStream}.
-   * 
+   *
    * @param byteLength number of bytes to read
    * @return byte array containing the bytes read or <code>null</code> if
    *         there is an {@link IOException} or if the requested number of bytes
@@ -1415,10 +1419,10 @@ public final class Util {
 
   /**
    * Creates a string from the bytes using the specified character set name.
-   * 
+   *
    * @param bytes bytes to convert
    * @param charsetName the name of the character set to use
-   * 
+   *
    * @return String for the given bytes and character set or <code>null</code>
    *         if the character set is not supported
    */

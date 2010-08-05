@@ -40,8 +40,8 @@ import com.google.gwt.dev.jjs.JavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.CheckForUpdates;
-import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
+import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.util.CollapsedPropertyKey;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Util;
@@ -333,14 +333,16 @@ public class Precompile {
       logger = logger.branch(TreeLogger.DEBUG, msg, null);
 
       Set<String> answers = new HashSet<String>();
-
+      SpeedTracerLogger.start(CompilerEventType.GET_ALL_REBINDS);
       for (int i = 0; i < getPermuationCount(); ++i) {
         String resultTypeName = rebindOracles[i].rebind(logger, requestTypeName);
         answers.add(resultTypeName);
         // Record the correct answer into each permutation.
         permutations[i].putRebindAnswer(requestTypeName, resultTypeName);
       }
-      return Util.toArray(String.class, answers);
+      String[] result = Util.toArray(String.class, answers);
+      SpeedTracerLogger.end(CompilerEventType.GET_ALL_REBINDS);
+      return result;
     }
 
     public CompilationState getCompilationState() {
@@ -448,6 +450,7 @@ public class Precompile {
   public static boolean validate(TreeLogger logger, JJSOptions jjsOptions,
       ModuleDef module, File genDir, File dumpSignatureFile) {
     try {
+      SpeedTracerLogger.start(CompilerEventType.VALIDATE);
       CompilationState compilationState = module.getCompilationState(logger);
       if (dumpSignatureFile != null) {
         // Dump early to avoid generated types.
@@ -482,6 +485,8 @@ public class Precompile {
     } catch (UnableToCompleteException e) {
       // Already logged.
       return false;
+    } finally {
+      SpeedTracerLogger.end(CompilerEventType.VALIDATE);
     }
   }
 
@@ -490,6 +495,7 @@ public class Precompile {
       PropertyPermutations allPermutations, File genDir, File dumpSignatureFile) {
 
     try {
+      SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
       CompilationState compilationState = module.getCompilationState(logger);
       if (dumpSignatureFile != null) {
         // Dump early to avoid generated types.
@@ -508,10 +514,8 @@ public class Precompile {
           module, compilationState, generatedArtifacts, allPermutations, genDir);
       // Allow GC later.
       compilationState = null;
-      SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
       UnifiedAst unifiedAst = getCompiler(module).precompile(logger, module,
           rpo, declEntryPts, null, jjsOptions, rpo.getPermuationCount() == 1);
-      SpeedTracerLogger.end(CompilerEventType.PRECOMPILE);
 
       // Merge all identical permutations together.
       List<Permutation> permutations = new ArrayList<Permutation>(
@@ -540,6 +544,8 @@ public class Precompile {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.
       return null;
+    } finally {
+      SpeedTracerLogger.end(CompilerEventType.PRECOMPILE);
     }
   }
 

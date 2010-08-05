@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -53,7 +53,8 @@ import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
-import com.google.gwt.dev.util.PerfCounter;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -68,27 +69,27 @@ import java.util.Set;
  * the information to infer places where "tighter" (that is, more specific)
  * types can be inferred for locals, fields, parameters, and method return
  * types. We also optimize dynamic casts and instanceof operations.
- * 
+ *
  * Type flow occurs automatically in most JExpressions. But locals, fields,
  * parameters, and method return types serve as "way points" where type
  * information is fixed based on the declared type. Type tightening can be done
  * by analyzing the types "flowing" into each way point, and then updating the
  * declared type of the way point to be a more specific type than it had before.
- * 
+ *
  * Oddly, it's quite possible to tighten a variable to the Null type, which
  * means either the variable was never assigned, or it was only ever assigned
  * null. This is great for two reasons:
- * 
+ *
  * 1) Once a variable has been tightened to null, it will no longer impact the
  * variables that depend on it.
- * 
+ *
  * 2) It creates some very interesting opportunities to optimize later, since we
  * know statically that the value of the variable is always null.
- * 
+ *
  * Open issue: we don't handle recursion where a method passes (some of) its own
  * args to itself or returns its own call result. With our naive analysis, we
  * can't figure out that tightening might occur.
- * 
+ *
  * Type flow is not supported for primitive types, only reference types.
  */
 public class TypeTightener {
@@ -160,7 +161,7 @@ public class TypeTightener {
    * of assignment). Method return types receive type flow from their contained
    * return statements, plus the return type of any methods that
    * override/implement them.
-   * 
+   *
    * Note that we only have to run this pass ONCE to record the relationships,
    * because type tightening never changes any relationships, only the types of
    * the things related. In my original implementation, I had naively mapped
@@ -371,7 +372,7 @@ public class TypeTightener {
    * Wherever possible, use the type flow information recorded by RecordVisitor
    * to change the declared type of a field, local, parameter, or method to a
    * more specific type.
-   * 
+   *
    * Also optimize dynamic casts and instanceof operations where possible.
    */
   public class TightenTypesVisitor extends JModVisitor {
@@ -805,12 +806,10 @@ public class TypeTightener {
   }
 
   public static boolean exec(JProgram program) {
-    PerfCounter.start("TypeTightener.exec");
+    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
+        "optimizer", "TypeTightener");
     boolean didChange = new TypeTightener(program).execImpl();
-    PerfCounter.end("TypeTightener.exec");
-    if (didChange) {
-      PerfCounter.inc("TypeTightener.exec.didChange");
-    }
+    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
     return didChange;
   }
 

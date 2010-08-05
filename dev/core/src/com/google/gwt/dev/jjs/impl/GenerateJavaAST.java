@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasAnnotations;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JAnnotation;
+import com.google.gwt.dev.jjs.ast.JAnnotation.Property;
 import com.google.gwt.dev.jjs.ast.JAnnotationArgument;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -50,6 +51,7 @@ import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JForStatement;
@@ -91,8 +93,6 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
-import com.google.gwt.dev.jjs.ast.JAnnotation.Property;
-import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -103,6 +103,8 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
@@ -214,14 +216,14 @@ public class GenerateJavaAST {
    * JProgram. By the end of this pass, the produced AST should contain every
    * piece of information we'll ever need about the code. The JDT nodes should
    * never again be referenced after this.
-   * 
+   *
    * This is implemented as a reflective visitor for JDT's AST. The advantage of
    * doing it reflectively is that if we run into any JDT nodes we can't handle,
    * we'll automatically throw an exception. If we had subclassed
    * {@link org.eclipse.jdt.internal.compiler.ast.ASTNode} we'd have to override
    * every single method and explicitly throw an exception to get the same
    * behavior.
-   * 
+   *
    * NOTE ON JDT FORCED OPTIMIZATIONS - If JDT statically determines that a
    * section of code in unreachable, it won't fully resolve that section of
    * code. This invalid-state code causes us major problems. As a result, we
@@ -303,7 +305,7 @@ public class GenerateJavaAST {
      * inherits that implements an interface method but that has a different
      * erased signature from the interface method.
      * </p>
-     * 
+     *
      * <p>
      * The need for these bridges was pointed out in issue 3064. The goal is
      * that virtual method calls through an interface type are translated to
@@ -318,7 +320,7 @@ public class GenerateJavaAST {
      * case, a bridge method should be added that overrides the interface method
      * and then calls the implementation method.
      * </p>
-     * 
+     *
      * <p>
      * This method should only be called once all regular, non-bridge methods
      * have been installed on the GWT types.
@@ -654,7 +656,7 @@ public class GenerateJavaAST {
      * Java that glue code is a semantic error, because a this/super call must
      * be the first statement of your constructor. On the upside, optimizations
      * work the same on our synthetic fields as with any user fields.
-     * 
+     *
      * The order of emulation is: - assign all synthetic fields from synthetic
      * args - call our super constructor emulation method - call our instance
      * initializer emulation method - run user code
@@ -1676,7 +1678,7 @@ public class GenerateJavaAST {
         if (elementVar.getType() != program.getTypeJavaLangObject()) {
           TypeBinding collectionType;
           try {
-            // TODO: This is slow! Cache lookup. 
+            // TODO: This is slow! Cache lookup.
             Field privateField = ForeachStatement.class.getDeclaredField("collectionElementType");
             privateField.setAccessible(true);
             collectionType = (TypeBinding) privateField.get(x);
@@ -1882,7 +1884,7 @@ public class GenerateJavaAST {
                * Got to be one of my params; it would be illegal to use a this
                * ref at this moment-- we would most likely be passing in a
                * supertype field that HASN'T BEEN INITIALIZED YET.
-               * 
+               *
                * Unfortunately, my params might not work as-is, so we have to
                * check each one to see if any will make a suitable this ref.
                */
@@ -1973,7 +1975,7 @@ public class GenerateJavaAST {
         /*
          * In some circumstances, the outer this ref can be captured as a local
          * value (val$this), in other cases, as a this ref (this$).
-         * 
+         *
          * TODO: investigate using more JDT node information as an alternative
          */
         if (field.getName().startsWith("this$")
@@ -2051,7 +2053,7 @@ public class GenerateJavaAST {
     /**
      * Create a bridge method. It calls a same-named method with the same
      * arguments, but with a different type signature.
-     * 
+     *
      * @param clazz The class to put the bridge method in
      * @param jdtBridgeMethod The corresponding bridge method added in the JDT
      * @param implmeth The implementation method to bridge to
@@ -2161,13 +2163,13 @@ public class GenerateJavaAST {
      * refs up an arbitrarily big tree of enclosing classes and
      * supertypes-with-enclosing-classes until we find something that's the
      * right type.
-     * 
+     *
      * We have this implemented as a Breadth-First Search to minimize the number
      * of derefs required, and this seems to be correct. Note that we explicitly
      * prefer the current expression as one of its supertypes over a synthetic
      * this ref rooted off the current expression that happens to be the correct
      * type. We have observed this to be consistent with how Java handles it.
-     * 
+     *
      * TODO(scottb): could we get this info directly from JDT?
      */
     private JExpression createThisRef(JReferenceType qualType,
@@ -2389,7 +2391,7 @@ public class GenerateJavaAST {
 
     /**
      * Check whether the specified type is definitely for an enum class.
-     * 
+     *
      * @param type The type being tested
      * @return whether it is certainly an enum
      */
@@ -2436,7 +2438,7 @@ public class GenerateJavaAST {
      * obvious way to tell, but the clue we can get from JDT is that the local's
      * containing method won't be the same as the method we're currently
      * processing.
-     * 
+     *
      * Once we have this clue, we can use getEmulationPath to compute the
      * current class's binding for that field.
      */
@@ -2608,7 +2610,7 @@ public class GenerateJavaAST {
        * innermost type (in other words, a needless qualifier), it must refer to
        * that innermost type, because a class can never be nested inside of
        * itself. In this case, we must treat it as if it were not qualified.
-       * 
+       *
        * In all other cases, the qualified thisref or superref cannot possibly
        * refer to the innermost type (even if the innermost type could be cast
        * to a compatible type), so we must create a reference to some outer
@@ -2780,7 +2782,7 @@ public class GenerateJavaAST {
         /*
          * Make an inner class to hold a lazy-init name-value map. We use a
          * class to take advantage of its clinit.
-         * 
+         *
          * class Map { $MAP = Enum.createValueOfMap($VALUES); }
          */
         SourceInfo sourceInfo = type.getSourceInfo().makeChild(
@@ -3063,6 +3065,7 @@ public class GenerateJavaAST {
    */
   public static void exec(TypeDeclaration[] types, TypeMap typeMap,
       JProgram jprogram, JsProgram jsProgram, JJSOptions options) {
+    SpeedTracerLogger.start(CompilerEventType.GENERATE_JAVA_AST);
     // Construct the basic AST.
     JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap,
         jprogram, options);
@@ -3077,6 +3080,7 @@ public class GenerateJavaAST {
     // Process JSNI.
     Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = v.getJsniMethodMap();
     new JsniRefGenerationVisitor(jprogram, jsProgram, jsniMethodMap).accept(jprogram);
+    SpeedTracerLogger.end(CompilerEventType.GENERATE_JAVA_AST);
   }
 
   /**

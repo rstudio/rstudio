@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,7 +35,8 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
-import com.google.gwt.dev.util.PerfCounter;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -50,8 +51,8 @@ public class Finalizer {
 
   /**
    * Any items that weren't marked during MarkVisitor can be set final.
-   * 
-   * Open question: What does it mean if an interface/abstract method becomes
+   *
+   *  Open question: What does it mean if an interface/abstract method becomes
    * final? Is this possible after Pruning? I guess it means that someone tried
    * to make a call to method that wasn't actually implemented anywhere in the
    * program. But if it wasn't implemented, then the enclosing class should have
@@ -152,7 +153,7 @@ public class Finalizer {
     public void endVisit(JConstructor x, Context ctx) {
       // Never overridden.
     }
-    
+
     @Override
     public void endVisit(JDeclarationStatement x, Context ctx) {
       // This is not a reassignment, the target may still be final.
@@ -203,12 +204,10 @@ public class Finalizer {
   }
 
   public static boolean exec(JProgram program) {
-    PerfCounter.start("Finalizer.exec");
+    SpeedTracerLogger.start(
+        CompilerEventType.OPTIMIZE, "optimizer", "Finalizer");
     boolean didChange = new Finalizer().execImpl(program);
-    PerfCounter.end("Finalizer.exec");
-    if (didChange) {
-      PerfCounter.inc("Finalizer.exec.didChange");
-    }
+    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
     return didChange;
   }
 

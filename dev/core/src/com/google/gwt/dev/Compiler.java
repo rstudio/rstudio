@@ -178,7 +178,6 @@ public class Compiler {
 
   public boolean run(TreeLogger logger, ModuleDef... modules)
       throws UnableToCompleteException {
-    SpeedTracerLogger.start(CompilerEventType.COMPILE);
     boolean tempWorkDir = false;
     try {
       if (options.getWorkDir() == null) {
@@ -203,11 +202,9 @@ public class Compiler {
 
           // Optimize early since permutation compiles will run in process.
           options.setOptimizePrecompile(true);
-          SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
           Precompilation precompilation = Precompile.precompile(branch,
               options, module, options.getGenDir(),
               options.getDumpSignatureFile());
-          SpeedTracerLogger.end(CompilerEventType.PRECOMPILE);
           if (precompilation == null) {
             return false;
           }
@@ -253,7 +250,6 @@ public class Compiler {
           e);
       return false;
     } finally {
-      SpeedTracerLogger.end(CompilerEventType.COMPILE);
       if (tempWorkDir) {
         Util.recursiveDelete(options.getWorkDir(), false);
       }

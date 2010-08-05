@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,19 +32,17 @@ import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.copy.CopyAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.liveness.LivenessAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.unreachable.UnreachableAnalysis;
-import com.google.gwt.dev.util.PerfCounter;
 import com.google.gwt.dev.util.Preconditions;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 /**
  */
 public class DataflowOptimizer {
   public static boolean exec(JProgram jprogram, JNode node) {
-    PerfCounter.start("DataflowOptimizer.exec");
+    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "DataflowOptimizer");
     boolean didChange = new DataflowOptimizer(jprogram).execImpl(node);
-    PerfCounter.end("DataflowOptimizer.exec");
-    if (didChange) {
-      PerfCounter.inc("DataflowOptimizer.exec.didChange");
-    }
+    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE);
     return didChange;
   }
 
@@ -68,37 +66,37 @@ public class DataflowOptimizer {
       String methodName = enclosingType.getName() + "." + method.getName();
 
       // AnalysisSolver.debug = methodName.equals("<some method>");
-      
+
       Preconditions.checkNotNull(cfg, "Can't build flow for %s", methodName);
-      
+
       try {
-        CombinedIntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg> 
+        CombinedIntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg>
         fwdAnalysis = CombinedIntegratedAnalysis.createAnalysis();
-        
+
         fwdAnalysis.addAnalysis(new UnreachableAnalysis());
         fwdAnalysis.addAnalysis(new ConstantsAnalysis());
         fwdAnalysis.addAnalysis(new CopyAnalysis());
         // fwdAnalysis.addAnalysis(new InlineVarAnalysis(program));
-  
+
         boolean madeChanges = false;
-        
-        madeChanges = AnalysisSolver.solveIntegrated(cfg, fwdAnalysis, true) 
-            || madeChanges; 
-        
+
+        madeChanges = AnalysisSolver.solveIntegrated(cfg, fwdAnalysis, true)
+            || madeChanges;
+
         cfg = CfgBuilder.build(program, methodBody.getBlock());
         Preconditions.checkNotNull(cfg);
-        
-        CombinedIntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg> 
+
+        CombinedIntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg>
         bkwAnalysis = CombinedIntegratedAnalysis.createAnalysis();
-        
+
         bkwAnalysis.addAnalysis(new LivenessAnalysis());
-        
-        madeChanges = AnalysisSolver.solveIntegrated(cfg, bkwAnalysis, false) 
-            || madeChanges; 
+
+        madeChanges = AnalysisSolver.solveIntegrated(cfg, bkwAnalysis, false)
+            || madeChanges;
 
         if (madeChanges) {
           didChange = true;
-          
+
           DeadCodeElimination.exec(program, methodBody);
         }
       } catch (Throwable t) {

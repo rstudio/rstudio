@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -36,6 +36,8 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.util.JsniRef;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,7 +143,10 @@ public class ReplaceRebinds {
 
   public static boolean exec(TreeLogger logger, JProgram program,
       RebindPermutationOracle rpo) {
-    return new ReplaceRebinds(logger, program, rpo).execImpl();
+    SpeedTracerLogger.start(CompilerEventType.REPLACE_REBINDS);
+    boolean didChange = new ReplaceRebinds(logger, program, rpo).execImpl();
+    SpeedTracerLogger.end(CompilerEventType.REPLACE_REBINDS);
+    return didChange;
   }
 
   private final TreeLogger logger;

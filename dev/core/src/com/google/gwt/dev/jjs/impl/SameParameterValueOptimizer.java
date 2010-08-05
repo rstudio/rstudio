@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,7 +32,8 @@ import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
-import com.google.gwt.dev.util.PerfCounter;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -180,18 +181,17 @@ public class SameParameterValueOptimizer {
   }
 
   public static boolean exec(JProgram program) {
-    PerfCounter.start("SameParameterValueOptimizer.exec");
+    SpeedTracerLogger.start(
+        CompilerEventType.OPTIMIZE, "optimizer", "SameParameterValueOptimizer");
     boolean didChange = new SameParameterValueOptimizer(program).execImpl(program);
-    PerfCounter.end("SameParameterValueOptimizer.exec");
-    if (didChange) {
-      PerfCounter.inc("SameParameterValueOptimizer.exec.didChange");
-    }
+    SpeedTracerLogger.end(
+        CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
     return didChange;
   }
 
   /**
    * Parameter values.
-   * 
+   *
    * If doesn't contain a parameter, then its value is unknown. If contains
    * parameter, and value is null - the parameter's value is not the same across
    * all calls. If value is not null - the parameter's value is the same across
@@ -203,7 +203,7 @@ public class SameParameterValueOptimizer {
   /**
    * These methods should not be tried to optimized due to their polymorphic
    * nature.
-   * 
+   *
    * TODO: support polymorphic calls properly.
    */
   private Set<JMethod> rescuedMethods = new HashSet<JMethod>();

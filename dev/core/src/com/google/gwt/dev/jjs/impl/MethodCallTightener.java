@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,13 +27,14 @@ import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.util.PerfCounter;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 /**
  * Update polymorphic method calls to tighter bindings based on the type of the
  * qualifier. For a given polymorphic method call to a non-final target, see if
  * the static type of the qualifer would let us target an override instead.
- * 
+ *
  * This is possible because the qualifier might have been tightened by
  * {@link com.google.gwt.dev.jjs.impl.TypeTightener}.
  */
@@ -120,7 +121,7 @@ public class MethodCallTightener {
      * an interface is considered
      * <q>overriding</q>
      * for the purposes of this method.
-     * 
+     *
      */
     private boolean methodOverrides(JMethod subMethod, JMethod supMethod) {
       if (subMethod.getParams().size() != supMethod.getParams().size()) {
@@ -139,12 +140,11 @@ public class MethodCallTightener {
   }
 
   public static boolean exec(JProgram program) {
-    PerfCounter.start("MethodCallTightener.exec");
+    SpeedTracerLogger.start(
+        CompilerEventType.OPTIMIZE, "optimizer", "TypeTightener");
     boolean didChange = new MethodCallTightener(program).execImpl();
-    PerfCounter.end("MethodCallTightener.exec");
-    if (didChange) {
-      PerfCounter.inc("MethodCallTightener.exec.didChange");
-    }
+    SpeedTracerLogger.end(
+        CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
     return didChange;
   }
 

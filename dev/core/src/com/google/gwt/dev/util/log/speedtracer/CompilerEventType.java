@@ -24,7 +24,8 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 public enum CompilerEventType implements EventType {
   CODE_SPLITTER("CodeSplitter", "Yellow"), //
   COMPILE("Compiler", "DarkBlue"), //
-  COMPILE_PERMUTATIONS("CompilePermutations", "Moccasin"), //
+  COMPILE_PERMUTATIONS("CompilePermutations", "BurlyWood"), //
+  JJS_COMPILE_PERMUTATION("JjsCompilePermutation", "Moccasin"), //
   DRAFT_OPTIMIZE("DraftOptimizer", "Blue"), //
   GENERATOR("Generator", "Red"), //
   JDT_COMPILER("JdtCompiler", "FireBrick"), //
@@ -34,7 +35,28 @@ public enum CompilerEventType implements EventType {
   OPTIMIZE("Optimize", "LightSlateGray"), //
   PRECOMPILE("Precompile", "CornflowerBlue"), //
   RESOURCE_ORACLE("ResourceOracle", "GoldenRod"), //
-  TYPE_ORACLE_MEDIATOR("TypeOracleMediator", "LightSteelBlue"); //
+  TYPE_ORACLE_MEDIATOR("TypeOracleMediator", "LightSteelBlue"), //
+  CRORE_PRECOMPILE("CroreCompiler", "Crimson"), //
+  WRITE_OBJECT_AS_FILE("WriteObjectAsFile", "Magenta"), //
+  BUILD_AST("BuildAST", "DarkGoldenRod"), //
+  FUNCTION_CLUSTER("JsFunctionClusterer","Cornflower"), //
+  BLOCKED("Blocked", "FloralWhite"), //
+  PERMUTATION_WORKER("PermuationWorker", "SpringGreen"), //
+  GET_ALL_REBINDS("GetAllPossibleRebindAnswers", "Brown"), //
+  FIND_ENTRY_POINTS("FindEntryPoints", "SlateGray"), //
+  VALIDATE("Validate", "YellowGreen"), //
+  NORMALIZER("Normalizer", "Peru"), //
+  RECORD_REBINDS("RecordRebinds", "Chocolate"), //
+  BUILD_TYPE_MAP("BuildTypeMap", "LightSeaGreen"), //
+  GET_COMPILATION_UNITS("GetCompilationUnitDeclarations", "Gainsboro"), //
+  GENERATE_JAVA_AST("GenerateJavaAST", "DodgerBlue"),
+  ARTIFICIAL_RESCUE_REORDER("ArtificialRescueReorder", "LightCyan"), //
+  FIX_ASSIGNMENT_TO_UNBOX("FixAssignmentToUnbox", "Orange"), //
+  ASSERTION_NORMALIZER("AssertionNormalizer","LightPink"), //
+  ASSERTION_REMOVER("AssertionRemover","LightSalmon"), //
+  REPLACE_REBINDS("ReplaceRebinds", "Snow"), //
+  CREATE_UNIFIED_AST("CreateUnifiedAST", "BlueViolet"), //
+  CHECK_FOR_ERRORS("CheckForErrors", "DimGrey"); //
 
   final String cssColor;
   final String name;
