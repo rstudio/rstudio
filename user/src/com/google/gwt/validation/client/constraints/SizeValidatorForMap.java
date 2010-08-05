@@ -13,23 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation;
+package com.google.gwt.validation.client.constraints;
 
-import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.validation.client.SimpleSampleTest;
+import java.util.Map;
 
-import junit.framework.Test;
+import javax.validation.ConstraintValidatorContext;
 
 /**
- * All validation tests.
+ * {@link javax.validation.constraints.Size} constraint validator implementation
+ * for a {@link Map}.
  */
-public class ValidationSuite {
+public class SizeValidatorForMap extends AbstractSizeValidator<Map<?, ?>> {
 
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for all validation code.");
-    suite.addTestSuite(SimpleSampleTest.class);
-    return suite;
+  @Override
+  public boolean isValid(Map<?, ?> value, ConstraintValidatorContext context) {
+    if (value == null) {
+      return true;
+    }
+    return isLengthValid(value.size());
   }
 
 }

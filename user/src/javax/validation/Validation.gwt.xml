@@ -17,5 +17,8 @@
 -->
 <!-- Includes the javax.validation classes from the source jar  -->
 <module>
-  <source path=""/>
+  <source path="">
+    <exclude name="super/"/>
+  </source>
+  <super-source path="super"/>
 </module>
