@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class SizeValidatorForArrayOfLong extends AbstractSizeValidator<long[]> {
 
-  @Override
   public boolean isValid(long[] value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

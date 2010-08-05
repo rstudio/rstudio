@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class SizeValidatorForString extends AbstractSizeValidator<String> {
 
-  @Override
   public boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

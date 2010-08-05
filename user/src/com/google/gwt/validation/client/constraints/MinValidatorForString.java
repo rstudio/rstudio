@@ -24,7 +24,7 @@ import javax.validation.ConstraintValidatorContext;
  * for a {@link String}.
  */
 public class MinValidatorForString extends AbstractMinValidator<String> {
-  @Override
+
   public boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

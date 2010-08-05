@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class SizeValidatorForArrayOfByte extends AbstractSizeValidator<byte[]> {
 
-  @Override
   public boolean isValid(byte[] value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

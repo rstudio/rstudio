@@ -25,7 +25,6 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class DigitsValidatorForString extends AbstractDigitsValidator<String> {
 
-  @Override
   public boolean isValid(String value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

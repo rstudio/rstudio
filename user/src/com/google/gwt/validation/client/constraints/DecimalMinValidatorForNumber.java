@@ -26,7 +26,7 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class DecimalMinValidatorForNumber extends
     AbstractDecimalMinValidator<Number> {
-  @Override
+
   public boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

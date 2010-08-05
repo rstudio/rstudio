@@ -26,7 +26,6 @@ import javax.validation.ConstraintValidatorContext;
 public class SizeValidatorForCollection extends
     AbstractSizeValidator<Collection<?>> {
 
-  @Override
   public boolean isValid(Collection<?> value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

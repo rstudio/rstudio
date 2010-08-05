@@ -26,7 +26,7 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class DecimalMaxValidatorForNumber extends
     AbstractDecimalMaxValidator<Number> {
-  @Override
+
   public boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

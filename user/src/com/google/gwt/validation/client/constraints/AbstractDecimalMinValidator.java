@@ -31,7 +31,6 @@ public abstract class AbstractDecimalMinValidator<T> implements
 
   private BigDecimal min;
 
-  @Override
   public final void initialize(DecimalMin constraintAnnotation) {
     try {
       min = new BigDecimal(constraintAnnotation.value());

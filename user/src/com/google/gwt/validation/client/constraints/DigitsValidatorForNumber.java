@@ -25,7 +25,7 @@ import javax.validation.ConstraintValidatorContext;
  * implementation for a {@link Number}.
  */
 public class DigitsValidatorForNumber extends AbstractDigitsValidator<Number> {
-  @Override
+
   public boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

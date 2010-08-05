@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class MaxValidatorForNumber extends AbstractMaxValidator<Number> {
 
-  @Override
   public boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

@@ -32,7 +32,6 @@ public abstract class AbstractMinValidator<T> implements
 
   private long min;
 
-  @Override
   public final void initialize(Min constraintAnnotation) {
     min = constraintAnnotation.value();
   }

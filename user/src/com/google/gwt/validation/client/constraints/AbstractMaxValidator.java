@@ -30,7 +30,6 @@ public abstract class AbstractMaxValidator<T> implements
 
   private long max;
 
-  @Override
   public final void initialize(Max constraintAnnotation) {
     max = constraintAnnotation.value();
   }

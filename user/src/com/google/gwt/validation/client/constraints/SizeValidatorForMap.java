@@ -25,7 +25,6 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class SizeValidatorForMap extends AbstractSizeValidator<Map<?, ?>> {
 
-  @Override
   public boolean isValid(Map<?, ?> value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

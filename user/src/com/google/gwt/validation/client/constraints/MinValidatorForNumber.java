@@ -22,7 +22,7 @@ import javax.validation.ConstraintValidatorContext;
  * for a {@link Number}.
  */
 public class MinValidatorForNumber extends AbstractMinValidator<Number> {
-  @Override
+
   public boolean isValid(Number value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;

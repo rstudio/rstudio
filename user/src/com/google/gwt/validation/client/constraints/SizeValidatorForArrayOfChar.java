@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  */
 public class SizeValidatorForArrayOfChar extends AbstractSizeValidator<char[]> {
 
-  @Override
   public boolean isValid(char[] value, ConstraintValidatorContext context) {
     if (value == null) {
       return true;
