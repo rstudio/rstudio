@@ -65,6 +65,14 @@
   overflow: auto;
 }
 
+.keyboardSelectedRow {
+
+}
+
+.keyboardSelectedCell {
+
+}
+
 @sprite .loading {
   gwt-image: 'cellTableLoading';
   margin: 30px;  

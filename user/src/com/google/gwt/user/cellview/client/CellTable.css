@@ -66,6 +66,14 @@
   background-color: #88b0f2;
 }
 
+.keyboardSelectedRow {
+
+}
+
+.keyboardSelectedCell {
+
+}
+
 @sprite .selectedRow {
   gwt-image: 'cellTableSelectedBackground';
   background-color: #628cd5;
