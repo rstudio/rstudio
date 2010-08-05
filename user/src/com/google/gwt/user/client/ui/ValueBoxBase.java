@@ -196,13 +196,15 @@ public class ValueBoxBase<T> extends FocusWidget implements
    * @throws ParseException if the value cannot be parsed
    */
   public T getValueOrThrow() throws ParseException {
-    String text = getText().trim();
+    String text = getText();
+    
+    T parseResult = parser.parse(text);
 
     if ("".equals(text)) {
       return null;
     }
 
-    return parser.parse(text);
+    return parseResult;
   }
 
   /**
