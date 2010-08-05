@@ -17,6 +17,7 @@ package com.google.gwt.app.place;
 
 import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.valuestore.shared.Record;
@@ -43,17 +44,18 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
 
   private Long id;
   private Long futureId;
-  private DeltaValueStore deltas;
+  private final RequestFactory requests;
 
   private Display display;
   private RequestObject<Void> requestObject;
 
   public AbstractRecordEditActivity(RecordEditView<R> view, Long id,
-      RequestObject<Void> requestObject) {
+      RequestFactory requests, RequestObject<Void> requestObject) {
 
     this.view = view;
     this.creating = 0L == id;
     this.id = id;
+    this.requests = requests;
     this.requestObject = requestObject;
   }
 
@@ -142,8 +144,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     view.setCreating(creating);
 
     if (creating) {
-      R tempRecord = (R) requestObject.getDeltaValueStore().create(
-          getRecordClass());
+      R tempRecord = (R) requests.create(getRecordClass());
       futureId = tempRecord.getId();
       doStart(display, tempRecord);
     } else {

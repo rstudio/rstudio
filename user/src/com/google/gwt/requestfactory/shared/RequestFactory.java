@@ -17,7 +17,6 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
  * <p>
@@ -28,7 +27,7 @@ import com.google.gwt.valuestore.shared.ValueStore;
  * Marker interface for the RequestFactory code generator.
  */
 public interface RequestFactory {
-  public static final String JSON_CONTENT_TYPE_UTF8 =
+  String JSON_CONTENT_TYPE_UTF8 =
     "application/json; charset=utf-8";
 
   String SYNC = "SYNC";
@@ -37,8 +36,6 @@ public interface RequestFactory {
   String URL = "gwtRequest";
 
   Record create(Class token);
-
-  ValueStore getValueStore();
 
   void init(HandlerManager eventBus);
 

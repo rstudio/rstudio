@@ -17,10 +17,8 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.WriteOperation;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
-import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,23 +29,16 @@ import java.util.Map;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * {@link ValueStore} implementation.
  */
-public class ValueStoreJsonImpl implements ValueStore {
+class ValueStoreJsonImpl {
   // package protected fields for use by DeltaValueStoreJsonImpl
 
   final HandlerManager eventBus;
-  final RecordToTypeMap map;
 
   final Map<RecordKey, RecordJsoImpl> records = new HashMap<RecordKey, RecordJsoImpl>();
 
-  public ValueStoreJsonImpl(HandlerManager eventBus, RecordToTypeMap map) {
+  ValueStoreJsonImpl(HandlerManager eventBus) {
     this.eventBus = eventBus;
-    this.map = map;
-  }
-
-  public void addValidation() {
-    throw new UnsupportedOperationException("Auto-generated method stub");
   }
 
   public void setRecord(RecordJsoImpl newRecord) {

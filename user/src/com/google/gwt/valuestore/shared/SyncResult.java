@@ -29,7 +29,7 @@ public interface SyncResult {
   // TODO: move violations out of the SyncResult...
   boolean hasViolations();
   
-  String getFutureId();
+  Long getFutureId();
 
   Record getRecord();
   

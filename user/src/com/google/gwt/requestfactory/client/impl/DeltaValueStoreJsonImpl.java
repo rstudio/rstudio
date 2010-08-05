@@ -25,8 +25,6 @@ import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.WriteOperation;
 import com.google.gwt.valuestore.shared.impl.RecordImpl;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
-import com.google.gwt.valuestore.shared.impl.RecordSchema;
-import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,8 +36,7 @@ import java.util.Set;
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p>
- * {@link DeltaValueStore} implementation.
+ * </p> {@link DeltaValueStore} implementation.
  */
 public class DeltaValueStoreJsonImpl implements DeltaValueStore {
 
@@ -100,33 +97,12 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     }-*/;
   }
 
-  private static class FutureIdGenerator {
-    Set<String> idsInTransit = new HashSet<String>();
-    int maxId = 1;
-
-    void delete(String id) {
-      idsInTransit.remove(id);
-    }
-
-    String getFutureId() {
-      int futureId = maxId++;
-      if (maxId == Integer.MAX_VALUE) {
-        maxId = 1;
-      }
-      assert !idsInTransit.contains(futureId);
-      return new String(futureId + "");
-    }
-  }
-
   private static final HashMap<String, String> NULL_VIOLATIONS = new HashMap<String, String>();
 
-  private static final Integer INITIAL_VERSION = 1;
-
   private boolean used = false;
-  private final FutureIdGenerator futureIdGenerator = new FutureIdGenerator();
 
   private final ValueStoreJsonImpl master;
-  private final RecordToTypeMap recordToTypeMap;
+  private final RequestFactoryJsonImpl requestFactory;
 
   // track C-U-D of CRUD operations
   private final Map<RecordKey, RecordJsoImpl> creates = new HashMap<RecordKey, RecordJsoImpl>();
@@ -136,9 +112,9 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
   private final Map<RecordKey, WriteOperation> operations = new HashMap<RecordKey, WriteOperation>();
 
   public DeltaValueStoreJsonImpl(ValueStoreJsonImpl master,
-      RecordToTypeMap recordToTypeMap) {
+      RequestFactoryJsonImpl requestFactory) {
     this.master = master;
-    this.recordToTypeMap = recordToTypeMap;
+    this.requestFactory = requestFactory;
   }
 
   public void addValidation() {
@@ -163,8 +139,8 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
        * construct 2 maps: (i) futureId to the datastore Id, (ii) futureId to
        * violationsMap
        */
-      Map<Object, Object> futureToDatastoreId = new HashMap<Object, Object>();
-      Map<String, Map<String, String>> violationsMap = new HashMap<String, Map<String, String>>();
+      Map<Long, Long> futureToDatastoreId = new HashMap<Long, Long>();
+      Map<Long, Map<String, String>> violationsMap = new HashMap<Long, Map<String, String>>();
       int length = newRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord sync = newRecords.get(i);
@@ -173,25 +149,26 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
           assert !sync.hasId();
           HashMap<String, String> violations = new HashMap<String, String>();
           sync.fillViolations(violations);
-          violationsMap.put(sync.getFutureId(), violations);
+          violationsMap.put(Long.valueOf(sync.getFutureId()), violations);
         } else {
-          violationsMap.put(sync.getFutureId(), NULL_VIOLATIONS);
-          futureToDatastoreId.put(sync.getFutureId(), sync.getId());
+          violationsMap.put(Long.valueOf(sync.getFutureId()), NULL_VIOLATIONS);
+          futureToDatastoreId.put(Long.valueOf(sync.getFutureId()),
+              Long.valueOf(sync.getId()));
         }
       }
 
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : creates.entrySet()) {
         final RecordKey futureKey = entry.getKey();
         // TODO change violationsMap to <Long, String>
-        Map<String, String> violations = violationsMap.get(futureKey.id.toString());
+        Map<String, String> violations = violationsMap.get(futureKey.id);
         assert violations != null;
         if (violations == NULL_VIOLATIONS) {
-          Object datastoreId = futureToDatastoreId.get(futureKey.id.toString());
+          Long datastoreId = futureToDatastoreId.get(futureKey.id);
           assert datastoreId != null;
-          futureIdGenerator.delete(futureKey.id.toString());
+          requestFactory.futureIdGenerator.delete(futureKey.id);
           final RecordKey key = new RecordKey(datastoreId, futureKey.schema);
           RecordJsoImpl value = entry.getValue();
-          value.set(Record.id, Long.parseLong(datastoreId.toString()));
+          value.set(Record.id, datastoreId);
           RecordJsoImpl masterRecord = master.records.get(key);
           assert masterRecord == null;
           master.records.put(key, value);
@@ -199,12 +176,11 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
           toRemove.add(key);
           master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
               masterRecord, WriteOperation.CREATE));
-          syncResults.add(new SyncResultImpl(masterRecord, null,
-              futureKey.id.toString()));
+          syncResults.add(new SyncResultImpl(masterRecord, null, futureKey.id));
         } else {
           // do not change the masterRecord or fire event
           syncResults.add(new SyncResultImpl(entry.getValue(), violations,
-              futureKey.id.toString()));
+              futureKey.id));
         }
       }
     }
@@ -214,10 +190,10 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     if (keys.contains(WriteOperation.DELETE.name())) {
       JsArray<ReturnRecord> deletedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.DELETE.name());
-      Map<String, Map<String, String>> violationsMap = getViolationsMap(deletedRecords);
+      Map<Long, Map<String, String>> violationsMap = getViolationsMap(deletedRecords);
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : deletes.entrySet()) {
         final RecordKey key = entry.getKey();
-        Map<String, String> violations = violationsMap.get(key.id.toString());
+        Map<String, String> violations = violationsMap.get(key.id);
         assert violations != null;
         if (violations == NULL_VIOLATIONS) {
           RecordJsoImpl masterRecord = master.records.get(key);
@@ -239,10 +215,10 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     if (keys.contains(WriteOperation.UPDATE.name())) {
       JsArray<ReturnRecord> updatedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.UPDATE.name());
-      Map<String, Map<String, String>> violationsMap = getViolationsMap(updatedRecords);
+      Map<Long, Map<String, String>> violationsMap = getViolationsMap(updatedRecords);
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : updates.entrySet()) {
         final RecordKey key = entry.getKey();
-        Map<String, String> violations = violationsMap.get(key.id.toString());
+        Map<String, String> violations = violationsMap.get(key.id);
         assert violations != null;
         if (violations == NULL_VIOLATIONS) {
           RecordJsoImpl masterRecord = master.records.get(key);
@@ -262,27 +238,17 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     return syncResults;
   }
 
-  public Record create(Class token) {
-    if (used) {
-      throw new IllegalStateException(
-          "create can only be called on an un-used DeltaValueStore");
-    }
-    String futureId = futureIdGenerator.getFutureId();
-
-    RecordSchema<? extends Record> schema = recordToTypeMap.getType(token);
-    RecordJsoImpl newRecord = RecordJsoImpl.create(Long.parseLong(futureId), INITIAL_VERSION,
-        schema);
-    RecordKey recordKey = new RecordKey(newRecord);
-    assert operations.get(recordKey) == null;
-    operations.put(recordKey, WriteOperation.CREATE);
-    creates.put(recordKey, newRecord);
-    return schema.create(newRecord);
-  }
-
   public void delete(Record record) {
     checkArgumentsAndState(record, "delete");
     RecordImpl recordImpl = (RecordImpl) record;
     RecordKey recordKey = new RecordKey(recordImpl);
+    RecordJsoImpl rawMasterRecord = master.records.get(recordKey);
+    if (rawMasterRecord == null) {
+      // it was a create on RF
+      RecordJsoImpl oldRecord = requestFactory.creates.remove(recordKey);
+      assert oldRecord != null;
+      return;
+    }
     WriteOperation priorOperation = operations.get(recordKey);
     if (priorOperation == null) {
       operations.put(recordKey, WriteOperation.DELETE);
@@ -327,6 +293,14 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
 
     RecordJsoImpl rawMasterRecord = master.records.get(recordKey);
     WriteOperation priorOperation = operations.get(recordKey);
+    if (rawMasterRecord == null && priorOperation == null) {
+      // it was a create on RF that has not been pulled in to the DVS.
+      RecordJsoImpl oldRecord = requestFactory.creates.remove(recordKey);
+      assert oldRecord != null;
+      operations.put(recordKey, WriteOperation.CREATE);
+      creates.put(recordKey, oldRecord);
+      priorOperation = WriteOperation.CREATE;
+    }
     if (priorOperation == null) {
       addNewChangeRecord(recordKey, recordImpl, property, value);
       return;
@@ -412,10 +386,6 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     return jsonData.toString();
   }
 
-  public boolean validate() {
-    throw new UnsupportedOperationException("Auto-generated method stub");
-  }
-
   /**
    * returns true if a new change record has been added.
    */
@@ -486,9 +456,9 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     }
   }
 
-  private Map<String, Map<String, String>> getViolationsMap(
+  private Map<Long, Map<String, String>> getViolationsMap(
       JsArray<ReturnRecord> records) {
-    Map<String, Map<String, String>> violationsMap = new HashMap<String, Map<String, String>>();
+    Map<Long, Map<String, String>> violationsMap = new HashMap<Long, Map<String, String>>();
     int length = records.length();
     for (int i = 0; i < length; i++) {
       ReturnRecord record = records.get(i);
@@ -499,7 +469,7 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
       } else {
         violations = NULL_VIOLATIONS;
       }
-      violationsMap.put(record.getId(), violations);
+      violationsMap.put(Long.valueOf(record.getId()), violations);
     }
     return violationsMap;
   }

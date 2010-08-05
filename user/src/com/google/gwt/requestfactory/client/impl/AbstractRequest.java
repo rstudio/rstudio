@@ -50,7 +50,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public AbstractRequest(RequestFactoryJsonImpl requestFactory) {
     this.requestFactory = requestFactory;
     ValueStoreJsonImpl valueStore = requestFactory.getValueStore();
-    this.deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
+    this.deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, requestFactory);
   }
 
   public void fire(Receiver<T> receiver) {
@@ -83,7 +83,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
   public void reset() {
     ValueStoreJsonImpl valueStore = requestFactory.getValueStore();
-    deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
+    deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, requestFactory);
   }
 
   public <V> void set(Property<V> property, Record record, V value) {

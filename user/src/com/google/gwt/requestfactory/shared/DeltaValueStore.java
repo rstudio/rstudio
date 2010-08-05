@@ -17,7 +17,6 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
  * <p>
@@ -27,15 +26,13 @@ import com.google.gwt.valuestore.shared.ValueStore;
  * </p>
  * Set of changes to a ValueStore.
  */
-public interface DeltaValueStore extends ValueStore {
+public interface DeltaValueStore {
 
   /**
    * Enable a DeltaValueStore to be reused again. For example, when the edit
    * fails on the server.
    */
   void clearUsed();
-
-  Record create(Class token);
 
   void delete(Record record);
 
@@ -47,9 +44,4 @@ public interface DeltaValueStore extends ValueStore {
   boolean isChanged();
 
   <V> void set(Property<V> property, Record record, V value);
-
-  /**
-   * Returns true if all validations have passed.
-   */
-  boolean validate();
 }

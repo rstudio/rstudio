@@ -15,11 +15,12 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
+import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SimpleFooRecord;
 import com.google.gwt.valuestore.shared.WriteOperation;
@@ -47,7 +48,18 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     }
   }
 
+  final RecordToTypeMap typeMap = new RecordToTypeMap() {
+    public RecordSchema<? extends Record> getType(
+        Class<? extends Record> recordClass) {
+      if (recordClass.equals(SimpleFooRecord.class)) {
+        return SimpleFooRecordImpl.SCHEMA;
+      }
+      throw new IllegalArgumentException("Unknown token " + recordClass);
+    }
+  };
   ValueStoreJsonImpl valueStore = null;
+  RequestFactoryJsonImpl requestFactory = null;
+ 
   RecordJsoImpl jso = null;
 
   public String getModuleName() {
@@ -56,16 +68,22 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   @Override
   public void gwtSetUp() {
-    valueStore = new ValueStoreJsonImpl(null, new RecordToTypeMap() {
-      public RecordSchema<? extends Record> getType(Class<? extends Record>
-          recordClass) {
-        if (recordClass.equals(SimpleFooRecord.class)) {
-          return SimpleFooRecordImpl.SCHEMA;
-        }
-        throw new IllegalArgumentException("Unknown token " + recordClass);
+    valueStore = new ValueStoreJsonImpl(null);
+    requestFactory = new RequestFactoryJsonImpl() {
+
+      public Record create(Class token) {
+        return create(token, typeMap);
       }
 
-    });
+      public void init(HandlerManager eventBus) {
+        // ignore.
+      }
+
+      public LoggingRequest loggingRequest() {
+        return null; //ignore
+      }
+
+    };
 
     // add a record
     jso = RecordJsoImpl.fromJson("{}");
@@ -80,19 +98,24 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testCreate() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
-    Record created = deltaValueStore.create(SimpleFooRecord.class);
+    Record created = requestFactory.create(SimpleFooRecord.class);
     assertNotNull(created.getId());
     assertNotNull(created.getVersion());
 
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
+    // DVS does not know about the created entity.
+    assertFalse(deltaValueStore.isChanged());
+    deltaValueStore.set(SimpleFooRecord.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
     testAndGetChangeRecord(deltaValueStore.toJson(), WriteOperation.CREATE);
   }
 
   public void testCreateDelete() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
-    Record created = deltaValueStore.create(SimpleFooRecord.class);
-    assertTrue(deltaValueStore.isChanged());
+    Record created = requestFactory.create(SimpleFooRecord.class);
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
+    assertFalse(deltaValueStore.isChanged());
     deltaValueStore.delete(created);
     assertFalse(deltaValueStore.isChanged());
 
@@ -101,9 +124,11 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testCreateUpdate() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
-    Record created = deltaValueStore.create(SimpleFooRecord.class);
-    assertTrue(deltaValueStore.isChanged());
+    Record created = requestFactory.create(SimpleFooRecord.class);
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
+    // DVS does not know about the created entity.
+    assertFalse(deltaValueStore.isChanged());
     deltaValueStore.set(SimpleFooRecord.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
     JSONObject changeRecord = testAndGetChangeRecord(deltaValueStore.toJson(),
@@ -112,14 +137,16 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testDelete() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
     deltaValueStore.delete(new MyRecordImpl(jso));
     assertTrue(deltaValueStore.isChanged());
     testAndGetChangeRecord(deltaValueStore.toJson(), WriteOperation.DELETE);
   }
 
   public void testDeleteUpdate() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
     deltaValueStore.delete(new MyRecordImpl(jso));
     assertTrue(deltaValueStore.isChanged());
 
@@ -133,7 +160,8 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testOperationAfterJson() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
     deltaValueStore.delete(new MyRecordImpl(jso));
     assertTrue(deltaValueStore.isChanged());
 
@@ -153,7 +181,8 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testUpdate() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
     deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
         "harry");
     assertTrue(deltaValueStore.isChanged());
@@ -163,7 +192,8 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testUpdateDelete() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, valueStore.map);
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
     deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
         "harry");
     assertTrue(deltaValueStore.isChanged());
@@ -172,18 +202,6 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     deltaValueStore.delete(new MyRecordImpl(jso));
     assertTrue(deltaValueStore.isChanged());
     testAndGetChangeRecord(deltaValueStore.toJson(), WriteOperation.DELETE);
-  }
-
-  public void testValidation() {
-    ValueStoreJsonImpl dummyValueStore = new ValueStoreJsonImpl(null, null);
-    DeltaValueStore deltaValueStore = new DeltaValueStoreJsonImpl(dummyValueStore, null);
-
-    try {
-      deltaValueStore.addValidation();
-      fail("Should throw an UnsupportedOperationException");
-    } catch (UnsupportedOperationException ex) {
-      // expected
-    }
   }
 
   private JSONObject testAndGetChangeRecord(String jsonString,

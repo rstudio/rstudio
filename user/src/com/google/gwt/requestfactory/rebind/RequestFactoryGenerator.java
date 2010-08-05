@@ -28,9 +28,9 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.requestfactory.client.impl.AbstractBooleanRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractBigDecimalRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractBigIntegerRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractBooleanRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractByteRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractCharacterRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractDateRequest;
@@ -293,16 +293,10 @@ public class RequestFactoryGenerator extends Generator {
       e.printStackTrace();
     }
 
-    // write init()
+    // write create(Class..)
     JClassType recordToTypeInterface = generatorContext.getTypeOracle().findType(
         RecordToTypeMap.class.getName());
-    String recordToTypeMapName = recordToTypeInterface.getName() + "Impl";
-    sw.println("public void init(HandlerManager handlerManager) {");
-    sw.indent();
-    sw.println("super.init(handlerManager, new " + recordToTypeMapName + "());");
-    sw.outdent();
-    sw.println("}");
-    sw.println();
+    String recordToTypeMapName = recordToTypeInterface.getName() + "Impl";    
     sw.println("public " + Record.class.getName() + " create(Class token) {");
     sw.indent();
     sw.println("return create(token, new " + recordToTypeMapName + "());");

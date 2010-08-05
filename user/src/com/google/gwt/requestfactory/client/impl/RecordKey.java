@@ -30,7 +30,7 @@ import com.google.gwt.valuestore.shared.impl.RecordSchema;
  */
 class RecordKey {
   final RecordSchema<?> schema;
-  final Object id;
+  final Long id;
 
   RecordKey(RecordImpl record) {
     this(record.getId(), record.getSchema());
@@ -40,7 +40,7 @@ class RecordKey {
     this(record.getId(), record.getSchema());
   }
 
-  protected RecordKey(Object id, RecordSchema<?> schema) {
+  protected RecordKey(Long id, RecordSchema<?> schema) {
     assert id != null;
     assert schema != null;
 

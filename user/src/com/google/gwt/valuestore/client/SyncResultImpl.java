@@ -32,15 +32,15 @@ public class SyncResultImpl implements SyncResult {
 
   private final Record record;
   private final Map<String, String> violations;
-  private final String futureId;
+  private final Long futureId;
   
-  public SyncResultImpl(Record record, Map<String, String> violations, String futureId) {
+  public SyncResultImpl(Record record, Map<String, String> violations, Long futureId) {
     this.record = record;
     this.violations = violations;
     this.futureId = futureId;
   }
 
-  public String getFutureId() {
+  public Long getFutureId() {
     return futureId;
   }
 

@@ -58,7 +58,7 @@ public class ReportEditActivity extends
   public ReportEditActivity(Long id, RecordEditView<ReportRecord> view,
       ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
-    super(view, id, requests.reportRequest().persist());
+    super(view, id, requests, requests.reportRequest().persist());
     this.requests = requests;
     this.placeController = placeController;
   }

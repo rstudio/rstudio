@@ -34,7 +34,9 @@ import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
 import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,21 +51,21 @@ import java.util.logging.Logger;
  */
 public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
-  private static class FutureIdGenerator {
-    Set<String> idsInTransit = new HashSet<String>();
-    int maxId = 1;
+  static class FutureIdGenerator {
+    Set<Long> idsInTransit = new HashSet<Long>();
+    Long maxId = 1L;
 
-    void delete(String id) {
+    void delete(Long id) {
       idsInTransit.remove(id);
     }
 
-    String getFutureId() {
-      int futureId = maxId++;
-      if (maxId == Integer.MAX_VALUE) {
-        maxId = 1;
+    Long getFutureId() {
+      Long futureId = maxId++;
+      if (maxId == Long.MAX_VALUE) {
+        maxId = 1L;
       }
       assert !idsInTransit.contains(futureId);
-      return new String(futureId + "");
+      return futureId;
     }
   }
 
@@ -80,19 +82,23 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private static final Integer INITIAL_VERSION = 1;
 
+  final FutureIdGenerator futureIdGenerator = new FutureIdGenerator();
+
+  final Map<RecordKey, RecordJsoImpl> creates = new HashMap<RecordKey, RecordJsoImpl>();
+
   private ValueStoreJsonImpl valueStore;
 
   private HandlerManager handlerManager;
 
-  private final FutureIdGenerator futureIdGenerator = new FutureIdGenerator();
-
   public com.google.gwt.valuestore.shared.Record create(
       Class<? extends Record> token, RecordToTypeMap recordToTypeMap) {
-    String futureId = futureIdGenerator.getFutureId();
+    Long futureId = futureIdGenerator.getFutureId();
 
     RecordSchema<? extends Record> schema = recordToTypeMap.getType(token);
-    RecordJsoImpl newRecord = RecordJsoImpl.create(Long.valueOf(futureId),
-        INITIAL_VERSION, schema);
+    RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
+        schema);
+    RecordKey recordKey = new RecordKey(newRecord);
+    creates.put(recordKey, newRecord);
     return schema.create(newRecord);
   }
 
@@ -123,7 +129,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         if (200 == response.getStatusCode()) {
           String text = response.getText();
           requestObject.handleResponseText(text);
-        } else if (response.SC_UNAUTHORIZED == response.getStatusCode()) {
+        } else if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
           wireLogger.finest("Need to log in");
         } else if (response.getStatusCode() > 0) {
           // During the redirection for logging in, we get a response with no
@@ -146,19 +152,19 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
   }
 
-  public ValueStoreJsonImpl getValueStore() {
-    return valueStore;
-  }
-
   /**
    * @param handlerManager
    */
-  protected void init(HandlerManager handlerManager, RecordToTypeMap map) {
-    this.valueStore = new ValueStoreJsonImpl(handlerManager, map);
+  public void init(HandlerManager handlerManager) {
+    this.valueStore = new ValueStoreJsonImpl(handlerManager);
     this.handlerManager = handlerManager;
     Logger.getLogger("").addHandler(new RequestFactoryLogHandler(
         this, Level.WARNING, wireLogger.getName()));
     logger.fine("Successfully initialized RequestFactory");
+  }
+
+  ValueStoreJsonImpl getValueStore() {
+    return valueStore;
   }
 
   private void postRequestEvent(State received, Response response) {
