@@ -18,6 +18,11 @@ package com.google.gwt.sample.expenses.gwt.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
+import com.google.gwt.requestfactory.client.LoginWidget;
+import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestEvent;
+import com.google.gwt.requestfactory.shared.UserInformationRecord;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.sample.bikeshed.style.client.Styles;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
@@ -26,9 +31,13 @@ import com.google.gwt.sample.expenses.gwt.request.ExpenseRecordChanged;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecordChanged;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.ProvidesKey;
+
+import java.util.Set;
 
 /**
  * Entry point for the Expenses app.
@@ -133,6 +142,19 @@ public class Expenses implements EntryPoint {
     final ExpenseDetails expenseDetails = shell.getExpenseDetails();
 
     root.add(shell);
+    
+    // Check for Authentication failures or mismatches
+    eventBus.addHandler(RequestEvent.TYPE, new AuthenticationFailureHandler());
+
+    // Add a login widget to the page
+    final LoginWidget login = shell.getLoginWidget();
+    Receiver<UserInformationRecord> receiver = new Receiver<UserInformationRecord>() {
+      public void onSuccess(UserInformationRecord userInformationRecord, Set<SyncResult> syncResults) {
+        login.setUserInformation(userInformationRecord);
+      }       
+     };
+     requestFactory.userInformationRequest().getCurrentUserInformation(
+         Location.getHref()).fire(receiver);
 
     // Listen for requests from ExpenseTree.
     expenseTree.setListener(new ExpenseTree.Listener() {

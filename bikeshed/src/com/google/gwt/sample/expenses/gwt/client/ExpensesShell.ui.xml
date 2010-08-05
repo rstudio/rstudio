@@ -3,6 +3,7 @@
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:m='urn:import:com.google.gwt.mobile.client'
+  xmlns:r='urn:import:com.google.gwt.requestfactory.client'
   xmlns:e='urn:import:com.google.gwt.sample.expenses.gwt.client'>
 
   <ui:with field='styles' type='com.google.gwt.sample.bikeshed.style.client.Styles' />
@@ -12,6 +13,14 @@
   <ui:style>
     @sprite .logo {
       gwt-image: 'logo';
+    }
+    
+    .login {
+      position: absolute;
+      left: 75%;
+      right: 0%;
+      text-align: center;
+      background-color: yellow;
     }
     
     .title {
@@ -34,6 +43,7 @@
   <g:DockLayoutPanel unit='PX'>
     <g:north size='96'>
       <g:HTMLPanel styleName='{style.title}'>
+        <r:LoginWidget styleName='{style.login}' ui:field="loginWidget"/>
         <table height='100%' cellpadding='8' cellspacing='0'>
           <tr>
             <td>

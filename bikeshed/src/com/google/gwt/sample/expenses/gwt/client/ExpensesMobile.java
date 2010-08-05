@@ -18,10 +18,19 @@ package com.google.gwt.sample.expenses.gwt.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
+import com.google.gwt.requestfactory.client.LoginWidget;
+import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestEvent;
+import com.google.gwt.requestfactory.shared.UserInformationRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.valuestore.shared.SyncResult;
+
+import java.util.Set;
 
 /**
  * Entry point for the mobile version of the Expenses app.
@@ -86,5 +95,18 @@ public class ExpensesMobile implements EntryPoint {
     final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
         requestFactory, employeeId);
     RootPanel.get().add(shell);
+    
+    // Check for Authentication failures or mismatches
+    eventBus.addHandler(RequestEvent.TYPE, new AuthenticationFailureHandler());
+
+    // Add a login widget to the page
+    final LoginWidget login = shell.getLoginWidget();
+    Receiver<UserInformationRecord> receiver = new Receiver<UserInformationRecord>() {
+      public void onSuccess(UserInformationRecord userInformationRecord, Set<SyncResult> syncResults) {
+        login.setUserInformation(userInformationRecord);
+      }       
+     };
+     requestFactory.userInformationRequest().getCurrentUserInformation(
+         Location.getHref()).fire(receiver);
   }
 }

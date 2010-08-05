@@ -59,3 +59,8 @@
 .error {
   color: red;
 }
+
+.login {
+  text-align: center;
+  background-color: yellow;
+}

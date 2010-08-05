@@ -2,11 +2,13 @@
 <ui:UiBinder
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:m='urn:import:com.google.gwt.mobile.client'
+  xmlns:r='urn:import:com.google.gwt.requestfactory.client'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
   <ui:style field='mobile' src='mobile.css'/>
 
   <g:HTMLPanel>
+    <r:LoginWidget styleName='{mobile.login}' ui:field="loginWidget"/>
     <div class='{mobile.bar}'>
       <g:HTML ui:field='backButton' styleName='{mobile.backButton}'><div>Back</div></g:HTML>
       <g:HTML ui:field='addButton' styleName='{mobile.button}'><img src='images/add.png'/></g:HTML>
