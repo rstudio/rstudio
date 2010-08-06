@@ -30,16 +30,16 @@ import java.util.Date;
 @DataTransferObject(com.google.gwt.sample.expenses.server.domain.Report.class)
 public interface ReportRecord extends Record {
 
-  Property<String> approvedSupervisorKey = new Property<String>("approvedSupervisorKey", "Approved Supervisor Key",
-      String.class);
+  Property<Long> approvedSupervisorKey = new Property<Long>("approvedSupervisorKey", "Approved Supervisor Key",
+      Long.class);
   Property<Date> created = new Property<Date>("created", "Created", Date.class);
   Property<String> department = new Property<String>("department", "Department", String.class);
   Property<String> notes = new Property<String>("notes", "Notes", String.class);
   Property<String> purpose = new Property<String>("purpose", "Purpose", String.class);
-  Property<String> reporterKey = new Property<String>("reporterKey", "Reporter Key",
-      String.class);
+  Property<Long> reporterKey = new Property<Long>("reporterKey", "Reporter Key",
+      Long.class);
 
-  String getApprovedSupervisorKey();
+  Long getApprovedSupervisorKey();
 
   Date getCreated();
 
@@ -49,5 +49,5 @@ public interface ReportRecord extends Record {
 
   String getPurpose();
   
-  String getReporterKey();
+  Long getReporterKey();
 }

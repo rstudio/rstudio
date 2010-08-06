@@ -19,7 +19,6 @@ import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -84,10 +83,6 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public void reset() {
     ValueStoreJsonImpl valueStore = requestFactory.getValueStore();
     deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, requestFactory);
-  }
-
-  public <V> void set(Property<V> property, Record record, V value) {
-    deltaValueStore.set(property, record, value);
   }
 
   /**

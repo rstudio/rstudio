@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
+import com.google.gwt.app.client.LongRenderer;
 import com.google.gwt.app.place.AbstractRecordListView;
 import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
@@ -57,9 +58,10 @@ public class ReportListView extends AbstractRecordListView<ReportRecord> {
     columns.add(new PropertyColumn<ReportRecord, Date>(ReportRecord.created,
         new DateTimeFormatRenderer(DateTimeFormat.getShortDateFormat())));
     columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.purpose));
-    columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.reporterKey));
-    columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.approvedSupervisorKey));
-
+    columns.add(new PropertyColumn<ReportRecord, java.lang.Long>(
+        ReportRecord.reporterKey, LongRenderer.instance()));
+    columns.add(new PropertyColumn<ReportRecord, java.lang.Long>(
+        ReportRecord.approvedSupervisorKey, LongRenderer.instance()));
     return columns;
   }
 }

@@ -15,9 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
-
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -40,5 +37,4 @@ public interface RequestObject<T> {
 
   void handleResponseText(String responseText);
   
-  <V> void set(Property<V> property, Record record, V value);
 }

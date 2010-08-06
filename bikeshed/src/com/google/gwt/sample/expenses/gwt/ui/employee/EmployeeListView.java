@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
+import com.google.gwt.app.client.LongRenderer;
 import com.google.gwt.app.place.AbstractRecordListView;
 import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
@@ -52,8 +53,8 @@ public class EmployeeListView extends AbstractRecordListView<EmployeeRecord> {
     columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.userName));
     columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.displayName));
     columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.password));
-    columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.supervisorKey));
-
+    columns.add(new PropertyColumn<EmployeeRecord, java.lang.Long>(
+        EmployeeRecord.supervisorKey, LongRenderer.instance()));
     return columns;
   }
 }
