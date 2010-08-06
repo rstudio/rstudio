@@ -28,17 +28,23 @@ import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
  */
 public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
 
-  private T curSelection;
   private Object curKey;
+  private T curSelection;
+
+  // Pending selection change
+  private boolean newSelected;
+  private T newSelectedObject = null;
 
   /**
    * Gets the currently-selected object.
    */
   public T getSelectedObject() {
+    resolveChanges();
     return curSelection;
   }
 
   public boolean isSelected(T object) {
+    resolveChanges();
     if (curSelection == null || curKey == null || object == null) {
       return false;
     }
@@ -46,14 +52,41 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
   }
 
   public void setSelected(T object, boolean selected) {
-    Object key = getKey(object);
-    if (selected) {
-      curSelection = object;
+    newSelectedObject = object;
+    newSelected = selected;
+    scheduleSelectionChangeEvent();
+  }
+  
+  @Override
+  protected void fireSelectionChangeEvent() {
+    if (isEventScheduled()) {
+      setEventCancelled(true);
+    }
+
+    if (resolveChanges()) {
+      SelectionChangeEvent.fire(this);
+    }
+  }
+  
+  private boolean resolveChanges() {
+    if (newSelectedObject == null) {
+      return false;
+    }
+    
+    Object key = getKey(newSelectedObject);
+    boolean sameKey = curKey == null ? key == null : curKey.equals(key);
+    boolean changed = false;
+    if (newSelected) {
+      changed = !sameKey;
+      curSelection = newSelectedObject;
       curKey = key;
-    } else if (curKey != null && curKey.equals(key)) {
+    } else if (sameKey) {
+      changed = true;
       curSelection = null;
       curKey = null;
     }
-    scheduleSelectionChangeEvent();
+    
+    newSelectedObject = null;
+    return changed;
   }
 }

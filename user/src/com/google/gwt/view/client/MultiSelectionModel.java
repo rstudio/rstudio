@@ -17,7 +17,9 @@ package com.google.gwt.view.client;
 
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,30 +33,67 @@ import java.util.Set;
  */
 public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
 
-  private Set<T> selectedSet = new HashSet<T>();
-  private Set<Object> selectedKeys = new HashSet<Object>();
+  // Ensure one value per key
+  private final HashMap<Object, T> selectedSet = new HashMap<Object, T>();
+  
+  private final HashMap<T, Boolean> selectionChanges = new HashMap<T, Boolean>();
 
   /**
-   * Get the set of selected items.
+   * Get the set of selected items as a copy.
    *
    * @return the set of selected items
    */
   public Set<T> getSelectedSet() {
-    return selectedSet;
+    resolveChanges();
+    return new HashSet<T>(selectedSet.values());
   }
 
   public boolean isSelected(T object) {
-    return selectedKeys.contains(getKey(object));
+    resolveChanges();
+    return selectedSet.containsKey(getKey(object));
   }
 
   public void setSelected(T object, boolean selected) {
-    if (selected) {
-      selectedSet.add(object);
-      selectedKeys.add(getKey(object));
-    } else {
-      selectedSet.remove(object);
-      selectedKeys.remove(getKey(object));
-    }
+    selectionChanges.put(object, selected);
     scheduleSelectionChangeEvent();
+  }
+  
+  @Override
+  protected void fireSelectionChangeEvent() {
+    if (isEventScheduled()) {
+      setEventCancelled(true);
+    }
+
+    if (resolveChanges()) {
+      SelectionChangeEvent.fire(this);
+    }
+  }
+
+  private boolean resolveChanges() {
+    if (selectionChanges.isEmpty()) {
+      return false;
+    }
+  
+    boolean changed = false;
+    for (Map.Entry<T, Boolean> entry : selectionChanges.entrySet()) {
+      T object = entry.getKey();
+      boolean selected = entry.getValue();
+
+      Object key = getKey(object);
+      T oldValue = selectedSet.get(key);
+      if (selected) {
+        if (oldValue == null || !oldValue.equals(object)) {
+          selectedSet.put(getKey(object), object);
+          changed = true;
+        }
+      } else {
+        if (oldValue != null) {
+          selectedSet.remove(key);
+          changed = true;
+        }
+      }
+    }
+    selectionChanges.clear();
+    return changed;
   }
 }

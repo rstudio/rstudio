@@ -36,11 +36,15 @@ public abstract class DefaultSelectionModel<T> extends
 
   private final Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
 
+  // Changes to be propagated into exceptions map
+  private final HashMap<T, Boolean> selectionChanges = new HashMap<T, Boolean>();
+
   /**
    * Removes all exceptions.
    */
   public void clearExceptions() {
     exceptions.clear();
+    selectionChanges.clear();
     scheduleSelectionChangeEvent();
   }
 
@@ -49,12 +53,14 @@ public abstract class DefaultSelectionModel<T> extends
    * implement this method in order to define the default selection behavior.
    */
   public abstract boolean isDefaultSelected(T object);
-
+  
   /**
    * If the given object is marked as an exception, return the exception value.
    * Otherwise, return the value of isDefaultSelected for the given object.
    */
   public boolean isSelected(T object) {
+    resolveChanges();
+    
     // Check exceptions first
     Object key = getKey(object);
     Boolean exception = exceptions.get(key);
@@ -72,15 +78,19 @@ public abstract class DefaultSelectionModel<T> extends
    * object is added to the list of exceptions with the given selected state.
    */
   public void setSelected(T object, boolean selected) {
-    Object key = getKey(object);
-    if (isDefaultSelected(object) != selected) {
-      // If the state is different than the default state, add an exception.
-      exceptions.put(key, selected);
-    } else {
-      exceptions.remove(key);
+    selectionChanges.put(object, selected);
+    scheduleSelectionChangeEvent();
+  }
+  
+  // Coalesce selection changes since the last event firing
+  protected void fireSelectionChangeEvent() {
+    if (isEventScheduled()) {
+      setEventCancelled(true);
     }
 
-    scheduleSelectionChangeEvent();
+    if (resolveChanges()) {
+      SelectionChangeEvent.fire(this);
+    }
   }
 
   /**
@@ -93,5 +103,33 @@ public abstract class DefaultSelectionModel<T> extends
     output.clear();
     output.putAll(exceptions);
     return output;
+  }
+  
+  private boolean resolveChanges() {
+    boolean changed = false;
+    for (Map.Entry<T, Boolean> entry : selectionChanges.entrySet()) {
+      T object = entry.getKey();
+      boolean selected = entry.getValue();
+      boolean defaultSelected = isDefaultSelected(object);
+      Object key = getKey(object);
+      Boolean previousException = exceptions.get(key);
+
+      if (defaultSelected == selected) {
+        // Not an exception, remove from exceptions table if present
+        if (previousException != null) {
+          exceptions.remove(key);
+          changed = true;
+        }
+      } else {
+        // Add as an exception if not already there
+        if (previousException != Boolean.valueOf(selected)) {
+          exceptions.put(key, selected);
+          changed = true;
+        }
+      }
+    }
+
+    selectionChanges.clear();
+    return changed;
   }
 }

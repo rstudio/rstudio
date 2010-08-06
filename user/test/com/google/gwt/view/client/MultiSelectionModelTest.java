@@ -56,6 +56,35 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     delayTestFinish(2000);
     model.setSelected("test", true);
   }
+  
+  public void testNoDuplicateChangeEvent() {
+    MultiSelectionModel<String> model = createSelectionModel();
+    SelectionChangeHandler handler = new SelectionChangeHandler() {
+      public void onSelectionChange(SelectionChangeEvent event) {
+        fail();
+      }
+    };
+
+    model.setSelected("test", true);
+    model.addSelectionChangeHandler(handler);
+    model.setSelected("test", true); // Should not fire change event
+    model.setSelected("test", true); // Should not fire change event
+  }
+  
+  public void testNoDuplicateChangeEvent2() {
+    MultiSelectionModel<String> model = createSelectionModel();
+    SelectionChangeHandler handler = new SelectionChangeHandler() {
+      public void onSelectionChange(SelectionChangeEvent event) {
+        fail();
+      }
+    };
+
+    model.setSelected("test", true);
+    model.setSelected("test", false);
+    model.addSelectionChangeHandler(handler);
+    model.setSelected("test", false); // Should not fire change event
+    model.setSelected("test", false); // Should not fire change event
+  }
 
   public void testSetSelected() {
     MultiSelectionModel<String> model = createSelectionModel();

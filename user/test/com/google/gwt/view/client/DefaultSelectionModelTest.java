@@ -60,6 +60,20 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
     model.setSelected("test", true);
   }
 
+  public void testNoDuplicateChangeEvent() {
+    DefaultSelectionModel<String> model = createSelectionModel();
+    SelectionChangeHandler handler = new SelectionChangeHandler() {
+      public void onSelectionChange(SelectionChangeEvent event) {
+        fail();
+      }
+    };
+
+    model.setSelected("selected999", false);
+    model.addSelectionChangeHandler(handler);
+    model.setSelected("selected999", false); // Should not fire change event
+    model.setSelected("selected999", false); // Should not fire change event
+  }
+
   public void testSetSelectedDefault() {
     Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
     DefaultSelectionModel<String> model = createSelectionModel();
