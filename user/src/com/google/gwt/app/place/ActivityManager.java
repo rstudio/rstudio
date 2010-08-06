@@ -117,7 +117,7 @@ public class ActivityManager<P extends Place> implements
   }
 
   /**
-   * Reject the place change if the current is not willing to stop.
+   * Reject the place change if the current activity is not willing to stop.
    * 
    * @see PlaceChangeRequestedEvent.Handler#onPlaceChangeRequested(PlaceChangeRequestedEvent)
    */

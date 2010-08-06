@@ -19,7 +19,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
 /**
- * A {@link Cell} used to render text. Clicking on the call causes its
+ * A {@link Cell} used to render text. Clicking on the cell causes its
  * {@link ValueUpdater} to be called.
  *
  * <p>
