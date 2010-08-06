@@ -83,12 +83,12 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     // assert isDefined(property.getName()) :
     // "Cannot ask for a property before setting it: "
     // + property.getName();
-    if (isNull(property.getName())) {
+    if (isNullOrUndefined(property.getName())) {
       return null;
     }
     try {
       if (Boolean.class.equals(property.getType())) {
-      return (V) Boolean.valueOf((String) get(property.getName()));
+      return (V) Boolean.valueOf(getBoolean(property.getName()));
       }
       if (Byte.class.equals(property.getType())) {
         return (V) Byte.valueOf((byte) getInt(property.getName()));
@@ -189,8 +189,8 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
   /**
    * @param name
    */
-  public final native boolean isNull(String name)/*-{
-    return this[name] === null;
+  public final native boolean isNullOrUndefined(String name)/*-{
+    return this[name] == null;
   }-*/;
 
   public final boolean merge(RecordJsoImpl from) {
@@ -297,6 +297,10 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   private native Date dateForDouble(double millis) /*-{
     return @java.util.Date::createFrom(D)(millis);
+  }-*/;
+
+  private native boolean getBoolean(String name) /*-{
+    return this[name];
   }-*/;
 
   private native double getDouble(String name) /*-{

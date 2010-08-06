@@ -122,6 +122,8 @@ public class RecordJsoImplTest extends GWTTestCase {
     }
     assertEquals((Long) 42L, jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
+    assertEquals(null, jso.get(SimpleFooRecord.longField));
+    assertEquals(null, jso.get(SimpleFooRecord.enumField));
     testSchema(jso, schemaPresent);
   }
 
