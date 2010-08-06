@@ -41,6 +41,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.Stack;
 
@@ -271,9 +272,9 @@ public class JavaScriptObjectNormalizer {
   }
 
   public static void exec(JProgram program) {
-    SpeedTracerLogger.start(CompilerEventType.NORMALIZER);
+    Event normalizerEvent = SpeedTracerLogger.start(CompilerEventType.NORMALIZER);
     new JavaScriptObjectNormalizer(program).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.NORMALIZER);
+    normalizerEvent.end();
   }
 
   private final JProgram program;

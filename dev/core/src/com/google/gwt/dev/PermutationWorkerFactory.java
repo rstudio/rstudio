@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,8 +61,8 @@ public abstract class PermutationWorkerFactory {
       }
 
       public void run() {
-        SpeedTracerLogger.start(CompilerEventType.PERMUTATION_WORKER, "name",
-            worker.getName());
+        Event permutationWorkerEvent =
+            SpeedTracerLogger.start(CompilerEventType.PERMUTATION_WORKER, "name", worker.getName());
         Result threadDeathResult = Result.FAIL;
         try {
           while (true) {
@@ -89,7 +90,7 @@ public abstract class PermutationWorkerFactory {
         } catch (InterruptedException e) {
           return;
         } finally {
-          SpeedTracerLogger.end(CompilerEventType.PERMUTATION_WORKER);
+          permutationWorkerEvent.end();
           // Record why I died.
           try {
             resultsQueue.put(threadDeathResult);
@@ -137,9 +138,9 @@ public abstract class PermutationWorkerFactory {
         int workToDo = work.size();
         int aliveWorkers = workers.size();
         waitForWorkers : while (workToDo > 0 && aliveWorkers > 0) {
-          SpeedTracerLogger.start(CompilerEventType.BLOCKED);
+          Event blockedEvent = SpeedTracerLogger.start(CompilerEventType.BLOCKED);
           Result take = resultsQueue.take();
-          SpeedTracerLogger.end(CompilerEventType.BLOCKED);
+          blockedEvent.end();
           switch (take) {
             case SUCCESS:
               --workToDo;

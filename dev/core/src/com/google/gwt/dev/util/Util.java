@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
 
 import org.w3c.dom.Attr;
@@ -1213,7 +1214,7 @@ public final class Util {
    */
   public static void writeObjectAsFile(TreeLogger logger, File file,
       Object... objects) throws UnableToCompleteException {
-    SpeedTracerLogger.start(CompilerEventType.WRITE_OBJECT_AS_FILE);
+    Event writeObjectAsFileEvent = SpeedTracerLogger.start(CompilerEventType.WRITE_OBJECT_AS_FILE);
     FileOutputStream stream = null;
     try {
       // No need to check mkdirs result because an IOException will occur anyway
@@ -1226,7 +1227,7 @@ public final class Util {
       throw new UnableToCompleteException();
     } finally {
       Utility.close(stream);
-      SpeedTracerLogger.end(CompilerEventType.WRITE_OBJECT_AS_FILE);
+      writeObjectAsFileEvent.end();
     }
   }
 

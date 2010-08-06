@@ -36,7 +36,7 @@ public enum CompilerEventType implements EventType {
   PRECOMPILE("Precompile", "CornflowerBlue"), //
   RESOURCE_ORACLE("ResourceOracle", "GoldenRod"), //
   TYPE_ORACLE_MEDIATOR("TypeOracleMediator", "LightSteelBlue"), //
-  CRORE_PRECOMPILE("CroreCompiler", "Crimson"), //
+  PRECOMPILE_CORE("CoreCompiler", "Crimson"), //
   WRITE_OBJECT_AS_FILE("WriteObjectAsFile", "Magenta"), //
   BUILD_AST("BuildAST", "DarkGoldenRod"), //
   FUNCTION_CLUSTER("JsFunctionClusterer","Cornflower"), //

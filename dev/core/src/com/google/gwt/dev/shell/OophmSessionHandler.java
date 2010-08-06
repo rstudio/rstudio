@@ -23,6 +23,7 @@ import com.google.gwt.dev.shell.JsValue.DispatchMethod;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.lang.reflect.Member;
 import java.util.Collections;
@@ -98,7 +99,7 @@ public class OophmSessionHandler extends SessionHandlerServer {
   @Override
   public ExceptionOrReturnValue invoke(BrowserChannelServer channel,
       Value thisVal, int methodDispatchId, Value[] args) {
-    SpeedTracerLogger.start(DevModeEventType.JS_TO_JAVA_CALL);
+    Event jsToJavaCallEvent = SpeedTracerLogger.start(DevModeEventType.JS_TO_JAVA_CALL);
     ServerObjectsTable localObjects = channel.getJavaObjectsExposedInBrowser();
     ModuleSpace moduleSpace = moduleMap.get(channel);
     ModuleHandle moduleHandle = moduleHandleMap.get(channel);
@@ -160,7 +161,7 @@ public class OophmSessionHandler extends SessionHandlerServer {
           t.getClass(), t);
     }
     Value retVal = channel.convertFromJsValue(localObjects, jsRetVal);
-    SpeedTracerLogger.end(DevModeEventType.JS_TO_JAVA_CALL);
+    jsToJavaCallEvent.end();
     return new ExceptionOrReturnValue(exception, retVal);
   }
 
@@ -168,7 +169,7 @@ public class OophmSessionHandler extends SessionHandlerServer {
   public synchronized TreeLogger loadModule(BrowserChannelServer channel,
       String moduleName, String userAgent, String url, String tabKey,
       String sessionKey, byte[] userAgentIcon) {
-    SpeedTracerLogger.start(DevModeEventType.MODULE_INIT);
+    Event moduleInit = SpeedTracerLogger.start(DevModeEventType.MODULE_INIT);
     ModuleHandle moduleHandle = host.createModuleLogger(moduleName, userAgent,
         url, tabKey, sessionKey, channel, userAgentIcon);
     TreeLogger logger = moduleHandle.getLogger();
@@ -199,7 +200,7 @@ public class OophmSessionHandler extends SessionHandlerServer {
       moduleHandleMap.remove(channel);
       return null;
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.MODULE_INIT);
+      moduleInit.end();
     }
     return moduleHandle.getLogger();
   }

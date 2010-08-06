@@ -105,6 +105,7 @@ import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
@@ -3065,7 +3066,7 @@ public class GenerateJavaAST {
    */
   public static void exec(TypeDeclaration[] types, TypeMap typeMap,
       JProgram jprogram, JsProgram jsProgram, JJSOptions options) {
-    SpeedTracerLogger.start(CompilerEventType.GENERATE_JAVA_AST);
+    Event generateJavaAstEvent = SpeedTracerLogger.start(CompilerEventType.GENERATE_JAVA_AST);
     // Construct the basic AST.
     JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap,
         jprogram, options);
@@ -3080,7 +3081,7 @@ public class GenerateJavaAST {
     // Process JSNI.
     Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = v.getJsniMethodMap();
     new JsniRefGenerationVisitor(jprogram, jsProgram, jsniMethodMap).accept(jprogram);
-    SpeedTracerLogger.end(CompilerEventType.GENERATE_JAVA_AST);
+    generateJavaAstEvent.end();
   }
 
   /**

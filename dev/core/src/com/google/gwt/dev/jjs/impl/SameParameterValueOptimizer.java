@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -181,11 +182,10 @@ public class SameParameterValueOptimizer {
   }
 
   public static boolean exec(JProgram program) {
-    SpeedTracerLogger.start(
+    Event optimizeEvent = SpeedTracerLogger.start(
         CompilerEventType.OPTIMIZE, "optimizer", "SameParameterValueOptimizer");
     boolean didChange = new SameParameterValueOptimizer(program).execImpl(program);
-    SpeedTracerLogger.end(
-        CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
+    optimizeEvent.end("didChange", "" + didChange);
     return didChange;
   }
 

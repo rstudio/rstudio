@@ -21,6 +21,7 @@ import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -315,7 +316,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    * Runs the module's user startup code.
    */
   public final void onLoad(TreeLogger logger) throws UnableToCompleteException {
-    SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_LOAD);
+    Event moduleSpaceLoad = SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_LOAD);
 
     // Tell the host we're ready for business.
     //
@@ -374,11 +375,11 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
             invokeNativeVoid("fireOnModuleLoadStart", null,
                 new Class[] {String.class}, new Object[] {entryPointTypeName});
 
-            SpeedTracerLogger.start(DevModeEventType.ON_MODULE_LOAD);
+            Event onModuleLoadEvent = SpeedTracerLogger.start(DevModeEventType.ON_MODULE_LOAD);
             try {
               onModuleLoad.invoke(module);
             } finally {
-              SpeedTracerLogger.end(DevModeEventType.ON_MODULE_LOAD);
+              onModuleLoadEvent.end();
             }
           }
         } finally {
@@ -411,7 +412,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       logger.log(TreeLogger.ERROR, unableToLoadMessage, caught);
       throw new UnableToCompleteException();
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.MODULE_SPACE_LOAD);
+      moduleSpaceLoad.end();
     }
   }
 
@@ -423,7 +424,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     String msg = null;
     String resultName = null;
 
-    SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_REBIND_AND_CREATE);
+    Event moduleSpaceRebindAndCreate =
+        SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_REBIND_AND_CREATE);
     try {
       // Rebind operates on source-level names.
       //
@@ -454,7 +456,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     } catch (InvocationTargetException e) {
       caught = e.getTargetException();
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.MODULE_SPACE_REBIND_AND_CREATE);
+      moduleSpaceRebindAndCreate.end();
     }
 
     // Always log here because sometimes this method gets called from static
@@ -593,7 +595,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    */
   private Class<?> loadClassFromSourceName(String sourceName)
       throws ClassNotFoundException {
-    SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_CLASS_LOAD);
+    Event moduleSpaceClassLoad = SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_CLASS_LOAD);
     try {
       String toTry = sourceName;
       while (true) {
@@ -611,7 +613,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
         }
       }
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.MODULE_SPACE_CLASS_LOAD);
+      moduleSpaceClassLoad.end();
     }
   }
 

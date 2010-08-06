@@ -35,14 +35,15 @@ import com.google.gwt.dev.jjs.impl.gflow.unreachable.UnreachableAnalysis;
 import com.google.gwt.dev.util.Preconditions;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
  */
 public class DataflowOptimizer {
   public static boolean exec(JProgram jprogram, JNode node) {
-    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "DataflowOptimizer");
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "DataflowOptimizer");
     boolean didChange = new DataflowOptimizer(jprogram).execImpl(node);
-    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE);
+    optimizeEvent.end();
     return didChange;
   }
 

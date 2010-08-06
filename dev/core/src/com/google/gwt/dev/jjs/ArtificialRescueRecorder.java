@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.impl.JsniRefLookup;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -124,9 +125,10 @@ public class ArtificialRescueRecorder {
   }
 
   public static void exec(JProgram program) {
-    SpeedTracerLogger.start(CompilerEventType.ARTIFICIAL_RESCUE_REORDER);
+    Event artificialRescueReorderEvent =
+        SpeedTracerLogger.start(CompilerEventType.ARTIFICIAL_RESCUE_REORDER);
     new ArtificialRescueRecorder(program).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.ARTIFICIAL_RESCUE_REORDER);
+    artificialRescueReorderEvent.end();
   }
 
   private final JInterfaceType artificialRescueType;

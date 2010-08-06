@@ -20,6 +20,7 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
 
@@ -306,7 +307,8 @@ public class ResourceOracleImpl implements ResourceOracle {
    * @param logger status and error details are written here
    */
   public void refresh(TreeLogger logger) {
-    SpeedTracerLogger.start(CompilerEventType.RESOURCE_ORACLE, "phase", "refresh");
+    Event resourceOracle =
+        SpeedTracerLogger.start(CompilerEventType.RESOURCE_ORACLE, "phase", "refresh");
     TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger,
         null);
 
@@ -362,7 +364,7 @@ public class ResourceOracleImpl implements ResourceOracle {
     exposedResources = Collections.unmodifiableSet(externalSet);
     exposedResourceMap = Collections.unmodifiableMap(externalMap);
     exposedPathNames = Collections.unmodifiableSet(externalMap.keySet());
-    SpeedTracerLogger.end(CompilerEventType.RESOURCE_ORACLE);
+    resourceOracle.end();
   }
 
   public void setPathPrefixes(PathPrefixSet pathPrefixSet) {

@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
  * Most autoboxing is handled by {@link GenerateJavaAST}. The only cases it
@@ -91,10 +92,11 @@ public class FixAssignmentToUnbox extends JModVisitor {
   }
 
   public static void exec(JProgram program) {
-    SpeedTracerLogger.start(CompilerEventType.FIX_ASSIGNMENT_TO_UNBOX);
+    Event fixAssignmentToUnboxEvent =
+        SpeedTracerLogger.start(CompilerEventType.FIX_ASSIGNMENT_TO_UNBOX);
     new CompoundAssignmentToUnboxNormalizer(program).accept(program);
     new FixAssignmentToUnbox(program).accept(program);
-    SpeedTracerLogger.end(CompilerEventType.FIX_ASSIGNMENT_TO_UNBOX);
+    fixAssignmentToUnboxEvent.end();
   }
 
   private final AutoboxUtils autoboxUtils;

@@ -45,6 +45,7 @@ import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -350,9 +351,9 @@ public class MakeCallsStatic {
   }
 
   public static boolean exec(JProgram program) {
-    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "MakeCallsStatic");
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "MakeCallsStatic");
     boolean didChange = new MakeCallsStatic(program).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
+    optimizeEvent.end("didChange", "" + didChange);
     return didChange;
   }
 

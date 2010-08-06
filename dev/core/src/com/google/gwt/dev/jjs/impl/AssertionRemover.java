@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
  * Removes all assertion statements from the AST.
@@ -50,9 +51,9 @@ public class AssertionRemover {
   }
 
   public static void exec(JProgram program) {
-    SpeedTracerLogger.start(CompilerEventType.ASSERTION_REMOVER);
+    Event assertionRemoverEvent = SpeedTracerLogger.start(CompilerEventType.ASSERTION_REMOVER);
     new AssertionRemover(program).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.ASSERTION_REMOVER);
+    assertionRemoverEvent.end();
   }
 
   private final JProgram program;

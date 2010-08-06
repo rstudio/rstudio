@@ -52,6 +52,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -527,9 +528,9 @@ public class Pruner {
   }
 
   public static boolean exec(JProgram program, boolean noSpecialTypes) {
-    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "Pruner");
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "Pruner");
     boolean didChange = new Pruner(program, noSpecialTypes).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
+    optimizeEvent.end("didChange", "" + didChange);
     return didChange;
   }
 

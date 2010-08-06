@@ -56,7 +56,7 @@ public final class SpeedTracerLogger {
   /**
    * Represents a node in a tree of SpeedTracer events.
    */
-  private class Event {
+  public class Event {
     List<Event> children = Lists.create();
     List<String> data;
     long durationNanos;
@@ -87,6 +87,13 @@ public final class SpeedTracerLogger {
         assert (data.length % 2 == 0);
         this.data = Lists.addAll(this.data, data);
       }
+    }
+
+    /**
+     * Signals the end of the current event.
+     */
+    public void end(String... data) {
+      SpeedTracerLogger.get().endImpl(this, data);
     }
 
     @Override
@@ -121,6 +128,26 @@ public final class SpeedTracerLogger {
 
     private double convertToMilliseconds(long nanos) {
       return nanos / 1000000.0d;
+    }
+  }
+  
+  /**
+   * A dummy implementation to do nothing if logging has not been turned on.
+   */
+  private class DummyEvent extends Event {
+    @Override
+    public void addData(String  ...data) {
+      // do nothing
+    }
+    
+    @Override
+    public void end(String... data) {
+      // do nothing
+    }
+    
+    @Override
+    public String toString() {
+      return "Dummy";
     }
   }
 
@@ -191,13 +218,6 @@ public final class SpeedTracerLogger {
   }
 
   /**
-   * Signals the end of the current event.
-   */
-  public static void end(EventType type, String... data) {
-    SpeedTracerLogger.get().endImpl(type, data);
-  }
-
-  /**
    * Create a new global instance. Force the zero time to be recorded and the
    * log to be opened if the default logging is turned on with the
    * <code>-Dgwt.speedtracerlog</code> VM property.
@@ -209,15 +229,16 @@ public final class SpeedTracerLogger {
   }
 
   /**
-   * Signals that a new event has started. You must call {@link #end} for each
+   * Signals that a new event has started. You must end each event for each
    * corresponding call to {@code start}. You may nest timing calls.
    *
    * @param type the type of event
    * @data a set of key-value pairs (each key is followed by its value) that
    *       contain additional information about the event
+   * @return an Event object to be closed by the caller
    */
-  public static void start(EventType type, String... data) {
-    SpeedTracerLogger.get().startImpl(type, data);
+  public static Event start(EventType type, String... data) {
+    return SpeedTracerLogger.get().startImpl(type, data);
   }
 
   /**
@@ -231,6 +252,7 @@ public final class SpeedTracerLogger {
     return LazySpeedTracerLoggerHolder.singleton;
   }
 
+  private final DummyEvent dummyEvent = new DummyEvent();
   private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>();
 
   private final BlockingQueue<Event> eventsToWrite;
@@ -276,7 +298,7 @@ public final class SpeedTracerLogger {
     currentEvent.addData(data);
   }
 
-  void endImpl(EventType type, String... data) {
+  void endImpl(Event event, String... data) {
     if (eventsToWrite == null) {
       return;
     }
@@ -296,15 +318,15 @@ public final class SpeedTracerLogger {
     assert (endTimeNanos >= currentEvent.startTimeNanos);
     currentEvent.durationNanos = endTimeNanos - currentEvent.startTimeNanos;
 
-    while (currentEvent.type != type && !threadPendingEvents.isEmpty()) {
+    while (currentEvent != event && !threadPendingEvents.isEmpty()) {
       // Missed a closing end for one or more frames! Try to sync back up.
-      currentEvent.addData("Missed", "This event was closed without an explicit call to SpeedTracerLogger.end()"); 
+      currentEvent.addData("Missed", "This event was closed without an explicit call to Event.end()"); 
       currentEvent = threadPendingEvents.pop();
       assert (endTimeNanos >= currentEvent.startTimeNanos);
       currentEvent.durationNanos = endTimeNanos - currentEvent.startTimeNanos;
     }
     
-    if (threadPendingEvents.isEmpty() && currentEvent.type != type) {
+    if (threadPendingEvents.isEmpty() && currentEvent != event) {
       currentEvent.addData("Missed", "Fell off the end of the threadPending events");
     }
     
@@ -328,9 +350,9 @@ public final class SpeedTracerLogger {
     }
   }
 
-  void startImpl(EventType type, String... data) {
+  Event startImpl(EventType type, String... data) {
     if (eventsToWrite == null) {
-      return;
+      return dummyEvent;
     }
 
     if (data.length % 2 == 1) {
@@ -345,6 +367,7 @@ public final class SpeedTracerLogger {
 
     Event newEvent = new Event(parent, type, data);
     threadPendingEvents.push(newEvent);
+    return newEvent;
   }
 
   private long normalizedTimeNanos() {

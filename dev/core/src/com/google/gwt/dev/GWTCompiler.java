@@ -33,6 +33,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.ToolBase;
 import com.google.gwt.util.tools.Utility;
 
@@ -163,7 +164,7 @@ public class GWTCompiler {
    */
   public boolean run(TreeLogger logger, ModuleDef... modules)
       throws UnableToCompleteException {
-    SpeedTracerLogger.start(CompilerEventType.COMPILE);
+    Event compileEvent = SpeedTracerLogger.start(CompilerEventType.COMPILE);
     boolean tempWorkDir = false;
     try {
       if (options.getWorkDir() == null) {
@@ -219,7 +220,7 @@ public class GWTCompiler {
           e);
       return false;
     } finally {
-      SpeedTracerLogger.end(CompilerEventType.COMPILE);
+      compileEvent.end();
       if (tempWorkDir) {
         Util.recursiveDelete(options.getWorkDir(), false);
       }

@@ -34,6 +34,7 @@ import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -395,7 +396,7 @@ public class ModuleDef {
   }
 
   public synchronized void refresh(TreeLogger logger) {
-    SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
+    Event moduleDefEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
     logger = logger.branch(TreeLogger.DEBUG, "Refreshing module '" + getName()
         + "'");
 
@@ -406,7 +407,7 @@ public class ModuleDef {
     if (lazyResourcesOracle != null) {
       lazyResourcesOracle.refresh(logger);
     }
-    SpeedTracerLogger.end(CompilerEventType.MODULE_DEF);
+    moduleDefEvent.end();
   }
 
   /**
@@ -445,7 +446,8 @@ public class ModuleDef {
    * @param logger Logs the activity.
    */
   synchronized void normalize(TreeLogger logger) {
-    SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "normalize");
+    Event moduleDefNormalize =
+        SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "normalize");
     // Normalize property providers.
     //
     for (Property current : getProperties()) {
@@ -491,7 +493,7 @@ public class ModuleDef {
           "No source path entries; expect subsequent failures", null);
     }
 
-    SpeedTracerLogger.end(CompilerEventType.MODULE_DEF);
+    moduleDefNormalize.end();
   }
 
   private void checkForSeedTypes(TreeLogger logger,

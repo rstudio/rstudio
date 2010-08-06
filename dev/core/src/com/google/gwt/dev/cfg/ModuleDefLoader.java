@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.util.tools.Utility;
 
@@ -129,7 +130,7 @@ public final class ModuleDefLoader {
    */
   public static ModuleDef loadFromClassPath(TreeLogger logger,
       String moduleName, boolean refresh) throws UnableToCompleteException {
-    SpeedTracerLogger.start(
+    Event moduleDefLoadFromClassPathEvent = SpeedTracerLogger.start(
         CompilerEventType.MODULE_DEF, "phase", "loadFromClassPath", "moduleName", moduleName);
     try {
       // Look up the module's physical name; if null, we are either encountering
@@ -145,7 +146,7 @@ public final class ModuleDefLoader {
       ModuleDefLoader loader = new ModuleDefLoader();
       return loader.doLoadModule(logger, moduleName);
     } finally {
-      SpeedTracerLogger.end(CompilerEventType.MODULE_DEF);
+      moduleDefLoadFromClassPathEvent.end();
     }
   }
 

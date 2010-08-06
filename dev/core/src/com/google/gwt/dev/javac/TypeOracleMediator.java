@@ -58,6 +58,7 @@ import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
@@ -294,7 +295,7 @@ public class TypeOracleMediator {
    */
   public void addNewUnits(TreeLogger logger,
       Collection<CompilationUnit> units) {
-    SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR);
+    Event typeOracleMediatorEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR);
     // First collect all class data.
     classMap = new HashMap<String, CollectClassData>();
     for (CompilationUnit unit : units) {
@@ -364,7 +365,7 @@ public class TypeOracleMediator {
     allMethodArgs = null;
     classMap = null;
     classMapType = null;
-    SpeedTracerLogger.end(CompilerEventType.TYPE_ORACLE_MEDIATOR);
+    typeOracleMediatorEvent.end();
   }
 
   /**
@@ -547,7 +548,7 @@ public class TypeOracleMediator {
    * creating JRealClassType/JGenericType objects.
    */
   private CollectClassData processClass(CompiledClass compiledClass) {
-    SpeedTracerLogger.start(DevModeEventType.VISIT_CLASS_FILE);
+    Event visitClassFileEvent = SpeedTracerLogger.start(DevModeEventType.VISIT_CLASS_FILE);
     
     byte[] classBytes = compiledClass.getBytes();
     ClassReader reader = new ClassReader(classBytes);
@@ -558,7 +559,7 @@ public class TypeOracleMediator {
     }
     reader.accept(cv, 0);
     
-    SpeedTracerLogger.end(DevModeEventType.VISIT_CLASS_FILE);    
+    visitClassFileEvent.end();    
     return mcv;
   }
 

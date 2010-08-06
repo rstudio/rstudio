@@ -24,6 +24,7 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.File;
 
@@ -84,7 +85,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       throws UnableToCompleteException {
     this.space = readySpace;
 
-    SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_HOST_READY);
+    Event moduleSpaceHostReadyEvent = SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_HOST_READY);
     try {
       // Establish an environment for JavaScript property providers to run.
       //
@@ -112,7 +113,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       //
       classLoader = new CompilingClassLoader(logger, compilationState, readySpace);
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.MODULE_SPACE_HOST_READY);
+      moduleSpaceHostReadyEvent.end();
     }
   }
 

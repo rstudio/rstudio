@@ -34,6 +34,7 @@ import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.ByteArrayOutputStream;
@@ -423,7 +424,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     setCurrentGenerator(generatorClass);
 
     long before = System.currentTimeMillis();
-    SpeedTracerLogger.start(CompilerEventType.GENERATOR, "class",
+    Event generatorEvent = SpeedTracerLogger.start(CompilerEventType.GENERATOR, "class",
         generator.getClass().getName(), "type", typeName);
     try {
       String className = generator.generate(logger, this, typeName);
@@ -446,7 +447,7 @@ public class StandardGeneratorContext implements GeneratorContext {
           + "' threw an exception while rebinding '" + typeName + "'", e);
       throw new UnableToCompleteException();
     } finally {
-      SpeedTracerLogger.end(CompilerEventType.GENERATOR);
+      generatorEvent.end();
     }
   }
 

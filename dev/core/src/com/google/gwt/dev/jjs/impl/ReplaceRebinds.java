@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,9 +144,9 @@ public class ReplaceRebinds {
 
   public static boolean exec(TreeLogger logger, JProgram program,
       RebindPermutationOracle rpo) {
-    SpeedTracerLogger.start(CompilerEventType.REPLACE_REBINDS);
+    Event replaceRebindsEvent = SpeedTracerLogger.start(CompilerEventType.REPLACE_REBINDS);
     boolean didChange = new ReplaceRebinds(logger, program, rpo).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.REPLACE_REBINDS);
+    replaceRebindsEvent.end();
     return didChange;
   }
 

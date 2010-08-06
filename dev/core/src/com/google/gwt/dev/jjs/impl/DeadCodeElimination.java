@@ -65,6 +65,7 @@ import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -1810,7 +1811,8 @@ public class DeadCodeElimination {
   }
 
   private boolean execImpl(JNode node) {
-    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "DeadCodeElimination");
+    Event optimizeEvent =
+        SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "DeadCodeElimination");
     boolean didChange = false;
     while (true) {
       DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor();
@@ -1820,7 +1822,7 @@ public class DeadCodeElimination {
       }
       didChange = true;
     }
-    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
+    optimizeEvent.end("didChange", "" + didChange);
     return didChange;
   }
 }

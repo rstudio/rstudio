@@ -36,6 +36,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -209,20 +210,21 @@ public class Compiler {
             return false;
           }
 
-          SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
+          Event compilePermutationsEvent =
+              SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
           Permutation[] allPerms = precompilation.getPermutations();
           List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
               options.getCompilerWorkDir(moduleName), allPerms);
           CompilePerms.compile(branch, precompilation, allPerms,
               options.getLocalWorkers(), resultFiles);
-          SpeedTracerLogger.end(CompilerEventType.COMPILE_PERMUTATIONS);
+          compilePermutationsEvent.end();
 
           ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
           JJSOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
 
           precompilation = null; // No longer needed, so save the memory
 
-          SpeedTracerLogger.start(CompilerEventType.LINK);
+          Event linkEvent = SpeedTracerLogger.start(CompilerEventType.LINK);
           File absPath = new File(options.getWarDir(), module.getName());
           absPath = absPath.getAbsoluteFile();
 
@@ -237,7 +239,7 @@ public class Compiler {
               generatedArtifacts, allPerms, resultFiles, options.getWarDir(),
               options.getExtraDir(), precompileOptions);
 
-          SpeedTracerLogger.end(CompilerEventType.LINK);
+          linkEvent.end();
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;
           branch.log(TreeLogger.INFO, "Compilation succeeded -- "

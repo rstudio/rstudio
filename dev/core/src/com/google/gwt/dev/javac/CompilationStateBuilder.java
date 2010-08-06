@@ -24,6 +24,7 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import org.apache.commons.collections.map.AbstractReferenceMap;
 import org.apache.commons.collections.map.ReferenceIdentityMap;
@@ -134,11 +135,12 @@ public class CompilationStateBuilder {
     
     public Collection<CompilationUnit> addGeneratedTypes(TreeLogger logger,
         Collection<GeneratedUnit> generatedUnits) {
-      SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+      Event compilationStateBuilderProcess =
+          SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
       try {
         return doBuildGeneratedTypes(logger, generatedUnits, this);
       } finally {
-        SpeedTracerLogger.end(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+        compilationStateBuilderProcess.end();
       }
     }
 
@@ -194,21 +196,23 @@ public class CompilationStateBuilder {
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources) {
-     SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    Event compilationStateBuilderProcessEvent =
+        SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
      try {
        return instance.doBuildFrom(logger, resources, null);
      } finally {
-       SpeedTracerLogger.end(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+       compilationStateBuilderProcessEvent.end();
      }
   }
 
   public static CompilationState buildFrom(TreeLogger logger,
       Set<Resource> resources, AdditionalTypeProviderDelegate delegate) {
-    SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    Event compilationStateBuilderProcessEvent =
+        SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
     try {
       return instance.doBuildFrom(logger, resources, delegate);
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+      compilationStateBuilderProcessEvent.end();
     }
   }
 
@@ -283,7 +287,8 @@ public class CompilationStateBuilder {
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger,
       Set<Resource> resources, AdditionalTypeProviderDelegate compilerDelegate) {
-    SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+    Event compilationStateBuilderProcess =
+        SpeedTracerLogger.start(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
     
     try {
       Map<String, CompilationUnit> resultUnits = new HashMap<String, CompilationUnit>();
@@ -327,7 +332,7 @@ public class CompilationStateBuilder {
                                      Collections.<ContentId> emptySet());
       return new CompilationState(logger, resultUnits.values(), compileMoreLater);
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.COMPILATION_STATE_BUILDER_PROCESS);
+      compilationStateBuilderProcess.end();
     }
   }
 

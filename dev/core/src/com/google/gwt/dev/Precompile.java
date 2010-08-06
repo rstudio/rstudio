@@ -70,6 +70,7 @@ import com.google.gwt.dev.util.arg.OptionValidateOnly;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.File;
 import java.io.Serializable;
@@ -333,7 +334,7 @@ public class Precompile {
       logger = logger.branch(TreeLogger.DEBUG, msg, null);
 
       Set<String> answers = new HashSet<String>();
-      SpeedTracerLogger.start(CompilerEventType.GET_ALL_REBINDS);
+      Event getAllRebindsEvent = SpeedTracerLogger.start(CompilerEventType.GET_ALL_REBINDS);
       for (int i = 0; i < getPermuationCount(); ++i) {
         String resultTypeName = rebindOracles[i].rebind(logger, requestTypeName);
         answers.add(resultTypeName);
@@ -341,7 +342,7 @@ public class Precompile {
         permutations[i].putRebindAnswer(requestTypeName, resultTypeName);
       }
       String[] result = Util.toArray(String.class, answers);
-      SpeedTracerLogger.end(CompilerEventType.GET_ALL_REBINDS);
+      getAllRebindsEvent.end();
       return result;
     }
 
@@ -449,8 +450,8 @@ public class Precompile {
    */
   public static boolean validate(TreeLogger logger, JJSOptions jjsOptions,
       ModuleDef module, File genDir, File dumpSignatureFile) {
+    Event validateEvent = SpeedTracerLogger.start(CompilerEventType.VALIDATE);
     try {
-      SpeedTracerLogger.start(CompilerEventType.VALIDATE);
       CompilationState compilationState = module.getCompilationState(logger);
       if (dumpSignatureFile != null) {
         // Dump early to avoid generated types.
@@ -486,7 +487,7 @@ public class Precompile {
       // Already logged.
       return false;
     } finally {
-      SpeedTracerLogger.end(CompilerEventType.VALIDATE);
+      validateEvent.end();
     }
   }
 
@@ -494,8 +495,8 @@ public class Precompile {
       ModuleDef module, int permutationBase,
       PropertyPermutations allPermutations, File genDir, File dumpSignatureFile) {
 
+    Event precompileEvent = SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
     try {
-      SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
       CompilationState compilationState = module.getCompilationState(logger);
       if (dumpSignatureFile != null) {
         // Dump early to avoid generated types.
@@ -545,7 +546,7 @@ public class Precompile {
       // cause has been logged.
       return null;
     } finally {
-      SpeedTracerLogger.end(CompilerEventType.PRECOMPILE);
+      precompileEvent.end();
     }
   }
 

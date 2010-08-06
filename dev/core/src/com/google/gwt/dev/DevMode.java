@@ -36,6 +36,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
@@ -364,7 +365,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     TreeLogger branch = getTopLogger().branch(TreeLogger.TRACE,
         "Loading modules");
-    SpeedTracerLogger.start(DevModeEventType.SLOW_STARTUP);
+    Event slowStartupEvent = SpeedTracerLogger.start(DevModeEventType.SLOW_STARTUP);
     try {
       for (String moduleName : options.getModuleNames()) {
         TreeLogger moduleBranch = branch.branch(TreeLogger.TRACE, moduleName);
@@ -383,7 +384,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       // Already logged.
       return false;
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.SLOW_STARTUP);
+      slowStartupEvent.end();
     }
     return true;
   }
@@ -398,7 +399,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       return -1;
     }
 
-    SpeedTracerLogger.start(DevModeEventType.JETTY_STARTUP);
+    Event jettyStartupEvent = SpeedTracerLogger.start(DevModeEventType.JETTY_STARTUP);
     boolean clearCallback = true;
     try {
       ui.setCallback(RestartServerEvent.getType(), this);
@@ -441,7 +442,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       System.err.println("Unable to start embedded HTTP server");
       e.printStackTrace();
     } finally {
-      SpeedTracerLogger.end(DevModeEventType.JETTY_STARTUP);
+      jettyStartupEvent.end();
       if (clearCallback) {
         // Clear the callback if we failed to start the server
         ui.setCallback(RestartServerEvent.getType(), null);

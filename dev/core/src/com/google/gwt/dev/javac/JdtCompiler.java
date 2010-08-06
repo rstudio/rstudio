@@ -22,6 +22,7 @@ import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -317,7 +318,7 @@ public class JdtCompiler {
    */
   public static List<CompilationUnit> compile(
       Collection<CompilationUnitBuilder> builders) {
-    SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER);
+    Event jdtCompilerEvent = SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER);
 
     try {
       DefaultUnitProcessor processor = new DefaultUnitProcessor();
@@ -326,7 +327,7 @@ public class JdtCompiler {
       compiler.doCompile(builders);
       return processor.getResults();
     } finally {
-      SpeedTracerLogger.end(CompilerEventType.JDT_COMPILER);
+      jdtCompilerEvent.end();
     }
   }
 
@@ -498,11 +499,11 @@ public class JdtCompiler {
       return false;
     }
 
-    SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER, "phase", "compile");
+    Event jdtCompilerEvent = SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER, "phase", "compile");
     compilerImpl = new CompilerImpl();
     compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     compilerImpl = null;
-    SpeedTracerLogger.end(CompilerEventType.JDT_COMPILER);
+    jdtCompilerEvent.end();
     lazyContentIdMap = null;
     return true;
   }

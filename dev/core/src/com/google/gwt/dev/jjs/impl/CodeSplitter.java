@@ -57,6 +57,7 @@ import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -255,11 +256,11 @@ public class CodeSplitter {
       // Don't do anything if there is no call to runAsync
       return;
     }
-    SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER);
+    Event codeSplitterEvent = SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER);
     dependencyRecorder.open();
     new CodeSplitter(logger, jprogram, jsprogram, map, dependencyRecorder).execImpl();
     dependencyRecorder.close();
-    SpeedTracerLogger.end(CompilerEventType.CODE_SPLITTER);
+    codeSplitterEvent.end();
   }
 
   /**
@@ -268,7 +269,8 @@ public class CodeSplitter {
    */
   public static int findSplitPoint(String refString, JProgram program,
       TreeLogger branch) throws UnableToCompleteException {
-    SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER, "phase", "findSplitPoint");
+    Event codeSplitterEvent =
+        SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER, "phase", "findSplitPoint");
     Map<JMethod, List<Integer>> methodToSplitPoint = reverseByEnclosingMethod(program.getRunAsyncReplacements());
     Map<String, List<Integer>> nameToSplitPoint = reverseByName(program.getRunAsyncReplacements());
 
@@ -328,7 +330,7 @@ public class CodeSplitter {
       throw new UnableToCompleteException();
     }
     int result = splitPoints.get(0);
-    SpeedTracerLogger.end(CompilerEventType.CODE_SPLITTER);
+    codeSplitterEvent.end();
     return result;
   }
 
@@ -368,7 +370,8 @@ public class CodeSplitter {
    */
   public static void pickInitialLoadSequence(TreeLogger logger,
       JProgram program, Properties properties) throws UnableToCompleteException {
-    SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER, "phase", "pickInitialLoadSequence");
+    Event codeSplitterEvent = SpeedTracerLogger.start(
+        CompilerEventType.CODE_SPLITTER, "phase", "pickInitialLoadSequence");
     TreeLogger branch = logger.branch(TreeLogger.TRACE,
         "Looking up initial load sequence for split points");
     LinkedHashSet<Integer> initialLoadSequence = new LinkedHashSet<Integer>();
@@ -400,7 +403,7 @@ public class CodeSplitter {
     installInitialLoadSequenceField(program, initialLoadSequence);
     program.setSplitPointInitialSequence(new ArrayList<Integer>(
         initialLoadSequence));
-    SpeedTracerLogger.end(CompilerEventType.CODE_SPLITTER);
+    codeSplitterEvent.end();
   }
 
   /**

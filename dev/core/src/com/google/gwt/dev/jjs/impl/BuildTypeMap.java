@@ -46,6 +46,7 @@ import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -539,11 +540,11 @@ public class BuildTypeMap {
       CompilationResults results, JsProgram jsProgram, TypeLinker linker) {
     BuildTypeMap btm = new BuildTypeMap(typeMap, jsProgram, linker,
         results.compiledUnits);
-    SpeedTracerLogger.start(CompilerEventType.BUILD_TYPE_MAP);
+    Event buildTypeMapEvent = SpeedTracerLogger.start(CompilerEventType.BUILD_TYPE_MAP);
     btm.createPeersForUnits();
     btm.resolveExternalTypes(results.binaryBindings);
     TypeDeclaration[] result = btm.createPeersForNonTypeDecls();
-    SpeedTracerLogger.end(CompilerEventType.BUILD_TYPE_MAP);
+    buildTypeMapEvent.end();
     return result;
   }
 

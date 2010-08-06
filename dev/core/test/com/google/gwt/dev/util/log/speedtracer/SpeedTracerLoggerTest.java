@@ -18,6 +18,7 @@ package com.google.gwt.dev.util.log.speedtracer;
 import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonException;
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 
 import junit.framework.TestCase;
@@ -64,8 +65,8 @@ public class SpeedTracerLoggerTest extends TestCase {
     @Override
     public void run() {
       for (int i = 0; i < MAX_EVENT_LOGS; i++) {
-        logger.startImpl(event);
-        logger.endImpl(event);
+        Event e = logger.startImpl(event);
+        logger.endImpl(e);
       }
     }
   }
@@ -81,12 +82,12 @@ public class SpeedTracerLoggerTest extends TestCase {
   public void testSpeedTracerLogger() throws IOException, JsonException {
     Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer);
-    logger.startImpl(dummyOne);
-    logger.startImpl(dummyTwo);
-    logger.endImpl(dummyTwo);
-    logger.startImpl(dummyThree);
-    logger.endImpl(dummyThree);
-    logger.endImpl(dummyOne);
+    Event dummyOneEvent = logger.startImpl(dummyOne);
+    Event dummyTwoEvent = logger.startImpl(dummyTwo);
+    logger.endImpl(dummyTwoEvent);
+    Event dummyThreeEvent = logger.startImpl(dummyThree);
+    logger.endImpl(dummyThreeEvent);
+    logger.endImpl(dummyOneEvent);
     logger.flush();
 
     Reader jsonReader = extractJsonFromWriter(writer);
@@ -111,9 +112,9 @@ public class SpeedTracerLoggerTest extends TestCase {
       JsonException {
     Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer);
-    logger.startImpl(dummyOne, "extraStart", "valueStart");
+    Event dummyOneEvent = logger.startImpl(dummyOne, "extraStart", "valueStart");
     logger.addDataImpl("extraMiddle", "valueMiddle");
-    logger.endImpl(dummyOne, "extraEnd", "valueEnd");
+    logger.endImpl(dummyOneEvent, "extraEnd", "valueEnd");
     logger.flush();
 
     Reader jsonReader = extractJsonFromWriter(writer);
@@ -131,12 +132,12 @@ public class SpeedTracerLoggerTest extends TestCase {
   public void testSpeedTracerLoggerMultiple() throws IOException, JsonException {
     Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer);
-    logger.startImpl(dummyOne);
-    logger.endImpl(dummyOne);
-    logger.startImpl(dummyTwo);
-    logger.endImpl(dummyTwo);
-    logger.startImpl(dummyThree);
-    logger.endImpl(dummyThree);
+    Event dummyOneEvent = logger.startImpl(dummyOne);
+    logger.endImpl(dummyOneEvent);
+    Event dummyTwoEvent = logger.startImpl(dummyTwo);
+    logger.endImpl(dummyTwoEvent);
+    Event dummyThreeEvent = logger.startImpl(dummyThree);
+    logger.endImpl(dummyThreeEvent);
     logger.flush();
 
     Reader jsonReader = extractJsonFromWriter(writer);

@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -204,10 +205,10 @@ public class Finalizer {
   }
 
   public static boolean exec(JProgram program) {
-    SpeedTracerLogger.start(
+    Event optimizeEvent = SpeedTracerLogger.start(
         CompilerEventType.OPTIMIZE, "optimizer", "Finalizer");
     boolean didChange = new Finalizer().execImpl(program);
-    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
+    optimizeEvent.end("didChange", "" + didChange);
     return didChange;
   }
 

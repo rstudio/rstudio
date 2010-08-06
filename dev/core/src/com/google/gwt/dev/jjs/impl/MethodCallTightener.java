@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
  * Update polymorphic method calls to tighter bindings based on the type of the
@@ -140,11 +141,10 @@ public class MethodCallTightener {
   }
 
   public static boolean exec(JProgram program) {
-    SpeedTracerLogger.start(
+    Event optimizeEvent = SpeedTracerLogger.start(
         CompilerEventType.OPTIMIZE, "optimizer", "TypeTightener");
     boolean didChange = new MethodCallTightener(program).execImpl();
-    SpeedTracerLogger.end(
-        CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
+    optimizeEvent.end("didChange", "" + didChange);
     return didChange;
   }
 

@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.HashSet;
 import java.util.List;
@@ -490,11 +491,10 @@ public class MethodInliner {
   }
 
   public static boolean exec(JProgram program) {
-    SpeedTracerLogger.start(
+    Event optimizeEvent = SpeedTracerLogger.start(
         CompilerEventType.OPTIMIZE, "optimizer", "MethodInliner");
     boolean didChange = new MethodInliner(program).execImpl();
-    SpeedTracerLogger.end(
-        CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
+    optimizeEvent.end("didChange", "" + didChange);
     return didChange;
   }
 

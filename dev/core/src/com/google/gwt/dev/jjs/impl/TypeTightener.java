@@ -55,6 +55,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -806,10 +807,10 @@ public class TypeTightener {
   }
 
   public static boolean exec(JProgram program) {
-    SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
         "optimizer", "TypeTightener");
     boolean didChange = new TypeTightener(program).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.OPTIMIZE, "didChange", "" + didChange);
+    optimizeEvent.end("didChange", "" + didChange);
     return didChange;
   }
 

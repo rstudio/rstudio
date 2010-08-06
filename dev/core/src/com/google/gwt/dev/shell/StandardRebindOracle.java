@@ -26,6 +26,7 @@ import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,7 +52,7 @@ public class StandardRebindOracle implements RebindOracle {
 
     public String rebind(TreeLogger logger, String typeName,
         ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
-      SpeedTracerLogger.start(DevModeEventType.REBIND);
+      Event rebindEvent = SpeedTracerLogger.start(DevModeEventType.REBIND);
       try {
         genCtx.setPropertyOracle(propOracle);
         String result = tryRebind(logger, typeName);
@@ -67,7 +68,7 @@ public class StandardRebindOracle implements RebindOracle {
         }
         return result;
       } finally {
-        SpeedTracerLogger.end(DevModeEventType.REBIND);
+        rebindEvent.end();
       }
     }
 

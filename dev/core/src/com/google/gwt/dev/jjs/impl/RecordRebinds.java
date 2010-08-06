@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.Set;
 
@@ -45,9 +46,9 @@ public class RecordRebinds {
   }
 
   public static void exec(JProgram program, Set<String> liveRebindRequests) {
-    SpeedTracerLogger.start(CompilerEventType.RECORD_REBINDS);
+    Event recordRebindsEvent = SpeedTracerLogger.start(CompilerEventType.RECORD_REBINDS);
     new RecordRebinds(program, liveRebindRequests).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.RECORD_REBINDS);
+    recordRebindsEvent.end();
   }
 
   private final JProgram program;

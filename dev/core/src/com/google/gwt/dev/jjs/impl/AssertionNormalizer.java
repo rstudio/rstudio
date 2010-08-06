@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
  * Removes all assertion statements from the AST.
@@ -56,9 +57,10 @@ public class AssertionNormalizer {
   }
 
   public static void exec(JProgram program) {
-    SpeedTracerLogger.start(CompilerEventType.ASSERTION_NORMALIZER);
+    Event assertionNormalizerEvent =
+        SpeedTracerLogger.start(CompilerEventType.ASSERTION_NORMALIZER);
     new AssertionNormalizer(program).execImpl();
-    SpeedTracerLogger.end(CompilerEventType.ASSERTION_NORMALIZER);
+    assertionNormalizerEvent.end();
   }
 
   private static String getAssertMethodSuffix(JExpression arg) {
