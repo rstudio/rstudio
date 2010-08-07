@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:d='urn:import:com.google.gwt.user.datepicker.client' >
+  xmlns:d='urn:import:com.google.gwt.user.datepicker.client'
+  xmlns:a='urn:import:com.google.gwt.app.client' >
   <ui:style>
     .fields {
       margin-top: 0.5em;
@@ -41,8 +42,8 @@
       <tr><td><div class='{style.label}'>Purpose:</div></td><td><g:TextBox ui:field='purpose'></g:TextBox></td></tr>
       <tr><td><div class='{style.label}'>Notes:</div></td><td><g:TextBox ui:field='notes'></g:TextBox></td></tr>
       <tr><td><div class='{style.label}'>Created:</div></td><td><d:DateBox ui:field='created'></d:DateBox></td></tr>
-      <tr><td><div class='{style.label}'>Reporter Key:</div></td><td><g:TextBox ui:field='reporterKey'></g:TextBox></td></tr>
-      <tr><td><div class='{style.label}'>Approved Supervisor Key:</div></td><td><g:TextBox ui:field='approvedSupervisorKey'></g:TextBox></td></tr>
+      <tr><td><div class='{style.label}'>Reporter Key:</div></td><td><a:LongBox ui:field='reporterKey'></a:LongBox></td></tr>
+      <tr><td><div class='{style.label}'>Approved Supervisor Key:</div></td><td><a:LongBox ui:field='approvedSupervisorKey'></a:LongBox></td></tr>
     </table>
 
     <div class='{style.bar}'>

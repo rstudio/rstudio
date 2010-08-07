@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
 import com.google.gwt.app.client.EditorSupport;
+import com.google.gwt.app.client.LongBox;
 import com.google.gwt.app.place.RecordEditView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
@@ -53,7 +54,7 @@ public class EmployeeEditView extends Composite implements
 
   @UiField TextBox displayName;
   @UiField TextBox password;
-  @UiField TextBox supervisorKey;
+  @UiField LongBox supervisorKey;
   @UiField TextBox userName;
   @UiField Button cancel;
   @UiField Button save;

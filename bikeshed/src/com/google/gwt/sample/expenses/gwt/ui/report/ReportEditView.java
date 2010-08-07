@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
 import com.google.gwt.app.client.EditorSupport;
+import com.google.gwt.app.client.LongBox;
 import com.google.gwt.app.place.RecordEditView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
@@ -54,8 +55,8 @@ public class ReportEditView extends Composite implements
 
   @UiField TextBox notes;
   @UiField TextBox purpose;
-  @UiField TextBox reporterKey;
-  @UiField TextBox approvedSupervisorKey;
+  @UiField LongBox reporterKey;
+  @UiField LongBox approvedSupervisorKey;
   @UiField DateBox created;
   @UiField Button cancel;
   @UiField Button save;
