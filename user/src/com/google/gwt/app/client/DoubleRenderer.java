@@ -42,6 +42,6 @@ public class DoubleRenderer extends AbstractRenderer<Double> {
   }
 
   public String render(Double object) {
-    return String.valueOf(object);
+    return toString(object);
   }
 }

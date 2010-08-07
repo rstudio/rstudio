@@ -42,6 +42,6 @@ public class BooleanRenderer extends AbstractRenderer<Boolean> {
   }
 
   public String render(Boolean object) {
-    return String.valueOf(object);
+    return toString(object);
   }
 }

@@ -20,7 +20,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormatRenderer;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -96,7 +96,7 @@ public class ReportDetailsView extends Composite implements RecordDetailsView<Re
     this.record = record;
     purpose.setInnerText(record.getPurpose());
     notes.setInnerText(record.getNotes());
-    created.setInnerText(DateTimeFormat.getShortDateFormat().format(record.getCreated()));
+    created.setInnerText(new DateTimeFormatRenderer().render(record.getCreated()));
     idSpan.setInnerText(record.getId().toString());
     versionSpan.setInnerText(record.getVersion().toString());
     reporterKey.setInnerText(String.valueOf(record.getReporterKey()));

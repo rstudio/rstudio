@@ -15,6 +15,7 @@
  */
 package com.google.gwt.i18n.client;
 
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.text.shared.AbstractRenderer;
 
 import java.util.Date;
@@ -26,16 +27,32 @@ public class DateTimeFormatRenderer extends AbstractRenderer<Date> {
   private final DateTimeFormat format;
   private final TimeZone timeZone;
 
+  /**
+   * Create an instance using {@link PredefinedFormat#DATE_SHORT}
+   */
+  public DateTimeFormatRenderer() {
+    this(DateTimeFormat.getFormat(PredefinedFormat.DATE_SHORT));
+  }
+  
+  /**
+   * Create an instance with the given format and the default time zone.
+   */
   public DateTimeFormatRenderer(DateTimeFormat format) {
     this(format, null);
   }
 
+  /**
+   * Create an instance with the given format and time zone.
+   */
   public DateTimeFormatRenderer(DateTimeFormat format, TimeZone timeZone) {
     this.format = format;
     this.timeZone = timeZone;
   }
 
   public String render(Date object) {
+    if (object == null) {
+      return toString(object);
+    }
     return timeZone == null ? format.format(object) : format.format(object,
         timeZone);
   }

@@ -42,6 +42,6 @@ public class LongRenderer extends AbstractRenderer<Long> {
   }
 
   public String render(Long object) {
-    return String.valueOf(object);
+    return toString(object);
   }
 }

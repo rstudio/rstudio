@@ -31,4 +31,8 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
   public void render(T object, Appendable appendable) throws IOException {
     appendable.append(render(object));
   }
+
+  protected String toString(Object obj) {
+    return obj == null ? "" : String.valueOf(obj);
+  }
 }

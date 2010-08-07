@@ -42,6 +42,6 @@ public class IntegerRenderer extends AbstractRenderer<Integer> {
   }
 
   public String render(Integer object) {
-    return String.valueOf(object);
+    return toString(object);
   }
 }

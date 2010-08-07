@@ -20,7 +20,8 @@ package com.google.gwt.text.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * <p>
- * A no-op String renderer.
+ * A no-op String renderer. This is rarely or never the right
+ * thing to use in production, but it's handy for tests.
  */
 public class PassthroughRenderer extends AbstractRenderer<String> {
 
