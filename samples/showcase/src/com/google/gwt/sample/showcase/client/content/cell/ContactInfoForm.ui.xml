@@ -98,7 +98,7 @@
             <g:Button
               ui:field='createButton'>
               <ui:msg
-                key='contactInfoFormUpdateButton'>Create Contact</ui:msg>
+                key='contactInfoFormCreateButton'>Create Contact</ui:msg>
             </g:Button>
           </td>
         </tr>
