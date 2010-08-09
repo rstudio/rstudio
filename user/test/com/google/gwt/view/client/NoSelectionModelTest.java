@@ -15,9 +15,6 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
-
 /**
  * Tests for {@link NoSelectionModel}.
  */
@@ -36,7 +33,7 @@ public class NoSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testSelectedChangeEvent() {
     NoSelectionModel<String> model = createSelectionModel();
-    SelectionChangeHandler handler = new SelectionChangeHandler() {
+    SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
       }

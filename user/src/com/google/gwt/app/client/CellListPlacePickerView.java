@@ -21,9 +21,8 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 
 import java.util.List;
 
@@ -57,7 +56,7 @@ public class CellListPlacePickerView<P extends Place> extends Composite
     this.cellList = new CellList<P>(new CellRenderer());
     initWidget(cellList);
     cellList.setSelectionModel(smodel);
-    smodel.addSelectionChangeHandler(new SelectionChangeHandler() {
+    smodel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         if (listener != null) {
           listener.placePicked(smodel.getSelectedObject());

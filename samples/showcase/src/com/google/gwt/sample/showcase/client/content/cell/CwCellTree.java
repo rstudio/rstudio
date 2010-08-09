@@ -30,8 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.MultiSelectionModel;
-import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
+import com.google.gwt.view.client.SelectionChangeEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,7 +118,7 @@ public class CwCellTree extends ContentWidget {
     final MultiSelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>();
     selectionModel.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
     selectionModel.addSelectionChangeHandler(
-        new SelectionModel.SelectionChangeHandler() {
+        new SelectionChangeEvent.Handler() {
           public void onSelectionChange(SelectionChangeEvent event) {
             StringBuilder sb = new StringBuilder();
             boolean first = true;

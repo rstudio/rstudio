@@ -34,10 +34,9 @@ import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.ListViewAdapter;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -255,7 +254,7 @@ public class ExpenseTree extends Composite {
 
     // Listen for selection. We need to add this handler before the CellBrowser
     // adds its own handler.
-    selectionModel.addSelectionChangeHandler(new SelectionChangeHandler() {
+    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         Object selected = selectionModel.getSelectedObject();
         if (selected == null) {

@@ -57,8 +57,7 @@ import com.google.gwt.view.client.AsyncListViewAdapter;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.Range;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
+import com.google.gwt.view.client.SelectionChangeEvent;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -468,7 +467,7 @@ public class ExpenseList extends Composite implements
     // Add a selection model.
     final NoSelectionModel<ReportRecord> selectionModel = new NoSelectionModel<ReportRecord>();
     table.setSelectionModel(selectionModel);
-    selectionModel.addSelectionChangeHandler(new SelectionChangeHandler() {
+    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         Object selected = selectionModel.getLastSelectedObject();
         if (selected != null && listener != null) {

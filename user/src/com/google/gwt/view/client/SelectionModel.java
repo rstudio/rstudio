@@ -17,7 +17,6 @@ package com.google.gwt.view.client;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -57,7 +56,7 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
     private ProvidesKey<T> keyProvider;
 
     public HandlerRegistration addSelectionChangeHandler(
-        SelectionChangeHandler handler) {
+        SelectionChangeEvent.Handler handler) {
       return handlerManager.addHandler(SelectionChangeEvent.getType(), handler);
     }
 
@@ -101,7 +100,7 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
     }
 
     /**
-     * Schedules a {@link SelectionModel.SelectionChangeEvent} to fire at the
+     * Schedules a {@link SelectionChangeEvent} to fire at the
      * end of the current event loop.
      */
     protected void scheduleSelectionChangeEvent() {
@@ -131,78 +130,12 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
   }
 
   /**
-   * Represents a selection change event.
-   */
-  public static class SelectionChangeEvent extends
-      GwtEvent<SelectionChangeHandler> {
-
-    /**
-     * Handler type.
-     */
-    private static Type<SelectionChangeHandler> TYPE;
-
-    /**
-     * Gets the type associated with this event.
-     * 
-     * @return returns the handler type
-     */
-    public static Type<SelectionChangeHandler> getType() {
-      if (TYPE == null) {
-        TYPE = new Type<SelectionChangeHandler>();
-      }
-      return TYPE;
-    }
-
-    /**
-     * Fires a selection change event on all registered handlers in the handler
-     * manager. If no such handlers exist, this method will do nothing.
-     * 
-     * @param source the source of the handlers
-     */
-    static void fire(SelectionModel<?> source) {
-      if (TYPE != null) {
-        SelectionChangeEvent event = new SelectionChangeEvent();
-        source.fireEvent(event);
-      }
-    }
-
-    /**
-     * Creates a selection change event.
-     */
-    SelectionChangeEvent() {
-    }
-
-    @Override
-    public final Type<SelectionChangeHandler> getAssociatedType() {
-      return TYPE;
-    }
-
-    @Override
-    protected void dispatch(SelectionChangeHandler handler) {
-      handler.onSelectionChange(this);
-    }
-  }
-
-  /**
-   * Handler interface for {@link SelectionChangeEvent} events.
-   */
-  public interface SelectionChangeHandler extends EventHandler {
-
-    /**
-     * Called when {@link SelectionChangeEvent} is fired.
-     * 
-     * @param event the {@link SelectionChangeEvent} that was fired
-     */
-    void onSelectionChange(SelectionChangeEvent event);
-  }
-
-  /**
    * Adds a {@link SelectionChangeEvent} handler.
    * 
    * @param handler the handler
    * @return the registration for the event
    */
-  HandlerRegistration addSelectionChangeHandler(SelectionChangeHandler handler);
+  HandlerRegistration addSelectionChangeHandler(SelectionChangeEvent.Handler handler);
 
   /**
    * Check if an object is selected.
@@ -214,7 +147,7 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
 
   /**
    * Set the selected state of an object and fire a
-   * {@link SelectionModel.SelectionChangeEvent} if the selection has
+   * {@link SelectionChangeEvent} if the selection has
    * changed.  Subclasses should not fire an event in the case where
    * selected is true and the object was already selected, or selected
    * is false and the object was not previously selected.

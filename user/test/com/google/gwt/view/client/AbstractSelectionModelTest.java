@@ -18,8 +18,6 @@ package com.google.gwt.view.client;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 
 /**
  * Tests for {@link AbstractSelectionModel}.
@@ -27,10 +25,10 @@ import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 public class AbstractSelectionModelTest extends GWTTestCase {
 
   /**
-   * A mock {@link SelectionChangeHandler} used for testing.
+   * A mock {@link SelectionChangeEvent.Handler} used for testing.
    */
   private static class MockSelectionChangeHandler implements
-      SelectionChangeHandler {
+      SelectionChangeEvent.Handler {
 
     private boolean eventFired;
 

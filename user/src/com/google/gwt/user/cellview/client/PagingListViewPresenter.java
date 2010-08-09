@@ -22,9 +22,8 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -608,7 +607,7 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
     this.selectionModel = selectionModel;
     if (selectionModel != null) {
       selectionHandler = selectionModel.addSelectionChangeHandler(
-          new SelectionChangeHandler() {
+          new SelectionChangeEvent.Handler() {
             public void onSelectionChange(SelectionChangeEvent event) {
               updateSelection();
             }

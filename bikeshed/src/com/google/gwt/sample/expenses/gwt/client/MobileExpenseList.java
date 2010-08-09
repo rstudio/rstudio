@@ -29,8 +29,7 @@ import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
 import com.google.gwt.view.client.ListView;
 import com.google.gwt.view.client.NoSelectionModel;
-import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
+import com.google.gwt.view.client.SelectionChangeEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -139,7 +138,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
 
     expenseSelection = new NoSelectionModel<ExpenseRecord>();
     expenseList.setSelectionModel(expenseSelection);
-    expenseSelection.addSelectionChangeHandler(new SelectionModel.SelectionChangeHandler() {
+    expenseSelection.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         listener.onExpenseSelected(expenseSelection.getLastSelectedObject());
       }

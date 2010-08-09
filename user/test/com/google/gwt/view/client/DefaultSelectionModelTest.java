@@ -15,9 +15,6 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +46,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testSelectedChangeEvent() {
     DefaultSelectionModel<String> model = createSelectionModel();
-    SelectionChangeHandler handler = new SelectionChangeHandler() {
+    SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
       }
@@ -62,7 +59,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testNoDuplicateChangeEvent() {
     DefaultSelectionModel<String> model = createSelectionModel();
-    SelectionChangeHandler handler = new SelectionChangeHandler() {
+    SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
       }

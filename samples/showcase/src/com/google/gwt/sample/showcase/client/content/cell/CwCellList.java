@@ -36,8 +36,7 @@ import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 
 /**
@@ -204,7 +203,7 @@ public class CwCellList extends ContentWidget {
     // Add a selection model so we can select cells.
     final SingleSelectionModel<ContactInfo> selectionModel = new SingleSelectionModel<ContactInfo>();
     cellList.setSelectionModel(selectionModel);
-    selectionModel.addSelectionChangeHandler(new SelectionChangeHandler() {
+    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         contactForm.setContact(selectionModel.getSelectedObject());
       }

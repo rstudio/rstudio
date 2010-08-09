@@ -15,9 +15,6 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
-
 /**
  * Tests for {@link SingleSelectionModel}.
  */
@@ -36,7 +33,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testSelectedChangeEvent() {
     SingleSelectionModel<String> model = createSelectionModel();
-    SelectionChangeHandler handler = new SelectionChangeHandler() {
+    SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
       }
@@ -49,7 +46,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
   
   public void testNoDuplicateChangeEvent() {
     SingleSelectionModel<String> model = createSelectionModel();
-    SelectionChangeHandler handler = new SelectionChangeHandler() {
+    SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
       }
@@ -63,7 +60,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
   
   public void testNoDuplicateChangeEvent2() {
     SingleSelectionModel<String> model = createSelectionModel();
-    SelectionChangeHandler handler = new SelectionChangeHandler() {
+    SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
       }

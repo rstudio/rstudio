@@ -16,8 +16,6 @@
 package com.google.gwt.view.client;
 
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionModel.SelectionChangeHandler;
 
 import java.util.List;
 
@@ -185,7 +183,7 @@ public class MockPagingListView<T> implements PagingListView<T> {
     // Add the new selection model.
     this.selectionModel = selectionModel;
     if (selectionModel != null) {
-      selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeHandler() {
+      selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
         public void onSelectionChange(SelectionChangeEvent event) {
         }
       });
