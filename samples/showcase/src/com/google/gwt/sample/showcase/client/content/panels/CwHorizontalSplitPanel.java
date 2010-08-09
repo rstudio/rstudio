@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
+@SuppressWarnings("deprecation")
 @ShowcaseStyle(".gwt-HorizontalSplitPanel")
 public class CwHorizontalSplitPanel extends ContentWidget {
   /**

@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle( {
+@ShowcaseStyle({
     ".gwt-SuggestBox", ".gwt-SuggestBoxPopup",
     "html>body .gwt-SuggestBoxPopup", "* html .gwt-SuggestBoxPopup"})
 public class CwSuggestBox extends ContentWidget {

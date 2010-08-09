@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle( {
+@ShowcaseStyle({
     ".gwt-DecoratedStackPanel", "html>body .gwt-DecoratedStackPanel",
     "* html .gwt-DecoratedStackPanel", ".cw-StackPanelHeader"})
 public class CwStackPanel extends ContentWidget {

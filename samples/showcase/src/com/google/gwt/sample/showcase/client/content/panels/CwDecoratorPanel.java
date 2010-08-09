@@ -33,7 +33,7 @@ import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 /**
  * Example file.
  */
-@ShowcaseStyle( {
+@ShowcaseStyle({
     ".gwt-DecoratorPanel", "html>body .gwt-DecoratorPanel",
     "* html .gwt-DecoratorPanel"})
 public class CwDecoratorPanel extends ContentWidget {

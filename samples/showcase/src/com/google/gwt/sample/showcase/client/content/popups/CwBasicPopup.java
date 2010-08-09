@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle( {
+@ShowcaseStyle({
     ".gwt-PopupPanel", "html>body .gwt-PopupPanel", "* html .gwt-PopupPanel",
     ".gwt-DecoratedPopupPanel", "html>body .gwt-DecoratedPopupPanel",
     "* html .gwt-DecoratedPopupPanel"})

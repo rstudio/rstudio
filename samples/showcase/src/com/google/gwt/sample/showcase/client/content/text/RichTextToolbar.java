@@ -41,6 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
  * for all rich text formatting, dynamically displayed only for the available
  * functionality.
  */
+@SuppressWarnings("deprecation")
 public class RichTextToolbar extends Composite {
 
   /**

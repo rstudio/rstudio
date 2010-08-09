@@ -35,7 +35,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle( {".gwt-PushButton", ".gwt-ToggleButton"})
+@ShowcaseStyle({".gwt-PushButton", ".gwt-ToggleButton"})
 public class CwCustomButton extends ContentWidget {
   /**
    * The constants used in this Content Widget.

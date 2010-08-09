@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle( {
+@ShowcaseStyle({
     ".gwt-MenuBar", ".gwt-MenuBarPopup", "html>body .gwt-MenuBarPopup",
     "* html .gwt-MenuBarPopup"})
 public class CwMenuBar extends ContentWidget {

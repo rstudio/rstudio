@@ -33,7 +33,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle( {
+@ShowcaseStyle({
     ".gwt-DecoratedTabBar", "html>body .gwt-DecoratedTabBar",
     "* html .gwt-DecoratedTabBar", ".gwt-TabPanel"})
 public class CwTabPanel extends ContentWidget {
@@ -83,6 +83,7 @@ public class CwTabPanel extends ContentWidget {
   /**
    * Initialize this example.
    */
+  @SuppressWarnings("deprecation")
   @ShowcaseSource
   @Override
   public Widget onInitialize() {

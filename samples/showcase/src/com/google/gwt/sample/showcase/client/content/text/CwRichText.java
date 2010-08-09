@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle( {
+@ShowcaseStyle({
     ".gwt-RichTextArea", ".hasRichTextToolbar", ".gwt-RichTextToolbar",
     ".cw-RichText"})
 public class CwRichText extends ContentWidget {

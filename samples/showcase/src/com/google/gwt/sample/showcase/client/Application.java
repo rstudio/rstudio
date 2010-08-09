@@ -228,6 +228,7 @@ public class Application extends Composite implements ResizeHandler,
     onWindowResized(event.getWidth(), event.getHeight());
   }
 
+  @SuppressWarnings("unused")
   public void onWindowResized(int width, int height) {
     if (width == windowWidth || width < 1) {
       return;

@@ -38,7 +38,7 @@ import java.util.Date;
 /**
  * Example file.
  */
-@ShowcaseStyle( {
+@ShowcaseStyle({
     ".gwt-DatePicker", ".datePicker", "td.datePickerMonth", ".gwt-DateBox",
     ".dateBox"})
 public class CwDatePicker extends ContentWidget {
@@ -87,6 +87,7 @@ public class CwDatePicker extends ContentWidget {
   /**
    * Initialize this example.
    */
+  @SuppressWarnings("deprecation")
   @ShowcaseSource
   @Override
   public Widget onInitialize() {

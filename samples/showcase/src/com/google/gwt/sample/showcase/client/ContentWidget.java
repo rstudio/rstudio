@@ -578,6 +578,7 @@ public abstract class ContentWidget extends LazyPanel
    * @param target the target Widget to place the contents
    * @param callback the callback when the call completes
    */
+  @SuppressWarnings("deprecation")
   private void requestSourceContents(
       String url, final HTML target, final RequestCallback callback) {
     // Show the loading image
