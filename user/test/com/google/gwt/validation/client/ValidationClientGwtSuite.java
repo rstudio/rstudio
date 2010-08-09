@@ -13,17 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation;
+package com.google.gwt.validation.client;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.validation.client.SimpleSampleTest;
 
 import junit.framework.Test;
 
 /**
- * All validation tests.
+ * All validation client GWT tests.
  */
-public class ValidationGwtSuite {
+public class ValidationClientGwtSuite {
 
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
@@ -31,5 +30,4 @@ public class ValidationGwtSuite {
     suite.addTestSuite(SimpleSampleTest.class);
     return suite;
   }
-
 }
