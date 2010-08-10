@@ -15,12 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Tests for {@link LayoutPanel}. Note that this only tests LayoutPanel-specific
@@ -42,7 +42,7 @@ public class LayoutPanelTest extends WidgetTestBase {
     p.forceLayout();
 
     delayTestFinish(5000);
-    Scheduler.get().scheduleDeferred(new Command() {
+    DeferredCommand.addCommand(new Command() {
       public void execute() {
         p.animate(100, new AnimationCallback() {
           public void onLayout(Layer layer, double progress) {
@@ -73,7 +73,7 @@ public class LayoutPanelTest extends WidgetTestBase {
     popup.center();
 
     delayTestFinish(2000);
-    Scheduler.get().scheduleDeferred(new Command() {
+    DeferredCommand.addCommand(new Command() {
       public void execute() {
         int offsetWidth = lp.getOffsetWidth();
         int offsetHeight = lp.getOffsetHeight();

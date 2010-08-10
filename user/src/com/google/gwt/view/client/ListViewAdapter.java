@@ -15,8 +15,8 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -394,7 +394,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       flushCancelled = false;
       if (!flushPending) {
         flushPending = true;
-        Scheduler.get().scheduleDeferred(flushCommand);
+        DeferredCommand.addCommand(flushCommand);
       }
     }
 

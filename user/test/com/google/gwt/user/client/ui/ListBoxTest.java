@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Tests {@link ListBox}. Needs many, many more tests.
@@ -50,7 +50,7 @@ public class ListBoxTest extends GWTTestCase {
     UIObjectTest.assertDebugId("myList", list.getElement());
 
     delayTestFinish(5000);
-    Scheduler.get().scheduleDeferred(new Command() {
+    DeferredCommand.addCommand(new Command() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myList-item0", "option0");   
         UIObjectTest.assertDebugIdContents("myList-item1", "option1");   

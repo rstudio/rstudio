@@ -15,10 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -170,7 +170,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
             forceLayout();
           }
         };
-        Scheduler.get().scheduleDeferred(layoutCommand);
+        DeferredCommand.addCommand(layoutCommand);
       }
     }
   }

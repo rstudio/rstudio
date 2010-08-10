@@ -15,13 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 import java.util.List;
 
@@ -297,7 +297,7 @@ public class MenuBarTest extends WidgetTestBase {
     UIObjectTest.assertDebugId("myMenu", bar.getElement());
 
     delayTestFinish(250);
-    Scheduler.get().scheduleDeferred(new Command() {
+    DeferredCommand.addCommand(new Command() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myMenu-item0", "top0");
         UIObjectTest.assertDebugIdContents("myMenu-item1", "top1");

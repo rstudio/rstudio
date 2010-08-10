@@ -18,9 +18,9 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.RunAsyncCallback;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -131,7 +131,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
       }
 
       public void onSuccess() {
-        Scheduler.get().scheduleDeferred(new Command() {
+        DeferredCommand.addCommand(new Command() {
 
           public void execute() {
             checkMetrics();

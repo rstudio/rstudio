@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
@@ -28,6 +27,7 @@ import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
@@ -141,7 +141,7 @@ public class DOMTest extends GWTTestCase {
     DOM.setStyleAttribute(elem, "left", (left - doc.getBodyOffsetTop()) + "px");
 
     delayTestFinish(1000);
-    Scheduler.get().scheduleDeferred(new Command() {
+    DeferredCommand.addCommand(new Command() {
       public void execute() {
         assertEquals(top + margin, DOM.getAbsoluteTop(elem));
         assertEquals(left + margin, DOM.getAbsoluteLeft(elem));
