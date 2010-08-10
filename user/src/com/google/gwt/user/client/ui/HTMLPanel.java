@@ -107,7 +107,9 @@ public class HTMLPanel extends ComplexPanel {
   }
 
   /**
-   * Adds a child widget to the panel, contained within an HTML element.
+   * Adds a child widget to the panel, contained within an HTML
+   * element.  It is up to the caller to ensure that the given element
+   * is a child of this panel's root element.
    * 
    * @param widget the widget to be added
    * @param elem the element within which it will be contained

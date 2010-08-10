@@ -485,7 +485,9 @@ public class XMLElement {
     // Make sure there are no children left but empty husks
     for (XMLElement child : consumeChildElementsNoEmptyCheck()) {
       if (child.hasChildNodes() || child.getAttributeCount() > 0) {
-        logger.die(this, "Element has illegal child %s", child);
+        logger.die(this, "Illegal child %s in a text-only context. "
+                   + "Perhaps you are trying to use unescaped HTML "
+                   + "where text is required, as in a HasText widget?", child);
       }
     }
 
