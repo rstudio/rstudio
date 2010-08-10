@@ -15,14 +15,41 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class allows you to execute code after all currently pending event
  * handlers have completed, using the {@link #addCommand(Command)} or
  * {@link #addCommand(IncrementalCommand)} methods. This is useful when you need
  * to execute code outside of the context of the current stack.
+ * 
+ * @deprecated Replaced by {@link Scheduler}
  */
+@Deprecated
 public class DeferredCommand {
-  private static final CommandExecutor commandExecutor = new CommandExecutor();
+  private static class PausedCommand implements ScheduledCommand {
+    List<ScheduledCommand> toSchedule = new ArrayList<ScheduledCommand>();
+    PausedCommand next;
+
+    public void execute() {
+      if (lastPaused == this) {
+        lastPaused = null;
+      }
+      for (ScheduledCommand cmd : toSchedule) {
+        Scheduler.get().scheduleDeferred(cmd);
+      }
+      if (next != null) {
+        // Scheduled a chained pause
+        Scheduler.get().scheduleDeferred(next);
+      }
+    }
+  }
+
+  private static PausedCommand lastPaused;
 
   /**
    * Enqueues a {@link Command} to be fired after all current events have been
@@ -32,12 +59,14 @@ public class DeferredCommand {
    *          inserted into the queue. Any events added after the pause will
    *          wait for an additional cycle through the system event loop before
    *          executing. Pauses are cumulative.
-   * 
    * @deprecated As of release 1.4, replaced by {@link #addCommand(Command)}
    */
-  @Deprecated
   public static void add(Command cmd) {
-    commandExecutor.submit(cmd);
+    if (cmd == null) {
+      addPause();
+    } else {
+      addCommand(cmd);
+    }
   }
 
   /**
@@ -48,13 +77,19 @@ public class DeferredCommand {
    * 
    * @param cmd the command to be fired
    * @throws NullPointerException if cmd is <code>null</code>
+   * @deprecated Replaced by
+   *             {@link Scheduler#scheduleDeferred(ScheduledCommand)}
    */
   public static void addCommand(Command cmd) {
     if (cmd == null) {
       throw new NullPointerException("cmd cannot be null");
     }
 
-    commandExecutor.submit(cmd);
+    if (lastPaused != null) {
+      lastPaused.toSchedule.add(cmd);
+    } else {
+      Scheduler.get().scheduleDeferred(cmd);
+    }
   }
 
   /**
@@ -66,13 +101,14 @@ public class DeferredCommand {
    * 
    * @param cmd the command to be fired
    * @throws NullPointerException if cmd is <code>null</code>
+   * @deprecated Replaced by {@link Scheduler#scheduleIncremental}
    */
   public static void addCommand(IncrementalCommand cmd) {
     if (cmd == null) {
       throw new NullPointerException("cmd cannot be null");
     }
 
-    commandExecutor.submit(cmd);
+    Scheduler.get().scheduleIncremental(cmd);
   }
 
   /**
@@ -80,8 +116,20 @@ public class DeferredCommand {
    * {@link DeferredCommand}s or pauses that are added after this pause will
    * wait for an additional cycle through the system event loop before
    * executing.
+   * 
+   * @deprecated No direct replacement; instead, a ScheduledCommand should cause
+   *             any other strictly-ordered commands to be scheduled
    */
   public static void addPause() {
-    commandExecutor.submit((Command) null);
+    if (lastPaused == null) {
+      // No existing pause
+      lastPaused = new PausedCommand();
+      Scheduler.get().scheduleDeferred(lastPaused);
+    } else {
+      // Chained pauses
+      PausedCommand newPaused = new PausedCommand();
+      lastPaused.next = newPaused;
+      lastPaused = newPaused;
+    }
   }
 }

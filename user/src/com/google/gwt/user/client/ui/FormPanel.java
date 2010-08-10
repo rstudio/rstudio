@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FormElement;
@@ -23,7 +24,6 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.FormPanelImpl;
 import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
@@ -627,7 +627,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     // because clients that detach the form panel when submission is
     // complete can cause some browsers (i.e. Mozilla) to go into an
     // 'infinite loading' state. See issue 916.
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         fireEvent(new SubmitCompleteEvent(impl.getContents(synthesizedFrame)));
       }

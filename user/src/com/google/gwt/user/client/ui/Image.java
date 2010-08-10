@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
@@ -45,7 +46,6 @@ import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
 
@@ -258,7 +258,7 @@ public class Image extends Widget implements SourcesLoadEvents,
        * that a second load event would occur while you are in the load event
        * handler.
        */
-      DeferredCommand.addCommand(new Command() {
+      Scheduler.get().scheduleDeferred(new Command() {
         public void execute() {
           NativeEvent evt = Document.get().createLoadEvent();
           getImageElement(image).dispatchEvent(evt);

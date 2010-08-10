@@ -15,13 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Unit test for {@link DialogBox}.
@@ -103,7 +103,7 @@ public class DialogBoxTest extends PopupTest {
 
     delayTestFinish(250);
     // Check the header IDs
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myDialogBox-caption",
             "test caption");

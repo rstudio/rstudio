@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
@@ -24,7 +25,6 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -90,13 +90,13 @@ public class TabLayoutPanelTest extends GWTTestCase {
     p.add(bar, new Label("bar"));
 
     delayTestFinish(2000);
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         assertEquals(128, foo.getOffsetWidth());
         assertEquals(128 - 32, foo.getOffsetHeight());
 
         p.selectTab(1);
-        DeferredCommand.addCommand(new Command() {
+        Scheduler.get().scheduleDeferred(new Command() {
           public void execute() {
             assertEquals(128, bar.getOffsetWidth());
             assertEquals(128 - 32, bar.getOffsetHeight());

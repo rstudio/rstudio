@@ -15,8 +15,8 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Old Mozilla-specific implementation of rich-text editing.
@@ -28,7 +28,7 @@ public class RichTextAreaImplOldMozilla extends RichTextAreaImplMozilla {
    */
   @Override
   protected void onElementInitialized() {
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         RichTextAreaImplOldMozilla.super.onElementInitialized();
       }

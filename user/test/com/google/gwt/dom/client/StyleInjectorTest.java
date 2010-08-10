@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Tests StyleInjector by looking for effects of injected CSS on DOM elements.
@@ -45,7 +45,7 @@ public class StyleInjectorTest extends GWTTestCase {
     // We need to allow the document to be redrawn
     delayTestFinish(TEST_DELAY);
 
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         assertEquals(100, elt.getOffsetLeft());
         assertEquals(100, elt.getClientHeight());
@@ -80,7 +80,7 @@ public class StyleInjectorTest extends GWTTestCase {
     // We need to allow the document to be redrawn
     delayTestFinish(TEST_DELAY);
 
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         assertEquals(100, elt.getOffsetLeft());
         assertEquals(100, elt.getClientHeight());
@@ -131,7 +131,7 @@ public class StyleInjectorTest extends GWTTestCase {
     if (immediate) {
       command.execute();
     } else {
-      DeferredCommand.addCommand(command);
+      Scheduler.get().scheduleDeferred(command);
       // We need to allow the BatchedCommands to execute
       delayTestFinish(TEST_DELAY);
     }

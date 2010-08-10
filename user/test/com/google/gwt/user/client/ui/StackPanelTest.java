@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -78,7 +78,7 @@ public class StackPanelTest extends PanelTestBase<StackPanel> {
     delayTestFinish(5000);
 
     // Check the header IDs
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myStack-text0", "header a");
         UIObjectTest.assertDebugIdContents("myStack-text1", "header b");

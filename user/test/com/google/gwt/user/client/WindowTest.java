@@ -16,6 +16,7 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -219,7 +220,7 @@ public class WindowTest extends GWTTestCase {
     largeDOM.setPixelSize(oldClientWidth + 100, oldClientHeight + 100);
     RootPanel.get().add(largeDOM);
     delayTestFinish(200);
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         int newClientHeight = Window.getClientHeight();
         int newClientWidth = Window.getClientWidth();
@@ -359,7 +360,7 @@ public class WindowTest extends GWTTestCase {
     final HandlerRegistration handlerRegistration = Window.addResizeHandler(resizeHandler);
 
     delayTestFinish(2000);
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new Command() {
       public void execute() {
         // Sizes must be appropriate, otherwise browsers may not resize as
         // requested. See comments in ResizeHelper.
