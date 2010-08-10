@@ -27,7 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
-import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
@@ -128,7 +128,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
     this.requestFactory = requestFactory;
     expenseAdapter = new AsyncListViewAdapter<ExpenseRecord>() {
       @Override
-      protected void onRangeChanged(ListView<ExpenseRecord> view) {
+      protected void onRangeChanged(HasData<ExpenseRecord> view) {
         requestExpenses();
       }
     };

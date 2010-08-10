@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,44 +15,38 @@
  */
 package com.google.gwt.view.client;
 
+import java.util.List;
+
 /**
- * A list view that displays data in 'pages'.
- * 
+ * A view that can display a range of data.
+ *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
- * 
+ *
  * @param <T> the data type of each row
  */
-public interface PagingListView<T> extends ListView<T> {
+public interface HasData<T> extends HasRows {
 
   /**
-   * A pager delegate, implemented by classes that depend on the start index,
-   * number of visible rows, or data size of a view.
-   * 
-   * @param <T> the data type of each row
+   * Get the {@link SelectionModel} used by this {@link HasData}.
+   *
+   * @return the {@link SelectionModel}
    */
-  public interface Pager<T> {
-    void onRangeOrSizeChanged(PagingListView<T> listView);
-  }
+  SelectionModel<? super T> getSelectionModel();
 
   /**
-   * Get the total data size.
+   * Set a values associated with the rows in the visible range.
+   *
+   * @param start the start index of the data
+   * @param values the values within the range
    */
-  int getDataSize();
+  void setRowValues(int start, List<T> values);
 
   /**
-   * Set the {@link Pager} that allows the user to change the range.
-   * 
-   * @param pager the {@link Pager}
+   * Set the {@link SelectionModel} used by this {@link HasData}.
+   *
+   * @param selectionModel the {@link SelectionModel}
    */
-  void setPager(Pager<T> pager);
-
-  /**
-   * Set a new range.
-   * 
-   * @param start the new start index
-   * @param length the new page size
-   */
-  void setRange(int start, int length);
+  void setSelectionModel(SelectionModel<? super T> selectionModel);
 }

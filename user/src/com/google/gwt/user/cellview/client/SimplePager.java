@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,16 +27,14 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
 
 /**
- * A pager for controlling a {@link PagingListView} that only supports simple
- * page navigation.
- * 
- * @param <T> the type of the PagingListView being controlled
+ * A pager for controlling a {@link HasRows} that only supports simple page
+ * navigation.
  */
-public class SimplePager<T> extends AbstractPager<T> {
+public class SimplePager extends AbstractPager {
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -128,6 +126,7 @@ public class SimplePager<T> extends AbstractPager<T> {
     CENTER, LEFT, RIGHT;
   }
 
+  private static int DEFAULT_FAST_FORWARD_ROWS = 1000;
   private static Resources DEFAULT_RESOURCES;
 
   private static Resources getDefaultResources() {
@@ -139,7 +138,7 @@ public class SimplePager<T> extends AbstractPager<T> {
 
   private final Image fastForward;
 
-  private final int fastForwardPages;
+  private final int fastForwardRows;
 
   private final Image firstPage;
 
@@ -169,93 +168,87 @@ public class SimplePager<T> extends AbstractPager<T> {
    */
   private final Resources resources;
 
-  private boolean showLastPageButton;
-
-  private boolean showFastForwardButton;
-
   /**
    * The {@link Style} used by this widget.
    */
   private final Style style;
 
   /**
-   * Construct a {@link SimplePager}.
-   * 
-   * @param view the {@link PagingListView} to page
+   * Construct a {@link SimplePager} with the default text location.
    */
-  public SimplePager(PagingListView<T> view) {
-    this(view, TextLocation.CENTER);
+  public SimplePager() {
+    this(TextLocation.CENTER);
   }
 
   /**
    * Construct a {@link SimplePager} with the specified text location.
-   * 
-   * @param view the {@link PagingListView} to page
+   *
    * @param location the location of the text relative to the buttons
    */
   @UiConstructor
   // Hack for Google I/O demo
-  public SimplePager(PagingListView<T> view, TextLocation location) {
-    this(view, location, getDefaultResources(), true,
-        1000 / view.getRange().getLength(), false);
+  public SimplePager(TextLocation location) {
+    this(location, getDefaultResources(), true, DEFAULT_FAST_FORWARD_ROWS,
+        false);
   }
 
   /**
    * Construct a {@link SimplePager} with the specified resources.
-   * 
-   * @param view the {@link PagingListView} to page
+   *
    * @param location the location of the text relative to the buttons
    * @param resources the {@link Resources} to use
    * @param showFastForwardButton if true, show a fast-forward button that
    *          advances by a larger increment than a single page
-   * @param fastForwardPages the number of pages to fast forward
+   * @param fastForwardRows the number of rows to jump when fast forwarding
    * @param showLastPageButton if true, show a button to go the the last page
    */
-  public SimplePager(final PagingListView<T> view, TextLocation location,
-      Resources resources, boolean showFastForwardButton,
-      final int fastForwardPages, boolean showLastPageButton) {
-    super(view);
+  public SimplePager(TextLocation location, Resources resources,
+      boolean showFastForwardButton, final int fastForwardRows,
+      boolean showLastPageButton) {
     this.resources = resources;
-    this.showFastForwardButton = showFastForwardButton;
-    this.fastForwardPages = fastForwardPages;
-    this.showLastPageButton = showLastPageButton;
+    this.fastForwardRows = fastForwardRows;
     this.style = resources.simplePagerStyle();
     this.style.ensureInjected();
 
     // Create the buttons.
-    fastForward = new Image(resources.simplePagerFastForward());
     firstPage = new Image(resources.simplePagerFirstPage());
-    lastPage = new Image(resources.simplePagerLastPage());
-    nextPage = new Image(resources.simplePagerNextPage());
-    prevPage = new Image(resources.simplePagerPreviousPage());
-
-    // Add handlers.
-    fastForward.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        Range range = view.getRange();
-        setPageStart(range.getStart() + range.getLength() * fastForwardPages);
-      }
-    });
     firstPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         firstPage();
       }
     });
-    lastPage.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        lastPage();
-      }
-    });
+    nextPage = new Image(resources.simplePagerNextPage());
     nextPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         nextPage();
       }
     });
+    prevPage = new Image(resources.simplePagerPreviousPage());
     prevPage.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         previousPage();
       }
     });
+    if (showLastPageButton) {
+      lastPage = new Image(resources.simplePagerLastPage());
+      lastPage.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          lastPage();
+        }
+      });
+    } else {
+      lastPage = null;
+    }
+    if (showFastForwardButton) {
+      fastForward = new Image(resources.simplePagerFastForward());
+      fastForward.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          setPage(getPage() + getFastForwardPages());
+        }
+      });
+    } else {
+      fastForward = null;
+    }
 
     // Construct the widget.
     HorizontalPanel layout = new HorizontalPanel();
@@ -281,76 +274,104 @@ public class SimplePager<T> extends AbstractPager<T> {
     }
 
     // Add style names to the cells.
-    fastForward.getElement().getParentElement().addClassName(style.button());
     firstPage.getElement().getParentElement().addClassName(style.button());
     prevPage.getElement().getParentElement().addClassName(style.button());
     label.getElement().getParentElement().addClassName(style.pageDetails());
     nextPage.getElement().getParentElement().addClassName(style.button());
-    lastPage.getElement().getParentElement().addClassName(style.button());
+    if (showFastForwardButton) {
+      fastForward.getElement().getParentElement().addClassName(style.button());
+    }
+    if (showLastPageButton) {
+      lastPage.getElement().getParentElement().addClassName(style.button());
+    }
+
+    // Disable the buttons by default.
+    setView(null);
   }
 
   @Override
-  public void onRangeOrSizeChanged(PagingListView<T> listView) {
-    super.onRangeOrSizeChanged(listView);
-    label.setText(createText());
+  public void firstPage() {
+    super.firstPage();
+  }
 
-    // Update the prev and first buttons.
-    boolean hasPrev = hasPreviousPage();
-    if (hasPrev && prevDisabled) {
-      prevDisabled = false;
-      firstPage.setResource(resources.simplePagerFirstPage());
-      prevPage.setResource(resources.simplePagerPreviousPage());
-      firstPage.getElement().getParentElement().removeClassName(
-          style.disabledButton());
-      prevPage.getElement().getParentElement().removeClassName(
-          style.disabledButton());
-    } else if (!hasPrev && !prevDisabled) {
-      prevDisabled = true;
-      firstPage.setResource(resources.simplePagerFirstPageDisabled());
-      prevPage.setResource(resources.simplePagerPreviousPageDisabled());
-      firstPage.getElement().getParentElement().addClassName(
-          style.disabledButton());
-      prevPage.getElement().getParentElement().addClassName(
-          style.disabledButton());
-    }
+  @Override
+  public int getPage() {
+    return super.getPage();
+  }
 
-    // Update the next and last buttons.
-    if (isRangeLimited() || !listView.isDataSizeExact()) {
-      boolean hasNext = hasNextPage();
-      if (hasNext && nextDisabled) {
-        nextDisabled = false;
-        nextPage.setResource(resources.simplePagerNextPage());
-        lastPage.setResource(resources.simplePagerLastPage());
-        nextPage.getElement().getParentElement().removeClassName(
-            style.disabledButton());
-        if (showLastPageButton) {
-          lastPage.getElement().getParentElement().removeClassName(
-              style.disabledButton());
-        }
-      } else if (!hasNext && !nextDisabled) {
-        nextDisabled = true;
-        nextPage.setResource(resources.simplePagerNextPageDisabled());
-        lastPage.setResource(resources.simplePagerLastPageDisabled());
-        nextPage.getElement().getParentElement().addClassName(
-            style.disabledButton());
-        if (showLastPageButton) {
-          lastPage.getElement().getParentElement().addClassName(
-              style.disabledButton());
-        }
-      }
+  @Override
+  public int getPageCount() {
+    return super.getPageCount();
+  }
 
-      if (showFastForwardButton) {
-        if (hasNextPages(fastForwardPages)) {
-          fastForward.setResource(resources.simplePagerFastForward());
-          fastForward.getElement().getParentElement().removeClassName(
-              style.disabledButton());
-        } else {
-          fastForward.setResource(resources.simplePagerFastForwardDisabled());
-          fastForward.getElement().getParentElement().addClassName(
-              style.disabledButton());
-        }
-      }
-    }
+  @Override
+  public boolean hasNextPage() {
+    return super.hasNextPage();
+  }
+
+  @Override
+  public boolean hasNextPages(int pages) {
+    return super.hasNextPages(pages);
+  }
+
+  @Override
+  public boolean hasPage(int index) {
+    return super.hasPage(index);
+  }
+
+  @Override
+  public boolean hasPreviousPage() {
+    return super.hasPreviousPage();
+  }
+
+  @Override
+  public boolean hasPreviousPages(int pages) {
+    return super.hasPreviousPages(pages);
+  }
+
+  @Override
+  public void lastPage() {
+    super.lastPage();
+  }
+
+  @Override
+  public void lastPageStart() {
+    super.lastPageStart();
+  }
+
+  @Override
+  public void nextPage() {
+    super.nextPage();
+  }
+
+  @Override
+  public void previousPage() {
+    super.previousPage();
+  }
+
+  @Override
+  public void setPage(int index) {
+    super.setPage(index);
+  }
+
+  @Override
+  public void setPageSize(int pageSize) {
+    super.setPageSize(pageSize);
+  }
+
+  @Override
+  public void setPageStart(int index) {
+    super.setPageStart(index);
+  }
+
+  @Override
+  public void setView(HasRows view) {
+    // Enable or disable all buttons.
+    boolean disableButtons = (view == null);
+    setFastForwardDisabled(disableButtons);
+    setNextPageButtonsDisabled(disableButtons);
+    setPrevPageButtonsDisabled(disableButtons);
+    super.setView(view);
   }
 
   /**
@@ -359,27 +380,146 @@ public class SimplePager<T> extends AbstractPager<T> {
    * loaded into the table.
    */
   public void startLoading() {
-    getPagingListView().setDataSize(0, true);
+    getView().setRowCount(0, true);
     label.setHTML("");
   }
 
   /**
    * Get the text to display in the pager that reflects the state of the pager.
-   * 
+   *
    * @return the text
    */
   protected String createText() {
     // Default text is 1 based.
     NumberFormat formatter = NumberFormat.getFormat("#,###");
-    PagingListView<T> view = getPagingListView();
-    Range range = view.getRange();
+    HasRows view = getView();
+    Range range = view.getVisibleRange();
     int pageStart = range.getStart() + 1;
     int pageSize = range.getLength();
-    int dataSize = view.getDataSize();
+    int dataSize = view.getRowCount();
     int endIndex = Math.min(dataSize, pageStart + pageSize - 1);
     endIndex = Math.max(pageStart, endIndex);
-    boolean exact = view.isDataSizeExact();
+    boolean exact = view.isRowCountExact();
     return formatter.format(pageStart) + "-" + formatter.format(endIndex)
         + (exact ? " of " : " of over ") + formatter.format(dataSize);
+  }
+
+  @Override
+  protected void onRangeOrRowCountChanged() {
+    HasRows view = getView();
+    label.setText(createText());
+
+    // Update the prev and first buttons.
+    setPrevPageButtonsDisabled(!hasPreviousPage());
+
+    // Update the next and last buttons.
+    if (isRangeLimited() || !view.isRowCountExact()) {
+      setNextPageButtonsDisabled(!hasNextPage());
+      setFastForwardDisabled(!hasNextPages(getFastForwardPages()));
+    }
+  }
+
+  /**
+   * Check if the next button is disabled. Visible for testing.
+   */
+  boolean isNextButtonDisabled() {
+    return nextDisabled;
+  }
+
+  /**
+   * Check if the previous button is disabled. Visible for testing.
+   */
+  boolean isPreviousButtonDisabled() {
+    return prevDisabled;
+  }
+
+  /**
+   * Get the number of pages to fast forward based on the current page size.
+   *
+   * @return the number of pages to fast forward
+   */
+  private int getFastForwardPages() {
+    int pageSize = getPageSize();
+    return pageSize > 0 ? fastForwardRows / pageSize : 0;
+  }
+
+  /**
+   * Enable or disable the fast forward button.
+   *
+   * @param disabled true to disable, false to enable
+   */
+  private void setFastForwardDisabled(boolean disabled) {
+    if (fastForward == null) {
+      return;
+    }
+    if (disabled) {
+      fastForward.setResource(resources.simplePagerFastForwardDisabled());
+      fastForward.getElement().getParentElement().addClassName(
+          style.disabledButton());
+    } else {
+      fastForward.setResource(resources.simplePagerFastForward());
+      fastForward.getElement().getParentElement().removeClassName(
+          style.disabledButton());
+    }
+  }
+
+  /**
+   * Enable or disable the next page buttons.
+   *
+   * @param disabled true to disable, false to enable
+   */
+  private void setNextPageButtonsDisabled(boolean disabled) {
+    if (disabled == nextDisabled) {
+      return;
+    }
+
+    nextDisabled = disabled;
+    if (disabled) {
+      nextPage.setResource(resources.simplePagerNextPageDisabled());
+      nextPage.getElement().getParentElement().addClassName(
+          style.disabledButton());
+      if (lastPage != null) {
+        lastPage.setResource(resources.simplePagerLastPageDisabled());
+        lastPage.getElement().getParentElement().addClassName(
+            style.disabledButton());
+      }
+    } else {
+      nextPage.setResource(resources.simplePagerNextPage());
+      nextPage.getElement().getParentElement().removeClassName(
+          style.disabledButton());
+      if (lastPage != null) {
+        lastPage.setResource(resources.simplePagerLastPage());
+        lastPage.getElement().getParentElement().removeClassName(
+            style.disabledButton());
+      }
+    }
+  }
+
+  /**
+   * Enable or disable the previous page buttons.
+   *
+   * @param disabled true to disable, false to enable
+   */
+  private void setPrevPageButtonsDisabled(boolean disabled) {
+    if (disabled == prevDisabled) {
+      return;
+    }
+
+    prevDisabled = disabled;
+    if (disabled) {
+      firstPage.setResource(resources.simplePagerFirstPageDisabled());
+      firstPage.getElement().getParentElement().addClassName(
+          style.disabledButton());
+      prevPage.setResource(resources.simplePagerPreviousPageDisabled());
+      prevPage.getElement().getParentElement().addClassName(
+          style.disabledButton());
+    } else {
+      firstPage.setResource(resources.simplePagerFirstPage());
+      firstPage.getElement().getParentElement().removeClassName(
+          style.disabledButton());
+      prevPage.setResource(resources.simplePagerPreviousPage());
+      prevPage.getElement().getParentElement().removeClassName(
+          style.disabledButton());
+    }
   }
 }

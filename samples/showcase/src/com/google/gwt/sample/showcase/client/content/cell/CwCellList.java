@@ -34,7 +34,6 @@ import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
@@ -44,7 +43,7 @@ import com.google.gwt.view.client.SingleSelectionModel;
  */
 @ShowcaseRaw({
     "ContactDatabase.java", "CwCellList.ui.xml", "ContactInfoForm.java",
-    "ShowMorePagerPanel.java"})
+    "ShowMorePagerPanel.java", "RangeLabelPager.java"})
 public class CwCellList extends ContentWidget {
 
   /**
@@ -118,13 +117,6 @@ public class CwCellList extends ContentWidget {
   }
 
   /**
-   * The CellList.
-   */
-  @ShowcaseData
-  @UiField(provided = true)
-  CellList<ContactInfo> cellList;
-
-  /**
    * The contact form used to update contacts.
    */
   @ShowcaseData
@@ -142,15 +134,21 @@ public class CwCellList extends ContentWidget {
    * The pager used to change the range of data.
    */
   @ShowcaseData
-  @UiField(provided = true)
-  ShowMorePagerPanel<ContactInfo> pager;
+  @UiField
+  ShowMorePagerPanel pagerPanel;
 
   /**
-   * The {@link ScrollPanel} that wraps the list.
+   * The pager used to display the current range.
    */
   @ShowcaseData
-  @UiField(provided = true)
-  ScrollPanel scrollPanel;
+  @UiField
+  RangeLabelPager rangeLabelPager;
+
+  /**
+   * The CellList.
+   */
+  @ShowcaseData
+  private CellList<ContactInfo> cellList;
 
   /**
    * An instance of the constants.
@@ -170,6 +168,7 @@ public class CwCellList extends ContentWidget {
     registerSource("CwCellList.ui.xml");
     registerSource("ContactInfoForm.java");
     registerSource("ShowMorePagerPanel.java");
+    registerSource("RangeLabelPager");
   }
 
   @Override
@@ -209,10 +208,6 @@ public class CwCellList extends ContentWidget {
       }
     });
 
-    // Create the pager.
-    scrollPanel = new ScrollPanel();
-    pager = new ShowMorePagerPanel<ContactInfo>(cellList, scrollPanel);
-
     // Set a key provider that provides a unique key for each contact. If key is
     // used to identify contacts when fields (such as the name and address)
     // change.
@@ -225,6 +220,13 @@ public class CwCellList extends ContentWidget {
     // Create the UiBinder.
     Binder uiBinder = GWT.create(Binder.class);
     Widget widget = uiBinder.createAndBindUi(this);
+
+    // Set the cellList as the view of the pagers. This example has two pagers.
+    // pagerPanel is a scrollable pager that extends the range when the user
+    // scrolls to the bottom. rangeLabelPager is a pager that displays the
+    // current range, but does not have any controls to change the range.
+    pagerPanel.setView(cellList);
+    rangeLabelPager.setView(cellList);
 
     // Handle events from the generate button.
     generateButton.addClickHandler(new ClickHandler() {

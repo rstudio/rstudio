@@ -18,7 +18,7 @@ package com.google.gwt.sample.showcase.client.content.cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.user.client.Random;
-import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ListViewAdapter;
 import com.google.gwt.view.client.ProvidesKey;
 
@@ -353,7 +353,7 @@ public class ContactDatabase {
    *
    * @param view a {@Link ListView}.
    */
-  public void addView(ListView<ContactInfo> view) {
+  public void addView(HasData<ContactInfo> view) {
     adapter.addView(view);
   }
 

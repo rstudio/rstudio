@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,11 +28,11 @@ import java.util.NoSuchElementException;
 /**
  * A concrete subclass of {@link AbstractListViewAdapter} that is backed by an
  * in-memory list.
- * 
+ *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
- * 
+ *
  * @param <T> the data type of the list
  */
 public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
@@ -52,7 +52,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
        * called more than once per call to {@link #next()} or
        * {@link #previous()}.
        */
-      private static final String IMPERMEABLE_EXCEPTION = "Cannot call add/remove more than once per call to next/previous.";
+      private static final String IMPERMEABLE_EXCEPTION =
+          "Cannot call add/remove more than once per call to next/previous.";
 
       /**
        * The index of the object that will be returned by {@link #next()}.
@@ -71,8 +72,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       private WrappedListIterator(int start) {
         int size = ListWrapper.this.size();
         if (start < 0 || start > size) {
-          throw new IndexOutOfBoundsException("Index: " + start + ", Size: "
-              + size);
+          throw new IndexOutOfBoundsException(
+              "Index: " + start + ", Size: " + size);
         }
         i = start;
       }
@@ -195,12 +196,15 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
     public ListWrapper(List<T> list) {
       this(list, null, 0);
+
+      // Initialize the data size based on the size of the input list.
+      updateDataSize(list.size(), true);
     }
 
     /**
      * Construct a new {@link ListWrapper} that delegates flush calls to the
      * specified delegate.
-     * 
+     *
      * @param list the list to wrap
      * @param delegate the delegate
      * @param offset the offset of this list
@@ -378,10 +382,10 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     private void flush() {
       // Defer to the delegate.
       if (delegate != null) {
-        delegate.minModified = Math.min(minModified + offset,
-            delegate.minModified);
-        delegate.maxModified = Math.max(maxModified + offset,
-            delegate.maxModified);
+        delegate.minModified = Math.min(
+            minModified + offset, delegate.minModified);
+        delegate.maxModified = Math.max(
+            maxModified + offset, delegate.maxModified);
         delegate.modified = modified || delegate.modified;
         delegate.flush();
         return;
@@ -411,8 +415,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
       if (modified) {
         int length = maxModified - minModified;
-        updateViewData(minModified, length, list.subList(minModified,
-            maxModified));
+        updateViewData(
+            minModified, length, list.subList(minModified, maxModified));
         modified = false;
       }
       minModified = Integer.MAX_VALUE;
@@ -456,7 +460,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
   /**
    * Get the list that backs this model. Changes to the list will be reflected
    * in the model.
-   * 
+   *
    * @return the list
    */
   public List<T> getList() {
@@ -472,7 +476,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
   /**
    * Replaces this model's list.
-   * 
+   *
    * @param wrappee the model's new list
    */
   public void setList(List<T> wrappee) {
@@ -484,7 +488,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
   }
 
   @Override
-  protected void onRangeChanged(ListView<T> view) {
+  protected void onRangeChanged(HasData<T> view) {
     updateViewData(view, 0, listWrapper.size(), listWrapper);
   }
 }

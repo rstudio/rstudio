@@ -6,7 +6,7 @@
   xmlns:s="urn:import:com.google.gwt.sample.showcase.client.content.cell">
 
   <ui:style>
-    .scrollPanel {
+    .scrollable {
       height: 400px;
       width: 250px;
       border: 1px solid #ccc;
@@ -22,14 +22,13 @@
     <table>
       <tr>
         <td
-          valign='top'>
-          <g:ScrollPanel
-            addStyleNames='{style.scrollPanel}'
-            ui:field='scrollPanel'>
-            <c:CellList
-              pageSize='40'
-              ui:field='cellList' />
-          </g:ScrollPanel>
+          valign='top'
+          align='center'>
+          <s:ShowMorePagerPanel
+            addStyleNames='{style.scrollable}'
+            ui:field='pagerPanel' />
+          <s:RangeLabelPager
+            ui:field='rangeLabelPager' />
         </td>
         <td
           class='{style.contactFormCell}'

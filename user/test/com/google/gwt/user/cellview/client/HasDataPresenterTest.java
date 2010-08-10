@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,16 +16,19 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.cellview.client.PagingListViewPresenter.ElementIterator;
-import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
-import com.google.gwt.user.cellview.client.PagingListViewPresenter.View;
-import com.google.gwt.view.client.MockPagingListView;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.HasDataPresenter.ElementIterator;
+import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
+import com.google.gwt.user.cellview.client.HasDataPresenter.View;
+import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.MockHasData;
+import com.google.gwt.view.client.MockHasData.MockRangeChangeHandler;
+import com.google.gwt.view.client.MockHasData.MockRowCountChangeHandler;
 import com.google.gwt.view.client.MockSelectionModel;
-import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
-import com.google.gwt.view.client.MockPagingListView.MockDelegate;
-import com.google.gwt.view.client.MockPagingListView.MockPager;
 
 import junit.framework.TestCase;
 
@@ -36,9 +39,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
- * Tests for {@link PagingListViewPresenter}.
+ * Tests for {@link HasDataPresenter}.
  */
-public class PagingListViewPresenterTest extends TestCase {
+public class HasDataPresenterTest extends TestCase {
 
   /**
    * Mock iterator over DOM elements.
@@ -72,7 +75,7 @@ public class PagingListViewPresenterTest extends TestCase {
 
     /**
      * Set the selection state of the current element.
-     * 
+     *
      * @param selected the selection state
      * @throws IllegalStateException if {@link #next()} has not been called
      */
@@ -86,10 +89,11 @@ public class PagingListViewPresenterTest extends TestCase {
 
   /**
    * A mock view used for testing.
-   * 
+   *
    * @param <T> the data type
    */
   private static class MockView<T> implements View<T> {
+
     private int childCount;
     private boolean dependsOnSelection;
     private String lastHtml;
@@ -98,6 +102,11 @@ public class PagingListViewPresenterTest extends TestCase {
     private boolean replaceAllChildrenCalled;
     private boolean replaceChildrenCalled;
     private Set<Integer> selectedRows = new HashSet<Integer>();
+
+    public <H extends EventHandler> HandlerRegistration addHandler(
+        H handler, Type<H> type) {
+      throw new UnsupportedOperationException();
+    }
 
     public void assertLastHtml(String html) {
       assertEquals(html, lastHtml);
@@ -126,13 +135,14 @@ public class PagingListViewPresenterTest extends TestCase {
     /**
      * Assert that {@link #setSelected(int, boolean)} was called for the
      * specified rows.
-     * 
+     *
      * @param rows the rows
      */
     public void assertSelectedRows(Integer... rows) {
       assertEquals(rows.length, selectedRows.size());
       for (Integer row : rows) {
-        assertTrue("Row " + row + "is not selected", selectedRows.contains(row));
+        assertTrue(
+            "Row " + row + "is not selected", selectedRows.contains(row));
       }
     }
 
@@ -170,15 +180,20 @@ public class PagingListViewPresenterTest extends TestCase {
       lastHtml = html;
     }
 
+    public void resetFocus() {
+    }
+
     public void setDependsOnSelection(boolean dependsOnSelection) {
       this.dependsOnSelection = dependsOnSelection;
-    }
-    
-    public void resetFocus() {
     }
 
     public void setLoadingState(LoadingState state) {
       this.loadingState = state;
+    }
+
+    public void setSelected(Element elem, boolean selected) {
+      // Not used in this mock.
+      throw new UnsupportedOperationException();
     }
 
     protected void setSelected(int index, boolean selected) {
@@ -190,16 +205,93 @@ public class PagingListViewPresenterTest extends TestCase {
     }
   }
 
+  public void testAddRowCountChangeHandler() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+    MockRowCountChangeHandler handler = new MockRowCountChangeHandler();
+
+    // Adding a handler should not invoke the handler.
+    // Add the handler to the view because it is the source of events.
+    HandlerRegistration reg = listView.addRowCountChangeHandler(handler);
+    assertEquals(-1, handler.getLastRowCount());
+    handler.reset();
+
+    // Change the row count.
+    presenter.setRowCount(100, true);
+    assertEquals(100, handler.getLastRowCount());
+    assertTrue(handler.isLastRowCountExact());
+    handler.reset();
+
+    // Set the same row count and verify no event is fired.
+    presenter.setRowCount(100, true);
+    assertEquals(-1, handler.getLastRowCount());
+    handler.reset();
+
+    // Change the row count again.
+    presenter.setRowCount(110, false);
+    assertEquals(110, handler.getLastRowCount());
+    assertFalse(handler.isLastRowCountExact());
+    handler.reset();
+
+    // Change only the isExact param and verify an event is fired.
+    presenter.setRowCount(110, true);
+    assertEquals(110, handler.getLastRowCount());
+    assertTrue(handler.isLastRowCountExact());
+    handler.reset();
+
+    // Remove the handler and verify it no longer receives events.
+    reg.removeHandler();
+    presenter.setRowCount(200, true);
+    assertEquals(-1, handler.getLastRowCount());
+  }
+
+  public void testAddRangeChangeHandler() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+    MockRangeChangeHandler handler = new MockRangeChangeHandler();
+
+    // Adding a handler should not invoke the handler.
+    // Add the handler to the view because it is the source of events.
+    HandlerRegistration reg = listView.addRangeChangeHandler(handler);
+    assertNull(handler.getLastRange());
+    handler.reset();
+
+    // Change the pageStart.
+    presenter.setVisibleRange(new Range(10, 10));
+    assertEquals(new Range(10, 10), handler.getLastRange());
+    handler.reset();
+
+    // Change the pageSize.
+    presenter.setVisibleRange(new Range(10, 20));
+    assertEquals(new Range(10, 20), handler.getLastRange());
+    handler.reset();
+
+    // Reuse the same range and verify an event is not fired.
+    presenter.setVisibleRange(new Range(10, 20));
+    assertNull(handler.getLastRange());
+    handler.reset();
+
+    // Remove the handler and verify it no longer receives events.
+    reg.removeHandler();
+    presenter.setVisibleRange(new Range(20, 100));
+    assertNull(handler.getLastRange());
+    handler.reset();
+  }
+
   public void testClearSelectionModel() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
     view.setDependsOnSelection(true);
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
     assertNull(presenter.getSelectionModel());
 
     // Initialize some data.
-    presenter.setData(0, 10, createData(0, 10));
+    presenter.setRowValues(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -224,31 +316,31 @@ public class PagingListViewPresenterTest extends TestCase {
   }
 
   public void testGetCurrentPageSize() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
-    presenter.setDataSize(35, true);
+    presenter.setRowCount(35, true);
 
     // First page.
     assertEquals(10, presenter.getCurrentPageSize());
 
     // Last page.
-    presenter.setRange(30, 10);
+    presenter.setVisibleRange(new Range(30, 10));
     assertEquals(5, presenter.getCurrentPageSize());
   }
 
   public void testRedraw() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
 
     // Initialize some data.
-    presenter.setDataSize(10, true);
-    presenter.setData(0, 10, createData(0, 10));
-    assertEquals(10, presenter.getData().size());
-    assertEquals("test 0", presenter.getData().get(0));
+    presenter.setRowCount(10, true);
+    presenter.setRowValues(0, createData(0, 10));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals("test 0", presenter.getRowValues().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -262,19 +354,84 @@ public class PagingListViewPresenterTest extends TestCase {
     view.assertLoadingState(LoadingState.LOADED);
   }
 
-  public void testSetData() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetRowCount() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
-    presenter.setRange(5, 10);
+    view.assertLoadingState(null);
+
+    // Set size to 100.
+    presenter.setRowCount(100, true);
+    assertEquals(100, presenter.getRowCount());
+    assertTrue(presenter.isRowCountExact());
+    view.assertLoadingState(LoadingState.LOADING);
+
+    // Set size to 0.
+    presenter.setRowCount(0, false);
+    assertEquals(0, presenter.getRowCount());
+    assertFalse(presenter.isRowCountExact());
+    view.assertLoadingState(LoadingState.EMPTY);
+  }
+
+  public void testSetRowCountNoBoolean() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+
+    try {
+      presenter.setRowCount(100);
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException e) {
+      // Expected.
+    }
+  }
+
+  public void testSetRowCountTrimsCurrentPage() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+    view.assertLoadingState(null);
+
+    // Initialize some data.
+    presenter.setRowCount(10, true);
+    presenter.setVisibleRange(new Range(0, 10));
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    presenter.setRowValues(0, createData(0, 10));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals("test 0", presenter.getRowValues().get(0));
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=0,size=10");
+    view.assertLoadingState(LoadingState.LOADED);
+
+    // Trim the size.
+    presenter.setRowCount(8, true);
+    assertEquals(8, presenter.getRowCount());
+    assertTrue(presenter.isRowCountExact());
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    assertEquals(8, presenter.getRowValues().size());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=0,size=8");
+    view.assertLoadingState(LoadingState.LOADED);
+  }
+
+  public void testSetRowValues() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+    presenter.setVisibleRange(new Range(5, 10));
     view.assertLoadingState(LoadingState.LOADING);
 
     // Page range same as data range.
     List<String> expectedData = createData(5, 10);
-    presenter.setData(5, 10, createData(5, 10));
-    assertEquals(10, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setRowValues(5, createData(5, 10));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
@@ -284,9 +441,9 @@ public class PagingListViewPresenterTest extends TestCase {
     // Page range contains data range.
     expectedData.set(2, "test 100");
     expectedData.set(3, "test 101");
-    presenter.setData(7, 2, createData(100, 2));
-    assertEquals(10, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setRowValues(7, createData(100, 2));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=7,size=2");
@@ -296,9 +453,9 @@ public class PagingListViewPresenterTest extends TestCase {
     // Data range overlaps page start.
     expectedData.set(0, "test 202");
     expectedData.set(1, "test 203");
-    presenter.setData(3, 4, createData(200, 4));
-    assertEquals(10, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setRowValues(3, createData(200, 4));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=5,size=2");
@@ -308,9 +465,9 @@ public class PagingListViewPresenterTest extends TestCase {
     // Data range overlaps page end.
     expectedData.set(8, "test 300");
     expectedData.set(9, "test 301");
-    presenter.setData(13, 4, createData(300, 4));
-    assertEquals(10, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setRowValues(13, createData(300, 4));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=13,size=2");
@@ -319,9 +476,9 @@ public class PagingListViewPresenterTest extends TestCase {
 
     // Data range contains page range.
     expectedData = createData(400, 20).subList(2, 12);
-    presenter.setData(3, 20, createData(400, 20));
-    assertEquals(10, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setRowValues(3, createData(400, 20));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
@@ -332,57 +489,57 @@ public class PagingListViewPresenterTest extends TestCase {
   /**
    * Setting data outside of the data size should update the data size.
    */
-  public void testSetDataChangesDataSize() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetRowValuesChangesDataSize() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
 
     // Set the initial data size.
-    presenter.setDataSize(10, true);
+    presenter.setRowCount(10, true);
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set the data within the range.
-    presenter.setData(0, 10, createData(0, 10));
+    presenter.setRowValues(0, createData(0, 10));
     view.assertLoadingState(LoadingState.LOADED);
 
     // Set the data past the range.
-    presenter.setData(5, 10, createData(5, 10));
-    assertEquals(15, presenter.getDataSize());
+    presenter.setRowValues(5, createData(5, 10));
+    assertEquals(15, presenter.getRowCount());
     view.assertLoadingState(LoadingState.LOADED);
   }
 
-  public void testSetDataOutsideRange() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetRowValuesOutsideRange() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
-    presenter.setRange(5, 10);
+    presenter.setVisibleRange(new Range(5, 10));
     view.assertLoadingState(LoadingState.LOADING);
 
     // Page range same as data range.
     List<String> expectedData = createData(5, 10);
-    presenter.setData(5, 10, createData(5, 10));
-    assertEquals(10, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setRowValues(5, createData(5, 10));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
     view.assertLoadingState(LoadingState.LOADED);
 
     // Data range past page end.
-    presenter.setData(15, 5, createData(15, 5));
-    assertEquals(10, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setRowValues(15, createData(15, 5));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
     view.assertLoadingState(LoadingState.LOADED);
 
     // Data range before page start.
-    presenter.setData(0, 5, createData(0, 5));
-    assertEquals(10, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setRowValues(0, createData(0, 5));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -394,23 +551,23 @@ public class PagingListViewPresenterTest extends TestCase {
    * the rendered string is identical to the previously rendered string. This is
    * useful for tables that refresh on an interval.
    */
-  public void testSetDataSameContents() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetRowValuesSameContents() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
-    view.assertLoadingState(LoadingState.LOADING);
+    view.assertLoadingState(null);
 
     // Initialize some data.
-    presenter.setRange(0, 10);
-    presenter.setData(0, 10, createData(0, 10));
+    presenter.setVisibleRange(new Range(0, 10));
+    presenter.setRowValues(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
     view.assertLoadingState(LoadingState.LOADED);
 
     // Set the same data over the entire range.
-    presenter.setData(0, 10, createData(0, 10));
+    presenter.setRowValues(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -420,12 +577,12 @@ public class PagingListViewPresenterTest extends TestCase {
   /**
    * Set data at the end of the page only.
    */
-  public void testSetDataSparse() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetRowValuesSparse() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
-    view.assertLoadingState(LoadingState.LOADING);
+    view.assertLoadingState(null);
 
     List<String> expectedData = createData(5, 3);
     expectedData.add(0, null);
@@ -433,285 +590,183 @@ public class PagingListViewPresenterTest extends TestCase {
     expectedData.add(0, null);
     expectedData.add(0, null);
     expectedData.add(0, null);
-    presenter.setRange(0, 10);
-    presenter.setData(5, 3, createData(5, 3));
-    assertEquals(8, presenter.getData().size());
-    assertEquals(expectedData, presenter.getData());
+    presenter.setVisibleRange(new Range(0, 10));
+    presenter.setRowValues(5, createData(5, 3));
+    assertEquals(8, presenter.getRowValues().size());
+    assertEquals(expectedData, presenter.getRowValues());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=8");
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
   }
 
-  public void testSetDataSize() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetVisibleRange() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
-        listView, view, 10);
-    view.assertLoadingState(LoadingState.LOADING);
-
-    // Set size to 100.
-    presenter.setDataSize(100, true);
-    assertEquals(100, presenter.getDataSize());
-    assertTrue(presenter.isDataSizeExact());
-    view.assertLoadingState(LoadingState.LOADING);
-
-    // Set size to 0.
-    presenter.setDataSize(0, false);
-    assertEquals(0, presenter.getDataSize());
-    assertFalse(presenter.isDataSizeExact());
-    view.assertLoadingState(LoadingState.EMPTY);
-  }
-
-  public void testSetDataSizeTrimsCurrentPage() {
-    PagingListView<String> listView = new MockPagingListView<String>();
-    MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
-        listView, view, 10);
-    view.assertLoadingState(LoadingState.LOADING);
-
-    // Initialize some data.
-    presenter.setDataSize(10, true);
-    presenter.setRange(0, 10);
-    assertEquals(new Range(0, 10), presenter.getRange());
-    presenter.setData(0, 10, createData(0, 10));
-    assertEquals(10, presenter.getData().size());
-    assertEquals("test 0", presenter.getData().get(0));
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
-    view.assertLoadingState(LoadingState.LOADED);
-
-    // Trim the size.
-    presenter.setDataSize(8, true);
-    assertEquals(8, presenter.getDataSize());
-    assertTrue(presenter.isDataSizeExact());
-    assertEquals(new Range(0, 10), presenter.getRange());
-    assertEquals(8, presenter.getData().size());
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=8");
-    view.assertLoadingState(LoadingState.LOADED);
-  }
-
-  public void testSetDelegate() {
-    PagingListView<String> listView = new MockPagingListView<String>();
-    MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
-        listView, view, 10);
-    MockDelegate<String> delegate = new MockDelegate<String>();
-    presenter.setDelegate(delegate);
-
-    // Change the pageStart.
-    presenter.setRange(10, 10);
-    assertEquals(listView, delegate.getLastListView());
-    delegate.clearListView();
-
-    // Change the pageSize.
-    presenter.setRange(10, 20);
-    assertEquals(listView, delegate.getLastListView());
-    delegate.clearListView();
-
-    // Reuse the same range.
-    presenter.setRange(10, 20);
-    assertNull(delegate.getLastListView());
-
-    // Change the data size, which does not affect the delegate.
-    presenter.setDataSize(100, true);
-    assertNull(delegate.getLastListView());
-
-    // Unset the delegate.
-    presenter.setDelegate(null);
-    presenter.setRange(20, 100);
-    assertNull(delegate.getLastListView());
-  }
-
-  public void testSetPager() {
-    PagingListView<String> listView = new MockPagingListView<String>();
-    MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
-        listView, view, 10);
-    MockPager<String> pager = new MockPager<String>();
-    presenter.setPager(pager);
-
-    // Change the pageStart.
-    presenter.setRange(10, 10);
-    assertEquals(listView, pager.getLastListView());
-    pager.clearListView();
-
-    // Change the pageSize.
-    presenter.setRange(10, 20);
-    assertEquals(listView, pager.getLastListView());
-    pager.clearListView();
-
-    // Reuse the same range.
-    presenter.setRange(10, 20);
-    assertNull(pager.getLastListView());
-
-    // Change the data size.
-    presenter.setDataSize(100, true);
-    assertEquals(listView, pager.getLastListView());
-    pager.clearListView();
-
-    // Unset the delegate.
-    presenter.setPager(null);
-    presenter.setRange(20, 100);
-    assertNull(pager.getLastListView());
-  }
-
-  public void testSetRange() {
-    PagingListView<String> listView = new MockPagingListView<String>();
-    MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
 
     // Set the range the first time.
-    presenter.setRange(0, 100);
-    assertEquals(new Range(0, 100), presenter.getRange());
-    assertEquals(0, presenter.getData().size());
+    presenter.setVisibleRange(new Range(0, 100));
+    assertEquals(new Range(0, 100), presenter.getVisibleRange());
+    assertEquals(0, presenter.getRowValues().size());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set the range to the same value.
-    presenter.setRange(0, 100);
-    assertEquals(new Range(0, 100), presenter.getRange());
-    assertEquals(0, presenter.getData().size());
+    presenter.setVisibleRange(new Range(0, 100));
+    assertEquals(new Range(0, 100), presenter.getVisibleRange());
+    assertEquals(0, presenter.getRowValues().size());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
     view.assertLoadingState(LoadingState.LOADING);
   }
 
-  public void testSetRangeDecreasePageSize() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetVisibleRangeDecreasePageSize() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
 
     // Initialize some data.
-    presenter.setRange(0, 10);
-    assertEquals(new Range(0, 10), presenter.getRange());
-    presenter.setData(0, 10, createData(0, 10));
-    assertEquals(10, presenter.getData().size());
-    assertEquals("test 0", presenter.getData().get(0));
+    presenter.setVisibleRange(new Range(0, 10));
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    presenter.setRowValues(0, createData(0, 10));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals("test 0", presenter.getRowValues().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
     view.assertLoadingState(LoadingState.LOADED);
 
     // Decrease the page size.
-    presenter.setRange(0, 8);
-    assertEquals(new Range(0, 8), presenter.getRange());
-    assertEquals(8, presenter.getData().size());
-    assertEquals("test 0", presenter.getData().get(0));
+    presenter.setVisibleRange(new Range(0, 8));
+    assertEquals(new Range(0, 8), presenter.getVisibleRange());
+    assertEquals(8, presenter.getRowValues().size());
+    assertEquals("test 0", presenter.getRowValues().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=8");
     view.assertLoadingState(LoadingState.LOADED);
   }
 
-  public void testSetRangeDecreasePageStart() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetVisibleRangeDecreasePageStart() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
 
     // Initialize some data.
-    presenter.setRange(10, 30);
-    assertEquals(new Range(10, 30), presenter.getRange());
-    presenter.setData(10, 10, createData(0, 10));
-    assertEquals(10, presenter.getData().size());
-    assertEquals("test 0", presenter.getData().get(0));
+    presenter.setVisibleRange(new Range(10, 30));
+    assertEquals(new Range(10, 30), presenter.getVisibleRange());
+    presenter.setRowValues(10, createData(0, 10));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals("test 0", presenter.getRowValues().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=10,size=10");
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
 
     // Decrease the start index.
-    presenter.setRange(8, 30);
-    assertEquals(new Range(8, 30), presenter.getRange());
-    assertEquals(12, presenter.getData().size());
-    assertEquals(null, presenter.getData().get(0));
-    assertEquals(null, presenter.getData().get(1));
-    assertEquals("test 0", presenter.getData().get(2));
+    presenter.setVisibleRange(new Range(8, 30));
+    assertEquals(new Range(8, 30), presenter.getVisibleRange());
+    assertEquals(12, presenter.getRowValues().size());
+    assertEquals(null, presenter.getRowValues().get(0));
+    assertEquals(null, presenter.getRowValues().get(1));
+    assertEquals("test 0", presenter.getRowValues().get(2));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=8,size=12");
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
   }
 
-  public void testSetRangeIncreasePageSize() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetVisibleRangeIncreasePageSize() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
 
     // Initialize some data.
-    presenter.setRange(0, 10);
-    assertEquals(new Range(0, 10), presenter.getRange());
-    presenter.setData(0, 10, createData(0, 10));
-    assertEquals(10, presenter.getData().size());
-    assertEquals("test 0", presenter.getData().get(0));
+    presenter.setVisibleRange(new Range(0, 10));
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    presenter.setRowValues(0, createData(0, 10));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals("test 0", presenter.getRowValues().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
     view.assertLoadingState(LoadingState.LOADED);
 
     // Increase the page size.
-    presenter.setRange(0, 20);
-    assertEquals(new Range(0, 20), presenter.getRange());
-    assertEquals(10, presenter.getData().size());
-    assertEquals("test 0", presenter.getData().get(0));
+    presenter.setVisibleRange(new Range(0, 20));
+    assertEquals(new Range(0, 20), presenter.getVisibleRange());
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals("test 0", presenter.getRowValues().get(0));
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
   }
 
-  public void testSetRangeIncreasePageStart() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+  public void testSetVisibleRangeIncreasePageStart() {
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
 
     // Initialize some data.
-    presenter.setRange(0, 20);
-    assertEquals(new Range(0, 20), presenter.getRange());
-    presenter.setData(0, 10, createData(0, 10));
-    assertEquals(10, presenter.getData().size());
-    assertEquals("test 0", presenter.getData().get(0));
+    presenter.setVisibleRange(new Range(0, 20));
+    assertEquals(new Range(0, 20), presenter.getVisibleRange());
+    presenter.setRowValues(0, createData(0, 10));
+    assertEquals(10, presenter.getRowValues().size());
+    assertEquals("test 0", presenter.getRowValues().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
 
     // Increase the start index.
-    presenter.setRange(2, 20);
-    assertEquals(new Range(2, 20), presenter.getRange());
-    assertEquals(8, presenter.getData().size());
-    assertEquals("test 2", presenter.getData().get(0));
+    presenter.setVisibleRange(new Range(2, 20));
+    assertEquals(new Range(2, 20), presenter.getVisibleRange());
+    assertEquals(8, presenter.getRowValues().size());
+    assertEquals("test 2", presenter.getRowValues().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=2,size=8");
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
   }
 
+  public void testSetVisibleRangeInts() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+
+    try {
+      presenter.setVisibleRange(0, 100);
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException e) {
+      // Expected.
+    }
+  }
+
   /**
    * If the cells depend on selection, the cells should be replaced.
    */
   public void testSetSelectionModelDependOnSelection() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
     view.setDependsOnSelection(true);
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
     assertNull(presenter.getSelectionModel());
 
     // Initialize some data.
-    presenter.setRange(0, 10);
-    presenter.setData(0, 10, createData(0, 10));
+    presenter.setVisibleRange(new Range(0, 10));
+    presenter.setRowValues(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -748,15 +803,15 @@ public class PagingListViewPresenterTest extends TestCase {
    * the cell container element.
    */
   public void testSetSelectionModelDoesNotDependOnSelection() {
-    PagingListView<String> listView = new MockPagingListView<String>();
+    HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    PagingListViewPresenter<String> presenter = new PagingListViewPresenter<String>(
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
         listView, view, 10);
     assertNull(presenter.getSelectionModel());
 
     // Initialize some data.
-    presenter.setRange(0, 10);
-    presenter.setData(0, 10, createData(0, 10));
+    presenter.setVisibleRange(new Range(0, 10));
+    presenter.setRowValues(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -790,7 +845,7 @@ public class PagingListViewPresenterTest extends TestCase {
 
   /**
    * Create a list of data for testing.
-   * 
+   *
    * @param start the start index
    * @param length the length
    * @return a list of data

@@ -36,7 +36,7 @@ public interface TreeViewModel {
     private AbstractListViewAdapter<T> listViewAdapter;
     private SelectionModel<? super T> selectionModel;
     private ValueUpdater<T> valueUpdater;
-    private ListView<T> view;
+    private HasData<T> view;
 
     /**
      * Construct a new {@link DefaultNodeInfo}.
@@ -83,7 +83,7 @@ public interface TreeViewModel {
       return valueUpdater;
     }
 
-    public void setView(ListView<T> view) {
+    public void setView(HasData<T> view) {
       this.view = view;
       listViewAdapter.addView(view);
     }
@@ -133,9 +133,9 @@ public interface TreeViewModel {
      * Set the view that is listening to this {@link NodeInfo}. The
      * implementation should attach the view to the source of data.
      * 
-     * @param view the {@link ListView}
+     * @param view the {@link HasData}
      */
-    void setView(ListView<T> view);
+    void setView(HasData<T> view);
 
     /**
      * Unset the view from the {@link NodeInfo}. The implementation should
@@ -146,7 +146,7 @@ public interface TreeViewModel {
 
   /**
    * Get the {@link NodeInfo} that will provide the {@link ProvidesKey},
-   * {@link Cell}, and {@link ListView}s to retrieve and display the children of
+   * {@link Cell}, and {@link HasData}s to retrieve and display the children of
    * the specified value.
    * 
    * @param value the value in the parent node

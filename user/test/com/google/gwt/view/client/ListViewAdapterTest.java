@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,58 +35,58 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
   public void testFlush() {
     ListViewAdapter<String> adapter = createListViewAdapter();
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
-    view.clearLastDataAndRange();
-    view.setDataSize(0, true);
+    view.clearLastRowValuesAndRange();
+    view.setRowCount(0, true);
 
     // Add data to the list.
     for (int i = 0; i < 10; i++) {
       list.add("test " + i);
     }
-    assertEquals(0, view.getDataSize());
-    assertNull(view.getLastData());
-    assertNull(view.getLastDataRange());
+    assertEquals(0, view.getRowCount());
+    assertNull(view.getLastRowValues());
+    assertNull(view.getLastRowValuesRange());
 
     // Flush the data immediately.
     adapter.flush();
-    assertEquals(10, view.getDataSize());
-    assertTrue(view.isDataSizeExact());
-    assertEquals(list, view.getLastData());
-    assertEquals(new Range(0, 10), view.getLastDataRange());
+    assertEquals(10, view.getRowCount());
+    assertTrue(view.isRowCountExact());
+    assertEquals(list, view.getLastRowValues());
+    assertEquals(new Range(0, 10), view.getLastRowValuesRange());
   }
 
   public void testListAdd() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     // add(String).
     list.add("added");
     assertEquals("added", list.get(10));
     adapter.flush();
-    assertEquals(new Range(10, 1), view.getLastDataRange());
+    assertEquals(new Range(10, 1), view.getLastRowValuesRange());
 
     // add(int, String).
     list.add(2, "inserted");
     assertEquals("inserted", list.get(2));
     adapter.flush();
-    assertEquals(new Range(2, 10), view.getLastDataRange());
+    assertEquals(new Range(2, 10), view.getLastRowValuesRange());
   }
 
   public void testListAddAll() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 25);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 25);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     // addAll(Collection).
     List<String> toAdd = createData(10, 3);
@@ -95,8 +95,8 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
     assertEquals("test 11", list.get(11));
     assertEquals("test 12", list.get(12));
     adapter.flush();
-    assertEquals(toAdd, view.getLastData());
-    assertEquals(new Range(10, 3), view.getLastDataRange());
+    assertEquals(toAdd, view.getLastRowValues());
+    assertEquals(new Range(10, 3), view.getLastRowValuesRange());
 
     // addAll(int, Collection).
     List<String> toInsert = createData(20, 3);
@@ -105,23 +105,23 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
     assertEquals("test 21", list.get(3));
     assertEquals("test 22", list.get(4));
     adapter.flush();
-    assertEquals(new Range(2, 14), view.getLastDataRange());
+    assertEquals(new Range(2, 14), view.getLastRowValuesRange());
   }
 
   public void testListClear() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
     assertEquals(10, list.size());
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     list.clear();
     assertEquals(0, list.size());
     adapter.flush();
-    assertEquals(0, view.getDataSize());
+    assertEquals(0, view.getRowCount());
   }
 
   public void testListContains() {
@@ -281,23 +281,23 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
   public void testListRemove() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     // remove(int).
     assertEquals("test 4", list.remove(4));
     assertEquals("test 5", list.get(4));
     adapter.flush();
-    assertEquals(new Range(4, 5), view.getLastDataRange());
+    assertEquals(new Range(4, 5), view.getLastRowValuesRange());
 
     // remove(String).
     assertTrue(list.remove("test 2"));
     assertEquals("test 3", list.get(2));
     adapter.flush();
-    assertEquals(new Range(2, 6), view.getLastDataRange());
+    assertEquals(new Range(2, 6), view.getLastRowValuesRange());
 
     // remove(String)
     assertFalse(list.remove("not in list"));
@@ -306,18 +306,18 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
   public void testListRemoveAll() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     List<String> toRemove = createData(2, 3);
     assertTrue(list.removeAll(toRemove));
     assertEquals(7, list.size());
     assertEquals("test 5", list.get(2));
     adapter.flush();
-    assertEquals(new Range(0, 7), view.getLastDataRange());
+    assertEquals(new Range(0, 7), view.getLastRowValuesRange());
 
     assertFalse(list.removeAll(toRemove));
   }
@@ -325,43 +325,43 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
   public void testListRetainAll() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     List<String> toRetain = createData(2, 3);
     assertTrue(list.retainAll(toRetain));
     assertEquals(3, list.size());
     assertEquals("test 2", list.get(0));
     adapter.flush();
-    assertEquals(new Range(0, 3), view.getLastDataRange());
+    assertEquals(new Range(0, 3), view.getLastRowValuesRange());
   }
 
   public void testListSet() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     list.set(3, "newvalue");
     assertEquals("newvalue", list.get(3));
     adapter.flush();
-    assertEquals(new Range(3, 1), view.getLastDataRange());
+    assertEquals(new Range(3, 1), view.getLastRowValuesRange());
   }
 
   public void testSubList() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     List<String> subList = list.subList(2, 5);
     assertEquals(3, subList.size());
@@ -370,12 +370,12 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
     assertEquals("test", subList.get(0));
     assertEquals("test", list.get(2));
     adapter.flush();
-    assertEquals(new Range(2, 1), view.getLastDataRange());
+    assertEquals(new Range(2, 1), view.getLastRowValuesRange());
   }
 
   public void testToArray() {
     List<String> list = createListViewAdapter(3).getList();
-    String[] expected = new String[] {"test 0", "test 1", "test 2"};
+    String[] expected = new String[]{"test 0", "test 1", "test 2"};
 
     Object[] objects = list.toArray();
     String[] strings = list.toArray(new String[3]);
@@ -396,55 +396,73 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
   public void testOnRangeChanged() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view0 = new MockPagingListView<String>();
-    MockPagingListView<String> view1 = new MockPagingListView<String>();
-    view0.setRange(0, 15);
-    view1.setRange(0, 15);
+    MockHasData<String> view0 = new MockHasData<String>();
+    MockHasData<String> view1 = new MockHasData<String>();
+    view0.setVisibleRange(0, 15);
+    view1.setVisibleRange(0, 15);
     adapter.addView(view0);
     adapter.addView(view1);
     adapter.flush();
-    view0.clearLastDataAndRange();
-    view1.clearLastDataAndRange();
+    view0.clearLastRowValuesAndRange();
+    view1.clearLastRowValuesAndRange();
 
     // Change the range of view0.
-    view0.setRange(0, 12);
-    assertEquals(list, view0.getLastData());
-    assertEquals(new Range(0, 10), view0.getLastDataRange());
-    assertNull(view1.getLastData());
-    assertNull(view1.getLastDataRange());
+    view0.setVisibleRange(0, 12);
+    assertEquals(list, view0.getLastRowValues());
+    assertEquals(new Range(0, 10), view0.getLastRowValuesRange());
+    assertNull(view1.getLastRowValues());
+    assertNull(view1.getLastRowValuesRange());
   }
 
   public void testRefresh() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
     List<String> list = adapter.getList();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
 
     // Refresh the view.
     adapter.refresh();
-    assertEquals(list, view.getLastData());
-    assertEquals(new Range(0, 10), view.getLastDataRange());
+    assertEquals(list, view.getLastRowValues());
+    assertEquals(new Range(0, 10), view.getLastRowValuesRange());
   }
 
   public void testSetList() {
     ListViewAdapter<String> adapter = createListViewAdapter(10);
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(0, 15);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
     adapter.addView(view);
     adapter.flush();
-    view.clearLastDataAndRange();
+    view.clearLastRowValuesAndRange();
     assertEquals("test 0", adapter.getList().get(0));
 
     List<String> replace = new ArrayList<String>();
     replace.add("helloworld");
     adapter.setList(replace);
     assertEquals("helloworld", adapter.getList().get(0));
-    assertEquals(1, view.getDataSize());
-    assertEquals(replace, view.getLastData());
-    assertEquals(new Range(0, 1), view.getLastDataRange());
+    assertEquals(1, view.getRowCount());
+    assertEquals(replace, view.getLastRowValues());
+    assertEquals(new Range(0, 1), view.getLastRowValuesRange());
+  }
+
+  public void testSetListEmpty() {
+    ListViewAdapter<String> adapter = createListViewAdapter(10);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(0, 15);
+    adapter.addView(view);
+    adapter.flush();
+    assertEquals(10, view.getRowCount());
+    view.clearLastRowValuesAndRange();
+    assertEquals("test 0", adapter.getList().get(0));
+
+    List<String> replace = new ArrayList<String>();
+    adapter.setList(replace);
+    assertEquals(0, view.getRowCount());
+    // An empty set should NOT set the row values.
+    assertEquals(null, view.getLastRowValues());
+    assertEquals(null, view.getLastRowValuesRange());
   }
 
   @Override

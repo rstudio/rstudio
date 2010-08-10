@@ -86,7 +86,7 @@ public class CellListPlacePickerView<P extends Place> extends Composite
   public void setValues(List<P> places, Renderer<P> renderer) {
     // Replace the current renderer.
     this.renderer = renderer;
-    cellList.setData(0, places.size(), places);
+    cellList.setRowValues(0, places);
     if (places.size() > 0) {
       smodel.setSelected(places.get(0), true);
     }

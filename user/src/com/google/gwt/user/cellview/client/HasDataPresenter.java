@@ -15,13 +15,14 @@
  */
 package com.google.gwt.user.cellview.client;
 
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 
@@ -34,9 +35,9 @@ import java.util.Set;
 
 /**
  * <p>
- * Presenter implementation of {@link PagingListView} that presents data for
- * various cell based widgets. This class contains most of the shared logic used
- * by these widgets, making it easier to test the common code.
+ * Presenter implementation of {@link HasData} that presents data for various
+ * cell based widgets. This class contains most of the shared logic used by
+ * these widgets, making it easier to test the common code.
  * <p>
  * <p>
  * In proper MVP design, user code would interact with the presenter. However,
@@ -48,7 +49,7 @@ import java.util.Set;
  *
  * @param <T> the data type of items in the list
  */
-class PagingListViewPresenter<T> implements PagingListView<T> {
+class HasDataPresenter<T> implements HasData<T> {
 
   /**
    * Default iterator over DOM elements.
@@ -56,9 +57,9 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
   static class DefaultElementIterator implements ElementIterator {
     private Element current;
     private Element next;
-    private final DefaultView<?> view;
+    private final View<?> view;
 
-    public DefaultElementIterator(DefaultView<?> view, Element first) {
+    public DefaultElementIterator(View<?> view, Element first) {
       this.view = view;
       next = first;
     }
@@ -95,120 +96,6 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
   }
 
   /**
-   * The default implementation of View.
-   *
-   * @param <T> the data type
-   */
-  abstract static class DefaultView<T> implements View<T> {
-
-    /**
-     * The Element that holds the rendered child items.
-     */
-    private final Element childContainer;
-
-    /**
-     * The temporary element use to convert HTML to DOM.
-     */
-    private final com.google.gwt.user.client.Element tmpElem;
-
-    /**
-     * The widget that contains the view.
-     */
-    private final Widget widget;
-
-    /**
-     * Construct a new View.
-     *
-     * @param childContainer the element that contains the children
-     */
-    public DefaultView(Widget widget, Element childContainer) {
-      this.widget = widget;
-      this.childContainer = childContainer;
-      tmpElem = Document.get().createDivElement().cast();
-    }
-
-    public int getChildCount() {
-      return childContainer.getChildCount();
-    }
-
-    public ElementIterator getChildIterator() {
-      return new DefaultElementIterator(
-          this, childContainer.getFirstChildElement());
-    }
-
-    public void onUpdateSelection() {
-    }
-
-    public void replaceAllChildren(List<T> values, String html) {
-      // If the widget is not attached, attach an event listener so we can catch
-      // synchronous load events from cached images.
-      if (!widget.isAttached()) {
-        DOM.setEventListener(widget.getElement(), widget);
-      }
-
-      // Render the HTML.
-      childContainer.setInnerHTML(CellBasedWidgetImpl.get().processHtml(html));
-
-      // Detach the event listener.
-      if (!widget.isAttached()) {
-        DOM.setEventListener(widget.getElement(), null);
-      }
-    }
-
-    public void replaceChildren(List<T> values, int start, String html) {
-      // Convert the html to DOM elements.
-      Element container = convertToElements(CellBasedWidgetImpl.get().processHtml(html));
-      int count = container.getChildCount();
-
-      // Get the first element to be replaced.
-      Element toReplace = null;
-      if (start < getChildCount()) {
-        toReplace = childContainer.getChild(start).cast();
-      }
-
-      // Replace the elements.
-      for (int i = 0; i < count; i++) {
-        if (toReplace == null) {
-          // The child will be removed from tmpElem, so always use index 0.
-          childContainer.appendChild(container.getChild(0));
-        } else {
-          Element nextSibling = toReplace.getNextSiblingElement();
-          childContainer.replaceChild(container.getChild(0), toReplace);
-          toReplace = nextSibling;
-        }
-      }
-    }
-
-    /**
-     * Convert the specified HTML into DOM elements and return the parent of the
-     * DOM elements.
-     *
-     * @param html the HTML to convert
-     * @return the parent element
-     */
-    protected Element convertToElements(String html) {
-      // Attach an event listener so we can catch synchronous load events from
-      // cached images.
-      DOM.setEventListener(tmpElem, widget);
-
-      tmpElem.setInnerHTML(html);
-
-      // Detach the event listener.
-      DOM.setEventListener(tmpElem, null);
-
-      return tmpElem;
-    }
-
-    /**
-     * Update an element to reflect its selected state.
-     *
-     * @param elem the element to update
-     * @param selected true if selected, false if not
-     */
-    protected abstract void setSelected(Element elem, boolean selected);
-  }
-
-  /**
    * An iterator over DOM elements.
    */
   static interface ElementIterator extends Iterator<Element> {
@@ -237,6 +124,16 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
    * @param <T> the data type
    */
   static interface View<T> {
+
+    /**
+     * Add a handler to the view.
+     *
+     * @param <H> the handler type
+     * @param handler the handler to add
+     * @param type the event type
+     */
+    <H extends EventHandler> HandlerRegistration addHandler(
+        final H handler, GwtEvent.Type<H> type);
 
     /**
      * Check whether or not the cells in the view depend on the selection state.
@@ -300,24 +197,22 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
      * Re-establish focus on an element within the view if desired.
      */
     void resetFocus();
-    
+
     /**
      * Set the current loading state of the data.
      *
      * @param state the loading state
      */
     void setLoadingState(LoadingState state);
+
+    /**
+     * Update an element to reflect its selected state.
+     *
+     * @param elem the element to update
+     * @param selected true if selected, false if not
+     */
+    void setSelected(Element elem, boolean selected);
   }
-
-  /**
-   * The local cache of data in the view. The 0th index in the list corresponds
-   * to the value at pageStart.
-   */
-  private final List<T> data = new ArrayList<T>();
-
-  private int dataSize = Integer.MIN_VALUE;
-  private boolean dataSizeIsExact;
-  private Delegate<T> delegate;
 
   /**
    * As an optimization, keep track of the last HTML string that we rendered. If
@@ -326,8 +221,7 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
    */
   private String lastContents = null;
 
-  private final PagingListView<T> listView;
-  private Pager<T> pager;
+  private final HasData<T> listView;
   private int pageSize;
   private int pageStart = 0;
 
@@ -335,6 +229,16 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
    * Set to true when the page start changes, and we need to do a full refresh.
    */
   private boolean pageStartChangedSinceRender;
+
+  private int rowCount = Integer.MIN_VALUE;
+
+  private boolean rowCountIsExact;
+
+  /**
+   * The local cache of data in the view. The 0th index in the list corresponds
+   * to the value at pageStart.
+   */
+  private final List<T> rowValues = new ArrayList<T>();
 
   /**
    * A local cache of the currently selected rows. We cannot track selected keys
@@ -349,18 +253,26 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
   private final View<T> view;
 
   /**
-   * Construct a new {@link PagingListViewPresenter}.
+   * Construct a new {@link HasDataPresenter}.
    *
    * @param listView the listView that is being presented
    * @param view the view implementation
    * @param pageSize the default page size
    */
-  public PagingListViewPresenter(
-      PagingListView<T> listView, View<T> view, int pageSize) {
+  public HasDataPresenter(HasData<T> listView, View<T> view, int pageSize) {
     this.listView = listView;
     this.view = view;
     this.pageSize = pageSize;
-    updateLoadingState();
+  }
+
+  public HandlerRegistration addRangeChangeHandler(
+      RangeChangeEvent.Handler handler) {
+    return view.addHandler(handler, RangeChangeEvent.getType());
+  }
+
+  public HandlerRegistration addRowCountChangeHandler(
+      RowCountChangeEvent.Handler handler) {
+    return view.addHandler(handler, RowCountChangeEvent.getType());
   }
 
   /**
@@ -375,13 +287,30 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
   }
 
   /**
+   * @throws UnsupportedOperationException
+   */
+  public void fireEvent(GwtEvent<?> event) {
+    // ListViews should fire their own events.
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Get the current page size. This is usually the page size, but can be less
    * if the data size cannot fill the current page.
    *
    * @return the size of the current page
    */
   public int getCurrentPageSize() {
-    return Math.min(pageSize, dataSize - pageStart);
+    return Math.min(pageSize, rowCount - pageStart);
+  }
+
+  /**
+   * Get the overall data size.
+   *
+   * @return the data size
+   */
+  public int getRowCount() {
+    return rowCount;
   }
 
   /**
@@ -391,32 +320,23 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
    *
    * @return the list of data for the current page
    */
-  public List<T> getData() {
-    return data;
-  }
-
-  /**
-   * Get the overall data size.
-   *
-   * @return the data size
-   */
-  public int getDataSize() {
-    return dataSize;
-  }
-
-  /**
-   * @return the range of data being displayed
-   */
-  public Range getRange() {
-    return new Range(pageStart, pageSize);
+  public List<T> getRowValues() {
+    return rowValues;
   }
 
   public SelectionModel<? super T> getSelectionModel() {
     return selectionModel;
   }
 
-  public boolean isDataSizeExact() {
-    return dataSizeIsExact;
+  /**
+   * @return the range of data being displayed
+   */
+  public Range getVisibleRange() {
+    return new Range(pageStart, pageSize);
+  }
+
+  public boolean isRowCountExact() {
+    return rowCountIsExact;
   }
 
   /**
@@ -424,10 +344,36 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
    */
   public void redraw() {
     lastContents = null;
-    setData(pageStart, data.size(), data);
+    setRowValues(pageStart, rowValues);
   }
 
-  public void setData(int start, int length, List<T> values) {
+  /**
+   * @throws UnsupportedOperationException
+   */
+  public final void setRowCount(int count) {
+    // Views should defer to their own implementation of
+    // setRowCount(int, boolean)) per HasRows spec.
+    throw new UnsupportedOperationException();
+  }
+
+  public void setRowCount(int count, boolean isExact) {
+    if (count == this.rowCount && isExact == this.rowCountIsExact) {
+      return;
+    }
+    this.rowCount = count;
+    this.rowCountIsExact = isExact;
+    updateLoadingState();
+
+    // Redraw the current page if it is affected by the new data size.
+    if (updateCachedData()) {
+      redraw();
+    }
+
+    // Update the pager.
+    RowCountChangeEvent.fire(listView, count, rowCountIsExact);
+  }
+
+  public void setRowValues(int start, List<T> values) {
     int valuesLength = values.size();
     int valuesEnd = start + valuesLength;
 
@@ -441,25 +387,25 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
     }
 
     // The data size must be at least as large as the data.
-    if (valuesEnd > dataSize) {
-      dataSize = valuesEnd;
-      onSizeChanged();
+    if (valuesEnd > rowCount) {
+      rowCount = valuesEnd;
+      RowCountChangeEvent.fire(listView, rowCount, rowCountIsExact);
     }
 
     // Create placeholders up to the specified index.
-    int cacheOffset = Math.max(0, boundedStart - pageStart - data.size());
+    int cacheOffset = Math.max(0, boundedStart - pageStart - rowValues.size());
     for (int i = 0; i < cacheOffset; i++) {
-      data.add(null);
+      rowValues.add(null);
     }
 
     // Insert the new values into the data array.
     for (int i = boundedStart; i < boundedEnd; i++) {
       T value = values.get(i - start);
       int dataIndex = i - pageStart;
-      if (dataIndex < data.size()) {
-        data.set(dataIndex, value);
+      if (dataIndex < rowValues.size()) {
+        rowValues.set(dataIndex, value);
       } else {
-        data.add(value);
+        rowValues.add(value);
       }
 
       // Update our local cache of selected rows.
@@ -475,7 +421,7 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
     // Construct a run of elements within the range of the data and the page.
     boundedStart = pageStartChangedSinceRender ? pageStart : boundedStart;
     boundedStart -= cacheOffset;
-    List<T> boundedValues = data.subList(
+    List<T> boundedValues = rowValues.subList(
         boundedStart - pageStart, boundedEnd - pageStart);
     int boundedSize = boundedValues.size();
     StringBuilder sb = new StringBuilder();
@@ -499,7 +445,7 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
       view.replaceChildren(
           boundedValues, boundedStart - pageStart, sb.toString());
     }
-    
+
     // Allow the view to reestablish focus after being re-rendered
     view.resetFocus();
 
@@ -508,60 +454,42 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
   }
 
   /**
-   * Set the overall size of the list.
-   *
-   * @param size the overall size
+   * @throws UnsupportedOperationException
    */
-  public void setDataSize(int size, boolean isExact) {
-    if (size == this.dataSize && isExact == this.dataSizeIsExact) {
-      return;
-    }
-    this.dataSize = size;
-    this.dataSizeIsExact = isExact;
-    updateLoadingState();
-
-    // Redraw the current page if it is affected by the new data size.
-    if (updateCachedData()) {
-      redraw();
-    }
-
-    // Update the pager.
-    onSizeChanged();
+  public final void setVisibleRange(int start, int length) {
+    // Views should defer to their own implementation of setVisibleRange(Range)
+    // per HasRows spec.
+    throw new UnsupportedOperationException();
   }
 
-  public void setDelegate(Delegate<T> delegate) {
-    this.delegate = delegate;
-  }
+  public void setVisibleRange(Range range) {
+    int start = range.getStart();
+    int length = range.getLength();
 
-  public void setPager(PagingListView.Pager<T> pager) {
-    this.pager = pager;
-  }
-
-  public void setRange(int start, int length) {
     // Update the page start.
     boolean pageStartChanged = false;
     if (pageStart != start) {
       if (start > pageStart) {
         int increase = start - pageStart;
-        if (data.size() > increase) {
+        if (rowValues.size() > increase) {
           // Remove the data we no longer need.
           for (int i = 0; i < increase; i++) {
-            data.remove(0);
+            rowValues.remove(0);
           }
         } else {
           // We have no overlapping data, so just clear it.
-          data.clear();
+          rowValues.clear();
         }
       } else {
         int decrease = pageStart - start;
-        if ((data.size() > 0) && (decrease < pageSize)) {
+        if ((rowValues.size() > 0) && (decrease < pageSize)) {
           // Insert null data at the beginning.
           for (int i = 0; i < decrease; i++) {
-            data.add(0, null);
+            rowValues.add(0, null);
           }
         } else {
           // We have no overlapping data, so just clear it.
-          data.clear();
+          rowValues.clear();
         }
       }
       pageStart = start;
@@ -590,13 +518,8 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
       redraw();
     }
 
-    // Update the pager.
-    onSizeChanged();
-
-    // Update the delegate with the new range.
-    if (delegate != null) {
-      delegate.onRangeChanged(listView);
-    }
+    // Update the pager and data source.
+    RangeChangeEvent.fire(listView, getVisibleRange());
   }
 
   public void setSelectionModel(
@@ -619,15 +542,6 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
   }
 
   /**
-   * Called when pageStart, pageSize, or data size changes.
-   */
-  private void onSizeChanged() {
-    if (pager != null) {
-      pager.onRangeOrSizeChanged(listView);
-    }
-  }
-
-  /**
    * Ensure that the cached data is consistent with the data size.
    *
    * @return true if the data was updated, false if not
@@ -635,10 +549,10 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
   private boolean updateCachedData() {
     boolean updated = false;
     int expectedLastIndex = Math.max(
-        0, Math.min(pageSize, dataSize - pageStart));
-    int lastIndex = data.size() - 1;
+        0, Math.min(pageSize, rowCount - pageStart));
+    int lastIndex = rowValues.size() - 1;
     while (lastIndex >= expectedLastIndex) {
-      data.remove(lastIndex);
+      rowValues.remove(lastIndex);
       selectedRows.remove(lastIndex + pageStart);
       lastIndex--;
       updated = true;
@@ -650,9 +564,9 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
    * Update the loading state of the view based on the data size and page size.
    */
   private void updateLoadingState() {
-    int cacheSize = data.size();
-    int curPageSize = isDataSizeExact() ? getCurrentPageSize() : pageSize;
-    if (dataSize == 0) {
+    int cacheSize = rowValues.size();
+    int curPageSize = isRowCountExact() ? getCurrentPageSize() : pageSize;
+    if (rowCount == 0) {
       view.setLoadingState(LoadingState.EMPTY);
     } else if (cacheSize >= curPageSize) {
       view.setLoadingState(LoadingState.LOADED);
@@ -674,7 +588,7 @@ class PagingListViewPresenter<T> implements PagingListView<T> {
     boolean refreshRequired = false;
     ElementIterator children = view.getChildIterator();
     int row = pageStart;
-    for (T value : data) {
+    for (T value : rowValues) {
       // Increment the child.
       if (!children.hasNext()) {
         break;

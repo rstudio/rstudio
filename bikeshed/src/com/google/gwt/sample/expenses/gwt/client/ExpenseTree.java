@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
-import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ListViewAdapter;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
@@ -111,7 +111,7 @@ public class ExpenseTree extends Composite {
     }
 
     @Override
-    public void addView(ListView<EmployeeRecord> view) {
+    public void addView(HasData<EmployeeRecord> view) {
       super.addView(view);
 
       // Request the count anytime a view is added.
@@ -128,8 +128,8 @@ public class ExpenseTree extends Composite {
     }
 
     @Override
-    protected void onRangeChanged(ListView<EmployeeRecord> view) {
-      Range range = view.getRange();
+    protected void onRangeChanged(HasData<EmployeeRecord> view) {
+      Range range = view.getVisibleRange();
       requestFactory.employeeRequest().findEmployeeEntriesByDepartment(
           department, range.getStart(), range.getLength()).forProperties(
           getEmployeeMenuProperties()).fire(this);

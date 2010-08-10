@@ -87,7 +87,7 @@ public class CwCellTable extends ContentWidget {
    */
   @ShowcaseData
   @UiField(provided = true)
-  SimplePager<ContactInfo> pager;
+  SimplePager pager;
 
   /**
    * An instance of the constants.
@@ -134,8 +134,9 @@ public class CwCellTable extends ContentWidget {
     // Create a Pager to control the table.
     SimplePager.Resources pagerResources = GWT.create(
         SimplePager.Resources.class);
-    pager = new SimplePager<ContactInfo>(
-        cellTable, TextLocation.CENTER, pagerResources, false, 0, true);
+    pager = new SimplePager(
+        TextLocation.CENTER, pagerResources, false, 0, true);
+    pager.setView(cellTable);
 
     // Add a selection model so we can select cells.
     final MultiSelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>();

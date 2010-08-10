@@ -18,24 +18,25 @@ package com.google.gwt.sample.showcase.client.content.cell;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.user.cellview.client.AbstractPager;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.view.client.PagingListView;
-import com.google.gwt.view.client.Range;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.HasRows;
 
 /**
- * A custom implementation of
- * {@link com.google.gwt.view.client.PagingListView.Pager} that automatically
- * increases the range every time the scroll bar reaches the bottom.
- *
- * @param <T> the data type of the list view
+ * A scrolling pager that automatically increases the range every time the
+ * scroll bar reaches the bottom.
  */
-public class ShowMorePagerPanel<T> extends AbstractPager<T> {
+public class ShowMorePagerPanel extends AbstractPager {
 
   /**
-   * The label that shows the current range.
+   * The default increment size.
    */
-  private final HTML label = new HTML();
+  private static final int DEFAULT_INCREMENT = 20;
+
+  /**
+   * The increment size.
+   */
+  private int incrementSize = DEFAULT_INCREMENT;
 
   /**
    * The last scroll position.
@@ -43,18 +44,15 @@ public class ShowMorePagerPanel<T> extends AbstractPager<T> {
   private int lastScrollPos = 0;
 
   /**
-   * Construct a new {@link ShowMorePagerPanel}. Presumably the
-   * {@link ScrollPanel} wraps the listView, but it isn't strictly necessary.
-   *
-   * @param listView the list view to page
-   * @param scrollable the {@link ScrollPanel} to respond to
+   * The scrollable panel.
    */
-  public ShowMorePagerPanel(
-      final PagingListView<T> listView, final ScrollPanel scrollable) {
-    super(listView);
-    final int initialPageSize = listView.getRange().getLength();
-    initWidget(label);
-    onRangeOrSizeChanged(listView);
+  private final ScrollPanel scrollable = new ScrollPanel();
+
+  /**
+   * Construct a new {@link ShowMorePagerPanel}.
+   */
+  public ShowMorePagerPanel() {
+    initWidget(scrollable);
 
     // Handle scroll events.
     scrollable.addScrollHandler(new ScrollHandler() {
@@ -66,27 +64,51 @@ public class ShowMorePagerPanel<T> extends AbstractPager<T> {
           return;
         }
 
+        HasRows view = getView();
+        if (view == null) {
+          return;
+        }
         int maxScrollTop = scrollable.getWidget().getOffsetHeight()
             - scrollable.getOffsetHeight();
         if (lastScrollPos >= maxScrollTop) {
           // We are near the end, so increase the page size.
           int newPageSize = Math.min(
-              listView.getRange().getLength() + initialPageSize,
-              listView.getDataSize());
-          listView.setRange(0, newPageSize);
+              view.getVisibleRange().getLength() + incrementSize,
+              view.getRowCount());
+          view.setVisibleRange(0, newPageSize);
         }
       }
     });
   }
 
-  @Override
-  public void onRangeOrSizeChanged(PagingListView<T> listView) {
-    // Update the label.
-    Range range = listView.getRange();
-    int start = range.getStart();
-    int end = start + range.getLength();
-    label.setText(start + " - " + end + " : " + listView.getDataSize());
+  /**
+   * Get the number of rows by which the range is increased when the scrollbar
+   * reaches the bottom.
+   *
+   * @return the increment size
+   */
+  public int getIncrementSize() {
+    return incrementSize;
+  }
 
-    super.onRangeOrSizeChanged(listView);
+  /**
+   * Set the number of rows by which the range is increased when the scrollbar
+   * reaches the bottom.
+   *
+   * @param incrementSize the incremental number of rows
+   */
+  public void setIncrementSize(int incrementSize) {
+    this.incrementSize = incrementSize;
+  }
+
+  @Override
+  public void setView(HasRows view) {
+    assert view instanceof Widget : "view must extend Widget";
+    scrollable.setWidget((Widget) view);
+    super.setView(view);
+  }
+
+  @Override
+  protected void onRangeOrRowCountChanged() {
   }
 }

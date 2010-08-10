@@ -18,71 +18,76 @@ package com.google.gwt.sample.bikeshed.cookbook.client;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
+import com.google.gwt.user.cellview.client.AbstractPager;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.HasRows;
 
 /**
- * A pager for controlling a PagingListView that uses a native scrollbar.
- *
- * @param <T> the type of the PagingListView being controlled
+ * A pager for controlling a {@link CellTable} that uses a native scrollbar.
  */
-public class ScrollbarPager<T> extends Composite implements PagingListView.Pager<T> {
-  
-  private int dataSize;
-  private int height;
+public class ScrollbarPager extends AbstractPager {
 
   /**
    * Number of units advanced by clicking the down arrow on the scrollbar.
    */
-  private int jump;
-  private int pageSize;
-  private ScrollPanel panel;
-  private CellTable<T> view;
-  private int spaceAbove;
-  private HTML spacer;
+  private final int jump;
+  private final ScrollPanel panel;
+  private final HTML spacer = new HTML();
+  private CellTable<?> table;
 
-  public ScrollbarPager(CellTable<T> view) {
+  public ScrollbarPager() {
     this.jump = getScrollPageAmount();
     this.panel = new ScrollPanel();
-    this.height = view.getBodyHeight();
-    this.spaceAbove = view.getHeaderHeight();
 
-    panel.setSize("50px", "" + height + "px");
+    panel.setPixelSize(50, 50);
     DOM.setStyleAttribute(panel.getElement(), "overflow", "auto");
 
     VerticalPanel p = new VerticalPanel();
-    p.add(spacer = new HTML("<div style='height: " + spaceAbove + "px;'"));
+    p.add(spacer);
     p.add(panel);
 
     initWidget(p);
-    
+
     panel.addScrollHandler(new ScrollHandler() {
       public void onScroll(ScrollEvent event) {
-        int position = panel.getScrollPosition() / jump;
-        ScrollbarPager.this.view.setPageStart(position);
+        if (table != null) {
+          int position = panel.getScrollPosition() / jump;
+          setPageStart(position);
+        }
       }
     });
-
-    this.view = view;
-    view.setPager(this);
   }
 
-  public void onRangeOrSizeChanged(PagingListView<T> listView) {
-    this.pageSize = listView.getRange().getLength();
-    this.dataSize = listView.getDataSize();
-    
-    this.height = view.getBodyHeight();
-    this.spaceAbove = view.getHeaderHeight();
+  @Override
+  public void setView(HasRows view) {
+    // TODO(jlabanca): ScrollbarPager should work with any HasRows.
+    throw new UnsupportedOperationException(
+        "view must be an instance of CellTable.");
+  }
+
+  public void setView(CellTable<?> view) {
+    table = view;
+    super.setView(view);
+  }
+
+  @Override
+  protected void onRangeOrRowCountChanged() {
+    int pageSize = table.getVisibleRange().getLength();
+    int dataSize = table.getRowCount();
+
+    int height = table.getBodyHeight();
+    int spaceAbove = table.getHeaderHeight();
     spacer.getElement().getStyle().setHeight(spaceAbove, Unit.PX);
     panel.setSize("50px", "" + height + "px");
 
     int h = Math.max(height + 1, jump * (dataSize - pageSize) + height);
-    panel.setWidget(new HTML("<div id='scroll-contents' style='width: 1px; height: " + h + "px;'></div>"));
+    panel.setWidget(
+        new HTML("<div id='scroll-contents' style='width: 1px; height: " + h
+            + "px;'></div>"));
   }
 
   /**

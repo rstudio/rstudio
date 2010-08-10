@@ -392,7 +392,8 @@ public class MailRecipe extends Composite implements ClickHandler {
     });
     table.addColumn(toggleColumn, "Toggle Read/Unread");
 
-    ScrollbarPager<Message> pager = new ScrollbarPager<Message>(table);
+    ScrollbarPager pager = new ScrollbarPager();
+    pager.setView(table);
 
     Label searchLabel = new Label("Search Sender or Subject:");
     final TextBox searchBox = new TextBox();

@@ -33,14 +33,10 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
+import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.HasKeyProvider;
-import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.ProvidesKey;
-import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
@@ -53,8 +49,7 @@ import java.util.Set;
  *
  * @param <T> the data type of each row
  */
-public class CellTable<T> extends Widget
-    implements PagingListView<T>, HasKeyProvider<T> {
+public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * A cleaner version of the table that uses less graphics.
@@ -308,120 +303,6 @@ public class CellTable<T> extends Widget
   }
 
   /**
-   * The view used by the presenter.
-   */
-  private class View extends PagingListViewPresenter.DefaultView<T> {
-
-    public View(Element childContainer) {
-      super(CellTable.this, childContainer);
-    }
-
-    public boolean dependsOnSelection() {
-      return dependsOnSelection;
-    }
-
-    @Override
-    public void onUpdateSelection() {
-      // Refresh headers.
-      for (Header<?> header : headers) {
-        if (header != null && header.getCell().dependsOnSelection()) {
-          createHeaders(false);
-          break;
-        }
-      }
-
-      // Refresh footers.
-      for (Header<?> footer : footers) {
-        if (footer != null && footer.getCell().dependsOnSelection()) {
-          createHeaders(true);
-          break;
-        }
-      }
-    }
-
-    public void render(StringBuilder sb, List<T> values, int start,
-        SelectionModel<? super T> selectionModel) {
-      createHeadersAndFooters();
-
-      String firstColumnStyle = style.firstColumn();
-      String lastColumnStyle = style.lastColumn();
-      int columnCount = columns.size();
-      int length = values.size();
-      int end = start + length;
-      for (int i = start; i < end; i++) {
-        T value = values.get(i - start);
-        boolean isSelected = (selectionModel == null || value == null)
-            ? false : selectionModel.isSelected(value);
-        sb.append("<tr onclick=''");
-        sb.append(" class='");
-        sb.append(i % 2 == 0 ? style.evenRow() : style.oddRow());
-        if (isSelected) {
-          sb.append(" ").append(style.selectedRow());
-        }
-        sb.append("'>");
-        int curColumn = 0;
-        for (Column<T, ?> column : columns) {
-          // TODO(jlabanca): How do we sink ONFOCUS and ONBLUR?
-          sb.append("<td class='").append(style.cell());
-          if (curColumn == 0) {
-            sb.append(" ").append(firstColumnStyle);
-          }
-          // The first and last column could be the same column.
-          if (curColumn == columnCount - 1) {
-            sb.append(" ").append(lastColumnStyle);
-          }
-          sb.append("'>");
-          int bufferLength = sb.length();
-          if (value != null) {
-            column.render(value, providesKey, sb);
-          }
-
-          // Add blank space to ensure empty rows aren't squished.
-          if (bufferLength == sb.length()) {
-            sb.append("&nbsp");
-          }
-          sb.append("</td>");
-          curColumn++;
-        }
-        sb.append("</tr>");
-      }
-    }
-
-    @Override
-    public void replaceAllChildren(List<T> values, String html) {
-      TABLE_IMPL.replaceAllRows(
-          CellTable.this, tbody, CellBasedWidgetImpl.get().processHtml(html));
-    }
-    
-    public void resetFocus() {
-      int pageStart = getPageStart();
-      int offset = keyboardSelectedRow - pageStart;
-      if (offset >= 0 && offset < getPageSize()) {
-        TableRowElement tr = getRowElement(offset);
-        TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
-        tr.addClassName(style.keyboardSelectedRow());
-        td.addClassName(style.keyboardSelectedCell());
-        td.setTabIndex(0);
-        td.focus(); // TODO (rice) only focus if we were focused previously
-      }
-    }
-
-    public void setLoadingState(LoadingState state) {
-      setLoadingIconVisible(state == LoadingState.LOADING);
-    }
-
-    @Override
-    protected Element convertToElements(String html) {
-      return TABLE_IMPL.convertToSectionElement(CellTable.this, "tbody", html);
-    }
-
-    @Override
-    protected void setSelected(Element elem, boolean selected) {
-      setStyleName(elem, style.selectedRow(), selected);
-    }
-  }
-
-  /**
    * The default page size.
    */
   private static final int DEFAULT_PAGESIZE = 15;
@@ -443,15 +324,15 @@ public class CellTable<T> extends Widget
   private boolean cellIsEditing;
   private final TableColElement colgroup;
 
-  private List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
+  private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
 
   private boolean dependsOnSelection;
 
-  private List<Header<?>> footers = new ArrayList<Header<?>>();
- 
+  private final List<Header<?>> footers = new ArrayList<Header<?>>();
+
   private boolean handlesSelection;
 
-  private List<Header<?>> headers = new ArrayList<Header<?>>();
+  private final List<Header<?>> headers = new ArrayList<Header<?>>();
 
   /**
    * Set to true when the footer is stale.
@@ -463,16 +344,6 @@ public class CellTable<T> extends Widget
   private int keyboardSelectedColumn = 0;
 
   private int keyboardSelectedRow = 0;
-
-  /**
-   * The presenter.
-   */
-  private final PagingListViewPresenter<T> presenter;
-
-  /**
-   * If null, each T will be used as its own key.
-   */
-  private ProvidesKey<T> providesKey;
 
   /**
    * Indicates whether or not the scheduled redraw has been cancelled.
@@ -505,7 +376,6 @@ public class CellTable<T> extends Widget
   private final TableSectionElement tbodyLoading;
   private final TableSectionElement tfoot;
   private final TableSectionElement thead;
-  private final View view;
 
   /**
    * Constructs a table with a default page size of 15.
@@ -531,14 +401,14 @@ public class CellTable<T> extends Widget
    * @param resources the resources to use for this widget
    */
   public CellTable(final int pageSize, Resources resources) {
+    super(Document.get().createTableElement(), pageSize);
     if (TABLE_IMPL == null) {
       TABLE_IMPL = GWT.create(Impl.class);
     }
     this.style = resources.cellTableStyle();
     this.style.ensureInjected();
 
-    setElement(table = Document.get().createTableElement());
-
+    table = getElement().cast();
     table.setCellSpacing(0);
     colgroup = Document.get().createColGroupElement();
     table.appendChild(colgroup);
@@ -556,17 +426,13 @@ public class CellTable<T> extends Widget
       tr.appendChild(td);
       td.setAlign("center");
       td.setInnerHTML("<div class='" + style.loading() + "'></div>");
+      setLoadingIconVisible(false);
     }
 
-    // Create the implementation.
-    view = new View(tbody);
-    this.presenter = new PagingListViewPresenter<T>(this, view, pageSize);
-
-    setPageSize(pageSize);
-
     // Sink events.
-    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT |
-        Event.ONKEYUP | Event.ONKEYDOWN);
+    sinkEvents(
+        Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONKEYUP
+            | Event.ONKEYDOWN);
   }
 
   /**
@@ -649,38 +515,9 @@ public class CellTable<T> extends Widget
     return height;
   }
 
-  public int getDataSize() {
-    return presenter.getDataSize();
-  }
-
-  public T getDisplayedItem(int indexOnPage) {
-    checkRowBounds(indexOnPage);
-    return presenter.getData().get(indexOnPage);
-  }
-
-  public List<T> getDisplayedItems() {
-    return new ArrayList<T>(presenter.getData());
-  }
-
   public int getHeaderHeight() {
     int height = getClientHeight(thead);
     return height;
-  }
-
-  public ProvidesKey<T> getKeyProvider() {
-    return providesKey;
-  }
-
-  public final int getPageSize() {
-    return getRange().getLength();
-  }
-
-  public final int getPageStart() {
-    return getRange().getStart();
-  }
-
-  public Range getRange() {
-    return presenter.getRange();
   }
 
   /**
@@ -698,19 +535,15 @@ public class CellTable<T> extends Widget
     return rows.getLength() > row ? rows.getItem(row) : null;
   }
 
-  public boolean isDataSizeExact() {
-    return presenter.isDataSizeExact();
-  }
-
   @Override
   public void onBrowserEvent(Event event) {
     CellBasedWidgetImpl.get().onBrowserEvent(this, event);
     super.onBrowserEvent(event);
-    
+
     String eventType = event.getType();
     boolean keyUp = "keyup".equals(eventType);
     boolean keyDown = "keydown".equals(eventType);
-    
+
     // Ignore keydown events unless the cell is in edit mode
     if (keyDown && !cellIsEditing) {
       return;
@@ -720,7 +553,7 @@ public class CellTable<T> extends Widget
         return;
       }
     }
-    
+
     // Find the cell where the event occurred.
     EventTarget eventTarget = event.getEventTarget();
     TableCellElement tableCell = null;
@@ -773,16 +606,16 @@ public class CellTable<T> extends Widget
         hoveringRow = null;
         tr.removeClassName(style.hoveredRow());
       }
-      
+
       // Update selection. Selection occurs before firing the event to the cell
       // in case the cell operates on the currently selected item.
-      T value = presenter.getData().get(row);
-      SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
+      T value = getDisplayedItem(row);
+      SelectionModel<? super T> selectionModel = getSelectionModel();
       if (selectionModel != null && "click".equals(eventType)
           && !handlesSelection) {
         selectionModel.setSelected(value, true);
       }
-      
+
       fireEventToCell(event, eventType, tableCell, value, col, row);
     }
   }
@@ -790,11 +623,12 @@ public class CellTable<T> extends Widget
   /**
    * Redraw the table using the existing data.
    */
+  @Override
   public void redraw() {
     if (redrawScheduled) {
       redrawCancelled = true;
     }
-    presenter.redraw();
+    super.redraw();
   }
 
   public void redrawFooters() {
@@ -853,68 +687,121 @@ public class CellTable<T> extends Widget
     ensureTableColElement(index).removeClassName(styleName);
   }
 
-  public void setData(int start, int length, List<T> values) {
-    presenter.setData(start, length, values);
-  }
+  @Override
+  protected void renderRowValues(StringBuilder sb, List<T> values, int start,
+      SelectionModel<? super T> selectionModel) {
+    createHeadersAndFooters();
 
-  public void setDataSize(int size, boolean isExact) {
-    presenter.setDataSize(size, isExact);
-  }
+    ProvidesKey<T> keyProvider = getKeyProvider();
+    String firstColumnStyle = style.firstColumn();
+    String lastColumnStyle = style.lastColumn();
+    int columnCount = columns.size();
+    int length = values.size();
+    int end = start + length;
+    for (int i = start; i < end; i++) {
+      T value = values.get(i - start);
+      boolean isSelected = (selectionModel == null || value == null)
+          ? false : selectionModel.isSelected(value);
+      sb.append("<tr onclick=''");
+      sb.append(" class='");
+      sb.append(i % 2 == 0 ? style.evenRow() : style.oddRow());
+      if (isSelected) {
+        sb.append(" ").append(style.selectedRow());
+      }
+      sb.append("'>");
+      int curColumn = 0;
+      for (Column<T, ?> column : columns) {
+        // TODO(jlabanca): How do we sink ONFOCUS and ONBLUR?
+        sb.append("<td class='").append(style.cell());
+        if (curColumn == 0) {
+          sb.append(" ").append(firstColumnStyle);
+        }
+        // The first and last column could be the same column.
+        if (curColumn == columnCount - 1) {
+          sb.append(" ").append(lastColumnStyle);
+        }
+        sb.append("'>");
+        int bufferLength = sb.length();
+        if (value != null) {
+          column.render(value, keyProvider, sb);
+        }
 
-  public void setDelegate(Delegate<T> delegate) {
-    presenter.setDelegate(delegate);
-  }
-
-  public void setKeyProvider(ProvidesKey<T> keyProvider) {
-    this.providesKey = keyProvider;
-  }
-
-  public void setPager(PagingListView.Pager<T> pager) {
-    presenter.setPager(pager);
-  }
-
-  /**
-   * Set the number of rows per page and refresh the table.
-   *
-   * @param pageSize the page size
-   *
-   * @throws IllegalArgumentException if pageSize is negative or 0
-   */
-  public final void setPageSize(int pageSize) {
-    setRange(getPageStart(), pageSize);
-  }
-
-  /**
-   * Set the starting index of the current visible page. The actual page start
-   * will be clamped in the range [0, getSize() - 1].
-   *
-   * @param pageStart the index of the row that should appear at the start of
-   *          the page
-   */
-  public final void setPageStart(int pageStart) {
-    setRange(pageStart, getPageSize());
-  }
-
-  public void setRange(int start, int length) {
-    presenter.setRange(start, length);
-  }
-
-  public void setSelectionModel(SelectionModel<? super T> selectionModel) {
-    presenter.setSelectionModel(selectionModel);
-  }
-
-  /**
-   * Checks that the row is within the correct bounds.
-   *
-   * @param row row index to check
-   * @throws IndexOutOfBoundsException
-   */
-  protected void checkRowBounds(int row) {
-    int rowCount = view.getChildCount();
-    if ((row >= rowCount) || (row < 0)) {
-      throw new IndexOutOfBoundsException(
-          "Row index: " + row + ", Row size: " + rowCount);
+        // Add blank space to ensure empty rows aren't squished.
+        if (bufferLength == sb.length()) {
+          sb.append("&nbsp");
+        }
+        sb.append("</td>");
+        curColumn++;
+      }
+      sb.append("</tr>");
     }
+  }
+
+  @Override
+  Element convertToElements(String html) {
+    return TABLE_IMPL.convertToSectionElement(CellTable.this, "tbody", html);
+  }
+
+  @Override
+  boolean dependsOnSelection() {
+    return dependsOnSelection;
+  }
+
+  @Override
+  Element getChildContainer() {
+    return tbody;
+  }
+
+  @Override
+  void onUpdateSelection() {
+    // Refresh headers.
+    for (Header<?> header : headers) {
+      if (header != null && header.getCell().dependsOnSelection()) {
+        createHeaders(false);
+        break;
+      }
+    }
+
+    // Refresh footers.
+    for (Header<?> footer : footers) {
+      if (footer != null && footer.getCell().dependsOnSelection()) {
+        createHeaders(true);
+        break;
+      }
+    }
+  }
+
+  @Override
+  void replaceAllChildren(List<T> values, String html) {
+    TABLE_IMPL.replaceAllRows(
+        CellTable.this, tbody, CellBasedWidgetImpl.get().processHtml(html));
+  }
+
+  @Override
+  void resetFocus() {
+    int pageStart = getPageStart();
+    int offset = keyboardSelectedRow - pageStart;
+    // Check that both the row and column still exist. The column may not exist
+    // if a column is removed.
+    if (offset >= 0 && offset < getChildCount()
+        && keyboardSelectedColumn < columns.size()) {
+      TableRowElement tr = getRowElement(offset);
+      TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
+      tr.addClassName(style.keyboardSelectedRow());
+      td.addClassName(style.keyboardSelectedCell());
+      td.setTabIndex(0);
+      td.focus(); // TODO (rice) only focus if we were focused previously
+    }
+  }
+
+  @Override
+  void setLoadingState(LoadingState state) {
+    setLoadingIconVisible(state == LoadingState.LOADING);
+  }
+
+  @Override
+  void setSelected(Element elem, boolean selected) {
+    setStyleName(elem, style.selectedRow(), selected);
   }
 
   /**
@@ -1017,13 +904,14 @@ public class CellTable<T> extends Widget
     Cell<C> cell = column.getCell();
     if (cellConsumesEventType(cell, eventType)) {
       C cellValue = column.getValue(value);
+      ProvidesKey<T> providesKey = getKeyProvider();
       Object key = providesKey == null ? value : providesKey.getKey(value);
       boolean cellWasEditing = cell.isEditing(tableCell, cellValue, key);
       column.onBrowserEvent(
           tableCell, getPageStart() + row, value, event, providesKey);
       cellIsEditing = cell.isEditing(tableCell, cellValue, key);
       if (cellWasEditing && !cellIsEditing) {
-        view.resetFocus();
+        resetFocus();
       }
     }
   }
@@ -1037,7 +925,7 @@ public class CellTable<T> extends Widget
     int oldColumn = keyboardSelectedColumn;
     int oldRow = keyboardSelectedRow;
     int numColumns = columns.size();
-    int numRows = getDataSize();
+    int numRows = getRowCount();
     switch (keyCode) {
       case KeyCodes.KEY_UP:
         if (keyboardSelectedRow > 0) {
@@ -1087,7 +975,7 @@ public class CellTable<T> extends Widget
       }
 
       // Add new selection markers and re-establish focus
-      view.resetFocus();
+      resetFocus();
       return true;
     }
 

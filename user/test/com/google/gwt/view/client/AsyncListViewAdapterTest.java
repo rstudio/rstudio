@@ -24,7 +24,7 @@ public class AsyncListViewAdapterTest extends AbstractListViewAdapterTest {
   protected AsyncListViewAdapter<String> createListViewAdapter() {
     return new AsyncListViewAdapter<String>() {
       @Override
-      protected void onRangeChanged(ListView<String> view) {
+      protected void onRangeChanged(HasData<String> view) {
       }
     };
   }

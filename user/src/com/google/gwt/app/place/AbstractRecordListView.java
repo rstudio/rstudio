@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.HasData;
 
 import java.util.HashSet;
 import java.util.List;
@@ -48,7 +48,7 @@ public abstract class AbstractRecordListView<R extends Record> extends
   private Set<Property<?>> properties = new HashSet<Property<?>>();
   private Delegate<R> delegate;
 
-  public PagingListView<R> asPagingListView() {
+  public HasData<R> asHasData() {
     return table;
   }
 

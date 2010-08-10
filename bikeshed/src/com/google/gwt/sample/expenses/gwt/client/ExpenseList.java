@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -54,7 +54,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
-import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -68,25 +68,27 @@ import java.util.Set;
 /**
  * The list of expense reports on the right side of the app.
  */
-public class ExpenseList extends Composite implements
-    ReportRecordChanged.Handler {
+public class ExpenseList extends Composite
+    implements ReportRecordChanged.Handler {
 
   /**
    * The auto refresh interval in milliseconds.
    */
   private static final int REFRESH_INTERVAL = 5000;
 
-  private static ExpenseListUiBinder uiBinder = GWT.create(ExpenseListUiBinder.class);
+  private static ExpenseListUiBinder uiBinder = GWT.create(
+      ExpenseListUiBinder.class);
 
   /**
    * Utility method to get the first part of the breadcrumb based on the
    * department and employee.
-   * 
+   *
    * @param department the selected department
    * @param employee the selected employee
    * @return the breadcrumb
    */
-  public static String getBreadcrumb(String department, EmployeeRecord employee) {
+  public static String getBreadcrumb(
+      String department, EmployeeRecord employee) {
     if (employee != null) {
       return "Reports for " + employee.getDisplayName();
     } else if (department != null) {
@@ -152,7 +154,7 @@ public class ExpenseList extends Composite implements
 
     /**
      * Called when the user selects a report.
-     * 
+     *
      * @param report the selected report
      */
     void onReportSelected(ReportRecord report);
@@ -184,7 +186,8 @@ public class ExpenseList extends Composite implements
    */
   private class HighlightCell extends AbstractCell<String> {
 
-    private static final String replaceString = "<span style='color:red;font-weight:bold;'>$1</span>";
+    private static final String replaceString =
+        "<span style='color:red;font-weight:bold;'>$1</span>";
 
     @Override
     public void render(String value, Object viewData, StringBuilder sb) {
@@ -202,7 +205,7 @@ public class ExpenseList extends Composite implements
    */
   private class ReportAdapter extends AsyncListViewAdapter<ReportRecord> {
     @Override
-    protected void onRangeChanged(ListView<ReportRecord> view) {
+    protected void onRangeChanged(HasData<ReportRecord> view) {
       requestReports(false);
     }
   }
@@ -210,7 +213,7 @@ public class ExpenseList extends Composite implements
   @UiField
   Element breadcrumb;
   @UiField
-  SimplePager<ReportRecord> pager;
+  SimplePager pager;
   @UiField(provided = true)
   DefaultTextBox searchBox;
   @UiField
@@ -357,7 +360,7 @@ public class ExpenseList extends Composite implements
 
   /**
    * Set the current department and employee to filter on.
-   * 
+   *
    * @param department the department, or null if none selected
    * @param employee the employee, or null if none selected
    */
@@ -385,16 +388,16 @@ public class ExpenseList extends Composite implements
   }
 
   @UiFactory
-  SimplePager<ReportRecord> createPager() {
-    SimplePager<ReportRecord> p = new SimplePager<ReportRecord>(table,
-        TextLocation.RIGHT);
+  SimplePager createPager() {
+    SimplePager p = new SimplePager(TextLocation.RIGHT);
+    p.setView(table);
     p.setRangeLimited(true);
     return p;
   }
 
   /**
    * Add a sortable column to the table.
-   * 
+   *
    * @param <C> the data type for the column
    * @param text the header text
    * @param cell the cell used to render the column
@@ -465,7 +468,8 @@ public class ExpenseList extends Composite implements
     table.addColumnStyleName(5, common.spacerColumn());
 
     // Add a selection model.
-    final NoSelectionModel<ReportRecord> selectionModel = new NoSelectionModel<ReportRecord>();
+    final NoSelectionModel<ReportRecord> selectionModel = new NoSelectionModel<
+        ReportRecord>();
     table.setSelectionModel(selectionModel);
     selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
@@ -485,24 +489,24 @@ public class ExpenseList extends Composite implements
     });
 
     // Purpose column.
-    addColumn("Purpose", new HighlightCell(),
-        new GetValue<ReportRecord, String>() {
+    addColumn(
+        "Purpose", new HighlightCell(), new GetValue<ReportRecord, String>() {
           public String getValue(ReportRecord object) {
             return object.getPurpose();
           }
         }, ReportRecord.purpose);
 
     // Notes column.
-    addColumn("Notes", new HighlightCell(),
-        new GetValue<ReportRecord, String>() {
+    addColumn(
+        "Notes", new HighlightCell(), new GetValue<ReportRecord, String>() {
           public String getValue(ReportRecord object) {
             return object.getNotes();
           }
         }, ReportRecord.notes);
 
     // Department column.
-    addColumn("Department", new TextCell(),
-        new GetValue<ReportRecord, String>() {
+    addColumn(
+        "Department", new TextCell(), new GetValue<ReportRecord, String>() {
           public String getValue(ReportRecord object) {
             return object.getDepartment();
           }
@@ -527,7 +531,7 @@ public class ExpenseList extends Composite implements
 
   /**
    * Send a request for reports in the current range.
-   * 
+   *
    * @param isPolling true if this request is caused by polling
    */
   private void requestReports(boolean isPolling) {
@@ -549,7 +553,7 @@ public class ExpenseList extends Composite implements
     if (startsWith == null || searchBox.getDefaultText().equals(startsWith)) {
       startsWith = "";
     }
-    Range range = table.getRange();
+    Range range = table.getVisibleRange();
     Long employeeId = employee == null ? -1 : new Long(employee.getId());
     String dept = department == null ? "" : department;
 
@@ -577,13 +581,14 @@ public class ExpenseList extends Composite implements
           }
         }
       };
-      requestFactory.reportRequest().countReportsBySearch(employeeId, dept,
-          startsWith).fire(lastDataSizeReceiver);
+      requestFactory.reportRequest().countReportsBySearch(
+          employeeId, dept, startsWith).fire(lastDataSizeReceiver);
     }
 
     // Request reports in the current range.
     lastDataReceiver = new Receiver<List<ReportRecord>>() {
-      public void onSuccess(List<ReportRecord> newValues, Set<SyncResult> syncResults) {
+      public void onSuccess(
+          List<ReportRecord> newValues, Set<SyncResult> syncResults) {
         if (this == lastDataReceiver) {
           int size = newValues.size();
           if (size < table.getPageSize()) {
@@ -602,8 +607,8 @@ public class ExpenseList extends Composite implements
           for (ReportRecord value : newValues) {
             Object key = reports.getKey(value);
             if (!isInitialData && !knownReportKeys.contains(key)) {
-              (new PhaseAnimation.CellTablePhaseAnimation<ReportRecord>(table,
-                  value, reports)).run();
+              (new PhaseAnimation.CellTablePhaseAnimation<ReportRecord>(
+                  table, value, reports)).run();
             }
             knownReportKeys.add(key);
           }

@@ -25,7 +25,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.AsyncListViewAdapter;
-import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
@@ -67,7 +67,7 @@ public class MobileReportList extends Composite implements MobilePage {
     this.employeeId = new Long(employeeId);
     reportAdapter = new AsyncListViewAdapter<ReportRecord>() {
       @Override
-      protected void onRangeChanged(ListView<ReportRecord> view) {
+      protected void onRangeChanged(HasData<ReportRecord> view) {
         requestReports();
       }
     };

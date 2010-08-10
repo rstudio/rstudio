@@ -26,6 +26,8 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -41,11 +43,11 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.ListView;
-import com.google.gwt.view.client.PagingListView;
-import com.google.gwt.view.client.PagingListView.Pager;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 import com.google.gwt.view.client.TreeViewModel.NodeInfo;
@@ -205,7 +207,7 @@ public class CellBrowser extends Composite
     public boolean handlesSelection() {
       return cell.handlesSelection();
     }
-    
+
     public boolean isEditing(Element element, C value, Object key) {
       return cell.isEditing(element, value, key);
     }
@@ -381,7 +383,7 @@ public class CellBrowser extends Composite
    */
   private class TreeNode<C> {
     private CellDecorator<C> cell;
-    private ListView<C> listView;
+    private HasData<C> view;
     private NodeInfo<C> nodeInfo;
     private Widget widget;
 
@@ -389,13 +391,13 @@ public class CellBrowser extends Composite
      * Construct a new {@link TreeNode}.
      *
      * @param nodeInfo the nodeInfo for the children nodes
-     * @param listView the list view assocated with the node
+     * @param view the view associated with the node
      * @param widget the widget that represents the list view
      */
-    public TreeNode(NodeInfo<C> nodeInfo, ListView<C> listView,
+    public TreeNode(NodeInfo<C> nodeInfo, HasData<C> view,
         CellDecorator<C> cell, Widget widget) {
       this.cell = cell;
-      this.listView = listView;
+      this.view = view;
       this.nodeInfo = nodeInfo;
       this.widget = widget;
     }
@@ -413,7 +415,7 @@ public class CellBrowser extends Composite
      * Unregister the list view and remove it from the widget.
      */
     void cleanup() {
-      listView.setSelectionModel(null);
+      view.setSelectionModel(null);
       nodeInfo.unsetView();
       getSplitLayoutPanel().remove(widget);
     }
@@ -557,7 +559,7 @@ public class CellBrowser extends Composite
     scrollLock.getStyle().setWidth(1, Unit.PX);
     getElement().appendChild(scrollLock);
 
-    // Associate the first ListView with the rootValue.
+    // Associate the first view with the rootValue.
     appendTreeNode(viewModel.getNodeInfo(rootValue));
 
     // Catch scroll events.
@@ -624,32 +626,33 @@ public class CellBrowser extends Composite
   }
 
   /**
-   * Create a Pager to control the list view. The {@link ListView} must extend
-   * {@link Widget}.
+   * Create a pager to control the list view.
    *
    * @param <C> the item type in the list view
-   * @param listView the list view to add paging too
-   * @return the {@link Pager}
+   * @param view the list view to add paging too
+   * @return the pager
    */
-  protected <C> Pager<C> createPager(PagingListView<C> listView) {
-    return new PageSizePager<C>(listView, listView.getRange().getLength());
+  protected <C> Widget createPager(HasData<C> view) {
+    PageSizePager pager = new PageSizePager(view.getVisibleRange().getLength());
+    pager.setView(view);
+    return pager;
   }
 
   /**
-   * Create a {@link PagingListView} that will display items. The
-   * {@link PagingListView} must extend {@link Widget}.
+   * Create a {@link HasData} that will display items. The {@link HasData} must
+   * extend {@link Widget}.
    *
    * @param <C> the item type in the list view
    * @param nodeInfo the node info with child data
    * @param cell the cell to use in the list view
-   * @return the {@link ListView}
+   * @return the {@link HasData}
    */
-  protected <C> PagingListView<C> createPagingListView(
-      NodeInfo<C> nodeInfo, Cell<C> cell) {
-    CellList<C> pagingListView = new CellList<C>(cell, getCellListResources());
-    pagingListView.setValueUpdater(nodeInfo.getValueUpdater());
-    pagingListView.setKeyProvider(nodeInfo.getProvidesKey());
-    return pagingListView;
+  // TODO(jlabanca): <ove createView into constructor factory arg?
+  protected <C> HasData<C> createView(NodeInfo<C> nodeInfo, Cell<C> cell) {
+    CellList<C> view = new CellList<C>(cell, getCellListResources());
+    view.setValueUpdater(nodeInfo.getValueUpdater());
+    view.setKeyProvider(nodeInfo.getProvidesKey());
+    return view;
   }
 
   /**
@@ -676,20 +679,19 @@ public class CellBrowser extends Composite
     // Create the list view.
     final int level = treeNodes.size();
     final CellDecorator<C> cell = new CellDecorator<C>(nodeInfo, level);
-    final PagingListView<C> listView = createPagingListView(nodeInfo, cell);
-    assert (listView instanceof Widget) : "createPagingListView() must return a widget";
+    final HasData<C> view = createView(nodeInfo, cell);
+    assert (view instanceof Widget) : "createView() must return a widget";
 
     // Create a pager and wrap the components in a scrollable container.
     ScrollPanel scrollable = new ScrollPanel();
-    final Pager<C> pager = createPager(listView);
+    final Widget pager = createPager(view);
     if (pager != null) {
-      assert (pager instanceof Widget) : "createPager() must return a widget";
       FlowPanel flowPanel = new FlowPanel();
-      flowPanel.add((Widget) listView);
-      flowPanel.add((Widget) pager);
+      flowPanel.add((Widget) view);
+      flowPanel.add(pager);
       scrollable.setWidget(flowPanel);
     } else {
-      scrollable.setWidget((Widget) listView);
+      scrollable.setWidget((Widget) view);
     }
     scrollable.setStyleName(style.column());
     if (level == 0) {
@@ -697,16 +699,47 @@ public class CellBrowser extends Composite
     }
 
     // Create a delegate list view so we can trap data changes.
-    ListView<C> listViewDelegate = new ListView<C>() {
-      public Range getRange() {
-        return listView.getRange();
+    HasData<C> viewDelegate = new HasData<C>() {
+
+      public HandlerRegistration addRangeChangeHandler(
+          RangeChangeEvent.Handler handler) {
+        return view.addRangeChangeHandler(handler);
       }
 
-      public boolean isDataSizeExact() {
-        return listView.isDataSizeExact();
+      public HandlerRegistration addRowCountChangeHandler(
+          RowCountChangeEvent.Handler handler) {
+        return view.addRowCountChangeHandler(handler);
       }
 
-      public void setData(int start, int length, List<C> values) {
+      public void fireEvent(GwtEvent<?> event) {
+        view.fireEvent(event);
+      }
+
+      public int getRowCount() {
+        return view.getRowCount();
+      }
+
+      public SelectionModel<? super C> getSelectionModel() {
+        return view.getSelectionModel();
+      }
+
+      public Range getVisibleRange() {
+        return view.getVisibleRange();
+      }
+
+      public boolean isRowCountExact() {
+        return view.isRowCountExact();
+      }
+
+      public final void setRowCount(int count) {
+        view.setRowCount(count);
+      }
+
+      public void setRowCount(int count, boolean isExact) {
+        view.setRowCount(count, isExact);
+      }
+
+      public void setRowValues(int start, List<C> values) {
         // Trim to the current level if the open node no longer exists.
         TreeNode<?> node = treeNodes.get(level);
         Object openKey = node.getCell().openKey;
@@ -725,32 +758,32 @@ public class CellBrowser extends Composite
         }
 
         // Refresh the list.
-        listView.setData(start, length, values);
-      }
-
-      public void setDataSize(int size, boolean isExact) {
-        listView.setDataSize(size, isExact);
-      }
-
-      public void setDelegate(Delegate<C> delegate) {
-        listView.setDelegate(delegate);
+        view.setRowValues(start, values);
       }
 
       public void setSelectionModel(SelectionModel<? super C> selectionModel) {
-        listView.setSelectionModel(selectionModel);
+        view.setSelectionModel(selectionModel);
+      }
+
+      public void setVisibleRange(int start, int length) {
+        view.setVisibleRange(start, length);
+      }
+
+      public void setVisibleRange(Range range) {
+        view.setVisibleRange(range);
       }
     };
 
     // Create a TreeNode.
     TreeNode<C> treeNode = new TreeNode<C>(
-        nodeInfo, listViewDelegate, cell, scrollable);
+        nodeInfo, viewDelegate, cell, scrollable);
     treeNodes.add(treeNode);
 
     // Attach the view to the selection model and node info.
-    listView.setSelectionModel(nodeInfo.getSelectionModel());
-    nodeInfo.setView(listViewDelegate);
+    view.setSelectionModel(nodeInfo.getSelectionModel());
+    nodeInfo.setView(viewDelegate);
 
-    // Add the ListView to the LayoutPanel.
+    // Add the view to the LayoutPanel.
     SplitLayoutPanel splitPanel = getSplitLayoutPanel();
     splitPanel.insertWest(scrollable, defaultWidth, null);
     splitPanel.setWidgetMinSize(scrollable, minWidth);
@@ -791,7 +824,7 @@ public class CellBrowser extends Composite
   }
 
   /**
-   * Reduce the number of {@link ListView}s down to the specified level.
+   * Reduce the number of {@link HasData}s down to the specified level.
    *
    * @param level the level to trim to
    */
@@ -799,7 +832,7 @@ public class CellBrowser extends Composite
     // Add a placeholder to maintain the same scroll width.
     adjustScrollLock();
 
-    // Remove the listViews that are no longer needed.
+    // Remove the views that are no longer needed.
     int curLevel = treeNodes.size() - 1;
     while (curLevel > level) {
       TreeNode<?> removed = treeNodes.remove(curLevel);

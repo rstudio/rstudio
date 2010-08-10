@@ -16,7 +16,7 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.HasData;
 
 /**
  * <p>
@@ -43,7 +43,7 @@ public interface RecordListView<R extends Record> extends IsWidget, PropertyView
     void createClicked();
   }
 
-  PagingListView<R> asPagingListView();
+  HasData<R> asHasData();
   
   /**
    * Sets the delegate.

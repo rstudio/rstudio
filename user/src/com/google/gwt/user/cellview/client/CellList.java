@@ -27,16 +27,11 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
+import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.HasKeyProvider;
-import com.google.gwt.view.client.PagingListView;
 import com.google.gwt.view.client.ProvidesKey;
-import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionModel;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,8 +41,7 @@ import java.util.Set;
  *
  * @param <T> the data type of list items
  */
-public class CellList<T> extends Widget
-    implements PagingListView<T>, HasKeyProvider<T> {
+public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -89,54 +83,6 @@ public class CellList<T> extends Widget
   }
 
   /**
-   * The view used by the presenter.
-   */
-  private class View extends PagingListViewPresenter.DefaultView<T> {
-
-    public View(Element childContainer) {
-      super(CellList.this, childContainer);
-    }
-
-    public boolean dependsOnSelection() {
-      return cell.dependsOnSelection();
-    }
-
-    public void render(StringBuilder sb, List<T> values, int start,
-        SelectionModel<? super T> selectionModel) {
-      int length = values.size();
-      int end = start + length;
-      for (int i = start; i < end; i++) {
-        T value = values.get(i - start);
-        boolean isSelected = selectionModel == null
-            ? false : selectionModel.isSelected(value);
-        // TODO(jlabanca): Factor out __idx because rows can move.
-        sb.append("<div onclick='' __idx='").append(i).append("'");
-        sb.append(" class='");
-        sb.append(i % 2 == 0 ? style.evenItem() : style.oddItem());
-        if (isSelected) {
-          sb.append(" ").append(style.selectedItem());
-        }
-        sb.append("'>");
-        cell.render(value, null, sb);
-        sb.append("</div>");
-      }
-    }
-
-    public void resetFocus() {
-    }
-
-    public void setLoadingState(LoadingState state) {
-      showOrHide(emptyMessageElem, state == LoadingState.EMPTY);
-      // TODO(jlabanca): Add a loading icon.
-    }
-
-    @Override
-    protected void setSelected(Element elem, boolean selected) {
-      setStyleName(elem, style.selectedItem(), selected);
-    }
-  }
-
-  /**
    * The default page size.
    */
   private static final int DEFAULT_PAGE_SIZE = 25;
@@ -155,11 +101,8 @@ public class CellList<T> extends Widget
   private String emptyListMessage = "";
   private final Element emptyMessageElem;
 
-  private ProvidesKey<T> keyProvider;
-  private final PagingListViewPresenter<T> presenter;
   private final Style style;
   private ValueUpdater<T> valueUpdater;
-  private final View view;
 
   /**
    * Construct a new {@link CellList}.
@@ -177,6 +120,7 @@ public class CellList<T> extends Widget
    * @param resources the resources used for this widget
    */
   public CellList(final Cell<T> cell, Resources resources) {
+    super(Document.get().createDivElement(), DEFAULT_PAGE_SIZE);
     this.cell = cell;
     this.style = resources.cellListStyle();
     this.style.ensureInjected();
@@ -187,10 +131,9 @@ public class CellList<T> extends Widget
     emptyMessageElem = Document.get().createDivElement();
     showOrHide(emptyMessageElem, false);
 
-    DivElement outerDiv = Document.get().createDivElement();
+    DivElement outerDiv = getElement().cast();
     outerDiv.appendChild(childContainer);
     outerDiv.appendChild(emptyMessageElem);
-    setElement(outerDiv);
 
     // Sink events that the cell consumes.
     Set<String> eventsToSink = new HashSet<String>();
@@ -200,29 +143,6 @@ public class CellList<T> extends Widget
       eventsToSink.addAll(consumedEvents);
     }
     CellBasedWidgetImpl.get().sinkEvents(this, eventsToSink);
-
-    // Create the implementation.
-    view = new View(childContainer);
-    presenter = new PagingListViewPresenter<T>(this, view, DEFAULT_PAGE_SIZE);
-  }
-
-  public int getDataSize() {
-    return presenter.getDataSize();
-  }
-
-  /**
-   * Get the value of a displayed item.
-   *
-   * @param indexOnPage the index on the page
-   * @return the value
-   */
-  public T getDisplayedItem(int indexOnPage) {
-    checkRowBounds(indexOnPage);
-    return presenter.getData().get(indexOnPage);
-  }
-
-  public List<T> getDisplayedItems() {
-    return new ArrayList<T>(presenter.getData());
   }
 
   /**
@@ -232,22 +152,6 @@ public class CellList<T> extends Widget
    */
   public String getEmptyListMessage() {
     return emptyListMessage;
-  }
-
-  public ProvidesKey<T> getKeyProvider() {
-    return keyProvider;
-  }
-
-  public final int getPageSize() {
-    return getRange().getLength();
-  }
-
-  public final int getPageStart() {
-    return getRange().getStart();
-  }
-
-  public Range getRange() {
-    return presenter.getRange();
   }
 
   /**
@@ -265,10 +169,6 @@ public class CellList<T> extends Widget
       return childContainer.getChild(indexOnPage).cast();
     }
     return null;
-  }
-
-  public boolean isDataSizeExact() {
-    return presenter.isDataSizeExact();
   }
 
   @Override
@@ -289,8 +189,8 @@ public class CellList<T> extends Widget
       // currently selected item.
       String eventType = event.getType();
       int idx = Integer.parseInt(idxString);
-      T value = presenter.getData().get(idx - getPageStart());
-      SelectionModel<? super T> selectionModel = presenter.getSelectionModel();
+      T value = getDisplayedItem(idx - getPageStart());
+      SelectionModel<? super T> selectionModel = getSelectionModel();
       if (selectionModel != null && "click".equals(eventType)
           && !cell.handlesSelection()) {
         selectionModel.setSelected(value, true);
@@ -305,25 +205,6 @@ public class CellList<T> extends Widget
   }
 
   /**
-   * Redraw the list using the existing data.
-   */
-  public void redraw() {
-    presenter.redraw();
-  }
-
-  public void setData(int start, int length, List<T> values) {
-    presenter.setData(start, length, values);
-  }
-
-  public void setDataSize(int size, boolean isExact) {
-    presenter.setDataSize(size, isExact);
-  }
-
-  public void setDelegate(Delegate<T> delegate) {
-    presenter.setDelegate(delegate);
-  }
-
-  /**
    * Set the message to display when there is no data.
    *
    * @param html the message to display when there are no results
@@ -331,41 +212,6 @@ public class CellList<T> extends Widget
   public void setEmptyListMessage(String html) {
     this.emptyListMessage = html;
     emptyMessageElem.setInnerHTML(html);
-  }
-
-  public void setKeyProvider(ProvidesKey<T> keyProvider) {
-    this.keyProvider = keyProvider;
-  }
-
-  public void setPager(Pager<T> pager) {
-    presenter.setPager(pager);
-  }
-
-  /**
-   * Set the page size.
-   *
-   * @param pageSize the new page size
-   */
-  public final void setPageSize(int pageSize) {
-    setRange(getPageStart(), pageSize);
-  }
-
-  /**
-   * Set the page start index.
-   *
-   * @param pageStart the new page start
-   */
-  public final void setPageStart(int pageStart) {
-    setRange(pageStart, getPageSize());
-  }
-
-  public void setRange(int start, int length) {
-    presenter.setRange(start, length);
-  }
-
-  public void setSelectionModel(
-      final SelectionModel<? super T> selectionModel) {
-    presenter.setSelectionModel(selectionModel);
   }
 
   /**
@@ -377,18 +223,47 @@ public class CellList<T> extends Widget
     this.valueUpdater = valueUpdater;
   }
 
-  /**
-   * Checks that the row is within the correct bounds.
-   *
-   * @param row row index to check
-   * @throws IndexOutOfBoundsException
-   */
-  protected void checkRowBounds(int row) {
-    int rowCount = view.getChildCount();
-    if ((row >= rowCount) || (row < 0)) {
-      throw new IndexOutOfBoundsException(
-          "Row index: " + row + ", Row size: " + rowCount);
+  @Override
+  protected void renderRowValues(StringBuilder sb, List<T> values, int start,
+      SelectionModel<? super T> selectionModel) {
+    int length = values.size();
+    int end = start + length;
+    for (int i = start; i < end; i++) {
+      T value = values.get(i - start);
+      boolean isSelected = selectionModel == null
+          ? false : selectionModel.isSelected(value);
+      // TODO(jlabanca): Factor out __idx because rows can move.
+      sb.append("<div onclick='' __idx='").append(i).append("'");
+      sb.append(" class='");
+      sb.append(i % 2 == 0 ? style.evenItem() : style.oddItem());
+      if (isSelected) {
+        sb.append(" ").append(style.selectedItem());
+      }
+      sb.append("'>");
+      cell.render(value, null, sb);
+      sb.append("</div>");
     }
+  }
+
+  @Override
+  boolean dependsOnSelection() {
+    return cell.dependsOnSelection();
+  }
+
+  @Override
+  Element getChildContainer() {
+    return childContainer;
+  }
+
+  @Override
+  void setLoadingState(LoadingState state) {
+    showOrHide(emptyMessageElem, state == LoadingState.EMPTY);
+    // TODO(jlabanca): Add a loading icon.
+  }
+
+  @Override
+  void setSelected(Element elem, boolean selected) {
+    setStyleName(elem, style.selectedItem(), selected);
   }
 
   /**
@@ -399,6 +274,7 @@ public class CellList<T> extends Widget
    * @return the key for the value
    */
   private Object getKey(T value) {
+    ProvidesKey<T> keyProvider = getKeyProvider();
     return keyProvider == null ? value : keyProvider.getKey(value);
   }
 

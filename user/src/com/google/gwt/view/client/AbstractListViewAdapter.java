@@ -15,9 +15,13 @@
  */
 package com.google.gwt.view.client;
 
+import com.google.gwt.event.shared.HandlerRegistration;
+
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -29,17 +33,8 @@ import java.util.Set;
  *
  * @param <T> the data type of records in the list
  */
+// TODO(jlabanca): Rename for AbstractListViewAdapter to something better.
 public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
-
-  private class Delegate implements ListView.Delegate<T> {
-    public void onRangeChanged(ListView<T> view) {
-      AbstractListViewAdapter.this.onRangeChanged(view);
-    }
-  }
-
-  private final Delegate delegate = new Delegate();
-
-  private Set<ListView<T>> views = new HashSet<ListView<T>>();
 
   /**
    * The provider of keys for list items.
@@ -57,24 +52,47 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   private boolean lastDataSizeExact;
 
   /**
+   * A mapping of {@link HasData}s to their handlers.
+   */
+  private Map<HasData<T>, HandlerRegistration> rangeChangeHandlers =
+      new HashMap<HasData<T>, HandlerRegistration>();
+
+  private Set<HasData<T>> views = new HashSet<HasData<T>>();
+
+  /**
    * Adds a view to this adapter. The current range of interest of the view will
    * be populated with data.
    *
-   * @param view a {@link ListView}.
+   * @param view a {@link HasData}.
    */
-  public void addView(ListView<T> view) {
-    if (views.contains(view)) {
-      throw new IllegalStateException("ListView already added");
+  // TODO(jlabanca): Stop using the term view to describe HasData.
+  public void addView(final HasData<T> view) {
+    if (view == null) {
+      throw new IllegalArgumentException("view cannot be null");
+    } else if (views.contains(view)) {
+      throw new IllegalStateException(
+          "The specified view has already been added to this adapter.");
     }
+
+    // Add the view to the set.
     views.add(view);
-    view.setDelegate(delegate);
 
-    // Update the data size.
+    // Add a handler to the view.
+    HandlerRegistration handler = view.addRangeChangeHandler(
+        new RangeChangeEvent.Handler() {
+          public void onRangeChange(RangeChangeEvent event) {
+            AbstractListViewAdapter.this.onRangeChanged(view);
+          }
+        });
+    rangeChangeHandlers.put(view, handler);
+
+    // Update the data size in the view.
     if (lastDataSize >= 0) {
-      view.setDataSize(lastDataSize, lastDataSizeExact);
+      view.setRowCount(lastDataSize, lastDataSizeExact);
     }
 
-    delegate.onRangeChanged(view);
+    // Initialize the view with the current range.
+    onRangeChanged(view);
   }
 
   /**
@@ -105,8 +123,8 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   public Range[] getRanges() {
     Range[] ranges = new Range[views.size()];
     int i = 0;
-    for (ListView<T> view : views) {
-      ranges[i++] = view.getRange();
+    for (HasData<T> view : views) {
+      ranges[i++] = view.getVisibleRange();
     }
     return ranges;
   }
@@ -114,18 +132,21 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   /**
    * Get the set of views currently assigned to this adapter.
    *
-   * @return the set of {@link ListView}
+   * @return the set of {@link HasData}
    */
-  public Set<ListView<T>> getViews() {
+  public Set<HasData<T>> getViews() {
     return Collections.unmodifiableSet(views);
   }
 
-  public void removeView(ListView<T> view) {
+  public void removeView(HasData<T> view) {
     if (!views.contains(view)) {
       throw new IllegalStateException("ListView not present");
     }
     views.remove(view);
-    view.setDelegate(null);
+
+    // Remove the handler.
+    HandlerRegistration handler = rangeChangeHandlers.remove(view);
+    handler.removeHandler();
   }
 
   /**
@@ -142,7 +163,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    *
    * @param view the view whose range has changed
    */
-  protected abstract void onRangeChanged(ListView<T> view);
+  protected abstract void onRangeChanged(HasData<T> view);
 
   /**
    * Inform the views of the total number of items that are available.
@@ -153,8 +174,8 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   protected void updateDataSize(int size, boolean exact) {
     lastDataSize = size;
     lastDataSizeExact = exact;
-    for (ListView<T> view : views) {
-      view.setDataSize(size, exact);
+    for (HasData<T> view : views) {
+      view.setRowCount(size, exact);
     }
   }
 
@@ -166,7 +187,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    * @param values the data values
    */
   protected void updateViewData(int start, int length, List<T> values) {
-    for (ListView<T> view : views) {
+    for (HasData<T> view : views) {
       updateViewData(view, start, length, values);
     }
   }
@@ -180,9 +201,9 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    * @param values the data values
    */
   protected void updateViewData(
-      ListView<T> view, int start, int length, List<T> values) {
+      HasData<T> view, int start, int length, List<T> values) {
     int end = start + length;
-    Range range = view.getRange();
+    Range range = view.getVisibleRange();
     int curStart = range.getStart();
     int curLength = range.getLength();
     int curEnd = curStart + curLength;
@@ -193,7 +214,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
       int realLength = realEnd - realStart;
       List<T> realValues = values.subList(
           realStart - start, realStart - start + realLength);
-      view.setData(realStart, realLength, realValues);
+      view.setRowValues(realStart, realValues);
     }
   }
 }

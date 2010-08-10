@@ -23,11 +23,19 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.user.cellview.client.PagingListViewPresenter.LoadingState;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.HasDataPresenter.ElementIterator;
+import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.ui.UIObject;
-import com.google.gwt.view.client.PagingListView;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 import com.google.gwt.view.client.TreeViewModel.NodeInfo;
@@ -51,6 +59,11 @@ class CellTreeNodeView<T> extends UIObject {
    */
   private static final String LEAF_IMAGE =
       "<div style='position:absolute;display:none;'></div>";
+
+  /**
+   * The temporary element used to render child items.
+   */
+  private static com.google.gwt.user.client.Element tmpElem;
 
   /**
    * Returns the element that parents the cell contents of the node.
@@ -84,6 +97,16 @@ class CellTreeNodeView<T> extends UIObject {
   }
 
   /**
+   * @return the temporary element used to create elements
+   */
+  private static com.google.gwt.user.client.Element getTmpElem() {
+    if (tmpElem == null) {
+      tmpElem = Document.get().createDivElement().cast();
+    }
+    return tmpElem;
+  }
+
+  /**
    * Show or hide an element.
    *
    * @param element the element to show or hide
@@ -98,24 +121,44 @@ class CellTreeNodeView<T> extends UIObject {
   }
 
   /**
-   * The {@link com.google.gwt.view.client.ListView ListView} used to show
-   * children.
+   * The {@link com.google.gwt.view.client.HasData} used to show children.
    *
    * @param <C> the child item type
    */
-  private static class NodeCellList<C> implements PagingListView<C> {
+  private static class NodeCellList<C> implements HasData<C> {
+
+    private HandlerManager handlerManger = new HandlerManager(this);
 
     /**
      * The view used by the NodeCellList.
      */
-    private class View extends PagingListViewPresenter.DefaultView<C> {
+    private class View implements HasDataPresenter.View<C> {
+
+      private final Element childContainer;
 
       public View(Element childContainer) {
-        super(nodeView.tree, childContainer);
+        this.childContainer = childContainer;
+      }
+
+      public <H extends EventHandler> HandlerRegistration addHandler(
+          H handler, Type<H> type) {
+        return handlerManger.addHandler(type, handler);
       }
 
       public boolean dependsOnSelection() {
         return cell.dependsOnSelection();
+      }
+
+      public int getChildCount() {
+        return childContainer.getChildCount();
+      }
+
+      public ElementIterator getChildIterator() {
+        return new HasDataPresenter.DefaultElementIterator(
+            this, childContainer.getFirstChildElement());
+      }
+
+      public void onUpdateSelection() {
       }
 
       public void render(StringBuilder sb, List<C> values, int start,
@@ -197,7 +240,6 @@ class CellTreeNodeView<T> extends UIObject {
         }
       }
 
-      @Override
       public void replaceAllChildren(List<C> values, String html) {
         // Hide the child container so we can animate it.
         if (nodeView.tree.isAnimationEnabled()) {
@@ -206,7 +248,7 @@ class CellTreeNodeView<T> extends UIObject {
 
         // Replace the child nodes.
         Map<Object, CellTreeNodeView<?>> savedViews = saveChildState(values, 0);
-        super.replaceAllChildren(values, html);
+        AbstractHasData.replaceAllChildren(nodeView.tree, childContainer, html);
         loadChildState(values, 0, savedViews);
 
         // Animate the child container open.
@@ -215,10 +257,14 @@ class CellTreeNodeView<T> extends UIObject {
         }
       }
 
-      @Override
       public void replaceChildren(List<C> values, int start, String html) {
         Map<Object, CellTreeNodeView<?>> savedViews = saveChildState(values, 0);
-        super.replaceChildren(values, start, html);
+
+        Element newChildren = AbstractHasData.convertToElements(
+            nodeView.tree, getTmpElem(), html);
+        AbstractHasData.replaceChildren(
+            nodeView.tree, childContainer, newChildren, start, html);
+
         loadChildState(values, 0, savedViews);
       }
 
@@ -230,8 +276,7 @@ class CellTreeNodeView<T> extends UIObject {
         showOrHide(nodeView.emptyMessageElem, state == LoadingState.EMPTY);
       }
 
-      @Override
-      protected void setSelected(Element elem, boolean selected) {
+      public void setSelected(Element elem, boolean selected) {
         setStyleName(getSelectionElement(elem),
             nodeView.tree.getStyle().selectedItem(), selected);
       }
@@ -342,7 +387,7 @@ class CellTreeNodeView<T> extends UIObject {
     private final int defaultPageSize;
     private final NodeInfo<C> nodeInfo;
     private CellTreeNodeView<?> nodeView;
-    private final PagingListViewPresenter<C> presenter;
+    private final HasDataPresenter<C> presenter;
 
     public NodeCellList(final NodeInfo<C> nodeInfo,
         final CellTreeNodeView<?> nodeView, int pageSize) {
@@ -351,18 +396,28 @@ class CellTreeNodeView<T> extends UIObject {
       this.nodeView = nodeView;
       cell = nodeInfo.getCell();
 
-      presenter = new PagingListViewPresenter<C>(
+      presenter = new HasDataPresenter<C>(
           this, new View(nodeView.ensureChildContainer()), pageSize);
 
       // Use a pager to update buttons.
-      presenter.setPager(new Pager<C>() {
-        public void onRangeOrSizeChanged(PagingListView<C> listView) {
-          // Assumes a page start of 0.
-          int dataSize = presenter.getDataSize();
-          int pageSize = getRange().getLength();
-          showOrHide(nodeView.showMoreElem, dataSize > pageSize);
+      presenter.addRowCountChangeHandler(new RowCountChangeEvent.Handler() {
+        public void onRowCountChange(RowCountChangeEvent event) {
+          int rowCount = event.getNewRowCount();
+          boolean isExact = event.isNewRowCountExact();
+          int pageSize = getVisibleRange().getLength();
+          showOrHide(nodeView.showMoreElem, isExact && rowCount > pageSize);
         }
       });
+    }
+
+    public HandlerRegistration addRangeChangeHandler(
+        RangeChangeEvent.Handler handler) {
+      return presenter.addRangeChangeHandler(handler);
+    }
+
+    public HandlerRegistration addRowCountChangeHandler(
+        RowCountChangeEvent.Handler handler) {
+      return presenter.addRowCountChangeHandler(handler);
     }
 
     /**
@@ -372,40 +427,40 @@ class CellTreeNodeView<T> extends UIObject {
       presenter.clearSelectionModel();
     }
 
-    public int getDataSize() {
-      return presenter.getDataSize();
+    public void fireEvent(GwtEvent<?> event) {
+      handlerManger.fireEvent(event);
     }
 
     public int getDefaultPageSize() {
       return defaultPageSize;
     }
 
-    public Range getRange() {
-      return presenter.getRange();
+    public int getRowCount() {
+      return presenter.getRowCount();
     }
 
-    public boolean isDataSizeExact() {
-      return presenter.isDataSizeExact();
+    public SelectionModel<? super C> getSelectionModel() {
+      return presenter.getSelectionModel();
     }
 
-    public void setData(int start, int length, List<C> values) {
-      presenter.setData(start, length, values);
+    public Range getVisibleRange() {
+      return presenter.getVisibleRange();
     }
 
-    public void setDataSize(int size, boolean isExact) {
-      presenter.setDataSize(size, isExact);
+    public boolean isRowCountExact() {
+      return presenter.isRowCountExact();
     }
 
-    public void setDelegate(Delegate<C> delegate) {
-      presenter.setDelegate(delegate);
+    public final void setRowCount(int count) {
+      setRowCount(count, true);
     }
 
-    public void setPager(Pager<C> pager) {
-      presenter.setPager(pager);
+    public void setRowCount(int size, boolean isExact) {
+      presenter.setRowCount(size, isExact);
     }
 
-    public void setRange(int start, int length) {
-      presenter.setRange(start, length);
+    public void setRowValues(int start, List<C> values) {
+      presenter.setRowValues(start, values);
     }
 
     public void setSelectionModel(
@@ -413,8 +468,16 @@ class CellTreeNodeView<T> extends UIObject {
       presenter.setSelectionModel(selectionModel);
     }
 
+    public final void setVisibleRange(int start, int length) {
+      setVisibleRange(new Range(start, length));
+    }
+
+    public void setVisibleRange(Range range) {
+      presenter.setVisibleRange(range);
+    }
+
     /**
-     * Assign this {@link PagingListView} to a new {@link CellTreeNodeView}.
+     * Assign this {@link HasData} to a new {@link CellTreeNodeView}.
      *
      * @param nodeView the new node view
      */
@@ -644,7 +707,7 @@ class CellTreeNodeView<T> extends UIObject {
     if (parentNodeInfo != null) {
       Cell<T> parentCell = parentNodeInfo.getCell();
       String eventType = event.getType();
-      SelectionModel<? super T> selectionModel = parentNodeInfo.getSelectionModel();
+          SelectionModel<? super T> selectionModel = parentNodeInfo.getSelectionModel();
 
       // Update selection.
       if (selectionModel != null && "click".equals(eventType)
@@ -773,18 +836,17 @@ class CellTreeNodeView<T> extends UIObject {
   }
 
   void showFewer() {
-    Range range = listView.getRange();
+    Range range = listView.getVisibleRange();
     int defaultPageSize = listView.getDefaultPageSize();
     int maxSize = Math.max(
         defaultPageSize, range.getLength() - defaultPageSize);
-    listView.setRange(range.getStart(), maxSize);
+    listView.setVisibleRange(range.getStart(), maxSize);
   }
 
   void showMore() {
-    Range range = listView.getRange();
-    int pageSize = listView.getRange().getLength()
-        + listView.getDefaultPageSize();
-    listView.setRange(range.getStart(), pageSize);
+    Range range = listView.getVisibleRange();
+    int pageSize = range.getLength() + listView.getDefaultPageSize();
+    listView.setVisibleRange(range.getStart(), pageSize);
   }
 
   /**

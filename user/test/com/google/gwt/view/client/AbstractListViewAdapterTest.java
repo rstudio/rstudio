@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,14 +29,14 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
 
   /**
    * A mock {@link AbstractListViewAdapter} used for testing.
-   * 
+   *
    * @param <T> the data type
    */
   static class MockListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
-    private ListView<T> lastChanged;
+    private HasData<T> lastChanged;
 
-    public void assertLastRangeChanged(ListView<T> expected) {
+    public void assertLastRangeChanged(HasData<T> expected) {
       assertEquals(expected, lastChanged);
     }
 
@@ -45,7 +45,7 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
     }
 
     @Override
-    protected void onRangeChanged(ListView<T> view) {
+    protected void onRangeChanged(HasData<T> view) {
       lastChanged = view;
     }
   }
@@ -63,17 +63,17 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
     adapter.assertLastRangeChanged(null);
 
     // Add the first view.
-    MockPagingListView<String> view0 = new MockPagingListView<String>();
+    MockHasData<String> view0 = new MockHasData<String>();
     adapter.addView(view0);
     adapter.assertLastRangeChanged(view0);
 
     // Add a second view.
-    MockPagingListView<String> view1 = new MockPagingListView<String>();
+    MockHasData<String> view1 = new MockHasData<String>();
     adapter.addView(view1);
     adapter.assertLastRangeChanged(view1);
 
     // Try to remove an invalid view.
-    MockPagingListView<String> invalidView = new MockPagingListView<String>();
+    MockHasData<String> invalidView = new MockHasData<String>();
     try {
       adapter.removeView(invalidView);
       fail("Expected IllegalStateException");
@@ -86,8 +86,8 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
 
     // Make sure the remaining view triggers the delegate.
     adapter.assertLastRangeChanged(view1);
-    view0.setRange(100, 20);
-    view1.setRange(100, 20); // Shouldn't affect the adapter.
+    view0.setVisibleRange(100, 20);
+    view1.setVisibleRange(100, 20); // Shouldn't affect the adapter.
     adapter.assertLastRangeChanged(view0);
   }
 
@@ -102,8 +102,8 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
 
     // One range.
     {
-      MockPagingListView<String> view0 = new MockPagingListView<String>();
-      view0.setRange(0, 10);
+      MockHasData<String> view0 = new MockHasData<String>();
+      view0.setVisibleRange(0, 10);
       adapter.addView(view0);
       Range[] ranges = adapter.getRanges();
       assertEquals(1, ranges.length);
@@ -112,11 +112,11 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
 
     // Multiple ranges.
     {
-      MockPagingListView<String> view1 = new MockPagingListView<String>();
-      view1.setRange(3, 10);
+      MockHasData<String> view1 = new MockHasData<String>();
+      view1.setVisibleRange(3, 10);
       adapter.addView(view1);
-      MockPagingListView<String> view2 = new MockPagingListView<String>();
-      view2.setRange(30, 35);
+      MockHasData<String> view2 = new MockHasData<String>();
+      view2.setVisibleRange(30, 35);
       adapter.addView(view2);
       Set<Range> ranges = new HashSet<Range>();
       for (Range range : adapter.getRanges()) {
@@ -131,14 +131,14 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
 
   public void testGetViews() {
     AbstractListViewAdapter<String> adapter = createListViewAdapter();
-    MockPagingListView<String> view0 = new MockPagingListView<String>();
-    MockPagingListView<String> view1 = new MockPagingListView<String>();
+    MockHasData<String> view0 = new MockHasData<String>();
+    MockHasData<String> view1 = new MockHasData<String>();
     assertEquals(0, adapter.getViews().size());
 
     // Add two views.
     adapter.addView(view0);
     adapter.addView(view1);
-    Set<ListView<String>> views = adapter.getViews();
+    Set<HasData<String>> views = adapter.getViews();
     assertEquals(2, views.size());
     assertTrue(views.contains(view0));
     assertTrue(views.contains(view1));
@@ -177,117 +177,117 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
     adapter.updateDataSize(10, true);
 
     // Add the first view.
-    MockPagingListView<String> view0 = new MockPagingListView<String>();
+    MockHasData<String> view0 = new MockHasData<String>();
     adapter.addView(view0);
     adapter.updateDataSize(20, true);
-    assertEquals(20, view0.getDataSize());
-    assertTrue(view0.isDataSizeExact());
+    assertEquals(20, view0.getRowCount());
+    assertTrue(view0.isRowCountExact());
 
     // Add another view.
-    MockPagingListView<String> view1 = new MockPagingListView<String>();
+    MockHasData<String> view1 = new MockHasData<String>();
     adapter.addView(view1);
     adapter.updateDataSize(30, false);
-    assertEquals(30, view0.getDataSize());
-    assertFalse(view0.isDataSizeExact());
-    assertEquals(30, view1.getDataSize());
-    assertFalse(view1.isDataSizeExact());
+    assertEquals(30, view0.getRowCount());
+    assertFalse(view0.isRowCountExact());
+    assertEquals(30, view1.getRowCount());
+    assertFalse(view1.isRowCountExact());
   }
 
   public void testUpdateViewData() {
     AbstractListViewAdapter<String> adapter = createListViewAdapter();
-    MockPagingListView<String> view = new MockPagingListView<String>();
-    view.setRange(10, 5);
+    MockHasData<String> view = new MockHasData<String>();
+    view.setVisibleRange(10, 5);
     adapter.addView(view);
 
     // Data equal to range.
     {
       List<String> values = createData(10, 5);
       adapter.updateViewData(10, 5, values);
-      assertEquals(values, view.getLastData());
-      assertEquals(new Range(10, 5), view.getLastDataRange());
-      view.clearLastDataAndRange();
+      assertEquals(values, view.getLastRowValues());
+      assertEquals(new Range(10, 5), view.getLastRowValuesRange());
+      view.clearLastRowValuesAndRange();
     }
 
     // Data contained within range.
     {
       List<String> values = createData(12, 2);
       adapter.updateViewData(12, 2, values);
-      assertEquals(values, view.getLastData());
-      assertEquals(new Range(12, 2), view.getLastDataRange());
-      view.clearLastDataAndRange();
+      assertEquals(values, view.getLastRowValues());
+      assertEquals(new Range(12, 2), view.getLastRowValuesRange());
+      view.clearLastRowValuesAndRange();
     }
 
     // Data before range.
     {
       List<String> values = createData(5, 5);
       adapter.updateViewData(5, 5, values);
-      assertNull(view.getLastData());
-      assertNull(view.getLastDataRange());
-      view.clearLastDataAndRange();
+      assertNull(view.getLastRowValues());
+      assertNull(view.getLastRowValuesRange());
+      view.clearLastRowValuesAndRange();
     }
 
     // Data after range.
     {
       List<String> values = createData(15, 5);
       adapter.updateViewData(15, 5, values);
-      assertNull(view.getLastData());
-      assertNull(view.getLastDataRange());
-      view.clearLastDataAndRange();
+      assertNull(view.getLastRowValues());
+      assertNull(view.getLastRowValuesRange());
+      view.clearLastRowValuesAndRange();
     }
 
     // Data overlaps entire range.
     {
       List<String> values = createData(5, 15);
       adapter.updateViewData(5, 15, values);
-      assertEquals(values.subList(5, 10), view.getLastData());
-      assertEquals(new Range(10, 5), view.getLastDataRange());
-      view.clearLastDataAndRange();
+      assertEquals(values.subList(5, 10), view.getLastRowValues());
+      assertEquals(new Range(10, 5), view.getLastRowValuesRange());
+      view.clearLastRowValuesAndRange();
     }
 
     // Data overlaps start of range.
     {
       List<String> values = createData(5, 7);
       adapter.updateViewData(5, 7, values);
-      assertEquals(values.subList(5, 7), view.getLastData());
-      assertEquals(new Range(10, 2), view.getLastDataRange());
-      view.clearLastDataAndRange();
+      assertEquals(values.subList(5, 7), view.getLastRowValues());
+      assertEquals(new Range(10, 2), view.getLastRowValuesRange());
+      view.clearLastRowValuesAndRange();
     }
 
     // Data overlaps end of range.
     {
       List<String> values = createData(13, 5);
       adapter.updateViewData(13, 5, values);
-      assertEquals(values.subList(0, 2), view.getLastData());
-      assertEquals(new Range(13, 2), view.getLastDataRange());
-      view.clearLastDataAndRange();
+      assertEquals(values.subList(0, 2), view.getLastRowValues());
+      assertEquals(new Range(13, 2), view.getLastRowValuesRange());
+      view.clearLastRowValuesAndRange();
     }
   }
 
   public void testUpdateViewDataMultipleViews() {
     AbstractListViewAdapter<String> adapter = createListViewAdapter();
-    MockPagingListView<String> view0 = new MockPagingListView<String>();
-    view0.setRange(10, 5);
+    MockHasData<String> view0 = new MockHasData<String>();
+    view0.setVisibleRange(10, 5);
     adapter.addView(view0);
-    MockPagingListView<String> view1 = new MockPagingListView<String>();
-    view1.setRange(0, 5);
+    MockHasData<String> view1 = new MockHasData<String>();
+    view1.setVisibleRange(0, 5);
     adapter.addView(view1);
-    MockPagingListView<String> view2 = new MockPagingListView<String>();
-    view2.setRange(12, 10);
+    MockHasData<String> view2 = new MockHasData<String>();
+    view2.setVisibleRange(12, 10);
     adapter.addView(view2);
 
     List<String> values = createData(10, 5);
     adapter.updateViewData(10, 5, values);
-    assertEquals(values, view0.getLastData());
-    assertEquals(new Range(10, 5), view0.getLastDataRange());
-    assertNull(view1.getLastData());
-    assertNull(view1.getLastDataRange());
-    assertEquals(values.subList(2, 5), view2.getLastData());
-    assertEquals(new Range(12, 3), view2.getLastDataRange());
+    assertEquals(values, view0.getLastRowValues());
+    assertEquals(new Range(10, 5), view0.getLastRowValuesRange());
+    assertNull(view1.getLastRowValues());
+    assertNull(view1.getLastRowValuesRange());
+    assertEquals(values.subList(2, 5), view2.getLastRowValues());
+    assertEquals(new Range(12, 3), view2.getLastRowValuesRange());
   }
 
   /**
    * Create an {@link AbstractListViewAdapter} for testing.
-   * 
+   *
    * @return the adapter
    */
   protected AbstractListViewAdapter<String> createListViewAdapter() {
@@ -296,7 +296,7 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
 
   /**
    * Create a list of data for testing.
-   * 
+   *
    * @param start the start index
    * @param length the length
    * @return a list of data
