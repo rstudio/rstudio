@@ -23,6 +23,8 @@ import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -353,33 +355,53 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
         try {
           for (int i = 0; i < entryPoints.length; i++) {
             entryPointTypeName = entryPoints[i];
-            Class<?> clazz = loadClassFromSourceName(entryPointTypeName);
             Method onModuleLoad = null;
-            try {
-              onModuleLoad = clazz.getMethod("onModuleLoad");
-              if (!Modifier.isStatic(onModuleLoad.getModifiers())) {
-                // it's non-static, so we need to rebind the class
-                onModuleLoad = null;
-              }
-            } catch (NoSuchMethodException e) {
-              // okay, try rebinding it; maybe the rebind result will have one
-            }
-            Object module = null;
-            if (onModuleLoad == null) {
-              module = rebindAndCreate(entryPointTypeName);
-              onModuleLoad = module.getClass().getMethod("onModuleLoad");
-              // Record the rebound name of the class for stats (below).
-              entryPointTypeName = module.getClass().getName().replace('$', '.');
-            }
-            onModuleLoad.setAccessible(true);
-            invokeNativeVoid("fireOnModuleLoadStart", null,
-                new Class[] {String.class}, new Object[] {entryPointTypeName});
+            Object module;
 
-            Event onModuleLoadEvent = SpeedTracerLogger.start(DevModeEventType.ON_MODULE_LOAD);
+            // Try to initialize EntryPoint, else throw up glass panel
             try {
-              onModuleLoad.invoke(module);
-            } finally {
-              onModuleLoadEvent.end();
+              Class<?> clazz = loadClassFromSourceName(entryPointTypeName);
+              onModuleLoad = null;
+              try {
+                onModuleLoad = clazz.getMethod("onModuleLoad");
+                if (!Modifier.isStatic(onModuleLoad.getModifiers())) {
+                  // it's non-static, so we need to rebind the class
+                  onModuleLoad = null;
+                }
+              } catch (NoSuchMethodException e) {
+                // okay, try rebinding it; maybe the rebind result will have one
+              }
+              module = null;
+              if (onModuleLoad == null) {
+                module = rebindAndCreate(entryPointTypeName);
+                onModuleLoad = module.getClass().getMethod("onModuleLoad");
+                // Record the rebound name of the class for stats (below).
+                entryPointTypeName = module.getClass().getName().replace(
+                    '$', '.');
+              }
+            } catch (Throwable e) {
+              displayErrorGlassPanel(
+                  "EntryPoint initialization exception", entryPointTypeName, e);
+              throw e;
+            }
+
+            // Try to invoke onModuleLoad, else throw up glass panel
+            try {
+              onModuleLoad.setAccessible(true);
+              invokeNativeVoid("fireOnModuleLoadStart", null,
+                  new Class[]{String.class}, new Object[]{entryPointTypeName});
+
+              Event onModuleLoadEvent = SpeedTracerLogger.start(
+                  DevModeEventType.ON_MODULE_LOAD);
+              try {
+                onModuleLoad.invoke(module);
+              } finally {
+                onModuleLoadEvent.end();
+              }
+            } catch (Throwable e) {
+              displayErrorGlassPanel(
+                  "onModuleLoad() threw an exception", entryPointTypeName, e);
+              throw e;
             }
           }
         } finally {
@@ -566,6 +588,23 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   private String composeResultErrorMsgPrefix(String name, String typePhrase) {
     return "Something other than " + typePhrase
         + " was returned from JSNI method '" + name + "'";
+  }
+
+  private void displayErrorGlassPanel(
+      String summary, String entryPointTypeName, Throwable e) throws Throwable {
+    StringWriter writer = new StringWriter();
+    e.printStackTrace(new PrintWriter(writer));
+    String stackTrace = writer.toString().replaceFirst(
+        // (?ms) for regex pattern modifiers MULTILINE and DOTALL
+        "(?ms)(Caused by:.+)", "<b>$1</b>");
+    String details = "<p>Exception while loading module <b>"
+        + entryPointTypeName + "</b>. See Development Mode for details.</p>"
+        + "<div style='overflow:visisble;white-space:pre;'>" + stackTrace
+        + "</pre>";
+
+    invokeNativeVoid("__gwt_displayGlassMessage", null,
+        new Class[]{String.class, String.class},
+        new Object[]{summary, details});
   }
 
   private boolean isUserFrame(StackTraceElement element) {

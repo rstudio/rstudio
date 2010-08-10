@@ -12,7 +12,7 @@ if ($stats) {
   var moduleName = moduleFunc ? moduleFunc.moduleName : "unknown";
   $stats({moduleName:moduleName,sessionId:$sessionId,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
 }
-var $hostedHtmlVersion="2.0";
+var $hostedHtmlVersion="2.1";
 
 var gwtOnLoad;
 var $hosted = "localhost:9997";
@@ -157,6 +157,15 @@ function __gwt_disconnected() {
 }
 
 function __gwt_disconnected_impl() {
+  __gwt_displayGlassMessage('GWT Code Server Disconnected',
+      'Most likely, you closed GWT development mode. Or you might have lost '
+      + 'network connectivity. To fix this, try restarting GWT Development Mode and '
+      + '<a style="color: #FFFFFF; font-weight: bold;" href="javascript:location.reload()">'
+      + 'REFRESH</a> this page.');
+}
+
+// Note this method is also used by ModuleSpace.java
+function __gwt_displayGlassMessage(summary, details) {
   var topWin = window.top;
   var topDoc = topWin.document;
   var outer = topDoc.createElement("div");
@@ -164,8 +173,8 @@ function __gwt_disconnected_impl() {
   outer.innerHTML = 
     '<div style="position:absolute;z-index:2147483646;left:0px;top:0px;right:0px;bottom:0px;filter:alpha(opacity=75);opacity:0.75;background-color:#000000;"></div>' +
     '<div style="position:absolute;z-index:2147483647;left:50px;top:50px;width:600px;color:#FFFFFF;font-family:verdana;">' +
-      '<div style="font-size:30px;font-weight:bold;">GWT Code Server Disconnected</div>' +
-      '<p style="font-size:15px;"> Most likely, you closed GWT development mode. Or you might have lost network connectivity. To fix this, try restarting GWT Development Mode and <a style="color: #FFFFFF; font-weight: bold;" href="javascript:location.reload()">REFRESH</a> this page.</p>' +
+      '<div style="font-size:30px;font-weight:bold;">' + summary + '</div>' +
+      '<p style="font-size:15px;">' + details + '</p>' +
     '</div>'
   ;
   topDoc.body.appendChild(outer);
