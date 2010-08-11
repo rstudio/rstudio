@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared.impl;
+package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.PropertyReference;
@@ -34,9 +34,11 @@ import com.google.gwt.valuestore.shared.Record;
  */
 public class RecordImpl implements Record {
   private final RecordJsoImpl jso;
+  private DeltaValueStoreJsonImpl deltaValueStore;
 
   protected RecordImpl(RecordJsoImpl record) {
     this.jso = record;
+    deltaValueStore = null;
   }
 
   public RecordJsoImpl asJso() {
@@ -62,4 +64,29 @@ public class RecordImpl implements Record {
   public Integer getVersion() {
     return jso.getVersion();
   }
+
+  public boolean isChanged() {
+    if (deltaValueStore == null) {
+      return false;
+    }
+    return deltaValueStore.isChanged();
+  }
+
+  public <V> void set(Property<V> property, RecordImpl record, V value) {
+    if (deltaValueStore == null) {
+      throw new UnsupportedOperationException(
+          "Setter methods can't be called before calling edit()");
+    }
+    deltaValueStore.set(property, record, value);
+  }
+
+  /*
+   * TODO: this method is public for the time being. Will become
+   * package-protected once {@link RecordImpl} moves to the same package as
+   * {@link AbstractRequest}.
+   */
+  public void setDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore) {
+    this.deltaValueStore = deltaValueStore;
+  }
+
 }

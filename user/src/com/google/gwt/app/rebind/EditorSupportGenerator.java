@@ -92,6 +92,10 @@ public class EditorSupportGenerator extends Generator {
 
   JClassType stringType;
 
+  private String capitalize(String name) {
+    return name.substring(0, 1).toUpperCase() + name.substring(1);
+  }
+
   @Override
   public String generate(TreeLogger logger, GeneratorContext generatorContext,
       String interfaceName) throws UnableToCompleteException {
@@ -450,12 +454,8 @@ public class EditorSupportGenerator extends Generator {
           + "> event) {");
       sw.indent();
       // recordField and uiFieldEntry have the same name
-      String recordFieldName = uiFieldEntry.getKey().getName();
-      sw.println("view.getDeltaValueStore().set(" + recordType.getName() + "."
-          + recordFieldName + ", view.getValue(),");
-      sw.indent();
-      sw.println("event.getValue());");
-      sw.outdent();
+      sw.println("view.getValue().set"
+          + capitalize(uiFieldEntry.getKey().getName()) + "(event.getValue());");
       sw.outdent();
       sw.println("}");
       sw.outdent();
@@ -479,12 +479,12 @@ public class EditorSupportGenerator extends Generator {
           getter = "getText";
         }
         sw.println(String.format(
-            "view.getDeltaValueStore().set(%s.%s, view.getValue(), view.%s.%s());",
-            recordType.getName(), property.getName(),
+            "view.getValue().set%s(view.%s.%s());",
+            capitalize(property.getName()),
             uiFieldEntry.getKey().getName(), getter));
       }
     }
-    sw.println("return view.getDeltaValueStore().isChanged();");
+    sw.println("return view.getValue().isChanged();");
     sw.outdent();
     sw.println("}");
     sw.outdent();

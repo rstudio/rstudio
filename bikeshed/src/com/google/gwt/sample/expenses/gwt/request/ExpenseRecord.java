@@ -48,9 +48,23 @@ public interface ExpenseRecord extends Record {
 
   String getDescription();
 
-  Long getId();
-
   String getReasonDenied();
 
   Long getReportId();
+
+  boolean isChanged();
+
+  void setAmount(Double amount);
+
+  void setApproval(String approval);
+
+  void setCategory(String category);
+
+  void setCreated(Date created);
+
+  void setDescription(String description);
+
+  void setReasonDenied(String reasonDenied);
+
+  void setReportId(Long reportId);
 }

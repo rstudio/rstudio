@@ -17,7 +17,6 @@ package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.request.ExpenseRecord;
@@ -75,9 +74,9 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
 
   public void create(Long reportId) {
     expense = (ExpenseRecord) requestFactory.create(ExpenseRecord.class);
-    requestObject = requestFactory.expenseRequest().persist();
-    DeltaValueStore deltas = requestObject.getDeltaValueStore();
-    deltas.set(ExpenseRecord.reportId, expense, reportId);
+    requestObject = requestFactory.expenseRequest().persist(expense);
+    ExpenseRecord editableExpense = requestObject.edit(expense);
+    editableExpense.setReportId(reportId);
     displayExpense();
   }
 
@@ -102,14 +101,14 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
-    DeltaValueStore deltas = requestObject.getDeltaValueStore();
-    deltas.set(ExpenseRecord.description, expense, nameText.getText());
-    deltas.set(ExpenseRecord.category, expense, categoryText.getText());
+    ExpenseRecord editableExpense = requestObject.edit(expense);
+    editableExpense.setDescription(nameText.getText());
+    editableExpense.setCategory(categoryText.getText());
 
     // TODO(jgw): validate amount (in dollars -- database is in pennies)
     String amountText = priceText.getText();
     double amount = Double.parseDouble(amountText);
-    deltas.set(ExpenseRecord.amount, expense, amount);
+    editableExpense.setAmount(amount);
 
     // TODO(jgw): Use non-deprecated date methods for this.
     Date date = new Date(
@@ -117,7 +116,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
         dateMonth.getSelectedIndex(),
         dateDay.getSelectedIndex() + 1
     );
-    deltas.set(ExpenseRecord.created, expense, date);
+    editableExpense.setCreated(date);
 
     // TODO: wait throbber
     requestObject.fire(new Receiver<Void>() {

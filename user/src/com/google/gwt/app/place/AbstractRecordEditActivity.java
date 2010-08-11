@@ -15,7 +15,6 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -75,7 +74,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   }
 
   public String mayStop() {
-    if (requestObject != null && requestObject.getDeltaValueStore().isChanged()) {
+    if (requestObject != null && requestObject.isChanged()) {
       return "Are you sure you want to abandon your changes?";
     }
 
@@ -92,8 +91,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
 
   public void saveClicked() {
     assert requestObject != null;
-    DeltaValueStore theDeltas = requestObject.getDeltaValueStore();
-    if (!theDeltas.isChanged()) {
+    if (!requestObject.isChanged()) {
       return;
     }
     view.setEnabled(false);
@@ -128,7 +126,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
           exit();
         } else {
           requestObject = toCommit;
-          requestObject.getDeltaValueStore().clearUsed();
+          requestObject.clearUsed();
           view.setEnabled(true);
         }
       }
@@ -183,10 +181,10 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
 
   private void doStart(final Display display, R record) {
     setRequestObject(record);
+    R editableRecord = requestObject.edit(record);
     view.setEnabled(true);
-    view.setValue(record);
+    view.setValue(editableRecord);
     view.showErrors(null);
     display.showActivityWidget(view);
-    view.setDeltaValueStore(requestObject.getDeltaValueStore());
   }
 }

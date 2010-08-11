@@ -29,9 +29,6 @@ import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
-import com.google.gwt.valuestore.shared.impl.RecordSchema;
-import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,7 +105,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         "Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
     builder.setHeader("pageurl", Location.getHref());
     builder.setRequestData(ClientRequestHelper.getRequestString(requestObject.getRequestData().getRequestMap(
-        ((DeltaValueStoreJsonImpl) requestObject.getDeltaValueStore()).toJson())));
+        ((AbstractRequest) requestObject).deltaValueStore.toJson())));
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {

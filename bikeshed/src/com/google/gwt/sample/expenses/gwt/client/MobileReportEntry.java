@@ -17,10 +17,8 @@ package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.sample.expenses.gwt.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -86,8 +84,8 @@ public class MobileReportEntry extends Composite implements MobilePage {
   public void create(Long reporterId) {
     report = (ReportRecord) requestFactory.create(ReportRecord.class);
     requestObject = requestFactory.reportRequest().persist(report);
-    DeltaValueStore deltas = requestObject.getDeltaValueStore();
-    deltas.set(ReportRecord.reporterKey, report, reporterId);
+    ReportRecord editableReport = requestObject.edit(report);
+    report.setReporterKey(reporterId);
     displayReport();
   }
 
@@ -112,16 +110,15 @@ public class MobileReportEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
-    DeltaValueStore deltas = requestObject.getDeltaValueStore();
-    deltas.set(ReportRecord.purpose, report, purposeText.getText());
-    deltas.set(ReportRecord.notes, report, notesText.getText());
-    deltas.set(ReportRecord.department, report,
-        departmentList.getValue(departmentList.getSelectedIndex()));
+    ReportRecord editableReport = requestObject.edit(report);
+    editableReport.setPurpose(purposeText.getText());
+    editableReport.setNotes(notesText.getText());
+    editableReport.setDepartment(departmentList.getValue(departmentList.getSelectedIndex()));
 
     // TODO(jgw): Use non-deprecated date methods for this.
     Date date = new Date(dateYear.getSelectedIndex() + 100,
         dateMonth.getSelectedIndex(), dateDay.getSelectedIndex() + 1);
-    deltas.set(ExpenseRecord.created, report, date);
+    editableReport.setCreated(date);
 
     // TODO: wait throbber
     requestObject.fire(new Receiver<Void>() {

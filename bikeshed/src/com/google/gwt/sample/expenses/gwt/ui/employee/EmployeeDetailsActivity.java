@@ -18,7 +18,6 @@ package com.google.gwt.sample.expenses.gwt.ui.employee;
 import com.google.gwt.app.place.AbstractActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordDetailsView;
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
@@ -80,8 +79,7 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
     }
     
     RequestObject<Void> deleteRequest = requests.employeeRequest().remove(view.getValue());
-    DeltaValueStore deltas = deleteRequest.getDeltaValueStore();
-    deltas.delete(view.getValue());
+    deleteRequest.delete(view.getValue());
     deleteRequest.fire(new Receiver<Void>() {
 
       public void onSuccess(Void ignore, Set<SyncResult> response) {

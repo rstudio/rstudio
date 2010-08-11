@@ -46,4 +46,16 @@ public interface EmployeeRecord extends Record {
   Long getSupervisorKey();
 
   String getUserName();
+
+  boolean isChanged();
+
+  void setDepartment(String department);
+
+  void setDisplayName(String displayName);
+
+  void setPassword(String password);
+
+  void setSupervisorKey(Long supervisorKey);
+
+  void setUserName(String userName);
 }

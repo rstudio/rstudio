@@ -50,4 +50,18 @@ public interface ReportRecord extends Record {
   String getPurpose();
   
   Long getReporterKey();
+
+  boolean isChanged();
+
+  void setApprovedSupervisorKey(Long approvedSupervisorKey);
+
+  void setCreated(Date created);
+
+  void setDepartment(String department);
+
+  void setNotes(String notes);
+
+  void setPurpose(String purpose);
+
+  void setReporterKey(Long reporterKey);
 }

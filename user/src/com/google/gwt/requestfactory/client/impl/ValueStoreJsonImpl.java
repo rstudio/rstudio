@@ -18,7 +18,6 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.valuestore.shared.WriteOperation;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 
 import java.util.HashMap;
 import java.util.Map;

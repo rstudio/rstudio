@@ -43,6 +43,10 @@ import com.google.gwt.requestfactory.client.impl.AbstractJsonObjectRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractShortRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractVoidRequest;
+import com.google.gwt.requestfactory.client.impl.RecordImpl;
+import com.google.gwt.requestfactory.client.impl.RecordJsoImpl;
+import com.google.gwt.requestfactory.client.impl.RecordSchema;
+import com.google.gwt.requestfactory.client.impl.RecordToTypeMap;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
@@ -55,10 +59,6 @@ import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.RecordChangedEvent;
 import com.google.gwt.valuestore.shared.WriteOperation;
-import com.google.gwt.valuestore.shared.impl.RecordImpl;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
-import com.google.gwt.valuestore.shared.impl.RecordSchema;
-import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
 
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -204,6 +204,7 @@ public class RequestFactoryGenerator extends Generator {
       sw.outdent();
       sw.println("}");
 
+      // getter methods
       for (JField field : publicRecordType.getFields()) {
         JType fieldType = field.getType();
         if (propertyType.getErasedType() == fieldType.getErasedType()) {
@@ -219,6 +220,29 @@ public class RequestFactoryGenerator extends Generator {
               returnType.getQualifiedSourceName(), capitalize(field.getName())));
           sw.indent();
           sw.println(String.format("return get(%s);", field.getName()));
+          sw.outdent();
+          sw.println("}");
+        }
+      }
+
+      // setter methods
+      for (JField field : publicRecordType.getFields()) {
+        JType fieldType = field.getType();
+        if (propertyType.getErasedType() == fieldType.getErasedType()) {
+          JParameterizedType parameterized = fieldType.isParameterized();
+          if (parameterized == null) {
+            logger.log(TreeLogger.ERROR, fieldType
+                + " must have its param type set.");
+            throw new UnableToCompleteException();
+          }
+          JClassType returnType = parameterized.getTypeArgs()[0];
+          sw.println();
+          String varName = field.getName();
+          sw.println(String.format("public void set%s(%s %s) {",
+              capitalize(field.getName()), returnType.getQualifiedSourceName(),
+              varName));
+          sw.indent();
+          sw.println(String.format("set(this.%s, this, %s);", field.getName(), varName));
           sw.outdent();
           sw.println("}");
         }
@@ -534,7 +558,7 @@ public class RequestFactoryGenerator extends Generator {
       if ("com.google.gwt.valuestore.shared.PropertyReference".equals(parameter.getType().getQualifiedBinaryName())) {
         sb.append(".get()");
       }
-      JClassType classType = parameter.getType().isClass();
+      JClassType classType = parameter.getType().isClassOrInterface();
       if (classType != null
           && classType.isAssignableTo(typeOracle.findType(Record.class.getName()))) {
         sb.append(".getId()");

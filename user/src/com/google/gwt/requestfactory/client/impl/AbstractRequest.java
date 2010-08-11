@@ -15,10 +15,10 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.Record;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,8 +31,8 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract implementation of {@link RequestObject}. Each request
- * stores a {@link DeltaValueStore}.
+ * Abstract implementation of {@link RequestObject}. Each request stores a
+ * {@link DeltaValueStoreJsonImpl}.
  * 
  * @param <T> return type
  * @param <R> type of this request object
@@ -41,7 +41,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     implements RequestObject<T> {
 
   protected final RequestFactoryJsonImpl requestFactory;
-  protected DeltaValueStore deltaValueStore;
+  protected DeltaValueStoreJsonImpl deltaValueStore;
   protected Receiver<T> receiver;
 
   private final Set<Property<?>> properties = new HashSet<Property<?>>();
@@ -49,7 +49,24 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public AbstractRequest(RequestFactoryJsonImpl requestFactory) {
     this.requestFactory = requestFactory;
     ValueStoreJsonImpl valueStore = requestFactory.getValueStore();
-    this.deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, requestFactory);
+    this.deltaValueStore = new DeltaValueStoreJsonImpl(valueStore,
+        requestFactory);
+  }
+
+  public void clearUsed() {
+    ((DeltaValueStoreJsonImpl) deltaValueStore).clearUsed();
+  }
+
+  public void delete(Record record) {
+    deltaValueStore.delete(record);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <P extends Record> P edit(P record) {
+    P returnRecordImpl = (P) ((RecordImpl) record).getSchema().create(
+        ((RecordImpl) record).asJso());
+    ((RecordImpl) returnRecordImpl).setDeltaValueStore(deltaValueStore);
+    return returnRecordImpl;
   }
 
   public void fire(Receiver<T> receiver) {
@@ -69,15 +86,15 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     return getThis();
   }
 
-  public DeltaValueStore getDeltaValueStore() {
-    return deltaValueStore;
-  }
-
   /**
    * @return the properties
    */
   public Set<Property<?>> getProperties() {
     return Collections.unmodifiableSet(properties);
+  }
+
+  public boolean isChanged() {
+    return ((DeltaValueStoreJsonImpl) deltaValueStore).isChanged();
   }
 
   public void reset() {

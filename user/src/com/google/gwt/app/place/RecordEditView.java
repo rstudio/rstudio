@@ -15,7 +15,6 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.user.client.ui.TakesValue;
 import com.google.gwt.valuestore.shared.Record;
 
@@ -42,11 +41,9 @@ public interface RecordEditView<R extends Record> extends TakesValue<R>,
     void saveClicked();
   }
   
-  DeltaValueStore getDeltaValueStore();
   boolean isChanged();
   void setCreating(boolean b);
   void setDelegate(Delegate delegate);
-  void setDeltaValueStore(DeltaValueStore deltas);
   void setEnabled(boolean b);
   
   // TODO needs to be Map<Property<?>, String> errors

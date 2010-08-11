@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared.impl;
+package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -36,7 +36,7 @@ public class RecordJsoImplTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.valuestore.ValueStoreSuite";
+    return "com.google.gwt.requestfactory.RequestFactoryTest";
   }
 
   public void testEmptyCopy() {

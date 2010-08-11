@@ -15,6 +15,8 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.valuestore.shared.Record;
+
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -25,16 +27,33 @@ package com.google.gwt.requestfactory.shared;
  * @param <T> The return type of objects in the corresponding response.
  */
 public interface RequestObject<T> {
-  // reset the DeltaValueStore.
-  void reset();
+
+  /**
+   * Enable a RequestObject to be reused again. For example, when the edit
+   * fails on the server.
+   */
+  void clearUsed();
+
+  // TODO: temporary hack so that I could get rid of DeltaValueStore. This will
+  // be removed once the hack for SYNC requests goes away.
+  void delete(Record record);
+
+  <P extends Record> P edit(P record);
 
   void fire(Receiver<T> receiver);
-
-  // can get access to a DeltaValueStore only in the context of a RequestObject.
-  DeltaValueStore getDeltaValueStore();
 
   RequestData getRequestData();
 
   void handleResponseText(String responseText);
+
+  /**
+   * Return true if there are outstanding changes that have not been
+   * communicated to the server yet. Note that it is illegal to call this method
+   * after a request using it has been fired.
+   */
+  boolean isChanged();
+
+  // reset the DeltaValueStore.
+  void reset();
   
 }

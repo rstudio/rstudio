@@ -17,14 +17,11 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.valuestore.client.SyncResultImpl;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.WriteOperation;
-import com.google.gwt.valuestore.shared.impl.RecordImpl;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,9 +33,12 @@ import java.util.Set;
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p> {@link DeltaValueStore} implementation.
+ * </p>
+ * Accumulates the local edits, made in the context of a
+ * {@link com.google.gwt.requestfactory.shared.RequestObject}.
+ * 
  */
-public class DeltaValueStoreJsonImpl implements DeltaValueStore {
+class DeltaValueStoreJsonImpl {
 
   static class ReturnRecord extends JavaScriptObject {
 
@@ -347,10 +347,6 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
         }
         break;
     }
-  }
-
-  public DeltaValueStore spawnDeltaView() {
-    throw new UnsupportedOperationException("Auto-generated method stub");
   }
 
   public String toJson() {

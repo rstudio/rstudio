@@ -39,7 +39,6 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.resources.client.ImageResource;
@@ -952,8 +951,8 @@ public class ExpenseDetails extends Composite
 
     // Submit the delta.
     RequestObject<Void> editRequest = expensesRequestFactory.reportRequest().persist(report);
-    DeltaValueStore deltas = editRequest.getDeltaValueStore();
-    deltas.set(ReportRecord.notes, report, pendingNotes);
+    ReportRecord editableReport = editRequest.edit(report);
+    editableReport.setNotes(pendingNotes);
     editRequest.fire(new Receiver<Void>() {
           public void onSuccess(Void ignore, Set<SyncResult> response) {
             // We expect onReportChanged to be called if there are no errors.
@@ -1035,10 +1034,10 @@ public class ExpenseDetails extends Composite
     }
 
     // Create a delta and sync with the value store.
-    RequestObject<Void> editRequest = expensesRequestFactory.expenseRequest().persist();
-    DeltaValueStore deltas = editRequest.getDeltaValueStore();
-    deltas.set(ExpenseRecord.approval, record, approval);
-    deltas.set(ExpenseRecord.reasonDenied, record, reasonDenied);
+    RequestObject<Void> editRequest = expensesRequestFactory.expenseRequest().persist(record);
+    ExpenseRecord editableRecord = editRequest.edit(record);
+    editableRecord.setApproval(approval);
+    editableRecord.setReasonDenied(reasonDenied);
     editRequest.fire(new Receiver<Void>() {
           public void onSuccess(Void ignore, Set<SyncResult> response) {
             String errorMessage = getErrorMessageFromSync(response);

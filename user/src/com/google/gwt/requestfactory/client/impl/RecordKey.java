@@ -15,9 +15,6 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.valuestore.shared.impl.RecordImpl;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
-import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
 /**
  * <p>

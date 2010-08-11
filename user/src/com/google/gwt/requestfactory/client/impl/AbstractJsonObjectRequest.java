@@ -18,8 +18,6 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
-import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
 import java.util.Collections;
 

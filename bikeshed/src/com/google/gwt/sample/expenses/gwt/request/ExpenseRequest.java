@@ -49,17 +49,16 @@ public interface ExpenseRequest {
   RecordListRequest<ExpenseRecord> findExpensesByReport(
       PropertyReference<Long> reportId);
 
-  // TODO: persist() and remove() methods are hacks for now.
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist();
+  RequestObject<Void> persist(ExpenseRecord record);
 
  /**
   * @return a request object
   */
   @Instance
-  RequestObject<Void> remove();
+  RequestObject<Void> remove(ExpenseRecord record);
 
 }

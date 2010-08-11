@@ -24,11 +24,6 @@ import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SimpleFooRecord;
 import com.google.gwt.valuestore.shared.WriteOperation;
-import com.google.gwt.valuestore.shared.impl.RecordImpl;
-import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
-import com.google.gwt.valuestore.shared.impl.RecordSchema;
-import com.google.gwt.valuestore.shared.impl.RecordToTypeMap;
-import com.google.gwt.valuestore.shared.impl.SimpleFooRecordImpl;
 
 import java.util.Date;
 
