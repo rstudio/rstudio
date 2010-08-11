@@ -28,6 +28,8 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
  */
 public final class InlineClientBundleGenerator extends
     AbstractClientBundleGenerator {
+
+  @Override
   protected AbstractResourceContext createResourceContext(TreeLogger logger,
       GeneratorContext context, JClassType resourceBundleType) {
     return new InlineResourceContext(logger.branch(TreeLogger.DEBUG,

@@ -46,6 +46,7 @@ class DOMItem {
   /**
    * Returns the hash code for this DOMItem.
    */
+  @Override
   public int hashCode() {
     return jsObject.hashCode();
   }

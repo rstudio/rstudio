@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 public final class StaticClientBundleGenerator extends
     AbstractClientBundleGenerator {
 
+  @Override
   protected AbstractResourceContext createResourceContext(TreeLogger logger,
       GeneratorContext context, JClassType resourceBundleType) {
     return new StaticResourceContext(logger.branch(TreeLogger.DEBUG,

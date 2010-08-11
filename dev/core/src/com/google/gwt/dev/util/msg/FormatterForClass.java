@@ -20,6 +20,7 @@ package com.google.gwt.dev.util.msg;
  */
 public final class FormatterForClass extends Formatter {
 
+  @Override
   public String format(Object toFormat) {
     return getNiceTypeName((Class<?>) toFormat);
   }

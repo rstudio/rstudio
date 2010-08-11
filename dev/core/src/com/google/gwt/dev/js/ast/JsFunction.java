@@ -118,10 +118,12 @@ public final class JsFunction extends JsLiteral implements HasName {
     return true;
   }
 
+  @Override
   public boolean isDefinitelyNotNull() {
     return true;
   }
 
+  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

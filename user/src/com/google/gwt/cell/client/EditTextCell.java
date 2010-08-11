@@ -126,6 +126,7 @@ public class EditTextCell extends AbstractEditableCell<
     super("click", "keyup", "keydown", "blur");
   }
 
+  @Override
   public boolean isEditing(Element element, String value, Object key) {
     ViewData viewData = getViewData(key);
     return viewData == null ? false : viewData.isEditing();

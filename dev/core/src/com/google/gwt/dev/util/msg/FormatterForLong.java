@@ -20,8 +20,8 @@ package com.google.gwt.dev.util.msg;
  */
 public final class FormatterForLong extends Formatter {
 
+  @Override
   public String format(Object toFormat) {
     return ((Long) toFormat).toString();
   }
-
 }

@@ -98,10 +98,12 @@ public class ReportDetailsActivity extends AbstractActivity implements
         Operation.EDIT));
   }
 
+  @Override
   public void onCancel() {
     onStop();
   }
 
+  @Override
   public void onStop() {
     display = null;
   }

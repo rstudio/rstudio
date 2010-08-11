@@ -29,14 +29,17 @@ public class ConditionWhenTypeIs extends Condition {
     this.exactTypeName = exactTypeName;
   }
 
+  @Override
   public String toString() {
     return "<when-type-is class='" + exactTypeName + "'/>";
   }
 
+  @Override
   protected boolean doEval(TreeLogger logger, DeferredBindingQuery query) {
     return exactTypeName.equals(query.getTestType());
   }
 
+  @Override
   protected String getEvalAfterMessage(String testType, boolean result) {
     if (result) {
       return "Yes, the requested type was an exact match";
@@ -45,6 +48,7 @@ public class ConditionWhenTypeIs extends Condition {
     }
   }
 
+  @Override
   protected String getEvalBeforeMessage(String testType) {
     return toString();
   }

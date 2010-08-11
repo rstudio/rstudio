@@ -139,6 +139,7 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
     return javaObject;
   }
 
+  @Override
   public HtmlPage getSynchronizationObject() {
     return htmlPage;
   }

@@ -22,8 +22,8 @@ import java.net.URL;
  */
 public class FormatterForURL extends Formatter {
 
+  @Override
   public String format(Object toFormat) {
     return ((URL) toFormat).toString();
   }
-
 }

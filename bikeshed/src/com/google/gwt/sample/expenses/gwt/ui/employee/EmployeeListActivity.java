@@ -81,6 +81,7 @@ public class EmployeeListActivity extends
     registration.removeHandler();
   }
 
+  @Override
   public void showDetails(EmployeeRecord record) {
     placeController.goTo(new EmployeeScaffoldPlace(record, Operation.DETAILS));
   }
@@ -96,6 +97,7 @@ public class EmployeeListActivity extends
     super.start(display);
   }
 
+  @Override
   protected RecordListRequest<EmployeeRecord> createRangeRequest(Range range) {
     return requests.employeeRequest().findEmployeeEntries(range.getStart(),
         range.getLength());

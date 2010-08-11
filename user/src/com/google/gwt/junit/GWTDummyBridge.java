@@ -32,6 +32,7 @@ class GWTDummyBridge extends GWTBridge {
   /**
    * @return null
    */
+  @Override
   public <T> T create(Class<?> classLiteral) {
     return null;
   }
@@ -39,6 +40,7 @@ class GWTDummyBridge extends GWTBridge {
   /**
    * @return the current version of GWT ({@link About#getGwtVersionNum()})
    */
+  @Override
   public String getVersion() {
     return About.getGwtVersionNum();
   }
@@ -46,6 +48,7 @@ class GWTDummyBridge extends GWTBridge {
   /**
    * @return false
    */
+  @Override
   public boolean isClient() {
     return false;
   }
@@ -54,6 +57,7 @@ class GWTDummyBridge extends GWTBridge {
    * Logs the message and throwable to the standard logger, with level {@link
    * Level#SEVERE}.
    */
+  @Override
   public void log(String message, Throwable e) {
     logger.log(Level.SEVERE, message, e);
   }

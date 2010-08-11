@@ -39,14 +39,17 @@ public class IdentitySets {
       this.item = item;
     }
 
+    @Override
     public boolean contains(Object o) {
       return o == item;
     }
 
+    @Override
     public Iterator<E> iterator() {
       return new SingletonIterator<E>(item);
     }
 
+    @Override
     public int size() {
       return 1;
     }

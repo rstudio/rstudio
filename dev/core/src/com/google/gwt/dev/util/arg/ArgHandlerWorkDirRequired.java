@@ -24,6 +24,7 @@ public class ArgHandlerWorkDirRequired extends ArgHandlerWorkDirOptional {
     super(option);
   }
 
+  @Override
   public String getPurpose() {
     return "The compiler work directory (must be writeable)";
   }

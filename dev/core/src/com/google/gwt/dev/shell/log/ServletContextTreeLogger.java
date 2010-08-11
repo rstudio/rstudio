@@ -30,15 +30,18 @@ public class ServletContextTreeLogger extends AbstractTreeLogger {
     this.ctx = ctx;
   }
 
+  @Override
   protected AbstractTreeLogger doBranch() {
     return new ServletContextTreeLogger(ctx);
   }
 
+  @Override
   protected void doCommitBranch(AbstractTreeLogger childBeingCommitted,
       Type type, String msg, Throwable caught, HelpInfo helpInfo) {
     doLog(childBeingCommitted.getBranchedIndex(), type, msg, caught, helpInfo);
   }
 
+  @Override
   protected void doLog(int indexOfLogEntryWithinParentLogger, Type type,
       String msg, Throwable caught, HelpInfo helpInfo) {
     if (caught != null) {

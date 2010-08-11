@@ -152,6 +152,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       this.file = file;
     }
 
+    @Override
     public void commit() {
       super.commit();
       FileOutputStream fos = null;
@@ -166,6 +167,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       }
     }
 
+    @Override
     public String optionalFileLocation() {
       return file.getAbsolutePath();
     }
@@ -197,6 +199,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       return result;
     }
 
+    @Override
     public void write(byte[] b) throws IOException {
       if (baos == null) {
         throw new IOException("stream closed");
@@ -204,6 +207,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       baos.write(b);
     }
 
+    @Override
     public void write(byte[] b, int off, int len) throws IOException {
       if (baos == null) {
         throw new IOException("stream closed");
@@ -211,6 +215,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       baos.write(b, off, len);
     }
 
+    @Override
     public void write(int b) throws IOException {
       if (baos == null) {
         throw new IOException("stream closed");

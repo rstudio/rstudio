@@ -79,6 +79,7 @@ public class EmployeeEditActivity extends
     return EmployeeRecord.class;
   }
 
+  @Override
   protected void setRequestObject(EmployeeRecord record) {
     requestObject = requests.employeeRequest().persist(record);
   }

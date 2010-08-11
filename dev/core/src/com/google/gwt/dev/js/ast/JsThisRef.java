@@ -34,6 +34,7 @@ public final class JsThisRef extends JsValueLiteral {
     return true;
   }
 
+  @Override
   public boolean isDefinitelyNotNull() {
     /*
      * You'd think that you could get a null this via function.call/apply, but
@@ -43,6 +44,7 @@ public final class JsThisRef extends JsValueLiteral {
     return true;
   }
 
+  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

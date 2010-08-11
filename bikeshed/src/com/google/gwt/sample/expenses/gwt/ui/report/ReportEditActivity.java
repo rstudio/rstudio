@@ -63,6 +63,7 @@ public class ReportEditActivity extends
     this.placeController = placeController;
   }
 
+  @Override
   protected void exit() {
     placeController.goTo(new ReportScaffoldPlace(getId(), Operation.DETAILS));
   }
@@ -72,12 +73,13 @@ public class ReportEditActivity extends
       Receiver<ReportRecord> callback) {
     requests.reportRequest().findReport(id).fire(callback);
   }
-  
+
   @Override
   protected Class getRecordClass() {
     return ReportRecord.class;
   }
 
+  @Override
   protected void setRequestObject(ReportRecord record) {
     requestObject = requests.reportRequest().persist(record);
   }

@@ -28,6 +28,7 @@ public class ConditionAny extends CompoundCondition {
   public ConditionAny() {
   }
 
+  @Override
   protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
       throws UnableToCompleteException {
     for (Iterator<Condition> iter = getConditions().iterator(); iter.hasNext();) {
@@ -39,6 +40,7 @@ public class ConditionAny extends CompoundCondition {
     return false;
   }
 
+  @Override
   protected String getEvalAfterMessage(String testType, boolean result) {
     if (result) {
       return "Yes: One or more subconditions was true";
@@ -47,6 +49,7 @@ public class ConditionAny extends CompoundCondition {
     }
   }
 
+  @Override
   protected String getEvalBeforeMessage(String testType) {
     return "Checking if any subcondition is true (<any>)";
   }

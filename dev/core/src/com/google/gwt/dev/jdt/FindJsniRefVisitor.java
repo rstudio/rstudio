@@ -51,6 +51,7 @@ public class FindJsniRefVisitor extends SafeASTVisitor {
     return Collections.unmodifiableSet(jsniRefs);
   }
 
+  @Override
   public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
     if (!methodDeclaration.isNative()) {
       return false;
@@ -94,6 +95,7 @@ public class FindJsniRefVisitor extends SafeASTVisitor {
       List<JsStatement> result = JsParser.parse(SourceOrigin.UNKNOWN,
           jsProgram.getScope(), sr);
       new JsVisitor() {
+        @Override
         public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
           String ident = x.getIdent();
           if (ident.charAt(0) == '@') {

@@ -137,6 +137,7 @@ public class StackTraceCreator {
       // No-op, relying on initializer call to collect()
     }
 
+    @Override
     public void fillInStackTrace(Throwable t) {
       JsArrayString stack = collect();
       JsArrayString locations = getLocation();

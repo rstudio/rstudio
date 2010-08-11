@@ -242,10 +242,12 @@ public class MessageTransport {
         super(DUMMY_CALLABLE);
       }
 
+      @Override
       public void set(Response v) {
         super.set(v);
       }
 
+      @Override
       public void setException(Throwable t) {
         super.setException(t);
       }

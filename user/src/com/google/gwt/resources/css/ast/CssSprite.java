@@ -80,6 +80,7 @@ public class CssSprite extends CssRule {
       return source.containsAll(c);
     }
 
+    @Override
     public boolean equals(Object o) {
       return source.equals(o);
     }
@@ -88,6 +89,7 @@ public class CssSprite extends CssRule {
       return source.get(index);
     }
 
+    @Override
     public int hashCode() {
       return source.hashCode();
     }
@@ -172,6 +174,7 @@ public class CssSprite extends CssRule {
     this.resourceFunction = resourceFunction;
   }
 
+  @Override
   public void traverse(CssVisitor visitor, Context context) {
     if (visitor.visit(this, context)) {
       visitor.acceptWithInsertRemove(selectors);

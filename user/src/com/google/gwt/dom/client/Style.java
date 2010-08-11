@@ -100,26 +100,31 @@ public class Style extends JavaScriptObject {
    */
   public enum BorderStyle implements HasCssName {
     NONE {
+      @Override
       public String getCssName() {
         return BORDER_STYLE_NONE;
       }
     },
     DOTTED {
+      @Override
       public String getCssName() {
         return BORDER_STYLE_DOTTED;
       }
     },
     DASHED {
+      @Override
       public String getCssName() {
         return BORDER_STYLE_DASHED;
       }
     },
     HIDDEN {
+      @Override
       public String getCssName() {
         return BORDER_STYLE_HIDDEN;
       }
     },
     SOLID {
+      @Override
       public String getCssName() {
         return BORDER_STYLE_SOLID;
       }
@@ -132,91 +137,109 @@ public class Style extends JavaScriptObject {
    */
   public enum Cursor implements HasCssName {
     DEFAULT {
+      @Override
       public String getCssName() {
         return CURSOR_DEFAULT;
       }
     },
     AUTO {
+      @Override
       public String getCssName() {
         return CURSOR_AUTO;
       }
     },
     CROSSHAIR {
+      @Override
       public String getCssName() {
         return CURSOR_CROSSHAIR;
       }
     },
     POINTER {
+      @Override
       public String getCssName() {
         return CURSOR_POINTER;
       }
     },
     MOVE {
+      @Override
       public String getCssName() {
         return CURSOR_MOVE;
       }
     },
     E_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_E_RESIZE;
       }
     },
     NE_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_NE_RESIZE;
       }
     },
     NW_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_NW_RESIZE;
       }
     },
     N_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_N_RESIZE;
       }
     },
     SE_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_SE_RESIZE;
       }
     },
     SW_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_SW_RESIZE;
       }
     },
     S_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_S_RESIZE;
       }
     },
     W_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_W_RESIZE;
       }
     },
     TEXT {
+      @Override
       public String getCssName() {
         return CURSOR_TEXT;
       }
     },
     WAIT {
+      @Override
       public String getCssName() {
         return CURSOR_WAIT;
       }
     },
     HELP {
+      @Override
       public String getCssName() {
         return CURSOR_HELP;
       }
     },
     COL_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_COL_RESIZE;
       }
     },
     ROW_RESIZE {
+      @Override
       public String getCssName() {
         return CURSOR_ROW_RESIZE;
       }
@@ -229,21 +252,25 @@ public class Style extends JavaScriptObject {
    */
   public enum Display implements HasCssName {
     NONE {
+      @Override
       public String getCssName() {
         return DISPLAY_NONE;
       }
     },
     BLOCK {
+      @Override
       public String getCssName() {
         return DISPLAY_BLOCK;
       }
     },
     INLINE {
+      @Override
       public String getCssName() {
         return DISPLAY_INLINE;
       }
     },
     INLINE_BLOCK {
+      @Override
       public String getCssName() {
         return DISPLAY_INLINE_BLOCK;
       }
@@ -256,16 +283,19 @@ public class Style extends JavaScriptObject {
    */
   public enum Float implements HasCssName {
     LEFT {
+      @Override
       public String getCssName() {
         return FLOAT_LEFT;
       }
     },
     RIGHT {
+      @Override
       public String getCssName() {
         return FLOAT_RIGHT;
       }
     },
     NONE {
+      @Override
       public String getCssName() {
         return FLOAT_NONE;
       }
@@ -278,16 +308,19 @@ public class Style extends JavaScriptObject {
    */
   public enum FontStyle implements HasCssName {
     NORMAL {
+      @Override
       public String getCssName() {
         return FONT_STYLE_NORMAL;
       }
     },
     ITALIC {
+      @Override
       public String getCssName() {
         return FONT_STYLE_ITALIC;
       }
     },
     OBLIQUE {
+      @Override
       public String getCssName() {
         return FONT_STYLE_OBLIQUE;
       }
@@ -300,21 +333,25 @@ public class Style extends JavaScriptObject {
    */
   public enum FontWeight implements HasCssName {
     NORMAL {
+      @Override
       public String getCssName() {
         return FONT_WEIGHT_NORMAL;
       }
     },
     BOLD {
+      @Override
       public String getCssName() {
         return FONT_WEIGHT_BOLD;
       }
     },
     BOLDER {
+      @Override
       public String getCssName() {
         return FONT_WEIGHT_BOLDER;
       }
     },
     LIGHTER {
+      @Override
       public String getCssName() {
         return FONT_WEIGHT_LIGHTER;
       }
@@ -327,46 +364,55 @@ public class Style extends JavaScriptObject {
    */
   public enum ListStyleType implements HasCssName {
     NONE {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_NONE;
       }
     },
     DISC {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_DISC;
       }
     },
     CIRCLE {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_CIRCLE;
       }
     },
     SQUARE {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_SQUARE;
       }
     },
     DECIMAL {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_DECIMAL;
       }
     },
     LOWER_ALPHA {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_LOWER_ALPHA;
       }
     },
     UPPER_ALPHA {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_UPPER_ALPHA;
       }
     },
     LOWER_ROMAN {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_LOWER_ROMAN;
       }
     },
     UPPER_ROMAN {
+      @Override
       public String getCssName() {
         return LIST_STYLE_TYPE_UPPER_ROMAN;
       }
@@ -379,21 +425,25 @@ public class Style extends JavaScriptObject {
    */
   public enum Overflow implements HasCssName {
     VISIBLE {
+      @Override
       public String getCssName() {
         return OVERFLOW_VISIBLE;
       }
     },
     HIDDEN {
+      @Override
       public String getCssName() {
         return OVERFLOW_HIDDEN;
       }
     },
     SCROLL {
+      @Override
       public String getCssName() {
         return OVERFLOW_SCROLL;
       }
     },
     AUTO {
+      @Override
       public String getCssName() {
         return OVERFLOW_AUTO;
       }
@@ -406,21 +456,25 @@ public class Style extends JavaScriptObject {
    */
   public enum Position implements HasCssName {
     STATIC {
+      @Override
       public String getCssName() {
         return POSITION_STATIC;
       }
     },
     RELATIVE {
+      @Override
       public String getCssName() {
         return POSITION_RELATIVE;
       }
     },
     ABSOLUTE {
+      @Override
       public String getCssName() {
         return POSITION_ABSOLUTE;
       }
     },
     FIXED {
+      @Override
       public String getCssName() {
         return POSITION_FIXED;
       }
@@ -433,21 +487,25 @@ public class Style extends JavaScriptObject {
    */
   public enum TextDecoration implements HasCssName {
     NONE {
+      @Override
       public String getCssName() {
         return TEXT_DECORATION_NONE;
       }
     },
     UNDERLINE {
+      @Override
       public String getCssName() {
         return TEXT_DECORATION_UNDERLINE;
       }
     },
     OVERLINE {
+      @Override
       public String getCssName() {
         return TEXT_DECORATION_OVERLINE;
       }
     },
     LINE_THROUGH {
+      @Override
       public String getCssName() {
         return TEXT_DECORATION_LINE_THROUGH;
       }
@@ -460,41 +518,49 @@ public class Style extends JavaScriptObject {
    */
   public enum VerticalAlign implements HasCssName {
     BASELINE {
+      @Override
       public String getCssName() {
         return VERTICAL_ALIGN_BASELINE;
       }
     },
     SUB {
+      @Override
       public String getCssName() {
         return VERTICAL_ALIGN_SUB;
       }
     },
     SUPER {
+      @Override
       public String getCssName() {
         return VERTICAL_ALIGN_SUPER;
       }
     },
     TOP {
+      @Override
       public String getCssName() {
         return VERTICAL_ALIGN_TOP;
       }
     },
     TEXT_TOP {
+      @Override
       public String getCssName() {
         return VERTICAL_ALIGN_TEXT_TOP;
       }
     },
     MIDDLE {
+      @Override
       public String getCssName() {
         return VERTICAL_ALIGN_MIDDLE;
       }
     },
     BOTTOM {
+      @Override
       public String getCssName() {
         return VERTICAL_ALIGN_BOTTOM;
       }
     },
     TEXT_BOTTOM {
+      @Override
       public String getCssName() {
         return VERTICAL_ALIGN_TEXT_BOTTOM;
       }
@@ -507,11 +573,13 @@ public class Style extends JavaScriptObject {
    */
   public enum Visibility implements HasCssName {
     VISIBLE {
+      @Override
       public String getCssName() {
         return VISIBILITY_VISIBLE;
       }
     },
     HIDDEN {
+      @Override
       public String getCssName() {
         return VISIBILITY_HIDDEN;
       }

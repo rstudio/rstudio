@@ -129,6 +129,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
    * 
    * @param widget the widget to be added
    */
+  @Override
   public void add(Widget widget) {
     insert(widget, getWidgetCount());
   }

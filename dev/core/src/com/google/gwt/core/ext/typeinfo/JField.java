@@ -136,6 +136,7 @@ public class JField implements HasAnnotations, HasMetaData {
     this.type = type;
   }
 
+  @Override
   public String toString() {
     String[] names = TypeOracle.modifierBitsToNames(modifierBits);
     StringBuffer sb = new StringBuffer();

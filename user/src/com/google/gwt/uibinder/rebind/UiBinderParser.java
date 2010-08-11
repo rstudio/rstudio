@@ -40,24 +40,28 @@ public class UiBinderParser {
 
   private enum Resource {
     data {
+      @Override
       void create(UiBinderParser parser, XMLElement elem)
           throws UnableToCompleteException {
         parser.createData(elem);
       }
     },
     image {
+      @Override
       void create(UiBinderParser parser, XMLElement elem)
           throws UnableToCompleteException {
         parser.createImage(elem);
       }
     },
     style {
+      @Override
       void create(UiBinderParser parser, XMLElement elem)
           throws UnableToCompleteException {
         parser.createStyle(elem);
       }
     },
     with {
+      @Override
       void create(UiBinderParser parser, XMLElement elem)
           throws UnableToCompleteException {
         parser.createResource(elem);

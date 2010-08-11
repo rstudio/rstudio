@@ -20,8 +20,8 @@ package com.google.gwt.dev.util.msg;
  */
 public final class FormatterForInteger extends Formatter {
 
+  @Override
   public String format(Object toFormat) {
     return ((Integer) toFormat).toString();
   }
-
 }

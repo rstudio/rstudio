@@ -175,6 +175,7 @@ public class JsModVisitor extends JsVisitor {
     }
   }
 
+  @Override
   protected JsExpression doAcceptLvalue(JsExpression expr) {
     return new LvalueContext().traverse(expr);
   }

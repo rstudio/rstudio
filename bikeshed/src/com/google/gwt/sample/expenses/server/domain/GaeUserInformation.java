@@ -36,6 +36,7 @@ public class GaeUserInformation extends UserInformation {
     super(redirectUrl);
   }
   
+  @Override
   public String getEmail() {
     User user = userService.getCurrentUser();
     if (user == null) {
@@ -44,6 +45,7 @@ public class GaeUserInformation extends UserInformation {
     return user.getEmail();
   }
 
+  @Override
   public Long getId() {
     User user = userService.getCurrentUser();
     if (user == null) {
@@ -52,14 +54,17 @@ public class GaeUserInformation extends UserInformation {
     return new Long(user.hashCode());
   }
   
+  @Override
   public String getLoginUrl() {
     return userService.createLoginURL(redirectUrl);
   }
   
+  @Override
   public String getLogoutUrl() {
     return userService.createLogoutURL(redirectUrl);
   }
   
+  @Override
   public String getName() {
     User user = userService.getCurrentUser();
     if (user == null) {
@@ -68,6 +73,7 @@ public class GaeUserInformation extends UserInformation {
     return user.getNickname();
   }
   
+  @Override
   public boolean isUserLoggedIn() {
     return userService.isUserLoggedIn();
   }
@@ -76,6 +82,7 @@ public class GaeUserInformation extends UserInformation {
    * Does nothing since in GAE authentication, the unique ID is provided by
    * the user service and is based on a hash in the User object.
    */
+  @Override
   public void setId(Long id) {
     // Do nothing
   }

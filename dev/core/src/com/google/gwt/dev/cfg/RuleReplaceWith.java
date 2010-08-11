@@ -34,11 +34,13 @@ public class RuleReplaceWith extends Rule {
     return replacementTypeName;
   }
 
+  @Override
   public String realize(TreeLogger logger, StandardGeneratorContext context,
       String typeName) throws UnableToCompleteException {
     return replacementTypeName;
   }
 
+  @Override
   public String toString() {
     return "<replace-with class='" + replacementTypeName + "'/>";
   }

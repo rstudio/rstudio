@@ -30,14 +30,17 @@ public class ArgHandlerWarDir extends ArgHandlerDir {
     this.option = option;
   }
 
+  @Override
   public String[] getDefaultArgs() {
     return new String[]{getTag(), "war"};
   }
 
+  @Override
   public String getPurpose() {
     return "The directory into which deployable output files will be written (defaults to 'war')";
   }
 
+  @Override
   public String getTag() {
     return "-war";
   }

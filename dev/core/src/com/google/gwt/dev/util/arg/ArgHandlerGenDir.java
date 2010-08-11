@@ -30,10 +30,12 @@ public final class ArgHandlerGenDir extends ArgHandlerDir {
     this.option = option;
   }
 
+  @Override
   public String getPurpose() {
     return "Debugging: causes normally-transient generated types to be saved in the specified directory";
   }
 
+  @Override
   public String getTag() {
     return "-gen";
   }

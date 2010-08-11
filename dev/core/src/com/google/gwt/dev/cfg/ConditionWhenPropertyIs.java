@@ -45,10 +45,12 @@ public class ConditionWhenPropertyIs extends Condition {
     return Sets.create(propName);
   }
 
+  @Override
   public String toString() {
     return "<when-property-is name='" + propName + "' value='" + value + "'/>";
   }
 
+  @Override
   protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
       throws UnableToCompleteException {
     PropertyOracle propertyOracle = query.getPropertyOracle();
@@ -76,6 +78,7 @@ public class ConditionWhenPropertyIs extends Condition {
     }
   }
 
+  @Override
   protected String getEvalAfterMessage(String testType, boolean result) {
     if (result) {
       return "Yes, the property value matched";
@@ -84,6 +87,7 @@ public class ConditionWhenPropertyIs extends Condition {
     }
   }
 
+  @Override
   protected String getEvalBeforeMessage(String testType) {
     return toString();
   }

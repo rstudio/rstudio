@@ -22,18 +22,17 @@ import java.io.File;
  */
 public abstract class ArgHandlerFile extends ArgHandler {
 
+  @Override
   public String[] getDefaultArgs() {
     return null;
   }
 
-  public abstract String getPurpose();
-
-  public abstract String getTag();
-
+  @Override
   public String[] getTagArgs() {
     return new String[]{"file"};
   }
 
+  @Override
   public int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
       setFile(new File(args[startIndex + 1]));

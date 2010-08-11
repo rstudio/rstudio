@@ -57,6 +57,7 @@ public final class ReflectiveParser {
 
     private Schema defaultSchema;
 
+    @Override
     public void characters(char[] ch, int start, int length)
         throws SAXException {
       int lineNumber = locator.getLineNumber();
@@ -115,6 +116,7 @@ public final class ReflectiveParser {
       }
     }
 
+    @Override
     public void endElement(String namespaceURI, String localName, String elem)
         throws SAXException {
       int lineNumber = locator.getLineNumber();
@@ -154,10 +156,12 @@ public final class ReflectiveParser {
       }
     }
 
+    @Override
     public void setDocumentLocator(Locator locator) {
       this.locator = locator;
     }
 
+    @Override
     public void startElement(String namespaceURI, String localName,
         String elemName, Attributes atts) throws SAXException {
       int lineNumber = locator.getLineNumber();

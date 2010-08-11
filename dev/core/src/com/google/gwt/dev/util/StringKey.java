@@ -59,6 +59,7 @@ public abstract class StringKey implements Comparable<StringKey> {
   /**
    * Delegates to {@link #compareTo}.
    */
+  @Override
   public final boolean equals(Object o) {
     if (o == null) {
       return false;

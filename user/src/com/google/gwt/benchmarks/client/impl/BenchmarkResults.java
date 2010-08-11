@@ -66,6 +66,7 @@ public class BenchmarkResults extends JUnitResult {
     return "BenchmarkResults {" + toStringInner() + "}";
   }
 
+  @Override
   protected String toStringInner() {
     return super.toStringInner() + ", trials: " + trials + ", sourceRef: "
         + sourceRef;

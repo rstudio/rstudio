@@ -86,10 +86,12 @@ public class JPrimitiveType extends JType {
     return "Class.createForPrimitive";
   }
 
+  @Override
   public String getJavahSignatureName() {
     return signatureName;
   }
 
+  @Override
   public String getJsniSignatureName() {
     return signatureName;
   }

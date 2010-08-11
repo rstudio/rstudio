@@ -46,22 +46,27 @@ public class ArgHandlerLogLevel extends ArgHandler {
     this.options = options;
   }
 
+  @Override
   public String[] getDefaultArgs() {
     return new String[] {getTag(), getDefaultLogLevel().name()};
   }
 
+  @Override
   public String getPurpose() {
     return "The level of logging detail: " + OPTIONS_STRING;
   }
 
+  @Override
   public String getTag() {
     return "-logLevel";
   }
 
+  @Override
   public String[] getTagArgs() {
     return new String[] {"level"};
   }
 
+  @Override
   public int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
       try {

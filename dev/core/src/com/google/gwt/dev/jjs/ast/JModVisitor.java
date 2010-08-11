@@ -318,6 +318,7 @@ public class JModVisitor extends JVisitor {
     }
   }
 
+  @Override
   public JExpression acceptLvalue(JExpression expr) {
     LvalueContext ctx = new LvalueContext();
     try {

@@ -187,6 +187,7 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     }
   }
 
+  @Override
   public final String generate(TreeLogger logger,
       GeneratorContext generatorContext, String typeName)
       throws UnableToCompleteException {

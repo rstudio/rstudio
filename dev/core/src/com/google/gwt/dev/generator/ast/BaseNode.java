@@ -22,6 +22,7 @@ public abstract class BaseNode implements Node {
 
   public abstract String toCode();
 
+  @Override
   public String toString() {
     return toCode();
   }

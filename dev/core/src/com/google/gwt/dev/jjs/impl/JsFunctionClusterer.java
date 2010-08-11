@@ -55,6 +55,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     super(js, statementRanges);
   }
 
+  @Override
   public void exec() {
     functionIndices = new LinkedList<Integer>();
 

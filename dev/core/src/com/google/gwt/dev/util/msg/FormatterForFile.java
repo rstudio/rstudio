@@ -22,8 +22,8 @@ import java.io.File;
  */
 public final class FormatterForFile extends Formatter {
 
+  @Override
   public String format(Object toFormat) {
     return ((File) toFormat).getAbsolutePath();
   }
-
 }

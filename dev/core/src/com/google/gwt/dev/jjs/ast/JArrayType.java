@@ -56,6 +56,7 @@ public class JArrayType extends JReferenceType {
     return elementType;
   }
 
+  @Override
   public String getJavahSignatureName() {
     String s = leafType.getJavahSignatureName();
     for (int i = 0; i < dims; ++i) {
@@ -64,6 +65,7 @@ public class JArrayType extends JReferenceType {
     return s;
   }
 
+  @Override
   public String getJsniSignatureName() {
     String s = leafType.getJsniSignatureName();
     for (int i = 0; i < dims; ++i) {

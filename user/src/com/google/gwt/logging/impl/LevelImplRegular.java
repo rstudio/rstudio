@@ -129,6 +129,7 @@ public class LevelImplRegular implements LevelImpl {
     return LevelImplRegular.SEVERE;
   }
 
+  @Override
   public String toString() {
     return getName();
   }

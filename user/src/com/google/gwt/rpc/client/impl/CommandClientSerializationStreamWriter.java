@@ -69,6 +69,7 @@ public class CommandClientSerializationStreamWriter extends
   /**
    * Type is passed in to handle primitive types.
    */
+  @Override
   protected ValueCommand makeValue(Class<?> type, Object value)
       throws SerializationException {
     SerializeFunction customSerializer;

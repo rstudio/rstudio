@@ -29,6 +29,7 @@ class DoubleAttributeParser extends StrictAttributeParser {
     super(converter, doubleType, logger);
   }
 
+  @Override
   public String parse(String value) throws UnableToCompleteException {
     try {
       Double.parseDouble(value);

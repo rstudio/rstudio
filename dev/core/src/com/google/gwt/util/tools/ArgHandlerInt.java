@@ -20,12 +20,7 @@ package com.google.gwt.util.tools;
  */
 public abstract class ArgHandlerInt extends ArgHandler {
 
-  public abstract String getPurpose();
-
-  public abstract String getTag();
-
-  public abstract String[] getTagArgs();
-
+  @Override
   public int handle(String[] args, int startIndex) {
     int value;
     if (startIndex + 1 < args.length) {
@@ -44,6 +39,7 @@ public abstract class ArgHandlerInt extends ArgHandler {
     return -1;
   }
 
+  @Override
   public boolean isRequired() {
     return false;
   }

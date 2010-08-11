@@ -61,6 +61,7 @@ public class JSONNull extends JSONValue {
     return "null";
   }
 
+  @Override
   native JavaScriptObject getUnwrapper() /*-{
     return @com.google.gwt.json.client.JSONNull::unwrap();
   }-*/;

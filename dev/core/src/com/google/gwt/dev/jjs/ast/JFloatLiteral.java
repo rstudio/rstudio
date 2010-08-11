@@ -67,6 +67,7 @@ public class JFloatLiteral extends JValueLiteral {
     return value;
   }
 
+  @Override
   public Object getValueObj() {
     return new Float(value);
   }

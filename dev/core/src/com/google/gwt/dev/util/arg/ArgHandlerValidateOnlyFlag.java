@@ -28,14 +28,17 @@ public final class ArgHandlerValidateOnlyFlag extends ArgHandlerFlag {
     this.option = option;
   }
 
+  @Override
   public String getPurpose() {
     return "Validate all source code, but do not compile";
   }
 
+  @Override
   public String getTag() {
     return "-validateOnly";
   }
 
+  @Override
   public boolean setFlag() {
     option.setValidateOnly(true);
     return true;

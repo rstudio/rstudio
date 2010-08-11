@@ -33,11 +33,13 @@ public class RuleGenerateWith extends Rule {
     this.generatorClass = generatorClass;
   }
 
+  @Override
   public String realize(TreeLogger logger, StandardGeneratorContext context,
       String typeName) throws UnableToCompleteException {
     return context.runGenerator(logger, generatorClass, typeName);
   }
 
+  @Override
   public String toString() {
     return "<generate-with class='" + generatorClass.getName() + "'/>";
   }

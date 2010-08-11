@@ -53,6 +53,7 @@ public class JBooleanLiteral extends JValueLiteral {
     return value;
   }
 
+  @Override
   public Object getValueObj() {
     return Boolean.valueOf(value);
   }

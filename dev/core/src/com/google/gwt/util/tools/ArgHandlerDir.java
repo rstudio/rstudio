@@ -22,14 +22,12 @@ import java.io.File;
  */
 public abstract class ArgHandlerDir extends ArgHandler {
 
-  public abstract String getPurpose();
-
-  public abstract String getTag();
-
+  @Override
   public String[] getTagArgs() {
     return new String[]{"dir"};
   }
 
+  @Override
   public int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
       setDir(new File(args[startIndex + 1]));

@@ -48,6 +48,7 @@ public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
   }
 
   // Causes source generation to delegate to the one visitor
+  @Override
   public final String toString() {
     DefaultTextOutput out = new DefaultTextOutput(false);
     ToStringGenerationVisitor v = new ToStringGenerationVisitor(out);

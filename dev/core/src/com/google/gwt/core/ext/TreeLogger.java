@@ -192,6 +192,7 @@ public abstract class TreeLogger {
       return this;
     }
 
+    @Override
     public boolean isLoggable(Type type) {
       return false;
     }

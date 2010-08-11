@@ -42,10 +42,12 @@ public final class JsNumberLiteral extends JsValueLiteral {
     return value != 0.0;
   }
 
+  @Override
   public boolean isDefinitelyNotNull() {
     return true;
   }
 
+  @Override
   public boolean isDefinitelyNull() {
     return false;
   }

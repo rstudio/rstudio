@@ -46,10 +46,12 @@ public final class ScaffoldDetailsActivities implements
 
   public Activity getActivity(ScaffoldPlace place) {
     return place.acceptFilter(new BaseScaffoldPlaceFilter<Activity>(null) {
+      @Override
       public Activity filter(EmployeeScaffoldPlace place) {
         return employeeActivities.getActivity(place);
       }
 
+      @Override
       public Activity filter(ReportScaffoldPlace place) {
         return reportActivities.getActivity(place);
       }

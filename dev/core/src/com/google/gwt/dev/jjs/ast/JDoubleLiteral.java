@@ -67,6 +67,7 @@ public class JDoubleLiteral extends JValueLiteral {
     return value;
   }
 
+  @Override
   public Object getValueObj() {
     return new Double(value);
   }

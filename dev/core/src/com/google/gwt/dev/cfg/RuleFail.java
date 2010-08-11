@@ -24,6 +24,7 @@ import com.google.gwt.dev.javac.StandardGeneratorContext;
  */
 public class RuleFail extends Rule {
 
+  @Override
   public String realize(TreeLogger logger, StandardGeneratorContext context,
       String typeName) throws UnableToCompleteException {
     logger.log(TreeLogger.ERROR, "Deferred binding request failed for type '"
@@ -31,8 +32,8 @@ public class RuleFail extends Rule {
     throw new UnableToCompleteException();
   }
 
+  @Override
   public String toString() {
     return "<fail>";
   }
-
 }

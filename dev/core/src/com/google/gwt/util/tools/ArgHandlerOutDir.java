@@ -20,16 +20,18 @@ package com.google.gwt.util.tools;
  */
 public abstract class ArgHandlerOutDir extends ArgHandlerDir {
 
+  @Override
   public String[] getDefaultArgs() {
     return new String[] {getTag(), System.getProperty("user.dir")};
   }
 
+  @Override
   public String getPurpose() {
     return "The directory to write output files into (defaults to current)";
   }
 
+  @Override
   public String getTag() {
     return "-out";
   }
-
 }

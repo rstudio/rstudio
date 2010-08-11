@@ -50,6 +50,7 @@ public class JMethod extends JAbstractMethod {
     return enclosingType;
   }
 
+  @Override
   public String getJsniSignature() {
     StringBuilder sb = new StringBuilder("@");
     sb.append(getEnclosingType().getQualifiedSourceName());

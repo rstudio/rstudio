@@ -74,10 +74,12 @@ class XMLParserImplStandard extends XMLParserImpl {
     return result;
   }-*/;
  
+  @Override
   protected String toStringImpl(ProcessingInstructionImpl node) {
     return toStringImpl((NodeImpl) node);
   }
   
+  @Override
   protected native String toStringImpl(NodeImpl node) /*-{
     var jsNode = node.@com.google.gwt.xml.client.impl.DOMItem::getJsObject()();
     return new XMLSerializer().serializeToString(jsNode);

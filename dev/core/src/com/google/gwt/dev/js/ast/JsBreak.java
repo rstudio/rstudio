@@ -46,6 +46,7 @@ public final class JsBreak extends JsStatement {
     v.endVisit(this, ctx);
   }
 
+  @Override
   public boolean unconditionalControlBreak() {
     return true;
   }

@@ -22,8 +22,8 @@ import java.lang.reflect.Method;
  */
 public final class FormatterForMethod extends Formatter {
 
+  @Override
   public String format(Object toFormat) {
     return ((Method) toFormat).getName();
   }
-
 }

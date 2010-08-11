@@ -20,6 +20,7 @@ package com.google.gwt.dev.util.msg;
  */
 public final class FormatterForStringArray extends Formatter {
 
+  @Override
   public String format(Object toFormat) {
     StringBuffer sb = new StringBuffer();
     String[] ss = (String[]) toFormat;
@@ -31,5 +32,4 @@ public final class FormatterForStringArray extends Formatter {
     }
     return sb.toString();
   }
-
 }

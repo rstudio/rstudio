@@ -74,6 +74,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     assertEquals(oracle.getJavaLangObject(), lowerBoundWildcard.getErasedType());
   }
 
+  @Override
   public void testGetMethods() throws NotFoundException {
     super.testGetMethods();
   }

@@ -214,6 +214,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     super.setWidth(width);
   }
 
+  @Override
   protected Element getContainerElement() {
     return containerElem;
   }

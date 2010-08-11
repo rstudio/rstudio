@@ -1343,6 +1343,7 @@ public class GenerateJavaScriptAST {
          */
         private JsNameRef dontReplaceCtor;
 
+        @Override
         public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
           // Replace invocation to ctor with a new op.
           if (x.getQualifier() instanceof JsNameRef) {
@@ -1424,6 +1425,7 @@ public class GenerateJavaScriptAST {
           }
         }
 
+        @Override
         public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
           if (x.getQualifier() instanceof JsNameRef) {
             dontReplaceCtor = (JsNameRef) x.getQualifier();

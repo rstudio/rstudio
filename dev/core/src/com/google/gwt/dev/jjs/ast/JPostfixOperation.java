@@ -26,11 +26,11 @@ public class JPostfixOperation extends JUnaryOperation {
     super(info, op, arg);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       super.traverse(visitor, ctx);
     }
     visitor.endVisit(this, ctx);
   }
-
 }

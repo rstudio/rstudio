@@ -41,6 +41,7 @@ public class AssertionNormalizer {
    */
   private class AssertNormalizeVisitor extends JModVisitor {
 
+    @Override
     public void endVisit(JAssertStatement x, Context ctx) {
       JExpression lhs = x.getTestExpr();
       String methodName = "Exceptions.throwAssertionError"

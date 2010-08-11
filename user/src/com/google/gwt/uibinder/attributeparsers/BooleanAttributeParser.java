@@ -29,6 +29,7 @@ class BooleanAttributeParser extends StrictAttributeParser {
     super(converter, booleanType, logger);
   }
 
+  @Override
   public String parse(String value) throws UnableToCompleteException {
     if (value.equals("true") || value.equals("false")) {
       return value;

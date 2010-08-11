@@ -44,6 +44,7 @@ public class JsIEBlockTextTransformer extends JsAbstractTextTransformer {
   /**
    * Do not perform clustering, only fix up IE7 block issue.
    */
+  @Override
   public void exec() {
     doSplits = statementRanges.numStatements() > MAX_BLOCK_SIZE;
     if (doSplits) {
@@ -58,6 +59,7 @@ public class JsIEBlockTextTransformer extends JsAbstractTextTransformer {
   /**
    * Record start of statement, and optionally inject new open block.
    */
+  @Override
   protected void beginStatement(StringBuilder newJs,
       ArrayList<Integer> starts) {
     if (doSplits && currentStatementCount == 0) {
@@ -79,6 +81,7 @@ public class JsIEBlockTextTransformer extends JsAbstractTextTransformer {
    * Record end of statement, and optionally inject close block, if block is
    * full.
    */
+  @Override
   protected void endStatement(StringBuilder newJs, ArrayList<Integer> ends) {
     currentStatementCount++;
     if (doSplits && currentStatementCount == MAX_BLOCK_SIZE) {

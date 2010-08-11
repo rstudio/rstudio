@@ -20,6 +20,7 @@ package com.google.gwt.dev.util.msg;
  */
 public final class FormatterToString extends Formatter {
 
+  @Override
   public String format(Object toFormat) {
     return toFormat.toString();
   }

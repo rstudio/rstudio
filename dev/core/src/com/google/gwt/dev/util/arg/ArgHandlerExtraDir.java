@@ -32,10 +32,12 @@ public final class ArgHandlerExtraDir extends ArgHandlerDir {
     this.option = option;
   }
 
+  @Override
   public String getPurpose() {
     return "The directory into which extra files, not intended for deployment, will be written";
   }
 
+  @Override
   public String getTag() {
     return "-extra";
   }

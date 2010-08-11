@@ -29,6 +29,7 @@ class IntAttributeParser extends StrictAttributeParser {
     super(converter, intType, logger);
   }
 
+  @Override
   public String parse(String value) throws UnableToCompleteException {
     try {
       Integer.parseInt(value);

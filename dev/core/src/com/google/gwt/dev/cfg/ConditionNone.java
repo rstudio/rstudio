@@ -29,6 +29,7 @@ public class ConditionNone extends CompoundCondition {
   public ConditionNone() {
   }
 
+  @Override
   protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
       throws UnableToCompleteException {
     for (Iterator<Condition> iter = getConditions().iterator(); iter.hasNext();) {
@@ -40,6 +41,7 @@ public class ConditionNone extends CompoundCondition {
     return true;
   }
 
+  @Override
   protected String getEvalAfterMessage(String testType, boolean result) {
     if (result) {
       return "Yes: All subconditions were false";
@@ -48,6 +50,7 @@ public class ConditionNone extends CompoundCondition {
     }
   }
 
+  @Override
   protected String getEvalBeforeMessage(String testType) {
     return "Checking if all subconditions are false (<none>)";
   }

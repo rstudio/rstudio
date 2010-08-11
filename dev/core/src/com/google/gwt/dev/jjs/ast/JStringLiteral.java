@@ -47,6 +47,7 @@ public class JStringLiteral extends JValueLiteral {
     return value;
   }
 
+  @Override
   public Object getValueObj() {
     return value;
   }

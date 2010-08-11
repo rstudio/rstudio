@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  * Subclass for converting strings into Integer.
  */
 public class AttributeConverterForInteger extends AttributeConverter {
+
+  @Override
   public Object convertToArg(Schema schema, int lineNumber, String elemName,
       String attrName, String attrValue) throws UnableToCompleteException {
     try {

@@ -43,6 +43,7 @@ import java.util.Iterator;
  */
 public class AsyncProxyGenerator extends Generator {
 
+  @Override
   public String generate(TreeLogger logger, GeneratorContext generatorContext,
       String typeName) throws UnableToCompleteException {
 

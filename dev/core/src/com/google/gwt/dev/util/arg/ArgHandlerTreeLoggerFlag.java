@@ -28,9 +28,11 @@ public final class ArgHandlerTreeLoggerFlag extends ArgHandlerFlag {
     this.option = option;
   }
 
+  @Override
   public String getPurpose() {
     return "Logs output in a graphical tree view";
   }
+  @Override
 
   public String getTag() {
     return "-treeLogger";
@@ -41,6 +43,7 @@ public final class ArgHandlerTreeLoggerFlag extends ArgHandlerFlag {
     return true;
   }
 
+  @Override
   public boolean setFlag() {
     option.setUseGuiLogger(true);
     return true;

@@ -31,6 +31,7 @@ public class DefaultTextOutput extends AbstractTextOutput {
     setPrintWriter(out = new PrintWriter(sw));
   }
 
+  @Override
   public String toString() {
     out.flush();
     if (sw != null) {

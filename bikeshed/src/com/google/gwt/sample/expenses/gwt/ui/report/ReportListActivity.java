@@ -81,6 +81,7 @@ public final class ReportListActivity extends
     registration.removeHandler();
   }
 
+  @Override
   public void showDetails(ReportRecord record) {
     placeController.goTo(new ReportScaffoldPlace(record, Operation.DETAILS));
   }
@@ -95,6 +96,7 @@ public final class ReportListActivity extends
     super.start(display);
   }
 
+  @Override
   protected RecordListRequest<ReportRecord> createRangeRequest(Range range) {
     return requests.reportRequest().findReportEntries(range.getStart(),
         range.getLength());

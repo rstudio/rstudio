@@ -32,30 +32,36 @@ public final class HandlerMethod {
   // A schema level that ignores everything.
   private static final Schema sArbitraryChildHandler = new Schema() {
 
+    @Override
     public void onBadAttributeValue(int lineNumber, String elemName,
         String attrName, String attrValue, Class<?> paramType) {
       // Ignore
     }
 
+    @Override
     public void onHandlerException(int lineNumber, String elemLocalName,
         Method method, Throwable e) {
       // Ignore
     }
 
+    @Override
     public void onMissingAttribute(int lineNumber, String elemName,
         String argName) {
       // Ignore
     }
 
+    @Override
     public void onUnexpectedAttribute(int lineNumber, String elemName,
         String attrName, String attrValue) {
       // Ignore
     }
 
+    @Override
     public void onUnexpectedChild(int lineNumber, String elemName) {
       // Ignore
     }
 
+    @Override
     public void onUnexpectedElement(int lineNumber, String elemName) {
       // Ignore
     }

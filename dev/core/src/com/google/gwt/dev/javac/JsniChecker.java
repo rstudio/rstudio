@@ -100,15 +100,18 @@ public class JsniChecker {
       suppressWarningsStack.pop();
     }
 
+    @Override
     public void endVisit(TypeDeclaration typeDeclaration, ClassScope scope) {
       suppressWarningsStack.pop();
     }
 
+    @Override
     public void endVisit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       suppressWarningsStack.pop();
     }
 
+    @Override
     public void endVisitValid(TypeDeclaration typeDeclaration, BlockScope scope) {
       suppressWarningsStack.pop();
     }
@@ -125,12 +128,14 @@ public class JsniChecker {
       return true;
     }
 
+    @Override
     public boolean visit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       suppressWarningsStack.push(getSuppressedWarnings(typeDeclaration.annotations));
       return true;
     }
 
+    @Override
     public boolean visitValid(TypeDeclaration typeDeclaration, BlockScope scope) {
       suppressWarningsStack.push(getSuppressedWarnings(typeDeclaration.annotations));
       return true;

@@ -130,6 +130,7 @@ public final class JsHoister {
       stack.push(toReturn);
     }
 
+    @Override
     public void endVisit(JsNameOf x, JsContext<JsExpression> ctx) {
       JsNameOf toReturn = new JsNameOf(x.getSourceInfo(), x.getName());
       stack.push(toReturn);

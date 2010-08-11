@@ -31,22 +31,27 @@ public final class ArgHandlerScriptStyle extends ArgHandler {
     this.option = option;
   }
 
+  @Override
   public String[] getDefaultArgs() {
     return new String[] {getTag(), "obfuscate"};
   }
 
+  @Override
   public String getPurpose() {
     return "Script output style: OBF[USCATED], PRETTY, or DETAILED (defaults to OBF)";
   }
 
+  @Override
   public String getTag() {
     return "-style";
   }
 
+  @Override
   public String[] getTagArgs() {
     return new String[] {"style"};
   }
 
+  @Override
   public int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
       String style = args[startIndex + 1].toLowerCase(Locale.ENGLISH);

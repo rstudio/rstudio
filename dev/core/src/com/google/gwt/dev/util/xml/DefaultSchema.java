@@ -43,6 +43,7 @@ public class DefaultSchema extends Schema {
         new AttributeConverterForBoolean());
   }
 
+  @Override
   public void onBadAttributeValue(int line, String elem, String attr,
       String value, Class<?> paramType) throws UnableToCompleteException {
     Messages.XML_ATTRIBUTE_CONVERSION_ERROR.log(logger, line, attr, paramType,
@@ -50,30 +51,35 @@ public class DefaultSchema extends Schema {
     throw new UnableToCompleteException();
   }
 
+  @Override
   public void onHandlerException(int line, String elem, Method method,
       Throwable e) throws UnableToCompleteException {
     Messages.XML_ELEMENT_HANDLER_EXCEPTION.log(logger, line, elem, e);
     throw new UnableToCompleteException();
   }
 
+  @Override
   public void onMissingAttribute(int line, String elem, String attr)
       throws UnableToCompleteException {
     Messages.XML_REQUIRED_ATTRIBUTE_MISSING.log(logger, elem, line, attr, null);
     throw new UnableToCompleteException();
   }
 
+  @Override
   public void onUnexpectedAttribute(int line, String elem, String attr,
       String value) throws UnableToCompleteException {
     Messages.XML_ATTRIBUTE_UNEXPECTED.log(logger, elem, line, attr, null);
     throw new UnableToCompleteException();
   }
 
+  @Override
   public void onUnexpectedChild(int line, String childElem)
       throws UnableToCompleteException {
     Messages.XML_CHILDREN_NOT_ALLOWED.log(logger, childElem, line, null);
     throw new UnableToCompleteException();
   }
 
+  @Override
   public void onUnexpectedElement(int line, String elem)
       throws UnableToCompleteException {
     Messages.XML_ELEMENT_UNEXPECTED.log(logger, line, elem, null);

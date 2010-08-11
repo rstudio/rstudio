@@ -48,6 +48,7 @@ public class JsThrow extends JsStatement {
     v.endVisit(this, ctx);
   }
 
+  @Override
   public boolean unconditionalControlBreak() {
     return true;
   }

@@ -67,6 +67,7 @@ public final class ViewerServiceTreeLogger extends AbstractTreeLogger {
       this.indexOfLogEntry = indexOfLogEntry;
     }
 
+    @Override
     public void send() {
       sendEntry(indexOfLogEntry, type, msg, caught, helpInfo);
     }

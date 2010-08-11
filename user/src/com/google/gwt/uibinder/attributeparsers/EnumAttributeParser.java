@@ -38,6 +38,7 @@ class EnumAttributeParser extends StrictAttributeParser {
     }
   }
 
+  @Override
   public String parse(String value) throws UnableToCompleteException {
     JEnumConstant c = values.get(value);
     if (c != null) {

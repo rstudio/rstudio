@@ -68,6 +68,7 @@ public class ValueBox<T> extends ValueBoxBase<T> {
     assert InputElement.as(element).getType().equalsIgnoreCase("text");
   }
 
+  @Override
   public Direction getDirection() {
     return BidiUtils.getDirectionOnElement(getElement());
   }
@@ -90,6 +91,7 @@ public class ValueBox<T> extends ValueBoxBase<T> {
     return getInputElement().getSize();
   }
 
+  @Override
   public void setDirection(Direction direction) {
     BidiUtils.setDirectionOnElement(getElement(), direction);
   }

@@ -27,6 +27,7 @@ public class GWTBridgeImpl extends GWTBridge {
     new ThreadLocal<String>() {
     private int counter = 0;
         
+    @Override
     public String initialValue() {
       return "DevModeThread" + ++counter;
     }

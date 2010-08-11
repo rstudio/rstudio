@@ -33,6 +33,7 @@ public class NetProxy {
       setName(fromPort + " => " + toPort + " #" + connections);
     }
 
+    @Override
     protected void recordBytesTransferred(byte[] bytes, int avail) {
       addBytesSent(avail, bytes);
     }
@@ -47,6 +48,7 @@ public class NetProxy {
       this.toSocket = toSocket;
     }
 
+    @Override
     public void run() {
       try {
         InputStream fromSideInput = fromSocket.getInputStream();
@@ -88,6 +90,7 @@ public class NetProxy {
       setName(fromPort + " <= " + toPort + " #" + connections);
     }
 
+    @Override
     protected void recordBytesTransferred(byte[] bytes, int avail) {
       addBytesReceived(avail, bytes);
     }

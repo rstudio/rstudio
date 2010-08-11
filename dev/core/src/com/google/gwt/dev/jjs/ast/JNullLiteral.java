@@ -40,6 +40,7 @@ public class JNullLiteral extends JValueLiteral {
     return JNullType.INSTANCE;
   }
 
+  @Override
   public Object getValueObj() {
     return null;
   }

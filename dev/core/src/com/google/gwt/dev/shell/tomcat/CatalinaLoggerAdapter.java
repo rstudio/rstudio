@@ -27,23 +27,28 @@ class CatalinaLoggerAdapter extends LoggerBase {
     this.logger = logger;
   }
 
+  @Override
   public void log(Exception exception, String msg) {
     logger.log(TreeLogger.WARN, msg, exception);
   }
 
+  @Override
   public void log(String msg) {
     logger.log(TreeLogger.INFO, msg, null);
   }
 
+  @Override
   public void log(String message, int verbosity) {
     TreeLogger.Type type = mapVerbosityToLogType(verbosity);
     logger.log(type, message, null);
   }
 
+  @Override
   public void log(String msg, Throwable throwable) {
     logger.log(TreeLogger.WARN, msg, throwable);
   }
 
+  @Override
   public void log(String message, Throwable throwable, int verbosity) {
     TreeLogger.Type type = mapVerbosityToLogType(verbosity);
     logger.log(type, message, throwable);

@@ -22,14 +22,12 @@ import com.google.gwt.dev.util.Empty;
  */
 public abstract class ArgHandlerFlag extends ArgHandler {
 
-  public abstract String getPurpose();
-
-  public abstract String getTag();
-
+  @Override
   public String[] getTagArgs() {
     return Empty.STRINGS;
   }
 
+  @Override
   public int handle(String[] args, int startIndex) {
     if (setFlag()) {
       return 0;
@@ -38,10 +36,10 @@ public abstract class ArgHandlerFlag extends ArgHandler {
     }
   }
 
+  @Override
   public boolean isRequired() {
     return false;
   }
 
   public abstract boolean setFlag();
-
 }

@@ -27,6 +27,7 @@ import java.net.URLConnection;
 abstract class EmmaStrategy {
 
   private static class NoEmmaStrategy extends EmmaStrategy {
+    @Override
     public byte[] getEmmaClassBytes(byte[] classBytes, String slashedName,
         long unitLastModified) {
       return classBytes;
@@ -34,6 +35,7 @@ abstract class EmmaStrategy {
   }
 
   private static class PreinstrumentedEmmaStrategy extends EmmaStrategy {
+    @Override
     public byte[] getEmmaClassBytes(byte[] classBytes, String slashedName,
         long unitLastModified) {
       // Check for an existing class on the classpath.

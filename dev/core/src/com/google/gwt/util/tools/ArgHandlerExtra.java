@@ -22,10 +22,12 @@ public abstract class ArgHandlerExtra extends ArgHandler {
 
   public abstract boolean addExtraArg(String arg);
 
+  @Override
   public final String getTag() {
     return null;
   }
 
+  @Override
   public int handle(String[] args, int startIndex) {
     if (addExtraArg(args[startIndex])) {
       return 0;
@@ -34,6 +36,7 @@ public abstract class ArgHandlerExtra extends ArgHandler {
     }
   }
 
+  @Override
   public boolean isRequired() {
     return false;
   }

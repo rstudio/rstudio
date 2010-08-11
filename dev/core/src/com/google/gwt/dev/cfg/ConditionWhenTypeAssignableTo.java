@@ -37,10 +37,12 @@ public class ConditionWhenTypeAssignableTo extends Condition {
     return assignableToTypeName;
   }
 
+  @Override
   public String toString() {
     return "<when-assignable class='" + assignableToTypeName + "'/>";
   }
 
+  @Override
   protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
       throws UnableToCompleteException {
     TypeOracle typeOracle = query.getTypeOracle();
@@ -69,6 +71,7 @@ public class ConditionWhenTypeAssignableTo extends Condition {
     }
   }
 
+  @Override
   protected String getEvalAfterMessage(String testType, boolean result) {
     if (result) {
       return "Yes, the requested type was assignable";
@@ -77,6 +80,7 @@ public class ConditionWhenTypeAssignableTo extends Condition {
     }
   }
 
+  @Override
   protected String getEvalBeforeMessage(String testType) {
     return toString();
   }

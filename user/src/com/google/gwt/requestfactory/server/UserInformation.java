@@ -34,30 +34,37 @@ public abstract class UserInformation {
       super(redirectUrl);
     }
   
+    @Override
     public String getEmail() {
       return "";
     }
 
+    @Override
     public Long getId() {
       return this.id;
     }
 
+    @Override
     public String getLoginUrl() {
       return "";
     }
   
+    @Override
     public String getLogoutUrl() {
       return "";
     }
   
+    @Override
     public String getName() {
       return "";
     }
   
+    @Override
     public boolean isUserLoggedIn() {
       return true;
     }
 
+    @Override
     public void setId(Long id) {
       this.id = id;
     }

@@ -30,10 +30,12 @@ public class ArgHandlerWorkDirOptional extends ArgHandlerDir {
     this.option = option;
   }
 
+  @Override
   public String getPurpose() {
     return "The compiler's working directory for internal use (must be writeable; defaults to a system temp dir)";
   }
 
+  @Override
   public String getTag() {
     return "-workDir";
   }
@@ -42,5 +44,4 @@ public class ArgHandlerWorkDirOptional extends ArgHandlerDir {
   public void setDir(File dir) {
     option.setWorkDir(dir);
   }
-
 }

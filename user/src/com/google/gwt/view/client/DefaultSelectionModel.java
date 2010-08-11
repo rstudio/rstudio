@@ -24,11 +24,11 @@ import java.util.Map;
  * A convenience {@link SelectionModel} that allows records to be selected
  * according to a subclass-defined rule, plus a list of positive or negative
  * exceptions.
- * 
+ *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
- * 
+ *
  * @param <T> the data type of records in the list
  */
 public abstract class DefaultSelectionModel<T> extends
@@ -53,14 +53,14 @@ public abstract class DefaultSelectionModel<T> extends
    * implement this method in order to define the default selection behavior.
    */
   public abstract boolean isDefaultSelected(T object);
-  
+
   /**
    * If the given object is marked as an exception, return the exception value.
    * Otherwise, return the value of isDefaultSelected for the given object.
    */
   public boolean isSelected(T object) {
     resolveChanges();
-    
+
     // Check exceptions first
     Object key = getKey(object);
     Boolean exception = exceptions.get(key);
@@ -81,8 +81,9 @@ public abstract class DefaultSelectionModel<T> extends
     selectionChanges.put(object, selected);
     scheduleSelectionChangeEvent();
   }
-  
+
   // Coalesce selection changes since the last event firing
+  @Override
   protected void fireSelectionChangeEvent() {
     if (isEventScheduled()) {
       setEventCancelled(true);
@@ -95,7 +96,7 @@ public abstract class DefaultSelectionModel<T> extends
 
   /**
    * Copies the exceptions map into a user-supplied map.
-   * 
+   *
    * @param output the user supplied map
    * @return the user supplied map
    */
@@ -104,7 +105,7 @@ public abstract class DefaultSelectionModel<T> extends
     output.putAll(exceptions);
     return output;
   }
-  
+
   private boolean resolveChanges() {
     boolean changed = false;
     for (Map.Entry<T, Boolean> entry : selectionChanges.entrySet()) {

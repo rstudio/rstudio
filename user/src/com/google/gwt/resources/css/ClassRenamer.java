@@ -71,6 +71,7 @@ public class ClassRenamer extends CssVisitor {
     /**
      * For debugging use only.
      */
+    @Override
     public String toString() {
       if (this == UNREFERENCED_EXTERNAL) {
         return "Unreferenced external class name";

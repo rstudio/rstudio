@@ -36,8 +36,8 @@ public enum JUnaryOperator {
     return this == INC || this == DEC;
   }
 
+  @Override
   public String toString() {
     return new String(getSymbol());
   }
-
 }
