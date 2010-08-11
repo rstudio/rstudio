@@ -103,6 +103,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -271,6 +272,8 @@ public class GenerateJavaAST {
     private JMethodBody currentMethodBody;
 
     private MethodScope currentMethodScope;
+
+    private Map<JField, JParameter> currentOuterThisRefParams;
 
     private int[] currentSeparatorPositions;
 
@@ -672,13 +675,6 @@ public class GenerateJavaAST {
         currentMethodBody = ctor.getBody();
         currentMethodScope = x.scope;
 
-        JMethodCall superOrThisCall = null;
-        ExplicitConstructorCall ctorCall = x.constructorCall;
-        if (ctorCall != null) {
-          superOrThisCall = (JMethodCall) dispatch("processExpression",
-              ctorCall);
-        }
-
         /*
          * Determine if we have an explicit this call. The presence of an
          * explicit this call indicates we can skip certain initialization steps
@@ -686,11 +682,12 @@ public class GenerateJavaAST {
          * steps are 1) assigning synthetic args to fields and 2) running
          * initializers.
          */
-        boolean hasExplicitThis = (ctorCall != null)
-            && !ctorCall.isSuperAccess();
+        boolean hasExplicitThis = (x.constructorCall != null)
+            && !x.constructorCall.isSuperAccess();
 
         JClassType enclosingType = ctor.getEnclosingType();
         JBlock block = currentMethodBody.getBlock();
+        currentOuterThisRefParams = Maps.create();
 
         /*
          * All synthetic fields must be assigned, unless we have an explicit
@@ -710,6 +707,8 @@ public class GenerateJavaAST {
                   block.addStmt(JProgram.createAssignmentStmt(info,
                       createVariableRef(info, field), createVariableRef(info,
                           param)));
+                  currentOuterThisRefParams = Maps.put(
+                      currentOuterThisRefParams, field, param);
                 }
               }
             }
@@ -727,19 +726,20 @@ public class GenerateJavaAST {
           }
         }
 
-        // Enums: wire up synthetic name/ordinal params to the super method.
-        if (enclosingType.isEnumOrSubclass() != null) {
-          assert (superOrThisCall != null);
-          JVariableRef enumNameRef = createVariableRef(
-              superOrThisCall.getSourceInfo(), ctor.getParams().get(0));
-          superOrThisCall.addArg(0, enumNameRef);
-          JVariableRef enumOrdinalRef = createVariableRef(
-              superOrThisCall.getSourceInfo(), ctor.getParams().get(1));
-          superOrThisCall.addArg(1, enumOrdinalRef);
-        }
-
         // optional this or super constructor call
-        if (superOrThisCall != null) {
+        if (x.constructorCall != null) {
+          JMethodCall superOrThisCall = (JMethodCall) dispatch(
+              "processExpression", x.constructorCall);
+          // Enums: wire up synthetic name/ordinal params to the super method.
+          if (enclosingType.isEnumOrSubclass() != null) {
+            JVariableRef enumNameRef = createVariableRef(
+                superOrThisCall.getSourceInfo(), ctor.getParams().get(0));
+            superOrThisCall.addArg(0, enumNameRef);
+            JVariableRef enumOrdinalRef = createVariableRef(
+                superOrThisCall.getSourceInfo(), ctor.getParams().get(1));
+            superOrThisCall.addArg(1, enumOrdinalRef);
+          }
+
           superOrThisCall.setStaticDispatchOnly();
           block.addStmt(superOrThisCall.makeStatement());
         }
@@ -760,6 +760,7 @@ public class GenerateJavaAST {
         // user code (finally!)
         block.addStmts(processStatements(x.statements));
 
+        currentOuterThisRefParams = null;
         currentMethodScope = null;
         currentMethod = null;
       } catch (Throwable e) {
@@ -1969,18 +1970,21 @@ public class GenerateJavaAST {
       return call;
     }
 
-    private void addAllOuterThisRefs(List<? super JFieldRef> list,
+    private void addAllOuterThisRefs(List<? super JVariableRef> list,
         JExpression expr, JClassType classType) {
-      if (classType.getFields().size() > 0) {
-        JField field = classType.getFields().get(0);
-        /*
-         * In some circumstances, the outer this ref can be captured as a local
-         * value (val$this), in other cases, as a this ref (this$).
-         *
-         * TODO: investigate using more JDT node information as an alternative
-         */
-        if (field.getName().startsWith("this$")
-            || field.getName().startsWith("val$this$")) {
+      for (JField field : classType.getFields()) {
+        // This fields are always first.
+        if (!field.isThisRef()) {
+          break;
+        }
+        // In a constructor, use the local param instead of the field.
+        JParameter param = null;
+        if (currentOuterThisRefParams != null && expr instanceof JThisRef) {
+          param = currentOuterThisRefParams.get(field);
+        }
+        if (param != null) {
+          list.add(new JParameterRef(expr.getSourceInfo(), param));
+        } else {
           list.add(new JFieldRef(expr.getSourceInfo(), expr, field,
               currentClass));
         }
@@ -1988,7 +1992,8 @@ public class GenerateJavaAST {
     }
 
     private void addAllOuterThisRefsPlusSuperChain(
-        List<? super JFieldRef> workList, JExpression expr, JClassType classType) {
+        List<? super JVariableRef> workList, JExpression expr,
+        JClassType classType) {
       for (; classType != null; classType = classType.getSuperClass()) {
         addAllOuterThisRefs(workList, expr, classType);
       }

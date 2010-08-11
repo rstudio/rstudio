@@ -620,12 +620,12 @@ public class BuildTypeMap {
   }
 
   private JField createField(SyntheticArgumentBinding binding,
-      JDeclaredType enclosingType) {
+      JDeclaredType enclosingType, Disposition disposition) {
     JType type = getType(binding.type);
     SourceInfo info = enclosingType.getSourceInfo().makeChild(
         BuildDeclMapVisitor.class, "Field " + String.valueOf(binding.name));
     JField field = program.createField(info, String.valueOf(binding.name),
-        enclosingType, type, false, Disposition.FINAL);
+        enclosingType, type, false, disposition);
     info.addCorrelation(program.getCorrelator().by(field));
     if (binding.matchingField != null) {
       typeMap.put(binding.matchingField, field);
@@ -841,7 +841,7 @@ public class BuildTypeMap {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
             if (arg.matchingField != null) {
-              createField(arg, type);
+              createField(arg, type, Disposition.THIS_REF);
             }
           }
         }
@@ -849,7 +849,7 @@ public class BuildTypeMap {
         if (nestedBinding.outerLocalVariables != null) {
           for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
-            createField(arg, type);
+            createField(arg, type, Disposition.FINAL);
           }
         }
       }
