@@ -23,7 +23,6 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.requestfactory.shared.DeltaValueStore;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -67,7 +66,6 @@ public class ReportEditView extends Composite implements
   @UiField Element createTitle;
 
   private Delegate delegate;
-  private DeltaValueStore deltas;
 
   private ReportRecord record;
 
@@ -78,10 +76,6 @@ public class ReportEditView extends Composite implements
 
   public ReportEditView asWidget() {
     return this;
-  }
-
-  public DeltaValueStore getDeltaValueStore() {
-    return deltas;
   }
 
   public Set<Property<?>> getProperties() {
@@ -108,10 +102,6 @@ public class ReportEditView extends Composite implements
 
   public void setDelegate(Delegate delegate) {
     this.delegate = delegate;
-  }
-
-  public void setDeltaValueStore(DeltaValueStore deltas) {
-    this.deltas = deltas;
   }
 
   public void setEnabled(boolean enabled) {

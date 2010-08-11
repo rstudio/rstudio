@@ -173,7 +173,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
 
   /**
    * Called to fetch the string token needed to get a new record via
-   * {@link DeltaValueStore#create}.
+   * {@link com.google.gwt.requestfactory.shared.RequestFactory} create(Class)}.
    */
   protected abstract Class<? extends Record> getRecordClass();
 

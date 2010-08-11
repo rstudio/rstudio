@@ -37,7 +37,7 @@ public abstract class AbstractVoidRequest extends
   }
 
   public void handleResponseText(String responseText) {
-    Set<SyncResult> syncResults = ((DeltaValueStoreJsonImpl) deltaValueStore).commit(responseText);
+    Set<SyncResult> syncResults = deltaValueStore.commit(responseText);
     receiver.onSuccess(null, syncResults);
   }
 

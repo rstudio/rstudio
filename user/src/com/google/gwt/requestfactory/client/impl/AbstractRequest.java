@@ -54,7 +54,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   }
 
   public void clearUsed() {
-    ((DeltaValueStoreJsonImpl) deltaValueStore).clearUsed();
+    deltaValueStore.clearUsed();
   }
 
   public void delete(Record record) {
@@ -94,7 +94,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   }
 
   public boolean isChanged() {
-    return ((DeltaValueStoreJsonImpl) deltaValueStore).isChanged();
+    return deltaValueStore.isChanged();
   }
 
   public void reset() {
