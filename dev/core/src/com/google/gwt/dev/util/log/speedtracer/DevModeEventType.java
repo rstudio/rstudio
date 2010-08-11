@@ -27,27 +27,19 @@ public enum DevModeEventType implements EventType {
       "Teal"), //
   CREATE_UI("Create UI", "BlueViolet"), //
   GENERATED_UNITS_ADD("Generated units add", "Brown"), //
-  GENERATOR_RUN("Generator run", "Tomato"), //
   JAVA_TO_JS_CALL("Java to JS call", "LightSkyBlue"), //
   JETTY_STARTUP("Jetty startup", "Orchid"), //
-  JS_TO_JAVA_CALL("JS to Java call", "OrangeRed"), //
-  MODULE_DEF_LOAD("ModuleDef load", "Peru"), //
-  MODULE_DEF_NORMALIZE("ModuleDef normalize", "DarkKhaki"), //
-  MODULE_DEF_REFRESH("ModuleDef refresh", "DarkKhaki"), //
+  JS_TO_JAVA_CALL("JS to Java call", "Orange"), //
   MODULE_INIT("Module init", "Khaki"), //
-  MODULE_SPACE_CLASS_LOAD("ModuleSpace class load", "Ivory"), //
+  MODULE_SPACE_CLASS_LOAD("ModuleSpace class load", "MintCream"), //
   MODULE_SPACE_HOST_CREATE("ModuleSpaceHost create", "Peachpuff"), //
   MODULE_SPACE_HOST_READY("ModuleSpaceHost ready", "Linen"), //
   MODULE_SPACE_LOAD("ModuleSpace load", "LemonChiffon"), //
   MODULE_SPACE_REBIND_AND_CREATE("ModuleSpace rebindAndCreate", "Crimson"), //
   ON_MODULE_LOAD("onModuleLoad", "LightGreen"), //
-  REBIND("Rebind", "Tomato"), //
-  REBOUND_TYPE_CREATE("Rebound type create", "Crimson"), //
-  RESOURCE_ORACLE_REFRESH("ResourceOracle refresh", "Orange"), //
+  REBIND("Rebind", "DarkOrange"), //
   SLOW_STARTUP("Slow startup", "DarkSeaGreen"), //
-  STARTUP("Startup", "LimeGreen"), //
-  TYPE_ORACLE_ADD_NEW_UNITS("TypeOracle add new units", "Magenta"), //
-  VISIT_CLASS_FILE("Visit class file", "RoyalBlue");
+  STARTUP("Startup", "LimeGreen");
 
   final String cssColor;
   final String name;

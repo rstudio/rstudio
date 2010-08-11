@@ -28,7 +28,7 @@ public enum CompilerEventType implements EventType {
   JJS_COMPILE_PERMUTATION("JjsCompilePermutation", "Moccasin"), //
   DRAFT_OPTIMIZE("DraftOptimizer", "Blue"), //
   GENERATOR("Generator", "Red"), //
-  JDT_COMPILER("JdtCompiler", "FireBrick"), //
+  JDT_COMPILER("JdtCompiler", "Tomato"), //
   LINK("Link", "LawnGreen"), //
   MAKE_SOYC_ARTIFACTS("MakeSoycArtifacts", "Chartreuse"), //
   MODULE_DEF("ModuleDef", "BlueViolet"), //

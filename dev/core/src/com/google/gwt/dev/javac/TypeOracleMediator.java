@@ -56,7 +56,6 @@ import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
-import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
@@ -296,7 +295,10 @@ public class TypeOracleMediator {
   public void addNewUnits(TreeLogger logger,
       Collection<CompilationUnit> units) {
     Event typeOracleMediatorEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR);
+    
     // First collect all class data.
+    Event visitClassFileEvent = SpeedTracerLogger.start(
+        CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Visit Class Files");
     classMap = new HashMap<String, CollectClassData>();
     for (CompilationUnit unit : units) {
       if (!unit.isCompiled()) {
@@ -312,7 +314,10 @@ public class TypeOracleMediator {
         }
       }
     }
+    visitClassFileEvent.end();
 
+    Event identityEvent = SpeedTracerLogger.start(
+        CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Establish Identity");
     // Perform a shallow pass to establish identity for new and old types.
     classMapType = new HashMap<JRealClassType, CollectClassData>();
     allMethodArgs = new MethodArgNamesLookup();
@@ -337,7 +342,9 @@ public class TypeOracleMediator {
         }
       }
     }
+    identityEvent.end();
 
+    Event resolveEnclosingEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Resolve Enclosing Classes");
     // Hook up enclosing types
     TreeLogger branch = logger.branch(TreeLogger.SPAM,
         "Resolving enclosing classes");
@@ -348,7 +355,9 @@ public class TypeOracleMediator {
         it.remove();
       }
     }
+    resolveEnclosingEvent.end();
 
+    Event resolveUnresolvedEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Resolve Unresolved Types");
     // Resolve unresolved types.
     for (JRealClassType type : unresolvedTypes) {
       branch = logger.branch(TreeLogger.SPAM, "Resolving "
@@ -358,8 +367,11 @@ public class TypeOracleMediator {
         // TODO: should we do anything else here?
       }
     }
+    resolveUnresolvedEvent.end();
 
+    Event finishEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Finish");
     typeOracle.finish();
+    finishEvent.end();
 
     // no longer needed
     allMethodArgs = null;
@@ -548,8 +560,6 @@ public class TypeOracleMediator {
    * creating JRealClassType/JGenericType objects.
    */
   private CollectClassData processClass(CompiledClass compiledClass) {
-    Event visitClassFileEvent = SpeedTracerLogger.start(DevModeEventType.VISIT_CLASS_FILE);
-    
     byte[] classBytes = compiledClass.getBytes();
     ClassReader reader = new ClassReader(classBytes);
     CollectClassData mcv = new CollectClassData();
@@ -558,8 +568,6 @@ public class TypeOracleMediator {
       cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
     }
     reader.accept(cv, 0);
-    
-    visitClassFileEvent.end();    
     return mcv;
   }
 

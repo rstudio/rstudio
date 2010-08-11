@@ -503,7 +503,7 @@ public class JdtCompiler {
     compilerImpl = new CompilerImpl();
     compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     compilerImpl = null;
-    jdtCompilerEvent.end();
+    jdtCompilerEvent.end("# icus", "" + icus.size());
     lazyContentIdMap = null;
     return true;
   }

@@ -220,7 +220,8 @@ public class HostedModeClassRewriter {
    */
   public byte[] rewrite(TypeOracle typeOracle, String className,
       byte[] classBytes, Map<String, String> anonymousClassMap) {
-    Event classBytesRewriteEvent = SpeedTracerLogger.start(DevModeEventType.CLASS_BYTES_REWRITE);
+    Event classBytesRewriteEvent =
+        SpeedTracerLogger.start(DevModeEventType.CLASS_BYTES_REWRITE, "Class Name", className);
     String desc = toDescriptor(className);
     assert (!jsoIntfDescs.contains(desc));
 

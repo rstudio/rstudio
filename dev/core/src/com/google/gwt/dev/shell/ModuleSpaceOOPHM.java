@@ -105,7 +105,8 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
       Object[] args) throws Throwable {
     TreeLogger branch = host.getLogger().branch(TreeLogger.SPAM,
         "Invoke native method " + name, null);
-    Event javaToJsCallEvent = SpeedTracerLogger.start(DevModeEventType.JAVA_TO_JS_CALL);
+    Event javaToJsCallEvent =
+        SpeedTracerLogger.start(DevModeEventType.JAVA_TO_JS_CALL);
 
     CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
     JsValueOOPHM jsthis = new JsValueOOPHM();

@@ -169,7 +169,7 @@ public class OophmSessionHandler extends SessionHandlerServer {
   public synchronized TreeLogger loadModule(BrowserChannelServer channel,
       String moduleName, String userAgent, String url, String tabKey,
       String sessionKey, byte[] userAgentIcon) {
-    Event moduleInit = SpeedTracerLogger.start(DevModeEventType.MODULE_INIT);
+    Event moduleInit = SpeedTracerLogger.start(DevModeEventType.MODULE_INIT, "Module Name", moduleName);
     ModuleHandle moduleHandle = host.createModuleLogger(moduleName, userAgent,
         url, tabKey, sessionKey, channel, userAgentIcon);
     TreeLogger logger = moduleHandle.getLogger();

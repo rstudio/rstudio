@@ -91,7 +91,7 @@ public abstract class DevModeBase implements DoneCallback {
     public ModuleSpaceHost createModuleSpaceHost(ModuleHandle module,
         String moduleName) throws UnableToCompleteException {
       Event moduleSpaceHostCreateEvent =
-          SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_HOST_CREATE);
+          SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_HOST_CREATE, "Module Name", moduleName);
       // TODO(jat): add support for closing an active module
       TreeLogger logger = module.getLogger();
       try {

@@ -318,7 +318,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    * Runs the module's user startup code.
    */
   public final void onLoad(TreeLogger logger) throws UnableToCompleteException {
-    Event moduleSpaceLoad = SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_LOAD);
+    Event moduleSpaceLoadEvent = SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_LOAD);
 
     // Tell the host we're ready for business.
     //
@@ -434,7 +434,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       logger.log(TreeLogger.ERROR, unableToLoadMessage, caught);
       throw new UnableToCompleteException();
     } finally {
-      moduleSpaceLoad.end();
+      moduleSpaceLoadEvent.end();
     }
   }
 
@@ -453,6 +453,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       //
       String sourceName = BinaryName.toSourceName(requestedClassName);
       resultName = rebind(sourceName);
+      moduleSpaceRebindAndCreate.addData(
+          "Requested Class", requestedClassName, "Result Name", resultName);
       Class<?> resolvedClass = loadClassFromSourceName(resultName);
       if (Modifier.isAbstract(resolvedClass.getModifiers())) {
         msg = "Deferred binding result type '" + resultName
@@ -634,7 +636,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    */
   private Class<?> loadClassFromSourceName(String sourceName)
       throws ClassNotFoundException {
-    Event moduleSpaceClassLoad = SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_CLASS_LOAD);
+    Event moduleSpaceClassLoad = SpeedTracerLogger.start(
+        DevModeEventType.MODULE_SPACE_CLASS_LOAD, "Source Name", sourceName);
     try {
       String toTry = sourceName;
       while (true) {

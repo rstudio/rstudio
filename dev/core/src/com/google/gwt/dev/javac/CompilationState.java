@@ -84,11 +84,13 @@ public class CompilationState {
 
   public void addGeneratedCompilationUnits(TreeLogger logger,
       Collection<GeneratedUnit> generatedUnits) {
-    Event generatedUnitsAddEvent = SpeedTracerLogger.start(DevModeEventType.GENERATED_UNITS_ADD);
+    Event generatedUnitsAddEvent = SpeedTracerLogger.start(
+        DevModeEventType.GENERATED_UNITS_ADD);
 
     try {
       logger = logger.branch(TreeLogger.DEBUG, "Adding '"
           + generatedUnits.size() + "' new generated units");
+      generatedUnitsAddEvent.addData("# new generated units", "" + generatedUnits.size());
       Collection<CompilationUnit> newUnits = compileMoreLater.addGeneratedTypes(
           logger, generatedUnits);
       assimilateUnits(logger, newUnits);

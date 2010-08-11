@@ -52,7 +52,7 @@ public class StandardRebindOracle implements RebindOracle {
 
     public String rebind(TreeLogger logger, String typeName,
         ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
-      Event rebindEvent = SpeedTracerLogger.start(DevModeEventType.REBIND);
+      Event rebindEvent = SpeedTracerLogger.start(DevModeEventType.REBIND, "Type Name", typeName);
       try {
         genCtx.setPropertyOracle(propOracle);
         String result = tryRebind(logger, typeName);
