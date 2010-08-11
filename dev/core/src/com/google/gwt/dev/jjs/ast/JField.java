@@ -25,14 +25,10 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
    * Determines whether the variable is final, volatile, or neither.
    */
   public static enum Disposition {
-    COMPILE_TIME_CONSTANT, FINAL, NONE, THIS_REF, VOLATILE;
+    COMPILE_TIME_CONSTANT, FINAL, NONE, VOLATILE;
 
     public boolean isFinal() {
-      return this == COMPILE_TIME_CONSTANT || this == FINAL || this == THIS_REF;
-    }
-
-    public boolean isThisRef() {
-      return this == THIS_REF;
+      return this == COMPILE_TIME_CONSTANT || this == FINAL;
     }
 
     private boolean isCompileTimeConstant() {
@@ -47,7 +43,6 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
-  private boolean isThisRef;
   private boolean isVolatile;
 
   JField(SourceInfo info, String name, JDeclaredType enclosingType, JType type,
@@ -57,7 +52,6 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     this.isStatic = isStatic;
     this.isCompileTimeConstant = disposition.isCompileTimeConstant();
     this.isVolatile = disposition.isVolatile();
-    this.isThisRef = disposition.isThisRef();
     // Disposition is not cached because we can be set final later.
   }
 
@@ -79,10 +73,6 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
 
   public boolean isStatic() {
     return isStatic;
-  }
-
-  public boolean isThisRef() {
-    return isThisRef;
   }
 
   public boolean isVolatile() {
