@@ -34,10 +34,12 @@ import com.google.gwt.valuestore.shared.Record;
  */
 public class RecordImpl implements Record {
   private final RecordJsoImpl jso;
+  private final boolean isFuture;
   private DeltaValueStoreJsonImpl deltaValueStore;
 
-  protected RecordImpl(RecordJsoImpl record) {
+  protected RecordImpl(RecordJsoImpl record, boolean isFuture) {
     this.jso = record;
+    this.isFuture = isFuture;
     deltaValueStore = null;
   }
 
@@ -70,6 +72,10 @@ public class RecordImpl implements Record {
       return false;
     }
     return deltaValueStore.isChanged();
+  }
+
+  public boolean isFuture() {
+    return isFuture;
   }
 
   public <V> void set(Property<V> property, RecordImpl record, V value) {

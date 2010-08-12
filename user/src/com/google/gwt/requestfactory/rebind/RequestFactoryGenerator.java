@@ -197,10 +197,10 @@ public class RequestFactoryGenerator extends Generator {
           recordImplTypeName));
 
       sw.println();
-      sw.println(String.format("private %s(RecordJsoImpl jso) {",
+      sw.println(String.format("private %s(RecordJsoImpl jso, boolean isFuture) {",
           recordImplTypeName));
       sw.indent();
-      sw.println("super(jso);");
+      sw.println("super(jso, isFuture);");
       sw.outdent();
       sw.println("}");
 
@@ -716,10 +716,10 @@ public class RequestFactoryGenerator extends Generator {
 
     sw.println();
     sw.println("@Override");
-    sw.println(String.format("public %s create(RecordJsoImpl jso) {",
+    sw.println(String.format("public %s create(RecordJsoImpl jso, boolean isFuture) {",
         recordImplTypeName));
     sw.indent();
-    sw.println(String.format("return new %s(jso);", recordImplTypeName));
+    sw.println(String.format("return new %s(jso, isFuture);", recordImplTypeName));
     sw.outdent();
     sw.println("}");
 

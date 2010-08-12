@@ -39,7 +39,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   private class MyRecordImpl extends RecordImpl {
 
     protected MyRecordImpl(RecordJsoImpl record) {
-      super(record);
+      super(record, false);
     }
   }
 

@@ -51,7 +51,11 @@ public abstract class RecordSchema<R extends Record> {
     return allProperties;
   }
 
-  public abstract R create(RecordJsoImpl jso);
+  public final R create(RecordJsoImpl jso) {
+    return create(jso, false);
+  }
+  
+  public abstract R create(RecordJsoImpl jso, boolean isFuture);
 
   public abstract RecordChangedEvent<?, ?> createChangeEvent(Record record,
       WriteOperation writeOperation);
@@ -62,6 +66,6 @@ public abstract class RecordSchema<R extends Record> {
     return createChangeEvent(record, writeOperation);
   }
 
+  // TODO(rjrjr) rename getProxyClass
   public abstract Class<? extends Record> getToken();
-
 }

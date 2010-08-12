@@ -47,6 +47,8 @@ import java.util.logging.Logger;
  */
 public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
+  // TODO(amitmanjhi) Dump this and the one in DeltaValueStore in favor of
+  // RecordImpl#isFuture
   static class FutureIdGenerator {
     Set<Long> idsInTransit = new HashSet<Long>();
     Long maxId = 1L;
@@ -65,9 +67,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
   }
 
-  private static Logger logger =
-    Logger.getLogger(RequestFactory.class.getName());
-  
+  private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
+
   // A separate logger for wire activity, which does not get logged by the
   // remote log handler, so we avoid infinite loops. All log messages that
   // could happen every time a request is made from the server should be logged
@@ -88,21 +89,18 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   public com.google.gwt.valuestore.shared.Record create(
       Class<? extends Record> token, RecordToTypeMap recordToTypeMap) {
-    Long futureId = futureIdGenerator.getFutureId();
 
     RecordSchema<? extends Record> schema = recordToTypeMap.getType(token);
-    RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
-        schema);
-    RecordKey recordKey = new RecordKey(newRecord);
-    creates.put(recordKey, newRecord);
-    return schema.create(newRecord);
+    if (schema == null) {
+      throw new IllegalArgumentException("Unknown proxy type: " + token);
+    }
+    return createFuture(schema);
   }
 
   public void fire(final RequestObject<?> requestObject) {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         GWT.getHostPageBaseURL() + RequestFactory.URL);
-    builder.setHeader(
-        "Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
+    builder.setHeader("Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
     builder.setHeader("pageurl", Location.getHref());
     builder.setRequestData(ClientRequestHelper.getRequestString(requestObject.getRequestData().getRequestMap(
         ((AbstractRequest) requestObject).deltaValueStore.toJson())));
@@ -124,8 +122,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
           // During the redirection for logging in, we get a response with no
           // status code, but it's not an error, so we only log errors with
           // bad status codes here.
-          wireLogger.severe(SERVER_ERROR + " " + response.getStatusCode() + 
-              " " + response.getText());
+          wireLogger.severe(SERVER_ERROR + " " + response.getStatusCode() + " "
+              + response.getText());
         }
         postRequestEvent(State.RECEIVED, response);
       }
@@ -137,7 +135,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       builder.send();
       postRequestEvent(State.SENT, null);
     } catch (RequestException e) {
-      wireLogger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() + ")", e);
+      wireLogger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() + ")",
+          e);
     }
   }
 
@@ -147,13 +146,23 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   public void init(HandlerManager handlerManager) {
     this.valueStore = new ValueStoreJsonImpl(handlerManager);
     this.handlerManager = handlerManager;
-    Logger.getLogger("").addHandler(new RequestFactoryLogHandler(
-        this, Level.WARNING, wireLogger.getName()));
+    Logger.getLogger("").addHandler(
+        new RequestFactoryLogHandler(this, Level.WARNING, wireLogger.getName()));
     logger.fine("Successfully initialized RequestFactory");
   }
 
   ValueStoreJsonImpl getValueStore() {
     return valueStore;
+  }
+
+  private Record createFuture(
+      RecordSchema<? extends Record> schema) {
+    Long futureId = futureIdGenerator.getFutureId();
+    RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
+        schema);
+    RecordKey recordKey = new RecordKey(newRecord);
+    creates.put(recordKey, newRecord);
+    return schema.create(newRecord);
   }
 
   private void postRequestEvent(State received, Response response) {

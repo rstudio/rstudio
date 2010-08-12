@@ -56,8 +56,8 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
     }
 
     @Override
-    public SimpleFooRecordImpl create(RecordJsoImpl jso) {
-      return new SimpleFooRecordImpl(jso);
+    public SimpleFooRecordImpl create(RecordJsoImpl jso, boolean isFuture) {
+      return new SimpleFooRecordImpl(jso, isFuture);
     }
 
     @Override
@@ -74,8 +74,8 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
 
   public static final RecordSchema<SimpleFooRecordImpl> SCHEMA = new MySchema();
 
-  private SimpleFooRecordImpl(RecordJsoImpl jso) {
-    super(jso);
+  private SimpleFooRecordImpl(RecordJsoImpl jso, boolean isFuture) {
+    super(jso, isFuture);
   }
 
   public Boolean getBoolField() {
