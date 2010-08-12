@@ -52,6 +52,9 @@ import javax.validation.ValidatorFactory;
  * An implementation of RequestProcessor for JSON encoded payloads.
  */
 public class JsonRequestProcessor implements RequestProcessor<String> {
+
+  private static final Logger log = Logger.getLogger(JsonRequestProcessor.class.getName());
+
   // TODO should we consume String, InputStream, or JSONObject?
   /**
    * A class representing the pair of a domain entity and its corresponding
@@ -71,7 +74,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public static Set<String> initBlackList() {
     Set<String> blackList = new HashSet<String>();
-    for (String str : new String[]{"password"}) {
+    for (String str : new String[] {"password"}) {
       blackList.add(str);
     }
     return Collections.unmodifiableSet(blackList);
@@ -158,8 +161,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         int ordinal = Integer.parseInt(parameterValue);
         Method valuesMethod = parameterType.getDeclaredMethod("values",
             new Class[0]);
-        Logger.getLogger(this.getClass().getName()).severe(
-            "Type is " + parameterType + " valuesMethod " + valuesMethod);
+        log.severe("Type is " + parameterType + " valuesMethod " + valuesMethod);
 
         if (valuesMethod != null) {
           valuesMethod.setAccessible(true);
@@ -612,7 +614,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           recordObject.get("id"), propertiesInRecord.get("id"));
 
       // persist
-      Set<ConstraintViolation<Object>> violations = null;
+
+      Set<ConstraintViolation<Object>> violations = Collections.emptySet();
+
       if (writeOperation == WriteOperation.DELETE) {
         entity.getMethod("remove").invoke(entityInstance);
       } else {
@@ -635,10 +639,24 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         }
 
         // validations check..
-        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-        Validator validator = validatorFactory.getValidator();
+        Validator validator = null;
+        try {
+          ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+          validator = validatorFactory.getValidator();
+        } catch (Exception e) {
+          /*
+           * This is JBoss's clumsy way of telling us that the system has not
+           * been configured.
+           */
+          log.info(String.format(
+              "Ingnoring exception caught initializing bean validation framework. "
+                  + "It is probably unconfigured or misconfigured. [%s] %s ",
+              e.getClass().getName(), e.getLocalizedMessage()));
+        }
 
-        violations = validator.validate(entityInstance);
+        if (validator != null) {
+          violations = validator.validate(entityInstance);
+        }
         if (violations.isEmpty()) {
           entity.getMethod("persist").invoke(entityInstance);
         }
@@ -648,6 +666,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       return getReturnRecord(writeOperation, entityInstance, recordObject,
           violations);
     } catch (Exception ex) {
+      log.severe(String.format("Caught exception [%s] %s",
+          ex.getClass().getName(), ex.getLocalizedMessage()));
       return getReturnRecordForException(writeOperation, recordObject, ex);
     }
   }

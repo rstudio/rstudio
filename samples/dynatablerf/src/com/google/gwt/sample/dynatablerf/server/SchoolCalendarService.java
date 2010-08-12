@@ -24,13 +24,16 @@ import com.google.gwt.sample.dynatablerf.domain.TimeSlot;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
  * The server side service class.
  */
 public class SchoolCalendarService {
+  private static Long serial = 0L;
 
   private static final String[] FIRST_NAMES = new String[] {
       "Inman", "Sally", "Omar", "Teddy", "Jimmy", "Cathy", "Barney", "Fred",
@@ -55,7 +58,7 @@ public class SchoolCalendarService {
 
   private static final int STUDENTS_PER_PROF = 5;
 
-  private static final List<Person> people = new ArrayList<Person>();
+  private static final Map<Long, Person> people = new LinkedHashMap<Long, Person>(); 
 
   private static final Random rnd = new Random(3);
 
@@ -74,15 +77,27 @@ public class SchoolCalendarService {
       return Collections.emptyList();
     }
 
-    return people.subList(startIndex, end);
+    return new ArrayList<Person>(people.values()).subList(startIndex, end);
   }
 
   private static void generateRandomPeople() {
     if (people.isEmpty())
       for (int i = 0; i < MAX_PEOPLE; ++i) {
         Person person = generateRandomPerson();
-        people.add(person);
+        persist(person);
       }
+  }
+  
+  public static Person findPerson(Long id) {
+    return people.get(id);
+  }
+  
+  public static void persist(Person person) {
+    if (person.getId() == null) {
+      person.setId(++serial);
+    }
+    person.setVersion(person.getVersion() + 1);
+    people.put(person.getId(), person);
   }
 
   private static Person generateRandomPerson() {

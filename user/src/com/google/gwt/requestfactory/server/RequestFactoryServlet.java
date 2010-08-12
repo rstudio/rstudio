@@ -58,7 +58,6 @@ public class RequestFactoryServlet extends HttpServlet {
   private static final String JSON_CHARSET = "UTF-8";
   private static final String JSON_CONTENT_TYPE = "application/json";
   
-  @SuppressWarnings("unchecked")
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException {

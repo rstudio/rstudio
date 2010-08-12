@@ -29,6 +29,7 @@ public interface SyncResult {
   // TODO: move violations out of the SyncResult...
   boolean hasViolations();
   
+  // TODO: futureId isn't working out so well, leaving soon
   Long getFutureId();
 
   Record getRecord();

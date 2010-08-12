@@ -15,30 +15,46 @@
  */
 package com.google.gwt.sample.dynatablerf.domain;
 
+import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
+
 /**
  * Hold relevant data for Person.
  */
 public abstract class Person {
-  private static Long serial = 1L;
+  /**
+   * The {@link RequestFactory} requires a static finder method for each proxied type.
+   * Soon it should allow you to customize how instances are found.
+   */
+  public static Person findPerson(Long id) {
+    return SchoolCalendarService.findPerson(id);
+  }
 
   private String description = "DESC";
 
   private String name;
-  
-  private final Long id;
+
+  private Long id;
+
+  private Integer version = 0;
 
   public Person() {
-    id = serial++;
   }
 
   public String getDescription() {
     return description;
   }
-  
+
+  /**
+   * The {@link RequestFactory} requires a Long id property for each proxied type.
+   * <p>
+   * The requirement for some kind of id object with proper hash / equals
+   * semantics is not going away, but it should become possible to use types
+   * other than Long, and properties other than "id".
+   */
   public Long getId() {
     return id;
   }
-  
+
   public String getName() {
     return name;
   }
@@ -49,15 +65,42 @@ public abstract class Person {
 
   public abstract String getSchedule(boolean[] daysFilter);
 
+  /**
+   * The {@link RequestFactory} requires an Integer version property for each proxied
+   * type, but makes no good use of it. This requirement will be removed soon.
+   */
   public Integer getVersion() {
-    return 1;
+    return version;
+  }
+
+  /**
+   * When this was written the {@link RequestFactory} required a persist method per type. 
+   * That requirement should be relaxed very soon (and may well have been already
+   * if we forget to update this comment).
+   */
+  public void persist() {
+    SchoolCalendarService.persist(this);
   }
 
   public void setDescription(String description) {
     this.description = description;
   }
 
+  public void setId(Long id) {
+    this.id = id;
+  }
+
   public void setName(String name) {
     this.name = name;
+  }
+
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
+
+  @Override
+  public String toString() {
+    return "Person [description=" + description + ", id=" + id + ", name="
+        + name + ", version=" + version + "]";
   }
 }

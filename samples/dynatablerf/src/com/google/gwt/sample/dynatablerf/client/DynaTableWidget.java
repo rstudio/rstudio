@@ -18,10 +18,12 @@ package com.google.gwt.sample.dynatablerf.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.sample.dynatablerf.client.events.NavigationEvent;
 import com.google.gwt.sample.dynatablerf.client.events.DataAvailableEvent;
+import com.google.gwt.sample.dynatablerf.client.events.NavigationEvent;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
+import com.google.gwt.sample.dynatablerf.shared.PersonProxyChanged;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -34,13 +36,13 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A composite Widget that implements the main interface for the dynamic table,
  * including the data table, status indicators, and paging buttons.
  */
 public class DynaTableWidget extends Composite {
-
   interface Binder extends UiBinder<Widget, DynaTableWidget> {
   }
 
@@ -70,6 +72,8 @@ public class DynaTableWidget extends Composite {
     }
   }
 
+  private static final Logger log = Logger.getLogger(DynaTableWidget.class.getName());
+
   // TODO: Re-add error handling
   @SuppressWarnings("unused")
   private static final String NO_CONNECTION_MESSAGE = "<p>The DynaTableRf example uses a "
@@ -95,11 +99,30 @@ public class DynaTableWidget extends Composite {
 
   private HandlerRegistration rowDataRegistration;
 
-  public DynaTableWidget(CalendarProvider provider, int rowCount) {
+  public DynaTableWidget(HandlerManager eventBus, CalendarProvider provider,
+      int rowCount) {
     this.provider = provider;
     Binder binder = GWT.create(Binder.class);
     initWidget(binder.createAndBindUi(this));
     initTable(rowCount);
+
+    eventBus.addHandler(PersonProxyChanged.TYPE,
+        new PersonProxyChanged.Handler() {
+          public void onPersonChanged(PersonProxyChanged event) {
+            /*
+             * At the moment this proxy includes all the new property values,
+             * but that's an accident. Only its id property should be populated.
+             * 
+             * The correct thing to do, and soon the only thing that will work,
+             * is to fire an appropriate request to pick up the new values. No,
+             * I'm not happy about the extra round trip. Still thinking about
+             * that.
+             */
+            log.info("Look who changed, time to repaint some things: "
+                + event.getRecord());
+          }
+        });
+
   }
 
   public void clearStatusText() {
@@ -114,6 +137,25 @@ public class DynaTableWidget extends Composite {
     navbar.gotoNext.setEnabled(false);
 
     setStatusText("Please wait...");
+
+    /*
+     * TODO the cell widgets reverse this relationship, to stay async friendly.
+     * 
+     * This widget would implement HasRows, and would not know directly about
+     * its data provider. Instead, the provider would know about the widget via
+     * something like
+     * 
+     * dynaTableWidget.addRangeChangeHandler(calendarProvider)
+     * 
+     * and on response would call
+     * 
+     * dynaTableWidget.setRowValues( ... ) directly
+     * 
+     * ListViewAdapter (soon to be renamed something like DataProvider) exists
+     * to make this convenient when dealing with lists, and to allow one
+     * provider to serve multiple HasData clients
+     * (AbstractListViewAdapter#addView(HasData<T>))
+     */
     provider.updateRowData(startRow, grid.getRowCount() - 1);
   }
 
@@ -167,6 +209,7 @@ public class DynaTableWidget extends Composite {
     int srcRowIndex = 0;
     int srcRowCount = people.size();
     int destRowIndex = 1; // skip navbar row
+
     for (; srcRowIndex < srcRowCount; ++srcRowIndex, ++destRowIndex) {
       PersonProxy p = people.get(srcRowIndex);
       grid.setText(destRowIndex, 0, p.getName());

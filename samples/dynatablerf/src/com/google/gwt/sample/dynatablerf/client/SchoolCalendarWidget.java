@@ -31,8 +31,8 @@ public class SchoolCalendarWidget extends Composite {
 
   private ScheduledCommand pendingRefresh;
 
-  public SchoolCalendarWidget(CalendarProvider provider, int visibleRows) {
-    dynaTable = new DynaTableWidget(provider, visibleRows);
+  public SchoolCalendarWidget(DynaTableWidget dynaTable) {
+    this.dynaTable = dynaTable;
     initWidget(dynaTable);
   }
 

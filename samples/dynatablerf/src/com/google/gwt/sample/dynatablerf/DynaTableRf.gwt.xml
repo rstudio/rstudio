@@ -18,6 +18,18 @@
 
   <inherits name='com.google.gwt.user.User' />
   <inherits name='com.google.gwt.requestfactory.RequestFactory' />
+  
+  <inherits name='com.google.gwt.logging.Logging'/>
+  <set-property name="gwt.logging.enabled" value="TRUE"/> 
+  <set-property name="gwt.logging.logLevel" value="INFO"/>
+  <set-property name="gwt.logging.consoleHandler" value="ENABLED" />
+  <set-property name="gwt.logging.developmentModeHandler" value="DISABLED" />
+  <set-property name="gwt.logging.firebugHandler" value="ENABLED" />
+  <set-property name="gwt.logging.hasWidgetsHandler" value="DISABLED" />
+  <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+  <set-property name="gwt.logging.systemHandler" value="ENABLED" />
+  <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
+  
   <entry-point class='com.google.gwt.sample.dynatablerf.client.DynaTableRf' />
   
   <set-configuration-property name="CssResource.obfuscationPrefix" value="empty" />

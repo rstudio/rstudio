@@ -18,6 +18,7 @@ package com.google.gwt.sample.dynatablerf.client;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.dynatablerf.client.events.DataAvailableEvent;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
@@ -25,12 +26,15 @@ import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * A data provider that bridges the provides row level updates from the data
  * available through a <@link SchoolCalendarService>.
  */
 public class CalendarProvider {
+  private static final Logger log = Logger.getLogger(CalendarProvider.class.getName());
+
   private final HandlerManager eventBus = new HandlerManager(this);
 
   private int lastMaxRows = -1;
@@ -69,12 +73,52 @@ public class CalendarProvider {
             lastMaxRows = maxRows;
             lastPeople = response;
             pushResults(startRow, response);
+
+            if (response.size() > 0) {
+              demoPersist(response.get(0));
+            }
           }
+
         });
   }
 
+  private void demoPersist(PersonProxy someone) {
+    /*
+     * Create a request to call someone's persist method.
+     */
+    RequestObject<Void> request = requests.personRequest().persist(someone);
+
+    someone = request.edit(someone);
+    someone.setName("Ray Ryan");
+    someone.setDescription("Was here");
+
+    request.fire(new Receiver<Void>() {
+      public void onSuccess(Void isNull, /* syncResults going away very soon */
+      Set<SyncResult> syncResults) {
+        /*
+         * A PersonProxyChanged should have fired. By M4, subtypes like
+         * PersonProxyChanged should go away and be replaced by a more general
+         * ProxyUpdateEvent
+         */
+        log.info("The persist call worked, did you see an update event?");
+      }
+
+      /*
+       * Coming soon
+       * 
+       * void onViolation(Set<ConstraintViolation> violations); void onError(
+       * ... tbd ... );
+       * 
+       * But likely this will come first, not sure who is dealing with
+       * serializing ConstraintViolation. Sorry.
+       * 
+       * void onViolation(Set<SyncResult> syncResults) { ... }
+       */
+
+    });
+  }
+
   private void pushResults(int startRow, List<PersonProxy> people) {
-    // TODO(rjrjr) RequestFactory should probably provide this event.
     eventBus.fireEvent(new DataAvailableEvent(startRow, people));
   }
 }

@@ -48,7 +48,7 @@ public class DynaTableRf implements EntryPoint {
 
     CalendarProvider provider = new CalendarProvider(requests);
 
-    calendar = new SchoolCalendarWidget(provider, 15);
+    calendar = new SchoolCalendarWidget(new DynaTableWidget(eventBus, provider, 15));
     filter = new DayFilterWidget(eventBus);
 
     RootLayoutPanel.get().add(
