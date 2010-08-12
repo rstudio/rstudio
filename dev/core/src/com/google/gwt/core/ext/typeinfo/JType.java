@@ -20,6 +20,9 @@ package com.google.gwt.core.ext.typeinfo;
  */
 public abstract class JType {
 
+  JType() {
+  }
+  
   /**
    * All types use identity for comparison.
    */

@@ -16,7 +16,13 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
+import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.asm.CollectAnnotationData;
 
@@ -29,9 +35,24 @@ import java.util.Map;
  */
 public interface Resolver {
 
+  void addImplementedInterface(JRealClassType type, JClassType intf);
+
+  void addThrows(JAbstractMethod method, JType exception);
+
   Map<String, JRealClassType> getBinaryMapper();
 
   TypeOracle getTypeOracle();
+
+  JMethod newMethod(JClassType type, String name,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+      JTypeParameter[] typeParams);
+
+  void newParameter(JAbstractMethod method, JType argType, String argName,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+      boolean argNamesAreReal);
+
+  JRealClassType newRealClassType(JPackage pkg, String enclosingTypeName,
+      boolean isLocalType, String className, boolean isIntf);
 
   boolean resolveAnnotation(TreeLogger logger,
       CollectAnnotationData annotVisitor,
@@ -42,4 +63,8 @@ public interface Resolver {
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations);
 
   boolean resolveClass(TreeLogger logger, JRealClassType type);
+
+  void setReturnType(JAbstractMethod method, JType returnType);
+
+  void setSuperClass(JRealClassType type, JClassType superType);
 }

@@ -43,7 +43,7 @@ public class JWildcardType extends JDelegatingClassType {
   private JClassType[] lazyLowerBounds;
   private JClassType[] lazyUpperBounds;
 
-  public JWildcardType(BoundType boundType, JClassType typeBound) {
+  JWildcardType(BoundType boundType, JClassType typeBound) {
     this.boundType = boundType;
     super.setBaseType(typeBound);
   }

@@ -16,12 +16,13 @@
 package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.HookableTypeOracle;
+import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.asm.Opcodes;
@@ -29,6 +30,7 @@ import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.signature.SignatureReader;
 import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.javac.Resolver;
+import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.TypeParameterLookup;
 import com.google.gwt.dev.javac.asm.CollectClassData.ClassType;
@@ -37,8 +39,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,45 +72,72 @@ public class ResolveGenericsTest extends AsmTestCase {
     }
   }
 
-  /**
-   * An extension of JMethod which keeps the reflected Method around.
-   */
-  public static class ReflectedMethod extends JMethod {
-    private Method method;
+  private class MockResolver implements Resolver {
+    private final Resolver delegate;
 
-    public ReflectedMethod(JClassType type, String methodName,
-        Map<Class<? extends Annotation>, Annotation> annotations,
-        JTypeParameter[] typeParams, Method method) {
-      super(type, methodName, annotations, typeParams);
-      this.method = method;
+    public MockResolver(Resolver resolver) {
+      this.delegate = resolver;
     }
 
-    public Method getMethod() {
-      return method;
+    public void addImplementedInterface(JRealClassType type, JClassType intf) {
+      delegate.addImplementedInterface(type, intf);
     }
-  }
 
-  public static class ResolverMockTypeOracle extends HookableTypeOracle {
-
-    private Map<String, JRealClassType> binaryMapper;
+    public void addThrows(JAbstractMethod method, JType exception) {
+      delegate.addThrows(method, exception);
+    }
 
     public Map<String, JRealClassType> getBinaryMapper() {
-      ensureBinaryMapper();
-      return binaryMapper;
+      return delegate.getBinaryMapper();
     }
 
-    @Override
-    protected void addNewType(JRealClassType type) {
-      super.addNewType(type);
-      String name = type.getQualifiedBinaryName().replace('.', '/');
-      ensureBinaryMapper();
-      binaryMapper.put(name, type);
+    public TypeOracle getTypeOracle() {
+      return delegate.getTypeOracle();
     }
 
-    private void ensureBinaryMapper() {
-      if (binaryMapper == null) {
-        binaryMapper = new HashMap<String, JRealClassType>();
-      }
+    public JMethod newMethod(JClassType type, String name,
+        Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+        JTypeParameter[] typeParams) {
+      return delegate.newMethod(type, name, declaredAnnotations, typeParams);
+    }
+
+    public void newParameter(JAbstractMethod method, JType argType,
+        String argName,
+        Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+        boolean argNamesAreReal) {
+      delegate.newParameter(method, argType, argName, declaredAnnotations,
+          argNamesAreReal);
+    }
+
+    public JRealClassType newRealClassType(JPackage pkg,
+        String enclosingTypeName, boolean isLocalType, String className,
+        boolean isIntf) {
+      return delegate.newRealClassType(pkg, enclosingTypeName, isLocalType,
+          className, isIntf);
+    }
+
+    public boolean resolveAnnotation(TreeLogger logger,
+        CollectAnnotationData annotVisitor,
+        Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+      return true;
+    }
+
+    public boolean resolveAnnotations(TreeLogger logger,
+        List<CollectAnnotationData> annotations,
+        Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+      return true;
+    }
+
+    public boolean resolveClass(TreeLogger logger, JRealClassType type) {
+      return true;
+    }
+
+    public void setReturnType(JAbstractMethod method, JType returnType) {
+      delegate.setReturnType(method, returnType);
+    }
+
+    public void setSuperClass(JRealClassType type, JClassType superType) {
+      delegate.setSuperClass(type, superType);
     }
   }
 
@@ -125,9 +153,13 @@ public class ResolveGenericsTest extends AsmTestCase {
   private static final String OUTER2_CLASS_SIG = "Lcom/google/gwt/dev/javac/asm/TestOuter1<Ljava/lang/String;>;";
   private static final String OUTER2_METHOD_SIG = "(Lcom/google/gwt/dev/javac/asm/TestHandler1<Ljava/lang/String;>;)V";
 
-  private final Map<String, JRealClassType> binaryMapper;
-  
+  private final TypeOracleMediator mediator;
+
   private final TypeOracle oracle;
+
+  private final Map<JMethod, Method> reflectionMethods = new IdentityHashMap<JMethod, Method>();
+
+  private final MockResolver resolver;
 
   @SuppressWarnings("unused")
   private JRealClassType testHandler;
@@ -135,45 +167,20 @@ public class ResolveGenericsTest extends AsmTestCase {
   private JRealClassType testHandler1;
 
   private JRealClassType testOuter0;
+  private JMethod testOuter0dispatch;
   private JRealClassType testOuter1;
-  private JRealClassType testOuter2;
 
-  private ReflectedMethod testOuter0dispatch;
-  private ReflectedMethod testOuter1dispatch;
-  private ReflectedMethod testOuter2dispatch;
+  private JMethod testOuter1dispatch;
+  private JRealClassType testOuter2;
+  private JMethod testOuter2dispatch;
 
   @SuppressWarnings("unused")
   private JRealClassType testType;
 
-  private Resolver resolver = new Resolver() {
-    public Map<String, JRealClassType> getBinaryMapper() {
-      return binaryMapper;
-    }
-
-    public TypeOracle getTypeOracle() {
-      return oracle;
-    }
-
-    public boolean resolveAnnotations(TreeLogger logger,
-        List<CollectAnnotationData> annotations,
-        Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-      return true;
-    }
-
-    public boolean resolveAnnotation(TreeLogger logger,
-        CollectAnnotationData annotVisitor,
-        Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-      return true;
-    }
-
-    public boolean resolveClass(TreeLogger logger, JRealClassType type) {
-      return true;
-    }
-  };
-
   public ResolveGenericsTest() {
-    oracle = TypeOracleTestingUtils.buildStandardTypeOracleWith(failTreeLogger);
-    createUnresolvedClass(Object.class, null);
+    mediator = TypeOracleTestingUtils.buildStandardMediatorWith(failTreeLogger);
+    resolver = new MockResolver(mediator.getResolver());
+    oracle = mediator.getTypeOracle();
     createUnresolvedClass(String.class, null);
     testHandler = createUnresolvedClass(TestHandler.class, null);
     testHandler1 = createUnresolvedClass(TestHandler1.class, null);
@@ -187,10 +194,10 @@ public class ResolveGenericsTest extends AsmTestCase {
         "dispatch", TestHandler.class);
     testOuter2dispatch = createUnresolvedMethod(testOuter2, TestOuter2.class,
         "dispatch", TestHandler.class);
-    binaryMapper = new LinkedHashMap<String, JRealClassType>();
     for (JClassType type : oracle.getTypes()) {
       if (type instanceof JRealClassType) {
-        binaryMapper.put(type.getQualifiedBinaryName().replace('.', '/'),
+        mediator.getBinaryMapper().put(
+            type.getQualifiedBinaryName().replace('.', '/'),
             (JRealClassType) type);
       }
     }
@@ -254,7 +261,7 @@ public class ResolveGenericsTest extends AsmTestCase {
       enclosingTypeName = enclosingType.getName();
     }
     if (n == 0) {
-      type = new JRealClassType(oracle, pkg, enclosingTypeName, false,
+      type = resolver.newRealClassType(pkg, enclosingTypeName, false,
           clazz.getSimpleName(), clazz.isInterface());
     } else {
       JTypeParameter[] params = createTypeParams(typeParams);
@@ -264,8 +271,8 @@ public class ResolveGenericsTest extends AsmTestCase {
     return type;
   }
 
-  private ReflectedMethod createUnresolvedMethod(JClassType type,
-      Class<?> clazz, String methodName, Class<?>... paramTypes) {
+  private JMethod createUnresolvedMethod(JClassType type, Class<?> clazz,
+      String methodName, Class<?>... paramTypes) {
     Method method = null;
     try {
       method = clazz.getMethod(methodName, paramTypes);
@@ -276,7 +283,9 @@ public class ResolveGenericsTest extends AsmTestCase {
     }
     JTypeParameter[] typeParams = createTypeParams(method.getTypeParameters());
     Map<Class<? extends Annotation>, Annotation> emptyMap = Collections.emptyMap();
-    return new ReflectedMethod(type, methodName, emptyMap, typeParams, method);
+    JMethod result = resolver.newMethod(type, methodName, emptyMap, typeParams);
+    reflectionMethods.put(result, method);
+    return result;
   }
 
   private void resolveClassSignature(JRealClassType type, String signature) {
@@ -289,15 +298,16 @@ public class ResolveGenericsTest extends AsmTestCase {
     classResolver.finish();
   }
 
-  private void resolveMethodSignature(ReflectedMethod method, String signature) {
+  private void resolveMethodSignature(JMethod method, String signature) {
     TypeParameterLookup lookup = new TypeParameterLookup();
     lookup.pushEnclosingScopes(method.getEnclosingType());
     lookup.pushScope(method.getTypeParameters());
     int access = Opcodes.ACC_PUBLIC;
-    String desc = Type.getMethodDescriptor(method.getMethod());
+    Method reflectionMethod = reflectionMethods.get(method);
+    String desc = Type.getMethodDescriptor(reflectionMethod);
     CollectMethodData methodData = new CollectMethodData(ClassType.TopLevel,
         access, method.getName(), desc, signature, null);
-    Class<?>[] paramTypes = method.getMethod().getParameterTypes();
+    Class<?>[] paramTypes = reflectionMethod.getParameterTypes();
     int n = paramTypes.length;
     Type[] argTypes = new Type[n];
     String[] argNames = new String[n];

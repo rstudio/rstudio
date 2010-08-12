@@ -22,11 +22,10 @@ import java.util.Arrays;
  */
 public class JAnnotationType extends JRealClassType {
 
-  public JAnnotationType(TypeOracle oracle, JPackage declaringPackage,
-      String enclosingTypeName, boolean isLocalType, String name,
-      boolean isInterface) {
-    super(oracle, declaringPackage, enclosingTypeName, isLocalType, name,
-        isInterface);
+  JAnnotationType(TypeOracle oracle, JPackage declaringPackage,
+      String enclosingTypeName, String name) {
+    super(oracle, declaringPackage, enclosingTypeName, false, name,
+        true);
   }
 
   @Override

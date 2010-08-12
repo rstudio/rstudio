@@ -29,21 +29,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Signature visitor that resolves all the type variables and their bounds for
- * a given class.
+ * Signature visitor that resolves all the type variables and their bounds for a
+ * given class.
  */
 public class ResolveClassSignature extends EmptySignatureVisitor {
 
-  private final Resolver resolver;
   private final Map<String, JRealClassType> binaryMapper;
-  private final TreeLogger logger;
-  private final JRealClassType type;
-  private final TypeParameterLookup lookup;
-
-  private JTypeParameter currentParam = null;
   private ArrayList<JType[]> bounds = null;
-  private JType[] superClass = new JType[1];
+  private JTypeParameter currentParam = null;
   private List<JType[]> interfaces = new ArrayList<JType[]>();
+  private final TreeLogger logger;
+
+  private final TypeParameterLookup lookup;
+  private final Resolver resolver;
+  private JType[] superClass = new JType[1];
+  private final JRealClassType type;
 
   public ResolveClassSignature(Resolver resolver,
       Map<String, JRealClassType> binaryMapper, TreeLogger logger,
@@ -72,16 +72,15 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
         // The generic signature contains a superclass for interfaces,
         // but TypeOracle doesn't like that -- verify that we were
         // told Object is the superclass and ignore it.
-        assert superClass[0].equals(
-            resolver.getTypeOracle().getJavaLangObject());
+        assert superClass[0].equals(resolver.getTypeOracle().getJavaLangObject());
       } else {
-        type.setSuperclass((JClassType) superClass[0]);
+        resolver.setSuperClass(type, (JClassType) superClass[0]);
       }
       superClass[0] = null;
     }
     for (JType[] intfRef : interfaces) {
       if (intfRef[0] != null) {
-        type.addImplementedInterface((JClassType) intfRef[0]);
+        resolver.addImplementedInterface(type, (JClassType) intfRef[0]);
       }
     }
     interfaces.clear();
@@ -128,7 +127,7 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
   @Override
   public SignatureVisitor visitSuperclass() {
     finish();
-    return new ResolveTypeSignature(resolver, binaryMapper, logger,
-        superClass, lookup, null);
+    return new ResolveTypeSignature(resolver, binaryMapper, logger, superClass,
+        lookup, null);
   }
 }

@@ -26,25 +26,32 @@ public class JParameter implements HasAnnotations, HasMetaData {
 
   private final Annotations annotations;
 
-  private String name;
-
-  private JType type;
+  private boolean argNameIsReal;
 
   private final JAbstractMethod enclosingMethod;
 
-  private boolean argNameIsReal;
+  private String name;
+
+  private JType type;
   
-  public JParameter(JAbstractMethod enclosingMethod, JType type,
+  JParameter(JAbstractMethod enclosingMethod, JParameter srcParam) {
+    this.enclosingMethod = enclosingMethod;
+    this.type = srcParam.type;
+    this.name = srcParam.name;
+    this.annotations = new Annotations(srcParam.annotations);
+  }
+
+  JParameter(JAbstractMethod enclosingMethod, JType type,
       String name) {
     this(enclosingMethod, type, name, null);
   }
 
-  public JParameter(JAbstractMethod enclosingMethod, JType type, String name,
+  JParameter(JAbstractMethod enclosingMethod, JType type, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     this(enclosingMethod, type, name, declaredAnnotations, true);
   }
 
-  public JParameter(JAbstractMethod enclosingMethod, JType type, String name,
+  JParameter(JAbstractMethod enclosingMethod, JType type, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       boolean argNameIsReal) {
     this.enclosingMethod = enclosingMethod;
@@ -55,18 +62,6 @@ public class JParameter implements HasAnnotations, HasMetaData {
     enclosingMethod.addParameter(this);
 
     annotations = new Annotations(declaredAnnotations);
-  }
-
-  JParameter(JAbstractMethod enclosingMethod, JParameter srcParam) {
-    this.enclosingMethod = enclosingMethod;
-    this.type = srcParam.type;
-    this.name = srcParam.name;
-    this.annotations = new Annotations(srcParam.annotations);
-  }
-
-  @Deprecated
-  public final void addMetaData(String tagName, String[] values) {
-    throw new UnsupportedOperationException();
   }
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {

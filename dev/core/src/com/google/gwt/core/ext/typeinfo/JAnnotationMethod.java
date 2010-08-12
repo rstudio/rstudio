@@ -23,15 +23,15 @@ import java.util.Map;
  */
 public class JAnnotationMethod extends JMethod {
   /**
-   * Default value for this annotation element. <code>null</code> is not a
-   * valid default value for an annotation element.
+   * Default value for this annotation element. <code>null</code> is not a valid
+   * default value for an annotation element.
    */
   private final Object defaultValue;
 
-  public JAnnotationMethod(JClassType enclosingType, String name,
-      Object defaultValue,
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-    super(enclosingType, name, declaredAnnotations, null);
+  JAnnotationMethod(JClassType enclosingType, String name,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+      JTypeParameter[] jtypeParameters, Object defaultValue) {
+    super(enclosingType, name, declaredAnnotations, jtypeParameters);
     this.defaultValue = defaultValue;
   }
 

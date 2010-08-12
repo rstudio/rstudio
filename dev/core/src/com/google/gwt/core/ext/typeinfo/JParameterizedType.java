@@ -71,19 +71,19 @@ public class JParameterizedType extends JMaybeParameterizedType {
 
   private List<JClassType> interfaces;
 
-  private JClassType lazySuperclass;
-
-  private final AbstractMembers members;
-
-  private final List<JClassType> typeArgs;
-
   /**
    * This map records the JClassType that should be used in place of a given
    * {@link JTypeParameter}.
    */
   private Map<JTypeParameter, JClassType> lazySubstitutionMap;
 
-  public JParameterizedType(JGenericType baseType, JClassType enclosingType,
+  private JClassType lazySuperclass;
+
+  private final AbstractMembers members;
+
+  private final List<JClassType> typeArgs;
+
+  JParameterizedType(JGenericType baseType, JClassType enclosingType,
       JClassType[] typeArgs) {
     super.setBaseType(baseType);
 
@@ -341,12 +341,6 @@ public class JParameterizedType extends JMaybeParameterizedType {
     return null;
   }
 
-  /**
-   */
-  public void setTypeArguments(JClassType[] typeArgs) {
-    this.typeArgs.addAll(Arrays.asList(typeArgs));
-  }
-
   @Override
   public String toString() {
     if (isInterface() != null) {
@@ -466,6 +460,10 @@ public class JParameterizedType extends JMaybeParameterizedType {
       currentParameterizedType = maybeParameterizedType.isParameterized();
     }
     lazySubstitutionMap = Maps.normalize(lazySubstitutionMap);
+  }
+
+  void setTypeArguments(JClassType[] typeArgs) {
+    this.typeArgs.addAll(Arrays.asList(typeArgs));
   }
 
   /**

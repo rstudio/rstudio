@@ -34,19 +34,6 @@ public class JField implements HasAnnotations, HasMetaData {
 
   private JType type;
 
-  public JField(JClassType enclosingType, String name) {
-    this(enclosingType, name, null);
-  }
-
-  public JField(JClassType enclosingType, String name,
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-    assert (enclosingType != null);
-    this.enclosingType = enclosingType;
-    this.name = name;
-    this.enclosingType.addField(this);
-    annotations = new Annotations(declaredAnnotations);
-  }
-
   JField(JClassType enclosingType, JField srcField) {
     this.annotations = new Annotations(srcField.annotations);
     this.enclosingType = enclosingType;
@@ -55,13 +42,17 @@ public class JField implements HasAnnotations, HasMetaData {
     this.type = srcField.type;
   }
 
-  @Deprecated
-  public final void addMetaData(String tagName, String[] values) {
-    throw new UnsupportedOperationException();
+  JField(JClassType enclosingType, String name) {
+    this(enclosingType, name, null);
   }
 
-  public void addModifierBits(int modifierBits) {
-    this.modifierBits |= modifierBits;
+  JField(JClassType enclosingType, String name,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    assert (enclosingType != null);
+    this.enclosingType = enclosingType;
+    this.name = name;
+    this.enclosingType.addField(this);
+    annotations = new Annotations(declaredAnnotations);
   }
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
@@ -132,10 +123,6 @@ public class JField implements HasAnnotations, HasMetaData {
     return 0 != (modifierBits & TypeOracle.MOD_VOLATILE);
   }
 
-  public void setType(JType type) {
-    this.type = type;
-  }
-
   @Override
   public String toString() {
     String[] names = TypeOracle.modifierBitsToNames(modifierBits);
@@ -155,6 +142,10 @@ public class JField implements HasAnnotations, HasMetaData {
     return sb.toString();
   }
 
+  void addModifierBits(int modifierBits) {
+    this.modifierBits |= modifierBits;
+  }
+
   /**
    * NOTE: This method is for testing purposes only.
    */
@@ -167,5 +158,9 @@ public class JField implements HasAnnotations, HasMetaData {
    */
   Annotation[] getDeclaredAnnotations() {
     return annotations.getDeclaredAnnotations();
+  }
+
+  void setType(JType type) {
+    this.type = type;
   }
 }

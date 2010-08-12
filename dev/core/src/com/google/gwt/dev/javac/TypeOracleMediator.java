@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,18 +17,12 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
-import com.google.gwt.core.ext.typeinfo.JAnnotationMethod;
-import com.google.gwt.core.ext.typeinfo.JAnnotationType;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JConstructor;
-import com.google.gwt.core.ext.typeinfo.JEnumConstant;
-import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
-import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JRawType;
@@ -37,6 +31,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.JWildcardType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.ext.typeinfo.TypeOracleBuilder;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.Opcodes;
@@ -76,7 +71,7 @@ import java.util.Set;
  * Builds or rebuilds a {@link com.google.gwt.core.ext.typeinfo.TypeOracle} from
  * a set of compilation units.
  */
-public class TypeOracleMediator {
+public class TypeOracleMediator extends TypeOracleBuilder {
 
   /**
    * Turn on to trace class processing.
@@ -86,7 +81,7 @@ public class TypeOracleMediator {
   /**
    * Pairs of bits to convert from ASM Opcodes.* to Shared.* bitfields.
    */
-  private static final int[] ASM_TO_SHARED_MODIFIERS = new int[] {
+  private static final int[] ASM_TO_SHARED_MODIFIERS = new int[]{
       Opcodes.ACC_PUBLIC, Shared.MOD_PUBLIC, Opcodes.ACC_PRIVATE,
       Shared.MOD_PRIVATE, Opcodes.ACC_PROTECTED, Shared.MOD_PROTECTED,
       Opcodes.ACC_STATIC, Shared.MOD_STATIC, Opcodes.ACC_FINAL,
@@ -99,7 +94,7 @@ public class TypeOracleMediator {
   /**
    * Returns the binary name of a type. This is the same name that would be
    * returned by {@link Class#getName()} for this type.
-   *
+   * 
    * @param type TypeOracle type to get the name for
    * @return binary name for a type
    */
@@ -192,9 +187,9 @@ public class TypeOracleMediator {
 
   /**
    * Returns true if this class is a non-static class inside a generic class.
-   *
+   * 
    * TODO(jat): do we need to consider the entire hierarchy?
-   *
+   * 
    * @param classData
    * @param enclosingClassData
    * @return true if this class is a non-static class inside a generic class
@@ -210,7 +205,7 @@ public class TypeOracleMediator {
 
   /**
    * Substitute the raw type if the supplied type is generic.
-   *
+   * 
    * @param type
    * @return original type or its raw type if it is generic
    */
@@ -226,8 +221,6 @@ public class TypeOracleMediator {
 
   // map of internal names to classes
   final Map<String, JRealClassType> binaryMapper = new HashMap<String, JRealClassType>();
-
-  final TypeOracle typeOracle;
 
   // map of fully qualified method names to their argument names
   // transient since it is not retained across calls to addNewUnits
@@ -248,27 +241,47 @@ public class TypeOracleMediator {
    * Construct a TypeOracleMediator.
    */
   public TypeOracleMediator() {
-    this(null);
-  }
-
-  /**
-   * Construct a TypeOracleMediator.
-   *
-   * @param typeOracle TypeOracle instance to use, or null to create a new one
-   */
-  // @VisibleForTesting
-  public TypeOracleMediator(TypeOracle typeOracle) {
-    if (typeOracle == null) {
-      typeOracle = new TypeOracle();
-    }
-    this.typeOracle = typeOracle;
     resolver = new Resolver() {
+      public void addImplementedInterface(JRealClassType type, JClassType intf) {
+        TypeOracleMediator.this.addImplementedInterface(type, intf);
+      }
+
+      public void addThrows(JAbstractMethod method, JType exception) {
+        TypeOracleMediator.this.addThrows(method, exception);
+      }
+
       public Map<String, JRealClassType> getBinaryMapper() {
         return TypeOracleMediator.this.binaryMapper;
       }
 
+      public TypeOracleMediator getMediator() {
+        return TypeOracleMediator.this;
+      }
+
       public TypeOracle getTypeOracle() {
         return TypeOracleMediator.this.typeOracle;
+      }
+
+      public JMethod newMethod(JClassType type, String name,
+          Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+          JTypeParameter[] typeParams) {
+        return TypeOracleMediator.this.newMethod(type, name,
+            declaredAnnotations, typeParams);
+      }
+
+      public void newParameter(JAbstractMethod method, JType argType,
+          String argName,
+          Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+          boolean argNamesAreReal) {
+        TypeOracleMediator.this.newParameter(method, argType, argName,
+            declaredAnnotations, argNamesAreReal);
+      }
+
+      public JRealClassType newRealClassType(JPackage pkg,
+          String enclosingTypeName, boolean isLocalType, String className,
+          boolean isIntf) {
+        return TypeOracleMediator.this.newRealClassType(pkg, enclosingTypeName,
+            isLocalType, className, isIntf);
       }
 
       public boolean resolveAnnotation(TreeLogger logger,
@@ -288,12 +301,20 @@ public class TypeOracleMediator {
       public boolean resolveClass(TreeLogger logger, JRealClassType type) {
         return TypeOracleMediator.this.resolveClass(logger, type);
       }
+
+      public void setReturnType(JAbstractMethod method, JType returnType) {
+        TypeOracleMediator.this.setReturnType(method, returnType);
+      }
+
+      public void setSuperClass(JRealClassType type, JClassType superType) {
+        TypeOracleMediator.this.setSuperClass(type, superType);
+      }
     };
   }
 
   /**
    * Adds new units to an existing TypeOracle.
-   *
+   * 
    * @param logger logger to use
    * @param units collection of compilation units to process
    */
@@ -369,7 +390,7 @@ public class TypeOracleMediator {
     resolveUnresolvedEvent.end();
 
     Event finishEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Finish");
-    typeOracle.finish();
+    super.finish();
     finishEvent.end();
 
     // no longer needed
@@ -384,6 +405,13 @@ public class TypeOracleMediator {
    */
   public Map<String, JRealClassType> getBinaryMapper() {
     return binaryMapper;
+  }
+
+  /**
+   * @return this mediator's resolver.
+   */
+  public Resolver getResolver() {
+    return resolver;
   }
 
   /**
@@ -432,11 +460,9 @@ public class TypeOracleMediator {
       enclosingTypeName = InternalName.toSourceName(InternalName.getClassName(enclosingClassData.getName()));
     }
     if ((access & Opcodes.ACC_ANNOTATION) != 0) {
-      resultType = new JAnnotationType(typeOracle, pkg, enclosingTypeName,
-          false, className, true);
+      resultType = newAnnotationType(pkg, enclosingTypeName, className);
     } else if ((access & Opcodes.ACC_ENUM) != 0) {
-      resultType = new JEnumType(typeOracle, pkg, enclosingTypeName,
-          isLocalType, className, isIntf);
+      resultType = newEnumType(pkg, enclosingTypeName, isLocalType, className);
     } else {
       JTypeParameter[] typeParams = getTypeParametersForClass(classData);
       if ((typeParams != null && typeParams.length > 0)
@@ -444,8 +470,8 @@ public class TypeOracleMediator {
         resultType = new JGenericType(typeOracle, pkg, enclosingTypeName,
             isLocalType, className, isIntf, typeParams);
       } else {
-        resultType = new JRealClassType(typeOracle, pkg, enclosingTypeName,
-            isLocalType, className, isIntf);
+        resultType = newRealClassType(pkg, enclosingTypeName, isLocalType,
+            className, isIntf);
       }
     }
 
@@ -537,7 +563,7 @@ public class TypeOracleMediator {
 
   /**
    * Map a bitset onto a different bitset.
-   *
+   * 
    * @param mapping int array containing a sequence of from/to pairs, each from
    *          entry should have exactly one bit set
    * @param input bitset to map
@@ -740,14 +766,14 @@ public class TypeOracleMediator {
     // Resolve annotations
     Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
     resolveAnnotations(logger, classData.getAnnotations(), declaredAnnotations);
-    type.addAnnotations(declaredAnnotations);
+    addAnnotations(type, declaredAnnotations);
 
     String signature = classData.getSignature();
     if (signature != null) {
       // If we have a signature, use it for superclass and interfaces
       SignatureReader reader = new SignatureReader(signature);
-      ResolveClassSignature classResolver = new ResolveClassSignature(
-          resolver, binaryMapper, logger, type, typeParamLookup);
+      ResolveClassSignature classResolver = new ResolveClassSignature(resolver,
+          binaryMapper, logger, type, typeParamLookup);
       reader.accept(classResolver);
       classResolver.finish();
     } else {
@@ -761,7 +787,7 @@ public class TypeOracleMediator {
                 + superName);
             return false;
           }
-          type.setSuperclass((JClassType) possiblySubstituteRawType(superType));
+          setSuperClass(type, (JClassType) possiblySubstituteRawType(superType));
         }
       }
 
@@ -772,7 +798,8 @@ public class TypeOracleMediator {
           logger.log(TreeLogger.WARN, "Unable to resolve interface " + intfName);
           return false;
         }
-        type.addImplementedInterface((JClassType) possiblySubstituteRawType(intf));
+        addImplementedInterface(type,
+            (JClassType) possiblySubstituteRawType(intf));
       }
     }
     if (((access & Opcodes.ACC_INTERFACE) == 0) && type.getSuperclass() == null) {
@@ -790,7 +817,7 @@ public class TypeOracleMediator {
 
     // Process fields
     // Track the next enum ordinal across resolveField calls.
-    int[] nextEnumOrdinal = new int[] {0};
+    int[] nextEnumOrdinal = new int[]{0};
     for (CollectFieldData field : classData.getFields()) {
       if (!resolveField(logger, type, field, typeParamLookup, nextEnumOrdinal)) {
         logger.log(TreeLogger.WARN, "Unable to resolve field " + field);
@@ -870,9 +897,9 @@ public class TypeOracleMediator {
           // type variables, the enclosign type must be the raw type instead
           // of the generic type.
           JGenericType genericType = enclosingType.isGenericType();
-          type.setEnclosingType(genericType.getRawType());
+          setEnclosingType(type, genericType.getRawType());
         } else {
-          type.setEnclosingType(enclosingType);
+          setEnclosingType(type, enclosingType);
         }
       }
     }
@@ -888,15 +915,16 @@ public class TypeOracleMediator {
     JField jfield;
     if ((field.getAccess() & Opcodes.ACC_ENUM) != 0) {
       assert (type.isEnum() != null);
-      jfield = new JEnumConstant(type, name, declaredAnnotations,
+      jfield = newEnumConstant(type, name, declaredAnnotations,
           nextEnumOrdinal[0]++);
     } else {
-      jfield = new JField(type, name, declaredAnnotations);
+      JField newField = newField(type, name, declaredAnnotations);
+      jfield = newField;
     }
 
     // Get modifiers.
     //
-    jfield.addModifierBits(mapBits(ASM_TO_SHARED_MODIFIERS, field.getAccess()));
+    addModifierBits(jfield, mapBits(ASM_TO_SHARED_MODIFIERS, field.getAccess()));
 
     String signature = field.getSignature();
     JType fieldType;
@@ -917,7 +945,7 @@ public class TypeOracleMediator {
     if (fieldType == null) {
       return false;
     }
-    jfield.setType(fieldType);
+    setFieldType(jfield, fieldType);
     return true;
   }
 
@@ -951,28 +979,27 @@ public class TypeOracleMediator {
     boolean hasReturnType = true;
     if ("<init>".equals(name)) {
       name = type.getSimpleSourceName();
-      method = new JConstructor(type, name, declaredAnnotations, typeParams);
+      method = newConstructor(type, name, declaredAnnotations, typeParams);
       hasReturnType = false;
     } else {
       if (type.isAnnotation() != null) {
-        // TODO(jat): !! anything else to do here?
-        method = new JAnnotationMethod(type, name, typeParams,
-            declaredAnnotations);
+        // TODO(jat): actually resolve the default annotation value.
+        method = newAnnotationMethod(type, name, declaredAnnotations,
+            typeParams, null);
       } else {
-        method = new JMethod(type, name, declaredAnnotations, typeParams);
+        method = newMethod(type, name, declaredAnnotations, typeParams);
       }
     }
 
-    // Copy modifier flags
-    method.addModifierBits(mapBits(ASM_TO_SHARED_MODIFIERS,
+    addModifierBits(method, mapBits(ASM_TO_SHARED_MODIFIERS,
         methodData.getAccess()));
     if (type.isInterface() != null) {
       // Always add implicit modifiers on interface methods.
-      method.addModifierBits(Shared.MOD_PUBLIC | Shared.MOD_ABSTRACT);
+      addModifierBits(method, Shared.MOD_PUBLIC | Shared.MOD_ABSTRACT);
     }
 
     if ((methodData.getAccess() & Opcodes.ACC_VARARGS) != 0) {
-      method.setVarArgs();
+      setVarArgs(method);
     }
 
     String signature = methodData.getSignature();
@@ -998,7 +1025,7 @@ public class TypeOracleMediator {
         if (returnJType == null) {
           return false;
         }
-        ((JMethod) method).setReturnType(returnJType);
+        setReturnType(method, returnJType);
       }
 
       if (!resolveParameters(logger, method, methodData)) {
@@ -1027,7 +1054,7 @@ public class TypeOracleMediator {
       List<CollectAnnotationData> annotations) {
     Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
     resolveAnnotations(logger, annotations, declaredAnnotations);
-    type.getPackage().addAnnotations(declaredAnnotations);
+    addAnnotations(type.getPackage(), declaredAnnotations);
     return true;
   }
 
@@ -1053,8 +1080,7 @@ public class TypeOracleMediator {
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
       resolveAnnotations(logger, paramAnnot[i], declaredAnnotations);
 
-      // JParameter adds itself to the method
-      new JParameter(method, argType, argNames[i], declaredAnnotations,
+      newParameter(method, argType, argNames[i], declaredAnnotations,
           argNamesAreReal);
     }
     return true;
@@ -1068,7 +1094,7 @@ public class TypeOracleMediator {
         if (exc == null) {
           return false;
         }
-        method.addThrows(exc);
+        addThrows(method, exc);
       }
     }
     return true;

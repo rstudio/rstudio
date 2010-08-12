@@ -24,7 +24,7 @@ import java.util.Map;
 public class JEnumConstant extends JField {
   private final int ordinal;
 
-  public JEnumConstant(JClassType enclosingType, String name,
+  JEnumConstant(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       int ordinal) {
     super(enclosingType, name, declaredAnnotations);

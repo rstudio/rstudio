@@ -32,7 +32,7 @@ public class JRawType extends JMaybeParameterizedType {
 
   private final AbstractMembers members;
 
-  public JRawType(JGenericType genericType) {
+  JRawType(JGenericType genericType) {
     super.setBaseType(genericType);
     members = new DelegateMembers(this, getBaseType(), ERASURE_SUBSTITUTION);
   }

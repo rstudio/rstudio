@@ -40,18 +40,6 @@ public class JArrayType extends JClassType {
   }
 
   @Override
-  public void addImplementedInterface(JClassType intf) {
-    throw new UnsupportedOperationException("modifying a "
-        + getClass().getSimpleName());
-  }
-
-  @Override
-  public void addModifierBits(int bits) {
-    throw new UnsupportedOperationException("modifying a "
-        + getClass().getSimpleName());
-  }
-
-  @Override
   public JConstructor findConstructor(JType[] paramTypes) {
     return null;
   }
@@ -191,7 +179,7 @@ public class JArrayType extends JClassType {
     }
     return lazyQualifiedBinaryName;
   }
-  
+
   @Override
   public String getQualifiedSourceName() {
     if (lazyQualifiedName == null) {
@@ -338,19 +326,6 @@ public class JArrayType extends JClassType {
     return null;
   }
 
-  public void setLeafType(JType type) {
-    JArrayType componentTypeIsArray = componentType.isArray();
-    if (componentTypeIsArray != null) {
-      componentTypeIsArray.setLeafType(type);
-    } else {
-      componentType = type;
-    }
-  }
-
-  @Override
-  public void setSuperclass(JClassType type) {
-  }
-
   @Override
   public String toString() {
     return getQualifiedSourceName();
@@ -402,7 +377,19 @@ public class JArrayType extends JClassType {
   }
 
   @Override
+  void addImplementedInterface(JClassType intf) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
   void addMethod(JMethod method) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  void addModifierBits(int bits) {
     throw new UnsupportedOperationException("modifying a "
         + getClass().getSimpleName());
   }
@@ -446,5 +433,18 @@ public class JArrayType extends JClassType {
 
   @Override
   void removeFromSupertypes() {
+  }
+
+  void setLeafType(JType type) {
+    JArrayType componentTypeIsArray = componentType.isArray();
+    if (componentTypeIsArray != null) {
+      componentTypeIsArray.setLeafType(type);
+    } else {
+      componentType = type;
+    }
+  }
+
+  @Override
+  void setSuperclass(JClassType type) {
   }
 }

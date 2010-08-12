@@ -27,22 +27,22 @@ public class JMethod extends JAbstractMethod {
 
   private JType returnType;
 
-  public JMethod(JClassType enclosingType, String name) {
+  JMethod(JClassType enclosingType, JMethod srcMethod) {
+    super(srcMethod);
+    this.enclosingType = enclosingType;
+    this.returnType = srcMethod.returnType;
+  }
+
+  JMethod(JClassType enclosingType, String name) {
     this(enclosingType, name, null, null);
   }
 
-  public JMethod(JClassType enclosingType, String name,
+  JMethod(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {
     super(name, declaredAnnotations, jtypeParameters);
     this.enclosingType = enclosingType;
     enclosingType.addMethod(this);
-  }
-
-  JMethod(JClassType enclosingType, JMethod srcMethod) {
-    super(srcMethod);
-    this.enclosingType = enclosingType;
-    this.returnType = srcMethod.returnType;
   }
 
   @Override
@@ -120,10 +120,6 @@ public class JMethod extends JAbstractMethod {
     return 0 != (getModifierBits() & TypeOracle.MOD_STATIC);
   }
 
-  public void setReturnType(JType type) {
-    returnType = type;
-  }
-
   @Override
   public String toString() {
     return getReadableDeclaration();
@@ -147,5 +143,9 @@ public class JMethod extends JAbstractMethod {
     toStringParamsAndThrows(sb);
 
     return sb.toString();
+  }
+
+  void setReturnType(JType type) {
+    returnType = type;
   }
 }

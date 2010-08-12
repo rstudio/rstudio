@@ -18,8 +18,6 @@ package com.google.gwt.dev.javac.asm;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.dev.asm.Type;
@@ -69,7 +67,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
    * @param argTypes
    * @param argNames
    * @param argNamesAreReal
-   * @param allMethodArgs 
+   * @param allMethodArgs
    */
   public ResolveMethodSignature(Resolver resolver, TreeLogger logger,
       JAbstractMethod method, TypeParameterLookup typeParamLookup,
@@ -99,7 +97,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
     // Set return type
     if (hasReturnType) {
       failed |= (returnType[0] == null);
-      ((JMethod) method).setReturnType(returnType[0]);
+      resolver.setReturnType(method, returnType[0]);
     }
 
     // Create arguments
@@ -133,7 +131,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
           declaredAnnotations);
 
       // JParameter adds itself to the method
-      new JParameter(method, argType, names[i], declaredAnnotations,
+      resolver.newParameter(method, argType, names[i], declaredAnnotations,
           namesAreReal);
     }
 
@@ -143,7 +141,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
         failed = true;
         continue;
       }
-      method.addThrows(exc[0]);
+      resolver.addThrows(method, exc[0]);
     }
     return !failed;
   }

@@ -37,16 +37,6 @@ package com.google.gwt.core.ext.typeinfo;
 @Deprecated
 public interface HasMetaData {
   /**
-   * Adds additional metadata.
-   * 
-   * @deprecated Javadoc comment metadata has been deprecated in favor of proper
-   *             Java annotations. The only way to add a Java annotation is via
-   *             the source code.
-   */
-  @Deprecated
-  void addMetaData(String tagName, String[] values);
-
-  /**
    * Gets each list of metadata for the specified tag name.
    * 
    * @deprecated Javadoc comment metadata has been deprecated in favor of proper

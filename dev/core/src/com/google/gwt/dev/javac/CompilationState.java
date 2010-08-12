@@ -132,6 +132,13 @@ public class CompilationState {
     return mediator.getTypeOracle();
   }
 
+  /**
+   * For testing.
+   */
+  TypeOracleMediator getMediator() {
+    return mediator;
+  }
+
   private void assimilateUnits(TreeLogger logger,
       Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {

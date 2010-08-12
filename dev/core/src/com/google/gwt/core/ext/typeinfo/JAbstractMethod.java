@@ -38,11 +38,11 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
 
   private List<JParameter> params = Lists.create();
 
+  private String[] realParameterNames = null;
+
   private List<JType> thrownTypes = Lists.create();
 
   private List<JTypeParameter> typeParams = Lists.create();
-
-  private String[] realParameterNames = null;
 
   JAbstractMethod(JAbstractMethod srcMethod) {
     this.annotations = new Annotations(srcMethod.annotations);
@@ -61,19 +61,6 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     if (jtypeParameters != null) {
       typeParams = Lists.create(jtypeParameters);
     }
-  }
-
-  @Deprecated
-  public final void addMetaData(String tagName, String[] values) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void addModifierBits(int bits) {
-    modifierBits |= bits;
-  }
-
-  public void addThrows(JType type) {
-    thrownTypes = Lists.add(thrownTypes, type);
   }
 
   public JParameter findParameter(String name) {
@@ -162,10 +149,6 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     return isVarArgs;
   }
 
-  public void setVarArgs() {
-    isVarArgs = true;
-  }
-
   protected int getModifierBits() {
     return modifierBits;
   }
@@ -221,8 +204,16 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     sb.append(">");
   }
 
+  void addModifierBits(int bits) {
+    modifierBits |= bits;
+  }
+
   void addParameter(JParameter param) {
     params = Lists.add(params, param);
+  }
+
+  void addThrows(JType type) {
+    thrownTypes = Lists.add(thrownTypes, type);
   }
 
   /**
@@ -269,6 +260,10 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
       }
     }
     return true;
+  }
+
+  void setVarArgs() {
+    isVarArgs = true;
   }
 
   private void fetchRealParameterNames() {

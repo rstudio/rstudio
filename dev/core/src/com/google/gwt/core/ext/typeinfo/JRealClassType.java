@@ -73,7 +73,7 @@ public class JRealClassType extends JClassType {
    * @param name
    * @param isInterface
    */
-  public JRealClassType(TypeOracle oracle, JPackage declaringPackage,
+  JRealClassType(TypeOracle oracle, JPackage declaringPackage,
       String enclosingTypeName, boolean isLocalType, String name,
       boolean isInterface) {
     this.oracle = oracle;
@@ -97,17 +97,6 @@ public class JRealClassType extends JClassType {
       // setEnclosingType().
     }
     oracle.addNewType(this);
-  }
-
-  public void addAnnotations(
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-    annotations.addAnnotations(declaredAnnotations);
-  }
-
-  @Override
-  public void addImplementedInterface(JClassType intf) {
-    assert (intf != null);
-    interfaces = Lists.add(interfaces, intf);
   }
 
   @Override
@@ -412,45 +401,6 @@ public class JRealClassType extends JClassType {
     return null;
   }
 
-  /**
-   * INTERNAL METHOD -- this should only be called by TypeOracleMediator.
-   * 
-   * TODO: reduce visibility.
-   * 
-   * @param enclosingType
-   */
-  public void setEnclosingType(JClassType enclosingType) {
-    assert this.enclosingType == null;
-    assert enclosingType != null;
-
-    this.enclosingType = enclosingType;
-
-    // Add myself to my enclosing type.
-    JRawType rawType = enclosingType.isRawType();
-    if (rawType != null) {
-      enclosingType = rawType.getGenericType();
-    }
-    enclosingType.addNestedType(this);
-  }
-
-  @Override
-  public void setSuperclass(JClassType type) {
-    assert (type != null);
-    assert (isInterface() == null);
-    this.superclass = type;
-    JRealClassType realSuperType;
-    if (type.isParameterized() != null) {
-      realSuperType = type.isParameterized().getBaseType();
-    } else if (type.isRawType() != null) {
-      realSuperType = type.isRawType().getGenericType();
-    } else if (type instanceof JRealClassType) {
-      realSuperType = (JRealClassType) type;
-    } else {
-      throw new IllegalArgumentException("Unknown type for " + type);
-    }
-    annotations.setParent(realSuperType.annotations);
-  }
-
   @Override
   public String toString() {
     if (isInterface) {
@@ -546,6 +496,17 @@ public class JRealClassType extends JClassType {
     }
   }
 
+  void addAnnotations(
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    annotations.addAnnotations(declaredAnnotations);
+  }
+
+  @Override
+  void addImplementedInterface(JClassType intf) {
+    assert (intf != null);
+    interfaces = Lists.add(interfaces, intf);
+  }
+
   /**
    * NOTE: This method is for testing purposes only.
    */
@@ -578,5 +539,37 @@ public class JRealClassType extends JClassType {
   @Override
   void removeFromSupertypes() {
     removeSubtype(this);
+  }
+
+  void setEnclosingType(JClassType enclosingType) {
+    assert this.enclosingType == null;
+    assert enclosingType != null;
+
+    this.enclosingType = enclosingType;
+
+    // Add myself to my enclosing type.
+    JRawType rawType = enclosingType.isRawType();
+    if (rawType != null) {
+      enclosingType = rawType.getGenericType();
+    }
+    enclosingType.addNestedType(this);
+  }
+
+  @Override
+  void setSuperclass(JClassType type) {
+    assert (type != null);
+    assert (isInterface() == null);
+    this.superclass = type;
+    JRealClassType realSuperType;
+    if (type.isParameterized() != null) {
+      realSuperType = type.isParameterized().getBaseType();
+    } else if (type.isRawType() != null) {
+      realSuperType = type.isRawType().getGenericType();
+    } else if (type instanceof JRealClassType) {
+      realSuperType = (JRealClassType) type;
+    } else {
+      throw new IllegalArgumentException("Unknown type for " + type);
+    }
+    annotations.setParent(realSuperType.annotations);
   }
 }

@@ -298,17 +298,6 @@ public class TypeOracle {
   }
 
   /**
-   * Called to add a source reference for a top-level class type.
-   * 
-   * SHOULD ONLY BE CALLED FROM TypeOracleMediator.
-   * 
-   * TODO: make not public?
-   */
-  public void addSourceReference(JRealClassType type, Resource sourceFile) {
-    javaSourceParser.addSourceForType(type, sourceFile);
-  }
-
-  /**
    * Attempts to find a package by name. All requests for the same package
    * return the same package object.
    * 
@@ -352,18 +341,6 @@ public class TypeOracle {
   }
 
   /**
-   * Called after a block of new types are added.
-   * 
-   * TODO: make not public?
-   */
-  public void finish() {
-    JClassType[] newTypes = recentTypes.toArray(new JClassType[recentTypes.size()]);
-    computeHierarchyRelationships(newTypes);
-    computeSingleJsoImplData(newTypes);
-    recentTypes.clear();
-  }
-
-  /**
    * Gets the type object that represents an array of the specified type. The
    * returned type always has a stable identity so as to guarantee that all
    * calls to this method with the same argument return the same object.
@@ -391,10 +368,6 @@ public class TypeOracle {
       assert javaLangObject != null;
     }
     return javaLangObject;
-  }
-
-  public JavaSourceParser getJavaSourceParser() {
-    return javaSourceParser;
   }
 
   /**
@@ -652,6 +625,27 @@ public class TypeOracle {
     String fqcn = newType.getQualifiedSourceName();
     allTypes.put(fqcn, newType);
     recentTypes.add(newType);
+  }
+
+  /**
+   * Called to add a source reference for a top-level class type.
+   */
+  void addSourceReference(JRealClassType type, Resource sourceFile) {
+    javaSourceParser.addSourceForType(type, sourceFile);
+  }
+
+  /**
+   * Called after a block of new types are added.
+   */
+  void finish() {
+    JClassType[] newTypes = recentTypes.toArray(new JClassType[recentTypes.size()]);
+    computeHierarchyRelationships(newTypes);
+    computeSingleJsoImplData(newTypes);
+    recentTypes.clear();
+  }
+
+  JavaSourceParser getJavaSourceParser() {
+    return javaSourceParser;
   }
 
   private void computeHierarchyRelationships(JClassType[] types) {
