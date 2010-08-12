@@ -704,10 +704,6 @@ public class JUnitShell extends DevMode {
     } else if (unit.isError()) {
       errMsg = "The test class '" + typeName
           + "' had compile errors; check log for details";
-    } else if (!unit.isCompiled()) {
-      errMsg = "The test class '"
-          + typeName
-          + "' depends on a unit that had compile errors; check log for details";
     } else {
       errMsg = "Unexpected error: the test class '"
           + typeName

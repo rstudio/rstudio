@@ -300,11 +300,6 @@ public abstract class CompilationUnit {
   }
 
   /**
-   * Returns <code>true</code> if this unit is compiled and valid.
-   */
-  public abstract boolean isCompiled();
-
-  /**
    * Returns <code>true</code> if this unit had errors.
    */
   public abstract boolean isError();

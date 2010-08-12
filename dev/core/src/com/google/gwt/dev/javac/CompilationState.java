@@ -136,13 +136,13 @@ public class CompilationState {
       Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
       unitMap.put(unit.getTypeName(), unit);
-      if (unit.isCompiled()) {
-        for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-          classFileMap.put(compiledClass.getInternalName(), compiledClass);
-          classFileMapBySource.put(compiledClass.getSourceName(), compiledClass);
-        }
+      for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+        classFileMap.put(compiledClass.getInternalName(), compiledClass);
+        classFileMapBySource.put(compiledClass.getSourceName(), compiledClass);
       }
     }
+    CompilationUnitInvalidator.retainValidUnits(logger, units,
+        compileMoreLater.getValidDependencies());
     mediator.addNewUnits(logger, units);
   }
 }

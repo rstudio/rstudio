@@ -66,11 +66,6 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   }
 
   @Override
-  public boolean isCompiled() {
-    return !hasErrors;
-  }
-
-  @Override
   public boolean isError() {
     return hasErrors;
   }

@@ -79,6 +79,11 @@ import java.util.Set;
 public class TypeOracleMediator {
 
   /**
+   * Turn on to trace class processing.
+   */
+  private static final boolean TRACE_CLASSES = false;
+
+  /**
    * Pairs of bits to convert from ASM Opcodes.* to Shared.* bitfields.
    */
   private static final int[] ASM_TO_SHARED_MODIFIERS = new int[] {
@@ -301,9 +306,6 @@ public class TypeOracleMediator {
         CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Visit Class Files");
     classMap = new HashMap<String, CollectClassData>();
     for (CompilationUnit unit : units) {
-      if (!unit.isCompiled()) {
-        continue;
-      }
       Collection<CompiledClass> compiledClasses = unit.getCompiledClasses();
       for (CompiledClass compiledClass : compiledClasses) {
         CollectClassData cv = processClass(compiledClass);
@@ -323,9 +325,6 @@ public class TypeOracleMediator {
     allMethodArgs = new MethodArgNamesLookup();
     Set<JRealClassType> unresolvedTypes = new HashSet<JRealClassType>();
     for (CompilationUnit unit : units) {
-      if (!unit.isCompiled()) {
-        continue;
-      }
       Collection<CompiledClass> compiledClasses = unit.getCompiledClasses();
       for (CompiledClass compiledClass : compiledClasses) {
         String internalName = compiledClass.getInternalName();
@@ -564,7 +563,7 @@ public class TypeOracleMediator {
     ClassReader reader = new ClassReader(classBytes);
     CollectClassData mcv = new CollectClassData();
     ClassVisitor cv = mcv;
-    if (false) {
+    if (TRACE_CLASSES) {
       cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
     }
     reader.accept(cv, 0);

@@ -41,7 +41,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * Manages a centralized cache for compiled units.
@@ -87,21 +86,18 @@ public class CompilationStateBuilder {
         CompilationUnit unit = builder.build(compiledClasses, dependencies,
             jsniMethods.values(), methodArgs,
             cud.compilationResult().getProblems());
-        if (!unit.isError()) {
-          addValidUnit(unit);
-
-          // Cache the valid unit for future compiles.
-          ContentId contentId = builder.getContentId();
-          unitCache.put(contentId, unit);
-          if (builder instanceof ResourceCompilationUnitBuilder) {
-            ResourceCompilationUnitBuilder rcub = (ResourceCompilationUnitBuilder) builder;
-            ResourceTag resourceTag = new ResourceTag(rcub.getLastModifed(),
-                contentId);
-            resourceContentCache.put(builder.getLocation(), resourceTag);
-            keepAliveLatestVersion.put(resourceTag, unit);
-          } else if (builder instanceof GeneratedCompilationUnitBuilder) {
-            keepAliveRecentlyGenerated.put(unit.getTypeName(), unit);
-          }
+        addValidUnit(unit);
+        // Cache the valid unit for future compiles.
+        ContentId contentId = builder.getContentId();
+        unitCache.put(contentId, unit);
+        if (builder instanceof ResourceCompilationUnitBuilder) {
+          ResourceCompilationUnitBuilder rcub = (ResourceCompilationUnitBuilder) builder;
+          ResourceTag resourceTag = new ResourceTag(rcub.getLastModifed(),
+              contentId);
+          resourceContentCache.put(builder.getLocation(), resourceTag);
+          keepAliveLatestVersion.put(resourceTag, unit);
+        } else if (builder instanceof GeneratedCompilationUnitBuilder) {
+          keepAliveRecentlyGenerated.put(unit.getTypeName(), unit);
         }
         resultUnits.put(unit.getTypeName(), unit);
       }
@@ -123,12 +119,6 @@ public class CompilationStateBuilder {
     private transient Map<String, CompilationUnit> resultUnits;
     private final Set<ContentId> validDependencies = new HashSet<ContentId>();
 
-    /**
-     * Provides compilation unit for unknown classes encountered by the
-     * compiler if desired.
-     */
-    private AdditionalTypeProviderDelegate delegate;
-
     public CompileMoreLater(AdditionalTypeProviderDelegate delegate) {
       compiler.setAdditionalTypeProviderDelegate(delegate);
     }
@@ -145,9 +135,10 @@ public class CompilationStateBuilder {
     }
 
     void addValidUnit(CompilationUnit unit) {
-      assert unit.isCompiled();
       compiler.addCompiledUnit(unit);
-      validDependencies.add(unit.getContentId());
+      if (!unit.isError()) {
+        validDependencies.add(unit.getContentId());
+      }
     }
 
     void compile(TreeLogger logger,
@@ -220,19 +211,6 @@ public class CompilationStateBuilder {
     return instance;
   }
 
-  private static void invalidateUnitsWithInvalidRefs(TreeLogger logger,
-      Map<String, CompilationUnit> resultUnits, Set<ContentId> set) {
-    Set<CompilationUnit> validResultUnits = new HashSet<CompilationUnit>(
-        resultUnits.values());
-    CompilationUnitInvalidator.retainValidUnits(logger, validResultUnits, set);
-    for (Entry<String, CompilationUnit> entry : resultUnits.entrySet()) {
-      CompilationUnit unit = entry.getValue();
-      if (unit.isCompiled() && !validResultUnits.contains(unit)) {
-        entry.setValue(new InvalidCompilationUnit(unit));
-      }
-    }
-  }
-
   /**
    * JsProgram for collecting JSNI methods.
    */
@@ -301,7 +279,8 @@ public class CompilationStateBuilder {
         if (tag != null && tag.getLastModified() == resource.getLastModified()) {
           ContentId contentId = tag.getContentId();
           CompilationUnit existingUnit = unitCache.get(contentId);
-          if (existingUnit != null && existingUnit.isCompiled()) {
+          // Always try to recompile error units.
+          if (existingUnit != null && !existingUnit.isError()) {
             resultUnits.put(existingUnit.getTypeName(), existingUnit);
           }
         }
@@ -327,10 +306,8 @@ public class CompilationStateBuilder {
       }
       compileMoreLater.compile(logger, builders, resultUnits);
 
-      // Invalidate units with invalid refs.
-      invalidateUnitsWithInvalidRefs(logger, resultUnits,
-                                     Collections.<ContentId> emptySet());
-      return new CompilationState(logger, resultUnits.values(), compileMoreLater);
+      return new CompilationState(logger, resultUnits.values(),
+          compileMoreLater);
     } finally {
       compilationStateBuilderProcess.end();
     }
@@ -352,7 +329,8 @@ public class CompilationStateBuilder {
       ContentId contentId = new ContentId(generatedUnit.getTypeName(),
           generatedUnit.getStrongHash());
       CompilationUnit existingUnit = unitCache.get(contentId);
-      if (existingUnit != null && existingUnit.isCompiled()) {
+      // Always try to recompile error units.
+      if (existingUnit != null && !existingUnit.isError()) {
         resultUnits.put(existingUnit.getTypeName(), existingUnit);
       }
     }
@@ -375,8 +353,6 @@ public class CompilationStateBuilder {
     }
 
     compileMoreLater.compile(logger, builders, resultUnits);
-    invalidateUnitsWithInvalidRefs(logger, resultUnits,
-        compileMoreLater.getValidDependencies());
     return resultUnits.values();
   }
 }

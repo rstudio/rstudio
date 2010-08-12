@@ -428,7 +428,6 @@ public class JdtCompiler {
   }
 
   public void addCompiledUnit(CompilationUnit unit) {
-    assert unit.isCompiled();
     addPackages(Shared.getPackageName(unit.getTypeName()).replace('.', '/'));
     addBinaryTypes(unit.getCompiledClasses());
     contentIdMap.put(unit.getDisplayLocation(), unit.getContentId());

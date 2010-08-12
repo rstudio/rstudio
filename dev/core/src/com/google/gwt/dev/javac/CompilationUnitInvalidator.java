@@ -68,7 +68,7 @@ public class CompilationUnitInvalidator {
     Set<CompilationUnit> currentlyValidUnits = new HashSet<CompilationUnit>();
     Set<ContentId> currentlyValidRefs = new HashSet<ContentId>(knownValidRefs);
     for (CompilationUnit unit : units) {
-      if (unit.isCompiled()) {
+      if (!unit.isError()) {
         currentlyValidUnits.add(unit);
         currentlyValidRefs.add(unit.getContentId());
       }

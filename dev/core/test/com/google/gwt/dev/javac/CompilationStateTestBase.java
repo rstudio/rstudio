@@ -84,7 +84,6 @@ public abstract class CompilationStateTestBase extends TestCase {
 
   static void assertUnitsChecked(Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
-      assertTrue(unit.isCompiled());
       assertFalse(unit.isError());
       assertTrue(unit.getCompiledClasses().size() > 0);
     }
