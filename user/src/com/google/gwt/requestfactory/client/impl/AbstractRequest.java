@@ -64,7 +64,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   @SuppressWarnings("unchecked")
   public <P extends Record> P edit(P record) {
     P returnRecordImpl = (P) ((RecordImpl) record).getSchema().create(
-        ((RecordImpl) record).asJso());
+        ((RecordImpl) record).asJso(), ((RecordImpl) record).isFuture());
     ((RecordImpl) returnRecordImpl).setDeltaValueStore(deltaValueStore);
     return returnRecordImpl;
   }

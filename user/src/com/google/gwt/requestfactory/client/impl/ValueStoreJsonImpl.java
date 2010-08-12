@@ -58,7 +58,7 @@ class ValueStoreJsonImpl {
    */
   private void setRecordInList(RecordJsoImpl newRecord, int i,
       JsArray<RecordJsoImpl> array) {
-    RecordKey recordKey = new RecordKey(newRecord);
+    RecordKey recordKey = new RecordKey(newRecord, RequestFactoryJsonImpl.NOT_FUTURE);
 
     RecordJsoImpl oldRecord = records.get(recordKey);
     if (oldRecord == null) {

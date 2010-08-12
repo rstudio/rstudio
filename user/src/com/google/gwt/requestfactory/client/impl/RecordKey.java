@@ -27,21 +27,23 @@ package com.google.gwt.requestfactory.client.impl;
 class RecordKey {
   final RecordSchema<?> schema;
   final Long id;
+  final boolean isFuture;
 
   RecordKey(RecordImpl record) {
-    this(record.getId(), record.getSchema());
+    this(record.getId(), record.getSchema(), record.isFuture());
   }
 
-  RecordKey(RecordJsoImpl record) {
-    this(record.getId(), record.getSchema());
+  RecordKey(RecordJsoImpl record, boolean isFuture) {
+    this(record.getId(), record.getSchema(), isFuture);
   }
 
-  protected RecordKey(Long id, RecordSchema<?> schema) {
+  protected RecordKey(Long id, RecordSchema<?> schema, boolean isFuture) {
     assert id != null;
     assert schema != null;
 
     this.id = id;
     this.schema = schema;
+    this.isFuture = isFuture;
   }
 
   @Override
@@ -68,7 +70,7 @@ class RecordKey {
   @Override
   public int hashCode() {
     final int prime = 31;
-    int result = 1;
+    int result = (isFuture ? 0 : 1);
     result = prime * result + ((id == null) ? 0 : id.hashCode());
     result = prime * result + ((schema == null) ? 0 : schema.hashCode());
     return result;
@@ -77,6 +79,6 @@ class RecordKey {
   @Override
   public String toString() {
     return "[RecordKey schema: " + schema.getClass().getName() + " id: " + id
-        + "]";
+        + " isFuture: " + (isFuture ? "true" : "false") + "]";
   }
 }

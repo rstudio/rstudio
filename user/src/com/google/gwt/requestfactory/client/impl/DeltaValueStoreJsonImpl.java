@@ -165,15 +165,14 @@ class DeltaValueStoreJsonImpl {
         if (violations == NULL_VIOLATIONS) {
           Long datastoreId = futureToDatastoreId.get(futureKey.id);
           assert datastoreId != null;
-          requestFactory.futureIdGenerator.delete(futureKey.id);
-          final RecordKey key = new RecordKey(datastoreId, futureKey.schema);
+          final RecordKey key = new RecordKey(datastoreId, futureKey.schema, RequestFactoryJsonImpl.NOT_FUTURE);
           RecordJsoImpl value = entry.getValue();
           value.set(Record.id, datastoreId);
           RecordJsoImpl masterRecord = master.records.get(key);
           assert masterRecord == null;
           master.records.put(key, value);
           masterRecord = value;
-          toRemove.add(key);
+          toRemove.add(new RecordKey(datastoreId, futureKey.schema, RequestFactoryJsonImpl.IS_FUTURE));
           master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
               masterRecord, WriteOperation.CREATE));
           syncResults.add(new SyncResultImpl(masterRecord, null, futureKey.id));
@@ -349,8 +348,7 @@ class DeltaValueStoreJsonImpl {
     }
   }
 
-  public String toJson() {
-    used = true;
+  String toJson() {
     if (operations.size() > 1) {
       throw new UnsupportedOperationException(
           "Currently, only one entity can be saved/persisted at a time");
@@ -367,6 +365,11 @@ class DeltaValueStoreJsonImpl {
        * allowed to span multiple entity groups.
        */
     }
+    return toJsonWithoutChecks();
+  }
+
+  String toJsonWithoutChecks() {
+    used = true;
     StringBuffer jsonData = new StringBuffer("{");
     for (WriteOperation writeOperation : WriteOperation.values()) {
       String jsonDataForOperation = getJsonForOperation(writeOperation);

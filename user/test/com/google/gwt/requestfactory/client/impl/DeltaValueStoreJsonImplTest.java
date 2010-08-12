@@ -57,6 +57,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
  
   RecordJsoImpl jso = null;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.requestfactory.RequestFactoryTest";
   }
@@ -70,12 +71,13 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         return create(token, typeMap);
       }
 
+      @Override
       public void init(HandlerManager eventBus) {
         // ignore.
       }
 
       public LoggingRequest loggingRequest() {
-        return null; //ignore
+        return null; // ignore
       }
 
     };
@@ -128,7 +130,9 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertTrue(deltaValueStore.isChanged());
     JSONObject changeRecord = testAndGetChangeRecord(deltaValueStore.toJson(),
         WriteOperation.CREATE);
-    changeRecord.get(SimpleFooRecord.userName.getName());
+    assertEquals(
+        "harry",
+        changeRecord.get(SimpleFooRecord.userName.getName()).isString().stringValue());
   }
 
   public void testDelete() {
@@ -151,8 +155,10 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertTrue(deltaValueStore.isChanged());
     JSONObject changeRecord = testAndGetChangeRecord(deltaValueStore.toJson(),
         WriteOperation.UPDATE);
-    changeRecord.get(SimpleFooRecord.userName.getName());
-  }
+    assertEquals(
+        "harry",
+        changeRecord.get(SimpleFooRecord.userName.getName()).isString().stringValue());
+   }
 
   public void testOperationAfterJson() {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
@@ -175,6 +181,41 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         "harry");
   }
 
+  public void testSeparateIds() {
+    RecordImpl createRecord = (RecordImpl) requestFactory.create(SimpleFooRecord.class);
+    assertTrue(createRecord.isFuture());
+    Long futureId = createRecord.getId();
+
+    RecordImpl mockRecord = new RecordImpl(RecordJsoImpl.create(futureId, 1,
+        SimpleFooRecordImpl.SCHEMA), RequestFactoryJsonImpl.NOT_FUTURE);
+    valueStore.setRecord(mockRecord.asJso()); // marked as non-future..
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
+
+    deltaValueStore.set(SimpleFooRecord.userName, createRecord, "harry");
+    deltaValueStore.set(SimpleFooRecord.userName, mockRecord, "bovik");
+    assertTrue(deltaValueStore.isChanged());
+    String jsonString = deltaValueStore.toJsonWithoutChecks();
+    JSONObject jsonObject = (JSONObject) JSONParser.parse(jsonString);
+    assertFalse(jsonObject.containsKey(WriteOperation.DELETE.name()));
+    assertTrue(jsonObject.containsKey(WriteOperation.CREATE.name()));
+    assertTrue(jsonObject.containsKey(WriteOperation.UPDATE.name()));
+
+    JSONArray createOperationArray = jsonObject.get(
+        WriteOperation.CREATE.name()).isArray();
+    assertEquals(1, createOperationArray.size());
+    assertEquals("harry", createOperationArray.get(0).isObject().get(
+        SimpleFooRecord.class.getName()).isObject().get(
+        SimpleFooRecord.userName.getName()).isString().stringValue());
+
+    JSONArray updateOperationArray = jsonObject.get(
+        WriteOperation.UPDATE.name()).isArray();
+    assertEquals(1, updateOperationArray.size());
+    assertEquals("bovik", updateOperationArray.get(0).isObject().get(
+        SimpleFooRecord.class.getName()).isObject().get(
+        SimpleFooRecord.userName.getName()).isString().stringValue());
+  }
+
   public void testUpdate() {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
@@ -183,7 +224,9 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertTrue(deltaValueStore.isChanged());
     JSONObject changeRecord = testAndGetChangeRecord(deltaValueStore.toJson(),
         WriteOperation.UPDATE);
-    changeRecord.get(SimpleFooRecord.userName.getName());
+    assertEquals(
+        "harry",
+        changeRecord.get(SimpleFooRecord.userName.getName()).isString().stringValue());
   }
 
   public void testUpdateDelete() {

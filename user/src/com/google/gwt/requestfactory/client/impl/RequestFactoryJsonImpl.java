@@ -31,9 +31,7 @@ import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.valuestore.shared.Record;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,25 +45,8 @@ import java.util.logging.Logger;
  */
 public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
-  // TODO(amitmanjhi) Dump this and the one in DeltaValueStore in favor of
-  // RecordImpl#isFuture
-  static class FutureIdGenerator {
-    Set<Long> idsInTransit = new HashSet<Long>();
-    Long maxId = 1L;
-
-    void delete(Long id) {
-      idsInTransit.remove(id);
-    }
-
-    Long getFutureId() {
-      Long futureId = maxId++;
-      if (maxId == Long.MAX_VALUE) {
-        maxId = 1L;
-      }
-      assert !idsInTransit.contains(futureId);
-      return futureId;
-    }
-  }
+  static final boolean IS_FUTURE = true;
+  static final boolean NOT_FUTURE = false;
 
   private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
 
@@ -79,7 +60,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private static final Integer INITIAL_VERSION = 1;
 
-  final FutureIdGenerator futureIdGenerator = new FutureIdGenerator();
+  private long currentFutureId = 0;
 
   final Map<RecordKey, RecordJsoImpl> creates = new HashMap<RecordKey, RecordJsoImpl>();
 
@@ -103,7 +84,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     builder.setHeader("Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
     builder.setHeader("pageurl", Location.getHref());
     builder.setRequestData(ClientRequestHelper.getRequestString(requestObject.getRequestData().getRequestMap(
-        ((AbstractRequest) requestObject).deltaValueStore.toJson())));
+        ((AbstractRequest<?,?>) requestObject).deltaValueStore.toJson())));
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
@@ -157,12 +138,12 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private Record createFuture(
       RecordSchema<? extends Record> schema) {
-    Long futureId = futureIdGenerator.getFutureId();
+    Long futureId = ++currentFutureId;
     RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
         schema);
-    RecordKey recordKey = new RecordKey(newRecord);
+    RecordKey recordKey = new RecordKey(newRecord, IS_FUTURE);
     creates.put(recordKey, newRecord);
-    return schema.create(newRecord);
+    return schema.create(newRecord, IS_FUTURE);
   }
 
   private void postRequestEvent(State received, Response response) {

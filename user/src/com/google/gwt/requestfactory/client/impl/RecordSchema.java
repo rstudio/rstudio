@@ -52,7 +52,7 @@ public abstract class RecordSchema<R extends Record> {
   }
 
   public final R create(RecordJsoImpl jso) {
-    return create(jso, false);
+    return create(jso, RequestFactoryJsonImpl.NOT_FUTURE);
   }
   
   public abstract R create(RecordJsoImpl jso, boolean isFuture);
