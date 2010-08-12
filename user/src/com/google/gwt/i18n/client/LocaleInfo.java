@@ -33,7 +33,9 @@ public class LocaleInfo {
    * is a static.  In the future, we would need a hash map from locale names
    * to LocaleInfo instances.
    */
-  private static LocaleInfo instance  = new LocaleInfo();
+  private static LocaleInfo instance  = new LocaleInfo(
+      (LocaleInfoImpl) GWT.create(LocaleInfoImpl.class),
+      (CldrImpl) GWT.create(CldrImpl.class));
 
   /**
    * @return an array of available locale names
@@ -50,7 +52,7 @@ public class LocaleInfo {
      * you might want to get the list of available locales in order to create
      * instances of each of them.
      */
-    return LocaleInfoImplHolder.infoImpl.getAvailableLocaleNames();
+    return instance.infoImpl.getAvailableLocaleNames();
   }
   
   /**
@@ -82,23 +84,19 @@ public class LocaleInfo {
     /*
      * See the comment from getAvailableLocaleNames() above.
      */
-    return LocaleInfoImplHolder.infoImpl.getLocaleNativeDisplayName(localeName);
+    return instance.infoImpl.getLocaleNativeDisplayName(localeName);
   }
-
-   private static class LocaleInfoImplHolder {
-     static final LocaleInfoImpl infoImpl = GWT.create(LocaleInfoImpl.class);
-   }
- 
-   private static class CldrImplHolder {
-     static final CldrImpl cldrImpl = GWT.create(CldrImpl.class);
-   }
 
   /**
    * @return true if any locale supported by this build of the app is RTL.
    */
   public static boolean hasAnyRTL() {
-    return LocaleInfoImplHolder.infoImpl.hasAnyRTL();
+    return instance.infoImpl.hasAnyRTL();
   }
+
+  private final LocaleInfoImpl infoImpl;
+
+  private final CldrImpl cldrImpl;
 
   private DateTimeConstants dateTimeConstants;
 
@@ -111,6 +109,19 @@ public class LocaleInfo {
    * Any such subclass should override all methods.
    */
   protected LocaleInfo() {
+    infoImpl = null;
+    cldrImpl = null;
+  }
+
+  /**
+   * Create a LocaleInfo instance, passing in the implementation classes.
+   * 
+   * @param impl LocaleInfoImpl instance to use
+   * @param cldr CldrImpl instance to use
+   */
+  private LocaleInfo(LocaleInfoImpl impl, CldrImpl cldr) {
+    this.infoImpl = impl;
+    this.cldrImpl = cldr;
   }
 
   /**
@@ -133,7 +144,7 @@ public class LocaleInfo {
    * @return the name of this locale, such as "default, "en_US", etc
    */
   public final String getLocaleName() {
-    return LocaleInfoImplHolder.infoImpl.getLocaleName();
+    return infoImpl.getLocaleName();
   }
 
   /**
@@ -148,7 +159,7 @@ public class LocaleInfo {
    * @return true if this locale is right-to-left instead of left-to-right
    */
   public final boolean isRTL() {
-    return CldrImplHolder.cldrImpl.isRTL();
+    return cldrImpl.isRTL();
   }
 
   private void ensureDateTimeConstants() {
@@ -160,13 +171,13 @@ public class LocaleInfo {
 
   private void ensureDateTimeFormatInfo() {
     if (dateTimeFormatInfo == null) {
-      dateTimeFormatInfo = LocaleInfoImplHolder.infoImpl.getDateTimeFormatInfo();
+      dateTimeFormatInfo = infoImpl.getDateTimeFormatInfo();
     }
   }
   
   private void ensureNumberConstants() {
     if (numberConstants == null) {
-      numberConstants = LocaleInfoImplHolder.infoImpl.getNumberConstants();
+      numberConstants = infoImpl.getNumberConstants();
     }
   }
 }
