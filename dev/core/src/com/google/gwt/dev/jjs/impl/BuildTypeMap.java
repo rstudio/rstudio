@@ -153,13 +153,6 @@ public class BuildTypeMap {
       }
     }
 
-    /**
-     * Weird: we used to have JConstructor (and JConstructorCall) in our AST,
-     * but we got rid of them completely and instead model them as instance
-     * methods whose qualifier is a naked no-argument new operation. See {@link
-     * GenerateJavaAST.JavaASTGenerationVisitor#processConstructor(ConstructorDeclaration)}
-     * for details.
-     */
     @Override
     public boolean visit(ConstructorDeclaration ctorDecl, ClassScope scope) {
       try {
