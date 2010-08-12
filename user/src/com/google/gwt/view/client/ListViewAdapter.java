@@ -489,6 +489,10 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
   @Override
   protected void onRangeChanged(HasData<T> view) {
-    updateViewData(view, 0, listWrapper.size(), listWrapper);
+    int size = listWrapper.size();
+    if (size > 0) {
+      // Do not push data if the data set is empty.
+      updateViewData(view, 0, size, listWrapper);
+    }
   }
 }

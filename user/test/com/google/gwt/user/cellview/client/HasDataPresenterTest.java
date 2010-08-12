@@ -509,6 +509,27 @@ public class HasDataPresenterTest extends TestCase {
     view.assertLoadingState(LoadingState.LOADED);
   }
 
+  /**
+   * Setting an empty list that starts on the page start should pass through to
+   * the view.
+   */
+  public void testSetRowValuesEmptySet() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+
+    // Set the initial data size.
+    presenter.setRowCount(10, true);
+    view.assertLoadingState(LoadingState.LOADING);
+
+    // Set an empty list of row values.
+    presenter.setRowValues(0, createData(0, 0));
+    view.assertLoadingState(LoadingState.LOADING);
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+  }
+
   public void testSetRowValuesOutsideRange() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();

@@ -217,6 +217,15 @@ public class AbstractListViewAdapterTest extends GWTTestCase {
       view.clearLastRowValuesAndRange();
     }
 
+    // Empty data list starting at page start.
+    {
+      List<String> values = createData(10, 0);
+      adapter.updateViewData(10, 0, values);
+      assertEquals(values, view.getLastRowValues());
+      assertEquals(new Range(10, 0), view.getLastRowValuesRange());
+      view.clearLastRowValuesAndRange();
+    }
+
     // Data before range.
     {
       List<String> values = createData(5, 5);

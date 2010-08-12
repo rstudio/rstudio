@@ -207,8 +207,9 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
     int curStart = range.getStart();
     int curLength = range.getLength();
     int curEnd = curStart + curLength;
-    if (curStart < end && curEnd > start) {
+    if (start == curStart || (curStart < end && curEnd > start)) {
       // Fire the handler with the data that is in the range.
+      // Allow an empty list that starts on the page start.
       int realStart = curStart < start ? start : curStart;
       int realEnd = curEnd > end ? end : curEnd;
       int realLength = realEnd - realStart;

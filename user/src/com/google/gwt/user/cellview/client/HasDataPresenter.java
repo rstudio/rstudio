@@ -381,8 +381,9 @@ class HasDataPresenter<T> implements HasData<T> {
     int pageEnd = pageStart + pageSize;
     int boundedStart = Math.max(start, pageStart);
     int boundedEnd = Math.min(valuesEnd, pageEnd);
-    if (boundedStart >= boundedEnd) {
+    if (start != pageStart && boundedStart >= boundedEnd) {
       // The data is out of range for the current page.
+      // Intentionally allow empty lists that start on the page start.
       return;
     }
 

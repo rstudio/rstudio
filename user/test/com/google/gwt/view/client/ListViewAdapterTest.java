@@ -460,9 +460,9 @@ public class ListViewAdapterTest extends AbstractListViewAdapterTest {
     List<String> replace = new ArrayList<String>();
     adapter.setList(replace);
     assertEquals(0, view.getRowCount());
-    // An empty set should NOT set the row values.
-    assertEquals(null, view.getLastRowValues());
-    assertEquals(null, view.getLastRowValuesRange());
+    // An empty set should set the row values.
+    assertEquals(replace, view.getLastRowValues());
+    assertEquals(new Range(0, 0), view.getLastRowValuesRange());
   }
 
   @Override
