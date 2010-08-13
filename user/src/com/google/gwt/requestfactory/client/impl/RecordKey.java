@@ -58,6 +58,9 @@ class RecordKey {
       return false;
     }
     RecordKey other = (RecordKey) obj;
+    if (isFuture != other.isFuture) {
+      return false;
+    }
     if (!id.equals(other.id)) {
       return false;
     }

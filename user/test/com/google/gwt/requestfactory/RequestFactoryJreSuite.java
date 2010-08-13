@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app;
+package com.google.gwt.requestfactory;
 
-import com.google.gwt.app.place.ActivityManagerTest;
-import com.google.gwt.app.place.PlaceChangeRequestedEventTest;
-import com.google.gwt.app.place.PlaceControllerTest;
+import com.google.gwt.requestfactory.client.impl.RecordKeyTest;
+import com.google.gwt.requestfactory.server.JsonRequestProcessorTest;
+import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistryTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -25,12 +25,12 @@ import junit.framework.TestSuite;
 /**
  * Suite of UiBinder tests that require the JRE.
  */
-public class AppJreSuite {
+public class RequestFactoryJreSuite {
   public static Test suite() {
-    TestSuite suite = new TestSuite("app package tests that require the JRE");
-    suite.addTestSuite(ActivityManagerTest.class);
-    suite.addTestSuite(PlaceControllerTest.class);
-    suite.addTestSuite(PlaceChangeRequestedEventTest.class);
+    TestSuite suite = new TestSuite("requestfactory package tests that require the JRE");
+    suite.addTestSuite(RecordKeyTest.class);
+    suite.addTestSuite(JsonRequestProcessorTest.class);
+    suite.addTestSuite(ReflectionBasedOperationRegistryTest.class);
     return suite;
   }
 }

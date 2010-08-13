@@ -27,7 +27,7 @@ import junit.framework.Test;
 public class RequestFactorySuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for all requestfactory code.");
+        "Test suite for requestfactory gwt code.");
     suite.addTestSuite(RecordJsoImplTest.class);
     suite.addTestSuite(DeltaValueStoreJsonImplTest.class);
     return suite;
