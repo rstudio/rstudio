@@ -9,6 +9,10 @@
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.5.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpclient-4.0.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpcore-4.0.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpmime-4.0.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/james/apache-mime4j-0.6.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-codec-1.3.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-httpclient-3.1.jar"/>
@@ -30,8 +34,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/easymock/easymockclassextension.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/objectweb/asm-3.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-r5940.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-r5940-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/redist/json/r2_20080312/json-1.5.jar" sourcepath="/GWT_TOOLS/redist/json/r2_20080312/json-src.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA.jar" sourcepath="/GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-6.1.11.jar" sourcepath="/GWT_TOOLS/lib/jetty/jetty-6.1.11-src.zip"/>
