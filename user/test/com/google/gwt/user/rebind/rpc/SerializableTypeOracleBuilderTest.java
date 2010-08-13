@@ -2357,8 +2357,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
     JTypeParameter syntheticTypeParam = new JTypeParameter("U", 0);
     // Force the type parameter to have a declaring class
-    new JGenericType(to, a.getPackage(), null, false, "C", false,
-        new JTypeParameter[] {syntheticTypeParam});
+    new JGenericType(to, a.getPackage(), null, "C", false, new JTypeParameter[] {syntheticTypeParam});
     syntheticTypeParam.setBounds(makeArray(b));
 
     JParameterizedType parameterizedType = to.getParameterizedType(a,

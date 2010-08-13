@@ -275,11 +275,6 @@ public class JArrayType extends JClassType {
   }
 
   @Override
-  public boolean isLocalType() {
-    return false;
-  }
-
-  @Override
   public boolean isMemberType() {
     return false;
   }

@@ -656,7 +656,7 @@ public class SerializableTypeOracleBuilder {
    * Returns <code>true</code> if a serializer class could access this type.
    */
   private static boolean isAccessibleToSerializer(JClassType type) {
-    if (type.isPrivate() || type.isLocalType()) {
+    if (type.isPrivate()) {
       return false;
     }
 

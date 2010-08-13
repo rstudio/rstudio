@@ -112,10 +112,6 @@ public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
     JClassType[] computedSubtypes = typeParameter.getSubtypes();
 
     for (JClassType computedSubtype : computedSubtypes) {
-      if (computedSubtype.isLocalType()) {
-        // Ignore local types.
-        continue;
-      }
       // Find the parameterized version of the Comparable interface.
       JClassType comparableIntf = findParameterizationOf(computedSubtype,
           comparableType);

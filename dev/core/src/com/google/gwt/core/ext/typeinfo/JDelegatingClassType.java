@@ -242,11 +242,6 @@ abstract class JDelegatingClassType extends JClassType {
   }
 
   @Override
-  public boolean isLocalType() {
-    return baseType.isLocalType();
-  }
-
-  @Override
   public boolean isMemberType() {
     return baseType.isMemberType();
   }

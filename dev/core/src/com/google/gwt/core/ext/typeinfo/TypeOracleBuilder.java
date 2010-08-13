@@ -88,9 +88,8 @@ public class TypeOracleBuilder {
   }
 
   protected JEnumType newEnumType(JPackage pkg, String enclosingTypeName,
-      boolean isLocalType, String className) {
-    return new JEnumType(typeOracle, pkg, enclosingTypeName, isLocalType,
-        className);
+      String className) {
+    return new JEnumType(typeOracle, pkg, enclosingTypeName, className);
   }
 
   protected JField newField(JRealClassType type, String name,
@@ -113,10 +112,9 @@ public class TypeOracleBuilder {
   }
 
   protected JRealClassType newRealClassType(JPackage pkg,
-      String enclosingTypeName, boolean isLocalType, String className,
-      boolean isIntf) {
-    return new JRealClassType(typeOracle, pkg, enclosingTypeName, isLocalType,
-        className, isIntf);
+      String enclosingTypeName, String className, boolean isIntf) {
+    return new JRealClassType(typeOracle, pkg, enclosingTypeName, className,
+        isIntf);
   }
 
   protected void setEnclosingType(JRealClassType type, JClassType enclosingType) {

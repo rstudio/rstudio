@@ -591,12 +591,12 @@ public abstract class JClassType extends JType implements HasAnnotations,
   public abstract JClassType isInterface();
 
   /**
-   * Tests if this type is a local type (within a method).
-   * 
-   * @return true if this type is a local type, whether it is named or
-   *         anonymous.
+   * @deprecated local types are not modeled
    */
-  public abstract boolean isLocalType();
+  @Deprecated
+  public final boolean isLocalType() {
+    return false;
+  }
 
   /**
    * Tests if this type is contained within another type.

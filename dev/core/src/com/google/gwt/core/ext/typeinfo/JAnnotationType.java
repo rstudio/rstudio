@@ -24,8 +24,7 @@ public class JAnnotationType extends JRealClassType {
 
   JAnnotationType(TypeOracle oracle, JPackage declaringPackage,
       String enclosingTypeName, String name) {
-    super(oracle, declaringPackage, enclosingTypeName, false, name,
-        true);
+    super(oracle, declaringPackage, enclosingTypeName, name, true);
   }
 
   @Override

@@ -281,7 +281,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
           String enclosingTypeName, boolean isLocalType, String className,
           boolean isIntf) {
         return TypeOracleMediator.this.newRealClassType(pkg, enclosingTypeName,
-            isLocalType, className, isIntf);
+            className, isIntf);
       }
 
       public boolean resolveAnnotation(TreeLogger logger,
@@ -454,7 +454,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     String jpkgName = compiledClass.getPackageName();
     JPackage pkg = typeOracle.getOrCreatePackage(jpkgName);
     boolean isIntf = (access & Opcodes.ACC_INTERFACE) != 0;
-    boolean isLocalType = classData.hasNoExternalName();
+    assert !classData.hasNoExternalName();
     String enclosingTypeName = null;
     if (enclosingClassData != null) {
       enclosingTypeName = InternalName.toSourceName(InternalName.getClassName(enclosingClassData.getName()));
@@ -462,16 +462,16 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     if ((access & Opcodes.ACC_ANNOTATION) != 0) {
       resultType = newAnnotationType(pkg, enclosingTypeName, className);
     } else if ((access & Opcodes.ACC_ENUM) != 0) {
-      resultType = newEnumType(pkg, enclosingTypeName, isLocalType, className);
+      resultType = newEnumType(pkg, enclosingTypeName, className);
     } else {
       JTypeParameter[] typeParams = getTypeParametersForClass(classData);
       if ((typeParams != null && typeParams.length > 0)
           || nonStaticInsideGeneric(classData, enclosingClassData)) {
         resultType = new JGenericType(typeOracle, pkg, enclosingTypeName,
-            isLocalType, className, isIntf, typeParams);
+            className, isIntf, typeParams);
       } else {
-        resultType = newRealClassType(pkg, enclosingTypeName, isLocalType,
-            className, isIntf);
+        resultType = newRealClassType(pkg, enclosingTypeName, className,
+            isIntf);
       }
     }
 

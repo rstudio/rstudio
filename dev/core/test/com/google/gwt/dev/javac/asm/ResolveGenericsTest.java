@@ -265,8 +265,8 @@ public class ResolveGenericsTest extends AsmTestCase {
           clazz.getSimpleName(), clazz.isInterface());
     } else {
       JTypeParameter[] params = createTypeParams(typeParams);
-      type = new JGenericType(oracle, pkg, enclosingTypeName, false,
-          clazz.getSimpleName(), clazz.isInterface(), params);
+      type = new JGenericType(oracle, pkg, enclosingTypeName, clazz.getSimpleName(),
+          clazz.isInterface(), params);
     }
     return type;
   }

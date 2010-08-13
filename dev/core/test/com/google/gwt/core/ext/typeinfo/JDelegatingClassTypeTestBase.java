@@ -692,17 +692,6 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isLocalType()}.
-   */
-  public void testIsLocalType() throws NotFoundException {
-    JDelegatingClassType testType = getTestType();
-    JClassType baseType = testType.getBaseType();
-
-    assertEquals(baseType.isLocalType(), testType.isLocalType());
-  }
-
-  /**
-   * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isMemberType()}.
    */
   public void testIsMemberType() throws NotFoundException {

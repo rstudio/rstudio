@@ -43,8 +43,6 @@ public class JRealClassType extends JClassType {
 
   private final boolean isInterface;
 
-  private final boolean isLocalType;
-
   private String lazyQualifiedBinaryName;
 
   private String lazyQualifiedName;
@@ -74,11 +72,9 @@ public class JRealClassType extends JClassType {
    * @param isInterface
    */
   JRealClassType(TypeOracle oracle, JPackage declaringPackage,
-      String enclosingTypeName, boolean isLocalType, String name,
-      boolean isInterface) {
+      String enclosingTypeName, String name, boolean isInterface) {
     this.oracle = oracle;
     this.declaringPackage = declaringPackage;
-    this.isLocalType = isLocalType;
     this.name = name;
     this.isInterface = isInterface;
     if (enclosingTypeName == null) {
@@ -303,9 +299,6 @@ public class JRealClassType extends JClassType {
     if (isMemberType() && !isStatic()) {
       return false;
     }
-    if (isLocalType()) {
-      return false;
-    }
     if (getConstructors().length == 0) {
       return true;
     }
@@ -334,17 +327,6 @@ public class JRealClassType extends JClassType {
   @Override
   public JClassType isInterface() {
     return isInterface ? this : null;
-  }
-
-  /**
-   * Tests if this type is a local type (within a method).
-   * 
-   * @return true if this type is a local type, whether it is named or
-   *         anonymous.
-   */
-  @Override
-  public boolean isLocalType() {
-    return isLocalType;
   }
 
   /**
