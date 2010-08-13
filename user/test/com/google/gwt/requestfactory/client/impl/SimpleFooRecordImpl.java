@@ -51,6 +51,7 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
       allProperties = Collections.unmodifiableSet(set);
     }
 
+    @Override
     public Set<Property<?>> allProperties() {
       return allProperties;
     }
@@ -67,6 +68,7 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
       return null;
     }
 
+    @Override
     public Class<? extends Record> getToken() {
       return SimpleFooRecord.class; // special field
     }

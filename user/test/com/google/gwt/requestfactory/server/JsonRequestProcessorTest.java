@@ -42,6 +42,7 @@ public class JsonRequestProcessorTest extends TestCase {
 
   private JsonRequestProcessor requestProcessor;;
 
+  @Override
   public void setUp() {
     requestProcessor = new JsonRequestProcessor();
     requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(
@@ -138,7 +139,7 @@ public class JsonRequestProcessorTest extends TestCase {
       assertEquals(9L, (long) fooResult.getLongField());
       assertEquals(com.google.gwt.valuestore.shared.SimpleEnum.BAR,
           fooResult.getEnumField());
-      assertEquals(false, (boolean)fooResult.getBoolField());
+      assertEquals(false, (boolean) fooResult.getBoolField());
     } catch (Exception e) {
       fail(e.toString());
     }

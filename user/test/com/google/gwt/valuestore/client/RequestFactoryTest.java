@@ -29,6 +29,7 @@ import java.util.Set;
  */
 public class RequestFactoryTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.valuestore.ValueStoreSuite";
   }

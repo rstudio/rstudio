@@ -28,6 +28,7 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
 
   private ReflectionBasedOperationRegistry registry;
 
+  @Override
   public void setUp() {
     registry = new ReflectionBasedOperationRegistry(
         new DefaultSecurityProvider());

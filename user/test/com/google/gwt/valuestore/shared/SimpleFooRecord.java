@@ -39,7 +39,6 @@ public interface SimpleFooRecord extends Record {
       new EnumProperty<com.google.gwt.valuestore.shared.SimpleEnum>("enumField",
           com.google.gwt.valuestore.shared.SimpleEnum.class, SimpleEnum.values());
 
-
   Boolean getBoolField();
   
   Date getCreated();
