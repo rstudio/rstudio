@@ -19,8 +19,11 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
@@ -59,8 +62,9 @@ import com.google.gwt.i18n.shared.WordCountDirectionEstimator;
  */
 @SuppressWarnings("deprecation")
 public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
-    HasClickHandlers, SourcesClickEvents, SourcesMouseEvents,
-    HasAllMouseHandlers, HasDirectionEstimator, HasAutoHorizontalAlignment {
+    HasClickHandlers, HasDoubleClickHandlers, SourcesClickEvents,
+    SourcesMouseEvents, HasAllMouseHandlers, HasDirectionEstimator,
+    HasAutoHorizontalAlignment {
 
   /**
    * Creates a Label widget that wraps an existing &lt;div&gt; or &lt;span&gt;
@@ -209,6 +213,10 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
   @Deprecated
   public void addClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.add(this, listener);
+  }
+
+  public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
+    return addHandler(handler, DoubleClickEvent.getType());
   }
 
   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {

@@ -18,7 +18,7 @@ package com.google.gwt.event.dom.client;
 /**
  * Represents a native click event.
  */
-public class ClickEvent extends DomEvent<ClickHandler> {
+public class ClickEvent extends MouseEvent<ClickHandler> {
 
   /**
    * Event type for click events. Represents the meta-data associated with this

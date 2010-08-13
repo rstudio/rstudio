@@ -20,12 +20,15 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasAllFocusHandlers;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -53,8 +56,8 @@ import com.google.gwt.user.client.ui.impl.FocusImpl;
  */
 @SuppressWarnings("deprecation")
 public abstract class FocusWidget extends Widget implements SourcesClickEvents,
-    HasClickHandlers, HasFocus, HasAllFocusHandlers, HasAllKeyHandlers,
-    HasAllMouseHandlers, SourcesMouseEvents {
+    HasClickHandlers, HasDoubleClickHandlers, HasFocus, HasAllFocusHandlers,
+    HasAllKeyHandlers, HasAllMouseHandlers, SourcesMouseEvents {
 
   private static final FocusImpl impl = FocusImpl.getFocusImplForWidget();
 
@@ -97,6 +100,10 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   @Deprecated
   public void addClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.add(this, listener);
+  }
+
+  public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
+    return addHandler(handler, DoubleClickEvent.getType());
   }
 
   public HandlerRegistration addFocusHandler(FocusHandler handler) {

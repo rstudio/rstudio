@@ -22,10 +22,13 @@ import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
 import com.google.gwt.event.dom.client.ErrorHandler;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.HasErrorHandlers;
 import com.google.gwt.event.dom.client.HasLoadHandlers;
 import com.google.gwt.event.dom.client.LoadEvent;
@@ -89,9 +92,9 @@ import java.util.HashMap;
  * </p>
  */
 @SuppressWarnings("deprecation")
-public class Image extends Widget implements SourcesLoadEvents,
-    HasLoadHandlers, HasErrorHandlers, SourcesClickEvents, HasClickHandlers,
-    HasAllMouseHandlers, SourcesMouseEvents {
+public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
+    HasErrorHandlers, SourcesClickEvents, HasClickHandlers,
+    HasDoubleClickHandlers, HasAllMouseHandlers, SourcesMouseEvents {
 
   /**
    * The attribute that is set when an image fires a native load or error event
@@ -472,6 +475,10 @@ public class Image extends Widget implements SourcesLoadEvents,
   @Deprecated
   public void addClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.add(this, listener);
+  }
+
+  public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
+    return addHandler(handler, DoubleClickEvent.getType());
   }
 
   public HandlerRegistration addErrorHandler(ErrorHandler handler) {

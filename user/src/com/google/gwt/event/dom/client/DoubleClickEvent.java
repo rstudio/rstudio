@@ -18,7 +18,7 @@ package com.google.gwt.event.dom.client;
 /**
  * Represents a native double click event.
  */
-public class DoubleClickEvent extends DomEvent<DoubleClickHandler> {
+public class DoubleClickEvent extends MouseEvent<DoubleClickHandler> {
 
   /**
    * Event type for double click events. Represents the meta-data associated
