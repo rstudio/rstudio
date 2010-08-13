@@ -23,7 +23,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
- * Suite of UiBinder tests that require the JRE.
+ * Suite of RequestFactory tests that require the JRE.
  */
 public class RequestFactoryJreSuite {
   public static Test suite() {

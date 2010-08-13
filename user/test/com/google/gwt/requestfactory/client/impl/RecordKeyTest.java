@@ -25,20 +25,25 @@ public class RecordKeyTest extends TestCase {
   public void testEquals() {
     RecordKey newKey1 = new RecordKey(1L, SimpleFooRecordImpl.SCHEMA,
         RequestFactoryJsonImpl.IS_FUTURE);
-    RecordKey newKey2 = new RecordKey(newKey1.id + 1, newKey1.schema,
-        newKey1.isFuture);
-    RecordKey oldKey1 = new RecordKey(newKey1.id, newKey1.schema,
-        !newKey1.isFuture);
+
     RecordKey anotherNewKey1 = new RecordKey(newKey1.id, newKey1.schema,
         newKey1.isFuture);
-    
     assertTrue(newKey1.equals(anotherNewKey1));
     assertTrue(newKey1.hashCode() == anotherNewKey1.hashCode());
-    
+
+    RecordKey newKey2 = new RecordKey(newKey1.id + 1, newKey1.schema,
+        newKey1.isFuture);
     assertFalse(newKey1.equals(newKey2));
     assertFalse(newKey1.hashCode() == newKey2.hashCode());
-    
+
+    RecordKey newKey1NoSchema = new RecordKey(newKey1.id,
+        SimpleBazRecordImpl.SCHEMA, newKey1.isFuture);
+    assertFalse(newKey1.equals(newKey1NoSchema));
+    assertFalse(newKey1.hashCode() == newKey1NoSchema.hashCode());
+
+    RecordKey oldKey1 = new RecordKey(newKey1.id, newKey1.schema,
+        !newKey1.isFuture);
     assertFalse(newKey1.equals(oldKey1));
-    assertFalse(newKey1.hashCode() == newKey2.hashCode());
+    assertFalse(newKey1.hashCode() == oldKey1.hashCode());
   }
 }
