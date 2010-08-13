@@ -109,7 +109,7 @@
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
         <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
-      	<pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
+        <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
         <path refid="test.extraclasspath" />
       </classpath>
     </gwt.javac>
@@ -132,7 +132,11 @@
     <gwt.checkstyle>
       <fileset dir="src" >
         <exclude name="javax/validation/super/javax/validation/constraints/Pattern.java"/>
-      </fileset>	
+        <exclude name="javax/validation/super/javax/validation/spi/ConfigurationState.java"/>
+        <exclude name="javax/validation/super/javax/validation/MessageInterpolator.java"/>
+        <exclude name="javax/validation/super/javax/validation/Configuration.java"/>
+        <exclude name="javax/validation/super/javax/validation/Validation.java"/>
+      </fileset>
       <fileset dir="super/com/google/gwt/emul" />
       <fileset dir="super/com/google/gwt/junit/translatable" />
     </gwt.checkstyle>
