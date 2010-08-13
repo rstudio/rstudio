@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.valuestore.shared.Property;
@@ -26,8 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
+ * <p> <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
@@ -44,7 +44,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   protected DeltaValueStoreJsonImpl deltaValueStore;
   protected Receiver<T> receiver;
 
-  private final Set<Property<?>> properties = new HashSet<Property<?>>();
+  private final Set<String> propertyRefs = new HashSet<String>();
 
   public AbstractRequest(RequestFactoryJsonImpl requestFactory) {
     this.requestFactory = requestFactory;
@@ -76,21 +76,23 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     requestFactory.fire(this);
   }
 
+  /**
+   * @deprecated use {@link #with(String...)} instead.
+   * @param properties
+   * @return
+   */
   public R forProperties(Collection<Property<?>> properties) {
-    this.properties.addAll(properties);
-    return getThis();
-  }
-
-  public R forProperty(Property<?> property) {
-    this.properties.add(property);
+    for (Property p : properties) {
+      with(p.getName());
+    }
     return getThis();
   }
 
   /**
    * @return the properties
    */
-  public Set<Property<?>> getProperties() {
-    return Collections.unmodifiableSet(properties);
+  public Set<String> getPropertyRefs() {
+    return Collections.unmodifiableSet(propertyRefs);
   }
 
   public boolean isChanged() {
@@ -102,10 +104,29 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, requestFactory);
   }
 
+  public void setSchemaAndRecord(String schemaToken, RecordJsoImpl jso) {
+    jso.setSchema(requestFactory.getSchema(schemaToken));
+    requestFactory.getValueStore().setRecord(jso, requestFactory);
+  }
+
+  public R with(String... propertyRef) {
+    for (String ref : propertyRef) {
+      propertyRefs.add(ref);
+    }
+    return getThis();
+  }
+
   /**
    * Subclasses must override to return {@code this}, to allow builder-style
    * methods to do the same.
    */
   protected abstract R getThis();
 
+  protected native void processRelated(JavaScriptObject related) /*-{
+    for(var recordKey in related) {
+      var schemaAndId = recordKey.split(/-/, 2);
+      var jso = related[recordKey];
+      this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::setSchemaAndRecord(Ljava/lang/String;Lcom/google/gwt/requestfactory/client/impl/RecordJsoImpl;)(schemaAndId[0], jso);
+    }
+  }-*/;
 }

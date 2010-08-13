@@ -24,6 +24,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Query;
+import javax.persistence.Transient;
 import javax.persistence.Version;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -138,6 +139,9 @@ public class Employee {
   @Column(name = "version")
   private Integer version;
 
+  @Transient
+  private Employee supervisor;
+
   public String getDepartment() {
     return department;
   }
@@ -152,6 +156,10 @@ public class Employee {
 
   public String getPassword() {
     return this.password;
+  }
+
+  public Employee getSupervisor() {
+    return supervisorKey != null ? findEmployee(supervisorKey) : null;
   }
 
   public Long getSupervisorKey() {
@@ -199,6 +207,10 @@ public class Employee {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public void setSupervisor(Employee supervisor) {
+    supervisorKey = supervisor == null ? null : supervisor.getId();
   }
 
   public void setSupervisorKey(Long supervisorKey) {

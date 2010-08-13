@@ -120,6 +120,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
           e);
     }
   }
+  
+  public abstract RecordSchema getSchema(String token);
 
   /**
    * @param handlerManager

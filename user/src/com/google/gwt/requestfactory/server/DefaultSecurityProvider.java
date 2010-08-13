@@ -43,6 +43,10 @@ public class DefaultSecurityProvider implements RequestSecurityProvider {
     }
   }
 
+  public String encodeClassType(Class<?> type) {
+    return type.getName();
+  }
+
   public String mapOperation(String operationName) throws SecurityException {
     return operationName;
   }

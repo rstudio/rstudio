@@ -50,7 +50,9 @@ AbstractJsonListRequest<T extends Record, R extends AbstractJsonListRequest<T, R
   }
 
   public void handleResponseText(String text) {
-    JsArray<RecordJsoImpl> valueJsos = RecordJsoImpl.arrayFromJson(text);
+    RecordJsoImpl.JsonResults results = RecordJsoImpl.fromResults(text);
+
+    JsArray<RecordJsoImpl> valueJsos = results.getListResult();
     List<T> valueList = new ArrayList<T>(valueJsos.length());
     for (int i = 0; i < valueJsos.length(); i++) {
       RecordJsoImpl jso = valueJsos.get(i);
@@ -58,7 +60,9 @@ AbstractJsonListRequest<T extends Record, R extends AbstractJsonListRequest<T, R
       valueList.add(schema.create(jso));
     }
 
-    requestFactory.getValueStore().setRecords(valueJsos);
+    requestFactory.getValueStore().setRecords(valueJsos, requestFactory);
+    processRelated(results.getRelated());
+
     receiver.onSuccess(valueList, Collections.<SyncResult> emptySet());
   }
 }

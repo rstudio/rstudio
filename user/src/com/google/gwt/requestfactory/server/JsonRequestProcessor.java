@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.requestfactory.shared.DataTransferObject;
 import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.WriteOperation;
@@ -56,12 +57,15 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private static final Logger log = Logger.getLogger(JsonRequestProcessor.class.getName());
 
   // TODO should we consume String, InputStream, or JSONObject?
+
   /**
    * A class representing the pair of a domain entity and its corresponding
    * record class on the client side.
    */
   public static class EntityRecordPair {
+
     public final Class<?> entity;
+
     public final Class<? extends Record> record;
 
     EntityRecordPair(Class<?> entity, Class<? extends Record> record) {
@@ -80,13 +84,17 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return Collections.unmodifiableSet(blackList);
   }
 
+  private RequestProperty propertyRefs;
+
+  private Map<String, JSONObject> relatedObjects
+      = new HashMap<String, JSONObject>();
+
   private OperationRegistry operationRegistry;
 
   public Collection<Property<?>> allProperties(Class<? extends Record> clazz) {
     Set<Property<?>> rtn = new HashSet<Property<?>>();
     for (Field f : clazz.getFields()) {
-      if (Modifier.isStatic(f.getModifiers())
-          && Property.class.isAssignableFrom(f.getType())) {
+      if (Modifier.isStatic(f.getModifiers()) && Property.class.isAssignableFrom(f.getType())) {
         try {
           rtn.add((Property<?>) f.get(null));
         } catch (IllegalAccessException e) {
@@ -99,7 +107,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public String decodeAndInvokeRequest(String encodedRequest) throws Exception {
     try {
-      return processJsonRequest(encodedRequest).toString();
+      Logger.getLogger(this.getClass().getName()).finest("Incoming request "
+          + encodedRequest);
+      String response = processJsonRequest(encodedRequest).toString();
+      Logger.getLogger(this.getClass().getName()).finest("Outgoing response "
+          + response);
+      return response;
     } catch (ClassNotFoundException e) {
       throw new IllegalArgumentException(e);
     } catch (IllegalAccessException e) {
@@ -119,7 +132,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Encodes parameter value.
-   * 
    */
   public Object decodeParameterValue(Class<?> parameterType,
       String parameterValue) {
@@ -174,21 +186,53 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
             }
           }
         }
-        throw new IllegalArgumentException("Can't decode enum " + parameterType
-            + " no matching ordinal " + ordinal);
+        throw new IllegalArgumentException(
+            "Can't decode enum " + parameterType + " no matching ordinal "
+                + ordinal);
       } catch (NoSuchMethodException e) {
-        throw new IllegalArgumentException("Can't decode enum " + parameterType);
+        throw new IllegalArgumentException(
+            "Can't decode enum " + parameterType);
       } catch (InvocationTargetException e) {
-        throw new IllegalArgumentException("Can't decode enum " + parameterType);
+        throw new IllegalArgumentException(
+            "Can't decode enum " + parameterType);
       } catch (IllegalAccessException e) {
-        throw new IllegalArgumentException("Can't decode enum " + parameterType);
+        throw new IllegalArgumentException(
+            "Can't decode enum " + parameterType);
       }
     }
     if (Date.class == parameterType) {
       return new Date(Long.parseLong(parameterValue));
     }
-    throw new IllegalArgumentException("Unknown parameter type: "
-        + parameterType);
+    if (Record.class.isAssignableFrom(parameterType)) {
+      Service service = parameterType.getAnnotation(Service.class);
+      if (service != null) {
+        Class<?> sClass = service.value();
+        String schemaAndId[] = parameterValue.toString().split("-", 2);
+        // ignore schema for now and use Property type
+        String findMeth = null;
+        try {
+          findMeth = getMethodNameFromPropertyName(sClass.getSimpleName(),
+              "find");
+          Method meth = sClass.getMethod(findMeth, Long.class);
+          return meth.invoke(null, Long.valueOf(schemaAndId[1]));
+        } catch (NoSuchMethodException e) {
+          e.printStackTrace();
+          throw new IllegalArgumentException(
+              sClass + " no method named " + findMeth);
+        } catch (InvocationTargetException e) {
+          e.printStackTrace();
+
+          throw new IllegalArgumentException(
+              sClass + " can't invoke method named " + findMeth);
+        } catch (IllegalAccessException e) {
+          e.printStackTrace();
+          throw new IllegalArgumentException(
+              sClass + " can't access method named " + findMeth);
+        }
+      }
+    }
+    throw new IllegalArgumentException(
+        "Unknown parameter type: " + parameterType);
   }
 
   public Object encodePropertyValue(Object value) {
@@ -220,18 +264,33 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * is sent into the response.
    */
   public Object encodePropertyValueFromDataStore(Object entityElement,
-      String propertyName) throws SecurityException, NoSuchMethodException,
-      IllegalAccessException, InvocationTargetException {
+      Class<?> propertyType, String propertyName,
+      RequestProperty propertyContext)
+      throws SecurityException, NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException, JSONException {
     String methodName = getMethodNameFromPropertyName(propertyName, "get");
     Method method = entityElement.getClass().getMethod(methodName);
     Object returnValue = method.invoke(entityElement);
+    if (returnValue != null && Record.class.isAssignableFrom(propertyType)) {
+      Method idMethod = entityElement.getClass().getMethod("getId");
+      Long id = (Long) idMethod.invoke(entityElement);
+
+      String keyRef =
+          operationRegistry.getSecurityProvider().encodeClassType(propertyType)
+              + "-" + id;
+      addRelatedObject(keyRef, returnValue,
+          (Class<? extends Record>) propertyType,
+          propertyContext.getProperty(propertyName));
+      // replace value with id reference
+      return keyRef;
+    }
     return encodePropertyValue(returnValue);
   }
 
   /**
    * Generate an ID for a new record. The default behavior is to return null and
    * let the data store generate the ID automatically.
-   * 
+   *
    * @param key the key of the record field
    * @return the ID of the new record, or null to auto generate
    */
@@ -260,43 +319,46 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       return entity.getConstructor().newInstance();
     }
     // TODO: check "version" validity.
-    return entity.getMethod("find" + entity.getSimpleName(), idType).invoke(
-        null, decodeParameterValue(idType, idValue.toString()));
+    return entity.getMethod("find" + entity.getSimpleName(), 
+        idType).invoke(null, decodeParameterValue(idType, idValue.toString()));
   }
 
   /**
    * Converts the returnValue of a 'get' method to a JSONArray.
-   * 
-   * @param resultList object returned by a 'get' method, must be of type
-   *          List<?>
+   *
+   * @param resultList     object returned by a 'get' method, must be of type
+   *                       List<?>
    * @param entityKeyClass the class type of the contained value
    * @return the JSONArray
    */
   public JSONArray getJsonArray(List<?> resultList,
-      Class<? extends Record> entityKeyClass) throws IllegalArgumentException,
-      SecurityException, IllegalAccessException, JSONException,
-      NoSuchMethodException, InvocationTargetException {
+      Class<? extends Record> entityKeyClass)
+      throws IllegalArgumentException, SecurityException,
+      IllegalAccessException, JSONException, NoSuchMethodException,
+      InvocationTargetException {
     JSONArray jsonArray = new JSONArray();
     if (resultList.size() == 0) {
       return jsonArray;
     }
 
     for (Object entityElement : resultList) {
-      jsonArray.put(getJsonObject(entityElement, entityKeyClass));
+      jsonArray.put(getJsonObject(entityElement, entityKeyClass, propertyRefs));
     }
     return jsonArray;
   }
 
   public JSONObject getJsonObject(Object entityElement,
-      Class<? extends Record> entityKeyClass) throws JSONException,
-      NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+      Class<? extends Record> entityKeyClass, RequestProperty propertyContext)
+      throws JSONException, NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException {
     JSONObject jsonObject = new JSONObject();
     for (Property<?> p : allProperties(entityKeyClass)) {
 
-      if (requestedProperty(p)) {
+      if (requestedProperty(p, propertyContext)) {
         String propertyName = p.getName();
-        jsonObject.put(propertyName, encodePropertyValueFromDataStore(
-            entityElement, propertyName));
+        jsonObject.put(propertyName,
+            encodePropertyValueFromDataStore(entityElement, p.getType(),
+                propertyName, propertyContext));
       }
     }
     return jsonObject;
@@ -305,11 +367,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Returns methodName corresponding to the propertyName that can be invoked on
    * an entity.
-   * 
+   *
    * Example: "userName" returns prefix + "UserName". "version" returns prefix +
    * "Version"
    */
-  public String getMethodNameFromPropertyName(String propertyName, String prefix) {
+  public String getMethodNameFromPropertyName(String propertyName,
+      String prefix) {
     if (propertyName == null) {
       throw new NullPointerException("propertyName must not be null");
     }
@@ -362,13 +425,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * Returns the property fields (name => type) for a record.
    */
   public Map<String, Class<?>> getPropertiesFromRecord(
-      Class<? extends Record> record) throws SecurityException,
-      IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+      Class<? extends Record> record)
+      throws SecurityException, IllegalAccessException,
+      InvocationTargetException, NoSuchMethodException {
     Map<String, Class<?>> properties = new HashMap<String, Class<?>>();
     for (Field f : record.getFields()) {
       if (Property.class.isAssignableFrom(f.getType())) {
-        Class<?> propertyType = (Class<?>) f.getType().getMethod("getType").invoke(
-            f.get(null));
+        Class<?> propertyType = (Class<?>) f.getType().getMethod(
+            "getType").invoke(f.get(null));
         properties.put(f.getName(), propertyType);
       }
     }
@@ -379,32 +443,33 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * Returns the property value, in the specified type, from the request object.
    * The value is put in the DataStore.
    */
-  public Object getPropertyValueFromRequest(JSONObject recordObject,
-      String key, Class<?> propertyType) throws JSONException {
+  public Object getPropertyValueFromRequest(JSONObject recordObject, String key,
+      Class<?> propertyType) throws JSONException {
     return decodeParameterValue(propertyType, recordObject.get(key).toString());
   }
 
   @SuppressWarnings("unchecked")
   public Class<Record> getRecordFromClassToken(String recordToken) {
     try {
-      Class<?> clazz = Class.forName(recordToken, false,
+      Class<?> clazz = Class.forName(recordToken, false, 
           getClass().getClassLoader());
       if (Record.class.isAssignableFrom(clazz)) {
         return (Class<Record>) clazz;
       }
-      throw new SecurityException("Attempt to access non-record class "
-          + recordToken);
+      throw new SecurityException(
+          "Attempt to access non-record class " + recordToken);
     } catch (ClassNotFoundException e) {
-      throw new IllegalArgumentException("Non-existent record class "
-          + recordToken);
+      throw new IllegalArgumentException(
+          "Non-existent record class " + recordToken);
     }
   }
 
   public JSONObject getReturnRecord(WriteOperation writeOperation,
       Object entityInstance, JSONObject recordObject,
-      Set<ConstraintViolation<Object>> violations) throws SecurityException,
-      JSONException, IllegalAccessException, InvocationTargetException,
-      NoSuchMethodException {
+      Set<ConstraintViolation<Object>> violations,
+      Class<? extends Record> record)
+      throws SecurityException, JSONException, IllegalAccessException,
+      InvocationTargetException, NoSuchMethodException {
     // id/futureId, the identifying field is sent back from the incoming record.
     JSONObject returnObject = new JSONObject();
     final boolean hasViolations = violations != null && !violations.isEmpty();
@@ -415,10 +480,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       case CREATE:
         returnObject.put("futureId", recordObject.getString("id"));
         if (!hasViolations) {
-          returnObject.put("id", encodePropertyValueFromDataStore(
-              entityInstance, "id"));
-          returnObject.put("version", encodePropertyValueFromDataStore(
-              entityInstance, "version"));
+          returnObject.put("id",
+              encodePropertyValueFromDataStore(entityInstance, Long.class,
+                  "id", propertyRefs));
+          returnObject.put("version",
+              encodePropertyValueFromDataStore(entityInstance, Integer.class,
+                  "version", propertyRefs));
         }
         break;
       case DELETE:
@@ -427,8 +494,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       case UPDATE:
         returnObject.put("id", recordObject.getString("id"));
         if (!hasViolations) {
-          returnObject.put("version", encodePropertyValueFromDataStore(
-              entityInstance, "version"));
+          returnObject.put("version",
+              encodePropertyValueFromDataStore(entityInstance, Integer.class,
+                  "version", propertyRefs));
         }
         break;
     }
@@ -464,7 +532,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Set<ConstraintViolation<Object>> violations) throws JSONException {
     JSONObject violationsAsJson = new JSONObject();
     for (ConstraintViolation<Object> violation : violations) {
-      violationsAsJson.put(violation.getPropertyPath().toString(),
+      violationsAsJson.put(violation.getPropertyPath().toString(), 
           violation.getMessage());
     }
     return violationsAsJson;
@@ -481,7 +549,13 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     RequestDefinition operation;
     JSONObject topLevelJsonObject = new JSONObject(jsonRequestString);
 
-    String operationName = topLevelJsonObject.getString(RequestData.OPERATION_TOKEN);
+    String operationName = topLevelJsonObject.getString(
+        RequestData.OPERATION_TOKEN);
+
+    String propertyRefsString =
+        topLevelJsonObject.has(RequestData.PROPERTY_REF_TOKEN) ?
+            topLevelJsonObject.getString(RequestData.PROPERTY_REF_TOKEN) : "";
+    propertyRefs = RequestProperty.parse(propertyRefsString);
     if (operationName.equals(RequestFactory.SYNC)) {
       return sync(topLevelJsonObject.getString(RequestData.CONTENT_TOKEN));
     } else {
@@ -490,28 +564,35 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Method domainMethod = domainClass.getMethod(
           operation.getDomainMethodName(), operation.getParameterTypes());
       if (!Modifier.isStatic(domainMethod.getModifiers())) {
-        throw new IllegalArgumentException("the " + domainMethod.getName()
-            + " is not static");
+        throw new IllegalArgumentException(
+            "the " + domainMethod.getName() + " is not static");
       }
       Object args[] = getObjectsFromParameterMap(
-          getParameterMap(topLevelJsonObject), domainMethod.getParameterTypes());
+          getParameterMap(topLevelJsonObject),
+          domainMethod.getParameterTypes());
       Object result = invokeStaticDomainMethod(domainMethod, args);
       if ((result instanceof List<?>) != operation.isReturnTypeList()) {
-        throw new IllegalArgumentException(String.format(
-            "Type mismatch, expected %s%s, but %s returns %s",
-            operation.isReturnTypeList() ? "list of " : "",
-            operation.getReturnType(), domainMethod,
-            domainMethod.getReturnType()));
+        throw new IllegalArgumentException(
+            String.format("Type mismatch, expected %s%s, but %s returns %s",
+                operation.isReturnTypeList() ? "list of " : "",
+                operation.getReturnType(), domainMethod,
+                domainMethod.getReturnType()));
       }
 
       if (result instanceof List<?>) {
-        return toJsonArray(operation, result);
-      } else if (result instanceof Number
-          && !(result instanceof BigDecimal || result instanceof BigInteger)) {
+        JSONObject envelop = new JSONObject();
+        envelop.put("result", toJsonArray(operation, result));
+        envelop.put("related", encodeRelatedObjectsToJson());
+        return envelop;
+      } else if (result instanceof Number && !(result instanceof BigDecimal
+          || result instanceof BigInteger)) {
         return result;
       } else {
+        JSONObject envelop = new JSONObject();
         JSONObject jsonObject = toJsonObject(operation, result);
-        return jsonObject;
+        envelop.put("result", jsonObject);
+        envelop.put("related", encodeRelatedObjectsToJson());
+        return envelop;
       }
     }
   }
@@ -519,12 +600,18 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * returns true if the property has been requested. TODO: use the properties
    * that should be coming with the request.
-   * 
-   * @param p the field of entity ref
+   *
+   * @param p               the field of entity ref
+   * @param propertyContext the root of the current dotted property reference
    * @return has the property value been requested
    */
-  public boolean requestedProperty(Property<?> p) {
-    return !BLACK_LIST.contains(p.getName());
+  public boolean requestedProperty(Property<?> p,
+      RequestProperty propertyContext) {
+    if (Record.class.isAssignableFrom(p.getType())) {
+      return propertyContext.hasProperty(p.getName());
+    } else {
+      return !BLACK_LIST.contains(p.getName());
+    }
   }
 
   public void setOperationRegistry(OperationRegistry operationRegistry) {
@@ -546,8 +633,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
         int length = reportArray.length();
         if (length == 0) {
-          throw new IllegalArgumentException("No json array for "
-              + writeOperation.name() + " should have been sent");
+          throw new IllegalArgumentException(
+              "No json array for " + writeOperation.name()
+                  + " should have been sent");
         }
         for (int i = 0; i < length; i++) {
           JSONObject recordWithSchema = reportArray.getJSONObject(i);
@@ -585,18 +673,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Persist a recordObject of token "recordToken" and return useful information
-   * as a JSONObject to return back.
-   * <p>
-   * Example: recordToken = "Employee", entity = Employee.class, record =
-   * EmployeeRecord.class
-   *<p>
-   * Steps:
-   * <ol>
-   * <li>assert that each property is present in "EmployeeRecord"
-   * <li>invoke "findEmployee (id)" OR new Employee()
-   * <li>set various fields on the attached entity and persist OR remove()
-   * <li>return data
-   * </ol>
+   * as a JSONObject to return back. <p> Example: recordToken = "Employee",
+   * entity = Employee.class, record = EmployeeRecord.class <p> Steps: <ol>
+   * <li>assert that each property is present in "EmployeeRecord" <li>invoke
+   * "findEmployee (id)" OR new Employee() <li>set various fields on the
+   * attached entity and persist OR remove() <li>return data </ol>
    */
   public JSONObject updateRecordInDataStore(String recordToken,
       JSONObject recordObject, WriteOperation writeOperation) {
@@ -605,7 +686,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Class<? extends Record> record = getRecordFromClassToken(recordToken);
       Class<?> entity = getEntityFromRecordAnnotation(record);
 
-      Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(record);
+      Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(
+          record);
       validateKeys(recordObject, propertiesInRecord.keySet());
       updatePropertyTypes(propertiesInRecord, entity);
 
@@ -664,7 +746,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
       // return data back.
       return getReturnRecord(writeOperation, entityInstance, recordObject,
-          violations);
+          violations, record);
     } catch (Exception ex) {
       log.severe(String.format("Caught exception [%s] %s",
           ex.getClass().getName(), ex.getLocalizedMessage()));
@@ -678,10 +760,29 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     while (keys.hasNext()) {
       String key = (String) keys.next();
       if (!declaredProperties.contains(key)) {
-        throw new IllegalArgumentException("key " + key
-            + " is not permitted to be set");
+        throw new IllegalArgumentException(
+            "key " + key + " is not permitted to be set");
       }
     }
+  }
+
+  private void addRelatedObject(String keyRef, Object returnValue,
+      Class<? extends Record> propertyType, RequestProperty propertyContext)
+      throws JSONException, IllegalAccessException, NoSuchMethodException,
+      InvocationTargetException {
+    Class<? extends Record> clazz =
+        (Class<? extends Record>) returnValue.getClass();
+
+    relatedObjects.put(keyRef, getJsonObject(returnValue, propertyType, 
+        propertyContext));
+  }
+
+  private JSONObject encodeRelatedObjectsToJson() throws JSONException {
+    JSONObject array = new JSONObject();
+    for (Map.Entry<String, JSONObject> entry : relatedObjects.entrySet()) {
+      array.put(entry.getKey(), entry.getValue());
+    }
+    return array;
   }
 
   @SuppressWarnings("unchecked")
@@ -698,7 +799,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       throws JSONException, NoSuchMethodException, IllegalAccessException,
       InvocationTargetException {
     JSONObject jsonObject = getJsonObject(result,
-        (Class<? extends Record>) operation.getReturnType());
+        (Class<? extends Record>) operation.getReturnType(), propertyRefs);
     return jsonObject;
   }
 }

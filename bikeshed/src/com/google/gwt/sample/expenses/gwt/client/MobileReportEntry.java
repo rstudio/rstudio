@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -81,11 +82,11 @@ public class MobileReportEntry extends Composite implements MobilePage {
     return this;
   }
 
-  public void create(Long reporterId) {
+  public void create(EmployeeRecord reporter) {
     report = (ReportRecord) requestFactory.create(ReportRecord.class);
     requestObject = requestFactory.reportRequest().persist(report);
     ReportRecord editableReport = requestObject.edit(report);
-    report.setReporterKey(reporterId);
+    editableReport.setReporter(reporter);
     displayReport();
   }
 

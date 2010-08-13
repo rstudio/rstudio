@@ -26,6 +26,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Query;
+import javax.persistence.Transient;
 import javax.persistence.Version;
 
 /**
@@ -59,7 +60,7 @@ public class Expense {
       em.close();
     }
   }
-  
+
   public static Expense findExpense(Long id) {
     if (id == null) {
       return null;
@@ -71,7 +72,7 @@ public class Expense {
       em.close();
     }
   }
-  
+
   @SuppressWarnings("unchecked")
   public static List<Expense> findExpensesByReport(Long reportId) {
     EntityManager em = entityManager();
@@ -98,17 +99,21 @@ public class Expense {
   private String category;
 
   private Date created;
-  
+
   private String description;
-  
+
   @Id
   @Column(name = "id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-  
+
   private String reasonDenied;
-  
+
+  @Transient
+  private Report report;
+
   // @JoinColumn
+
   private Long reportId;
 
   @Version
@@ -122,7 +127,7 @@ public class Expense {
   public String getApproval() {
     return this.approval;
   }
-  
+
   public String getCategory() {
     return this.category;
   }
@@ -134,13 +139,17 @@ public class Expense {
   public String getDescription() {
     return description;
   }
-  
+
   public Long getId() {
     return this.id;
   }
-  
+
   public String getReasonDenied() {
     return this.reasonDenied;
+  }
+
+  public Report getReporter() {
+    return reportId != null ? Report.findReport(reportId) : null;
   }
 
   public Long getReportId() {
@@ -169,11 +178,11 @@ public class Expense {
       em.close();
     }
   }
-  
+
   public void setAmount(Double amount) {
     this.amount = amount;
   }
-  
+
   public void setApproval(String approval) {
     this.approval = approval;
   }
@@ -198,8 +207,12 @@ public class Expense {
     this.reasonDenied = reasonDenied;
   }
 
+  public void setReport(Report report) {
+    reportId = report == null ? null : report.getId();
+  }
+
   public void setReportId(Long reportId) {
-    this.reportId = reportId; 
+    this.reportId = reportId;
   }
 
   public void setVersion(Integer version) {

@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.WriteOperation;
 
 import java.util.HashMap;
@@ -29,7 +30,7 @@ import java.util.Map;
  * </span>
  * </p>
  */
-class ValueStoreJsonImpl {
+public class ValueStoreJsonImpl {
   // package protected fields for use by DeltaValueStoreJsonImpl
 
   final HandlerManager eventBus;
@@ -40,14 +41,26 @@ class ValueStoreJsonImpl {
     this.eventBus = eventBus;
   }
 
-  public void setRecord(RecordJsoImpl newRecord) {
-    setRecordInList(newRecord, 0, null);
+  public Record getRecordBySchemaAndId(RecordSchema<?> schema, 
+      Long id) {
+    if (id == null) {
+      return null;
+    }
+    // TODO: pass isFuture to this method from decoding ID string
+    RecordKey key = new RecordKey(id, schema, false);
+    return schema.create(records.get(key));
   }
 
-  public void setRecords(JsArray<RecordJsoImpl> newRecords) {
+  public void setRecord(RecordJsoImpl newRecord,
+      RequestFactoryJsonImpl requestFactory) {
+    setRecordInList(newRecord, 0, null, requestFactory);
+  }
+
+  public void setRecords(JsArray<RecordJsoImpl> newRecords,
+      RequestFactoryJsonImpl requestFactory) {
     for (int i = 0, l = newRecords.length(); i < l; i++) {
       RecordJsoImpl newRecord = newRecords.get(i);
-      setRecordInList(newRecord, i, newRecords);
+      setRecordInList(newRecord, i, newRecords, requestFactory);
     }
   }
 
@@ -55,11 +68,14 @@ class ValueStoreJsonImpl {
    * @param newRecord
    * @param i
    * @param array
+   * @param requestFactory
    */
   private void setRecordInList(RecordJsoImpl newRecord, int i,
-      JsArray<RecordJsoImpl> array) {
+      JsArray<RecordJsoImpl> array, RequestFactoryJsonImpl requestFactory) {
     RecordKey recordKey = new RecordKey(newRecord, RequestFactoryJsonImpl.NOT_FUTURE);
-
+    newRecord.setValueStore(this);
+    newRecord.setRequestFactory(requestFactory);
+    
     RecordJsoImpl oldRecord = records.get(recordKey);
     if (oldRecord == null) {
       records.put(recordKey, newRecord);

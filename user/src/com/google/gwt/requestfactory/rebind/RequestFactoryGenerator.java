@@ -65,23 +65,22 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
+ * <p> <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
- * Generates implementations of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory RequestFactory}
- * and its nested interfaces.
+ * </span> </p> Generates implementations of {@link com.google.gwt.requestfactory.shared.RequestFactory
+ * RequestFactory} and its nested interfaces.
  */
 public class RequestFactoryGenerator extends Generator {
 
-  private final Set<JClassType> generatedRecordTypes = new HashSet<JClassType>();
+  private final Set<JClassType> generatedRecordTypes
+      = new HashSet<JClassType>();
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext generatorContext,
@@ -94,15 +93,16 @@ public class RequestFactoryGenerator extends Generator {
 
     // Ensure that the requested type exists
     if (interfaceType == null) {
-      logger.log(TreeLogger.ERROR, "Could not find requested typeName: "
-          + interfaceName);
+      logger.log(TreeLogger.ERROR,
+          "Could not find requested typeName: " + interfaceName);
       throw new UnableToCompleteException();
     }
     if (interfaceType.isInterface() == null) {
       // The incoming type wasn't a plain interface, we don't support
       // abstract base classes
-      logger.log(TreeLogger.ERROR, interfaceType.getQualifiedSourceName()
-          + " is not an interface.", null);
+      logger.log(TreeLogger.ERROR,
+          interfaceType.getQualifiedSourceName() + " is not an interface.",
+          null);
       throw new UnableToCompleteException();
     }
 
@@ -114,9 +114,8 @@ public class RequestFactoryGenerator extends Generator {
 
     // If an implementation already exists, we don't need to do any work
     if (out != null) {
-      generateOnce(
-          typeOracle.findType(RequestFactory.class.getCanonicalName()), logger,
-          generatorContext, out, interfaceType, packageName, implName);
+      generateOnce(typeOracle.findType(RequestFactory.class.getCanonicalName()),
+          logger, generatorContext, out, interfaceType, packageName, implName);
     }
 
     return packageName + "." + implName;
@@ -147,6 +146,9 @@ public class RequestFactoryGenerator extends Generator {
     String recordImplTypeName = publicRecordType.getName() + "Impl";
     PrintWriter pw = generatorContext.tryCreate(logger, packageName,
         recordImplTypeName);
+
+    Set<JClassType> transitiveDeps = new LinkedHashSet<JClassType>();
+
     if (pw != null) {
       logger = logger.branch(TreeLogger.DEBUG, "Generating "
           + publicRecordType.getName());
@@ -157,9 +159,10 @@ public class RequestFactoryGenerator extends Generator {
       String eventTypeName = publicRecordType.getName() + "Changed";
       JClassType eventType = typeOracle.findType(packageName, eventTypeName);
       if (eventType == null) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Cannot find %s implementation %s.%s",
-            RecordChangedEvent.class.getName(), packageName, eventTypeName));
+        logger.log(TreeLogger.ERROR,
+            String.format("Cannot find %s implementation %s.%s",
+                RecordChangedEvent.class.getName(), packageName,
+                eventTypeName));
         throw new UnableToCompleteException();
       }
 
@@ -176,6 +179,8 @@ public class RequestFactoryGenerator extends Generator {
       f.addImport(Collections.class.getName());
       f.addImport(HashSet.class.getName());
       f.addImport(Set.class.getName());
+      f.addImport(Map.class.getName());
+      f.addImport(HashMap.class.getName());
 
       f.setSuperclass(RecordImpl.class.getSimpleName());
       f.addImplementedInterface(publicRecordType.getName());
@@ -188,8 +193,10 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println();
       String simpleImplName = publicRecordType.getSimpleSourceName() + "Impl";
-      printRequestImplClass(sw, publicRecordType, simpleImplName, true);
-      printRequestImplClass(sw, publicRecordType, simpleImplName, false);
+      printRequestImplClass(sw, publicRecordType, simpleImplName, true,
+          typeOracle);
+      printRequestImplClass(sw, publicRecordType, simpleImplName, false,
+          typeOracle);
 
       sw.println();
       sw.println(String.format(
@@ -203,6 +210,7 @@ public class RequestFactoryGenerator extends Generator {
       sw.println("super(jso, isFuture);");
       sw.outdent();
       sw.println("}");
+      JClassType recordBaseType = typeOracle.findType(Record.class.getName());
 
       // getter methods
       for (JField field : publicRecordType.getFields()) {
@@ -210,18 +218,26 @@ public class RequestFactoryGenerator extends Generator {
         if (propertyType.getErasedType() == fieldType.getErasedType()) {
           JParameterizedType parameterized = fieldType.isParameterized();
           if (parameterized == null) {
-            logger.log(TreeLogger.ERROR, fieldType
-                + " must have its param type set.");
+            logger.log(TreeLogger.ERROR,
+                fieldType + " must have its param type set.");
             throw new UnableToCompleteException();
           }
           JClassType returnType = parameterized.getTypeArgs()[0];
           sw.println();
           sw.println(String.format("public %s get%s() {",
-              returnType.getQualifiedSourceName(), capitalize(field.getName())));
+              returnType.getQualifiedSourceName(),
+              capitalize(field.getName())));
           sw.indent();
           sw.println(String.format("return get(%s);", field.getName()));
           sw.outdent();
           sw.println("}");
+          /*
+           * Because a Proxy A may relate to B which relates to C, we need to
+           * ensure transitively.
+           */
+          if (isRecordType(typeOracle, returnType)) {
+            transitiveDeps.add(returnType);
+          }
         }
       }
 
@@ -254,6 +270,11 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     generatedRecordTypes.add(publicRecordType);
+    // ensure generatation of transitive dependencies
+    for (JClassType type : transitiveDeps) {
+      ensureRecordType(logger, generatorContext, type.getPackage().getName(),
+          type);
+    }
   }
 
   private void generateOnce(JClassType requestFactoryType, TreeLogger logger,
@@ -261,8 +282,9 @@ public class RequestFactoryGenerator extends Generator {
       JClassType interfaceType, String packageName, String implName)
       throws UnableToCompleteException {
 
-    logger = logger.branch(TreeLogger.DEBUG, String.format(
-        "Generating implementation of %s", interfaceType.getName()));
+    logger = logger.branch(TreeLogger.DEBUG,
+        String.format("Generating implementation of %s",
+            interfaceType.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
@@ -270,6 +292,8 @@ public class RequestFactoryGenerator extends Generator {
     f.addImport(RequestFactoryJsonImpl.class.getName());
     f.addImport(interfaceType.getQualifiedSourceName());
     f.addImport(RecordToTypeMap.class.getName());
+    f.addImport(Record.class.getName());
+    f.addImport(RecordSchema.class.getName());
     f.addImplementedInterface(interfaceType.getName());
     f.setSuperclass(RequestFactoryJsonImpl.class.getSimpleName());
 
@@ -288,11 +312,9 @@ public class RequestFactoryGenerator extends Generator {
       }
       JType returnType = method.getReturnType();
       if (null == returnType) {
-        logger.log(
-            TreeLogger.ERROR,
-            String.format(
-                "Illegal return type for %s. Methods of %s must return interfaces, found void",
-                method.getName(), interfaceType.getName()));
+        logger.log(TreeLogger.ERROR, String.format(
+            "Illegal return type for %s. Methods of %s must return interfaces, found void",
+            method.getName(), interfaceType.getName()));
         throw new UnableToCompleteException();
       }
       JClassType asInterface = returnType.isInterface();
@@ -317,8 +339,8 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     // write create(Class..)
-    JClassType recordToTypeInterface = generatorContext.getTypeOracle().findType(
-        RecordToTypeMap.class.getName());
+    JClassType recordToTypeInterface = generatorContext.getTypeOracle().findType(RecordToTypeMap.class.getName());
+    // TODO: note, this seems like a bug. What if you have 2 RequestFactories?
     String recordToTypeMapName = recordToTypeInterface.getName() + "Impl";
     sw.println("public " + Record.class.getName() + " create(Class token) {");
     sw.indent();
@@ -326,20 +348,26 @@ public class RequestFactoryGenerator extends Generator {
     sw.outdent();
     sw.println("}");
 
+    sw.println(
+           "public RecordSchema<? extends Record> getSchema(String schemaToken) {");
+    sw.indent();
+    sw.println("return new " + recordToTypeMapName + "().getType(schemaToken);");
+    sw.outdent();
+    sw.println("}");
+
     // write a method for each request builder and generate it
     for (JMethod requestSelector : requestSelectors) {
       String returnTypeName = requestSelector.getReturnType().getQualifiedSourceName();
-      String nestedImplName = capitalize(requestSelector.getName().replace('.',
-          '_'))
-          + "Impl";
+      String nestedImplName =
+          capitalize(requestSelector.getName().replace('.', '_')) + "Impl";
       String nestedImplPackage = generatorContext.getTypeOracle().findType(
           returnTypeName).getPackage().getName();
 
       sw.println("public " + returnTypeName + " " + requestSelector.getName()
           + "() {");
       sw.indent();
-      sw.println("return new " + nestedImplPackage + "." + nestedImplName
-          + "(this);");
+      sw.println(
+          "return new " + nestedImplPackage + "." + nestedImplName + "(this);");
       sw.outdent();
       sw.println("}");
       sw.println();
@@ -369,8 +397,9 @@ public class RequestFactoryGenerator extends Generator {
   private void generateRecordToTypeMap(TreeLogger logger,
       GeneratorContext generatorContext, PrintWriter out,
       JClassType interfaceType, String packageName, String implName) {
-    logger = logger.branch(TreeLogger.DEBUG, String.format(
-        "Generating implementation of %s", interfaceType.getName()));
+    logger = logger.branch(TreeLogger.DEBUG,
+        String.format("Generating implementation of %s",
+            interfaceType.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
@@ -396,9 +425,30 @@ public class RequestFactoryGenerator extends Generator {
       sw.println("}");
     }
 
-    sw.println("throw new IllegalArgumentException(\"Unknown token \" + token + ");
+    sw.println(
+        "throw new IllegalArgumentException(\"Unknown token \" + token + ");
     sw.indent();
-    sw.println("\", does not match any of the TOKEN vairables of a Record\");");
+    sw.println("\", does not match any of the TOKEN variables of a Record\");");
+    sw.outdent();
+    sw.outdent();
+    sw.println("}");
+
+    // TODO: unoptimal bloat, and there doesn't need to be two of these methods
+    sw.println("public RecordSchema<? extends Record> getType(String token) {");
+    sw.indent();
+    for (JClassType publicRecordType : generatedRecordTypes) {
+      String qualifiedSourceName = publicRecordType.getQualifiedSourceName();
+      sw.println("if (token.equals(\"" + qualifiedSourceName + "\")) {");
+      sw.indent();
+      sw.println("return " + qualifiedSourceName + "Impl.SCHEMA;");
+      sw.outdent();
+      sw.println("}");
+    }
+
+    sw.println(
+        "throw new IllegalArgumentException(\"Unknown token \" + token + ");
+    sw.indent();
+    sw.println("\", does not match any of the TOKEN variables of a Record\");");
     sw.outdent();
     sw.outdent();
     sw.println("}");
@@ -413,8 +463,9 @@ public class RequestFactoryGenerator extends Generator {
       JMethod selectorMethod, JClassType mainType, String packageName,
       String implName) throws UnableToCompleteException {
     JClassType selectorInterface = selectorMethod.getReturnType().isInterface();
-    logger = logger.branch(TreeLogger.DEBUG, String.format(
-        "Generating implementation of %s", selectorInterface.getName()));
+    logger = logger.branch(TreeLogger.DEBUG,
+        String.format("Generating implementation of %s",
+            selectorInterface.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
@@ -428,8 +479,8 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("private final " + mainType.getName() + "Impl factory;");
     sw.println();
     // constructor for the class.
-    sw.println("public " + implName + "(" + mainType.getName()
-        + "Impl factory) {");
+    sw.println(
+        "public " + implName + "(" + mainType.getName() + "Impl factory) {");
     sw.indent();
     sw.println("this.factory = factory;");
     sw.outdent();
@@ -485,21 +536,23 @@ public class RequestFactoryGenerator extends Generator {
       } else if (isVoidRequest(typeOracle, requestType)) {
         requestClassName = AbstractVoidRequest.class.getName();
       } else {
-        logger.log(TreeLogger.ERROR, "Return type " + requestType
-            + " is not yet supported");
+        logger.log(TreeLogger.ERROR,
+            "Return type " + requestType + " is not yet supported");
         throw new UnableToCompleteException();
       }
 
       sw.println(getMethodDeclaration(method) + " {");
       sw.indent();
-      sw.println("return new " + requestClassName + "(factory" + enumArgument
-          + ") {");
+      sw.println(
+          "return new " + requestClassName + "(factory" + enumArgument + ") {");
       sw.indent();
       String requestDataName = RequestData.class.getSimpleName();
       sw.println("public " + requestDataName + " getRequestData() {");
       sw.indent();
-      sw.println("return new " + requestDataName + "(\"" + operationName
-          + "\", " + getParametersAsString(method, typeOracle) + ");");
+      sw.println(
+          "return new " + requestDataName + "(\"" + operationName + "\", "
+              + getParametersAsString(method, typeOracle) + ","
+              + "getPropertyRefs());");
       sw.outdent();
       sw.println("}");
       sw.outdent();
@@ -514,9 +567,8 @@ public class RequestFactoryGenerator extends Generator {
   }
 
   /**
-   * This method is very similar to {@link
-   * com.google.gwt.core.ext.typeinfo.JMethod.getReadableDeclaration()}. The
-   * only change is that each parameter is final.
+   * This method is very similar to {@link com.google.gwt.core.ext.typeinfo.JMethod.getReadableDeclaration()}.
+   * The only change is that each parameter is final.
    */
   private String getMethodDeclaration(JMethod method) {
     StringBuilder sb = new StringBuilder("public ");
@@ -555,7 +607,8 @@ public class RequestFactoryGenerator extends Generator {
       // TODO No. This defeats the entire purpose of PropertyReference. It's
       // supposed
       // to be dereferenced server side, not client side.
-      if ("com.google.gwt.valuestore.shared.PropertyReference".equals(parameter.getType().getQualifiedBinaryName())) {
+      if ("com.google.gwt.valuestore.shared.PropertyReference".equals(
+          parameter.getType().getQualifiedBinaryName())) {
         sb.append(".get()");
       }
       JClassType classType = parameter.getType().isClassOrInterface();
@@ -577,7 +630,8 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(BigInteger.class.getName()));
   }
 
-  private boolean isBooleanRequest(TypeOracle typeOracle, JClassType requestType) {
+  private boolean isBooleanRequest(TypeOracle typeOracle,
+      JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Boolean.class.getName()));
   }
 
@@ -594,7 +648,8 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Date.class.getName()));
   }
 
-  private boolean isDoubleRequest(TypeOracle typeOracle, JClassType requestType) {
+  private boolean isDoubleRequest(TypeOracle typeOracle,
+      JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Double.class.getName()));
   }
 
@@ -602,11 +657,13 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Enum.class.getName()));
   }
 
-  private boolean isFloatRequest(TypeOracle typeOracle, JClassType requestType) {
+  private boolean isFloatRequest(TypeOracle typeOracle,
+      JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Float.class.getName()));
   }
 
-  private boolean isIntegerRequest(TypeOracle typeOracle, JClassType requestType) {
+  private boolean isIntegerRequest(TypeOracle typeOracle,
+      JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Integer.class.getName()));
   }
 
@@ -619,11 +676,17 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isAssignableTo(typeOracle.findType(RecordListRequest.class.getName()));
   }
 
-  private boolean isRecordRequest(TypeOracle typeOracle, JClassType requestType) {
+  private boolean isRecordRequest(TypeOracle typeOracle,
+      JClassType requestType) {
     return requestType.isAssignableTo(typeOracle.findType(RecordRequest.class.getName()));
   }
 
-  private boolean isShortRequest(TypeOracle typeOracle, JClassType requestType) {
+  private boolean isRecordType(TypeOracle typeOracle, JClassType requestType) {
+    return requestType.isAssignableTo(typeOracle.findType(Record.class.getName()));
+  }
+
+  private boolean isShortRequest(TypeOracle typeOracle,
+      JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Short.class.getName()));
   }
 
@@ -633,11 +696,9 @@ public class RequestFactoryGenerator extends Generator {
 
   /**
    * Prints a ListRequestImpl or ObjectRequestImpl class.
-   * 
-   * @param list
    */
   private void printRequestImplClass(SourceWriter sw, JClassType returnType,
-      String returnImplTypeName, boolean list) {
+      String returnImplTypeName, boolean list, TypeOracle typeOracle) {
 
     String name = list ? "ListRequestImpl" : "ObjectRequestImpl";
     Class<?> superClass = list ? AbstractJsonListRequest.class
@@ -648,6 +709,7 @@ public class RequestFactoryGenerator extends Generator {
         + "> {");
     sw.println();
     sw.indent();
+
     sw.println(String.format("%s(%s factory) {", name,
         RequestFactoryJsonImpl.class.getSimpleName()));
     sw.indent();
@@ -661,6 +723,7 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("return this;");
     sw.outdent();
     sw.println("}");
+
     sw.outdent();
     sw.println("}");
     sw.println();
@@ -675,12 +738,13 @@ public class RequestFactoryGenerator extends Generator {
    * @return
    * @throws UnableToCompleteException
    */
+
   private JClassType printSchema(TypeOracle typeOracle,
       JClassType publicRecordType, String recordImplTypeName,
       JClassType eventType, SourceWriter sw) {
-    sw.println(String.format(
-        "public static class MySchema extends RecordSchema<%s> {",
-        recordImplTypeName));
+    sw.println(
+        String.format("public static class MySchema extends RecordSchema<%s> {",
+            recordImplTypeName));
 
     sw.indent();
     sw.println("private final Set<Property<?>> allProperties;");
@@ -737,8 +801,8 @@ public class RequestFactoryGenerator extends Generator {
     sw.println();
     sw.println("public Class getToken() {");
     sw.indent();
-    sw.println("return " + publicRecordType.getQualifiedSourceName()
-        + ".class;" + " // special field");
+    sw.println("return " + publicRecordType.getQualifiedSourceName() + ".class;"
+        + " // special field");
     sw.outdent();
     sw.println("}");
 

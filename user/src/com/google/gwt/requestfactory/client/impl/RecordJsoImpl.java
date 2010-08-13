@@ -28,15 +28,34 @@ import java.math.BigInteger;
 import java.util.Date;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
+ * <p> <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
- * JSO implementation of {@link Record}, used to back subclasses of
+ * </span> </p> JSO implementation of {@link Record}, used to back subclasses of
  * {@link RecordImpl}.
  */
 public class RecordJsoImpl extends JavaScriptObject implements Record {
+
+  /**
+   * JSO to hold result and related objects.
+   */
+  public static class JsonResults extends JavaScriptObject {
+
+    protected JsonResults() {
+    }
+
+    public final native JsArray<RecordJsoImpl> getListResult() /*-{
+      return this.result;
+    }-*/;
+
+    public final native JavaScriptObject getRelated() /*-{
+      return this.related;
+    }-*/;
+
+    public final native RecordJsoImpl getResult() /*-{
+      return this.result;
+    }-*/;
+  }
+
   public static native JsArray<RecordJsoImpl> arrayFromJson(String json) /*-{
     return eval(json);
   }-*/;
@@ -64,7 +83,14 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return xyz;
   }-*/;
 
+  public static native JsonResults fromResults(String json) /*-{
+    // TODO: clean this
+    eval("xyz=" + json);
+    return xyz;
+  }-*/;
+
   /* Made protected, for testing */
+
   protected static native RecordJsoImpl create() /*-{
     return {};
   }-*/;
@@ -88,7 +114,10 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     }
     try {
       if (Boolean.class.equals(property.getType())) {
-      return (V) Boolean.valueOf(getBoolean(property.getName()));
+        return (V) Boolean.valueOf(getBoolean(property.getName()));
+      }
+      if (Character.class.equals(property.getType())) {
+        return (V) Character.valueOf(String.valueOf(get(property.getName())).charAt(0));
       }
       if (Byte.class.equals(property.getType())) {
         return (V) Byte.valueOf((byte) getInt(property.getName()));
@@ -130,8 +159,9 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
         }
       }
     } catch (final Exception ex) {
-      throw new IllegalStateException("Property  " + property.getName() + " has invalid " +
-      " value " + get(property.getName()) + " for type " + property.getType());
+      throw new IllegalStateException(
+          "Property  " + property.getName() + " has invalid " + " value "
+              + get(property.getName()) + " for type " + property.getType());
     }
 
     if (property instanceof EnumProperty) {
@@ -144,13 +174,28 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
         }
       }
     }
-    
-    // Sun JDK compile fails without this cast
-    return (V) get(property.getName());
+
+    if (String.class == property.getType()) {
+      return (V) get(property.getName());
+    }
+    // at this point, we checked all the known primitive/value types we support
+    // TODO: handle embedded types, List, Set, Map
+
+    // else, it must be a record type
+    String relatedId = (String) get(property.getName());
+    if (relatedId == null) {
+      return null;
+    } else {
+      // TODO: should cache this or modify JSO field in place
+      String schemaAndId[] = relatedId.split("-");
+      return (V) getValueStore().getRecordBySchemaAndId(
+          getRequestFactory().getSchema(schemaAndId[0]),
+          Long.valueOf(schemaAndId[1]));
+    }
   }
 
   public final native <T> T get(String propertyName) /*-{
-    return this[propertyName];
+    return this[propertyName] || null;
   }-*/;
 
   public final Long getId() {
@@ -160,9 +205,19 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
   public final <V> PropertyReference<V> getRef(Property<V> property) {
     return new PropertyReference<V>(this, property);
   }
+  
+  // TODO: HACK! Need to look up token to schema for relatins
+  public final native RequestFactoryJsonImpl getRequestFactory() /*-{
+    return this['__rf'];
+  }-*/;
 
   public final native RecordSchema<?> getSchema() /*-{
     return this['__key'];
+  }-*/;
+  
+  // TODO: HACK! Make VS public and stash it in the record for relation lookups
+  public final native ValueStoreJsonImpl getValueStore() /*-{
+     return this['__vs'];  
   }-*/;
 
   public final Integer getVersion() {
@@ -178,8 +233,8 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   public final boolean isEmpty() {
     for (Property<?> property : getSchema().allProperties()) {
-      if ((property != Record.id) && (property != Record.version)
-          && (isDefined(property.getName()))) {
+      if ((property != Record.id) && (property != Record.version) && (isDefined(
+          property.getName()))) {
         return false;
       }
     }
@@ -211,12 +266,19 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       setString(property.getName(), (String) value);
       return;
     }
-    if (value instanceof Long || value instanceof BigDecimal || value instanceof BigInteger) {
+     if (value instanceof Character) {
       setString(property.getName(), String.valueOf(value));
       return;
     }
 
-    if (value instanceof Integer || value instanceof Short || value instanceof Byte) {
+    if (value instanceof Long || value instanceof BigDecimal
+        || value instanceof BigInteger) {
+      setString(property.getName(), String.valueOf(value));
+      return;
+    }
+
+    if (value instanceof Integer || value instanceof Short
+        || value instanceof Byte) {
       setInt(property.getName(), ((Number) value).intValue());
       return;
     }
@@ -236,17 +298,39 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       return;
     }
 
-    throw new UnsupportedOperationException("Can't yet set properties of type "
-        + value.getClass().getName());
+    if (value instanceof Boolean) {
+      setBoolean(property.getName(), ((Boolean) value).booleanValue());
+    }
+
+    if (value instanceof Record) {
+      setString(property.getName(),
+          getRequestFactory().getSchema(value.getClass().getName()).getToken().getName()
+              + "-" + String.valueOf(((Record) value).getId()));  
+    }
+
+    throw new UnsupportedOperationException(
+        "Can't yet set properties of type " + value.getClass().getName());
   }
+
+
+  // TODO: HACK! Need to look up token to schema for relatins
+  public final native void setRequestFactory(RequestFactoryJsonImpl requestFactory) /*-{
+    this['__rf'] = requestFactory;
+  }-*/;
 
   public final native void setSchema(RecordSchema<?> schema) /*-{
     this['__key'] = schema;
   }-*/;
 
+  // TODO: HACK! Make VS public and stash it in the record for relation lookups
+
+  public final native void setValueStore(ValueStoreJsonImpl valueStoreJson) /*-{
+    this['__vs']=valueStoreJson;
+  }-*/;
+
   /**
    * Return JSON representation using org.json library.
-   * 
+   *
    * @return returned string.
    */
   public final native String toJson() /*-{
@@ -271,7 +355,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
   /**
    * Return JSON representation of just id and version fields, using org.json
    * library.
-   * 
+   *
    * @return returned string.
    */
   public final native String toJsonIdVersion() /*-{
@@ -287,7 +371,8 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return $wnd.JSON.stringify(object);
   }-*/;
 
-  private native boolean copyPropertyIfDifferent(String name, RecordJsoImpl from) /*-{
+  private native boolean copyPropertyIfDifferent(String name,
+      RecordJsoImpl from) /*-{
     if (this[name] == from[name]) {
       return false;
     }
@@ -309,6 +394,10 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   private native int getInt(String name) /*-{
     return this[name];
+  }-*/;
+
+  private native void setBoolean(String name, boolean value) /*-{
+    this[name] = value;
   }-*/;
 
   private native void setDouble(String name, double value) /*-{

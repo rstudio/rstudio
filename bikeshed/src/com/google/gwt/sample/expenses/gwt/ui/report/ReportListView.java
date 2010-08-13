@@ -15,12 +15,13 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
-import com.google.gwt.app.client.LongRenderer;
+import com.google.gwt.app.client.ProxyIdRenderer;
 import com.google.gwt.app.place.AbstractRecordListView;
 import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormatRenderer;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -58,10 +59,10 @@ public class ReportListView extends AbstractRecordListView<ReportRecord> {
     columns.add(new PropertyColumn<ReportRecord, Date>(ReportRecord.created,
         new DateTimeFormatRenderer(DateTimeFormat.getShortDateFormat())));
     columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.purpose));
-    columns.add(new PropertyColumn<ReportRecord, java.lang.Long>(
-        ReportRecord.reporterKey, LongRenderer.instance()));
-    columns.add(new PropertyColumn<ReportRecord, java.lang.Long>(
-        ReportRecord.approvedSupervisorKey, LongRenderer.instance()));
+    columns.add(new PropertyColumn<ReportRecord, EmployeeRecord>(
+        ReportRecord.reporter, ProxyIdRenderer.<EmployeeRecord>instance()));
+    columns.add(new PropertyColumn<ReportRecord, EmployeeRecord>(
+        ReportRecord.approvedSupervisor, ProxyIdRenderer.<EmployeeRecord>instance()));
     return columns;
   }
 }

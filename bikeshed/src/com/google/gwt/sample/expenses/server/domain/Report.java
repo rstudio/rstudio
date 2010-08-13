@@ -36,6 +36,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Query;
+import javax.persistence.Transient;
 import javax.persistence.Version;
 
 /**
@@ -66,8 +67,8 @@ public class Report {
       String startsWith) {
     EntityManager em = entityManager();
     try {
-      Query query = queryReportsBySearch(em, employeeId, department,
-          startsWith, null, true);
+      Query query = queryReportsBySearch(em, employeeId, department, startsWith,
+          null, true);
       if (query == null) {
         return REPORT_COUNT;
       }
@@ -108,11 +109,13 @@ public class Report {
   }
 
   @SuppressWarnings("unchecked")
-  public static List<Report> findReportEntries(int firstResult, int maxResults) {
+  public static List<Report> findReportEntries(int firstResult,
+      int maxResults) {
     EntityManager em = entityManager();
     try {
-      List<Report> reportList = em.createQuery("select o from Report o").setFirstResult(
-          firstResult).setMaxResults(maxResults).getResultList();
+      List<Report> reportList = em.createQuery(
+          "select o from Report o").setFirstResult(firstResult).setMaxResults(
+          maxResults).getResultList();
       // force it to materialize
       reportList.size();
       return reportList;
@@ -127,8 +130,8 @@ public class Report {
       int maxResults) {
     EntityManager em = entityManager();
     try {
-      Query query = queryReportsBySearch(em, employeeId, department,
-          startsWith, orderBy, false);
+      Query query = queryReportsBySearch(em, employeeId, department, startsWith,
+          orderBy, false);
 
       // Try to get the memcache
       if (cache == null) {
@@ -176,7 +179,7 @@ public class Report {
         query.setHint(JPACursorHelper.CURSOR_HINT, trialCursor);
         while (firstResult > pos) {
           int min = Math.min(firstResult - pos, 1000);
-          
+
           // If we need to skip more than 1000 records, ensure the
           // breaks occur at multiples of 1000 in order to increase the
           // chances of reusing cursors from the memcache
@@ -184,7 +187,7 @@ public class Report {
             int mod = (pos + min) % 1000;
             min -= mod;
           }
-          
+
           query.setMaxResults(min);
           List<Report> results = query.getResultList();
           int count = results.size();
@@ -192,7 +195,7 @@ public class Report {
             break;
           }
           pos += count;
-          
+
           // Save the cursor for later
           Cursor cursor = JPACursorHelper.getCursor(results);
           if (cache != null) {
@@ -200,24 +203,25 @@ public class Report {
                 pos);
             cache.put(key, cursor.toWebSafeString());
           }
-          
+
           query.setHint(JPACursorHelper.CURSOR_HINT, cursor);
         }
       }
-      
+
       query.setMaxResults(maxResults);
 
       List<Report> reportList = query.getResultList();
       // force it to materialize
       reportList.size();
-      
+
       Cursor cursor = JPACursorHelper.getCursor(reportList);
       if (cache != null) {
         int pos = firstResult + reportList.size();
-        String key = createKey(employeeId, department, startsWith, orderBy, pos);
+        String key = createKey(employeeId, department, startsWith, orderBy,
+            pos);
         cache.put(key, cursor.toWebSafeString());
       }
-      
+
       return reportList;
     } finally {
       em.close();
@@ -228,7 +232,8 @@ public class Report {
   public static List<Report> findReportsByEmployee(Long employeeId) {
     EntityManager em = entityManager();
     try {
-      Query query = em.createQuery("select o from Report o where o.reporterKey =:reporterKey");
+      Query query = em.createQuery(
+          "select o from Report o where o.reporterKey =:reporterKey");
       query.setParameter("reporterKey", employeeId);
       List<Report> reportList = query.getResultList();
       // force it to materialize
@@ -241,22 +246,19 @@ public class Report {
 
   private static String createKey(Long employeeId, String department,
       String startsWith, String orderBy, int firstResult) {
-    return "" + employeeId + "+" + encode(department) + "+"
-        + encode(startsWith) + "+" + encode(orderBy) + "+" + firstResult;
+    return "" + employeeId + "+" + encode(department) + "+" + encode(startsWith)
+        + "+" + encode(orderBy) + "+" + firstResult;
   }
 
   /**
    * Returns a String based on an input String that provides the following
    * guarantees.
-   * 
-   * <ol>
-   * <li>The result contains no '+' characters
-   * <li>Distinct inputs always produce distinct results
-   * </ol>
-   * 
-   * <p>
-   * Note that the transformation is not required to be reversible.
-   * 
+   *
+   * <ol> <li>The result contains no '+' characters <li>Distinct inputs always
+   * produce distinct results </ol>
+   *
+   * <p> Note that the transformation is not required to be reversible.
+   *
    * @param s the input String
    * @return a String suitable for use as part of a a memcache key
    */
@@ -272,13 +274,13 @@ public class Report {
   /**
    * Query for reports based on the search parameters. If startsWith is
    * specified, the results will not be ordered.
-   * 
-   * @param em the {@link EntityManager} to use
+   *
+   * @param em         the {@link EntityManager} to use
    * @param employeeId the employee id
    * @param department the department to search
    * @param startsWith the starting string
-   * @param orderBy the order of the results
-   * @param isCount true to query on the count only
+   * @param orderBy    the order of the results
+   * @param isCount    true to query on the count only
    * @return the query, or null to return full report count.
    */
   private static Query queryReportsBySearch(EntityManager em, Long employeeId,
@@ -335,7 +337,14 @@ public class Report {
     return query;
   }
 
+  @Transient
+  private Employee approvedSupervisor;
+
+  @Transient
+  private Employee reporter;
+
   // @JoinColumn
+
   private Long approvedSupervisorKey;
 
   private Date created;
@@ -358,8 +367,7 @@ public class Report {
   private String purposeLowerCase;
 
   /**
-   * Store reporter's key instead of reporter. See:
-   * http://code.google.com/appengine
+   * Store reporter's key instead of reporter. See: http://code.google.com/appengine
    * /docs/java/datastore/relationships.html#Unowned_Relationships
    */
   // @JoinColumn
@@ -368,6 +376,11 @@ public class Report {
   @Version
   @Column(name = "version")
   private Integer version;
+
+  public Employee getApprovedSupervisor() {
+    return approvedSupervisorKey != null ? Employee.findEmployee(
+        approvedSupervisorKey) : null;
+  }
 
   public Long getApprovedSupervisorKey() {
     return approvedSupervisorKey;
@@ -391,6 +404,10 @@ public class Report {
 
   public String getPurpose() {
     return this.purpose;
+  }
+
+  public Employee getReporter() {
+    return reporterKey != null ? Employee.findEmployee(reporterKey) : null;
   }
 
   public Long getReporterKey() {
@@ -445,8 +462,16 @@ public class Report {
     this.purposeLowerCase = purpose == null ? "" : purpose.toLowerCase();
   }
 
+  public void setReporter(Employee reporter) {
+    reporterKey = reporter == null ? null : reporter.getId();
+  }
+
   public void setReporterKey(Long reporter) {
     this.reporterKey = reporter;
+  }
+
+  public void setSupervisor(Employee supervisor) {
+    approvedSupervisorKey = supervisor == null ? null : supervisor.getId();
   }
 
   public void setVersion(Integer version) {
@@ -466,4 +491,5 @@ public class Report {
     sb.append("ApprovedSupervisor: ").append(getApprovedSupervisorKey());
     return sb.toString();
   }
+
 }

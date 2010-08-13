@@ -52,7 +52,7 @@ public class EmployeeDetailsView extends Composite implements
   @UiField
   SpanElement password;
   @UiField
-  SpanElement supervisorKey;
+  SpanElement supervisor;
   @UiField
   HasClickHandlers edit;
   @UiField
@@ -95,7 +95,7 @@ public class EmployeeDetailsView extends Composite implements
     displayName.setInnerText(record.getDisplayName());
     userName.setInnerText(record.getUserName());
     password.setInnerText(record.getPassword());
-    supervisorKey.setInnerText(String.valueOf(record.getSupervisorKey()));
+    supervisor.setInnerText(String.valueOf(record.getSupervisor() == null ? null : record.getSupervisor().getId()));
     idSpan.setInnerText(record.getId().toString());
     versionSpan.setInnerText(record.getVersion().toString());
   }

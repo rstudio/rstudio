@@ -16,7 +16,9 @@
 package com.google.gwt.requestfactory.shared;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -34,14 +36,19 @@ public class RequestData {
   public static final String CONTENT_TOKEN = "contentData";
   public static final String OPERATION_TOKEN = "operation";
   public static final String PARAM_TOKEN = "param";
+  public static final String PROPERTY_REF_TOKEN = "propertyRefs";
 
   // TODO: non-final is a hack for now.
   private String operation;
   private final Object[] parameters;
 
-  public RequestData(String operation, Object[] parameters) {
+  private Set<String> propertyRefs;
+
+  public RequestData(String operation, Object[] parameters,
+      Set<String> propertyRefs) {
     this.operation = operation;
     this.parameters = parameters;
+    this.propertyRefs = propertyRefs;
   }
 
   /**
@@ -63,6 +70,18 @@ public class RequestData {
     }
     if (contentData != null) {
       requestMap.put(CONTENT_TOKEN, contentData);
+    }
+
+    if (propertyRefs != null && !propertyRefs.isEmpty()) {
+      StringBuffer props = new StringBuffer();
+      Iterator<String> propIt = propertyRefs.iterator();
+      while (propIt.hasNext()) {
+        props.append(propIt.next());
+        if (propIt.hasNext()) {
+          props.append(",");
+        }
+      }
+      requestMap.put(PROPERTY_REF_TOKEN, props.toString());
     }
     return requestMap;
   }

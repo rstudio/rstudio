@@ -36,6 +36,7 @@ public class SimpleFoo {
   public static List<SimpleFoo> findAll() {
     return Collections.singletonList(singleton);
   }
+
   public static SimpleFoo findSimpleFoo(Long id) {
     return findSimpleFooById(id);
   }
@@ -51,11 +52,13 @@ public class SimpleFoo {
 
   public static void reset() {
     singleton = new SimpleFoo();
-  };
+  }
+
   @SuppressWarnings("unused")
   private static Integer privateMethod() {
     return 0;
   }
+
   Integer version = 1;
 
   private Boolean boolField;
@@ -70,6 +73,8 @@ public class SimpleFoo {
 
   private String userName;
 
+  private SimpleBar barField;
+
   public SimpleFoo() {
     intId = 42;
     version = 1;
@@ -77,7 +82,12 @@ public class SimpleFoo {
     longField = 8L;
     enumField = SimpleEnum.FOO;
     created = new Date();
+    barField = SimpleBar.getSingleton();
     boolField = true;
+  }
+
+  public SimpleBar getBarField() {
+    return barField;
   }
 
   public Boolean getBoolField() {
@@ -113,6 +123,10 @@ public class SimpleFoo {
   }
 
   public void persist() {
+  }
+
+  public void setBarField(SimpleBar barField) {
+    this.barField = barField;
   }
 
   public void setBoolField(Boolean bool) {

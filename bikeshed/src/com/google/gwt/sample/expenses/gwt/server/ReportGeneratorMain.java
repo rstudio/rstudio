@@ -55,8 +55,8 @@ public class ReportGeneratorMain {
       repWriter = new PrintWriter(dir + "/Report.csv");
       expWriter = new PrintWriter(dir + "/Expense.csv");
       empWriter.println("userName,displayName,supervisorKey,VERSION,key,department,password");
-      repWriter.println("created,notes,VERSION,approvedSupervisorKey,key,reporterKey,purposeLowerCase,purpose,department");
-      expWriter.println("category,description,reasonDenied,amount,VERSION,reportId,key,created,approval");
+      repWriter.println("created,notes,VERSION,approvedSupervisor,key,reporter,purposeLowerCase,purpose,department");
+      expWriter.println("category,description,reasonDenied,amount,VERSION,report,key,created,approval");
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -95,7 +95,7 @@ public class ReportGeneratorMain {
         @Override
         public long storeExpense(ExpenseDTO expense) {
           long id = allids++;
-          // category,description,reasonDenied,amount,VERSION,reportId,key,created,approval"
+          // category,description,reasonDenied,amount,VERSION,report,key,created,approval"
           expWriter.println(expense.category + "," + expense.description + ",," + expense.amount + ","
               + VERSION + "," + expense.reportId + "," + id + "," + dateToString(expense.created)
               + ",");
@@ -105,7 +105,7 @@ public class ReportGeneratorMain {
         @Override
         public long storeReport(ReportDTO report) {          
           long id = allids++;
-          // created,notes,VERSION,approvedSupervisorKey,key,reporterKey,purposeLowerCase,purpose,department
+          // created,notes,VERSION,approvedSupervisor,key,reporter,purposeLowerCase,purpose,department
           repWriter.println(dateToString(report.created) + ",\"" + report.notes + "\"," + VERSION + ","
               + report.approvedSupervisorKey + "," + id + "," + report.reporterKey + ",\""
               + report.purpose.toLowerCase() + "\",\"" + report.purpose + "\"," + report.department);

@@ -95,12 +95,13 @@ public class JsonRequestProcessorTest extends TestCase {
     com.google.gwt.valuestore.server.SimpleFoo.reset();
     try {
       // fetch object
-      JSONObject foo = (JSONObject) requestProcessor.processJsonRequest("{ \""
+      JSONObject results = (JSONObject) requestProcessor.processJsonRequest("{ \""
           + RequestData.OPERATION_TOKEN + "\": \""
           + com.google.gwt.valuestore.shared.SimpleFooRequest.class.getName()
           + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
           + "findSimpleFooById\", " + "\"" + RequestData.PARAM_TOKEN
           + "0\": \"999\" }");
+      JSONObject foo = results.getJSONObject("result");   
       assertEquals(foo.getInt("id"), 999);
       assertEquals(foo.getInt("intId"), 42);
       assertEquals(foo.getString("userName"), "GWT");

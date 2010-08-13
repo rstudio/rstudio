@@ -17,6 +17,7 @@ package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.user.cellview.client.CellList;
@@ -43,7 +44,7 @@ public class MobileReportList extends Composite implements MobilePage {
    * TODO: doc.
    */
   public interface Listener {
-    void onCreateReport(Long reporterId);
+    void onCreateReport(EmployeeRecord reporter);
 
     void onReportSelected(ReportRecord report);
   }
@@ -53,7 +54,7 @@ public class MobileReportList extends Composite implements MobilePage {
    */
   private Receiver<List<ReportRecord>> lastReceiver;
 
-  private final Long employeeId;
+  private final EmployeeRecord employee;
   private final Listener listener;
   private final CellList<ReportRecord> reportList;
   private final AsyncListViewAdapter<ReportRecord> reportAdapter;
@@ -61,10 +62,10 @@ public class MobileReportList extends Composite implements MobilePage {
   private final ExpensesRequestFactory requestFactory;
 
   public MobileReportList(final Listener listener,
-      final ExpensesRequestFactory requestFactory, long employeeId) {
+      final ExpensesRequestFactory requestFactory, EmployeeRecord employee) {
     this.listener = listener;
     this.requestFactory = requestFactory;
-    this.employeeId = new Long(employeeId);
+    this.employee = employee;
     reportAdapter = new AsyncListViewAdapter<ReportRecord>() {
       @Override
       protected void onRangeChanged(HasData<ReportRecord> view) {
@@ -116,7 +117,7 @@ public class MobileReportList extends Composite implements MobilePage {
   }
 
   public void onAdd() {
-    listener.onCreateReport(employeeId);
+    listener.onCreateReport(employee);
   }
 
   public void onCustom() {
@@ -147,7 +148,7 @@ public class MobileReportList extends Composite implements MobilePage {
         reportAdapter.updateViewData(0, size, newValues);
       }
     };
-    requestFactory.reportRequest().findReportEntriesBySearch(employeeId, "",
+    requestFactory.reportRequest().findReportEntriesBySearch(employee.getId(), "",
         "", ReportRecord.created.getName() + " DESC", 0, 25).forProperties(
         getReportColumns()).fire(lastReceiver);
   }

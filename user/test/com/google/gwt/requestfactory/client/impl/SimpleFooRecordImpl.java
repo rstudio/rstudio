@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.RecordChangedEvent;
+import com.google.gwt.valuestore.shared.SimpleBarRecord;
 import com.google.gwt.valuestore.shared.SimpleFooRecord;
 import com.google.gwt.valuestore.shared.WriteOperation;
 
@@ -80,10 +81,14 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
     super(jso, isFuture);
   }
 
+  public SimpleBarRecord getBarField() {
+    return (SimpleBarRecord) getValueStore().getRecordBySchemaAndId(SCHEMA, (Long) (Object) get(barField));
+  }
+
   public Boolean getBoolField() {
     return get(boolField);
   }
-  
+
   public java.util.Date getCreated() {
     return get(created);
   }

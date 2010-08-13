@@ -74,7 +74,7 @@ public abstract class UserInformation {
   
   public static UserInformation getCurrentUserInformation(String redirectUrl) {
     UserInformation userInfo = null;
-    if (!userInformationImplClass.isEmpty()) {
+    if (!"".equals(userInformationImplClass)) {
       try {
         userInfo = (UserInformation) Class.forName(
             userInformationImplClass).getConstructor(

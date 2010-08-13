@@ -13,19 +13,39 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.server;
+package com.google.gwt.app.client;
+
+import com.google.gwt.text.shared.Parser;
+import com.google.gwt.valuestore.shared.Record;
+
+import java.text.ParseException;
 
 /**
- * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p>
- * Maps operation name to {RequestDefinition}.
+ * <p>
+ * A no-op renderer, always returns null
+ * @param <T> a Record type.
  */
-public interface OperationRegistry {
+public class NullParser<T extends Record> implements Parser<T> {
 
-  RequestDefinition getOperation(String operationName);
+  private static NullParser INSTANCE;
 
-  RequestSecurityProvider getSecurityProvider();
+  /**
+   * @return the instance of the null parser
+   */
+  public static <T extends Record> Parser<T> instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new NullParser<T>();
+    }
+    return INSTANCE;
+  }
+
+  protected NullParser() {
+  }
+
+  public T parse(CharSequence object) throws ParseException {
+    return null;
+  }
 }

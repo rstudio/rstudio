@@ -206,7 +206,7 @@ public class DataGenerator {
   private JSONObject getExpenseAsJson(Expense expense) throws JSONException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("id", "" + expense.getId());
-    jsonObject.put("reportId", expense.getReportId());
+    jsonObject.put("report", expense.getReportId());
     jsonObject.put("description", expense.getDescription());
     jsonObject.put("created", expense.getCreated().getTime());
     jsonObject.put("amount", expense.getAmount());
@@ -239,12 +239,12 @@ public class DataGenerator {
     jsonObject.put("id", "" + report.getId());
     jsonObject.put("created", report.getCreated().getTime());
     jsonObject.put("department", report.getDepartment());
-    jsonObject.put("reporterKey", report.getReporterKey());
+    jsonObject.put("reporter", report.getReporterKey());
     jsonObject.put("purpose", report.getPurpose());
     jsonObject.put("notes", report.getNotes());
     Long approvedSupervisorKey = report.getApprovedSupervisorKey();
     if (approvedSupervisorKey != null) {
-      jsonObject.put("approvedSupervisorKey", "" + report.getApprovedSupervisorKey());
+      jsonObject.put("approvedSupervisor", "" + report.getApprovedSupervisorKey());
     }
     return jsonObject;
   }

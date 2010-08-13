@@ -20,6 +20,7 @@ import com.google.gwt.user.server.rpc.RPCServletUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -88,6 +89,8 @@ public class RequestFactoryServlet extends HttpServlet {
       }
       // TODO: clean exception handling code below.
     } catch (Exception e) {
+      Logger.getLogger(getClass().getName()).severe(e.getMessage());
+      e.printStackTrace();
       throw new RuntimeException(e);
     }
   }

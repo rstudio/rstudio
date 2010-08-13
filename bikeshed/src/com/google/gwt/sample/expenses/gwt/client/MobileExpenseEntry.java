@@ -21,6 +21,7 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -72,11 +73,11 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
     return this;
   }
 
-  public void create(Long reportId) {
+  public void create(ReportRecord report) {
     expense = (ExpenseRecord) requestFactory.create(ExpenseRecord.class);
     requestObject = requestFactory.expenseRequest().persist(expense);
     ExpenseRecord editableExpense = requestObject.edit(expense);
-    editableExpense.setReportId(reportId);
+    editableExpense.setReport(report);
     displayExpense();
   }
 

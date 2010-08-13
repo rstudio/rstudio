@@ -32,8 +32,8 @@ public interface EmployeeRecord extends Record {
   Property<String> displayName = new Property<String>("displayName", "Display Name",
       String.class);
   Property<String> password = new Property<String>("password", "Password", String.class);
-  Property<Long> supervisorKey = new Property<Long>("supervisorKey", "Supervisor Key",
-      Long.class);
+  Property<EmployeeRecord> supervisor = new Property<EmployeeRecord>("supervisor", "Supervisor",
+      EmployeeRecord.class);
 
   Property<String> department = new Property<String>("department", "Department", String.class);
 
@@ -43,7 +43,7 @@ public interface EmployeeRecord extends Record {
 
   String getPassword();
 
-  Long getSupervisorKey();
+  EmployeeRecord getSupervisor();
 
   String getUserName();
 
@@ -55,7 +55,7 @@ public interface EmployeeRecord extends Record {
 
   void setPassword(String password);
 
-  void setSupervisorKey(Long supervisorKey);
+  void setSupervisor(EmployeeRecord supervisor);
 
   void setUserName(String userName);
 }

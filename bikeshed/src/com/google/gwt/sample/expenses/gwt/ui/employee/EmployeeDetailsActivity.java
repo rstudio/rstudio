@@ -120,6 +120,6 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
       }
     };
 
-    requests.employeeRequest().findEmployee(Value.of(id)).fire(callback);
+    requests.employeeRequest().findEmployee(Value.of(id)).with("supervisor").fire(callback);
   }
 }

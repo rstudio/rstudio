@@ -119,6 +119,7 @@ public class ReportDetailsActivity extends AbstractActivity implements
         display.showActivityWidget(view);
       }
     };
-    requests.reportRequest().findReport(Value.of(id)).fire(callback);
+    requests.reportRequest().findReport(Value.of(id)).with(
+        "reporter", "approvedSupervisor").fire(callback);
   }
 }

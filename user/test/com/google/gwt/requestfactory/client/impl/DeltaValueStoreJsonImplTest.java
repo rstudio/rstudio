@@ -51,6 +51,14 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
       }
       throw new IllegalArgumentException("Unknown token " + recordClass);
     }
+
+     public RecordSchema<? extends Record> getType(
+       String recordClass) {
+      if (recordClass.equals(SimpleFooRecord.class.getName())) {
+        return SimpleFooRecordImpl.SCHEMA;
+      }
+      throw new IllegalArgumentException("Unknown token " + recordClass);
+    }
   };
   ValueStoreJsonImpl valueStore = null;
   RequestFactoryJsonImpl requestFactory = null;
@@ -69,6 +77,11 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
       public Record create(Class token) {
         return create(token, typeMap);
+      }
+
+
+      public RecordSchema getSchema(String token) {
+        return typeMap.getType(token);
       }
 
       @Override
@@ -91,7 +104,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     jso.set(SimpleFooRecord.intId, 4);
     jso.set(SimpleFooRecord.created, new Date());
     jso.setSchema(SimpleFooRecordImpl.SCHEMA);
-    valueStore.setRecord(jso);
+    valueStore.setRecord(jso, requestFactory);
   }
 
   public void testCreate() {
@@ -188,7 +201,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
     RecordImpl mockRecord = new RecordImpl(RecordJsoImpl.create(futureId, 1,
         SimpleFooRecordImpl.SCHEMA), RequestFactoryJsonImpl.NOT_FUTURE);
-    valueStore.setRecord(mockRecord.asJso()); // marked as non-future..
+    valueStore.setRecord(mockRecord.asJso(), requestFactory); // marked as non-future..
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
 

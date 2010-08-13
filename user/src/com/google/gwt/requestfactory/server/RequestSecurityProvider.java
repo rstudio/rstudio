@@ -32,6 +32,11 @@ public interface RequestSecurityProvider {
   void checkClass(Class<?> clazz) throws SecurityException;
 
   /**
+   * Encode a Class type into a String token.
+   */
+  String encodeClassType(Class<?> type);
+
+  /**
    * Optionally decodes a previously encoded operation. Throws exception if
    * argument is not a legal operation.
    */

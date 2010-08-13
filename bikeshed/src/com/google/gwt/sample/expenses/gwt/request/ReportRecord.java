@@ -30,16 +30,16 @@ import java.util.Date;
 @DataTransferObject(com.google.gwt.sample.expenses.server.domain.Report.class)
 public interface ReportRecord extends Record {
 
-  Property<Long> approvedSupervisorKey = new Property<Long>("approvedSupervisorKey", "Approved Supervisor Key",
-      Long.class);
+  Property<EmployeeRecord> approvedSupervisor = new Property<EmployeeRecord>("approvedSupervisor", "Approved Supervisor Key",
+      EmployeeRecord.class);
   Property<Date> created = new Property<Date>("created", "Created", Date.class);
   Property<String> department = new Property<String>("department", "Department", String.class);
   Property<String> notes = new Property<String>("notes", "Notes", String.class);
   Property<String> purpose = new Property<String>("purpose", "Purpose", String.class);
-  Property<Long> reporterKey = new Property<Long>("reporterKey", "Reporter Key",
-      Long.class);
+  Property<EmployeeRecord> reporter = new Property<EmployeeRecord>("reporter", "Reporter",
+      EmployeeRecord.class);
 
-  Long getApprovedSupervisorKey();
+  EmployeeRecord getApprovedSupervisor();
 
   Date getCreated();
 
@@ -49,11 +49,11 @@ public interface ReportRecord extends Record {
 
   String getPurpose();
   
-  Long getReporterKey();
+  EmployeeRecord getReporter();
 
   boolean isChanged();
 
-  void setApprovedSupervisorKey(Long approvedSupervisorKey);
+  void setApprovedSupervisor(EmployeeRecord approvedSupervisor);
 
   void setCreated(Date created);
 
@@ -63,5 +63,5 @@ public interface ReportRecord extends Record {
 
   void setPurpose(String purpose);
 
-  void setReporterKey(Long reporterKey);
+  void setReporter(EmployeeRecord reporter);
 }

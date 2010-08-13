@@ -48,6 +48,27 @@ public class RequestFactoryTest extends GWTTestCase {
             assertEquals(8L, (long) response.getLongField());
             assertEquals(com.google.gwt.valuestore.shared.SimpleEnum.FOO,
                 response.getEnumField());
+            assertEquals(null, response.getBarField());
+            finishTest();
+          }
+        });
+  }
+
+   public void testFetchEntityWithRelation() {
+    SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+    req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
+        new Receiver<SimpleFooRecord>() {
+          public void onSuccess(SimpleFooRecord response,
+              Set<SyncResult> syncResult) {
+            assertEquals(42, (int) response.getIntId());
+            assertEquals("GWT", response.getUserName());
+            assertEquals(8L, (long) response.getLongField());
+            assertEquals(com.google.gwt.valuestore.shared.SimpleEnum.FOO,
+                response.getEnumField());
+            assertNotNull(response.getBarField());
             finishTest();
           }
         });

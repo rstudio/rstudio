@@ -51,7 +51,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
    * TODO: doc.
    */
   public interface Listener {
-    void onCreateExpense(Long reportId);
+    void onCreateExpense(ReportRecord report);
 
     void onEditReport(ReportRecord report);
 
@@ -169,7 +169,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
   }
 
   public void onAdd() {
-    listener.onCreateExpense(report.getId());
+    listener.onCreateExpense(report);
   }
 
   public void onCustom() {

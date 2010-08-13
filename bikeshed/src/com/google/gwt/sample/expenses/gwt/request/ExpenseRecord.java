@@ -36,7 +36,7 @@ public interface ExpenseRecord extends Record {
   Property<Date> created = new Property<Date>("created", "Created", Date.class);
   Property<String> description = new Property<String>("description", "Description", String.class);
   Property<String> reasonDenied = new Property<String>("reasonDenied", "Reason Denied", String.class);
-  Property<Long> reportId = new Property<Long>("reportId", "Report Id", Long.class);
+  Property<ReportRecord> report = new Property<ReportRecord>("report", "Report", ReportRecord.class);
 
   Double getAmount();
   
@@ -50,7 +50,7 @@ public interface ExpenseRecord extends Record {
 
   String getReasonDenied();
 
-  Long getReportId();
+  ReportRecord getReport();
 
   boolean isChanged();
 
@@ -66,5 +66,5 @@ public interface ExpenseRecord extends Record {
 
   void setReasonDenied(String reasonDenied);
 
-  void setReportId(Long reportId);
+  void setReport(ReportRecord report);
 }

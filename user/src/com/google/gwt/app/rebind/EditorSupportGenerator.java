@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.TakesValue;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.Record;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
@@ -90,6 +91,7 @@ public class EditorSupportGenerator extends Generator {
   JClassType takesValueType;
   JClassType hasTextType;
 
+  JClassType jrecordType;
   JClassType stringType;
 
   private String capitalize(String name) {
@@ -180,7 +182,8 @@ public class EditorSupportGenerator extends Generator {
         HasText.class.getName());
     stringType = generatorContext.getTypeOracle().findType(
         String.class.getName());
-
+    recordType = generatorContext.getTypeOracle().findType(
+        Record.class.getName());
     writeGetPropertiesMethod(sw, recordType);
     writeInit(sw, viewType, recordType);
     writeIsChangedMethod(sw, recordType, viewType);
@@ -302,6 +305,9 @@ public class EditorSupportGenerator extends Generator {
     JClassType returnType = (JClassType) method.getReturnType();
     if (returnType.isAssignableTo(stringType)) {
       return "";
+    }
+    if (returnType.isAssignableTo(jrecordType)) {
+      return ".getId()+\"\"";
     }
     return ".toString()";
   }

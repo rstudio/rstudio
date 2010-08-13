@@ -39,18 +39,23 @@ public interface SimpleFooRecord extends Record {
       new EnumProperty<com.google.gwt.valuestore.shared.SimpleEnum>("enumField",
           com.google.gwt.valuestore.shared.SimpleEnum.class, SimpleEnum.values());
 
+  Property<SimpleBarRecord> barField = new Property<SimpleBarRecord>("barField",
+      SimpleBarRecord.class);
+
+  SimpleBarRecord getBarField();
+
   Boolean getBoolField();
   
   Date getCreated();
 
+  com.google.gwt.valuestore.shared.SimpleEnum getEnumField();
+
   Integer getIntId();
+
+  Long getLongField();
 
   String getPassword();
 
   String getUserName();
-
-  Long getLongField();
-
-  com.google.gwt.valuestore.shared.SimpleEnum getEnumField();
 
 }

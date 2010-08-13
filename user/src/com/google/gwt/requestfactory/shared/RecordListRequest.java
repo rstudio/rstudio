@@ -22,20 +22,20 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
+ * <p> <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
- * Implemented by RequestObjects for service methods that return lists of
- * records.
- * 
+ * </span> </p> Implemented by RequestObjects for service methods that return
+ * lists of records.
+ *
  * @param <R> The type held by the returned list
  */
-public interface RecordListRequest<R extends Record> extends
-    RequestObject<List<R>> {
+public interface RecordListRequest<R extends Record>
+    extends RequestObject<List<R>> {
 
+  RecordListRequest<R> with(String... propertyRefs);
+
+  /**
+   * @deprecated use {@link #with(String...)} instead.
+   */
   RecordListRequest<R> forProperties(Collection<Property<?>> properties);
-
-  RecordListRequest<R> forProperty(Property<?> property);
 }

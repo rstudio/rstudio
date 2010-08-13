@@ -23,12 +23,14 @@ import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.UserInformationRecord;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.valuestore.shared.SyncResult;
+import com.google.gwt.valuestore.shared.Value;
 
 import java.util.Set;
 
@@ -44,7 +46,7 @@ public class ExpensesMobile implements EntryPoint {
 
   /**
    * TODO(jgw): Put this some place more sensible.
-   * 
+   *
    * @param amount the amount in dollars
    */
   public static String formatCurrency(double amount) {
@@ -89,24 +91,36 @@ public class ExpensesMobile implements EntryPoint {
     }
 
     final HandlerManager eventBus = new HandlerManager(null);
-    final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
+    final ExpensesRequestFactory requestFactory = GWT.create(
+        ExpensesRequestFactory.class);
     requestFactory.init(eventBus);
 
-    final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
-        requestFactory, employeeId);
-    RootPanel.get().add(shell);
-    
-    // Check for Authentication failures or mismatches
-    eventBus.addHandler(RequestEvent.TYPE, new AuthenticationFailureHandler());
+    final long finalEmployeeId = employeeId;
+    requestFactory.employeeRequest().findEmployee(Value.of(employeeId)).fire(
+        new Receiver<EmployeeRecord>() {
+          @Override
+          public void onSuccess(EmployeeRecord employee,
+              Set<SyncResult> syncResults) {
+            final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
+                requestFactory, employee);
+            RootPanel.get().add(shell);
 
-    // Add a login widget to the page
-    final LoginWidget login = shell.getLoginWidget();
-    Receiver<UserInformationRecord> receiver = new Receiver<UserInformationRecord>() {
-      public void onSuccess(UserInformationRecord userInformationRecord, Set<SyncResult> syncResults) {
-        login.setUserInformation(userInformationRecord);
-      }       
-     };
-     requestFactory.userInformationRequest().getCurrentUserInformation(
-         Location.getHref()).fire(receiver);
+            // Check for Authentication failures or mismatches
+            eventBus.addHandler(RequestEvent.TYPE,
+                new AuthenticationFailureHandler());
+
+            // Add a login widget to the page
+            final LoginWidget login = shell.getLoginWidget();
+            Receiver<UserInformationRecord> receiver
+                = new Receiver<UserInformationRecord>() {
+              public void onSuccess(UserInformationRecord userInformationRecord,
+                  Set<SyncResult> syncResults) {
+                login.setUserInformation(userInformationRecord);
+              }
+            };
+            requestFactory.userInformationRequest().getCurrentUserInformation(
+                Location.getHref()).fire(receiver);
+          }
+        } );
   }
 }

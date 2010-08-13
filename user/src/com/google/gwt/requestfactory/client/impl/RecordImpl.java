@@ -50,7 +50,7 @@ public class RecordImpl implements Record {
   public <V> V get(Property<V> property) {
     return jso.get(property);
   }
-
+  
   public Long getId() {
     return jso.getId();
   }
@@ -93,6 +93,10 @@ public class RecordImpl implements Record {
    */
   public void setDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore) {
     this.deltaValueStore = deltaValueStore;
+  }
+
+  protected ValueStoreJsonImpl getValueStore() {
+    return jso.getValueStore();
   }
 
 }

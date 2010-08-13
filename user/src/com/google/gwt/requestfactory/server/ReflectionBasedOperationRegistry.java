@@ -151,6 +151,7 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
   }
 
   /**
+
    * Turns an operation in the form of package.requestClass::method into a
    * RequestDefinition via reflection.
    */
@@ -180,6 +181,10 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
       throw new SecurityException(
           "Access to non-existent class " + reqClassName);
     }
+  }
+
+  public RequestSecurityProvider getSecurityProvider() {
+    return securityProvider;
   }
 
   private Method findMethod(Class<?> clazz, String methodName) {
