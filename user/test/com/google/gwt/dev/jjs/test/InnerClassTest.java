@@ -45,6 +45,24 @@ public class InnerClassTest extends GWTTestCase {
     }
   }
 
+  class OuterRefFromSuperCtorBase {
+    OuterRefFromSuperCtorBase(Object o) {
+      o.toString();
+    }
+  }
+
+  class OuterRefFromSuperCtorCall extends OuterRefFromSuperCtorBase {
+    OuterRefFromSuperCtorCall() {
+      super(new Object() {
+        @Override
+        public String toString() {
+          testAppend.append("OuterRefFromSuperCtorCall");
+          return "";
+        }
+      });
+    }
+  }
+
   static class P1<T1> {
     class P2<T2> extends P1<T1> {
       class P3<T3> extends P2<T2> {
@@ -77,7 +95,7 @@ public class InnerClassTest extends GWTTestCase {
     }
   }
 
-  private StringBuffer testAppend;
+  private StringBuffer testAppend = new StringBuffer();
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -95,7 +113,6 @@ public class InnerClassTest extends GWTTestCase {
   }
 
   public void testInnerClassInitialization() {
-    testAppend = new StringBuffer();
     new InnerClass();
     assertEquals("ab", testAppend.toString());
   }
@@ -116,6 +133,7 @@ public class InnerClassTest extends GWTTestCase {
       AppendToStringBuffer ap = new AppendToStringBuffer(i) {
         public void act() {
           b.append(num);
+          testAppend.append(num);
         }
       };
       results.add(ap);
@@ -124,6 +142,12 @@ public class InnerClassTest extends GWTTestCase {
       theAp.act();
     }
     assertEquals("0123456789", b.toString());
+    assertEquals("0123456789", testAppend.toString());
+  }
+
+  public void testOuterThisFromSuperCall() {
+    new OuterRefFromSuperCtorCall();
+    assertEquals("OuterRefFromSuperCtorCall", testAppend.toString());
   }
 
 }
