@@ -39,6 +39,8 @@ import com.google.gwt.sample.showcase.client.content.cell.CwCellSampler;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTable;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTree;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellValidation;
+import com.google.gwt.sample.showcase.client.content.i18n.CwBidiFormatting;
+import com.google.gwt.sample.showcase.client.content.i18n.CwBidiInput;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsWithLookupExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwDateTimeFormat;
@@ -397,6 +399,10 @@ public class Showcase implements EntryPoint {
         images.catI18N());
     setupMainMenuOption(catI18N, new CwMessagesExample(constants),
         images.catI18N());
+    setupMainMenuOption(catI18N, new CwBidiInput(constants),
+        images.catI18N());
+    setupMainMenuOption(catI18N, new CwBidiFormatting(constants),
+        images.catI18N());
     setupMainMenuOption(catI18N, new CwPluralFormsExample(constants),
         images.catI18N());
     setupMainMenuOption(catI18N, new CwConstantsExample(constants),
@@ -597,3 +603,4 @@ public class Showcase implements EntryPoint {
         getCurrentReferenceStyleName("Application"), callback);
   }
 }
+

@@ -35,6 +35,8 @@ import com.google.gwt.sample.showcase.client.content.cell.CwCellSampler;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTable;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellTree;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellValidation;
+import com.google.gwt.sample.showcase.client.content.i18n.CwBidiFormatting;
+import com.google.gwt.sample.showcase.client.content.i18n.CwBidiInput;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsWithLookupExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwDateTimeFormat;
@@ -452,7 +454,9 @@ public abstract class ContentWidget extends LazyPanel
         runAsyncCode(CwPluralFormsExample.class),
         runAsyncCode(CwConstantsExample.class),
         runAsyncCode(CwConstantsWithLookupExample.class),
-        runAsyncCode(CwDictionaryExample.class)));
+        runAsyncCode(CwDictionaryExample.class),
+        runAsyncCode(CwBidiFormatting.class),
+        runAsyncCode(CwBidiInput.class)));
   }
 
   protected void prefetchListsAndMenus() {
@@ -618,3 +622,4 @@ public abstract class ContentWidget extends LazyPanel
     }
   }
 }
+
