@@ -182,7 +182,7 @@ public class EditorSupportGenerator extends Generator {
         HasText.class.getName());
     stringType = generatorContext.getTypeOracle().findType(
         String.class.getName());
-    recordType = generatorContext.getTypeOracle().findType(
+    jrecordType = generatorContext.getTypeOracle().findType(
         Record.class.getName());
     writeGetPropertiesMethod(sw, recordType);
     writeInit(sw, viewType, recordType);
