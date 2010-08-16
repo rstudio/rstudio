@@ -98,7 +98,6 @@ public class ExpensesMobile implements EntryPoint {
     final long finalEmployeeId = employeeId;
     requestFactory.employeeRequest().findEmployee(Value.of(employeeId)).fire(
         new Receiver<EmployeeRecord>() {
-          @Override
           public void onSuccess(EmployeeRecord employee,
               Set<SyncResult> syncResults) {
             final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
@@ -121,6 +120,6 @@ public class ExpensesMobile implements EntryPoint {
             requestFactory.userInformationRequest().getCurrentUserInformation(
                 Location.getHref()).fire(receiver);
           }
-        } );
+        });
   }
 }
