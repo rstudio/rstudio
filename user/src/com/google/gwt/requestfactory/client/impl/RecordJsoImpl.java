@@ -284,7 +284,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     }
 
     if (value instanceof Date) {
-      double millis = ((Date) value).getTime();
+      long millis = ((Date) value).getTime();
       setString(property.getName(), String.valueOf(millis));
       return;
     }
