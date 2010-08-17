@@ -45,6 +45,30 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
     }
   };
 
+  public static final MockJavaResource NOPACKAGE = new MockJavaResource(
+      "NoPackage") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("public class NoPackage extends test.Top {\n");
+      code.append("  public String value() { return \"NoPackage\"; }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+
+  public static final MockJavaResource NOPACKAGE2 = new MockJavaResource(
+      "NoPackage2") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("public class NoPackage2 extends NoPackage {\n");
+      code.append("  public String value() { return \"NoPackage2\"; }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+
   public static final MockJavaResource OUTER = new MockJavaResource(
       "test.Outer") {
     @Override
@@ -117,8 +141,11 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
     initializeExpectedDependency(JavaResourceBase.BAR, JavaResourceBase.STRING,
         JavaResourceBase.FOO);
 
-    // TOP has a self-reference
-    initializeExpectedDependency(TOP, JavaResourceBase.STRING, TOP);
+    initializeExpectedDependency(NOPACKAGE, JavaResourceBase.STRING, TOP);
+    initializeExpectedDependency(NOPACKAGE2, NOPACKAGE,
+        JavaResourceBase.STRING, TOP);
+
+    initializeExpectedDependency(TOP, JavaResourceBase.STRING);
     initializeExpectedDependency(TOP3, JavaResourceBase.STRING, TOP);
 
     initializeExpectedDependency(OUTER, JavaResourceBase.STRING);
@@ -155,6 +182,10 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
     testBinaryBindings(OUTER, STATIC_INNER_SUBCLASS);
   }
 
+  public void testBinaryNoPackage() {
+    testBinaryBindings(TOP, NOPACKAGE, NOPACKAGE2);
+  }
+
   public void testSourceBindingsWithMemberInnerClass() {
     testSourceBindings(OUTER, MEMBER_INNER_SUBCLASS);
   }
@@ -169,6 +200,10 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
 
   public void testSourceBindingsWithStaticInnerClass() {
     testSourceBindings(OUTER, STATIC_INNER_SUBCLASS);
+  }
+
+  public void testSourceNoPackage() {
+    testSourceBindings(TOP, NOPACKAGE, NOPACKAGE2);
   }
 
   public void testWithGeneratedUnits() {
@@ -187,14 +222,21 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
     Map<String, CompilationUnit> unitMap = state.getCompilationUnitMap();
     for (MockJavaResource file : files) {
       String typeName = file.getTypeName();
-      Set<ContentId> dependencies = unitMap.get(typeName).getDependencies();
-      Set<String> expectedTypeNames = EXPECTED_DEPENDENCIES.get(typeName);
-      assertEquals(expectedTypeNames.size(), dependencies.size());
-      for (String expectedTypeName : expectedTypeNames) {
-        CompilationUnit expectedUnit = unitMap.get(expectedTypeName);
-        assertNotNull(expectedUnit);
-        assertTrue(dependencies.contains(expectedUnit.getContentId()));
+      Dependencies dependencies = unitMap.get(typeName).getDependencies();
+      Set<CompiledClass> classDeps = new HashSet<CompiledClass>();
+      classDeps.addAll(dependencies.qualified.values());
+      classDeps.addAll(dependencies.simple.values());
+      classDeps.remove(null);
+      Set<String> actualTypeNames = new HashSet<String>();
+      for (CompiledClass cc : classDeps) {
+        actualTypeNames.add(cc.getUnit().getTypeName());
       }
+      // Not tracking deps on Object.
+      actualTypeNames.remove("java.lang.Object");
+      // Don't care about self dep.
+      actualTypeNames.remove(typeName);
+      Set<String> expectedTypeNames = EXPECTED_DEPENDENCIES.get(typeName);
+      assertEquals(expectedTypeNames, actualTypeNames);
     }
   }
 
