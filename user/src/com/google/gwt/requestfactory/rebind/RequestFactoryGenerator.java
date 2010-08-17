@@ -638,7 +638,8 @@ public class RequestFactoryGenerator extends Generator {
       JClassType classType = parameter.getType().isClassOrInterface();
       if (classType != null
           && classType.isAssignableTo(typeOracle.findType(Record.class.getName()))) {
-        sb.append(".getId()");
+        sb.insert(0, "((" + classType.getQualifiedBinaryName() + "Impl" + ")");
+        sb.append(").getUniqueId()");
       }
     }
     return "new Object[] {" + sb.toString() + "}";

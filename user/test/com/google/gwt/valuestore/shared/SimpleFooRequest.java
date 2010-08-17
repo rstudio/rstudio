@@ -15,18 +15,25 @@
  */
 package com.google.gwt.valuestore.shared;
 
+import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 
 /**
-   * Do nothing test interface.
-   */
-  @Service(com.google.gwt.valuestore.server.SimpleFoo.class)
-  public interface SimpleFooRequest {
-    RequestObject<Long> countSimpleFoo();
-    RecordListRequest<SimpleFooRecord> findAll();
-    RecordRequest<SimpleFooRecord> findSimpleFooById(Long id);
-    RequestObject<Integer> privateMethod();
-  }
+ * Do nothing test interface.
+ */
+@Service(com.google.gwt.valuestore.server.SimpleFoo.class)
+public interface SimpleFooRequest {
+  RequestObject<Long> countSimpleFoo();
+
+  RecordListRequest<SimpleFooRecord> findAll();
+
+  RecordRequest<SimpleFooRecord> findSimpleFooById(Long id);
+
+  RequestObject<Integer> privateMethod();
+
+  @Instance
+  RequestObject<Void> persist(SimpleFooRecord record);
+}

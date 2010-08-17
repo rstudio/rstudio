@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.DataTransferObject;
+import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.valuestore.shared.Record;
@@ -49,12 +50,15 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
 
     private Method domainMethod;
 
+    private boolean isInstance;
+
     public ReflectiveRequestDefinition(Class<?> requestClass,
-        Method requestMethod, Class<?> domainClass, Method domainMethod) {
+        Method requestMethod, Class<?> domainClass, Method domainMethod, boolean isInstance) {
       this.requestClass = requestClass;
       this.requestMethod = requestMethod;
       this.domainClass = domainClass;
       this.domainMethod = domainMethod;
+      this.isInstance = isInstance;
     }
 
     public String getDomainClassName() {
@@ -94,6 +98,10 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
       }
       // primitive ?
       return requestReturnType;
+    }
+
+    public boolean isInstance() {
+      return isInstance;
     }
 
     public boolean isReturnTypeList() {
@@ -171,9 +179,15 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
         Class<?> domainClass = domainClassAnnotation.value();
         Method requestMethod = findMethod(requestClass, domainMethodName);
         Method domainMethod = findMethod(domainClass, domainMethodName);
+        boolean isInstance = (requestMethod.getAnnotation(Instance.class) != null);
         if (requestMethod != null && domainMethod != null) {
+          if (isInstance == Modifier.isStatic(domainMethod.getModifiers())) {
+            throw new IllegalArgumentException("domain method " + domainMethod
+                + " and interface method " + requestMethod
+                + " don't match wrt instance/static");
+          }
           return new ReflectiveRequestDefinition(requestClass, requestMethod,
-              domainClass, domainMethod);
+              domainClass, domainMethod, isInstance);
         }
       }
       return null;

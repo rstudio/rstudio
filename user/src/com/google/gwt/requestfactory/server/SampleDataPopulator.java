@@ -88,7 +88,8 @@ public class SampleDataPopulator {
       IOException, JSONException {
     PostMethod post = new PostMethod(url);
     JSONObject request = new JSONObject();
-    request.put(RequestData.OPERATION_TOKEN, RequestFactory.SYNC);
+    // TODO: fix
+    request.put(RequestData.OPERATION_TOKEN, "DOESNT_WORK");
     request.put(RequestData.CONTENT_TOKEN, contentData);
     post.setRequestBody(request.toString());
     HttpClient client = new HttpClient();

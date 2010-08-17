@@ -47,6 +47,11 @@ public interface RequestDefinition {
   Class<?> getReturnType();
 
   /**
+   * Returns true if the domain method is an instance method.
+   */
+  boolean isInstance();
+
+  /**
    * Returns true if the request returns Lists of {@link #getReturnType},
    * false for single instances.
    */

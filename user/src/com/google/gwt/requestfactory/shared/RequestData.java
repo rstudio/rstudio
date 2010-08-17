@@ -57,10 +57,6 @@ public class RequestData {
    */
   public Map<String, String> getRequestMap(String contentData) {
     Map<String, String> requestMap = new HashMap<String, String>();
-    // nasty hack, remove.
-    if (operation.endsWith("persist") || operation.endsWith("remove")) {
-      operation = RequestFactory.SYNC;
-    }
     requestMap.put(OPERATION_TOKEN, operation);
     if (parameters != null) {
       for (int i = 0; i < parameters.length; i++) {

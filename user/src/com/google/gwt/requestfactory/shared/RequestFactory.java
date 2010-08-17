@@ -27,9 +27,7 @@ import com.google.gwt.valuestore.shared.Record;
  * Marker interface for the RequestFactory code generator.
  */
 public interface RequestFactory {
-  static final String JSON_CONTENT_TYPE_UTF8 = "application/json; charset=utf-8";
-
-  String SYNC = "SYNC";
+  String JSON_CONTENT_TYPE_UTF8 = "application/json; charset=utf-8";
 
   // TODO: this must be configurable
   String URL = "gwtRequest";

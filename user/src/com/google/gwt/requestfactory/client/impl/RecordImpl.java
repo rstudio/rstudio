@@ -63,6 +63,11 @@ public class RecordImpl implements Record {
     return jso.getSchema();
   }
 
+  public String getUniqueId() {
+    return jso.getId() + "-" + (isFuture ? "IS" : "NO") + "-"
+        + getSchema().getToken().getName();
+  }
+
   public Integer getVersion() {
     return jso.getVersion();
   }
