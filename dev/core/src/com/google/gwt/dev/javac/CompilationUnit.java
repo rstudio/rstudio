@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -335,10 +336,7 @@ public abstract class CompilationUnit {
    */
   abstract ContentId getContentId();
 
-  /**
-   * The set of dependencies on other classes.
-   */
-  abstract Dependencies getDependencies();
+  abstract Set<ContentId> getDependencies();
 
   abstract CategorizedProblem[] getProblems();
 

@@ -31,33 +31,6 @@ import java.util.Set;
  */
 public class CompilationStateTest extends CompilationStateTestBase {
 
-  private static final MockJavaResource FOO_DIFF_API = new MockJavaResource(
-      "test.Foo") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class Foo {\n");
-      code.append("  public String value() { return \"Foo\"; }\n");
-      code.append("  public String value2() { return \"Foo2\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-
-  private static final MockJavaResource FOO_SAME_API = new MockJavaResource(
-      "test.Foo") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class Foo {\n");
-      code.append("  public String value() { return \"Foo2\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-
   public void testAddGeneratedCompilationUnit() {
     validateCompilationState();
 
@@ -146,9 +119,9 @@ public class CompilationStateTest extends CompilationStateTestBase {
    * another generated unit it depends on can be reused
    */
   public void testComplexCacheInvalidation() {
-    testCachingOverMultipleRefreshes(new MockJavaResource[]{
+    testCachingOverMultipleRefreshes(new MockJavaResource[] {
         JavaResourceBase.FOO, JavaResourceBase.BAR},
-        new MockJavaResource[]{
+        new MockJavaResource[] {
             JavaResourceBase.FOO,
             new TweakedMockJavaResource(JavaResourceBase.BAR)},
         Collections.singleton(JavaResourceBase.FOO.getTypeName()));
@@ -161,30 +134,17 @@ public class CompilationStateTest extends CompilationStateTestBase {
 
   public void testInvalidation() {
     testCachingOverMultipleRefreshes(
-        new MockJavaResource[]{JavaResourceBase.FOO},
-        new MockJavaResource[]{new TweakedMockJavaResource(JavaResourceBase.FOO)},
-        Collections.<String> emptySet());
-  }
-
-  public void testInvalidationNonstructuralDep() {
-    testCachingOverMultipleRefreshes(new MockJavaResource[]{
-        JavaResourceBase.FOO, JavaResourceBase.BAR}, new MockJavaResource[]{
-        FOO_SAME_API, JavaResourceBase.BAR},
-        Collections.singleton(JavaResourceBase.BAR.getTypeName()));
+        new MockJavaResource[] {JavaResourceBase.FOO},
+        new MockJavaResource[] {new TweakedMockJavaResource(
+            JavaResourceBase.FOO)}, Collections.<String> emptySet());
   }
 
   public void testInvalidationOfMultipleUnits() {
-    testCachingOverMultipleRefreshes(new MockJavaResource[]{
-        JavaResourceBase.FOO, JavaResourceBase.BAR}, new MockJavaResource[]{
+    testCachingOverMultipleRefreshes(new MockJavaResource[] {
+        JavaResourceBase.FOO, JavaResourceBase.BAR}, new MockJavaResource[] {
         new TweakedMockJavaResource(JavaResourceBase.FOO),
         new TweakedMockJavaResource(JavaResourceBase.BAR)},
         Collections.<String> emptySet());
-  }
-
-  public void testInvalidationStructuralDep() {
-    testCachingOverMultipleRefreshes(new MockJavaResource[]{
-        JavaResourceBase.FOO, JavaResourceBase.BAR}, new MockJavaResource[]{
-        FOO_DIFF_API, JavaResourceBase.BAR}, Collections.<String> emptySet());
   }
 
   public void testInvalidationWhenSourceUnitsChange() {
@@ -205,7 +165,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
     assertNotNull(oldBar);
 
     // change unit in source oracle
-    oracle.replace(FOO_DIFF_API);
+    oracle.replace(new TweakedMockJavaResource(JavaResourceBase.FOO));
     rebuildCompilationState();
 
     /*
@@ -268,6 +228,15 @@ public class CompilationStateTest extends CompilationStateTestBase {
     rebuildCompilationState();
     assertEquals(size, state.getCompilationUnits().size());
     validateCompilationState();
+  }
+
+  /* test if generatedUnits that depend on stale generatedUnits are invalidated */
+  public void testTransitiveInvalidation() {
+    testCachingOverMultipleRefreshes(new MockJavaResource[] {
+        JavaResourceBase.FOO, JavaResourceBase.BAR},
+        new MockJavaResource[] {
+            new TweakedMockJavaResource(JavaResourceBase.FOO),
+            JavaResourceBase.BAR}, Collections.<String> emptySet());
   }
 
   private void testCaching(MockJavaResource... resources) {

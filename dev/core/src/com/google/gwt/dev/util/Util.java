@@ -633,11 +633,6 @@ public final class Util {
   public static void maybeDumpSource(TreeLogger logger, String location,
       String source, String typeName) {
 
-    if (location.startsWith("/mock/")) {
-      // Unit test mocks, don't dump to disk.
-      return;
-    }
-
     if (isCompilationUnitOnDisk(location)) {
       // Don't write another copy.
       return;

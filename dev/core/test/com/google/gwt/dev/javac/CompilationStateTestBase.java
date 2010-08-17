@@ -115,10 +115,6 @@ public abstract class CompilationStateTestBase extends TestCase {
     Map<String, CompilationUnit> unitMap = state.getCompilationUnitMap();
     Collection<CompilationUnit> units = state.getCompilationUnits();
 
-    // Validate that we have as many units as resources.
-    assertEquals(oracle.getResources().size() + generatedTypeNames.length,
-        units.size());
-
     // Validate that the collections are consistent with each other.
     assertEquals(new HashSet<CompilationUnit>(unitMap.values()),
         new HashSet<CompilationUnit>(units));

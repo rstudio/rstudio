@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,8 +16,10 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jdt.SafeASTVisitor;
+import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -29,6 +31,7 @@ import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
 import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -73,7 +76,7 @@ public class JdtCompiler {
     /**
      * Checks for additional packages which may contain additional compilation
      * units.
-     * 
+     *
      * @param slashedPackageName the '/' separated name of the package to find
      * @return <code>true</code> if such a package exists
      */
@@ -82,7 +85,7 @@ public class JdtCompiler {
     /**
      * Finds a new compilation unit on-the-fly for the requested type, if there
      * is an alternate mechanism for doing so.
-     * 
+     *
      * @param binaryName the binary name of the requested type
      * @return a unit answering the name, or <code>null</code> if no such unit
      *         can be created
@@ -94,6 +97,7 @@ public class JdtCompiler {
    * A default processor that simply collects build units.
    */
   public static final class DefaultUnitProcessor implements UnitProcessor {
+    private JdtCompiler compiler;
     private final List<CompilationUnit> results = new ArrayList<CompilationUnit>();
 
     public DefaultUnitProcessor() {
@@ -105,10 +109,15 @@ public class JdtCompiler {
 
     public void process(CompilationUnitBuilder builder,
         CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
-      CompilationUnit unit = builder.build(compiledClasses, new Dependencies(),
+      CompilationUnit unit = builder.build(compiledClasses,
+          compiler.computeDependencies(cud),
           Collections.<JsniMethod> emptyList(), new MethodArgNamesLookup(),
           cud.compilationResult().getProblems());
       results.add(unit);
+    }
+
+    public void setCompiler(JdtCompiler compiler) {
+      this.compiler = compiler;
     }
   }
   /**
@@ -176,6 +185,7 @@ public class JdtCompiler {
       ICompilationUnit icu = cud.compilationResult().compilationUnit;
       Adapter adapter = (Adapter) icu;
       CompilationUnitBuilder builder = adapter.getBuilder();
+      contentIdMap.put(builder.getLocation(), builder.getContentId());
       processor.process(builder, cud, compiledClasses);
     }
   }
@@ -313,6 +323,7 @@ public class JdtCompiler {
     try {
       DefaultUnitProcessor processor = new DefaultUnitProcessor();
       JdtCompiler compiler = new JdtCompiler(processor);
+      processor.setCompiler(compiler);
       compiler.doCompile(builders);
       return processor.getResults();
     } finally {
@@ -329,8 +340,6 @@ public class JdtCompiler {
         | ClassFileConstants.ATTR_LINES | ClassFileConstants.ATTR_SOURCE;
     // Tricks like "boolean stopHere = true;" depend on this setting.
     options.preserveAllLocalVariables = true;
-    // Let the JDT collect compilation unit dependencies
-    options.produceReferenceInfo = true;
 
     // Turn off all warnings, saves some memory / speed.
     options.reportUnusedDeclaredThrownExceptionIncludeDocCommentReference = false;
@@ -393,6 +402,19 @@ public class JdtCompiler {
    */
   private transient CompilerImpl compilerImpl;
 
+  /**
+   * Maps resource path names to contentId to resolve dependencies.
+   */
+  private final Map<String, ContentId> contentIdMap = new HashMap<String, ContentId>();
+
+  /**
+   * Builders don't compute their contentId until their source is read;
+   * therefore we cannot eagerly lookup their contentId up front. Keep the set
+   * of currently compiling units in a map and lazily fetch their id only when a
+   * dependency is encountered.
+   */
+  private transient Map<String, CompilationUnitBuilder> lazyContentIdMap;
+
   private final Set<String> notPackages = new HashSet<String>();
 
   private final Set<String> packages = new HashSet<String>();
@@ -408,13 +430,69 @@ public class JdtCompiler {
   public void addCompiledUnit(CompilationUnit unit) {
     addPackages(Shared.getPackageName(unit.getTypeName()).replace('.', '/'));
     addBinaryTypes(unit.getCompiledClasses());
+    contentIdMap.put(unit.getDisplayLocation(), unit.getContentId());
+  }
+
+  public Set<ContentId> computeDependencies(CompilationUnitDeclaration cud) {
+    return computeDependencies(cud, Collections.<String> emptySet());
+  }
+
+  public Set<ContentId> computeDependencies(
+      final CompilationUnitDeclaration cud, Set<String> additionalDependencies) {
+    final Set<ContentId> result = new HashSet<ContentId>();
+    class DependencyVisitor extends TypeRefVisitor {
+      public DependencyVisitor() {
+        super(cud);
+      }
+
+      @Override
+      protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
+          CompilationUnitDeclaration unitOfReferrer, Expression expression) {
+        String fileName = String.valueOf(referencedType.getFileName());
+        addFileReference(fileName);
+      }
+
+      @Override
+      protected void onTypeRef(SourceTypeBinding referencedType,
+          CompilationUnitDeclaration unitOfReferrer) {
+        // Map the referenced type to the target compilation unit file.
+        String fileName = String.valueOf(referencedType.getFileName());
+        addFileReference(fileName);
+      }
+
+      private void addFileReference(String fileName) {
+        if (!fileName.endsWith(".java")) {
+          // Binary-only reference, cannot compute dependency.
+          return;
+        }
+        ContentId contentId = contentIdMap.get(fileName);
+        if (contentId == null) {
+          // This may be a reference to a currently-compiling unit.
+          CompilationUnitBuilder builder = lazyContentIdMap.get(fileName);
+          assert builder != null : "Unexpected source reference ('" + fileName
+              + "') could not find builder";
+          contentId = builder.getContentId();
+        }
+        assert contentId != null;
+        result.add(contentId);
+      }
+    }
+    DependencyVisitor visitor = new DependencyVisitor();
+    cud.traverse(visitor, cud.scope);
+
+    for (String dependency : additionalDependencies) {
+      visitor.addFileReference(dependency);
+    }
+    return Sets.normalize(result);
   }
 
   public boolean doCompile(Collection<CompilationUnitBuilder> builders) {
+    lazyContentIdMap = new HashMap<String, CompilationUnitBuilder>();
     List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>();
     for (CompilationUnitBuilder builder : builders) {
       addPackages(Shared.getPackageName(builder.getTypeName()).replace('.', '/'));
       icus.add(new Adapter(builder));
+      lazyContentIdMap.put(builder.getLocation(), builder);
     }
     if (icus.isEmpty()) {
       return false;
@@ -425,6 +503,7 @@ public class JdtCompiler {
     compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     compilerImpl = null;
     jdtCompilerEvent.end("# icus", "" + icus.size());
+    lazyContentIdMap = null;
     return true;
   }
 

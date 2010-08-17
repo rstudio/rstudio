@@ -21,10 +21,11 @@ import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 abstract class CompilationUnitImpl extends CompilationUnit {
 
-  private final Dependencies dependencies;
+  private final Set<ContentId> dependencies;
   private final List<CompiledClass> exposedCompiledClasses;
   private final boolean hasErrors;
   private final List<JsniMethod> jsniMethods;
@@ -32,7 +33,8 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   private final CategorizedProblem[] problems;
 
   public CompilationUnitImpl(List<CompiledClass> compiledClasses,
-      Dependencies dependencies, Collection<? extends JsniMethod> jsniMethods,
+      Set<ContentId> dependencies,
+      Collection<? extends JsniMethod> jsniMethods,
       MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
     this.exposedCompiledClasses = Lists.normalizeUnmodifiable(compiledClasses);
     this.dependencies = dependencies;
@@ -77,7 +79,7 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   }
 
   @Override
-  Dependencies getDependencies() {
+  Set<ContentId> getDependencies() {
     return dependencies;
   }
 

@@ -27,10 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * Helper class to invalidate units in a set based on errors or references to
@@ -60,28 +57,20 @@ public class CompilationUnitInvalidator {
 
   public static void retainValidUnits(TreeLogger logger,
       Collection<CompilationUnit> units) {
-    retainValidUnits(logger, units,
-        Collections.<String, CompiledClass> emptyMap());
+    retainValidUnits(logger, units, Collections.<ContentId> emptySet());
   }
 
   public static void retainValidUnits(TreeLogger logger,
-      Collection<CompilationUnit> units, Map<String, CompiledClass> validClasses) {
+      Collection<CompilationUnit> units, Set<ContentId> knownValidRefs) {
     logger = logger.branch(TreeLogger.TRACE, "Removing invalidated units");
 
     // Assume all units are valid at first.
     Set<CompilationUnit> currentlyValidUnits = new HashSet<CompilationUnit>();
-    Set<String> currentlyValidClasses = new HashSet<String>();
+    Set<ContentId> currentlyValidRefs = new HashSet<ContentId>(knownValidRefs);
     for (CompilationUnit unit : units) {
       if (!unit.isError()) {
         currentlyValidUnits.add(unit);
-        for (CompiledClass cc : unit.getCompiledClasses()) {
-          currentlyValidClasses.add(cc.getSourceName());
-        }
-      }
-    }
-    for (Entry<String, CompiledClass> entry : validClasses.entrySet()) {
-      if (!entry.getValue().getUnit().isError()) {
-        currentlyValidClasses.add(entry.getKey());
+        currentlyValidRefs.add(unit.getContentId());
       }
     }
 
@@ -90,19 +79,17 @@ public class CompilationUnitInvalidator {
       changed = false;
       for (Iterator<CompilationUnit> it = currentlyValidUnits.iterator(); it.hasNext();) {
         CompilationUnit unitToCheck = it.next();
-        List<String> missingDeps = unitToCheck.getDependencies().findMissingDeps(
-            currentlyValidClasses);
-        if (missingDeps.size() > 0) {
-          TreeLogger branch = logger.branch(TreeLogger.DEBUG,
-              "Compilation unit '" + unitToCheck
-                  + "' is removed due to invalid reference(s):");
-          it.remove();
-          for (CompiledClass cc : unitToCheck.getCompiledClasses()) {
-            currentlyValidClasses.remove(cc.getSourceName());
-          }
-          changed = true;
-          for (String dep : missingDeps) {
-            branch.log(TreeLogger.DEBUG, dep);
+        TreeLogger branch = null;
+        for (ContentId ref : unitToCheck.getDependencies()) {
+          if (!currentlyValidRefs.contains(ref)) {
+            if (branch == null) {
+              branch = logger.branch(TreeLogger.DEBUG, "Compilation unit '"
+                  + unitToCheck + "' is removed due to invalid reference(s):");
+              it.remove();
+              currentlyValidRefs.remove(unitToCheck.getContentId());
+              changed = true;
+            }
+            branch.log(TreeLogger.DEBUG, ref.get());
           }
         }
       }

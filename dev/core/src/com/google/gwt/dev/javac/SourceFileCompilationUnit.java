@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A compilation unit that was generated.
@@ -39,7 +40,7 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
   private final ContentId contentId;
 
   public SourceFileCompilationUnit(Resource sourceFile, ContentId contentId,
-      List<CompiledClass> compiledClasses, Dependencies dependencies,
+      List<CompiledClass> compiledClasses, Set<ContentId> dependencies,
       Collection<? extends JsniMethod> jsniMethods,
       MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
     super(compiledClasses, dependencies, jsniMethods, methodArgs, problems);
