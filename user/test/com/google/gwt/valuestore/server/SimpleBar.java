@@ -55,7 +55,7 @@ public class SimpleBar {
   Integer version = 1;
 
   @Id
-  private Long id = -1L;
+  private Long id = 10L;
 
   private String userName;
 

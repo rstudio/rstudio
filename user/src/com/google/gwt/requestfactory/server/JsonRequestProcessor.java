@@ -272,8 +272,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Method method = entityElement.getClass().getMethod(methodName);
     Object returnValue = method.invoke(entityElement);
     if (returnValue != null && Record.class.isAssignableFrom(propertyType)) {
-      Method idMethod = entityElement.getClass().getMethod("getId");
-      Long id = (Long) idMethod.invoke(entityElement);
+      Method idMethod = returnValue.getClass().getMethod("getId");
+      Long id = (Long) idMethod.invoke(returnValue);
 
       String keyRef =
           operationRegistry.getSecurityProvider().encodeClassType(propertyType)
