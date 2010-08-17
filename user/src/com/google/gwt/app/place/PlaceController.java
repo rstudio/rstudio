@@ -16,11 +16,13 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
+
+import java.util.logging.Logger;
 
 /**
  * <p>
@@ -29,11 +31,8 @@ import com.google.gwt.user.client.Window.ClosingHandler;
  * </span>
  * </p>
  * In charge of the user's location in the app.
- * 
- * @param <P> the type of places managed
  */
-public class PlaceController<P extends Place> {
-
+public class PlaceController {
   /**
    * Default implementation of {@link Delegate}, based on {@link Window}.
    */
@@ -46,7 +45,7 @@ public class PlaceController<P extends Place> {
       return Window.confirm(message);
     }
   }
-
+  
   /**
    * Optional delegate in charge of Window related events. Provides nice
    * isolation for unit testing, and allows customization of confirmation
@@ -58,30 +57,32 @@ public class PlaceController<P extends Place> {
     boolean confirm(String message);
   }
 
-  private final HandlerManager eventBus;
-  private final Delegate delegate;
+  private static final Logger log = Logger.getLogger(PlaceController.class.getName());
 
-  private P where;
+  private final EventBus eventBus;
+
+  private final Delegate delegate;
+  private Place where = Place.NOWHERE;
 
   /**
-   * Create a new PlaceController with a {@link DefaultDelegate}.
-   * The DefaultDelegate is created via a call to GWT.create(), so 
-   * an alternative default implementation can be provided through
-   * &lt;replace-with> rules in a gwt.xml file.
+   * Create a new PlaceController with a {@link DefaultDelegate}. The
+   * DefaultDelegate is created via a call to GWT.create(), so an alternative
+   * default implementation can be provided through &lt;replace-with> rules in a
+   * gwt.xml file.
    */
-  public PlaceController(HandlerManager eventBus) {
+  public PlaceController(EventBus eventBus) {
     this(eventBus, (Delegate) GWT.create(DefaultDelegate.class));
   }
 
   /**
    * Create a new PlaceController.
    */
-  public PlaceController(HandlerManager eventBus, Delegate delegate) {
+  public PlaceController(EventBus eventBus, Delegate delegate) {
     this.eventBus = eventBus;
     this.delegate = delegate;
     delegate.addWindowClosingHandler(new ClosingHandler() {
       public void onWindowClosing(ClosingEvent event) {
-        String warning = maybeGoTo(null);
+        String warning = maybeGoTo(Place.NOWHERE);
         if (warning != null) {
           event.setMessage(warning);
         }
@@ -92,29 +93,43 @@ public class PlaceController<P extends Place> {
   /**
    * @return the current place
    */
-  public P getWhere() {
+  public Place getWhere() {
     return where;
   }
 
   /**
    * Request a change to a new place. It is not a given that we'll actually get
-   * there. First a {@link PlaceChangeRequestedEvent} will be posted to the
+   * there. First a {@link PlaceChangeRequesteEvent} will be posted to the
    * event bus. If any receivers post a warning message to that event, it will
    * be presented to the user via {@link Delegate#confirm(String)} (which is
    * typically a call to {@link Window#confirm(String)}). If she cancels, the
    * current location will not change. Otherwise, the location changes and a
    * {@link PlaceChangeEvent} is posted announcing the new place.
    */
-  public void goTo(P newPlace) {
+  public void goTo(Place newPlace) {
+    log().fine("goTo: " + newPlace);
+
+    if (getWhere().equals(newPlace)) {
+      log().fine("Asked to return to the same place: " + newPlace);
+      return;
+    }
+
     String warning = maybeGoTo(newPlace);
     if (warning == null || delegate.confirm(warning)) {
       where = newPlace;
-      eventBus.fireEvent(new PlaceChangeEvent<P>(newPlace));
+      eventBus.fireEvent(new PlaceChangeEvent(newPlace));
     }
   }
 
-  private String maybeGoTo(P newPlace) {
-    PlaceChangeRequestedEvent<P> willChange = new PlaceChangeRequestedEvent<P>(
+  /**
+   * Visible for testing.
+   */
+  Logger log() {
+    return log;
+  }
+
+  private String maybeGoTo(Place newPlace) {
+    PlaceChangeRequesteEvent willChange = new PlaceChangeRequesteEvent(
         newPlace);
     eventBus.fireEvent(willChange);
     String warning = willChange.getWarning();

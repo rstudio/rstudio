@@ -293,8 +293,8 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       return;
     }
 
-    if (value instanceof Enum) {
-      setInt(property.getName(), ((Enum) value).ordinal());
+    if (value instanceof Enum<?>) {
+      setInt(property.getName(), ((Enum<?>) value).ordinal());
       return;
     }
 

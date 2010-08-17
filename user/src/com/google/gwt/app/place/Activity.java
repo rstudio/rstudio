@@ -15,6 +15,8 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.event.shared.EventBus;
+
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -30,6 +32,9 @@ public interface Activity {
   /**
    * Implemented by objects responsible for displaying the widgets that
    * activities drive.
+   * 
+   * TODO perhaps this is actually com.google.gwt.user.client.ui.HasWidget,
+   * and implemented by SimplePanel
    */
   public interface Display {
     void showActivityWidget(IsWidget widget);
@@ -38,8 +43,8 @@ public interface Activity {
   /**
    * Called when the user is trying to navigate away from this activity.
    * 
-   * @return A message to display to the user, e.g. to warn of unsaved work, 
-   * or null to say nothing
+   * @return A message to display to the user, e.g. to warn of unsaved work, or
+   *         null to say nothing
    */
   String mayStop();
 
@@ -50,7 +55,8 @@ public interface Activity {
   void onCancel();
 
   /**
-   * Called when the Activity's widget has been removed from view.
+   * Called when the Activity's widget has been removed from view. All event
+   * handlers it registered will have been removed before this method is called.
    */
   void onStop();
 
@@ -59,8 +65,14 @@ public interface Activity {
    * Once the widget is ready (typically after an RPC response has been
    * received), receiver should present it via
    * {@link Display#showActivityWidget(IsWidget)}.
+   * <p>
+   * Any handlers attached to the provided event bus will be de-registered when
+   * the activity is stopped, so activities will rarely need to hold on to the
+   * {@link HandlerRegistration} instances returned by
+   * {@link EventBus#addHandler}.
    * 
    * @param panel the panel to display this activity's widget when it is ready
+   * @param eventBus the event bus
    */
-  void start(Display panel);
+  void start(Display panel, EventBus eventBus);
 }

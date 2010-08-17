@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -47,7 +47,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   static final boolean IS_FUTURE = true;
   static final boolean NOT_FUTURE = false;
-
   private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
 
   // A separate logger for wire activity, which does not get logged by the
@@ -66,7 +65,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private ValueStoreJsonImpl valueStore;
 
-  private HandlerManager handlerManager;
+  private EventBus handlerManager;
 
   public com.google.gwt.valuestore.shared.Record create(
       Class<? extends Record> token, RecordToTypeMap recordToTypeMap) {
@@ -75,6 +74,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     if (schema == null) {
       throw new IllegalArgumentException("Unknown proxy type: " + token);
     }
+
     return createFuture(schema);
   }
 
@@ -121,17 +121,71 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
   }
   
+  public Class<? extends Record> getClass(Record proxy) {
+    return ((RecordImpl) proxy).getSchema().getToken();
+  }
+
   public abstract RecordSchema getSchema(String token);
+
+  public String getToken(Record record) {
+    String rtn = ((RecordImpl) record).getSchema().getToken().getName() + "-";
+    if (((RecordImpl) record).isFuture()) {
+      rtn += "0-FUTURE";
+    } else {
+      rtn += record.getId();
+    }
+    return rtn;
+  }
 
   /**
    * @param handlerManager
    */
-  public void init(HandlerManager handlerManager) {
+  public void init(EventBus handlerManager) {
     this.valueStore = new ValueStoreJsonImpl(handlerManager);
     this.handlerManager = handlerManager;
     Logger.getLogger("").addHandler(
         new RequestFactoryLogHandler(this, Level.WARNING, wireLogger.getName()));
     logger.fine("Successfully initialized RequestFactory");
+  }
+
+  protected Class<? extends Record> getClass(String token,
+      RecordToTypeMap recordToTypeMap) {
+    String[] bits = token.split("-");
+    RecordSchema<? extends Record> schema = recordToTypeMap.getType(bits[0]);
+    if (schema == null) {
+      return null;
+    }
+    return schema.getToken();
+  }
+
+  protected Record getProxy(String token, RecordToTypeMap recordToTypeMap) {
+    String[] bits = token.split("-");
+    if (bits.length < 2 || bits.length > 3) {
+      return null;
+    }
+
+    RecordSchema<? extends Record> schema = recordToTypeMap.getType(bits[0]);
+    if (schema == null) {
+      return null;
+    }
+
+    if (bits.length == 3) {
+      return createFuture(schema);
+    }
+
+    Long id = null;
+    try {
+      id = Long.valueOf(bits[1]);
+    } catch (NumberFormatException e) {
+      return null;
+    }
+
+    return schema.create(RecordJsoImpl.create(id, -1, schema));
+  }
+
+  protected String getToken(Class<? extends Record> clazz,
+      RecordToTypeMap recordToTypeMap) {
+    return recordToTypeMap.getType(clazz).getToken().getName();
   }
 
   ValueStoreJsonImpl getValueStore() {

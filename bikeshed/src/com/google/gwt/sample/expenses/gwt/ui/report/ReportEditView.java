@@ -68,12 +68,12 @@ public class ReportEditView extends Composite implements
   private Delegate delegate;
 
   private ReportRecord record;
-
+  
   public ReportEditView() {
     initWidget(BINDER.createAndBindUi(this));
     DATA_BINDER.init(this);
   }
-
+  
   public ReportEditView asWidget() {
     return this;
   }

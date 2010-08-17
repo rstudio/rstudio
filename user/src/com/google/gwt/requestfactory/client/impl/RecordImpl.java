@@ -98,5 +98,4 @@ public class RecordImpl implements Record {
   protected ValueStoreJsonImpl getValueStore() {
     return jso.getValueStore();
   }
-
 }

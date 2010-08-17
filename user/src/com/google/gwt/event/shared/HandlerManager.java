@@ -28,7 +28,7 @@ import java.util.Set;
  * Manager responsible for adding handlers to event sources and firing those
  * handlers on passed in events.
  */
-public class HandlerManager {
+public class HandlerManager implements EventBus {
 
   /**
    * Interface for queued add/remove operations.
@@ -159,7 +159,7 @@ public class HandlerManager {
   }
 
   /**
-   * Adds a handle.
+   * Adds a handler.
    * 
    * @param <H> The type of handler
    * @param type the event type associated with this handler

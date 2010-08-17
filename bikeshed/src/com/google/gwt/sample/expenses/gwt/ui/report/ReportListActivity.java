@@ -18,13 +18,9 @@ package com.google.gwt.sample.expenses.gwt.ui.report;
 import com.google.gwt.app.place.AbstractRecordListActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordListView;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
-import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecordChanged;
@@ -47,53 +43,37 @@ public final class ReportListActivity extends
   }
 
   private final ExpensesRequestFactory requests;
-  private final PlaceController<ScaffoldPlace> placeController;
-  private final HandlerManager eventBus;
-  private HandlerRegistration registration;
 
   /**
    * Creates an activity that uses the default singleton view instance.
+   * 
+   * @param proxyPlaceToListPlace
    */
-  public ReportListActivity(HandlerManager eventBus,
-      ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController) {
-    this(eventBus, requests, getDefaultView(), placeController);
+  public ReportListActivity(ExpensesRequestFactory requests,
+      PlaceController placeController) {
+    this(requests, getDefaultView(), placeController);
   }
 
   /**
-   * Creates an activity that uses its own view instance.
+   * Creates an activity that uses the given view instance.
    */
-  public ReportListActivity(HandlerManager eventBus,
-      ExpensesRequestFactory requests, RecordListView<ReportRecord> view,
-      PlaceController<ScaffoldPlace> placeController) {
-    super(view);
-    this.eventBus = eventBus;
+  public ReportListActivity(ExpensesRequestFactory requests,
+      RecordListView<ReportRecord> view, PlaceController placeController) {
+    super(requests, placeController, view, ReportRecord.class);
+
     this.requests = requests;
-    this.placeController = placeController;
-  }
-
-  public void createClicked() {
-    placeController.goTo(new ReportScaffoldPlace(0L, Operation.EDIT));
   }
 
   @Override
-  public void onStop() {
-    registration.removeHandler();
-  }
-
-  @Override
-  public void showDetails(ReportRecord record) {
-    placeController.goTo(new ReportScaffoldPlace(record, Operation.DETAILS));
-  }
-
-  @Override
-  public void start(Display display) {
-    this.registration = eventBus.addHandler(ReportRecordChanged.TYPE, new ReportRecordChanged.Handler() {
-      public void onReportChanged(ReportRecordChanged event) {
-        update(event.getWriteOperation(), event.getRecord());
-      }
-    });
-    super.start(display);
+  public void start(Display display, EventBus eventBus) {
+    // TODO(rjrjr) this can move to super class when event bus gets smarter
+    eventBus.addHandler(ReportRecordChanged.TYPE,
+        new ReportRecordChanged.Handler() {
+          public void onReportChanged(ReportRecordChanged event) {
+            update(event.getWriteOperation(), event.getRecord());
+          }
+        });
+    super.start(display, eventBus);
   }
 
   @Override

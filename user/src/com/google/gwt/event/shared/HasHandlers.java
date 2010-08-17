@@ -20,10 +20,16 @@ package com.google.gwt.event.shared;
  * associated with it.
  */
 public interface HasHandlers {
+  
   /**
-   * Fires the given event to all the appropriate handlers.
+   * Fires the given event to the handlers listening to the event's type.
    * 
-   * @param event the event to be fired
+   * Any exceptions thrown by handlers will be bundled into a
+   * {@link UmbrellaException} and then re-thrown after all handlers have
+   * completed. An exception thrown by a handler will not prevent other handlers
+   * from executing.
+   * 
+   * @param event the event
    */
   void fireEvent(GwtEvent<?> event);
 }

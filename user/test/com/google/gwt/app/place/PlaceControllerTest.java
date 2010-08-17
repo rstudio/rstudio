@@ -16,11 +16,10 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.Window.ClosingHandler;
 
 import junit.framework.TestCase;
+
+import java.util.logging.Logger;
 
 /**
  * Eponymous test class.
@@ -28,64 +27,46 @@ import junit.framework.TestCase;
 public class PlaceControllerTest extends TestCase {
 
   private final class Canceler implements
-      PlaceChangeRequestedEvent.Handler<MyPlace> {
-    MyPlace calledWith = null;
+      PlaceChangeRequesteEvent.Handler {
+    Place calledWith = null;
     String warning = "Stop fool!";
 
-    public void onPlaceChangeRequested(PlaceChangeRequestedEvent<MyPlace> event) {
+    public void onPlaceChangeRequest(PlaceChangeRequesteEvent event) {
       calledWith = event.getNewPlace();
       event.setWarning(warning);
-    }
-  }
-
-  private static class Delegate implements PlaceController.Delegate {
-    String message = null;
-    boolean confirm = false;
-    ClosingHandler handler = null;
-
-    public HandlerRegistration addWindowClosingHandler(ClosingHandler handler) {
-      this.handler = handler;
-      return new HandlerRegistration() {
-        public void removeHandler() {
-          throw new UnsupportedOperationException("Auto-generated method stub");
-        }
-      };
-    }
-
-    public void close() {
-      ClosingEvent event = new ClosingEvent();
-      handler.onWindowClosing(event);
-      message = event.getMessage();
-    }
-    
-    public boolean confirm(String message) {
-      this.message = message;
-      return confirm;
     }
   }
 
   private static class MyPlace extends Place {
   }
 
-  private class SimpleHandler implements PlaceChangeEvent.Handler<MyPlace> {
+  private class SimpleHandler implements PlaceChangeEvent.Handler {
     MyPlace calledWith = null;
 
-    public void onPlaceChange(PlaceChangeEvent<MyPlace> event) {
-      calledWith = event.getNewPlace();
+    public void onPlaceChange(PlaceChangeEvent event) {
+      calledWith = (MyPlace) event.getNewPlace();
     }
   }
 
+  private Logger deadLogger = new Logger("shut up", null) {
+  };
+
   private HandlerManager eventBus = new HandlerManager(null);
-  private Delegate delegate = new Delegate();
-  private PlaceController<MyPlace> placeController = new PlaceController<MyPlace>(
-      eventBus, delegate);
+  private MockPlaceControllerDelegate delegate = new MockPlaceControllerDelegate();
+  private PlaceController placeController = new PlaceController(
+      eventBus, delegate) {
+    @Override
+    Logger log() {
+      return deadLogger;
+    }
+  };
 
   public void testConfirmCancelOnUserNav() {
     SimpleHandler handler = new SimpleHandler();
     eventBus.addHandler(PlaceChangeEvent.TYPE, handler);
 
     Canceler canceler = new Canceler();
-    eventBus.addHandler(PlaceChangeRequestedEvent.TYPE, canceler);
+    eventBus.addHandler(PlaceChangeRequesteEvent.TYPE, canceler);
 
     MyPlace place = new MyPlace();
 
@@ -105,7 +86,7 @@ public class PlaceControllerTest extends TestCase {
     eventBus.addHandler(PlaceChangeEvent.TYPE, handler);
 
     Canceler canceler = new Canceler();
-    eventBus.addHandler(PlaceChangeRequestedEvent.TYPE, canceler);
+    eventBus.addHandler(PlaceChangeRequesteEvent.TYPE, canceler);
 
     assertNull(handler.calledWith);
     assertNull(delegate.message);

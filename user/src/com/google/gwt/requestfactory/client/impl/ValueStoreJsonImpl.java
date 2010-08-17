@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.WriteOperation;
 
@@ -33,11 +33,11 @@ import java.util.Map;
 public class ValueStoreJsonImpl {
   // package protected fields for use by DeltaValueStoreJsonImpl
 
-  final HandlerManager eventBus;
+  final EventBus eventBus;
 
   final Map<RecordKey, RecordJsoImpl> records = new HashMap<RecordKey, RecordJsoImpl>();
 
-  ValueStoreJsonImpl(HandlerManager eventBus) {
+  ValueStoreJsonImpl(EventBus eventBus) {
     this.eventBus = eventBus;
   }
 

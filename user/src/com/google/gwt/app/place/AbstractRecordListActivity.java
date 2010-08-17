@@ -15,15 +15,21 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.app.place.ProxyPlace.Operation;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
+import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.WriteOperation;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 
 import java.util.Collections;
@@ -54,16 +60,44 @@ import java.util.Set;
  */
 public abstract class AbstractRecordListActivity<R extends Record>
     implements Activity, RecordListView.Delegate<R> {
+  /**
+   * Used by the table and its selection model, to define record equality via
+   * id.
+   */
+  private static class RecordKeyProvider<R extends Record> implements
+      ProvidesKey<R> {
+    public Object getKey(R item) {
+      return item == null ? null : item.getId();
+    }
+  }
+
+  /**
+   * This mapping allows us to update individual rows as records change.
+   */
   private final Map<Long, Integer> recordToRow = new HashMap<Long, Integer>();
-  private final Map<Long, R> idToRecord = new HashMap<Long, R>();
+
+  private final RequestFactory requests;
+  private final PlaceController placeController;
   private final SingleSelectionModel<R> selectionModel;
+  private final Class<R> proxyType;
+
+  /**
+   * Used by the table and its selection model to rely on record id for
+   * equality.
+   */
+  private final RecordKeyProvider<R> keyProvider = new RecordKeyProvider<R>();
 
   private HandlerRegistration rangeChangeHandler;
   private RecordListView<R> view;
   private Display display;
 
-  public AbstractRecordListActivity(RecordListView<R> view) {
+  public AbstractRecordListActivity(RequestFactory requests,
+      PlaceController placeController, RecordListView<R> view,
+      Class<R> proxyType) {
     this.view = view;
+    this.requests = requests;
+    this.placeController = placeController;
+    this.proxyType = proxyType;
     view.setDelegate(this);
 
     final HasData<R> hasData = view.asHasData();
@@ -74,17 +108,24 @@ public abstract class AbstractRecordListActivity<R extends Record>
           }
         });
 
-    selectionModel = new SingleSelectionModel<R>() {
-      @Override
-      public void setSelected(R newSelection, boolean selected) {
-        R wasSelected = this.getSelectedObject();
-        super.setSelected(newSelection, selected);
-        if (!newSelection.equals(wasSelected)) {
-          showDetails(newSelection);
+    selectionModel = new SingleSelectionModel<R>();
+    selectionModel.setKeyProvider(keyProvider);
+    hasData.setSelectionModel(selectionModel);
+    ((AbstractHasData<R>) hasData).setKeyProvider(keyProvider);
+
+    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+      public void onSelectionChange(SelectionChangeEvent event) {
+        R selectedObject = selectionModel.getSelectedObject();
+        if (selectedObject != null) {
+          showDetails(selectedObject);
         }
       }
-    };
-    hasData.setSelectionModel(selectionModel);
+    });
+  }
+
+  public void createClicked() {
+    placeController.goTo(new ProxyPlace(requests.create(proxyType),
+        Operation.CREATE));
   }
 
   public RecordListView<R> getView() {
@@ -112,11 +153,9 @@ public abstract class AbstractRecordListActivity<R extends Record>
           return;
         }
         recordToRow.clear();
-        idToRecord.clear();
         for (int i = 0, row = range.getStart(); i < values.size(); i++, row++) {
           R record = values.get(i);
           recordToRow.put(record.getId(), row);
-          idToRecord.put(record.getId(), record);
         }
         getView().asHasData().setRowValues(range.getStart(), values);
         if (display != null) {
@@ -137,26 +176,28 @@ public abstract class AbstractRecordListActivity<R extends Record>
   }
 
   /**
-   * Select the record if it happens to be visible, or clear the selection if
-   * called with null or "".
+   * Select the given record, or clear the selection if called with null.
    */
-  public void select(Long id) {
-    if (id == null || 0 == id) {
+  public void select(R record) {
+    if (record == null) {
       R selected = selectionModel.getSelectedObject();
       if (selected != null) {
         selectionModel.setSelected(selected, false);
       }
     } else {
-      R record = idToRecord.get(id);
-      if (record != null) {
-        selectionModel.setSelected(record, true);
-      }
+      selectionModel.setSelected(record, true);
     }
   }
 
-  public void start(Display display) {
+  public void start(Display display, EventBus eventBus) {
+    eventBus.addHandler(PlaceChangeEvent.TYPE, new PlaceChangeEvent.Handler() {
+      public void onPlaceChange(PlaceChangeEvent event) {
+        updateSelection(event.getNewPlace());
+      }
+    });
     this.display = display;
     init();
+    updateSelection(placeController.getWhere());
   }
 
   public void update(WriteOperation writeOperation, R record) {
@@ -182,8 +223,6 @@ public abstract class AbstractRecordListActivity<R extends Record>
   protected abstract RecordListRequest<R> createRangeRequest(Range range);
 
   protected abstract void fireCountRequest(Receiver<Long> callback);
-
-  protected abstract void showDetails(R record);
 
   private void getLastPage() {
     fireCountRequest(new Receiver<Long>() {
@@ -212,8 +251,30 @@ public abstract class AbstractRecordListActivity<R extends Record>
     });
   }
 
+  @SuppressWarnings("unchecked")
+  private void selectCoerced(Place newPlace) {
+    select((R) ((ProxyPlace) newPlace).getProxy());
+  }
+
+  private void showDetails(R record) {
+    placeController.goTo(new ProxyPlace(record, Operation.DETAILS));
+  }
+
   private void update(R record) {
     Integer row = recordToRow.get(record.getId());
     getView().asHasData().setRowValues(row, Collections.singletonList(record));
+  }
+
+  private void updateSelection(Place newPlace) {
+    if (newPlace instanceof ProxyPlace) {
+      ProxyPlace proxyPlace = (ProxyPlace) newPlace;
+      if (proxyPlace.getOperation() != Operation.CREATE
+          && requests.getClass(proxyPlace.getProxy()).equals(proxyType)) {
+        selectCoerced(newPlace);
+        return;
+      }
+    }
+
+    select(null);
   }
 }

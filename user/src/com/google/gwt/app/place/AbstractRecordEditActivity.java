@@ -15,6 +15,8 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.app.place.ProxyPlace.Operation;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -38,22 +40,28 @@ import java.util.Set;
 public abstract class AbstractRecordEditActivity<R extends Record> implements
     Activity, RecordEditView.Delegate {
 
-  protected RequestObject<Void> requestObject;
+  private RequestObject<Void> requestObject;
 
   private final boolean creating;
   private final RecordEditView<R> view;
-
-  private Long id;
-  private Long futureId;
+  private final Class<R> proxyType;
   private final RequestFactory requests;
+  private final PlaceController placeController;
 
+  private R record;
+  @SuppressWarnings("unused")
+  private Long futureId;
   private Display display;
 
-  public AbstractRecordEditActivity(RecordEditView<R> view, Long id,
-      RequestFactory requests) {
+  public AbstractRecordEditActivity(RecordEditView<R> view, R record,
+      Class<R> proxyType, boolean creating, RequestFactory requests,
+      PlaceController placeController) {
+
     this.view = view;
-    this.creating = 0L == id;
-    this.id = id;
+    this.record = record;
+    this.proxyType = proxyType;
+    this.placeController = placeController;
+    this.creating = creating;
     this.requests = requests;
   }
 
@@ -105,23 +113,34 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
           return;
         }
         boolean hasViolations = false;
-        for (SyncResult syncResult : response) {
-          Record syncRecord = syncResult.getRecord();
-          if (creating) {
-            if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
-              continue;
-            }
-            id = syncRecord.getId();
-          } else {
-            if (!syncRecord.getId().equals(id)) {
-              continue;
-            }
-          }
-          if (syncResult.hasViolations()) {
-            hasViolations = true;
-            view.showErrors(syncResult.getViolations());
-          }
+        
+        // TODO(amit) at the moment we only get one response, and futures are buggy. 
+        // So forcing the issue for now, but the more code involved may have to come back
+        // when bugs are fixed
+        assert response.size() == 1;
+        SyncResult syncResult = response.iterator().next();
+        record = cast(syncResult.getRecord());
+        if (syncResult.hasViolations()) {
+          hasViolations = true;
+          view.showErrors(syncResult.getViolations());
         }
+//        for (SyncResult syncResult : response) {
+//          Record syncRecord = syncResult.getRecord();
+//          if (creating) {
+//            if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
+//              continue;
+//            }
+//            record = cast(syncRecord);
+//          } else {
+//            if (!syncRecord.getId().equals(record.getId())) {
+//              continue;
+//            }
+//          }
+//          if (syncResult.hasViolations()) {
+//            hasViolations = true;
+//            view.showErrors(syncResult.getViolations());
+//          }
+//        }
         if (!hasViolations) {
           exit();
         } else {
@@ -130,24 +149,23 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
           view.setEnabled(true);
         }
       }
-
     };
     toCommit.fire(receiver);
   }
 
   @SuppressWarnings("unchecked")
-  public void start(Display display) {
+  public void start(Display display, EventBus eventBus) {
     this.display = display;
 
     view.setDelegate(this);
     view.setCreating(creating);
 
     if (creating) {
-      R tempRecord = (R) requests.create(getRecordClass());
+      R tempRecord = (R) requests.create(proxyType);
       futureId = tempRecord.getId();
       doStart(display, tempRecord);
     } else {
-      fireFindRequest(Value.of(id), new Receiver<R>() {
+      fireFindRequest(Value.of(record.getId()), new Receiver<R>() {
         public void onSuccess(R record, Set<SyncResult> syncResults) {
           if (AbstractRecordEditActivity.this.display != null) {
             doStart(AbstractRecordEditActivity.this.display, record);
@@ -158,33 +176,30 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   }
 
   /**
-   * Called when the user has clicked Cancel or has successfully saved.
-   */
-  protected abstract void exit();
-
-  /**
    * Called to fetch the details of the edited record.
    */
   protected abstract void fireFindRequest(Value<Long> id, Receiver<R> callback);
 
-  protected Long getId() {
-    return id;
+  protected abstract RequestObject<Void> getPersistRequest(R record);
+
+  @SuppressWarnings("unchecked")
+  private R cast(Record syncRecord) {
+    return (R) syncRecord;
   }
 
-  /**
-   * Called to fetch the string token needed to get a new record via
-   * {@link com.google.gwt.requestfactory.shared.RequestFactory} create(Class)}.
-   */
-  protected abstract Class<? extends Record> getRecordClass();
-
-  protected abstract void setRequestObject(R record);
-
   private void doStart(final Display display, R record) {
-    setRequestObject(record);
+    requestObject = getPersistRequest(record);
     R editableRecord = requestObject.edit(record);
     view.setEnabled(true);
     view.setValue(editableRecord);
     view.showErrors(null);
     display.showActivityWidget(view);
+  }
+
+  /**
+   * Called when the user has clicked Cancel or has successfully saved.
+   */
+  private void exit() {
+    placeController.goTo(new ProxyPlace(record, Operation.DETAILS));
   }
 }

@@ -18,13 +18,9 @@ package com.google.gwt.sample.expenses.gwt.ui.employee;
 import com.google.gwt.app.place.AbstractRecordListActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordListView;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
-import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecordChanged;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
@@ -47,54 +43,38 @@ public class EmployeeListActivity extends
   }
 
   private final ExpensesRequestFactory requests;
-  private final PlaceController<ScaffoldPlace> placeController;
-  private final HandlerManager eventBus;
-  private HandlerRegistration registration;
 
   /**
    * Creates an activity that uses the default singleton view instance.
+   * 
+   * @param proxyPlaceToListPlace
    */
-  public EmployeeListActivity(HandlerManager eventBus,
-      ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController) {
-    this(eventBus, requests, getDefaultView(), placeController);
+  public EmployeeListActivity(ExpensesRequestFactory requests,
+      PlaceController placeController) {
+    this(requests, getDefaultView(), placeController);
   }
 
   /**
-   * Creates an activity that uses its own view instance.
+   * Creates an activity that uses the given view instance.
    */
-  public EmployeeListActivity(HandlerManager eventBus,
-      ExpensesRequestFactory requests, RecordListView<EmployeeRecord> view,
-      PlaceController<ScaffoldPlace> placeController) {
-    super(view);
-    this.eventBus = eventBus;
+  public EmployeeListActivity(ExpensesRequestFactory requests,
+      RecordListView<EmployeeRecord> view, PlaceController placeController) {
+    super(requests, placeController, view, EmployeeRecord.class);
+
     this.requests = requests;
-    this.placeController = placeController;
   }
-
-  public void createClicked() {
-    placeController.goTo(new EmployeeScaffoldPlace(0L, Operation.EDIT));
-  }
-
+  
   @Override
-  public void onStop() {
-    registration.removeHandler();
-  }
-
-  @Override
-  public void showDetails(EmployeeRecord record) {
-    placeController.goTo(new EmployeeScaffoldPlace(record, Operation.DETAILS));
-  }
-
-  @Override
-  public void start(Display display) {
-    this.registration = eventBus.addHandler(EmployeeRecordChanged.TYPE,
+  public void start(Display display, EventBus eventBus) {
+    // TODO(rjrjr) this can move to super class when event bus gets smarter
+    eventBus.addHandler(EmployeeRecordChanged.TYPE,
         new EmployeeRecordChanged.Handler() {
           public void onEmployeeChanged(EmployeeRecordChanged event) {
             update(event.getWriteOperation(), event.getRecord());
           }
         });
-    super.start(display);
+    
+    super.start(display, eventBus);
   }
 
   @Override

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -62,7 +62,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   };
   ValueStoreJsonImpl valueStore = null;
   RequestFactoryJsonImpl requestFactory = null;
- 
+
   RecordJsoImpl jso = null;
 
   @Override
@@ -79,13 +79,12 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         return create(token, typeMap);
       }
 
-
       public RecordSchema getSchema(String token) {
         return typeMap.getType(token);
       }
 
       @Override
-      public void init(HandlerManager eventBus) {
+      public void init(EventBus eventBus) {
         // ignore.
       }
 
@@ -93,6 +92,17 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         return null; // ignore
       }
 
+      public Class<? extends Record> getClass(String token) {
+        throw new UnsupportedOperationException("Auto-generated method stub");
+      }
+
+      public Record getProxy(String token) {
+        throw new UnsupportedOperationException("Auto-generated method stub");
+      }
+
+      public String getToken(Class<? extends Record> clazz) {
+        throw new UnsupportedOperationException("Auto-generated method stub");
+      }
     };
 
     // add a record

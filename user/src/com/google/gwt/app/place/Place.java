@@ -27,4 +27,10 @@ package com.google.gwt.app.place;
  */
 public abstract class Place {
 
+  /**
+   * The null place.
+   */
+  public static final Place NOWHERE = new Place() {
+  };
+
 }

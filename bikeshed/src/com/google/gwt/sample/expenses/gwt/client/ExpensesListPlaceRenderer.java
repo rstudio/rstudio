@@ -13,29 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.gwt.ui;
+package com.google.gwt.sample.expenses.gwt.client;
 
-import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
+import com.google.gwt.app.place.ProxyListPlace;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.gwt.request.ExpensesEntityTypesProcessor;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.text.shared.AbstractRenderer;
-import com.google.gwt.valuestore.shared.Record;
 
 /**
- * Renders {@link ListScaffoldPlace}s for display to users.
+ * Renders {@link ProxyListPlace}s for display to users.
  */
-public class ScaffoldListPlaceRenderer extends AbstractRenderer<ListScaffoldPlace> {
+//TODO i18n
+public class ExpensesListPlaceRenderer extends AbstractRenderer<ProxyListPlace> {
 
-  public String render(ListScaffoldPlace object) {
-    // TODO These class comparisons are gross, find a cleaner way.
-    Class<? extends Record> type = object.getType();
-    if (type.equals(EmployeeRecord.class)) {
-      return "Employees";
-    }
-    if (type.equals(ReportRecord.class)) {
-      return "Reports";
-    }
-
-    throw new IllegalArgumentException("Cannot render unknown type " + object);
+  public String render(ProxyListPlace object) {
+    return new ExpensesEntityTypesProcessor<String>() {
+      @Override
+      public void handleEmployee(EmployeeRecord isNull) {
+        setResult("Employees");
+      }
+      @Override
+      public void handleReport(ReportRecord isNull) {
+        setResult("Reports");
+      }
+    }.process(object.getProxyClass());
   }
 }

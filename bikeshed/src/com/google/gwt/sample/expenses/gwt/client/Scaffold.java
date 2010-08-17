@@ -17,34 +17,33 @@ package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.app.place.Activity;
 import com.google.gwt.app.place.ActivityManager;
+import com.google.gwt.app.place.ActivityMapper;
+import com.google.gwt.app.place.CachingActivityMapper;
+import com.google.gwt.app.place.FilteredActivityMapper;
 import com.google.gwt.app.place.IsWidget;
 import com.google.gwt.app.place.PlaceController;
-import com.google.gwt.app.place.PlacePicker;
+import com.google.gwt.app.place.PlaceHistoryHandler;
+import com.google.gwt.app.place.ProxyListPlace;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
-import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.UserInformationRecord;
-import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
+import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesEntityTypesProcessor;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.ui.ListActivitiesMapper;
-import com.google.gwt.sample.expenses.gwt.ui.ScaffoldListPlaceRenderer;
 import com.google.gwt.user.client.Window.Location;
+import com.google.gwt.user.client.ui.HasConstrainedValue;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -52,18 +51,17 @@ import java.util.Set;
  */
 public class Scaffold implements EntryPoint {
   public void onModuleLoad() {
+    ScaffoldFactory factory = GWT.create(ScaffoldFactory.class);
 
     /* App controllers and services */
 
-    final HandlerManager eventBus = new HandlerManager(null);
-    final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
-    requestFactory.init(eventBus);
-    final PlaceController<ScaffoldPlace> placeController = new PlaceController<ScaffoldPlace>(
-        eventBus);
+    final EventBus eventBus = factory.getEventBus();
+    final ExpensesRequestFactory requestFactory = factory.getRequestFactory();
+    final PlaceController placeController = factory.getPlaceController();
 
     /* Top level UI */
 
-    final ScaffoldShell shell = new ScaffoldShell();
+    final ScaffoldShell shell = factory.getShell();
 
     /* Display loading notifications when we touch the network. */
 
@@ -79,39 +77,42 @@ public class Scaffold implements EntryPoint {
         }
       }
     });
-    
+
     /* Check for Authentication failures or mismatches */
-    
+
     eventBus.addHandler(RequestEvent.TYPE, new AuthenticationFailureHandler());
 
     /* Add a login widget to the page */
-    
+
     final LoginWidget login = shell.getLoginWidget();
     Receiver<UserInformationRecord> receiver = new Receiver<UserInformationRecord>() {
-      public void onSuccess(UserInformationRecord userInformationRecord, Set<SyncResult> syncResults) {
+      public void onSuccess(UserInformationRecord userInformationRecord,
+          Set<SyncResult> syncResults) {
         login.setUserInformation(userInformationRecord);
-      }       
-     };
-     requestFactory.userInformationRequest().getCurrentUserInformation(
-         Location.getHref()).fire(receiver);
+      }
+    };
+    requestFactory.userInformationRequest().getCurrentUserInformation(
+        Location.getHref()).fire(receiver);
 
     /* Left side lets us pick from all the types of entities */
 
-    PlacePicker<ListScaffoldPlace> placePicker = new PlacePicker<ListScaffoldPlace>(
-        shell.getPlacesBox(), placeController, new ScaffoldListPlaceRenderer());
-    placePicker.setPlaces(getTopPlaces());
+    HasConstrainedValue<ProxyListPlace> listPlacePickerView = shell.getPlacesBox();
+    listPlacePickerView.setValues(getTopPlaces());
+    factory.getListPlacePicker().register(eventBus, listPlacePickerView);
 
     /*
-     * The app is run by ActivityManager instances that listen for place change
-     * events and run the appropriate Activity
-     * 
-     * The top half runs list activities of a traditional master / details view,
-     * although here "master" is a misnomer. The two ActivityManagers are
-     * completely independent of one another.
+     * Top of the screen is the master list of a master / detail UI. Set it up
+     * to filter ProxyPlace instances to an appropriate ProxyListPlace, and put
+     * a cache on it to keep the same activity instance running rather than
+     * building a new one on each detail change.
      */
-    final ActivityManager<ScaffoldPlace> masterActivityManager = new ActivityManager<ScaffoldPlace>(
-        new ScaffoldMasterActivities(new ListActivitiesMapper(eventBus,
-            requestFactory, placeController)), eventBus);
+
+    CachingActivityMapper cached = new CachingActivityMapper(
+        new ExpensesMasterActivities(requestFactory, placeController));
+    ActivityMapper masterActivityMap = new FilteredActivityMapper(
+        factory.getProxyPlaceToListPlace(), cached);
+    final ActivityManager masterActivityManager = new ActivityManager(
+        masterActivityMap, eventBus);
 
     masterActivityManager.setDisplay(new Activity.Display() {
       public void showActivityWidget(IsWidget widget) {
@@ -120,11 +121,10 @@ public class Scaffold implements EntryPoint {
       }
     });
 
-    /*
-     * The bottom half handles details
-     */
-    final ActivityManager<ScaffoldPlace> detailsActivityManager = new ActivityManager<ScaffoldPlace>(
-        new ScaffoldDetailsActivities(requestFactory, placeController),
+    /* Bottom of the screen shows the details of a master / detail UI */
+
+    final ActivityManager detailsActivityManager = new ActivityManager(
+        new ExpensesDetailsActivities(requestFactory, placeController),
         eventBus);
 
     detailsActivityManager.setDisplay(new Activity.Display() {
@@ -139,18 +139,28 @@ public class Scaffold implements EntryPoint {
     Element loading = Document.get().getElementById("loading");
     loading.getParentElement().removeChild(loading);
 
+    /* Browser history integration */
+    PlaceHistoryHandler placeHistoryHandler = factory.getPlaceHistoryHandler();
+    placeHistoryHandler.register(placeController, eventBus, 
+        /* defaultPlace */ getTopPlaces().iterator().next());
+    placeHistoryHandler.handleCurrentHistory();
+
     /* And show the user the shell */
 
     RootLayoutPanel.get().add(shell);
   }
 
-  private List<ListScaffoldPlace> getTopPlaces() {
-    final List<ListScaffoldPlace> rtn = new ArrayList<ListScaffoldPlace>();
-    ExpensesEntityTypesProcessor.processAll(new ExpensesEntityTypesProcessor.EntityTypesProcessor() {
-      public void processType(Class<? extends Record> recordType) {
-        rtn.add(new ListScaffoldPlace(recordType));
-      }
-    });
-    return Collections.unmodifiableList(rtn);
+  // TODO(rjrjr) No reason to make the place objects in advance, just make
+  // it list the class objects themselves. Needs to be sorted by rendered name,
+  // too
+  private Set<ProxyListPlace> getTopPlaces() {
+    Set<Class<? extends Record>> types = ExpensesEntityTypesProcessor.getAll();
+    Set<ProxyListPlace> rtn = new HashSet<ProxyListPlace>(types.size());
+
+    for (Class<? extends Record> type : types) {
+      rtn.add(new ProxyListPlace(type));
+    }
+
+    return rtn;
   }
 }

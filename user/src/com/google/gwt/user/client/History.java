@@ -79,6 +79,7 @@ public class History {
    * @param listener the listener to be added
    * @deprecated use {@link History#addValueChangeHandler(ValueChangeHandler)} instead
    */
+  @SuppressWarnings("deprecation")
   @Deprecated
   public static void addHistoryListener(HistoryListener listener) {
     if (impl != null) {
@@ -144,9 +145,7 @@ public class History {
   }
 
   /**
-   * Adds a new browser history entry. In hosted mode, the 'back' and 'forward'
-   * actions are accessible via the standard Alt-Left and Alt-Right keystrokes.
-   * Calling this method will cause
+   * Adds a new browser history entry. Calling this method will cause
    * {@link ValueChangeHandler#onValueChange(com.google.gwt.event.logical.shared.ValueChangeEvent)}
    * to be called as well.
    * 
@@ -157,9 +156,7 @@ public class History {
   }
 
   /**
-   * Adds a new browser history entry. In hosted mode, the 'back' and 'forward'
-   * actions are accessible via the standard Alt-Left and Alt-Right keystrokes.
-   * Calling this method will cause
+   * Adds a new browser history entry. Calling this method will cause
    * {@link ValueChangeHandler#onValueChange(com.google.gwt.event.logical.shared.ValueChangeEvent)}
    * to be called as well if and only if issueEvent is true.
    * 
@@ -197,6 +194,7 @@ public class History {
    * 
    * @param listener the listener to be removed
    */
+  @SuppressWarnings("deprecation")
   @Deprecated
   public static void removeHistoryListener(HistoryListener listener) {
     if (impl != null) {

@@ -22,9 +22,9 @@ import com.google.gwt.user.client.ui.Widget;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * <p>
- * Extended by View interfaces that are likely to be implemented by Widgets.
+ * Extended by view interfaces that are likely to be implemented by Widgets.
  * Provides access to that widget, if it exists, without compromising the
- * ability to provide mock view instance in JRE unit tests.
+ * ability to provide a mock view instance in JRE unit tests.
  */
 public interface IsWidget {
   Widget asWidget();

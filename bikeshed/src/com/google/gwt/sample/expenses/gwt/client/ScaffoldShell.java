@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,15 +16,16 @@
 package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.app.client.NotificationMole;
-import com.google.gwt.app.place.PlacePickerView;
+import com.google.gwt.app.place.ProxyListPlace;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.requestfactory.client.LoginWidget;
-import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasConstrainedValue;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ValuePicker;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -33,6 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class ScaffoldShell extends Composite {
   interface Binder extends UiBinder<Widget, ScaffoldShell> {
   }
+
   private static final Binder BINDER = GWT.create(Binder.class);
 
   @UiField SimplePanel details;
@@ -40,7 +42,9 @@ public class ScaffoldShell extends Composite {
   @UiField LoginWidget loginWidget;
   @UiField SimplePanel master;
   @UiField NotificationMole mole;
-  @UiField PlacePickerView<ListScaffoldPlace> placesBox;
+  @UiField(provided = true)
+  ValuePicker<ProxyListPlace> placesBox = new ValuePicker<ProxyListPlace>(
+      new ExpensesListPlaceRenderer());
 
   public ScaffoldShell() {
     initWidget(BINDER.createAndBindUi(this));
@@ -59,7 +63,7 @@ public class ScaffoldShell extends Composite {
   public LoginWidget getLoginWidget() {
     return loginWidget;
   }
-  
+
   /**
    * @return the panel to hold the master list
    */
@@ -77,7 +81,7 @@ public class ScaffoldShell extends Composite {
   /**
    * @return the navigator
    */
-  public PlacePickerView<ListScaffoldPlace> getPlacesBox() {
+  public HasConstrainedValue<ProxyListPlace> getPlacesBox() {
     return placesBox;
   }
 

@@ -25,41 +25,37 @@ import com.google.gwt.event.shared.GwtEvent;
  * </span>
  * </p>
  * Event thrown when the user has reached a new location in the app.
- * 
- * @param <P> the type of the new place
  */
-public class PlaceChangeEvent<P extends Place> extends
-    GwtEvent<PlaceChangeEvent.Handler<P>> {
+public class PlaceChangeEvent extends GwtEvent<PlaceChangeEvent.Handler> {
 
   /**
    * Implemented by handlers of PlaceChangeEvent.
+   * 
    * @param <P> the type of the new Place
    */
-  public interface Handler<P extends Place> extends EventHandler {
-    void onPlaceChange(PlaceChangeEvent<P> event);
+  public interface Handler extends EventHandler {
+    void onPlaceChange(PlaceChangeEvent event);
   }
 
-  public static final Type<Handler<?>> TYPE = new Type<Handler<?>>();
+  public static final Type<Handler> TYPE = new Type<Handler>();
 
-  private final P newPlace;
+  private final Place newPlace;
 
-  public PlaceChangeEvent(P newPlace) {
+  public PlaceChangeEvent(Place newPlace) {
     this.newPlace = newPlace;
   }
 
-  // param type of static TYPE cannot be set
-  @SuppressWarnings("unchecked")
   @Override
-  public Type<Handler<P>> getAssociatedType() {
-    return (Type) TYPE;
+  public Type<Handler> getAssociatedType() {
+    return TYPE;
   }
 
-  public P getNewPlace() {
+  public Place getNewPlace() {
     return newPlace;
   }
 
   @Override
-  protected void dispatch(Handler<P> handler) {
+  protected void dispatch(Handler handler) {
     handler.onPlaceChange(this);
   }
 }

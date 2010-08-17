@@ -23,9 +23,7 @@ package com.google.gwt.app.place;
  * </p>
  * Finds the activity to run for a given {@link Place}, used to configure
  * an {@link ActivityManager}.
- * 
- * @param <P> the type of place that can be mapped
  */
-public interface ActivityMapper<P extends Place> {
-  Activity getActivity(P place);
+public interface ActivityMapper {
+  Activity getActivity(Place place);
 }

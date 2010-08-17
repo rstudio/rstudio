@@ -338,15 +338,41 @@ public class RequestFactoryGenerator extends Generator {
       e.printStackTrace();
     }
 
-    // write create(Class..)
     JClassType recordToTypeInterface = generatorContext.getTypeOracle().findType(RecordToTypeMap.class.getName());
     // TODO: note, this seems like a bug. What if you have 2 RequestFactories?
     String recordToTypeMapName = recordToTypeInterface.getName() + "Impl";
+
+    // write create(Class)
     sw.println("public " + Record.class.getName() + " create(Class token) {");
     sw.indent();
     sw.println("return create(token, new " + recordToTypeMapName + "());");
     sw.outdent();
     sw.println("}");
+    sw.println();
+
+    // write getClass(String)
+    sw.println("public Class<? extends " + Record.class.getName() + "> getClass(String token) {");
+    sw.indent();
+    sw.println("return getClass(token, new " + recordToTypeMapName + "());");
+    sw.outdent();
+    sw.println("}");
+    sw.println();
+
+    // write getProxy(String)
+    sw.println("public " + Record.class.getName() + " getProxy(String token) {");
+    sw.indent();
+    sw.println("return getProxy(token, new " + recordToTypeMapName + "());");
+    sw.outdent();
+    sw.println("}");
+    sw.println();
+
+    // write getToken(Class)
+    sw.println("public String getToken(Class clazz) {");
+    sw.indent();
+    sw.println("return getToken(clazz, new " + recordToTypeMapName + "());");
+    sw.outdent();
+    sw.println("}");
+    sw.println();
 
     sw.println(
            "public RecordSchema<? extends Record> getSchema(String schemaToken) {");
@@ -433,28 +459,26 @@ public class RequestFactoryGenerator extends Generator {
     sw.outdent();
     sw.println("}");
 
-    // TODO: unoptimal bloat, and there doesn't need to be two of these methods
     sw.println("public RecordSchema<? extends Record> getType(String token) {");
     sw.indent();
+    sw.println("String[] bits = token.split(\"-\");");
     for (JClassType publicRecordType : generatedRecordTypes) {
       String qualifiedSourceName = publicRecordType.getQualifiedSourceName();
-      sw.println("if (token.equals(\"" + qualifiedSourceName + "\")) {");
+      sw.println("if (bits[0].equals(\"" + qualifiedSourceName + "\")) {");
       sw.indent();
       sw.println("return " + qualifiedSourceName + "Impl.SCHEMA;");
       sw.outdent();
       sw.println("}");
     }
 
-    sw.println(
-        "throw new IllegalArgumentException(\"Unknown token \" + token + ");
-    sw.indent();
-    sw.println("\", does not match any of the TOKEN variables of a Record\");");
-    sw.outdent();
+    sw.println("throw new IllegalArgumentException(\"Unknown string token: \" + token);");
     sw.outdent();
     sw.println("}");
 
     sw.outdent();
     sw.println("}");
+    sw.println();
+
     generatorContext.commit(logger, out);
   }
 

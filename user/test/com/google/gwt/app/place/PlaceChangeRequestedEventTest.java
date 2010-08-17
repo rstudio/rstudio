@@ -24,9 +24,8 @@ public class PlaceChangeRequestedEventTest extends TestCase {
   private static final String W1 = "foo";
 
   public void testNoClobberWarning() {
-    PlaceChangeRequestedEvent<Place> e = new PlaceChangeRequestedEvent<Place>(
-        new Place() {
-        });
+    PlaceChangeRequesteEvent e = new PlaceChangeRequesteEvent(new Place() {
+    });
 
     assertNull(e.getWarning());
     e.setWarning(W1);

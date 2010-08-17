@@ -15,19 +15,20 @@
  */
 package com.google.gwt.sample.expenses.gwt.client;
 
-import com.google.gwt.app.place.PlacePickerView;
+import com.google.gwt.app.place.ProxyListPlace;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.requestfactory.client.LoginWidget;
-import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasConstrainedValue;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ValuePicker;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * TODO: doc.
+ * Top level UI for the mobile version of the application.
  */
 public class ScaffoldMobileShell extends Composite {
 
@@ -36,8 +37,10 @@ public class ScaffoldMobileShell extends Composite {
 
   @UiField SimplePanel body;
   @UiField DivElement error;
+  @UiField(provided = true)
+  ValuePicker<ProxyListPlace> placesBox = new ValuePicker<ProxyListPlace>(
+      new ExpensesListPlaceRenderer());
   @UiField LoginWidget loginWidget;
-  @UiField PlacePickerView<ListScaffoldPlace> placesBox;
 
   public ScaffoldMobileShell() {
     initWidget(BINDER.createAndBindUi(this));
@@ -56,8 +59,8 @@ public class ScaffoldMobileShell extends Composite {
   public LoginWidget getLoginWidget() {
     return loginWidget;
   }
-  
-  public PlacePickerView<ListScaffoldPlace> getPlacesBox() {
+
+  public HasConstrainedValue<ProxyListPlace> getPlacesBox() {
     return placesBox;
   }
 

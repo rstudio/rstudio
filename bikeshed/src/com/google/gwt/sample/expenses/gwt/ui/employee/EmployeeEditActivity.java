@@ -19,9 +19,7 @@ import com.google.gwt.app.place.AbstractRecordEditActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordEditView;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.valuestore.shared.Value;
@@ -42,30 +40,24 @@ public class EmployeeEditActivity extends
   }
 
   private final ExpensesRequestFactory requests;
-  private final PlaceController<ScaffoldPlace> placeController;
 
   /**
    * Creates an activity that uses the default singleton view instance.
    */
-  public EmployeeEditActivity(Long id, ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController) {
-    this(id, getDefaultView(), requests, placeController);
+  public EmployeeEditActivity(EmployeeRecord proxy,
+      ExpensesRequestFactory requests, PlaceController placeController,
+      boolean creating) {
+    this(getDefaultView(), proxy, requests, placeController, creating);
   }
 
   /**
-   * Creates an activity that uses its own view instance.
+   * Creates an activity that uses the given view instance.
    */
-  public EmployeeEditActivity(Long id, RecordEditView<EmployeeRecord> view,
-      ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController) {
-    super(view, id, requests);
+  public EmployeeEditActivity(RecordEditView<EmployeeRecord> view,
+      EmployeeRecord proxy, ExpensesRequestFactory requests,
+      PlaceController placeController, boolean creating) {
+    super(view, proxy, EmployeeRecord.class, creating, requests, placeController);
     this.requests = requests;
-    this.placeController = placeController;
-  }
-
-  @Override
-  protected void exit() {
-    placeController.goTo(new EmployeeScaffoldPlace(getId(), Operation.DETAILS));
   }
 
   @Override
@@ -74,13 +66,7 @@ public class EmployeeEditActivity extends
     requests.employeeRequest().findEmployee(id).fire(callback);
   }
 
-  @Override
-  protected Class getRecordClass() {
-    return EmployeeRecord.class;
-  }
-
-  @Override
-  protected void setRequestObject(EmployeeRecord record) {
-    requestObject = requests.employeeRequest().persist(record);
+  protected RequestObject<Void> getPersistRequest(EmployeeRecord record) {
+    return requests.employeeRequest().persist(record);
   }
 }

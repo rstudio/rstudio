@@ -175,10 +175,10 @@ class DeltaValueStoreJsonImpl {
           toRemove.add(new RecordKey(datastoreId, futureKey.schema, RequestFactoryJsonImpl.IS_FUTURE));
           master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
               masterRecord, WriteOperation.CREATE));
-          syncResults.add(new SyncResultImpl(masterRecord, null, futureKey.id));
+          syncResults.add(makeSyncResult(masterRecord, null, futureKey.id));
         } else {
           // do not change the masterRecord or fire event
-          syncResults.add(new SyncResultImpl(entry.getValue(), violations,
+          syncResults.add(makeSyncResult(entry.getValue(), violations,
               futureKey.id));
         }
       }
@@ -201,10 +201,10 @@ class DeltaValueStoreJsonImpl {
           toRemove.add(key);
           master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
               masterRecord, WriteOperation.DELETE));
-          syncResults.add(new SyncResultImpl(masterRecord, null, null));
+          syncResults.add(makeSyncResult(masterRecord, null, null));
         } else {
           // do not change the masterRecord or fire event
-          syncResults.add(new SyncResultImpl(entry.getValue(), violations, null));
+          syncResults.add(makeSyncResult(entry.getValue(), violations, null));
         }
       }
     }
@@ -226,10 +226,10 @@ class DeltaValueStoreJsonImpl {
           toRemove.add(key);
           master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
               masterRecord, WriteOperation.UPDATE));
-          syncResults.add(new SyncResultImpl(masterRecord, null, null));
+          syncResults.add(makeSyncResult(masterRecord, null, null));
         } else {
           // do not change the masterRecord or fire event
-          syncResults.add(new SyncResultImpl(entry.getValue(), violations, null));
+          syncResults.add(makeSyncResult(entry.getValue(), violations, null));
         }
       }
     }
@@ -403,8 +403,8 @@ class DeltaValueStoreJsonImpl {
 
   private void checkArgumentsAndState(Record record, String methodName) {
     if (used) {
-      throw new IllegalStateException(
-          methodName + " can only be called on an un-used DeltaValueStore");
+      throw new IllegalStateException(methodName
+          + " can only be called on an un-used DeltaValueStore");
     }
     if (!(record instanceof RecordImpl)) {
       throw new IllegalArgumentException(record + " + must be an instance of "
@@ -427,8 +427,8 @@ class DeltaValueStoreJsonImpl {
       } else {
         requestData.append(",");
       }
-      requestData.append("{\"" + entry.getValue().getSchema().getToken().getName()
-          + "\":");
+      requestData.append("{\""
+          + entry.getValue().getSchema().getToken().getName() + "\":");
       if (writeOperation != WriteOperation.DELETE) {
         requestData.append(impl.toJson());
       } else {
@@ -498,6 +498,11 @@ class DeltaValueStoreJsonImpl {
     }
 
     return true;
+  }
+
+  private SyncResultImpl makeSyncResult(RecordJsoImpl jso,
+      Map<String, String> violations, Long futureId) {
+    return new SyncResultImpl(jso.getSchema().create(jso), violations, futureId);
   }
 
   private RecordJsoImpl newChangeRecord(RecordImpl fromRecord) {

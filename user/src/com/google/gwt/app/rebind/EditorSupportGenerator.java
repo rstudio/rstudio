@@ -55,8 +55,7 @@ import java.util.Map.Entry;
  * </span>
  * </p>
  * Generates implementations of {@link
- * com.google.gwt.app.client.EditorSupport EditorSupport} and its
- * nested interfaces.
+ * com.google.gwt.app.client.EditorSupport EditorSupport}.
  */
 public class EditorSupportGenerator extends Generator {
 

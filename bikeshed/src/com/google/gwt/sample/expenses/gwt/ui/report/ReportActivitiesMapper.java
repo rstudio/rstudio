@@ -16,31 +16,37 @@
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
 import com.google.gwt.app.place.Activity;
-import com.google.gwt.app.place.ActivityMapper;
 import com.google.gwt.app.place.PlaceController;
-import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
+import com.google.gwt.app.place.ProxyPlace;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 
 /**
- * Maps {@link ReportScaffoldPlace} instances to the {@link Activity} to run.
+ * Maps {@link ProxyPlace} instances to the {@link Activity} to run.
  */
-public class ReportActivitiesMapper implements
-    ActivityMapper<ReportScaffoldPlace> {
+public class ReportActivitiesMapper {
   private final ExpensesRequestFactory requests;
-  private final PlaceController<ScaffoldPlace> placeController;
+  private final PlaceController placeController;
 
-  public ReportActivitiesMapper(ExpensesRequestFactory requests, PlaceController<ScaffoldPlace> placeController) {
+  public ReportActivitiesMapper(ExpensesRequestFactory requests,
+      PlaceController placeController) {
     this.requests = requests;
     this.placeController = placeController;
   }
 
-  public Activity getActivity(ReportScaffoldPlace place) {
+  public Activity getActivity(ProxyPlace place) {
     switch (place.getOperation()) {
       case DETAILS:
-        return new ReportDetailsActivity(place.getId(), requests, placeController);
+        return new ReportDetailsActivity((ReportRecord) place.getProxy(),
+            requests, placeController);
+
       case EDIT:
-        return new ReportEditActivity(place.getId(), requests, placeController);
+        return new ReportEditActivity((ReportRecord) place.getProxy(),
+            requests, placeController, false);
+
+      case CREATE:
+        return new ReportEditActivity((ReportRecord) place.getProxy(),
+            requests, placeController, true);
     }
 
     throw new IllegalArgumentException("Unknown operation "

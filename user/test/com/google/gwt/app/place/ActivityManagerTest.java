@@ -15,7 +15,11 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.user.client.ui.Widget;
 
 import junit.framework.TestCase;
@@ -30,7 +34,7 @@ public class ActivityManagerTest extends TestCase {
     }
 
     @Override
-    public void start(Display display) {
+    public void start(Display display, EventBus eventBus) {
       this.display = display;
     }
 
@@ -38,6 +42,23 @@ public class ActivityManagerTest extends TestCase {
       display.showActivityWidget(view);
     }
   }
+
+  private static class Event extends GwtEvent<Handler> {
+    private static GwtEvent.Type<EventHandler> TYPE = new GwtEvent.Type<EventHandler>();
+
+    @Override
+    public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType() {
+      throw new UnsupportedOperationException("Auto-generated method stub");
+    }
+
+    @Override
+    protected void dispatch(Handler handler) {
+      throw new UnsupportedOperationException("Auto-generated method stub");
+    }
+  }
+
+  private static class Handler implements EventHandler {
+  };
 
   private static class MyDisplay implements Activity.Display {
     IsWidget widget = null;
@@ -48,23 +69,27 @@ public class ActivityManagerTest extends TestCase {
   }
 
   private static class MyPlace extends Place {
-  };
+  }
 
   private static class MyView implements IsWidget {
     public Widget asWidget() {
       return null;
     }
   }
-
   private static class SyncActivity implements Activity {
     boolean canceled = false;
     boolean stopped = false;
-    Display display = null;
-    String stopWarning = null;
+    Display display;
+    String stopWarning;
     MyView view;
+    EventBus bus;
 
     SyncActivity(MyView view) {
       this.view = view;
+    }
+
+    public String mayStop() {
+      return stopWarning;
     }
 
     public void onCancel() {
@@ -75,26 +100,23 @@ public class ActivityManagerTest extends TestCase {
       stopped = true;
     }
 
-    public void start(Display display) {
+    public void start(Display display, EventBus eventBus) {
       this.display = display;
+      this.bus = eventBus;
       display.showActivityWidget(view);
-    }
-
-    public String mayStop() {
-      return stopWarning;
     }
   }
 
   private final MyPlace place1 = new MyPlace();
   private final MyPlace place2 = new MyPlace();
 
-  private final SyncActivity activity1 = new SyncActivity(new MyView());
-  private final SyncActivity activity2 = new SyncActivity(new MyView());
+  private SyncActivity activity1 = new SyncActivity(new MyView());
+
+  private SyncActivity activity2 = new SyncActivity(new MyView());
 
   private final MyDisplay realDisplay = new MyDisplay();
-
-  private final ActivityMapper<MyPlace> myMap = new ActivityMapper<MyPlace>() {
-    public Activity getActivity(MyPlace place) {
+  private final ActivityMapper myMap = new ActivityMapper() {
+    public Activity getActivity(Place place) {
       if (place.equals(place1)) {
         return activity1;
       }
@@ -107,15 +129,16 @@ public class ActivityManagerTest extends TestCase {
   };
 
   private HandlerManager eventBus = new HandlerManager(null);
-  private ActivityManager<MyPlace> manager = new ActivityManager<MyPlace>(
+
+  private ActivityManager manager = new ActivityManager(
       myMap, eventBus);
 
   public void testAsyncDispatch() {
     final AsyncActivity asyncActivity1 = new AsyncActivity(new MyView());
     final AsyncActivity asyncActivity2 = new AsyncActivity(new MyView());
 
-    ActivityMapper<MyPlace> map = new ActivityMapper<MyPlace>() {
-      public Activity getActivity(MyPlace place) {
+    ActivityMapper map = new ActivityMapper() {
+      public Activity getActivity(Place place) {
         if (place.equals(place1)) {
           return asyncActivity1;
         }
@@ -127,10 +150,10 @@ public class ActivityManagerTest extends TestCase {
       }
     };
 
-    manager = new ActivityManager<MyPlace>(map, eventBus);
+    manager = new ActivityManager(map, eventBus);
     manager.setDisplay(realDisplay);
 
-    PlaceChangeRequestedEvent<MyPlace> event = new PlaceChangeRequestedEvent<MyPlace>(
+    PlaceChangeRequesteEvent event = new PlaceChangeRequesteEvent(
         place1);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
@@ -139,7 +162,7 @@ public class ActivityManagerTest extends TestCase {
     assertFalse(asyncActivity1.canceled);
     assertNull(asyncActivity1.display);
 
-    eventBus.fireEvent(new PlaceChangeEvent<Place>(place1));
+    eventBus.fireEvent(new PlaceChangeEvent(place1));
     assertNull(realDisplay.widget);
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
@@ -150,7 +173,7 @@ public class ActivityManagerTest extends TestCase {
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
 
-    event = new PlaceChangeRequestedEvent<MyPlace>(place2);
+    event = new PlaceChangeRequesteEvent(place2);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
     assertEquals(asyncActivity1.view, realDisplay.widget);
@@ -160,12 +183,12 @@ public class ActivityManagerTest extends TestCase {
     assertFalse(asyncActivity2.canceled);
     assertNull(asyncActivity2.display);
 
-    eventBus.fireEvent(new PlaceChangeEvent<Place>(place2));
+    eventBus.fireEvent(new PlaceChangeEvent(place2));
     /*
-     * TODO until caching is in place, relying on stopped activities to be
-     * good citizens to reduce flicker. This makes me very nervous.
+     * TODO until caching is in place, relying on stopped activities to be good
+     * citizens to reduce flicker. This makes me very nervous.
      */
-//    assertNull(realDisplay.widget);
+    // assertNull(realDisplay.widget);
     assertFalse(asyncActivity1.canceled);
     assertTrue(asyncActivity1.stopped);
     assertFalse(asyncActivity2.stopped);
@@ -180,8 +203,8 @@ public class ActivityManagerTest extends TestCase {
     final AsyncActivity asyncActivity1 = new AsyncActivity(new MyView());
     final AsyncActivity ayncActivity2 = new AsyncActivity(new MyView());
 
-    ActivityMapper<MyPlace> map = new ActivityMapper<MyPlace>() {
-      public Activity getActivity(MyPlace place) {
+    ActivityMapper map = new ActivityMapper() {
+      public Activity getActivity(Place place) {
         if (place.equals(place1)) {
           return asyncActivity1;
         }
@@ -193,10 +216,10 @@ public class ActivityManagerTest extends TestCase {
       }
     };
 
-    manager = new ActivityManager<MyPlace>(map, eventBus);
+    manager = new ActivityManager(map, eventBus);
     manager.setDisplay(realDisplay);
 
-    PlaceChangeRequestedEvent<MyPlace> event = new PlaceChangeRequestedEvent<MyPlace>(
+    PlaceChangeRequesteEvent event = new PlaceChangeRequesteEvent(
         place1);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
@@ -205,20 +228,20 @@ public class ActivityManagerTest extends TestCase {
     assertFalse(asyncActivity1.canceled);
     assertNull(asyncActivity1.display);
 
-    eventBus.fireEvent(new PlaceChangeEvent<Place>(place1));
+    eventBus.fireEvent(new PlaceChangeEvent(place1));
     assertNull(realDisplay.widget);
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
     assertNotNull(asyncActivity1.display);
 
-    event = new PlaceChangeRequestedEvent<MyPlace>(place2);
+    event = new PlaceChangeRequesteEvent(place2);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
     assertNull(realDisplay.widget);
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
 
-    eventBus.fireEvent(new PlaceChangeEvent<Place>(place2));
+    eventBus.fireEvent(new PlaceChangeEvent(place2));
     assertNull(realDisplay.widget);
     assertTrue(asyncActivity1.canceled);
     assertFalse(asyncActivity1.stopped);
@@ -233,19 +256,98 @@ public class ActivityManagerTest extends TestCase {
     assertEquals(ayncActivity2.view, realDisplay.widget);
   }
 
+  public void testDropHandlersOnStop() {
+    manager.setDisplay(realDisplay);
+
+    assertEquals(0, eventBus.getHandlerCount(Event.TYPE));
+
+    activity1 = new SyncActivity(null) {
+      @Override
+      public void start(Display panel, EventBus eventBus) {
+        super.start(panel, eventBus);
+        bus.addHandler(Event.TYPE, new Handler());
+      }
+
+      @Override
+      public void onStop() {
+        super.onStop();
+        bus.addHandler(Event.TYPE, new Handler());
+      }
+    };
+
+    PlaceChangeEvent event = new PlaceChangeEvent(place1);
+    eventBus.fireEvent(event);
+    assertEquals(1, eventBus.getHandlerCount(Event.TYPE));
+
+    event = new PlaceChangeEvent(place2);
+    eventBus.fireEvent(event);
+    assertEquals(0, eventBus.getHandlerCount(Event.TYPE));
+
+    // Make sure we didn't nuke the ActivityManager's own handlers
+    assertEquals(1, eventBus.getHandlerCount(PlaceChangeEvent.TYPE));
+    assertEquals(1, eventBus.getHandlerCount(PlaceChangeRequesteEvent.TYPE));
+  }
+
   public void testEventSetupAndTeardown() {
     assertEquals(0, eventBus.getHandlerCount(PlaceChangeEvent.TYPE));
-    assertEquals(0, eventBus.getHandlerCount(PlaceChangeRequestedEvent.TYPE));
+    assertEquals(0, eventBus.getHandlerCount(PlaceChangeRequesteEvent.TYPE));
 
     manager.setDisplay(realDisplay);
 
     assertEquals(1, eventBus.getHandlerCount(PlaceChangeEvent.TYPE));
-    assertEquals(1, eventBus.getHandlerCount(PlaceChangeRequestedEvent.TYPE));
+    assertEquals(1, eventBus.getHandlerCount(PlaceChangeRequesteEvent.TYPE));
 
     manager.setDisplay(null);
 
     assertEquals(0, eventBus.getHandlerCount(PlaceChangeEvent.TYPE));
-    assertEquals(0, eventBus.getHandlerCount(PlaceChangeRequestedEvent.TYPE));
+    assertEquals(0, eventBus.getHandlerCount(PlaceChangeRequesteEvent.TYPE));
+  }
+
+  public void testExceptionsOnStopAndStart() {
+    activity1 = new SyncActivity(null) {
+      @Override
+      public void start(Display panel, EventBus eventBus) {
+        super.start(panel, eventBus);
+        bus.addHandler(Event.TYPE, new Handler());
+      }
+      @Override
+      public void onStop() {
+        super.onStop();
+        bus.addHandler(Event.TYPE, new Handler());
+        throw new UnsupportedOperationException("Auto-generated method stub");
+      }
+    };
+
+    activity2 = new SyncActivity(null) {
+      @Override
+      public void start(Display panel, EventBus eventBus) {
+        super.start(panel, eventBus);
+        throw new UnsupportedOperationException("Auto-generated method stub");
+      }
+    };
+
+    manager.setDisplay(realDisplay);
+
+    try {
+      PlaceChangeEvent event = new PlaceChangeEvent(place1);
+      eventBus.fireEvent(event);
+      assertEquals(1, eventBus.getHandlerCount(Event.TYPE));
+
+      event = new PlaceChangeEvent(place2);
+      eventBus.fireEvent(event);
+
+      fail("Expected exception");
+    } catch (UmbrellaException e) {
+      // HandlerManager throws this one
+      assertEquals(1, e.getCauses().size());
+
+      UmbrellaException nested = (UmbrellaException) e.getCause();
+      assertEquals(2, nested.getCauses().size());
+    }
+
+    assertTrue(activity1.stopped);
+    assertNotNull(activity2.display);
+    assertEquals(0, eventBus.getHandlerCount(Event.TYPE));
   }
 
   public void testRejected() {
@@ -253,16 +355,16 @@ public class ActivityManagerTest extends TestCase {
 
     activity1.stopWarning = "Stop fool!";
 
-    PlaceChangeRequestedEvent<MyPlace> event = new PlaceChangeRequestedEvent<MyPlace>(
+    PlaceChangeRequesteEvent event = new PlaceChangeRequesteEvent(
         place1);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
     assertNull(realDisplay.widget);
 
-    eventBus.fireEvent(new PlaceChangeEvent<Place>(place1));
+    eventBus.fireEvent(new PlaceChangeEvent(place1));
     assertEquals(activity1.view, realDisplay.widget);
 
-    event = new PlaceChangeRequestedEvent<MyPlace>(place2);
+    event = new PlaceChangeRequesteEvent(place2);
     eventBus.fireEvent(event);
     assertEquals(activity1.stopWarning, event.getWarning());
     assertEquals(activity1.view, realDisplay.widget);
@@ -273,7 +375,7 @@ public class ActivityManagerTest extends TestCase {
   public void testSyncDispatch() {
     manager.setDisplay(realDisplay);
 
-    PlaceChangeRequestedEvent<MyPlace> event = new PlaceChangeRequestedEvent<MyPlace>(
+    PlaceChangeRequesteEvent event = new PlaceChangeRequesteEvent(
         place1);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
@@ -281,19 +383,19 @@ public class ActivityManagerTest extends TestCase {
     assertFalse(activity1.stopped);
     assertFalse(activity1.canceled);
 
-    eventBus.fireEvent(new PlaceChangeEvent<Place>(place1));
+    eventBus.fireEvent(new PlaceChangeEvent(place1));
     assertEquals(activity1.view, realDisplay.widget);
     assertFalse(activity1.stopped);
     assertFalse(activity1.canceled);
 
-    event = new PlaceChangeRequestedEvent<MyPlace>(place2);
+    event = new PlaceChangeRequesteEvent(place2);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
     assertEquals(activity1.view, realDisplay.widget);
     assertFalse(activity1.stopped);
     assertFalse(activity1.canceled);
 
-    eventBus.fireEvent(new PlaceChangeEvent<Place>(place2));
+    eventBus.fireEvent(new PlaceChangeEvent(place2));
     assertEquals(activity2.view, realDisplay.widget);
     assertTrue(activity1.stopped);
     assertFalse(activity1.canceled);

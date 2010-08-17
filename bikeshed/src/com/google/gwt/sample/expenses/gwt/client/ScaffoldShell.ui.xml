@@ -134,7 +134,7 @@
     <g:center>
       <g:FlowPanel styleName='{style.content} {style.centered}'>
         <g:SimplePanel styleName='{style.entities}'>
-          <a:CellListPlacePickerView styleName="{style.entitiesList}" width='100%' pageSize='100' ui:field='placesBox'/>
+          <g:ValuePicker styleName="{style.entitiesList}" width='100%' pageSize='100' ui:field='placesBox'/>
         </g:SimplePanel>
         <g:FlowPanel>
           <a:NotificationMole animationDuration='0' message='loading...' ui:field='mole'></a:NotificationMole>

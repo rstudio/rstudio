@@ -19,9 +19,7 @@ import com.google.gwt.app.place.AbstractRecordEditActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordEditView;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.valuestore.shared.Value;
@@ -42,45 +40,32 @@ public class ReportEditActivity extends
   }
 
   private final ExpensesRequestFactory requests;
-  private final PlaceController<ScaffoldPlace> placeController;
 
   /**
    * Creates an activity that uses the default singleton view instance.
    */
-  public ReportEditActivity(Long id, ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController) {
-    this(id, getDefaultView(), requests, placeController);
+  public ReportEditActivity(ReportRecord proxy,
+      ExpensesRequestFactory requests, PlaceController placeController,
+      boolean creating) {
+    this(proxy, getDefaultView(), requests, placeController, creating);
   }
 
   /**
-   * Creates an activity that uses its own view instance.
+   * Creates an activity that uses the given view instance.
    */
-  public ReportEditActivity(Long id, RecordEditView<ReportRecord> view,
-      ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController) {
-    super(view, id, requests);
+  public ReportEditActivity(ReportRecord proxy,
+      RecordEditView<ReportRecord> view, ExpensesRequestFactory requests,
+      PlaceController placeController, boolean creating) {
+    super(view, proxy, ReportRecord.class, creating, requests, placeController);
     this.requests = requests;
-    this.placeController = placeController;
   }
 
   @Override
-  protected void exit() {
-    placeController.goTo(new ReportScaffoldPlace(getId(), Operation.DETAILS));
-  }
-
-  @Override
-  protected void fireFindRequest(Value<Long> id,
-      Receiver<ReportRecord> callback) {
+  protected void fireFindRequest(Value<Long> id, Receiver<ReportRecord> callback) {
     requests.reportRequest().findReport(id).fire(callback);
   }
 
-  @Override
-  protected Class getRecordClass() {
-    return ReportRecord.class;
-  }
-
-  @Override
-  protected void setRequestObject(ReportRecord record) {
-    requestObject = requests.reportRequest().persist(record);
+  protected RequestObject<Void> getPersistRequest(ReportRecord record) {
+    return requests.reportRequest().persist(record);
   }
 }

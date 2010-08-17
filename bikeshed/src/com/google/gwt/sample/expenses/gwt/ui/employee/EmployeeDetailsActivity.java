@@ -17,12 +17,12 @@ package com.google.gwt.sample.expenses.gwt.ui.employee;
 
 import com.google.gwt.app.place.AbstractActivity;
 import com.google.gwt.app.place.PlaceController;
+import com.google.gwt.app.place.ProxyPlace;
 import com.google.gwt.app.place.RecordDetailsView;
+import com.google.gwt.app.place.ProxyPlace.Operation;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.valuestore.shared.SyncResult;
@@ -34,7 +34,6 @@ import java.util.Set;
  * An {@link com.google.gwt.app.place.Activity Activity} that requests and
  * displays detailed information on a given employee.
  */
-// TODO yet another abstract activity is needed
 public class EmployeeDetailsActivity extends AbstractActivity implements
     RecordDetailsView.Delegate {
   private static RecordDetailsView<EmployeeRecord> defaultView;
@@ -47,27 +46,27 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
   }
 
   private final ExpensesRequestFactory requests;
-  private final PlaceController<ScaffoldPlace> placeController;
+  private final PlaceController placeController;
   private final RecordDetailsView<EmployeeRecord> view;
-  private Long id;
+  private EmployeeRecord record;
   private Display display;
 
   /**
    * Creates an activity that uses the default singleton view instance.
    */
-  public EmployeeDetailsActivity(Long id, ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController) {
-    this(id, requests, placeController, getDefaultView());
+  public EmployeeDetailsActivity(EmployeeRecord proxy,
+      ExpensesRequestFactory requests, PlaceController placeController) {
+    this(proxy, requests, placeController, getDefaultView());
   }
 
   /**
    * Creates an activity that uses its own view instance.
    */
-  public EmployeeDetailsActivity(Long id, ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController,
+  public EmployeeDetailsActivity(EmployeeRecord proxy,
+      ExpensesRequestFactory requests, PlaceController placeController,
       RecordDetailsView<EmployeeRecord> view) {
     this.placeController = placeController;
-    this.id = id;
+    this.record = proxy;
     this.requests = requests;
     view.setDelegate(this);
     this.view = view;
@@ -77,9 +76,8 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
     if (!view.confirm("Really delete this record? You cannot undo this change.")) {
       return;
     }
-    
+
     RequestObject<Void> deleteRequest = requests.employeeRequest().remove(view.getValue());
-    deleteRequest.delete(view.getValue());
     deleteRequest.fire(new Receiver<Void>() {
 
       public void onSuccess(Void ignore, Set<SyncResult> response) {
@@ -87,15 +85,14 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
           // This activity is dead
           return;
         }
-        
+
         display.showActivityWidget(null);
       }
     });
   }
 
   public void editClicked() {
-    placeController.goTo(new EmployeeScaffoldPlace(view.getValue(),
-        Operation.EDIT));
+    placeController.goTo(new ProxyPlace(view.getValue(), Operation.EDIT));
   }
 
   @Override
@@ -107,8 +104,8 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
   public void onStop() {
     display = null;
   }
-  
-  public void start(Display displayIn) {
+
+  public void start(Display displayIn, EventBus eventBus) {
     this.display = displayIn;
     Receiver<EmployeeRecord> callback = new Receiver<EmployeeRecord>() {
       public void onSuccess(EmployeeRecord record, Set<SyncResult> syncResults) {
@@ -120,6 +117,6 @@ public class EmployeeDetailsActivity extends AbstractActivity implements
       }
     };
 
-    requests.employeeRequest().findEmployee(Value.of(id)).with("supervisor").fire(callback);
+    requests.employeeRequest().findEmployee(Value.of(record.getId())).with("supervisor").fire(callback);
   }
 }

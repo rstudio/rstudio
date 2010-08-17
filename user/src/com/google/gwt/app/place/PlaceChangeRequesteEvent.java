@@ -27,42 +27,38 @@ import com.google.gwt.event.shared.GwtEvent;
  * Event thrown when the user may go to a new place in the app, or tries to
  * leave it. Receivers can call {@link #setWarning(String)} request that the
  * user be prompted to confirm the change.
- * 
- * @param <P> the type of the requested place
  */
-public class PlaceChangeRequestedEvent<P extends Place> extends
-    GwtEvent<PlaceChangeRequestedEvent.Handler<P>> {
+public class PlaceChangeRequesteEvent extends
+    GwtEvent<PlaceChangeRequesteEvent.Handler> {
 
   /**
    * Implemented by handlers of PlaceChangeRequestedEvent.
    * 
    * @param <P> the type of the requested Place
    */
-  public interface Handler<P extends Place> extends EventHandler {
-    void onPlaceChangeRequested(PlaceChangeRequestedEvent<P> event);
+  public interface Handler extends EventHandler {
+    void onPlaceChangeRequest(PlaceChangeRequesteEvent event);
   }
 
-  public static final Type<Handler<?>> TYPE = new Type<Handler<?>>();
+  public static final Type<Handler> TYPE = new Type<Handler>();
 
   private String warning;
 
-  private final P newPlace;
+  private final Place newPlace;
 
-  public PlaceChangeRequestedEvent(P newPlace) {
+  public PlaceChangeRequesteEvent(Place newPlace) {
     this.newPlace = newPlace;
   }
 
-  // param type of static TYPE cannot be set
-  @SuppressWarnings("unchecked")
   @Override
-  public Type<Handler<P>> getAssociatedType() {
-    return (Type) TYPE;
+  public Type<Handler> getAssociatedType() {
+    return TYPE;
   }
 
   /**
    * @return the place we may navigate to, or null on window close
    */
-  public P getNewPlace() {
+  public Place getNewPlace() {
     return newPlace;
   }
 
@@ -92,7 +88,7 @@ public class PlaceChangeRequestedEvent<P extends Place> extends
   }
 
   @Override
-  protected void dispatch(Handler<P> handler) {
-    handler.onPlaceChangeRequested(this);
+  protected void dispatch(Handler handler) {
+    handler.onPlaceChangeRequest(this);
   }
 }

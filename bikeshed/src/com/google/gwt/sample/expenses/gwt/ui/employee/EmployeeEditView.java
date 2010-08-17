@@ -60,11 +60,11 @@ public class EmployeeEditView extends Composite implements
   @UiField InlineLabel id;
   @UiField InlineLabel version;
   @UiField DivElement errors;
+  
   @UiField Element editTitle;
   @UiField Element createTitle;
 
   private Delegate delegate;
-
   private EmployeeRecord record;
 
   public EmployeeEditView() {

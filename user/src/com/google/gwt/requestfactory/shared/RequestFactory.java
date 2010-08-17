@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.valuestore.shared.Record;
 
 /**
@@ -35,8 +35,51 @@ public interface RequestFactory {
   String URL = "gwtRequest";
 
   Record create(Class token);
-  
-  void init(HandlerManager eventBus);
+
+  /**
+   * Return the class object which may be used to create new instances of the
+   * type of the given proxy, via {@link #create}. Due to limitations of GWT's
+   * metadata system, calls to the proxy's getClass() method will not serve this
+   * purpose.
+   */
+  Class<? extends Record> getClass(Record proxy);
+
+/**
+   * Return the class object which may be used to create new instances of the
+   * type of this token, via {@link #create}. The token may represent either a
+   * proxy instance (see {@link #getToken(Record)) or a proxy class (see
+   * 
+   * @link #getToken(Class)}).
+   */
+  Class<? extends Record> getClass(String token);
+
+  /**
+   * Return the appropriate proxy, which may have only its id attribute set.
+   */
+  Record getProxy(String token);
+
+  /**
+   * Get a {@link com.google.gwt.user.client.History} compatible token that
+   * represents the given class. It can be processed by
+   * {@link #getClass(String)}
+   * 
+   * @return a {@link com.google.gwt.user.client.History} compatible token
+   */
+  String getToken(Class<? extends Record> clazz);
+
+  /**
+   * Get a {@link com.google.gwt.user.client.History} compatible token that
+   * represents the given proxy. It can be processed by
+   * {@link #getClass(String)} and {@link #getClass(Record)}.
+   * 
+   * @return a {@link com.google.gwt.user.client.History} compatible token
+   */
+  String getToken(Record proxy);
+
+  /**
+   * Start this request factory.
+   */
+  void init(EventBus eventBus);
 
   // The following methods match the format for the generated sub-interfaces
   // and implementations are generated using the same code we use to generate

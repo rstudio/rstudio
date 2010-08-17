@@ -16,6 +16,7 @@
 package com.google.gwt.app;
 
 import com.google.gwt.app.place.ActivityManagerTest;
+import com.google.gwt.app.place.AbstractPlaceHistoryHandlerTest;
 import com.google.gwt.app.place.PlaceChangeRequestedEventTest;
 import com.google.gwt.app.place.PlaceControllerTest;
 
@@ -23,12 +24,13 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
- * Suite of UiBinder tests that require the JRE.
+ * Suite of app package tests that require the JRE.
  */
 public class AppJreSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("app package tests that require the JRE");
     suite.addTestSuite(ActivityManagerTest.class);
+    suite.addTestSuite(AbstractPlaceHistoryHandlerTest.class);
     suite.addTestSuite(PlaceControllerTest.class);
     suite.addTestSuite(PlaceChangeRequestedEventTest.class);
     return suite;

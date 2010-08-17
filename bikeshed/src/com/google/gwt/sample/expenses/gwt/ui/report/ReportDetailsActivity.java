@@ -17,12 +17,12 @@ package com.google.gwt.sample.expenses.gwt.ui.report;
 
 import com.google.gwt.app.place.AbstractActivity;
 import com.google.gwt.app.place.PlaceController;
+import com.google.gwt.app.place.ProxyPlace;
 import com.google.gwt.app.place.RecordDetailsView;
+import com.google.gwt.app.place.ProxyPlace.Operation;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.valuestore.shared.SyncResult;
@@ -34,7 +34,7 @@ import java.util.Set;
  * An {@link com.google.gwt.app.place.Activity Activity} that requests and
  * displays detailed information on a given report.
  */
-//TODO yet another abstract activity is needed
+// TODO yet another abstract activity is needed
 public class ReportDetailsActivity extends AbstractActivity implements
     RecordDetailsView.Delegate {
   private static RecordDetailsView<ReportRecord> defaultView;
@@ -47,27 +47,27 @@ public class ReportDetailsActivity extends AbstractActivity implements
   }
 
   private final ExpensesRequestFactory requests;
-  private final PlaceController<ScaffoldPlace> placeController;
+  private final PlaceController placeController;
   private final RecordDetailsView<ReportRecord> view;
-  private Long id;
+  private ReportRecord record;
   private Display display;
 
   /**
    * Creates an activity that uses the default singleton view instance.
    */
-  public ReportDetailsActivity(Long id, ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController) {
-    this(id, requests, placeController, getDefaultView());
+  public ReportDetailsActivity(ReportRecord proxy,
+      ExpensesRequestFactory requests, PlaceController placeController) {
+    this(proxy, requests, placeController, getDefaultView());
   }
 
   /**
    * Creates an activity that uses its own view instance.
    */
-  public ReportDetailsActivity(Long id, ExpensesRequestFactory requests,
-      PlaceController<ScaffoldPlace> placeController,
+  public ReportDetailsActivity(ReportRecord proxy,
+      ExpensesRequestFactory requests, PlaceController placeController,
       RecordDetailsView<ReportRecord> view) {
     this.placeController = placeController;
-    this.id = id;
+    this.record = proxy;
     this.requests = requests;
     view.setDelegate(this);
     this.view = view;
@@ -77,7 +77,7 @@ public class ReportDetailsActivity extends AbstractActivity implements
     if (!view.confirm("Really delete this record? You cannot undo this change.")) {
       return;
     }
-    
+
     RequestObject<Void> deleteRequest = requests.reportRequest().remove(view.getValue());
     deleteRequest.delete(view.getValue());
     deleteRequest.fire(new Receiver<Void>() {
@@ -87,15 +87,14 @@ public class ReportDetailsActivity extends AbstractActivity implements
           // This activity is dead
           return;
         }
-        
+
         display.showActivityWidget(null);
       }
     });
   }
 
   public void editClicked() {
-    placeController.goTo(new ReportScaffoldPlace(view.getValue(),
-        Operation.EDIT));
+    placeController.goTo(new ProxyPlace(view.getValue(), Operation.EDIT));
   }
 
   @Override
@@ -107,8 +106,8 @@ public class ReportDetailsActivity extends AbstractActivity implements
   public void onStop() {
     display = null;
   }
-  
-  public void start(final Display displayIn) {
+
+  public void start(final Display displayIn, EventBus eventBus) {
     this.display = displayIn;
     Receiver<ReportRecord> callback = new Receiver<ReportRecord>() {
       public void onSuccess(ReportRecord record, Set<SyncResult> syncResults) {
@@ -119,7 +118,7 @@ public class ReportDetailsActivity extends AbstractActivity implements
         display.showActivityWidget(view);
       }
     };
-    requests.reportRequest().findReport(Value.of(id)).with(
+    requests.reportRequest().findReport(Value.of(record.getId())).with(
         "reporter", "approvedSupervisor").fire(callback);
   }
 }

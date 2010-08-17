@@ -17,54 +17,27 @@ package com.google.gwt.sample.expenses.gwt.client;
 
 import com.google.gwt.app.place.Activity;
 import com.google.gwt.app.place.ActivityMapper;
-import com.google.gwt.app.place.PlaceController;
-import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlaceFilter;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeActivitiesMapper;
-import com.google.gwt.sample.expenses.gwt.ui.report.ReportActivitiesMapper;
+import com.google.gwt.app.place.Place;
 
 /**
- * Finds the activity to run for a particular {@link ScaffoldPlace}.
+ * Instantiates activities for the mobile app.
  */
-public final class ScaffoldMobileActivities implements
-    ActivityMapper<ScaffoldPlace> {
+public final class ScaffoldMobileActivities implements ActivityMapper {
 
-  private final ActivityMapper<ListScaffoldPlace> listActivitiesBuilder;
-  private final ActivityMapper<EmployeeScaffoldPlace> employeeActivitiesBuilder;
-  private final ActivityMapper<ReportScaffoldPlace> reportActivitiesBuilder;
+  private final ExpensesMasterActivities listActivityBuilder;
+  private final ExpensesDetailsActivities detailsActivityBuilder;
 
-  /**
-   * @param requestFactory
-   * @param placeController
-   */
-  public ScaffoldMobileActivities(
-      ActivityMapper<ListScaffoldPlace> listActivitiesBuilder,
-      ExpensesRequestFactory requestFactory,
-      PlaceController<ScaffoldPlace> placeController) {
-    this.listActivitiesBuilder = listActivitiesBuilder;
-    this.employeeActivitiesBuilder = new EmployeeActivitiesMapper(
-        requestFactory, placeController);
-    this.reportActivitiesBuilder = new ReportActivitiesMapper(requestFactory,
-        placeController);
+  public ScaffoldMobileActivities(ExpensesMasterActivities listActivitiesBuilder,
+      ExpensesDetailsActivities detailsActivityBuilder) {
+    this.listActivityBuilder = listActivitiesBuilder;
+    this.detailsActivityBuilder = detailsActivityBuilder;
   }
 
-  public Activity getActivity(ScaffoldPlace place) {
-    return place.acceptFilter(new ScaffoldPlaceFilter<Activity>() {
-      public Activity filter(EmployeeScaffoldPlace place) {
-        return employeeActivitiesBuilder.getActivity(place);
-      }
-
-      public Activity filter(ListScaffoldPlace place) {
-        return listActivitiesBuilder.getActivity(place);
-      }
-
-      public Activity filter(ReportScaffoldPlace place) {
-        return reportActivitiesBuilder.getActivity(place);
-      }
-    });
+  public Activity getActivity(Place place) {
+    Activity rtn = listActivityBuilder.getActivity(place);
+    if (rtn == null) {
+      rtn = detailsActivityBuilder.getActivity(place);
+    }
+    return rtn;
   }
 }
