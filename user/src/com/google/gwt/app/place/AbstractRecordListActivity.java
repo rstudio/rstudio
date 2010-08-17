@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,19 +47,19 @@ import java.util.Set;
  * Abstract activity for requesting and displaying a list of {@link Record}.
  * <p>
  * Subclasses must:
- *
+ * 
  * <ul>
  * <li>implement methods to provide a full count, and request a specific
  * <li>provide a {@link RecordListView}
  * <li>respond to "show details" commands
  * </ul>
- *
+ * 
  * Only the properties required by the view will be requested.
- *
+ * 
  * @param <R> the type of {@link Record} listed
  */
-public abstract class AbstractRecordListActivity<R extends Record>
-    implements Activity, RecordListView.Delegate<R> {
+public abstract class AbstractRecordListActivity<R extends Record> implements
+    Activity, RecordListView.Delegate<R> {
   /**
    * Used by the table and its selection model, to define record equality via
    * id.
@@ -101,12 +101,11 @@ public abstract class AbstractRecordListActivity<R extends Record>
     view.setDelegate(this);
 
     final HasData<R> hasData = view.asHasData();
-    rangeChangeHandler = hasData.addRangeChangeHandler(
-        new RangeChangeEvent.Handler() {
-          public void onRangeChange(RangeChangeEvent event) {
-            AbstractRecordListActivity.this.onRangeChanged(hasData);
-          }
-        });
+    rangeChangeHandler = hasData.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      public void onRangeChange(RangeChangeEvent event) {
+        AbstractRecordListActivity.this.onRangeChanged(hasData);
+      }
+    });
 
     selectionModel = new SingleSelectionModel<R>();
     selectionModel.setKeyProvider(keyProvider);
@@ -224,6 +223,16 @@ public abstract class AbstractRecordListActivity<R extends Record>
 
   protected abstract void fireCountRequest(Receiver<Long> callback);
 
+  /**
+   * Called when the user chooses a record to view. This default implementation
+   * sends the {@link PlaceController} to an appropriate {@link ProxyPlace}.
+   * 
+   * @param record the chosen record
+   */
+  protected void showDetails(R record) {
+    placeController.goTo(new ProxyPlace(record, Operation.DETAILS));
+  }
+
   private void getLastPage() {
     fireCountRequest(new Receiver<Long>() {
       public void onSuccess(Long response, Set<SyncResult> syncResults) {
@@ -254,10 +263,6 @@ public abstract class AbstractRecordListActivity<R extends Record>
   @SuppressWarnings("unchecked")
   private void selectCoerced(Place newPlace) {
     select((R) ((ProxyPlace) newPlace).getProxy());
-  }
-
-  private void showDetails(R record) {
-    placeController.goTo(new ProxyPlace(record, Operation.DETAILS));
   }
 
   private void update(R record) {

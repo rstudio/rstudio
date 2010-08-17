@@ -70,15 +70,15 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     if ((unsavedChangesWarning == null)
         || Window.confirm(unsavedChangesWarning)) {
       if (requestObject != null) {
-        requestObject.reset(); // silence the next mayStop() call when place
+        // silence the next mayStop() call when place changes
+        requestObject.reset();
       }
-      // changes
-      if (creating) {
-        display.showActivityWidget(null);
-      } else {
-        exit();
-      }
+      exit(false);
     }
+  }
+
+  public R getRecord() {
+    return record;
   }
 
   public String mayStop() {
@@ -113,10 +113,10 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
           return;
         }
         boolean hasViolations = false;
-        
-        // TODO(amit) at the moment we only get one response, and futures are buggy. 
-        // So forcing the issue for now, but the more code involved may have to come back
-        // when bugs are fixed
+
+        // TODO(amit) at the moment we only get one response, and futures are
+        // buggy. So forcing the issue for now, but the more involved code may
+        // have to come back when bugs are fixed
         assert response.size() == 1;
         SyncResult syncResult = response.iterator().next();
         record = cast(syncResult.getRecord());
@@ -124,25 +124,25 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
           hasViolations = true;
           view.showErrors(syncResult.getViolations());
         }
-//        for (SyncResult syncResult : response) {
-//          Record syncRecord = syncResult.getRecord();
-//          if (creating) {
-//            if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
-//              continue;
-//            }
-//            record = cast(syncRecord);
-//          } else {
-//            if (!syncRecord.getId().equals(record.getId())) {
-//              continue;
-//            }
-//          }
-//          if (syncResult.hasViolations()) {
-//            hasViolations = true;
-//            view.showErrors(syncResult.getViolations());
-//          }
-//        }
+        // for (SyncResult syncResult : response) {
+        // Record syncRecord = syncResult.getRecord();
+        // if (creating) {
+        // if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
+        // continue;
+        // }
+        // record = cast(syncRecord);
+        // } else {
+        // if (!syncRecord.getId().equals(record.getId())) {
+        // continue;
+        // }
+        // }
+        // if (syncResult.hasViolations()) {
+        // hasViolations = true;
+        // view.showErrors(syncResult.getViolations());
+        // }
+        // }
         if (!hasViolations) {
-          exit();
+          exit(true);
         } else {
           requestObject = toCommit;
           requestObject.clearUsed();
@@ -165,13 +165,31 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
       futureId = tempRecord.getId();
       doStart(display, tempRecord);
     } else {
-      fireFindRequest(Value.of(record.getId()), new Receiver<R>() {
+      fireFindRequest(Value.of(getRecord().getId()), new Receiver<R>() {
         public void onSuccess(R record, Set<SyncResult> syncResults) {
           if (AbstractRecordEditActivity.this.display != null) {
             doStart(AbstractRecordEditActivity.this.display, record);
           }
         }
       });
+    }
+  }
+
+  /**
+   * Called when the user cancels or has successfully saved. This default
+   * implementation tells the {@link PlaceController} to show the details of the
+   * edited record, or clears the display if a creation was canceled.
+   * <p>
+   * If we're creating, a call to getRecord() from here will return a record
+   * with the correct id. However, other properties may be stale or unset.
+   * 
+   * @param saved true if changes were comitted
+   */
+  protected void exit(boolean saved) {
+    if (!saved && creating) {
+      display.showActivityWidget(null);
+    } else {
+      placeController.goTo(new ProxyPlace(getRecord(), Operation.DETAILS));
     }
   }
 
@@ -194,12 +212,5 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     view.setValue(editableRecord);
     view.showErrors(null);
     display.showActivityWidget(view);
-  }
-
-  /**
-   * Called when the user has clicked Cancel or has successfully saved.
-   */
-  private void exit() {
-    placeController.goTo(new ProxyPlace(record, Operation.DETAILS));
   }
 }
