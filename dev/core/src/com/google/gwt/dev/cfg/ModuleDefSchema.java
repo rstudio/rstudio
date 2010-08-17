@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -93,9 +93,11 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __public_3_excludes = "";
 
-    protected final String __public_4_defaultexcludes = "yes";
+    protected final String __public_4_skips = "";
 
-    protected final String __public_5_casesensitive = "true";
+    protected final String __public_5_defaultexcludes = "yes";
+
+    protected final String __public_6_casesensitive = "true";
 
     protected final String __replace_with_1_class = null;
 
@@ -123,9 +125,11 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __source_3_excludes = "";
 
-    protected final String __source_4_defaultexcludes = "yes";
+    protected final String __source_4_skips = "";
 
-    protected final String __source_5_casesensitive = "true";
+    protected final String __source_5_defaultexcludes = "yes";
+
+    protected final String __source_6_casesensitive = "true";
 
     protected final String __stylesheet_1_src = null;
 
@@ -135,9 +139,11 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __super_source_3_excludes = "";
 
-    protected final String __super_source_4_defaultexcludes = "yes";
+    protected final String __super_source_4_skips = "";
 
-    protected final String __super_source_5_casesensitive = "true";
+    protected final String __super_source_5_defaultexcludes = "yes";
+
+    protected final String __super_source_6_casesensitive = "true";
 
     /**
      * Used to accumulate binding property conditions before recording the
@@ -433,12 +439,13 @@ public class ModuleDefSchema extends Schema {
 
     @SuppressWarnings("unused")
     protected Schema __public_begin(String path, String includes,
-        String excludes, String defaultExcludes, String caseSensitive) {
+        String excludes, String skips, String defaultExcludes,
+        String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
     }
 
     protected void __public_end(String path, String includes, String excludes,
-        String defaultExcludes, String caseSensitive) {
+        String skips, String defaultExcludes, String caseSensitive) {
       IncludeExcludeSchema childSchema = ((IncludeExcludeSchema) fChild);
       foundAnyPublic = true;
 
@@ -450,11 +457,15 @@ public class ModuleDefSchema extends Schema {
       addDelimitedStringToSet(excludes, "[ ,]", excludeSet);
       String[] excludeList = excludeSet.toArray(new String[excludeSet.size()]);
 
+      Set<String> skipSet = childSchema.getSkips();
+      addDelimitedStringToSet(skips, "[ ,]", skipSet);
+      String[] skipList = skipSet.toArray(new String[skipSet.size()]);
+
       boolean doDefaultExcludes = toPrimitiveBoolean(defaultExcludes);
       boolean doCaseSensitive = toPrimitiveBoolean(caseSensitive);
 
       addPublicPackage(modulePackageAsPath, path, includeList, excludeList,
-          doDefaultExcludes, doCaseSensitive);
+          skipList, doDefaultExcludes, doCaseSensitive);
     }
 
     protected Schema __replace_with_begin(String className) {
@@ -591,13 +602,14 @@ public class ModuleDefSchema extends Schema {
      */
     @SuppressWarnings("unused")
     protected Schema __source_begin(String path, String includes,
-        String excludes, String defaultExcludes, String caseSensitive) {
+        String excludes, String skips, String defaultExcludes,
+        String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
     }
 
     protected void __source_end(String path, String includes, String excludes,
-        String defaultExcludes, String caseSensitive) {
-      addSourcePackage(path, includes, excludes, defaultExcludes,
+        String skips, String defaultExcludes, String caseSensitive) {
+      addSourcePackage(path, includes, excludes, skips, defaultExcludes,
           caseSensitive, false);
     }
 
@@ -616,13 +628,15 @@ public class ModuleDefSchema extends Schema {
      */
     @SuppressWarnings("unused")
     protected Schema __super_source_begin(String path, String includes,
-        String excludes, String defaultExcludes, String caseSensitive) {
+        String excludes, String skips, String defaultExcludes,
+        String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
     }
 
     protected void __super_source_end(String path, String includes,
-        String excludes, String defaultExcludes, String caseSensitive) {
-      addSourcePackage(path, includes, excludes, defaultExcludes,
+        String excludes, String skips, String defaultExcludes,
+        String caseSensitive) {
+      addSourcePackage(path, includes, excludes, skips, defaultExcludes,
           caseSensitive, true);
     }
 
@@ -639,8 +653,8 @@ public class ModuleDefSchema extends Schema {
     }
 
     private void addPublicPackage(String parentDir, String relDir,
-        String[] includeList, String[] excludeList, boolean defaultExcludes,
-        boolean caseSensitive) {
+        String[] includeList, String[] excludeList, String[] skipList,
+        boolean defaultExcludes, boolean caseSensitive) {
       String normChildDir = normalizePathEntry(relDir);
       if (normChildDir.startsWith("/")) {
         logger.log(TreeLogger.WARN, "Non-relative public package: "
@@ -658,13 +672,13 @@ public class ModuleDefSchema extends Schema {
         return;
       }
       String fullDir = parentDir + normChildDir;
-      moduleDef.addPublicPackage(fullDir, includeList, excludeList,
+      moduleDef.addPublicPackage(fullDir, includeList, excludeList, skipList,
           defaultExcludes, caseSensitive);
     }
 
     private void addSourcePackage(String relDir, String includes,
-        String excludes, String defaultExcludes, String caseSensitive,
-        boolean isSuperSource) {
+        String excludes, String skips, String defaultExcludes,
+        String caseSensitive, boolean isSuperSource) {
       IncludeExcludeSchema childSchema = ((IncludeExcludeSchema) fChild);
       foundExplicitSourceOrSuperSource = true;
 
@@ -676,16 +690,20 @@ public class ModuleDefSchema extends Schema {
       addDelimitedStringToSet(excludes, "[ ,]", excludeSet);
       String[] excludeList = excludeSet.toArray(new String[excludeSet.size()]);
 
+      Set<String> skipSet = childSchema.getSkips();
+      addDelimitedStringToSet(skips, "[ ,]", skipSet);
+      String[] skipList = skipSet.toArray(new String[skipSet.size()]);
+
       boolean doDefaultExcludes = toPrimitiveBoolean(defaultExcludes);
       boolean doCaseSensitive = toPrimitiveBoolean(caseSensitive);
 
       addSourcePackage(modulePackageAsPath, relDir, includeList, excludeList,
-          doDefaultExcludes, doCaseSensitive, isSuperSource);
+          skipList, doDefaultExcludes, doCaseSensitive, isSuperSource);
     }
 
     private void addSourcePackage(String modulePackagePath, String relDir,
-        String[] includeList, String[] excludeList, boolean defaultExcludes,
-        boolean caseSensitive, boolean isSuperSource) {
+        String[] includeList, String[] excludeList, String[] skipList,
+        boolean defaultExcludes, boolean caseSensitive, boolean isSuperSource) {
       String normChildDir = normalizePathEntry(relDir);
       if (normChildDir.startsWith("/")) {
         logger.log(TreeLogger.WARN, "Non-relative source package: "
@@ -711,18 +729,19 @@ public class ModuleDefSchema extends Schema {
          * logical class names.
          */
         moduleDef.addSuperSourcePackage(fullPackagePath, includeList,
-            excludeList, defaultExcludes, caseSensitive);
+            excludeList, skipList, defaultExcludes, caseSensitive);
       } else {
         /*
-         * Add the full package path to the include and exclude lists since the
+         * Add the full package path to the include/exclude/skip lists since the
          * logical name of classes on the source path includes the package path
-         * but the include and exclude lists do not.
+         * but the include, exclude, and skip lists do not.
          */
         addPrefix(includeList, fullPackagePath);
         addPrefix(excludeList, fullPackagePath);
+        addPrefix(skipList, fullPackagePath);
 
         moduleDef.addSourcePackage(fullPackagePath, includeList, excludeList,
-            defaultExcludes, caseSensitive);
+            skipList, defaultExcludes, caseSensitive);
       }
     }
 
@@ -805,9 +824,22 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __include_1_name = null;
 
+    protected final String __skip_1_name = null;
+
+    /**
+     * Files neither in this module, nor available from other modules.
+     */
     private final Set<String> excludes = new HashSet<String>();
 
+    /**
+     * Files in this module.
+     */
     private final Set<String> includes = new HashSet<String>();
+
+    /**
+     * Files not in this module, but available from other modules.
+     */
+    private final Set<String> skips = new HashSet<String>();
 
     public Set<String> getExcludes() {
       return excludes;
@@ -815,6 +847,10 @@ public class ModuleDefSchema extends Schema {
 
     public Set<String> getIncludes() {
       return includes;
+    }
+
+    public Set<String> getSkips() {
+      return skips;
     }
 
     protected Schema __exclude_begin(String name) {
@@ -826,7 +862,12 @@ public class ModuleDefSchema extends Schema {
       includes.add(name);
       return null;
     }
-  }
+
+    protected Schema __skip_begin(String name) {
+      skips.add(name);
+      return null;
+    }
+}
 
   private static class LinkerName {
     public final String name;
@@ -1231,12 +1272,12 @@ public class ModuleDefSchema extends Schema {
     //
     if (!foundExplicitSourceOrSuperSource) {
       bodySchema.addSourcePackage(modulePackageAsPath, "client", Empty.STRINGS,
-          Empty.STRINGS, true, true, false);
+          Empty.STRINGS, Empty.STRINGS, true, true, false);
     }
 
     if (!foundAnyPublic) {
       bodySchema.addPublicPackage(modulePackageAsPath, "public", Empty.STRINGS,
-          Empty.STRINGS, true, true);
+          Empty.STRINGS, Empty.STRINGS, true, true);
     }
 
     // We do this in __module_end so this value is never inherited
@@ -1246,7 +1287,7 @@ public class ModuleDefSchema extends Schema {
   /**
    * Parses handwritten JavaScript found in the module xml, logging an error
    * message and throwing an exception if there's a problem.
-   * 
+   *
    * @param startLineNumber the start line number where the script was found;
    *          used to report errors
    * @param script the JavaScript to wrap in "function() { script }" to parse

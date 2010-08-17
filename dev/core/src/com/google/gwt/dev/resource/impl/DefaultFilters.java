@@ -44,7 +44,7 @@ public class DefaultFilters {
   private static final boolean YES_JAVA = true;
 
   static ZipScanner getScanner(String[] includeList, String[] excludeList,
-      boolean defaultExcludes, boolean caseSensitive) {
+      String[] skipList, boolean defaultExcludes, boolean caseSensitive) {
     /*
      * Hijack Ant's ZipScanner to handle inclusions/exclusions exactly as Ant
      * does. We're only using its pattern-matching capabilities; the code path
@@ -54,8 +54,9 @@ public class DefaultFilters {
     if (includeList.length > 0) {
       scanner.setIncludes(includeList);
     }
-    if (excludeList.length > 0) {
-      scanner.setExcludes(excludeList);
+    if (excludeList.length > 0 || skipList.length > 0) {
+      String[] excludeOrSkip = concatenate(excludeList, skipList);
+      scanner.setExcludes(excludeOrSkip);
     }
     if (defaultExcludes) {
       scanner.addDefaultExcludes();
@@ -66,6 +67,18 @@ public class DefaultFilters {
     return scanner;
   }
 
+  private static String[] concatenate(String[] array1, String[] array2) {
+    String[] answer = new String[array1.length + array2.length];
+    int i = 0;
+    for (String entry : array1) {
+      answer[i++] = entry;
+    }
+    for (String entry : array2) {
+      answer[i++] = entry;
+    }
+    return answer;
+  }
+  
   /* used when defaultExcludes is true */
   final ResourceFilter defaultResourceFilter = new ResourceFilter() {
 
@@ -162,15 +175,17 @@ public class DefaultFilters {
   }
 
   public ResourceFilter customJavaFilter(String includeList[],
-      String excludeList[], boolean defaultExcludes, boolean caseSensitive) {
-    return getCustomFilter(includeList, excludeList, defaultExcludes,
+      String excludeList[], String skipList[], boolean defaultExcludes,
+      boolean caseSensitive) {
+    return getCustomFilter(includeList, excludeList, skipList, defaultExcludes,
         caseSensitive, YES_JAVA);
   }
 
   public ResourceFilter customResourceFilter(String includeList[],
-      String excludeList[], boolean defaultExcludes, boolean caseSensitive) {
+      String excludeList[], String[] skipList, boolean defaultExcludes,
+      boolean caseSensitive) {
 
-    return getCustomFilter(includeList, excludeList, defaultExcludes,
+    return getCustomFilter(includeList, excludeList, skipList, defaultExcludes,
         caseSensitive, NOT_JAVA);
   }
 
@@ -180,13 +195,15 @@ public class DefaultFilters {
    * as the final ResourceFilter.
    */
   ResourceFilter customFilterWithCatchAll(final String includeList[],
-      final String excludeList[], final boolean defaultExcludes,
-      final ResourceFilter catchAll, final boolean isJava) {
+      final String excludeList[], final String skipList[],
+      final boolean defaultExcludes, final ResourceFilter catchAll,
+      final boolean isJava) {
 
-    assert includeList.length > 0 || excludeList.length > 0;
+    assert includeList.length > 0 || excludeList.length > 0 || skipList.length > 0;
 
     final ResourceFilter includeFilter = getFilterPart(includeList, IS_INCLUDES);
-    final ResourceFilter excludeFilter = getFilterPart(excludeList, IS_EXCLUDES);
+    final ResourceFilter excludeFilter = getFilterPart(concatenate(excludeList, skipList),
+        IS_EXCLUDES);
 
     if (includeFilter == null || excludeFilter == null) {
       return catchAll;
@@ -216,9 +233,11 @@ public class DefaultFilters {
   }
 
   ResourceFilter getCustomFilter(final String includeList[],
-      final String excludeList[], final boolean defaultExcludes,
-      final boolean caseSensitive, final boolean isJava) {
-    if (includeList.length == 0 && excludeList.length == 0 && caseSensitive) {
+      final String excludeList[], final String skipList[],
+      final boolean defaultExcludes, final boolean caseSensitive,
+      final boolean isJava) {
+    if (includeList.length == 0 && excludeList.length == 0 &&
+        skipList.length == 0 && caseSensitive) {
       // optimize for the common case.
       return getMatchingDefaultFilter(defaultExcludes, isJava);
     }
@@ -226,7 +245,7 @@ public class DefaultFilters {
     // don't create a catchAll in default cases
     ResourceFilter catchAll = new ResourceFilter() {
       ZipScanner scanner = getScanner(includeList, excludeList,
-          defaultExcludes, caseSensitive);
+          skipList, defaultExcludes, caseSensitive);
 
       public boolean allows(String path) {
         if (isJava) {
@@ -240,7 +259,7 @@ public class DefaultFilters {
     if (!caseSensitive) {
       return catchAll;
     }
-    return customFilterWithCatchAll(includeList, excludeList, defaultExcludes,
+    return customFilterWithCatchAll(includeList, excludeList, skipList, defaultExcludes,
         catchAll, isJava);
   }
 

@@ -29,12 +29,7 @@ import java.util.Map;
  */
 public class PathPrefixSet {
   /*
-   * (1) TODO(amitmanjhi): Support multiple PathPrefixes with different filters
-   * but the same "path". This could arise when client code inherits some
-   * library code and defines the same path prefix with a more specific resource
-   * filter.
-   * 
-   * (2) TODO(amitmanjhi): Improve the api of the PathPrefixSet so that with one
+   * (1) TODO(amitmanjhi): Improve the api of the PathPrefixSet so that with one
    * trie-traversal, it could be found out which resources rooted at a directory
    * are allowed?
    */
@@ -57,6 +52,14 @@ public class PathPrefixSet {
       return newChild;
     }
 
+    public void extendPathPrefix(PathPrefix prefix) {
+      if (this.prefix == null) {
+        this.prefix = prefix;
+      } else {
+        this.prefix.merge(prefix);
+      }
+    }
+
     public TrieNode findChild(String part) {
       return children.get(part);
     }
@@ -67,10 +70,6 @@ public class PathPrefixSet {
 
     public boolean hasChildren() {
       return !children.isEmpty();
-    }
-
-    public void setPathPrefix(PathPrefix prefix) {
-      this.prefix = prefix;
     }
 
     @Override
@@ -103,9 +102,9 @@ public class PathPrefixSet {
   /**
    * @param prefix the prefix to add
    * @return <code>true</code> if the prefix was not already in the set;
-   *         otherwise, it replaced an identical one having the same prefix,
-   *         which has the effect of changing which filter is used (last one
-   *         wins)
+   *         otherwise, it merged with one having the same prefix, which has
+   *         the effect of expanding the filter (the merge works as
+   *         <code>union(includes - skips) - union(excludes)</code>)
    */
   public boolean add(PathPrefix prefix) {
     prefix.setPriority(prefixes.size());
@@ -118,7 +117,7 @@ public class PathPrefixSet {
      * prefix to the root so that we can apply the filter.
      */
     if ("".equals(pathPrefix)) {
-      rootTrieNode.setPathPrefix(prefix);
+      rootTrieNode.extendPathPrefix(prefix);
       return false;
     }
 
@@ -138,8 +137,7 @@ public class PathPrefixSet {
       }
     }
     assert (parentNode != null);
-    // This may clobber an existing one, but that's okay. Last one wins.
-    parentNode.setPathPrefix(prefix);
+    parentNode.extendPathPrefix(prefix);
     return didAdd;
   }
 

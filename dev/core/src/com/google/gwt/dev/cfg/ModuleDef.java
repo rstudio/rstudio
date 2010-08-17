@@ -154,40 +154,41 @@ public class ModuleDef {
   }
 
   public synchronized void addPublicPackage(String publicPackage,
-      String[] includeList, String[] excludeList, boolean defaultExcludes,
-      boolean caseSensitive) {
+      String[] includeList, String[] excludeList, String[] skipList,
+      boolean defaultExcludes, boolean caseSensitive) {
 
     if (lazyPublicOracle != null) {
       throw new IllegalStateException("Already normalized");
     }
     publicPrefixSet.add(new PathPrefix(publicPackage,
         defaultFilters.customResourceFilter(includeList, excludeList,
-            defaultExcludes, caseSensitive), true));
+            skipList, defaultExcludes, caseSensitive), true, excludeList));
   }
 
   public void addSourcePackage(String sourcePackage, String[] includeList,
-      String[] excludeList, boolean defaultExcludes, boolean caseSensitive) {
+      String[] excludeList, String[] skipList, boolean defaultExcludes,
+      boolean caseSensitive) {
     addSourcePackageImpl(sourcePackage, includeList, excludeList,
-        defaultExcludes, caseSensitive, false);
+        skipList, defaultExcludes, caseSensitive, false);
   }
 
   public void addSourcePackageImpl(String sourcePackage, String[] includeList,
-      String[] excludeList, boolean defaultExcludes, boolean caseSensitive,
-      boolean isSuperSource) {
+      String[] excludeList, String[] skipList, boolean defaultExcludes,
+      boolean caseSensitive, boolean isSuperSource) {
     if (lazySourceOracle != null) {
       throw new IllegalStateException("Already normalized");
     }
     PathPrefix pathPrefix = new PathPrefix(sourcePackage,
-        defaultFilters.customJavaFilter(includeList, excludeList,
-            defaultExcludes, caseSensitive), isSuperSource);
+        defaultFilters.customJavaFilter(includeList, excludeList, skipList,
+            defaultExcludes, caseSensitive), isSuperSource, excludeList);
     sourcePrefixSet.add(pathPrefix);
   }
 
   public void addSuperSourcePackage(String superSourcePackage,
-      String[] includeList, String[] excludeList, boolean defaultExcludes,
-      boolean caseSensitive) {
+      String[] includeList, String[] excludeList, String[] skipList,
+      boolean defaultExcludes, boolean caseSensitive) {
     addSourcePackageImpl(superSourcePackage, includeList, excludeList,
-        defaultExcludes, caseSensitive, true);
+        skipList, defaultExcludes, caseSensitive, true);
   }
 
   /**

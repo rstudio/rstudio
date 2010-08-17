@@ -1,0 +1,4 @@
+<module>
+  <source path="client" includes="InTwo.java,Shared.java"/>
+  <inherits name="com.google.gwt.dev.cfg.testdata.merging.One"/>
+</module>

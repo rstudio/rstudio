@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,6 +14,13 @@
  * the License.
  */
 package com.google.gwt.dev.resource.impl;
+
+import org.apache.tools.ant.types.ZipScanner;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Represents the abstract path prefix that goes between the
@@ -31,14 +38,16 @@ public final class PathPrefix {
 
   public static final PathPrefix ALL = new PathPrefix("", null);
 
-  private final ResourceFilter filter;
+  private final Set<String> exclusions;
+  private ZipScanner exclusionScanner;
+  private final List<ResourceFilter> filters;
   private final String prefix;
   private int priority = -1;
   private final boolean shouldReroot;
 
   /**
    * Construct a non-rerooting prefix.
-   * 
+   *
    * @param prefix a string prefix that (1) is the empty string or (2) begins
    *          with something other than a slash and ends with a slash
    * @param filter the resource filter to use, or <code>null</code> for no
@@ -47,12 +56,12 @@ public final class PathPrefix {
    *          inconsistent behavior in identifying available resources)
    */
   public PathPrefix(String prefix, ResourceFilter filter) {
-    this(prefix, filter, false);
+    this(prefix, filter, false, null);
   }
 
   /**
-   * Construct a prefix.
-   * 
+   * Construct a prefix without global exclusions.
+   *
    * @param prefix a string prefix that (1) is the empty string or (2) begins
    *          with something other than a slash and ends with a slash
    * @param filter the resource filter to use, or <code>null</code> for no
@@ -63,19 +72,46 @@ public final class PathPrefix {
    *          for this prefix will be rerooted to not include the initial prefix
    *          path; if <code>false</code>, the prefix will be included in a
    *          matching resource's path.
-   * 
    */
   public PathPrefix(String prefix, ResourceFilter filter, boolean shouldReroot) {
+    this(prefix, filter, shouldReroot, null);
+  }
+
+  /**
+   * Construct a prefix.
+   *
+   * @param prefix a string prefix that (1) is the empty string or (2) begins
+   *          with something other than a slash and ends with a slash
+   * @param filter the resource filter to use, or <code>null</code> for no
+   *          filter; note that the filter must always return the same answer
+   *          for the same candidate path (doing otherwise will produce
+   *          inconsistent behavior in identifying available resources)
+   * @param shouldReroot if <code>true</code>, any matching {@link Resource}
+   *          for this prefix will be rerooted to not include the initial prefix
+   *          path; if <code>false</code>, the prefix will be included in a
+   *          matching resource's path.
+   * @param excludeList list of globs that should be removed from <i>any</i>
+   *          module's resources.
+   */
+  public PathPrefix(String prefix, ResourceFilter filter, boolean shouldReroot,
+      String[] excludeList) {
     assertValidPrefix(prefix);
     this.prefix = prefix;
-    this.filter = filter;
+    this.filters = new ArrayList<ResourceFilter>(1);
+    this.filters.add(filter);
     this.shouldReroot = shouldReroot;
+    this.exclusions = new HashSet<String>();
+    if (excludeList != null) {
+      for (String exclude : excludeList) {
+        exclusions.add(exclude);
+      }
+    }
   }
 
   /**
    * Determines whether or not a given path is allowed by this path prefix by
    * checking both the prefix string and the filter.
-   * 
+   *
    * @param path
    * @return
    */
@@ -83,13 +119,23 @@ public final class PathPrefix {
     if (!path.startsWith(prefix)) {
       return false;
     }
-    if (filter == null) {
+    if (filters.size() == 0 && exclusions.size() == 0) {
       return true;
     }
     if (shouldReroot) {
       path = getRerootedPath(path);
     }
-    return filter.allows(path);
+
+    createExcludeFilter();
+    if (exclusionScanner != null && exclusionScanner.match(path)) {
+      return false;
+    }
+    for (ResourceFilter filter : filters) {
+      if (filter == null || filter.allows(path)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -108,7 +154,7 @@ public final class PathPrefix {
 
   /**
    * The prefix.
-   * 
+   *
    * @return the result is guaranteed to be non-<code>null</code>, and
    *         either be the empty string or it will not begin with a slash and
    *         will end with a slash; these guarantees are very useful when
@@ -132,13 +178,30 @@ public final class PathPrefix {
     return prefix.hashCode();
   }
 
+  /**
+   * Consolidate a given {@code PathPrefix} with this one, such that resources
+   * excluded by neither prefix and included by either are allowed.
+   *
+   * @param pathPrefix
+   */
+  public void merge(PathPrefix pathPrefix) {
+    assert prefix.equals(pathPrefix.prefix);
+    for (ResourceFilter filter : pathPrefix.filters) {
+      filters.add(filter);
+    }
+    exclusions.addAll(pathPrefix.exclusions);
+    if (exclusionScanner != null && !exclusions.isEmpty()) {
+      exclusionScanner = null;  // lose the stale one; we'll recreate later
+    }
+  }
+
   public boolean shouldReroot() {
     return shouldReroot;
   }
 
   @Override
   public String toString() {
-    return prefix + (shouldReroot ? "**" : "*") + (filter == null ? "" : "?");
+    return prefix + (shouldReroot ? "**" : "*") + (filters.size() == 0 ? "" : "?");
   }
 
   int getPriority() {
@@ -153,5 +216,14 @@ public final class PathPrefix {
   private void assertValidPrefix(String prefix) {
     assert (prefix != null);
     assert ("".equals(prefix) || (!prefix.startsWith("/") && prefix.endsWith("/"))) : "malformed prefix";
+  }
+
+  private void createExcludeFilter() {
+    if (exclusionScanner == null && !exclusions.isEmpty()) {
+      exclusionScanner = new ZipScanner();
+      exclusionScanner.setIncludes(exclusions.toArray(new String[exclusions.size()]));
+      exclusionScanner.init();
+      exclusions.clear();
+    }
   }
 }
