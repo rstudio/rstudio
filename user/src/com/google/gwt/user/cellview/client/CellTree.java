@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -38,6 +39,33 @@ import java.util.ArrayList;
  * A view of a tree.
  */
 public class CellTree extends Composite implements HasAnimation {
+
+  /**
+   * A cleaner version of the table that uses less graphics.
+   */
+  public static interface CleanResources extends Resources {
+
+    @Source("cellTreeClosedArrow.png")
+    ImageResource cellTreeClosedItem();
+
+    @Source("cellTreeLoadingClean.gif")
+    ImageResource cellTreeLoading();
+
+    @Source("cellTreeOpenArrow.png")
+    ImageResource cellTreeOpenItem();
+
+    @Source("CellTreeClean.css")
+    CleanStyle cellTreeStyle();
+  }
+
+  /**
+   * A cleaner version of the table that uses less graphics.
+   */
+  public static interface CleanStyle extends Style {
+    String topItem();
+
+    String topItemImageValue();
+  }
 
   /**
    * A node animation.
@@ -311,6 +339,11 @@ public class CellTree extends Composite implements HasAnimation {
     String itemValue();
 
     /**
+     * Applied to the keyboard selected item.
+     */
+    String keyboardSelectedItem();
+
+    /**
      * Applied to open tree items.
      */
     String openItem();
@@ -342,33 +375,6 @@ public class CellTree extends Composite implements HasAnimation {
   }
 
   /**
-   * A cleaner version of the table that uses less graphics.
-   */
-  public static interface CleanStyle extends Style {
-    String topItem();
-
-    String topItemImageValue();
-  }
-
-  /**
-   * A cleaner version of the table that uses less graphics.
-   */
-  public static interface CleanResources extends Resources {
-
-    @Source("cellTreeClosedArrow.png")
-    ImageResource cellTreeClosedItem();
-
-    @Source("cellTreeLoadingClean.gif")
-    ImageResource cellTreeLoading();
-
-    @Source("cellTreeOpenArrow.png")
-    ImageResource cellTreeOpenItem();
-
-    @Source("CellTreeClean.css")
-    CleanStyle cellTreeStyle();
-  }
-
-  /**
    * The default number of children to show under a tree node.
    */
   private static final int DEFAULT_LIST_SIZE = 25;
@@ -386,6 +392,8 @@ public class CellTree extends Composite implements HasAnimation {
    * The animation.
    */
   private NodeAnimation animation;
+
+  private boolean cellIsEditing;
 
   /**
    * The HTML used to generate the closed image.
@@ -411,6 +419,12 @@ public class CellTree extends Composite implements HasAnimation {
    * Indicates whether or not animations are enabled.
    */
   private boolean isAnimationEnabled;
+
+  /**
+   * The {@link CellTreeNodeView} whose children are currently being selected
+   * using the keyboard.
+   */
+  private CellTreeNodeView<?> keyboardSelectedNode;
 
   /**
    * The HTML used to generate the loading image.
@@ -461,8 +475,8 @@ public class CellTree extends Composite implements HasAnimation {
    * @param rootValue the hidden root value of the tree
    * @param resources the resources used to render the tree
    */
-  public <T> CellTree(
-      TreeViewModel viewModel, T rootValue, Resources resources) {
+  public <T> CellTree(TreeViewModel viewModel, T rootValue,
+      Resources resources) {
     this.viewModel = viewModel;
     this.style = resources.cellTreeStyle();
     this.style.ensureInjected();
@@ -485,13 +499,14 @@ public class CellTree extends Composite implements HasAnimation {
     setAnimation(SlideAnimation.create());
 
     // Add event handlers.
-    sinkEvents(Event.ONCLICK);
+    sinkEvents(Event.ONCLICK | Event.ONKEYDOWN | Event.ONKEYUP);
 
     // Associate a view with the item.
-    CellTreeNodeView<T> root = new CellTreeNodeView<T>(
-        this, null, null, getElement(), rootValue);
-    rootNode = root;
+    CellTreeNodeView<T> root = new CellTreeNodeView<T>(this, null, null,
+        getElement(), rootValue);
+    keyboardSelectedNode = rootNode = root;
     root.setOpen(true);
+    keyboardSelectedNode.keyboardEnter(0, false);
   }
 
   /**
@@ -527,8 +542,32 @@ public class CellTree extends Composite implements HasAnimation {
     CellBasedWidgetImpl.get().onBrowserEvent(this, event);
     super.onBrowserEvent(event);
 
-    Element target = event.getEventTarget().cast();
+    String eventType = event.getType();
 
+    // Keep track of whether the user has focused on the widget
+    if ("blur".equals(eventType)) {
+      keyboardSelectedNode.keyboardBlur();
+      return;
+    }
+    if ("focus".equals(eventType)) {
+      keyboardSelectedNode.keyboardFocus();
+      return;
+    }
+
+    boolean keyUp = "keyup".equals(eventType);
+    boolean keyDown = "keydown".equals(eventType);
+
+    // Ignore keydown events unless the cell is in edit mode
+    if (keyDown && !cellIsEditing) {
+      return;
+    }
+    if (keyUp && !cellIsEditing) {
+      if (handleKey(event)) {
+        return;
+      }
+    }
+
+    Element target = event.getEventTarget().cast();
     ArrayList<Element> chain = new ArrayList<Element>();
     collectElementChain(chain, getElement(), target);
 
@@ -544,10 +583,17 @@ public class CellTree extends Composite implements HasAnimation {
           nodeView.showMore();
           return;
         }
+
+        // Move the keyboard focus to the clicked item
+        keyboardSelectedNode.keyboardExit();
+        keyboardSelectedNode = nodeView.getParentNode();
+        keyboardSelectedNode.keyboardEnter(target, true);
       }
 
-      // Forward the event to the cell.
-      if (nodeView.getCellParent().isOrHasChild(target)) {
+      // Forward the event to the cell
+      if (nodeView.getCellParent().isOrHasChild(target)
+          || (eventType.startsWith("key")
+              && nodeView.getCellParent().getParentElement() == target)) {
         nodeView.fireEventToCell(event);
       }
     }
@@ -634,16 +680,16 @@ public class CellTree extends Composite implements HasAnimation {
    */
   void maybeAnimateTreeNode(CellTreeNodeView<?> node) {
     if (animation != null) {
-      animation.animate(node,
-          node.consumeAnimate() && isAnimationEnabled() && !node.isRootNode());
+      animation.animate(node, node.consumeAnimate() && isAnimationEnabled()
+          && !node.isRootNode());
     }
   }
 
   /**
    * Collects parents going up the element tree, terminated at the tree root.
    */
-  private void collectElementChain(
-      ArrayList<Element> chain, Element hRoot, Element hElem) {
+  private void collectElementChain(ArrayList<Element> chain, Element hRoot,
+      Element hElem) {
     if ((hElem == null) || (hElem == hRoot)) {
       return;
     }
@@ -652,8 +698,8 @@ public class CellTree extends Composite implements HasAnimation {
     chain.add(hElem);
   }
 
-  private CellTreeNodeView<?> findItemByChain(
-      ArrayList<Element> chain, int idx, CellTreeNodeView<?> parent) {
+  private CellTreeNodeView<?> findItemByChain(ArrayList<Element> chain,
+      int idx, CellTreeNodeView<?> parent) {
     if (idx == chain.size()) {
       return parent;
     }
@@ -700,5 +746,81 @@ public class CellTree extends Composite implements HasAnimation {
     // Close the div and return.
     sb.append("\"></div>");
     return sb.toString();
+  }
+
+  /**
+   * @return true if the key event was consumed by navigation, false if it
+   *         should be passed on to the underlying Cell.
+   */
+  private boolean handleKey(Event event) {
+    int keyCode = event.getKeyCode();
+
+    CellTreeNodeView<?> child = null;
+    int keyboardSelectedIndex = keyboardSelectedNode.getKeyboardSelectedIndex();
+    if (keyboardSelectedIndex != -1
+        && keyboardSelectedNode.getChildCount() > keyboardSelectedIndex) {
+      child = keyboardSelectedNode.getChildNode(keyboardSelectedIndex);
+    }
+
+    CellTreeNodeView<?> parent = keyboardSelectedNode.getParentNode();
+    switch (keyCode) {
+      case KeyCodes.KEY_UP:
+        if (keyboardSelectedNode.getKeyboardSelectedIndex() == 0) {
+          if (!keyboardSelectedNode.isRootNode()) {
+            if (parent != null) {
+              keyboardSelectedNode.keyboardExit();
+              parent.keyboardEnter(parent.indexOf(keyboardSelectedNode), true);
+              keyboardSelectedNode = parent;
+            }
+          }
+        } else {
+          keyboardSelectedNode.keyboardUp();
+          // Descend into open nodes, go to bottom of leaf node
+          int index = keyboardSelectedNode.getKeyboardSelectedIndex();
+          while ((child = keyboardSelectedNode.getChildNode(index)).isOpen()) {
+            keyboardSelectedNode.keyboardExit();
+            index = child.getChildCount() - 1;
+            child.keyboardEnter(index, true);
+            keyboardSelectedNode = child;
+          }
+        }
+        return true;
+
+      case KeyCodes.KEY_DOWN:
+        if (child != null && child.isOpen()) {
+          keyboardSelectedNode.keyboardExit();
+          child.keyboardEnter(0, true);
+          keyboardSelectedNode = child;
+        } else if (!keyboardSelectedNode.keyboardDown()) {
+          if (parent != null) {
+            keyboardSelectedNode.keyboardExit();
+            parent.keyboardEnter(parent.indexOf(keyboardSelectedNode), true);
+            // If already at last node of a given level, go up
+            while (!parent.keyboardDown()) {
+              CellTreeNodeView<?> newParent = parent.getParentNode();
+              if (newParent != null) {
+                parent.keyboardExit();
+                newParent.keyboardEnter(newParent.indexOf(parent) + 1, true);
+                parent = newParent;
+              }
+            }
+            keyboardSelectedNode = parent;
+          }
+        }
+        return true;
+
+      case KeyCodes.KEY_LEFT:
+      case KeyCodes.KEY_RIGHT:
+      case KeyCodes.KEY_ENTER:
+        // TODO(rice) - try different key bahavior mappings such as
+        // left=close, right=open, enter=toggle.
+        if (child != null && !child.isLeaf()) {
+          child.setOpen(!child.isOpen());
+          return true;
+        }
+        break;
+    }
+
+    return false;
   }
 }

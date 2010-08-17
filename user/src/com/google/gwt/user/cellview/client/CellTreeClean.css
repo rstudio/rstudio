@@ -23,6 +23,14 @@
   padding-right: 3px;
 }
 
+/*
+div:focus { outline: none; }
+*/
+
+.keyboardSelectedItem {
+  background-color: #ffff00;
+}
+
 .openItem {
   
 }

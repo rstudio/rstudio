@@ -23,8 +23,28 @@
   padding-right: 3px;
 }
 
+/*
+div:focus { outline: none; }
+*/
+
+.keyboardSelectedItem {
+  background-color: #ffff00;
+}
+	
 .openItem {
   
+}
+
+.topItem {
+
+}
+
+.topItemImage {
+
+}
+
+.topItemImageValue {
+
 }
 
 @sprite .selectedItem {
@@ -38,16 +58,4 @@
 .showMoreButton {
   padding-left: 16px;
   outline: none;
-}
-
-.topItem {
-  
-}
-
-.topItemImage {
-  
-}
-
-.topItemImageValue {
-  
 }

@@ -21,8 +21,11 @@ import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.HasCell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.Category;
@@ -98,6 +101,16 @@ public class ContactTreeViewModel implements TreeViewModel {
 
     public int compareTo(LetterCount o) {
       return (o == null) ? -1 : (firstLetter - o.firstLetter);
+    }
+ 
+    @Override
+    public boolean equals(Object o) {
+      return compareTo((LetterCount) o) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+      return firstLetter;
     }
 
     /**
@@ -185,6 +198,15 @@ public class ContactTreeViewModel implements TreeViewModel {
       }
     });
     contactCell = new CompositeCell<ContactInfo>(hasCells) {
+      @Override
+      public void onBrowserEvent(Element parent, ContactInfo value, Object key,
+          NativeEvent event, ValueUpdater<ContactInfo> valueUpdater) {
+        if ("keyup".equals(event.getType())
+            && event.getKeyCode() == KeyCodes.KEY_ENTER) {
+          selectionModel.setSelected(value, !selectionModel.isSelected(value));
+        }
+      }
+
       @Override
       public void render(ContactInfo value, Object key, StringBuilder sb) {
         sb.append("<table><tbody><tr>");
