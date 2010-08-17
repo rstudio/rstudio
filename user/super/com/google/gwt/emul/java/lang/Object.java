@@ -41,6 +41,14 @@ public class Object {
    */
   @SuppressWarnings("unused")
   private transient int typeId;
+  
+  /**
+   * A JavaScript Json map for looking up castability between types.
+   * 
+   * @skip
+   */
+  @SuppressWarnings("unused")
+  private transient JavaScriptObject castableTypeMap;
 
   /**
    * magic magic magic.
@@ -48,7 +56,7 @@ public class Object {
    * @skip
    */
   @SuppressWarnings("unused")
-  private transient Object typeMarker;
+  private transient JavaScriptObject typeMarker;
 
   public boolean equals(Object other) {
     return this == other;

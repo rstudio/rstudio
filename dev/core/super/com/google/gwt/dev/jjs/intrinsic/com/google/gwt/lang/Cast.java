@@ -25,19 +25,18 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 final class Cast {
 
-  // magic magic magic
-  protected static Object typeIdArray;
-
-  static native boolean canCast(int srcId, int dstId) /*-{
-    return srcId && !!@com.google.gwt.lang.Cast::typeIdArray[srcId][dstId];
+  static native boolean canCast(Object src, int dstId) /*-{
+    return src.@java.lang.Object::typeId &&
+          !!src.@java.lang.Object::castableTypeMap[dstId];
   }-*/;
 
   /**
    * Danger: value not coerced to boolean; use the result only in a boolean
    * context.
    */
-  static native boolean canCastUnsafe(int srcId, int dstId) /*-{
-    return srcId && @com.google.gwt.lang.Cast::typeIdArray[srcId][dstId];
+  static native boolean canCastUnsafe(Object src, int dstId) /*-{
+    return src.@java.lang.Object::typeId && 
+          src.@java.lang.Object::castableTypeMap[dstId];
   }-*/;
 
   static native String charToString(char x) /*-{
@@ -45,7 +44,7 @@ final class Cast {
   }-*/;
 
   static Object dynamicCast(Object src, int dstId) {
-    if (src != null && !canCastUnsafe(Util.getTypeId(src), dstId)) {
+    if (src != null && !canCastUnsafe(src, dstId)) {
       throw new ClassCastException();
     }
     return src;
@@ -56,7 +55,7 @@ final class Cast {
    */
   static Object dynamicCastAllowJso(Object src, int dstId) {
     if (src != null && !isJavaScriptObject(src) &&
-        !canCastUnsafe(Util.getTypeId(src), dstId)) {
+        !canCastUnsafe(src, dstId)) {
       throw new ClassCastException();
     }
     return src;
@@ -73,7 +72,7 @@ final class Cast {
   }
 
   static boolean instanceOf(Object src, int dstId) {
-    return (src != null) && canCast(Util.getTypeId(src), dstId);
+    return (src != null) && canCast(src, dstId);
   }
 
   /**
@@ -89,7 +88,7 @@ final class Cast {
    */
   static boolean instanceOfOrJso(Object src, int dstId) {
     return (src != null) &&
-        (isJavaScriptObject(src) || canCast(Util.getTypeId(src), dstId));
+        (isJavaScriptObject(src) || canCast(src, dstId));
   }
 
   static boolean isJavaObject(Object src) {

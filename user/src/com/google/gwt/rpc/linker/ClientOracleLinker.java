@@ -71,7 +71,8 @@ public class ClientOracleLinker extends AbstractLinker {
         for (SymbolData symbolData : result.getSymbolMap()) {
           builder.add(symbolData.getSymbolName(), symbolData.getJsniIdent(),
               symbolData.getClassName(), symbolData.getMemberName(),
-              symbolData.getTypeId());
+              symbolData.getTypeId(), 
+              new CastableTypeDataImpl(symbolData.getCastableTypeMap()));
         }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();

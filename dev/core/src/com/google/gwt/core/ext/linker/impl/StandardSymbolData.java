@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
+import com.google.gwt.core.ext.linker.CastableTypeMap;
 import com.google.gwt.core.ext.linker.SymbolData;
 
 import java.io.File;
@@ -31,15 +32,15 @@ import java.net.URISyntaxException;
 public class StandardSymbolData implements SymbolData {
 
   public static StandardSymbolData forClass(String className, String uriString,
-      int lineNumber, int typeId) {
+      int lineNumber, int typeId, CastableTypeMap castableTypeMap) {
     return new StandardSymbolData(className, null, null, uriString, lineNumber,
-        typeId);
+        typeId, castableTypeMap);
   }
 
   public static StandardSymbolData forMember(String className,
       String memberName, String methodSig, String uriString, int lineNumber) {
     return new StandardSymbolData(className, memberName, methodSig, uriString,
-        lineNumber, 0);
+        lineNumber, 0, null);
   }
 
   public static String toUriString(String fileName) {
@@ -62,9 +63,11 @@ public class StandardSymbolData implements SymbolData {
   private String sourceUri;
   private String symbolName;
   private int typeId;
+  private CastableTypeMap castableTypeMap;
 
   private StandardSymbolData(String className, String memberName,
-      String methodSig, String sourceUri, int sourceLine, int typeId) {
+      String methodSig, String sourceUri, int sourceLine, int typeId, 
+      CastableTypeMap castableTypeMap) {
     assert className != null && className.length() > 0 : "className";
     assert memberName != null || methodSig == null : "methodSig without memberName";
     assert sourceLine >= -1 : "sourceLine: " + sourceLine;
@@ -75,6 +78,11 @@ public class StandardSymbolData implements SymbolData {
     this.sourceUri = sourceUri;
     this.sourceLine = sourceLine;
     this.typeId = typeId;
+    this.castableTypeMap = castableTypeMap;
+  }
+  
+  public CastableTypeMap getCastableTypeMap() {
+    return castableTypeMap;
   }
 
   public String getClassName() {
@@ -152,6 +160,7 @@ public class StandardSymbolData implements SymbolData {
     sourceUri = (String) in.readObject();
     symbolName = in.readUTF();
     typeId = in.readInt();
+    castableTypeMap = (CastableTypeMap) in.readObject();
   }
 
   /**
@@ -179,5 +188,6 @@ public class StandardSymbolData implements SymbolData {
     out.writeObject(sourceUri);
     out.writeUTF(symbolName);
     out.writeInt(typeId);
+    out.writeObject(castableTypeMap);
   }
 }

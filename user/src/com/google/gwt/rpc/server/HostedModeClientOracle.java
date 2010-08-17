@@ -57,6 +57,11 @@ public final class HostedModeClientOracle extends ClientOracle {
   public String createUnusedIdent(String ident) {
     return unimplemented();
   }
+  
+  @Override
+  public CastableTypeData getCastableTypeData(Class<?> clazz) {
+    return unimplemented();
+  }
 
   /**
    * Unimplemented.

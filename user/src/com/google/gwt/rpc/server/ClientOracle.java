@@ -51,6 +51,11 @@ public abstract class ClientOracle {
   public abstract String createUnusedIdent(String ident);
 
   /**
+   * Returns the Json castableType data for a given type.
+   */
+  public abstract CastableTypeData getCastableTypeData(Class<?> clazz);
+
+  /**
    * Given a base type and the unobfuscated field name, find the obfuscated name
    * for the field in the client. This will search superclasses as well for the
    * first matching field.

@@ -22,6 +22,10 @@ import com.google.gwt.core.client.JavaScriptObject;
  * fields.
  */
 final class Util {
+  
+  static native JavaScriptObject getCastableTypeMap(Object o) /*-{
+    return o.@java.lang.Object::castableTypeMap;
+  }-*/;
 
   static native int getTypeId(Object o) /*-{
     return o.@java.lang.Object::typeId;
@@ -29,6 +33,10 @@ final class Util {
 
   static native JavaScriptObject getTypeMarker(Object o) /*-{
     return o.@java.lang.Object::typeMarker;
+  }-*/;
+
+  static native void setCastableTypeMap(Object o, JavaScriptObject castableTypeMap) /*-{
+    o.@java.lang.Object::castableTypeMap = castableTypeMap;
   }-*/;
 
   static native void setTypeId(Object o, int typeId) /*-{

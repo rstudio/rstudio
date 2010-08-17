@@ -44,6 +44,11 @@ public class DelegatingClientOracle extends ClientOracle {
   }
 
   @Override
+  public CastableTypeData getCastableTypeData(Class<?> clazz) {
+    return delegate.getCastableTypeData(clazz);
+  }
+  
+  @Override
   public String getFieldId(Class<?> clazz, String fieldName) {
     return delegate.getFieldId(clazz, fieldName);
   }

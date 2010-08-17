@@ -15,6 +15,8 @@
  */
 package com.google.gwt.lang;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * This is a magic class the compiler uses as a base class for injected array
  * classes.
@@ -95,7 +97,8 @@ public final class Array {
   public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
     Array a = asArrayType(array);
     Array result = arraySlice(a, fromIndex, toIndex);
-    initValues(a.getClass(), Util.getTypeId(a), a.queryId, result);
+    initValues(a.getClass(), Util.getTypeId(a), 
+        Util.getCastableTypeMap(a), a.queryId, result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -114,7 +117,8 @@ public final class Array {
   public static <T> T[] createFrom(T[] array, int length) {
     Array a = asArrayType(array);
     Array result = createFromSeed(NULL_SEED_TYPE, length);
-    initValues(a.getClass(), Util.getTypeId(a), a.queryId, result);
+    initValues(a.getClass(), Util.getTypeId(a), 
+        Util.getCastableTypeMap(a), a.queryId, result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -125,15 +129,17 @@ public final class Array {
    * 
    * @param arrayClass the class of the array
    * @param typeId the typeId of the array
+   * @param castableTypeMap the map of types to which this array can be casted,
+   *          in the form of a JSON map object
    * @param queryId the queryId of the array
    * @param length the length of the array
    * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
    * @return the new array
    */
-  public static Array initDim(Class<?> arrayClass, int typeId, int queryId,
-      int length, int seedType) {
+  public static Array initDim(Class<?> arrayClass, int typeId, 
+        JavaScriptObject castableTypeMap, int queryId, int length, int seedType) {
     Array result = createFromSeed(seedType, length);
-    initValues(arrayClass, typeId, queryId, result);
+    initValues(arrayClass, typeId, castableTypeMap, queryId, result);
     return result;
   }
 
@@ -142,16 +148,19 @@ public final class Array {
    * array, [a, b, c].
    * 
    * @param arrayClasses the class of each dimension of the array
-   * @param typeIdExprs the typeId at each dimension, from highest to lowest
-   * @param queryIdExprs the queryId at each dimension, from highest to lowest
-   * @param dimExprs the length at each dimension, from highest to lower
+   * @param typeIdExprs the typeId of each dimension, from highest to lowest
+   * @param castableTypeMapExprs the JSON castableTypeMap of each dimension,
+   *          from highest to lowest
+   * @param queryIdExprs the queryId of each dimension, from highest to lowest
+   * @param dimExprs the length of each dimension, from highest to lower
    * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
    * @return the new array
    */
   public static Array initDims(Class<?> arrayClasses[], int[] typeIdExprs,
-      int[] queryIdExprs, int[] dimExprs, int count, int seedType) {
-    return initDims(arrayClasses, typeIdExprs, queryIdExprs, dimExprs, 0,
-        count, seedType);
+      JavaScriptObject[] castableTypeMapExprs, int[] queryIdExprs, int[] dimExprs, 
+      int count, int seedType) {
+    return initDims(arrayClasses, typeIdExprs, castableTypeMapExprs, queryIdExprs, 
+        dimExprs, 0, count, seedType);
   }
 
   /**
@@ -160,15 +169,18 @@ public final class Array {
    * 
    * @param arrayClass the class of the array
    * @param typeId the typeId of the array
+   * @param castableTypeMap the map of types to which this array can be casted,
+   *          in the form of a JSON map object
    * @param queryId the queryId of the array
    * @param array the JSON array that will be transformed into a GWT array
    * @return values; having wrapped it for GWT
    */
-  public static Array initValues(Class<?> arrayClass, int typeId, int queryId,
-      Array array) {
+  public static Array initValues(Class<?> arrayClass, int typeId, 
+      JavaScriptObject castableTypeMap, int queryId, Array array) {
     ExpandoWrapper.wrapArray(array);
     array.arrayClass = arrayClass;
     Util.setTypeId(array, typeId);
+    Util.setCastableTypeMap(array, castableTypeMap);
     array.queryId = queryId;
     return array;
   }
@@ -178,7 +190,7 @@ public final class Array {
    */
   public static Object setCheck(Array array, int index, Object value) {
     if (value != null) {
-      if (array.queryId > 0 && !Cast.canCastUnsafe(Util.getTypeId(value), array.queryId)) {
+      if (array.queryId > 0 && !Cast.canCastUnsafe(value, array.queryId)) {
         throw new ArrayStoreException();
       }
       if (array.queryId < 0 && Cast.isJavaObject(value)) {
@@ -236,19 +248,22 @@ public final class Array {
   }-*/;
 
   private static Array initDims(Class<?> arrayClasses[], int[] typeIdExprs,
-      int[] queryIdExprs, int[] dimExprs, int index, int count, int seedType) {
+      JavaScriptObject[] castableTypeMapExprs, int[] queryIdExprs, int[] dimExprs, 
+      int index, int count, int seedType) {
+    
     int length = dimExprs[index];
     boolean isLastDim = (index == (count - 1));
 
     Array result = createFromSeed(isLastDim ? seedType : NULL_SEED_TYPE, length);
-    initValues(arrayClasses[index], typeIdExprs[index], queryIdExprs[index], result);
+    initValues(arrayClasses[index], typeIdExprs[index], 
+        castableTypeMapExprs[index], queryIdExprs[index], result);
 
     if (!isLastDim) {
       // Recurse to next dimension.
       ++index;
       for (int i = 0; i < length; ++i) {
-        set(result, i, initDims(arrayClasses, typeIdExprs, queryIdExprs, dimExprs,
-            index, count, seedType));
+        set(result, i, initDims(arrayClasses, typeIdExprs, castableTypeMapExprs,
+            queryIdExprs, dimExprs, index, count, seedType));
       }
     }
     return result;

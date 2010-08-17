@@ -52,10 +52,11 @@ public final class WebModeClientOracle extends ClientOracle implements
     private WebModeClientOracle oracle = new WebModeClientOracle();
 
     public void add(String jsIdent, String jsniIdent, String className,
-        String memberName, int typeId) {
+        String memberName, int typeId, CastableTypeData castableTypeData) {
       oracle.idents.add(jsIdent);
       ClassData data = oracle.getClassData(className);
       data.typeId = typeId;
+      data.castableTypeData = castableTypeData;
       if (jsniIdent == null || jsniIdent.length() == 0) {
         data.typeName = className;
         data.seedName = jsIdent;
@@ -108,15 +109,16 @@ public final class WebModeClientOracle extends ClientOracle implements
   }
 
   private static class ClassData implements Serializable {
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 4L;
 
+    public CastableTypeData castableTypeData;
     public final Map<String, String> fieldIdentsToNames = new HashMap<String, String>();
     public final Map<String, String> fieldNamesToIdents = new HashMap<String, String>();
     public final Map<String, String> methodJsniNamesToIdents = new HashMap<String, String>();
     public String seedName;
     public List<String> serializableFields = Collections.emptyList();
-    public String typeName;
     public int typeId;
+    public String typeName;
   }
 
   /**
@@ -229,6 +231,18 @@ public final class WebModeClientOracle extends ClientOracle implements
       ident += "$";
     }
     return ident;
+  }
+  
+  @Override
+  public CastableTypeData getCastableTypeData(Class<?> clazz) {
+    while (clazz != null) {
+      CastableTypeData toReturn = getCastableTypeData(canonicalName(clazz));
+      if (toReturn != null) {
+        return toReturn;
+      }
+      clazz = clazz.getSuperclass();
+    }
+    return null;
   }
 
   @Override
@@ -394,6 +408,11 @@ public final class WebModeClientOracle extends ClientOracle implements
     } else {
       return clazz.getName();
     }
+  }
+  
+  private CastableTypeData getCastableTypeData(String className) {
+    ClassData data = getClassData(className);
+    return data.castableTypeData;
   }
 
   private ClassData getClassData(String className) {

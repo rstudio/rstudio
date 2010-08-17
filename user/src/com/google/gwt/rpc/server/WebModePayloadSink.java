@@ -533,7 +533,8 @@ public class WebModePayloadSink extends CommandSink {
 
       String initValuesId = clientOracle.getMethodId(
           "com.google.gwt.lang.Array", "initValues", "Ljava/lang/Class;", "I",
-          "I", "Lcom/google/gwt/lang/Array;");
+          "Lcom/google/gwt/core/client/JavaScriptObject;", "I", 
+          "Lcom/google/gwt/lang/Array;");
       assert initValuesId != null : "Could not find initValues";
 
       String classLitId = clientOracle.getFieldId(
@@ -546,12 +547,16 @@ public class WebModePayloadSink extends CommandSink {
       constructorFunctions.put(targetClass, functionName);
 
       /*
-       * Set the typeIds and queryIds to exact values, or fall back to acting
-       * like a plain Object[] array.
+       * Set the typeIds, castableTypeData, and queryIds to exact values, 
+       * or fall back to acting like a plain Object[] array.
        */
+      CastableTypeData castableTypeData;
       int typeId = clientOracle.getTypeId(targetClass);
-      if (typeId == 0) {
+      if (typeId != 0) {
+        castableTypeData = clientOracle.getCastableTypeData(targetClass);
+      } else {
         typeId = clientOracle.getTypeId(Object[].class);
+        castableTypeData = clientOracle.getCastableTypeData(Object[].class);
       }
 
       int queryId = clientOracle.getTypeId(x.getComponentType());
@@ -574,6 +579,8 @@ public class WebModePayloadSink extends CommandSink {
       push(classLitId);
       comma();
       push(String.valueOf(typeId));
+      comma();
+      push(castableTypeData.toJs());
       comma();
       push(String.valueOf(queryId));
       comma();

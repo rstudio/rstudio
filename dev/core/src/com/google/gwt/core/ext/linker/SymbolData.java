@@ -79,6 +79,11 @@ public interface SymbolData extends Serializable {
       return o1.getJsniIdent().compareTo(o2.getJsniIdent());
     }
   }
+  
+  /**
+   * Returns a JSON map of castableTypes
+   */
+  CastableTypeMap getCastableTypeMap();
 
   /**
    * Returns the name of the type or enclosing type if the symbol is a method or

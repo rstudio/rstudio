@@ -318,7 +318,7 @@ public class JProgram extends JNode {
    */
   private final SourceInfo intrinsic;
 
-  private List<JsonObject> jsonTypeTable;
+  private List<JsonObject> jsonCastableTypeMaps;
 
   private Map<JReferenceType, JNonNullType> nonNullTypes = new IdentityHashMap<JReferenceType, JNonNullType>();
 
@@ -766,6 +766,20 @@ public class JProgram extends JNode {
     return allEntryMethods;
   }
 
+  public JsonObject getCastableTypeMap(int typeId) {
+    // ensure jsonCastableTypeMaps has been initialized
+    // it might not have been if the CastNormalizer has not been run
+    if (jsonCastableTypeMaps == null) {
+      jsonCastableTypeMaps = new ArrayList<JsonObject>();
+      // ensure the always-false (typeId == 0) entry is present
+      jsonCastableTypeMaps.add(new JsonObject(createSourceInfoSynthetic(
+          JProgram.class, "always-false typeinfo entry"),
+          getJavaScriptObject()));
+    }
+    
+    return jsonCastableTypeMaps.get(typeId); 
+  }
+
   public CorrelationFactory getCorrelator() {
     return correlator;
   }
@@ -825,10 +839,6 @@ public class JProgram extends JNode {
 
   public JClassType getJavaScriptObject() {
     return typeSpecialJavaScriptObject;
-  }
-
-  public List<JsonObject> getJsonTypeTable() {
-    return jsonTypeTable;
   }
 
   public JExpression getLiteralAbsentArrayDimension() {
@@ -1161,7 +1171,7 @@ public class JProgram extends JNode {
     for (int i = 0, c = types.size(); i < c; ++i) {
       typeIdMap.put(types.get(i), Integer.valueOf(i));
     }
-    this.jsonTypeTable = jsonObjects;
+    this.jsonCastableTypeMaps = jsonObjects;
   }
 
   public boolean isJavaLangString(JType type) {
