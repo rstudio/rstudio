@@ -36,7 +36,7 @@ public abstract class UserInformation {
   
     @Override
     public String getEmail() {
-      return "";
+      return "Dummy Email";
     }
 
     @Override
@@ -56,7 +56,7 @@ public abstract class UserInformation {
   
     @Override
     public String getName() {
-      return "";
+      return "Dummy User";
     }
   
     @Override

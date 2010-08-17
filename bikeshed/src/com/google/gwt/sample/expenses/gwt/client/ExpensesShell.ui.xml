@@ -20,9 +20,10 @@
       left: 75%;
       right: 0%;
       text-align: center;
-      background-color: yellow;
+      background-color: white;
+      color: #7b8fae;
     }
-    
+
     .title {
       border-bottom: 1px solid #c3c3c3;
     }
