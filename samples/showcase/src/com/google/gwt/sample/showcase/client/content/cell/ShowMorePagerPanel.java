@@ -64,8 +64,8 @@ public class ShowMorePagerPanel extends AbstractPager {
           return;
         }
 
-        HasRows view = getView();
-        if (view == null) {
+        HasRows display = getDisplay();
+        if (display == null) {
           return;
         }
         int maxScrollTop = scrollable.getWidget().getOffsetHeight()
@@ -73,9 +73,9 @@ public class ShowMorePagerPanel extends AbstractPager {
         if (lastScrollPos >= maxScrollTop) {
           // We are near the end, so increase the page size.
           int newPageSize = Math.min(
-              view.getVisibleRange().getLength() + incrementSize,
-              view.getRowCount());
-          view.setVisibleRange(0, newPageSize);
+              display.getVisibleRange().getLength() + incrementSize,
+              display.getRowCount());
+          display.setVisibleRange(0, newPageSize);
         }
       }
     });
@@ -91,6 +91,13 @@ public class ShowMorePagerPanel extends AbstractPager {
     return incrementSize;
   }
 
+  @Override
+  public void setDisplay(HasRows display) {
+    assert display instanceof Widget : "display must extend Widget";
+    scrollable.setWidget((Widget) display);
+    super.setDisplay(display);
+  }
+
   /**
    * Set the number of rows by which the range is increased when the scrollbar
    * reaches the bottom.
@@ -99,13 +106,6 @@ public class ShowMorePagerPanel extends AbstractPager {
    */
   public void setIncrementSize(int incrementSize) {
     this.incrementSize = incrementSize;
-  }
-
-  @Override
-  public void setView(HasRows view) {
-    assert view instanceof Widget : "view must extend Widget";
-    scrollable.setWidget((Widget) view);
-    super.setView(view);
   }
 
   @Override

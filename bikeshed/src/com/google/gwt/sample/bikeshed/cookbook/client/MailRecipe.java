@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.DefaultSelectionModel;
-import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 
 import java.util.Collections;
@@ -309,14 +309,14 @@ public class MailRecipe extends Composite implements ClickHandler {
   }
 
   protected Widget createWidget() {
-    ListViewAdapter<Message> adapter = new ListViewAdapter<Message>();
-    messages = adapter.getList();
+    ListDataProvider<Message> dataProvider = new ListDataProvider<Message>();
+    messages = dataProvider.getList();
 
     addMessages(10);
 
     table = new CellTable<Message>(10);
     table.setSelectionModel(selectionModel);
-    adapter.addView(table);
+    dataProvider.addDataDisplay(table);
 
     // The state of the checkbox is synchronized with the selection model
     SelectionColumn<Message> selectedColumn = new SelectionColumn<Message>(

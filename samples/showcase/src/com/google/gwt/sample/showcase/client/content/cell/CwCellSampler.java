@@ -276,7 +276,7 @@ public class CwCellSampler extends ContentWidget {
     editableCells = new ArrayList<AbstractEditableCell<?, ?>>();
     cellTable = new CellTable<ContactInfo>(6);
     cellTable.setKeyProvider(ContactInfo.KEY_PROVIDER);
-    ContactDatabase.get().addView(cellTable);
+    ContactDatabase.get().addDataDisplay(cellTable);
 
     // CheckboxCell.
     final Category[] categories = ContactDatabase.get().queryCategories();
@@ -454,7 +454,7 @@ public class CwCellSampler extends ContentWidget {
         pendingChanges.clear();
 
         // Push the changes to the views.
-        ContactDatabase.get().refreshViews();
+        ContactDatabase.get().refreshDisplays();
       }
     });
 

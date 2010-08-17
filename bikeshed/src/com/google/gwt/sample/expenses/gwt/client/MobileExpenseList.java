@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.view.client.AsyncListViewAdapter;
+import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -95,7 +95,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
 
   private final ExpensesRequestFactory requestFactory;
   private final CellList<ExpenseRecord> expenseList;
-  private final AsyncListViewAdapter<ExpenseRecord> expenseAdapter;
+  private final AsyncDataProvider<ExpenseRecord> expenseDataProvider;
   private final NoSelectionModel<ExpenseRecord> expenseSelection;
 
   /**
@@ -122,29 +122,31 @@ public class MobileExpenseList extends Composite implements MobilePage {
     }
   };
 
-  public MobileExpenseList(final Listener listener,
-      final ExpensesRequestFactory requestFactory) {
+  public MobileExpenseList(
+      final Listener listener, final ExpensesRequestFactory requestFactory) {
     this.listener = listener;
     this.requestFactory = requestFactory;
-    expenseAdapter = new AsyncListViewAdapter<ExpenseRecord>() {
+    expenseDataProvider = new AsyncDataProvider<ExpenseRecord>() {
       @Override
       protected void onRangeChanged(HasData<ExpenseRecord> view) {
         requestExpenses();
       }
     };
-    expenseAdapter.setKeyProvider(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
+    expenseDataProvider.setKeyProvider(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
 
     expenseList = new CellList<ExpenseRecord>(new ExpenseCell());
 
     expenseSelection = new NoSelectionModel<ExpenseRecord>();
     expenseList.setSelectionModel(expenseSelection);
-    expenseSelection.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-      public void onSelectionChange(SelectionChangeEvent event) {
-        listener.onExpenseSelected(expenseSelection.getLastSelectedObject());
-      }
-    });
+    expenseSelection.addSelectionChangeHandler(
+        new SelectionChangeEvent.Handler() {
+          public void onSelectionChange(SelectionChangeEvent event) {
+            listener.onExpenseSelected(
+                expenseSelection.getLastSelectedObject());
+          }
+        });
 
-    expenseAdapter.addView(expenseList);
+    expenseDataProvider.addDataDisplay(expenseList);
     initWidget(expenseList);
   }
 
@@ -178,7 +180,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
 
   public void onRefresh(boolean clear) {
     if (clear) {
-      expenseAdapter.updateDataSize(0, true);
+      expenseDataProvider.updateRowCount(0, true);
     }
     requestExpenses();
   }
@@ -206,11 +208,12 @@ public class MobileExpenseList extends Composite implements MobilePage {
       return;
     }
     lastReceiver = new Receiver<List<ExpenseRecord>>() {
-      public void onSuccess(List<ExpenseRecord> newValues, Set<SyncResult> syncResults) {
+      public void onSuccess(
+          List<ExpenseRecord> newValues, Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
           int size = newValues.size();
-          expenseAdapter.updateDataSize(size, true);
-          expenseAdapter.updateViewData(0, size, newValues);
+          expenseDataProvider.updateRowCount(size, true);
+          expenseDataProvider.updateRowData(0, newValues);
 
           // Add the new keys to the known keys.
           boolean isInitialData = knownDeniedKeys == null;
@@ -218,12 +221,12 @@ public class MobileExpenseList extends Composite implements MobilePage {
             knownDeniedKeys = new HashSet<Object>();
           }
           for (ExpenseRecord value : newValues) {
-            Object key = expenseAdapter.getKey(value);
+            Object key = expenseDataProvider.getKey(value);
             String approval = value.getApproval();
             if (Expenses.Approval.DENIED.getText().equals(approval)) {
               if (!isInitialData && !knownDeniedKeys.contains(key)) {
                 (new PhaseAnimation.CellListPhaseAnimation<ExpenseRecord>(
-                    expenseList, value, expenseAdapter)).run();
+                    expenseList, value, expenseDataProvider)).run();
               }
               knownDeniedKeys.add(key);
             } else {

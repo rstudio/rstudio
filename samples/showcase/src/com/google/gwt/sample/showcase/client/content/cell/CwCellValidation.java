@@ -268,7 +268,7 @@ public class CwCellValidation extends ContentWidget {
               object.setAddress(value);
 
               // Push the change to the views.
-              ContactDatabase.get().refreshViews();
+              ContactDatabase.get().refreshDisplays();
             } else {
               // Update the view data to mark the pending value as invalid.
               ValidationData viewData = addressCell.getViewData(
@@ -284,7 +284,7 @@ public class CwCellValidation extends ContentWidget {
     });
 
     // Add the table to the database.
-    ContactDatabase.get().addView(table);
+    ContactDatabase.get().addDataDisplay(table);
 
     return table;
   }

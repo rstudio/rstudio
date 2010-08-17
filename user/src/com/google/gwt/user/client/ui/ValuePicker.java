@@ -113,6 +113,6 @@ public class ValuePicker<T> extends Composite
   }
 
   public void setValues(Collection<T> places) {
-    cellList.setRowValues(0, new ArrayList<T>(places));
+    cellList.setRowData(0, new ArrayList<T>(places));
   }
 }

@@ -459,8 +459,8 @@ class CellTreeNodeView<T> extends UIObject {
       presenter.setRowCount(size, isExact);
     }
 
-    public void setRowValues(int start, List<C> values) {
-      presenter.setRowValues(start, values);
+    public void setRowData(int start, List<C> values) {
+      presenter.setRowData(start, values);
     }
 
     public void setSelectionModel(
@@ -474,6 +474,11 @@ class CellTreeNodeView<T> extends UIObject {
 
     public void setVisibleRange(Range range) {
       presenter.setVisibleRange(range);
+    }
+
+    public void setVisibleRangeAndClearData(
+        Range range, boolean forceRangeChangeEvent) {
+      presenter.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
     }
 
     /**
@@ -663,7 +668,7 @@ class CellTreeNodeView<T> extends UIObject {
     // Unregister the list handler.
     if (listView != null) {
       listView.cleanup();
-      nodeInfo.unsetView();
+      nodeInfo.unsetDataDisplay();
       listView = null;
     }
 
@@ -763,7 +768,7 @@ class CellTreeNodeView<T> extends UIObject {
         nodeInfo, this, tree.getDefaultNodeSize());
     listView = view;
     view.setSelectionModel(nodeInfo.getSelectionModel());
-    nodeInfo.setView(view);
+    nodeInfo.setDataDisplay(view);
   }
 
   /**

@@ -157,7 +157,7 @@ public abstract class AbstractRecordListActivity<R extends Record>
           R record = values.get(i);
           recordToRow.put(record.getId(), row);
         }
-        getView().asHasData().setRowValues(range.getStart(), values);
+        getView().asHasData().setRowData(range.getStart(), values);
         if (display != null) {
           display.showActivityWidget(getView());
         }
@@ -262,7 +262,7 @@ public abstract class AbstractRecordListActivity<R extends Record>
 
   private void update(R record) {
     Integer row = recordToRow.get(record.getId());
-    getView().asHasData().setRowValues(row, Collections.singletonList(record));
+    getView().asHasData().setRowData(row, Collections.singletonList(record));
   }
 
   private void updateSelection(Place newPlace) {

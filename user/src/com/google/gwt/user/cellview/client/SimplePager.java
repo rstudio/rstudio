@@ -286,7 +286,7 @@ public class SimplePager extends AbstractPager {
     }
 
     // Disable the buttons by default.
-    setView(null);
+    setDisplay(null);
   }
 
   @Override
@@ -350,6 +350,16 @@ public class SimplePager extends AbstractPager {
   }
 
   @Override
+  public void setDisplay(HasRows display) {
+    // Enable or disable all buttons.
+    boolean disableButtons = (display == null);
+    setFastForwardDisabled(disableButtons);
+    setNextPageButtonsDisabled(disableButtons);
+    setPrevPageButtonsDisabled(disableButtons);
+    super.setDisplay(display);
+  }
+
+  @Override
   public void setPage(int index) {
     super.setPage(index);
   }
@@ -364,23 +374,13 @@ public class SimplePager extends AbstractPager {
     super.setPageStart(index);
   }
 
-  @Override
-  public void setView(HasRows view) {
-    // Enable or disable all buttons.
-    boolean disableButtons = (view == null);
-    setFastForwardDisabled(disableButtons);
-    setNextPageButtonsDisabled(disableButtons);
-    setPrevPageButtonsDisabled(disableButtons);
-    super.setView(view);
-  }
-
   /**
    * Let the page know that the table is loading. Call this method to clear all
    * data from the table and hide the current range when new data is being
    * loaded into the table.
    */
   public void startLoading() {
-    getView().setRowCount(0, true);
+    getDisplay().setRowCount(0, true);
     label.setHTML("");
   }
 
@@ -392,28 +392,28 @@ public class SimplePager extends AbstractPager {
   protected String createText() {
     // Default text is 1 based.
     NumberFormat formatter = NumberFormat.getFormat("#,###");
-    HasRows view = getView();
-    Range range = view.getVisibleRange();
+    HasRows display = getDisplay();
+    Range range = display.getVisibleRange();
     int pageStart = range.getStart() + 1;
     int pageSize = range.getLength();
-    int dataSize = view.getRowCount();
+    int dataSize = display.getRowCount();
     int endIndex = Math.min(dataSize, pageStart + pageSize - 1);
     endIndex = Math.max(pageStart, endIndex);
-    boolean exact = view.isRowCountExact();
+    boolean exact = display.isRowCountExact();
     return formatter.format(pageStart) + "-" + formatter.format(endIndex)
         + (exact ? " of " : " of over ") + formatter.format(dataSize);
   }
 
   @Override
   protected void onRangeOrRowCountChanged() {
-    HasRows view = getView();
+    HasRows display = getDisplay();
     label.setText(createText());
 
     // Update the prev and first buttons.
     setPrevPageButtonsDisabled(!hasPreviousPage());
 
     // Update the next and last buttons.
-    if (isRangeLimited() || !view.isRowCountExact()) {
+    if (isRangeLimited() || !display.isRowCountExact()) {
       setNextPageButtonsDisabled(!hasNextPage());
       setFastForwardDisabled(!hasNextPages(getFastForwardPages()));
     }

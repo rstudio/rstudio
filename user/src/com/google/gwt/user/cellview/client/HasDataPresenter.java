@@ -214,6 +214,8 @@ class HasDataPresenter<T> implements HasData<T> {
     void setSelected(Element elem, boolean selected);
   }
 
+  private final HasData<T> display;
+
   /**
    * As an optimization, keep track of the last HTML string that we rendered. If
    * the contents do not change the next time we render, then we don't have to
@@ -221,7 +223,6 @@ class HasDataPresenter<T> implements HasData<T> {
    */
   private String lastContents = null;
 
-  private final HasData<T> listView;
   private int pageSize;
   private int pageStart = 0;
 
@@ -238,7 +239,7 @@ class HasDataPresenter<T> implements HasData<T> {
    * The local cache of data in the view. The 0th index in the list corresponds
    * to the value at pageStart.
    */
-  private final List<T> rowValues = new ArrayList<T>();
+  private final List<T> rowData = new ArrayList<T>();
 
   /**
    * A local cache of the currently selected rows. We cannot track selected keys
@@ -255,12 +256,12 @@ class HasDataPresenter<T> implements HasData<T> {
   /**
    * Construct a new {@link HasDataPresenter}.
    *
-   * @param listView the listView that is being presented
+   * @param display the display that is being presented
    * @param view the view implementation
    * @param pageSize the default page size
    */
-  public HasDataPresenter(HasData<T> listView, View<T> view, int pageSize) {
-    this.listView = listView;
+  public HasDataPresenter(HasData<T> display, View<T> view, int pageSize) {
+    this.display = display;
     this.view = view;
     this.pageSize = pageSize;
   }
@@ -290,7 +291,7 @@ class HasDataPresenter<T> implements HasData<T> {
    * @throws UnsupportedOperationException
    */
   public void fireEvent(GwtEvent<?> event) {
-    // ListViews should fire their own events.
+    // HasData should fire their own events.
     throw new UnsupportedOperationException();
   }
 
@@ -320,8 +321,8 @@ class HasDataPresenter<T> implements HasData<T> {
    *
    * @return the list of data for the current page
    */
-  public List<T> getRowValues() {
-    return rowValues;
+  public List<T> getRowData() {
+    return rowData;
   }
 
   public SelectionModel<? super T> getSelectionModel() {
@@ -344,7 +345,7 @@ class HasDataPresenter<T> implements HasData<T> {
    */
   public void redraw() {
     lastContents = null;
-    setRowValues(pageStart, rowValues);
+    setRowData(pageStart, rowData);
   }
 
   /**
@@ -370,10 +371,10 @@ class HasDataPresenter<T> implements HasData<T> {
     }
 
     // Update the pager.
-    RowCountChangeEvent.fire(listView, count, rowCountIsExact);
+    RowCountChangeEvent.fire(display, count, rowCountIsExact);
   }
 
-  public void setRowValues(int start, List<T> values) {
+  public void setRowData(int start, List<T> values) {
     int valuesLength = values.size();
     int valuesEnd = start + valuesLength;
 
@@ -390,23 +391,23 @@ class HasDataPresenter<T> implements HasData<T> {
     // The data size must be at least as large as the data.
     if (valuesEnd > rowCount) {
       rowCount = valuesEnd;
-      RowCountChangeEvent.fire(listView, rowCount, rowCountIsExact);
+      RowCountChangeEvent.fire(display, rowCount, rowCountIsExact);
     }
 
     // Create placeholders up to the specified index.
-    int cacheOffset = Math.max(0, boundedStart - pageStart - rowValues.size());
+    int cacheOffset = Math.max(0, boundedStart - pageStart - rowData.size());
     for (int i = 0; i < cacheOffset; i++) {
-      rowValues.add(null);
+      rowData.add(null);
     }
 
     // Insert the new values into the data array.
     for (int i = boundedStart; i < boundedEnd; i++) {
       T value = values.get(i - start);
       int dataIndex = i - pageStart;
-      if (dataIndex < rowValues.size()) {
-        rowValues.set(dataIndex, value);
+      if (dataIndex < rowData.size()) {
+        rowData.set(dataIndex, value);
       } else {
-        rowValues.add(value);
+        rowData.add(value);
       }
 
       // Update our local cache of selected rows.
@@ -420,9 +421,11 @@ class HasDataPresenter<T> implements HasData<T> {
     }
 
     // Construct a run of elements within the range of the data and the page.
+    // boundedStart = start index of the data to replace.
+    // boundedSize = the number of items to replace.
     boundedStart = pageStartChangedSinceRender ? pageStart : boundedStart;
     boundedStart -= cacheOffset;
-    List<T> boundedValues = rowValues.subList(
+    List<T> boundedValues = rowData.subList(
         boundedStart - pageStart, boundedEnd - pageStart);
     int boundedSize = boundedValues.size();
     StringBuilder sb = new StringBuilder();
@@ -434,7 +437,8 @@ class HasDataPresenter<T> implements HasData<T> {
     // Replace the DOM elements with the new rendered cells.
     int childCount = view.getChildCount();
     if (boundedStart == pageStart
-        && (boundedSize >= childCount || boundedSize >= getCurrentPageSize())) {
+        && (boundedSize >= childCount || boundedSize >= getCurrentPageSize()
+            || rowData.size() < childCount)) {
       // If the contents have not changed, we're done.
       String newContents = sb.toString();
       if (!newContents.equals(lastContents)) {
@@ -464,63 +468,12 @@ class HasDataPresenter<T> implements HasData<T> {
   }
 
   public void setVisibleRange(Range range) {
-    int start = range.getStart();
-    int length = range.getLength();
+    setVisibleRange(range, false, false);
+  }
 
-    // Update the page start.
-    boolean pageStartChanged = false;
-    if (pageStart != start) {
-      if (start > pageStart) {
-        int increase = start - pageStart;
-        if (rowValues.size() > increase) {
-          // Remove the data we no longer need.
-          for (int i = 0; i < increase; i++) {
-            rowValues.remove(0);
-          }
-        } else {
-          // We have no overlapping data, so just clear it.
-          rowValues.clear();
-        }
-      } else {
-        int decrease = pageStart - start;
-        if ((rowValues.size() > 0) && (decrease < pageSize)) {
-          // Insert null data at the beginning.
-          for (int i = 0; i < decrease; i++) {
-            rowValues.add(0, null);
-          }
-        } else {
-          // We have no overlapping data, so just clear it.
-          rowValues.clear();
-        }
-      }
-      pageStart = start;
-      pageStartChanged = true;
-      pageStartChangedSinceRender = true;
-    }
-
-    // Update the page size.
-    boolean pageSizeChanged = false;
-    if (pageSize != length) {
-      pageSize = length;
-      pageSizeChanged = true;
-    }
-
-    // Early exit if the range hasn't changed.
-    if (!pageStartChanged && !pageSizeChanged) {
-      return;
-    }
-
-    // Update the loading state.
-    updateLoadingState();
-
-    // Redraw with the existing data.
-    boolean dataStale = updateCachedData();
-    if (pageStartChanged || dataStale) {
-      redraw();
-    }
-
-    // Update the pager and data source.
-    RangeChangeEvent.fire(listView, getVisibleRange());
+  public void setVisibleRangeAndClearData(
+      Range range, boolean forceRangeChangeEvent) {
+    setVisibleRange(range, true, forceRangeChangeEvent);
   }
 
   public void setSelectionModel(
@@ -543,6 +496,80 @@ class HasDataPresenter<T> implements HasData<T> {
   }
 
   /**
+   * Set the visible {@link Range}, optionally clearing data and/or firing a
+   * {@link RangeChangeEvent}.
+   *
+   * @param range the new {@link Range}
+   * @param clearData true to clear all data
+   * @param forceRangeChangeEvent true to force a {@link RangeChangeEvent}
+   */
+  private void setVisibleRange(
+      Range range, boolean clearData, boolean forceRangeChangeEvent) {
+    final int start = range.getStart();
+    final int length = range.getLength();
+
+    // Update the page start.
+    final boolean pageStartChanged = (pageStart != start);
+    if (pageStartChanged) {
+      // Trim the data if we aren't clearing it.
+      if (!clearData) {
+        if (start > pageStart) {
+          int increase = start - pageStart;
+          if (rowData.size() > increase) {
+            // Remove the data we no longer need.
+            for (int i = 0; i < increase; i++) {
+              rowData.remove(0);
+            }
+          } else {
+            // We have no overlapping data, so just clear it.
+            rowData.clear();
+          }
+        } else {
+          int decrease = pageStart - start;
+          if ((rowData.size() > 0) && (decrease < pageSize)) {
+            // Insert null data at the beginning.
+            for (int i = 0; i < decrease; i++) {
+              rowData.add(0, null);
+            }
+          } else {
+            // We have no overlapping data, so just clear it.
+            rowData.clear();
+          }
+        }
+      }
+
+      // Update the page start.
+      pageStart = start;
+      pageStartChangedSinceRender = true;
+    }
+
+    // Update the page size.
+    final boolean pageSizeChanged = (pageSize != length);
+    if (pageSizeChanged) {
+      pageSize = length;
+    }
+
+    // Clear the data.
+    if (clearData) {
+      rowData.clear();
+      selectedRows.clear();
+    }
+
+    // Update the loading state.
+    updateLoadingState();
+
+    // Redraw with the existing data.
+    if (pageStartChanged || clearData || updateCachedData()) {
+      redraw();
+    }
+
+    // Update the pager and data source if the range changed.
+    if (pageStartChanged || pageSizeChanged || forceRangeChangeEvent) {
+      RangeChangeEvent.fire(display, getVisibleRange());
+    }
+  }
+
+  /**
    * Ensure that the cached data is consistent with the data size.
    *
    * @return true if the data was updated, false if not
@@ -551,9 +578,9 @@ class HasDataPresenter<T> implements HasData<T> {
     boolean updated = false;
     int expectedLastIndex = Math.max(
         0, Math.min(pageSize, rowCount - pageStart));
-    int lastIndex = rowValues.size() - 1;
+    int lastIndex = rowData.size() - 1;
     while (lastIndex >= expectedLastIndex) {
-      rowValues.remove(lastIndex);
+      rowData.remove(lastIndex);
       selectedRows.remove(lastIndex + pageStart);
       lastIndex--;
       updated = true;
@@ -565,7 +592,7 @@ class HasDataPresenter<T> implements HasData<T> {
    * Update the loading state of the view based on the data size and page size.
    */
   private void updateLoadingState() {
-    int cacheSize = rowValues.size();
+    int cacheSize = rowData.size();
     int curPageSize = isRowCountExact() ? getCurrentPageSize() : pageSize;
     if (rowCount == 0) {
       view.setLoadingState(LoadingState.EMPTY);
@@ -589,7 +616,7 @@ class HasDataPresenter<T> implements HasData<T> {
     boolean refreshRequired = false;
     ElementIterator children = view.getChildIterator();
     int row = pageStart;
-    for (T value : rowValues) {
+    for (T value : rowData) {
       // Increment the child.
       if (!children.hasNext()) {
         break;

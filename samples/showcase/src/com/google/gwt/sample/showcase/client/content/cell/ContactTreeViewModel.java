@@ -29,7 +29,7 @@ import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.Catego
 import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.ContactInfo;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellList.ContactCell;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 
@@ -127,7 +127,7 @@ public class ContactTreeViewModel implements TreeViewModel {
    */
   private static Images images;
 
-  private final ListViewAdapter<Category> categoryAdapter;
+  private final ListDataProvider<Category> categoryDataProvider;
   private final Cell<ContactInfo> contactCell;
   private final SelectionModel<ContactInfo> selectionModel;
 
@@ -138,9 +138,9 @@ public class ContactTreeViewModel implements TreeViewModel {
       images = GWT.create(Images.class);
     }
 
-    // Create an adapter that provides categories.
-    categoryAdapter = new ListViewAdapter<Category>();
-    List<Category> categoryList = categoryAdapter.getList();
+    // Create a data provider that provides categories.
+    categoryDataProvider = new ListDataProvider<Category>();
+    List<Category> categoryList = categoryDataProvider.getList();
     for (Category category : ContactDatabase.get().queryCategories()) {
       categoryList.add(category);
     }
@@ -213,7 +213,7 @@ public class ContactTreeViewModel implements TreeViewModel {
     if (value == null) {
       // Return top level categories.
       return new DefaultNodeInfo<Category>(
-          categoryAdapter, new CategoryCell(images.contactsGroup()));
+          categoryDataProvider, new CategoryCell(images.contactsGroup()));
     } else if (value instanceof Category) {
       // Return the first letters of each first name.
       Category category = (Category) value;
@@ -233,17 +233,17 @@ public class ContactTreeViewModel implements TreeViewModel {
       List<LetterCount> orderedCounts = new ArrayList<LetterCount>(
           counts.values());
       return new DefaultNodeInfo<LetterCount>(
-          new ListViewAdapter<LetterCount>(orderedCounts),
+          new ListDataProvider<LetterCount>(orderedCounts),
           new LetterCountCell());
     } else if (value instanceof LetterCount) {
       // Return the contacts with the specified character and first name.
       LetterCount count = (LetterCount) value;
           List<ContactInfo> contacts = ContactDatabase.get().queryContactsByCategoryAndFirstName(count.category, count.firstLetter + "");
-      ListViewAdapter<ContactInfo> adapter = new ListViewAdapter<ContactInfo>(
-          contacts);
-      adapter.setKeyProvider(ContactInfo.KEY_PROVIDER);
+      ListDataProvider<ContactInfo> dataProvider = new ListDataProvider<
+          ContactInfo>(contacts);
+      dataProvider.setKeyProvider(ContactInfo.KEY_PROVIDER);
       return new DefaultNodeInfo<ContactInfo>(
-          adapter, contactCell, selectionModel, null);
+          dataProvider, contactCell, selectionModel, null);
     }
 
     // Unhandled type.

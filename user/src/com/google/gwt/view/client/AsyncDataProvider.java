@@ -18,37 +18,24 @@ package com.google.gwt.view.client;
 import java.util.List;
 
 /**
- * An implementation of {@link AbstractListViewAdapter} that allows the data to be
+ * An implementation of {@link AbstractDataProvider} that allows the data to be
  * modified.
  *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
- * 
+ *
  * @param <T> the data type of records in the list
  */
-public abstract class AsyncListViewAdapter<T> extends AbstractListViewAdapter<T> {
+public abstract class AsyncDataProvider<T> extends AbstractDataProvider<T> {
 
-  /**
-   * Inform the views of the total number of items that are available.
-   *
-   * @param size the new size
-   * @param exact true if the size is exact, false if it is a guess
-   */
   @Override
-  public void updateDataSize(int size, boolean exact) {
-    super.updateDataSize(size, exact);
+  public void updateRowCount(int size, boolean exact) {
+    super.updateRowCount(size, exact);
   }
 
-  /**
-   * Inform the views of the new data.
-   *
-   * @param start the start index
-   * @param length the length of the data
-   * @param values the data values
-   */
   @Override
-  public void updateViewData(int start, int length, List<T> values) {
-    super.updateViewData(start, length, values);
+  public void updateRowData(int start, List<T> values) {
+    super.updateRowData(start, values);
   }
 }

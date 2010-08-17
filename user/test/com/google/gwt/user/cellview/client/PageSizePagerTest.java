@@ -32,23 +32,23 @@ public class PageSizePagerTest extends AbstractPagerTest {
     assertFalse(pager.isShowLessButtonVisible());
     assertFalse(pager.isShowMoreButtonVisible());
 
-    // Set the view.
-    HasRows view = new MockHasData<String>();
-    view.setRowCount(1000);
-    pager.setView(view);
+    // Set the display.
+    HasRows display = new MockHasData<String>();
+    display.setRowCount(1000);
+    pager.setDisplay(display);
 
     // Show number of rows equal to increment.
-    view.setVisibleRange(0, PAGE_INCREMENT);
+    display.setVisibleRange(0, PAGE_INCREMENT);
     assertFalse(pager.isShowLessButtonVisible());
     assertTrue(pager.isShowMoreButtonVisible());
 
     // Show more than increment.
-    view.setVisibleRange(0, PAGE_INCREMENT + 1);
+    display.setVisibleRange(0, PAGE_INCREMENT + 1);
     assertTrue(pager.isShowLessButtonVisible());
     assertTrue(pager.isShowMoreButtonVisible());
 
     // Show all rows.
-    view.setVisibleRange(0, 1000);
+    display.setVisibleRange(0, 1000);
     assertTrue(pager.isShowLessButtonVisible());
     assertFalse(pager.isShowMoreButtonVisible());
   }

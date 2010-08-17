@@ -71,7 +71,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.ListDataProvider;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -409,9 +409,9 @@ public class ExpenseDetails extends Composite
   private final Label errorPopupMessage = new Label();
 
   /**
-   * The adapter that provides expense items.
+   * The data provider that provides expense items.
    */
-  private final ListViewAdapter<ExpenseRecord> items;
+  private final ListDataProvider<ExpenseRecord> items;
 
   /**
    * The set of Expense keys that we have seen. When a new key is added, we
@@ -449,10 +449,10 @@ public class ExpenseDetails extends Composite
   public ExpenseDetails() {
     createErrorPopup();
     initWidget(uiBinder.createAndBindUi(this));
-    items = new ListViewAdapter<ExpenseRecord>();
+    items = new ListDataProvider<ExpenseRecord>();
     items.setKeyProvider(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
     table.setKeyProvider(items);
-    items.addView(table);
+    items.addDataDisplay(table);
 
     // Switch to edit notes.
     notesEditLink.addClickHandler(new ClickHandler() {
@@ -899,7 +899,8 @@ public class ExpenseDetails extends Composite
     // Cancel the timer since we are about to send a request.
     refreshTimer.cancel();
     lastReceiver = new Receiver<List<ExpenseRecord>>() {
-      public void onSuccess(List<ExpenseRecord> newValues, Set<SyncResult> syncResults) {
+      public void onSuccess(
+          List<ExpenseRecord> newValues, Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
           List<ExpenseRecord> list = new ArrayList<ExpenseRecord>(newValues);
           sortExpenses(list, lastComparator);
@@ -932,7 +933,8 @@ public class ExpenseDetails extends Composite
       }
     };
     expensesRequestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(Record.id)).forProperties(getExpenseColumns()).fire(lastReceiver);
+        report.getRef(Record.id)).forProperties(getExpenseColumns()).fire(
+        lastReceiver);
   }
 
   /**
@@ -954,15 +956,15 @@ public class ExpenseDetails extends Composite
     ReportRecord editableReport = editRequest.edit(report);
     editableReport.setNotes(pendingNotes);
     editRequest.fire(new Receiver<Void>() {
-          public void onSuccess(Void ignore, Set<SyncResult> response) {
-            // We expect onReportChanged to be called if there are no errors.
-            String errorMessage = getErrorMessageFromSync(response);
-            if (errorMessage.length() > 0) {
-              showErrorPopup(errorMessage);
-              setNotesEditState(false, false, report.getNotes());
-            }
-          }
-        });
+      public void onSuccess(Void ignore, Set<SyncResult> response) {
+        // We expect onReportChanged to be called if there are no errors.
+        String errorMessage = getErrorMessageFromSync(response);
+        if (errorMessage.length() > 0) {
+          showErrorPopup(errorMessage);
+          setNotesEditState(false, false, report.getNotes());
+        }
+      }
+    });
   }
 
   /**
@@ -1039,13 +1041,12 @@ public class ExpenseDetails extends Composite
     editableRecord.setApproval(approval);
     editableRecord.setReasonDenied(reasonDenied);
     editRequest.fire(new Receiver<Void>() {
-          public void onSuccess(Void ignore, Set<SyncResult> response) {
-            String errorMessage = getErrorMessageFromSync(response);
-            if (errorMessage.length() > 0) {
-              syncCommit(
-                  record, errorMessage.length() > 0 ? errorMessage : null);
-            }
-          }
-        });
+      public void onSuccess(Void ignore, Set<SyncResult> response) {
+        String errorMessage = getErrorMessageFromSync(response);
+        if (errorMessage.length() > 0) {
+          syncCommit(record, errorMessage.length() > 0 ? errorMessage : null);
+        }
+      }
+    });
   }
 }

@@ -26,7 +26,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 /**
- * A concrete subclass of {@link AbstractListViewAdapter} that is backed by an
+ * A concrete subclass of {@link AbstractDataProvider} that is backed by an
  * in-memory list.
  *
  * <p>
@@ -35,7 +35,7 @@ import java.util.NoSuchElementException;
  *
  * @param <T> the data type of the list
  */
-public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
+public class ListDataProvider<T> extends AbstractDataProvider<T> {
 
   /**
    * A wrapper around a list that updates the model on any change.
@@ -150,8 +150,8 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
     /**
      * We wait until the end of the current event loop before flushing changes
-     * so that we don't spam the views. This also allows users to clear and
-     * replace all of the data without forcing the view back to page 0.
+     * so that we don't spam the displays. This also allows users to clear and
+     * replace all of the data without forcing the display back to page 0.
      */
     private Command flushCommand = new Command() {
       public void execute() {
@@ -198,7 +198,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       this(list, null, 0);
 
       // Initialize the data size based on the size of the input list.
-      updateDataSize(list.size(), true);
+      updateRowCount(list.size(), true);
     }
 
     /**
@@ -399,7 +399,7 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     }
 
     /**
-     * Flush pending list changes to the views. By default,
+     * Flush pending list changes to the displays. By default,
      */
     private void flushNow() {
       // Cancel any pending flush command.
@@ -410,13 +410,11 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
       int newSize = list.size();
       if (curSize != newSize) {
         curSize = newSize;
-        updateDataSize(curSize, true);
+        updateRowCount(curSize, true);
       }
 
       if (modified) {
-        int length = maxModified - minModified;
-        updateViewData(
-            minModified, length, list.subList(minModified, maxModified));
+        updateRowData(minModified, list.subList(minModified, maxModified));
         modified = false;
       }
       minModified = Integer.MAX_VALUE;
@@ -432,26 +430,26 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
   /**
    * Creates an empty model.
    */
-  public ListViewAdapter() {
+  public ListDataProvider() {
     this(new ArrayList<T>());
   }
 
   /**
    * Creates a list model that wraps the given collection. Changes to the
    * wrapped list must be made via this model in order to be correctly applied
-   * to views.
+   * to displays.
    */
-  public ListViewAdapter(List<T> wrappee) {
+  public ListDataProvider(List<T> wrappee) {
     listWrapper = new ListWrapper(wrappee);
   }
 
   /**
-   * Flush pending list changes to the views. By default, views are informed of
-   * modifications to the underlying list at the end of the current event loop,
-   * which makes it possible to perform multiple operations synchronously
-   * without repeatedly refreshing the views. This method can be called to flush
-   * the changes immediately instead of waiting until the end of the current
-   * event loop.
+   * Flush pending list changes to the displays. By default, displays are
+   * informed of modifications to the underlying list at the end of the current
+   * event loop, which makes it possible to perform multiple operations
+   * synchronously without repeatedly refreshing the displays. This method can
+   * be called to flush the changes immediately instead of waiting until the end
+   * of the current event loop.
    */
   public void flush() {
     listWrapper.flushNow();
@@ -468,10 +466,10 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
   }
 
   /**
-   * Refresh all of the views listening to this adapter.
+   * Refresh all of the displays listening to this adapter.
    */
   public void refresh() {
-    updateViewData(0, listWrapper.size(), listWrapper);
+    updateRowData(0, listWrapper);
   }
 
   /**
@@ -488,11 +486,11 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
   }
 
   @Override
-  protected void onRangeChanged(HasData<T> view) {
+  protected void onRangeChanged(HasData<T> display) {
     int size = listWrapper.size();
     if (size > 0) {
       // Do not push data if the data set is empty.
-      updateViewData(view, 0, size, listWrapper);
+      updateRowData(display, 0, listWrapper);
     }
   }
 }

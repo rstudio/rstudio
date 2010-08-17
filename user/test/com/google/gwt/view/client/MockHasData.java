@@ -81,7 +81,8 @@ public class MockHasData<T> implements HasData<T> {
 
   private final HandlerManager handlerManager = new HandlerManager(this);
   private Range lastRange;
-  private List<T> lastRowValues;
+  private List<T> lastRowData;
+
   private int pageStart;
   private int pageSize = DEFAULT_PAGE_SIZE;
   private int rowCount;
@@ -100,10 +101,10 @@ public class MockHasData<T> implements HasData<T> {
   }
 
   /**
-   * Clear the last data set by {@link #setRowValues(int, List)}.
+   * Clear the last data set by {@link #setRowData(int, List)}.
    */
-  public void clearLastRowValuesAndRange() {
-    lastRowValues = null;
+  public void clearLastRowDataAndRange() {
+    lastRowData = null;
     lastRange = null;
   }
 
@@ -112,20 +113,20 @@ public class MockHasData<T> implements HasData<T> {
   }
 
   /**
-   * Get the last data set in {@link #setRowValues(int, List)}.
+   * Get the last data set in {@link #setRowData(int, List)}.
    *
    * @return the last data set
    */
-  public List<T> getLastRowValues() {
-    return lastRowValues;
+  public List<T> getLastRowData() {
+    return lastRowData;
   }
 
   /**
-   * Get the last data range set in {@link #setRowValues(int, List)}.
+   * Get the last data range set in {@link #setRowData(int, List)}.
    *
    * @return the last data range
    */
-  public Range getLastRowValuesRange() {
+  public Range getLastRowDataRange() {
     return lastRange;
   }
 
@@ -145,9 +146,9 @@ public class MockHasData<T> implements HasData<T> {
     return rowCountExact;
   }
 
-  public void setRowValues(int start, List<T> values) {
+  public void setRowData(int start, List<T> values) {
     lastRange = new Range(start, values.size());
-    lastRowValues = values;
+    lastRowData = values;
   }
 
   public final void setRowCount(int count) {
@@ -168,14 +169,12 @@ public class MockHasData<T> implements HasData<T> {
   }
 
   public void setVisibleRange(Range range) {
-    int start = range.getStart();
-    int length = range.getLength();
-    if (this.pageStart == start && this.pageSize == length) {
-      return;
-    }
-    this.pageStart = start;
-    this.pageSize = length;
-    RangeChangeEvent.fire(this, getVisibleRange());
+    setVisibleRange(range, false, false);
+  }
+
+  public void setVisibleRangeAndClearData(
+      Range range, boolean forceRangeChangeEvent) {
+    setVisibleRange(range, true, forceRangeChangeEvent);
   }
 
   public void setSelectionModel(SelectionModel<? super T> selectionModel) {
@@ -194,5 +193,21 @@ public class MockHasData<T> implements HasData<T> {
             }
           });
     }
+  }
+
+  private void setVisibleRange(
+      Range range, boolean clearData, boolean forceRangeChangeEvent) {
+    int start = range.getStart();
+    int length = range.getLength();
+    if (clearData) {
+      lastRowData = null;
+    }
+    if (!forceRangeChangeEvent && this.pageStart == start
+        && this.pageSize == length) {
+      return;
+    }
+    this.pageStart = start;
+    this.pageSize = length;
+    RangeChangeEvent.fire(this, getVisibleRange());
   }
 }

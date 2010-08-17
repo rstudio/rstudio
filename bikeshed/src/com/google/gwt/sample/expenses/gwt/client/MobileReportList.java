@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,7 +25,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.view.client.AsyncListViewAdapter;
+import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -57,7 +57,7 @@ public class MobileReportList extends Composite implements MobilePage {
   private final EmployeeRecord employee;
   private final Listener listener;
   private final CellList<ReportRecord> reportList;
-  private final AsyncListViewAdapter<ReportRecord> reportAdapter;
+  private final AsyncDataProvider<ReportRecord> reportDataProvider;
   private final NoSelectionModel<ReportRecord> reportSelection;
   private final ExpensesRequestFactory requestFactory;
 
@@ -66,31 +66,34 @@ public class MobileReportList extends Composite implements MobilePage {
     this.listener = listener;
     this.requestFactory = requestFactory;
     this.employee = employee;
-    reportAdapter = new AsyncListViewAdapter<ReportRecord>() {
+
+    reportDataProvider = new AsyncDataProvider<ReportRecord>() {
       @Override
       protected void onRangeChanged(HasData<ReportRecord> view) {
         requestReports();
       }
     };
-    reportAdapter.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
+    reportDataProvider.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
 
     reportList = new CellList<ReportRecord>(new AbstractCell<ReportRecord>() {
       @Override
-      public void render(ReportRecord value, Object viewData, StringBuilder sb) {
+      public void render(
+          ReportRecord value, Object viewData, StringBuilder sb) {
         sb.append("<div class='item'>" + value.getPurpose() + "</div>");
       }
     });
 
     reportSelection = new NoSelectionModel<ReportRecord>();
     reportSelection.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
-    reportSelection.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-      public void onSelectionChange(SelectionChangeEvent event) {
-        listener.onReportSelected(reportSelection.getLastSelectedObject());
-      }
-    });
+    reportSelection.addSelectionChangeHandler(
+        new SelectionChangeEvent.Handler() {
+          public void onSelectionChange(SelectionChangeEvent event) {
+            listener.onReportSelected(reportSelection.getLastSelectedObject());
+          }
+        });
 
     reportList.setSelectionModel(reportSelection);
-    reportAdapter.addView(reportList);
+    reportDataProvider.addDataDisplay(reportList);
 
     initWidget(reportList);
     onRefresh(false);
@@ -125,7 +128,7 @@ public class MobileReportList extends Composite implements MobilePage {
 
   public void onRefresh(boolean clear) {
     if (clear) {
-      reportAdapter.updateDataSize(0, true);
+      reportDataProvider.updateRowCount(0, true);
     }
     requestReports();
   }
@@ -142,10 +145,11 @@ public class MobileReportList extends Composite implements MobilePage {
       return;
     }
     lastReceiver = new Receiver<List<ReportRecord>>() {
-      public void onSuccess(List<ReportRecord> newValues, Set<SyncResult> syncResults) {
+      public void onSuccess(
+          List<ReportRecord> newValues, Set<SyncResult> syncResults) {
         int size = newValues.size();
-        reportAdapter.updateDataSize(size, true);
-        reportAdapter.updateViewData(0, size, newValues);
+        reportDataProvider.updateRowCount(size, true);
+        reportDataProvider.updateRowData(0, newValues);
       }
     };
     requestFactory.reportRequest().findReportEntriesBySearch(employee.getId(), "",

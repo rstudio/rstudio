@@ -63,7 +63,7 @@ public class ScrollbarPager extends AbstractPager {
   }
 
   @Override
-  public void setView(HasRows view) {
+  public void setDisplay(HasRows view) {
     // TODO(jlabanca): ScrollbarPager should work with any HasRows.
     throw new UnsupportedOperationException(
         "view must be an instance of CellTable.");
@@ -71,7 +71,7 @@ public class ScrollbarPager extends AbstractPager {
 
   public void setView(CellTable<?> view) {
     table = view;
-    super.setView(view);
+    super.setDisplay(view);
   }
 
   @Override

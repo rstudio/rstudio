@@ -90,7 +90,7 @@ public class ContactInfoForm extends Composite {
         contactInfo.setCategory(categories[categoryIndex]);
 
         // Update the views.
-        ContactDatabase.get().refreshViews();
+        ContactDatabase.get().refreshDisplays();
       }
     });
     createButton.addClickHandler(new ClickHandler() {

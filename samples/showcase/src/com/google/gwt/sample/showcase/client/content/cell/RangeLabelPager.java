@@ -40,10 +40,10 @@ public class RangeLabelPager extends AbstractPager {
 
   @Override
   protected void onRangeOrRowCountChanged() {
-    HasRows view = getView();
-    Range range = view.getVisibleRange();
+    HasRows display = getDisplay();
+    Range range = display.getVisibleRange();
     int start = range.getStart();
     int end = start + range.getLength();
-    label.setText(start + " - " + end + " : " + view.getRowCount());
+    label.setText(start + " - " + end + " : " + display.getRowCount());
   }
 }

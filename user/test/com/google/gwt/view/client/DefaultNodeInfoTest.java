@@ -17,7 +17,7 @@ package com.google.gwt.view.client;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.view.client.AbstractListViewAdapterTest.MockListViewAdapter;
+import com.google.gwt.view.client.AbstractDataProviderTest.MockDataProvider;
 import com.google.gwt.view.client.TreeViewModel.DefaultNodeInfo;
 
 import junit.framework.TestCase;
@@ -28,7 +28,7 @@ import junit.framework.TestCase;
 public class DefaultNodeInfoTest extends TestCase {
 
   public void testAccessors() {
-    ListViewAdapter<String> adapter = new ListViewAdapter<String>();
+    ListDataProvider<String> provider = new ListDataProvider<String>();
     TextCell cell = new TextCell();
     SingleSelectionModel<String> selectionModel = new SingleSelectionModel<
         String>();
@@ -37,34 +37,34 @@ public class DefaultNodeInfoTest extends TestCase {
       }
     };
     DefaultNodeInfo<String> nodeInfo = new DefaultNodeInfo<String>(
-        adapter, cell, selectionModel, valueUpdater);
+        provider, cell, selectionModel, valueUpdater);
 
-    assertEquals(adapter, nodeInfo.getProvidesKey());
+    assertEquals(provider, nodeInfo.getProvidesKey());
     assertEquals(cell, nodeInfo.getCell());
     assertEquals(selectionModel, nodeInfo.getSelectionModel());
     assertEquals(valueUpdater, nodeInfo.getValueUpdater());
   }
 
-  public void testSetView() {
-    MockListViewAdapter<String> adapter = new MockListViewAdapter<String>();
+  public void testSetDataDisplay() {
+    MockDataProvider<String> provider = new MockDataProvider<String>();
     DefaultNodeInfo<String> nodeInfo = new DefaultNodeInfo<String>(
-        adapter, new TextCell());
-    MockHasData<String> view = new MockHasData<String>();
-    view.setVisibleRange(0, 10);
-    view.clearLastRowValuesAndRange();
+        provider, new TextCell());
+    MockHasData<String> display = new MockHasData<String>();
+    display.setVisibleRange(0, 10);
+    display.clearLastRowDataAndRange();
 
-    // setView.
-    nodeInfo.setView(view);
-    adapter.assertLastRangeChanged(view);
-    adapter.clearLastRangeChanged();
+    // setDataDisplay.
+    nodeInfo.setDataDisplay(display);
+    provider.assertLastRangeChanged(display);
+    provider.clearLastRangeChanged();
 
-    view.setVisibleRange(0, 5);
-    adapter.assertLastRangeChanged(view);
-    adapter.clearLastRangeChanged();
+    display.setVisibleRange(0, 5);
+    provider.assertLastRangeChanged(display);
+    provider.clearLastRangeChanged();
 
-    // unsetView.
-    nodeInfo.unsetView();
-    view.setVisibleRange(0, 5);
-    adapter.assertLastRangeChanged(null);
+    // unsetDataDisplay.
+    nodeInfo.unsetDataDisplay();
+    display.setVisibleRange(0, 5);
+    provider.assertLastRangeChanged(null);
   }
 }

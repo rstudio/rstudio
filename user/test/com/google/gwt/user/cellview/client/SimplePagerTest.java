@@ -30,23 +30,23 @@ public class SimplePagerTest extends AbstractPagerTest {
     assertTrue(pager.isPreviousButtonDisabled());
     assertTrue(pager.isNextButtonDisabled());
 
-    // Set the view.
-    HasRows view = new MockHasData<String>();
-    view.setRowCount(1000);
-    pager.setView(view);
+    // Set the display.
+    HasRows display = new MockHasData<String>();
+    display.setRowCount(1000);
+    pager.setDisplay(display);
 
     // First Page.
-    view.setVisibleRange(0, 20);
+    display.setVisibleRange(0, 20);
     assertTrue(pager.isPreviousButtonDisabled());
     assertFalse(pager.isNextButtonDisabled());
 
     // Middle Page.
-    view.setVisibleRange(100, 20);
+    display.setVisibleRange(100, 20);
     assertFalse(pager.isPreviousButtonDisabled());
     assertFalse(pager.isNextButtonDisabled());
 
     // Last Page.
-    view.setVisibleRange(980, 20);
+    display.setVisibleRange(980, 20);
     assertFalse(pager.isPreviousButtonDisabled());
     assertTrue(pager.isNextButtonDisabled());
   }

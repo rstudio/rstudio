@@ -202,11 +202,12 @@ public class CwCellList extends ContentWidget {
     // Add a selection model so we can select cells.
     final SingleSelectionModel<ContactInfo> selectionModel = new SingleSelectionModel<ContactInfo>();
     cellList.setSelectionModel(selectionModel);
-    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-      public void onSelectionChange(SelectionChangeEvent event) {
-        contactForm.setContact(selectionModel.getSelectedObject());
-      }
-    });
+    selectionModel.addSelectionChangeHandler(
+        new SelectionChangeEvent.Handler() {
+          public void onSelectionChange(SelectionChangeEvent event) {
+            contactForm.setContact(selectionModel.getSelectedObject());
+          }
+        });
 
     // Set a key provider that provides a unique key for each contact. If key is
     // used to identify contacts when fields (such as the name and address)
@@ -214,19 +215,19 @@ public class CwCellList extends ContentWidget {
     cellList.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
     selectionModel.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
 
-    // Add the CellList to the adapter in the database.
-    ContactDatabase.get().addView(cellList);
+    // Add the CellList to the data provider in the database.
+    ContactDatabase.get().addDataDisplay(cellList);
 
     // Create the UiBinder.
     Binder uiBinder = GWT.create(Binder.class);
     Widget widget = uiBinder.createAndBindUi(this);
 
-    // Set the cellList as the view of the pagers. This example has two pagers.
-    // pagerPanel is a scrollable pager that extends the range when the user
-    // scrolls to the bottom. rangeLabelPager is a pager that displays the
+    // Set the cellList as the display of the pagers. This example has two
+    // pagers. pagerPanel is a scrollable pager that extends the range when the
+    // user scrolls to the bottom. rangeLabelPager is a pager that displays the
     // current range, but does not have any controls to change the range.
-    pagerPanel.setView(cellList);
-    rangeLabelPager.setView(cellList);
+    pagerPanel.setDisplay(cellList);
+    rangeLabelPager.setDisplay(cellList);
 
     // Handle events from the generate button.
     generateButton.addClickHandler(new ClickHandler() {

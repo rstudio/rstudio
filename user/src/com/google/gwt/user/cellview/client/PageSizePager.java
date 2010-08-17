@@ -52,24 +52,25 @@ public class PageSizePager extends AbstractPager {
     // Show more button.
     showMoreButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        // view should be non-null, but we check defensively.
-        HasRows view = getView();
-        if (view != null) {
-          Range range = view.getVisibleRange();
+        // Display should be non-null, but we check defensively.
+        HasRows display = getDisplay();
+        if (display != null) {
+          Range range = display.getVisibleRange();
           int pageSize = Math.min(range.getLength() + increment,
-              view.getRowCount() + (view.isRowCountExact() ? 0 : increment));
-          view.setVisibleRange(range.getStart(), pageSize);
+              display.getRowCount()
+                  + (display.isRowCountExact() ? 0 : increment));
+          display.setVisibleRange(range.getStart(), pageSize);
         }
       }
     });
     showLessButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        // view should be non-null, but we check defensively.
-        HasRows view = getView();
-        if (view != null) {
-          Range range = view.getVisibleRange();
+        // Display should be non-null, but we check defensively.
+        HasRows display = getDisplay();
+        if (display != null) {
+          Range range = display.getVisibleRange();
           int pageSize = Math.max(range.getLength() - increment, increment);
-          view.setVisibleRange(range.getStart(), pageSize);
+          display.setVisibleRange(range.getStart(), pageSize);
         }
       }
     });
@@ -80,7 +81,18 @@ public class PageSizePager extends AbstractPager {
     layout.setWidget(0, 2, showMoreButton);
 
     // Hide the buttons by default.
-    setView(null);
+    setDisplay(null);
+  }
+
+  @Override
+  public void setDisplay(HasRows display) {
+    // Hide the buttons if the display is null. If the display is non-null, the
+    // buttons will be displayed in onRangeOrRowCountChanged().
+    if (display == null) {
+      showLessButton.setVisible(false);
+      showMoreButton.setVisible(false);
+    }
+    super.setDisplay(display);
   }
 
   @Override
@@ -89,23 +101,13 @@ public class PageSizePager extends AbstractPager {
   }
 
   @Override
-  public void setView(HasRows view) {
-    // Hide the buttons if the view is null. If the view is non-null, the
-    // buttons will be displayed in onRangeOrRowCountChanged().
-    if (view == null) {
-      showLessButton.setVisible(false);
-      showMoreButton.setVisible(false);
-    }
-    super.setView(view);
-  }
-
-  @Override
   protected void onRangeOrRowCountChanged() {
     // Assumes a page start index of 0.
-    HasRows view = getView();
-    int pageSize = view.getVisibleRange().getLength();
+    HasRows display = getDisplay();
+    int pageSize = display.getVisibleRange().getLength();
     boolean hasLess = pageSize > increment;
-    boolean hasMore = !view.isRowCountExact() || pageSize < view.getRowCount();
+    boolean hasMore = !display.isRowCountExact()
+        || pageSize < display.getRowCount();
     showLessButton.setVisible(hasLess);
     showMoreButton.setVisible(hasMore);
     layout.setText(0, 1, (hasLess && hasMore) ? " | " : "");

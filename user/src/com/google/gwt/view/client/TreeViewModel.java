@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,7 +20,7 @@ import com.google.gwt.cell.client.ValueUpdater;
 
 /**
  * A model of a tree.
- * 
+ *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
@@ -33,35 +33,35 @@ public interface TreeViewModel {
   class DefaultNodeInfo<T> implements NodeInfo<T> {
 
     private Cell<T> cell;
-    private AbstractListViewAdapter<T> listViewAdapter;
+    private AbstractDataProvider<T> dataProvider;
     private SelectionModel<? super T> selectionModel;
     private ValueUpdater<T> valueUpdater;
-    private HasData<T> view;
+    private HasData<T> display;
 
     /**
      * Construct a new {@link DefaultNodeInfo}.
-     * 
-     * @param adapter the {@link AbstractListViewAdapter} that provides the
+     *
+     * @param dataProvider the {@link AbstractDataProvider} that provides the
      *          child values
      * @param cell the {@link Cell} used to render the child values
      */
-    public DefaultNodeInfo(AbstractListViewAdapter<T> adapter, Cell<T> cell) {
-      this(adapter, cell, null, null);
+    public DefaultNodeInfo(AbstractDataProvider<T> dataProvider, Cell<T> cell) {
+      this(dataProvider, cell, null, null);
     }
 
     /**
      * Construct a new {@link DefaultNodeInfo}.
-     * 
-     * @param adapter the {@link AbstractListViewAdapter} that provides the
+     *
+     * @param dataProvider the {@link AbstractDataProvider} that provides the
      *          child values
      * @param cell the {@link Cell} used to render the child values update when
      *          the selection changes
      * @param valueUpdater the {@link ValueUpdater}
      */
-    public DefaultNodeInfo(AbstractListViewAdapter<T> adapter,
+    public DefaultNodeInfo(AbstractDataProvider<T> dataProvider,
         final Cell<T> cell, SelectionModel<? super T> selectionModel,
         final ValueUpdater<T> valueUpdater) {
-      this.listViewAdapter = adapter;
+      this.dataProvider = dataProvider;
       this.cell = cell;
       this.selectionModel = selectionModel;
       this.valueUpdater = valueUpdater;
@@ -72,7 +72,7 @@ public interface TreeViewModel {
     }
 
     public ProvidesKey<T> getProvidesKey() {
-      return listViewAdapter;
+      return dataProvider;
     }
 
     public SelectionModel<? super T> getSelectionModel() {
@@ -83,13 +83,13 @@ public interface TreeViewModel {
       return valueUpdater;
     }
 
-    public void setView(HasData<T> view) {
-      this.view = view;
-      listViewAdapter.addView(view);
+    public void setDataDisplay(HasData<T> display) {
+      this.display = display;
+      dataProvider.addDataDisplay(display);
     }
 
-    public void unsetView() {
-      listViewAdapter.removeView(view);
+    public void unsetDataDisplay() {
+      dataProvider.removeDataDisplay(display);
     }
   }
 
@@ -100,14 +100,14 @@ public interface TreeViewModel {
 
     /**
      * Get the {@link Cell} used to render the children of this node.
-     * 
+     *
      * @return the {@link Cell}
      */
     Cell<T> getCell();
 
     /**
      * Return the key provider for children of this node.
-     * 
+     *
      * @return the {@link ProvidesKey}
      */
     ProvidesKey<T> getProvidesKey();
@@ -117,38 +117,38 @@ public interface TreeViewModel {
      * unify selection across all items of the same type, or across the entire
      * tree, return the same instance of {@link SelectionModel} from all
      * {@link NodeInfo}.
-     * 
+     *
      * @return the {@link SelectionModel}
      */
     SelectionModel<? super T> getSelectionModel();
 
     /**
      * Get the value updater associated with the cell.
-     * 
+     *
      * @return the value updater
      */
     ValueUpdater<T> getValueUpdater();
 
     /**
-     * Set the view that is listening to this {@link NodeInfo}. The
-     * implementation should attach the view to the source of data.
-     * 
-     * @param view the {@link HasData}
+     * Set the display that is listening to this {@link NodeInfo}. The
+     * implementation should attach the display to the source of data.
+     *
+     * @param display the {@link HasData}
      */
-    void setView(HasData<T> view);
+    void setDataDisplay(HasData<T> display);
 
     /**
-     * Unset the view from the {@link NodeInfo}. The implementation should
-     * detach the view from the source of data.
+     * Unset the display from the {@link NodeInfo}. The implementation should
+     * detach the display from the source of data.
      */
-    void unsetView();
+    void unsetDataDisplay();
   }
 
   /**
    * Get the {@link NodeInfo} that will provide the {@link ProvidesKey},
    * {@link Cell}, and {@link HasData}s to retrieve and display the children of
    * the specified value.
-   * 
+   *
    * @param value the value in the parent node
    * @return the {@link NodeInfo}
    */
@@ -156,9 +156,9 @@ public interface TreeViewModel {
 
   /**
    * Check if the value is known to be a leaf node.
-   * 
+   *
    * @param value the value at the node
-   * 
+   *
    * @return true if the node is known to be a leaf node, false otherwise
    */
   boolean isLeaf(Object value);

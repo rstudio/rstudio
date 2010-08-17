@@ -28,6 +28,7 @@ import com.google.gwt.view.client.MockHasData.MockRangeChangeHandler;
 import com.google.gwt.view.client.MockHasData.MockRowCountChangeHandler;
 import com.google.gwt.view.client.MockSelectionModel;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 
 import junit.framework.TestCase;
@@ -291,7 +292,7 @@ public class HasDataPresenterTest extends TestCase {
     assertNull(presenter.getSelectionModel());
 
     // Initialize some data.
-    presenter.setRowValues(0, createData(0, 10));
+    presenter.setRowData(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -338,9 +339,9 @@ public class HasDataPresenterTest extends TestCase {
 
     // Initialize some data.
     presenter.setRowCount(10, true);
-    presenter.setRowValues(0, createData(0, 10));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals("test 0", presenter.getRowValues().get(0));
+    presenter.setRowData(0, createData(0, 10));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals("test 0", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -399,9 +400,9 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setRowCount(10, true);
     presenter.setVisibleRange(new Range(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    presenter.setRowValues(0, createData(0, 10));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals("test 0", presenter.getRowValues().get(0));
+    presenter.setRowData(0, createData(0, 10));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals("test 0", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -412,14 +413,14 @@ public class HasDataPresenterTest extends TestCase {
     assertEquals(8, presenter.getRowCount());
     assertTrue(presenter.isRowCountExact());
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowValues().size());
+    assertEquals(8, presenter.getRowData().size());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=8");
     view.assertLoadingState(LoadingState.LOADED);
   }
 
-  public void testSetRowValues() {
+  public void testSetRowData() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
     HasDataPresenter<String> presenter = new HasDataPresenter<String>(
@@ -429,9 +430,9 @@ public class HasDataPresenterTest extends TestCase {
 
     // Page range same as data range.
     List<String> expectedData = createData(5, 10);
-    presenter.setRowValues(5, createData(5, 10));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(5, createData(5, 10));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
@@ -441,9 +442,9 @@ public class HasDataPresenterTest extends TestCase {
     // Page range contains data range.
     expectedData.set(2, "test 100");
     expectedData.set(3, "test 101");
-    presenter.setRowValues(7, createData(100, 2));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(7, createData(100, 2));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=7,size=2");
@@ -453,9 +454,9 @@ public class HasDataPresenterTest extends TestCase {
     // Data range overlaps page start.
     expectedData.set(0, "test 202");
     expectedData.set(1, "test 203");
-    presenter.setRowValues(3, createData(200, 4));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(3, createData(200, 4));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=5,size=2");
@@ -465,9 +466,9 @@ public class HasDataPresenterTest extends TestCase {
     // Data range overlaps page end.
     expectedData.set(8, "test 300");
     expectedData.set(9, "test 301");
-    presenter.setRowValues(13, createData(300, 4));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(13, createData(300, 4));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=13,size=2");
@@ -476,9 +477,9 @@ public class HasDataPresenterTest extends TestCase {
 
     // Data range contains page range.
     expectedData = createData(400, 20).subList(2, 12);
-    presenter.setRowValues(3, createData(400, 20));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(3, createData(400, 20));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
@@ -500,11 +501,11 @@ public class HasDataPresenterTest extends TestCase {
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set the data within the range.
-    presenter.setRowValues(0, createData(0, 10));
+    presenter.setRowData(0, createData(0, 10));
     view.assertLoadingState(LoadingState.LOADED);
 
     // Set the data past the range.
-    presenter.setRowValues(5, createData(5, 10));
+    presenter.setRowData(5, createData(5, 10));
     assertEquals(15, presenter.getRowCount());
     view.assertLoadingState(LoadingState.LOADED);
   }
@@ -524,7 +525,7 @@ public class HasDataPresenterTest extends TestCase {
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set an empty list of row values.
-    presenter.setRowValues(0, createData(0, 0));
+    presenter.setRowData(0, createData(0, 0));
     view.assertLoadingState(LoadingState.LOADING);
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -540,27 +541,27 @@ public class HasDataPresenterTest extends TestCase {
 
     // Page range same as data range.
     List<String> expectedData = createData(5, 10);
-    presenter.setRowValues(5, createData(5, 10));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(5, createData(5, 10));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
     view.assertLoadingState(LoadingState.LOADED);
 
     // Data range past page end.
-    presenter.setRowValues(15, createData(15, 5));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(15, createData(15, 5));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
     view.assertLoadingState(LoadingState.LOADED);
 
     // Data range before page start.
-    presenter.setRowValues(0, createData(0, 5));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(0, createData(0, 5));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -581,14 +582,14 @@ public class HasDataPresenterTest extends TestCase {
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
-    presenter.setRowValues(0, createData(0, 10));
+    presenter.setRowData(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
     view.assertLoadingState(LoadingState.LOADED);
 
     // Set the same data over the entire range.
-    presenter.setRowValues(0, createData(0, 10));
+    presenter.setRowData(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -612,9 +613,9 @@ public class HasDataPresenterTest extends TestCase {
     expectedData.add(0, null);
     expectedData.add(0, null);
     presenter.setVisibleRange(new Range(0, 10));
-    presenter.setRowValues(5, createData(5, 3));
-    assertEquals(8, presenter.getRowValues().size());
-    assertEquals(expectedData, presenter.getRowValues());
+    presenter.setRowData(5, createData(5, 3));
+    assertEquals(8, presenter.getRowData().size());
+    assertEquals(expectedData, presenter.getRowData());
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=8");
@@ -630,7 +631,7 @@ public class HasDataPresenterTest extends TestCase {
     // Set the range the first time.
     presenter.setVisibleRange(new Range(0, 100));
     assertEquals(new Range(0, 100), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowValues().size());
+    assertEquals(0, presenter.getRowData().size());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -639,11 +640,117 @@ public class HasDataPresenterTest extends TestCase {
     // Set the range to the same value.
     presenter.setVisibleRange(new Range(0, 100));
     assertEquals(new Range(0, 100), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowValues().size());
+    assertEquals(0, presenter.getRowData().size());
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
     view.assertLoadingState(LoadingState.LOADING);
+  }
+
+  public void testSetVisibleRangeAndClearDataDifferentRange() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+
+    // Add a range change handler.
+    final List<Range> events = new ArrayList<Range>();
+    listView.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      public void onRangeChange(RangeChangeEvent event) {
+        events.add(event.getNewRange());
+      }
+    });
+
+    // Set some initial data.
+    presenter.setVisibleRange(new Range(5, 10));
+    presenter.setRowData(5, createData(5, 10));
+    assertEquals(new Range(5, 10), presenter.getVisibleRange());
+    assertEquals(10, presenter.getRowData().size());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=5,size=10");
+    view.assertLoadingState(LoadingState.LOADED);
+    assertEquals(1, events.size());
+
+    // Set a different range.
+    presenter.setVisibleRangeAndClearData(new Range(0, 10), false);
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    assertEquals(0, presenter.getRowData().size());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=0,size=0");
+    view.assertLoadingState(LoadingState.LOADING);
+    assertEquals(2, events.size());
+  }
+
+  public void testSetVisibleRangeAndClearDataSameRange() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+
+    // Add a range change handler.
+    final List<Range> events = new ArrayList<Range>();
+    listView.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      public void onRangeChange(RangeChangeEvent event) {
+        events.add(event.getNewRange());
+      }
+    });
+
+    // Set some initial data.
+    presenter.setRowData(0, createData(0, 10));
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    assertEquals(10, presenter.getRowData().size());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=0,size=10");
+    view.assertLoadingState(LoadingState.LOADED);
+    assertEquals(0, events.size());
+
+    // Set the same range.
+    presenter.setVisibleRangeAndClearData(new Range(0, 10), false);
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    assertEquals(0, presenter.getRowData().size());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=0,size=0");
+    view.assertLoadingState(LoadingState.LOADING);
+    assertEquals(0, events.size());
+  }
+
+  public void testSetVisibleRangeAndClearDataSameRangeForceEvent() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10);
+
+    // Add a range change handler.
+    final List<Range> events = new ArrayList<Range>();
+    listView.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      public void onRangeChange(RangeChangeEvent event) {
+        events.add(event.getNewRange());
+      }
+    });
+
+    // Set some initial data.
+    presenter.setRowData(0, createData(0, 10));
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    assertEquals(10, presenter.getRowData().size());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=0,size=10");
+    view.assertLoadingState(LoadingState.LOADED);
+    assertEquals(0, events.size());
+
+    // Set the same range.
+    presenter.setVisibleRangeAndClearData(new Range(0, 10), true);
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+    assertEquals(0, presenter.getRowData().size());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=0,size=0");
+    view.assertLoadingState(LoadingState.LOADING);
+    assertEquals(1, events.size());
   }
 
   public void testSetVisibleRangeDecreasePageSize() {
@@ -655,9 +762,9 @@ public class HasDataPresenterTest extends TestCase {
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    presenter.setRowValues(0, createData(0, 10));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals("test 0", presenter.getRowValues().get(0));
+    presenter.setRowData(0, createData(0, 10));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals("test 0", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -666,8 +773,8 @@ public class HasDataPresenterTest extends TestCase {
     // Decrease the page size.
     presenter.setVisibleRange(new Range(0, 8));
     assertEquals(new Range(0, 8), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowValues().size());
-    assertEquals("test 0", presenter.getRowValues().get(0));
+    assertEquals(8, presenter.getRowData().size());
+    assertEquals("test 0", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=8");
@@ -683,9 +790,9 @@ public class HasDataPresenterTest extends TestCase {
     // Initialize some data.
     presenter.setVisibleRange(new Range(10, 30));
     assertEquals(new Range(10, 30), presenter.getVisibleRange());
-    presenter.setRowValues(10, createData(0, 10));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals("test 0", presenter.getRowValues().get(0));
+    presenter.setRowData(10, createData(0, 10));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals("test 0", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=10,size=10");
@@ -694,10 +801,10 @@ public class HasDataPresenterTest extends TestCase {
     // Decrease the start index.
     presenter.setVisibleRange(new Range(8, 30));
     assertEquals(new Range(8, 30), presenter.getVisibleRange());
-    assertEquals(12, presenter.getRowValues().size());
-    assertEquals(null, presenter.getRowValues().get(0));
-    assertEquals(null, presenter.getRowValues().get(1));
-    assertEquals("test 0", presenter.getRowValues().get(2));
+    assertEquals(12, presenter.getRowData().size());
+    assertEquals(null, presenter.getRowData().get(0));
+    assertEquals(null, presenter.getRowData().get(1));
+    assertEquals("test 0", presenter.getRowData().get(2));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=8,size=12");
@@ -713,9 +820,9 @@ public class HasDataPresenterTest extends TestCase {
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    presenter.setRowValues(0, createData(0, 10));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals("test 0", presenter.getRowValues().get(0));
+    presenter.setRowData(0, createData(0, 10));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals("test 0", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -724,8 +831,8 @@ public class HasDataPresenterTest extends TestCase {
     // Increase the page size.
     presenter.setVisibleRange(new Range(0, 20));
     assertEquals(new Range(0, 20), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals("test 0", presenter.getRowValues().get(0));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals("test 0", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -741,9 +848,9 @@ public class HasDataPresenterTest extends TestCase {
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 20));
     assertEquals(new Range(0, 20), presenter.getVisibleRange());
-    presenter.setRowValues(0, createData(0, 10));
-    assertEquals(10, presenter.getRowValues().size());
-    assertEquals("test 0", presenter.getRowValues().get(0));
+    presenter.setRowData(0, createData(0, 10));
+    assertEquals(10, presenter.getRowData().size());
+    assertEquals("test 0", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -752,8 +859,8 @@ public class HasDataPresenterTest extends TestCase {
     // Increase the start index.
     presenter.setVisibleRange(new Range(2, 20));
     assertEquals(new Range(2, 20), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowValues().size());
-    assertEquals("test 2", presenter.getRowValues().get(0));
+    assertEquals(8, presenter.getRowData().size());
+    assertEquals("test 2", presenter.getRowData().get(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=2,size=8");
@@ -787,7 +894,7 @@ public class HasDataPresenterTest extends TestCase {
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
-    presenter.setRowValues(0, createData(0, 10));
+    presenter.setRowData(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -832,7 +939,7 @@ public class HasDataPresenterTest extends TestCase {
 
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
-    presenter.setRowValues(0, createData(0, 10));
+    presenter.setRowData(0, createData(0, 10));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");

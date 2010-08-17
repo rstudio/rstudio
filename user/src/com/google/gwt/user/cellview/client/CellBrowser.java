@@ -416,7 +416,7 @@ public class CellBrowser extends Composite
      */
     void cleanup() {
       view.setSelectionModel(null);
-      nodeInfo.unsetView();
+      nodeInfo.unsetDataDisplay();
       getSplitLayoutPanel().remove(widget);
     }
   }
@@ -626,19 +626,6 @@ public class CellBrowser extends Composite
   }
 
   /**
-   * Create a pager to control the list view.
-   *
-   * @param <C> the item type in the list view
-   * @param view the list view to add paging too
-   * @return the pager
-   */
-  protected <C> Widget createPager(HasData<C> view) {
-    PageSizePager pager = new PageSizePager(view.getVisibleRange().getLength());
-    pager.setView(view);
-    return pager;
-  }
-
-  /**
    * Create a {@link HasData} that will display items. The {@link HasData} must
    * extend {@link Widget}.
    *
@@ -647,12 +634,26 @@ public class CellBrowser extends Composite
    * @param cell the cell to use in the list view
    * @return the {@link HasData}
    */
-  // TODO(jlabanca): <ove createView into constructor factory arg?
-  protected <C> HasData<C> createView(NodeInfo<C> nodeInfo, Cell<C> cell) {
-    CellList<C> view = new CellList<C>(cell, getCellListResources());
-    view.setValueUpdater(nodeInfo.getValueUpdater());
-    view.setKeyProvider(nodeInfo.getProvidesKey());
-    return view;
+  // TODO(jlabanca): Move createView into constructor factory arg?
+  protected <C> HasData<C> createDisplay(NodeInfo<C> nodeInfo, Cell<C> cell) {
+    CellList<C> display = new CellList<C>(cell, getCellListResources());
+    display.setValueUpdater(nodeInfo.getValueUpdater());
+    display.setKeyProvider(nodeInfo.getProvidesKey());
+    return display;
+  }
+
+  /**
+   * Create a pager to control the list view.
+   *
+   * @param <C> the item type in the list view
+   * @param display the list view to add paging too
+   * @return the pager
+   */
+  protected <C> Widget createPager(HasData<C> display) {
+    PageSizePager pager = new PageSizePager(
+        display.getVisibleRange().getLength());
+    pager.setDisplay(display);
+    return pager;
   }
 
   /**
@@ -679,7 +680,7 @@ public class CellBrowser extends Composite
     // Create the list view.
     final int level = treeNodes.size();
     final CellDecorator<C> cell = new CellDecorator<C>(nodeInfo, level);
-    final HasData<C> view = createView(nodeInfo, cell);
+    final HasData<C> view = createDisplay(nodeInfo, cell);
     assert (view instanceof Widget) : "createView() must return a widget";
 
     // Create a pager and wrap the components in a scrollable container.
@@ -739,7 +740,7 @@ public class CellBrowser extends Composite
         view.setRowCount(count, isExact);
       }
 
-      public void setRowValues(int start, List<C> values) {
+      public void setRowData(int start, List<C> values) {
         // Trim to the current level if the open node no longer exists.
         TreeNode<?> node = treeNodes.get(level);
         Object openKey = node.getCell().openKey;
@@ -758,7 +759,7 @@ public class CellBrowser extends Composite
         }
 
         // Refresh the list.
-        view.setRowValues(start, values);
+        view.setRowData(start, values);
       }
 
       public void setSelectionModel(SelectionModel<? super C> selectionModel) {
@@ -772,6 +773,11 @@ public class CellBrowser extends Composite
       public void setVisibleRange(Range range) {
         view.setVisibleRange(range);
       }
+
+      public void setVisibleRangeAndClearData(
+          Range range, boolean forceRangeChangeEvent) {
+        view.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
+      }
     };
 
     // Create a TreeNode.
@@ -781,7 +787,7 @@ public class CellBrowser extends Composite
 
     // Attach the view to the selection model and node info.
     view.setSelectionModel(nodeInfo.getSelectionModel());
-    nodeInfo.setView(viewDelegate);
+    nodeInfo.setDataDisplay(viewDelegate);
 
     // Add the view to the LayoutPanel.
     SplitLayoutPanel splitPanel = getSplitLayoutPanel();

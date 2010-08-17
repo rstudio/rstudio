@@ -245,14 +245,14 @@ public abstract class AbstractHasData<T> extends Widget
    */
   public T getDisplayedItem(int indexOnPage) {
     checkRowBounds(indexOnPage);
-    return presenter.getRowValues().get(indexOnPage);
+    return presenter.getRowData().get(indexOnPage);
   }
 
   /**
    * Get the row values that the widget is currently displaying.
    */
   public List<T> getDisplayedItems() {
-    return new ArrayList<T>(presenter.getRowValues());
+    return new ArrayList<T>(presenter.getRowData());
   }
 
   public ProvidesKey<T> getKeyProvider() {
@@ -332,8 +332,8 @@ public abstract class AbstractHasData<T> extends Widget
     presenter.setRowCount(size, isExact);
   }
 
-  public void setRowValues(int start, List<T> values) {
-    presenter.setRowValues(start, values);
+  public void setRowData(int start, List<T> values) {
+    presenter.setRowData(start, values);
   }
 
   public void setSelectionModel(SelectionModel<? super T> selectionModel) {
@@ -346,6 +346,11 @@ public abstract class AbstractHasData<T> extends Widget
 
   public void setVisibleRange(Range range) {
     presenter.setVisibleRange(range);
+  }
+
+  public void setVisibleRangeAndClearData(
+      Range range, boolean forceRangeChangeEvent) {
+    presenter.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
   }
 
   /**

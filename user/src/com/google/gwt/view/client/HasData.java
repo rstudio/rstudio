@@ -41,7 +41,7 @@ public interface HasData<T> extends HasRows {
    * @param start the start index of the data
    * @param values the values within the range
    */
-  void setRowValues(int start, List<T> values);
+  void setRowData(int start, List<T> values);
 
   /**
    * Set the {@link SelectionModel} used by this {@link HasData}.
@@ -49,4 +49,21 @@ public interface HasData<T> extends HasRows {
    * @param selectionModel the {@link SelectionModel}
    */
   void setSelectionModel(SelectionModel<? super T> selectionModel);
+
+  /**
+   * <p>
+   * Set the visible range and clear the current visible data.
+   * </p>
+   * <p>
+   * If the second argument <code>forceRangeChangeEvent</code> is true, a
+   * {@link RangeChangeEvent} will be fired even if the range does not change.
+   * If false, a {@link RangeChangeEvent} will only be fired if the range
+   * changes.
+   * </p>
+   *
+   * @param range the new {@link Range}
+   * @param forceRangeChangeEvent true to fire a {@link RangeChangeEvent} even
+   *          if the {@link Range} doesn't change
+   */
+  void setVisibleRangeAndClearData(Range range, boolean forceRangeChangeEvent);
 }

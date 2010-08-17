@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A base implementation of a data source for list views.
+ * A base implementation of a data source for {@link HasData} implementations.
  *
  * <p>
  * Note: This class is new and its interface subject to change.
@@ -33,8 +33,9 @@ import java.util.Set;
  *
  * @param <T> the data type of records in the list
  */
-// TODO(jlabanca): Rename for AbstractListViewAdapter to something better.
-public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
+public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
+
+  private Set<HasData<T>> displays = new HashSet<HasData<T>>();
 
   /**
    * The provider of keys for list items.
@@ -42,14 +43,14 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   private ProvidesKey<T> keyProvider;
 
   /**
-   * The last data size.
+   * The last row count.
    */
-  private int lastDataSize = -1;
+  private int lastRowCount = -1;
 
   /**
-   * Indicates whether or not the last data size is exact.
+   * Indicates whether or not the last row count is exact.
    */
-  private boolean lastDataSizeExact;
+  private boolean lastRowCountExact;
 
   /**
    * A mapping of {@link HasData}s to their handlers.
@@ -57,42 +58,48 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   private Map<HasData<T>, HandlerRegistration> rangeChangeHandlers =
       new HashMap<HasData<T>, HandlerRegistration>();
 
-  private Set<HasData<T>> views = new HashSet<HasData<T>>();
-
   /**
-   * Adds a view to this adapter. The current range of interest of the view will
-   * be populated with data.
+   * Adds a data display to this adapter. The current range of interest of the
+   * display will be populated with data.
    *
-   * @param view a {@link HasData}.
+   * @param display a {@link HasData}.
    */
-  // TODO(jlabanca): Stop using the term view to describe HasData.
-  public void addView(final HasData<T> view) {
-    if (view == null) {
-      throw new IllegalArgumentException("view cannot be null");
-    } else if (views.contains(view)) {
+  public void addDataDisplay(final HasData<T> display) {
+    if (display == null) {
+      throw new IllegalArgumentException("display cannot be null");
+    } else if (displays.contains(display)) {
       throw new IllegalStateException(
-          "The specified view has already been added to this adapter.");
+          "The specified display has already been added to this adapter.");
     }
 
-    // Add the view to the set.
-    views.add(view);
+    // Add the display to the set.
+    displays.add(display);
 
-    // Add a handler to the view.
-    HandlerRegistration handler = view.addRangeChangeHandler(
+    // Add a handler to the display.
+    HandlerRegistration handler = display.addRangeChangeHandler(
         new RangeChangeEvent.Handler() {
           public void onRangeChange(RangeChangeEvent event) {
-            AbstractListViewAdapter.this.onRangeChanged(view);
+            AbstractDataProvider.this.onRangeChanged(display);
           }
         });
-    rangeChangeHandlers.put(view, handler);
+    rangeChangeHandlers.put(display, handler);
 
-    // Update the data size in the view.
-    if (lastDataSize >= 0) {
-      view.setRowCount(lastDataSize, lastDataSizeExact);
+    // Update the data size in the display.
+    if (lastRowCount >= 0) {
+      display.setRowCount(lastRowCount, lastRowCountExact);
     }
 
-    // Initialize the view with the current range.
-    onRangeChanged(view);
+    // Initialize the display with the current range.
+    onRangeChanged(display);
+  }
+
+  /**
+   * Get the set of displays currently assigned to this adapter.
+   *
+   * @return the set of {@link HasData}
+   */
+  public Set<HasData<T>> getDataDisplays() {
+    return Collections.unmodifiableSet(displays);
   }
 
   /**
@@ -116,36 +123,27 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   }
 
   /**
-   * Get the current ranges of all views.
+   * Get the current ranges of all displays.
    *
    * @return the ranges
    */
   public Range[] getRanges() {
-    Range[] ranges = new Range[views.size()];
+    Range[] ranges = new Range[displays.size()];
     int i = 0;
-    for (HasData<T> view : views) {
-      ranges[i++] = view.getVisibleRange();
+    for (HasData<T> display : displays) {
+      ranges[i++] = display.getVisibleRange();
     }
     return ranges;
   }
 
-  /**
-   * Get the set of views currently assigned to this adapter.
-   *
-   * @return the set of {@link HasData}
-   */
-  public Set<HasData<T>> getViews() {
-    return Collections.unmodifiableSet(views);
-  }
-
-  public void removeView(HasData<T> view) {
-    if (!views.contains(view)) {
-      throw new IllegalStateException("ListView not present");
+  public void removeDataDisplay(HasData<T> display) {
+    if (!displays.contains(display)) {
+      throw new IllegalStateException("HasData not present");
     }
-    views.remove(view);
+    displays.remove(display);
 
     // Remove the handler.
-    HandlerRegistration handler = rangeChangeHandlers.remove(view);
+    HandlerRegistration handler = rangeChangeHandlers.remove(display);
     handler.removeHandler();
   }
 
@@ -159,51 +157,49 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   }
 
   /**
-   * Called when a view changes its range of interest.
+   * Called when a display changes its range of interest.
    *
-   * @param view the view whose range has changed
+   * @param display the display whose range has changed
    */
-  protected abstract void onRangeChanged(HasData<T> view);
+  protected abstract void onRangeChanged(HasData<T> display);
 
   /**
-   * Inform the views of the total number of items that are available.
+   * Inform the displays of the total number of items that are available.
    *
-   * @param size the new size
-   * @param exact true if the size is exact, false if it is a guess
+   * @param count the new total row count
+   * @param exact true if the count is exact, false if it is an estimate
    */
-  protected void updateDataSize(int size, boolean exact) {
-    lastDataSize = size;
-    lastDataSizeExact = exact;
-    for (HasData<T> view : views) {
-      view.setRowCount(size, exact);
+  protected void updateRowCount(int count, boolean exact) {
+    lastRowCount = count;
+    lastRowCountExact = exact;
+
+    for (HasData<T> display : displays) {
+      display.setRowCount(count, exact);
     }
   }
 
   /**
-   * Inform the views of the new data.
+   * Inform the displays of the new data.
    *
    * @param start the start index
-   * @param length the length of the data
    * @param values the data values
    */
-  protected void updateViewData(int start, int length, List<T> values) {
-    for (HasData<T> view : views) {
-      updateViewData(view, start, length, values);
+  protected void updateRowData(int start, List<T> values) {
+    for (HasData<T> display : displays) {
+      updateRowData(display, start, values);
     }
   }
 
   /**
-   * Informs a single view of new data.
+   * Informs a single display of new data.
    *
-   * @param view the view to be updated
+   * @param display the display to be updated
    * @param start the start index
-   * @param length the length of the data
    * @param values the data values
    */
-  protected void updateViewData(
-      HasData<T> view, int start, int length, List<T> values) {
-    int end = start + length;
-    Range range = view.getVisibleRange();
+  protected void updateRowData(HasData<T> display, int start, List<T> values) {
+    int end = start + values.size();
+    Range range = display.getVisibleRange();
     int curStart = range.getStart();
     int curLength = range.getLength();
     int curEnd = curStart + curLength;
@@ -215,7 +211,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
       int realLength = realEnd - realStart;
       List<T> realValues = values.subList(
           realStart - start, realStart - start + realLength);
-      view.setRowValues(realStart, realValues);
+      display.setRowData(realStart, realValues);
     }
   }
 }

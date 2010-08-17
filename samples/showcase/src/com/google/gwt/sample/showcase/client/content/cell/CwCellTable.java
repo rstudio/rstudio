@@ -136,7 +136,7 @@ public class CwCellTable extends ContentWidget {
         SimplePager.Resources.class);
     pager = new SimplePager(
         TextLocation.CENTER, pagerResources, false, 0, true);
-    pager.setView(cellTable);
+    pager.setDisplay(cellTable);
 
     // Add a selection model so we can select cells.
     final MultiSelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>();
@@ -152,7 +152,7 @@ public class CwCellTable extends ContentWidget {
     selectionModel.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
 
     // Add the CellList to the adapter in the database.
-    ContactDatabase.get().addView(cellTable);
+    ContactDatabase.get().addDataDisplay(cellTable);
 
     // Create the UiBinder.
     Binder uiBinder = GWT.create(Binder.class);
@@ -219,7 +219,7 @@ public class CwCellTable extends ContentWidget {
       public void update(int index, ContactInfo object, String value) {
         // Called when the user changes the value.
         object.setFirstName(value);
-        ContactDatabase.get().refreshViews();
+        ContactDatabase.get().refreshDisplays();
       }
     });
 
@@ -236,7 +236,7 @@ public class CwCellTable extends ContentWidget {
       public void update(int index, ContactInfo object, String value) {
         // Called when the user changes the value.
         object.setLastName(value);
-        ContactDatabase.get().refreshViews();
+        ContactDatabase.get().refreshDisplays();
       }
     });
 
@@ -262,7 +262,7 @@ public class CwCellTable extends ContentWidget {
             object.setCategory(category);
           }
         }
-        ContactDatabase.get().refreshViews();
+        ContactDatabase.get().refreshDisplays();
       }
     });
 

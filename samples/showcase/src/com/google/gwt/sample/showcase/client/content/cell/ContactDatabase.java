@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.user.client.Random;
 import com.google.gwt.view.client.HasData;
-import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 
 import java.util.ArrayList;
@@ -55,7 +55,8 @@ public class ContactDatabase {
     /**
      * The key provider that provides the unique ID of a contact.
      */
-    public static final ProvidesKey<ContactInfo> KEY_PROVIDER = new ProvidesKey<ContactInfo>() {
+    public static final ProvidesKey<ContactInfo> KEY_PROVIDER = new ProvidesKey<
+        ContactInfo>() {
       public Object getKey(ContactInfo item) {
         return item == null ? null : item.getId();
       }
@@ -312,9 +313,9 @@ public class ContactDatabase {
   }
 
   /**
-   * The adapter that holds the list of contacts in the database.
+   * The provider that holds the list of contacts in the database.
    */
-  private ListViewAdapter<ContactInfo> adapter = new ListViewAdapter<
+  private ListDataProvider<ContactInfo> dataProvider = new ListDataProvider<
       ContactInfo>();
 
   private final Category[] categories;
@@ -341,29 +342,30 @@ public class ContactDatabase {
    * @param contact the contact to add.
    */
   public void addContact(ContactInfo contact) {
-    List<ContactInfo> contacts = adapter.getList();
+    List<ContactInfo> contacts = dataProvider.getList();
     // Remove the contact first so we don't add a duplicate.
     contacts.remove(contact);
     contacts.add(contact);
   }
 
   /**
-   * Add a view to the database. The current range of interest of the view will
-   * be populated with data.
+   * Add a display to the database. The current range of interest of the display
+   * will be populated with data.
    *
-   * @param view a {@Link ListView}.
+   * @param display a {@Link HasData}.
    */
-  public void addView(HasData<ContactInfo> view) {
-    adapter.addView(view);
+  public void addDataDisplay(HasData<ContactInfo> display) {
+    dataProvider.addDataDisplay(display);
   }
 
   /**
-   * Generate the specified number of contacts and add them to the adapter.
+   * Generate the specified number of contacts and add them to the data
+   * provider.
    *
    * @param count the number of contacts to generate.
    */
   public void generateContacts(int count) {
-    List<ContactInfo> contacts = adapter.getList();
+    List<ContactInfo> contacts = dataProvider.getList();
     for (int i = 0; i < count; i++) {
       contacts.add(createContactInfo());
     }
@@ -386,7 +388,7 @@ public class ContactDatabase {
    */
   public List<ContactInfo> queryContactsByCategory(Category category) {
     List<ContactInfo> matches = new ArrayList<ContactInfo>();
-    for (ContactInfo contact : adapter.getList()) {
+    for (ContactInfo contact : dataProvider.getList()) {
       if (contact.getCategory() == category) {
         matches.add(contact);
       }
@@ -405,7 +407,7 @@ public class ContactDatabase {
   public List<ContactInfo> queryContactsByCategoryAndFirstName(
       Category category, String firstNamePrefix) {
     List<ContactInfo> matches = new ArrayList<ContactInfo>();
-    for (ContactInfo contact : adapter.getList()) {
+    for (ContactInfo contact : dataProvider.getList()) {
       if (contact.getCategory() == category
           && contact.getFirstName().startsWith(firstNamePrefix)) {
         matches.add(contact);
@@ -415,10 +417,10 @@ public class ContactDatabase {
   }
 
   /**
-   * Refresh all views.
+   * Refresh all displays.
    */
-  public void refreshViews() {
-    adapter.refresh();
+  public void refreshDisplays() {
+    dataProvider.refresh();
   }
 
   /**

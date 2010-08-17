@@ -27,6 +27,8 @@ import com.google.gwt.view.client.RowCountChangeEvent;
  */
 public abstract class AbstractPager extends Composite {
 
+  private HasRows display;
+
   /**
    * If true, all operations should be limited to the data size.
    */
@@ -39,33 +41,32 @@ public abstract class AbstractPager extends Composite {
 
   private HandlerRegistration rangeChangeHandler;
   private HandlerRegistration rowCountChangeHandler;
-  private HasRows view;
-
-  /**
-   * Get the page size.
-   *
-   * @return the page size, or -1 if the view is not set
-   */
-  public int getPageSize() {
-    return view == null ? -1 : view.getVisibleRange().getLength();
-  }
-
-  /**
-   * Get the page start index.
-   *
-   * @return the page start index, or -1 if the view is not set
-   */
-  public int getPageStart() {
-    return view == null ? -1 : view.getVisibleRange().getStart();
-  }
 
   /**
    * Get the {@link HasRows} being paged.
    *
    * @return the {@link HasRows}
    */
-  public HasRows getView() {
-    return view;
+  public HasRows getDisplay() {
+    return display;
+  }
+
+  /**
+   * Get the page size.
+   *
+   * @return the page size, or -1 if the display is not set
+   */
+  public int getPageSize() {
+    return display == null ? -1 : display.getVisibleRange().getLength();
+  }
+
+  /**
+   * Get the page start index.
+   *
+   * @return the page start index, or -1 if the display is not set
+   */
+  public int getPageStart() {
+    return display == null ? -1 : display.getVisibleRange().getStart();
   }
 
   /**
@@ -92,10 +93,10 @@ public abstract class AbstractPager extends Composite {
   /**
    * Set the {@link HasRows} to be paged.
    *
-   * @param view the {@link HasRows}
+   * @param display the {@link HasRows}
    */
-  public void setView(HasRows view) {
-    // Remove the old view.
+  public void setDisplay(HasRows display) {
+    // Remove the old handlers.
     if (rangeChangeHandler != null) {
       rangeChangeHandler.removeHandler();
       rangeChangeHandler = null;
@@ -105,21 +106,21 @@ public abstract class AbstractPager extends Composite {
       rangeChangeHandler = null;
     }
 
-    // Set the new view.
-    this.view = view;
-    if (view != null) {
-      rangeChangeHandler = view.addRangeChangeHandler(
+    // Set the new display.
+    this.display = display;
+    if (display != null) {
+      rangeChangeHandler = display.addRangeChangeHandler(
           new RangeChangeEvent.Handler() {
             public void onRangeChange(RangeChangeEvent event) {
-              if (AbstractPager.this.view != null) {
+              if (AbstractPager.this.display != null) {
                 onRangeOrRowCountChanged();
               }
             }
           });
-      rowCountChangeHandler = view.addRowCountChangeHandler(
+      rowCountChangeHandler = display.addRowCountChangeHandler(
           new RowCountChangeEvent.Handler() {
             public void onRowCountChange(RowCountChangeEvent event) {
-              if (AbstractPager.this.view != null) {
+              if (AbstractPager.this.display != null) {
                 handleRowCountChange(
                     event.getNewRowCount(), event.isNewRowCountExact());
               }
@@ -148,13 +149,13 @@ public abstract class AbstractPager extends Composite {
    * {@link #previousPage()} can be called.
    * </p>
    *
-   * @return the page index, or -1 if the view is not set
+   * @return the page index, or -1 if the display is not set
    */
   protected int getPage() {
-    if (view == null) {
+    if (display == null) {
       return -1;
     }
-    Range range = view.getVisibleRange();
+    Range range = display.getVisibleRange();
     int pageSize = range.getLength();
     return (range.getStart() + pageSize - 1) / pageSize;
   }
@@ -162,14 +163,14 @@ public abstract class AbstractPager extends Composite {
   /**
    * Get the number of pages based on the data size.
    *
-   * @return the page count, or -1 if the view is not set
+   * @return the page count, or -1 if the display is not set
    */
   protected int getPageCount() {
-    if (view == null) {
+    if (display == null) {
       return -1;
     }
     int pageSize = getPageSize();
-    return (view.getRowCount() + pageSize - 1) / pageSize;
+    return (display.getRowCount() + pageSize - 1) / pageSize;
   }
 
   /**
@@ -178,13 +179,13 @@ public abstract class AbstractPager extends Composite {
    * forward.
    */
   protected boolean hasNextPage() {
-    if (view == null) {
+    if (display == null) {
       return false;
-    } else if (!view.isRowCountExact()) {
+    } else if (!display.isRowCountExact()) {
       return true;
     }
-    Range range = view.getVisibleRange();
-    return range.getStart() + range.getLength() < view.getRowCount();
+    Range range = display.getVisibleRange();
+    return range.getStart() + range.getLength() < display.getRowCount();
   }
 
   /**
@@ -192,11 +193,11 @@ public abstract class AbstractPager extends Composite {
    * additional pages.
    */
   protected boolean hasNextPages(int pages) {
-    if (view == null) {
+    if (display == null) {
       return false;
     }
-    Range range = view.getVisibleRange();
-    return range.getStart() + pages * range.getLength() < view.getRowCount();
+    Range range = display.getVisibleRange();
+    return range.getStart() + pages * range.getLength() < display.getRowCount();
   }
 
   /**
@@ -204,7 +205,8 @@ public abstract class AbstractPager extends Composite {
    * range.
    */
   protected boolean hasPage(int index) {
-    return view == null ? false : getPageSize() * index < view.getRowCount();
+    return display == null ? false : getPageSize() * index
+        < display.getRowCount();
   }
 
   /**
@@ -213,7 +215,8 @@ public abstract class AbstractPager extends Composite {
    * table backward.
    */
   protected boolean hasPreviousPage() {
-    return view == null ? false : getPageStart() > 0 && view.getRowCount() > 0;
+    return display == null ? false : getPageStart() > 0
+        && display.getRowCount() > 0;
   }
 
   /**
@@ -221,10 +224,10 @@ public abstract class AbstractPager extends Composite {
    * pages.
    */
   protected boolean hasPreviousPages(int pages) {
-    if (view == null) {
+    if (display == null) {
       return false;
     }
-    Range range = view.getVisibleRange();
+    Range range = display.getVisibleRange();
     return (pages - 1) * range.getLength() < range.getStart();
   }
 
@@ -239,8 +242,8 @@ public abstract class AbstractPager extends Composite {
    * Set the page start to the last index that will still show a full page.
    */
   protected void lastPageStart() {
-    if (view != null) {
-      setPageStart(view.getRowCount() - getPageSize());
+    if (display != null) {
+      setPageStart(display.getRowCount() - getPageSize());
     }
   }
 
@@ -248,8 +251,8 @@ public abstract class AbstractPager extends Composite {
    * Advance the starting row by 'pageSize' rows.
    */
   protected void nextPage() {
-    if (view != null) {
-      Range range = view.getVisibleRange();
+    if (display != null) {
+      Range range = display.getVisibleRange();
       setPageStart(range.getStart() + range.getLength());
     }
   }
@@ -264,8 +267,8 @@ public abstract class AbstractPager extends Composite {
    * Move the starting row back by 'pageSize' rows.
    */
   protected void previousPage() {
-    if (view != null) {
-      Range range = view.getVisibleRange();
+    if (display != null) {
+      Range range = display.getVisibleRange();
       setPageStart(range.getStart() - range.getLength());
     }
   }
@@ -276,30 +279,30 @@ public abstract class AbstractPager extends Composite {
    * @param index the page index
    */
   protected void setPage(int index) {
-    if (view != null
-        && (!isRangeLimited || !view.isRowCountExact() || hasPage(index))) {
+    if (display != null
+        && (!isRangeLimited || !display.isRowCountExact() || hasPage(index))) {
       // We don't use the local version of setPageStart because it would
       // constrain the index, but the user probably wants to use absolute page
       // indexes.
       int pageSize = getPageSize();
-      view.setVisibleRange(pageSize * index, pageSize);
+      display.setVisibleRange(pageSize * index, pageSize);
     }
   }
 
   /**
-   * Set the page size of the view.
+   * Set the page size of the display.
    *
    * @param pageSize the new page size
    */
   protected void setPageSize(int pageSize) {
-    if (view != null) {
-      Range range = view.getVisibleRange();
+    if (display != null) {
+      Range range = display.getVisibleRange();
       int pageStart = range.getStart();
-      if (isRangeLimited && view.isRowCountExact()) {
-        pageStart = Math.min(pageStart, view.getRowCount() - pageSize);
+      if (isRangeLimited && display.isRowCountExact()) {
+        pageStart = Math.min(pageStart, display.getRowCount() - pageSize);
       }
       pageStart = Math.max(0, pageStart);
-      view.setVisibleRange(pageStart, pageSize);
+      display.setVisibleRange(pageStart, pageSize);
     }
   }
 
@@ -309,28 +312,28 @@ public abstract class AbstractPager extends Composite {
    * @param index the index
    */
   protected void setPageStart(int index) {
-    if (view != null) {
-      Range range = view.getVisibleRange();
+    if (display != null) {
+      Range range = display.getVisibleRange();
       int pageSize = range.getLength();
-      if (isRangeLimited && view.isRowCountExact()) {
-        index = Math.min(index, view.getRowCount() - pageSize);
+      if (isRangeLimited && display.isRowCountExact()) {
+        index = Math.min(index, display.getRowCount() - pageSize);
       }
       index = Math.max(0, index);
       if (index != range.getStart()) {
-        view.setVisibleRange(index, pageSize);
+        display.setVisibleRange(index, pageSize);
       }
     }
   }
 
   /**
-   * Called when the row count changes. Only called if view is non-null.
+   * Called when the row count changes. Only called if display is non-null.
    *
    * @param rowCount the new row count
    * @param isExact true if the row count is exact
    */
   private void handleRowCountChange(int rowCount, boolean isExact) {
     int oldRowCount = lastRowCount;
-    lastRowCount = view.getRowCount();
+    lastRowCount = display.getRowCount();
 
     // If the row count has changed, limit the range.
     if (isRangeLimited && oldRowCount != lastRowCount) {
