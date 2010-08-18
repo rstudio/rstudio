@@ -53,13 +53,11 @@ import javax.validation.ValidatorFactory;
  */
 public class JsonRequestProcessor implements RequestProcessor<String> {
 
-  public static final String RELATED = "related";
-
   // TODO should we consume String, InputStream, or JSONObject?
   private class DvsData {
     private final JSONObject jsonObject;
     private final WriteOperation writeOperation;
-    
+
     DvsData(JSONObject jsonObject, WriteOperation writeOperation) {
       this.jsonObject = jsonObject;
       this.writeOperation = writeOperation;
@@ -70,13 +68,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     private final Object entityInstance;
     // TODO: violations should have more structure than JSONObject
     private final JSONObject violations;
-    private final WriteOperation writeOperation;
 
-    EntityData(Object entityInstance, JSONObject violations,
-        WriteOperation writeOperation) {
+    EntityData(Object entityInstance, JSONObject violations) {
       this.entityInstance = entityInstance;
       this.violations = violations;
-      this.writeOperation = writeOperation;
     }
   }
 
@@ -110,6 +105,20 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
   }
 
+  private class SerializedEntity {
+    // the field value of the entityInstance might change from under us.
+    private final Object entityInstance;
+
+    private final JSONObject serializedEntity;
+
+    SerializedEntity(Object entityInstance, JSONObject serializedEntity) {
+      this.entityInstance = entityInstance;
+      this.serializedEntity = serializedEntity;
+    }
+  }
+
+  public static final String RELATED = "related";
+
   public static final Set<String> BLACK_LIST = initBlackList();
 
   private static final Logger log = Logger.getLogger(JsonRequestProcessor.class.getName());
@@ -140,9 +149,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    */
   private Set<EntityKey> involvedKeys = new HashSet<EntityKey>();
   private Map<EntityKey, DvsData> dvsDataMap = new HashMap<EntityKey, DvsData>();
-  private Map<EntityKey, EntityData> beforeDataMap = new HashMap<EntityKey, EntityData>();
+  private Map<EntityKey, SerializedEntity> beforeDataMap = new HashMap<EntityKey, SerializedEntity>();
   private Map<EntityKey, EntityData> afterDvsDataMap = new HashMap<EntityKey, EntityData>();
-  
+
   public Collection<Property<?>> allProperties(Class<? extends Record> clazz) {
     Set<Property<?>> rtn = new HashSet<Property<?>>();
     for (Field f : clazz.getFields()) {
@@ -417,11 +426,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         violations = validator.validate(entityInstance);
       }
       return new EntityData(entityInstance, (violations.isEmpty() ? null
-          : getViolationsAsJson(violations)), writeOperation);
+          : getViolationsAsJson(violations)));
     } catch (Exception ex) {
       log.severe(String.format("Caught exception [%s] %s",
           ex.getClass().getName(), ex.getLocalizedMessage()));
-      return getEntityDataForException(entityKey, writeOperation, ex);
+      return getEntityDataForException(entityKey, ex);
     }
   }
 
@@ -641,20 +650,22 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
 
     if (topLevelJsonObject.has(RequestData.CONTENT_TOKEN)) {
-       // updates involvedKeys and dvsDataMap.
-       decodeDVS(topLevelJsonObject.getString(RequestData.CONTENT_TOKEN));
+      // updates involvedKeys and dvsDataMap.
+      decodeDVS(topLevelJsonObject.getString(RequestData.CONTENT_TOKEN));
     }
-   // get the domain object (for instance methods) and args.
+    // get the domain object (for instance methods) and args.
     Object args[][] = getObjectsFromParameterMap(operation.isInstance(),
         getParameterMap(topLevelJsonObject), domainMethod.getParameterTypes());
-    
-    // Construct beforeDataMap 
+
+    // the involvedKeys set is complete at this point.
+
+    // Construct beforeDataMap
     constructBeforeDataMap();
     // Construct afterDvsDataMap.
     constructAfterDvsDataMap();
-    
+
     // resolve parameters that are so far just EntityKeys.
-    // TODO: resolve paramters other than  the domainInstance 
+    // TODO: resolve paramters other than the domainInstance
     EntityKey domainEntityKey = null;
     if (args[0][0] != null) {
       domainEntityKey = (EntityKey) args[0][0];
@@ -710,6 +721,47 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
   }
 
+  /**
+   * Returns true iff the after and before JSONObjects are different.
+   * 
+   * @throws JSONException
+   */
+  boolean hasChanged(JSONObject before, JSONObject after) {
+    if (before == null) {
+      return after != null;
+    }
+    // before != null
+    if (after == null) {
+      return true;
+    }
+    try {
+      // before != null && after != null
+      Iterator<?> keyIterator = before.keys();
+      while (keyIterator.hasNext()) {
+        String key = keyIterator.next().toString();
+        Object beforeValue = before.get(key);
+        Object afterValue = after.get(key);
+        if (beforeValue == null) {
+          if (afterValue == null) {
+            continue;
+          }
+          return true;
+        }
+        if (afterValue == null) {
+          return true;
+        }
+        if (!beforeValue.equals(afterValue)) {
+          return true;
+        }
+      }
+    } catch (JSONException ex) {
+      log.warning("Encountered a JSONException " + ex.getMessage()
+          + " in getChanged");
+      return false;
+    }
+    return false;
+  }
+
   private void addRelatedObject(String keyRef, Object returnValue,
       Class<? extends Record> propertyType, RequestProperty propertyContext)
       throws JSONException, IllegalAccessException, NoSuchMethodException,
@@ -738,10 +790,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         afterDvsDataMap.put(entityKey, entityData);
       } else {
         assert !entityKey.isFuture;
-        EntityData entityData = beforeDataMap.get(entityKey);
-        assert entityData != null;
-        // TODO(cromwellian): copy here
-        afterDvsDataMap.put(entityKey, entityData);
+        SerializedEntity serializedEntity = beforeDataMap.get(entityKey);
+        assert serializedEntity.entityInstance != null;
+        afterDvsDataMap.put(entityKey, new EntityData(
+            serializedEntity.entityInstance, null));
       }
     }
   }
@@ -753,36 +805,23 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * Algorithm: go through the involvedKeys, and find the entityData
    * corresponding to each.
    * 
-   * @throws NoSuchMethodException
-   * @throws InvocationTargetException
-   * @throws IllegalAccessException
-   * @throws SecurityException
-   * @throws IllegalArgumentException
    */
   private void constructBeforeDataMap() throws IllegalArgumentException,
       SecurityException, IllegalAccessException, InvocationTargetException,
-      NoSuchMethodException {
-    beforeDataMap = new HashMap<EntityKey, EntityData>();
+      NoSuchMethodException, JSONException {
     for (EntityKey entityKey : involvedKeys) {
       if (entityKey.isFuture) {
         // the "before" is empty.
         continue;
       }
-      // 
-      Class<?> entityClass = getEntityFromRecordAnnotation(entityKey.record);
-      // TODO: merge this lookup code with other uses.
-      Object entityInstance = entityClass.getMethod(
-          "find" + entityClass.getSimpleName(), Long.class).invoke(null,
-          new Long(entityKey.id));
-      beforeDataMap.put(entityKey, new EntityData(entityInstance, null, null));
+      beforeDataMap.put(entityKey, getSerializedEntity(entityKey));
     }
   }
 
   /**
    * Decode deltaValueStore to populate involvedKeys and dvsDataMap.
    */
-  private void decodeDVS(String content)
-      throws SecurityException {
+  private void decodeDVS(String content) throws SecurityException {
     try {
       JSONObject jsonObject = new JSONObject(content);
       for (WriteOperation writeOperation : WriteOperation.values()) {
@@ -820,7 +859,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private WriteOperation detectDeleteOrUpdate(EntityKey entityKey,
       EntityData entityData) throws IllegalArgumentException,
       SecurityException, IllegalAccessException, InvocationTargetException,
-      NoSuchMethodException {
+      NoSuchMethodException, JSONException {
     if (entityData.entityInstance == null) {
       return null;
     }
@@ -833,9 +872,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (entityInstance == null) {
       return WriteOperation.DELETE;
     }
-    // TODO (cromwellian): is it an update? how to detect?
-    // This is a HACK!!!
-    if (entityData.writeOperation == WriteOperation.UPDATE) {
+    if (hasChanged(beforeDataMap.get(entityKey).serializedEntity,
+        serializeEntity(entityInstance, entityKey.record))) {
       return WriteOperation.UPDATE;
     }
     return null;
@@ -877,8 +915,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return returnObject;
   }
 
-  private EntityData getEntityDataForException(EntityKey entityKey,
-      WriteOperation writeOperation, Exception ex) {
+  private EntityData getEntityDataForException(EntityKey entityKey, Exception ex) {
 
     JSONObject violations = null;
     try {
@@ -893,7 +930,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       // ignore.
       e.printStackTrace();
     }
-    return new EntityData(null, violations, writeOperation);
+    return new EntityData(null, violations);
   }
 
   /**
@@ -911,6 +948,20 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private String getSchemaAndId(Class<? extends Record> record, Object newId) {
     return record.getName() + "-" + newId;
+  }
+
+  private SerializedEntity getSerializedEntity(EntityKey entityKey)
+      throws IllegalArgumentException, SecurityException,
+      IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+      JSONException {
+    Class<?> entityClass = getEntityFromRecordAnnotation(entityKey.record);
+    // TODO: merge this lookup code with other uses.
+    Object entityInstance = entityClass.getMethod(
+        "find" + entityClass.getSimpleName(), Long.class).invoke(null,
+        new Long(entityKey.id));
+    JSONObject serializedEntity = serializeEntity(entityInstance,
+        entityKey.record);
+    return new SerializedEntity(entityInstance, serializedEntity);
   }
 
   /**
@@ -973,6 +1024,42 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     } else {
       return !BLACK_LIST.contains(p.getName());
     }
+  }
+
+  /**
+   * Return the properties of an entityInstance, visible on the client, as a
+   * JSONObject.
+   *<p>
+   * TODO: clean up the copy-paste from getJSONObject.
+   */
+  private JSONObject serializeEntity(Object entityInstance,
+      Class<? extends Record> recordClass) throws SecurityException,
+      NoSuchMethodException, IllegalArgumentException, IllegalAccessException,
+      InvocationTargetException, JSONException {
+    if (entityInstance == null) {
+      return null;
+    }
+    JSONObject jsonObject = new JSONObject();
+    for (Property<?> p : allProperties(recordClass)) {
+      String propertyName = p.getName();
+      String methodName = getMethodNameFromPropertyName(propertyName, "get");
+      Method method = entityInstance.getClass().getMethod(methodName);
+      Object returnValue = method.invoke(entityInstance);
+
+      Object propertyValue;
+      if (returnValue != null && Record.class.isAssignableFrom(p.getType())) {
+        Method idMethod = returnValue.getClass().getMethod("getId");
+        Long id = (Long) idMethod.invoke(returnValue);
+
+        propertyValue = operationRegistry.getSecurityProvider().encodeClassType(
+            p.getType())
+            + "-" + id;
+      } else {
+        propertyValue = encodePropertyValue(returnValue);
+      }
+      jsonObject.put(propertyName, propertyValue);
+    }
+    return jsonObject;
   }
 
   @SuppressWarnings("unchecked")

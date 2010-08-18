@@ -73,6 +73,8 @@ public class SimpleFoo {
 
   private Long longField;
 
+  private String password;
+
   private String userName;
 
   private SimpleBar barField;
@@ -116,6 +118,10 @@ public class SimpleFoo {
     return longField;
   }
 
+  public String getPassword() {
+    return password;
+  }
+
   public String getUserName() {
     return userName;
   }
@@ -154,6 +160,10 @@ public class SimpleFoo {
 
   public void setLongField(Long longField) {
     this.longField = longField;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
   }
 
   public void setUserName(String userName) {

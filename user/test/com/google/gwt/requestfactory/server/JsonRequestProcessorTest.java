@@ -24,8 +24,10 @@ import com.google.gwt.valuestore.shared.WriteOperation;
 import junit.framework.TestCase;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
@@ -94,21 +96,7 @@ public class JsonRequestProcessorTest extends TestCase {
     com.google.gwt.valuestore.server.SimpleFoo.reset();
     try {
       // fetch object
-      JSONObject results = (JSONObject) requestProcessor.processJsonRequest("{ \""
-          + RequestData.OPERATION_TOKEN + "\": \""
-          + com.google.gwt.valuestore.shared.SimpleFooRequest.class.getName()
-          + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
-          + "findSimpleFooById\", " + "\"" + RequestData.PARAM_TOKEN
-          + "0\": \"999\" }");
-      JSONObject foo = results.getJSONObject("result");   
-      assertEquals(foo.getInt("id"), 999);
-      assertEquals(foo.getInt("intId"), 42);
-      assertEquals(foo.getString("userName"), "GWT");
-      assertEquals(foo.getLong("longField"), 8L);
-      assertEquals(foo.getInt("enumField"), 0);
-      assertEquals(foo.getInt("version"), 1);
-      assertEquals(foo.getBoolean("boolField"), true);
-      assertTrue(foo.has("created"));
+     JSONObject foo = fetchVerifyAndGetInitialObject();
 
       // modify fields and sync
       foo.put("intId", 45);
@@ -118,25 +106,16 @@ public class JsonRequestProcessorTest extends TestCase {
       foo.put("boolField", false);
       Date now = new Date();
       foo.put("created", "" + now.getTime());
-      JSONObject recordWithSchema = new JSONObject();
-      recordWithSchema.put(SimpleFooRecord.class.getName(), foo);
-      JSONArray arr = new JSONArray();
-      arr.put(recordWithSchema);
-      JSONObject operation = new JSONObject();
-      
-      operation.put(WriteOperation.UPDATE.toString(), arr);
-      JSONObject sync = new JSONObject();
-      sync.put(RequestData.OPERATION_TOKEN, "com.google.gwt.valuestore.shared.SimpleFooRequest::persist");
-      sync.put(RequestData.CONTENT_TOKEN, operation.toString());
-      sync.put(RequestData.PARAM_TOKEN + "0", foo.getInt("id") + "-NO" + "-"
-          + SimpleFooRecord.class.getName());
-      JSONObject result = (JSONObject) requestProcessor.processJsonRequest(sync.toString());
 
-      // TODO: commented till snapshotting and automatic-diff is ready.
+     JSONObject result = getResultFromServer(foo);
+
       // check modified fields and no violations
       SimpleFoo fooResult = SimpleFoo.getSingleton();
-      assertFalse(result.getJSONObject("sideEffects").getJSONArray("UPDATE").getJSONObject(
-          0).has("violations"));
+      JSONArray updateArray = result.getJSONObject("sideEffects").getJSONArray("UPDATE");
+      assertEquals(1, updateArray.length());
+      assertEquals(1, updateArray.getJSONObject(0).length());
+      assertTrue(updateArray.getJSONObject(0).has("id"));
+      assertFalse(updateArray.getJSONObject(0).has("violations"));
       assertEquals((int) 45, (int) fooResult.getIntId());
       assertEquals("JSC", fooResult.getUserName());
       assertEquals(now, fooResult.getCreated());
@@ -145,6 +124,62 @@ public class JsonRequestProcessorTest extends TestCase {
           fooResult.getEnumField());
       assertEquals(false, (boolean) fooResult.getBoolField());
       
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail(e.toString());
+    }
+  }
+
+  public void testEndToEndSmartDiff_NoChange() {
+    com.google.gwt.valuestore.server.SimpleFoo.reset();
+    try {
+      // fetch object
+      JSONObject foo = fetchVerifyAndGetInitialObject();
+
+      // change the value on the server behind the back
+      SimpleFoo fooResult = SimpleFoo.getSingleton();
+      fooResult.setUserName("JSC");
+      fooResult.setIntId(45);
+
+      // modify fields and sync -- there should be no change on the server.
+      foo.put("intId", 45);
+      foo.put("userName", "JSC");
+      JSONObject result = getResultFromServer(foo);
+
+      // check modified fields and no violations
+      assertFalse(result.getJSONObject("sideEffects").has("UPDATE"));
+      fooResult = SimpleFoo.getSingleton();
+      assertEquals((int) 45, (int) fooResult.getIntId());
+      assertEquals("JSC", fooResult.getUserName());
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail(e.toString());
+    }
+  }
+
+  public void testEndToEndSmartDiff_SomeChange() {
+    com.google.gwt.valuestore.server.SimpleFoo.reset();
+    try {
+      // fetch object
+      JSONObject foo = fetchVerifyAndGetInitialObject();
+
+      // change some fields but don't change other fields.
+      SimpleFoo fooResult = SimpleFoo.getSingleton();
+      fooResult.setUserName("JSC");
+      fooResult.setIntId(45);
+      foo.put("userName", "JSC");
+      foo.put("intId", 45);
+      Date now = new Date();
+      foo.put("created", "" + now.getTime());
+
+      JSONObject result = getResultFromServer(foo);
+
+      // check modified fields and no violations
+      assertTrue(result.getJSONObject("sideEffects").has("UPDATE"));
+      fooResult = SimpleFoo.getSingleton();
+      assertEquals((int) 45, (int) fooResult.getIntId());
+      assertEquals("JSC", fooResult.getUserName());
+      assertEquals(now, fooResult.getCreated());
     } catch (Exception e) {
       e.printStackTrace();
       fail(e.toString());
@@ -161,5 +196,47 @@ public class JsonRequestProcessorTest extends TestCase {
     Object val = requestProcessor.decodeParameterValue(expectedType, paramValue);
     assertEquals(expectedType, val.getClass());
     assertEquals(expectedValue, val);
+  }
+
+  private JSONObject fetchVerifyAndGetInitialObject() throws JSONException,
+      NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+      ClassNotFoundException {
+    JSONObject results = (JSONObject) requestProcessor.processJsonRequest("{ \""
+        + RequestData.OPERATION_TOKEN
+        + "\": \""
+        + com.google.gwt.valuestore.shared.SimpleFooRequest.class.getName()
+        + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
+        + "findSimpleFooById\", "
+        + "\""
+        + RequestData.PARAM_TOKEN
+        + "0\": \"999\" }");
+    JSONObject foo = results.getJSONObject("result");
+    assertEquals(foo.getInt("id"), 999);
+    assertEquals(foo.getInt("intId"), 42);
+    assertEquals(foo.getString("userName"), "GWT");
+    assertEquals(foo.getLong("longField"), 8L);
+    assertEquals(foo.getInt("enumField"), 0);
+    assertEquals(foo.getInt("version"), 1);
+    assertEquals(foo.getBoolean("boolField"), true);
+    assertTrue(foo.has("created"));
+    return foo;
+  }
+
+  private JSONObject getResultFromServer(JSONObject foo) throws JSONException,
+      NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+      ClassNotFoundException {
+    JSONObject recordWithSchema = new JSONObject();
+    recordWithSchema.put(SimpleFooRecord.class.getName(), foo);
+    JSONArray arr = new JSONArray();
+    arr.put(recordWithSchema);
+    JSONObject operation = new JSONObject();
+    operation.put(WriteOperation.UPDATE.toString(), arr);
+    JSONObject sync = new JSONObject();
+    sync.put(RequestData.OPERATION_TOKEN,
+        "com.google.gwt.valuestore.shared.SimpleFooRequest::persist");
+    sync.put(RequestData.CONTENT_TOKEN, operation.toString());
+    sync.put(RequestData.PARAM_TOKEN + "0", foo.getInt("id") + "-NO" + "-"
+        + SimpleFooRecord.class.getName());
+    return (JSONObject) requestProcessor.processJsonRequest(sync.toString());
   }
 }
