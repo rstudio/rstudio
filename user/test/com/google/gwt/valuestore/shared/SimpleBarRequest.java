@@ -15,14 +15,16 @@
  */
 package com.google.gwt.valuestore.shared;
 
-import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.Instance;
+import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Service;
 
 /**
- * Creates SimpleFooRequests.
+ * Do nothing test interface.
  */
-public interface SimpleRequestFactory extends RequestFactory {
+@Service(com.google.gwt.valuestore.server.SimpleBar.class)
+public interface SimpleBarRequest {
 
-  SimpleFooRequest simpleFooRequest();
-
-  SimpleBarRequest simpleBarRequest();
+  @Instance
+  RequestObject<Void> persist(SimpleBarRecord record);
 }

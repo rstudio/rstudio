@@ -30,4 +30,5 @@ public interface SimpleBarRecord extends Record {
 
   String getUserName();
 
+  void setUserName(String userName);
 }

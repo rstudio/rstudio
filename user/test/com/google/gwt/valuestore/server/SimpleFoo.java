@@ -29,6 +29,8 @@ public class SimpleFoo {
 
   static SimpleFoo singleton = new SimpleFoo();
 
+  private static Long nextId = 1L;
+
   public static Long countSimpleFoo() {
     return 1L;
   }
@@ -65,7 +67,7 @@ public class SimpleFoo {
   private Date created;
   private SimpleEnum enumField;
   @Id
-  private Long id = -1L;
+  private Long id = 1L;
 
   private Integer intId = -1;
 
@@ -123,6 +125,7 @@ public class SimpleFoo {
   }
 
   public void persist() {
+    setId(nextId++);
   }
 
   public void setBarField(SimpleBar barField) {

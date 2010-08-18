@@ -15,8 +15,8 @@
  */
 package com.google.gwt.valuestore.shared;
 
-import com.google.gwt.valuestore.server.SimpleFoo;
 import com.google.gwt.requestfactory.shared.DataTransferObject;
+import com.google.gwt.valuestore.server.SimpleFoo;
 
 import java.util.Date;
 
@@ -48,7 +48,7 @@ public interface SimpleFooRecord extends Record {
   
   Date getCreated();
 
-  com.google.gwt.valuestore.shared.SimpleEnum getEnumField();
+  SimpleEnum getEnumField();
 
   Integer getIntId();
 
@@ -58,4 +58,17 @@ public interface SimpleFooRecord extends Record {
 
   String getUserName();
 
+  void setBarField(SimpleBarRecord barField);
+
+  void setBoolField(Boolean boolField);
+
+  void setCreated(Date created);
+
+  void setIntId(Integer intId);
+
+  void setLongField(Long longField);
+
+  void setPassword(String password);
+
+  void setUserName(String userName);
 }

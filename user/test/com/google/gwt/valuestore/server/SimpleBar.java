@@ -27,6 +27,8 @@ public class SimpleBar {
 
   static SimpleBar singleton = new SimpleBar();
 
+  private static Long nextId = 1L;
+
   public static Long countSimpleBar() {
     return 1L;
   }
@@ -55,7 +57,7 @@ public class SimpleBar {
   Integer version = 1;
 
   @Id
-  private Long id = 10L;
+  private Long id = 1L;
 
   private String userName;
 
@@ -77,6 +79,7 @@ public class SimpleBar {
   }
 
   public void persist() {
+    setId(nextId++);
   }
 
   public void setId(Long id) {

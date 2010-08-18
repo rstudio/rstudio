@@ -23,6 +23,7 @@ import com.google.gwt.valuestore.shared.SimpleFooRecord;
 import com.google.gwt.valuestore.shared.WriteOperation;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -111,6 +112,34 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
 
   public java.lang.String getUserName() {
     return get(userName);
+  }
+
+  public void setBarField(SimpleBarRecord barField) {
+    // ignore
+  }
+
+  public void setBoolField(Boolean boolField) {
+    // ignore
+  }
+
+  public void setCreated(Date created) {
+    // ignore
+  }
+
+  public void setIntId(Integer intId) {
+    // ignore
+  }
+
+  public void setLongField(Long longField) {
+    // ignore
+  }
+
+  public void setPassword(String password) {
+    // ignore
+  }
+
+  public void setUserName(String userName) {
+    // ignore
   }
 
 }
