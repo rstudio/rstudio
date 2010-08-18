@@ -31,6 +31,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -168,6 +169,12 @@ public abstract class CompilationUnit {
   }
 
   protected static final DiskCache diskCache = new DiskCache();
+
+  static final Comparator<CompilationUnit> COMPARATOR = new Comparator<CompilationUnit>() {
+    public int compare(CompilationUnit o1, CompilationUnit o2) {
+      return o1.getTypeName().compareTo(o2.getTypeName());
+    }
+  };
 
   private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
 

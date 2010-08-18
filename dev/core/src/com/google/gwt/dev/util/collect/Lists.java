@@ -287,6 +287,13 @@ public class Lists {
     }
   }
 
+  public static <T extends Comparable<? super T>> List<T> sort(List<T> list) {
+    if (list.size() > 1) {
+      Collections.sort(list);
+    }
+    return list;
+  }
+
   public static <T> List<T> sort(List<T> list, Comparator<? super T> sort) {
     if (list.size() > 1) {
       Collections.sort(list, sort);

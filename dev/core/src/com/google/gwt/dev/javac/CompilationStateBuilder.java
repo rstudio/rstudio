@@ -78,9 +78,6 @@ public class CompilationStateBuilder {
 
         MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
 
-        CompilationUnitInvalidator.reportErrors(logger, cud,
-            builder.getSource());
-
         Set<ContentId> dependencies = compiler.computeDependencies(cud,
             jsniDeps);
         CompilationUnit unit = builder.build(compiledClasses, dependencies,
@@ -114,8 +111,6 @@ public class CompilationStateBuilder {
      */
     private final JSORestrictionsChecker.CheckerState jsoState = new JSORestrictionsChecker.CheckerState();
 
-    private transient TreeLogger logger;
-
     private transient Map<String, CompilationUnit> resultUnits;
     private final Set<ContentId> validDependencies = new HashSet<ContentId>();
 
@@ -141,11 +136,8 @@ public class CompilationStateBuilder {
       }
     }
 
-    void compile(TreeLogger logger,
-        Collection<CompilationUnitBuilder> builders,
+    void compile(Collection<CompilationUnitBuilder> builders,
         Map<String, CompilationUnit> resultUnits) {
-      this.logger = logger.branch(TreeLogger.DEBUG,
-          "Validating newly compiled units");
       this.resultUnits = resultUnits;
       compiler.doCompile(builders);
     }
@@ -298,16 +290,22 @@ public class CompilationStateBuilder {
         CompilationUnit validUnit = resultUnits.get(typeName);
         if (validUnit != null) {
           compileMoreLater.addValidUnit(validUnit);
-          // Report any existing errors as if the unit were recompiled.
-          CompilationUnitInvalidator.reportErrors(logger, validUnit);
         } else {
           builders.add(new ResourceCompilationUnitBuilder(typeName, resource));
         }
       }
-      compileMoreLater.compile(logger, builders, resultUnits);
+      compileMoreLater.compile(builders, resultUnits);
 
-      return new CompilationState(logger, resultUnits.values(),
-          compileMoreLater);
+      ArrayList<CompilationUnit> result = new ArrayList<CompilationUnit>(
+          resultUnits.values());
+      // Sort, then report all errors (re-report for cached units).
+      Collections.sort(result, CompilationUnit.COMPARATOR);
+      TreeLogger branch = logger.branch(TreeLogger.DEBUG,
+          "Validating newly compiled units");
+      for (CompilationUnit unit : result) {
+        CompilationUnitInvalidator.reportErrors(branch, unit);
+      }
+      return new CompilationState(logger, result, compileMoreLater);
     } finally {
       compilationStateBuilderProcess.end();
     }
@@ -340,8 +338,6 @@ public class CompilationStateBuilder {
         resultUnits.values(), compileMoreLater.getValidDependencies());
     for (CompilationUnit validUnit : resultUnits.values()) {
       compileMoreLater.addValidUnit(validUnit);
-      // Report any existing errors as if the unit were recompiled.
-      CompilationUnitInvalidator.reportErrors(logger, validUnit);
     }
 
     // Compile everything else.
@@ -351,8 +347,17 @@ public class CompilationStateBuilder {
         builders.add(new GeneratedCompilationUnitBuilder(generatedUnit));
       }
     }
+    compileMoreLater.compile(builders, resultUnits);
 
-    compileMoreLater.compile(logger, builders, resultUnits);
-    return resultUnits.values();
+    ArrayList<CompilationUnit> result = new ArrayList<CompilationUnit>(
+        resultUnits.values());
+    // Sort, then report all errors (re-report for cached units).
+    Collections.sort(result, CompilationUnit.COMPARATOR);
+    TreeLogger branch = logger.branch(TreeLogger.DEBUG,
+        "Validating newly compiled units");
+    for (CompilationUnit unit : result) {
+      CompilationUnitInvalidator.reportErrors(branch, unit);
+    }
+    return result;
   }
 }

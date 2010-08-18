@@ -19,14 +19,16 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
-import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,20 +40,13 @@ import java.util.Set;
  */
 public class CompilationUnitInvalidator {
 
+  @SuppressWarnings("deprecation")
   public static void reportErrors(TreeLogger logger, CompilationUnit unit) {
-    reportErrors(logger, unit.getProblems(), unit.getDisplayLocation(),
-        unit.isError());
-  }
-
-  public static void reportErrors(TreeLogger logger,
-      CompilationUnitDeclaration cud, String sourceForDump) {
-    CategorizedProblem[] problems = cud.compilationResult().getProblems();
-    String fileName = String.valueOf(cud.getFileName());
-    boolean isError = cud.compilationResult().hasErrors();
-    TreeLogger branch = reportErrors(logger, problems, fileName, isError);
+    TreeLogger branch = reportErrors(logger, unit.getProblems(),
+        unit.getDisplayLocation(), unit.isError());
     if (branch != null) {
-      Util.maybeDumpSource(branch, fileName, sourceForDump,
-          String.valueOf(cud.getMainTypeName()));
+      Util.maybeDumpSource(branch, unit.getDisplayLocation(), unit.getSource(),
+          unit.getTypeName());
     }
   }
 
@@ -65,7 +60,7 @@ public class CompilationUnitInvalidator {
     logger = logger.branch(TreeLogger.TRACE, "Removing invalidated units");
 
     // Assume all units are valid at first.
-    Set<CompilationUnit> currentlyValidUnits = new HashSet<CompilationUnit>();
+    Set<CompilationUnit> currentlyValidUnits = new LinkedHashSet<CompilationUnit>();
     Set<ContentId> currentlyValidRefs = new HashSet<ContentId>(knownValidRefs);
     for (CompilationUnit unit : units) {
       if (!unit.isError()) {
@@ -79,17 +74,22 @@ public class CompilationUnitInvalidator {
       changed = false;
       for (Iterator<CompilationUnit> it = currentlyValidUnits.iterator(); it.hasNext();) {
         CompilationUnit unitToCheck = it.next();
-        TreeLogger branch = null;
+        List<String> invalidRefs = Lists.create();
         for (ContentId ref : unitToCheck.getDependencies()) {
           if (!currentlyValidRefs.contains(ref)) {
-            if (branch == null) {
-              branch = logger.branch(TreeLogger.DEBUG, "Compilation unit '"
-                  + unitToCheck + "' is removed due to invalid reference(s):");
-              it.remove();
-              currentlyValidRefs.remove(unitToCheck.getContentId());
-              changed = true;
-            }
-            branch.log(TreeLogger.DEBUG, ref.get());
+            invalidRefs = Lists.add(invalidRefs, ref.get());
+          }
+        }
+        if (invalidRefs.size() > 0) {
+          it.remove();
+          currentlyValidRefs.remove(unitToCheck.getContentId());
+          changed = true;
+          TreeLogger branch = logger.branch(TreeLogger.DEBUG,
+              "Compilation unit '" + unitToCheck
+                  + "' is removed due to invalid reference(s):");
+          Lists.sort(invalidRefs);
+          for (String ref : invalidRefs) {
+            branch.log(TreeLogger.DEBUG, ref);
           }
         }
       }
