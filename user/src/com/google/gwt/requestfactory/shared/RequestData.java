@@ -38,6 +38,10 @@ public class RequestData {
   public static final String PARAM_TOKEN = "param";
   public static final String PROPERTY_REF_TOKEN = "propertyRefs";
 
+  public static final String RESULT_TOKEN = "result";
+
+  public static final String RELATED_TOKEN = "related";
+
   // TODO: non-final is a hack for now.
   private String operation;
   private final Object[] parameters;

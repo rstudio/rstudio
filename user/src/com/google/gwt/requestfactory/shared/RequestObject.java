@@ -40,8 +40,6 @@ public interface RequestObject<T> {
 
   RequestData getRequestData();
 
-  void handleResponseText(String responseText);
-
   /**
    * Return true if there are outstanding changes that have not been
    * communicated to the server yet. Note that it is illegal to call this method

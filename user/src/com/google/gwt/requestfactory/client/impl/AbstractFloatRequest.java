@@ -30,13 +30,13 @@ import java.util.Collections;
  * RequestFactory.RequestObject} for requests that return Float.
  */
 public abstract class AbstractFloatRequest extends
-    AbstractRequest<Float, AbstractFloatRequest> {
+    AbstractPrimitiveRequest<Float, AbstractFloatRequest> {
 
   public AbstractFloatRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     receiver.onSuccess(Float.valueOf(responseText),
         Collections.<SyncResult> emptySet());
   }

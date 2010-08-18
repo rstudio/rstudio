@@ -30,13 +30,13 @@ import java.util.Collections;
  * RequestFactory.RequestObject} for requests that return Short.
  */
 public abstract class AbstractShortRequest extends
-    AbstractRequest<Short, AbstractShortRequest> {
+    AbstractPrimitiveRequest<Short, AbstractShortRequest> {
 
   public AbstractShortRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     receiver.onSuccess(Short.valueOf(responseText),
         Collections.<SyncResult> emptySet());
   }

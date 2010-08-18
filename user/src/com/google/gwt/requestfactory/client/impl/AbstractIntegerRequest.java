@@ -30,13 +30,13 @@ import java.util.Collections;
  * RequestFactory.RequestObject} for requests that return Integer.
  */
 public abstract class AbstractIntegerRequest extends
-    AbstractRequest<Integer, AbstractIntegerRequest> {
+    AbstractPrimitiveRequest<Integer, AbstractIntegerRequest> {
 
   public AbstractIntegerRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     receiver.onSuccess(Integer.valueOf(responseText),
         Collections.<SyncResult> emptySet());
   }

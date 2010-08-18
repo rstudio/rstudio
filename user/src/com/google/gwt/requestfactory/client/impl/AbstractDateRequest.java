@@ -31,13 +31,13 @@ import java.util.Date;
  * RequestFactory.RequestObject} for requests that return Date.
  */
 public abstract class AbstractDateRequest extends
-    AbstractRequest<Date, AbstractDateRequest> {
+    AbstractPrimitiveRequest<Date, AbstractDateRequest> {
 
   public AbstractDateRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     receiver.onSuccess(new Date(Long.valueOf(responseText)),
         Collections.<SyncResult> emptySet());
   }

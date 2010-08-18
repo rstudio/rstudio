@@ -43,16 +43,20 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     protected JsonResults() {
     }
 
+    public final native JavaScriptObject getJavascriptResult() /*-{
+      return this.result;
+    }-*/;
+
     public final native JsArray<RecordJsoImpl> getListResult() /*-{
+      return this.result;
+    }-*/;
+
+    public final native RecordJsoImpl getRecordResult() /*-{
       return this.result;
     }-*/;
 
     public final native JavaScriptObject getRelated() /*-{
       return this.related;
-    }-*/;
-
-    public final native RecordJsoImpl getResult() /*-{
-      return this.result;
     }-*/;
   }
 
@@ -311,7 +315,6 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     throw new UnsupportedOperationException(
         "Can't yet set properties of type " + value.getClass().getName());
   }
-
 
   // TODO: HACK! Need to look up token to schema for relatins
   public final native void setRequestFactory(RequestFactoryJsonImpl requestFactory) /*-{

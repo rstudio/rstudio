@@ -30,13 +30,13 @@ import java.util.Collections;
  * RequestFactory.RequestObject} for requests that return Character.
  */
 public abstract class AbstractCharacterRequest extends
-    AbstractRequest<Character, AbstractCharacterRequest> {
+    AbstractPrimitiveRequest<Character, AbstractCharacterRequest> {
 
   public AbstractCharacterRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     receiver.onSuccess(responseText.charAt(0), 
         Collections.<SyncResult> emptySet());
   }

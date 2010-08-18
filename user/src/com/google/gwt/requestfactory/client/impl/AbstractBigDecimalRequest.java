@@ -31,14 +31,14 @@ import java.util.Collections;
  * RequestFactory.RequestObject} for requests that return BigDecimal.
  */
 public abstract class AbstractBigDecimalRequest extends
-    AbstractRequest<BigDecimal, AbstractBigDecimalRequest> {
+    AbstractPrimitiveRequest<BigDecimal, AbstractBigDecimalRequest> {
 
   public AbstractBigDecimalRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
-    receiver.onSuccess(new BigDecimal(responseText), 
+  public void handlePrimitiveResult(String responseText) {
+    receiver.onSuccess(new BigDecimal(responseText),
         Collections.<SyncResult> emptySet());
   }
 

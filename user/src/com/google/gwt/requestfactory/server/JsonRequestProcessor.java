@@ -53,6 +53,8 @@ import javax.validation.ValidatorFactory;
  */
 public class JsonRequestProcessor implements RequestProcessor<String> {
 
+  public static final String RELATED = "related";
+
   // TODO should we consume String, InputStream, or JSONObject?
   private class DvsData {
     private final JSONObject jsonObject;
@@ -673,23 +675,23 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
               domainMethod.getReturnType()));
     }
 
+    JSONObject envelop = new JSONObject();
     if (result instanceof List<?>) {
-      JSONObject envelop = new JSONObject();
-      envelop.put("result", toJsonArray(operation, result));
-      envelop.put("related", encodeRelatedObjectsToJson());
+      envelop.put(RequestData.RESULT_TOKEN, toJsonArray(operation, result));
       envelop.put("sideEffects", sideEffects);
       return envelop;
-    } else if (result instanceof Number
-        && !(result instanceof BigDecimal || result instanceof BigInteger)) {
-      return result;
+    } else if (result instanceof Number || result instanceof Enum
+        || result instanceof String || result instanceof Date
+        || result instanceof Character || result instanceof Boolean) {
+      envelop.put(RequestData.RESULT_TOKEN, result);
     } else {
-      JSONObject envelop = new JSONObject();
       JSONObject jsonObject = toJsonObject(operation, result);
-      envelop.put("result", jsonObject);
-      envelop.put("related", encodeRelatedObjectsToJson());
+      envelop.put(RequestData.RESULT_TOKEN, jsonObject);
       envelop.put("sideEffects", sideEffects);
       return envelop;
     }
+    envelop.put(RequestData.RELATED_TOKEN, encodeRelatedObjectsToJson());
+    return envelop;
   }
 
   public void setOperationRegistry(OperationRegistry operationRegistry) {

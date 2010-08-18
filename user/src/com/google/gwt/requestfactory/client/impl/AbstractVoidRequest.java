@@ -30,13 +30,13 @@ import java.util.Set;
  * RequestFactory.RequestObject} for requests that return Void.
  */
 public abstract class AbstractVoidRequest extends
-    AbstractRequest<Void, AbstractVoidRequest> {
+    AbstractPrimitiveRequest<Void, AbstractVoidRequest> {
 
   public AbstractVoidRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     Set<SyncResult> syncResults = deltaValueStore.commit(responseText);
     receiver.onSuccess(null, syncResults);
   }

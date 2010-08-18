@@ -30,13 +30,13 @@ import java.util.Collections;
  * RequestFactory.RequestObject} for requests that return Boolean.
  */
 public abstract class AbstractBooleanRequest extends
-    AbstractRequest<Boolean, AbstractBooleanRequest> {
+    AbstractPrimitiveRequest<Boolean, AbstractBooleanRequest> {
 
   public AbstractBooleanRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     receiver.onSuccess(Boolean.valueOf(responseText),
         Collections.<SyncResult> emptySet());
   }

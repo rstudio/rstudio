@@ -32,7 +32,7 @@ import java.util.Collections;
  * @param <E> an enum type
  */
 public abstract class AbstractEnumRequest<E extends Enum<E>> extends
-    AbstractRequest<Integer, AbstractEnumRequest<E>> {
+    AbstractPrimitiveRequest<Integer, AbstractEnumRequest<E>> {
 
   private E[] enumValues;
 
@@ -41,7 +41,7 @@ public abstract class AbstractEnumRequest<E extends Enum<E>> extends
     this.enumValues = enumValues;
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     int ordinal = Integer.valueOf(responseText);
     for (E e : enumValues) {
       if (ordinal == e.ordinal()) {

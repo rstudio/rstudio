@@ -32,13 +32,13 @@ import java.util.Collections;
  * RequestFactory.RequestObject} for requests that return BigInteger.
  */
 public abstract class AbstractBigIntegerRequest extends
-    AbstractRequest<BigInteger, AbstractBigIntegerRequest> {
+    AbstractPrimitiveRequest<BigInteger, AbstractBigIntegerRequest> {
 
   public AbstractBigIntegerRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     receiver.onSuccess(new BigDecimal(responseText).toBigInteger(),
         Collections.<SyncResult> emptySet());
   }

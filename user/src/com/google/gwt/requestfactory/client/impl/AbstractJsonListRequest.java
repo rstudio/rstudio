@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.valuestore.shared.Record;
@@ -49,10 +50,9 @@ AbstractJsonListRequest<T extends Record, R extends AbstractJsonListRequest<T, R
     this.schema = schema;
   }
 
-  public void handleResponseText(String text) {
-    RecordJsoImpl.JsonResults results = RecordJsoImpl.fromResults(text);
+  public void handleJsonResult(JavaScriptObject jsoResult) {
 
-    JsArray<RecordJsoImpl> valueJsos = results.getListResult();
+    JsArray<RecordJsoImpl> valueJsos = jsoResult.cast();
     List<T> valueList = new ArrayList<T>(valueJsos.length());
     for (int i = 0; i < valueJsos.length(); i++) {
       RecordJsoImpl jso = valueJsos.get(i);
@@ -61,7 +61,6 @@ AbstractJsonListRequest<T extends Record, R extends AbstractJsonListRequest<T, R
     }
 
     requestFactory.getValueStore().setRecords(valueJsos, requestFactory);
-    processRelated(results.getRelated());
 
     receiver.onSuccess(valueList, Collections.<SyncResult> emptySet());
   }

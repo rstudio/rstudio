@@ -96,7 +96,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         wireLogger.finest("Response received");
         if (200 == response.getStatusCode()) {
           String text = response.getText();
-          requestObject.handleResponseText(text);
+          ((AbstractRequest) requestObject).handleResponseText(text);
         } else if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
           wireLogger.finest("Need to log in");
         } else if (response.getStatusCode() > 0) {

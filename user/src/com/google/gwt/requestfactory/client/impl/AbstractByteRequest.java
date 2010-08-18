@@ -30,13 +30,13 @@ import java.util.Collections;
  * RequestFactory.RequestObject} for requests that return Byte.
  */
 public abstract class AbstractByteRequest extends
-    AbstractRequest<Byte, AbstractByteRequest> {
+    AbstractPrimitiveRequest<Byte, AbstractByteRequest> {
 
   public AbstractByteRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResponseText(String responseText) {
+  public void handlePrimitiveResult(String responseText) {
     receiver.onSuccess(Integer.valueOf(responseText).byteValue(),
         Collections.<SyncResult> emptySet());
   }

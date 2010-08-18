@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
@@ -43,14 +44,12 @@ public abstract class //
     this.schema = schema;
   }
 
-  public void handleResponseText(String text) {
-    RecordJsoImpl.JsonResults results = RecordJsoImpl.fromResults(text);
+  public void handleJsonResult(JavaScriptObject jsoResult) {
 
-    RecordJsoImpl jso = results.getResult();
+    RecordJsoImpl jso = jsoResult.cast();
     jso.setSchema(schema);
 
     requestFactory.getValueStore().setRecord(jso, requestFactory);
-    processRelated(results.getRelated());
 
     receiver.onSuccess(schema.create(jso), Collections.<SyncResult>emptySet());
   }
