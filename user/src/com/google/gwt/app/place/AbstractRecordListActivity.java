@@ -163,8 +163,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
       }
     };
 
-    createRangeRequest(range).forProperties(getView().getProperties()).fire(
-        callback);
+    fireRangeRequest(range, callback);
   }
 
   public void onStop() {
@@ -233,6 +232,12 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
     placeController.goTo(new ProxyPlace(record, Operation.DETAILS));
   }
 
+  private void fireRangeRequest(final Range range,
+      final Receiver<List<R>> callback) {
+    createRangeRequest(range).forProperties(getView().getProperties()).fire(
+        callback);
+  }
+
   private void getLastPage() {
     fireCountRequest(new Receiver<Long>() {
       public void onSuccess(Long response, Set<SyncResult> syncResults) {
@@ -266,8 +271,16 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
   }
 
   private void update(R record) {
-    Integer row = recordToRow.get(record.getId());
-    getView().asHasData().setRowData(row, Collections.singletonList(record));
+    final Integer row = recordToRow.get(record.getId());
+    if (row == null) {
+      return;
+    }
+    fireRangeRequest(new Range(row, 1), new Receiver<List<R>>() {
+      public void onSuccess(List<R> response, Set<SyncResult> syncResults) {
+        getView().asHasData().setRowData(row,
+            Collections.singletonList(response.get(0)));
+      }
+    });
   }
 
   private void updateSelection(Place newPlace) {

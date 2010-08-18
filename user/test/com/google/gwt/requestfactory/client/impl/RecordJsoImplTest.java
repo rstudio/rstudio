@@ -40,8 +40,7 @@ public class RecordJsoImplTest extends GWTTestCase {
   }
 
   public void testEmptyCopy() {
-    RecordJsoImpl emptyCopy = RecordJsoImpl.emptyCopy(new RecordImpl(
-        getPopulatedJso(), false));
+    RecordJsoImpl emptyCopy = RecordJsoImpl.emptyCopy(getPopulatedJso());
     testMinimalJso(emptyCopy, SCHEMA_PRESENT);
   }
 

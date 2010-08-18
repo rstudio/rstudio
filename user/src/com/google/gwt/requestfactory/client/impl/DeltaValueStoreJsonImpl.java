@@ -184,8 +184,7 @@ class DeltaValueStoreJsonImpl {
           master.records.put(key, value);
           masterRecord = value;
           toRemove.add(new RecordKey(datastoreId, futureKey.schema, RequestFactoryJsonImpl.IS_FUTURE));
-          master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
-              masterRecord, WriteOperation.CREATE));
+          requestFactory.postChangeEvent(masterRecord, WriteOperation.CREATE);
           syncResults.add(makeSyncResult(masterRecord, null, futureKey.id));
         } else {
           // do not change the masterRecord or fire event
@@ -213,8 +212,7 @@ class DeltaValueStoreJsonImpl {
         if (masterRecord != null) {
           if (violations == NULL_VIOLATIONS) {
             master.records.remove(key);
-            master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
-                masterRecord, WriteOperation.DELETE));
+            requestFactory.postChangeEvent(masterRecord, WriteOperation.DELETE);
             syncResults.add(makeSyncResult(masterRecord, null, null));
           } else {
             // do not change the masterRecord or fire event
@@ -237,8 +235,7 @@ class DeltaValueStoreJsonImpl {
           assert masterRecord != null;
           masterRecord.merge(entry.getValue());
           toRemove.add(key);
-          master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
-              masterRecord, WriteOperation.UPDATE));
+          requestFactory.postChangeEvent(masterRecord, WriteOperation.UPDATE);
           syncResults.add(makeSyncResult(masterRecord, null, null));
         } else {
           // do not change the masterRecord or fire event
@@ -466,7 +463,7 @@ class DeltaValueStoreJsonImpl {
   }
 
   private RecordJsoImpl newChangeRecord(RecordImpl fromRecord) {
-    return RecordJsoImpl.emptyCopy(fromRecord);
+    return RecordJsoImpl.emptyCopy(fromRecord.asJso());
   }
 
   private void processToRemove(Set<RecordKey> toRemove,

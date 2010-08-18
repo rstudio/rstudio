@@ -16,7 +16,6 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.WriteOperation;
 
@@ -33,13 +32,7 @@ import java.util.Map;
 public class ValueStoreJsonImpl {
   // package protected fields for use by DeltaValueStoreJsonImpl
 
-  final EventBus eventBus;
-
   final Map<RecordKey, RecordJsoImpl> records = new HashMap<RecordKey, RecordJsoImpl>();
-
-  ValueStoreJsonImpl(EventBus eventBus) {
-    this.eventBus = eventBus;
-  }
 
   public Record getRecordBySchemaAndId(RecordSchema<?> schema, 
       Long id) {
@@ -64,34 +57,27 @@ public class ValueStoreJsonImpl {
     }
   }
 
-  /**
-   * @param newRecord
-   * @param i
-   * @param array
-   * @param requestFactory
-   */
-  private void setRecordInList(RecordJsoImpl newRecord, int i,
+  private void setRecordInList(RecordJsoImpl newJsoRecord, int i,
       JsArray<RecordJsoImpl> array, RequestFactoryJsonImpl requestFactory) {
-    RecordKey recordKey = new RecordKey(newRecord, RequestFactoryJsonImpl.NOT_FUTURE);
-    newRecord.setValueStore(this);
-    newRecord.setRequestFactory(requestFactory);
+    RecordKey recordKey = new RecordKey(newJsoRecord, RequestFactoryJsonImpl.NOT_FUTURE);
+    newJsoRecord.setValueStore(this);
+    newJsoRecord.setRequestFactory(requestFactory);
     
     RecordJsoImpl oldRecord = records.get(recordKey);
     if (oldRecord == null) {
-      records.put(recordKey, newRecord);
+      records.put(recordKey, newJsoRecord);
       // TODO: need to fire a create event.
     } else {
       // TODO: Merging is not the correct thing to do but it works as long as we
       // don't have filtering by properties. Need to revisit this once response
       // only has a subset of all properties.
-      boolean changed = oldRecord.merge(newRecord);
-      newRecord = oldRecord.cast();
+      boolean changed = oldRecord.merge(newJsoRecord);
+      newJsoRecord = oldRecord.cast();
       if (array != null) {
-        array.set(i, newRecord);
+        array.set(i, newJsoRecord);
       }
       if (changed) {
-        eventBus.fireEvent(newRecord.getSchema().createChangeEvent(newRecord,
-            WriteOperation.UPDATE));
+        requestFactory.postChangeEvent(newJsoRecord, WriteOperation.UPDATE);
       }
     }
   }

@@ -29,6 +29,7 @@ import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.WriteOperation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -65,7 +66,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private ValueStoreJsonImpl valueStore;
 
-  private EventBus handlerManager;
+  private EventBus eventBus;
 
   public com.google.gwt.valuestore.shared.Record create(
       Class<? extends Record> token, RecordToTypeMap recordToTypeMap) {
@@ -84,7 +85,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     builder.setHeader("Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
     builder.setHeader("pageurl", Location.getHref());
     builder.setRequestData(ClientRequestHelper.getRequestString(requestObject.getRequestData().getRequestMap(
-        ((AbstractRequest<?,?>) requestObject).deltaValueStore.toJson())));
+        ((AbstractRequest<?, ?>) requestObject).deltaValueStore.toJson())));
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
@@ -120,7 +121,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
           e);
     }
   }
-  
+
   public Class<? extends Record> getClass(Record proxy) {
     return ((RecordImpl) proxy).getSchema().getToken();
   }
@@ -138,11 +139,11 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   }
 
   /**
-   * @param handlerManager
+   * @param eventBus
    */
-  public void init(EventBus handlerManager) {
-    this.valueStore = new ValueStoreJsonImpl(handlerManager);
-    this.handlerManager = handlerManager;
+  public void init(EventBus eventBus) {
+    this.valueStore = new ValueStoreJsonImpl();
+    this.eventBus = eventBus;
     Logger.getLogger("").addHandler(
         new RequestFactoryLogHandler(this, Level.WARNING, wireLogger.getName()));
     logger.fine("Successfully initialized RequestFactory");
@@ -192,8 +193,18 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return valueStore;
   }
 
-  private Record createFuture(
-      RecordSchema<? extends Record> schema) {
+  void postChangeEvent(RecordJsoImpl newJsoRecord, WriteOperation op) {
+    /*
+     * Ensure event receivers aren't accidentally using cached info by making an
+     * unpopulated copy of the record.
+     */
+    newJsoRecord = RecordJsoImpl.emptyCopy(newJsoRecord);
+    Record javaRecord = newJsoRecord.getSchema().create(newJsoRecord);    
+    eventBus.fireEvent(newJsoRecord.getSchema().createChangeEvent(javaRecord,
+        op));
+  }
+
+  private Record createFuture(RecordSchema<? extends Record> schema) {
     Long futureId = ++currentFutureId;
     RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
         schema);
@@ -203,6 +214,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   }
 
   private void postRequestEvent(State received, Response response) {
-    handlerManager.fireEvent(new RequestEvent(received, response));
+    eventBus.fireEvent(new RequestEvent(received, response));
   }
 }

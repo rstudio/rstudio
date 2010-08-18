@@ -25,6 +25,13 @@ import com.google.gwt.event.shared.GwtEvent;
  * </span>
  * </p>
  * Abstract base class for an event announcing changes to a {@link Record}.
+ * <p>
+ * Note that this event includes an unpopulated copy of the changed record
+ * &mdash; all properties are undefined except it's id. That is, the event
+ * includes only enough information for receivers to issue requests to get
+ * themselves fresh copies of the record.
+ * <p>
+ * TODO: rather than an empty record, consider using a string token 
  * 
  * @param <R> the type of the record
  * @param <H> the type of event handler
@@ -41,6 +48,10 @@ public abstract class RecordChangedEvent<R extends Record, H extends EventHandle
     this.writeOperation = writeOperation;
   }
 
+  /**
+   * @return an unpopulated copy of the changed record &mdash; all properties
+   *         are undefined except it's id
+   */
   public R getRecord() {
     return record;
   }

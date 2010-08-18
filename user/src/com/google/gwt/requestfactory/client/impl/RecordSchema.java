@@ -60,12 +60,6 @@ public abstract class RecordSchema<R extends Record> {
   public abstract RecordChangedEvent<?, ?> createChangeEvent(Record record,
       WriteOperation writeOperation);
 
-  public RecordChangedEvent<?, ?> createChangeEvent(RecordJsoImpl jsoRecord,
-      WriteOperation writeOperation) {
-    R record = create(jsoRecord);
-    return createChangeEvent(record, writeOperation);
-  }
-
   // TODO(rjrjr) rename getProxyClass
   public abstract Class<? extends Record> getToken();
 }

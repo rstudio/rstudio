@@ -73,10 +73,10 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return copy;
   }
 
-  public static RecordJsoImpl emptyCopy(RecordImpl from) {
-    Long id = from.get(Record.id);
-    Integer version = from.get(Record.version);
-    final RecordSchema<?> schema = from.getSchema();
+  public static RecordJsoImpl emptyCopy(RecordJsoImpl jso) {
+    Long id = jso.get(Record.id);
+    Integer version = jso.get(Record.version);
+    final RecordSchema<?> schema = jso.getSchema();
 
     return create(id, version, schema);
   }

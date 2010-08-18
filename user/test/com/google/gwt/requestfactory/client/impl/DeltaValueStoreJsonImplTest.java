@@ -72,7 +72,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   @Override
   public void gwtSetUp() {
-    valueStore = new ValueStoreJsonImpl(null);
+    valueStore = new ValueStoreJsonImpl();
     requestFactory = new RequestFactoryJsonImpl() {
 
       public Record create(Class token) {
