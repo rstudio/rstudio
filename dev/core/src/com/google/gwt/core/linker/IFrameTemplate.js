@@ -249,7 +249,7 @@ function __MODULE_FUNC__() {
       $wnd.location.reload();
       return;
     }
-    initialHtml = "hosted.html?__MODULE_FUNC__";
+    initialHtml = "__HOSTED_FILENAME__?__MODULE_FUNC__";
     strongName = "";
   }
 

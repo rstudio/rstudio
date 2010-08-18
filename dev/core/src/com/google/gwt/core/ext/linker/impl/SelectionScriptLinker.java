@@ -35,8 +35,10 @@ import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -175,10 +177,16 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
       ArtifactSet toReturn = new ArtifactSet(artifacts);
       toReturn.add(emitSelectionScript(logger, context, artifacts));
+      maybeAddHostedModeFile(logger, toReturn);
       return toReturn;
     }
   }
 
+  @Override
+  public boolean supportsDevMode() {
+    return (getHostedFilename() != "");
+  }
+  
   protected Collection<Artifact<?>> doEmitCompilation(TreeLogger logger,
       LinkerContext context, CompilationResult result)
       throws UnableToCompleteException {
@@ -322,6 +330,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     replaceAll(selectionScript, "__MODULE_FUNC__",
         context.getModuleFunctionName());
     replaceAll(selectionScript, "__MODULE_NAME__", context.getModuleName());
+    replaceAll(selectionScript, "__HOSTED_FILENAME__", getHostedFilename());
 
     int startPos;
 
@@ -428,7 +437,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
     return selectionScript.toString();
   }
-
+  
   /**
    * Generate a Snippet of JavaScript to inject an external stylesheet.
    * 
@@ -460,6 +469,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected abstract String getCompilationExtension(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
 
+  protected String getHostedFilename() {
+    return "";
+  }
+
   /**
    * Compute the beginning of a JavaScript file that will hold the main module
    * implementation.
@@ -487,6 +500,50 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
   protected abstract String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
+
+  /**
+   * Add the hosted file to the artifact set.
+   */
+  protected void maybeAddHostedModeFile(TreeLogger logger, ArtifactSet artifacts)
+      throws UnableToCompleteException {
+    String hostedFilename = getHostedFilename();
+    if ("".equals(hostedFilename)) {
+      return;
+    }
+    try {
+      URL resource = SelectionScriptLinker.class.getResource(hostedFilename);
+      if (resource == null) {
+        logger.log(TreeLogger.ERROR,
+            "Unable to find support resource: " + hostedFilename);
+        throw new UnableToCompleteException();
+      }
+
+      final URLConnection connection = resource.openConnection();
+      // TODO: extract URLArtifact class?
+      EmittedArtifact hostedFile = new EmittedArtifact(
+          SelectionScriptLinker.class, hostedFilename) {
+        @Override
+        public InputStream getContents(TreeLogger logger)
+            throws UnableToCompleteException {
+          try {
+            return connection.getInputStream();
+          } catch (IOException e) {
+            logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
+            throw new UnableToCompleteException();
+          }
+        }
+
+        @Override
+        public long getLastModified() {
+          return connection.getLastModified();
+        }
+      };
+      artifacts.add(hostedFile);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
+      throw new UnableToCompleteException();
+    }
+  }
 
   /**
    * Find all instances of {@link SelectionInformation} and add them to the

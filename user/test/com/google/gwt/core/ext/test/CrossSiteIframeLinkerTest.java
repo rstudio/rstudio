@@ -16,13 +16,10 @@
 
 package com.google.gwt.core.ext.test;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 
 /**
  * Integration test of the cross-site iframe linker.
  */
-@DoNotRunWith(Platform.Devel)
 public class CrossSiteIframeLinkerTest extends LinkerTest {
   @Override
   public String getModuleName() {

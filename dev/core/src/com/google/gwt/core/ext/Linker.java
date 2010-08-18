@@ -76,7 +76,7 @@ public abstract class Linker {
 
     return false;
   }
-
+  
   /**
    * This method is invoked for linkers not annotated with {@link Shardable}. It
    * sees all artifacts across the whole compile and can modify them
@@ -149,5 +149,13 @@ public abstract class Linker {
   public ArtifactSet relink(TreeLogger logger, LinkerContext context,
       ArtifactSet newArtifacts) throws UnableToCompleteException {
     return newArtifacts;
+  }
+
+  /**
+   * Does this linker support DevMode?
+   */
+  public boolean supportsDevMode() {
+    // By default, linkers do not support Dev Mode
+    return false;
   }
 }

@@ -29,9 +29,6 @@ function __MODULE_FUNC__() {
   // The downloaded script code, once it arrives
   ,compiledScript
   
-  // Whether the main script has been injected yet
-  ,scriptInjected
-  
   // The iframe holding the app's code
   ,scriptFrame
 
@@ -83,8 +80,7 @@ function __MODULE_FUNC__() {
     try {
       var query = $wnd.location.search;
       return (query.indexOf('gwt.codesvr=') != -1
-          || query.indexOf('gwt.hosted=') != -1 
-          || ($wnd.external && $wnd.external.gwtOnLoad)) &&
+          || query.indexOf('gwt.hosted=') != -1) &&
           (query.indexOf('gwt.hybrid') == -1);
     } catch (e) {
       // Defensive: some versions of IE7 reportedly can throw an exception
@@ -94,14 +90,13 @@ function __MODULE_FUNC__() {
     return result;
   }
   
-  // Called when the body has been finished and when the script
-  // to install is available. These can happen in either order.
-  // When both have happened, create the code-holding iframe.
-  //
+  // This function is called on two events: the body has finished
+  // loading, and the script to install is available. For hosted
+  // mode, install the hosted file as soon as the body is done.
+  // For prod mode, additionally wait until the script to install
+  // has been loaded, and then install the code.
   function maybeCreateFrame() {
-    if (bodyDone && compiledScript && !scriptInjected) {
-    	scriptInjected = true;
-
+    if (bodyDone && !scriptFrame && (isHostedMode() || compiledScript)) {
     	// Create the script frame, making sure it's invisible, but not
     	// "display:none", which keeps some browsers from running code in it.
     	scriptFrame = $doc.createElement('iframe');
@@ -114,7 +109,15 @@ function __MODULE_FUNC__() {
         // For some reason, adding this setTimeout makes code installation
         // more reliable.
         setTimeout(function() {
-          installCode(compiledScript);
+            if (isHostedMode()) {
+              // TODO(unnurg) changing the src introduces cross-site problems
+              // Neeed to add a hosted-xsiframe.js and install a script tag 
+              // pointing at it
+              scriptFrame.contentWindow.location.replace(
+            		  base + "__HOSTED_FILENAME__?__MODULE_FUNC__");
+            } else {
+              installCode(compiledScript);
+            }
         })
     }
   }
@@ -222,6 +225,9 @@ function __MODULE_FUNC__() {
   __MODULE_FUNC__.onScriptInstalled = function(gwtOnLoadFunc) {
     // remove the callback to prevent it being called twice
     __MODULE_FUNC__.onScriptInstalled = null;
+    if (isHostedMode()) {
+      scriptFrame.contentWindow.__gwt_getProperty = computePropValue;
+    }
     gwtOnLoadFunc(onLoadErrorFunc, '__MODULE_NAME__', base, softPermutationId);
     // Record when the module EntryPoints return.
     $stats && $stats({
@@ -240,12 +246,6 @@ function __MODULE_FUNC__() {
 
   // --------------- STRAIGHT-LINE CODE ---------------
 
-  if (isHostedMode()) {
-    alert("Cross-site hosted mode not yet implemented. See issue " +
-      "http://code.google.com/p/google-web-toolkit/issues/detail?id=2079");
-    return;
-  }
-
   // do it early for compile/browse rebasing
   processMetas();
   computeScriptBase();
@@ -262,20 +262,22 @@ function __MODULE_FUNC__() {
   });
 
   var strongName;
-  try {
+  if (!isHostedMode()) {
+    try {
 // __PERMUTATIONS_BEGIN__
-    // Permutation logic
+      // Permutation logic
 // __PERMUTATIONS_END__
-    var idx = strongName.indexOf(':');
-    if (idx != -1) {
-      softPermutationId = +(strongName.substring(idx + 1));
-      strongName = strongName.substring(0, idx);
+      var idx = strongName.indexOf(':');
+      if (idx != -1) {
+        softPermutationId = +(strongName.substring(idx + 1));
+        strongName = strongName.substring(0, idx);
+      }
+    } catch (e) {
+      // intentionally silent on property failure
+      return;
     }
-  } catch (e) {
-    // intentionally silent on property failure
-    return;
-  }  
-  
+  }
+
   var onBodyDoneTimerId;
   function onBodyDone() {
     if (!bodyDone) {
@@ -329,7 +331,6 @@ function __MODULE_FUNC__() {
 // __MODULE_SCRIPTS_BEGIN__
   // Script resources are injected here
 // __MODULE_SCRIPTS_END__
-
   // This is a bit ugly, but serves a purpose. We need to ensure that the stats
   // script runs before the compiled script. If they are both doc.write()n in
   // sequence, that should be the effect. Except on IE it turns out that a
@@ -338,7 +339,10 @@ function __MODULE_FUNC__() {
   // some apps. The final solution was simply to inject the compiled script
   // from *within* the stats script, guaranteeing order at the expense of near
   // total inscrutability :(
-  var compiledScriptTag = '"<script src=\\"' + base + strongName + '.cache.js\\"></scr" + "ipt>"';
+  var compiledScriptWrite = '';
+  if (!isHostedMode()) {
+    compiledScriptWrite = 'document.write("<script src=\\"' + base + strongName + '.cache.js\\"></scr" + "ipt>");';
+  }
 
   $doc.write('<scr' + 'ipt><!-' + '-\n'
     + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
@@ -349,7 +353,7 @@ function __MODULE_FUNC__() {
     + 'moduleName:"__MODULE_NAME__", sessionId:window.__gwtStatsSessionId, subSystem:"startup",'
     + 'evtGroup: "moduleStartup", millis:(new Date()).getTime(),'
     + 'type: "moduleRequested"});'
-    + 'document.write(' + compiledScriptTag + ');'
+    + compiledScriptWrite
     + '\n-' + '-></scr' + 'ipt>');
 }
 

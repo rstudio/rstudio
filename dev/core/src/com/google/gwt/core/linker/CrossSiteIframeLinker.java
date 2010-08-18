@@ -85,6 +85,11 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   @Override
+  protected String getHostedFilename() {
+    return "hosted_xsiframe.html";
+  }
+  
+  @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
       String strongName) {
     throw new UnsupportedOperationException("Should not be called");

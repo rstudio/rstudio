@@ -1092,10 +1092,16 @@ public class JUnitShell extends DevMode {
       }
     }
     if (developmentMode) {
-      // BACKWARDS COMPATIBILITY: most linkers currently fail in dev mode.
-      if (module.getLinker("std") != null) {
-        // TODO: unfortunately, this could be race condition between dev/prod
-        module.addLinker("std");
+      // BACKWARDS COMPATIBILITY: many linkers currently fail in dev mode.
+      try {
+        if (!module.getActivePrimaryLinker().newInstance().supportsDevMode()) {
+          if (module.getLinker("std") != null) {
+            // TODO: unfortunately, this could be race condition between dev/prod
+            module.addLinker("std");
+          }
+        }
+      } catch (Exception e) {
+        getTopLogger().log(TreeLogger.WARN, "Failed to instantiate linker: " + e);
       }
       super.link(getTopLogger(), module);
     } else {
