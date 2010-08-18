@@ -39,7 +39,7 @@ public class ActionCell<C> extends AbstractCell<C> {
     void execute(T object);
   }
 
-  private final String message;
+  private final String html;
   private final Delegate<C> delegate;
 
   /**
@@ -50,8 +50,8 @@ public class ActionCell<C> extends AbstractCell<C> {
    */
   public ActionCell(String message, Delegate<C> delegate) {
     super("click");
-    this.message = message;
     this.delegate = delegate;
+    this.html = "<button>" + message + "</button>";
   }
 
   @Override
@@ -64,6 +64,6 @@ public class ActionCell<C> extends AbstractCell<C> {
 
   @Override
   public void render(C value, Object key, StringBuilder sb) {
-    sb.append("<button>" + message + "</button>");
+    sb.append(html);
   }
 }

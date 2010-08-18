@@ -21,14 +21,25 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
 /**
- * A {@link Cell} used to render a checkbox.  The value of the checkbox
- * may be toggled using the ENTER key as well as via mouse click.
+ * A {@link Cell} used to render a checkbox. The value of the checkbox may be
+ * toggled using the ENTER key as well as via mouse click.
  *
  * <p>
  * Note: This class is new and its interface subject to change.
  * </p>
  */
 public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
+
+  /**
+   * An html string representation of a checked input box.
+   */
+  private static final String INPUT_CHECKED =
+      "<input type=\"checkbox\" checked/>";
+
+  /**
+   * An html string representation of an unchecked input box.
+   */
+  private static final String INPUT_UNCHECKED = "<input type=\"checkbox\"/>";
 
   private final boolean isSelectBox;
 
@@ -63,19 +74,19 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
   public void onBrowserEvent(Element parent, Boolean value, Object key,
       NativeEvent event, ValueUpdater<Boolean> valueUpdater) {
     String type = event.getType();
-    
-    boolean enterPressed = "keyup".equals(type) &&
-        event.getKeyCode() == KeyCodes.KEY_ENTER;
+
+    boolean enterPressed = "keyup".equals(type)
+        && event.getKeyCode() == KeyCodes.KEY_ENTER;
     if ("change".equals(type) || enterPressed) {
       InputElement input = parent.getFirstChild().cast();
       Boolean isChecked = input.isChecked();
-      
+
       // If the enter key was pressed, toggle the value
       if (enterPressed) {
         isChecked = !isChecked;
         input.setChecked(isChecked);
       }
-      
+
       setViewData(key, isChecked);
       if (valueUpdater != null) {
         valueUpdater.update(isChecked);
@@ -92,13 +103,10 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
       viewData = null;
     }
 
-    sb.append("<input type=\"checkbox\"");
-    if (value != null) {
-      boolean isChecked = (viewData != null) ? viewData : value;
-      if (isChecked) {
-        sb.append(" checked");
-      }
+    if (value != null && ((viewData != null) ? viewData : value)) {
+      sb.append(INPUT_CHECKED);
+    } else {
+      sb.append(INPUT_UNCHECKED);
     }
-    sb.append("/>");
   }
 }

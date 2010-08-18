@@ -59,12 +59,11 @@ public class TextInputCell extends AbstractEditableCell<String, String> {
       viewData = null;
     }
 
-    sb.append("<input type='text'");
-    if (viewData != null) {
-      sb.append(" value='" + viewData + "'");
-    } else if (value != null) {
-      sb.append(" value='" + value + "'");
+    String s = (viewData != null) ? viewData : (value != null ? value : null);
+    if (s != null) {
+      sb.append("<input type='text' value='").append(s).append("'></input>");
+    } else {
+      sb.append("<input type='text'></input>");
     }
-    sb.append("></input>");
   }
 }

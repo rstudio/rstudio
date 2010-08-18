@@ -620,17 +620,6 @@ public class CellTable<T> extends AbstractHasData<T> {
     }
   }
 
-  /**
-   * Redraw the table using the existing data.
-   */
-  @Override
-  public void redraw() {
-    if (redrawScheduled) {
-      redrawCancelled = true;
-    }
-    super.redraw();
-  }
-
   public void redrawFooters() {
     createHeaders(true);
   }
@@ -693,8 +682,12 @@ public class CellTable<T> extends AbstractHasData<T> {
     createHeadersAndFooters();
 
     ProvidesKey<T> keyProvider = getKeyProvider();
-    String firstColumnStyle = style.firstColumn();
-    String lastColumnStyle = style.lastColumn();
+    String evenRowStyle = style.evenRow();
+    String oddRowStyle = style.oddRow();
+    String cellStyle = style.cell();
+    String firstColumnStyle = " " + style.firstColumn();
+    String lastColumnStyle = " " + style.lastColumn();
+    String selectedRowStyle = " " + style.selectedRow();
     int columnCount = columns.size();
     int length = values.size();
     int end = start + length;
@@ -702,35 +695,27 @@ public class CellTable<T> extends AbstractHasData<T> {
       T value = values.get(i - start);
       boolean isSelected = (selectionModel == null || value == null)
           ? false : selectionModel.isSelected(value);
-      sb.append("<tr onclick=''");
-      sb.append(" class='");
-      sb.append(i % 2 == 0 ? style.evenRow() : style.oddRow());
+      sb.append("<tr onclick='' class='");
+      sb.append(i % 2 == 0 ? evenRowStyle : oddRowStyle);
       if (isSelected) {
-        sb.append(" ").append(style.selectedRow());
+        sb.append(selectedRowStyle);
       }
       sb.append("'>");
       int curColumn = 0;
       for (Column<T, ?> column : columns) {
-        // TODO(jlabanca): How do we sink ONFOCUS and ONBLUR?
-        sb.append("<td class='").append(style.cell());
+        sb.append("<td class='").append(cellStyle);
         if (curColumn == 0) {
-          sb.append(" ").append(firstColumnStyle);
+          sb.append(firstColumnStyle);
         }
         // The first and last column could be the same column.
         if (curColumn == columnCount - 1) {
-          sb.append(" ").append(lastColumnStyle);
+          sb.append(lastColumnStyle);
         }
-        sb.append("'>");
-        int bufferLength = sb.length();
+        sb.append("'><div>");
         if (value != null) {
           column.render(value, keyProvider, sb);
         }
-
-        // Add blank space to ensure empty rows aren't squished.
-        if (bufferLength == sb.length()) {
-          sb.append("&nbsp");
-        }
-        sb.append("</td>");
+        sb.append("</div></td>");
         curColumn++;
       }
       sb.append("</tr>");
@@ -773,6 +758,10 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   @Override
   void replaceAllChildren(List<T> values, String html) {
+    // Cancel any pending redraw.
+    if (redrawScheduled) {
+      redrawCancelled = true;
+    }
     TABLE_IMPL.replaceAllRows(
         CellTable.this, tbody, CellBasedWidgetImpl.get().processHtml(html));
   }
@@ -884,6 +873,13 @@ public class CellTable<T> extends AbstractHasData<T> {
     return colgroup.getChild(index).cast();
   }
 
+  /**
+   * Find the cell that contains the element. Note that the TD element is not
+   * the parent. The parent is the div inside the TD cell.
+   *
+   * @param elem the element
+   * @return the parent cell
+   */
   private TableCellElement findNearestParentCell(Element elem) {
     while ((elem != null) && (elem != table)) {
       // TODO: We need is() implementations in all Element subclasses.
@@ -897,6 +893,9 @@ public class CellTable<T> extends AbstractHasData<T> {
     return null;
   }
 
+  /**
+   * Fire an event to the Cell within the specified {@link TableCellElement}.
+   */
   @SuppressWarnings("unchecked")
   private <C> void fireEventToCell(Event event, String eventType,
       TableCellElement tableCell, T value, int col, int row) {
@@ -906,10 +905,11 @@ public class CellTable<T> extends AbstractHasData<T> {
       C cellValue = column.getValue(value);
       ProvidesKey<T> providesKey = getKeyProvider();
       Object key = providesKey == null ? value : providesKey.getKey(value);
-      boolean cellWasEditing = cell.isEditing(tableCell, cellValue, key);
+      Element parentElem = tableCell.getFirstChildElement();
+      boolean cellWasEditing = cell.isEditing(parentElem, cellValue, key);
       column.onBrowserEvent(
-          tableCell, getPageStart() + row, value, event, providesKey);
-      cellIsEditing = cell.isEditing(tableCell, cellValue, key);
+          parentElem, getPageStart() + row, value, event, providesKey);
+      cellIsEditing = cell.isEditing(parentElem, cellValue, key);
       if (cellWasEditing && !cellIsEditing) {
         resetFocus();
       }
