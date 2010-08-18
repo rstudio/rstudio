@@ -56,9 +56,9 @@ class DeltaValueStoreJsonImpl {
     }-*/;
 
     private static native JavaScriptObject getJsoResponse(String response) /*-{
-      // TODO: clean this
+      // TODO: clean and optimize this.
       eval("xyz=" + response);
-      return xyz;
+      return xyz["sideEffects"];
     }-*/;
 
     protected ReturnRecord() {
@@ -76,7 +76,17 @@ class DeltaValueStoreJsonImpl {
       return this.futureId;
     }-*/;
 
-    public final native String getId() /*-{
+    public final Long getId() {
+      String parts[] = getSchemaAndId().split("-");
+      return Long.parseLong(parts[1]);
+    }
+
+    public final String getSchema() {
+      String parts[] = getSchemaAndId().split("-");
+      return parts[0];
+    }
+
+    public final native String getSchemaAndId() /*-{
       return this.id;
     }-*/;
 
@@ -107,7 +117,8 @@ class DeltaValueStoreJsonImpl {
   // track C-U-D of CRUD operations
   private final Map<RecordKey, RecordJsoImpl> creates = new HashMap<RecordKey, RecordJsoImpl>();
   private final Map<RecordKey, RecordJsoImpl> updates = new HashMap<RecordKey, RecordJsoImpl>();
-  private final Map<RecordKey, RecordJsoImpl> deletes = new HashMap<RecordKey, RecordJsoImpl>();
+  // nothing for deletes because DeltaValueStore is not involved in deletes. The
+  // operation alone suffices.
 
   private final Map<RecordKey, WriteOperation> operations = new HashMap<RecordKey, WriteOperation>();
 
@@ -153,7 +164,7 @@ class DeltaValueStoreJsonImpl {
         } else {
           violationsMap.put(Long.valueOf(sync.getFutureId()), NULL_VIOLATIONS);
           futureToDatastoreId.put(Long.valueOf(sync.getFutureId()),
-              Long.valueOf(sync.getId()));
+              sync.getId());
         }
       }
 
@@ -184,33 +195,35 @@ class DeltaValueStoreJsonImpl {
       }
     }
     processToRemove(toRemove, WriteOperation.CREATE);
-
     toRemove.clear();
+
     if (keys.contains(WriteOperation.DELETE.name())) {
       JsArray<ReturnRecord> deletedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.DELETE.name());
       Map<Long, Map<String, String>> violationsMap = getViolationsMap(deletedRecords);
-      for (Map.Entry<RecordKey, RecordJsoImpl> entry : deletes.entrySet()) {
-        final RecordKey key = entry.getKey();
+      int length = deletedRecords.length();
+      // for (Map.Entry<RecordKey, RecordJsoImpl> entry : deletes.entrySet()) {
+      for (int i = 0; i < length; i++) {
+        final RecordKey key = new RecordKey(deletedRecords.get(i).getId(),
+            requestFactory.getSchema(deletedRecords.get(i).getSchema()),
+            RequestFactoryJsonImpl.NOT_FUTURE);
         Map<String, String> violations = violationsMap.get(key.id);
         assert violations != null;
-        if (violations == NULL_VIOLATIONS) {
-          RecordJsoImpl masterRecord = master.records.get(key);
-          assert masterRecord != null;
-          master.records.remove(key);
-          toRemove.add(key);
-          master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
-              masterRecord, WriteOperation.DELETE));
-          syncResults.add(makeSyncResult(masterRecord, null, null));
-        } else {
-          // do not change the masterRecord or fire event
-          syncResults.add(makeSyncResult(entry.getValue(), violations, null));
+        RecordJsoImpl masterRecord = master.records.get(key);
+        if (masterRecord != null) {
+          if (violations == NULL_VIOLATIONS) {
+            master.records.remove(key);
+            master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
+                masterRecord, WriteOperation.DELETE));
+            syncResults.add(makeSyncResult(masterRecord, null, null));
+          } else {
+            // do not change the masterRecord or fire event
+            syncResults.add(makeSyncResult(masterRecord, violations, null));
+          }
         }
       }
     }
-    processToRemove(toRemove, WriteOperation.DELETE);
 
-    toRemove.clear();
     if (keys.contains(WriteOperation.UPDATE.name())) {
       JsArray<ReturnRecord> updatedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.UPDATE.name());
@@ -235,49 +248,6 @@ class DeltaValueStoreJsonImpl {
     }
     processToRemove(toRemove, WriteOperation.UPDATE);
     return syncResults;
-  }
-
-  public void delete(Record record) {
-    checkArgumentsAndState(record, "delete");
-    RecordImpl recordImpl = (RecordImpl) record;
-    RecordKey recordKey = new RecordKey(recordImpl);
-    RecordJsoImpl rawMasterRecord = master.records.get(recordKey);
-    if (rawMasterRecord == null) {
-      // it was a create on RF
-      RecordJsoImpl oldRecord = requestFactory.creates.remove(recordKey);
-      assert oldRecord != null;
-      return;
-    }
-    WriteOperation priorOperation = operations.get(recordKey);
-    if (priorOperation == null) {
-      operations.put(recordKey, WriteOperation.DELETE);
-      deletes.put(recordKey, recordImpl.asJso());
-      return;
-    }
-    Record priorRecord = null;
-    switch (priorOperation) {
-      case CREATE:
-        priorRecord = creates.remove(recordKey);
-        assert priorRecord != null;
-        operations.remove(recordKey);
-        break;
-      case DELETE:
-        // nothing to do here.
-        break;
-      case UPDATE:
-        // undo update
-        priorRecord = updates.remove(recordKey);
-        assert priorRecord != null;
-        operations.remove(recordKey);
-
-        // actually delete
-        operations.put(recordKey, WriteOperation.DELETE);
-        deletes.put(recordKey, recordImpl.asJso());
-        break;
-      default:
-        throw new IllegalStateException("unknown prior WriteOperation "
-            + priorOperation.name());
-    }
   }
 
   public boolean isChanged() {
@@ -312,15 +282,6 @@ class DeltaValueStoreJsonImpl {
         priorRecord = creates.get(recordKey);
         assert priorRecord != null;
         priorRecord.set(property, value);
-        break;
-      case DELETE:
-        // undo delete
-        RecordJsoImpl recordJsoImpl = deletes.remove(recordKey);
-        assert recordJsoImpl != null;
-        operations.remove(recordKey);
-
-        // add new change record
-        addNewChangeRecord(recordKey, recordImpl, property, value);
         break;
       case UPDATE:
         priorRecord = updates.get(recordKey);
@@ -371,7 +332,8 @@ class DeltaValueStoreJsonImpl {
   String toJsonWithoutChecks() {
     used = true;
     StringBuffer jsonData = new StringBuffer("{");
-    for (WriteOperation writeOperation : WriteOperation.values()) {
+    for (WriteOperation writeOperation : new WriteOperation[] {
+        WriteOperation.CREATE, WriteOperation.UPDATE}) {
       String jsonDataForOperation = getJsonForOperation(writeOperation);
       if (jsonDataForOperation.equals("")) {
         continue;
@@ -445,8 +407,6 @@ class DeltaValueStoreJsonImpl {
     switch (writeOperation) {
       case CREATE:
         return creates;
-      case DELETE:
-        return deletes;
       case UPDATE:
         return updates;
       default:
@@ -468,7 +428,7 @@ class DeltaValueStoreJsonImpl {
       } else {
         violations = NULL_VIOLATIONS;
       }
-      violationsMap.put(Long.valueOf(record.getId()), violations);
+      violationsMap.put(record.getId(), violations);
     }
     return violationsMap;
   }
@@ -513,16 +473,10 @@ class DeltaValueStoreJsonImpl {
       WriteOperation writeOperation) {
     for (RecordKey recordKey : toRemove) {
       operations.remove(recordKey);
-      switch (writeOperation) {
-        case CREATE:
-          creates.remove(recordKey);
-          break;
-        case DELETE:
-          deletes.remove(recordKey);
-          break;
-        case UPDATE:
-          updates.remove(recordKey);
-          break;
+      if (writeOperation == WriteOperation.CREATE) {
+        creates.remove(recordKey);
+      } else if (writeOperation == WriteOperation.UPDATE) {
+        updates.remove(recordKey);
       }
     }
   }

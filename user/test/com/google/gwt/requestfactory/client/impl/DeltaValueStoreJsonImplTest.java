@@ -131,18 +131,6 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     testAndGetChangeRecord(deltaValueStore.toJson(), WriteOperation.CREATE);
   }
 
-  public void testCreateDelete() {
-    Record created = requestFactory.create(SimpleFooRecord.class);
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
-        valueStore, requestFactory);
-    assertFalse(deltaValueStore.isChanged());
-    deltaValueStore.delete(created);
-    assertFalse(deltaValueStore.isChanged());
-
-    String jsonString = deltaValueStore.toJson();
-    assertEquals("{}", jsonString);
-  }
-
   public void testCreateUpdate() {
     Record created = requestFactory.create(SimpleFooRecord.class);
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
@@ -158,35 +146,11 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         changeRecord.get(SimpleFooRecord.userName.getName()).isString().stringValue());
   }
 
-  public void testDelete() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
-        valueStore, requestFactory);
-    deltaValueStore.delete(new MyRecordImpl(jso));
-    assertTrue(deltaValueStore.isChanged());
-    testAndGetChangeRecord(deltaValueStore.toJson(), WriteOperation.DELETE);
-  }
-
-  public void testDeleteUpdate() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
-        valueStore, requestFactory);
-    deltaValueStore.delete(new MyRecordImpl(jso));
-    assertTrue(deltaValueStore.isChanged());
-
-    // update after a delete nullifies the delete.
-    deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
-        "harry");
-    assertTrue(deltaValueStore.isChanged());
-    JSONObject changeRecord = testAndGetChangeRecord(deltaValueStore.toJson(),
-        WriteOperation.UPDATE);
-    assertEquals(
-        "harry",
-        changeRecord.get(SimpleFooRecord.userName.getName()).isString().stringValue());
-   }
-
   public void testOperationAfterJson() {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
-    deltaValueStore.delete(new MyRecordImpl(jso));
+    deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
+        "newHarry");
     assertTrue(deltaValueStore.isChanged());
 
     deltaValueStore.toJson();
@@ -250,19 +214,6 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertEquals(
         "harry",
         changeRecord.get(SimpleFooRecord.userName.getName()).isString().stringValue());
-  }
-
-  public void testUpdateDelete() {
-    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
-        valueStore, requestFactory);
-    deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
-        "harry");
-    assertTrue(deltaValueStore.isChanged());
-
-    // delete after an update nullifies the delete.
-    deltaValueStore.delete(new MyRecordImpl(jso));
-    assertTrue(deltaValueStore.isChanged());
-    testAndGetChangeRecord(deltaValueStore.toJson(), WriteOperation.DELETE);
   }
 
   private JSONObject testAndGetChangeRecord(String jsonString,

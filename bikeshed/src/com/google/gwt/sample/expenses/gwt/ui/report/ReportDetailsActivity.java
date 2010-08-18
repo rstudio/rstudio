@@ -79,7 +79,6 @@ public class ReportDetailsActivity extends AbstractActivity implements
     }
 
     RequestObject<Void> deleteRequest = requests.reportRequest().remove(view.getValue());
-    deleteRequest.delete(view.getValue());
     deleteRequest.fire(new Receiver<Void>() {
 
       public void onSuccess(Void ignore, Set<SyncResult> response) {

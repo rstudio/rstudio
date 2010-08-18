@@ -57,10 +57,6 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     deltaValueStore.clearUsed();
   }
 
-  public void delete(Record record) {
-    deltaValueStore.delete(record);
-  }
-
   @SuppressWarnings("unchecked")
   public <P extends Record> P edit(P record) {
     P returnRecordImpl = (P) ((RecordImpl) record).getSchema().create(
@@ -70,7 +66,6 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   }
 
   public void fire(Receiver<T> receiver) {
-    // TODO: do something with deltaValueStore.
     assert null != receiver : "receiver cannot be null";
     this.receiver = receiver;
     requestFactory.fire(this);

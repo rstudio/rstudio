@@ -34,10 +34,6 @@ public interface RequestObject<T> {
    */
   void clearUsed();
 
-  // TODO: temporary hack so that I could get rid of DeltaValueStore. This will
-  // be removed once the hack for SYNC requests goes away.
-  void delete(Record record);
-
   <P extends Record> P edit(P record);
 
   void fire(Receiver<T> receiver);

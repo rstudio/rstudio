@@ -54,23 +54,27 @@ import javax.validation.ValidatorFactory;
 public class JsonRequestProcessor implements RequestProcessor<String> {
 
   // TODO should we consume String, InputStream, or JSONObject?
+  private class DvsData {
+    private final JSONObject jsonObject;
+    private final WriteOperation writeOperation;
+    
+    DvsData(JSONObject jsonObject, WriteOperation writeOperation) {
+      this.jsonObject = jsonObject;
+      this.writeOperation = writeOperation;
+    }
+  }
 
   private class EntityData {
-    private final EntityKey entityKey;
     private final Object entityInstance;
     // TODO: violations should have more structure than JSONObject
     private final JSONObject violations;
     private final WriteOperation writeOperation;
-    private final Class<?> entityClass;
 
-    EntityData(EntityKey entityKey, Object entityInstance,
-        JSONObject violations, WriteOperation writeOperation,
-        Class<?> entityClass) {
-      this.entityKey = entityKey;
+    EntityData(Object entityInstance, JSONObject violations,
+        WriteOperation writeOperation) {
       this.entityInstance = entityInstance;
       this.violations = violations;
       this.writeOperation = writeOperation;
-      this.entityClass = entityClass;
     }
   }
 
@@ -122,7 +126,20 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private OperationRegistry operationRegistry;
 
-  private Map<EntityKey, EntityData> entityDataMap;
+  /*
+   * <li>Request comes in. Construct the involvedKeys, dvsDataMap and
+   * beforeDataMap, using DVS and parameters.
+   * 
+   * <li>Apply the DVS and construct the afterDvsDataMqp.
+   * 
+   * <li>Invoke the method noted in the operation.
+   * 
+   * <li>Find the changes that need to be sent back.
+   */
+  private Set<EntityKey> involvedKeys = new HashSet<EntityKey>();
+  private Map<EntityKey, DvsData> dvsDataMap = new HashMap<EntityKey, DvsData>();
+  private Map<EntityKey, EntityData> beforeDataMap = new HashMap<EntityKey, EntityData>();
+  private Map<EntityKey, EntityData> afterDvsDataMap = new HashMap<EntityKey, EntityData>();
   
   public Collection<Property<?>> allProperties(Class<? extends Record> clazz) {
     Set<Property<?>> rtn = new HashSet<Property<?>>();
@@ -238,6 +255,13 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       return new Date(Long.parseLong(parameterValue));
     }
     if (Record.class.isAssignableFrom(parameterType)) {
+      /* TODO: 1. Don't resolve in this step, just get EntityKey. May need to
+       * use DVS.
+       *
+       * 2. Merge the following and the object resolution code in getEntityKey.
+       * 3. Update the involvedKeys set.
+       */ 
+      // TODO(amitmanjhi): shouldn't this be DataTransferObject.class?
       Service service = parameterType.getAnnotation(Service.class);
       if (service != null) {
         Class<?> sClass = service.value();
@@ -309,9 +333,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Method idMethod = returnValue.getClass().getMethod("getId");
       Long id = (Long) idMethod.invoke(returnValue);
 
-      String keyRef =
-          operationRegistry.getSecurityProvider().encodeClassType(propertyType)
-              + "-" + id;
+      String keyRef = operationRegistry.getSecurityProvider().encodeClassType(
+          propertyType)
+          + "-" + id;
       addRelatedObject(keyRef, returnValue,
           (Class<? extends Record>) propertyType,
           propertyContext.getProperty(propertyName));
@@ -338,15 +362,13 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * <p>
    * A <i>set</i> might have side-effects, but we don't handle that.
    */
-  public EntityData getEntityDataForRecord(String recordToken,
+  public EntityData getEntityDataForRecord(EntityKey entityKey,
       JSONObject recordObject, WriteOperation writeOperation) throws JSONException {
-    Class<? extends Record> record = getRecordFromClassToken(recordToken);
-    EntityKey entityKey = new EntityKey(recordObject.getLong("id"),
-        (writeOperation == WriteOperation.CREATE), record);
-    try {
-      Class<?> entity = getEntityFromRecordAnnotation(record);
 
-      Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(record);
+    try {
+      Class<?> entity = getEntityFromRecordAnnotation(entityKey.record);
+
+      Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(entityKey.record);
       validateKeys(recordObject, propertiesInRecord.keySet());
       updatePropertyTypes(propertiesInRecord, entity);
 
@@ -392,9 +414,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       if (validator != null) {
         violations = validator.validate(entityInstance);
       }
-
-      return new EntityData(entityKey, entityInstance,
-          getViolationsAsJson(violations), writeOperation, entity);
+      return new EntityData(entityInstance, (violations.isEmpty() ? null
+          : getViolationsAsJson(violations)), writeOperation);
     } catch (Exception ex) {
       log.severe(String.format("Caught exception [%s] %s",
           ex.getClass().getName(), ex.getLocalizedMessage()));
@@ -486,8 +507,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   /**
-   * Returns Object[0][0] as the object instance or null if it is a static
-   * method. Returns Object[1] as the params array.
+   * Returns Object[0][0] as the entityKey corresponding to the object instance
+   * or null if it is a static method. Returns Object[1] as the params array.
    */
   public Object[][] getObjectsFromParameterMap(boolean isInstanceMethod,
       Map<String, String> parameterMap, Class<?> parameterClasses[]) {
@@ -496,10 +517,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Object args[][] = new Object[2][];
     args[0] = new Object[1];
     if (isInstanceMethod) {
-      args[0][0] = getEntityInstance(parameterMap.get(RequestData.PARAM_TOKEN + "0"));
+      EntityKey entityKey = getEntityKey(parameterMap.get(RequestData.PARAM_TOKEN + "0"));
+      involvedKeys.add(entityKey);
+      args[0][0] = entityKey;
     } else {
       args[0][0] = null;
     }
+    
+    // TODO: update the involvedKeys for other params
     int offset = (isInstanceMethod ? 1 : 0);
     args[1] = new Object[parameterClasses.length];
     for (int i = 0; i < parameterClasses.length; i++) {
@@ -578,44 +603,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
   }
 
-  public JSONObject getReturnRecord(WriteOperation writeOperation,
-      Object entityInstance, JSONObject recordObject,
-      Set<ConstraintViolation<Object>> violations,
-      Class<? extends Record> record)
-      throws SecurityException, JSONException, IllegalAccessException,
-      InvocationTargetException, NoSuchMethodException {
-    // id/futureId, the identifying field is sent back from the incoming record.
-    JSONObject returnObject = new JSONObject();
-    final boolean hasViolations = violations != null && !violations.isEmpty();
-    if (hasViolations) {
-      returnObject.put("violations", getViolationsAsJson(violations));
-    }
-    switch (writeOperation) {
-      case CREATE:
-        returnObject.put("futureId", recordObject.getString("id"));
-        if (!hasViolations) {
-          returnObject.put("id",
-              encodePropertyValueFromDataStore(entityInstance, Long.class,
-                  "id", propertyRefs));
-          returnObject.put("version",
-              encodePropertyValueFromDataStore(entityInstance, Integer.class,
-                  "version", propertyRefs));
-        }
-        break;
-      case DELETE:
-        returnObject.put("id", recordObject.getString("id"));
-        break;
-      case UPDATE:
-        returnObject.put("id", recordObject.getString("id"));
-        if (!hasViolations) {
-          returnObject.put("version", encodePropertyValueFromDataStore(
-              entityInstance, Integer.class, "version", propertyRefs));
-        }
-        break;
-    }
-    return returnObject;
-  }
-
   public JSONObject getViolationsAsJson(
       Set<ConstraintViolation<Object>> violations) throws JSONException {
     JSONObject violationsAsJson = new JSONObject();
@@ -651,16 +638,32 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           + " should " + (operation.isInstance() ? "not " : "") + "be static");
     }
 
-    entityDataMap = topLevelJsonObject.has(RequestData.CONTENT_TOKEN)
-        ? decodeDVS(topLevelJsonObject.getString(RequestData.CONTENT_TOKEN))
-        : new HashMap<EntityKey, EntityData>();
-
+    if (topLevelJsonObject.has(RequestData.CONTENT_TOKEN)) {
+       // updates involvedKeys and dvsDataMap.
+       decodeDVS(topLevelJsonObject.getString(RequestData.CONTENT_TOKEN));
+    }
    // get the domain object (for instance methods) and args.
     Object args[][] = getObjectsFromParameterMap(operation.isInstance(),
         getParameterMap(topLevelJsonObject), domainMethod.getParameterTypes());
-    Object result = invokeDomainMethod(args[0][0], domainMethod, args[1]);
     
-    // TODO: Need to do snap-shotting and compare before and after.
+    // Construct beforeDataMap 
+    constructBeforeDataMap();
+    // Construct afterDvsDataMap.
+    constructAfterDvsDataMap();
+    
+    // resolve parameters that are so far just EntityKeys.
+    // TODO: resolve paramters other than  the domainInstance 
+    EntityKey domainEntityKey = null;
+    if (args[0][0] != null) {
+      domainEntityKey = (EntityKey) args[0][0];
+      EntityData domainEntityData = afterDvsDataMap.get(domainEntityKey);
+      assert domainEntityData != null;
+      args[0][0] = domainEntityData.entityInstance;
+      assert args[0][0] != null;
+    }
+    Object result = invokeDomainMethod(args[0][0], domainMethod, args[1]);
+
+    JSONObject sideEffects = getSideEffects();
     
     if ((result instanceof List<?>) != operation.isReturnTypeList()) {
       throw new IllegalArgumentException(
@@ -674,6 +677,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       JSONObject envelop = new JSONObject();
       envelop.put("result", toJsonArray(operation, result));
       envelop.put("related", encodeRelatedObjectsToJson());
+      envelop.put("sideEffects", sideEffects);
       return envelop;
     } else if (result instanceof Number
         && !(result instanceof BigDecimal || result instanceof BigInteger)) {
@@ -683,6 +687,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       JSONObject jsonObject = toJsonObject(operation, result);
       envelop.put("result", jsonObject);
       envelop.put("related", encodeRelatedObjectsToJson());
+      envelop.put("sideEffects", sideEffects);
       return envelop;
     }
   }
@@ -714,12 +719,68 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   /**
-   * Decode deltaValueStore.
+   * @throws JSONException 
+   * 
    */
-  private Map<EntityKey, EntityData> decodeDVS(String content)
-      throws SecurityException {
+  private void constructAfterDvsDataMap() throws JSONException {
+    afterDvsDataMap = new HashMap<EntityKey, EntityData>();
+    for (EntityKey entityKey : involvedKeys) {
+      // use the beforeDataMap and dvsDataMap
+      DvsData dvsData = dvsDataMap.get(entityKey);
+      if (dvsData != null) {
+        EntityData entityData = getEntityDataForRecord(entityKey,
+            dvsData.jsonObject, dvsData.writeOperation);
+        if (entityKey.isFuture) {
+          // TODO: assert that the id is null for entityData.entityInstance
+        }
+        afterDvsDataMap.put(entityKey, entityData);
+      } else {
+        assert !entityKey.isFuture;
+        EntityData entityData = beforeDataMap.get(entityKey);
+        assert entityData != null;
+        // TODO(cromwellian): copy here
+        afterDvsDataMap.put(entityKey, entityData);
+      }
+    }
+  }
 
-    Map<EntityKey, EntityData> returnMap = new HashMap<EntityKey, EntityData>();
+  /**
+   * Constructs the beforeDataMap.
+   * 
+   * <p>
+   * Algorithm: go through the involvedKeys, and find the entityData
+   * corresponding to each.
+   * 
+   * @throws NoSuchMethodException
+   * @throws InvocationTargetException
+   * @throws IllegalAccessException
+   * @throws SecurityException
+   * @throws IllegalArgumentException
+   */
+  private void constructBeforeDataMap() throws IllegalArgumentException,
+      SecurityException, IllegalAccessException, InvocationTargetException,
+      NoSuchMethodException {
+    beforeDataMap = new HashMap<EntityKey, EntityData>();
+    for (EntityKey entityKey : involvedKeys) {
+      if (entityKey.isFuture) {
+        // the "before" is empty.
+        continue;
+      }
+      // 
+      Class<?> entityClass = getEntityFromRecordAnnotation(entityKey.record);
+      // TODO: merge this lookup code with other uses.
+      Object entityInstance = entityClass.getMethod(
+          "find" + entityClass.getSimpleName(), Long.class).invoke(null,
+          new Long(entityKey.id));
+      beforeDataMap.put(entityKey, new EntityData(entityInstance, null, null));
+    }
+  }
+
+  /**
+   * Decode deltaValueStore to populate involvedKeys and dvsDataMap.
+   */
+  private void decodeDVS(String content)
+      throws SecurityException {
     try {
       JSONObject jsonObject = new JSONObject(content);
       for (WriteOperation writeOperation : WriteOperation.values()) {
@@ -742,15 +803,40 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
                 "There cannot be more than one record token");
           }
           JSONObject recordObject = recordWithSchema.getJSONObject(recordToken);
-          EntityData entityData = getEntityDataForRecord(recordToken,
-              recordObject, writeOperation);
-          returnMap.put(entityData.entityKey, entityData);
+          Class<? extends Record> record = getRecordFromClassToken(recordToken);
+          EntityKey entityKey = new EntityKey(recordObject.getLong("id"),
+              (writeOperation == WriteOperation.CREATE), record);
+          involvedKeys.add(entityKey);
+          dvsDataMap.put(entityKey, new DvsData(recordObject, writeOperation));
         }
       }
-      return returnMap;
     } catch (JSONException e) {
       throw new IllegalArgumentException("sync failed: ", e);
     }
+  }
+
+  private WriteOperation detectDeleteOrUpdate(EntityKey entityKey,
+      EntityData entityData) throws IllegalArgumentException,
+      SecurityException, IllegalAccessException, InvocationTargetException,
+      NoSuchMethodException {
+    if (entityData.entityInstance == null) {
+      return null;
+    }
+    
+    Class<?> entityClass = getEntityFromRecordAnnotation(entityKey.record);
+    // TODO: merge this lookup code with other uses.
+    Object entityInstance = entityClass.getMethod(
+        "find" + entityClass.getSimpleName(), Long.class).invoke(null,
+        new Long(entityKey.id));
+    if (entityInstance == null) {
+      return WriteOperation.DELETE;
+    }
+    // TODO (cromwellian): is it an update? how to detect?
+    // This is a HACK!!!
+    if (entityData.writeOperation == WriteOperation.UPDATE) {
+      return WriteOperation.UPDATE;
+    }
+    return null;
   }
 
   private JSONObject encodeRelatedObjectsToJson() throws JSONException {
@@ -759,6 +845,34 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       array.put(entry.getKey(), entry.getValue());
     }
     return array;
+  }
+
+  private JSONObject getCreateReturnRecord(EntityKey originalEntityKey,
+      EntityData entityData) throws SecurityException, JSONException,
+      IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    // id/futureId, the identifying field is sent back from the incoming record.
+    assert originalEntityKey.isFuture;
+    Object entityInstance = entityData.entityInstance;
+    assert entityInstance != null;
+    JSONObject returnObject = new JSONObject();
+    returnObject.put("futureId", originalEntityKey.id + "");
+    boolean hasViolations = entityData.violations != null
+        && entityData.violations.length() > 0;
+    if (hasViolations) {
+      returnObject.put("violations", entityData.violations);
+    } else {
+      Object newId = encodePropertyValueFromDataStore(entityInstance,
+          Long.class, "id", propertyRefs);
+      if (newId == null) {
+        log.warning("Record with futureId " + originalEntityKey.id
+            + " not persisted");
+        return null; // no changeRecord for this CREATE.
+      }
+      returnObject.put("id", getSchemaAndId(originalEntityKey.record, newId));
+      returnObject.put("version", encodePropertyValueFromDataStore(
+          entityInstance, Integer.class, "version", propertyRefs));
+    }
+    return returnObject;
   }
 
   private EntityData getEntityDataForException(EntityKey entityKey,
@@ -777,25 +891,71 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       // ignore.
       e.printStackTrace();
     }
-    return new EntityData(entityKey, null, violations, writeOperation, null);
+    return new EntityData(null, violations, writeOperation);
   }
 
   /**
-   * Given param0, decodeId and FutureId. String is of the form "239-NO" or
-   * "239-IS". the latter is a futureId
+   * Given param0, return the EntityKey. String is of the form
+   * "239-NO-com....EmployeeRecord" or "239-IS-com...EmployeeRecord".
    */
-  private Object getEntityInstance(String string) {
+  private EntityKey getEntityKey(String string) {
     String parts[] = string.split("-");
     assert parts.length == 3;
 
     Long id = Long.parseLong(parts[0]);
-    EntityKey entityKey = new EntityKey(id, "IS".equals(parts[1]),
+    return new EntityKey(id, "IS".equals(parts[1]),
         getRecordFromClassToken(parts[2]));
-    EntityData entityData = entityDataMap.get(entityKey);
-    assert entityData != null;
-    return entityData.entityInstance;
   }
 
+  private String getSchemaAndId(Class<? extends Record> record, Object newId) {
+    return record.getName() + "-" + newId;
+  }
+
+  /**
+   * Returns a JSONObject with at most three keys: CREATE, UPDATE, DELETE. Each
+   * value is a JSONArray of JSONObjects.
+   */
+  private JSONObject getSideEffects() throws SecurityException, JSONException,
+      IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    JSONObject sideEffects = new JSONObject();
+    JSONArray createArray = new JSONArray();
+    JSONArray deleteArray = new JSONArray();
+    JSONArray updateArray = new JSONArray();
+    for (EntityKey entityKey : involvedKeys) {
+      EntityData entityData = afterDvsDataMap.get(entityKey);
+      assert entityData != null;
+      if (entityKey.isFuture) {
+        JSONObject createRecord = getCreateReturnRecord(entityKey, entityData);
+        if (createRecord != null) {
+          createArray.put(createRecord);
+        }
+        continue;
+      }
+      WriteOperation writeOperation = detectDeleteOrUpdate(entityKey,
+          entityData);
+      if (writeOperation == WriteOperation.DELETE) {
+        JSONObject deleteRecord = new JSONObject();
+        deleteRecord.put("id", getSchemaAndId(entityKey.record, entityKey.id));
+        deleteArray.put(deleteRecord);
+      }
+      if (writeOperation == WriteOperation.UPDATE) {
+        JSONObject updateRecord = new JSONObject();
+        updateRecord.put("id", getSchemaAndId(entityKey.record, entityKey.id));
+        updateArray.put(updateRecord);
+      }
+    }
+    if (createArray.length() > 0) {
+      sideEffects.put(WriteOperation.CREATE.name(), createArray);
+    }
+    if (deleteArray.length() > 0) {
+      sideEffects.put(WriteOperation.DELETE.name(), deleteArray);
+    }
+    if (updateArray.length() > 0) {
+      sideEffects.put(WriteOperation.UPDATE.name(), updateArray);
+    }
+    return sideEffects;
+  }
+  
   /**
    * returns true if the property has been requested. TODO: use the properties
    * that should be coming with the request.
