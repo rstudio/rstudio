@@ -962,7 +962,6 @@ class CellTreeNodeView<T> extends UIObject {
     child.removeAttribute("tabIndex");
     child.removeClassName(tree.getStyle().keyboardSelectedItem());
     keyboardSelection = null;
-    keyboardSelectedIndex = -1;
     keyboardFocused = false;
   }
 
