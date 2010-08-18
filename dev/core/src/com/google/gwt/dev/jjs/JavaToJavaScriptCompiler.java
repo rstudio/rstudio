@@ -223,7 +223,9 @@ public class JavaToJavaScriptCompiler {
       UnifiedAst unifiedAst, Permutation permutation)
       throws UnableToCompleteException {
     Event jjsCompilePermutationEvent =
-        SpeedTracerLogger.start(CompilerEventType.JJS_COMPILE_PERMUTATION);
+        SpeedTracerLogger.start(CompilerEventType.JJS_COMPILE_PERMUTATION,  "name",
+            permutation.prettyPrint());
+
     InternalCompilerException.preload();
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
@@ -235,6 +237,7 @@ public class JavaToJavaScriptCompiler {
         System.out.println("------------------------------------------------------------");
         System.out.println("|                     (new permuation)                     |");
         System.out.println("------------------------------------------------------------");
+        System.out.println("Properties: " + permutation.prettyPrint());
       }
 
       AST ast = unifiedAst.getFreshAst();

@@ -20,6 +20,7 @@ import com.google.gwt.dev.json.JsonException;
 import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Format;
 
 import junit.framework.TestCase;
 
@@ -81,7 +82,7 @@ public class SpeedTracerLoggerTest extends TestCase {
 
   public void testSpeedTracerLogger() throws IOException, JsonException {
     Writer writer = new StringWriter();
-    SpeedTracerLogger logger = new SpeedTracerLogger(writer);
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.HTML);
     Event dummyOneEvent = logger.startImpl(dummyOne);
     Event dummyTwoEvent = logger.startImpl(dummyTwo);
     logger.endImpl(dummyTwoEvent);
@@ -111,7 +112,7 @@ public class SpeedTracerLoggerTest extends TestCase {
   public void testSpeedTracerLoggerExtraData() throws IOException,
       JsonException {
     Writer writer = new StringWriter();
-    SpeedTracerLogger logger = new SpeedTracerLogger(writer);
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.HTML);
     Event dummyOneEvent = logger.startImpl(dummyOne, "extraStart", "valueStart");
     logger.addDataImpl("extraMiddle", "valueMiddle");
     logger.endImpl(dummyOneEvent, "extraEnd", "valueEnd");
@@ -131,7 +132,7 @@ public class SpeedTracerLoggerTest extends TestCase {
 
   public void testSpeedTracerLoggerMultiple() throws IOException, JsonException {
     Writer writer = new StringWriter();
-    SpeedTracerLogger logger = new SpeedTracerLogger(writer);
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.HTML);
     Event dummyOneEvent = logger.startImpl(dummyOne);
     logger.endImpl(dummyOneEvent);
     Event dummyTwoEvent = logger.startImpl(dummyTwo);
@@ -154,7 +155,7 @@ public class SpeedTracerLoggerTest extends TestCase {
       IOException {
     final int NUM_THREADS = 3;
     Writer writer = new StringWriter();
-    SpeedTracerLogger logger = new SpeedTracerLogger(writer);
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.HTML);
     Thread threads[] = new Thread[NUM_THREADS];
     threads[0] = new TestLoggerThreadedThread(dummyOne, logger);
     threads[1] = new TestLoggerThreadedThread(dummyTwo, logger);
@@ -195,6 +196,44 @@ public class SpeedTracerLoggerTest extends TestCase {
     }
   }
 
+  public void testSpeedTracerLoggerMarkTimeline() throws IOException, JsonException {
+   Writer writer = new StringWriter();
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.RAW);
+    Event dummyOneEvent = logger.startImpl(dummyOne);
+    logger.markTimelineImpl("name", "value");
+    dummyOneEvent.end();
+    logger.flush();
+
+    // There should be no HTML in here
+    String logString = writer.toString();
+    BufferedReader jsonReader = new BufferedReader(new StringReader(logString));
+    JsonObject dummyOneObject = JsonObject.parse(jsonReader).asObject();
+    assertTrue(compareJsonToEvent(dummyOneObject, dummyOne));
+    JsonArray children = dummyOneObject.get("children").asArray();
+    assertEquals(1, children.getLength());
+    JsonObject markTimelineObject = children.get(0).asObject();
+    assertEquals(11.0, markTimelineObject.get("type").asNumber().getDecimal(), .001);
+    JsonObject dataObject = markTimelineObject.get("data").asObject();
+    assertEquals("json=" + logString, "value", dataObject.get("name").asString().getString());
+  }
+
+
+  public void testSpeedTracerLoggerRaw() throws IOException, JsonException {
+   Writer writer = new StringWriter();
+    SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.RAW);
+    Event dummyOneEvent = logger.startImpl(dummyOne);
+    dummyOneEvent.end();
+    logger.flush();
+
+    // There should be no HTML in here
+    String logString = writer.toString();
+    assertTrue(logString.trim().startsWith("{"));
+    assertTrue(logString.trim().endsWith("}"));
+    BufferedReader jsonReader = new BufferedReader(new StringReader(logString));
+    JsonObject dummyOneObject = JsonObject.parse(jsonReader).asObject();
+    assertTrue(compareJsonToEvent(dummyOneObject, dummyOne));
+  }
+
   private boolean compareJsonToEvent(JsonObject jsonObject, EventType eventType) {
     String typeName = jsonObject.get("typeName").asString().getString();
     String color = jsonObject.get("color").asString().getString();
@@ -205,6 +244,7 @@ public class SpeedTracerLoggerTest extends TestCase {
   private BufferedReader extractJsonFromWriter(Writer writer)
       throws IOException {
     String jsonString = writer.toString();
+    assertTrue(jsonString.substring(0,5).toLowerCase().startsWith("<html"));
     BufferedReader jsonReader = new BufferedReader(new StringReader(jsonString));
     // Skip ahead to start of JSON
     while (true) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.util.collect.Lists;
 
@@ -36,7 +37,7 @@ public final class Permutation implements Serializable {
 
   /**
    * Clones an existing permutation, but with a new id.
-   * 
+   *
    * @param id new permutation id
    * @param other Permutation to copy
    */
@@ -100,6 +101,26 @@ public final class Permutation implements Serializable {
     orderedRebindAnswers = Lists.addAll(orderedRebindAnswers,
         other.orderedRebindAnswers);
     other.destroy();
+  }
+
+  /**
+   * Shows a list of the property settings that were set to make up this
+   * permutation in human readable form.
+   */
+  public String prettyPrint() {
+    StringBuilder builder = new StringBuilder();
+    for (StaticPropertyOracle oracle : orderedPropertyOracles) {
+      String[] values = oracle.getOrderedPropValues();
+      BindingProperty[] props = oracle.getOrderedProps();
+      assert values.length == props.length;
+      for (int i = 0; i < props.length; i++) {
+        builder.append(props[i].getName() + "=" + values[i]);
+        if (i < props.length - 1) {
+          builder.append(",");
+        }
+      }
+    }
+    return builder.toString();
   }
 
   public void putRebindAnswer(String requestType, String resultType) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,8 @@ package com.google.gwt.resources.rg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import org.w3c.dom.Node;
 
@@ -172,7 +174,7 @@ class ImageBundleBuilder {
      * Decreasing Width. The basic strategy is to sort the remaining rectangles
      * by decreasing width and try to fit them to the left of each of the
      * rectangles we've already picked for this column.
-     * 
+     *
      * @param rectsInColumn the ImageRects that were already selected for this
      *          column
      * @param remainingRectsOrderedByWidth the sub list of ImageRects that may
@@ -529,7 +531,11 @@ class ImageBundleBuilder {
     // Create the bundled image.
     BufferedImage bundledImage = new BufferedImage(rect.getWidth(),
         rect.getHeight(), BufferedImage.TYPE_INT_ARGB_PRE);
+
+    SpeedTracerLogger.Event createGraphicsEvent =
+      SpeedTracerLogger.start(CompilerEventType.GRAPHICS_INIT);
     Graphics2D g2d = bundledImage.createGraphics();
+    createGraphicsEvent.end();
 
     g2d.drawImage(rect.getImage(), rect.transform(), null);
     g2d.dispose();
@@ -599,7 +605,7 @@ class ImageBundleBuilder {
    * Assimilates the image associated with a particular image method into the
    * master composite. If the method names an image that has already been
    * assimilated, the existing image rectangle is reused.
-   * 
+   *
    * @param logger a hierarchical logger which logs to the hosted console
    * @param imageName the name of an image that can be found on the classpath
    * @param resource the URL from which the image data wil be loaded
@@ -776,10 +782,10 @@ class ImageBundleBuilder {
   /**
    * This method creates the bundled image through the composition of the other
    * images.
-   * 
+   *
    * In this particular implementation, we use NFDHDW (see
    * {@link #arrangeImages()}) to get an approximate optimal image packing.
-   * 
+   *
    * The most important aspect of drawing the bundled image is that it be drawn
    * in a deterministic way. The drawing of the image should not rely on
    * implementation details of the Generator system which may be subject to
@@ -801,7 +807,10 @@ class ImageBundleBuilder {
     // Create the bundled image.
     BufferedImage bundledImage = new BufferedImage(size.width, size.height,
         BufferedImage.TYPE_INT_ARGB_PRE);
+
+    SpeedTracerLogger.Event graphicsEvent = SpeedTracerLogger.start(CompilerEventType.GRAPHICS_INIT);
     Graphics2D g2d = bundledImage.createGraphics();
+    graphicsEvent.end();
 
     for (ImageRect imageRect : imageRects) {
       g2d.drawImage(imageRect.getImage(), imageRect.transform(), null);

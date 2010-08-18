@@ -109,6 +109,8 @@ public class GWTCompiler {
 
   public static void main(String[] args) {
     ToolBase.legacyWarn(GWTCompiler.class, Compiler.class);
+    SpeedTracerLogger.init();
+    Event compileEvent = SpeedTracerLogger.start(CompilerEventType.COMPILE);
 
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
@@ -117,6 +119,7 @@ public class GWTCompiler {
      * still implementation-dependent.
      */
     final LegacyCompilerOptions options = new GWTCompilerOptionsImpl();
+    boolean success = false;
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -134,11 +137,13 @@ public class GWTCompiler {
       };
       if (CompileTaskRunner.runWithAppropriateLogger(options, task)) {
         // Exit w/ success code.
-        System.exit(0);
+        success = true;
       }
     }
+
+    compileEvent.end();
     // Exit w/ non-success code.
-    System.exit(1);
+    System.exit(success ? 0 : 1);
   }
 
   private final GWTCompilerOptionsImpl options;

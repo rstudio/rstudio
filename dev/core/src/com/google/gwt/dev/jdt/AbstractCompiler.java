@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,8 +25,9 @@ import com.google.gwt.dev.javac.Shared;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.CharArrayComparator;
 import com.google.gwt.dev.util.Empty;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -169,10 +170,9 @@ public abstract class AbstractCompiler {
 
       @Override
       public void compile(ICompilationUnit[] sourceUnits) {
-        jdtProcessNanos = 0;
+        SpeedTracerLogger.Event compileEvent = SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER);
         super.compile(sourceUnits);
-        PerfLogger.log("AbstractCompiler.compile, time spent in JDT process callback: "
-            + (jdtProcessNanos / 1000000) + "ms");
+        compileEvent.end();
         cuds = null;
       }
 
@@ -347,7 +347,7 @@ public abstract class AbstractCompiler {
           addPackageRecursively(packages, pkg.substring(0, i));
         }
       }
-      
+
       public static boolean contains(String name) {
         return packages.contains(name);
       }

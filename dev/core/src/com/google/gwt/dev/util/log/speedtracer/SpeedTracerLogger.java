@@ -45,23 +45,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 public final class SpeedTracerLogger {
 
   /**
-   * Enumerated types for logging events implement this interface.
-   */
-  public interface EventType {
-    String getColor();
-
-    String getName();
-  }
-
-  /**
    * Represents a node in a tree of SpeedTracer events.
    */
   public class Event {
+    protected final EventType type;
     List<Event> children = Lists.create();
     List<String> data;
     long durationNanos;
     final long startTimeNanos;
-    final EventType type;
 
     Event() {
       data = Lists.create();
@@ -82,7 +73,7 @@ public final class SpeedTracerLogger {
     /**
      * @param data key/value pairs to add to JSON object.
      */
-    public void addData(String  ...data) {
+    public void addData(String... data) {
       if (data != null) {
         assert (data.length % 2 == 0);
         this.data = Lists.addAll(this.data, data);
@@ -93,12 +84,16 @@ public final class SpeedTracerLogger {
      * Signals the end of the current event.
      */
     public void end(String... data) {
-      SpeedTracerLogger.get().endImpl(this, data);
+      endImpl(this, data);
     }
 
     @Override
     public String toString() {
       return type.getName();
+    }
+
+    protected double convertToMilliseconds(long nanos) {
+      return nanos / 1000000.0d;
     }
 
     JsonObject toJson() {
@@ -125,26 +120,44 @@ public final class SpeedTracerLogger {
 
       return json;
     }
-
-    private double convertToMilliseconds(long nanos) {
-      return nanos / 1000000.0d;
-    }
   }
-  
+
+  /**
+   * Enumerated types for logging events implement this interface.
+   */
+  public interface EventType {
+    String getColor();
+
+    String getName();
+  }
+
+  static enum Format {
+    /**
+     * Standard SpeedTracer log that includes JSON wrapped in HTML that will
+     * launch a SpeedTracer monitor session.
+     */
+    HTML,
+
+    /**
+     * Only the JSON data without any HTML wrappers.
+     */
+    RAW
+  }
+
   /**
    * A dummy implementation to do nothing if logging has not been turned on.
    */
   private class DummyEvent extends Event {
     @Override
-    public void addData(String  ...data) {
+    public void addData(String... data) {
       // do nothing
     }
-    
+
     @Override
     public void end(String... data) {
       // do nothing
     }
-    
+
     @Override
     public String toString() {
       return "Dummy";
@@ -166,8 +179,8 @@ public final class SpeedTracerLogger {
     private final BlockingQueue<Event> threadEventQueue;
     private final Writer writer;
 
-    public LogWriterThread(Writer writer, String fileName,
-        final BlockingQueue<Event> eventQueue) {
+    public LogWriterThread(
+        Writer writer, String fileName, final BlockingQueue<Event> eventQueue) {
       super();
       this.writer = writer;
       this.fileName = fileName;
@@ -193,7 +206,9 @@ public final class SpeedTracerLogger {
           }
         }
         // All queued events have been written.
-        writer.write("</div></body></html>\n");
+        if (outputFormat.equals(Format.HTML)) {
+          writer.write("</div></body></html>\n");
+        }
         writer.close();
       } catch (InterruptedException ignored) {
       } catch (IOException e) {
@@ -203,6 +218,33 @@ public final class SpeedTracerLogger {
       } finally {
         shutDownLatch.countDown();
       }
+    }
+  }
+
+  /**
+   * Records a LOG_MESSAGE type of SpeedTracer event.
+   */
+  private class MarkTimelineEvent extends Event {
+    public MarkTimelineEvent(Event parent) {
+      super();
+      if (parent != null) {
+        parent.children = Lists.add(parent.children, this);
+      }
+    }
+
+    @Override
+    JsonObject toJson() {
+      JsonObject json = JsonObject.create();
+      json.put("type", 11);
+      double startMs = convertToMilliseconds(startTimeNanos);
+      json.put("time", startMs);
+      json.put("duration", 0.0);
+      JsonObject jsonData = JsonObject.create();
+      for (int i = 0; i < data.size(); i += 2) {
+        jsonData.put(data.get(i), data.get(i + 1));
+      }
+      json.put("data", jsonData);
+      return json;
     }
   }
 
@@ -219,13 +261,21 @@ public final class SpeedTracerLogger {
 
   /**
    * Create a new global instance. Force the zero time to be recorded and the
-   * log to be opened if the default logging is turned on with the
-   * <code>-Dgwt.speedtracerlog</code> VM property.
+   * log to be opened if the default logging is turned on with the <code>
+   * -Dgwt.speedtracerlog</code> VM property.
    *
    * This method is only intended to be called once.
    */
   public static void init() {
     get();
+  }
+
+  /**
+   * Adds a LOG_MESSAGE SpeedTracer event to the log. This represents a single
+   * point in time and has a special representation in the SpeedTracer UI.
+   */
+  public static void markTimeline(String... data) {
+    SpeedTracerLogger.get().markTimelineImpl(data);
   }
 
   /**
@@ -253,7 +303,9 @@ public final class SpeedTracerLogger {
   }
 
   private final DummyEvent dummyEvent = new DummyEvent();
-  private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>();
+
+  private final BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<
+      Event>();
 
   private final BlockingQueue<Event> eventsToWrite;
 
@@ -261,13 +313,15 @@ public final class SpeedTracerLogger {
 
   private final Event flushSentinel = new Event();
 
-  private final ThreadLocal<Stack<Event>> pendingEvents = new ThreadLocal<Stack<Event>>() {
+  private final Format outputFormat;
+
+  private final ThreadLocal<Stack<Event>> pendingEvents = new ThreadLocal<
+      Stack<Event>>() {
     @Override
     protected Stack<Event> initialValue() {
       return new Stack<Event>();
     }
   };
-
   private final CountDownLatch shutDownLatch = new CountDownLatch(1);
 
   private final Event shutDownSentinel = new Event();
@@ -279,11 +333,24 @@ public final class SpeedTracerLogger {
    *
    * @param writer alternative {@link Writer} to send speed tracer output.
    */
-  SpeedTracerLogger(Writer writer) {
+  SpeedTracerLogger(Writer writer, Format format) {
+    outputFormat = format;
     eventsToWrite = openLogWriter(writer, "");
   }
 
   private SpeedTracerLogger() {
+    // Allow a system property to override the default output format
+    final String formatString = System.getProperty("gwt.speedtracerformat");
+    Format format = Format.HTML;
+    if (formatString != null) {
+      for (Format value : Format.values()) {
+        if (value.name().toLowerCase().equals(formatString.toLowerCase())) {
+          format = value;
+          break;
+        }
+      }
+    }
+    outputFormat = format;
     eventsToWrite = openDefaultLogWriter();
   }
 
@@ -296,6 +363,17 @@ public final class SpeedTracerLogger {
 
     Event currentEvent = threadPendingEvents.peek();
     currentEvent.addData(data);
+  }
+
+  public void markTimelineImpl(String... data) {
+    Stack<Event> threadPendingEvents = pendingEvents.get();
+    Event parent = null;
+    if (!threadPendingEvents.isEmpty()) {
+      parent = threadPendingEvents.peek();
+    }
+    Event newEvent = new MarkTimelineEvent(parent);
+    threadPendingEvents.push(newEvent);
+    newEvent.end(data);
   }
 
   void endImpl(Event event, String... data) {
@@ -320,16 +398,18 @@ public final class SpeedTracerLogger {
 
     while (currentEvent != event && !threadPendingEvents.isEmpty()) {
       // Missed a closing end for one or more frames! Try to sync back up.
-      currentEvent.addData("Missed", "This event was closed without an explicit call to Event.end()"); 
+      currentEvent.addData("Missed",
+          "This event was closed without an explicit call to Event.end()");
       currentEvent = threadPendingEvents.pop();
       assert (endTimeNanos >= currentEvent.startTimeNanos);
       currentEvent.durationNanos = endTimeNanos - currentEvent.startTimeNanos;
     }
-    
+
     if (threadPendingEvents.isEmpty() && currentEvent != event) {
-      currentEvent.addData("Missed", "Fell off the end of the threadPending events");
+      currentEvent.addData(
+          "Missed", "Fell off the end of the threadPending events");
     }
-    
+
     currentEvent.addData(data);
     if (threadPendingEvents.isEmpty()) {
       eventsToWrite.add(currentEvent);
@@ -376,6 +456,7 @@ public final class SpeedTracerLogger {
 
   private BlockingQueue<Event> openDefaultLogWriter() {
     final String logFile = System.getProperty("gwt.speedtracerlog");
+
     Writer writer = null;
     if (logFile != null) {
 
@@ -383,25 +464,29 @@ public final class SpeedTracerLogger {
         writer = new BufferedWriter(new FileWriter(logFile));
         return openLogWriter(writer, logFile);
       } catch (IOException e) {
-        System.err.println("Unable to open gwt.speedtracerlog '" + logFile
-            + "'");
+        System.err.println(
+            "Unable to open gwt.speedtracerlog '" + logFile + "'");
         e.printStackTrace();
       }
     }
     return null;
   }
 
-  private BlockingQueue<Event> openLogWriter(final Writer writer,
-      final String fileName) {
+  private BlockingQueue<Event> openLogWriter(
+      final Writer writer, final String fileName) {
     try {
-      writer.write("<HTML isdump=\"true\"><body>"
-          + "<style>body {font-family:Helvetica; margin-left:15px;}</style>"
-          + "<h2>Performance dump from GWT</h2>"
-          + "<div>This file contains data that can be viewed with the "
-          + "<a href=\"http://code.google.com/speedtracer\">SpeedTracer</a> "
-          + "extension under the <a href=\"http://chrome.google.com/\">Chrome</a> browser.</div>"
-          + "<p><span id=\"info\">(You must install the SpeedTracer extension to open this file)</span></p>"
-          + "<div style=\"display: none\" id=\"traceData\" version=\"0.17\">\n");
+      if (outputFormat.equals(Format.HTML)) {
+        writer.write(
+                "<HTML isdump=\"true\"><body>"
+                + "<style>body {font-family:Helvetica; margin-left:15px;}</style>"
+                + "<h2>Performance dump from GWT</h2>"
+                + "<div>This file contains data that can be viewed with the "
+                + "<a href=\"http://code.google.com/speedtracer\">SpeedTracer</a> "
+                + "extension under the <a href=\"http://chrome.google.com/\">"
+                + "Chrome</a> browser.</div><p><span id=\"info\">"
+                + "(You must install the SpeedTracer extension to open this file)</span></p>"
+                + "<div style=\"display: none\" id=\"traceData\" version=\"0.17\">\n");
+      }
     } catch (IOException e) {
       System.err.println("Unable to write to gwt.speedtracerlog '"
           + (fileName == null ? "" : fileName) + "'");
@@ -426,7 +511,8 @@ public final class SpeedTracerLogger {
     Thread logWriterWorker = new LogWriterThread(writer, fileName, eventQueue);
 
     // Lower than normal priority.
-    logWriterWorker.setPriority((Thread.MIN_PRIORITY + Thread.NORM_PRIORITY) / 2);
+    logWriterWorker.setPriority(
+        (Thread.MIN_PRIORITY + Thread.NORM_PRIORITY) / 2);
 
     /*
      * This thread must be daemon, otherwise shutdown hooks would never begin to

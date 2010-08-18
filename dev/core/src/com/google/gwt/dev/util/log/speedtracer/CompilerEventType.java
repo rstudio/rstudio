@@ -56,7 +56,8 @@ public enum CompilerEventType implements EventType {
   ASSERTION_REMOVER("AssertionRemover","LightSalmon"), //
   REPLACE_REBINDS("ReplaceRebinds", "Snow"), //
   CREATE_UNIFIED_AST("CreateUnifiedAST", "BlueViolet"), //
-  CHECK_FOR_ERRORS("CheckForErrors", "DimGrey"); //
+  CHECK_FOR_ERRORS("CheckForErrors", "DimGrey"), //
+  GRAPHICS_INIT("Graphics2D.createGraphics()", "Blue"); //
 
   final String cssColor;
   final String name;
