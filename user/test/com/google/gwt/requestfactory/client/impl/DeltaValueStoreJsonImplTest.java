@@ -79,6 +79,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         return create(token, typeMap);
       }
 
+      @Override
       public RecordSchema getSchema(String token) {
         return typeMap.getType(token);
       }
@@ -118,6 +119,17 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testCreate() {
+    Record created = requestFactory.create(SimpleFooRecord.class);
+    assertNotNull(created.getId());
+    assertNotNull(created.getVersion());
+
+    DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
+        valueStore, requestFactory);
+    String json = deltaValueStore.toJson();
+    testAndGetChangeRecord(json, WriteOperation.CREATE);
+  }
+
+  public void testCreateWithSet() {
     Record created = requestFactory.create(SimpleFooRecord.class);
     assertNotNull(created.getId());
     assertNotNull(created.getVersion());
@@ -182,7 +194,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     deltaValueStore.set(SimpleFooRecord.userName, createRecord, "harry");
     deltaValueStore.set(SimpleFooRecord.userName, mockRecord, "bovik");
     assertTrue(deltaValueStore.isChanged());
-    String jsonString = deltaValueStore.toJsonWithoutChecks();
+    String jsonString = deltaValueStore.toJson();
     JSONObject jsonObject = (JSONObject) JSONParser.parse(jsonString);
     assertFalse(jsonObject.containsKey(WriteOperation.DELETE.name()));
     assertTrue(jsonObject.containsKey(WriteOperation.CREATE.name()));

@@ -194,7 +194,7 @@ class DeltaValueStoreJsonImpl {
           returnedJso, WriteOperation.DELETE.name());
       Map<Long, Map<String, String>> violationsMap = getViolationsMap(deletedRecords);
       int length = deletedRecords.length();
-      // for (Map.Entry<RecordKey, RecordJsoImpl> entry : deletes.entrySet()) {
+
       for (int i = 0; i < length; i++) {
         final RecordKey key = new RecordKey(deletedRecords.get(i).getId(),
             requestFactory.getSchema(deletedRecords.get(i).getSchema()),
@@ -300,27 +300,18 @@ class DeltaValueStoreJsonImpl {
   }
 
   String toJson() {
-    if (operations.size() > 1) {
-      throw new UnsupportedOperationException(
-          "Currently, only one entity can be saved/persisted at a time");
-      /*
-       * TODO: Short-term todo is to allow multiple entities belonging to the
-       * same class to be persisted at the same time. The client side support
-       * for this operation is already in place. On the server side, this will
-       * entail persisting all entities as part of a single transaction. In
-       * particular, the transaction should fail if the validation check on any
-       * of the entities fail.
-       * 
-       * Multiple entities belonging to different records can not be persisted
-       * at present due to the appEngine limitation of a transaction not being
-       * allowed to span multiple entity groups.
-       */
-    }
-    return toJsonWithoutChecks();
-  }
-
-  String toJsonWithoutChecks() {
     used = true;
+
+    /*
+     * pull the creates that only the requestFactory knows about.
+     */
+    for (RecordKey recordKey : requestFactory.creates.keySet()) {
+      RecordJsoImpl oldRecord = requestFactory.creates.remove(recordKey);
+      assert oldRecord != null;
+      operations.put(recordKey, WriteOperation.CREATE);
+      creates.put(recordKey, oldRecord);
+    }
+
     StringBuffer jsonData = new StringBuffer("{");
     for (WriteOperation writeOperation : new WriteOperation[] {
         WriteOperation.CREATE, WriteOperation.UPDATE}) {
