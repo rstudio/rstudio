@@ -46,17 +46,17 @@ public class JNullType extends JReferenceType {
     return "N";
   }
 
+  @Override
+  public JClassType getSuperClass() {
+    return null;
+  }
+
   public boolean isAbstract() {
     return false;
   }
 
   public boolean isFinal() {
     return true;
-  }
-
-  @Override
-  public void setSuperClass(JClassType superClass) {
-    throw new InternalCompilerException("should not be called");
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

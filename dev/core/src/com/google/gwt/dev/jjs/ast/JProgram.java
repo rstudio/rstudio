@@ -1040,8 +1040,8 @@ public class JProgram extends JNode {
       } else {
         elementType = getTypeArray(leafType, dimensions - 1);
       }
-      arrayType = new JArrayType(elementType, leafType, dimensions);
-      arrayType.setSuperClass(typeJavaLangObject);
+      arrayType = new JArrayType(elementType, leafType, dimensions,
+          typeJavaLangObject);
       allArrayTypes.add(arrayType);
 
       /*

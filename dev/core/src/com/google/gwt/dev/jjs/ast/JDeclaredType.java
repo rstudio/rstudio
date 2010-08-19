@@ -218,12 +218,8 @@ public abstract class JDeclaredType extends JReferenceType implements
     return name.substring(dotpos + 1);
   }
 
-  /**
-   * Returns this type's super class, or <code>null</code> if this type is
-   * {@link Object} or the {@link JNullType}.
-   */
   @Override
-  public JClassType getSuperClass() {
+  public final JClassType getSuperClass() {
     return superClass;
   }
 
@@ -270,9 +266,12 @@ public abstract class JDeclaredType extends JReferenceType implements
 
   /**
    * Sets this type's super class.
+   * 
+   * TODO: to replace this setter with a final field, we'd have to refactor
+   * {@link com.google.gwt.dev.jjs.impl.BuildTypeMap} to use the builder pattern
+   * and resolve super types first.
    */
-  @Override
-  public void setSuperClass(JClassType superClass) {
+  public final void setSuperClass(JClassType superClass) {
     this.superClass = superClass;
   }
 
@@ -314,7 +313,7 @@ public abstract class JDeclaredType extends JReferenceType implements
     annotations = (List<JAnnotation>) stream.readObject();
   }
 
-  /**
+/**
    * See {@link #writeMethodBodies(ObjectOutputStream).
    * 
    * @see #writeMethodBodies(ObjectOutputStream)
@@ -336,12 +335,10 @@ public abstract class JDeclaredType extends JReferenceType implements
     if (newClinitTarget != null && getClass().desiredAssertionStatus()) {
       // Make sure this is a pure upgrade to a superclass or null.
       for (JDeclaredType current = clinitTarget; current != newClinitTarget; current = current.getSuperClass()) {
-        Preconditions.checkNotNull(current.getSuperClass(), 
+        Preconditions.checkNotNull(
+            current.getSuperClass(),
             "Null super class for: %s (currentTarget: %s; newTarget: %s) in %s",
-            current,
-            clinitTarget,
-            newClinitTarget,
-            this);
+            current, clinitTarget, newClinitTarget, this);
       }
     }
     clinitTarget = newClinitTarget;

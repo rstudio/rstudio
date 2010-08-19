@@ -22,11 +22,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public abstract class JReferenceType extends JType implements CanBeAbstract {
 
-  /**
-   * This type's super class.
-   */
-  private JClassType superClass;
-
   public JReferenceType(SourceInfo info, String name) {
     super(info, name, JNullLiteral.INSTANCE);
   }
@@ -60,21 +55,12 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
    * Returns this type's super class, or <code>null</code> if this type is
    * {@link Object} or the {@link JNullType}.
    */
-  public JClassType getSuperClass() {
-    return superClass;
-  }
+  public abstract JClassType getSuperClass();
 
   /**
    * If this type is a non-null type, returns the underlying (original) type.
    */
   public JReferenceType getUnderlyingType() {
     return this;
-  }
-
-  /**
-   * Sets this type's super class.
-   */
-  public void setSuperClass(JClassType superClass) {
-    this.superClass = superClass;
   }
 }

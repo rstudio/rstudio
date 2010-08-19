@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
-import com.google.gwt.dev.jjs.InternalCompilerException;
-
 /**
  * A type including all the values in some other type except for
  * <code>null</code>.
@@ -57,11 +55,6 @@ public class JNonNullType extends JReferenceType {
 
   public boolean isFinal() {
     return ref.isFinal();
-  }
-
-  @Override
-  public void setSuperClass(JClassType superClass) {
-    throw new InternalCompilerException("should not be called");
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
