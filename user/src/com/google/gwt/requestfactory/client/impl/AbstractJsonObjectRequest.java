@@ -15,12 +15,11 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SyncResult;
 
-import java.util.Collections;
+import java.util.Set;
 
 /**
  * <p> <span style="color:red">Experimental API: This class is still under rapid
@@ -44,14 +43,15 @@ public abstract class //
     this.schema = schema;
   }
 
-  public void handleResult(Object jsoResult, JavaScriptObject sideEffects) {
+  @Override
+  public void handleResult(Object jsoResult, Set<SyncResult> syncResults) {
 
     RecordJsoImpl jso = (RecordJsoImpl) jsoResult;
     jso.setSchema(schema);
 
     requestFactory.getValueStore().setRecord(jso, requestFactory);
 
-    receiver.onSuccess(schema.create(jso), Collections.<SyncResult>emptySet());
+    receiver.onSuccess(schema.create(jso), syncResults);
   }
 
 }

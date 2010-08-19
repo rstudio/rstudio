@@ -20,6 +20,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.SimpleBarRecord;
 import com.google.gwt.valuestore.shared.SimpleFooRecord;
 import com.google.gwt.valuestore.shared.SimpleRequestFactory;
@@ -137,6 +138,50 @@ public class RequestFactoryTest extends GWTTestCase {
                   Set<SyncResult> syncResults) {
                 assertEquals("Greetings FOO from GWT", response);
                 finishTest();
+              }
+            });
+          }
+        });
+  }
+
+  /*
+   * tests that (a) any method can have a side effect that is handled correctly. (b)
+   * instance methods are handled correctly.
+   */
+  public void testMethodWithSideEffects() {
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+
+    req.simpleFooRequest().findSimpleFooById(999L).fire(
+        new Receiver<SimpleFooRecord>() {
+
+          public void onSuccess(SimpleFooRecord newFoo,
+              Set<SyncResult> syncResults) {
+            final RequestObject<Long> fooReq = req.simpleFooRequest().countSimpleFooWithUserNameSideEffect(
+                newFoo);
+            newFoo = fooReq.edit(newFoo);
+            newFoo.setUserName("Ray");
+            fooReq.fire(new Receiver<Long>() {
+              public void onSuccess(Long response, Set<SyncResult> syncResults) {
+                assertEquals(new Long(1L), response);
+                // confirm that there was a sideEffect.
+                assertEquals(1, syncResults.size());
+                SyncResult syncResultArray[] = syncResults.toArray(new SyncResult[0]);
+                assertFalse(syncResultArray[0].hasViolations());
+                assertNull(syncResultArray[0].getFutureId());
+                Record record = syncResultArray[0].getRecord();
+                assertEquals(new Long(999L), record.getId());
+                // confirm that the instance method did have the desired sideEffect.
+                req.simpleFooRequest().findSimpleFooById(999L).fire(
+                    new Receiver<SimpleFooRecord>() {
+                      public void onSuccess(SimpleFooRecord finalFoo,
+                          Set<SyncResult> syncResults) {
+                        assertEquals("Ray", finalFoo.getUserName());
+                        finishTest();
+                      }
+                    });
               }
             });
           }

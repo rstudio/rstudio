@@ -15,10 +15,9 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.valuestore.shared.SyncResult;
 
-import java.util.Collections;
+import java.util.Set;
 
 /**
  * <p>
@@ -42,13 +41,13 @@ public abstract class AbstractEnumRequest<E extends Enum<E>> extends
     this.enumValues = enumValues;
   }
 
+  @Override
   public void handlePrimitiveResult(String responseText,
-      JavaScriptObject sideEffects) {
+      Set<SyncResult> syncResults) {
     int ordinal = Integer.valueOf(responseText);
     for (E e : enumValues) {
       if (ordinal == e.ordinal()) {
-        receiver.onSuccess(ordinal,
-            Collections.<SyncResult> emptySet());
+        receiver.onSuccess(ordinal, syncResults);
       }
     }
     throw new IllegalArgumentException("Invalid enum ordinal value " + ordinal);

@@ -15,11 +15,10 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.valuestore.shared.SyncResult;
 
-import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * <p>
@@ -38,10 +37,10 @@ public abstract class AbstractDateRequest extends
     super(requestFactory);
   }
 
+  @Override
   public void handlePrimitiveResult(String responseText,
-      JavaScriptObject sideEffects) {
-    receiver.onSuccess(new Date(Long.valueOf(responseText)),
-        Collections.<SyncResult> emptySet());
+      Set<SyncResult> syncResults) {
+    receiver.onSuccess(new Date(Long.valueOf(responseText)), syncResults);
   }
 
   @Override

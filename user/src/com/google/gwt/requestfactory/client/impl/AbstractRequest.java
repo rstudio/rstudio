@@ -20,6 +20,7 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -95,9 +96,10 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   }
 
   public void handleResponseText(String responseText) {
-     RecordJsoImpl.JsonResults results = RecordJsoImpl.fromResults(responseText);
+    RecordJsoImpl.JsonResults results = RecordJsoImpl.fromResults(responseText);
     processRelated(results.getRelated());
-    handleResult(results.getResult(), results.getSideEffects());
+    handleResult(results.getResult(),
+        deltaValueStore.commit(results.getSideEffects()));
   }
   
   public boolean isChanged() {
@@ -128,7 +130,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   protected abstract R getThis();
 
   protected abstract void handleResult(Object result,
-      JavaScriptObject sideEffects);
+      Set<SyncResult> syncResults);
 
   protected native void processRelated(JavaScriptObject related) /*-{
     for(var recordKey in related) {

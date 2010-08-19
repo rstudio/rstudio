@@ -28,6 +28,9 @@ import com.google.gwt.requestfactory.shared.Service;
 public interface SimpleFooRequest {
   RequestObject<Long> countSimpleFoo();
 
+  @Instance
+  RequestObject<Long> countSimpleFooWithUserNameSideEffect(SimpleFooRecord record);
+
   RecordListRequest<SimpleFooRecord> findAll();
 
   RecordRequest<SimpleFooRecord> findSimpleFooById(Long id);

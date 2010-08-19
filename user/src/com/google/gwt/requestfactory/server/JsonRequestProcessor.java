@@ -697,16 +697,17 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     JSONObject envelop = new JSONObject();
     if (result instanceof List<?>) {
       envelop.put(RequestData.RESULT_TOKEN, toJsonArray(operation, result));
-      envelop.put("sideEffects", sideEffects);
+      envelop.put(RequestData.SIDE_EFFECTS_TOKEN, sideEffects);
       return envelop;
     } else if (result instanceof Number || result instanceof Enum
         || result instanceof String || result instanceof Date
         || result instanceof Character || result instanceof Boolean) {
       envelop.put(RequestData.RESULT_TOKEN, result);
+      envelop.put(RequestData.SIDE_EFFECTS_TOKEN, sideEffects);
     } else {
       JSONObject jsonObject = toJsonObject(operation, result);
       envelop.put(RequestData.RESULT_TOKEN, jsonObject);
-      envelop.put("sideEffects", sideEffects);
+      envelop.put(RequestData.SIDE_EFFECTS_TOKEN, sideEffects);
       return envelop;
     }
     envelop.put(RequestData.RELATED_TOKEN, encodeRelatedObjectsToJson());

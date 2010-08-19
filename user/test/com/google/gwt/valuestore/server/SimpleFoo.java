@@ -52,6 +52,11 @@ public class SimpleFoo {
     return singleton;
   }
 
+  public Long countSimpleFooWithUserNameSideEffect() {
+    singleton.setUserName(userName);
+    return 1L;
+  }
+
   public String hello(SimpleBar bar) {
     return "Greetings " + bar.getUserName() + " from " + getUserName();  
   }

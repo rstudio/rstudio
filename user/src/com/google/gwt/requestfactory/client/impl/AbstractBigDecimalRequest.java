@@ -15,11 +15,10 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.math.BigDecimal;
-import java.util.Collections;
+import java.util.Set;
 
 /**
  * <p>
@@ -38,10 +37,10 @@ public abstract class AbstractBigDecimalRequest extends
     super(requestFactory);
   }
 
+  @Override
   public void handlePrimitiveResult(String responseText,
-      JavaScriptObject sideEffects) {
-    receiver.onSuccess(new BigDecimal(responseText),
-        Collections.<SyncResult> emptySet());
+      Set<SyncResult> syncResults) {
+    receiver.onSuccess(new BigDecimal(responseText), syncResults);
   }
 
   @Override

@@ -15,10 +15,9 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.valuestore.shared.SyncResult;
 
-import java.util.Collections;
+import java.util.Set;
 
 /**
  * <p>
@@ -37,10 +36,10 @@ public abstract class AbstractShortRequest extends
     super(requestFactory);
   }
 
+  @Override
   public void handlePrimitiveResult(String responseText,
-      JavaScriptObject sideEffects) {
-    receiver.onSuccess(Short.valueOf(responseText),
-        Collections.<SyncResult> emptySet());
+      Set<SyncResult> syncResults) {
+    receiver.onSuccess(Short.valueOf(responseText), syncResults);
   }
 
   @Override

@@ -15,7 +15,9 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.valuestore.shared.SyncResult;
+
+import java.util.Set;
 
 /**
  * <p>
@@ -36,10 +38,11 @@ public abstract class AbstractPrimitiveRequest<T, R extends AbstractRequest<T, R
     super(requestFactory);
   }
 
-  public void handleResult(Object result, JavaScriptObject sideEffects) {
-    handlePrimitiveResult(asString(result), sideEffects);
+  @Override
+  public void handleResult(Object result, Set<SyncResult> syncResults) {
+    handlePrimitiveResult(asString(result), syncResults);
   }
 
   protected abstract void handlePrimitiveResult(String responseText,
-      JavaScriptObject sideEffects);
+      Set<SyncResult> syncResults);
 }

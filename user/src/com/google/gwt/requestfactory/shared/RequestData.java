@@ -42,6 +42,8 @@ public class RequestData {
 
   public static final String RELATED_TOKEN = "related";
 
+  public static final String SIDE_EFFECTS_TOKEN = "sideEffects";
+
   // TODO: non-final is a hack for now.
   private String operation;
   private final Object[] parameters;

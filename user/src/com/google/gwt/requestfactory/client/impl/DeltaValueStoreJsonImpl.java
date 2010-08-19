@@ -55,12 +55,6 @@ class DeltaValueStoreJsonImpl {
       }
     }-*/;
 
-    private static native JavaScriptObject getJsoResponse(String response) /*-{
-      // TODO: clean and optimize this.
-      eval("xyz=" + response);
-      return xyz["sideEffects"];
-    }-*/;
-
     protected ReturnRecord() {
     }
 
