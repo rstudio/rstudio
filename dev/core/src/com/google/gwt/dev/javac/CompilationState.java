@@ -149,7 +149,7 @@ public class CompilationState {
       }
     }
     CompilationUnitInvalidator.retainValidUnits(logger, units,
-        compileMoreLater.getValidDependencies());
+        compileMoreLater.getValidClasses());
     mediator.addNewUnits(logger, units);
   }
 }

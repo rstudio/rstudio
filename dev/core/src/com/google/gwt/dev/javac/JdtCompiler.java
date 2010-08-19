@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,9 +17,9 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.Lists;
-import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -30,8 +30,16 @@ import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
 import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
+import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Argument;
+import org.eclipse.jdt.internal.compiler.ast.Block;
+import org.eclipse.jdt.internal.compiler.ast.Clinit;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
+import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Initializer;
+import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -45,6 +53,7 @@ import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
+import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
@@ -76,7 +85,7 @@ public class JdtCompiler {
     /**
      * Checks for additional packages which may contain additional compilation
      * units.
-     *
+     * 
      * @param slashedPackageName the '/' separated name of the package to find
      * @return <code>true</code> if such a package exists
      */
@@ -85,7 +94,7 @@ public class JdtCompiler {
     /**
      * Finds a new compilation unit on-the-fly for the requested type, if there
      * is an alternate mechanism for doing so.
-     *
+     * 
      * @param binaryName the binary name of the requested type
      * @return a unit answering the name, or <code>null</code> if no such unit
      *         can be created
@@ -97,7 +106,6 @@ public class JdtCompiler {
    * A default processor that simply collects build units.
    */
   public static final class DefaultUnitProcessor implements UnitProcessor {
-    private JdtCompiler compiler;
     private final List<CompilationUnit> results = new ArrayList<CompilationUnit>();
 
     public DefaultUnitProcessor() {
@@ -109,15 +117,10 @@ public class JdtCompiler {
 
     public void process(CompilationUnitBuilder builder,
         CompilationUnitDeclaration cud, List<CompiledClass> compiledClasses) {
-      CompilationUnit unit = builder.build(compiledClasses,
-          compiler.computeDependencies(cud),
+      CompilationUnit unit = builder.build(compiledClasses, new Dependencies(),
           Collections.<JsniMethod> emptyList(), new MethodArgNamesLookup(),
           cud.compilationResult().getProblems());
       results.add(unit);
-    }
-
-    public void setCompiler(JdtCompiler compiler) {
-      this.compiler = compiler;
     }
   }
   /**
@@ -185,7 +188,6 @@ public class JdtCompiler {
       ICompilationUnit icu = cud.compilationResult().compilationUnit;
       Adapter adapter = (Adapter) icu;
       CompilationUnitBuilder builder = adapter.getBuilder();
-      contentIdMap.put(builder.getLocation(), builder.getContentId());
       processor.process(builder, cud, compiledClasses);
     }
   }
@@ -323,7 +325,6 @@ public class JdtCompiler {
     try {
       DefaultUnitProcessor processor = new DefaultUnitProcessor();
       JdtCompiler compiler = new JdtCompiler(processor);
-      processor.setCompiler(compiler);
       compiler.doCompile(builders);
       return processor.getResults();
     } finally {
@@ -340,6 +341,8 @@ public class JdtCompiler {
         | ClassFileConstants.ATTR_LINES | ClassFileConstants.ATTR_SOURCE;
     // Tricks like "boolean stopHere = true;" depend on this setting.
     options.preserveAllLocalVariables = true;
+    // Let the JDT collect compilation unit dependencies
+    options.produceReferenceInfo = true;
 
     // Turn off all warnings, saves some memory / speed.
     options.reportUnusedDeclaredThrownExceptionIncludeDocCommentReference = false;
@@ -392,6 +395,8 @@ public class JdtCompiler {
     return null;
   }
 
+  private AdditionalTypeProviderDelegate additionalTypeProviderDelegate;
+
   /**
    * Maps dotted binary names to compiled classes.
    */
@@ -402,26 +407,11 @@ public class JdtCompiler {
    */
   private transient CompilerImpl compilerImpl;
 
-  /**
-   * Maps resource path names to contentId to resolve dependencies.
-   */
-  private final Map<String, ContentId> contentIdMap = new HashMap<String, ContentId>();
-
-  /**
-   * Builders don't compute their contentId until their source is read;
-   * therefore we cannot eagerly lookup their contentId up front. Keep the set
-   * of currently compiling units in a map and lazily fetch their id only when a
-   * dependency is encountered.
-   */
-  private transient Map<String, CompilationUnitBuilder> lazyContentIdMap;
-
   private final Set<String> notPackages = new HashSet<String>();
 
   private final Set<String> packages = new HashSet<String>();
 
   private final UnitProcessor processor;
-
-  private AdditionalTypeProviderDelegate additionalTypeProviderDelegate;
 
   public JdtCompiler(UnitProcessor processor) {
     this.processor = processor;
@@ -430,80 +420,213 @@ public class JdtCompiler {
   public void addCompiledUnit(CompilationUnit unit) {
     addPackages(Shared.getPackageName(unit.getTypeName()).replace('.', '/'));
     addBinaryTypes(unit.getCompiledClasses());
-    contentIdMap.put(unit.getDisplayLocation(), unit.getContentId());
   }
 
-  public Set<ContentId> computeDependencies(CompilationUnitDeclaration cud) {
-    return computeDependencies(cud, Collections.<String> emptySet());
-  }
-
-  public Set<ContentId> computeDependencies(
-      final CompilationUnitDeclaration cud, Set<String> additionalDependencies) {
-    final Set<ContentId> result = new HashSet<ContentId>();
+  public ArrayList<String> collectApiRefs(final CompilationUnitDeclaration cud) {
+    final Set<String> apiRefs = new HashSet<String>();
     class DependencyVisitor extends TypeRefVisitor {
       public DependencyVisitor() {
         super(cud);
       }
 
       @Override
+      public boolean visit(Argument arg, BlockScope scope) {
+        // Adapted from {@link Argument#traverse}.
+        // Don't visit annotations.
+        if (arg.type != null) {
+          arg.type.traverse(this, scope);
+        }
+        return false;
+      }
+
+      @Override
+      public boolean visit(Argument arg, ClassScope scope) {
+        // Adapted from {@link Argument#traverse}.
+        // Don't visit annotations.
+        if (arg.type != null) {
+          arg.type.traverse(this, scope);
+        }
+        return false;
+      }
+
+      @Override
+      public boolean visit(Block block, BlockScope scope) {
+        assert false : "Error in DepedencyVisitor; should never visit a block";
+        return false;
+      }
+
+      @Override
+      public boolean visit(Clinit clinit, ClassScope scope) {
+        return false;
+      }
+
+      @Override
+      public boolean visit(ConstructorDeclaration ctor, ClassScope scope) {
+        if (ctor.typeParameters != null) {
+          int typeParametersLength = ctor.typeParameters.length;
+          for (int i = 0; i < typeParametersLength; i++) {
+            ctor.typeParameters[i].traverse(this, ctor.scope);
+          }
+        }
+        traverse(ctor);
+        return false;
+      }
+
+      @Override
+      public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
+        // Don't visit javadoc.
+        // Don't visit annotations.
+        if (fieldDeclaration.type != null) {
+          fieldDeclaration.type.traverse(this, scope);
+        }
+        // Don't visit initialization.
+        return false;
+      }
+
+      @Override
+      public boolean visit(Initializer initializer, MethodScope scope) {
+        return false;
+      }
+
+      @Override
+      public boolean visit(MethodDeclaration meth, ClassScope scope) {
+        if (meth.typeParameters != null) {
+          int typeParametersLength = meth.typeParameters.length;
+          for (int i = 0; i < typeParametersLength; i++) {
+            meth.typeParameters[i].traverse(this, meth.scope);
+          }
+        }
+        if (meth.returnType != null) {
+          meth.returnType.traverse(this, meth.scope);
+        }
+        traverse(meth);
+        return false;
+      }
+
+      @Override
+      public boolean visit(TypeDeclaration typeDeclaration, ClassScope scope) {
+        traverse(typeDeclaration);
+        return false;
+      }
+
+      @Override
+      public boolean visit(TypeDeclaration typeDeclaration,
+          CompilationUnitScope scope) {
+        traverse(typeDeclaration);
+        return false;
+      }
+
+      @Override
       protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
           CompilationUnitDeclaration unitOfReferrer, Expression expression) {
-        String fileName = String.valueOf(referencedType.getFileName());
-        addFileReference(fileName);
+        if (!String.valueOf(referencedType.getFileName()).endsWith(".java")) {
+          // ignore binary-only annotations
+          return;
+        }
+        addReference(referencedType);
       }
 
       @Override
       protected void onTypeRef(SourceTypeBinding referencedType,
           CompilationUnitDeclaration unitOfReferrer) {
-        // Map the referenced type to the target compilation unit file.
-        String fileName = String.valueOf(referencedType.getFileName());
-        addFileReference(fileName);
+        addReference(referencedType);
       }
 
-      private void addFileReference(String fileName) {
-        if (!fileName.endsWith(".java")) {
-          // Binary-only reference, cannot compute dependency.
-          return;
+      private void addReference(ReferenceBinding referencedType) {
+        String binaryName = CharOperation.toString(referencedType.compoundName);
+        apiRefs.add(BinaryName.toSourceName(binaryName));
+      }
+
+      /**
+       * Adapted from {@link MethodDeclaration#traverse}.
+       */
+      private void traverse(AbstractMethodDeclaration meth) {
+        // Don't visit javadoc.
+        // Don't visit annotations.
+        if (meth.arguments != null) {
+          int argumentLength = meth.arguments.length;
+          for (int i = 0; i < argumentLength; i++) {
+            meth.arguments[i].traverse(this, meth.scope);
+          }
         }
-        ContentId contentId = contentIdMap.get(fileName);
-        if (contentId == null) {
-          // This may be a reference to a currently-compiling unit.
-          CompilationUnitBuilder builder = lazyContentIdMap.get(fileName);
-          assert builder != null : "Unexpected source reference ('" + fileName
-              + "') could not find builder";
-          contentId = builder.getContentId();
+        if (meth.thrownExceptions != null) {
+          int thrownExceptionsLength = meth.thrownExceptions.length;
+          for (int i = 0; i < thrownExceptionsLength; i++) {
+            meth.thrownExceptions[i].traverse(this, meth.scope);
+          }
         }
-        assert contentId != null;
-        result.add(contentId);
+        // Don't visit method bodies.
+      }
+
+      /**
+       * Adapted from {@link TypeDeclaration#traverse}.
+       */
+      private void traverse(TypeDeclaration type) {
+        // Don't visit javadoc.
+        // Don't visit annotations.
+        if (type.superclass != null) {
+          type.superclass.traverse(this, type.scope);
+        }
+        if (type.superInterfaces != null) {
+          int length = type.superInterfaces.length;
+          for (int i = 0; i < length; i++) {
+            type.superInterfaces[i].traverse(this, type.scope);
+          }
+        }
+        if (type.typeParameters != null) {
+          int length = type.typeParameters.length;
+          for (int i = 0; i < length; i++) {
+            type.typeParameters[i].traverse(this, type.scope);
+          }
+        }
+        if (type.memberTypes != null) {
+          int length = type.memberTypes.length;
+          for (int i = 0; i < length; i++) {
+            type.memberTypes[i].traverse(this, type.scope);
+          }
+        }
+        if (type.fields != null) {
+          int length = type.fields.length;
+          for (int i = 0; i < length; i++) {
+            FieldDeclaration field;
+            if ((field = type.fields[i]).isStatic()) {
+              field.traverse(this, type.staticInitializerScope);
+            } else {
+              field.traverse(this, type.initializerScope);
+            }
+          }
+        }
+        if (type.methods != null) {
+          int length = type.methods.length;
+          for (int i = 0; i < length; i++) {
+            type.methods[i].traverse(this, type.scope);
+          }
+        }
       }
     }
     DependencyVisitor visitor = new DependencyVisitor();
     cud.traverse(visitor, cud.scope);
-
-    for (String dependency : additionalDependencies) {
-      visitor.addFileReference(dependency);
-    }
-    return Sets.normalize(result);
+    ArrayList<String> result = new ArrayList<String>(apiRefs);
+    Collections.sort(result);
+    return result;
   }
 
   public boolean doCompile(Collection<CompilationUnitBuilder> builders) {
-    lazyContentIdMap = new HashMap<String, CompilationUnitBuilder>();
     List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>();
     for (CompilationUnitBuilder builder : builders) {
       addPackages(Shared.getPackageName(builder.getTypeName()).replace('.', '/'));
       icus.add(new Adapter(builder));
-      lazyContentIdMap.put(builder.getLocation(), builder);
     }
     if (icus.isEmpty()) {
       return false;
     }
 
-    Event jdtCompilerEvent = SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER, "phase", "compile");
+    Event jdtCompilerEvent = SpeedTracerLogger.start(
+        CompilerEventType.JDT_COMPILER, "phase", "compile");
     compilerImpl = new CompilerImpl();
     compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     compilerImpl = null;
     jdtCompilerEvent.end("# icus", "" + icus.size());
-    lazyContentIdMap = null;
     return true;
   }
 

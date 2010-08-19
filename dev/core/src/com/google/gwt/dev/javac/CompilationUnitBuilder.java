@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Builds a {@link CompilationUnit}.
@@ -61,7 +60,7 @@ public abstract class CompilationUnitBuilder {
 
     @Override
     protected CompilationUnit makeUnit(List<CompiledClass> compiledClasses,
-        Set<ContentId> dependencies,
+        Dependencies dependencies,
         Collection<? extends JsniMethod> jsniMethods,
         MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
       return new GeneratedCompilationUnit(generatedUnit, compiledClasses,
@@ -146,7 +145,7 @@ public abstract class CompilationUnitBuilder {
 
     @Override
     protected CompilationUnit makeUnit(List<CompiledClass> compiledClasses,
-        Set<ContentId> dependencies,
+        Dependencies dependencies,
         Collection<? extends JsniMethod> jsniMethods,
         MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
       return new SourceFileCompilationUnit(getResource(), contentId,
@@ -159,7 +158,7 @@ public abstract class CompilationUnitBuilder {
     private final GeneratedUnit generatedUnit;
 
     public GeneratedCompilationUnit(GeneratedUnit generatedUnit,
-        List<CompiledClass> compiledClasses, Set<ContentId> dependencies,
+        List<CompiledClass> compiledClasses, Dependencies dependencies,
         Collection<? extends JsniMethod> jsniMethods,
         MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
       super(compiledClasses, dependencies, jsniMethods, methodArgs, problems);
@@ -235,8 +234,7 @@ public abstract class CompilationUnitBuilder {
   }
 
   public CompilationUnit build(List<CompiledClass> compiledClasses,
-      Set<ContentId> dependencies,
-      Collection<? extends JsniMethod> jsniMethods,
+      Dependencies dependencies, Collection<? extends JsniMethod> jsniMethods,
       MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
     // Free the source now.
     source = null;
@@ -265,7 +263,7 @@ public abstract class CompilationUnitBuilder {
   protected abstract String doGetSource();
 
   protected abstract CompilationUnit makeUnit(
-      List<CompiledClass> compiledClasses, Set<ContentId> dependencies,
+      List<CompiledClass> compiledClasses, Dependencies dependencies,
       Collection<? extends JsniMethod> jsniMethods,
       MethodArgNamesLookup methodArgs, CategorizedProblem[] errors);
 
