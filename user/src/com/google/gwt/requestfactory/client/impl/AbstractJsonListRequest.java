@@ -50,9 +50,9 @@ AbstractJsonListRequest<T extends Record, R extends AbstractJsonListRequest<T, R
     this.schema = schema;
   }
 
-  public void handleJsonResult(JavaScriptObject jsoResult) {
+  public void handleResult(Object jsoResult, JavaScriptObject sideEffects) {
 
-    JsArray<RecordJsoImpl> valueJsos = jsoResult.cast();
+    JsArray<RecordJsoImpl> valueJsos = (JsArray<RecordJsoImpl>) jsoResult;
     List<T> valueList = new ArrayList<T>(valueJsos.length());
     for (int i = 0; i < valueJsos.length(); i++) {
       RecordJsoImpl jso = valueJsos.get(i);

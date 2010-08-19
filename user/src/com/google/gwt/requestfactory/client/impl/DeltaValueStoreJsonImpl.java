@@ -136,9 +136,8 @@ class DeltaValueStoreJsonImpl {
     used = false;
   }
 
-  public Set<SyncResult> commit(String response) {
+  public Set<SyncResult> commit(JavaScriptObject returnedJso) {
     Set<SyncResult> syncResults = new HashSet<SyncResult>();
-    JavaScriptObject returnedJso = ReturnRecord.getJsoResponse(response);
     HashSet<String> keys = new HashSet<String>();
     ReturnRecord.fillKeys(returnedJso, keys);
 

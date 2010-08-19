@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.Collections;
@@ -36,7 +37,8 @@ public abstract class AbstractBooleanRequest extends
     super(requestFactory);
   }
 
-  public void handlePrimitiveResult(String responseText) {
+  public void handlePrimitiveResult(String responseText,
+      JavaScriptObject sideEffects) {
     receiver.onSuccess(Boolean.valueOf(responseText),
         Collections.<SyncResult> emptySet());
   }

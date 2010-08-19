@@ -53,9 +53,9 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
         requestFactory);
   }
 
-  public native String asString(JavaScriptObject jso) /*-{
-    return String(jso);
-  }-*/;
+  protected String asString(Object jso) {
+    return String.valueOf(jso);
+  }
 
   public void clearUsed() {
     deltaValueStore.clearUsed();
@@ -97,7 +97,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public void handleResponseText(String responseText) {
      RecordJsoImpl.JsonResults results = RecordJsoImpl.fromResults(responseText);
     processRelated(results.getRelated());
-    handleJsonResult(results.getJavascriptResult());
+    handleResult(results.getResult(), results.getSideEffects());
   }
   
   public boolean isChanged() {
@@ -127,7 +127,8 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
    */
   protected abstract R getThis();
 
-  protected abstract void handleJsonResult(JavaScriptObject result);
+  protected abstract void handleResult(Object result,
+      JavaScriptObject sideEffects);
 
   protected native void processRelated(JavaScriptObject related) /*-{
     for(var recordKey in related) {

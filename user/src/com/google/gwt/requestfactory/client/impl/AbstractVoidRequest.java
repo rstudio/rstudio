@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.Set;
@@ -36,8 +37,9 @@ public abstract class AbstractVoidRequest extends
     super(requestFactory);
   }
 
-  public void handlePrimitiveResult(String responseText) {
-    Set<SyncResult> syncResults = deltaValueStore.commit(responseText);
+  public void handlePrimitiveResult(String responseText,
+      JavaScriptObject sideEffects) {
+    Set<SyncResult> syncResults = deltaValueStore.commit(sideEffects);
     receiver.onSuccess(null, syncResults);
   }
 

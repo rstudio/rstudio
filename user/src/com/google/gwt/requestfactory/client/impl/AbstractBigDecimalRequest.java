@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.math.BigDecimal;
@@ -37,7 +38,8 @@ public abstract class AbstractBigDecimalRequest extends
     super(requestFactory);
   }
 
-  public void handlePrimitiveResult(String responseText) {
+  public void handlePrimitiveResult(String responseText,
+      JavaScriptObject sideEffects) {
     receiver.onSuccess(new BigDecimal(responseText),
         Collections.<SyncResult> emptySet());
   }

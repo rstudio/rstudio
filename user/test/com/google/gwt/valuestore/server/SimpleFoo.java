@@ -52,6 +52,10 @@ public class SimpleFoo {
     return singleton;
   }
 
+  public String hello(SimpleBar bar) {
+    return "Greetings " + bar.getUserName() + " from " + getUserName();  
+  }
+
   public static void reset() {
     singleton = new SimpleFoo();
   }

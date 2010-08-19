@@ -73,6 +73,10 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
       return domainMethod.getParameterTypes();
     }
 
+    public Type[] getRequestParameterTypes() {
+      return requestMethod.getGenericParameterTypes();
+    }
+
     public Class<?> getReturnType() {
       Class<?> domainReturnType = getReturnTypeFromParameter(domainMethod,
           domainMethod.getGenericReturnType());

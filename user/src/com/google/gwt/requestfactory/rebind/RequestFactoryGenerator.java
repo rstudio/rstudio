@@ -42,6 +42,7 @@ import com.google.gwt.requestfactory.client.impl.AbstractJsonListRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonObjectRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractShortRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractStringRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractVoidRequest;
 import com.google.gwt.requestfactory.client.impl.RecordImpl;
 import com.google.gwt.requestfactory.client.impl.RecordJsoImpl;
@@ -531,6 +532,8 @@ public class RequestFactoryGenerator extends Generator {
         requestClassName = asInnerImplClass("ListRequestImpl", returnType);
       } else if (isRecordRequest(typeOracle, requestType)) {
         requestClassName = asInnerImplClass("ObjectRequestImpl", returnType);
+      } else if (isStringRequest(typeOracle, requestType)) {
+        requestClassName = AbstractStringRequest.class.getName();
       } else if (isLongRequest(typeOracle, requestType)) {
         requestClassName = AbstractLongRequest.class.getName();
       } else if (isIntegerRequest(typeOracle, requestType)) {
@@ -627,18 +630,29 @@ public class RequestFactoryGenerator extends Generator {
       if (sb.length() > 0) {
         sb.append(", ");
       }
+      JClassType classType = parameter.getType().isClassOrInterface();
+
+      JType paramType = parameter.getType();
+      boolean isRef =
+          "com.google.gwt.valuestore.shared.PropertyReference".equals(
+          paramType.getQualifiedBinaryName());
+      JParameterizedType params = paramType.isParameterized();
+      if (params != null) {
+        classType = params.getTypeArgs()[0];
+      }
+      if (classType != null
+          && classType.isAssignableTo(typeOracle.findType(Record.class.getName()))) {
+        sb.append("((" + classType.getQualifiedBinaryName() + "Impl" + ")");
+      }
       sb.append(parameter.getName());
       // TODO No. This defeats the entire purpose of PropertyReference. It's
       // supposed
       // to be dereferenced server side, not client side.
-      if ("com.google.gwt.valuestore.shared.PropertyReference".equals(
-          parameter.getType().getQualifiedBinaryName())) {
+      if (isRef) {
         sb.append(".get()");
       }
-      JClassType classType = parameter.getType().isClassOrInterface();
       if (classType != null
           && classType.isAssignableTo(typeOracle.findType(Record.class.getName()))) {
-        sb.insert(0, "((" + classType.getQualifiedBinaryName() + "Impl" + ")");
         sb.append(").getUniqueId()");
       }
     }
@@ -713,6 +727,11 @@ public class RequestFactoryGenerator extends Generator {
   private boolean isShortRequest(TypeOracle typeOracle,
       JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Short.class.getName()));
+  }
+
+  private boolean isStringRequest(TypeOracle typeOracle,
+      JClassType requestType) {
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(String.class.getName()));
   }
 
   private boolean isVoidRequest(TypeOracle typeOracle, JClassType requestType) {

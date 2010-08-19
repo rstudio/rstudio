@@ -15,6 +15,8 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import java.lang.reflect.Type;
+
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -40,6 +42,8 @@ public interface RequestDefinition {
    * Returns the parameter types of the method to be invoked on the server.
    */
   Class<?>[] getParameterTypes();
+
+  Type[] getRequestParameterTypes();
 
   /**
    * Returns the return type of the method to be invoked on the server.

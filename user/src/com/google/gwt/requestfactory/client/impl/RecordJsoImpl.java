@@ -43,10 +43,6 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     protected JsonResults() {
     }
 
-    public final native JavaScriptObject getJavascriptResult() /*-{
-      return this.result;
-    }-*/;
-
     public final native JsArray<RecordJsoImpl> getListResult() /*-{
       return this.result;
     }-*/;
@@ -57,6 +53,14 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
     public final native JavaScriptObject getRelated() /*-{
       return this.related;
+    }-*/;
+
+    public final native Object getResult() /*-{
+      return Object(this.result);
+    }-*/;
+
+    public final native JavaScriptObject getSideEffects() /*-{
+      return this.sideEffects;
     }-*/;
   }
 

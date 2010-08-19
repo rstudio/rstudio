@@ -16,6 +16,9 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.valuestore.shared.SyncResult;
+
+import java.util.Collections;
 
 /**
  * <p>
@@ -25,21 +28,23 @@ import com.google.gwt.core.client.JavaScriptObject;
  * </p>
  * Abstract implementation of
  * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
- * RequestFactory.RequestObject} for requests that return non-record types.
- * @param <T> return type
- * @param <R> type of this request object
+ * RequestFactory.RequestObject} for requests that return String.
  */
-public abstract class AbstractPrimitiveRequest<T, R extends AbstractRequest<T, R>> extends
-    AbstractRequest<T, R> {
+public abstract class AbstractStringRequest extends
+    AbstractPrimitiveRequest<String, AbstractStringRequest> {
 
-  public AbstractPrimitiveRequest(RequestFactoryJsonImpl requestFactory) {
+  public AbstractStringRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
   }
 
-  public void handleResult(Object result, JavaScriptObject sideEffects) {
-    handlePrimitiveResult(asString(result), sideEffects);
+  public void handlePrimitiveResult(String responseText,
+      JavaScriptObject sideEffects) {
+    receiver.onSuccess(responseText,
+        Collections.<SyncResult> emptySet());
   }
 
-  protected abstract void handlePrimitiveResult(String responseText,
-      JavaScriptObject sideEffects);
+  @Override
+  protected AbstractStringRequest getThis() {
+    return this;
+  }
 }

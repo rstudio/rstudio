@@ -17,8 +17,8 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.DataTransferObject;
 import com.google.gwt.requestfactory.shared.RequestData;
-import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.PropertyReference;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.WriteOperation;
 
@@ -30,6 +30,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
@@ -195,8 +197,18 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Encodes parameter value.
    */
-  public Object decodeParameterValue(Class<?> parameterType,
+  public Object decodeParameterValue(Type genericParameterType,
       String parameterValue) {
+    Class<?>parameterType = null;
+    if (genericParameterType instanceof Class) {
+      parameterType = (Class<?>) genericParameterType;
+    }
+    if (genericParameterType instanceof ParameterizedType) {
+      ParameterizedType pType = (ParameterizedType) genericParameterType;
+      if (PropertyReference.class == pType.getRawType()) {
+        parameterType = (Class<?>) pType.getActualTypeArguments()[0];
+      }
+    }
     if (String.class == parameterType) {
       return parameterValue;
     }
@@ -272,18 +284,17 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
        * 2. Merge the following and the object resolution code in getEntityKey.
        * 3. Update the involvedKeys set.
        */ 
-      // TODO(amitmanjhi): shouldn't this be DataTransferObject.class?
-      Service service = parameterType.getAnnotation(Service.class);
+      DataTransferObject service = parameterType.getAnnotation(DataTransferObject.class);
       if (service != null) {
         Class<?> sClass = service.value();
-        String schemaAndId[] = parameterValue.toString().split("-", 2);
+        String schemaAndId[] = parameterValue.toString().split("-", 3);
         // ignore schema for now and use Property type
         String findMeth = null;
         try {
           findMeth = getMethodNameFromPropertyName(sClass.getSimpleName(),
               "find");
           Method meth = sClass.getMethod(findMeth, Long.class);
-          return meth.invoke(null, Long.valueOf(schemaAndId[1]));
+          return meth.invoke(null, Long.valueOf(schemaAndId[0]));
         } catch (NoSuchMethodException e) {
           e.printStackTrace();
           throw new IllegalArgumentException(
@@ -522,7 +533,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * or null if it is a static method. Returns Object[1] as the params array.
    */
   public Object[][] getObjectsFromParameterMap(boolean isInstanceMethod,
-      Map<String, String> parameterMap, Class<?> parameterClasses[]) {
+      Map<String, String> parameterMap, Type parameterClasses[]) {
     // TODO: create an EntityMethodCall (instance, args) instead.
     assert parameterClasses != null;
     Object args[][] = new Object[2][];
@@ -537,9 +548,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     
     // TODO: update the involvedKeys for other params
     int offset = (isInstanceMethod ? 1 : 0);
-    args[1] = new Object[parameterClasses.length];
-    for (int i = 0; i < parameterClasses.length; i++) {
-      args[1][i] = decodeParameterValue(parameterClasses[i],
+    args[1] = new Object[parameterClasses.length - offset];
+    for (int i = 0; i < parameterClasses.length - offset; i++) {
+      args[1][i] = decodeParameterValue(parameterClasses[i + offset],
           parameterMap.get(RequestData.PARAM_TOKEN + (i + offset)));
     }
     return args;
@@ -655,11 +666,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
     // get the domain object (for instance methods) and args.
     Object args[][] = getObjectsFromParameterMap(operation.isInstance(),
-        getParameterMap(topLevelJsonObject), domainMethod.getParameterTypes());
-
-    // the involvedKeys set is complete at this point.
-
-    // Construct beforeDataMap
+        getParameterMap(topLevelJsonObject), operation.getRequestParameterTypes());
+    // Construct beforeDataMap 
     constructBeforeDataMap();
     // Construct afterDvsDataMap.
     constructAfterDvsDataMap();

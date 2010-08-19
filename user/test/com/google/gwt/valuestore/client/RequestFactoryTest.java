@@ -118,4 +118,28 @@ public class RequestFactoryTest extends GWTTestCase {
           }
         });
   }
+
+  public void testRecordsAsInstanceMethodParams() {
+
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+    req.simpleFooRequest().findSimpleFooById(999L).fire(
+        new Receiver<SimpleFooRecord>() {
+          public void onSuccess(SimpleFooRecord response,
+              Set<SyncResult> syncResult) {
+            SimpleBarRecord bar = (SimpleBarRecord) req.create(SimpleBarRecord.class);
+            RequestObject<String> helloReq = req.simpleFooRequest().hello(response, bar);
+            bar = helloReq.edit(bar);
+            helloReq.fire(new Receiver<String>() {
+              public void onSuccess(String response,
+                  Set<SyncResult> syncResults) {
+                assertEquals("Greetings FOO from GWT", response);
+                finishTest();
+              }
+            });
+          }
+        });
+  }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.Collections;
@@ -41,7 +42,8 @@ public abstract class AbstractEnumRequest<E extends Enum<E>> extends
     this.enumValues = enumValues;
   }
 
-  public void handlePrimitiveResult(String responseText) {
+  public void handlePrimitiveResult(String responseText,
+      JavaScriptObject sideEffects) {
     int ordinal = Integer.valueOf(responseText);
     for (E e : enumValues) {
       if (ordinal == e.ordinal()) {

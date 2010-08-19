@@ -44,9 +44,9 @@ public abstract class //
     this.schema = schema;
   }
 
-  public void handleJsonResult(JavaScriptObject jsoResult) {
+  public void handleResult(Object jsoResult, JavaScriptObject sideEffects) {
 
-    RecordJsoImpl jso = jsoResult.cast();
+    RecordJsoImpl jso = (RecordJsoImpl) jsoResult;
     jso.setSchema(schema);
 
     requestFactory.getValueStore().setRecord(jso, requestFactory);
