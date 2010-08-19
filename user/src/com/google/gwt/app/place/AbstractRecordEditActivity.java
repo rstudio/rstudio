@@ -49,7 +49,6 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   private final PlaceController placeController;
 
   private R record;
-  @SuppressWarnings("unused")
   private Long futureId;
   private Display display;
 
