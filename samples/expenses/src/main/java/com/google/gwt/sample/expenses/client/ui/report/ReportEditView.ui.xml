@@ -1,0 +1,55 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:d='urn:import:com.google.gwt.user.datepicker.client'
+  xmlns:a='urn:import:com.google.gwt.app.client' >
+  <ui:style>
+    .fields {
+      margin-top: 0.5em;
+      margin-left: 1em;
+    }
+    .label {
+      font-weight: bold;
+      min-height: 25px;
+    }
+    .button {
+      margin-right: 1em;
+    }
+    .bar {
+      margin-left: 1em;
+    }
+    .header {
+      margin-left: 1em;
+      color: #4B4A4A;
+      text-shadow: #ddf 1px 1px 0;
+      margin-bottom: 0;
+    }
+    .underline {
+      border-bottom: 2px solid #6F7277;
+    }
+  </ui:style>
+
+  <g:HTMLPanel>
+    <div class='{style.underline}'>
+      <h3 class='{style.header}' ui:field='editTitle'>
+        <ui:msg>Report <g:InlineLabel ui:field='id' /> (v<g:InlineLabel ui:field='version'/>)</ui:msg>
+      </h3>
+      <h3 class='{style.header}' ui:field='createTitle'><ui:msg>New Report</ui:msg></h3>
+    </div>
+    <div ui:field='errors' style='background-color: red; '></div>
+
+    <table class='{style.fields}'>
+      <tr><td><div class='{style.label}'>Purpose:</div></td><td><g:TextBox ui:field='purpose'></g:TextBox></td></tr>
+      <tr><td><div class='{style.label}'>Notes:</div></td><td><g:TextBox ui:field='notes'></g:TextBox></td></tr>
+      <tr><td><div class='{style.label}'>Created:</div></td><td><d:DateBox ui:field='created'></d:DateBox></td></tr>
+      <tr><td><div class='{style.label}'>Reporter Key:</div></td><td><a:LongBox ui:field='reporterKey'></a:LongBox></td></tr>
+      <tr><td><div class='{style.label}'>Approved Supervisor Key:</div></td><td><a:LongBox ui:field='approvedSupervisorKey'></a:LongBox></td></tr>
+    </table>
+
+    <div class='{style.bar}'>
+      <g:Button addStyleNames='{style.button}' ui:field='save'>Save</g:Button>
+      <g:Button addStyleNames='{style.button}' ui:field='cancel'>Cancel</g:Button>
+    </div>
+
+  </g:HTMLPanel>
+</ui:UiBinder>

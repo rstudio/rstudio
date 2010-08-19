@@ -1,0 +1,191 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:m='urn:import:com.google.gwt.mobile.client'
+  xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
+
+  <ui:with
+    field='styles'
+    type='com.google.gwt.sample.expenses.client.style.Styles.Resources' />
+  <ui:style field='desktop' src='desktop.css' />
+
+  <ui:image
+    field='searchCenter'
+    src='style/searchCenter.png'
+    repeatStyle="Horizontal" />
+  <ui:image
+    field='searchLeft'
+    src='style/searchLeft.png' />
+
+  <ui:image
+    field='cornerTopRight' />
+  <ui:image
+    field='cornerTopLeft' />
+  <ui:image
+    field='cornerBottomRight' />
+  <ui:image
+    field='cornerBottomLeft' />
+
+  <ui:style>   
+   .textBox {
+      width: 250px;
+      border: 0px;
+      padding: 4px 0px 2px;
+      height: 16px;
+      font-size: 12px;
+      outline-width: 0px;
+      background: transparent;
+    }
+
+    .searchButton {
+      cursor: pointer;
+      cursor: hand;
+    }
+
+    @sprite .searchCenter {
+      gwt-image: 'searchCenter';
+      padding-top: 1px;
+    }
+    
+    @sprite .searchLeft {
+      gwt-image: 'searchLeft';
+    }
+
+    .center {
+      border-bottom: 1px solid #d7dde8;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit='PX'>
+
+    <g:north
+      size='70'>
+      <g:HTMLPanel
+        styleName='{desktop.breadcrumbBar}'>
+        <table
+          align='center'
+          width='100%'
+          cellspacing='0'
+          cellpadding='0'>
+          <!-- Top of 9 box. -->
+          <tr>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerTopLeft}' />
+            </td>
+            <td
+              colspan='2'
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerTopRight}' />
+            </td>
+          </tr>
+          <tr>
+            <!-- Left of 9 box. -->
+            <td
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <!-- Breadcrumb. -->
+            <td
+              class='{desktop.breadcrumb} {desktop.breadcrumbBorder}'
+              align='left'
+              ui:field='breadcrumb'>
+              All Reports
+            </td>
+            <!-- Search Box. -->
+            <td
+              class='{desktop.breadcrumbBorder}'
+              align='right'
+              valign='middle'>
+              <table
+                cellspacing='0'
+                cellpadding='0'>
+                <tr>
+                  <td
+                    valign='top'>
+                    <div
+                      class='{style.searchLeft}' />
+                  </td>
+                  <td
+                    valign='top'
+                    class='{style.searchCenter}'>
+                    <g:TextBox
+                      styleName='{style.textBox}'
+                      ui:field='searchBox' />
+                  </td>
+                  <td
+                    valign='top'>
+                    <g:Image
+                      addStyleNames='{style.searchButton}'
+                      ui:field='searchButton'
+                      resource='{styles.searchRight}' />
+                  </td>
+                  <td>
+                    <div
+                      style='width:50px;' />
+                  </td>
+                </tr>
+              </table>
+            </td>
+            <!-- Right of 9 box. -->
+            <td
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+          </tr>
+          <!-- Bottom of 9 box. -->
+          <tr>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerBottomLeft}' />
+            </td>
+            <td
+              colspan='2'
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerBottomRight}' />
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:north>
+
+    <g:center>
+      <m:MobileScrollPanel
+        styleName='{style.center}'>
+        <c:CellTable
+          addStyleNames='{desktop.table}'
+          width='100%'
+          ui:field='table' />
+      </m:MobileScrollPanel>
+    </g:center>
+
+    <g:south
+      size='30'>
+      <g:HTMLPanel>
+        <div
+          style='position:absolute;right:30px;'>
+          <c:SimplePager
+            ui:field='pager' />
+        </div>
+      </g:HTMLPanel>
+    </g:south>
+  </g:DockLayoutPanel>
+</ui:UiBinder> 

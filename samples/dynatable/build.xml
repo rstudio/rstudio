@@ -1,5 +1,6 @@
 <project name="dynatable" default="build" basedir=".">
   <property name="sample.root" value="dynatable" />
   <property name="sample.module" value="DynaTable" />
+  <property name="sample.path" value="src" />
   <import file="../common.ant.xml" />
 </project>

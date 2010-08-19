@@ -1,5 +1,6 @@
 <project name="hello" default="build" basedir=".">
   <property name="sample.root" value="hello" />
   <property name="sample.module" value="Hello" />
+  <property name="sample.path" value="src" />
   <import file="../common.ant.xml" />
 </project>

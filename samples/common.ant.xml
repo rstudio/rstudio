@@ -22,6 +22,12 @@
   <!-- Use the uppercase name rather than the lowercase name -->
   <property name="sample.build" value="${gwt.build.out}/samples/${sample.upper}" />
 
+  <path id="gae.extraclasspath">
+    <pathelement location="${gwt.tools.lib}/appengine/appengine-api-1.0-sdk-1.3.4.jar"/>
+    <pathelement location="${gwt.tools.lib}/appengine/geronimo-jpa_3.0_spec-1.1.1.jar"/>
+    <pathelement location="${gwt.tools.lib}/appengine/datanucleus-appengine-1.0.7.final.jar"/>
+  </path>
+
   <target name="source" description="Copy source to the output folder">
     <mkdir dir="${sample.build}/src" />
     <copy todir="${sample.build}/src">
@@ -39,6 +45,9 @@
       <classpath>
         <pathelement location="${gwt.user.jar}" />
         <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.tools.lib}/jsr107cache/jsr107cache-1.1.jar"/>
+        <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar"/>
+        <path refid="gae.extraclasspath" />
       </classpath>
     </gwt.javac>
   </target>
@@ -46,7 +55,7 @@
   <target name="gwtc" description="Compile to JavaScript">
     <outofdate>
       <sourcefiles>
-        <fileset dir="src" />
+        <fileset dir="${sample.path}" />
         <fileset dir="${sample.build}/war/WEB-INF/classes" />
         <fileset file="${gwt.user.jar}" />
         <fileset file="${gwt.dev.jar}" />
@@ -55,7 +64,7 @@
       <sequential>
         <mkdir dir="${sample.build}/war" />
         <gwt.timer name="${sample.upper} with ${gwt.samples.localworkers} localWorkers">
-          <java dir="${sample.build}" classname="com.google.gwt.dev.Compiler" classpath="src:${sample.build}/war/WEB-INF/classes:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+          <java dir="${sample.build}" classname="com.google.gwt.dev.Compiler" classpath="${sample.path}:${sample.build}/war/WEB-INF/classes:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
             <jvmarg value="-Xmx256M"/>
             <arg value="-localWorkers" />
             <arg value="${gwt.samples.localworkers}" />

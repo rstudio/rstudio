@@ -1,0 +1,44 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+  <ui:style>
+  .form {
+    padding: 0.5em;
+    background-color: #ebeff9;
+    font-weight: bold;
+    font-size: 13px;
+  }
+
+  .middleColumn {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+
+  .error {
+  }
+  </ui:style>
+
+  <g:HTMLPanel styleName='{style.form}'>
+    <table border='0'>
+      <tr>
+        <td>Name:</td><td class='{style.middleColumn}'></td>
+        <td><g:TextBox ui:field='nameText'/></td>
+      </tr>
+      <tr>
+        <td>Date:</td><td class='{style.middleColumn}'></td>
+        <td><g:ListBox ui:field='dateYear'/>/<g:ListBox ui:field='dateMonth'/>/<g:ListBox ui:field='dateDay'/></td>
+      </tr>
+      <tr>
+        <td>Category:</td><td class='{style.middleColumn}'></td>
+        <td><g:TextBox ui:field='categoryText'/></td>
+      </tr>
+      <tr>
+        <td>Price:</td><td class='{style.middleColumn}'>$</td>
+        <td><g:TextBox ui:field='priceText'/></td>
+      </tr>
+    </table>
+    <div class='error' ui:field='errorText'/>
+  </g:HTMLPanel>
+</ui:UiBinder>

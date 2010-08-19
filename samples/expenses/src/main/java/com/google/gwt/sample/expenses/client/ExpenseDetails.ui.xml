@@ -1,0 +1,269 @@
+<!DOCTYPE ui:UiBinder SYSTEM 'http://dl.google.com/gwt/DTD/xhtml.ent'>
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:m='urn:import:com.google.gwt.mobile.client'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
+
+  <ui:style
+    field='desktop'
+    src='desktop.css' />
+
+  <ui:image
+    field='cornerTopRight' />
+  <ui:image
+    field='cornerTopLeft' />
+  <ui:image
+    field='cornerBottomRight' />
+  <ui:image
+    field='cornerBottomLeft' />
+  <ui:image
+    field='leftArrow' />
+  <ui:image
+    field='pendingNotes' />
+
+  <ui:style>
+    .details {
+      width: 100%;
+      margin-top: 25px;
+    }
+    
+    @sprite .leftArrow {
+      gwt-image: 'leftArrow';
+    }
+    
+    .link {
+      text-decoration: underline;
+      color: black;
+      cursor: hand;
+      cursor: pointer;
+    }
+    
+    .link:hover {
+      text-decoration: underline;
+      color: black;
+      cursor: hand;
+      cursor: pointer;
+    }
+
+    .reportLink {
+      margin-left: 5px;
+    }
+    
+    .label {
+      width: 150px;
+      padding: 3px 0px 3px 9px;
+    }
+    
+    .amount {
+      width: 100px;
+      padding: 3px 9px 3px 0px;
+    }
+    
+    .dotted {
+      border-bottom: 1px dotted black;
+    }
+    
+    .notesColumn {
+      width: 350px;
+      padding-right: 20px;
+    }
+    
+    .notesTextBox {
+      width: 300px;
+      border: 1px solid #d7dde8;
+      padding: 3px;
+    }
+    
+    .notesEditLink {
+      font-weight: bold;
+    }
+    
+    @sprite .pendingNotes {
+      gwt-image: 'pendingNotes';
+      margin-left: 10px;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit='PX'>
+    <g:north
+      size='180'>
+      <g:HTMLPanel
+        styleName='{desktop.breadcrumbBar}'>
+        <table
+          align='center'
+          width='100%'
+          cellspacing='0'
+          cellpadding='0'>
+          <!-- Top of 9 box. -->
+          <tr>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerTopLeft}' />
+            </td>
+            <td
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerTopRight}' />
+            </td>
+          </tr>
+          <tr>
+            <!-- Left of 9 box. -->
+            <td
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <!-- Breadcrumb. -->
+            <td
+              class='{desktop.breadcrumb} {desktop.breadcrumbBorder}'
+              ui:field='reportName'>
+            </td>
+            <!-- Right of 9 box. -->
+            <td
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+          </tr>
+          <!-- Bottom of 9 box. -->
+          <tr>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerBottomLeft}' />
+            </td>
+            <td
+              class='{desktop.breadcrumbBorder}'>
+              <div
+                class='{desktop.breadcrumbBorderInner}' />
+            </td>
+            <td
+              class='{desktop.breadcrumbCorner}'>
+              <div
+                class='{desktop.breadcrumbCornerBottomRight}' />
+            </td>
+          </tr>
+
+          <!-- Link back to report list. -->
+          <tr>
+            <td
+              colspan='3'
+              style='padding-top:6px;'>
+              <table
+                cellpadding='0'
+                cellspacing='0'>
+                <tr>
+                  <td>
+                    <div
+                      class='{style.leftArrow}' />
+                  </td>
+                  <td>
+                    <g:Anchor
+                      styleName='{style.reportLink} {style.link}'
+                      ui:field='reportsLink' />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Details about the Report. -->
+        <table
+          class='{style.details}'
+          cellpadding='0'
+          cellspacing='0'>
+          <tr>
+            <td
+              class='{style.label}'>
+              Cost:
+            </td>
+            <td
+              align='right'
+              class='{style.amount}'
+              ui:field='costLabel'>
+            </td>
+            <td
+              rowspan='3'>
+              &nbsp;
+            </td>
+            <td
+              class='{style.notesColumn}'>
+              <table
+                cellspacing='0'
+                cellpadding='0'>
+                <tr>
+                  <td>
+                    Notes:
+                  </td>
+                  <td>
+                    <div
+                      class='{style.pendingNotes}'
+                      ui:field='notesPending' />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class='{style.label} {style.dotted}'>
+              Approved:
+            </td>
+            <td
+              align='right'
+              class='{style.amount}  {style.dotted}'
+              ui:field='approvedLabel'>
+            </td>
+            <td
+              rowspan='2'
+              class='{style.notesColumn}'
+              valign='top'>
+              <g:TextBox
+                styleName='{style.notesTextBox}'
+                ui:field='notesBox' />
+              <span
+                ui:field='notes' />
+              <span
+                ui:field='notesEditLinkWrapper'>
+                (<g:Anchor
+                  styleName='{style.link} {style.notesEditLink}'
+                  ui:field='notesEditLink'>edit</g:Anchor>)
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class='{style.label}'>
+              <b>Un-reconciled:</b>
+            </td>
+            <td
+              align='right'
+              class='{style.amount}'
+              style='font-weight:bold'
+              ui:field='unreconciledLabel'>
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:north>
+
+    <g:center>
+      <m:MobileScrollPanel>
+        <c:CellTable
+          addStyleNames='{desktop.table}'
+          width='100%'
+          ui:field='table' />
+      </m:MobileScrollPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+
+</ui:UiBinder> 

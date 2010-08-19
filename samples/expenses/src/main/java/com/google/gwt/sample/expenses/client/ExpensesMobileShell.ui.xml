@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:m='urn:import:com.google.gwt.mobile.client'
+  xmlns:r='urn:import:com.google.gwt.requestfactory.client'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+  <ui:style field='mobile' src='mobile.css'/>
+
+  <g:HTMLPanel>
+    <r:LoginWidget styleName='{mobile.login}' ui:field="loginWidget"/>
+    <div class='{mobile.bar}'>
+      <g:HTML ui:field='backButton' styleName='{mobile.backButton}'><div>Back</div></g:HTML>
+      <g:HTML ui:field='addButton' styleName='{mobile.button}'><img src='images/add.png'/></g:HTML>
+      <g:HTML ui:field='customButton' styleName='{mobile.customButton}'/>
+      <g:HTML ui:field='refreshButton' styleName='{mobile.button}'><img src='images/refresh.png'/></g:HTML>
+      <div class='{mobile.title}' ui:field='titleSpan'>Expenses</div>
+    </div>
+    <g:SimplePanel ui:field='container'/>
+  </g:HTMLPanel>
+</ui:UiBinder>

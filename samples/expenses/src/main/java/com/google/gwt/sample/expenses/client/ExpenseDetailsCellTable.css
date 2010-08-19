@@ -1,0 +1,80 @@
+.cellTable {
+  
+}
+
+.footer {
+  border-top: 2px solid #6f7277;
+  padding: 3px 9px;
+  text-align: left;
+  color: #4b4a4a;
+  text-shadow: #ddf 1px 1px 0;
+}
+
+.header {
+  border-bottom: 2px solid #6f7277;
+  padding: 3px 9px;
+  text-align: left;
+  color: #4b4a4a;
+  text-shadow: #ddf 1px 1px 0;
+}
+
+.cell {
+  padding: 4px 9px;
+}
+
+.firstColumn {
+  padding: 0px;
+}
+
+.lastColumn {
+  padding: 0px;
+}
+
+.firstColumnFooter {
+  border: 0px;
+  padding: 0px;
+}
+
+.firstColumnHeader {
+  border: 0px;
+  padding: 0px;
+}
+
+.lastColumnFooter {
+  border: 0px;
+  padding: 0px;
+}
+
+.lastColumnHeader {
+  border: 0px;
+  padding: 0px;
+}
+
+.evenRow {
+  background-color: #ffffff;
+}
+
+.oddRow {
+  background-color: #f3f7fb;
+}
+
+.hoveredRow {
+
+}
+
+.keyboardSelectedRow {
+
+}
+
+.keyboardSelectedCell {
+
+}
+
+.selectedRow {
+  
+}
+
+@sprite .loading {
+  gwt-image: 'cellTableLoading';
+  margin: 30px;  
+}

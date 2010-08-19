@@ -1,0 +1,220 @@
+/* global */
+body, table, td {
+  font-family: Arial, sans-serif;
+  font-weight: light;
+}
+
+h1 {
+  color: #4b4a4a;
+}
+
+/* odds and ends */
+.box {
+  border: 1px solid #ccc;
+  background-color: white;
+  margin: 0.25em;
+  padding: 0.5em;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+}
+
+.padded {
+  padding: 5px;
+}
+
+.header {
+  font-weight: bold;
+  font-size: 12pt;
+  margin: 0.5em;
+}
+
+.headerLeft {
+  font-weight: light;
+  font-size: 12pt;
+  margin-bottom: 0.5em;
+}
+
+.headerMain {
+  font-weight: light;
+  font-size: 18pt;
+}
+
+/* ExpenseTree */
+
+.usernameTreeItem {
+  color: #999;
+  font-size: 90%;
+}
+
+.usernameTreeItemSelected {
+  color: white;
+  font-size: 90%;
+}
+
+/* ExpenseList */
+.expenseListCreatedColumn {
+  width: 25ex;
+}
+.expenseListDepartmentColumn {
+  width: 25ex;
+}
+.expenseListPurposeColumn {
+  width: 50ex;
+}
+
+/* EpenseDetails */
+.expenseDetailsDateColumn {
+  width: 35ex;
+}
+.expenseDetailsCategoryColumn {
+  width: 30ex;
+}
+.expenseDetailsAmountColumn {
+  width: 18ex;
+}
+.expenseDetailsApprovalColumn {
+  width: 250px;
+}
+.expenseDetailsErrorPopupMessage {
+  width: 300px;
+  padding-bottom: 10px;
+  font-size: 130%;
+  color: red;
+  text-align: center;
+}
+
+.popupPanel {
+  border: 3px solid white;
+  border-right: 11px solid white;
+  border-bottom: 11px solid white;
+  -webkit-border-image: url(blueborder.png) 3 11 11 3 round round;
+  -moz-border-image: url(blueborder.png) 3 11 11 3 round round;
+  padding: 10px;
+}
+
+@sprite .blankOption {
+  gwt-image: 'blankIcon';
+  padding-left: 20px;
+  width: auto;
+  height: auto;
+  overflow: auto;
+}
+
+@sprite .approvedOption {
+  gwt-image: 'approvedIcon';
+  padding-left: 20px;
+  width: auto;
+  height: auto;
+  overflow: auto;
+}
+
+@sprite .deniedOption {
+  gwt-image: 'deniedIcon';
+  padding-left: 20px;
+  width: auto;
+  height: auto;
+  overflow: auto;
+}
+
+.spacerColumn {
+  width: 15px;
+  border: 0 !important;
+}
+
+/* tables */
+.table {
+  width: 100%;
+  font-size: 8pt;
+  border-spacing: 0px 0px;
+  border-collapse: collapse;
+}
+
+.table td {
+  border-bottom: 1px solid #ccc;
+}
+
+/* date picker */
+.gwt-DatePicker {
+  border: 1px solid #A2BBDD;
+  cursor: default;
+}
+.gwt-DatePicker td,
+.datePickerMonthSelector td:focus {
+  outline: none
+}
+.datePickerDays {
+  width: 100%;
+  background: white;
+}
+.datePickerDay,
+.datePickerWeekdayLabel,
+.datePickerWeekendLabel {
+  font-size: 75%;
+  text-align: center;
+  padding: 4px;
+  outline: none;
+}
+.datePickerWeekdayLabel,
+.datePickerWeekendLabel {
+  background: #C3D9FF;
+  padding: 0px 4px 2px;
+  cursor: default;
+}
+.datePickerDay {
+  padding: 4px;
+  cursor: hand;
+  cursor: pointer;
+}
+.datePickerDayIsToday {
+  border: 1px solid black;
+  padding: 3px;
+}
+.datePickerDayIsWeekend {
+  background: #EEEEEE;
+}
+.datePickerDayIsFiller {
+  color: #888888;
+}
+.datePickerDayIsValue {
+  background: #aaccee;
+}
+.datePickerDayIsDisabled {
+  color: #AAAAAA;
+  font-style: italic;
+}
+.datePickerDayIsHighlighted {
+  background: #F0E68C;
+}
+.datePickerDayIsValueAndHighlighted {
+  background: #bbddd9;
+}
+.datePickerMonthSelector {
+  background: #C3D9FF;
+  width: 100%;
+}
+td.datePickerMonth {
+  text-align: center;
+  vertical-align: center;
+  white-space: nowrap;
+  font-size: 70%;
+  font-weight: bold;
+  color: blue;
+}
+.datePickerPreviousButton,
+.datePickerNextButton {
+  font-size: 120%;
+  line-height: 1em;
+  color: blue;
+  cursor: hand;
+  cursor: pointer;
+  padding: 0px 4px;
+}
+
+/* splitters */
+.gwt-SplitLayoutPanel-HDragger {
+  background: #b6cef3 url(hsplitter-grip.png) center center no-repeat;
+}
+
+.gwt-SplitLayoutPanel-VDragger {
+  background: #b6cef3 url(vsplitter-grip.png) center center no-repeat;
+}

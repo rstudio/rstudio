@@ -1,0 +1,48 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <ui:style>
+    .fields {
+      margin-top: 0.5em;
+      margin-left: 1em;
+    }
+    .label {
+      font-weight: bold;
+      min-height: 25px;
+    }
+    .button {
+      margin-right: 1em;
+    }
+    .bar {
+      margin-left: 1em;
+    }
+    .header {
+      margin-left: 1em;
+      color: #4B4A4A;
+      text-shadow: #ddf 1px 1px 0;
+      margin-bottom: 0;
+    }
+    .underline {
+      border-bottom: 2px solid #6F7277;
+    }
+  </ui:style>
+
+  <g:HTMLPanel>
+    <div class='{style.underline}'>
+      <h3 class='{style.header}'><ui:msg>Report <span ui:field='idSpan' /> (v<span ui:field='versionSpan'/>)</ui:msg></h3>
+    </div>
+
+    <table class='{style.fields}'>
+      <tr><td><div class='{style.label}'>Purpose:</div></td><td><span ui:field='purpose'></span></td></tr>
+      <tr><td><div class='{style.label}'>Notes:</div></td><td><span ui:field='notes'></span></td></tr>
+      <tr><td><div class='{style.label}'>Created:</div></td><td><span ui:field='created'></span></td></tr>
+      <tr><td><div class='{style.label}'>Reporter Key:</div></td><td><span ui:field='reporterKey'></span></td></tr>
+      <tr><td><div class='{style.label}'>Approved Supervisor Key:</div></td><td><span ui:field='approvedSupervisorKey'></span></td></tr>
+    </table>
+
+    <div class='{style.bar}'>
+    <g:Button addStyleNames='{style.button}' ui:field='edit'>Edit</g:Button>
+    <g:Anchor ui:field='delete'>Delete</g:Anchor>
+    </div>
+  </g:HTMLPanel>
+</ui:UiBinder>

@@ -1,0 +1,44 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+  <ui:style>
+  .form {
+    padding: 0.5em;
+    background-color: #ebeff9;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  
+  .label {
+    padding-right: 5px;
+  }
+  
+  .reasonText {
+    font-weight: normal;
+  }
+  </ui:style>
+
+  <g:HTMLPanel styleName='{style.form}'>
+    <table border='0'>
+      <tr><td class='{style.label}'>Name:</td><td ui:field='nameText'></td></tr>
+      <tr><td class='{style.label}'>Date:</td><td ui:field='dateText'></td></tr>
+      <tr>
+        <td class='{style.label}'>Category:</td><td ui:field='categoryText'>
+        </td>
+      </tr>
+      <tr>
+        <td class='{style.label}'>Price:</td><td>$<span ui:field='priceText'/>
+        </td>
+      </tr>
+      <tr>
+        <td class='{style.label}'>Status:</td><td ui:field='approvalText'></td>
+      </tr>
+      <tr ui:field='reasonRow'>
+        <td></td>
+        <td ui:field='reasonText' class='{style.reasonText}'></td>
+      </tr>
+    </table>
+  </g:HTMLPanel>
+</ui:UiBinder>

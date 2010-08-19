@@ -1,0 +1,66 @@
+.bar {
+  position: relative;
+  -webkit-border-image: url(images/toolbar_bg.png) 0 0 4 0 stretch stretch;
+  -moz-border-image: url(images/toolbar_bg.png) 0 0 4 0 stretch stretch;
+  border-width: 0px 0px 4px;
+  margin: 0px 0px -4px;
+  padding: 7px 0px 5px;
+  background-color: #ebeff9;
+  color: #2e4987;
+  height: 32px;
+  text-align: center;
+  text-shadow: white 0px 1px 1px;
+  color: #2e4987;
+
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 24px;
+}
+
+.title {
+}
+
+.button {
+  float: right;
+  height: 22px;
+  width: 22px;
+  margin-right: 6px;
+
+  border-width: 4px 4px 5px 4px;
+  -webkit-border-image: url(images/button.png) 4 4 5 4 stretch stretch;
+  -moz-border-image: url(images/button.png) 4 4 5 4 stretch stretch;
+  color: #2e4987;
+}
+
+.customButton {
+  float: right;
+  height: 22px;
+  margin-right: 6px;
+
+  border-width: 4px 4px 5px 4px;
+  -webkit-border-image: url(images/button.png) 4 4 5 4 stretch stretch;
+  -moz-border-image: url(images/button.png) 4 4 5 4 stretch stretch;
+  color: #2e4987;
+}
+
+.backButton {
+  float: left;
+  height: 22px;
+  margin-left: 3px;
+
+  border-width: 4px 4px 5px 12px;
+  -webkit-border-image: url(images/button_back.png) 4 4 5 12 stretch stretch;
+  -moz-border-image: url(images/button_back.png) 4 4 5 12 stretch stretch;
+
+  text-align: center;
+  display: table-cell;
+}
+
+.error {
+  color: red;
+}
+
+.login {
+  text-align: center;
+  background-color: yellow;
+}
