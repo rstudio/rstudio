@@ -16,11 +16,9 @@
 package com.google.gwt.app.client;
 
 import com.google.gwt.app.place.RecordEditView;
-import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * <p>
@@ -35,7 +33,7 @@ import java.util.Set;
  * @param <V> the View type
  */
 public interface EditorSupport<R extends Record, V extends RecordEditView<R>> {
-  Set<Property<?>> getProperties();
+  String[] getPaths();
   
   void init(final V view);
 

@@ -183,8 +183,8 @@ public class EditorSupportGenerator extends Generator {
         String.class.getName());
     jrecordType = generatorContext.getTypeOracle().findType(
         Record.class.getName());
-    writeGetPropertiesMethod(sw, recordType);
-    writeInit(sw, viewType, recordType);
+    writeGetPathsMethod(sw, recordType);
+    writeInit(sw, viewType);
     writeIsChangedMethod(sw, recordType, viewType);
     writeSetEnabledMethod(sw, viewType);
     writeSetValueMethod(sw, recordType, viewType, logger);
@@ -417,28 +417,27 @@ public class EditorSupportGenerator extends Generator {
   }
 
   /**
-   * Write the implementation for the getProperties() method.
+   * Write the implementation for the getPaths() method.
    */
-  private void writeGetPropertiesMethod(SourceWriter sw, JClassType recordType) {
+  private void writeGetPathsMethod(SourceWriter sw, JClassType recordType) {
     sw.indent();
-    sw.println("public Set<Property<?>> getProperties() {");
+    sw.println("public String[] getPaths() {");
     sw.indent();
-    sw.println("Set<Property<?>> rtn = new HashSet<Property<?>>();");
+    sw.println("Set<String> rtn = new HashSet<String>();");
     for (JField field : recordType.getFields()) {
       if (field.getType().getQualifiedSourceName().equals(
           Property.class.getName())) {
         sw.println("rtn.add(" + recordType.getName() + "." + field.getName()
-            + ");");
+            + ".getName());");
       }
     }
-    sw.println("return rtn;");
+    sw.println("return rtn.toArray(new String[rtn.size()]);");
     sw.outdent();
     sw.println("}");
     sw.outdent();
   }
 
-  private void writeInit(SourceWriter sw, JClassType viewType,
-      JClassType recordType) {
+  private void writeInit(SourceWriter sw, JClassType viewType) {
     sw.indent();
     sw.println("public void init(final " + viewType.getName() + " view) {");
     sw.indent();

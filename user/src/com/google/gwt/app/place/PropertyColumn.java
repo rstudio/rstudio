@@ -27,7 +27,9 @@ import com.google.gwt.valuestore.shared.Record;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * A column that displays a record property as a string.
+ * A column that displays a record property as a string. NB: Property objects
+ * will soon go away, and this column class will hopefully replaced by a (much
+ * simpler to use) code generated system.
  * 
  * @param <R> the type of record in this table
  * @param <T> value type of the property
@@ -38,21 +40,43 @@ public class PropertyColumn<R extends Record, T> extends TextColumn<R> {
     return new PropertyColumn<R, String>(property,
         PassthroughRenderer.instance());
   }
-  private final Renderer<T> renderer;
 
+  private final Renderer<T> renderer;
   private final Property<T> property;
+  private final String[] paths;
+
+  public PropertyColumn(Property<T> property, ProxyRenderer<T> renderer) {
+    this.property = property;
+    this.renderer = renderer;
+    this.paths = pathinate(property, renderer);
+  }
 
   public PropertyColumn(Property<T> property, Renderer<T> renderer) {
     this.property = property;
     this.renderer = renderer;
+    this.paths = new String[] {property.getName()};
   }
 
-  public Property<T> getProperty() {
-    return property;
+  public String getDisplayName() {
+    return property.getDisplayName();
+  }
+
+  public String[] getPaths() {
+    return paths;
   }
 
   @Override
   public String getValue(R object) {
     return renderer.render(object.get(property));
+  }
+
+  private String[] pathinate(Property<T> property, ProxyRenderer<T> renderer) {
+    String[] rtn = new String[renderer.getPaths().length];
+    int i = 0;
+    for (String rendererPath : renderer.getPaths()) {
+      rtn[i++] = property.getName() + "." + rendererPath;
+    }
+
+    return rtn;
   }
 }

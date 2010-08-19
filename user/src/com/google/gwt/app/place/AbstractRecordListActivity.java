@@ -225,7 +225,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
   /**
    * Called when the user chooses a record to view. This default implementation
    * sends the {@link PlaceController} to an appropriate {@link ProxyPlace}.
-   * 
+   *
    * @param record the chosen record
    */
   protected void showDetails(R record) {
@@ -234,7 +234,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
 
   private void fireRangeRequest(final Range range,
       final Receiver<List<R>> callback) {
-    createRangeRequest(range).forProperties(getView().getProperties()).fire(
+    createRangeRequest(range).with(getView().getPaths()).fire(
         callback);
   }
 

@@ -18,11 +18,18 @@ package com.google.gwt.sample.expenses.gwt.ui.employee;
 import com.google.gwt.app.place.AbstractRecordEditActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordEditView;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
+import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.Value;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * An activity that requests all info on an employee, allows the user to edit
@@ -56,8 +63,29 @@ public class EmployeeEditActivity extends
   public EmployeeEditActivity(RecordEditView<EmployeeRecord> view,
       EmployeeRecord proxy, ExpensesRequestFactory requests,
       PlaceController placeController, boolean creating) {
-    super(view, proxy, EmployeeRecord.class, creating, requests, placeController);
+    super(view, proxy, EmployeeRecord.class, creating, requests,
+        placeController);
     this.requests = requests;
+  }
+
+  @Override
+  public void start(Display display, EventBus eventBus) {
+    getEmployeeEditView().setEmployeePickerValues(
+        Collections.<EmployeeRecord> emptyList());
+    
+    requests.employeeRequest().findEmployeeEntries(0, 50).with(
+        EmployeeRenderer.instance().getPaths()).fire(
+        new Receiver<List<EmployeeRecord>>() {
+          public void onSuccess(List<EmployeeRecord> response,
+              Set<SyncResult> syncResults) {
+            List<EmployeeRecord> values = new ArrayList<EmployeeRecord>();
+            values.add(null);
+            values.addAll(response);
+            getEmployeeEditView().setEmployeePickerValues(values);
+          }
+
+        });
+    super.start(display, eventBus);
   }
 
   @Override
@@ -68,5 +96,9 @@ public class EmployeeEditActivity extends
 
   protected RequestObject<Void> getPersistRequest(EmployeeRecord record) {
     return requests.employeeRequest().persist(record);
+  }
+
+  private EmployeeEditView getEmployeeEditView() {
+    return ((EmployeeEditView) getView());
   }
 }
