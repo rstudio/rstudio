@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
 import com.google.gwt.app.client.EditorSupport;
+import com.google.gwt.app.client.LongBox;
 import com.google.gwt.app.place.RecordEditView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
@@ -31,10 +32,10 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.ValueListBox;
+import com.google.gwt.valuestore.shared.Property;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Edit view for employee records.
@@ -50,31 +51,18 @@ public class EmployeeEditView extends Composite implements
   private static final Binder BINDER = GWT.create(Binder.class);
   private static final DataBinder DATA_BINDER = GWT.create(DataBinder.class);
 
-  @UiField
-  TextBox displayName;
-  @UiField
-  TextBox password;
-  @UiField(provided = true)
-  ValueListBox<EmployeeRecord> supervisor = new ValueListBox<EmployeeRecord>(
-      EmployeeRenderer.instance());
-
-  @UiField
-  TextBox userName;
-  @UiField
-  Button cancel;
-  @UiField
-  Button save;
-  @UiField
-  InlineLabel id;
-  @UiField
-  InlineLabel version;
-  @UiField
-  DivElement errors;
-
-  @UiField
-  Element editTitle;
-  @UiField
-  Element createTitle;
+  @UiField TextBox displayName;
+  @UiField TextBox password;
+  @UiField LongBox supervisorKey;
+  @UiField TextBox userName;
+  @UiField Button cancel;
+  @UiField Button save;
+  @UiField InlineLabel id;
+  @UiField InlineLabel version;
+  @UiField DivElement errors;
+  
+  @UiField Element editTitle;
+  @UiField Element createTitle;
 
   private Delegate delegate;
   private EmployeeRecord record;
@@ -88,8 +76,8 @@ public class EmployeeEditView extends Composite implements
     return this;
   }
 
-  public String[] getPaths() {
-    return DATA_BINDER.getPaths();
+  public Set<Property<?>> getProperties() {
+    return DATA_BINDER.getProperties();
   }
 
   public EmployeeRecord getValue() {
@@ -112,10 +100,6 @@ public class EmployeeEditView extends Composite implements
 
   public void setDelegate(Delegate delegate) {
     this.delegate = delegate;
-  }
-
-  public void setEmployeePickerValues(Collection<EmployeeRecord> values) {
-    supervisor.setAcceptableValues(values);
   }
 
   public void setEnabled(boolean enabled) {

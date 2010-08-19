@@ -16,15 +16,14 @@
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
 import com.google.gwt.app.client.EditorSupport;
+import com.google.gwt.app.client.LongBox;
 import com.google.gwt.app.place.RecordEditView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
-import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeRenderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -33,11 +32,11 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.ValueListBox;
 import com.google.gwt.user.datepicker.client.DateBox;
+import com.google.gwt.valuestore.shared.Property;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Edit view for employee records.
@@ -55,10 +54,8 @@ public class ReportEditView extends Composite implements
 
   @UiField TextBox notes;
   @UiField TextBox purpose;
-  @UiField(provided = true) ValueListBox<EmployeeRecord> reporter =
-    new ValueListBox<EmployeeRecord>(EmployeeRenderer.instance());
-  @UiField(provided = true) ValueListBox<EmployeeRecord> approvedSupervisor =
-    new ValueListBox<EmployeeRecord>(EmployeeRenderer.instance());
+  @UiField LongBox reporterKey;
+  @UiField LongBox approvedSupervisorKey;
   @UiField DateBox created;
   @UiField Button cancel;
   @UiField Button save;
@@ -71,18 +68,18 @@ public class ReportEditView extends Composite implements
   private Delegate delegate;
 
   private ReportRecord record;
-
+  
   public ReportEditView() {
     initWidget(BINDER.createAndBindUi(this));
     DATA_BINDER.init(this);
   }
-
+  
   public ReportEditView asWidget() {
     return this;
   }
 
-  public String[] getPaths() {
-    return DATA_BINDER.getPaths();
+  public Set<Property<?>> getProperties() {
+    return DATA_BINDER.getProperties();
   }
 
   public ReportRecord getValue() {
@@ -105,11 +102,6 @@ public class ReportEditView extends Composite implements
 
   public void setDelegate(Delegate delegate) {
     this.delegate = delegate;
-  }
-
-  public void setEmployeePickerValues(Collection<EmployeeRecord> values) {
-    approvedSupervisor.setAcceptableValues(values);
-    reporter.setAcceptableValues(values);
   }
 
   public void setEnabled(boolean enabled) {

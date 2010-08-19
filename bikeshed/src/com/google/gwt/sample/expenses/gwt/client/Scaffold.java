@@ -97,7 +97,7 @@ public class Scaffold implements EntryPoint {
     /* Left side lets us pick from all the types of entities */
 
     HasConstrainedValue<ProxyListPlace> listPlacePickerView = shell.getPlacesBox();
-    listPlacePickerView.setAcceptableValues(getTopPlaces());
+    listPlacePickerView.setValues(getTopPlaces());
     factory.getListPlacePicker().register(eventBus, listPlacePickerView);
 
     /*

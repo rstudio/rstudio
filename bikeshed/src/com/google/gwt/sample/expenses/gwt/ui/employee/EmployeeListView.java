@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
+import com.google.gwt.app.client.ProxyIdRenderer;
 import com.google.gwt.app.place.AbstractRecordListView;
 import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
@@ -50,14 +51,10 @@ public class EmployeeListView extends AbstractRecordListView<EmployeeRecord> {
     List<PropertyColumn<EmployeeRecord, ?>> columns = new ArrayList<PropertyColumn<EmployeeRecord, ?>>();
 
     columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.userName));
-
     columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.displayName));
-
     columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.password));
-
     columns.add(new PropertyColumn<EmployeeRecord, EmployeeRecord>(
-        EmployeeRecord.supervisor, EmployeeRenderer.instance()));
-
+        EmployeeRecord.supervisor, ProxyIdRenderer.<EmployeeRecord>instance()));
     return columns;
   }
 }

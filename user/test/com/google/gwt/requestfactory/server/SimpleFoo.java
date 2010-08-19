@@ -29,7 +29,7 @@ public class SimpleFoo {
     return null;
   }
 
-  public static SimpleFoo findSimpleFooById(@SuppressWarnings("unused") Long id) {
+  public static SimpleFoo findSimpleFooById(Long id) {
     return null;
   }
 

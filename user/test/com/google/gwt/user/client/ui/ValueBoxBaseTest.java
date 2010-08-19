@@ -40,7 +40,7 @@ public class ValueBoxBaseTest extends GWTTestCase {
     parser.throwException = true;
     valueBoxBase.setText("");
     try {
-      valueBoxBase.getValueOrThrow();
+      String string = valueBoxBase.getValueOrThrow();
       fail("Should have thrown ParseException");
     } catch (ParseException e) {
       // exception was correctly thrown
@@ -62,7 +62,7 @@ public class ValueBoxBaseTest extends GWTTestCase {
     parser.throwException = true;
     valueBoxBase.setText("simple string");
     try {
-      valueBoxBase.getValueOrThrow();
+      String string = valueBoxBase.getValueOrThrow();
       fail("Should have thrown ParseException");
     } catch (ParseException e) {
       // exception was correctly thrown
@@ -73,7 +73,7 @@ public class ValueBoxBaseTest extends GWTTestCase {
   }
   
   // Test that a string with padding spaces correctly passes through
-  public void testSpaces() throws ParseException {
+  public void testSpaces() {
     Element elm = Document.get().createTextInputElement();
     Renderer<String> renderer = PassthroughRenderer.instance();
     MockParser parser = new MockParser();
@@ -81,9 +81,12 @@ public class ValueBoxBaseTest extends GWTTestCase {
     ValueBoxBase<String> valueBoxBase = 
       new ValueBoxBase<String>(elm, renderer, parser);
     
-    String text = "  two space padding test  ";
-    valueBoxBase.setText(text);
-    assertEquals(text, valueBoxBase.getValueOrThrow());
+    valueBoxBase.setText("  two space padding test  ");
+    try {
+      assertEquals("  two space padding  ", valueBoxBase.getValueOrThrow());
+    } catch (ParseException e) {
+      fail("Should not have thrown ParseException");
+    }
     if (!parser.parseCalled) {
       fail("Parser was not run");
     }

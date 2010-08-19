@@ -18,20 +18,11 @@ package com.google.gwt.sample.expenses.gwt.ui.report;
 import com.google.gwt.app.place.AbstractRecordEditActivity;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordEditView;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
-import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeRenderer;
-import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.valuestore.shared.Value;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 /**
  * An activity that requests all info on a report, allows the user to edit it,
@@ -68,26 +59,7 @@ public class ReportEditActivity extends
     super(view, proxy, ReportRecord.class, creating, requests, placeController);
     this.requests = requests;
   }
-  @Override
-  public void start(Display display, EventBus eventBus) {
-    getReportEditView().setEmployeePickerValues(
-        Collections.<EmployeeRecord> emptyList());
-    
-    requests.employeeRequest().findEmployeeEntries(0, 50).with(
-        EmployeeRenderer.instance().getPaths()).fire(
-        new Receiver<List<EmployeeRecord>>() {
-          public void onSuccess(List<EmployeeRecord> response,
-              Set<SyncResult> syncResults) {
-            List<EmployeeRecord> values = new ArrayList<EmployeeRecord>();
-            values.add(null);
-            values.addAll(response);
-            getReportEditView().setEmployeePickerValues(values);
-          }
 
-        });
-    super.start(display, eventBus);
-  }
-  
   @Override
   protected void fireFindRequest(Value<Long> id, Receiver<ReportRecord> callback) {
     requests.reportRequest().findReport(id).fire(callback);
@@ -95,9 +67,5 @@ public class ReportEditActivity extends
 
   protected RequestObject<Void> getPersistRequest(ReportRecord record) {
     return requests.reportRequest().persist(record);
-  }
-
-  private ReportEditView getReportEditView() {
-    return ((ReportEditView) getView());
   }
 }

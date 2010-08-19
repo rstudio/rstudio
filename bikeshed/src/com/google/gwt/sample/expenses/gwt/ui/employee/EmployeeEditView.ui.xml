@@ -40,7 +40,7 @@
     <table class='{style.fields}'>
       <tr><td><div class='{style.label}'>Display Name:</div></td><td><g:TextBox ui:field='displayName'></g:TextBox></td></tr>
       <tr><td><div class='{style.label}'>User Name:</div></td><td><g:TextBox ui:field='userName'></g:TextBox></td></tr>
-      <tr><td><div class='{style.label}'>Supervisor:</div></td><td><g:ValueListBox ui:field='supervisor'></g:ValueListBox></td></tr>
+      <tr><td><div class='{style.label}'>Supervisor Key:</div></td><td><a:LongBox ui:field='supervisorKey'></a:LongBox></td></tr>
       <tr><td><div class='{style.label}'>Password:</div></td><td><g:PasswordTextBox ui:field='password'></g:PasswordTextBox></td></tr>
     </table>
 

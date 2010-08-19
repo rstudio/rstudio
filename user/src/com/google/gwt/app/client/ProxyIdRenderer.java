@@ -13,29 +13,37 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place;
+package com.google.gwt.app.client;
 
-import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.text.shared.AbstractRenderer;
+import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.valuestore.shared.Record;
 
-import java.util.Set;
-
 /**
- * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p>
- * A view that displays a set of {@link Property} values for a type of
- * {@link Record}.
- * 
- * @param <R> the type of the record
+ * <p>
+ * Renderer of Record values
+ * @param <T> a record type
  */
-public interface PropertyView<R extends Record> {
+public class ProxyIdRenderer<T extends Record> extends AbstractRenderer<T> {
+  private static ProxyIdRenderer INSTANCE;
 
   /**
-   * @return the set of properties this view displays, which are guaranteed to
-   *         be properties of R
+   * @return the instance
    */
-  Set<Property<?>> getProperties();
+  public static <T extends Record> Renderer<T> instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new ProxyIdRenderer<T>();
+    }
+    return INSTANCE;
+  }
+
+  protected ProxyIdRenderer() {
+  }
+
+  public String render(T object) {
+    return toString(object == null ? null : object.getId());
+  }
 }

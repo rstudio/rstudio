@@ -42,8 +42,8 @@
       <tr><td><div class='{style.label}'>Purpose:</div></td><td><g:TextBox ui:field='purpose'></g:TextBox></td></tr>
       <tr><td><div class='{style.label}'>Notes:</div></td><td><g:TextBox ui:field='notes'></g:TextBox></td></tr>
       <tr><td><div class='{style.label}'>Created:</div></td><td><d:DateBox ui:field='created'></d:DateBox></td></tr>
-      <tr><td><div class='{style.label}'>Reporter:</div></td><td><g:ValueListBox ui:field='reporter'></g:ValueListBox></td></tr>
-      <tr><td><div class='{style.label}'>Approved Supervisor:</div></td><td><g:ValueListBox ui:field='approvedSupervisor'></g:ValueListBox></td></tr>
+      <tr><td><div class='{style.label}'>Reporter Key:</div></td><td><a:LongBox ui:field='reporterKey'></a:LongBox></td></tr>
+      <tr><td><div class='{style.label}'>Approved Supervisor Key:</div></td><td><a:LongBox ui:field='approvedSupervisorKey'></a:LongBox></td></tr>
     </table>
 
     <div class='{style.bar}'>

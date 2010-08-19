@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
+import com.google.gwt.app.client.ProxyIdRenderer;
 import com.google.gwt.app.place.AbstractRecordListView;
 import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
@@ -22,7 +23,6 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormatRenderer;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
-import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeRenderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -58,15 +58,11 @@ public class ReportListView extends AbstractRecordListView<ReportRecord> {
 
     columns.add(new PropertyColumn<ReportRecord, Date>(ReportRecord.created,
         new DateTimeFormatRenderer(DateTimeFormat.getShortDateFormat())));
-
     columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.purpose));
-
     columns.add(new PropertyColumn<ReportRecord, EmployeeRecord>(
-        ReportRecord.reporter, EmployeeRenderer.instance()));
-
+        ReportRecord.reporter, ProxyIdRenderer.<EmployeeRecord>instance()));
     columns.add(new PropertyColumn<ReportRecord, EmployeeRecord>(
-        ReportRecord.approvedSupervisor, EmployeeRenderer.instance()));
-
+        ReportRecord.approvedSupervisor, ProxyIdRenderer.<EmployeeRecord>instance()));
     return columns;
   }
 }

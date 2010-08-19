@@ -88,8 +88,6 @@ import com.google.gwt.user.client.ui.TextAreaTest;
 import com.google.gwt.user.client.ui.TreeItemTest;
 import com.google.gwt.user.client.ui.TreeTest;
 import com.google.gwt.user.client.ui.UIObjectTest;
-import com.google.gwt.user.client.ui.ValueBoxBaseTest;
-import com.google.gwt.user.client.ui.ValueListBoxTest;
 import com.google.gwt.user.client.ui.VerticalPanelTest;
 import com.google.gwt.user.client.ui.VerticalSplitPanelTest;
 import com.google.gwt.user.client.ui.WidgetCollectionTest;
@@ -184,8 +182,6 @@ public class UISuite {
     suite.addTestSuite(TreeTest.class);
     suite.addTestSuite(TreeItemTest.class);
     suite.addTestSuite(UIObjectTest.class);
-    suite.addTestSuite(ValueBoxBaseTest.class);
-    suite.addTestSuite(ValueListBoxTest.class);
     suite.addTestSuite(VerticalPanelTest.class);
     suite.addTestSuite(VerticalSplitPanelTest.class);
     suite.addTestSuite(WidgetCollectionTest.class);
