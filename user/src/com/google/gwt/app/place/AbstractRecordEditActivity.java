@@ -118,33 +118,23 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
         }
         boolean hasViolations = false;
 
-        // TODO(amit) at the moment we only get one response, and futures are
-        // buggy. So forcing the issue for now, but the more involved code may
-        // have to come back when bugs are fixed
-        assert response.size() == 1;
-        SyncResult syncResult = response.iterator().next();
-        record = cast(syncResult.getRecord());
-        if (syncResult.hasViolations()) {
-          hasViolations = true;
-          view.showErrors(syncResult.getViolations());
+         for (SyncResult syncResult : response) {
+          Record syncRecord = syncResult.getRecord();
+          if (creating) {
+            if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
+              continue;
+            }
+            record = cast(syncRecord);
+          } else {
+            if (!syncRecord.getId().equals(record.getId())) {
+              continue;
+            }
+          }
+          if (syncResult.hasViolations()) {
+            hasViolations = true;
+            view.showErrors(syncResult.getViolations());
+          }
         }
-        // for (SyncResult syncResult : response) {
-        // Record syncRecord = syncResult.getRecord();
-        // if (creating) {
-        // if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
-        // continue;
-        // }
-        // record = cast(syncRecord);
-        // } else {
-        // if (!syncRecord.getId().equals(record.getId())) {
-        // continue;
-        // }
-        // }
-        // if (syncResult.hasViolations()) {
-        // hasViolations = true;
-        // view.showErrors(syncResult.getViolations());
-        // }
-        // }
         if (!hasViolations) {
           exit(true);
         } else {
