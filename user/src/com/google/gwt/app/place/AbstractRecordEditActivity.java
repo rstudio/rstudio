@@ -80,6 +80,10 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     return record;
   }
 
+  public RecordEditView<R> getView() {
+    return view;
+  }
+
   public String mayStop() {
     if (requestObject != null && requestObject.isChanged()) {
       return "Are you sure you want to abandon your changes?";
@@ -87,7 +91,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
 
     return null;
   }
-
+  
   public void onCancel() {
     onStop();
   }

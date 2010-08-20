@@ -21,10 +21,10 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.view.client.HasData;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +45,7 @@ public abstract class AbstractRecordListView<R extends Record> extends
     Composite implements RecordListView<R> {
 
   private CellTable<R> table;
-  private Set<Property<?>> properties = new HashSet<Property<?>>();
+  private Set<String> paths = new HashSet<String>();
   private Delegate<R> delegate;
 
   public HasData<R> asHasData() {
@@ -56,8 +56,8 @@ public abstract class AbstractRecordListView<R extends Record> extends
     return this;
   }
 
-  public Set<Property<?>> getProperties() {
-    return properties;
+  public String[] getPaths() {
+    return paths.toArray(new String[paths.size()]);
   }
 
   public void setDelegate(final Delegate<R> delegate) {
@@ -70,8 +70,8 @@ public abstract class AbstractRecordListView<R extends Record> extends
     this.table = table;
 
     for (PropertyColumn<R, ?> column : columns) {
-      table.addColumn(column, column.getProperty().getDisplayName());
-      properties.add(column.getProperty());
+      table.addColumn(column, column.getDisplayName());
+      paths.addAll(Arrays.asList(column.getPaths()));
     }
 
     newButton.addClickHandler(new ClickHandler() {

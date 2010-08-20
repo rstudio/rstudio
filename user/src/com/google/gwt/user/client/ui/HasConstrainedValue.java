@@ -19,15 +19,20 @@ import java.util.Collection;
 
 /**
  * Implemented by widgets that pick from a set of values.
+ * <p>
+ * It is up to the implementation to decide (and document) how to behave when
+ * {@link #setValue(Object)} is called with a value that is not in the
+ * acceptable set. For example, throwing an {@link IllegalArgumentException}, or
+ * quietly adding the value to the acceptable set, are both reasonable choices.
  * 
  * @param <T> the type of value
  */
 public interface HasConstrainedValue<T> extends HasValue<T> {
 
   /**
-   * Set the acceptible values.
+   * Set the acceptable values.
    * 
    * @param values the acceptible values
    */
-  void setValues(Collection<T> values);
+  void setAcceptableValues(Collection<T> values);
 }

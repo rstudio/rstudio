@@ -15,10 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
-
-import java.util.Set;
 
 /**
  * <p>
@@ -26,16 +23,14 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * A view that displays a set of {@link Property} values for a type of
- * {@link Record}.
+ * A view that displays a set of property values for a type of {@link Record}.
  * 
  * @param <R> the type of the record
  */
 public interface PropertyView<R extends Record> {
 
   /**
-   * @return the set of properties this view displays, which are guaranteed to
-   *         be properties of R
+   * @return the set of properties this view displays
    */
-  Set<Property<?>> getProperties();
+  String[] getPaths();
 }
