@@ -59,6 +59,9 @@
     <pathelement location="${gwt.tools.lib}/easymock/easymock.jar"/>
     <pathelement location="${gwt.tools.lib}/easymock/easymockclassextension.jar"/>
     <pathelement location="${gwt.tools.lib}/objectweb/asm-3.1.jar"/>
+    <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
+    <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
+    <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
     <pathelement location="${gwt.dev.jar}" />
   </path>
 
@@ -108,8 +111,6 @@
         <pathelement location="${javac.out}" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
-        <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
-        <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
         <path refid="test.extraclasspath" />
       </classpath>
     </gwt.javac>
