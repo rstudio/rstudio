@@ -37,6 +37,12 @@
     <copy todir="${sample.build}/war">
       <fileset dir="war" excludes="WEB-INF/classes/**"/>
     </copy>
+    <if>
+      <available file="pom.xml"/>
+      <then>
+        <copy tofile="${sample.build}/pom.xml" file="pom.xml"/>
+      </then>
+    </if>
   </target>
 
   <target name="compile" description="Compile all java files">

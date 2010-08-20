@@ -61,6 +61,12 @@
     </antcall>
   </target>
 
+  <target name="source" description="Copy source to the output folder">
+    <antcall target="-do">
+      <param name="target" value="source" />
+    </antcall>
+  </target>
+  
   <target name="test" description="Test GWT">
     <antcall target="-do">
       <param name="target" value="test" />
