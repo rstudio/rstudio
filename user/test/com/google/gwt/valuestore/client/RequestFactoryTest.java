@@ -33,11 +33,182 @@ import java.util.Set;
  */
 public class RequestFactoryTest extends GWTTestCase {
 
+  /*
+   * TODO: all these tests should check the final values. It will be easy when
+   * we have better persistence than the singleton pattern.
+   */
+  public void testPersistExistingEntityExistingRelation() {
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+
+    req.simpleBarRequest().findSimpleBarById(999L).fire(
+        new Receiver<SimpleBarRecord>() {
+          public void onSuccess(final SimpleBarRecord barRecord,
+              Set<SyncResult> syncResults) {
+            req.simpleFooRequest().findSimpleFooById(999L).fire(
+                new Receiver<SimpleFooRecord>() {
+                  public void onSuccess(SimpleFooRecord fooRecord,
+                      Set<SyncResult> syncResults) {
+                    RequestObject<Void> updReq = req.simpleFooRequest().persist(
+                        fooRecord);
+                    fooRecord = updReq.edit(fooRecord);
+                    fooRecord.setBarField(barRecord);
+                    updReq.fire(new Receiver<Void>() {
+                      public void onSuccess(Void response,
+                          Set<SyncResult> syncResults) {
+                        finishTest();
+                      }
+                    });
+                  }
+                });
+          }
+        });
+  }
+
+  /*
+   * Find Entity Create Entity2 Relate Entity2 to Entity Persist Entity
+   */
+  public void testPersistExistingEntityNewRelation() {
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+
+    SimpleBarRecord newBar = (SimpleBarRecord) req.create(SimpleBarRecord.class);
+
+    final RequestObject<Void> barReq = req.simpleBarRequest().persist(newBar);
+    newBar = barReq.edit(newBar);
+    newBar.setUserName("Amit");
+
+    final SimpleBarRecord finalNewBar = newBar;
+    req.simpleFooRequest().findSimpleFooById(999L).fire(
+        new Receiver<SimpleFooRecord>() {
+          public void onSuccess(SimpleFooRecord response,
+              Set<SyncResult> syncResults) {
+            RequestObject<Void> fooReq = req.simpleFooRequest().persist(
+                response);
+            response = fooReq.edit(response);
+            response.setBarField(finalNewBar);
+            fooReq.fire(new Receiver<Void>() {
+              public void onSuccess(Void response, Set<SyncResult> syncResults) {
+                req.simpleFooRequest().findSimpleFooById(999L).with(
+                    "barField.userName").fire(new Receiver<SimpleFooRecord>() {
+                  public void onSuccess(SimpleFooRecord finalFooRecord,
+                      Set<SyncResult> syncResults) {
+                    // barReq hasn't been persisted, so old value
+                    assertEquals("FOO",
+                        finalFooRecord.getBarField().getUserName());
+                    finishTest();
+                  }
+
+                });
+              }
+            });
+          }
+        });
+  }
+
+  /*
+   * Find Entity2 Create Entity, Persist Entity Relate Entity2 to Entity Persist
+   * Entity
+   */
+  public void testPersistNewEntityExistingRelation() {
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+    SimpleFooRecord newFoo = (SimpleFooRecord) req.create(SimpleFooRecord.class);
+
+    final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("Ray");
+
+    final SimpleFooRecord finalFoo = newFoo;
+    req.simpleBarRequest().findSimpleBarById(999L).fire(
+        new Receiver<SimpleBarRecord>() {
+          public void onSuccess(SimpleBarRecord response,
+              Set<SyncResult> syncResults) {
+            finalFoo.setBarField(response);
+            fooReq.fire(new Receiver<Void>() {
+              public void onSuccess(Void response, Set<SyncResult> syncResults) {
+                req.simpleFooRequest().findSimpleFooById(999L).fire(
+                    new Receiver<SimpleFooRecord>() {
+                      public void onSuccess(SimpleFooRecord finalFooRecord,
+                          Set<SyncResult> syncResults) {
+                        // newFoo hasn't been persisted, so userName is the old value.
+                        assertEquals("GWT", finalFooRecord.getUserName());
+                        finishTest();
+                      }
+
+                    });
+              }
+            });
+          }
+        });
+  }
+
+  /*
+   * Create Entity, Persist Entity Create Entity2, Perist Entity2 relate Entity2
+   * to Entity Persist
+   */
+  public void testPersistNewEntityNewRelation() {
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+    SimpleFooRecord newFoo = (SimpleFooRecord) req.create(SimpleFooRecord.class);
+    SimpleBarRecord newBar = (SimpleBarRecord) req.create(SimpleBarRecord.class);
+
+    final RequestObject<SimpleFooRecord> fooReq = req.simpleFooRequest().persistAndReturnSelf(
+        newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("Ray");
+
+    final RequestObject<SimpleBarRecord> barReq = req.simpleBarRequest().persistAndReturnSelf(
+        newBar);
+    newBar = barReq.edit(newBar);
+    newBar.setUserName("Amit");
+
+    fooReq.fire(new Receiver<SimpleFooRecord>() {
+      public void onSuccess(final SimpleFooRecord persistedFoo,
+          Set<SyncResult> syncResult) {
+        barReq.fire(new Receiver<SimpleBarRecord>() {
+          public void onSuccess(final SimpleBarRecord persistedBar,
+              Set<SyncResult> syncResults) {
+            assertEquals("Ray", persistedFoo.getUserName());
+            final RequestObject<Void> fooReq2 = req.simpleFooRequest().persist(
+                persistedFoo);
+            SimpleFooRecord editablePersistedFoo = fooReq2.edit(persistedFoo);
+            editablePersistedFoo.setBarField(persistedBar);
+            fooReq2.fire(new Receiver<Void>() {
+              public void onSuccess(Void response, Set<SyncResult> syncResults) {
+                req.simpleFooRequest().findSimpleFooById(999L).with(
+                    "barField.userName").fire(new Receiver<SimpleFooRecord>() {
+                  public void onSuccess(SimpleFooRecord finalFooRecord,
+                      Set<SyncResult> syncResults) {
+                    assertEquals("Amit",
+                        finalFooRecord.getBarField().getUserName());
+                    finishTest();
+                  }
+
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
   public void testPersistRelation() {
     final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
     HandlerManager hm = new HandlerManager(null);
     req.init(hm);
-    delayTestFinish(500000);
+    delayTestFinish(5000);
 
     SimpleFooRecord rayFoo = req.create(SimpleFooRecord.class);
     final RequestObject<SimpleFooRecord> persistRay = req.simpleFooRequest().persistAndReturnSelf(

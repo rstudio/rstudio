@@ -16,6 +16,7 @@
 package com.google.gwt.valuestore.shared;
 
 import com.google.gwt.requestfactory.shared.Instance;
+import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
@@ -26,9 +27,15 @@ import com.google.gwt.requestfactory.shared.Service;
 @Service(com.google.gwt.valuestore.server.SimpleBar.class)
 public interface SimpleBarRequest {
 
+  RequestObject<Long> countSimpleBar();
+
+  RecordListRequest<SimpleBarRecord> findAll();
+
+  RecordRequest<SimpleBarRecord> findSimpleBarById(Long id);
+
   @Instance
   RequestObject<Void> persist(SimpleBarRecord record);
-  
+
   @Instance
   RecordRequest<SimpleBarRecord> persistAndReturnSelf(SimpleBarRecord record);
 }
