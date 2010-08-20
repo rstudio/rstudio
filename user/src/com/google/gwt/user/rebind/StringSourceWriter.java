@@ -33,7 +33,7 @@ public class StringSourceWriter implements SourceWriter {
   private final PrintWriter out = new PrintWriter(buffer);
 
   public void beginJavaDocComment() {
-    out.println("/**");
+    println("/**");
     indent();
     indentPrefix = " * ";
   }
@@ -72,7 +72,8 @@ public class StringSourceWriter implements SourceWriter {
 
   public void println() {
     maybeIndent();
-    out.println();
+    // Unix-style line endings for consistent behavior across platforms.
+    out.print('\n');
     needsIndent = true;
   }
 

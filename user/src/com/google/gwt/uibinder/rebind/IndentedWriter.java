@@ -42,7 +42,8 @@ public class IndentedWriter {
    * Outputs a new line.
    */
   public void newline() {
-    pw.println();
+    // Unix-style line endings for consistent behavior across platforms.
+    pw.print('\n');
   }
 
   /**
@@ -60,7 +61,8 @@ public class IndentedWriter {
    */
   public void write(String format) {
     printIndent();
-    pw.println(format);
+    pw.print(format);
+    newline();
   }
 
   /**
@@ -69,7 +71,7 @@ public class IndentedWriter {
   public void write(String format, Object... args) {
     printIndent();
     pw.printf(format, args);
-    pw.println();
+    newline();
   }
 
   private void printIndent() {

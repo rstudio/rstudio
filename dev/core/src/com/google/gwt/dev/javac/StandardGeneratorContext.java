@@ -494,7 +494,17 @@ public class StandardGeneratorContext implements GeneratorContext {
     // it is pending so another attempt to create the same type will fail.
     Generated gcup;
     StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw, true);
+    PrintWriter pw = new PrintWriter(sw, true) {
+      /**
+       * Overridden to force unix-style line endings for consistent behavior
+       * across platforms.
+       */
+      @Override
+      public void println() {
+        super.print('\n');
+        super.flush();
+      }
+    };
     if (this.genDir == null) {
       gcup = new GeneratedUnitImpl(sw, typeName);
     } else {
