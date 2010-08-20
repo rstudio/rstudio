@@ -169,14 +169,16 @@ class DeltaValueStoreJsonImpl {
         if (violations == NULL_VIOLATIONS) {
           Long datastoreId = futureToDatastoreId.get(futureKey.id);
           assert datastoreId != null;
-          final RecordKey key = new RecordKey(datastoreId, futureKey.schema, RequestFactoryJsonImpl.NOT_FUTURE);
+          final RecordKey key = new RecordKey(datastoreId, futureKey.schema,
+              RequestFactoryJsonImpl.NOT_FUTURE);
           RecordJsoImpl value = entry.getValue();
           value.set(Record.id, datastoreId);
           RecordJsoImpl masterRecord = master.records.get(key);
           assert masterRecord == null;
           master.records.put(key, value);
           masterRecord = value;
-          toRemove.add(new RecordKey(datastoreId, futureKey.schema, RequestFactoryJsonImpl.IS_FUTURE));
+          toRemove.add(new RecordKey(datastoreId, futureKey.schema,
+              RequestFactoryJsonImpl.IS_FUTURE));
           requestFactory.postChangeEvent(masterRecord, WriteOperation.CREATE);
           syncResults.add(makeSyncResult(masterRecord, null, futureKey.id));
         } else {
@@ -201,16 +203,22 @@ class DeltaValueStoreJsonImpl {
             RequestFactoryJsonImpl.NOT_FUTURE);
         Map<String, String> violations = violationsMap.get(key.id);
         assert violations != null;
+        /*
+         * post change event if no violations.
+         *
+         * TODO: there needs to be a separate path for violations, not mingled
+         * with update events.
+         */
+        if (violations == NULL_VIOLATIONS) {
+          requestFactory.postChangeEvent(RecordJsoImpl.create(key.id, 1,
+              key.schema), WriteOperation.DELETE);
+        }
         RecordJsoImpl masterRecord = master.records.get(key);
         if (masterRecord != null) {
-          if (violations == NULL_VIOLATIONS) {
-            master.records.remove(key);
-            requestFactory.postChangeEvent(masterRecord, WriteOperation.DELETE);
-            syncResults.add(makeSyncResult(masterRecord, null, null));
-          } else {
-            // do not change the masterRecord or fire event
-            syncResults.add(makeSyncResult(masterRecord, violations, null));
-          }
+          master.records.remove(key);
+          syncResults.add(makeSyncResult(masterRecord, null, null));
+        } else {
+          syncResults.add(makeSyncResult(masterRecord, violations, null));
         }
       }
     }
@@ -219,20 +227,32 @@ class DeltaValueStoreJsonImpl {
       JsArray<ReturnRecord> updatedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.UPDATE.name());
       Map<Long, Map<String, String>> violationsMap = getViolationsMap(updatedRecords);
-      for (Map.Entry<RecordKey, RecordJsoImpl> entry : updates.entrySet()) {
-        final RecordKey key = entry.getKey();
+
+      int length = updatedRecords.length();
+      for (int i = 0; i < length; i++) {
+        final RecordKey key = new RecordKey(updatedRecords.get(i).getId(),
+            requestFactory.getSchema(updatedRecords.get(i).getSchema()),
+            RequestFactoryJsonImpl.NOT_FUTURE);
         Map<String, String> violations = violationsMap.get(key.id);
         assert violations != null;
+        // post change events if no violations.
         if (violations == NULL_VIOLATIONS) {
-          RecordJsoImpl masterRecord = master.records.get(key);
-          assert masterRecord != null;
-          masterRecord.merge(entry.getValue());
+          requestFactory.postChangeEvent(RecordJsoImpl.create(key.id, 1,
+              key.schema), WriteOperation.UPDATE);
+        }
+
+        RecordJsoImpl masterRecord = master.records.get(key);
+        RecordJsoImpl value = updates.get(key);
+        if (masterRecord != null && value != null) {
+          // no support for partial updates.
+          masterRecord.merge(value);
           toRemove.add(key);
-          requestFactory.postChangeEvent(masterRecord, WriteOperation.UPDATE);
+        }
+        if (masterRecord != null) {
           syncResults.add(makeSyncResult(masterRecord, null, null));
         } else {
           // do not change the masterRecord or fire event
-          syncResults.add(makeSyncResult(entry.getValue(), violations, null));
+          syncResults.add(makeSyncResult(masterRecord, violations, null));
         }
       }
     }
