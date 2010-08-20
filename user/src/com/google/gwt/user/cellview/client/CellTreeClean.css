@@ -28,7 +28,7 @@ div:focus { outline: none; }
 */
 
 .keyboardSelectedItem {
-  background-color: #ffff00;
+/*  background-color: #ffff00; */
 }
 
 .openItem {
