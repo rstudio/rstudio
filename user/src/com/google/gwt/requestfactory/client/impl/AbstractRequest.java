@@ -79,10 +79,10 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   /**
    * @deprecated use {@link #with(String...)} instead.
    * @param properties
-   * @return
    */
+  @Deprecated
   public R forProperties(Collection<Property<?>> properties) {
-    for (Property p : properties) {
+    for (Property<?> p : properties) {
       with(p.getName());
     }
     return getThis();
@@ -134,6 +134,8 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
   protected native void processRelated(JavaScriptObject related) /*-{
     for(var recordKey in related) {
+      // Workaround for __gwt_ObjectId appearing in Chrome dev mode.
+      if (!related.hasOwnProperty(recordKey)) continue;
       var schemaAndId = recordKey.split(/-/, 2);
       var jso = related[recordKey];
       this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::setSchemaAndRecord(Ljava/lang/String;Lcom/google/gwt/requestfactory/client/impl/RecordJsoImpl;)(schemaAndId[0], jso);
