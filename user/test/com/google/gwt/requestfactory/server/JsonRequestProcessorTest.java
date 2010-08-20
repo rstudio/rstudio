@@ -170,7 +170,8 @@ public class JsonRequestProcessorTest extends TestCase {
       foo.put("userName", "JSC");
       foo.put("intId", 45);
       Date now = new Date();
-      foo.put("created", "" + now.getTime());
+      long newTime = now.getTime() + 10000;
+      foo.put("created", "" + newTime);
 
       JSONObject result = getResultFromServer(foo);
 
@@ -179,7 +180,7 @@ public class JsonRequestProcessorTest extends TestCase {
       fooResult = SimpleFoo.getSingleton();
       assertEquals((int) 45, (int) fooResult.getIntId());
       assertEquals("JSC", fooResult.getUserName());
-      assertEquals(now, fooResult.getCreated());
+      assertEquals(newTime, fooResult.getCreated().getTime());
     } catch (Exception e) {
       e.printStackTrace();
       fail(e.toString());
