@@ -36,7 +36,7 @@ public class RecordJsoImplTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.requestfactory.RequestFactoryTest";
+    return "com.google.gwt.requestfactory.RequestFactorySuite";
   }
 
   public void testEmptyCopy() {
