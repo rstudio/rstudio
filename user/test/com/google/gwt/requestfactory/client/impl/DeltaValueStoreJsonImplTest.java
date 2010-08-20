@@ -54,8 +54,15 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
      public RecordSchema<? extends Record> getType(
        String recordClass) {
-      if (recordClass.equals(SimpleFooRecord.class.getName())) {
+      if (recordClass.equals("simple-foo-class-token")) {
         return SimpleFooRecordImpl.SCHEMA;
+      }
+      throw new IllegalArgumentException("Unknown token " + recordClass);
+    }
+
+    public String getClassToken(Class<?> recordClass) {
+      if (recordClass.equals(SimpleFooRecord.class)) {
+        return "simple-foo-class-token";
       }
       throw new IllegalArgumentException("Unknown token " + recordClass);
     }
@@ -102,6 +109,10 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
       }
 
       public String getToken(Class<? extends Record> clazz) {
+        throw new UnsupportedOperationException("Auto-generated method stub");
+      }
+
+      public String getToken(Record proxy) {
         throw new UnsupportedOperationException("Auto-generated method stub");
       }
     };

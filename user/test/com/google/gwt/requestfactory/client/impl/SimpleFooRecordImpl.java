@@ -39,7 +39,9 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
    * The Schema class.
    */
   public static class MySchema extends RecordSchema<SimpleFooRecordImpl> {
+    
     private final Set<Property<?>> allProperties;
+    
     {
       Set<Property<?>> set = new HashSet<Property<?>>();
       set.addAll(super.allProperties());
@@ -51,6 +53,9 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
       set.add(longField);
       set.add(enumField);
       allProperties = Collections.unmodifiableSet(set);
+    }
+    public MySchema() {
+      super(SimpleFooRecord.class.getName());
     }
 
     @Override
@@ -71,7 +76,7 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
     }
 
     @Override
-    public Class<? extends Record> getToken() {
+    public Class<? extends Record> getProxyClass() {
       return SimpleFooRecord.class; // special field
     }
   }

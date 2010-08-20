@@ -123,20 +123,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   }
 
   public Class<? extends Record> getClass(Record proxy) {
-    return ((RecordImpl) proxy).getSchema().getToken();
+    return ((RecordImpl) proxy).getSchema().getProxyClass();
   }
 
   public abstract RecordSchema<?> getSchema(String token);
-
-  public String getToken(Record record) {
-    String rtn = ((RecordImpl) record).getSchema().getToken().getName() + "-";
-    if (((RecordImpl) record).isFuture()) {
-      rtn += "0-FUTURE";
-    } else {
-      rtn += record.getId();
-    }
-    return rtn;
-  }
 
   /**
    * @param eventBus
@@ -156,7 +146,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     if (schema == null) {
       return null;
     }
-    return schema.getToken();
+    return schema.getProxyClass();
   }
 
   protected Record getProxy(String token, RecordToTypeMap recordToTypeMap) {
@@ -184,9 +174,15 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return schema.create(RecordJsoImpl.create(id, -1, schema));
   }
 
-  protected String getToken(Class<? extends Record> clazz,
-      RecordToTypeMap recordToTypeMap) {
-    return recordToTypeMap.getType(clazz).getToken().getName();
+  protected String getToken(Record record, RecordToTypeMap recordToTypeMap) {
+    Class<? extends Record> proxyClass = ((RecordImpl) record).getSchema().getProxyClass();
+    String rtn = recordToTypeMap.getClassToken(proxyClass) + "-";
+    if (((RecordImpl) record).isFuture()) {
+      rtn += "0-FUTURE";
+    } else {
+      rtn += record.getId();
+    }
+    return rtn;
   }
 
   ValueStoreJsonImpl getValueStore() {

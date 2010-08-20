@@ -314,9 +314,6 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     }
 
     if (value instanceof RecordImpl) {
-      RequestFactoryJsonImpl requestFactory = getRequestFactory();
-      RecordSchema<?> schema = ((RecordImpl)value).getSchema();
-      Class<?> token = schema.getToken();
       setString(property.getName(), ((RecordImpl) value).getUniqueId());
       return;
     }
@@ -358,9 +355,15 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
     var key = this.__key;
     delete this.__key;
+    var rf = this.__rf;
+    delete this.__rf;
+    var vs = this.__vs;
+    delete this.__vs;
     // TODO verify that the stringify() from json2.js works on IE
     var rtn = $wnd.JSON.stringify(this);
     this.__key = key;
+    this.__rf = rf;
+    this.__vs = vs;
     return rtn;
   }-*/;
 

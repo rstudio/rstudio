@@ -39,14 +39,21 @@ import java.util.Set;
  * @param <R> the type of the Records this schema describes
  */
 public abstract class RecordSchema<R extends Record> {
+  
+  private final String token;
+  
   private final Set<Property<?>> allProperties;
+  
   {
     Set<Property<?>> set = new HashSet<Property<?>>();
     set.add(Record.id);
     set.add(Record.version);
     allProperties = Collections.unmodifiableSet(set);
   }
-
+  
+  public RecordSchema(String token) {
+    this.token = token;
+  }
   public Set<Property<?>> allProperties() {
     return allProperties;
   }
@@ -60,6 +67,9 @@ public abstract class RecordSchema<R extends Record> {
   public abstract RecordChangedEvent<?, ?> createChangeEvent(Record record,
       WriteOperation writeOperation);
 
-  // TODO(rjrjr) rename getProxyClass
-  public abstract Class<? extends Record> getToken();
+  public abstract Class<? extends Record> getProxyClass();
+
+  public String getToken() {
+    return token;
+  }
 }

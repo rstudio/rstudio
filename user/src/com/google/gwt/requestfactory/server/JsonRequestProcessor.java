@@ -365,11 +365,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return encodePropertyValue(returnValue);
   }
 
-  @SuppressWarnings("unchecked")
-  private Class<? extends Record> castToRecordClass(Class<?> propertyType) {
-    return (Class<? extends Record>) propertyType;
-  }
-
   /**
    * Generate an ID for a new record. The default behavior is to return null and
    * let the data store generate the ID automatically.
@@ -432,7 +427,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
          * configured.
          */
         log.info(String.format(
-            "Ingnoring exception caught initializing bean validation framework. "
+            "Ignoring exception caught initializing bean validation framework. "
                 + "It is probably unconfigured or misconfigured. [%s] %s ",
             e.getClass().getName(), e.getLocalizedMessage()));
       }
@@ -780,6 +775,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
     relatedObjects.put(keyRef, getJsonObject(returnValue, propertyType,
         propertyContext));
+  }
+
+  @SuppressWarnings("unchecked")
+  private Class<? extends Record> castToRecordClass(Class<?> propertyType) {
+    return (Class<? extends Record>) propertyType;
   }
 
   /**

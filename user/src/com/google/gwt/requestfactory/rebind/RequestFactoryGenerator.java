@@ -364,10 +364,18 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
     sw.println();
 
+    // write getToken(Record)
+    sw.println("public String getToken(Record record) {");
+    sw.indent();
+    sw.println("return getToken(record, new " + recordToTypeMapName + "());");
+    sw.outdent();
+    sw.println("}");
+    sw.println();
+
     // write getToken(Class)
     sw.println("public String getToken(Class clazz) {");
     sw.indent();
-    sw.println("return getToken(clazz, new " + recordToTypeMapName + "());");
+    sw.println("return new " + recordToTypeMapName + "().getClassToken(clazz);");
     sw.outdent();
     sw.println("}");
     sw.println();
@@ -438,21 +446,19 @@ public class RequestFactoryGenerator extends Generator {
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
 
-    sw.println("public RecordSchema<? extends Record> getType(Class token) {");
+    sw.println("public <R extends Record> RecordSchema<R> getType(Class<R> recordClass) {");
     sw.indent();
     for (JClassType publicRecordType : generatedRecordTypes) {
       String qualifiedSourceName = publicRecordType.getQualifiedSourceName();
-      sw.println("if (token == " + qualifiedSourceName + ".class) {");
+      sw.println("if (recordClass == " + qualifiedSourceName + ".class) {");
       sw.indent();
-      sw.println("return " + qualifiedSourceName + "Impl.SCHEMA;");
+      sw.println("return (RecordSchema<R>) " + qualifiedSourceName + "Impl.SCHEMA;");
       sw.outdent();
       sw.println("}");
     }
-
     sw.println(
-        "throw new IllegalArgumentException(\"Unknown token \" + token + ");
+        "throw new IllegalArgumentException(\"Unknown recordClass \" + recordClass);");
     sw.indent();
-    sw.println("\", does not match any of the TOKEN variables of a Record\");");
     sw.outdent();
     sw.outdent();
     sw.println("}");
@@ -468,10 +474,27 @@ public class RequestFactoryGenerator extends Generator {
       sw.outdent();
       sw.println("}");
     }
-
     sw.println("throw new IllegalArgumentException(\"Unknown string token: \" + token);");
     sw.outdent();
     sw.println("}");
+
+    sw.println("public String getClassToken(Class<?> recordClass) {");
+    sw.indent();
+    for (JClassType publicRecordType : generatedRecordTypes) {
+      String qualifiedSourceName = publicRecordType.getQualifiedSourceName();
+      sw.println("if (recordClass == " + qualifiedSourceName + ".class) {");
+      sw.indent();
+      sw.println("return \"" + qualifiedSourceName + "\";");
+      sw.outdent();
+      sw.println("}");
+    }
+    sw.println(
+        "throw new IllegalArgumentException(\"Unknown recordClass \" + recordClass);");
+    sw.indent();
+    sw.outdent();
+    sw.outdent();
+    sw.println("}");
+
 
     sw.outdent();
     sw.println("}");
@@ -820,6 +843,13 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
 
     sw.println();
+    sw.println("public MySchema() {");
+    sw.indent();
+    sw.println("super(\"" + publicRecordType.getQualifiedSourceName() + "\");");
+    sw.outdent();
+    sw.println("}");
+
+    sw.println();
     sw.println("@Override");
     sw.println(String.format("public %s create(RecordJsoImpl jso, boolean isFuture) {",
         recordImplTypeName));
@@ -840,7 +870,7 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
 
     sw.println();
-    sw.println("public Class getToken() {");
+    sw.println("public Class getProxyClass() {");
     sw.indent();
     sw.println("return " + publicRecordType.getQualifiedSourceName() + ".class;"
         + " // special field");

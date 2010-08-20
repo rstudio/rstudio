@@ -66,6 +66,7 @@ public class RequestFactoryServlet extends HttpServlet {
     ensureConfig();
     String jsonRequestString = RPCServletUtils.readContent(
         request, JSON_CONTENT_TYPE, JSON_CHARSET);
+    System.err.println(jsonRequestString);
     response.setStatus(HttpServletResponse.SC_OK);
     PrintWriter writer = response.getWriter();
 

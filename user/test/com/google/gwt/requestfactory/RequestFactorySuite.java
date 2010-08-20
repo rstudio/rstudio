@@ -13,22 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore;
+package com.google.gwt.requestfactory;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.valuestore.client.RequestFactoryTest;
+import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImplTest;
+import com.google.gwt.requestfactory.client.impl.RecordJsoImplTest;
 
 import junit.framework.Test;
 
 /**
- * Tests of the valuestore package that require GWT.
- * @see com.google.gwt.requestfactory.RequestFactorySuiteDisabled
+ * Tests of RequestFactory that require GWT.
+ * @see com.google.gwt.valuestore.ValueStoreSuite
  */
-public class ValueStoreSuiteDisabled {
+public class RequestFactorySuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for all valuestore code.");
-    suite.addTestSuite(RequestFactoryTest.class);
+        "Test suite for requestfactory gwt code.");
+    suite.addTestSuite(RecordJsoImplTest.class);
+    suite.addTestSuite(DeltaValueStoreJsonImplTest.class);
     return suite;
   }
 }

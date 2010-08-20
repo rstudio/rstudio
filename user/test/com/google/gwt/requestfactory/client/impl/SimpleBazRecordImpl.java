@@ -33,11 +33,16 @@ public class SimpleBazRecordImpl extends RecordImpl {
    * The Schema class.
    */
   public static class MySchema extends RecordSchema<SimpleBazRecordImpl> {
+    
     private final Set<Property<?>> allProperties;
     {
       Set<Property<?>> set = new HashSet<Property<?>>();
       set.addAll(super.allProperties());
       allProperties = Collections.unmodifiableSet(set);
+    }
+    
+    public MySchema() {
+      super(SimpleBazRecordImpl.class.getName());
     }
 
     @Override
@@ -58,7 +63,7 @@ public class SimpleBazRecordImpl extends RecordImpl {
     }
 
     @Override
-    public Class<? extends Record> getToken() {
+    public Class<? extends Record> getProxyClass() {
       // ignore
       return null;
     }

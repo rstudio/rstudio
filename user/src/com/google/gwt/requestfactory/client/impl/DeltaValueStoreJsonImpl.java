@@ -371,7 +371,7 @@ class DeltaValueStoreJsonImpl {
         requestData.append(",");
       }
       requestData.append("{\""
-          + entry.getValue().getSchema().getToken().getName() + "\":");
+          + entry.getValue().getSchema().getToken() + "\":");
       if (writeOperation != WriteOperation.DELETE) {
         requestData.append(impl.toJson());
       } else {
