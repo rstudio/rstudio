@@ -56,8 +56,9 @@ import com.google.gwt.user.client.ui.impl.FocusImpl;
  */
 @SuppressWarnings("deprecation")
 public abstract class FocusWidget extends Widget implements SourcesClickEvents,
-    HasClickHandlers, HasDoubleClickHandlers, HasFocus, HasAllFocusHandlers,
-    HasAllKeyHandlers, HasAllMouseHandlers, SourcesMouseEvents {
+    HasClickHandlers, HasDoubleClickHandlers, HasFocus, HasEnabled,
+    HasAllFocusHandlers, HasAllKeyHandlers, HasAllMouseHandlers,
+    SourcesMouseEvents {
 
   private static final FocusImpl impl = FocusImpl.getFocusImplForWidget();
 
