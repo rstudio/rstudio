@@ -47,6 +47,37 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   private Object layoutData;
   private Widget parent;
 
+  /**
+   * Adds a native event handler to the widget and sinks the corresponding
+   * native event. If you do not want to sink the native event, use the generic
+   * addHandler method instead.
+   * 
+   * @param <H> the type of handler to add
+   * @param type the event key
+   * @param handler the handler
+   * @return {@link HandlerRegistration} used to remove the handler
+   */
+  public final <H extends EventHandler> HandlerRegistration addDomHandler(
+      final H handler, DomEvent.Type<H> type) {
+    assert handler != null : "handler must not be null";
+    assert type != null : "type must not be null";
+    sinkEvents(Event.getTypeInt(type.getName()));
+    return ensureHandlers().addHandler(type, handler);
+  }
+
+  /**
+   * Adds this handler to the widget.
+   * 
+   * @param <H> the type of handler to add
+   * @param type the event type
+   * @param handler the handler
+   * @return {@link HandlerRegistration} used to remove the handler
+   */
+  public final <H extends EventHandler> HandlerRegistration addHandler(
+      final H handler, GwtEvent.Type<H> type) {
+    return ensureHandlers().addHandler(type, handler);
+  }
+
   public void fireEvent(GwtEvent<?> event) {
     if (handlerManager != null) {
       handlerManager.fireEvent(event);
@@ -165,37 +196,6 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
     } else {
       eventsToSink |= eventBitsToAdd;
     }
-  }
-
-  /**
-   * Adds a native event handler to the widget and sinks the corresponding
-   * native event. If you do not want to sink the native event, use the generic
-   * addHandler method instead.
-   * 
-   * @param <H> the type of handler to add
-   * @param type the event key
-   * @param handler the handler
-   * @return {@link HandlerRegistration} used to remove the handler
-   */
-  protected final <H extends EventHandler> HandlerRegistration addDomHandler(
-      final H handler, DomEvent.Type<H> type) {
-    assert handler != null : "handler must not be null";
-    assert type != null : "type must not be null";
-    sinkEvents(Event.getTypeInt(type.getName()));
-    return ensureHandlers().addHandler(type, handler);
-  }
-
-  /**
-   * Adds this handler to the widget.
-   * 
-   * @param <H> the type of handler to add
-   * @param type the event type
-   * @param handler the handler
-   * @return {@link HandlerRegistration} used to remove the handler
-   */
-  protected final <H extends EventHandler> HandlerRegistration addHandler(
-      final H handler, GwtEvent.Type<H> type) {
-    return ensureHandlers().addHandler(type, handler);
   }
 
   /**
