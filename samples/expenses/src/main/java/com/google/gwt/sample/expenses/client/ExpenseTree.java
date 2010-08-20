@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,9 +29,9 @@ import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.view.client.AsyncListViewAdapter;
+import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
-import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -55,7 +55,7 @@ public class ExpenseTree extends Composite {
 
     /**
      * Called when the user selects a tree item.
-     * 
+     *
      * @param department the selected department name
      * @param employee the selected employee
      */
@@ -71,7 +71,8 @@ public class ExpenseTree extends Composite {
       super(Styles.resources().userIcon(), new AbstractCell<EmployeeRecord>() {
 
         private final String usernameStyle = Styles.common().usernameTreeItem();
-        private final String usernameStyleSelected = Styles.common().usernameTreeItemSelected();
+        private final String usernameStyleSelected =
+            Styles.common().usernameTreeItemSelected();
 
         @Override
         public boolean dependsOnSelection() {
@@ -79,8 +80,8 @@ public class ExpenseTree extends Composite {
         }
 
         @Override
-        public void render(EmployeeRecord value, Object viewData,
-            StringBuilder sb) {
+        public void render(
+            EmployeeRecord value, Object viewData, StringBuilder sb) {
           if (value != null) {
             sb.append(value.getDisplayName()).append("<br>");
             sb.append("<span class='").append(usernameStyle);
@@ -98,33 +99,33 @@ public class ExpenseTree extends Composite {
   }
 
   /**
-   * The {@link ListViewAdapter} used for Employee lists.
+   * The {@link ListDataProvider} used for Employee lists.
    */
-  private class EmployeeListViewAdapter extends
-      AsyncListViewAdapter<EmployeeRecord> implements
-      Receiver<List<EmployeeRecord>> {
+  private class EmployeeListDataProvider extends AsyncDataProvider<
+      EmployeeRecord> implements Receiver<List<EmployeeRecord>> {
 
     private final String department;
 
-    public EmployeeListViewAdapter(String department) {
+    public EmployeeListDataProvider(String department) {
       this.department = department;
     }
 
     @Override
-    public void addView(HasData<EmployeeRecord> view) {
-      super.addView(view);
+    public void addDataDisplay(HasData<EmployeeRecord> display) {
+      super.addDataDisplay(display);
 
       // Request the count anytime a view is added.
-      requestFactory.employeeRequest().countEmployeesByDepartment(department).fire(
-          new Receiver<Long>() {
-            public void onSuccess(Long response, Set<SyncResult> syncResults) {
-              updateDataSize(response.intValue(), true);
-            }
-          });
+      requestFactory.employeeRequest().countEmployeesByDepartment(
+          department).fire(new Receiver<Long>() {
+        public void onSuccess(Long response, Set<SyncResult> syncResults) {
+          updateRowCount(response.intValue(), true);
+        }
+      });
     }
 
-    public void onSuccess(List<EmployeeRecord> response, Set<SyncResult> syncResults) {
-      updateViewData(0, response.size(), response);
+    public void onSuccess(
+        List<EmployeeRecord> response, Set<SyncResult> syncResults) {
+      updateRowData(0, response);
     }
 
     @Override
@@ -154,17 +155,17 @@ public class ExpenseTree extends Composite {
     public <T> NodeInfo<?> getNodeInfo(T value) {
       if (value == null) {
         // Top level.
-        return new DefaultNodeInfo<String>(departments, departmentCell,
-            selectionModel, null);
+        return new DefaultNodeInfo<String>(
+            departments, departmentCell, selectionModel, null);
       } else if (isAllDepartment(value)) {
         // Employees are not displayed under the 'All' Department.
         return null;
       } else if (value instanceof String) {
         // Second level.
-        EmployeeListViewAdapter adapter = new EmployeeListViewAdapter(
+        EmployeeListDataProvider dataProvider = new EmployeeListDataProvider(
             (String) value);
-        return new DefaultNodeInfo<EmployeeRecord>(adapter, employeeCell,
-            selectionModel, null);
+        return new DefaultNodeInfo<EmployeeRecord>(
+            dataProvider, employeeCell, selectionModel, null);
       }
 
       return null;
@@ -190,9 +191,9 @@ public class ExpenseTree extends Composite {
   }
 
   /**
-   * The adapter that provides departments.
+   * The data provider that provides departments.
    */
-  private ListViewAdapter<String> departments = new ListViewAdapter<String>();
+  private ListDataProvider<String> departments = new ListDataProvider<String>();
 
   /**
    * The last selected department.
@@ -217,7 +218,8 @@ public class ExpenseTree extends Composite {
   /**
    * The shared {@link SingleSelectionModel}.
    */
-  private final SingleSelectionModel<Object> selectionModel = new SingleSelectionModel<Object>();
+  private final SingleSelectionModel<Object> selectionModel =
+      new SingleSelectionModel<Object>();
 
   /**
    * The main widget.
@@ -254,32 +256,34 @@ public class ExpenseTree extends Composite {
 
     // Listen for selection. We need to add this handler before the CellBrowser
     // adds its own handler.
-    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-      public void onSelectionChange(SelectionChangeEvent event) {
-        Object selected = selectionModel.getSelectedObject();
-        if (selected == null) {
-          lastEmployee = null;
-          lastDepartment = null;
-        } else if (selected instanceof EmployeeRecord) {
-          lastEmployee = (EmployeeRecord) selected;
-        } else if (selected instanceof String) {
-          lastEmployee = null;
-          if (model.isAllDepartment(selected)) {
-            lastDepartment = null;
-          } else {
-            lastDepartment = (String) selected;
-          }
-        }
+    selectionModel.addSelectionChangeHandler(
+        new SelectionChangeEvent.Handler() {
+          public void onSelectionChange(SelectionChangeEvent event) {
+            Object selected = selectionModel.getSelectedObject();
+            if (selected == null) {
+              lastEmployee = null;
+              lastDepartment = null;
+            } else if (selected instanceof EmployeeRecord) {
+              lastEmployee = (EmployeeRecord) selected;
+            } else if (selected instanceof String) {
+              lastEmployee = null;
+              if (model.isAllDepartment(selected)) {
+                lastDepartment = null;
+              } else {
+                lastDepartment = (String) selected;
+              }
+            }
 
-        if (listener != null) {
-          listener.onSelection(lastDepartment, lastEmployee);
-        }
-      }
-    });
+            if (listener != null) {
+              listener.onSelection(lastDepartment, lastEmployee);
+            }
+          }
+        });
     selectionModel.setKeyProvider(new ProvidesKey<Object>() {
       public Object getKey(Object item) {
         if (item instanceof EmployeeRecord) {
-          return Expenses.EMPLOYEE_RECORD_KEY_PROVIDER.getKey((EmployeeRecord) item);
+          return Expenses.EMPLOYEE_RECORD_KEY_PROVIDER.getKey(
+              (EmployeeRecord) item);
         }
         return item;
       }
