@@ -247,7 +247,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         int ordinal = Integer.parseInt(parameterValue);
         Method valuesMethod = parameterType.getDeclaredMethod("values",
             new Class[0]);
-        log.severe("Type is " + parameterType + " valuesMethod " + valuesMethod);
 
         if (valuesMethod != null) {
           valuesMethod.setAccessible(true);
