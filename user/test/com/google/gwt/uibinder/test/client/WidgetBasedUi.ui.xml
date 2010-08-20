@@ -72,6 +72,17 @@
   for a resource to provide arbitrary objects to arbitrary attributes (look for FooLabel)
 </ui:with>
 
+<ui:import field='com.google.gwt.uibinder.test.client.Constants.CONST_FOO'>
+  Tests the static import of a single constant into the local namespace.
+</ui:import>
+
+<ui:import field='com.google.gwt.uibinder.test.client.Constants.Inner.*'>
+  Tests the static import of multiple constants into the local namespace.
+</ui:import>
+
+<ui:import field='com.google.gwt.uibinder.test.client.Constants.MyEnum.*'>
+  Tests the static import of an enum into the local namespace.
+</ui:import>
 <!--
   Tests creating a CssResource from an external file.
  -->
@@ -164,7 +175,10 @@
   </gwt:Dock>
   <gwt:Dock direction='CENTER'>
     <gwt:HTMLPanel>
-      <p ui:field='bracedParagraph' fnord='blah di blah {{foo: "bar"} di blah'><ui:msg>This is a demonstration and test bed of GWT's shiny UiBinder
+      <p ui:field='bracedParagraph' fnord='blah di blah {{foo: "bar"} di blah'
+        foo='{CONST_FOO}' bar='{CONST_BAR} {CONST_BAZ}'
+        enum='{ENUM_1.name} {ENUM_2.name}' ><ui:msg>This is a
+      demonstration and test bed of GWT's shiny UiBinder
       package. At the moment it works mainly as described in
       <a href="http://code.google.com/p/google-web-toolkit-incubator/wiki/DeclarativeUi"
         ui:ph="oldBlogLink">

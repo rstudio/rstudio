@@ -448,19 +448,19 @@ public class UiBinderTest extends GWTTestCase {
      * AbsolutePanelParserTest and AbsolutePanelTest are enough to make up for
      * the lack. Leaving this here as a warning to the next guy.
      */
-//    {
-//      Widget w = widgetUi.myAbsolutePanelItemA;
-//      assertNotNull("Widget exists", w);
-//      assertEquals("Widget has left", 1, p.getWidgetLeft(w));
-//      assertEquals("Widget has top", 2, p.getWidgetTop(w));
-//    }
-//
-//    {
-//      Widget w = widgetUi.myAbsolutePanelItemC;
-//      assertNotNull("Widget exists", w);
-//      assertEquals("Widget has left", 10, p.getWidgetLeft(w));
-//      assertEquals("Widget has top", 20, p.getWidgetTop(w));
-//    }
+    // {
+    // Widget w = widgetUi.myAbsolutePanelItemA;
+    // assertNotNull("Widget exists", w);
+    // assertEquals("Widget has left", 1, p.getWidgetLeft(w));
+    // assertEquals("Widget has top", 2, p.getWidgetTop(w));
+    // }
+    //
+    // {
+    // Widget w = widgetUi.myAbsolutePanelItemC;
+    // assertNotNull("Widget exists", w);
+    // assertEquals("Widget has left", 10, p.getWidgetLeft(w));
+    // assertEquals("Widget has top", 20, p.getWidgetTop(w));
+    // }
   }
 
   public void testStringAttributeIgnoresStaticSetter() {
@@ -536,6 +536,16 @@ public class UiBinderTest extends GWTTestCase {
         widgetUi.simpleSpriteParagraph.getOffsetWidth());
     assertEquals(widgetUi.prettyImage.getHeight(),
         widgetUi.simpleSpriteParagraph.getOffsetHeight());
+  }
+
+  public void testStaticImport() {
+    assertEquals(Constants.CONST_FOO,
+        widgetUi.bracedParagraph.getAttribute("foo"));
+    assertEquals(Constants.Inner.CONST_BAR + " " + Constants.Inner.CONST_BAZ,
+        widgetUi.bracedParagraph.getAttribute("bar"));
+    assertEquals(Constants.MyEnum.ENUM_1.name() + " "
+        + Constants.MyEnum.ENUM_2.name(),
+        widgetUi.bracedParagraph.getAttribute("enum"));
   }
 
   public void suppressForIEfail_testBizarrelyElementedWidgets() {

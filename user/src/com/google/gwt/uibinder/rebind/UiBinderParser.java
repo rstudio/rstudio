@@ -17,7 +17,10 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
@@ -39,28 +42,35 @@ import java.util.LinkedHashSet;
 public class UiBinderParser {
 
   private enum Resource {
-    data {
+    DATA {
       @Override
       void create(UiBinderParser parser, XMLElement elem)
           throws UnableToCompleteException {
         parser.createData(elem);
       }
     },
-    image {
+    IMAGE {
       @Override
       void create(UiBinderParser parser, XMLElement elem)
           throws UnableToCompleteException {
         parser.createImage(elem);
       }
     },
-    style {
+    IMPORT {
+      @Override
+      void create(UiBinderParser parser, XMLElement elem)
+          throws UnableToCompleteException {
+        parser.createImport(elem);
+      }
+    },
+    STYLE {
       @Override
       void create(UiBinderParser parser, XMLElement elem)
           throws UnableToCompleteException {
         parser.createStyle(elem);
       }
     },
-    with {
+    WITH {
       @Override
       void create(UiBinderParser parser, XMLElement elem)
           throws UnableToCompleteException {
@@ -74,8 +84,9 @@ public class UiBinderParser {
 
   private static final String FLIP_RTL_ATTRIBUTE = "flipRtl";
   private static final String FIELD_ATTRIBUTE = "field";
-  private static final String SOURCE_ATTRIBUTE = "src";
   private static final String REPEAT_STYLE_ATTRIBUTE = "repeatStyle";
+  private static final String SOURCE_ATTRIBUTE = "src";
+  private static final String TYPE_ATTRIBUTE = "type";
 
   // TODO(rjrjr) Make all the ElementParsers receive their dependencies via
   // constructor like this one does, and make this an ElementParser. I want
@@ -130,7 +141,7 @@ public class UiBinderParser {
 
   private JClassType consumeCssResourceType(XMLElement elem)
       throws UnableToCompleteException {
-    String typeName = elem.consumeRawAttribute("type", null);
+    String typeName = elem.consumeRawAttribute(TYPE_ATTRIBUTE, null);
     if (typeName == null) {
       return cssResourceType;
     }
@@ -140,7 +151,7 @@ public class UiBinderParser {
 
   private JClassType consumeTypeAttribute(XMLElement elem)
       throws UnableToCompleteException {
-    String resourceTypeName = elem.consumeRequiredRawAttribute("type");
+    String resourceTypeName = elem.consumeRequiredRawAttribute(TYPE_ATTRIBUTE);
 
     JClassType resourceType = oracle.findType(resourceTypeName);
     if (resourceType == null) {
@@ -194,6 +205,49 @@ public class UiBinderParser {
   }
 
   /**
+   * Process <code>&lt;ui:import field="com.example.Blah.CONSTANT"></code>.
+   */
+  private void createImport(XMLElement elem) throws UnableToCompleteException {
+    String rawFieldName = elem.consumeRequiredRawAttribute(FIELD_ATTRIBUTE);
+    if (elem.getAttributeCount() > 0) {
+      writer.die(elem, "Should only find attribute \"%s\"", FIELD_ATTRIBUTE);
+    }
+
+    int idx = rawFieldName.lastIndexOf('.');
+    if (idx < 1) {
+      writer.die(elem, "Attribute %s does not look like a static import "
+          + "reference", FIELD_ATTRIBUTE);
+    }
+    String enclosingName = rawFieldName.substring(0, idx);
+    String constantName = rawFieldName.substring(idx + 1);
+
+    JClassType enclosingType = oracle.findType(enclosingName);
+    if (enclosingType == null) {
+      writer.die(elem, "Unable to locate type %s", enclosingName);
+    }
+
+    if ("*".equals(constantName)) {
+      for (JField field : enclosingType.getFields()) {
+        if (!field.isStatic()) {
+          continue;
+        } else if (field.isPublic()) {
+          // OK
+        } else if (field.isProtected() || field.isPrivate()) {
+          continue;
+        } else if (!enclosingType.getPackage().equals(
+            writer.getOwnerClass().getOwnerType().getPackage())) {
+          // package-protected in another package
+          continue;
+        }
+        createSingleImport(elem, enclosingType, enclosingName + "."
+            + field.getName(), field.getName());
+      }
+    } else {
+      createSingleImport(elem, enclosingType, rawFieldName, constantName);
+    }
+  }
+
+  /**
    * Interprets <ui:with> elements.
    */
   private void createResource(XMLElement elem) throws UnableToCompleteException {
@@ -233,6 +287,31 @@ public class UiBinderParser {
      * If neither of the above, the FieldWriter's default GWT.create call will
      * do just fine.
      */
+  }
+
+  private void createSingleImport(XMLElement elem, JClassType enclosingType,
+      String rawFieldName, String constantName)
+      throws UnableToCompleteException {
+    JField field = enclosingType.findField(constantName);
+    if (field == null) {
+      writer.die(elem, "Unable to locate a field named %s in %s", constantName,
+          enclosingType.getQualifiedSourceName());
+    } else if (!field.isStatic()) {
+      writer.die(elem, "Field %s in type %s is not static", constantName,
+          enclosingType.getQualifiedSourceName());
+    }
+
+    JType importType = field.getType();
+    JClassType fieldType;
+    if (importType instanceof JPrimitiveType) {
+      fieldType = oracle.findType(((JPrimitiveType) importType).getQualifiedBoxedSourceName());
+    } else {
+      fieldType = (JClassType) importType;
+    }
+
+    FieldWriter fieldWriter = fieldManager.registerField(fieldType,
+        constantName);
+    fieldWriter.setInitializer(rawFieldName);
   }
 
   private void createStyle(XMLElement elem) throws UnableToCompleteException {
@@ -283,8 +362,8 @@ public class UiBinderParser {
 
         if (writer.isBinderElement(elem)) {
           try {
-            Resource.valueOf(elem.getLocalName()).create(UiBinderParser.this,
-                elem);
+            Resource.valueOf(elem.getLocalName().toUpperCase()).create(
+                UiBinderParser.this, elem);
           } catch (IllegalArgumentException e) {
             writer.die(elem,
                 "Unknown tag %s, or is not appropriate as a top level element",

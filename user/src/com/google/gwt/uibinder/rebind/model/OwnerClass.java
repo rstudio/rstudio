@@ -67,6 +67,8 @@ public class OwnerClass {
 
   private final MortalLogger logger;
 
+  private final JClassType ownerType;
+
   /**
    * Constructor.
    *
@@ -75,9 +77,14 @@ public class OwnerClass {
    */
   public OwnerClass(JClassType ownerType, MortalLogger logger) throws UnableToCompleteException {
     this.logger = logger;
+    this.ownerType = ownerType;
     findUiFields(ownerType);
     findUiFactories(ownerType);
     findUiHandlers(ownerType);
+  }
+
+  public JClassType getOwnerType() {
+    return ownerType;
   }
 
   /**
