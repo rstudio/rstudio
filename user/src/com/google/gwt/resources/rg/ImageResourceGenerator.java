@@ -41,7 +41,7 @@ import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -221,8 +221,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
    * ClientBundle .
    */
   static class CachedState {
-    public final Map<BundleKey, BundledImage> bundledImages = new HashMap<BundleKey, BundledImage>();
-    public final Map<BundleKey, ExternalImage> externalImages = new HashMap<BundleKey, ExternalImage>();
+    public final Map<BundleKey, BundledImage> bundledImages = new LinkedHashMap<BundleKey, BundledImage>();
+    public final Map<BundleKey, ExternalImage> externalImages = new LinkedHashMap<BundleKey, ExternalImage>();
   }
 
   /**
