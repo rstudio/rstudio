@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.user.client.DOM;
+
 /**
  * Test for {@link DeckPanel}.
  */
@@ -98,6 +100,46 @@ public class DeckPanelTest extends PanelTestBase<DeckPanel> {
 
     // Verify content.onLoad was actually called
     assertEquals("attached", content.getText());
+  }
+  
+  /**
+   * Test that style width/height is set to 100% by default.
+   */
+  public void testWidgetDefaultSizeOnAdd() {
+    DeckPanel deck = new DeckPanel();
+    RootPanel.get().add(deck);
+    
+    // Prepare widget, no width/height initially
+    Label content = new Label("content");
+    assertEquals("", content.getElement().getStyle().getWidth());
+    assertEquals("", content.getElement().getStyle().getHeight());
+    
+    // Add a widget to the DeckPanel
+    deck.add(content);
+    
+    // Verify width/height
+    assertEquals("100%", content.getElement().getStyle().getWidth());
+    assertEquals("100%", content.getElement().getStyle().getHeight());
+  }
+  
+  /**
+   * Test that existing width/height is kept as is during add.
+   */
+  public void testWidgetKeepSizeOnAdd() {
+    DeckPanel deck = new DeckPanel();
+    RootPanel.get().add(deck);
+    
+    // Prepare widget, with width/height
+    Label content = new Label("content");
+    DOM.setStyleAttribute(content.getElement(), "width", "5cm");
+    DOM.setStyleAttribute(content.getElement(), "height", "30mm");
+    
+    // Add a widget to the DeckPanel
+    deck.add(content);
+    
+    // Verify width/height
+    assertEquals("5cm", DOM.getStyleAttribute(content.getElement(), "width"));
+    assertEquals("30mm", DOM.getStyleAttribute(content.getElement(), "height"));
   }
 
   @Override

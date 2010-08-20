@@ -341,7 +341,15 @@ public class DeckPanel extends ComplexPanel implements HasAnimation, InsertPanel
   private void finishWidgetInitialization(Element container, Widget w) {
     UIObject.setVisible(container, false);
     DOM.setStyleAttribute(container, "height", "100%");
-    w.setSize("100%", "100%");
+    
+    // Set 100% by default.
+    Element element = w.getElement();
+    if (DOM.getStyleAttribute(element, "width").equals("")) {
+      w.setWidth("100%");
+    }
+    if (DOM.getStyleAttribute(element, "height").equals("")) {
+      w.setHeight("100%");
+    }
 
     // Issue 2510: Hiding the widget isn't necessary because we hide its
     // wrapper, but it's in here for legacy support.
