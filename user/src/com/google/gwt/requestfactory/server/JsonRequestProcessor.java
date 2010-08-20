@@ -56,7 +56,7 @@ import javax.validation.ValidatorFactory;
 public class JsonRequestProcessor implements RequestProcessor<String> {
 
   // TODO should we consume String, InputStream, or JSONObject?
-  private class DvsData {
+  private static class DvsData {
     private final JSONObject jsonObject;
     private final WriteOperation writeOperation;
 
@@ -66,7 +66,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
   }
 
-  private class EntityData {
+  private static class EntityData {
     private final Object entityInstance;
     // TODO: violations should have more structure than JSONObject
     private final JSONObject violations;
@@ -77,7 +77,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
   }
 
-  private class EntityKey {
+  private static class EntityKey {
     private final boolean isFuture;
     // TODO: update for non-long id?
     private final long id;
@@ -107,7 +107,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
   }
 
-  private class SerializedEntity {
+  private static class SerializedEntity {
     // the field value of the entityInstance might change from under us.
     private final Object entityInstance;
 
@@ -200,7 +200,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   public Object decodeParameterValue(Type genericParameterType,
       String parameterValue) {
     Class<?>parameterType = null;
-    if (genericParameterType instanceof Class) {
+    if (genericParameterType instanceof Class<?>) {
       parameterType = (Class<?>) genericParameterType;
     }
     if (genericParameterType instanceof ParameterizedType) {
@@ -283,31 +283,29 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
        *
        * 2. Merge the following and the object resolution code in getEntityKey.
        * 3. Update the involvedKeys set.
-       */ 
+       */
       DataTransferObject service = parameterType.getAnnotation(DataTransferObject.class);
       if (service != null) {
         Class<?> sClass = service.value();
-        String schemaAndId[] = parameterValue.toString().split("-", 3);
-        // ignore schema for now and use Property type
-        String findMeth = null;
+        EntityKey entityKey = getEntityKey(parameterValue.toString());
+        DvsData dvsData = dvsDataMap.get(entityKey);
         try {
-          findMeth = getMethodNameFromPropertyName(sClass.getSimpleName(),
-              "find");
-          Method meth = sClass.getMethod(findMeth, Long.class);
-          return meth.invoke(null, Long.valueOf(schemaAndId[0]));
+          if (dvsData != null) {
+            EntityData entityData = getEntityDataForRecord(entityKey,
+                dvsData.jsonObject, dvsData.writeOperation);
+            return entityData.entityInstance;
+          } else {
+            Method findMeth = sClass.getMethod(getMethodNameFromPropertyName(sClass.getSimpleName(), "find"), Long.class);
+            return findMeth.invoke(null, entityKey.id);
+          }
         } catch (NoSuchMethodException e) {
-          e.printStackTrace();
           throw new IllegalArgumentException(
-              sClass + " no method named " + findMeth);
+              "No such method " + getMethodNameFromPropertyName(
+                  sClass.getSimpleName(), "find"), e);
         } catch (InvocationTargetException e) {
-          e.printStackTrace();
-
-          throw new IllegalArgumentException(
-              sClass + " can't invoke method named " + findMeth);
+          throw new IllegalArgumentException("Can't invoke method", e);
         } catch (IllegalAccessException e) {
-          e.printStackTrace();
-          throw new IllegalArgumentException(
-              sClass + " can't access method named " + findMeth);
+          throw new IllegalArgumentException("Can't invoke method", e);
         }
       }
     }
@@ -359,12 +357,17 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           propertyType)
           + "-" + id;
       addRelatedObject(keyRef, returnValue,
-          (Class<? extends Record>) propertyType,
+          castToRecordClass(propertyType),
           propertyContext.getProperty(propertyName));
       // replace value with id reference
       return keyRef;
     }
     return encodePropertyValue(returnValue);
+  }
+
+  @SuppressWarnings("unchecked")
+  private Class<? extends Record> castToRecordClass(Class<?> propertyType) {
+    return (Class<? extends Record>) propertyType;
   }
 
   /**
@@ -385,12 +388,13 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * A <i>set</i> might have side-effects, but we don't handle that.
    */
   public EntityData getEntityDataForRecord(EntityKey entityKey,
-      JSONObject recordObject, WriteOperation writeOperation) throws JSONException {
+      JSONObject recordObject, WriteOperation writeOperation) {
 
     try {
       Class<?> entity = getEntityFromRecordAnnotation(entityKey.record);
 
       Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(entityKey.record);
+      Map<String, Class<?>> propertiesToDTO = new HashMap<String, Class<?>>(propertiesInRecord);
       validateKeys(recordObject, propertiesInRecord.keySet());
       updatePropertyTypes(propertiesInRecord, entity);
 
@@ -411,7 +415,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           }
         } else {
           Object propertyValue = getPropertyValueFromRequest(recordObject, key,
-              propertyType);
+              propertiesToDTO.get(key));
           entity.getMethod(getMethodNameFromPropertyName(key, "set"),
               propertyType).invoke(entityInstance, propertyValue);
         }
@@ -441,7 +445,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     } catch (Exception ex) {
       log.severe(String.format("Caught exception [%s] %s",
           ex.getClass().getName(), ex.getLocalizedMessage()));
-      return getEntityDataForException(entityKey, ex);
+      return getEntityDataForException(ex);
     }
   }
 
@@ -698,8 +702,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (result instanceof List<?>) {
       envelop.put(RequestData.RESULT_TOKEN, toJsonArray(operation, result));
       envelop.put(RequestData.SIDE_EFFECTS_TOKEN, sideEffects);
-      return envelop;
-    } else if (result instanceof Number || result instanceof Enum
+    } else if (result instanceof Number || result instanceof Enum<?>
         || result instanceof String || result instanceof Date
         || result instanceof Character || result instanceof Boolean) {
       envelop.put(RequestData.RESULT_TOKEN, result);
@@ -708,7 +711,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       JSONObject jsonObject = toJsonObject(operation, result);
       envelop.put(RequestData.RESULT_TOKEN, jsonObject);
       envelop.put(RequestData.SIDE_EFFECTS_TOKEN, sideEffects);
-      return envelop;
     }
     envelop.put(RequestData.RELATED_TOKEN, encodeRelatedObjectsToJson());
     return envelop;
@@ -775,7 +777,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Class<? extends Record> propertyType, RequestProperty propertyContext)
       throws JSONException, IllegalAccessException, NoSuchMethodException,
       InvocationTargetException {
-    Class<? extends Record> clazz = (Class<? extends Record>) returnValue.getClass();
 
     relatedObjects.put(keyRef, getJsonObject(returnValue, propertyType,
         propertyContext));
@@ -785,7 +786,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * @throws JSONException 
    * 
    */
-  private void constructAfterDvsDataMap() throws JSONException {
+  private void constructAfterDvsDataMap() {
     afterDvsDataMap = new HashMap<EntityKey, EntityData>();
     for (EntityKey entityKey : involvedKeys) {
       // use the beforeDataMap and dvsDataMap
@@ -924,7 +925,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return returnObject;
   }
 
-  private EntityData getEntityDataForException(EntityKey entityKey, Exception ex) {
+  private EntityData getEntityDataForException(Exception ex) {
 
     JSONObject violations = null;
     try {
@@ -1060,9 +1061,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         Method idMethod = returnValue.getClass().getMethod("getId");
         Long id = (Long) idMethod.invoke(returnValue);
 
-        propertyValue = operationRegistry.getSecurityProvider().encodeClassType(
-            p.getType())
-            + "-" + id;
+        propertyValue = id + "-NO-" + operationRegistry.getSecurityProvider().encodeClassType(
+            p.getType());
       } else {
         propertyValue = encodePropertyValue(returnValue);
       }

@@ -437,6 +437,10 @@ public class Report {
     }
   }
 
+  public void setApprovedSupervisor(Employee reporter) {
+    approvedSupervisorKey = reporter == null ? null : reporter.getId();
+  }
+
   public void setApprovedSupervisorKey(Long approvedSupervisorKey) {
     this.approvedSupervisorKey = approvedSupervisorKey;
   }

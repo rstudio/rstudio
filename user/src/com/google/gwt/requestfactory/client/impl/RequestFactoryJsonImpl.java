@@ -68,10 +68,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private EventBus eventBus;
 
-  public com.google.gwt.valuestore.shared.Record create(
-      Class<? extends Record> token, RecordToTypeMap recordToTypeMap) {
+  public <R extends Record> R create(Class<R> token,
+      RecordToTypeMap recordToTypeMap) {
 
-    RecordSchema<? extends Record> schema = recordToTypeMap.getType(token);
+    RecordSchema<R> schema = recordToTypeMap.getType(token);
     if (schema == null) {
       throw new IllegalArgumentException("Unknown proxy type: " + token);
     }
@@ -97,7 +97,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         wireLogger.finest("Response received");
         if (200 == response.getStatusCode()) {
           String text = response.getText();
-          ((AbstractRequest) requestObject).handleResponseText(text);
+          ((AbstractRequest<?, ?>) requestObject).handleResponseText(text);
         } else if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
           wireLogger.finest("Need to log in");
         } else if (response.getStatusCode() > 0) {
@@ -126,7 +126,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return ((RecordImpl) proxy).getSchema().getToken();
   }
 
-  public abstract RecordSchema getSchema(String token);
+  public abstract RecordSchema<?> getSchema(String token);
 
   public String getToken(Record record) {
     String rtn = ((RecordImpl) record).getSchema().getToken().getName() + "-";
@@ -199,12 +199,12 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
      * unpopulated copy of the record.
      */
     newJsoRecord = RecordJsoImpl.emptyCopy(newJsoRecord);
-    Record javaRecord = newJsoRecord.getSchema().create(newJsoRecord);    
+    Record javaRecord = newJsoRecord.getSchema().create(newJsoRecord);
     eventBus.fireEvent(newJsoRecord.getSchema().createChangeEvent(javaRecord,
         op));
   }
 
-  private Record createFuture(RecordSchema<? extends Record> schema) {
+  private <R extends Record> R createFuture(RecordSchema<R> schema) {
     Long futureId = ++currentFutureId;
     RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
         schema);

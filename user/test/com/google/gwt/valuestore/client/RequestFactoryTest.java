@@ -33,39 +33,41 @@ import java.util.Set;
  */
 public class RequestFactoryTest extends GWTTestCase {
 
-  public void disabled_testPersistRelation() {
+  public void testPersistRelation() {
     final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
     HandlerManager hm = new HandlerManager(null);
     req.init(hm);
-    delayTestFinish(5000);
-    SimpleFooRecord newFoo = (SimpleFooRecord) req.create(SimpleFooRecord.class);
-    SimpleBarRecord newBar = (SimpleBarRecord) req.create(SimpleBarRecord.class);
+    delayTestFinish(500000);
 
-    final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
+    SimpleFooRecord rayFoo = req.create(SimpleFooRecord.class);
+    final RequestObject<SimpleFooRecord> persistRay = req.simpleFooRequest().persistAndReturnSelf(
+        rayFoo);
+    rayFoo = persistRay.edit(rayFoo);
+    rayFoo.setUserName("Ray");
 
-    newFoo = fooReq.edit(newFoo);
-    newFoo.setUserName("Ray");
+    persistRay.fire(new Receiver<SimpleFooRecord>() {
+      public void onSuccess(final SimpleFooRecord persistedRay,
+          Set<SyncResult> ignored) {
 
-    final RequestObject<Void> barReq = req.simpleBarRequest().persist(newBar);
-    newBar = barReq.edit(newBar);
-    newBar.setUserName("Amit");
+        SimpleBarRecord amitBar = req.create(SimpleBarRecord.class);
+        final RequestObject<SimpleBarRecord> persistAmit = req.simpleBarRequest().persistAndReturnSelf(
+            amitBar);
+        amitBar = persistAmit.edit(amitBar);
+        amitBar.setUserName("Amit");
 
-    final SimpleBarRecord finalNewBar = newBar;
-    final SimpleFooRecord finalNewFoo = newFoo;
-    fooReq.fire(new Receiver<Void>() {
-      public void onSuccess(Void response, Set<SyncResult> syncResultSet1) {
-        for (SyncResult syncResult1 : syncResultSet1) {
-          // update id.
-        }
-        barReq.fire(new Receiver<Void>() {
-          public void onSuccess(Void response, Set<SyncResult> syncResultSet2) {
-            final RequestObject<Void> fooReq2 = req.simpleFooRequest().persist(
-                finalNewFoo);
-            SimpleFooRecord newRec = fooReq2.edit(finalNewFoo);
-            newRec.setBarField(finalNewBar);
+        persistAmit.fire(new Receiver<SimpleBarRecord>() {
+          public void onSuccess(SimpleBarRecord persistedAmit,
+              Set<SyncResult> ignored) {
 
-            fooReq2.fire(new Receiver<Void>() {
-              public void onSuccess(Void response, Set<SyncResult> syncResultSet3) {
+            final RequestObject<SimpleFooRecord> persistRelationship = req.simpleFooRequest().persistAndReturnSelf(
+                persistedRay).with("barField");
+            SimpleFooRecord newRec = persistRelationship.edit(persistedRay);
+            newRec.setBarField(persistedAmit);
+
+            persistRelationship.fire(new Receiver<SimpleFooRecord>() {
+              public void onSuccess(SimpleFooRecord relatedRay,
+                  Set<SyncResult> ignored) {
+                assertEquals("Amit", relatedRay.getBarField().getUserName());
                 finishTest();
               }
             });
@@ -130,13 +132,14 @@ public class RequestFactoryTest extends GWTTestCase {
         new Receiver<SimpleFooRecord>() {
           public void onSuccess(SimpleFooRecord response,
               Set<SyncResult> syncResult) {
-            SimpleBarRecord bar = (SimpleBarRecord) req.create(SimpleBarRecord.class);
+            SimpleBarRecord bar = req.create(SimpleBarRecord.class);
             RequestObject<String> helloReq = req.simpleFooRequest().hello(response, bar);
             bar = helloReq.edit(bar);
+            bar.setUserName("BAR");
             helloReq.fire(new Receiver<String>() {
               public void onSuccess(String response,
                   Set<SyncResult> syncResults) {
-                assertEquals("Greetings FOO from GWT", response);
+                assertEquals("Greetings BAR from GWT", response);
                 finishTest();
               }
             });

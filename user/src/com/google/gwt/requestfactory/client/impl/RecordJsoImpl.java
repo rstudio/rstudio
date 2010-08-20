@@ -82,7 +82,10 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     Integer version = jso.get(Record.version);
     final RecordSchema<?> schema = jso.getSchema();
 
-    return create(id, version, schema);
+    RecordJsoImpl copy = create(id, version, schema);
+    copy.setRequestFactory(jso.getRequestFactory());
+    copy.setValueStore(jso.getValueStore());
+    return copy;
   }
 
   public static native RecordJsoImpl fromJson(String json) /*-{
@@ -310,10 +313,12 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       setBoolean(property.getName(), ((Boolean) value).booleanValue());
     }
 
-    if (value instanceof Record) {
-      setString(property.getName(),
-          getRequestFactory().getSchema(value.getClass().getName()).getToken().getName()
-              + "-" + String.valueOf(((Record) value).getId()));  
+    if (value instanceof RecordImpl) {
+      RequestFactoryJsonImpl requestFactory = getRequestFactory();
+      RecordSchema<?> schema = ((RecordImpl)value).getSchema();
+      Class<?> token = schema.getToken();
+      setString(property.getName(), ((RecordImpl) value).getUniqueId());
+      return;
     }
 
     throw new UnsupportedOperationException(

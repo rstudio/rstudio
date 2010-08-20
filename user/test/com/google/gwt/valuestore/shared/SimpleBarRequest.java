@@ -16,6 +16,7 @@
 package com.google.gwt.valuestore.shared;
 
 import com.google.gwt.requestfactory.shared.Instance;
+import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 
@@ -27,4 +28,7 @@ public interface SimpleBarRequest {
 
   @Instance
   RequestObject<Void> persist(SimpleBarRecord record);
+  
+  @Instance
+  RecordRequest<SimpleBarRecord> persistAndReturnSelf(SimpleBarRecord record);
 }

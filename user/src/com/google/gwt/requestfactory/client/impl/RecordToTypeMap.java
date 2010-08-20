@@ -27,6 +27,6 @@ import com.google.gwt.valuestore.shared.Record;
  * Record class to its internal "type" representation.
  */
 public interface RecordToTypeMap {
-  RecordSchema<? extends Record> getType(Class<? extends Record> recordClass);
+  <R extends Record> RecordSchema<R> getType(Class<R> recordClass);
   RecordSchema<? extends Record> getType(String token);
 }

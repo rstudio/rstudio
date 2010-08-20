@@ -44,10 +44,10 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   final RecordToTypeMap typeMap = new RecordToTypeMap() {
-    public RecordSchema<? extends Record> getType(
-        Class<? extends Record> recordClass) {
+    @SuppressWarnings("unchecked")
+    public <R extends Record> RecordSchema<R> getType(Class<R> recordClass) {
       if (recordClass.equals(SimpleFooRecord.class)) {
-        return SimpleFooRecordImpl.SCHEMA;
+        return (RecordSchema<R>) SimpleFooRecordImpl.SCHEMA;
       }
       throw new IllegalArgumentException("Unknown token " + recordClass);
     }
@@ -75,12 +75,12 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     valueStore = new ValueStoreJsonImpl();
     requestFactory = new RequestFactoryJsonImpl() {
 
-      public Record create(Class token) {
+      public <R extends Record> R create(Class<R> token) {
         return create(token, typeMap);
       }
 
       @Override
-      public RecordSchema getSchema(String token) {
+      public RecordSchema<?> getSchema(String token) {
         return typeMap.getType(token);
       }
 
@@ -195,7 +195,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     deltaValueStore.set(SimpleFooRecord.userName, mockRecord, "bovik");
     assertTrue(deltaValueStore.isChanged());
     String jsonString = deltaValueStore.toJson();
-    JSONObject jsonObject = (JSONObject) JSONParser.parse(jsonString);
+    JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(jsonString);
     assertFalse(jsonObject.containsKey(WriteOperation.DELETE.name()));
     assertTrue(jsonObject.containsKey(WriteOperation.CREATE.name()));
     assertTrue(jsonObject.containsKey(WriteOperation.UPDATE.name()));
@@ -230,7 +230,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   private JSONObject testAndGetChangeRecord(String jsonString,
       WriteOperation currentWriteOperation) {
-    JSONObject jsonObject = (JSONObject) JSONParser.parse(jsonString);
+    JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(jsonString);
     for (WriteOperation writeOperation : WriteOperation.values()) {
       if (writeOperation != currentWriteOperation) {
         assertFalse(jsonObject.containsKey(writeOperation.name()));

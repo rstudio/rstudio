@@ -22,6 +22,7 @@ import junit.framework.Test;
 
 /**
  * Tests of the valuestore package that require GWT.
+ * @see com.google.gwt.requestfactory.RequestFactorySuite
  */
 public class ValueStoreSuite {
   public static Test suite() {

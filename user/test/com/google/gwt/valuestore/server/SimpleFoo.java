@@ -143,6 +143,11 @@ public class SimpleFoo {
     setId(nextId++);
   }
 
+  public SimpleFoo persistAndReturnSelf() {
+    persist();
+    return this;
+  }
+
   public void setBarField(SimpleBar barField) {
     this.barField = barField;
   }

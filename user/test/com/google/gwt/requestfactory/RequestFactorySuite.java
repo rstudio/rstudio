@@ -22,7 +22,8 @@ import com.google.gwt.requestfactory.client.impl.RecordJsoImplTest;
 import junit.framework.Test;
 
 /**
- *
+ * Tests of RequestFactory that require GWT.
+ * @see com.google.gwt.valuestore.ValueStoreSuite
  */
 public class RequestFactorySuite {
   public static Test suite() {

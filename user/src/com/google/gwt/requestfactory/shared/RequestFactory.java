@@ -32,7 +32,7 @@ public interface RequestFactory {
   // TODO: this must be configurable
   String URL = "gwtRequest";
 
-  Record create(Class token);
+  <R extends Record> R create(Class<R> token);
 
   /**
    * Return the class object which may be used to create new instances of the

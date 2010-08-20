@@ -80,6 +80,12 @@ public class SimpleBar {
 
   public void persist() {
     setId(nextId++);
+    singleton.setUserName(userName);
+  }
+  
+  public SimpleBar persistAndReturnSelf() {
+    persist();
+    return this;
   }
 
   public void setId(Long id) {

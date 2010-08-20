@@ -194,10 +194,8 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println();
       String simpleImplName = publicRecordType.getSimpleSourceName() + "Impl";
-      printRequestImplClass(sw, publicRecordType, simpleImplName, true,
-          typeOracle);
-      printRequestImplClass(sw, publicRecordType, simpleImplName, false,
-          typeOracle);
+      printRequestImplClass(sw, publicRecordType, simpleImplName, true);
+      printRequestImplClass(sw, publicRecordType, simpleImplName, false);
 
       sw.println();
       sw.println(String.format(
@@ -211,7 +209,6 @@ public class RequestFactoryGenerator extends Generator {
       sw.println("super(jso, isFuture);");
       sw.outdent();
       sw.println("}");
-      JClassType recordBaseType = typeOracle.findType(Record.class.getName());
 
       // getter methods
       for (JField field : publicRecordType.getFields()) {
@@ -742,7 +739,7 @@ public class RequestFactoryGenerator extends Generator {
    * Prints a ListRequestImpl or ObjectRequestImpl class.
    */
   private void printRequestImplClass(SourceWriter sw, JClassType returnType,
-      String returnImplTypeName, boolean list, TypeOracle typeOracle) {
+      String returnImplTypeName, boolean list) {
 
     String name = list ? "ListRequestImpl" : "ObjectRequestImpl";
     Class<?> superClass = list ? AbstractJsonListRequest.class
