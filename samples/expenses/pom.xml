@@ -49,7 +49,7 @@
         </repository>
     <repository>
             <id>gwt-repo</id>
-            <url>http://google-web-toolkit.googlecode.com/svn/2.1.0.M2/gwt/maven</url>
+            <url>http://google-web-toolkit.googlecode.com/svn/2.1.0.M3/gwt/maven</url>
             <name>Google Web Toolkit Repository</name>
         </repository>
     </repositories>
@@ -65,7 +65,7 @@
         </pluginRepository>
     <pluginRepository>
             <id>gwt-plugin-repo</id>
-            <url>http://google-web-toolkit.googlecode.com/svn/2.1.0.M2/gwt/maven</url>
+            <url>http://google-web-toolkit.googlecode.com/svn/2.1.0.M3/gwt/maven</url>
             <name>Google Web Toolkit Plugin Repository</name>
         </pluginRepository>
     </pluginRepositories>
@@ -601,7 +601,7 @@
                 <configuration>
 						<fork>false</fork>
 						<log4jConfiguration>${basedir}/src/main/resources/log4j.properties</log4jConfiguration>
-						<mappingIncludes>**/*.class</mappingIncludes>
+						<mappingIncludes>**/domain/*.class</mappingIncludes>
 						<verbose>true</verbose>
 						<enhancerName>ASM</enhancerName>
 						<api>JPA</api>
@@ -650,9 +650,9 @@
 				<runTarget>/Expenses.html</runTarget>
                 <hostedWebapp>${project.build.directory}/${project.build.finalName}</hostedWebapp>
 				<modules>
-					<module>${project.groupId}.gwt.Expenses</module>
-                    <module>${project.groupId}.gwt.ExpensesMobile</module>
-			<module>${project.groupId}.gwt.LoadExpensesDB</module>
+					<module>${project.groupId}.Expenses</module>
+                    <module>${project.groupId}.ExpensesMobile</module>
+			<module>${project.groupId}.LoadExpensesDB</module>
 				</modules>
                 <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
                 <extraJvmArgs>-javaagent:${gae.home}/lib/agent/appengine-agent.jar -Xmx1024m</extraJvmArgs>

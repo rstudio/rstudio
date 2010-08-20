@@ -43,6 +43,12 @@
         <copy tofile="${sample.build}/pom.xml" file="pom.xml"/>
       </then>
     </if>
+    <if>
+      <available file="README-MAVEN.txt"/>
+      <then>
+        <copy tofile="${sample.build}/README-MAVEN.txt" file="README-MAVEN.txt"/>
+      </then>
+    </if>
   </target>
 
   <target name="compile" description="Compile all java files">

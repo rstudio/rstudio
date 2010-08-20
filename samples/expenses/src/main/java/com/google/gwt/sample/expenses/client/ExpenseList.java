@@ -34,11 +34,11 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportRecord;
 import com.google.gwt.sample.expenses.client.request.ReportRecordChanged;
-import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -53,7 +53,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.view.client.AsyncListViewAdapter;
+import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.Range;
@@ -201,11 +201,11 @@ public class ExpenseList extends Composite
   }
 
   /**
-   * The adapter used to retrieve reports.
+   * The data provider used to retrieve reports.
    */
-  private class ReportAdapter extends AsyncListViewAdapter<ReportRecord> {
+  private class ReportDataProvider extends AsyncDataProvider<ReportRecord> {
     @Override
-    protected void onRangeChanged(HasData<ReportRecord> view) {
+    protected void onRangeChanged(HasData<ReportRecord> display) {
       requestReports(false);
     }
   }
@@ -283,9 +283,9 @@ public class ExpenseList extends Composite
   private final List<Property<?>> reportColumns;
 
   /**
-   * The adapter that provides reports.
+   * The data provider that provides reports.
    */
-  private final ReportAdapter reports = new ReportAdapter();
+  private final ReportDataProvider reports = new ReportDataProvider();
 
   /**
    * The factory used to send requests.
@@ -314,8 +314,8 @@ public class ExpenseList extends Composite
     searchBox = new DefaultTextBox("search");
     initWidget(uiBinder.createAndBindUi(this));
 
-    // Add the view to the adapter.
-    reports.addView(table);
+    // Add the view to the data provider.
+    reports.addDataDisplay(table);
 
     // Listen for key events from the text boxes.
     searchBox.addKeyUpHandler(new KeyUpHandler() {
@@ -352,7 +352,7 @@ public class ExpenseList extends Composite
       if (record != null && changedId.equals(record.getId())) {
         List<ReportRecord> changedList = new ArrayList<ReportRecord>();
         changedList.add(changed);
-        reports.updateViewData(i + table.getPageStart(), 1, changedList);
+        reports.updateRowData(i + table.getPageStart(), changedList);
       }
       i++;
     }
@@ -390,7 +390,7 @@ public class ExpenseList extends Composite
   @UiFactory
   SimplePager createPager() {
     SimplePager p = new SimplePager(TextLocation.RIGHT);
-    p.setView(table);
+    p.setDisplay(table);
     p.setRangeLimited(true);
     return p;
   }
@@ -471,14 +471,15 @@ public class ExpenseList extends Composite
     final NoSelectionModel<ReportRecord> selectionModel = new NoSelectionModel<
         ReportRecord>();
     table.setSelectionModel(selectionModel);
-    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-      public void onSelectionChange(SelectionChangeEvent event) {
-        Object selected = selectionModel.getLastSelectedObject();
-        if (selected != null && listener != null) {
-          listener.onReportSelected((ReportRecord) selected);
-        }
-      }
-    });
+    selectionModel.addSelectionChangeHandler(
+        new SelectionChangeEvent.Handler() {
+          public void onSelectionChange(SelectionChangeEvent event) {
+            Object selected = selectionModel.getLastSelectedObject();
+            if (selected != null && listener != null) {
+              listener.onReportSelected((ReportRecord) selected);
+            }
+          }
+        });
 
     // Spacer column.
     table.addColumn(new Column<ReportRecord, String>(new TextCell()) {
@@ -577,7 +578,7 @@ public class ExpenseList extends Composite
           if (this == lastDataSizeReceiver) {
             int count = response.intValue();
             // Treat count == 1000 as inexact due to AppEngine limitation
-            reports.updateDataSize(count, count != 1000);
+            reports.updateRowCount(count, count != 1000);
           }
         }
       };
@@ -593,10 +594,10 @@ public class ExpenseList extends Composite
           int size = newValues.size();
           if (size < table.getPageSize()) {
             // Now we know the exact data size
-            reports.updateDataSize(table.getPageStart() + size, true);
+            reports.updateRowCount(table.getPageStart() + size, true);
           }
           if (size > 0) {
-            reports.updateViewData(table.getPageStart(), size, newValues);
+            reports.updateRowData(table.getPageStart(), newValues);
           }
 
           // Add the new keys to the known keys.

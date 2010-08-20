@@ -35,7 +35,7 @@
     <table class='{style.fields}'>
       <tr><td><div class='{style.label}'>Display Name:</div></td><td><span ui:field='displayName'></span></td></tr>
       <tr><td><div class='{style.label}'>User Name:</div></td><td><span ui:field='userName'></span></td></tr>
-      <tr><td><div class='{style.label}'>Supervisor Key:</div></td><td><span ui:field='supervisorKey'></span></td></tr>
+      <tr><td><div class='{style.label}'>Supervisor:</div></td><td><span ui:field='supervisor'></span></td></tr>
       <tr><td><div class='{style.label}'>Password:</div></td><td><span ui:field='password'></span></td></tr>
    </table>
 
