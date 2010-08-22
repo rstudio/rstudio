@@ -320,7 +320,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (Boolean.class == type) {
       return value;
     }
-    if (Date.class == type) {
+    if (Date.class.isAssignableFrom(type)) {
       return String.valueOf(((Date) value).getTime());
     }
     if (Enum.class.isAssignableFrom(type)) {
