@@ -273,11 +273,8 @@ class DeltaValueStoreJsonImpl {
     RecordJsoImpl rawMasterRecord = master.records.get(recordKey);
     WriteOperation priorOperation = operations.get(recordKey);
     if (rawMasterRecord == null && priorOperation == null) {
-      // it was a create on RF that has not been pulled in to the DVS.
-      RecordJsoImpl oldRecord = requestFactory.creates.remove(recordKey);
-      assert oldRecord != null;
       operations.put(recordKey, WriteOperation.CREATE);
-      creates.put(recordKey, oldRecord);
+      creates.put(recordKey, recordImpl.asJso());
       priorOperation = WriteOperation.CREATE;
     }
     if (priorOperation == null) {
@@ -321,16 +318,6 @@ class DeltaValueStoreJsonImpl {
 
   String toJson() {
     used = true;
-
-    /*
-     * pull the creates that only the requestFactory knows about.
-     */
-    for (RecordKey recordKey : requestFactory.creates.keySet()) {
-      RecordJsoImpl oldRecord = requestFactory.creates.remove(recordKey);
-      assert oldRecord != null;
-      operations.put(recordKey, WriteOperation.CREATE);
-      creates.put(recordKey, oldRecord);
-    }
 
     StringBuffer jsonData = new StringBuffer("{");
     for (WriteOperation writeOperation : new WriteOperation[] {

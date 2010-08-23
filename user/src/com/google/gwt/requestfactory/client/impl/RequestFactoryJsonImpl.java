@@ -31,8 +31,6 @@ import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.WriteOperation;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,8 +59,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   private static final Integer INITIAL_VERSION = 1;
 
   private long currentFutureId = 0;
-
-  final Map<RecordKey, RecordJsoImpl> creates = new HashMap<RecordKey, RecordJsoImpl>();
 
   private ValueStoreJsonImpl valueStore;
 
@@ -204,8 +200,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     Long futureId = ++currentFutureId;
     RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
         schema);
-    RecordKey recordKey = new RecordKey(newRecord, IS_FUTURE);
-    creates.put(recordKey, newRecord);
     return schema.create(newRecord, IS_FUTURE);
   }
 

@@ -137,7 +137,8 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
     String json = deltaValueStore.toJson();
-    testAndGetChangeRecord(json, WriteOperation.CREATE);
+    JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(json);
+    assertFalse(jsonObject.containsKey(WriteOperation.CREATE.name()));
   }
 
   public void testCreateWithSet() {
