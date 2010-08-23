@@ -72,7 +72,19 @@ import java.util.Set;
  * public ResourcePrototype[] getResources() {
  *   return new ResourcePrototype[] { resource() };
  * }
- * public native ResourcePrototype getResource(String name) /-{
+ * private static HashMap<String, ResourcePrototype> resourceMap;
+ * public ResourcePrototype getResource(String name) {
+ *   if (GWT.isScript()) {
+ *     return getResourceNative(name);
+ *   } else {
+ *     if (resourceMap == null) {
+ *       resourceMap = new HashMap<String, ResourcePrototype>();
+ *       resourceMap.put("resource", resource());
+ *     }
+ *     return resourceMap.get(name);
+ *   }
+ * }
+ * private native ResourcePrototype getResourceNative(String name) /-{
  *   switch (name) {
  *     case 'resource': return this.@...::resource()();
  *   }
@@ -262,6 +274,9 @@ public abstract class AbstractClientBundleGenerator extends Generator {
       // Used by the map methods
       f.addImport(ResourcePrototype.class.getName());
 
+      // Used for Java resource map.
+      f.addImport(HashMap.class.getName());
+
       // The whole point of this exercise
       f.addImplementedInterface(sourceType.getQualifiedSourceName());
 
@@ -270,6 +285,9 @@ public abstract class AbstractClientBundleGenerator extends Generator {
 
       // Set the now-calculated simple source name
       resourceContext.setSimpleSourceName(generatedSimpleSourceName);
+
+      // Reserve a field for the Java resource map.
+      fields.addName("resourceMap");
 
       // Write the generated code to disk
       createFieldsAndAssignments(logger, sw, generators, resourceContext,
@@ -683,9 +701,36 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     sw.outdent();
     sw.println("}");
 
-    // Use a switch statement as a fast map
-    sw.println("public native ResourcePrototype "
-        + "getResource(String name) /*-{");
+    // Map implementation for dev mode.
+    sw.println("private static HashMap<String, ResourcePrototype> resourceMap;");
+    sw.println("public ResourcePrototype getResource(String name) {");
+    sw.indent();
+    sw.println("if (GWT.isScript()) {");
+    sw.indent();
+    sw.println("return getResourceNative(name);");
+    sw.outdent();
+    sw.println("} else {");
+    sw.indent();
+    sw.println("if (resourceMap == null) {");
+    sw.indent();
+    sw.println("resourceMap = new HashMap<String, ResourcePrototype>();");
+    for (List<JMethod> list : taskList.values()) {
+      for (JMethod m : list) {
+        sw.println("resourceMap.put(\"" + m.getName() + "\", "
+            + m.getName() + "());");
+      }
+    }
+    sw.outdent();
+    sw.println("}");
+    sw.println("return resourceMap.get(name);");
+    sw.outdent();
+    sw.println("}");
+    sw.outdent();
+    sw.println("}");
+
+    // Use a switch statement as a fast map for script mode.
+    sw.println("private native ResourcePrototype "
+        + "getResourceNative(String name) /*-{");
     sw.indent();
     sw.println("switch (name) {");
     sw.indent();
