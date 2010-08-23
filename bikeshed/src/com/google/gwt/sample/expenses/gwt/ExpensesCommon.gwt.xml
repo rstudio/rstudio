@@ -3,7 +3,6 @@
 <module>
   <inherits name='com.google.gwt.app.App' />
   <inherits name='com.google.gwt.requestfactory.RequestFactory'/>
-  <inherits name='com.google.gwt.sample.bikeshed.style.Style'/>
   <inherits name='com.google.gwt.mobile.Mobile'/>
   <inherits name='com.google.gwt.user.cellview.CellView'/>
   <inherits name='com.google.gwt.logging.Logging'/>
