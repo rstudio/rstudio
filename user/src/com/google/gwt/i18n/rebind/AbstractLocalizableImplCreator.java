@@ -211,7 +211,7 @@ abstract class AbstractLocalizableImplCreator extends
           genPath += msgWriter.getExtension();
           OutputStream outStr = context.tryCreateResource(logger, genPath);
           if (outStr != null) {
-            TreeLogger branch = logger.branch(TreeLogger.INFO, "Generating "
+            TreeLogger branch = logger.branch(TreeLogger.TRACE, "Generating "
                 + genPath + " from " + className + " for locale " + locale,
                 null);
             PrintWriter out = null;
