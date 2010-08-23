@@ -50,12 +50,12 @@ public class NameFactory {
   }
 
   /**
-   * Adds a name to the set of already known identifiers. Has no affect if the
-   * name is already considered an existing identifier.
+   * Reserves a known name.  Asserts that the name is not already in this set.
    * 
    * @param name a not <code>null</code> name
    */
   public void addName(String name) {
+    assert !usedNames.contains(name);
     usedNames.add(name);
   }
 
@@ -74,6 +74,7 @@ public class NameFactory {
       if (usedNames.contains(newName)) {
         newName = name + count;
       } else {
+        usedNames.add(newName);
         return newName;
       }
     }
