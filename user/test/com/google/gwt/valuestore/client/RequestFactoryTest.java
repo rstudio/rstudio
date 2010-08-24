@@ -204,6 +204,26 @@ public class RequestFactoryTest extends GWTTestCase {
     });
   }
 
+   public void testPersistRecursiveRelation() {
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+
+    SimpleFooRecord rayFoo = req.create(SimpleFooRecord.class);
+    final RequestObject<SimpleFooRecord> persistRay = req.simpleFooRequest().persistAndReturnSelf(
+        rayFoo);
+    rayFoo = persistRay.edit(rayFoo);
+    rayFoo.setUserName("Ray");
+    rayFoo.setFooField(rayFoo);
+    persistRay.fire(new Receiver<SimpleFooRecord>() {
+      public void onSuccess(final SimpleFooRecord persistedRay,
+          Set<SyncResult> ignored) {
+        finishTest();
+      }
+    });
+  }
+
   public void testPersistRelation() {
     final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
     HandlerManager hm = new HandlerManager(null);

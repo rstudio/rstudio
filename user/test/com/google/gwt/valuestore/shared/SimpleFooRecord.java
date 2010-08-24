@@ -42,6 +42,9 @@ public interface SimpleFooRecord extends Record {
   Property<SimpleBarRecord> barField = new Property<SimpleBarRecord>("barField",
       SimpleBarRecord.class);
 
+  Property<SimpleFooRecord> fooField = new Property<SimpleFooRecord>("fooField",
+      SimpleFooRecord.class);
+
   SimpleBarRecord getBarField();
 
   Boolean getBoolField();
@@ -49,6 +52,8 @@ public interface SimpleFooRecord extends Record {
   Date getCreated();
 
   SimpleEnum getEnumField();
+
+  SimpleFooRecord getFooField();
 
   Integer getIntId();
 
@@ -63,6 +68,8 @@ public interface SimpleFooRecord extends Record {
   void setBoolField(Boolean boolField);
 
   void setCreated(Date created);
+
+  void setFooField(SimpleFooRecord fooField);
 
   void setIntId(Integer intId);
 

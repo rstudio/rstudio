@@ -88,6 +88,8 @@ public class SimpleFoo {
 
   private SimpleBar barField;
 
+  private SimpleFoo fooField;
+
   public SimpleFoo() {
     intId = 42;
     version = 1;
@@ -113,6 +115,10 @@ public class SimpleFoo {
 
   public SimpleEnum getEnumField() {
     return enumField;
+  }
+
+  public SimpleFoo getFooField() {
+    return fooField;
   }
 
   public Long getId() {
@@ -162,6 +168,10 @@ public class SimpleFoo {
 
   public void setEnumField(SimpleEnum enumField) {
     this.enumField = enumField;
+  }
+
+  public void setFooField(SimpleFoo fooField) {
+    this.fooField = fooField;
   }
 
   public void setId(Long id) {

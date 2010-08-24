@@ -103,6 +103,10 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
     return get(enumField);
   }
 
+  public SimpleFooRecord getFooField() {
+    return (SimpleFooRecord) getValueStore().getRecordBySchemaAndId(SCHEMA, (Long) (Object) get(fooField));
+  }
+
   public java.lang.Integer getIntId() {
     return get(intId);
   }
@@ -128,6 +132,10 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
   }
 
   public void setCreated(Date created) {
+    // ignore
+  }
+
+  public void setFooField(SimpleFooRecord fooField) {
     // ignore
   }
 

@@ -149,6 +149,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * 
    * <li>Find the changes that need to be sent back.
    */
+  private Map<EntityKey, Object> cachedEntityLookup = new HashMap<EntityKey, Object>();
   private Set<EntityKey> involvedKeys = new HashSet<EntityKey>();
   private Map<EntityKey, DvsData> dvsDataMap = new HashMap<EntityKey, DvsData>();
   private Map<EntityKey, SerializedEntity> beforeDataMap = new HashMap<EntityKey, SerializedEntity>();
@@ -287,6 +288,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       if (service != null) {
         Class<?> sClass = service.value();
         EntityKey entityKey = getEntityKey(parameterValue.toString());
+
         DvsData dvsData = dvsDataMap.get(entityKey);
         try {
           if (dvsData != null) {
@@ -294,7 +296,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
                 dvsData.jsonObject, dvsData.writeOperation);
             return entityData.entityInstance;
           } else {
-            Method findMeth = sClass.getMethod(getMethodNameFromPropertyName(sClass.getSimpleName(), "find"), Long.class);
+            Method findMeth = sClass.getMethod(
+                getMethodNameFromPropertyName(sClass.getSimpleName(), "find"),
+                Long.class);
             return findMeth.invoke(null, entityKey.id);
           }
         } catch (NoSuchMethodException e) {
@@ -396,11 +400,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Object entityInstance = getEntityInstance(writeOperation, entity,
           recordObject.get("id"), propertiesInRecord.get("id"));
 
+      cachedEntityLookup.put(entityKey, entityInstance);
+
       Set<ConstraintViolation<Object>> violations = Collections.emptySet();
       Iterator<?> keys = recordObject.keys();
       while (keys.hasNext()) {
         String key = (String) keys.next();
         Class<?> propertyType = propertiesInRecord.get(key);
+        Class<?> dtoType = propertiesToDTO.get(key);
         if (writeOperation == WriteOperation.CREATE && ("id".equals(key))) {
           Long id = generateIdForCreate(key);
           if (id != null) {
@@ -408,8 +415,20 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
                 propertyType).invoke(entityInstance, id);
           }
         } else {
-          Object propertyValue = getPropertyValueFromRequest(recordObject, key,
-              propertiesToDTO.get(key));
+          Object propertyValue = null;
+          if (Record.class.isAssignableFrom(dtoType)) {
+            EntityKey propKey = getEntityKey(recordObject.getString(key));
+            Object cacheValue = cachedEntityLookup.get(propKey);
+            if (cachedEntityLookup.containsKey(propKey)) {
+              propertyValue = cacheValue;
+            } else {
+              propertyValue = getPropertyValueFromRequest(recordObject, key,
+               propertiesToDTO.get(key));
+            }
+          } else {
+             propertyValue = getPropertyValueFromRequest(recordObject, key,
+               propertiesToDTO.get(key));
+          }
           entity.getMethod(getMethodNameFromPropertyName(key, "set"),
               propertyType).invoke(entityInstance, propertyValue);
         }
