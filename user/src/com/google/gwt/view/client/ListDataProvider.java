@@ -15,8 +15,8 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -153,7 +153,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
      * so that we don't spam the displays. This also allows users to clear and
      * replace all of the data without forcing the display back to page 0.
      */
-    private Command flushCommand = new Command() {
+    private ScheduledCommand flushCommand = new ScheduledCommand() {
       public void execute() {
         flushPending = false;
         if (flushCancelled) {
@@ -394,7 +394,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       flushCancelled = false;
       if (!flushPending) {
         flushPending = true;
-        DeferredCommand.addCommand(flushCommand);
+        Scheduler.get().scheduleFinally(flushCommand);
       }
     }
 
@@ -405,6 +405,11 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
       // Cancel any pending flush command.
       if (flushPending) {
         flushCancelled = true;
+      }
+
+      // Early exit if this list has been replaced in the data provider.
+      if (listWrapper != this) {
+        return;
       }
 
       int newSize = list.size();

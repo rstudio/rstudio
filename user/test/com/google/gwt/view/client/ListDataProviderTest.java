@@ -15,6 +15,9 @@
  */
 package com.google.gwt.view.client;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -431,13 +434,15 @@ public class ListDataProviderTest extends AbstractDataProviderTest {
 
   public void testSetList() {
     ListDataProvider<String> provider = createListDataProvider(10);
-    MockHasData<String> display = new MockHasData<String>();
+    final MockHasData<String> display = new MockHasData<String>();
     display.setVisibleRange(0, 15);
     provider.addDataDisplay(display);
     provider.flush();
     display.clearLastRowDataAndRange();
-    assertEquals("test 0", provider.getList().get(0));
+    List<String> oldList = provider.getList();
+    assertEquals("test 0", oldList.get(0));
 
+    // Replace the list.
     List<String> replace = new ArrayList<String>();
     replace.add("helloworld");
     provider.setList(replace);
@@ -445,6 +450,17 @@ public class ListDataProviderTest extends AbstractDataProviderTest {
     assertEquals(1, display.getRowCount());
     assertEquals(replace, display.getLastRowData());
     assertEquals(new Range(0, 1), display.getLastRowDataRange());
+    display.clearLastRowDataAndRange();
+
+    // Verify that the old list doesn't trigger updates in the display.
+    oldList.set(0, "newValue");
+    delayTestFinish(2000);
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      public void execute() {
+        assertNull(display.getLastRowData());
+        finishTest();
+      }
+    });
   }
 
   public void testSetListEmpty() {
