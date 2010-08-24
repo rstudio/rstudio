@@ -47,7 +47,11 @@ public class ClientRequestHelper {
     }-*/;
 
     private native String toJsonString()/*-{
-      return $wnd.JSON.stringify(this);
+      var gwt = this.__gwt_ObjectId;
+      delete this.__gwt_ObjectId;
+      var rtn = $wnd.JSON.stringify(this);
+      this.__gwt_ObjectId = gwt;
+      return rtn;
     }-*/;
   }
 

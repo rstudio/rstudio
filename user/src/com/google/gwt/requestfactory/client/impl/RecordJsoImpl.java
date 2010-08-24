@@ -359,11 +359,14 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     delete this.__rf;
     var vs = this.__vs;
     delete this.__vs;
+    var gwt = this.__gwt_ObjectId;
+    delete this.__gwt_ObjectId;
     // TODO verify that the stringify() from json2.js works on IE
     var rtn = $wnd.JSON.stringify(this);
     this.__key = key;
     this.__rf = rf;
     this.__vs = vs;
+    this.__gwt_ObjectId = gwt;
     return rtn;
   }-*/;
 
