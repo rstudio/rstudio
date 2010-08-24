@@ -18,6 +18,7 @@ package com.google.gwt.app.place;
 import com.google.gwt.app.place.ProxyPlace.Operation;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.user.client.Window;
@@ -146,7 +147,6 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     toCommit.fire(receiver);
   }
 
-  @SuppressWarnings("unchecked")
   public void start(Display display, EventBus eventBus) {
     this.display = display;
 
@@ -154,11 +154,12 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     view.setCreating(creating);
 
     if (creating) {
-      R tempRecord = (R) requests.create(proxyType);
+      R tempRecord = requests.create(proxyType);
       futureId = tempRecord.getId();
       doStart(display, tempRecord);
     } else {
-      fireFindRequest(Value.of(getRecord().getId()), new Receiver<R>() {
+      RecordRequest<R> findRequest = getFindRequest(Value.of(getRecord().getId()));
+      findRequest.with(getView().getPaths()).fire(new Receiver<R>() {
         public void onSuccess(R record, Set<SyncResult> syncResults) {
           if (AbstractRecordEditActivity.this.display != null) {
             doStart(AbstractRecordEditActivity.this.display, record);
@@ -189,7 +190,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   /**
    * Called to fetch the details of the edited record.
    */
-  protected abstract void fireFindRequest(Value<Long> id, Receiver<R> callback);
+  protected abstract RecordRequest<R> getFindRequest(Value<Long> id);
 
   protected abstract RequestObject<Void> getPersistRequest(R record);
 

@@ -20,6 +20,7 @@ import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.RecordEditView;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
@@ -89,8 +90,8 @@ public class ReportEditActivity extends
   }
   
   @Override
-  protected void fireFindRequest(Value<Long> id, Receiver<ReportRecord> callback) {
-    requests.reportRequest().findReport(id).fire(callback);
+  protected RecordRequest<ReportRecord> getFindRequest(Value<Long> id) {
+    return requests.reportRequest().findReport(id);
   }
 
   protected RequestObject<Void> getPersistRequest(ReportRecord record) {
