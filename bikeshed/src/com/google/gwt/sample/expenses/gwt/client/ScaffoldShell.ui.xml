@@ -51,7 +51,6 @@
       left: 75%;
       right: 0%;
       text-align: center;
-      background-color: #777;
       color: #def;
     }
 
