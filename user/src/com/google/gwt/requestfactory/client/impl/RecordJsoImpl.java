@@ -370,25 +370,6 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return rtn;
   }-*/;
 
-  /**
-   * Return JSON representation of just id and version fields, using org.json
-   * library.
-   *
-   * @return returned string.
-   */
-  public final native String toJsonIdVersion() /*-{
-    // Safari 4.0.5 appears not to honor the replacer argument, so we can't do this:
-    //    var replacer = function(key, value) {
-    //      if (key == 'id' || key == 'version') {
-    //        return value;
-    //      }
-    //      return;
-    //    }
-    //    return $wnd.JSON.stringify(this, replacer);
-    var object = { id: this.id, version: this.version };
-    return $wnd.JSON.stringify(object);
-  }-*/;
-
   private native boolean copyPropertyIfDifferent(String name,
       RecordJsoImpl from) /*-{
     if (this[name] == from[name]) {

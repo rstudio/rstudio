@@ -363,6 +363,7 @@ class DeltaValueStoreJsonImpl {
   }
 
   private String getJsonForOperation(WriteOperation writeOperation) {
+    assert (writeOperation == WriteOperation.CREATE || writeOperation == WriteOperation.UPDATE);
     Map<RecordKey, RecordJsoImpl> recordsMap = getRecordsMap(writeOperation);
     if (recordsMap.size() == 0) {
       return "";
@@ -379,11 +380,7 @@ class DeltaValueStoreJsonImpl {
       }
       requestData.append("{\""
           + entry.getValue().getSchema().getToken() + "\":");
-      if (writeOperation != WriteOperation.DELETE) {
-        requestData.append(impl.toJson());
-      } else {
-        requestData.append(impl.toJsonIdVersion());
-      }
+      requestData.append(impl.toJson());
       requestData.append("}");
     }
     requestData.append("]");

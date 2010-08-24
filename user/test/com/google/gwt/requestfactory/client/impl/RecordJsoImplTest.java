@@ -81,11 +81,6 @@ public class RecordJsoImplTest extends GWTTestCase {
     assertEquals(ID_VERSION_JSON, getMinimalJso().toJson());
   }
 
-  public void testToJsonIdVersion() {
-    assertEquals(ID_VERSION_JSON, getPopulatedJso().toJsonIdVersion());
-    assertEquals(ID_VERSION_JSON, getMinimalJso().toJsonIdVersion());
-  }
-
   private RecordJsoImpl getEmptyJso() {
     return RecordJsoImpl.create();
   }
