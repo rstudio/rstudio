@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,7 +47,7 @@ public final class ModuleDefLoader {
   private interface LoadStrategy {
     /**
      * Perform loading on the specified module.
-     * 
+     *
      * @param logger logs the process
      * @param moduleName the name of the process
      * @param moduleDef a module
@@ -69,7 +69,7 @@ public final class ModuleDefLoader {
   @SuppressWarnings("unchecked")
   private static final Map<String, ModuleDef> loadedModules = new ReferenceMap(
       AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT);
-  
+
   /**
    * A mapping from effective to physical module names.
    */
@@ -79,7 +79,7 @@ public final class ModuleDefLoader {
   /**
    * Creates a module in memory that is not associated with a
    * <code>.gwt.xml</code> file on disk.
-   * 
+   *
    * @param logger logs the process
    * @param moduleName the synthetic module to create
    * @param inherits a set of modules to inherit from
@@ -108,7 +108,7 @@ public final class ModuleDefLoader {
   /**
    * Loads a new module from the class path.  Equivalent to
    * {@link #loadFromClassPath(logger, moduleName, false)}.
-   * 
+   *
    * @param logger logs the process
    * @param moduleName the module to load
    * @return the loaded module
@@ -118,10 +118,10 @@ public final class ModuleDefLoader {
       throws UnableToCompleteException {
     return loadFromClassPath(logger, moduleName, false);
   }
-  
+
   /**
    * Loads a new module from the class path.
-   * 
+   *
    * @param logger logs the process
    * @param moduleName the module to load
    * @param refresh whether to refresh the module
@@ -182,7 +182,7 @@ public final class ModuleDefLoader {
 
   /**
    * Constructs a {@link ModuleDefLoader} that loads a synthetic module.
-   * 
+   *
    * @param inherits a set of modules to inherit from
    */
   private ModuleDefLoader(final String[] inherits) {
@@ -201,7 +201,7 @@ public final class ModuleDefLoader {
 
   /**
    * Loads a new module into <code>moduleDef</code> as an included module.
-   * 
+   *
    * @param logger Logs the process.
    * @param moduleName The module to load.
    * @param moduleDef The module to add the new module to.
@@ -274,7 +274,7 @@ public final class ModuleDefLoader {
 
   /**
    * This method loads a module.
-   * 
+   *
    * @param logger used to log the loading process
    * @param moduleName the name of the module
    * @return the module returned -- cannot be null
@@ -289,11 +289,17 @@ public final class ModuleDefLoader {
     }
 
     ModuleDef moduleDef = new ModuleDef(moduleName);
+    Event moduleLoadEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,
+        "phase", "strategy.load()");
     strategy.load(logger, moduleName, moduleDef);
+    moduleLoadEvent.end();
 
     // Do any final setup.
     //
+    Event moduleNormalizeEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,
+        "phase", "moduleDef.normalize()");
     moduleDef.normalize(logger);
+    moduleNormalizeEvent.end();
 
     // Add the "physical" module name: com.google.Module
     loadedModules.put(moduleName, moduleDef);

@@ -327,6 +327,7 @@ public final class SpeedTracerLogger {
   private final Event shutDownSentinel = new Event();
 
   private final long zeroTimeNanos = System.nanoTime();
+  private final long zeroTimeMilliseconds = System.currentTimeMillis();
 
   /**
    * Constructor intended for unit testing.
@@ -446,6 +447,11 @@ public final class SpeedTracerLogger {
     }
 
     Event newEvent = new Event(parent, type, data);
+    // Add a field to the top level event in order to  track the base time
+    // so we can re-normalize the data
+    if (threadPendingEvents.size() == 0) {
+      newEvent.addData("baseTime", "" + zeroTimeMilliseconds);
+    }
     threadPendingEvents.push(newEvent);
     return newEvent;
   }
