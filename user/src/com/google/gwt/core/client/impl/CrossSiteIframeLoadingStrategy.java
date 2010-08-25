@@ -120,7 +120,7 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
        @com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy::clearOnSuccess(*)(fragment);
        @com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy::clearCallbacks(*)(tag);
        head.removeChild(tag);
-       __gwtModuleFunction.installCode(code);
+       __gwtModuleFunction.installCode(code, false);
      }
    }-*/;
 

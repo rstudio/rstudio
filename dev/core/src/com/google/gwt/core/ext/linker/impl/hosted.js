@@ -1,16 +1,13 @@
-<html>
-<head><script>
+
 var $wnd = parent;
 var $doc = $wnd.document;
-var $moduleName, $moduleBase, $entry
+var $moduleName = window.name;
+var $moduleBase, $entry
 ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
 ,$sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null;
 // Lightweight metrics
 if ($stats) {
-  var moduleFuncName = location.search.substr(1);
-  var moduleFunc = $wnd[moduleFuncName];
-  var moduleName = moduleFunc ? moduleFunc.moduleName : "unknown";
-  $stats({moduleName:moduleName,sessionId:$sessionId,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
+  $stats({moduleName:$moduleName,sessionId:$sessionId,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
 }
 var $hostedHtmlVersion="2.1";
 
@@ -306,10 +303,7 @@ window.fireOnModuleLoadStart = function(className) {
 };
 
 window.__gwt_module_id = 0;
-</script></head>
-<body>
-<font face='arial' size='-1'>This html file is for hosted mode support.</font>
-<script><!--
+
 // Lightweight metrics
 $stats && $stats({moduleName:$moduleName, sessionId:$sessionId, subSystem:'startup', evtGroup:'moduleStartup', millis:(new Date()).getTime(), type:'moduleEvalEnd'});
 
@@ -345,6 +339,5 @@ if (idx >= 0) {
   $hosted = decodeURIComponent($hosted);
 }
 
-query = window.location.search.substring(1);
-if (query && $wnd[query]) setTimeout(function() { $wnd[query].onScriptInstalled(gwtOnLoad) }, 1);
---></script></body></html>
+setTimeout(function() { $wnd[$moduleName].onScriptInstalled(gwtOnLoad) }, 1);
+

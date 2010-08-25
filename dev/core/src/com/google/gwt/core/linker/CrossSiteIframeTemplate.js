@@ -106,52 +106,56 @@ function __MODULE_FUNC__() {
         scriptFrame.tabIndex = -1;
         document.body.appendChild(scriptFrame);
 
+        var doc = scriptFrame.contentDocument;
+        if (!doc) {
+          doc = scriptFrame.contentWindow.document;
+        }
+        // The missing content has been seen on Safari 3 and firebug will
+        // behave incorrectly on soft refresh unless we explicitly set the content
+        // of the frame. However, we don't want to do this when runAsync calls
+        // installCode, so we do it here when we create the iframe.
+        doc.open();
+        doc.write('<html><head></head><body></body></html>');
+        doc.close();
+
         // For some reason, adding this setTimeout makes code installation
         // more reliable.
         setTimeout(function() {
             if (isHostedMode()) {
-              // TODO(unnurg) changing the src introduces cross-site problems
-              // Neeed to add a hosted-xsiframe.js and install a script tag 
-              // pointing at it
-              scriptFrame.contentWindow.location.replace(
-            		  base + "__HOSTED_FILENAME__?__MODULE_FUNC__");
+              scriptFrame.contentWindow.name = '__MODULE_FUNC__';
+              installCode(base + "__HOSTED_FILENAME__", true);
             } else {
-              installCode(compiledScript);
+              installCode(compiledScript, false);
             }
         })
     }
   }
-
+  
   // Install code into scriptFrame
   //
-  function installCode(code) {
+  function installCode(code, isUrl) {
     var doc = scriptFrame.contentDocument;
     if (!doc) {
       doc = scriptFrame.contentWindow.document;
     }
-    
-    var dochead = doc.getElementsByTagName('head')[0];
-    if (!dochead) {
-    	// This has been seen on Safari 3.
-    	// Give the iframe a skeletal HTML document and try again.
-    	doc.write('<html><head></head><body></body></html>');
-    	dochead = doc.getElementsByTagName('head')[0];
-    }
+    var docbody = doc.getElementsByTagName('body')[0];
 
     // Inject the fetched script into the script frame.
-    // The script will call onScriptLoad.
+    // The script will call onScriptInstalled.
     var script = doc.createElement('script');
     script.language='javascript';
-    script.text = code;
+    if (isUrl) {
+      script.src = code;
+    } else {
+      script.text = code;
+    }
+    docbody.appendChild(script);
 
-    dochead.appendChild(script);
-	  
-    // Remove the tag to shrink the DOM a little.
+    // Remove the tags to shrink the DOM a little.
     // It should have installed its code immediately after being added.
-    dochead.removeChild(script);
+    docbody.removeChild(script);
   }
 
-  
   __PROCESS_METAS__
   __COMPUTE_SCRIPT_BASE__
   

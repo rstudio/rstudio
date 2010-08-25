@@ -86,7 +86,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
 
   @Override
   protected String getHostedFilename() {
-    return "hosted_xsiframe.html";
+    return "hosted.js";
   }
   
   @Override
