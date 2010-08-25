@@ -57,7 +57,7 @@ mode.
 If you prefer to work from the command line, you can use Maven to build your
 project. (http://maven.apache.org/)  Maven uses the supplied 'pom.xml' file
 which describes exactly how to build your project.  This file has been tested
-to work against Ant 2.2.1.  The following assumes 'mvn' is on your command
+to work against Maven 2.2.1  The following assumes 'mvn' is on your command
 line path.
 
 To run development mode, just type 'mvn gae:run'.

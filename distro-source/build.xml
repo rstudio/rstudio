@@ -45,6 +45,9 @@
       <zipfileset dir="${gwt.build.out}" prefix="${project.distname}">
         <include name="samples" />
         <include name="samples/*" />
+        <include name="samples/*/build.xml" />
+        <include name="samples/*/pom.xml" />
+        <include name="samples/*/README-MAVEN.txt" />
         <include name="samples/*/src/**" />
         <include name="samples/*/war/**" />
       </zipfileset>
