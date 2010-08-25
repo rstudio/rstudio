@@ -17,6 +17,8 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -85,10 +87,12 @@ public abstract class AbstractHasData<T> extends Widget
 
     public void replaceAllChildren(List<T> values, String html) {
       hasData.replaceAllChildren(values, html);
+      fireValueChangeEvent();
     }
 
     public void replaceChildren(List<T> values, int start, String html) {
       hasData.replaceChildren(values, start, html);
+      fireValueChangeEvent();
     }
 
     public void resetFocus() {
@@ -107,6 +111,18 @@ public abstract class AbstractHasData<T> extends Widget
      */
     public void setSelected(Element elem, boolean selected) {
       hasData.setSelected(elem, selected);
+    }
+
+    /**
+     * Fire a value change event.
+     */
+    private void fireValueChangeEvent() {
+      // Use an anonymous class to override ValueChangeEvents's protected
+      // constructor. We can't call ValueChangeEvent.fire() because this class
+      // doesn't implement HasValueChangeHandlers.
+      hasData.fireEvent(
+          new ValueChangeEvent<List<T>>(hasData.getDisplayedItems()) {
+          });
     }
   }
 
@@ -379,6 +395,19 @@ public abstract class AbstractHasData<T> extends Widget
       int start, SelectionModel<? super T> selectionModel);
 
   /**
+   * Add a {@link ValueChangeHandler} that is called when the display values
+   * change. Used by {@link CellBrowser} to detect when the displayed data
+   * changes.
+   *
+   * @param handler the handler
+   * @return a {@link HandlerRegistration} to remove the handler
+   */
+  final HandlerRegistration addValueChangeHandler(
+      ValueChangeHandler<List<T>> handler) {
+    return addHandler(handler, ValueChangeEvent.getType());
+  }
+
+  /**
    * Convert the specified HTML into DOM elements and return the parent of the
    * DOM elements.
    *
@@ -407,6 +436,35 @@ public abstract class AbstractHasData<T> extends Widget
    */
   int getChildCount() {
     return getChildContainer().getChildCount();
+  }
+
+  /**
+   * Get the first index of a displayed item according to its key.
+   *
+   * @param value the value
+   * @return the index of the item, or -1 of not found
+   */
+  int indexOf(T value) {
+    ProvidesKey<T> keyProvider = getKeyProvider();
+    List<T> items = getDisplayedItems();
+
+    // If no key provider is present, just compare the objets.
+    if (keyProvider == null) {
+      return items.indexOf(value);
+    }
+
+    // Compare the keys of each object.
+    Object key = keyProvider.getKey(value);
+    if (key == null) {
+      return -1;
+    }
+    int itemCount = items.size();
+    for (int i = 0; i < itemCount; i++) {
+      if (key.equals(keyProvider.getKey(items.get(i)))) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   /**

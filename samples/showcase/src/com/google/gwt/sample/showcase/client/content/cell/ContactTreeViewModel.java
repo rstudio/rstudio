@@ -102,7 +102,7 @@ public class ContactTreeViewModel implements TreeViewModel {
     public int compareTo(LetterCount o) {
       return (o == null) ? -1 : (firstLetter - o.firstLetter);
     }
- 
+
     @Override
     public boolean equals(Object o) {
       return compareTo((LetterCount) o) == 0;
@@ -201,6 +201,9 @@ public class ContactTreeViewModel implements TreeViewModel {
       @Override
       public void onBrowserEvent(Element parent, ContactInfo value, Object key,
           NativeEvent event, ValueUpdater<ContactInfo> valueUpdater) {
+        // Make sure that the composition cells see the event.
+        super.onBrowserEvent(parent, value, key, event, valueUpdater);
+
         if ("keyup".equals(event.getType())
             && event.getKeyCode() == KeyCodes.KEY_ENTER) {
           selectionModel.setSelected(value, !selectionModel.isSelected(value));

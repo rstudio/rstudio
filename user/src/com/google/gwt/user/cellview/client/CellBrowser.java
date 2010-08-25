@@ -26,7 +26,10 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
-import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.OpenEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -35,7 +38,6 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasAnimation;
 import com.google.gwt.user.client.ui.ProvidesResize;
@@ -45,9 +47,6 @@ import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ProvidesKey;
-import com.google.gwt.view.client.Range;
-import com.google.gwt.view.client.RangeChangeEvent;
-import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 import com.google.gwt.view.client.TreeViewModel.NodeInfo;
@@ -61,7 +60,7 @@ import java.util.Set;
  * A "browsable" view of a tree in which only a single node per level may be
  * open at one time.
  */
-public class CellBrowser extends Composite
+public class CellBrowser extends AbstractCellTree
     implements ProvidesResize, RequiresResize, HasAnimation {
 
   /**
@@ -167,6 +166,11 @@ public class CellBrowser extends Composite
     private Object openKey;
 
     /**
+     * The value of the currently open item.
+     */
+    private C openValue;
+
+    /**
      * The key provider for the node.
      */
     private final ProvidesKey<C> providesKey;
@@ -221,30 +225,13 @@ public class CellBrowser extends Composite
 
       // Open child nodes.
       if (Event.getTypeInt(event.getType()) == Event.ONMOUSEDOWN) {
-        trimToLevel(level);
-
-        // Remove style from currently open item.
-        Element curOpenItem = Document.get().getElementById(getOpenId());
-        if (curOpenItem != null) {
-          setElementOpenState(curOpenItem.getParentElement(), false);
-        }
-        openKey = null;
-
-        // Save the key of the new open item and update the Element.
-        if (!viewModel.isLeaf(value)) {
-          NodeInfo<?> nodeInfo = viewModel.getNodeInfo(value);
-          if (nodeInfo != null) {
-            openKey = providesKey.getKey(value);
-            setElementOpenState(parent, true);
-            appendTreeNode(nodeInfo);
-          }
-        }
+        setChildState(this, value, true, true);
       }
     }
 
     public void render(C value, Object viewData, StringBuilder sb) {
       boolean isOpen = (openKey == null) ? false : openKey.equals(
-          providesKey.getKey(value));
+          getValueKey(value));
       boolean isSelected = (selectionModel == null)
           ? false : selectionModel.isSelected(value);
       sb.append("<div style='position:relative;padding-right:");
@@ -257,14 +244,10 @@ public class CellBrowser extends Composite
       if (isSelected) {
         sb.append(" ").append(style.selectedItem());
       }
-      sb.append("'");
-      if (isOpen) {
-        sb.append(" id='").append(getOpenId()).append("'");
-      }
-      sb.append(">");
+      sb.append("'>");
       if (isOpen) {
         sb.append(openImageHtml);
-      } else if (viewModel.isLeaf(value)) {
+      } else if (isLeaf(value)) {
         sb.append(LEAF_IMAGE);
       } else {
         sb.append(closedImageHtml);
@@ -289,49 +272,13 @@ public class CellBrowser extends Composite
     }
 
     /**
-     * Get the image element of the decorated cell.
+     * Get the key for the specified value.
      *
-     * @param parent the parent of this cell
-     * @return the image element
+     * @param value the value
+     * @return the key
      */
-    private Element getImageElement(Element parent) {
-      return parent.getFirstChildElement().getFirstChildElement();
-    }
-
-    /**
-     * Get the ID of the open element.
-     *
-     * @return the ID
-     */
-    private String getOpenId() {
-      return uniqueId + "-" + level;
-    }
-
-    /**
-     * Replace the image element of a cell and update the styles associated with
-     * the open state.
-     *
-     * @param parent the parent element of the cell
-     * @param open true if open, false if closed
-     */
-    private void setElementOpenState(Element parent, boolean open) {
-      // Update the style name and ID.
-      Element wrapper = parent.getFirstChildElement();
-      if (open) {
-        wrapper.addClassName(style.openItem());
-        wrapper.setId(getOpenId());
-      } else {
-        wrapper.removeClassName(style.openItem());
-        wrapper.setId("");
-      }
-
-      // Replace the image element.
-      String html = open ? openImageHtml : closedImageHtml;
-      Element tmp = Document.get().createDivElement();
-      tmp.setInnerHTML(html);
-      Element imageElem = tmp.getFirstChildElement();
-      Element oldImg = getImageElement(parent);
-      wrapper.replaceChild(imageElem, oldImg);
+    private Object getValueKey(C value) {
+      return (providesKey == null) ? value : providesKey.getKey(value);
     }
   }
 
@@ -381,43 +328,146 @@ public class CellBrowser extends Composite
    *
    * @param <C> the data type of the children of the node
    */
-  private class TreeNode<C> {
-    private CellDecorator<C> cell;
-    private HasData<C> view;
+  private class TreeNodeImpl<C> implements TreeNode {
+    private final CellDecorator<C> cell;
+    private final AbstractHasData<C> display;
     private NodeInfo<C> nodeInfo;
-    private Widget widget;
+    private final Object value;
+    private final HandlerRegistration valueChangeHandler;
+    private final Widget widget;
 
     /**
-     * Construct a new {@link TreeNode}.
+     * Construct a new {@link TreeNodeImpl}.
      *
      * @param nodeInfo the nodeInfo for the children nodes
-     * @param view the view associated with the node
+     * @param value the value of the node
+     * @param display the display associated with the node
+     * @param cell the {@link Cell} used to render the data
      * @param widget the widget that represents the list view
      */
-    public TreeNode(NodeInfo<C> nodeInfo, HasData<C> view,
-        CellDecorator<C> cell, Widget widget) {
+    public TreeNodeImpl(final NodeInfo<C> nodeInfo, Object value,
+        AbstractHasData<C> display, final CellDecorator<C> cell,
+        Widget widget) {
       this.cell = cell;
-      this.view = view;
+      this.display = display;
       this.nodeInfo = nodeInfo;
+      this.value = value;
       this.widget = widget;
+
+      // Trim to the current level if the open node disappears.
+      valueChangeHandler = display.addValueChangeHandler(
+          new ValueChangeHandler<List<C>>() {
+            public void onValueChange(ValueChangeEvent<List<C>> event) {
+              Object openKey = cell.openKey;
+              if (openKey != null) {
+                boolean stillExists = false;
+                List<C> displayValues = event.getValue();
+                for (C displayValue : displayValues) {
+                  if (openKey.equals(cell.getValueKey(displayValue))) {
+                    stillExists = true;
+                    break;
+                  }
+                }
+                if (!stillExists) {
+                  trimToLevel(cell.level);
+                }
+              }
+            }
+          });
+    }
+
+    public int getChildCount() {
+      assertNotDestroyed();
+      return display.getChildCount();
+    }
+
+    public C getChildValue(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return display.getDisplayedItem(index);
+    }
+
+    public int getIndex() {
+      assertNotDestroyed();
+      TreeNodeImpl<?> parent = getParent();
+      return (parent == null) ? 0 : parent.getOpenIndex();
+    }
+
+    public TreeNodeImpl<?> getParent() {
+      assertNotDestroyed();
+      return (cell.level == 0) ? null : treeNodes.get(cell.level - 1);
+    }
+
+    public Object getValue() {
+      return value;
+    }
+
+    public boolean isChildLeaf(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return isLeaf(getChildValue(index));
+    }
+
+    public boolean isChildOpen(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return (cell.openKey == null) ? false : cell.openKey.equals(
+          cell.getValueKey(getChildValue(index)));
+    }
+
+    public boolean isDestroyed() {
+      return nodeInfo == null;
+    }
+
+    public TreeNode setChildOpen(int index, boolean open) {
+      return setChildOpen(index, open, true);
+    }
+
+    public TreeNode setChildOpen(int index, boolean open, boolean fireEvents) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return setChildState(cell, getChildValue(index), open, fireEvents);
     }
 
     /**
-     * Get the {@link CellDecorator} used to render the node.
-     *
-     * @return the cell decorator
+     * Assert that the node has not been destroyed.
      */
-    public CellDecorator<C> getCell() {
-      return cell;
+    private void assertNotDestroyed() {
+      if (isDestroyed()) {
+        throw new IllegalStateException("TreeNode no longer exists.");
+      }
+    }
+
+    /**
+     * Check the child bounds.
+     *
+     * @param index the index of the child
+     * @throws IndexOutOfBoundsException if the child is not in range
+     */
+    private void checkChildBounds(int index) {
+      if ((index < 0) || (index >= getChildCount())) {
+        throw new IndexOutOfBoundsException();
+      }
     }
 
     /**
      * Unregister the list view and remove it from the widget.
      */
-    void cleanup() {
-      view.setSelectionModel(null);
+    private void destroy() {
+      valueChangeHandler.removeHandler();
+      display.setSelectionModel(null);
       nodeInfo.unsetDataDisplay();
       getSplitLayoutPanel().remove(widget);
+      nodeInfo = null;
+    }
+
+    /**
+     * Get the index of the open item.
+     *
+     * @return the index of the open item, or -1 if not found
+     */
+    private int getOpenIndex() {
+      return display.indexOf(cell.openValue);
     }
   }
 
@@ -467,11 +517,6 @@ public class CellBrowser extends Composite
   private final String closedImageHtml;
 
   /**
-   * The unique ID assigned to this tree widget.
-   */
-  private final String uniqueId = Document.get().createUniqueId();
-
-  /**
    * A boolean indicating whether or not animations are enabled.
    */
   private boolean isAnimationEnabled;
@@ -502,14 +547,10 @@ public class CellBrowser extends Composite
   private Element scrollLock;
 
   /**
-   * The visible {@link TreeNode}.
+   * The visible {@link TreeNodeImpl}s.
    */
-  private final List<TreeNode<?>> treeNodes = new ArrayList<TreeNode<?>>();
-
-  /**
-   * The {@link TreeViewModel} that backs the tree.
-   */
-  private final TreeViewModel viewModel;
+  private final List<TreeNodeImpl<?>> treeNodes = new ArrayList<
+      TreeNodeImpl<?>>();
 
   /**
    * Construct a new {@link CellBrowser}.
@@ -532,7 +573,7 @@ public class CellBrowser extends Composite
    */
   public <T> CellBrowser(
       TreeViewModel viewModel, T rootValue, Resources resources) {
-    this.viewModel = viewModel;
+    super(viewModel);
     this.style = resources.cellBrowserStyle();
     this.style.ensureInjected();
     initWidget(new SplitLayoutPanel());
@@ -560,7 +601,7 @@ public class CellBrowser extends Composite
     getElement().appendChild(scrollLock);
 
     // Associate the first view with the rootValue.
-    appendTreeNode(viewModel.getNodeInfo(rootValue));
+    appendTreeNode(getNodeInfo(rootValue), rootValue);
 
     // Catch scroll events.
     sinkEvents(Event.ONSCROLL);
@@ -582,6 +623,11 @@ public class CellBrowser extends Composite
    */
   public int getMinimumColumnWidth() {
     return minWidth;
+  }
+
+  @Override
+  public TreeNode getRootTreeNode() {
+    return treeNodes.get(0);
   }
 
   public boolean isAnimationEnabled() {
@@ -634,8 +680,9 @@ public class CellBrowser extends Composite
    * @param cell the cell to use in the list view
    * @return the {@link HasData}
    */
-  // TODO(jlabanca): Move createView into constructor factory arg?
-  protected <C> HasData<C> createDisplay(NodeInfo<C> nodeInfo, Cell<C> cell) {
+  // TODO(jlabanca): Move createDisplay into constructor factory arg?
+  protected <C> AbstractHasData<C> createDisplay(
+      NodeInfo<C> nodeInfo, Cell<C> cell) {
     CellList<C> display = new CellList<C>(cell, getCellListResources());
     display.setValueUpdater(nodeInfo.getValueUpdater());
     display.setKeyProvider(nodeInfo.getProvidesKey());
@@ -671,123 +718,43 @@ public class CellBrowser extends Composite
   }
 
   /**
-   * Create a new {@link TreeNode} and append it to the end of the LayoutPanel.
+   * Create a new {@link TreeNodeImpl} and append it to the end of the
+   * LayoutPanel.
    *
    * @param <C> the data type of the children
    * @param nodeInfo the info about the node
+   * @param value the value of the open node
    */
-  private <C> void appendTreeNode(final NodeInfo<C> nodeInfo) {
+  private <C> void appendTreeNode(final NodeInfo<C> nodeInfo, Object value) {
     // Create the list view.
     final int level = treeNodes.size();
     final CellDecorator<C> cell = new CellDecorator<C>(nodeInfo, level);
-    final HasData<C> view = createDisplay(nodeInfo, cell);
-    assert (view instanceof Widget) : "createView() must return a widget";
+    final AbstractHasData<C> view = createDisplay(nodeInfo, cell);
 
     // Create a pager and wrap the components in a scrollable container.
     ScrollPanel scrollable = new ScrollPanel();
     final Widget pager = createPager(view);
     if (pager != null) {
       FlowPanel flowPanel = new FlowPanel();
-      flowPanel.add((Widget) view);
+      flowPanel.add(view);
       flowPanel.add(pager);
       scrollable.setWidget(flowPanel);
     } else {
-      scrollable.setWidget((Widget) view);
+      scrollable.setWidget(view);
     }
     scrollable.setStyleName(style.column());
     if (level == 0) {
       scrollable.addStyleName(style.firstColumn());
     }
 
-    // Create a delegate list view so we can trap data changes.
-    HasData<C> viewDelegate = new HasData<C>() {
-
-      public HandlerRegistration addRangeChangeHandler(
-          RangeChangeEvent.Handler handler) {
-        return view.addRangeChangeHandler(handler);
-      }
-
-      public HandlerRegistration addRowCountChangeHandler(
-          RowCountChangeEvent.Handler handler) {
-        return view.addRowCountChangeHandler(handler);
-      }
-
-      public void fireEvent(GwtEvent<?> event) {
-        view.fireEvent(event);
-      }
-
-      public int getRowCount() {
-        return view.getRowCount();
-      }
-
-      public SelectionModel<? super C> getSelectionModel() {
-        return view.getSelectionModel();
-      }
-
-      public Range getVisibleRange() {
-        return view.getVisibleRange();
-      }
-
-      public boolean isRowCountExact() {
-        return view.isRowCountExact();
-      }
-
-      public final void setRowCount(int count) {
-        view.setRowCount(count);
-      }
-
-      public void setRowCount(int count, boolean isExact) {
-        view.setRowCount(count, isExact);
-      }
-
-      public void setRowData(int start, List<C> values) {
-        // Trim to the current level if the open node no longer exists.
-        TreeNode<?> node = treeNodes.get(level);
-        Object openKey = node.getCell().openKey;
-        if (openKey != null) {
-          boolean stillExists = false;
-          ProvidesKey<C> keyProvider = nodeInfo.getProvidesKey();
-          for (C value : values) {
-            if (openKey.equals(keyProvider.getKey(value))) {
-              stillExists = true;
-              break;
-            }
-          }
-          if (!stillExists) {
-            trimToLevel(level);
-          }
-        }
-
-        // Refresh the list.
-        view.setRowData(start, values);
-      }
-
-      public void setSelectionModel(SelectionModel<? super C> selectionModel) {
-        view.setSelectionModel(selectionModel);
-      }
-
-      public void setVisibleRange(int start, int length) {
-        view.setVisibleRange(start, length);
-      }
-
-      public void setVisibleRange(Range range) {
-        view.setVisibleRange(range);
-      }
-
-      public void setVisibleRangeAndClearData(
-          Range range, boolean forceRangeChangeEvent) {
-        view.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
-      }
-    };
-
     // Create a TreeNode.
-    TreeNode<C> treeNode = new TreeNode<C>(
-        nodeInfo, viewDelegate, cell, scrollable);
+    TreeNodeImpl<C> treeNode = new TreeNodeImpl<C>(
+        nodeInfo, value, view, cell, scrollable);
     treeNodes.add(treeNode);
 
     // Attach the view to the selection model and node info.
     view.setSelectionModel(nodeInfo.getSelectionModel());
-    nodeInfo.setDataDisplay(viewDelegate);
+    nodeInfo.setDataDisplay(view);
 
     // Add the view to the LayoutPanel.
     SplitLayoutPanel splitPanel = getSplitLayoutPanel();
@@ -830,6 +797,83 @@ public class CellBrowser extends Composite
   }
 
   /**
+   * Set the open state of a tree node.
+   *
+   * @param cell the Cell that changed state.
+   * @param value the value to open
+   * @param open true to open, false to close
+   * @param fireEvents true to fireEvents
+   * @return the open {@link TreeNode}, or null if not opened
+   */
+  private <C> TreeNode setChildState(
+      CellDecorator<C> cell, C value, boolean open, boolean fireEvents) {
+
+    // Early exit if the node is a leaf.
+    if (isLeaf(value)) {
+      return null;
+    }
+
+    // Get the key of the value to open.
+    Object newKey = cell.getValueKey(value);
+
+    if (open) {
+      if (newKey == null) {
+        // Early exit if opening but the specified node has no key.
+        return null;
+      } else if (newKey.equals(cell.openKey)) {
+        // Early exit if opening but the specified node is already open.
+        return treeNodes.get(cell.level + 1);
+      }
+
+      // Close the currently open node.
+      if (cell.openKey != null) {
+        setChildState(cell, cell.openValue, false, fireEvents);
+      }
+
+      // Get the child node info.
+      NodeInfo<?> childNodeInfo = getNodeInfo(value);
+      if (childNodeInfo == null) {
+        return null;
+      }
+
+      // Update the cell so it renders the styles correctly.
+      cell.openValue = value;
+      cell.openKey = cell.getValueKey(value);
+
+      // Refresh the display to update the styles for this node.
+      treeNodes.get(cell.level).display.redraw();
+
+      // Add the child node.
+      appendTreeNode(childNodeInfo, value);
+
+      if (fireEvents) {
+        OpenEvent.fire(this, treeNodes.get(cell.level + 1));
+      }
+      return treeNodes.get(cell.level + 1);
+    } else {
+      // Early exit if closing and the specified node or all nodes are closed.
+      if (cell.openKey == null || !cell.openKey.equals(newKey)) {
+        return null;
+      }
+
+      // Close the node.
+      TreeNode closedNode = treeNodes.get(cell.level + 1);
+      trimToLevel(cell.level);
+      cell.openKey = null;
+      cell.openValue = null;
+
+      // Refresh the display to update the styles for this node.
+      treeNodes.get(cell.level).display.redraw();
+
+      if (fireEvents) {
+        CloseEvent.fire(this, closedNode);
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Reduce the number of {@link HasData}s down to the specified level.
    *
    * @param level the level to trim to
@@ -841,8 +885,8 @@ public class CellBrowser extends Composite
     // Remove the views that are no longer needed.
     int curLevel = treeNodes.size() - 1;
     while (curLevel > level) {
-      TreeNode<?> removed = treeNodes.remove(curLevel);
-      removed.cleanup();
+      TreeNodeImpl<?> removed = treeNodes.remove(curLevel);
+      removed.destroy();
       curLevel--;
     }
   }

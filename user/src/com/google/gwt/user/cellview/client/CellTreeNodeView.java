@@ -23,6 +23,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
@@ -55,7 +57,10 @@ import java.util.Set;
 class CellTreeNodeView<T> extends UIObject {
 
   /**
-   * The {@link com.google.gwt.view.client.HasData} used to show children.
+   * The {@link com.google.gwt.view.client.HasData} used to show children. This
+   * class is intentionally static because we might move it to a new
+   * {@link CellTreeNodeView}, and we don't want non-static references to the
+   * old {@link CellTreeNodeView}.
    *
    * @param <C> the child item type
    */
@@ -72,8 +77,8 @@ class CellTreeNodeView<T> extends UIObject {
         this.childContainer = childContainer;
       }
 
-      public <H extends EventHandler> HandlerRegistration addHandler(H handler,
-          Type<H> type) {
+      public <H extends EventHandler> HandlerRegistration addHandler(
+          H handler, Type<H> type) {
         return handlerManger.addHandler(type, handler);
       }
 
@@ -86,8 +91,8 @@ class CellTreeNodeView<T> extends UIObject {
       }
 
       public ElementIterator getChildIterator() {
-        return new HasDataPresenter.DefaultElementIterator(this,
-            childContainer.getFirstChildElement());
+        return new HasDataPresenter.DefaultElementIterator(
+            this, childContainer.getFirstChildElement());
       }
 
       public void onUpdateSelection() {
@@ -181,6 +186,16 @@ class CellTreeNodeView<T> extends UIObject {
         // Replace the child nodes.
         Map<Object, CellTreeNodeView<?>> savedViews = saveChildState(values, 0);
         AbstractHasData.replaceAllChildren(nodeView.tree, childContainer, html);
+
+        // Trim the list of children.
+        int size = values.size();
+        int childCount = nodeView.children.size();
+        while (childCount > size) {
+          childCount--;
+          nodeView.children.remove(childCount);
+        }
+
+        // Reattach the open nodes.
         loadChildState(values, 0, savedViews);
 
         // Animate the child container open.
@@ -192,18 +207,18 @@ class CellTreeNodeView<T> extends UIObject {
       public void replaceChildren(List<C> values, int start, String html) {
         Map<Object, CellTreeNodeView<?>> savedViews = saveChildState(values, 0);
 
-        Element newChildren = AbstractHasData.convertToElements(nodeView.tree,
-            getTmpElem(), html);
-        AbstractHasData.replaceChildren(nodeView.tree, childContainer,
-            newChildren, start, html);
+        Element newChildren = AbstractHasData.convertToElements(
+            nodeView.tree, getTmpElem(), html);
+        AbstractHasData.replaceChildren(
+            nodeView.tree, childContainer, newChildren, start, html);
 
         loadChildState(values, 0, savedViews);
       }
 
       public void resetFocus() {
         if (nodeView.keyboardSelectedIndex != -1) {
-          nodeView.keyboardEnter(nodeView.keyboardSelectedIndex,
-              nodeView.keyboardFocused);
+          nodeView.keyboardEnter(
+              nodeView.keyboardSelectedIndex, nodeView.keyboardFocused);
         }
       }
 
@@ -230,14 +245,15 @@ class CellTreeNodeView<T> extends UIObject {
         int end = start + len;
         int childCount = nodeView.getChildCount();
         ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
-        Element childElem =
-          nodeView.ensureChildContainer().getFirstChildElement();
+
+        Element container = nodeView.ensureChildContainer();
+        Element childElem = container.getFirstChildElement();
         for (int i = start; i < end; i++) {
           C childValue = values.get(i - start);
-          CellTreeNodeView<C> child = nodeView.createTreeNodeView(nodeInfo,
-              childElem, childValue, null);
-          CellTreeNodeView<?> savedChild =
-            savedViews.remove(providesKey.getKey(childValue));
+          CellTreeNodeView<C> child = nodeView.createTreeNodeView(
+              nodeInfo, childElem, childValue, null);
+          CellTreeNodeView<?> savedChild = savedViews.remove(
+              providesKey.getKey(childValue));
           // Copy the saved child's state into the new child
           if (savedChild != null) {
             child.animationFrame = savedChild.animationFrame;
@@ -250,20 +266,25 @@ class CellTreeNodeView<T> extends UIObject {
             child.open = savedChild.open;
             child.showMoreElem = savedChild.showMoreElem;
 
+            // Transfer the tree node so that if the user has a handle to it, it
+            // won't be destroyed.
+            child.treeNode = savedChild.treeNode;
+            if (child.treeNode != null) {
+              child.treeNode.nodeView = child;
+            }
+
             // Swap the node view in the child. We reuse the same NodeListView
             // so that we don't have to unset and register a new view with the
-            // NodeInfo.
-            savedChild.listView.setNodeView(child);
+            // NodeInfo, which would inevitably cause the NodeInfo to push
+            // new data.
+            child.listView = savedChild.listView;
+            child.listView.nodeView = child;
 
             // Copy the child container element to the new child
             child.getElement().appendChild(savedChild.ensureAnimationFrame());
           }
 
           if (childCount > i) {
-            if (savedChild == null) {
-              // Cleanup the child node if we aren't going to reuse it.
-              nodeView.children.get(i).cleanup();
-            }
             nodeView.children.set(i, child);
           } else {
             nodeView.children.add(child);
@@ -281,8 +302,8 @@ class CellTreeNodeView<T> extends UIObject {
        * @param start the start index
        * @return the map of open nodes
        */
-      private Map<Object, CellTreeNodeView<?>> saveChildState(List<C> values,
-          int start) {
+      private Map<Object, CellTreeNodeView<?>> saveChildState(
+          List<C> values, int start) {
         // Ensure that we have a children array.
         if (nodeView.children == null) {
           nodeView.children = new ArrayList<CellTreeNodeView<?>>();
@@ -292,20 +313,23 @@ class CellTreeNodeView<T> extends UIObject {
         int len = values.size();
         int end = start + len;
         int childCount = nodeView.getChildCount();
-        Map<Object, CellTreeNodeView<?>> openNodes =
-          new HashMap<Object, CellTreeNodeView<?>>();
+        Map<Object, CellTreeNodeView<?>> openNodes = new HashMap<
+            Object, CellTreeNodeView<?>>();
         for (int i = start; i < end && i < childCount; i++) {
           CellTreeNodeView<?> child = nodeView.getChildNode(i);
-          // Ignore child nodes that are closed.
           if (child.isOpen()) {
+            // Save child nodes that are open.
             openNodes.put(child.getValueKey(), child);
+          } else {
+            // Cleanup child nodes that are closed.
+            child.cleanup(true);
           }
         }
 
         // Trim the saved views down to the children that still exists.
         ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
-        Map<Object, CellTreeNodeView<?>> savedViews =
-          new HashMap<Object, CellTreeNodeView<?>>();
+        Map<Object, CellTreeNodeView<?>> savedViews = new HashMap<
+            Object, CellTreeNodeView<?>>();
         for (C childValue : values) {
           // Remove any child elements that correspond to prior children
           // so the call to setInnerHtml will not destroy them
@@ -316,6 +340,12 @@ class CellTreeNodeView<T> extends UIObject {
             savedViews.put(key, savedView);
           }
         }
+
+        // Cleanup the remaining open nodes that are not in the new data set.
+        for (CellTreeNodeView<?> lostNode : openNodes.values()) {
+          lostNode.cleanup(true);
+        }
+
         return savedViews;
       }
     }
@@ -335,8 +365,8 @@ class CellTreeNodeView<T> extends UIObject {
       this.nodeView = nodeView;
       cell = nodeInfo.getCell();
 
-      presenter = new HasDataPresenter<C>(this, new View(
-          nodeView.ensureChildContainer()), pageSize);
+      presenter = new HasDataPresenter<C>(
+          this, new View(nodeView.ensureChildContainer()), pageSize);
 
       // Use a pager to update buttons.
       presenter.addRowCountChangeHandler(new RowCountChangeEvent.Handler() {
@@ -419,23 +449,102 @@ class CellTreeNodeView<T> extends UIObject {
         Range range, boolean forceRangeChangeEvent) {
       presenter.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
     }
+  }
+
+  /**
+   * An implementation of {@link TreeNode} that delegates to a
+   * {@link CellTreeNodeView}. This class is intentionally static because we
+   * might move it to a new {@link CellTreeNodeView}, and we don't want
+   * non-static references to the old {@link CellTreeNodeView}.
+   */
+  private static class TreeNodeImpl implements TreeNode {
+
+    private CellTreeNodeView<?> nodeView;
+
+    public TreeNodeImpl(CellTreeNodeView<?> nodeView) {
+      this.nodeView = nodeView;
+    }
+
+    public int getChildCount() {
+      assertNotDestroyed();
+      return nodeView.getChildCount();
+    }
+
+    public Object getChildValue(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return nodeView.getChildNode(index).value;
+    }
+
+    public int getIndex() {
+      assertNotDestroyed();
+      return (nodeView.parentNode == null)
+          ? 0 : nodeView.parentNode.children.indexOf(nodeView);
+    }
+
+    public TreeNode getParent() {
+      assertNotDestroyed();
+      return nodeView.isRootNode() ? null : nodeView.parentNode.treeNode;
+    }
+
+    public Object getValue() {
+      return nodeView.value;
+    }
+
+    public boolean isChildLeaf(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return nodeView.getChildNode(index).isLeaf();
+    }
+
+    public boolean isChildOpen(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return nodeView.getChildNode(index).isOpen();
+    }
+
+    public boolean isDestroyed() {
+      return nodeView.isDestroyed || !nodeView.isOpen();
+    }
+
+    public TreeNode setChildOpen(int index, boolean open) {
+      return setChildOpen(index, open, true);
+    }
+
+    public TreeNode setChildOpen(int index, boolean open, boolean fireEvents) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      CellTreeNodeView<?> child = nodeView.getChildNode(index);
+      return child.setOpen(open, fireEvents) ? child.treeNode : null;
+    }
 
     /**
-     * Assign this {@link HasData} to a new {@link CellTreeNodeView}.
-     *
-     * @param nodeView the new node view
+     * Assert that the node has not been destroyed.
      */
-    private void setNodeView(CellTreeNodeView<?> nodeView) {
-      this.nodeView.listView = null;
-      this.nodeView = nodeView;
-      nodeView.listView = this;
+    private void assertNotDestroyed() {
+      if (isDestroyed()) {
+        throw new IllegalStateException("TreeNode no longer exists.");
+      }
+    }
+
+    /**
+     * Check the child bounds.
+     *
+     * @param index the index of the child
+     * @throws IndexOutOfBoundsException if the child is not in range
+     */
+    private void checkChildBounds(int index) {
+      if ((index < 0) || (index >= getChildCount())) {
+        throw new IndexOutOfBoundsException();
+      }
     }
   }
 
   /**
    * The element used in place of an image when a node has no children.
    */
-  private static final String LEAF_IMAGE = "<div style='position:absolute;display:none;'></div>";
+  private static final String LEAF_IMAGE =
+      "<div style='position:absolute;display:none;'></div>";
 
   /**
    * The temporary element used to render child items.
@@ -449,7 +558,8 @@ class CellTreeNodeView<T> extends UIObject {
    * @return the cell parent within the node
    */
   private static Element getCellParent(Element nodeElem) {
-    return getSelectionElement(nodeElem).getFirstChildElement().getChild(1).cast();
+    return getSelectionElement(nodeElem).getFirstChildElement().getChild(
+        1).cast();
   }
 
   /**
@@ -535,6 +645,11 @@ class CellTreeNodeView<T> extends UIObject {
   private Element emptyMessageElem;
 
   /**
+   * Set to true when the node is destroyed.
+   */
+  private boolean isDestroyed;
+
+  /**
    * True if the keyboard selection has focus.
    */
   private boolean keyboardFocused;
@@ -590,6 +705,13 @@ class CellTreeNodeView<T> extends UIObject {
   private final CellTree tree;
 
   /**
+   * The publicly visible tree node. The {@link CellTreeNodeView} doesn't
+   * implement {@link TreeNode} directly because we want to transfer the user's
+   * handle to the {@link TreeNode} to the new {@link CellTreeNodeView}.
+   */
+  private TreeNodeImpl treeNode;
+
+  /**
    * This node's value.
    */
   private T value;
@@ -622,7 +744,7 @@ class CellTreeNodeView<T> extends UIObject {
   }
 
   public boolean isLeaf() {
-    return tree.getTreeViewModel().isLeaf(value);
+    return tree.isLeaf(value);
   }
 
   /**
@@ -638,19 +760,31 @@ class CellTreeNodeView<T> extends UIObject {
    * Sets whether this item's children are displayed.
    *
    * @param open whether the item is open
+   * @param fireEvents true to fire events if the state changes
+   * @return true if successfully opened, false otherwise.
    */
-  public void setOpen(boolean open) {
+  public boolean setOpen(boolean open, boolean fireEvents) {
     // Early out.
     if (this.open == open) {
-      return;
+      return this.open;
     }
 
+    // If this node is a leaf node, do not call TreeViewModel.getNodeInfo().
+    if (open && isLeaf()) {
+      return false;
+    }
+
+    // The animation clears the innerHtml of the childContainer. If we reopen a
+    // node as its closing, it is possible that the new data will be set
+    // synchronously, so we have to cancel the animation before attaching the
+    // data display to the node info.
+    tree.cancelTreeNodeAnimation();
     this.animate = true;
     this.open = open;
     if (open) {
       if (!nodeInfoLoaded) {
         nodeInfoLoaded = true;
-        nodeInfo = tree.getTreeViewModel().getNodeInfo(value);
+        nodeInfo = tree.getNodeInfo(value);
 
         // Sink events for the new node.
         if (nodeInfo != null) {
@@ -678,22 +812,39 @@ class CellTreeNodeView<T> extends UIObject {
         }
         ensureAnimationFrame().getStyle().setProperty("display", "");
         onOpen(nodeInfo);
+
+        // Fire an event.
+        if (fireEvents) {
+          OpenEvent.fire(tree, getTreeNode());
+        }
+      } else {
+        this.open = false;
       }
     } else {
       if (!isRootNode()) {
         setStyleName(getCellParent(), tree.getStyle().openItem(), false);
       }
-      cleanup();
+      cleanup(false);
       tree.maybeAnimateTreeNode(this);
       updateImage(false);
       keyboardExit();
+      keyboardSelectedIndex = -1;
+
+      // Fire an event.
+      if (fireEvents) {
+        CloseEvent.fire(tree, getTreeNode());
+      }
     }
+
+    return this.open;
   }
 
   /**
    * Unregister the list handler and destroy all child nodes.
+   *
+   * @param destroy true to destroy this node
    */
-  protected void cleanup() {
+  protected void cleanup(boolean destroy) {
     // Unregister the list handler.
     if (listView != null) {
       listView.cleanup();
@@ -701,12 +852,17 @@ class CellTreeNodeView<T> extends UIObject {
       listView = null;
     }
 
-    // Recursively kill children.
+    // Recursively destroy children.
     if (children != null) {
       for (CellTreeNodeView<?> child : children) {
-        child.cleanup();
+        child.cleanup(true);
       }
       children = null;
+    }
+
+    // Destroy this node.
+    if (destroy) {
+      isDestroyed = true;
     }
   }
 
@@ -727,8 +883,8 @@ class CellTreeNodeView<T> extends UIObject {
    * @param viewData view data associated with the node
    * @return a TreeNodeView of suitable type
    */
-  protected <C> CellTreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
-      Element childElem, C childValue, Object viewData) {
+  protected <C> CellTreeNodeView<C> createTreeNodeView(
+      NodeInfo<C> nodeInfo, Element childElem, C childValue, Object viewData) {
     return new CellTreeNodeView<C>(tree, this, nodeInfo, childElem, childValue);
   }
 
@@ -741,8 +897,7 @@ class CellTreeNodeView<T> extends UIObject {
     if (parentNodeInfo != null) {
       Cell<T> parentCell = parentNodeInfo.getCell();
       String eventType = event.getType();
-      SelectionModel<? super T> selectionModel =
-        parentNodeInfo.getSelectionModel();
+          SelectionModel<? super T> selectionModel = parentNodeInfo.getSelectionModel();
 
       // Update selection.
       if (selectionModel != null && "click".equals(eventType)
@@ -756,8 +911,8 @@ class CellTreeNodeView<T> extends UIObject {
       Object key = getValueKey();
       Set<String> consumedEvents = parentCell.getConsumedEvents();
       if (consumedEvents != null && consumedEvents.contains(eventType)) {
-        parentCell.onBrowserEvent(cellParent, value, key, event,
-            parentNodeInfo.getValueUpdater());
+        parentCell.onBrowserEvent(
+            cellParent, value, key, event, parentNodeInfo.getValueUpdater());
       }
     }
   }
@@ -794,8 +949,8 @@ class CellTreeNodeView<T> extends UIObject {
    * @param <C> the child data type of the node
    */
   protected <C> void onOpen(final NodeInfo<C> nodeInfo) {
-    NodeCellList<C> view = new NodeCellList<C>(nodeInfo, this,
-        tree.getDefaultNodeSize());
+    NodeCellList<C> view = new NodeCellList<C>(
+        nodeInfo, this, tree.getDefaultNodeSize());
     listView = view;
     view.setSelectionModel(nodeInfo.getSelectionModel());
     nodeInfo.setDataDisplay(view);
@@ -870,6 +1025,18 @@ class CellTreeNodeView<T> extends UIObject {
 
   Element getShowMoreElement() {
     return showMoreElem;
+  }
+
+  /**
+   * Get a {@link TreeNode} with a public API for this node view.
+   *
+   * @return the {@link TreeNode}
+   */
+  TreeNode getTreeNode() {
+    if (treeNode == null) {
+      treeNode = new TreeNodeImpl(this);
+    }
+    return treeNode;
   }
 
   int indexOf(CellTreeNodeView<?> child) {
@@ -977,8 +1144,7 @@ class CellTreeNodeView<T> extends UIObject {
    * @return true if the selection moved
    */
   boolean keyboardUp() {
-    Element prev =
-      keyboardSelection.getParentElement().getFirstChildElement();
+    Element prev = keyboardSelection.getParentElement().getFirstChildElement();
     Element next = prev.getNextSiblingElement();
     while (next != null && next != keyboardSelection) {
       prev = next;
@@ -997,8 +1163,8 @@ class CellTreeNodeView<T> extends UIObject {
   void showFewer() {
     Range range = listView.getVisibleRange();
     int defaultPageSize = listView.getDefaultPageSize();
-    int maxSize = Math.max(defaultPageSize,
-        range.getLength() - defaultPageSize);
+    int maxSize = Math.max(
+        defaultPageSize, range.getLength() - defaultPageSize);
     listView.setVisibleRange(range.getStart(), maxSize);
   }
 
@@ -1036,8 +1202,8 @@ class CellTreeNodeView<T> extends UIObject {
     boolean isTopLevel = parentNode.isRootNode();
     String html = tree.getClosedImageHtml(isTopLevel);
     if (open) {
-      html = isLoading ? tree.getLoadingImageHtml()
-          : tree.getOpenImageHtml(isTopLevel);
+      html = isLoading ? tree.getLoadingImageHtml() : tree.getOpenImageHtml(
+          isTopLevel);
     }
     if (nodeInfoLoaded && nodeInfo == null) {
       html = LEAF_IMAGE;

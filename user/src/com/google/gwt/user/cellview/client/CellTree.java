@@ -28,7 +28,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasAnimation;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.TreeViewModel;
@@ -38,7 +37,7 @@ import java.util.ArrayList;
 /**
  * A view of a tree.
  */
-public class CellTree extends Composite implements HasAnimation {
+public class CellTree extends AbstractCellTree implements HasAnimation {
 
   /**
    * A cleaner version of the table that uses less graphics.
@@ -452,11 +451,6 @@ public class CellTree extends Composite implements HasAnimation {
   private final Style style;
 
   /**
-   * The {@link TreeViewModel} that backs the tree.
-   */
-  private final TreeViewModel viewModel;
-
-  /**
    * Construct a new {@link CellTree}.
    *
    * @param <T> the type of data in the root node
@@ -475,9 +469,9 @@ public class CellTree extends Composite implements HasAnimation {
    * @param rootValue the hidden root value of the tree
    * @param resources the resources used to render the tree
    */
-  public <T> CellTree(TreeViewModel viewModel, T rootValue,
-      Resources resources) {
-    this.viewModel = viewModel;
+  public <T> CellTree(
+      TreeViewModel viewModel, T rootValue, Resources resources) {
+    super(viewModel);
     this.style = resources.cellTreeStyle();
     this.style.ensureInjected();
     initWidget(new SimplePanel());
@@ -502,10 +496,10 @@ public class CellTree extends Composite implements HasAnimation {
     sinkEvents(Event.ONCLICK | Event.ONKEYDOWN | Event.ONKEYUP);
 
     // Associate a view with the item.
-    CellTreeNodeView<T> root = new CellTreeNodeView<T>(this, null, null,
-        getElement(), rootValue);
+    CellTreeNodeView<T> root = new CellTreeNodeView<T>(
+        this, null, null, getElement(), rootValue);
     keyboardSelectedNode = rootNode = root;
-    root.setOpen(true);
+    root.setOpen(true, false);
     keyboardSelectedNode.keyboardEnter(0, false);
   }
 
@@ -529,8 +523,9 @@ public class CellTree extends Composite implements HasAnimation {
     return defaultNodeSize;
   }
 
-  public TreeViewModel getTreeViewModel() {
-    return viewModel;
+  @Override
+  public TreeNode getRootTreeNode() {
+    return rootNode.getTreeNode();
   }
 
   public boolean isAnimationEnabled() {
@@ -577,7 +572,7 @@ public class CellTree extends Composite implements HasAnimation {
         // Open the node when the open image is clicked.
         Element showMoreElem = nodeView.getShowMoreElement();
         if (nodeView.getImageElement().isOrHasChild(target)) {
-          nodeView.setOpen(!nodeView.isOpen());
+          nodeView.setOpen(!nodeView.isOpen(), true);
           return;
         } else if (showMoreElem != null && showMoreElem.isOrHasChild(target)) {
           nodeView.showMore();
@@ -631,6 +626,13 @@ public class CellTree extends Composite implements HasAnimation {
   }
 
   /**
+   * Cancel a pending animation.
+   */
+  void cancelTreeNodeAnimation() {
+    animation.cancel();
+  }
+
+  /**
    * Get the HTML to render the closed image.
    *
    * @param isTop true if the top element, false if not
@@ -680,16 +682,16 @@ public class CellTree extends Composite implements HasAnimation {
    */
   void maybeAnimateTreeNode(CellTreeNodeView<?> node) {
     if (animation != null) {
-      animation.animate(node, node.consumeAnimate() && isAnimationEnabled()
-          && !node.isRootNode());
+      animation.animate(node,
+          node.consumeAnimate() && isAnimationEnabled() && !node.isRootNode());
     }
   }
 
   /**
    * Collects parents going up the element tree, terminated at the tree root.
    */
-  private void collectElementChain(ArrayList<Element> chain, Element hRoot,
-      Element hElem) {
+  private void collectElementChain(
+      ArrayList<Element> chain, Element hRoot, Element hElem) {
     if ((hElem == null) || (hElem == hRoot)) {
       return;
     }
@@ -698,8 +700,8 @@ public class CellTree extends Composite implements HasAnimation {
     chain.add(hElem);
   }
 
-  private CellTreeNodeView<?> findItemByChain(ArrayList<Element> chain,
-      int idx, CellTreeNodeView<?> parent) {
+  private CellTreeNodeView<?> findItemByChain(
+      ArrayList<Element> chain, int idx, CellTreeNodeView<?> parent) {
     if (idx == chain.size()) {
       return parent;
     }
@@ -815,7 +817,7 @@ public class CellTree extends Composite implements HasAnimation {
         // TODO(rice) - try different key bahavior mappings such as
         // left=close, right=open, enter=toggle.
         if (child != null && !child.isLeaf()) {
-          child.setOpen(!child.isOpen());
+          child.setOpen(!child.isOpen(), true);
           return true;
         }
         break;

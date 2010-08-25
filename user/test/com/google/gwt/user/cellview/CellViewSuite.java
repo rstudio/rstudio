@@ -17,6 +17,9 @@ package com.google.gwt.user.cellview;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.user.cellview.client.AbstractPagerTest;
+import com.google.gwt.user.cellview.client.AnimatedCellTreeTest;
+import com.google.gwt.user.cellview.client.CellBrowserTest;
+import com.google.gwt.user.cellview.client.CellTreeTest;
 import com.google.gwt.user.cellview.client.ColumnTest;
 import com.google.gwt.user.cellview.client.HasDataPresenterTest;
 import com.google.gwt.user.cellview.client.PageSizePagerTest;
@@ -33,6 +36,9 @@ public class CellViewSuite {
         "Test suite for all cellview classes");
 
     suite.addTestSuite(AbstractPagerTest.class);
+    suite.addTestSuite(AnimatedCellTreeTest.class);
+    suite.addTestSuite(CellBrowserTest.class);
+    suite.addTestSuite(CellTreeTest.class);
     suite.addTestSuite(ColumnTest.class);
     suite.addTestSuite(HasDataPresenterTest.class);
     suite.addTestSuite(PageSizePagerTest.class);
