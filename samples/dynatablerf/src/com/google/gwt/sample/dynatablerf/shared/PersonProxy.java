@@ -16,9 +16,9 @@
 package com.google.gwt.sample.dynatablerf.shared;
 
 import com.google.gwt.requestfactory.shared.DataTransferObject;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.sample.dynatablerf.domain.Person;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Person DTO.

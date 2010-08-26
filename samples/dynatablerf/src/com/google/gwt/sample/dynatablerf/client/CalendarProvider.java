@@ -19,10 +19,10 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.dynatablerf.client.events.DataAvailableEvent;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
-import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.List;
 import java.util.Set;

@@ -17,8 +17,8 @@ package com.google.gwt.sample.dynatablerf.shared;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.valuestore.shared.RecordChangedEvent;
-import com.google.gwt.valuestore.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.RecordChangedEvent;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
 /**
  * This class will no longer be necessary pending HandlerManager changes.
