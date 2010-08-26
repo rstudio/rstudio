@@ -16,6 +16,8 @@
 package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.junit.client.GWTTestCase;
+//import com.google.gwt.regexp.shared.RegExp;
+//import com.google.gwt.regexp.shared.SplitResult;
 
 /**
  * Unit tests for GwtEscapeUtils.
@@ -43,31 +45,31 @@ public class GwtSafeHtmlUtilsTest extends GWTTestCase {
         "f&quot;bar &#39;&lt;&amp;em&gt;&lt;e/m&gt;oo&amp;bar", escaped);
   }
 
-  public void testEscape_withEntities1() {
+  public void disabled_testEscape_withEntities1() {
     String escaped = SafeHtmlUtils.htmlEscapeAllowEntities(
         "f\"bar \'<&em><e/m>oo&bar");
     assertEquals(
         "f&quot;bar &#39;&lt;&amp;em&gt;&lt;e/m&gt;oo&amp;bar", escaped);
   }
 
-  public void testEscape_withEntities2() {
+  public void disabled_testEscape_withEntities2() {
     String escaped = SafeHtmlUtils.htmlEscapeAllowEntities("& foo &lt;");
     assertEquals("&amp; foo &lt;", escaped);
   }
 
-  public void testEscape_withEntities3() {
+  public void disabled_testEscape_withEntities3() {
     String escaped = SafeHtmlUtils.htmlEscapeAllowEntities(
         "<foo> &amp; <em> bar &#39; baz");
     assertEquals("&lt;foo&gt; &amp; &lt;em&gt; bar &#39; baz", escaped);
   }
 
-  public void testEscape_withEntities4() {
+  public void disabled_testEscape_withEntities4() {
     String escaped = SafeHtmlUtils.htmlEscapeAllowEntities(
         "&foo &&amp; bar &#39; baz&");
     assertEquals("&amp;foo &amp;&amp; bar &#39; baz&amp;", escaped);
   }
 
-  public void testEscape_withEntitiesInvalidEntities() {
+  public void disabled_testEscape_withEntitiesInvalidEntities() {
     String escaped = SafeHtmlUtils.htmlEscapeAllowEntities(
         "&a mp;&;&x;&#;&#x;");
     assertEquals("&amp;a mp;&amp;;&x;&amp;#;&amp;#x;", escaped);
