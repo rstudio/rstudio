@@ -121,17 +121,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public static final String RELATED = "related";
 
-  public static final Set<String> BLACK_LIST = initBlackList();
-
   private static final Logger log = Logger.getLogger(JsonRequestProcessor.class.getName());
-
-  public static Set<String> initBlackList() {
-    Set<String> blackList = new HashSet<String>();
-    for (String str : new String[] {"password"}) {
-      blackList.add(str);
-    }
-    return Collections.unmodifiableSet(blackList);
-  }
 
   private RequestProperty propertyRefs;
 
@@ -1047,9 +1037,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       RequestProperty propertyContext) {
     if (Record.class.isAssignableFrom(p.getType())) {
       return propertyContext.hasProperty(p.getName());
-    } else {
-      return !BLACK_LIST.contains(p.getName());
     }
+
+    return true;
   }
 
   /**
