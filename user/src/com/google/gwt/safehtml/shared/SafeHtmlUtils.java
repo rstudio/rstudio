@@ -16,7 +16,6 @@
 package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.regexp.shared.RegExp;
-import com.google.gwt.regexp.shared.SplitResult;
 
 /**
  * Utility class containing static methods for escaping and sanitizing strings.
@@ -113,16 +112,16 @@ public final class SafeHtmlUtils {
   public static String htmlEscapeAllowEntities(String text) {
     StringBuilder escaped = new StringBuilder();
 
-    SplitResult splitSegment = AMP_RE.split(text, -1);
-    for (int i = 0, len = splitSegment.length(); i < len; i++) {
-      String segment = splitSegment.get(i);
-      if (i == 0) {
+    boolean firstSegment = true;
+    for (String segment : text.split("&", -1)) {
+      if (firstSegment) {
         /*
          * The first segment is never part of an entity reference, so we always
          * escape it.
          * Note that if the input starts with an ampersand, we will get an empty
          * segment before that.
          */
+        firstSegment = false;
         escaped.append(htmlEscape(segment));
         continue;
       }

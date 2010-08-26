@@ -16,7 +16,6 @@
 package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.regexp.shared.RegExp;
-import com.google.gwt.regexp.shared.SplitResult;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -79,15 +78,15 @@ public final class SimpleHtmlSanitizer implements HtmlSanitizer {
   private static String simpleSanitize(String text) {
     StringBuilder sanitized = new StringBuilder();
 
-    SplitResult splitSegment = LT_RE.split(text, -1);
-    for (int i = 0, len = splitSegment.length(); i < len; i++) {
-      String segment = splitSegment.get(i);
-      if (i == 0) {
+    boolean firstSegment = true;
+    for (String segment : text.split("<", -1)) {
+      if (firstSegment) {
         /*
          *  the first segment is never part of a valid tag; note that if the
          *  input string starts with a tag, we will get an empty segment at the 
          *  beginning.
          */
+        firstSegment = false;
         sanitized.append(SafeHtmlUtils.htmlEscapeAllowEntities(segment));
         continue;
       }
