@@ -122,7 +122,6 @@ public class DynaTableWidget extends Composite {
                 + event.getRecord());
           }
         });
-
   }
 
   public void clearStatusText() {

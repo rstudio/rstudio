@@ -62,6 +62,10 @@ public class SchoolCalendarService {
 
   private static final Random rnd = new Random(3);
 
+  public static Person findPerson(Long id) {
+    return people.get(id);
+  }
+
   public static List<Person> getPeople(int startIndex, int maxCount) {
     generateRandomPeople();
 
@@ -79,18 +83,6 @@ public class SchoolCalendarService {
 
     return new ArrayList<Person>(people.values()).subList(startIndex, end);
   }
-
-  private static void generateRandomPeople() {
-    if (people.isEmpty())
-      for (int i = 0; i < MAX_PEOPLE; ++i) {
-        Person person = generateRandomPerson();
-        persist(person);
-      }
-  }
-  
-  public static Person findPerson(Long id) {
-    return people.get(id);
-  }
   
   public static void persist(Person person) {
     if (person.getId() == null) {
@@ -98,6 +90,14 @@ public class SchoolCalendarService {
     }
     person.setVersion(person.getVersion() + 1);
     people.put(person.getId(), person);
+  }
+  
+  private static void generateRandomPeople() {
+    if (people.isEmpty())
+      for (int i = 0; i < MAX_PEOPLE; ++i) {
+        Person person = generateRandomPerson();
+        persist(person);
+      }
   }
 
   private static Person generateRandomPerson() {

@@ -26,6 +26,10 @@
     <gwt.ant dir="json" />
   </target>
 
+  <target name="logexample" description="Build logexample">
+    <gwt.ant dir="logexample" />
+  </target>
+
   <target name="mail" description="Build mail">
     <gwt.ant dir="mail" />
   </target>
@@ -36,9 +40,11 @@
 
   <target name="-do" description="Run all subprojects" >
     <antcall target="dynatable" />
+    <antcall target="dynatablerf" />
     <antcall target="expenses" />
     <antcall target="hello" />
     <antcall target="json" />
+    <!-- <antcall target="logexample" /> Doesn't quite work yet -->
     <antcall target="mail" />
     <antcall target="showcase" />
   </target>
