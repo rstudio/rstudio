@@ -22,12 +22,12 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.Value;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeRenderer;
-import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.valuestore.shared.Value;
 
 import java.util.ArrayList;
 import java.util.Collections;

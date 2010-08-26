@@ -16,7 +16,7 @@
 package com.google.gwt.app.client;
 
 import com.google.gwt.app.place.RecordEditView;
-import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.requestfactory.shared.Record;
 
 import java.util.Map;
 

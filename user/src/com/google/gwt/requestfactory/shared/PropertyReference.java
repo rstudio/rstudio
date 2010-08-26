@@ -13,9 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
-
-import java.util.Map;
+package com.google.gwt.requestfactory.shared;
 
 /**
  * <p>
@@ -23,16 +21,32 @@ import java.util.Map;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Result per record of a SyncRequest.
+ * A pointer to a particular property value.
+ *
+ * @param <V> Value type
  */
-public interface SyncResult {
-  // TODO: move violations out of the SyncResult...
-  boolean hasViolations();
-  
-  // TODO: futureId isn't working out so well, leaving soon
-  Long getFutureId();
+public class PropertyReference<V> {
+  private final Record record;
+  private final Property<V> property;
 
-  Record getRecord();
+  public PropertyReference(Record record, Property<V> property) {
+    assert null != record;
+    assert null != property;
+
+    this.record = record;
+    this.property = property;
+  }
   
-  Map<String, String> getViolations();
+  protected PropertyReference() {
+    this.record = null;
+    this.property = null;
+  }
+
+  public V get() {
+    return record.get(property);
+  }
+
+  Property<V> getProperty() {
+    return property;
+  }
 }

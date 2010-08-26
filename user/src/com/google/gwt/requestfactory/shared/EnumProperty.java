@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
+package com.google.gwt.requestfactory.shared;
 
 /**
  * <p>
@@ -21,43 +21,28 @@ package com.google.gwt.valuestore.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Defines a property of a {@link Record}.
+ * Defines a property of a {@link com.google.gwt.requestfactory.shared.Record}.
  *
  * @param <V> the type of the property's value
  */
-public class Property<V> {
-  private final String name;
-  private final Class<V> type;
-  private final String displayName;
+public class EnumProperty<V> extends Property<V> {
+
+  private V[] values;
 
   /**
    * @param name the property's name and displayName
    * @param type the class of the property's value
+   * @param values the result of Enum.values() method
    */
-  public Property(String name, Class<V> type) {
-    this(name, name, type);
+  public EnumProperty(String name, Class<V> type, V[] values) {
+    super(name, type);
+    this.values = values;
   }
 
   /**
-   * @param name the property's name
-   * @param displayName the property's user visible name
-   * @param type the class of the property's value
+   * Returns the values that the enum may take on.
    */
-  public Property(String name, String displayName, Class<V> type) {
-    this.name = name;
-    this.displayName = displayName;
-    this.type = type;
-  }
-
-  public String getDisplayName() {
-    return displayName;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public Class<V> getType() {
-    return type;
+  public V[] getValues() {
+    return values;
   }
 }

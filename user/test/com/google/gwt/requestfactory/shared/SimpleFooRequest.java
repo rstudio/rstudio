@@ -13,18 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
-
-import com.google.gwt.requestfactory.shared.Instance;
-import com.google.gwt.requestfactory.shared.RecordListRequest;
-import com.google.gwt.requestfactory.shared.RecordRequest;
-import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.requestfactory.shared.Service;
+package com.google.gwt.requestfactory.shared;
 
 /**
  * Do nothing test interface.
  */
-@Service(com.google.gwt.valuestore.server.SimpleFoo.class)
+@Service(com.google.gwt.requestfactory.server.SimpleFoo.class)
 public interface SimpleFooRequest {
   RequestObject<Long> countSimpleFoo();
 

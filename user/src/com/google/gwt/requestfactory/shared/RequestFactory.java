@@ -16,7 +16,6 @@
 package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.valuestore.shared.Record;
 
 /**
  * <p>

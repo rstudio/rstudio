@@ -17,8 +17,6 @@
 package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.requestfactory.server.UserInformation;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
 
 /**
  * "API Generated" DTO interface based on {@link UserInformation}.

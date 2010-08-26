@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.client;
+package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.SimpleBarRecord;
-import com.google.gwt.valuestore.shared.SimpleFooRecord;
-import com.google.gwt.valuestore.shared.SimpleRequestFactory;
-import com.google.gwt.valuestore.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.SimpleBarRecord;
+import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
+import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Set;
 
@@ -270,7 +270,7 @@ public class RequestFactoryTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.valuestore.ValueStoreSuite";
+    return "com.google.gwt.requestfactory.RequestFactorySuite";
   }
 
   public void testFetchEntity() {
@@ -285,7 +285,7 @@ public class RequestFactoryTest extends GWTTestCase {
             assertEquals(42, (int) response.getIntId());
             assertEquals("GWT", response.getUserName());
             assertEquals(8L, (long) response.getLongField());
-            assertEquals(com.google.gwt.valuestore.shared.SimpleEnum.FOO,
+            assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.FOO,
                 response.getEnumField());
             assertEquals(null, response.getBarField());
             finishTest();
@@ -305,7 +305,7 @@ public class RequestFactoryTest extends GWTTestCase {
             assertEquals(42, (int) response.getIntId());
             assertEquals("GWT", response.getUserName());
             assertEquals(8L, (long) response.getLongField());
-            assertEquals(com.google.gwt.valuestore.shared.SimpleEnum.FOO,
+            assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.FOO,
                 response.getEnumField());
             assertNotNull(response.getBarField());
             finishTest();

@@ -18,10 +18,10 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.valuestore.shared.EnumProperty;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.PropertyReference;
-import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.requestfactory.shared.EnumProperty;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.PropertyReference;
+import com.google.gwt.requestfactory.shared.Record;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

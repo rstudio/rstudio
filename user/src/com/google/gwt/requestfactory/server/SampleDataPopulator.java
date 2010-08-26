@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.valuestore.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;

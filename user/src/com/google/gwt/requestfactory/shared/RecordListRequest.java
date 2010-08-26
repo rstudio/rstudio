@@ -15,8 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
 
 import java.util.Collection;
 import java.util.List;

@@ -21,7 +21,7 @@ package com.google.gwt.requestfactory.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Marks the id {@link com.google.gwt.valuestore.shared.Property Property} of an
+ * Marks the id {@link com.google.gwt.requestfactory.shared.Property Property} of an
  * entity.
  */
 public @interface Id {

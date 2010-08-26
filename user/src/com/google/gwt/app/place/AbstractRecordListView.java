@@ -17,11 +17,11 @@ package com.google.gwt.app.place;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.view.client.HasData;
 
 import java.util.Arrays;

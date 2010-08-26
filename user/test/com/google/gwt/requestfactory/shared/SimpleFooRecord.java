@@ -13,10 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
+package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.requestfactory.shared.DataTransferObject;
-import com.google.gwt.valuestore.server.SimpleFoo;
+import com.google.gwt.requestfactory.server.SimpleFoo;
 
 import java.util.Date;
 
@@ -35,9 +34,9 @@ public interface SimpleFooRecord extends Record {
   Property<Integer> intId = new Property<Integer>("intId", Integer.class);
   Property<Date> created = new Property<Date>("created", Date.class);
   Property<Long> longField = new Property<Long>("longField", Long.class);
-  Property<com.google.gwt.valuestore.shared.SimpleEnum> enumField =
-      new EnumProperty<com.google.gwt.valuestore.shared.SimpleEnum>("enumField",
-          com.google.gwt.valuestore.shared.SimpleEnum.class, SimpleEnum.values());
+  Property<com.google.gwt.requestfactory.shared.SimpleEnum> enumField =
+      new EnumProperty<com.google.gwt.requestfactory.shared.SimpleEnum>("enumField",
+          com.google.gwt.requestfactory.shared.SimpleEnum.class, SimpleEnum.values());
 
   Property<SimpleBarRecord> barField = new Property<SimpleBarRecord>("barField",
       SimpleBarRecord.class);

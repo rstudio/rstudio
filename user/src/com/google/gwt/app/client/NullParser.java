@@ -15,8 +15,8 @@
  */
 package com.google.gwt.app.client;
 
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.text.shared.Parser;
-import com.google.gwt.valuestore.shared.Record;
 
 import java.text.ParseException;
 

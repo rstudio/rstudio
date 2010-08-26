@@ -16,8 +16,8 @@
 package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.requestfactory.shared.DataTransferObject;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.Record;
 
 import java.util.Date;
 

@@ -30,13 +30,13 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.TakesValue;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
 
 import java.io.PrintWriter;
 import java.util.Arrays;

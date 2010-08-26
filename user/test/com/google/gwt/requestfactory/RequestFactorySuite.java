@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.requestfactory.client.RequestFactoryTest;
 import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImplTest;
 import com.google.gwt.requestfactory.client.impl.RecordJsoImplTest;
 
@@ -23,7 +24,6 @@ import junit.framework.Test;
 
 /**
  * Tests of RequestFactory that require GWT.
- * @see com.google.gwt.valuestore.ValueStoreSuite
  */
 public class RequestFactorySuite {
   public static Test suite() {
@@ -31,6 +31,7 @@ public class RequestFactorySuite {
         "Test suite for requestfactory gwt code.");
     suite.addTestSuite(RecordJsoImplTest.class);
     suite.addTestSuite(DeltaValueStoreJsonImplTest.class);
+    suite.addTestSuite(RequestFactoryTest.class);
     return suite;
   }
 }

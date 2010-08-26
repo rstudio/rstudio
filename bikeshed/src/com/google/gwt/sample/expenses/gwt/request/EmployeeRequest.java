@@ -16,12 +16,12 @@
 package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
+import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Employee;
-import com.google.gwt.valuestore.shared.PropertyReference;
 
 /**
  * "API Generated" request selector interface implemented by objects that give

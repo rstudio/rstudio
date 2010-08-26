@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.valuestore.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Set;
 import java.util.logging.Handler;

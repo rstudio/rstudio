@@ -21,8 +21,7 @@ package com.google.gwt.requestfactory.client.impl;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * The key used to store {@link com.google.gwt.valuestore.shared.Record Record}s
- * in {@link com.google.gwt.valuestore.shared.ValueStore ValueStore}.
+ * The key used to store {@link com.google.gwt.requestfactory.shared.Record Record}s.
  */
 class RecordKey {
   final RecordSchema<?> schema;

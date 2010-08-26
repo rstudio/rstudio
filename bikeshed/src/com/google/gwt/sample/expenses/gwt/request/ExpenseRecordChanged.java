@@ -17,8 +17,8 @@ package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.valuestore.shared.RecordChangedEvent;
-import com.google.gwt.valuestore.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.RecordChangedEvent;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
 /**
  * "API Generated" event posted when the values of an {@link ExpenseRecord}

@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.valuestore.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.SimpleFooRecord;
 
 import java.util.Date;
 

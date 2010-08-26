@@ -13,22 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore;
+package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.valuestore.client.RequestFactoryTest;
-
-import junit.framework.Test;
+import com.google.gwt.requestfactory.server.SimpleBar;
 
 /**
- * Tests of the valuestore package that require GWT.
- * @see com.google.gwt.requestfactory.RequestFactorySuite
+ * A simple entity used for testing. Has an int field and date field. Add other data types as their
+ * support gets built in.
  */
-public class ValueStoreSuite {
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for all valuestore code.");
-    suite.addTestSuite(RequestFactoryTest.class);
-    return suite;
-  }
+@DataTransferObject(SimpleBar.class)
+public interface SimpleBarRecord extends Record {
+
+  Property<String> userName = new Property<String>("userName", "User Name",
+      String.class);
+
+  String getUserName();
+
+  void setUserName(String userName);
 }

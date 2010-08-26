@@ -50,16 +50,17 @@ import com.google.gwt.requestfactory.client.impl.RecordSchema;
 import com.google.gwt.requestfactory.client.impl.RecordToTypeMap;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.PropertyReference;
+import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.RecordChangedEvent;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.RecordChangedEvent;
-import com.google.gwt.valuestore.shared.WriteOperation;
 
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -653,8 +654,7 @@ public class RequestFactoryGenerator extends Generator {
       JClassType classType = parameter.getType().isClassOrInterface();
 
       JType paramType = parameter.getType();
-      boolean isRef =
-          "com.google.gwt.valuestore.shared.PropertyReference".equals(
+      boolean isRef = PropertyReference.class.getName().equals(
           paramType.getQualifiedBinaryName());
       JParameterizedType params = paramType.isParameterized();
       if (params != null) {

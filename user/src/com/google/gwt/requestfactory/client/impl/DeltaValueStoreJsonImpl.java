@@ -17,11 +17,11 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.valuestore.client.SyncResultImpl;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.valuestore.shared.WriteOperation;
+import com.google.gwt.requestfactory.client.SyncResultImpl;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.HashMap;
 import java.util.HashSet;

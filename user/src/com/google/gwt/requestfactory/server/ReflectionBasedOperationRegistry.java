@@ -17,9 +17,9 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.DataTransferObject;
 import com.google.gwt.requestfactory.shared.Instance;
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
-import com.google.gwt.valuestore.shared.Record;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;

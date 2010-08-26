@@ -21,9 +21,9 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.LoggingRequest;
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.SimpleFooRecord;
-import com.google.gwt.valuestore.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.Date;
 

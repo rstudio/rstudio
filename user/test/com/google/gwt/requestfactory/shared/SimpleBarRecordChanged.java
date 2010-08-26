@@ -13,27 +13,27 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
+package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.EventHandler;
 
 /**
- * Test implementation of {@link RecordChangedEvent} for 
- * {@link SimpleFooRecord}.
+ * Test implementation of {@link com.google.gwt.requestfactory.shared.RecordChangedEvent} for
+ * {@link com.google.gwt.requestfactory.shared.SimpleFooRecord}.
  */
-public class SimpleFooRecordChanged extends
-    RecordChangedEvent<SimpleFooRecord, SimpleFooRecordChanged.Handler> {
+public class SimpleBarRecordChanged extends
+    RecordChangedEvent<SimpleBarRecord, SimpleBarRecordChanged.Handler> {
 
 /**
  *  Test Handler for SimpleFooChanged event.
  */
   public interface Handler extends EventHandler {
-    void onSimpleFooRecordChanged(SimpleFooRecordChanged record);
+    void onSimpleBarRecordChanged(SimpleBarRecordChanged record);
   }
 
   public static final Type<Handler> TYPE = new Type<Handler>();
 
-  public SimpleFooRecordChanged(SimpleFooRecord record,
+  public SimpleBarRecordChanged(SimpleBarRecord record,
       WriteOperation writeOperation) {
     super(record, writeOperation);
   }
@@ -45,6 +45,6 @@ public class SimpleFooRecordChanged extends
 
   @Override
   protected void dispatch(Handler handler) {
-    handler.onSimpleFooRecordChanged(this);
+    handler.onSimpleBarRecordChanged(this);
   }
 }

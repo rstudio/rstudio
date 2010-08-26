@@ -16,11 +16,11 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.DataTransferObject;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.PropertyReference;
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestData;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.PropertyReference;
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import org.json.JSONArray;
 import org.json.JSONException;

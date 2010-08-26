@@ -18,8 +18,6 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.valuestore.shared.RecordChangedEvent;
-import com.google.gwt.valuestore.shared.WriteOperation;
 
 /**
  * "API Generated" event posted when the values of a {@link UserInformationRecord}

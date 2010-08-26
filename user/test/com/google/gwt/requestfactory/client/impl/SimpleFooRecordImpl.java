@@ -15,12 +15,12 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.RecordChangedEvent;
-import com.google.gwt.valuestore.shared.SimpleBarRecord;
-import com.google.gwt.valuestore.shared.SimpleFooRecord;
-import com.google.gwt.valuestore.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.RecordChangedEvent;
+import com.google.gwt.requestfactory.shared.SimpleBarRecord;
+import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.Collections;
 import java.util.Date;
@@ -99,7 +99,7 @@ public class SimpleFooRecordImpl extends RecordImpl implements SimpleFooRecord {
     return get(created);
   }
 
-  public com.google.gwt.valuestore.shared.SimpleEnum getEnumField() {
+  public com.google.gwt.requestfactory.shared.SimpleEnum getEnumField() {
     return get(enumField);
   }
 

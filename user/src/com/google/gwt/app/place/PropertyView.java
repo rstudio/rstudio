@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.requestfactory.shared.Record;
 
 /**
  * <p>

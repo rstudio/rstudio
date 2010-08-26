@@ -18,7 +18,6 @@
 <module>
   <inherits name='com.google.gwt.core.Core'/>
   <inherits name='com.google.gwt.http.HTTP'/>
-  <inherits name='com.google.gwt.valuestore.ValueStore'/>
 
   <source path="client"/>
   <source path="shared"/>

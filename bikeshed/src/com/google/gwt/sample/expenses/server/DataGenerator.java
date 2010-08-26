@@ -16,10 +16,10 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.sample.expenses.server.domain.Employee;
 import com.google.gwt.sample.expenses.server.domain.Expense;
 import com.google.gwt.sample.expenses.server.domain.Report;
-import com.google.gwt.valuestore.shared.WriteOperation;
 
 import org.json.JSONArray;
 import org.json.JSONException;

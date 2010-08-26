@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory;
 import com.google.gwt.requestfactory.client.impl.RecordKeyTest;
 import com.google.gwt.requestfactory.server.JsonRequestProcessorTest;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistryTest;
+import com.google.gwt.requestfactory.server.RequestPropertyTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -31,6 +32,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(RecordKeyTest.class);
     suite.addTestSuite(JsonRequestProcessorTest.class);
     suite.addTestSuite(ReflectionBasedOperationRegistryTest.class);
+    suite.addTestSuite(RequestPropertyTest.class);
     return suite;
   }
 }

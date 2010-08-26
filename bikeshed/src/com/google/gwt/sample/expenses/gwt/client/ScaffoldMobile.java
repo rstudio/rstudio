@@ -30,15 +30,15 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestEvent;
+import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.UserInformationRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesEntityTypesProcessor;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.HasConstrainedValue;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.HashSet;
 import java.util.Set;

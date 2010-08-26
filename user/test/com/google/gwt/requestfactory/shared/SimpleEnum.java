@@ -13,22 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
-
-import com.google.gwt.requestfactory.shared.DataTransferObject;
-import com.google.gwt.valuestore.server.SimpleBar;
+package com.google.gwt.requestfactory.shared;
 
 /**
- * A simple entity used for testing. Has an int field and date field. Add other data types as their
- * support gets built in.
+ * Test enum class.
  */
-@DataTransferObject(SimpleBar.class)
-public interface SimpleBarRecord extends Record {
-
-  Property<String> userName = new Property<String>("userName", "User Name",
-      String.class);
-
-  String getUserName();
-
-  void setUserName(String userName);
+public enum SimpleEnum {
+  FOO, BAR
 }

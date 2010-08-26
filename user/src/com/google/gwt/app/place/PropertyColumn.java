@@ -15,11 +15,11 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.text.shared.PassthroughRenderer;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Record;
 
 /**
  * <p>

@@ -16,10 +16,9 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.RequestData;
-import com.google.gwt.valuestore.server.SimpleFoo;
-import com.google.gwt.valuestore.shared.SimpleEnum;
-import com.google.gwt.valuestore.shared.SimpleFooRecord;
-import com.google.gwt.valuestore.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.SimpleEnum;
+import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import junit.framework.TestCase;
 
@@ -93,7 +92,7 @@ public class JsonRequestProcessorTest extends TestCase {
   }
 
   public void testEndToEnd() {
-    com.google.gwt.valuestore.server.SimpleFoo.reset();
+    com.google.gwt.requestfactory.server.SimpleFoo.reset();
     try {
       // fetch object
      JSONObject foo = fetchVerifyAndGetInitialObject();
@@ -120,7 +119,7 @@ public class JsonRequestProcessorTest extends TestCase {
       assertEquals("JSC", fooResult.getUserName());
       assertEquals(now, fooResult.getCreated());
       assertEquals(9L, (long) fooResult.getLongField());
-      assertEquals(com.google.gwt.valuestore.shared.SimpleEnum.BAR,
+      assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.BAR,
           fooResult.getEnumField());
       assertEquals(false, (boolean) fooResult.getBoolField());
       
@@ -131,7 +130,7 @@ public class JsonRequestProcessorTest extends TestCase {
   }
 
   public void testEndToEndSmartDiff_NoChange() {
-    com.google.gwt.valuestore.server.SimpleFoo.reset();
+    com.google.gwt.requestfactory.server.SimpleFoo.reset();
     try {
       // fetch object
       JSONObject foo = fetchVerifyAndGetInitialObject();
@@ -158,7 +157,7 @@ public class JsonRequestProcessorTest extends TestCase {
   }
 
   public void testEndToEndSmartDiff_SomeChange() {
-    com.google.gwt.valuestore.server.SimpleFoo.reset();
+    com.google.gwt.requestfactory.server.SimpleFoo.reset();
     try {
       // fetch object
       JSONObject foo = fetchVerifyAndGetInitialObject();
@@ -205,7 +204,7 @@ public class JsonRequestProcessorTest extends TestCase {
     JSONObject results = (JSONObject) requestProcessor.processJsonRequest("{ \""
         + RequestData.OPERATION_TOKEN
         + "\": \""
-        + com.google.gwt.valuestore.shared.SimpleFooRequest.class.getName()
+        + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
         + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
         + "findSimpleFooById\", "
         + "\""
@@ -234,7 +233,7 @@ public class JsonRequestProcessorTest extends TestCase {
     operation.put(WriteOperation.UPDATE.toString(), arr);
     JSONObject sync = new JSONObject();
     sync.put(RequestData.OPERATION_TOKEN,
-        "com.google.gwt.valuestore.shared.SimpleFooRequest::persist");
+        "com.google.gwt.requestfactory.shared.SimpleFooRequest::persist");
     sync.put(RequestData.CONTENT_TOKEN, operation.toString());
     sync.put(RequestData.PARAM_TOKEN + "0", foo.getInt("id") + "-NO" + "-"
         + SimpleFooRecord.class.getName());

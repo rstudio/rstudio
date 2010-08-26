@@ -29,7 +29,7 @@ public class RequestPropertyTest extends TestCase {
     RequestProperty name = sup.getProperty("name");
     assertNotNull(name);
     RequestProperty age = sup.getProperty("age");
-    assertNotNull(name);
+    assertNotNull(age);
   }
   public void testParseSingleSelector() {
     RequestProperty prop = RequestProperty.parse("supervisor.name");

@@ -15,8 +15,8 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.valuestore.shared.Record;
 
 /**
  * A place in the app that deals with a specific {@link RequestFactory} proxy.

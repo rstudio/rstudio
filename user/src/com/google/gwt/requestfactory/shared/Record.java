@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
+package com.google.gwt.requestfactory.shared;
 
 /**
  * <p>
@@ -21,7 +21,7 @@ package com.google.gwt.valuestore.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * An entry in a {@link com.google.gwt.valuestore.shared.ValueStore ValueStore}.
+ * A proxy for a server-side domain object.
  */
 public interface Record {
   Property<Long> id = new Property<Long>("id", Long.class);

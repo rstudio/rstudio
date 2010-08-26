@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.client;
+package com.google.gwt.requestfactory.client;
 
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Map;
 

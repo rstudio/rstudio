@@ -15,9 +15,9 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RecordRequest;
-import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Set;
 
