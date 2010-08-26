@@ -17,6 +17,8 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.requestfactory.server.SimpleFoo;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Date;
 
 /**
@@ -30,14 +32,29 @@ public interface SimpleFooRecord extends Record {
       String.class);
   Property<String> password = new Property<String>("password", "Password",
       String.class);
-  Property<Boolean> boolField = new Property<Boolean>("boolField", Boolean.class);
-  Property<Integer> intId = new Property<Integer>("intId", Integer.class);
-  Property<Date> created = new Property<Date>("created", Date.class);
-  Property<Long> longField = new Property<Long>("longField", Long.class);
-  Property<com.google.gwt.requestfactory.shared.SimpleEnum> enumField =
-      new EnumProperty<com.google.gwt.requestfactory.shared.SimpleEnum>("enumField",
-          com.google.gwt.requestfactory.shared.SimpleEnum.class, SimpleEnum.values());
 
+  Property<Character> charField = new Property<Character>("charField", Character.class);
+  
+  Property<Long> longField = new Property<Long>("longField", Long.class);
+  Property<BigDecimal> bigDecimalField = new Property<BigDecimal>("bigDecimalField", BigDecimal.class);
+  Property<BigInteger> bigIntField = new Property<BigInteger>("bigIntField", BigInteger.class);
+  
+  Property<Integer> intId = new Property<Integer>("intId", Integer.class);
+  Property<Short> shortField = new Property<Short>("shortField", Short.class);
+  Property<Byte> byteField = new Property<Byte>("byteField", Byte.class);
+  
+  Property<Date> created = new Property<Date>("created", Date.class);
+
+  Property<Double> doubleField = new Property<Double>("doubleField", Double.class);
+  Property<Float> floatField = new Property<Float>("floatField", Float.class);
+  
+  Property<SimpleEnum> enumField =
+      new EnumProperty<SimpleEnum>("enumField",
+          SimpleEnum.class, SimpleEnum.values());
+
+  Property<Boolean> boolField = new Property<Boolean>("boolField", Boolean.class);
+  Property<Boolean> otherBoolField = new Property<Boolean>("otherBoolField", Boolean.class);
+  
   Property<SimpleBarRecord> barField = new Property<SimpleBarRecord>("barField",
       SimpleBarRecord.class);
 
@@ -45,36 +62,68 @@ public interface SimpleFooRecord extends Record {
       SimpleFooRecord.class);
 
   SimpleBarRecord getBarField();
-
+  
+  BigDecimal getBigDecimalField();
+  
+  BigInteger getBigIntField();
+  
   Boolean getBoolField();
   
+  Byte getByteField();
+  
+  Character getCharField();
+  
   Date getCreated();
-
+  
+  Double getDoubleField();
+  
   SimpleEnum getEnumField();
-
+  
+  Float getFloatField();
+  
   SimpleFooRecord getFooField();
-
+  
   Integer getIntId();
-
+  
   Long getLongField();
-
+  
+  Boolean getOtherBoolField();
+  
   String getPassword();
 
+  Short getShortField();
+  
   String getUserName();
-
+  
   void setBarField(SimpleBarRecord barField);
+
+  void setBigDecimalField(BigDecimal d);
+
+  void setBigIntField(BigInteger i);
 
   void setBoolField(Boolean boolField);
 
+  void setByteField(Byte b);
+
+  void setCharField(Character c);
+
   void setCreated(Date created);
 
+  void setDoubleField(Double d);
+
+  void setFloatField(Float f);
+  
   void setFooField(SimpleFooRecord fooField);
 
   void setIntId(Integer intId);
 
   void setLongField(Long longField);
 
+  void setOtherBoolField(Boolean boolField);
+
   void setPassword(String password);
+
+  void setShortField(Short s);
 
   void setUserName(String userName);
 }

@@ -15,11 +15,13 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
+import com.google.gwt.app.client.BooleanRenderer;
 import com.google.gwt.app.place.AbstractRecordListView;
 import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormatRenderer;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeRenderer;
@@ -57,7 +59,7 @@ public class ReportListView extends AbstractRecordListView<ReportRecord> {
     List<PropertyColumn<ReportRecord, ?>> columns = new ArrayList<PropertyColumn<ReportRecord, ?>>();
 
     columns.add(new PropertyColumn<ReportRecord, Date>(ReportRecord.created,
-        new DateTimeFormatRenderer(DateTimeFormat.getShortDateFormat())));
+        new DateTimeFormatRenderer(DateTimeFormat.getFormat(PredefinedFormat.DATE_SHORT))));
 
     columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.purpose));
 
@@ -66,6 +68,9 @@ public class ReportListView extends AbstractRecordListView<ReportRecord> {
 
     columns.add(new PropertyColumn<ReportRecord, EmployeeRecord>(
         ReportRecord.approvedSupervisor, EmployeeRenderer.instance()));
+
+    columns.add(new PropertyColumn<ReportRecord, Boolean>(
+        ReportRecord.approved, BooleanRenderer.instance()));
 
     return columns;
   }

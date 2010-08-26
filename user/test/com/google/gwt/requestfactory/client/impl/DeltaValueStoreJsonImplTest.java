@@ -15,12 +15,11 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.requestfactory.shared.LoggingRequest;
+import com.google.gwt.requestfactory.client.SimpleRequestFactoryInstance;
 import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.SimpleFooRecord;
 import com.google.gwt.requestfactory.shared.WriteOperation;
@@ -31,6 +30,8 @@ import java.util.Date;
  * Tests for {@link DeltaValueStoreJsonImpl}.
  */
 public class DeltaValueStoreJsonImplTest extends GWTTestCase {
+
+  private static final String SIMPLE_FOO_CLASS_NAME = "com.google.gwt.requestfactory.shared.SimpleFooRecord";
 
   /*
    * sub-classed it here so that the protected constructor of {@link RecordImpl}
@@ -43,30 +44,6 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     }
   }
 
-  final RecordToTypeMap typeMap = new RecordToTypeMap() {
-    @SuppressWarnings("unchecked")
-    public <R extends Record> RecordSchema<R> getType(Class<R> recordClass) {
-      if (recordClass.equals(SimpleFooRecord.class)) {
-        return (RecordSchema<R>) SimpleFooRecordImpl.SCHEMA;
-      }
-      throw new IllegalArgumentException("Unknown token " + recordClass);
-    }
-
-     public RecordSchema<? extends Record> getType(
-       String recordClass) {
-      if (recordClass.equals("simple-foo-class-token")) {
-        return SimpleFooRecordImpl.SCHEMA;
-      }
-      throw new IllegalArgumentException("Unknown token " + recordClass);
-    }
-
-    public String getClassToken(Class<?> recordClass) {
-      if (recordClass.equals(SimpleFooRecord.class)) {
-        return "simple-foo-class-token";
-      }
-      throw new IllegalArgumentException("Unknown token " + recordClass);
-    }
-  };
   ValueStoreJsonImpl valueStore = null;
   RequestFactoryJsonImpl requestFactory = null;
 
@@ -80,42 +57,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   @Override
   public void gwtSetUp() {
     valueStore = new ValueStoreJsonImpl();
-    requestFactory = new RequestFactoryJsonImpl() {
-
-      public <R extends Record> R create(Class<R> token) {
-        return create(token, typeMap);
-      }
-
-      @Override
-      public RecordSchema<?> getSchema(String token) {
-        return typeMap.getType(token);
-      }
-
-      @Override
-      public void init(EventBus eventBus) {
-        // ignore.
-      }
-
-      public LoggingRequest loggingRequest() {
-        return null; // ignore
-      }
-
-      public Class<? extends Record> getClass(String token) {
-        throw new UnsupportedOperationException("Auto-generated method stub");
-      }
-
-      public Record getProxy(String token) {
-        throw new UnsupportedOperationException("Auto-generated method stub");
-      }
-
-      public String getToken(Class<? extends Record> clazz) {
-        throw new UnsupportedOperationException("Auto-generated method stub");
-      }
-
-      public String getToken(Record proxy) {
-        throw new UnsupportedOperationException("Auto-generated method stub");
-      }
-    };
+    requestFactory = (RequestFactoryJsonImpl) SimpleRequestFactoryInstance.factory();
 
     // add a record
     jso = RecordJsoImpl.fromJson("{}");
@@ -125,7 +67,9 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     jso.set(SimpleFooRecord.password, "bovik");
     jso.set(SimpleFooRecord.intId, 4);
     jso.set(SimpleFooRecord.created, new Date());
-    jso.setSchema(SimpleFooRecordImpl.SCHEMA);
+    jso.set(SimpleFooRecord.boolField, false);
+    jso.set(SimpleFooRecord.otherBoolField, true);
+    jso.setSchema(SimpleRequestFactoryInstance.schema());
     valueStore.setRecord(jso, requestFactory);
   }
 
@@ -145,7 +89,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     Record created = requestFactory.create(SimpleFooRecord.class);
     assertNotNull(created.getId());
     assertNotNull(created.getVersion());
-
+    
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
     // DVS does not know about the created entity.
@@ -198,7 +142,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     Long futureId = createRecord.getId();
 
     RecordImpl mockRecord = new RecordImpl(RecordJsoImpl.create(futureId, 1,
-        SimpleFooRecordImpl.SCHEMA), RequestFactoryJsonImpl.NOT_FUTURE);
+        SimpleRequestFactoryInstance.schema()), RequestFactoryJsonImpl.NOT_FUTURE);
     valueStore.setRecord(mockRecord.asJso(), requestFactory); // marked as non-future..
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
@@ -216,14 +160,14 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         WriteOperation.CREATE.name()).isArray();
     assertEquals(1, createOperationArray.size());
     assertEquals("harry", createOperationArray.get(0).isObject().get(
-        SimpleFooRecord.class.getName()).isObject().get(
+        SIMPLE_FOO_CLASS_NAME).isObject().get(
         SimpleFooRecord.userName.getName()).isString().stringValue());
 
     JSONArray updateOperationArray = jsonObject.get(
         WriteOperation.UPDATE.name()).isArray();
     assertEquals(1, updateOperationArray.size());
     assertEquals("bovik", updateOperationArray.get(0).isObject().get(
-        SimpleFooRecord.class.getName()).isObject().get(
+        SIMPLE_FOO_CLASS_NAME).isObject().get(
         SimpleFooRecord.userName.getName()).isString().stringValue());
   }
 
@@ -256,9 +200,9 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
     JSONObject recordWithName = writeOperationArray.get(0).isObject();
     assertEquals(1, recordWithName.size());
-    assertTrue(recordWithName.containsKey(SimpleFooRecord.class.getName()));
+    assertTrue(recordWithName.containsKey(SIMPLE_FOO_CLASS_NAME));
 
-    JSONObject record = recordWithName.get(SimpleFooRecord.class.getName()).isObject();
+    JSONObject record = recordWithName.get(SIMPLE_FOO_CLASS_NAME).isObject();
     assertTrue(record.containsKey("id"));
     assertTrue(record.containsKey("version"));
 

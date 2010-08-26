@@ -30,14 +30,20 @@ import java.util.Date;
 @DataTransferObject(com.google.gwt.sample.expenses.server.domain.Report.class)
 public interface ReportRecord extends Record {
 
-  Property<EmployeeRecord> approvedSupervisor = new Property<EmployeeRecord>("approvedSupervisor", "Approved Supervisor Key",
-      EmployeeRecord.class);
+  Property<Boolean> approved = new Property<Boolean>("approved", "Approved",
+      Boolean.class);
+  Property<EmployeeRecord> approvedSupervisor = new Property<EmployeeRecord>(
+      "approvedSupervisor", "Approved Supervisor Key", EmployeeRecord.class);
   Property<Date> created = new Property<Date>("created", "Created", Date.class);
-  Property<String> department = new Property<String>("department", "Department", String.class);
+  Property<String> department = new Property<String>("department",
+      "Department", String.class);
   Property<String> notes = new Property<String>("notes", "Notes", String.class);
-  Property<String> purpose = new Property<String>("purpose", "Purpose", String.class);
-  Property<EmployeeRecord> reporter = new Property<EmployeeRecord>("reporter", "Reporter",
-      EmployeeRecord.class);
+  Property<String> purpose = new Property<String>("purpose", "Purpose",
+      String.class);
+  Property<EmployeeRecord> reporter = new Property<EmployeeRecord>("reporter",
+      "Reporter", EmployeeRecord.class);
+
+  Boolean getApproved();
 
   EmployeeRecord getApprovedSupervisor();
 
@@ -48,10 +54,12 @@ public interface ReportRecord extends Record {
   String getNotes();
 
   String getPurpose();
-  
+
   EmployeeRecord getReporter();
 
   boolean isChanged();
+
+  void setApproved(Boolean approved);
 
   void setApprovedSupervisor(EmployeeRecord approvedSupervisor);
 

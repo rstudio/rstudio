@@ -13,8 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.server;
+package com.google.gwt.valuestore.server;
 
+import com.google.gwt.requestfactory.server.SimpleBar;
 import com.google.gwt.requestfactory.shared.Id;
 import com.google.gwt.requestfactory.shared.SimpleEnum;
 
@@ -63,36 +64,43 @@ public class SimpleFoo {
     return 0;
   }
 
+  Integer version = 1;
+
   @Id
   private Long id = 1L;
 
-  Integer version = 1;
+  private Integer intId = -1;
 
-  private String userName;
   private String password;
 
+  private String userName;
+
   private Character charField;
+  
   private Long longField;
 
   private BigDecimal bigDecimalField;
   
   private BigInteger bigIntField;
-  private Integer intId = -1;
+  
   private Short shortField;
   
   private Byte byteField;
   
   private Date created;
+  
   private Double doubleField;
   
   private Float floatField;
   
   private SimpleEnum enumField;
+  
   private Boolean boolField;
 
   private Boolean otherBoolField;
 
   private SimpleBar barField;
+  
   private SimpleFoo fooField;
 
   public SimpleFoo() {
@@ -123,7 +131,7 @@ public class SimpleFoo {
   }
 
   /**
-   * @return the bigIntegerField
+   * @return the bigIntField
    */
   public BigInteger getBigIntField() {
     return bigIntField;
@@ -184,13 +192,14 @@ public class SimpleFoo {
   public Long getLongField() {
     return longField;
   }
-
+  
   /**
    * @return the otherBoolField
    */
   public Boolean getOtherBoolField() {
     return otherBoolField;
   }
+
   public String getPassword() {
     return password;
   }
@@ -235,10 +244,10 @@ public class SimpleFoo {
   }
 
   /**
-   * @param bigIntegerField the bigIntegerField to set
+   * @param bigIntField the bigIntField to set
    */
-  public void setBigIntField(BigInteger bigIntegerField) {
-    this.bigIntField = bigIntegerField;
+  public void setBigIntField(BigInteger bigIntField) {
+    this.bigIntField = bigIntField;
   }
 
   public void setBoolField(Boolean bool) {

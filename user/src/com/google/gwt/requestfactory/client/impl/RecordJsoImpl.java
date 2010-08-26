@@ -177,9 +177,9 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
     if (property instanceof EnumProperty) {
       EnumProperty<V> eProperty = (EnumProperty<V>) property;
-      Enum[] values = (Enum[]) eProperty.getValues();
+      Enum<?>[] values = (Enum[]) eProperty.getValues();
       int ordinal = getInt(property.getName());
-      for (Enum value : values) {
+      for (Enum<?> value : values) {
         if (ordinal == value.ordinal()) {
           return (V) value;
         }
@@ -311,6 +311,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
     if (value instanceof Boolean) {
       setBoolean(property.getName(), ((Boolean) value).booleanValue());
+      return;
     }
 
     if (value instanceof RecordImpl) {

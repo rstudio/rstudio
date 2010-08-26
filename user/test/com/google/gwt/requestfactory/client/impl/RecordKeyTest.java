@@ -15,15 +15,44 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.RecordChangedEvent;
+import com.google.gwt.requestfactory.shared.WriteOperation;
+
 import junit.framework.TestCase;
 
 /**
- * Tests for {@link RecordJsoImpl}.
+ * Eponymous unit test.
  */
 public class RecordKeyTest extends TestCase {
 
+  static class Schema1 extends RecordSchema<Record> {
+    public Schema1() {
+      super("schemey");
+    }
+
+    @Override
+    public Record create(RecordJsoImpl jso, boolean isFuture) {
+      throw new UnsupportedOperationException("Auto-generated method stub");
+    }
+
+    @Override
+    public RecordChangedEvent<?, ?> createChangeEvent(Record record,
+        WriteOperation writeOperation) {
+      throw new UnsupportedOperationException("Auto-generated method stub");
+    }
+
+    @Override
+    public Class<? extends Record> getProxyClass() {
+      throw new UnsupportedOperationException("Auto-generated method stub");
+    }
+  }
+  
+  static class Schema2 extends Schema1 {
+  }
+
   public void testEquals() {
-    RecordKey newKey1 = new RecordKey(1L, SimpleFooRecordImpl.SCHEMA,
+    RecordKey newKey1 = new RecordKey(1L, new Schema1(),
         RequestFactoryJsonImpl.IS_FUTURE);
 
     RecordKey anotherNewKey1 = new RecordKey(newKey1.id, newKey1.schema,
@@ -37,7 +66,7 @@ public class RecordKeyTest extends TestCase {
     assertFalse(newKey1.hashCode() == newKey2.hashCode());
 
     RecordKey newKey1NoSchema = new RecordKey(newKey1.id,
-        SimpleBazRecordImpl.SCHEMA, newKey1.isFuture);
+        new Schema2(), newKey1.isFuture);
     assertFalse(newKey1.equals(newKey1NoSchema));
     assertFalse(newKey1.hashCode() == newKey1NoSchema.hashCode());
 

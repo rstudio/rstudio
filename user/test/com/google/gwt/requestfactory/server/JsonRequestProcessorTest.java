@@ -115,7 +115,7 @@ public class JsonRequestProcessorTest extends TestCase {
       assertEquals(1, updateArray.getJSONObject(0).length());
       assertTrue(updateArray.getJSONObject(0).has("id"));
       assertFalse(updateArray.getJSONObject(0).has("violations"));
-      assertEquals((int) 45, (int) fooResult.getIntId());
+      assertEquals(45, (int) fooResult.getIntId());
       assertEquals("JSC", fooResult.getUserName());
       assertEquals(now, fooResult.getCreated());
       assertEquals(9L, (long) fooResult.getLongField());
@@ -148,7 +148,7 @@ public class JsonRequestProcessorTest extends TestCase {
       // check modified fields and no violations
       assertFalse(result.getJSONObject("sideEffects").has("UPDATE"));
       fooResult = SimpleFoo.getSingleton();
-      assertEquals((int) 45, (int) fooResult.getIntId());
+      assertEquals(45, (int) fooResult.getIntId());
       assertEquals("JSC", fooResult.getUserName());
     } catch (Exception e) {
       e.printStackTrace();
@@ -177,7 +177,7 @@ public class JsonRequestProcessorTest extends TestCase {
       // check modified fields and no violations
       assertTrue(result.getJSONObject("sideEffects").has("UPDATE"));
       fooResult = SimpleFoo.getSingleton();
-      assertEquals((int) 45, (int) fooResult.getIntId());
+      assertEquals(45, (int) fooResult.getIntId());
       assertEquals("JSC", fooResult.getUserName());
       assertEquals(newTime, fooResult.getCreated().getTime());
     } catch (Exception e) {

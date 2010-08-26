@@ -29,6 +29,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -53,20 +54,40 @@ public class ReportEditView extends Composite implements
   private static final Binder BINDER = GWT.create(Binder.class);
   private static final DataBinder DATA_BINDER = GWT.create(DataBinder.class);
 
-  @UiField TextBox notes;
-  @UiField TextBox purpose;
-  @UiField(provided = true) ValueListBox<EmployeeRecord> reporter =
-    new ValueListBox<EmployeeRecord>(EmployeeRenderer.instance());
-  @UiField(provided = true) ValueListBox<EmployeeRecord> approvedSupervisor =
-    new ValueListBox<EmployeeRecord>(EmployeeRenderer.instance());
-  @UiField DateBox created;
-  @UiField Button cancel;
-  @UiField Button save;
-  @UiField InlineLabel id;
-  @UiField InlineLabel version;
-  @UiField DivElement errors;
-  @UiField Element editTitle;
-  @UiField Element createTitle;
+  @UiField
+  TextBox notes;
+  @UiField
+  TextBox purpose;
+  @UiField(provided = true)
+  ValueListBox<EmployeeRecord> reporter = new ValueListBox<EmployeeRecord>(
+      EmployeeRenderer.instance());
+  @UiField(provided = true)
+  CheckBox approved = new CheckBox() {
+    @Override
+    public void setValue(Boolean value, boolean fire) {
+      value = value == null ? false : value;
+      super.setValue(value, fire);
+    }
+  };
+  @UiField(provided = true)
+  ValueListBox<EmployeeRecord> approvedSupervisor = new ValueListBox<EmployeeRecord>(
+      EmployeeRenderer.instance());
+  @UiField
+  DateBox created;
+  @UiField
+  Button cancel;
+  @UiField
+  Button save;
+  @UiField
+  InlineLabel id;
+  @UiField
+  InlineLabel version;
+  @UiField
+  DivElement errors;
+  @UiField
+  Element editTitle;
+  @UiField
+  Element createTitle;
 
   private Delegate delegate;
 

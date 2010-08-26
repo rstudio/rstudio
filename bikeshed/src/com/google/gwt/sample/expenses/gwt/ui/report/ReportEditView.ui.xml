@@ -44,6 +44,7 @@
       <tr><td><div class='{style.label}'>Created:</div></td><td><d:DateBox ui:field='created'></d:DateBox></td></tr>
       <tr><td><div class='{style.label}'>Reporter:</div></td><td><g:ValueListBox ui:field='reporter'></g:ValueListBox></td></tr>
       <tr><td><div class='{style.label}'>Approved Supervisor:</div></td><td><g:ValueListBox ui:field='approvedSupervisor'></g:ValueListBox></td></tr>
+      <tr><td><div class='{style.label}'>Approved:</div></td><td><g:CheckBox ui:field='approved'></g:CheckBox></td></tr>
     </table>
 
     <div class='{style.bar}'>

@@ -36,7 +36,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Query;
-import javax.persistence.Transient;
 import javax.persistence.Version;
 
 /**
@@ -337,12 +336,6 @@ public class Report {
     return query;
   }
 
-  @Transient
-  private Employee approvedSupervisor;
-
-  @Transient
-  private Employee reporter;
-
   // @JoinColumn
 
   private Long approvedSupervisorKey;
@@ -359,13 +352,15 @@ public class Report {
   private String notes;
 
   private String purpose;
-
+  
+  private Boolean approved;
+  
   /**
    * Store a lower case version of the purpose for searching.
    */
   @SuppressWarnings("unused")
   private String purposeLowerCase;
-
+  
   /**
    * Store reporter's key instead of reporter. See: http://code.google.com/appengine
    * /docs/java/datastore/relationships.html#Unowned_Relationships
@@ -376,6 +371,10 @@ public class Report {
   @Version
   @Column(name = "version")
   private Integer version;
+
+  public Boolean getApproved() {
+    return approved;
+  }
 
   public Employee getApprovedSupervisor() {
     return approvedSupervisorKey != null ? Employee.findEmployee(
@@ -435,6 +434,10 @@ public class Report {
     } finally {
       em.close();
     }
+  }
+
+  public void setApproved(Boolean approved) {
+    this.approved = approved;
   }
 
   public void setApprovedSupervisor(Employee reporter) {

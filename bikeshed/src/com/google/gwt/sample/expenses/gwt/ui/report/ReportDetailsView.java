@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
+import com.google.gwt.app.client.BooleanRenderer;
 import com.google.gwt.app.place.RecordDetailsView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.SpanElement;
@@ -56,6 +57,8 @@ public class ReportDetailsView extends Composite implements RecordDetailsView<Re
   SpanElement reporterKey;
   @UiField
   SpanElement approvedSupervisorKey;
+  @UiField
+  SpanElement approved;
   @UiField
   HasClickHandlers edit;
   @UiField
@@ -102,5 +105,6 @@ public class ReportDetailsView extends Composite implements RecordDetailsView<Re
     versionSpan.setInnerText(record.getVersion().toString());
     reporterKey.setInnerText(EmployeeRenderer.instance().render(record.getReporter()));
     approvedSupervisorKey.setInnerText(EmployeeRenderer.instance().render(record.getApprovedSupervisor()));
+    approved.setInnerText(BooleanRenderer.instance().render(record.getApproved()));
   }
 }

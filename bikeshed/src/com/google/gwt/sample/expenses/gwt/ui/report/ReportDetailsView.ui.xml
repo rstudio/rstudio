@@ -38,6 +38,7 @@
       <tr><td><div class='{style.label}'>Created:</div></td><td><span ui:field='created'></span></td></tr>
       <tr><td><div class='{style.label}'>Reporter Key:</div></td><td><span ui:field='reporterKey'></span></td></tr>
       <tr><td><div class='{style.label}'>Approved Supervisor Key:</div></td><td><span ui:field='approvedSupervisorKey'></span></td></tr>
+      <tr><td><div class='{style.label}'>Approved:</div></td><td><span ui:field='approved'></span></td></tr>
     </table>
 
     <div class='{style.bar}'>
