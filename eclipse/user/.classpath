@@ -37,7 +37,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-r5940.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-r5940-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5940/htmlunit-core-js-r5940-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/redist/json/r2_20080312/json-1.5.jar" sourcepath="/GWT_TOOLS/redist/json/r2_20080312/json-src.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA.jar" sourcepath="/GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
+	<classpathentry eported="true" kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA.jar" sourcepath="/GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-6.1.11.jar" sourcepath="/GWT_TOOLS/lib/jetty/jetty-6.1.11-src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

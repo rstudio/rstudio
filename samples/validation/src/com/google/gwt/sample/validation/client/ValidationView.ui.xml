@@ -1,0 +1,52 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  <ui:style type ="com.google.gwt.sample.validation.client.ValidationView.MyStyle">
+    @external .gwt-DialogBox;
+    .gwt-DialogBox {
+      width: 400px;
+    }
+    .panel {
+      align: center;
+    }
+    .send {
+      display: block;
+      font-size: 16pt;
+    }
+    .error {
+      color: red;
+    }
+    .dialogPanel {
+      margin: 5px;
+    }
+    .close {
+      margin: 15px 6px 6px;
+    }
+  </ui:style>
+  <g:VerticalPanel styleName="{style.panel}">
+    <g:FlowPanel>
+      <g:Label>Please enter your name:</g:Label>
+      <g:TextBox ui:field="nameField">GWT User</g:TextBox>
+    </g:FlowPanel>
+    <g:Button styleName="{style.send}" ui:field="sendButton">Send</g:Button>
+    <g:Label styleName="{style.error}" ui:field="errorLabel" />
+    <g:DialogBox ui:field="dialogBox"
+        animationEnabled="true"
+        text="Remote Procedure Call"
+        visible="false"
+        width="400">
+      <g:VerticalPanel styleName="dialogPanel">
+        <g:HTML>
+          <b>Sending name to the server:</b>
+        </g:HTML>
+        <g:Label ui:field="textToServer" />
+        <g:HTML>
+          <br />
+          <b>Server replies:</b>
+        </g:HTML>
+        <g:HTML ui:field="serverResponse" />
+        <g:Button styleName="{style.close}" ui:field="closeButton">Close</g:Button>
+      </g:VerticalPanel>
+    </g:DialogBox>
+  </g:VerticalPanel>
+</ui:UiBinder>

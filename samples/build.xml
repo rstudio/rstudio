@@ -38,6 +38,10 @@
     <gwt.ant dir="showcase" />
   </target>
 
+  <target name="validation" description="Build validation">
+    <gwt.ant dir="validation" />
+  </target>
+
   <target name="-do" description="Run all subprojects" >
     <antcall target="dynatable" />
     <antcall target="dynatablerf" />
@@ -47,6 +51,7 @@
     <!-- <antcall target="logexample" /> Doesn't quite work yet -->
     <antcall target="mail" />
     <antcall target="showcase" />
+    <antcall target="validation" />
   </target>
 
   <target name="build" description="Builds GWT">
@@ -72,7 +77,7 @@
       <param name="target" value="source" />
     </antcall>
   </target>
-  
+
   <target name="test" description="Test GWT">
     <antcall target="-do">
       <param name="target" value="test" />
