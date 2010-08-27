@@ -22,6 +22,7 @@ import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
+import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.UserInformationRecord;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
@@ -31,10 +32,10 @@ import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportRecord;
 import com.google.gwt.sample.expenses.client.request.ReportRecordChanged;
 import com.google.gwt.sample.expenses.client.style.Styles;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.gwt.valuestore.shared.SyncResult;
 import com.google.gwt.view.client.ProvidesKey;
 
 import java.util.Set;
@@ -130,6 +131,13 @@ public class Expenses implements EntryPoint {
   private ExpensesShell shell;
 
   public void onModuleLoad() {
+    GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+      public void onUncaughtException(Throwable e) {
+        Window.alert("Error: " + e.getMessage());
+//        placeController.goTo(Place.NOWHERE);
+      }
+    });
+    
     final HandlerManager eventBus = new HandlerManager(null);
     requestFactory = GWT.create(ExpensesRequestFactory.class);
     requestFactory.init(eventBus);

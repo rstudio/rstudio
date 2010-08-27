@@ -22,15 +22,15 @@ import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
+import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.UserInformationRecord;
+import com.google.gwt.requestfactory.shared.Value;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.valuestore.shared.SyncResult;
-import com.google.gwt.valuestore.shared.Value;
 
 import java.util.Set;
 
@@ -78,6 +78,13 @@ public class ExpensesMobile implements EntryPoint {
    * This is the entry point method.
    */
   public void onModuleLoad() {
+    GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+      public void onUncaughtException(Throwable e) {
+        Window.alert("Error: " + e.getMessage());
+//        placeController.goTo(Place.NOWHERE);
+      }
+    });
+    
     // Get the employee ID from the URL.
     long employeeId = 1;
     try {

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.client.request;
 
-import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.requestfactory.shared.Record;
 
 import java.util.Collections;
 import java.util.HashSet;

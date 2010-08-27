@@ -20,7 +20,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.client.request.ExpenseRecordChanged;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
@@ -28,8 +30,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.valuestore.shared.PropertyReference;
-import com.google.gwt.valuestore.shared.SyncResult;
 
 import java.util.List;
 import java.util.Set;
