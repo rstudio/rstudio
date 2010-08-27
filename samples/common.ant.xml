@@ -82,7 +82,9 @@
       <sequential>
         <mkdir dir="${sample.build}/war" />
         <gwt.timer name="${sample.upper} with ${gwt.samples.localworkers} localWorkers">
-          <java dir="${sample.build}" classname="com.google.gwt.dev.Compiler" classpath="${sample.path}:${sample.build}/war/WEB-INF/classes:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+          <java dir="${sample.build}" classname="com.google.gwt.dev.Compiler"
+                classpath="${sample.path}:${sample.build}/war/WEB-INF/classes:${gwt.user.jar}:${gwt.dev.jar}:${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar:${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar"
+		fork="yes" failonerror="true">
             <jvmarg value="-Xmx256M"/>
             <arg value="-localWorkers" />
             <arg value="${gwt.samples.localworkers}" />
