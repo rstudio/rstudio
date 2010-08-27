@@ -20,4 +20,7 @@
   <inherits name='com.google.gwt.user.User'/>
   <source path="client"/>
   <source path="shared"/>
+  <generate-with class="com.google.gwt.safehtml.rebind.SafeHtmlTemplatesGenerator">
+    <when-type-assignable class="com.google.gwt.safehtml.client.SafeHtmlTemplates"/>
+  </generate-with>
 </module>

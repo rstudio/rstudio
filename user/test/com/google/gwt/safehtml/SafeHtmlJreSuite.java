@@ -15,6 +15,8 @@
  */
 package com.google.gwt.safehtml;
 
+import com.google.gwt.safehtml.rebind.HtmlTemplateParserTest;
+import com.google.gwt.safehtml.rebind.ParsedHtmlTemplateTest;
 import com.google.gwt.safehtml.server.UriUtilsTest;
 import com.google.gwt.safehtml.shared.SafeHtmlUtilsTest;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilderTest;
@@ -37,6 +39,8 @@ public class SafeHtmlJreSuite {
     suite.addTestSuite(SimpleHtmlSanitizerTest.class);
     suite.addTestSuite(SafeHtmlStringTest.class);
     suite.addTestSuite(UriUtilsTest.class);
+    suite.addTestSuite(HtmlTemplateParserTest.class);
+    suite.addTestSuite(ParsedHtmlTemplateTest.class);
     
     return suite;
   }
