@@ -25,7 +25,7 @@ public interface RequestProcessor<T> {
   /**
    * Decodes request, invokes methods, and re-encoded resulting return values.
    */
-  T decodeAndInvokeRequest(T encodedRequest) throws Exception;
+  T decodeAndInvokeRequest(T encodedRequest) throws RequestProcessingException;
 
   /**
    * Sets the OperationRegistry to be used for looking up invocation metadata.

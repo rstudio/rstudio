@@ -20,6 +20,7 @@ import com.google.gwt.user.server.rpc.RPCServletUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -58,6 +59,7 @@ public class RequestFactoryServlet extends HttpServlet {
 
   private static final String JSON_CHARSET = "UTF-8";
   private static final String JSON_CONTENT_TYPE = "application/json";
+  private static final Logger log = Logger.getLogger(RequestFactoryServlet.class.getCanonicalName());
   
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -87,11 +89,10 @@ public class RequestFactoryServlet extends HttpServlet {
         writer.print(requestProcessor.decodeAndInvokeRequest(jsonRequestString));
         writer.flush();
       }
-      // TODO: clean exception handling code below.
-    } catch (Exception e) {
-      Logger.getLogger(getClass().getName()).severe(e.getMessage());
-      e.printStackTrace();
-      throw new RuntimeException(e);
+    } catch (RequestProcessingException e) {
+      writer.print((String) e.getResponse());
+      writer.flush();
+      log.log(Level.SEVERE, "Unexpected error", e);
     }
   }
 

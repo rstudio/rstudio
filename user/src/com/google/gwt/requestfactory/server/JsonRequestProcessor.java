@@ -160,7 +160,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return rtn;
   }
 
-  public String decodeAndInvokeRequest(String encodedRequest) throws Exception {
+  public String decodeAndInvokeRequest(String encodedRequest) throws RequestProcessingException {
     try {
       Logger.getLogger(this.getClass().getName()).finest("Incoming request "
           + encodedRequest);
@@ -168,21 +168,16 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Logger.getLogger(this.getClass().getName()).finest("Outgoing response "
           + response);
       return response;
-    } catch (ClassNotFoundException e) {
-      throw new IllegalArgumentException(e);
-    } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException(e);
-    } catch (InvocationTargetException e) {
-      throw new IllegalArgumentException(e);
-    } catch (SecurityException e) {
-      throw new IllegalArgumentException(e);
-    } catch (JSONException e) {
-      throw new IllegalArgumentException(e);
-    } catch (NoSuchMethodException e) {
-      throw new IllegalArgumentException(e);
-    } catch (IllegalArgumentException e) {
-      throw new RuntimeException(e);
-    }
+    } catch (Exception e) {
+      JSONObject exceptionResponse = new JSONObject();
+      try {
+        exceptionResponse.put("exception", "Server error");
+      } catch (JSONException jsonException) {
+        throw new IllegalStateException(jsonException);
+      }
+      throw new RequestProcessingException("Unexpected exception", e, 
+          exceptionResponse.toString());
+    } 
   }
 
   /**
@@ -647,7 +642,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return domainMethod.invoke(domainObject, args);
   }
 
-  public Object processJsonRequest(String jsonRequestString)
+  public JSONObject processJsonRequest(String jsonRequestString)
       throws JSONException, NoSuchMethodException, IllegalAccessException,
       InvocationTargetException, ClassNotFoundException {
     RequestDefinition operation;

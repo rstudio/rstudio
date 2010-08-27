@@ -97,6 +97,9 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
   public void handleResponseText(String responseText) {
     RecordJsoImpl.JsonResults results = RecordJsoImpl.fromResults(responseText);
+    if (results.getException() != null) {
+      throw new RuntimeException(results.getException());
+    }
     processRelated(results.getRelated());
     handleResult(results.getResult(),
         deltaValueStore.commit(results.getSideEffects()));
