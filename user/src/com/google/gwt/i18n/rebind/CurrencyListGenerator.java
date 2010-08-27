@@ -15,6 +15,7 @@
  */
 package com.google.gwt.i18n.rebind;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
@@ -190,6 +191,16 @@ public class CurrencyListGenerator extends Generator {
       return flags;
     }
 
+    public String getJava() {
+      StringBuilder buf = new StringBuilder();
+      buf.append("new CurrencyDataImpl(\"").append(quote(code)).append("\", \"");
+      buf.append(quote(symbol)).append("\", ").append(flags);
+      if (portableSymbol.length() > 0) {
+        buf.append(", \"").append(quote(portableSymbol)).append('\"');
+      }
+      return buf.append(')').toString();
+    }
+
     public String getJson() {
       StringBuilder buf = new StringBuilder();
       buf.append("[ \"").append(quote(code)).append("\", \"");
@@ -226,6 +237,10 @@ public class CurrencyListGenerator extends Generator {
       "com/google/gwt/i18n/client/constants/CurrencyExtra";
 
   private static final String CURRENCY_LIST = CurrencyList.class.getCanonicalName();
+
+  private static final String HASHMAP = HashMap.class.getCanonicalName();
+
+  private static final String JAVASCRIPTOBJECT = JavaScriptObject.class.getCanonicalName();
 
   /**
    * Prefix for properties files containing number formatting constants for each
@@ -374,13 +389,10 @@ public class CurrencyListGenerator extends Generator {
       ClassSourceFileComposerFactory factory =
           new ClassSourceFileComposerFactory(packageName, className);
       factory.setSuperclass(superClassName);
-      factory.addImport(CURRENCY_LIST);
       factory.addImport(CURRENCY_DATA);
+      factory.addImport(JAVASCRIPTOBJECT);
+      factory.addImport(HASHMAP);
       SourceWriter writer = factory.createSourceWriter(context, pw);
-      if (currencies.length > 0) {
-        writeCurrencyMethod(className, writer, currencies, allCurrencyData);
-        writeNamesMethod(className, writer, currencies, allCurrencyData);
-      }
       if (defCurrencyCode != null) {
         CurrencyInfo currencyInfo = allCurrencyData.get(defCurrencyCode);
         if (currencyInfo == null) {
@@ -390,9 +402,20 @@ public class CurrencyListGenerator extends Generator {
         }
         writer.println();
         writer.println("@Override");
-        writer.println("public native CurrencyData getDefault() /*-{");
+        writer.println("protected CurrencyData getDefaultJava() {");
+        writer.println("  return " + currencyInfo.getJava() + ";");
+        writer.println("}");
+        writer.println();
+        writer.println("@Override");
+        writer.println("protected native CurrencyData getDefaultNative() /*-{");
         writer.println("  return " + currencyInfo.getJson() + ";");
         writer.println("}-*/;");
+      }
+      if (currencies.length > 0) {
+        writeCurrencyMethodJava(writer, currencies, allCurrencyData);
+        writeCurrencyMethodNative(writer, currencies, allCurrencyData);
+        writeNamesMethodJava(writer, currencies, allCurrencyData);
+        writeNamesMethodNative(writer, currencies, allCurrencyData);
       }
       writer.commit(logger);
     }
@@ -422,30 +445,47 @@ public class CurrencyListGenerator extends Generator {
       ClassSourceFileComposerFactory factory =
           new ClassSourceFileComposerFactory(packageName, className);
       factory.setSuperclass(targetClass.getQualifiedSourceName());
-      factory.addImport(CURRENCY_LIST);
       factory.addImport(CURRENCY_DATA);
+      factory.addImport(JAVASCRIPTOBJECT);
+      factory.addImport(HASHMAP);
       factory.addImport("com.google.gwt.i18n.client.LocaleInfo");
       SourceWriter writer = factory.createSourceWriter(context, pw);
       writer.println("private CurrencyList instance;");
       writer.println();
       writer.println("@Override");
-      writer.println("public CurrencyData getDefault() {");
+      writer.println("protected CurrencyData getDefaultJava() {");
       writer.println("  ensureInstance();");
-      writer.println("  return instance.getDefault();");
+      writer.println("  return instance.getDefaultJava();");
       writer.println("}");
       writer.println();
       writer.println("@Override");
-      writer.println("protected void loadCurrencyMap() {");
+      writer.println("protected CurrencyData getDefaultNative() {");
       writer.println("  ensureInstance();");
-      writer.println("  instance.loadCurrencyMap();");
-      writer.println("  dataMap = instance.dataMap;");
+      writer.println("  return instance.getDefaultNative();");
       writer.println("}");
       writer.println();
       writer.println("@Override");
-      writer.println("protected void loadNamesMap() {");
+      writer.println("protected HashMap<String, CurrencyData> loadCurrencyMapJava() {");
       writer.println("  ensureInstance();");
-      writer.println("  instance.loadNamesMap();");
-      writer.println("  namesMap = instance.namesMap;");
+      writer.println("  return instance.loadCurrencyMapJava();");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("protected JavaScriptObject loadCurrencyMapNative() {");
+      writer.println("  ensureInstance();");
+      writer.println("  return instance.loadCurrencyMapNative();");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("protected HashMap<String, String> loadNamesMapJava() {");
+      writer.println("  ensureInstance();");
+      writer.println("  return instance.loadNamesMapJava();");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("protected JavaScriptObject loadNamesMapNative() {");
+      writer.println("  ensureInstance();");
+      writer.println("  return instance.loadNamesMapNative();");
       writer.println("}");
       writer.println();
       writer.println("private void ensureInstance() {");
@@ -619,7 +659,7 @@ public class CurrencyListGenerator extends Generator {
   }
 
   /**
-   * Writes a loadCurrencyMap method for the current locale, based on its
+   * Writes a loadCurrencyMapJava method for the current locale, based on its
    * currency data and its superclass (if any). As currencies are included in
    * this method, their names are added to {@code nameMap} for later use.
    * 
@@ -627,32 +667,71 @@ public class CurrencyListGenerator extends Generator {
    * method is omitted entirely.
    * 
    * @param allCurrencyData map of currency codes to currency data for the
-   *        current locale, including all inherited currencies data
+   *          current locale, including all inherited currencies data
    * @param className name of the class we are generating
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
-   *        listed
+   *          listed
    */
-  private void writeCurrencyMethod(String className, SourceWriter writer,
+  private void writeCurrencyMethodJava(SourceWriter writer,
       String[] currencies, Map<String, CurrencyInfo> allCurrencyData) {
     boolean needHeader = true;
     for (String currencyCode : currencies) {
+      // TODO(jat): only emit new data where it differs from superclass!
       CurrencyInfo currencyInfo = allCurrencyData.get(currencyCode);
       if (needHeader) {
         needHeader = false;
         writer.println();
-        writer.println("private void loadSuperCurrencyMap() {");
-        writer.println("  super.loadCurrencyMap();");
-        writer.println("}");
+        writer.println("@Override");
+        writer.println("protected HashMap<String, CurrencyData> loadCurrencyMapJava() {");
+        writer.indent();
+        writer.println("HashMap<String, CurrencyData> result = super.loadCurrencyMapJava();");
+      }
+      writer.println("// " + currencyInfo.getDisplayName());
+      writer.println("result.put(\"" + quote(currencyCode) + "\", "
+          + currencyInfo.getJava() + ");");
+    }
+    if (!needHeader) {
+      writer.println("return result;");
+      writer.outdent();
+      writer.println("}");
+    }
+  }
+
+  /**
+   * Writes a loadCurrencyMapNative method for the current locale, based on its
+   * currency data and its superclass (if any). As currencies are included in
+   * this method, their names are added to {@code nameMap} for later use.
+   * 
+   * If no new currency data is added for this locale over its superclass, the
+   * method is omitted entirely.
+   * 
+   * @param allCurrencyData map of currency codes to currency data for the
+   *          current locale, including all inherited currencies data
+   * @param className name of the class we are generating
+   * @param writer SourceWriter instance to use for writing the class
+   * @param currencies array of valid currency names in the order they should be
+   *          listed
+   */
+  private void writeCurrencyMethodNative(SourceWriter writer,
+      String[] currencies, Map<String, CurrencyInfo> allCurrencyData) {
+    boolean needHeader = true;
+    for (String currencyCode : currencies) {
+      // TODO(jat): only emit new data where it differs from superclass!
+      CurrencyInfo currencyInfo = allCurrencyData.get(currencyCode);
+      if (needHeader) {
+        needHeader = false;
         writer.println();
         writer.println("@Override");
-        writer.println("protected native void loadCurrencyMap() /*-{");
+        writer.println("protected JavaScriptObject loadCurrencyMapNative() {");
         writer.indent();
-        writer.println("this.@com.google.gwt.i18n.client." + className
-            + "::loadSuperCurrencyMap()();");
-        writer.println("this.@com.google.gwt.i18n.client." + className
-            + "::overrideCurrencyMap(Lcom/google/gwt/core/client/"
-            + "JavaScriptObject;)({");
+        writer.println("return overrideMap(super.loadCurrencyMapNative(), loadMyCurrencyMapOverridesNative());");
+        writer.outdent();
+        writer.println("}");
+        writer.println();
+        writer.println("private native JavaScriptObject loadMyCurrencyMapOverridesNative() /*-{");
+        writer.indent();
+        writer.println("return {");
         writer.indent();
       }
       writer.println("// " + currencyInfo.getDisplayName());
@@ -661,14 +740,14 @@ public class CurrencyListGenerator extends Generator {
     }
     if (!needHeader) {
       writer.outdent();
-      writer.println("});");
+      writer.println("};");
       writer.outdent();
       writer.println("}-*/;");
     }
   }
 
   /**
-   * Writes a loadNamesMap method for the current locale, based on its the
+   * Writes a loadNamesMapJava method for the current locale, based on its the
    * supplied names map and its superclass (if any).
    * 
    * If no new names are added for this locale over its superclass, the method
@@ -677,30 +756,68 @@ public class CurrencyListGenerator extends Generator {
    * @param className name of the class we are generating
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
-   *        listed
+   *          listed
    */
-  private void writeNamesMethod(String className, SourceWriter writer,
-      String[] currencies, Map<String, CurrencyInfo> allCurrencyData) {
+  private void writeNamesMethodJava(SourceWriter writer, String[] currencies,
+      Map<String, CurrencyInfo> allCurrencyData) {
     boolean needHeader = true;
     for (String currencyCode : currencies) {
+      // TODO(jat): only emit new data where it differs from superclass!
       CurrencyInfo currencyInfo = allCurrencyData.get(currencyCode);
       String displayName = currencyInfo.getDisplayName();
       if (displayName != null && !currencyCode.equals(displayName)) {
         if (needHeader) {
           needHeader = false;
           writer.println();
-          writer.println("private void loadSuperNamesMap() {");
-          writer.println("  super.loadNamesMap();");
-          writer.println("}");
+          writer.println("@Override");
+          writer.println("protected HashMap<String, String> loadNamesMapJava() {");
+          writer.indent();
+          writer.println("HashMap<String, String> result = super.loadNamesMapJava();");
+        }
+        writer.println("result.put(\"" + quote(currencyCode) + "\", \""
+            + quote(displayName) + "\");");
+      }
+    }
+    if (!needHeader) {
+      writer.println("return result;");
+      writer.outdent();
+      writer.println("}");
+    }
+  }
+
+  /**
+   * Writes a loadNamesMapNative method for the current locale, based on its the
+   * supplied names map and its superclass (if any).
+   * 
+   * If no new names are added for this locale over its superclass, the method
+   * is omitted entirely.
+   * 
+   * @param className name of the class we are generating
+   * @param writer SourceWriter instance to use for writing the class
+   * @param currencies array of valid currency names in the order they should be
+   *          listed
+   */
+  private void writeNamesMethodNative(SourceWriter writer, String[] currencies,
+      Map<String, CurrencyInfo> allCurrencyData) {
+    boolean needHeader = true;
+    for (String currencyCode : currencies) {
+      // TODO(jat): only emit new data where it differs from superclass!
+      CurrencyInfo currencyInfo = allCurrencyData.get(currencyCode);
+      String displayName = currencyInfo.getDisplayName();
+      if (displayName != null && !currencyCode.equals(displayName)) {
+        if (needHeader) {
+          needHeader = false;
           writer.println();
           writer.println("@Override");
-          writer.println("protected native void loadNamesMap() /*-{");
+          writer.println("protected JavaScriptObject loadNamesMapNative() {");
           writer.indent();
-          writer.println("this.@com.google.gwt.i18n.client." + className
-              + "::loadSuperNamesMap()();");
-          writer.println("this.@com.google.gwt.i18n.client." + className
-              + "::overrideNamesMap(Lcom/google/gwt/core/"
-              + "client/JavaScriptObject;)({");
+          writer.println("return overrideMap(super.loadNamesMapNative(), loadMyNamesMapOverridesNative());");
+          writer.outdent();
+          writer.println("}");
+          writer.println();
+          writer.println("private native JavaScriptObject loadMyNamesMapOverridesNative() /*-{");
+          writer.indent();
+          writer.println("return {");
           writer.indent();
         }
         writer.println("\"" + quote(currencyCode) + "\": \""
@@ -709,7 +826,7 @@ public class CurrencyListGenerator extends Generator {
     }
     if (!needHeader) {
       writer.outdent();
-      writer.println("});");
+      writer.println("};");
       writer.outdent();
       writer.println("}-*/;");
     }

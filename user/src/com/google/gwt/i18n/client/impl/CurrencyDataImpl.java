@@ -15,77 +15,108 @@
  */
 package com.google.gwt.i18n.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.i18n.client.CurrencyData;
+import com.google.gwt.i18n.client.DefaultCurrencyData;
 
 /**
- * JSO Overlay type that wraps currency data.
- * 
- * The JSO is an array with three elements:
- *   0 - ISO4217 currency code
- *   1 - currency symbol to use for this locale
- *   2 - flags and # of decimal digits:
- *       d0-d2: # of decimal digits for this currency, 0-7
- *       d3:    currency symbol goes after number, 0=before
- *       d4:    currency symbol position is based on d3
- *       d5:    space is forced, 0=no space present
- *       d6:    spacing around currency symbol is based on d5
- *   3 - portable currency symbol (optional)
+ * A POJO for currency data.
  */
-public final class CurrencyDataImpl extends JavaScriptObject
-    implements CurrencyData {
-  
+public final class CurrencyDataImpl extends DefaultCurrencyData {
+
   /**
    * Public so CurrencyListGenerator can get to them. As usual with an impl
    * package, external code should not rely on these values.
    */
+  public static final int DEPRECATED_FLAG = 128;
   public static final int POS_FIXED_FLAG = 16;
   public static final int POS_SUFFIX_FLAG = 8;
   public static final int PRECISION_MASK = 7;
   public static final int SPACE_FORCED_FLAG = 32;
   public static final int SPACING_FIXED_FLAG = 64;
-  public static final int DEPRECATED_FLAG = 128;
 
-  protected CurrencyDataImpl() {
+  public static int getDefaultFractionDigits(int flagsAndPrecision) {
+    return flagsAndPrecision & PRECISION_MASK;
   }
 
-  public native String getCurrencyCode() /*-{
-    return this[0];
-  }-*/;
+  public static boolean isDeprecated(int flagsAndPrecision) {
+    return (flagsAndPrecision & DEPRECATED_FLAG) != 0;
+  }
 
-  public native String getCurrencySymbol() /*-{
-    return this[1];
-  }-*/;
+  public static boolean isSpaceForced(int flagsAndPrecision) {
+    return (flagsAndPrecision & SPACE_FORCED_FLAG) != 0;
+  }
+
+  public static boolean isSpacingFixed(int flagsAndPrecision) {
+    return (flagsAndPrecision & SPACING_FIXED_FLAG) != 0;
+  }
+
+  public static boolean isSymbolPositionFixed(int flagsAndPrecision) {
+    return (flagsAndPrecision & POS_FIXED_FLAG) != 0;
+  }
+
+  public static boolean isSymbolPrefix(int flagsAndPrecision) {
+    return (flagsAndPrecision & POS_SUFFIX_FLAG) != 0;
+  }
+
+  /**
+   * Flags and # of decimal digits.
+   * 
+   * <pre>
+   *       d0-d2: # of decimal digits for this currency, 0-7
+   *       d3:    currency symbol goes after number, 0=before
+   *       d4:    currency symbol position is based on d3
+   *       d5:    space is forced, 0=no space present
+   *       d6:    spacing around currency symbol is based on d5
+   * </pre>
+   */
+  private final int flagsAndPrecision;
+
+  /**
+   * Portable currency symbol, may be the same as {@link #currencySymbol}.
+   */
+  private final String portableCurrencySymbol;
+
+  /**
+   * Create a new CurrencyData whose portable symbol is the same as its local
+   * symbol.
+   */
+  public CurrencyDataImpl(String currencyCode, String currencySymbol,
+      int flagsAndPrecision) {
+    this(currencyCode, currencySymbol, flagsAndPrecision, currencySymbol);
+  }
+
+  public CurrencyDataImpl(String currencyCode, String currencySymbol,
+      int flagsAndPrecision, String portableCurrencySymbol) {
+    super(currencyCode, currencySymbol,
+        getDefaultFractionDigits(flagsAndPrecision));
+    this.flagsAndPrecision = flagsAndPrecision;
+    this.portableCurrencySymbol = portableCurrencySymbol;
+  }
 
   public int getDefaultFractionDigits() {
-    return getFlagsAndPrecision() & PRECISION_MASK;
+    return getDefaultFractionDigits(flagsAndPrecision);
   }
 
-  public native String getPortableCurrencySymbol() /*-{
-    return this[3] || this[1];
-  }-*/;
+  public String getPortableCurrencySymbol() {
+    return portableCurrencySymbol;
+  }
 
   public boolean isDeprecated() {
-    return (getFlagsAndPrecision() & DEPRECATED_FLAG) != 0;
+    return isDeprecated(flagsAndPrecision);
   }
-  
+
   public boolean isSpaceForced() {
-    return (getFlagsAndPrecision() & SPACE_FORCED_FLAG) != 0;
+    return isSpaceForced(flagsAndPrecision);
   }
-  
+
   public boolean isSpacingFixed() {
-    return (getFlagsAndPrecision() & SPACING_FIXED_FLAG) != 0;
+    return isSpacingFixed(flagsAndPrecision);
   }
-  
+
   public boolean isSymbolPositionFixed() {
-    return (getFlagsAndPrecision() & POS_FIXED_FLAG) != 0;
+    return isSymbolPositionFixed(flagsAndPrecision);
   }
-  
+
   public boolean isSymbolPrefix() {
-    return (getFlagsAndPrecision() & POS_SUFFIX_FLAG) != 0;
+    return isSymbolPrefix(flagsAndPrecision);
   }
-  
-  private native int getFlagsAndPrecision() /*-{
-    return this[2];
-  }-*/;
 }

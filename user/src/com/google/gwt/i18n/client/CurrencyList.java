@@ -18,8 +18,11 @@ package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.i18n.client.impl.CurrencyDataImpl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
@@ -44,34 +47,90 @@ public class CurrencyList implements Iterable<CurrencyData> {
     return CurrencyListInstance.instance;
   }
 
-  // This helper method exists because we can't call JSO instance methods
-  // directly from JSNI.
-  protected static boolean isDeprecated(CurrencyData currencyData) {
-    return currencyData.isDeprecated();
-  }
+  /**
+   * Add all entries in {@code override} to the original map, replacing
+   * any existing entries.  This is used by subclasses that need to slightly
+   * alter the data used by the parent locale.
+   */
+  protected static final native JavaScriptObject overrideMap(
+      JavaScriptObject original, JavaScriptObject override) /*-{
+    for (var key in override) {
+      if (override.hasOwnProperty(key)) {
+        original[key] = override[key];
+      }
+    }
+    return original;
+  }-*/;
 
   /**
-   * JS Object which contains a map of currency codes to CurrencyDataImpl
-   * objects.  Each currency code is assumed to be a valid JS object key.
+   * Add currency codes contained in the map to an ArrayList.
    */
-  protected JavaScriptObject dataMap;
+  private static native void loadCurrencyValuesNative(JavaScriptObject map, ArrayList<CurrencyData> collection) /*-{
+    for (var key in map) {
+      if (map.hasOwnProperty(key)) {
+        collection.@java.util.ArrayList::add(Ljava/lang/Object;)(map[key]);
+      }
+    }
+  }-*/;
 
   /**
-   * JS Object which contains a map of currency codes to localized currency
-   * names. This is kept separate from {@link #dataMap} above so that the names
-   * can be completely removed by the compiler if they are not used. Each
-   * currency code is assumed to be a valid JS object key.
+   * Directly reference an entry in the currency names map JSO.
+   * 
+   * @param code ISO4217 currency code
+   * @return currency name, or the currency code if not known
    */
-  protected JavaScriptObject namesMap;
+  private static native String lookupNameNative(JavaScriptObject namesMap, String code) /*-{
+    return namesMap[code] || code;
+  }-*/;
 
+  /**
+   * Directly reference an entry in the currency map JSO.
+   * 
+   * @param code ISO4217 currency code
+   * @return currency data
+   */
+  private static native CurrencyData lookupNative(JavaScriptObject dataMap, String code) /*-{
+    return dataMap[code];
+  }-*/;
+
+  /**
+   * Map of currency codes to CurrencyData.
+   */
+  protected HashMap<String, CurrencyData> dataMapJava;
+
+  /**
+   * JS map of currency codes to CurrencyData objects. Each currency code is
+   * assumed to be a valid JS object key.
+   */
+  protected JavaScriptObject dataMapNative;
+
+  /**
+   * Map of currency codes to localized currency names. This is kept separate
+   * from {@link #dataMap} above so that the names can be completely removed by
+   * the compiler if they are not used.
+   */
+  protected HashMap<String, String> namesMapJava;
+
+  /**
+   * JS map of currency codes to localized currency names. This is kept separate
+   * from {@link #dataMapNative} above so that the names can be completely
+   * removed by the compiler if they are not used. Each currency code is assumed
+   * to be a valid JS object key.
+   */
+  protected JavaScriptObject namesMapNative;
+  
   /**
    * Return the default currency data for this locale.
    * 
    * Generated implementations override this method.
    */
-  public native CurrencyData getDefault() /*-{
-    return [ "USD", "$", 2, "US$" ];
-  }-*/;
+  public CurrencyData getDefault() {
+    if (GWT.isScript()) {
+      return getDefaultNative();
+    } else {
+      return getDefaultJava();
+    }
+  }
 
   /**
    * Returns an iterator for the list of currencies.
@@ -81,7 +140,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
   public final Iterator<CurrencyData> iterator() {
     return iterator(false);
   }
-  
+
   /**
    * Returns an iterator for the list of currencies, optionally including
    * deprecated ones. 
@@ -90,23 +149,24 @@ public class CurrencyList implements Iterable<CurrencyData> {
    */
   public final Iterator<CurrencyData> iterator(boolean includeDeprecated) {
     ensureCurrencyMap();
-    ArrayList<String> keys = new ArrayList<String>();
-    loadCurrencyKeys(keys, includeDeprecated);
-    final Iterator<String> it = keys.iterator();
-    return new Iterator<CurrencyData>() {
-
-      public boolean hasNext() {
-        return it.hasNext();
+    ArrayList<CurrencyData> collection = new ArrayList<CurrencyData>();
+    if (GWT.isScript()) {
+      loadCurrencyValuesNative(dataMapNative, collection);
+    } else {
+      for (CurrencyData item : dataMapJava.values()) {
+        collection.add(item);
       }
-
-      public CurrencyData next() {
-        return getEntry(it.next());
+    }
+    if (!includeDeprecated) {
+      ArrayList<CurrencyData> newCollection = new ArrayList<CurrencyData>();
+      for (CurrencyData value : collection) {
+        if (!value.isDeprecated()) {
+          newCollection.add(value);
+        }
       }
-
-      public void remove() {
-        throw new UnsupportedOperationException("Remove not supported");
-      }
-    };
+      collection = newCollection;
+    }
+    return Collections.unmodifiableList(collection).iterator();
   }
 
   /**
@@ -117,7 +177,11 @@ public class CurrencyList implements Iterable<CurrencyData> {
    */
   public final CurrencyData lookup(String currencyCode) {
     ensureCurrencyMap();
-    return getEntry(currencyCode);
+    if (GWT.isScript()) {
+      return lookupNative(dataMapNative, currencyCode);
+    } else {
+      return dataMapJava.get(currencyCode);
+    }
   }
 
   /**
@@ -128,120 +192,115 @@ public class CurrencyList implements Iterable<CurrencyData> {
    */
   public final String lookupName(String currencyCode) {
     ensureNamesMap();
-    return getNamesEntry(currencyCode);
-  }
-
-  /**
-   * Ensure that the map of currency data has been initialized.
-   */
-  protected final void ensureCurrencyMap() {
-    if (dataMap == null) {
-      loadCurrencyMap();
+    if (GWT.isScript()) {
+      return lookupNameNative(namesMapNative, currencyCode);
+    } else {
+      String result = namesMapJava.get(currencyCode);
+      return (result == null) ? currencyCode : result;
     }
   }
 
   /**
-   * Ensure that the map of currency data has been initialized.
+   * Return the default currency data for this locale.
+   * 
+   * Generated implementations override this method.
    */
-  protected final void ensureNamesMap() {
-    if (namesMap == null) {
-      loadNamesMap();
-    }
+  protected CurrencyData getDefaultJava() {
+    return new CurrencyDataImpl("USD", "$", 2, "US$");
   }
 
   /**
-   * Directly reference an entry in the currency map JSO.
+   * Return the default currency data for this locale.
    * 
-   * @param code ISO4217 currency code
-   * @return currency data
+   * Generated implementations override this method.
    */
-  protected final native CurrencyData getEntry(String code) /*-{
-    return this.@com.google.gwt.i18n.client.CurrencyList::dataMap[code];
+  protected native CurrencyData getDefaultNative() /*-{
+    return [ "USD", "$", 2, "US$" ];
   }-*/;
 
   /**
-   * Directly reference an entry in the currency names map JSO.
+   * Loads the currency map.
    * 
-   * @param code ISO4217 currency code
-   * @return currency name, or the currency code if not known
+   * Generated implementations override this method.
    */
-  protected final native String getNamesEntry(String code) /*-{
-    return this.@com.google.gwt.i18n.client.CurrencyList::namesMap[code] || code;
-  }-*/;
+  protected HashMap<String, CurrencyData> loadCurrencyMapJava() {
+    HashMap<String, CurrencyData> result = new HashMap<String, CurrencyData>();
+    result.put("USD", new CurrencyDataImpl("USD", "$", 2));
+    result.put("EUR", new CurrencyDataImpl("EUR", "€", 2));
+    result.put("GBP", new CurrencyDataImpl("GBP", "UK£", 2));
+    result.put("JPY", new CurrencyDataImpl("JPY", "¥", 0));
+    return result;
+  }
 
   /**
    * Loads the currency map from a JS object literal.
    * 
    * Generated implementations override this method.
    */
-  protected native void loadCurrencyMap() /*-{
-    this.@com.google.gwt.i18n.client.CurrencyList::dataMap = {
-        "USD": [ "USD", "$", 2 ],
-        "EUR": [ "EUR", "€", 2 ],
-        "GBP": [ "GBP", "UK£", 2 ],
-        "JPY": [ "JPY", "¥", 0 ],
-     };
+  protected native JavaScriptObject loadCurrencyMapNative() /*-{
+    return {
+      "USD": [ "USD", "$", 2 ],
+      "EUR": [ "EUR", "€", 2 ],
+      "GBP": [ "GBP", "UK£", 2 ],
+      "JPY": [ "JPY", "¥", 0 ],
+    };
   }-*/;
 
+  /**
+   * Loads the currency names map.
+   * 
+   * Generated implementations override this method.
+   */
+  protected HashMap<String, String> loadNamesMapJava() {
+    HashMap<String, String> result = new HashMap<String, String>();
+    result.put("USD", "US Dollar");
+    result.put("EUR", "Euro");
+    result.put("GBP", "British Pound Sterling");
+    result.put("JPY", "Japanese Yen");
+    return result;
+  }
+  
   /**
    * Loads the currency names map from a JS object literal.
    * 
    * Generated implementations override this method.
    */
-  protected native void loadNamesMap() /*-{
-    this.@com.google.gwt.i18n.client.CurrencyList::namesMap = {
-        "USD": "US Dollar",
-        "EUR": "Euro",
-        "GBP": "British Pound Sterling",
-        "JPY": "Japanese Yen",
-     };
+  protected native JavaScriptObject loadNamesMapNative() /*-{
+    return {
+      "USD": "US Dollar",
+      "EUR": "Euro",
+      "GBP": "British Pound Sterling",
+      "JPY": "Japanese Yen",
+    };
   }-*/;
 
   /**
-   * Add all entries in {@code override} to the currency data map, replacing
-   * any existing entries.  This is used by subclasses that need to slightly
-   * alter the data used by the parent locale.
-   * 
-   * @param override JS object with currency code -> CurrencyData pairs
+   * Ensure that the map of currency data has been initialized.
    */
-  protected final native void overrideCurrencyMap(JavaScriptObject override) /*-{
-    var map = this.@com.google.gwt.i18n.client.CurrencyList::dataMap;
-    for (var key in override) {
-      if (override.hasOwnProperty(key)) {
-        map[key] = override[key];
+  private void ensureCurrencyMap() {
+    if (GWT.isScript()) {
+      if (dataMapNative == null) {
+        dataMapNative = loadCurrencyMapNative();
+      }
+    } else {
+      if (dataMapJava == null) {
+        dataMapJava = loadCurrencyMapJava();
       }
     }
-  }-*/;
+  }
 
   /**
-   * Add all entries in {@code override} to the currency name map, replacing
-   * any existing entries.  This is used by subclasses that need to slightly
-   * alter the data used by the parent locale.
-   * 
-   * @param override JS object with currency code -> name pairs
+   * Ensure that the map of currency data has been initialized.
    */
-  protected final native void overrideNamesMap(JavaScriptObject override) /*-{
-    var map = this.@com.google.gwt.i18n.client.CurrencyList::namesMap;
-    for (var key in override) {
-      if (override.hasOwnProperty(key)) {
-        map[key] = override[key];
+  private void ensureNamesMap() {
+    if (GWT.isScript()) {
+      if (namesMapNative == null) {
+        namesMapNative = loadNamesMapNative();
+      }
+    } else {
+      if (namesMapJava == null) {
+        namesMapJava = loadNamesMapJava();
       }
     }
-  }-*/;
-
-  /**
-   * Add currency codes contained in the map to an ArrayList.
-   */
-  private native void loadCurrencyKeys(ArrayList<String> keys,
-      boolean includeDeprecated) /*-{
-    var map = this.@com.google.gwt.i18n.client.CurrencyList::dataMap;
-    for (var key in map) {
-      if (map.hasOwnProperty(key)) {
-        if (includeDeprecated
-            || !@com.google.gwt.i18n.client.CurrencyList::isDeprecated(Lcom/google/gwt/i18n/client/CurrencyData;)(map[key])) {
-          keys.@java.util.ArrayList::add(Ljava/lang/Object;)(key);
-        }
-      }
-    }
-  }-*/;
+  }
 }
