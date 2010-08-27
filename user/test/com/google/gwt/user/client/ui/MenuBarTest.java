@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -126,6 +126,22 @@ public class MenuBarTest extends WidgetTestBase {
     assertNull(l0.getPopup());
     assertNull(l0.getSelectedItem());
     assertNull(l1.getPopup());
+
+    // Open l2.
+    l0.itemOver(item0, true);
+    l1.itemOver(item1, true);
+    l2.itemOver(item2, true);
+    assertTrue(l0.getPopup().isShowing());
+    assertEquals(item0, l0.getSelectedItem());
+    assertTrue(l1.getPopup().isShowing());
+    assertEquals(item1, l1.getSelectedItem());
+
+    // Close child menus below l1.
+    l1.closeAllChildren(true);
+    assertTrue(l0.getPopup().isShowing());
+    assertEquals(item0, l0.getSelectedItem());
+    assertNull(l1.getPopup());
+    assertNull(l2.getPopup());
   }
 
   @DoNotRunWith({Platform.HtmlUnitBug})
@@ -144,6 +160,44 @@ public class MenuBarTest extends WidgetTestBase {
     NativeEvent event = Document.get().createBlurEvent();
     menu.getElement().dispatchEvent(event);
     assertNull(menu.getSelectedItem());
+  }
+
+  public void testDebugId() {
+    // Create a sub menu
+    MenuBar subMenu = new MenuBar(true);
+    subMenu.addItem("sub0", BLANK_COMMAND);
+    subMenu.addItem("sub1", BLANK_COMMAND);
+    subMenu.addItem("sub2", BLANK_COMMAND);
+
+    // Create a menu bar
+    MenuBar bar = new MenuBar(false);
+    bar.setAnimationEnabled(false);
+    bar.setAutoOpen(true);
+    bar.addItem("top0", BLANK_COMMAND);
+    bar.addItem("top1", BLANK_COMMAND);
+    MenuItem top2 = bar.addItem("top2", subMenu);
+    RootPanel.get().add(bar);
+
+    // Open the item with a submenu
+    bar.itemOver(top2, true);
+
+    // Set the Debug Id
+    bar.ensureDebugId("myMenu");
+    UIObjectTest.assertDebugId("myMenu", bar.getElement());
+
+    delayTestFinish(250);
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        UIObjectTest.assertDebugIdContents("myMenu-item0", "top0");
+        UIObjectTest.assertDebugIdContents("myMenu-item1", "top1");
+        UIObjectTest.assertDebugIdContents("myMenu-item2", "top2");
+
+        UIObjectTest.assertDebugIdContents("myMenu-item2-item0", "sub0");
+        UIObjectTest.assertDebugIdContents("myMenu-item2-item1", "sub1");
+        UIObjectTest.assertDebugIdContents("myMenu-item2-item2", "sub2");
+        finishTest();
+      }
+    });
   }
 
   public void testEscapeKey() {
@@ -169,8 +223,8 @@ public class MenuBarTest extends WidgetTestBase {
     assertEquals(item1, l1.getSelectedItem());
 
     // Escape from the menu.
-    NativeEvent event = Document.get().createKeyDownEvent(false, false, false,
-        false, KeyCodes.KEY_ESCAPE, KeyCodes.KEY_ESCAPE);
+    NativeEvent event = Document.get().createKeyDownEvent(
+        false, false, false, false, KeyCodes.KEY_ESCAPE, KeyCodes.KEY_ESCAPE);
     l1.getElement().dispatchEvent(event);
     assertNull(l0.getPopup());
     assertNull(l0.getSelectedItem());
@@ -255,62 +309,6 @@ public class MenuBarTest extends WidgetTestBase {
     }
   }
 
-  public void testSelectItem() {
-    MenuBar bar = new MenuBar(false);
-    MenuItem item1 = new MenuItem("item1", BLANK_COMMAND);
-    MenuItem item2 = new MenuItem("item2", BLANK_COMMAND);
-    MenuItem item3 = new MenuItem("item3", BLANK_COMMAND);
-    bar.addItem(item1);
-    bar.addItem(item2);
-    bar.addItem(item3);
-    RootPanel.get().add(bar);
-
-    bar.selectItem(item1);
-    assertEquals(item1, bar.getSelectedItem());
-    bar.selectItem(item3);
-    assertEquals(item3, bar.getSelectedItem());
-    bar.selectItem(null);
-    assertNull(bar.getSelectedItem());
-  }
-
-  public void testDebugId() {
-    // Create a sub menu
-    MenuBar subMenu = new MenuBar(true);
-    subMenu.addItem("sub0", BLANK_COMMAND);
-    subMenu.addItem("sub1", BLANK_COMMAND);
-    subMenu.addItem("sub2", BLANK_COMMAND);
-
-    // Create a menu bar
-    MenuBar bar = new MenuBar(false);
-    bar.setAnimationEnabled(false);
-    bar.setAutoOpen(true);
-    bar.addItem("top0", BLANK_COMMAND);
-    bar.addItem("top1", BLANK_COMMAND);
-    MenuItem top2 = bar.addItem("top2", subMenu);
-    RootPanel.get().add(bar);
-
-    // Open the item with a submenu
-    bar.itemOver(top2, true);
-
-    // Set the Debug Id
-    bar.ensureDebugId("myMenu");
-    UIObjectTest.assertDebugId("myMenu", bar.getElement());
-
-    delayTestFinish(250);
-    DeferredCommand.addCommand(new Command() {
-      public void execute() {
-        UIObjectTest.assertDebugIdContents("myMenu-item0", "top0");
-        UIObjectTest.assertDebugIdContents("myMenu-item1", "top1");
-        UIObjectTest.assertDebugIdContents("myMenu-item2", "top2");
-
-        UIObjectTest.assertDebugIdContents("myMenu-item2-item0", "sub0");
-        UIObjectTest.assertDebugIdContents("myMenu-item2-item1", "sub1");
-        UIObjectTest.assertDebugIdContents("myMenu-item2-item2", "sub2");
-        finishTest();
-      }
-    });
-  }
-
   /**
    * Test that the selected item points to the correct item.
    */
@@ -343,6 +341,24 @@ public class MenuBarTest extends WidgetTestBase {
     assertNull(bar.getSelectedItem());
   }
 
+  public void testSelectItem() {
+    MenuBar bar = new MenuBar(false);
+    MenuItem item1 = new MenuItem("item1", BLANK_COMMAND);
+    MenuItem item2 = new MenuItem("item2", BLANK_COMMAND);
+    MenuItem item3 = new MenuItem("item3", BLANK_COMMAND);
+    bar.addItem(item1);
+    bar.addItem(item2);
+    bar.addItem(item3);
+    RootPanel.get().add(bar);
+
+    bar.selectItem(item1);
+    assertEquals(item1, bar.getSelectedItem());
+    bar.selectItem(item3);
+    assertEquals(item3, bar.getSelectedItem());
+    bar.selectItem(null);
+    assertNull(bar.getSelectedItem());
+  }
+
   public void testTabKey() {
     // Create a menu bar with children.
     MenuBar l0 = new MenuBar();
@@ -366,8 +382,8 @@ public class MenuBarTest extends WidgetTestBase {
     assertEquals(item1, l1.getSelectedItem());
 
     // Tab away from the menu.
-    NativeEvent event = Document.get().createKeyDownEvent(false, false, false,
-        false, KeyCodes.KEY_TAB, KeyCodes.KEY_TAB);
+    NativeEvent event = Document.get().createKeyDownEvent(
+        false, false, false, false, KeyCodes.KEY_TAB, KeyCodes.KEY_TAB);
     l1.getElement().dispatchEvent(event);
     assertNull(l0.getPopup());
     assertNull(l0.getSelectedItem());

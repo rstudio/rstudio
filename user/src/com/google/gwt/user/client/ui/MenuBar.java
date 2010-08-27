@@ -371,6 +371,28 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   /**
+   * Closes this menu and all child menu popups.
+   *
+   * @param focus true to move focus to the parent
+   */
+  public void closeAllChildren(boolean focus) {
+    if (shownChildMenu != null) {
+      // Hide any open submenus of this item
+      shownChildMenu.onHide(focus);
+      shownChildMenu = null;
+      selectItem(null);
+    }
+    // Close the current popup
+    if (popup != null) {
+      popup.hide();
+    }
+    // If focus is true, set focus to parentMenu
+    if (focus && parentMenu != null) {
+      parentMenu.focus();
+    }
+  }
+
+  /**
    * Give this MenuBar focus.
    */
   public void focus() {
