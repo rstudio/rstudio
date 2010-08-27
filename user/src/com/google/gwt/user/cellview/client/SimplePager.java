@@ -22,6 +22,7 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -44,51 +45,61 @@ public class SimplePager extends AbstractPager {
     /**
      * The image used to skip ahead multiple pages.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerFastForward();
 
     /**
      * The disabled "fast forward" image.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerFastForwardDisabled();
 
     /**
      * The image used to go to the first page.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerFirstPage();
 
     /**
      * The disabled first page image.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerFirstPageDisabled();
 
     /**
      * The image used to go to the last page.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerLastPage();
 
     /**
      * The disabled last page image.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerLastPageDisabled();
 
     /**
      * The image used to go to the next page.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerNextPage();
 
     /**
      * The disabled next page image.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerNextPageDisabled();
 
     /**
      * The image used to go to the previous page.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerPreviousPage();
 
     /**
      * The disabled previous page image.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource simplePagerPreviousPageDisabled();
 
     /**

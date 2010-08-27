@@ -52,9 +52,8 @@ class LayoutImpl {
     style.setPosition(Position.ABSOLUTE);
     style.setZIndex(-32767);
 
-    // Position the ruler off the left/top edges, double the size just to be
+    // Position the ruler off the top edge, double the size just to be
     // extra sure it doesn't show up on the screen.
-    style.setLeft(-20, widthUnit);
     style.setTop(-20, heightUnit);
 
     // Note that we are making the ruler element 10x10, because some browsers
@@ -79,7 +78,8 @@ class LayoutImpl {
     Element beforeContainer = null;
     if (before != null) {
       beforeContainer = before.getParentElement();
-      assert beforeContainer.getParentElement() == parent : "Element to insert before must be a sibling";
+      assert beforeContainer.getParentElement()
+          == parent : "Element to insert before must be a sibling";
     }
     parent.insertBefore(container, beforeContainer);
     return container;
@@ -100,28 +100,30 @@ class LayoutImpl {
   public void finalizeLayout(Element parent) {
   }
 
-  public double getUnitSizeInPixels(Element parent, Unit unit, boolean vertical) {
+  public double getUnitSizeInPixels(
+      Element parent, Unit unit, boolean vertical) {
     if (unit == null) {
       return 1;
     }
 
     switch (unit) {
       case PCT:
-        return (vertical ? parent.getClientHeight() : parent.getClientWidth()) / 100.0;
+        return (vertical ? parent.getClientHeight() : parent.getClientWidth())
+            / 100.0;
       case EM:
         return relativeRuler.getOffsetWidth() / 10.0;
       case EX:
         return relativeRuler.getOffsetHeight() / 10.0;
       case CM:
-        return fixedRuler.getOffsetWidth() * 0.1;     // 1.0    cm / cm
+        return fixedRuler.getOffsetWidth() * 0.1; // 1.0 cm / cm
       case MM:
-        return fixedRuler.getOffsetWidth() * 0.01;    // 0.1    cm / mm
+        return fixedRuler.getOffsetWidth() * 0.01; // 0.1 cm / mm
       case IN:
-        return fixedRuler.getOffsetWidth() * 0.254;   // 2.54   cm / in
+        return fixedRuler.getOffsetWidth() * 0.254; // 2.54 cm / in
       case PT:
         return fixedRuler.getOffsetWidth() * 0.00353; // 0.0353 cm / pt
       case PC:
-        return fixedRuler.getOffsetWidth() * 0.0423;  // 0.423  cm / pc
+        return fixedRuler.getOffsetWidth() * 0.0423; // 0.423 cm / pc
       default:
       case PX:
         return 1;
@@ -136,18 +138,18 @@ class LayoutImpl {
   public void layout(Layer layer) {
     Style style = layer.container.getStyle();
 
-    style.setProperty("left", layer.setLeft
-        ? (layer.left + layer.leftUnit.getType()) : "");
-    style.setProperty("top", layer.setTop
-        ? (layer.top + layer.topUnit.getType()) : "");
-    style.setProperty("right", layer.setRight
-        ? (layer.right + layer.rightUnit.getType()) : "");
-    style.setProperty("bottom", layer.setBottom
-        ? (layer.bottom + layer.bottomUnit.getType()) : "");
-    style.setProperty("width", layer.setWidth
-        ? (layer.width + layer.widthUnit.getType()) : "");
-    style.setProperty("height", layer.setHeight
-        ? (layer.height + layer.heightUnit.getType()) : "");
+    style.setProperty(
+        "left", layer.setLeft ? (layer.left + layer.leftUnit.getType()) : "");
+    style.setProperty(
+        "top", layer.setTop ? (layer.top + layer.topUnit.getType()) : "");
+    style.setProperty("right",
+        layer.setRight ? (layer.right + layer.rightUnit.getType()) : "");
+    style.setProperty("bottom",
+        layer.setBottom ? (layer.bottom + layer.bottomUnit.getType()) : "");
+    style.setProperty("width",
+        layer.setWidth ? (layer.width + layer.widthUnit.getType()) : "");
+    style.setProperty("height",
+        layer.setHeight ? (layer.height + layer.heightUnit.getType()) : "");
 
     style = layer.child.getStyle();
     switch (layer.hPos) {

@@ -27,9 +27,10 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.cellview.client.HasDataPresenter.ElementIterator;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.ui.UIObject;
@@ -102,13 +103,13 @@ class CellTreeNodeView<T> extends UIObject {
           SelectionModel<? super C> selectionModel) {
         // Cache the style names that will be used for each child.
         CellTree.Style style = nodeView.tree.getStyle();
-        String selectedStyle = style.selectedItem();
+        String selectedStyle = " " + style.selectedItem();
         String itemStyle = style.item();
         String itemImageValueStyle = style.itemImageValue();
         String itemValueStyle = style.itemValue();
-        String openStyle = style.openItem();
-        String topStyle = style.topItem();
-        String topImageValueStyle = style.topItemImageValue();
+        String openStyle = " " + style.openItem();
+        String topStyle = " " + style.topItem();
+        String topImageValueStyle = " " + style.topItemImageValue();
         boolean isRootNode = nodeView.isRootNode();
         String openImage = nodeView.tree.getOpenImageHtml(isRootNode);
         String closedImage = nodeView.tree.getClosedImageHtml(isRootNode);
@@ -128,6 +129,7 @@ class CellTreeNodeView<T> extends UIObject {
         }
 
         // Render the child nodes.
+        boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
         ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
         TreeViewModel model = nodeView.tree.getTreeViewModel();
         for (C value : values) {
@@ -138,26 +140,35 @@ class CellTreeNodeView<T> extends UIObject {
           sb.append("<div>");
 
           // The selection pads the content based on the depth.
-          sb.append("<div style='padding-left:");
+          if (isRtl) {
+            sb.append("<div style='padding-right:");
+          } else {
+            sb.append("<div style='padding-left:");
+          }
           sb.append(paddingLeft);
           sb.append("px;' class='").append(itemStyle);
           if (isOpen) {
-            sb.append(" ").append(openStyle);
+            sb.append(openStyle);
           }
           if (isRootNode) {
-            sb.append(" ").append(topStyle);
+            sb.append(topStyle);
           }
           if (selectionModel != null && selectionModel.isSelected(value)) {
-            sb.append(" ").append(selectedStyle);
+            sb.append(selectedStyle);
           }
           sb.append("'>");
 
           // Inner div contains image and value.
-          sb.append("<div onclick='' style='position:relative;padding-left:");
+          if (isRtl) {
+            sb.append(
+                "<div onclick='' style='position:relative;padding-right:");
+          } else {
+            sb.append("<div onclick='' style='position:relative;padding-left:");
+          }
           sb.append(imageWidth);
           sb.append("px;' class='").append(itemImageValueStyle);
           if (isRootNode) {
-            sb.append(" ").append(topImageValueStyle);
+            sb.append(topImageValueStyle);
           }
           sb.append("'>");
 
@@ -1124,8 +1135,9 @@ class CellTreeNodeView<T> extends UIObject {
     if (keyboardSelection == null) {
       return;
     }
-    Element child =
-      keyboardSelection.getFirstChildElement().getFirstChildElement();
+
+    Element parent = keyboardSelection.getFirstChildElement();
+    Element child = parent.getFirstChildElement();
     child.removeAttribute("tabIndex");
     child.removeClassName(tree.getStyle().keyboardSelectedItem());
     keyboardSelection = null;

@@ -31,6 +31,7 @@ import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -59,6 +60,12 @@ import java.util.Set;
 /**
  * A "browsable" view of a tree in which only a single node per level may be
  * open at one time.
+ *
+ * <p>
+ * This widget will <em>only</em> work in standards mode, which requires that
+ * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
+ * declaration.
+ * </p>
  */
 public class CellBrowser extends AbstractCellTree
     implements ProvidesResize, RequiresResize, HasAnimation {
@@ -71,24 +78,26 @@ public class CellBrowser extends AbstractCellTree
     /**
      * An image indicating a closed branch.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource cellBrowserClosed();
 
     /**
      * An image indicating an open branch.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource cellBrowserOpen();
 
     /**
      * The background used for open items.
      */
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellBrowserOpenBackground();
 
     /**
      * The background used for selected items.
      */
     @Source("cellTreeSelectedBackground.png")
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellBrowserSelectedBackground();
 
     /**
@@ -311,6 +320,9 @@ public class CellBrowser extends AbstractCellTree
     void scrollToEnd() {
       Element elem = getElement();
       targetScrollLeft = elem.getScrollWidth() - elem.getClientWidth();
+      if (LocaleInfo.getCurrentLocale().isRTL()) {
+        targetScrollLeft *= -1;
+      }
 
       if (isAnimationEnabled()) {
         // Animate the scrolling.
@@ -593,9 +605,12 @@ public class CellBrowser extends AbstractCellTree
     scrollLock.getStyle().setPosition(Position.ABSOLUTE);
     scrollLock.getStyle().setVisibility(Visibility.HIDDEN);
     scrollLock.getStyle().setZIndex(-32767);
-    scrollLock.getStyle().setBackgroundColor("red");
     scrollLock.getStyle().setTop(0, Unit.PX);
-    scrollLock.getStyle().setLeft(0, Unit.PX);
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      scrollLock.getStyle().setRight(0, Unit.PX);
+    } else {
+      scrollLock.getStyle().setLeft(0, Unit.PX);
+    }
     scrollLock.getStyle().setHeight(1, Unit.PX);
     scrollLock.getStyle().setWidth(1, Unit.PX);
     getElement().appendChild(scrollLock);
@@ -708,7 +723,7 @@ public class CellBrowser extends AbstractCellTree
    * scroll bar.
    */
   private void adjustScrollLock() {
-    int scrollLeft = getElement().getScrollLeft();
+    int scrollLeft = Math.abs(getElement().getScrollLeft());
     if (scrollLeft > 0) {
       int clientWidth = getElement().getClientWidth();
       scrollLock.getStyle().setWidth(scrollLeft + clientWidth, Unit.PX);
@@ -758,7 +773,11 @@ public class CellBrowser extends AbstractCellTree
 
     // Add the view to the LayoutPanel.
     SplitLayoutPanel splitPanel = getSplitLayoutPanel();
-    splitPanel.insertWest(scrollable, defaultWidth, null);
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      splitPanel.insertEast(scrollable, defaultWidth, null);
+    } else {
+      splitPanel.insertWest(scrollable, defaultWidth, null);
+    }
     splitPanel.setWidgetMinSize(scrollable, minWidth);
     splitPanel.forceLayout();
 
@@ -775,7 +794,12 @@ public class CellBrowser extends AbstractCellTree
   private String getImageHtml(ImageResource res) {
     // Add the position and dimensions.
     StringBuilder sb = new StringBuilder();
-    sb.append("<div style=\"position:absolute;right:0px;top:0px;height:100%;");
+    sb.append("<div style=\"position:absolute;top:0px;height:100%;");
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      sb.append("left:0px;");
+    } else {
+      sb.append("right:0px;");
+    }
     sb.append("width:").append(res.getWidth()).append("px;");
 
     // Add the background, vertically centered.

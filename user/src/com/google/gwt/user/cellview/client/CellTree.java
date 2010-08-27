@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -36,6 +37,12 @@ import java.util.ArrayList;
 
 /**
  * A view of a tree.
+ *
+ * <p>
+ * This widget will <em>only</em> work in standards mode, which requires that
+ * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
+ * declaration.
+ * </p>
  */
 public class CellTree extends AbstractCellTree implements HasAnimation {
 
@@ -568,7 +575,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
 
     CellTreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
     if (nodeView != null && nodeView != rootNode) {
-      if ("click".equals(event.getType())) {
+      if ("click".equals(eventType)) {
         // Open the node when the open image is clicked.
         Element showMoreElem = nodeView.getShowMoreElement();
         if (nodeView.getImageElement().isOrHasChild(target)) {
@@ -578,7 +585,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
           nodeView.showMore();
           return;
         }
-
+      } else if ("mouseup".equals(eventType)) {
         // Move the keyboard focus to the clicked item
         keyboardSelectedNode.keyboardExit();
         keyboardSelectedNode = nodeView.getParentNode();
@@ -737,7 +744,12 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
     sb.append("' ");
 
     // Add the position and dimensions.
-    sb.append("style=\"position:absolute;left:0px;top:0px;");
+    sb.append("style=\"position:absolute;top:0px;");
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      sb.append("right:0px;");
+    } else {
+      sb.append("left:0px;");
+    }
     sb.append("height:").append(res.getHeight()).append("px;");
     sb.append("width:").append(res.getWidth()).append("px;");
 

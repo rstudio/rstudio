@@ -156,7 +156,7 @@ public class CwCellValidation extends ContentWidget {
       sb.append("\"></input>");
 
       if (invalid) {
-        sb.append("<span style='color:red;'>");
+        sb.append("&nbsp;<span style='color:red;'>");
         sb.append(errorMessage);
         sb.append("</span>");
       }

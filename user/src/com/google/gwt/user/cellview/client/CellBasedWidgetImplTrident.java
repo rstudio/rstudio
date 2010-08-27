@@ -22,6 +22,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -53,7 +54,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   /**
    * The last value of the focused input element.
    */
-  private static String focusedInputValue;
+  private static Object focusedInputValue;
 
   /**
    * The set of input types that can receive change events.
@@ -97,12 +98,26 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   }-*/;
 
   /**
-   * Get the value of an element that has a value.
+   * Get the value of an element that has a value or checked state.
    *
    * @param elem the input element
    * @return the value of the input
    */
-  private static native String getInputValue(Element elem) /*-{
+  private static Object getInputValue(Element elem) {
+    if (isCheckbox(elem)) {
+      return InputElement.as(elem).isChecked();
+    }
+    return getInputValueImpl(elem);
+  }
+
+  /**
+   * Get the value of an element that has a value, such as an input element,
+   * textarea, or select box.
+   *
+   * @param elem the input element
+   * @return the value of the input
+   */
+  private static native String getInputValueImpl(Element elem) /*-{
     return elem.value;
   }-*/;
 
@@ -147,7 +162,8 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
       if (inputTypes.contains(tagName)) {
         focusedInput = target;
         focusedInputValue = getInputValue(target);
-        focusedInputChangesOnBlurOnly = !"select".equals(tagName);
+        focusedInputChangesOnBlurOnly = !"select".equals(tagName)
+            && !isCheckbox(target);
       }
 
       // The focus event has not fired yet, so we just need to set the
@@ -167,6 +183,20 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   }
 
   /**
+   * Check whether or not an element is a checkbox or radio button.
+   *
+   * @param elem the element to check
+   * @return true if a checkbox, false if not
+   */
+  private static boolean isCheckbox(Element elem) {
+    if (elem == null || !"input".equalsIgnoreCase(elem.getTagName())) {
+      return false;
+    }
+    String inputType = InputElement.as(elem).getType().toLowerCase();
+    return "checkbox".equals(inputType) || "radio".equals(inputType);
+  }
+
+  /**
    * Synthesize a change event on the focused input element if the value has
    * changed.
    *
@@ -177,7 +207,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
       return;
     }
 
-    String newValue = getInputValue(focusedInput);
+    Object newValue = getInputValue(focusedInput);
     if (!newValue.equals(focusedInputValue)) {
       // Save the new value in case it changes again.
       focusedInputValue = newValue;
@@ -273,7 +303,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
 
       // Sink the events required for focus. We use an attribute on the widget
       // to remember whether or not we've sunk the events.
-      int eventsToSink = -1;
+      int eventsToSink = 0;
       Element elem = widget.getElement();
       String attr = "__gwtCellBasedWidgetImplDispatchingFocus";
       if (!"true".equals(elem.getAttribute(attr))) {

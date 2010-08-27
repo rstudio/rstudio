@@ -17,6 +17,7 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
@@ -37,6 +38,7 @@ public class IconCellDecorator<C> implements Cell<C> {
   private final Cell<C> cell;
   private final String iconHtml;
   private final int imageWidth;
+  private final String outerDivHtml;
   private final String placeHolderHtml;
 
   /**
@@ -64,6 +66,16 @@ public class IconCellDecorator<C> implements Cell<C> {
     this.iconHtml = getImageHtml(icon, valign, false);
     this.imageWidth = icon.getWidth() + 6;
     this.placeHolderHtml = getImageHtml(icon, valign, true);
+
+    // Cache the HTML for the outer div.
+    String theOuterDivHtml = "<div style='position:relative;";
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      theOuterDivHtml += "padding-right:";
+    } else {
+      theOuterDivHtml += "padding-left:";
+    }
+    theOuterDivHtml += imageWidth + "px;'>";
+    this.outerDivHtml = theOuterDivHtml;
   }
 
   public boolean dependsOnSelection() {
@@ -77,7 +89,7 @@ public class IconCellDecorator<C> implements Cell<C> {
   public boolean handlesSelection() {
     return cell.handlesSelection();
   }
-  
+
   public boolean isEditing(Element element, C value, Object key) {
     return cell.isEditing(element, value, key);
   }
@@ -88,9 +100,7 @@ public class IconCellDecorator<C> implements Cell<C> {
   }
 
   public void render(C value, Object key, StringBuilder sb) {
-    sb.append("<div style='position:relative;padding-left:");
-    sb.append(imageWidth);
-    sb.append("px;'>");
+    sb.append(outerDivHtml);
     if (isIconUsed(value)) {
       sb.append(getIconHtml(value));
     } else {
@@ -141,7 +151,12 @@ public class IconCellDecorator<C> implements Cell<C> {
       boolean isPlaceholder) {
     // Add the position and dimensions.
     StringBuilder sb = new StringBuilder();
-    sb.append("<div style=\"position:absolute;left:0px;top:0px;height:100%;");
+    sb.append("<div style=\"position:absolute;top:0px;height:100%;");
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      sb.append("right:0px;");
+    } else {
+      sb.append("left:0px;");
+    }
     sb.append("width:").append(res.getWidth()).append("px;");
 
     // Add the background, vertically centered.
