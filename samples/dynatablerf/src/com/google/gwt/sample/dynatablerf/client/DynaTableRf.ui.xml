@@ -1,5 +1,5 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client'>
+  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'>
   <ui:style>
     body {
     	background-color: white;
@@ -10,21 +10,48 @@
     	margin-top: 3px;
     }
     
+    .boxed {
+    	border: thin solid black;
+    	margin: 2px;
+    	overflow: hidden;
+    	padding: 5px;
+    	-moz-border-radius: 5px;
+    	-webkit-border-radius: 5px;
+    }
+    
     .header {
     	font-weight: bold;
     	font-size: 200%;
     }
+    
+    .main {
+    	margin: 5px;
+    }
+    
+    @external gwt-SplitLayoutPanel-VDragger;
+    .gwt-SplitLayoutPanel-VDragger {
+    	cursor: row-resize;
+    }
   </ui:style>
-  <g:DockLayoutPanel unit="EX">
+  <g:DockLayoutPanel unit="EX" stylePrimaryName="{style.main}">
     <g:north size="5">
       <g:HTML styleName="{style.header}">School Schedule for Professors and Students
       </g:HTML>
     </g:north>
     <g:east size="30">
-      <dt:DayFilterWidget ui:field="filter" />
+      <g:SplitLayoutPanel>
+        <g:north size="250">
+          <dt:DayFilterWidget ui:field="filter"
+            stylePrimaryName="{style.boxed}" />
+        </g:north>
+        <g:center>
+          <dt:FavoritesWidget ui:field="favorites"
+            stylePrimaryName="{style.boxed}" />
+        </g:center>
+      </g:SplitLayoutPanel>
     </g:east>
     <g:center>
-      <dt:SchoolCalendarWidget ui:field="calendar" />
+      <dt:SummaryWidget ui:field="calendar" stylePrimaryName="{style.boxed}" />
     </g:center>
   </g:DockLayoutPanel>
 </ui:UiBinder>

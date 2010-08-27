@@ -17,9 +17,11 @@ package com.google.gwt.sample.dynatablerf.shared;
 
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.RecordListRequest;
+import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
+import com.google.gwt.sample.dynatablerf.domain.Address;
 import com.google.gwt.sample.dynatablerf.domain.Person;
 import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
 
@@ -30,14 +32,27 @@ import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
 public interface DynaTableRequestFactory extends RequestFactory {
 
   /**
-   * Source of request objects for the Person class.  
+   * Source of request objects for the Address class.
+   */
+  @Service(Address.class)
+  interface AddressRequest {
+    RecordRequest<AddressProxy> findAddress(Long id);
+
+    @Instance
+    RequestObject<Void> persist(AddressProxy person);
+  }
+
+  /**
+   * Source of request objects for the Person class.
    */
   @Service(Person.class)
   interface PersonRequest {
+    RecordRequest<PersonProxy> findPerson(Long id);
+
     @Instance
     RequestObject<Void> persist(PersonProxy person);
   }
-  
+
   /**
    * Source of request objects for the SchoolCalendarService.
    */
@@ -46,8 +61,10 @@ public interface DynaTableRequestFactory extends RequestFactory {
     // TODO(amitmanjhi, cromwellian) RequestObject<List<PersonProxy>>
     RecordListRequest<PersonProxy> getPeople(int startIndex, int maxCount);
   }
-  
+
+  AddressRequest addressRequest();
+
   PersonRequest personRequest();
-  
+
   SchoolCalendarRequest schoolCalendarRequest();
 }

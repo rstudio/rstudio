@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.dynatablerf.client;
+package com.google.gwt.sample.dynatablerf.client.widgets;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.sample.dynatablerf.client.events.FilterChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiConstructor;
@@ -56,10 +56,10 @@ public class DayFilterWidget extends Composite {
   @UiField
   Button none;
 
-  private final HandlerManager eventBus;
+  private final EventBus eventBus;
 
   @UiConstructor
-  public DayFilterWidget(HandlerManager eventBus) {
+  public DayFilterWidget(EventBus eventBus) {
     this.eventBus = eventBus;
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
   }

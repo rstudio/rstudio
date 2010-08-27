@@ -13,7 +13,7 @@ Description:
     <module name="TreeWalker">
         <module name="FileContentsHolder"/>
         <module name="InterfaceIsType">
-            <property name="severity" value="error"/>
+            <property name="severity" value="ignore"/>
         </module>
         <module name="RedundantImport">
             <property name="severity" value="error"/>

@@ -1,0 +1,21 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'>
+  <ui:style src="../common.css">
+    
+  </ui:style>
+  <g:HTMLPanel>
+    <div class="{style.rightAlign}">
+      Name:
+      <g:TextBox ui:field="name" stylePrimaryName="{style.editField}" />
+      <br />
+      Description:
+      <g:TextBox ui:field="description" stylePrimaryName="{style.editField}" />
+      <br />
+      Note:
+      <g:TextArea ui:field="note" stylePrimaryName="{style.editField}" />
+      <br />
+    </div>
+    Address:
+    <dt:AddressEditor ui:field="address" stylePrimaryName="{style.editField}" />
+  </g:HTMLPanel>
+</ui:UiBinder>

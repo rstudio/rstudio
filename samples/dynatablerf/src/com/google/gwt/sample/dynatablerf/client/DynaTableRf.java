@@ -17,7 +17,11 @@ package com.google.gwt.sample.dynatablerf.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.sample.dynatablerf.client.widgets.DayFilterWidget;
+import com.google.gwt.sample.dynatablerf.client.widgets.FavoritesWidget;
+import com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,9 +38,12 @@ public class DynaTableRf implements EntryPoint {
   }
 
   @UiField(provided = true)
-  SchoolCalendarWidget calendar;
+  SummaryWidget calendar;
 
-  HandlerManager eventBus = new HandlerManager(null);
+  EventBus eventBus = new HandlerManager(null);
+
+  @UiField(provided = true)
+  FavoritesWidget favorites;
 
   @UiField(provided = true)
   DayFilterWidget filter;
@@ -45,10 +52,11 @@ public class DynaTableRf implements EntryPoint {
 
     DynaTableRequestFactory requests = GWT.create(DynaTableRequestFactory.class);
     requests.init(eventBus);
+    FavoritesManager manager = new FavoritesManager();
+    PersonEditorWorkflow.register(eventBus, requests, manager);
 
-    CalendarProvider provider = new CalendarProvider(requests);
-
-    calendar = new SchoolCalendarWidget(new DynaTableWidget(eventBus, provider, 15));
+    calendar = new SummaryWidget(eventBus, requests, 15);
+    favorites = new FavoritesWidget(eventBus, requests, manager);
     filter = new DayFilterWidget(eventBus);
 
     RootLayoutPanel.get().add(

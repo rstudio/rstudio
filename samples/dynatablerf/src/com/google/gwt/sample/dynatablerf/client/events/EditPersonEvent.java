@@ -17,44 +17,36 @@ package com.google.gwt.sample.dynatablerf.client.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 
 /**
- * An event that indicates the user wishes to navigate within the data being
- * displayed.
+ * Begin editing a person.
+ * 
+ * TODO: Make this an Activity.
  */
-public class NavigationEvent extends GwtEvent<NavigationEvent.Handler> {
-  /**
-   * Indicates the direction of motion within the data set.
-   */
-  public enum Direction {
-    START, FORWARD, BACKWARD
-  }
+public class EditPersonEvent extends GwtEvent<EditPersonEvent.Handler> {
+  public static final Type<Handler> TYPE = new Type<Handler>();
 
   /**
-   * Handles {@link NavigationEvent}.
+   * Handles {@link EditPersonEvent}.
    */
   public interface Handler extends EventHandler {
-    void onNavigation(NavigationEvent e);
+    void startEdit(PersonProxy person);
   }
 
-  public static final Type<Handler> TYPE = new Type<Handler>();
-  private final Direction direction;
+  private final PersonProxy person;
 
-  public NavigationEvent(Direction direction) {
-    this.direction = direction;
-  }
-
-  @Override
-  public Type<Handler> getAssociatedType() {
-    return TYPE;
-  }
-
-  public Direction getDirection() {
-    return direction;
+  public EditPersonEvent(PersonProxy person) {
+    this.person = person;
   }
 
   @Override
   protected void dispatch(Handler handler) {
-    handler.onNavigation(this);
+    handler.startEdit(person);
+  }
+
+  @Override
+  public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType() {
+    return TYPE;
   }
 }

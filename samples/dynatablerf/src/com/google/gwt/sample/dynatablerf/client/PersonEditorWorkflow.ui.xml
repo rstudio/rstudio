@@ -1,0 +1,31 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'>
+  <ui:style src="common.css">
+    .dialog {
+    	background: white;
+    	border: thin solid #AAA;
+    	padding: 5px;
+    	-moz-box-shadow: 10px 10px 5px #888;
+    	-moz-border-radius: 5px;
+    	-webkit-box-shadow: 10px 10px 5px #888;
+    	-webkit-border-radius: 5px;
+    }
+    
+    .floatLeft {
+    	float: left;
+    }
+  </ui:style>
+  <g:DialogBox ui:field="dialog" modal="true" stylePrimaryName="{style.dialog}">
+    <g:caption>Editing a person...</g:caption>
+    <g:HTMLPanel ui:field="contents">
+      <dt:PersonEditor ui:field="personEditor" />
+      <hr />
+      <g:CheckBox ui:field="favorite" stylePrimaryName="{style.floatLeft}">Favorite
+      </g:CheckBox>
+      <div class="{style.rightAlign}">
+        <g:Button ui:field="cancel">Cancel</g:Button>
+        <g:Button ui:field="save">Save</g:Button>
+      </div>
+    </g:HTMLPanel>
+  </g:DialogBox>
+</ui:UiBinder>

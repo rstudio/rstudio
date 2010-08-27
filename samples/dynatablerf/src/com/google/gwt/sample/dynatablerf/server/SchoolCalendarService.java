@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.dynatablerf.server;
 
+import com.google.gwt.sample.dynatablerf.domain.Address;
 import com.google.gwt.sample.dynatablerf.domain.Person;
 import com.google.gwt.sample.dynatablerf.domain.Professor;
 import com.google.gwt.sample.dynatablerf.domain.Schedule;
@@ -58,7 +59,7 @@ public class SchoolCalendarService {
 
   private static final int STUDENTS_PER_PROF = 5;
 
-  private static final Map<Long, Person> people = new LinkedHashMap<Long, Person>(); 
+  private static final Map<Long, Person> people = new LinkedHashMap<Long, Person>();
 
   private static final Random rnd = new Random(3);
 
@@ -84,6 +85,10 @@ public class SchoolCalendarService {
     return new ArrayList<Person>(people.values()).subList(startIndex, end);
   }
   
+  public static void persist(Address address) {
+    address.setVersion(address.getVersion() + 1);
+  }
+
   public static void persist(Person person) {
     if (person.getId() == null) {
       person.setId(++serial);
@@ -91,13 +96,15 @@ public class SchoolCalendarService {
     person.setVersion(person.getVersion() + 1);
     people.put(person.getId(), person);
   }
-  
+
   private static void generateRandomPeople() {
-    if (people.isEmpty())
+    if (people.isEmpty()) {
       for (int i = 0; i < MAX_PEOPLE; ++i) {
         Person person = generateRandomPerson();
+        AddressFuzzer.fuzz(rnd, person.getAddress());
         persist(person);
       }
+    }
   }
 
   private static Person generateRandomPerson() {

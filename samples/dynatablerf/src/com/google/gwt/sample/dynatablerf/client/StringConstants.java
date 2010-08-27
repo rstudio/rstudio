@@ -13,21 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.ui;
+package com.google.gwt.sample.dynatablerf.client;
 
 /**
- * Implemented by objects that hold a value.
- * 
- * @param <V> value type
+ * Contains a bunch of string constants to avoid typos in the demo code.
  */
-public interface TakesValue<V> {
-  /**
-   * Sets the value.
-   */
-  void setValue(V value);
-
-  /**
-   * Returns the current value.
-   */
-  V getValue();
+public interface StringConstants {
+  String ADDRESS = "address";
+  String NOTE = "note";
+  String DESCRIPTION = "description";
+  String NAME = "name";
+  String ZIP = "zip";
+  String STATE = "state";
+  String CITY = "city";
+  String STREET = "street";
 }

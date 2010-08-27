@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,40 +18,35 @@ package com.google.gwt.sample.dynatablerf.shared;
 import com.google.gwt.requestfactory.shared.DataTransferObject;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.sample.dynatablerf.domain.Person;
+import com.google.gwt.sample.dynatablerf.domain.Address;
 
 /**
- * Person DTO.
+ * Represents an Address in the client code.
  */
-@DataTransferObject(Person.class)
-public interface PersonProxy extends Record {
+@DataTransferObject(Address.class)
+public interface AddressProxy extends Record {
   /*
    * These property objects will soon no longer be necessary (and will no longer
    * be public api).
    */
-  Property<String> name = new Property<String>("name", "Name", String.class);
-  Property<String> description = new Property<String>("description",
-      "Description", String.class);
-  Property<String> schedule = new Property<String>("schedule", "Schedule",
-      String.class);
-  Property<String> note = new Property<String>("note", "Note", String.class);
-  Property<AddressProxy> address = new Property<AddressProxy>("address",
-      "Name", AddressProxy.class);
+  Property<String> city = new Property<String>("city", "City", String.class);
+  Property<String> state = new Property<String>("state", "State", String.class);
+  Property<String> street = new Property<String>("street", "Street", String.class);
+  Property<Integer> zip = new Property<Integer>("zip", "Zip", Integer.class);
 
-  AddressProxy getAddress();
+  String getCity();
 
-  String getDescription();
+  String getState();
 
-  String getName();
+  String getStreet();
 
-  String getNote();
+  Integer getZip();
 
-  String getSchedule();
+  void setCity(String city);
 
-  void setDescription(String description);
+  void setState(String state);
 
-  void setName(String name);
+  void setStreet(String street);
 
-  void setNote(String note);
-
+  void setZip(Integer zip);
 }

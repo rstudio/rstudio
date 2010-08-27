@@ -1,0 +1,22 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:a='urn:import:com.google.gwt.app.client'>
+  <ui:style src="../common.css">
+    
+  </ui:style>
+  <g:HTMLPanel>
+    <div class="{style.rightAlign}">
+      Street:
+      <g:TextBox ui:field="street" stylePrimaryName="{style.editField}" />
+      <br />
+      City:
+      <g:TextBox ui:field="city" stylePrimaryName="{style.editField}" />
+      <br />
+      State:
+      <g:TextBox ui:field="state" stylePrimaryName="{style.editField}" />
+      <br />
+      Zip:
+      <a:IntegerBox ui:field="zip" stylePrimaryName="{style.editField}" />
+      <br />
+    </div>
+  </g:HTMLPanel>
+</ui:UiBinder>

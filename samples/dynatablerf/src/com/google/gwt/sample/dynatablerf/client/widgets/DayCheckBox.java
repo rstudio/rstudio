@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.dynatablerf.client;
+package com.google.gwt.sample.dynatablerf.client.widgets;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.sample.dynatablerf.client.events.FilterChangeEvent;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -29,10 +29,10 @@ import com.google.gwt.user.client.ui.Composite;
 class DayCheckBox extends Composite {
   private final CheckBox cb = new CheckBox();
   private int day;
-  private final HandlerManager eventBus;
+  private final EventBus eventBus;
   private HandlerRegistration filterRegistration;
 
-  public DayCheckBox(HandlerManager eventBus) {
+  public DayCheckBox(EventBus eventBus) {
     this.eventBus = eventBus;
     initWidget(cb);
     cb.setEnabled(false);

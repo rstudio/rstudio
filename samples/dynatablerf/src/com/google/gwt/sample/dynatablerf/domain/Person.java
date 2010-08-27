@@ -22,12 +22,18 @@ import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
  */
 public abstract class Person {
   /**
-   * The {@link RequestFactory} requires a static finder method for each proxied type.
+   * The RequestFactory requires a static finder method for each proxied type.
    * Soon it should allow you to customize how instances are found.
    */
   public static Person findPerson(Long id) {
+    /*
+     * TODO At the moment requestFactory requires a finder method per type It
+     * should get more flexible soon.
+     */
     return SchoolCalendarService.findPerson(id);
   }
+
+  private final Address address = new Address();
 
   private String description = "DESC";
 
@@ -37,7 +43,13 @@ public abstract class Person {
 
   private Integer version = 0;
 
+  private String note;
+
   public Person() {
+  }
+
+  public Address getAddress() {
+    return address;
   }
 
   public String getDescription() {
@@ -45,7 +57,7 @@ public abstract class Person {
   }
 
   /**
-   * The {@link RequestFactory} requires a Long id property for each proxied type.
+   * The RequestFactory requires a Long id property for each proxied type.
    * <p>
    * The requirement for some kind of id object with proper hash / equals
    * semantics is not going away, but it should become possible to use types
@@ -59,6 +71,10 @@ public abstract class Person {
     return name;
   }
 
+  public String getNote() {
+    return note;
+  }
+
   public String getSchedule() {
     return getSchedule(new boolean[] {true, true, true, true, true, true, true});
   }
@@ -66,7 +82,7 @@ public abstract class Person {
   public abstract String getSchedule(boolean[] daysFilter);
 
   /**
-   * The {@link RequestFactory} requires an Integer version property for each proxied
+   * The RequestFactory requires an Integer version property for each proxied
    * type, but makes no good use of it. This requirement will be removed soon.
    */
   public Integer getVersion() {
@@ -74,9 +90,9 @@ public abstract class Person {
   }
 
   /**
-   * When this was written the {@link RequestFactory} required a persist method per type. 
-   * That requirement should be relaxed very soon (and may well have been already
-   * if we forget to update this comment).
+   * When this was written the RequestFactory required a persist method per
+   * type. That requirement should be relaxed very soon (and may well have been
+   * already if we forget to update this comment).
    */
   public void persist() {
     SchoolCalendarService.persist(this);
@@ -88,10 +104,15 @@ public abstract class Person {
 
   public void setId(Long id) {
     this.id = id;
+    address.setId(id);
   }
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public void setNote(String note) {
+    this.note = note;
   }
 
   public void setVersion(Integer version) {

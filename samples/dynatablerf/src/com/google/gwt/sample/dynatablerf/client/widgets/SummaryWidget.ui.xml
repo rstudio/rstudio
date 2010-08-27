@@ -1,0 +1,26 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:cv='urn:import:com.google.gwt.user.cellview.client'>
+  <ui:style src="../common.css"
+    type="com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget.Style">
+      .displayInline {
+        display: inline;
+      }
+      
+      .thirty {
+        width: 30%
+      }
+    </ui:style>
+  <g:DockLayoutPanel ui:field="dock" unit="EX">
+    <g:north size="6">
+      <g:HTMLPanel>
+        <div class="{style.rightAlign}">
+          <cv:SimplePager ui:field="pager" stylePrimaryName="{style.displayInline}"
+            display="{table}" />
+        </div>
+      </g:HTMLPanel>
+    </g:north>
+    <g:center>
+      <cv:CellTable ui:field="table" />
+    </g:center>
+  </g:DockLayoutPanel>
+</ui:UiBinder>

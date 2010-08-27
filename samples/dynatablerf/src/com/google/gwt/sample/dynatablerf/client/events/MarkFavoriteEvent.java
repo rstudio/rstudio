@@ -19,29 +19,25 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
- * Indicates that new data is available to the application.
+ * Used client-side to add entries to the favorites list.
  */
-public class DataAvailableEvent extends GwtEvent<DataAvailableEvent.Handler> {
+public class MarkFavoriteEvent extends GwtEvent<MarkFavoriteEvent.Handler> {
   /**
-   * Handles {@link DataAvailableEvent}.
+   * Handles {@link MarkFavoriteEvent}.
    */
   public interface Handler extends EventHandler {
-    void onRowData(DataAvailableEvent event);
+    void onMarkFavorite(MarkFavoriteEvent event);
   }
 
   public static final Type<Handler> TYPE = new Type<Handler>();
-  private final List<PersonProxy> people;
-  private final int startRow;
 
-  public DataAvailableEvent(int startRow, List<PersonProxy> people) {
-    this.startRow = startRow;
-    this.people = Collections.unmodifiableList(new ArrayList<PersonProxy>(
-        people));
+  private final PersonProxy person;
+  private final boolean isFavorite;
+
+  public MarkFavoriteEvent(PersonProxy person, boolean isFavorite) {
+    this.person = person;
+    this.isFavorite = isFavorite;
   }
 
   @Override
@@ -49,16 +45,16 @@ public class DataAvailableEvent extends GwtEvent<DataAvailableEvent.Handler> {
     return TYPE;
   }
 
-  public List<PersonProxy> getPeople() {
-    return people;
+  public PersonProxy getPerson() {
+    return person;
   }
 
-  public int getStartRow() {
-    return startRow;
+  public boolean isFavorite() {
+    return isFavorite;
   }
 
   @Override
   protected void dispatch(Handler handler) {
-    handler.onRowData(this);
+    handler.onMarkFavorite(this);
   }
 }

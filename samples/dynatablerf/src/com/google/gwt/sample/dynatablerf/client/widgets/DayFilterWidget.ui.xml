@@ -1,5 +1,5 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client'>
+  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'>
   <ui:style>
     .all {
     	float: left;

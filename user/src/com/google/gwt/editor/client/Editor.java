@@ -13,21 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.ui;
+package com.google.gwt.editor.client;
+
+import java.util.Set;
 
 /**
- * Implemented by objects that hold a value.
+ * Describes an editor whose behavior is not altered by the value being
+ * displayed.
  * 
- * @param <V> value type
+ * @param <T> the type of object the editor displays.
  */
-public interface TakesValue<V> {
-  /**
-   * Sets the value.
-   */
-  void setValue(V value);
+public interface Editor<T> {
 
   /**
-   * Returns the current value.
+   * Used by the EditorDriver to traverse sub-editors. Plays nicely with
+   * UiFieldMapper.
+   * 
+   * @return the Editor associated with the path, or <code>null</code> if there
+   *         is no such sub-Editor.
    */
-  V getValue();
+  Editor<?> getEditorForPath(String path);
+
+  /**
+   * Returns the paths that the editor intends to display.
+   */
+  Set<String> getPaths();
+
 }

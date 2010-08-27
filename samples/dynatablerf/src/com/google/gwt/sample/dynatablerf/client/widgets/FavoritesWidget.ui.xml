@@ -1,0 +1,17 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <ui:style
+    type="com.google.gwt.sample.dynatablerf.client.widgets.FavoritesWidget.Style">
+      .header {
+        font-weight: bold;
+      }
+      
+      .favorite {
+        cursor: pointer;
+      }
+    </ui:style>
+  <g:HTMLPanel>
+    <g:Label>Favorites</g:Label>
+    <hr />
+    <g:FlowPanel ui:field="container" />
+  </g:HTMLPanel>
+</ui:UiBinder>

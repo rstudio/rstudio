@@ -17,6 +17,8 @@
   <source path="shared"/>
 
   <inherits name='com.google.gwt.user.User' />
+  <inherits name='com.google.gwt.editor.Editor' />
+  <inherits name='com.google.gwt.app.App' />
   <inherits name='com.google.gwt.requestfactory.RequestFactory' />
   
   <inherits name='com.google.gwt.logging.Logging'/>
