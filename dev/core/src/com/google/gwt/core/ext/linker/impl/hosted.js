@@ -2,7 +2,7 @@
 var $wnd = parent;
 var $doc = $wnd.document;
 var $moduleName = window.name;
-var $moduleBase, $entry
+var $moduleBase, $entry, $errFn
 ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
 ,$sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null;
 // Lightweight metrics
@@ -12,7 +12,6 @@ if ($stats) {
 var $hostedHtmlVersion="2.1";
 
 var gwtOnLoad;
-var $hosted = "localhost:9997";
 
 function loadIframe(url) {
   var topDoc = window.top.document;
@@ -43,26 +42,48 @@ function loadIframe(url) {
   topDoc.body.insertBefore(iframe, topDoc.body.firstChild);
 }
 
-var ua = navigator.userAgent.toLowerCase();
-if (ua.indexOf("gecko") != -1) {
-  // install eval wrapper on FF to avoid EvalError problem
-  var __eval = window.eval;
-  window.eval = function(s) {
-    return __eval(s);
+function getCodeServer() {
+  var server = "localhost:9997";
+  var query = $wnd.location.search;
+  var idx = query.indexOf("gwt.codesvr=");
+  if (idx >= 0) {
+    idx += 12;  // "gwt.codesvr=".length() == 12
+  }
+  if (idx >= 0) {
+    var amp = query.indexOf("&", idx);
+    if (amp >= 0) {
+      server = query.substring(idx, amp);
+    } else {
+      server = query.substring(idx);
+    }
+    // According to RFC 3986, some of this component's characters (e.g., ':')
+    // are reserved and *may* be escaped.
+    return decodeURIComponent(server);
   }
 }
-if (ua.indexOf("chrome") != -1) {
-  // work around __gwt_ObjectId appearing in JS objects
-  var hop = Object.prototype.hasOwnProperty;
-  Object.prototype.hasOwnProperty = function(prop) {
-    return prop != "__gwt_ObjectId" && hop.call(this, prop);
-  };
-  // do the same in our parent as well -- see issue 4486
-  // NOTE: this will have to be changed when we support non-iframe-based DevMode 
-  var hop2 = parent.Object.prototype.hasOwnProperty;
-  parent.Object.prototype.hasOwnProperty = function(prop) {
-    return prop != "__gwt_ObjectId" && hop2.call(this, prop);
-  };
+
+function doBrowserSpecificFixes() {
+  var ua = navigator.userAgent.toLowerCase();
+  if (ua.indexOf("gecko") != -1) {
+    // install eval wrapper on FF to avoid EvalError problem
+    var __eval = window.eval;
+    window.eval = function(s) {
+      return __eval(s);
+    }
+  }
+  if (ua.indexOf("chrome") != -1) {
+    // work around __gwt_ObjectId appearing in JS objects
+    var hop = Object.prototype.hasOwnProperty;
+    Object.prototype.hasOwnProperty = function(prop) {
+      return prop != "__gwt_ObjectId" && hop.call(this, prop);
+    };
+    // do the same in our parent as well -- see issue 4486
+    // NOTE: this will have to be changed when we support non-iframe-based DevMode
+    var hop2 = parent.Object.prototype.hasOwnProperty;
+    parent.Object.prototype.hasOwnProperty = function(prop) {
+      return prop != "__gwt_ObjectId" && hop2.call(this, prop);
+    };
+  }
 }
 
 // wrapper to call JS methods, which we need both to be able to supply a
@@ -227,72 +248,75 @@ function findPluginXPCOM() {
   }
 }
 
-gwtOnLoad = function(errFn, modName, modBase){
-  $moduleName = modName;
-  $moduleBase = modBase;
+function generateSessionId() {
+  var ASCII_EXCLAMATION = 33;
+  var ASCII_TILDE = 126;
+  var chars = [];
+  for (var i = 0; i < 16; ++i) {
+    chars.push(Math.floor(ASCII_EXCLAMATION
+    + Math.random() * (ASCII_TILDE - ASCII_EXCLAMATION + 1)));
+  }
+  return String.fromCharCode.apply(null, chars);
+}
 
+function tryConnectingToPlugin(sessionId, url) {
   // Note that the order is important
   var pluginFinders = [
     findPluginXPCOM,
     findPluginObject,
     findPluginEmbed,
   ];
-  var topWin = window.top;
-  var url = topWin.location.href;
-  if (!topWin.__gwt_SessionID) {
-    var ASCII_EXCLAMATION = 33;
-    var ASCII_TILDE = 126;
-    var chars = [];
-    for (var i = 0; i < 16; ++i) {
-      chars.push(Math.floor(ASCII_EXCLAMATION
-          + Math.random() * (ASCII_TILDE - ASCII_EXCLAMATION + 1)));
-    }
-    topWin.__gwt_SessionID = String.fromCharCode.apply(null, chars);
-  }
-  var plugin = null;
-  for (var i = 0; i < pluginFinders.length; ++i) {
-    try {
-      var maybePlugin = pluginFinders[i]();
-      if (maybePlugin != null && maybePlugin.init(window)) {
-        plugin = maybePlugin;
-        break;
-      }
-    } catch (e) {
-    }
-  }
-  if (!plugin) {
-    // try searching for a v1 plugin for backwards compatibility
-    var found = false;
+  var codeServer = getCodeServer();
+  var plugin;
     for (var i = 0; i < pluginFinders.length; ++i) {
       try {
         plugin = pluginFinders[i]();
-        if (plugin != null && plugin.connect($hosted, $moduleName, window)) {
-          return;
+        if (plugin != null && plugin.init(window)) {
+          if (!plugin.connect(url, sessionId, codeServer, $moduleName,
+            $hostedHtmlVersion)) {
+            pluginConnectionError(codeServer);
+            return null;
+          }
+          return plugin;
         }
       } catch (e) {
-      }
-    }
-    loadIframe("http://gwt.google.com/missing-plugin");
-  } else {
-    if (plugin.connect(url, topWin.__gwt_SessionID, $hosted, $moduleName,
-        $hostedHtmlVersion)) {
-      window.onUnload = function() {
-        try {
-          // wrap in try/catch since plugins are not required to supply this
-          plugin.disconnect();
-        } catch (e) {
-        }
-      };
-    } else {
-      if (errFn) {
-        errFn(modName);
-      } else {
-        alert("Plugin failed to connect to hosted mode server at " + $hosted);
-        loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
-      }
     }
   }
+  return null;
 }
+
+function pluginConnectionError(codeServer) {
+  if ($errFn) {
+    $errFn($moduleName);
+  } else {
+    alert("Plugin failed to connect to hosted mode server at " + codeServer);
+    loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
+  }
+}
+
+gwtOnLoad = function(errFn, modName, modBase){
+  $moduleName = modName;
+  $moduleBase = modBase;
+  $errFn = errFn;
+
+  var topWin = window.top;
+  var url = topWin.location.href;
+  if (!topWin.__gwt_SessionID) {
+    topWin.__gwt_SessionID = generateSessionId();
+  }
+  var plugin = tryConnectingToPlugin(topWin.__gwt_SessionID, url);
+  if (plugin == null) {
+    loadIframe("http://gwt.google.com/missing-plugin/");
+    return;
+  }
+  window.onUnload = function() {
+    try {
+      // wrap in try/catch since plugins are not required to supply this
+      plugin.disconnect();
+    } catch (e) {
+    }
+  };
+};
 
 window.onunload = function() {
 };
@@ -307,36 +331,15 @@ window.__gwt_module_id = 0;
 // Lightweight metrics
 $stats && $stats({moduleName:$moduleName, sessionId:$sessionId, subSystem:'startup', evtGroup:'moduleStartup', millis:(new Date()).getTime(), type:'moduleEvalEnd'});
 
-// OOPHM currently only supports IFrameLinker
+doBrowserSpecificFixes();
+
+// DevMode currently only supports iframe based linkers
 var query = parent.location.search;
 if (!findPluginXPCOM()) {
   document.write('<embed id="pluginEmbed" type="application/x-gwt-hosted-mode" width="10" height="10">');
   document.write('</embed>');
   document.write('<object id="pluginObject" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E">');
   document.write('</object>');
-}
-
-// look for the old query parameter if we don't find the new one
-var idx = query.indexOf("gwt.codesvr=");
-if (idx >= 0) {
-  idx += 12;  // "gwt.codesvr=".length() == 12
-} else {
-  idx = query.indexOf("gwt.hosted=");
-  if (idx >= 0) {
-    idx += 11;  // "gwt.hosted=".length() == 11
-  }
-}
-if (idx >= 0) {
-  var amp = query.indexOf("&", idx);
-  if (amp >= 0) {
-    $hosted = query.substring(idx, amp);
-  } else {
-    $hosted = query.substring(idx);
-  }
-
-  // According to RFC 3986, some of this component's characters (e.g., ':')
-  // are reserved and *may* be escaped.
-  $hosted = decodeURIComponent($hosted);
 }
 
 setTimeout(function() { $wnd[$moduleName].onScriptInstalled(gwtOnLoad) }, 1);

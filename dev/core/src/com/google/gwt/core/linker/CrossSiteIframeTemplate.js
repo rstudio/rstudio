@@ -77,15 +77,8 @@ function __MODULE_FUNC__() {
 
   function isHostedMode() {
     var result = false;
-    try {
-      var query = $wnd.location.search;
-      return (query.indexOf('gwt.codesvr=') != -1
-          || query.indexOf('gwt.hosted=') != -1) &&
-          (query.indexOf('gwt.hybrid') == -1);
-    } catch (e) {
-      // Defensive: some versions of IE7 reportedly can throw an exception
-      // evaluating "external.gwtOnLoad".
-    }
+    var query = $wnd.location.search;
+    return (query.indexOf('gwt.codesvr=') != -1);
     isHostedMode = function() { return result; };
     return result;
   }
