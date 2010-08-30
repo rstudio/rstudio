@@ -17,13 +17,15 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.WriteOperation;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.json.JSONArray;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -86,22 +88,21 @@ public class SampleDataPopulator {
   @SuppressWarnings("deprecation")
   private void postJsonFile(JSONObject contentData) throws HttpException,
       IOException, JSONException {
-    PostMethod post = new PostMethod(url);
+    HttpPost post = new HttpPost(url);
     JSONObject request = new JSONObject();
-    // TODO: fix
     request.put(RequestData.OPERATION_TOKEN, "DOESNT_WORK");
     request.put(RequestData.CONTENT_TOKEN, contentData);
-    post.setRequestBody(request.toString());
-    HttpClient client = new HttpClient();
-    int status = client.executeMethod(post);
-    JSONObject response = new JSONObject(post.getResponseBodyAsString());
-    JSONArray records = response.getJSONArray(WriteOperation.CREATE.name());
-    if (status == HttpStatus.SC_OK) {
-      System.out.println("SUCCESS: Put " + records.length()
+    StringEntity reqEntity = new StringEntity(request.toString());
+    post.setEntity(reqEntity);
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(post);
+    HttpEntity resEntity = response.getEntity();
+    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+      System.out.println("SUCCESS: Put " + resEntity.getContentLength()
           + " records in the datastore!");
       return;
     }
-    System.err.println("POST failed: Status line " + post.getStatusLine()
+    System.err.println("POST failed: Status line " + response.getStatusLine()
         + ", please check your URL");
   }
 
