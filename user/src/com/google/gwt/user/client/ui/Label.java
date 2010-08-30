@@ -61,8 +61,8 @@ import com.google.gwt.i18n.shared.WordCountDirectionEstimator;
  * </p>
  */
 @SuppressWarnings("deprecation")
-public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
-    HasClickHandlers, HasDoubleClickHandlers, SourcesClickEvents,
+public class Label extends Widget implements HasDirectionalText, HasWordWrap,
+    HasDirection, HasClickHandlers, HasDoubleClickHandlers, SourcesClickEvents,
     SourcesMouseEvents, HasAllMouseHandlers, HasDirectionEstimator,
     HasAutoHorizontalAlignment {
 
@@ -101,7 +101,7 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
    * ({@code getElement()}).
    * See {@link #setTextOrHtml(String, Direction, boolean)} for details.
    */
-  private Direction contentDir;
+  private Direction textDir;
 
   /**
    * The widget's DirectionEstimator object.
@@ -150,7 +150,7 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
     setStyleName("gwt-Label");
     isElementInline = false;
     isSpanWrapped = false;
-    contentDir = Direction.DEFAULT;
+    textDir = Direction.DEFAULT;
     initialElementDir = Direction.DEFAULT;
   }
 
@@ -200,7 +200,7 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
     assert isElementInline || tagName.equalsIgnoreCase("div");
     isSpanWrapped = false;
     initialElementDir = BidiUtils.getDirectionOnElement(element);
-    contentDir = initialElementDir;
+    textDir = initialElementDir;
   }
 
   public HandlerRegistration addClickHandler(ClickHandler handler) {
@@ -268,13 +268,9 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
     return autoHorizontalAlignment;
   }
 
-  public Direction getContentDirection() {
-    return contentDir;
-  }
-
   /**
    * Gets the widget element's direction.
-   * @deprecated Use {@link #getContentDirection} instead
+   * @deprecated Use {@link #getTextDirection} instead
    */
   @Deprecated
   public Direction getDirection() {
@@ -294,6 +290,10 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
 
   public String getText() {
     return getTextOrHtml(false);
+  }
+
+  public Direction getTextDirection() {
+    return textDir;
   }
 
   public boolean getWordWrap() {
@@ -350,7 +350,7 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
     // content direction.
     setInnerTextOrHtml(getTextOrHtml(true), true);
     isSpanWrapped = false;
-    contentDir = initialElementDir;
+    textDir = initialElementDir;
     updateHorizontalAlignment();
   }
 
@@ -456,8 +456,8 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
       // Preserves the initial direction of the widget. This is different from
       // passing the direction parameter explicitly as DEFAULT, which forces the
       // widget to inherit the direction from its parent.
-      if (contentDir != initialElementDir) {
-        contentDir = initialElementDir;
+      if (textDir != initialElementDir) {
+        textDir = initialElementDir;
         BidiUtils.setDirectionOnElement(getElement(), initialElementDir);
         updateHorizontalAlignment();
       }
@@ -491,7 +491,7 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
    * @param isHtml whether the content is HTML
    */
   protected void setTextOrHtml(String content, Direction dir, boolean isHtml) {
-    contentDir = dir;
+    textDir = dir;
 
     // Set the text and the direction.
     if (isElementInline) {
@@ -530,8 +530,8 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
       /* autoHorizontalAlignment is a truly automatic policy, i.e. either
       ALIGN_CONTENT_START or ALIGN_CONTENT_END */
       align = autoHorizontalAlignment == ALIGN_CONTENT_START ?
-          HorizontalAlignmentConstant.startOf(contentDir) :
-          HorizontalAlignmentConstant.endOf(contentDir);
+          HorizontalAlignmentConstant.startOf(textDir) :
+          HorizontalAlignmentConstant.endOf(textDir);
     }
 
     if (align != horzAlign) {
@@ -541,3 +541,4 @@ public class Label extends Widget implements HasText, HasWordWrap, HasDirection,
     }
   }
 }
+

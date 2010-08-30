@@ -42,7 +42,7 @@ import com.google.gwt.i18n.client.HasDirection.Direction;
  * {@example com.google.gwt.examples.HTMLExample}
  * </p>
  */
-public class HTML extends Label implements HasHTML {
+public class HTML extends Label implements HasDirectionalHtml {
 
   /**
    * Creates an HTML widget that wraps an existing &lt;div&gt; or &lt;span&gt;

@@ -73,8 +73,8 @@ public class HTMLTest extends LabelTest {
   }
 
   /**
-   * Asserts that both the {@link Label#getContentDirection} and the physical
-   * dir attribute match the expected direction.
+   * Asserts that both the {@link Label#getTextDirection} and the physical dir
+   * attribute match the expected direction.
    *
    * @param message Assertion message
    * @param expected Expected direction
@@ -87,8 +87,8 @@ public class HTMLTest extends LabelTest {
         isSpanWrapped() && getLabelDirection() == Direction.DEFAULT &&
         expected == Direction.LTR && !LocaleInfo.getCurrentLocale().isRTL());
 
-    assertEquals("contentDir mismatch: " + message, expected,
-        label.getContentDirection());
+    assertEquals("textDir mismatch: " + message, expected,
+        label.getTextDirection());
   }
 
   private Direction getLabelDirection() {
@@ -167,3 +167,4 @@ public class HTMLTest extends LabelTest {
     }
   }
 }
+
