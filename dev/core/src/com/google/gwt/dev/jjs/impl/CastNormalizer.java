@@ -54,31 +54,27 @@ import java.util.Set;
  * {@link JsoDevirtualizer}, and {@link LongCastNormalizer} having already run.
  * 
  * <p>
- * Object and String always get a typeId of 1 and 2, respectively. 0 is reserved
- * as the typeId for any classes that can never be instance type of a successful
- * dynamic cast.
- * </p>
- * <p>
  * Object and String always get a queryId of 0 and 1, respectively. The 0
  * queryId always means "always succeeds". In practice, we never generate an
  * explicit cast with a queryId of 0; it is only used for array store checking,
  * where the 0 queryId means that anything can be stored into an Object[].
  * </p>
  * <p>
- * JavaScriptObject and subclasses have no typeId at all. JavaScriptObject has a
- * queryId of -1, which again is only used for array store checking, to ensure
- * that a non-JSO is not stored into a JavaScriptObject[].
+ * JavaScriptObject has a queryId of -1, which again is only used for array store
+ * checking, to ensure that a non-JSO is not stored into a JavaScriptObject[].
  * </p>
  */
 public class CastNormalizer {
-  private class AssignTypeIdsVisitor extends JVisitor {
+  private class AssignTypeCastabilityVisitor extends JVisitor {
 
     Set<JReferenceType> alreadyRan = new HashSet<JReferenceType>();
-    private List<JReferenceType> instantiableTypes = new ArrayList<JReferenceType>();
-    private final List<JArrayType> instantiatedArrayTypes = new ArrayList<JArrayType>();
-    private List<JsonObject> jsonObjects = new ArrayList<JsonObject>();
+    private IdentityHashMap<JReferenceType, JsonObject> 
+          castableTypeMaps = new IdentityHashMap<JReferenceType, JsonObject>();
+    private final List<JArrayType> instantiatedArrayTypes = 
+          new ArrayList<JArrayType>();
     private int nextQueryId = 0;
-    private Map<JReferenceType, Set<JReferenceType>> queriedTypes = new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
+    private Map<JReferenceType, Set<JReferenceType>> queriedTypes = 
+          new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
 
     {
       JTypeOracle typeOracle = program.typeOracle;
@@ -93,26 +89,17 @@ public class CastNormalizer {
           program.getTypeJavaLangObject());
 
       // Reserve query id 1 for java.lang.String to facilitate the mashup case.
+      // Also, facilitates detecting an object as a Java String (see Cast.java)
       // Multiple GWT modules need to modify String's prototype the same way.
       recordCastInternal(program.getTypeJavaLangString(),
           program.getTypeJavaLangObject());
     }
 
-    public void computeTypeIds() {
+    public void computeTypeCastabilityMaps() {
 
-      // the 0th entry is the "always false" entry
-      instantiableTypes.add(null);
-      jsonObjects.add(new JsonObject(program.createSourceInfoSynthetic(
-          AssignTypeIdsVisitor.class, "always-false typeinfo entry"),
-          program.getJavaScriptObject()));
-
-      /*
-       * Do String first to reserve typeIds 1 and 2 for Object and String,
-       * respectively. This ensures consistent modification of String's
-       * prototype.
-       */
+      // do String first (which will pull in Object also, it's superclass).
       computeSourceType(program.getTypeJavaLangString());
-      assert (instantiableTypes.size() == 3);
+      assert (castableTypeMaps.size() == 3);
 
       /*
        * Compute the list of classes than can successfully satisfy cast
@@ -130,9 +117,9 @@ public class CastNormalizer {
       }
 
       // pass our info to JProgram
-      program.initTypeInfo(instantiableTypes, jsonObjects);
+      program.initTypeInfo(castableTypeMaps);
 
-      // JSO's maker queryId is -1 (used for array stores).
+      // JSO's marker queryId is -1 (used for array stores).
       JClassType jsoType = program.getJavaScriptObject();
       if (jsoType != null) {
         queryIds.put(jsoType, -1);
@@ -156,7 +143,6 @@ public class CastNormalizer {
           // will generate a null pointer exception instead
           return;
         }
-        JArrayType lhsArrayType = lhsArrayRef.getArrayType();
 
         // primitives are statically correct
         if (!(elementType instanceof JReferenceType)) {
@@ -177,6 +163,7 @@ public class CastNormalizer {
         JType rhsType = x.getRhs().getType();
         assert (rhsType instanceof JReferenceType);
 
+        JArrayType lhsArrayType = lhsArrayRef.getArrayType();
         for (JArrayType arrayType : instantiatedArrayTypes) {
           if (typeOracle.canTheoreticallyCast(arrayType, lhsArrayType)) {
             JType itElementType = arrayType.getElementType();
@@ -257,7 +244,7 @@ public class CastNormalizer {
 
       // Create a sparse lookup object.
       SourceInfo sourceInfo = program.createSourceInfoSynthetic(
-          AssignTypeIdsVisitor.class, "typeinfo lookup");
+          AssignTypeCastabilityVisitor.class, "typeinfo lookup");
       JsonObject jsonObject = new JsonObject(sourceInfo,
           program.getJavaScriptObject());
       // Start at 1; 0 is Object and always true.
@@ -272,7 +259,7 @@ public class CastNormalizer {
 
       /*
        * Don't add an entry for empty answer sets, except for Object and String
-       * which require typeIds.
+       * which require entries.
        */
       if (jsonObject.propInits.isEmpty()
           && type != program.getTypeJavaLangObject()
@@ -281,8 +268,7 @@ public class CastNormalizer {
       }
 
       // add an entry for me
-      instantiableTypes.add(type);
-      jsonObjects.add(jsonObject);
+      castableTypeMaps.put(type,jsonObject);
     }
 
     private void recordCast(JType targetType, JExpression rhs) {
@@ -604,9 +590,9 @@ public class CastNormalizer {
       visitor.accept(program);
     }
     {
-      AssignTypeIdsVisitor assigner = new AssignTypeIdsVisitor();
+      AssignTypeCastabilityVisitor assigner = new AssignTypeCastabilityVisitor();
       assigner.accept(program);
-      assigner.computeTypeIds();
+      assigner.computeTypeCastabilityMaps();
     }
     {
       ReplaceTypeChecksVisitor replacer = new ReplaceTypeChecksVisitor();

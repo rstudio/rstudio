@@ -318,7 +318,7 @@ public class JProgram extends JNode {
    */
   private final SourceInfo intrinsic;
 
-  private List<JsonObject> jsonCastableTypeMaps;
+  private IdentityHashMap<JReferenceType, JsonObject> castableTypeMaps;
 
   private Map<JReferenceType, JNonNullType> nonNullTypes = new IdentityHashMap<JReferenceType, JNonNullType>();
 
@@ -347,8 +347,6 @@ public class JProgram extends JNode {
   private final SourceInfo stringPoolSourceInfo;
 
   private JClassType typeClass;
-
-  private Map<JReferenceType, Integer> typeIdMap = new HashMap<JReferenceType, Integer>();
 
   private JInterfaceType typeJavaIoSerializable;
 
@@ -766,18 +764,23 @@ public class JProgram extends JNode {
     return allEntryMethods;
   }
 
-  public JsonObject getCastableTypeMap(int typeId) {
+  public JsonObject getCastableTypeMap(JReferenceType referenceType) {
+    
     // ensure jsonCastableTypeMaps has been initialized
     // it might not have been if the CastNormalizer has not been run
-    if (jsonCastableTypeMaps == null) {
-      jsonCastableTypeMaps = new ArrayList<JsonObject>();
-      // ensure the always-false (typeId == 0) entry is present
-      jsonCastableTypeMaps.add(new JsonObject(createSourceInfoSynthetic(
-          JProgram.class, "always-false typeinfo entry"),
-          getJavaScriptObject()));
+    if (castableTypeMaps == null) {
+      initTypeInfo(null);
     }
     
-    return jsonCastableTypeMaps.get(typeId); 
+    JsonObject returnMap = castableTypeMaps.get(referenceType);
+    if (returnMap == null) {
+      // add a new empty map
+      returnMap = new JsonObject(createSourceInfoSynthetic(JProgram.class,
+                                        "empty map"), getJavaScriptObject()); 
+      castableTypeMaps.put(referenceType, returnMap);
+    }
+    
+    return returnMap;
   }
 
   public CorrelationFactory getCorrelator() {
@@ -1100,16 +1103,6 @@ public class JProgram extends JNode {
     }
   }
 
-  public int getTypeId(JReferenceType referenceType) {
-    assert (referenceType == getRunTimeType(referenceType));
-    Integer integer = typeIdMap.get(referenceType);
-    if (integer == null) {
-      return 0;
-    }
-
-    return integer.intValue();
-  }
-
   public JClassType getTypeJavaLangClass() {
     return typeClass;
   }
@@ -1165,13 +1158,15 @@ public class JProgram extends JNode {
   public JPrimitiveType getTypeVoid() {
     return JPrimitiveType.VOID;
   }
-
-  public void initTypeInfo(List<JReferenceType> types,
-      List<JsonObject> jsonObjects) {
-    for (int i = 0, c = types.size(); i < c; ++i) {
-      typeIdMap.put(types.get(i), Integer.valueOf(i));
+  
+  public void initTypeInfo(
+      IdentityHashMap<JReferenceType,JsonObject> instantiatedTypeCastableTypeMaps) {
+    
+    castableTypeMaps = instantiatedTypeCastableTypeMaps;
+    
+    if (castableTypeMaps == null || castableTypeMaps.size() == 0) {
+      castableTypeMaps = new IdentityHashMap<JReferenceType, JsonObject>();
     }
-    this.jsonCastableTypeMaps = jsonObjects;
   }
 
   public boolean isJavaLangString(JType type) {

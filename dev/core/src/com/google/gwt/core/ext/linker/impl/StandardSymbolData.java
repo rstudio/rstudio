@@ -32,9 +32,9 @@ import java.net.URISyntaxException;
 public class StandardSymbolData implements SymbolData {
 
   public static StandardSymbolData forClass(String className, String uriString,
-      int lineNumber, int typeId, CastableTypeMap castableTypeMap) {
+      int lineNumber, int queryId, CastableTypeMap castableTypeMap) {
     return new StandardSymbolData(className, null, null, uriString, lineNumber,
-        typeId, castableTypeMap);
+        queryId, castableTypeMap);
   }
 
   public static StandardSymbolData forMember(String className,
@@ -62,11 +62,11 @@ public class StandardSymbolData implements SymbolData {
   private int sourceLine;
   private String sourceUri;
   private String symbolName;
-  private int typeId;
+  private int queryId;
   private CastableTypeMap castableTypeMap;
 
   private StandardSymbolData(String className, String memberName,
-      String methodSig, String sourceUri, int sourceLine, int typeId, 
+      String methodSig, String sourceUri, int sourceLine, int queryId, 
       CastableTypeMap castableTypeMap) {
     assert className != null && className.length() > 0 : "className";
     assert memberName != null || methodSig == null : "methodSig without memberName";
@@ -77,7 +77,7 @@ public class StandardSymbolData implements SymbolData {
     this.methodSig = methodSig;
     this.sourceUri = sourceUri;
     this.sourceLine = sourceLine;
-    this.typeId = typeId;
+    this.queryId = queryId;
     this.castableTypeMap = castableTypeMap;
   }
   
@@ -103,6 +103,10 @@ public class StandardSymbolData implements SymbolData {
     return memberName;
   }
 
+  public int getQueryId() {
+    return queryId;
+  }
+
   public int getSourceLine() {
     return sourceLine;
   }
@@ -113,10 +117,6 @@ public class StandardSymbolData implements SymbolData {
 
   public String getSymbolName() {
     return symbolName;
-  }
-
-  public int getTypeId() {
-    return typeId;
   }
 
   public boolean isClass() {
@@ -159,7 +159,7 @@ public class StandardSymbolData implements SymbolData {
     sourceLine = in.readInt();
     sourceUri = (String) in.readObject();
     symbolName = in.readUTF();
-    typeId = in.readInt();
+    queryId = in.readInt();
     castableTypeMap = (CastableTypeMap) in.readObject();
   }
 
@@ -187,7 +187,7 @@ public class StandardSymbolData implements SymbolData {
     out.writeInt(sourceLine);
     out.writeObject(sourceUri);
     out.writeUTF(symbolName);
-    out.writeInt(typeId);
+    out.writeInt(queryId);
     out.writeObject(castableTypeMap);
   }
 }

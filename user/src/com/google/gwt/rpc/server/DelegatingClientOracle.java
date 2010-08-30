@@ -85,13 +85,13 @@ public class DelegatingClientOracle extends ClientOracle {
   }
 
   @Override
-  public String getSeedName(Class<?> clazz) {
-    return delegate.getSeedName(clazz);
+  public int getQueryId(Class<?> clazz) {
+    return delegate.getQueryId(clazz);
   }
 
   @Override
-  public int getTypeId(Class<?> clazz) {
-    return delegate.getTypeId(clazz);
+  public String getSeedName(Class<?> clazz) {
+    return delegate.getSeedName(clazz);
   }
 
   @Override

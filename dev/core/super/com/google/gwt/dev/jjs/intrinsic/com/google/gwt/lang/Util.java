@@ -18,29 +18,21 @@ package com.google.gwt.lang;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * This class is used to access the private, GWT-specific typeId and typeMarker
- * fields.
+ * This class is used to access the private, GWT-specific 
+ * castableTypeMap and typeMarker fields.
  */
 final class Util {
-  
+
   static native JavaScriptObject getCastableTypeMap(Object o) /*-{
     return o.@java.lang.Object::castableTypeMap;
-  }-*/;
-
-  static native int getTypeId(Object o) /*-{
-    return o.@java.lang.Object::typeId;
   }-*/;
 
   static native JavaScriptObject getTypeMarker(Object o) /*-{
     return o.@java.lang.Object::typeMarker;
   }-*/;
-
+ 
   static native void setCastableTypeMap(Object o, JavaScriptObject castableTypeMap) /*-{
     o.@java.lang.Object::castableTypeMap = castableTypeMap;
-  }-*/;
-
-  static native void setTypeId(Object o, int typeId) /*-{
-    o.@java.lang.Object::typeId = typeId;
   }-*/;
 
 }

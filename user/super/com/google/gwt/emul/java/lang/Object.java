@@ -35,14 +35,6 @@ public class Object {
   private transient JavaScriptObject expando;
 
   /**
-   * magic magic magic.
-   * 
-   * @skip
-   */
-  @SuppressWarnings("unused")
-  private transient int typeId;
-  
-  /**
    * A JavaScript Json map for looking up castability between types.
    * 
    * @skip

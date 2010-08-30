@@ -105,15 +105,15 @@ public abstract class ClientOracle {
   public abstract Field[] getOperableFields(Class<?> clazz);
 
   /**
+   * Returns the assigned castability queryId of a given type.
+   */
+  public abstract int getQueryId(Class<?> clazz);
+
+  /**
    * Returns the name of the top-level function that is used as the seed
    * function for a given type.
    */
   public abstract String getSeedName(Class<?> clazz);
-
-  /**
-   * Returns the assigned typeId of a given type or 0.
-   */
-  public abstract int getTypeId(Class<?> clazz);
 
   /**
    * Returns the deobfuscated name of a type based on the name of the type's

@@ -52,11 +52,23 @@ public final class WebModeClientOracle extends ClientOracle implements
     private WebModeClientOracle oracle = new WebModeClientOracle();
 
     public void add(String jsIdent, String jsniIdent, String className,
-        String memberName, int typeId, CastableTypeData castableTypeData) {
+        String memberName, int queryId, CastableTypeData castableTypeData) {
+      
       oracle.idents.add(jsIdent);
       ClassData data = oracle.getClassData(className);
-      data.typeId = typeId;
-      data.castableTypeData = castableTypeData;
+      
+      /*
+       * Don't overwrite castableTypeData and queryId if already set.
+       * There are many versions of symbols for a given className, 
+       * corresponding to the type of member fields, etc.,
+       * which don't have the queryId or castableTypeData initialized.  Only
+       * the symbol data for the class itself has this info.
+       */
+      if (data.castableTypeData == null) {
+        data.queryId = queryId;
+        data.castableTypeData = castableTypeData;
+      }
+      
       if (jsniIdent == null || jsniIdent.length() == 0) {
         data.typeName = className;
         data.seedName = jsIdent;
@@ -109,15 +121,15 @@ public final class WebModeClientOracle extends ClientOracle implements
   }
 
   private static class ClassData implements Serializable {
-    private static final long serialVersionUID = 4L;
+    private static final long serialVersionUID = 5L;
 
     public CastableTypeData castableTypeData;
     public final Map<String, String> fieldIdentsToNames = new HashMap<String, String>();
     public final Map<String, String> fieldNamesToIdents = new HashMap<String, String>();
     public final Map<String, String> methodJsniNamesToIdents = new HashMap<String, String>();
+    public int queryId;
     public String seedName;
     public List<String> serializableFields = Collections.emptyList();
-    public int typeId;
     public String typeName;
   }
 
@@ -345,21 +357,21 @@ public final class WebModeClientOracle extends ClientOracle implements
   }
 
   @Override
-  public String getSeedName(Class<?> clazz) {
-    ClassData data = getClassData(clazz.getName());
-    return data.seedName;
-  }
-
-  @Override
-  public int getTypeId(Class<?> clazz) {
+  public int getQueryId(Class<?> clazz) {
     while (clazz != null) {
-      int toReturn = getTypeId(canonicalName(clazz));
+      int toReturn = getQueryId(canonicalName(clazz));
       if (toReturn != 0) {
         return toReturn;
       }
       clazz = clazz.getSuperclass();
     }
     return 0;
+  }
+
+  @Override
+  public String getSeedName(Class<?> clazz) {
+    ClassData data = getClassData(clazz.getName());
+    return data.seedName;
   }
 
   @Override
@@ -437,9 +449,9 @@ public final class WebModeClientOracle extends ClientOracle implements
     return getMethodId(className, methodName, jsniArgTypes);
   }
 
-  private int getTypeId(String className) {
+  private int getQueryId(String className) {
     ClassData data = getClassData(className);
-    return data.typeId;
+    return data.queryId;
   }
 
   /**

@@ -118,7 +118,6 @@ import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
-import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -445,14 +444,13 @@ public class GenerateJavaScriptAST {
     }
 
     private void recordSymbol(JReferenceType x, JsName jsName) {
-      int typeId = program.getTypeId(x);
-      
-      JsonObject castableTypeMapObj = program.getCastableTypeMap(typeId);
+      int queryId = program.getQueryId(x);
+      JsonObject castableTypeMapObj = program.getCastableTypeMap(x);
       CastableTypeMap castableTypeMap = new StandardCastableTypeMap(castableTypeMapObj.toString());
       
       StandardSymbolData symbolData = StandardSymbolData.forClass(x.getName(),
           x.getSourceInfo().getFileName(), x.getSourceInfo().getStartLine(),
-          typeId, castableTypeMap);
+          queryId, castableTypeMap);
       assert !symbolTable.containsKey(symbolData);
       symbolTable.put(symbolData, jsName);
     }
@@ -1500,9 +1498,9 @@ public class GenerateJavaScriptAST {
           lhs, rhs);
     }
     
-    private void generateCastableTypeIds(JClassType x, List<JsStatement> globalStmts) {
-      int typeId = program.getTypeId(x);
-      if (typeId >= 0) {
+    private void generateCastableTypeMap(JClassType x, List<JsStatement> globalStmts) {
+      JsonObject castableTypeMap = program.getCastableTypeMap(x);
+      if (castableTypeMap != null) {
         JField castableTypeMapField = program.getIndexedField("Object.castableTypeMap");
         JsName castableTypeMapName = names.get(castableTypeMapField);
         if (castableTypeMapName == null) {
@@ -1513,8 +1511,7 @@ public class GenerateJavaScriptAST {
         SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
               GenerateJavaScriptAST.class, "Castable type map");
         
-        JsonObject jsonObject = program.getCastableTypeMap(typeId);
-        accept(jsonObject);
+        accept(castableTypeMap);
         JsExpression objExpr = pop();
         
         // Generate castableTypeMap for each type prototype
@@ -1564,8 +1561,7 @@ public class GenerateJavaScriptAST {
         generateTypeMarker(globalStmts);
       }
 
-      generateTypeId(x, globalStmts);
-      generateCastableTypeIds(x, globalStmts);
+      generateCastableTypeMap(x, globalStmts);
     }
 
     private void generateGwtOnLoad(List<JsFunction> entryFuncs,
@@ -1785,27 +1781,6 @@ public class GenerateJavaScriptAST {
         JsExprStmt stmt = asg.makeStmt();
         globalStmts.add(stmt);
         typeForStatMap.put(stmt, program.getTypeJavaLangObject());
-      }
-    }
-
-    private void generateTypeId(JClassType x, List<JsStatement> globalStmts) {
-      int typeId = program.getTypeId(x);
-      if (typeId >= 0) {
-        JField typeIdField = program.getIndexedField("Object.typeId");
-        JsName typeIdName = names.get(typeIdField);
-        if (typeIdName == null) {
-          // Was pruned; this compilation must have no dynamic casts.
-          return;
-        }
-        SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-            GenerateJavaScriptVisitor.class, "Type id assignment");
-        JsNameRef fieldRef = typeIdName.makeRef(sourceInfo);
-        fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
-        JsNumberLiteral typeIdLit = jsProgram.getNumberLiteral(typeId);
-        JsExpression asg = createAssignment(fieldRef, typeIdLit);
-        JsExprStmt asgStmt = asg.makeStmt();
-        globalStmts.add(asgStmt);
-        typeForStatMap.put(asgStmt, x);
       }
     }
 
@@ -2156,7 +2131,6 @@ public class GenerateJavaScriptAST {
 
     // Object fields
     specialObfuscatedIdents.put("expando", "eX");
-    specialObfuscatedIdents.put("typeId", "tI");
     specialObfuscatedIdents.put("typeMarker", "tM");
     specialObfuscatedIdents.put("castableTypeMap", "cM");
 

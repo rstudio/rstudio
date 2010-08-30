@@ -26,7 +26,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 final class Cast {
 
   static native boolean canCast(Object src, int dstId) /*-{
-    return src.@java.lang.Object::typeId &&
+    return src.@java.lang.Object::castableTypeMap &&
           !!src.@java.lang.Object::castableTypeMap[dstId];
   }-*/;
 
@@ -35,7 +35,7 @@ final class Cast {
    * context.
    */
   static native boolean canCastUnsafe(Object src, int dstId) /*-{
-    return src.@java.lang.Object::typeId && 
+    return src.@java.lang.Object::castableTypeMap && 
           src.@java.lang.Object::castableTypeMap[dstId];
   }-*/;
 
@@ -75,9 +75,6 @@ final class Cast {
     return (src != null) && canCast(src, dstId);
   }
 
-  /**
-   * Instance of JSO only if there's no type ID.
-   */
   static boolean instanceOfJso(Object src) {
     return (src != null) && isJavaScriptObject(src);
   }
@@ -92,15 +89,15 @@ final class Cast {
   }
 
   static boolean isJavaObject(Object src) {
-    return Util.getTypeMarker(src) == getNullMethod() || Util.getTypeId(src) == 2;
+    return isNonStringJavaObject(src) || isJavaString(src);
   }
 
   static boolean isJavaScriptObject(Object src) {
-    return Util.getTypeMarker(src) != getNullMethod() && Util.getTypeId(src) != 2;
+    return !isNonStringJavaObject(src) && !isJavaString(src);
   }
 
   static boolean isJavaScriptObjectOrString(Object src) {
-    return Util.getTypeMarker(src) != getNullMethod();
+    return !isNonStringJavaObject(src);
   }
 
   /**
@@ -208,6 +205,35 @@ final class Cast {
     return @null::nullMethod();
   }-*/;
 
+  /**
+   * Returns whether the Object is a Java String.
+   * 
+   * Depends on the requirement that queryId = 1 is reserved for String,
+   * and that the trivial cast String to String is explicitly added to the
+   * castableTypeMap for String, and String cannot be the target of a cast from
+   * anything else (except for the trivial cast from Object), since 
+   * java.lang.String is a final class. 
+   * (See the constructor for the CastNormalizer.AssignTypeCastabilityVisitor).
+   * 
+   * Since java Strings are translated as JavaScript strings, Strings need to be
+   * interchangeable between GWT modules, unlike other Java Objects.
+   */
+  private static boolean isJavaString(Object src) {
+    return canCast(src, 1);
+  }
+  
+  /**
+   * Returns whether the Object is a Java Object but not a String.
+   * 
+   * Depends on all Java Objects (except for String) having the typeMarker field
+   * generated, and set to the nullMethod for the current GWT module.  Note this
+   * test essentially tests whether an Object is a java object for the current
+   * GWT module.  Java Objects from external GWT modules are not recognizable as
+   * Java Objects in this context.
+   */
+  private static boolean isNonStringJavaObject(Object src) {
+    return Util.getTypeMarker(src) == getNullMethod();
+  }
 }
 
 // CHECKSTYLE_NAMING_ON

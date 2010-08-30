@@ -132,16 +132,16 @@ public final class HostedModeClientOracle extends ClientOracle {
    * Unimplemented.
    */
   @Override
-  public String getSeedName(Class<?> clazz) {
-    return unimplemented();
+  public int getQueryId(Class<?> clazz) {
+    return this.<Integer> unimplemented();
   }
 
   /**
    * Unimplemented.
    */
   @Override
-  public int getTypeId(Class<?> clazz) {
-    return this.<Integer> unimplemented();
+  public String getSeedName(Class<?> clazz) {
+    return unimplemented();
   }
 
   /**

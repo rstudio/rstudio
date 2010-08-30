@@ -50,7 +50,33 @@ import java.util.Map.Entry;
  * TODO: could add generics to require args to be of the same type
  */
 public class TestSetValidator {
-
+  
+  private static class UnassignableObject {
+  }
+  
+  /**
+   * Check that an Object array has it's meta-data preserved (e.g. Array.queryId),
+   * to ensure proper type checking on element assignment.
+   */
+  public static boolean checkObjectArrayElementAssignment(Object[] array,
+      int index, Object value) {
+    
+    // first check that the requested assignment succeeds
+    try {
+      array[index] = value;
+    } catch (ArrayStoreException e) {
+      return false;
+    }
+    
+    // next check that assignment with a bogus type throws ArrayStoreException
+    try {
+      array[index] = new UnassignableObject();
+      return false;
+    } catch (ArrayStoreException e) {
+      return true;
+    }
+  }
+  
   public static boolean equals(boolean[] expected, boolean[] actual) {
     if (actual == null) {
       return false;

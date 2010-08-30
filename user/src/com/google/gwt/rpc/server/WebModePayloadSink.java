@@ -532,7 +532,7 @@ public class WebModePayloadSink extends CommandSink {
       }
 
       String initValuesId = clientOracle.getMethodId(
-          "com.google.gwt.lang.Array", "initValues", "Ljava/lang/Class;", "I",
+          "com.google.gwt.lang.Array", "initValues", "Ljava/lang/Class;",
           "Lcom/google/gwt/core/client/JavaScriptObject;", "I", 
           "Lcom/google/gwt/lang/Array;");
       assert initValuesId != null : "Could not find initValues";
@@ -547,26 +547,22 @@ public class WebModePayloadSink extends CommandSink {
       constructorFunctions.put(targetClass, functionName);
 
       /*
-       * Set the typeIds, castableTypeData, and queryIds to exact values, 
+       * Set the castableTypeData and queryIds to exact values, 
        * or fall back to acting like a plain Object[] array.
        */
-      CastableTypeData castableTypeData;
-      int typeId = clientOracle.getTypeId(targetClass);
-      if (typeId != 0) {
-        castableTypeData = clientOracle.getCastableTypeData(targetClass);
-      } else {
-        typeId = clientOracle.getTypeId(Object[].class);
+      CastableTypeData castableTypeData = clientOracle.getCastableTypeData(targetClass);
+      if (castableTypeData == null) {
         castableTypeData = clientOracle.getCastableTypeData(Object[].class);
       }
 
-      int queryId = clientOracle.getTypeId(x.getComponentType());
+      int queryId = clientOracle.getQueryId(x.getComponentType());
       if (queryId == 0) {
-        queryId = clientOracle.getTypeId(Object.class);
+        queryId = clientOracle.getQueryId(Object.class);
       }
 
       byte[] ident = getBytes("_0");
 
-      // function foo(_0) {return initValues(classLid, typeId, queryId, _0)}
+      // function foo(_0) {return initValues(classLid, castableTypeData, queryId, _0)}
       function();
       push(functionName);
       lparen();
@@ -577,8 +573,6 @@ public class WebModePayloadSink extends CommandSink {
       push(initValuesId);
       lparen();
       push(classLitId);
-      comma();
-      push(String.valueOf(typeId));
       comma();
       push(castableTypeData.toJs());
       comma();

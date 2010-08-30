@@ -124,15 +124,11 @@ public class ArrayNormalizer {
       JMethodCall call = new JMethodCall(x.getSourceInfo(), null, initDim,
           arrayType);
       JLiteral classLit = x.getClassLiteral();
-      
-      int typeId = program.getTypeId(arrayType);
-      JLiteral typeIdLit = program.getLiteralInt(typeId);
-      JsonObject castableTypeMap = program.getCastableTypeMap(typeId);
-      
+      JsonObject castableTypeMap = program.getCastableTypeMap(arrayType);
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JExpression dim = x.dims.get(0);
       JType elementType = arrayType.getElementType();
-      call.addArgs(classLit, typeIdLit, castableTypeMap, queryIdLit, dim,
+      call.addArgs(classLit, castableTypeMap, queryIdLit, dim,
           getSeedTypeLiteralFor(elementType));
       ctx.replaceMe(call);
     }
@@ -144,8 +140,6 @@ public class ArrayNormalizer {
           "Creating dimensions");
       JMethodCall call = new JMethodCall(sourceInfo, null, initDims, arrayType);
       JsonArray classLitList = new JsonArray(sourceInfo,
-          program.getJavaScriptObject());
-      JsonArray typeIdList = new JsonArray(sourceInfo,
           program.getJavaScriptObject());
       JsonArray castableTypeMapList = new JsonArray(sourceInfo,
           program.getJavaScriptObject());
@@ -160,12 +154,8 @@ public class ArrayNormalizer {
 
         JLiteral classLit = x.getClassLiterals().get(i);
         classLitList.exprs.add(classLit);
-
-        int typeId = program.getTypeId(curArrayType);
-        JLiteral typeIdLit = program.getLiteralInt(typeId);
-        typeIdList.exprs.add(typeIdLit);
         
-        JsonObject castableTypeMap = program.getCastableTypeMap(typeId);
+        JsonObject castableTypeMap = program.getCastableTypeMap(curArrayType);
         castableTypeMapList.exprs.add(castableTypeMap);
 
         JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(curArrayType));
@@ -174,7 +164,7 @@ public class ArrayNormalizer {
         dimList.exprs.add(x.dims.get(i));
         cur = curArrayType.getElementType();
       }
-      call.addArgs(classLitList, typeIdList, castableTypeMapList, queryIdList, 
+      call.addArgs(classLitList, castableTypeMapList, queryIdList, 
           dimList, program.getLiteralInt(dims), getSeedTypeLiteralFor(cur));
       ctx.replaceMe(call);
     }
@@ -187,28 +177,24 @@ public class ArrayNormalizer {
       JMethodCall call = new JMethodCall(sourceInfo, null, initValues,
           arrayType);
       JLiteral classLit = x.getClassLiteral();
-      
-      int typeId = program.getTypeId(arrayType);
-      JLiteral typeIdLit = program.getLiteralInt(typeId);
-      JsonObject castableTypeMap = program.getCastableTypeMap(typeId);
-      
+      JsonObject castableTypeMap = program.getCastableTypeMap(arrayType);
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JsonArray initList = new JsonArray(sourceInfo,
           program.getJavaScriptObject());
       for (int i = 0; i < x.initializers.size(); ++i) {
         initList.exprs.add(x.initializers.get(i));
       }
-      call.addArgs(classLit, typeIdLit, castableTypeMap, queryIdLit, initList);
+      call.addArgs(classLit, castableTypeMap, queryIdLit, initList);
       ctx.replaceMe(call);
     }
 
     private int tryGetQueryId(JArrayType type) {
       JType elementType = type.getElementType();
-      int leafTypeId = -1;
+      int leafQueryId = -1;
       if (elementType instanceof JReferenceType) {
-        leafTypeId = program.getQueryId(program.getRunTimeType((JReferenceType) elementType));
+        leafQueryId = program.getQueryId(program.getRunTimeType((JReferenceType) elementType));
       }
-      return leafTypeId;
+      return leafQueryId;
     }
   }
 

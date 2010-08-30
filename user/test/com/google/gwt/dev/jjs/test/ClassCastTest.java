@@ -34,11 +34,16 @@ public class ClassCastTest extends GWTTestCase {
 
   static abstract class Food {
   }
+  
+  static class Drink {
+  }
 
   private volatile Object arrayOfInt = new int[3];
   private volatile Object arrayOfWidget = new Widget[4];
+  private volatile Object arrayOfApple = new Apple[5];
   private volatile Food foodItem = new Apple();
   private volatile CanEatRaw rawFoodItem = new Apple();
+  private volatile Object drinkItem = new Drink();
 
   @Override
   public String getModuleName() {
@@ -55,15 +60,20 @@ public class ClassCastTest extends GWTTestCase {
     assertFalse(arrayOfInt instanceof Food);
     assertFalse(arrayOfWidget instanceof Food);
   }
-
+ 
   public void testBaseToInterface() {
-    Apple apple = (Apple) foodItem;
+    CanEatRaw canEatRaw = (CanEatRaw) foodItem;
   }
-
+  
+  public void testBaseToInterfaceArrayElement() {
+    CanEatRaw[] canEatRawArray = new CanEatRaw[3];
+    canEatRawArray[1] = (CanEatRaw) foodItem;
+  }
+  
   public void testBaseToInterfaceMethod() {
-    Apple apple = (Apple) getFoodItem();
+    CanEatRaw canEatRaw = (CanEatRaw) getFoodItem();
   }
-
+ 
   @SuppressWarnings("cast")
   public void testBaseToInterfaceToConcreteCrazyInline() {
     Apple apple = (Apple) (CanEatRaw) (Food) new Apple();
@@ -85,6 +95,21 @@ public class ClassCastTest extends GWTTestCase {
     Apple apple = (Apple) foodItem;
   }
 
+  public void testDownCastToArrayElement() {
+    Apple[] appleArray = new Apple[3];
+    appleArray[2] = (Apple) foodItem;
+  }
+  
+  public void testDownCastToArrayArrayElement() {
+    Apple[][] appleArrayArray = new Apple[3][4];
+    appleArrayArray[2][2] = (Apple) foodItem;
+  }
+  
+  public void testArrayToArrayArrayElement() {
+    Apple[][] appleArrayArray = new Apple[3][5];
+    appleArrayArray[2] = (Apple[]) arrayOfApple;
+  }
+  
   public void testDownCastClassMethod() {
     Apple apple = (Apple) getFoodItem();
   }
@@ -93,6 +118,11 @@ public class ClassCastTest extends GWTTestCase {
     Apple apple = (Apple) rawFoodItem;
   }
 
+  public void testDownCastInterfaceToArrayElement() {
+    Apple[] appleArray = new Apple[3];
+    appleArray[2] = (Apple) rawFoodItem;
+  }
+  
   public void testDownCastInterfaceMethod() {
     Apple apple = (Apple) getRawFoodItem();
   }
@@ -108,7 +138,92 @@ public class ClassCastTest extends GWTTestCase {
   public void testInterfaceToBaseToConcreteMethod() {
     Apple apple = (Apple) getRawFoodAsFoodMethod();
   }
+  
+  public void testClassCastExceptionObjectToConcrete() {
+    try {
+      Apple apple = (Apple) drinkItem;
+      fail("Expected ClassCastException");
+    } catch (ClassCastException e) {
+      // expected
+    }
+  }
 
+  public void testClassCastExceptionToBase() {
+    try {
+      Food food = (Food) drinkItem;
+      fail("Expected ClassCastException");
+    } catch (ClassCastException e) {
+      // expected
+    }
+  }
+
+  public void testClassCastExceptionToInterface() {
+    try {
+      CanEatRaw canEatRaw = (CanEatRaw) drinkItem;
+      fail("Expected ClassCastException");
+    } catch (ClassCastException e) {
+      // expected
+    }
+  }
+
+  public void testClassCastExceptionArrayToConcrete() {
+    try {
+      Apple apple = (Apple) arrayOfWidget;
+      fail("Expected ClassCastException");
+    } catch (ClassCastException e) {
+      // expected
+    }
+  }
+  
+  public void testClassCastExceptionObjectToArray() {
+    try {
+      Apple[] appleArray = (Apple[]) drinkItem;
+      fail("Expected ClassCastException");
+    } catch (ClassCastException e) {
+      // expected
+    }
+  }
+  
+  public void testClassCastExceptionObjectToConcreteArrayElement() {
+    try {
+      Apple[] appleArray = new Apple[3];
+      appleArray[0] = (Apple) drinkItem;
+      fail("Expected ClassCastException");
+    } catch (ClassCastException e) {
+      // expected
+    }
+  }
+  
+  public void testArrayStoreExceptionObjectToConcreteArrayElement() {
+    try {
+      Object[] appleArray = new Apple[3];
+      appleArray[0] = drinkItem;
+      fail("Expected ArrayStoreException");
+    } catch (ArrayStoreException e) {
+      // expected
+    }
+  }
+  
+  public void testClassCastExceptionArrayToArrayArrayElement() {
+    try {
+      Apple[][] appleArrayArray = new Apple[3][4];
+      appleArrayArray[2] = (Apple[]) arrayOfWidget;
+      fail("Expected ClassCastException");
+    } catch (ClassCastException e) {
+      // expected
+    }
+  }
+  
+  public void testArrayStoreExceptionArrayToArrayArrayElement() {
+    try {
+      Object[][] appleArrayArray = new Apple[3][4];
+      appleArrayArray[2] = (Object[]) arrayOfWidget;
+      fail("Expected ArrayStoreException");
+    } catch (ArrayStoreException e) {
+      // expected
+    }
+  }
+  
   private CanEatRaw getFoodAsRawFoodField() {
     return (CanEatRaw) foodItem;
   }

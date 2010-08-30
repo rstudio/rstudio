@@ -103,6 +103,11 @@ public interface SymbolData extends Serializable {
   String getMemberName();
 
   /**
+   * Returns the queryId for castability comparisons.
+   */
+  int getQueryId();
+
+  /**
    * Returns the line number on which the symbol was originally declared or
    * <code>-1</code> if the line number is unknown.
    */
@@ -119,11 +124,6 @@ public interface SymbolData extends Serializable {
    * Returns the JavaScript symbol this data maps to.
    */
   String getSymbolName();
-
-  /**
-   * Returns the typeId or <code>0</code> if the type does not have a typeId.
-   */
-  int getTypeId();
 
   /**
    * Returns <code>true</code> if the symbol represents a class.
