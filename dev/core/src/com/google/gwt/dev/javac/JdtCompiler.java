@@ -15,10 +15,8 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.util.Name.BinaryName;
-import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -26,6 +24,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.compiler.ClassFile;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
@@ -67,6 +66,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -180,9 +180,13 @@ public class JdtCompiler {
     @Override
     public void process(CompilationUnitDeclaration cud, int i) {
       super.process(cud, i);
-      FindTypesInCud typeFinder = new FindTypesInCud();
-      cud.traverse(typeFinder, cud.scope);
-      List<CompiledClass> compiledClasses = typeFinder.getClasses();
+      ClassFile[] classFiles = cud.compilationResult().getClassFiles();
+      Map<ClassFile, CompiledClass> results = new LinkedHashMap<ClassFile, CompiledClass>();
+      for (ClassFile classFile : classFiles) {
+        createCompiledClass(classFile, results);
+      }
+      List<CompiledClass> compiledClasses = new ArrayList<CompiledClass>(
+          results.values());
       addBinaryTypes(compiledClasses);
 
       ICompilationUnit icu = cud.compilationResult().compilationUnit;
@@ -190,39 +194,25 @@ public class JdtCompiler {
       CompilationUnitBuilder builder = adapter.getBuilder();
       processor.process(builder, cud, compiledClasses);
     }
-  }
 
-  private class FindTypesInCud extends SafeASTVisitor {
-    Map<SourceTypeBinding, CompiledClass> map = new IdentityHashMap<SourceTypeBinding, CompiledClass>();
-
-    public List<CompiledClass> getClasses() {
-      return new ArrayList<CompiledClass>(map.values());
-    }
-
-    @Override
-    public boolean visit(TypeDeclaration typeDecl, ClassScope scope) {
-      CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
-      assert (enclosingClass != null);
-      CompiledClass newClass = new CompiledClass(typeDecl, enclosingClass);
-      map.put(typeDecl.binding, newClass);
-      return true;
-    }
-
-    @Override
-    public boolean visit(TypeDeclaration typeDecl, CompilationUnitScope scope) {
-      assert (typeDecl.binding.enclosingType() == null);
-      CompiledClass newClass = new CompiledClass(typeDecl, null);
-      map.put(typeDecl.binding, newClass);
-      return true;
-    }
-
-    @Override
-    public boolean visitValid(TypeDeclaration typeDecl, BlockScope scope) {
-      CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
-      assert (enclosingClass != null);
-      CompiledClass newClass = new CompiledClass(typeDecl, enclosingClass);
-      map.put(typeDecl.binding, newClass);
-      return true;
+    /**
+     * Recursively creates enclosing types first.
+     */
+    private void createCompiledClass(ClassFile classFile,
+        Map<ClassFile, CompiledClass> results) {
+      if (results.containsKey(classFile)) {
+        // Already created.
+        return;
+      }
+      CompiledClass enclosingClass = null;
+      if (classFile.enclosingClassFile != null) {
+        ClassFile enclosingClassFile = classFile.enclosingClassFile;
+        createCompiledClass(enclosingClassFile, results);
+        enclosingClass = results.get(enclosingClassFile);
+        assert enclosingClass != null;
+      }
+      CompiledClass result = new CompiledClass(classFile, enclosingClass);
+      results.put(classFile, result);
     }
   }
 

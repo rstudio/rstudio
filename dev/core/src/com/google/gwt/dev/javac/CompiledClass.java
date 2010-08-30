@@ -20,7 +20,6 @@ import com.google.gwt.dev.util.Name.InternalName;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ClassFile;
-import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
@@ -34,19 +33,6 @@ import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 public final class CompiledClass {
 
   private static final DiskCache diskCache = new DiskCache();
-
-  private static ClassFile getClassFile(TypeDeclaration typeDecl,
-      String binaryName) {
-    for (ClassFile tryClassFile : typeDecl.compilationResult().getClassFiles()) {
-      char[] tryBinaryName = CharOperation.concatWith(
-          tryClassFile.getCompoundName(), '/');
-      if (binaryName.equals(String.valueOf(tryBinaryName))) {
-        return tryClassFile;
-      }
-    }
-    assert false;
-    return null;
-  }
 
   /**
    * Returns <code>true</code> if this is a local type, or if this type is
@@ -75,11 +61,10 @@ public final class CompiledClass {
 
   private transient NameEnvironmentAnswer nameEnvironmentAnswer;
 
-  CompiledClass(TypeDeclaration typeDeclaration, CompiledClass enclosingClass) {
+  CompiledClass(ClassFile classFile, CompiledClass enclosingClass) {
     this.enclosingClass = enclosingClass;
-    SourceTypeBinding binding = typeDeclaration.binding;
+    SourceTypeBinding binding = classFile.referenceBinding;
     this.internalName = CharOperation.charToString(binding.constantPoolName());
-    ClassFile classFile = getClassFile(typeDeclaration, internalName);
     byte[] bytes = classFile.getBytes();
     this.cacheToken = diskCache.writeByteArray(bytes);
     this.isLocal = isLocalType(binding);

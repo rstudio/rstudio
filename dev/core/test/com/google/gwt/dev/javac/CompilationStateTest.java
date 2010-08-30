@@ -119,8 +119,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
         Shared.getTypeName(JavaResourceBase.FOO)) {
       @Override
       protected CharSequence getContent() {
-        return Shared.readSource(JavaResourceBase.FOO)
-            + "\ncompilation error LOL!";
+        return "compilation error LOL!";
       }
     };
     oracle.add(badFoo);
