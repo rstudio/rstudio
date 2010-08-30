@@ -212,7 +212,12 @@ A more lenient set of style checks for test cases, needed because test often nee
         <module name="MethodParamPad"/>
         <module name="NoWhitespaceBefore">
             <property name="severity" value="error"/>
-            <property name="tokens" value="SEMI,DOT,POST_DEC,POST_INC"/>
+            <property name="tokens" value="SEMI,POST_DEC,POST_INC"/>
+        </module>
+        <module name="NoWhitespaceBefore">
+            <property name="severity" value="error"/>
+            <property name="allowLineBreaks" value="true"/>
+            <property name="tokens" value="DOT"/>
         </module>
         <module name="RedundantModifier"/>
         <module name="EqualsHashCode"/>
