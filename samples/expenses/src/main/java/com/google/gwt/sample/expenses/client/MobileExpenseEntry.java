@@ -74,7 +74,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
   }
 
   public void create(ReportRecord report) {
-    expense = (ExpenseRecord) requestFactory.create(ExpenseRecord.class);
+    expense = requestFactory.create(ExpenseRecord.class);
     requestObject = requestFactory.expenseRequest().persist(expense);
     ExpenseRecord editableExpense = requestObject.edit(expense);
     editableExpense.setReport(report);

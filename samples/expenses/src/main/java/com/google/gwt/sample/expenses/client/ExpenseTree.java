@@ -21,7 +21,6 @@ import com.google.gwt.cell.client.IconCellDecorator;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Overflow;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
@@ -38,8 +37,6 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -132,7 +129,7 @@ public class ExpenseTree extends Composite {
     protected void onRangeChanged(HasData<EmployeeRecord> view) {
       Range range = view.getVisibleRange();
       requestFactory.employeeRequest().findEmployeeEntriesByDepartment(
-          department, range.getStart(), range.getLength()).forProperties(
+          department, range.getStart(), range.getLength()).with(
           getEmployeeMenuProperties()).fire(this);
     }
   }
@@ -186,7 +183,7 @@ public class ExpenseTree extends Composite {
     }
 
     public boolean isLeaf(Object value) {
-      return !isDepartment(value) || isAllDepartment(value);
+      return value != null && (!isDepartment(value) || isAllDepartment(value));
     }
   }
 
@@ -295,10 +292,9 @@ public class ExpenseTree extends Composite {
     tree.setAnimationEnabled(true);
   }
 
-  private Collection<Property<?>> getEmployeeMenuProperties() {
-    List<Property<?>> columns = new ArrayList<Property<?>>();
-    columns.add(EmployeeRecord.displayName);
-    columns.add(EmployeeRecord.userName);
-    return columns;
+  private String[] getEmployeeMenuProperties() {
+    return new String[]{
+        EmployeeRecord.displayName.getName(),
+        EmployeeRecord.userName.getName()};
   }
 }

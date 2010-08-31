@@ -16,7 +16,6 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
@@ -31,8 +30,6 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -192,11 +189,9 @@ public class MobileExpenseList extends Composite implements MobilePage {
     onRefresh(true);
   }
 
-  private Collection<Property<?>> getExpenseColumns() {
-    List<Property<?>> columns = new ArrayList<Property<?>>();
-    columns.add(ExpenseRecord.description);
-    columns.add(ExpenseRecord.amount);
-    return columns;
+  private String[] getExpenseColumns() {
+    return new String[]{
+        ExpenseRecord.description.getName(), ExpenseRecord.amount.getName()};
   }
 
   /**
@@ -239,7 +234,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
       }
     };
     requestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(ReportRecord.id)).forProperties(getExpenseColumns()).fire(
+        report.getRef(ReportRecord.id)).with(getExpenseColumns()).fire(
         lastReceiver);
   }
 }

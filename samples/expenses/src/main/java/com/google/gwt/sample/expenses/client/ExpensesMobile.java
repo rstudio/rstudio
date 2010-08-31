@@ -102,7 +102,6 @@ public class ExpensesMobile implements EntryPoint {
         ExpensesRequestFactory.class);
     requestFactory.init(eventBus);
 
-    final long finalEmployeeId = employeeId;
     requestFactory.employeeRequest().findEmployee(Value.of(employeeId)).fire(
         new Receiver<EmployeeRecord>() {
           public void onSuccess(EmployeeRecord employee,

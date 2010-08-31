@@ -83,7 +83,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
   }
 
   public void create(EmployeeRecord reporter) {
-    report = (ReportRecord) requestFactory.create(ReportRecord.class);
+    report = requestFactory.create(ReportRecord.class);
     requestObject = requestFactory.reportRequest().persist(report);
     ReportRecord editableReport = requestObject.edit(report);
     editableReport.setReporter(reporter);

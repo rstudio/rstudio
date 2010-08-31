@@ -16,7 +16,6 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
@@ -30,8 +29,6 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -133,11 +130,9 @@ public class MobileReportList extends Composite implements MobilePage {
     requestReports();
   }
 
-  private Collection<Property<?>> getReportColumns() {
-    List<Property<?>> columns = new ArrayList<Property<?>>();
-    columns.add(ReportRecord.created);
-    columns.add(ReportRecord.purpose);
-    return columns;
+  private String[] getReportColumns() {
+    return new String[]{
+        ReportRecord.created.getName(), ReportRecord.purpose.getName()};
   }
 
   private void requestReports() {
@@ -152,8 +147,8 @@ public class MobileReportList extends Composite implements MobilePage {
         reportDataProvider.updateRowData(0, newValues);
       }
     };
-    requestFactory.reportRequest().findReportEntriesBySearch(employee.getId(), "",
-        "", ReportRecord.created.getName() + " DESC", 0, 25).forProperties(
+    requestFactory.reportRequest().findReportEntriesBySearch(employee.getId(),
+        "", "", ReportRecord.created.getName() + " DESC", 0, 25).with(
         getReportColumns()).fire(lastReceiver);
   }
 }

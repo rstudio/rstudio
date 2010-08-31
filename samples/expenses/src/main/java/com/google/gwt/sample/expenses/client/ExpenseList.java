@@ -280,7 +280,9 @@ public class ExpenseList extends Composite
   /**
    * The columns to request with each report.
    */
-  private final List<Property<?>> reportColumns;
+  private final String[] reportColumns = new String[]{
+      ReportRecord.created.getName(), ReportRecord.purpose.getName(),
+      ReportRecord.notes.getName()};
 
   /**
    * The data provider that provides reports.
@@ -304,10 +306,6 @@ public class ExpenseList extends Composite
 
   public ExpenseList() {
     reports.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
-    reportColumns = new ArrayList<Property<?>>();
-    reportColumns.add(ReportRecord.created);
-    reportColumns.add(ReportRecord.purpose);
-    reportColumns.add(ReportRecord.notes);
 
     // Initialize the widget.
     createTable();
@@ -619,7 +617,7 @@ public class ExpenseList extends Composite
     };
 
     requestFactory.reportRequest().findReportEntriesBySearch(employeeId, dept,
-        startsWith, orderBy, range.getStart(), range.getLength()).forProperties(
+        startsWith, orderBy, range.getStart(), range.getLength()).with(
         reportColumns).fire(lastDataReceiver);
   }
 

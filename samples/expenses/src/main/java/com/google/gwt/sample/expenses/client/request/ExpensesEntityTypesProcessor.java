@@ -91,7 +91,7 @@ public abstract class ExpensesEntityTypesProcessor<T> {
   /**
    * Create an instance with the given default value.
    * 
-   * @param the value that will be returned by {@link #process} if
+   * @param defaultValue the value that will be returned by {@link #process} if
    *          {@link #setResult} is not called.
    */
   public ExpensesEntityTypesProcessor(T defaultValue) {

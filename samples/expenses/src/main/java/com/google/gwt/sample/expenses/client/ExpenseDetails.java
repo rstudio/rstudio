@@ -39,7 +39,6 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -74,7 +73,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -360,8 +358,6 @@ public class ExpenseDetails extends Composite
   @UiField
   Element costLabel;
 
-  ExpensesRequestFactory expensesRequestFactory;
-
   @UiField
   Element notes;
 
@@ -407,6 +403,8 @@ public class ExpenseDetails extends Composite
    * The label inside the error popup.
    */
   private final Label errorPopupMessage = new Label();
+
+  private ExpensesRequestFactory expensesRequestFactory;
 
   /**
    * The data provider that provides expense items.
@@ -520,8 +518,17 @@ public class ExpenseDetails extends Composite
   public void onReportChanged(ReportRecordChanged event) {
     ReportRecord changed = event.getRecord();
     if (report != null && report.getId().equals(changed.getId())) {
-      report = changed;
-      setNotesEditState(false, false, changed.getNotes());
+      // Request the updated report.
+      expensesRequestFactory.reportRequest().findReport(
+          report.getRef(ReportRecord.id)).with(
+          ReportRecord.notes.getName()).fire(new Receiver<ReportRecord>() {
+        @Override
+        public void onSuccess(
+            ReportRecord response, Set<SyncResult> syncResults) {
+          report = response;
+          setNotesEditState(false, false, response.getNotes());
+        }
+      });
     }
   }
 
@@ -861,15 +868,12 @@ public class ExpenseDetails extends Composite
   /**
    * Get the columns displayed in the expense table.
    */
-  private Collection<Property<?>> getExpenseColumns() {
-    List<Property<?>> columns = new ArrayList<Property<?>>();
-    columns.add(ExpenseRecord.amount);
-    columns.add(ExpenseRecord.approval);
-    columns.add(ExpenseRecord.category);
-    columns.add(ExpenseRecord.created);
-    columns.add(ExpenseRecord.description);
-    columns.add(ExpenseRecord.reasonDenied);
-    return columns;
+  private String[] getExpenseColumns() {
+    return new String[]{
+        ExpenseRecord.amount.getName(), ExpenseRecord.approval.getName(),
+        ExpenseRecord.category.getName(), ExpenseRecord.created.getName(),
+        ExpenseRecord.description.getName(),
+        ExpenseRecord.reasonDenied.getName()};
   }
 
   /**
@@ -933,8 +937,7 @@ public class ExpenseDetails extends Composite
       }
     };
     expensesRequestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(Record.id)).forProperties(getExpenseColumns()).fire(
-        lastReceiver);
+        report.getRef(Record.id)).with(getExpenseColumns()).fire(lastReceiver);
   }
 
   /**
