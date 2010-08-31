@@ -27,6 +27,7 @@ import com.google.gwt.uibinder.attributeparsers.TextAlignConstantParserTest;
 import com.google.gwt.uibinder.attributeparsers.VerticalAlignmentConstantParserTest;
 import com.google.gwt.uibinder.elementparsers.AbsolutePanelParserTest;
 import com.google.gwt.uibinder.elementparsers.DialogBoxParserTest;
+import com.google.gwt.uibinder.elementparsers.DisclosurePanelParserTest;
 import com.google.gwt.uibinder.elementparsers.DockLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.GridParserTest;
 import com.google.gwt.uibinder.elementparsers.ImageParserTest;
@@ -36,7 +37,9 @@ import com.google.gwt.uibinder.elementparsers.ListBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.MenuBarParserTest;
 import com.google.gwt.uibinder.elementparsers.MenuItemParserTest;
 import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
+import com.google.gwt.uibinder.elementparsers.StackPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
+import com.google.gwt.uibinder.elementparsers.TabPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.UIObjectParserTest;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsTest;
 import com.google.gwt.uibinder.rebind.FieldWriterOfGeneratedCssResourceTest;
@@ -86,6 +89,7 @@ public class UiBinderJreSuite {
     // elementparsers
     suite.addTestSuite(AbsolutePanelParserTest.class);
     suite.addTestSuite(DialogBoxParserTest.class);
+    suite.addTestSuite(DisclosurePanelParserTest.class);
     suite.addTestSuite(DockLayoutPanelParserTest.class);
     suite.addTestSuite(GridParserTest.class);
     suite.addTestSuite(ImageParserTest.class);
@@ -95,7 +99,9 @@ public class UiBinderJreSuite {
     suite.addTestSuite(MenuBarParserTest.class);
     suite.addTestSuite(MenuItemParserTest.class);
     suite.addTestSuite(StackLayoutPanelParserTest.class);
+    suite.addTestSuite(StackPanelParserTest.class);
     suite.addTestSuite(TabLayoutPanelParserTest.class);
+    suite.addTestSuite(TabPanelParserTest.class);
     suite.addTestSuite(UIObjectParserTest.class);
 
     return suite;

@@ -43,9 +43,6 @@ public class TabLayoutPanelParser implements ElementParser {
     // TabLayoutPanel requires tabBar size and unit ctor args.
 
     String size = panelElem.consumeRequiredDoubleAttribute("barHeight");
-    if ("".equals(size)) {
-      writer.die(panelElem, "barHeight attribute is required");
-    }
 
     JEnumType unitEnumType = writer.getOracle().findType(
         Unit.class.getCanonicalName()).isEnum();
@@ -84,8 +81,7 @@ public class TabLayoutPanelParser implements ElementParser {
         writer.addStatement("%s.add(%s, \"%s\", true);", fieldName,
             childFieldName, html);
       } else if (children.customHeader != null) {
-        XMLElement headerElement =
-          children.customHeader.consumeSingleChildElement();
+        XMLElement headerElement = children.customHeader.consumeSingleChildElement();
 
         if (!writer.isWidgetElement(headerElement)) {
           writer.die(headerElement, "Is not a widget");
@@ -110,20 +106,20 @@ public class TabLayoutPanelParser implements ElementParser {
       public Boolean interpretElement(XMLElement child)
           throws UnableToCompleteException {
 
-        if (hasTag(child, HEADER)) {
+        if (isElementType(elem, child, HEADER)) {
           assertFirstHeader();
           children.header = child;
           return true;
         }
 
-        if (hasTag(child, CUSTOM)) {
+        if (isElementType(elem, child, CUSTOM)) {
           assertFirstHeader();
           children.customHeader = child;
           return true;
         }
 
         // Must be the body, then
-        if (null != children.body) {
+        if (children.body != null) {
           writer.die(children.body, "May have only one body element");
         }
 
@@ -132,18 +128,10 @@ public class TabLayoutPanelParser implements ElementParser {
       }
 
       void assertFirstHeader() throws UnableToCompleteException {
-        if ((null != children.header) && (null != children.customHeader)) {
-          writer.die(elem, "May have only one %1$s:header "
-              + "or %1$s:customHeader", elem.getPrefix());
+        if (children.header != null || children.customHeader != null) {
+          writer.die(elem, "May have only one <%1$s:header> "
+              + "or <%1$s:customHeader>", elem.getPrefix());
         }
-      }
-
-      private boolean hasTag(XMLElement child, final String attribute) {
-        return rightNamespace(child) && child.getLocalName().equals(attribute);
-      }
-
-      private boolean rightNamespace(XMLElement child) {
-        return child.getNamespaceUri().equals(elem.getNamespaceUri());
       }
     });
 

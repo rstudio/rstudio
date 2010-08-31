@@ -107,6 +107,17 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource DISCLOSURE_PANEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.DisclosurePanel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class DisclosurePanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource DOCK_LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.DockLayoutPanel") {
     @Override
@@ -363,6 +374,17 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource STACK_PANEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.StackPanel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class StackPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource STYLE = new MockJavaResource(
       "com.google.gwt.dom.client.Style") {
     @Override
@@ -382,6 +404,17 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class TabLayoutPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource TAB_PANEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.TabPanel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class TabPanel extends Widget {\n");
       code.append("}\n");
       return code;
     }
@@ -459,6 +492,7 @@ public class UiJavaResources {
     rtn.add(CLICK_HANDLER);
     rtn.add(COMMAND);
     rtn.add(DIALOG_BOX);
+    rtn.add(DISCLOSURE_PANEL);
     rtn.add(DOCK_LAYOUT_PANEL);
     rtn.add(ELEMENT);
     rtn.add(EVENT_HANDLER);
@@ -480,8 +514,10 @@ public class UiJavaResources {
     rtn.add(MOUSE_OVER_HANDLER);
     rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STACK_LAYOUT_PANEL);
+    rtn.add(STACK_PANEL);
     rtn.add(STYLE);
     rtn.add(TAB_LAYOUT_PANEL);
+    rtn.add(TAB_PANEL);
     rtn.add(TEXT_BOX_BASE);
     rtn.add(UI_OBJECT);
     rtn.add(UI_BINDER);

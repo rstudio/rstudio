@@ -20,13 +20,10 @@ import com.google.gwt.uibinder.rebind.FieldWriter;
 
 import junit.framework.TestCase;
 
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * A unit test. Guess what of.
+ * Test for {@link StackLayoutPanelParser}.
  */
 public class StackLayoutPanelParserTest extends TestCase {
 
@@ -40,23 +37,115 @@ public class StackLayoutPanelParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new StackLayoutPanelParser());
   }
 
-  public void testBadChild() throws SAXException, IOException {
+  public void testBad_notStack() throws Exception {
     StringBuffer b = new StringBuffer();
     b.append("<g:StackLayoutPanel unit='EM'>");
-    b.append("  <g:west><foo/></g:west>");
+    b.append("  <div/>");
     b.append("</g:StackLayoutPanel>");
 
+    parseAndFail(b, "Only <g:stack> children are allowed");
+  }
+
+  public void testBad_noWidget() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:StackLayoutPanel unit='EM'>");
+    b.append("  <g:stack>");
+    b.append("  </g:stack>");
+    b.append("</g:StackLayoutPanel>");
+
+    parseAndFail(b, "Must have a child widget");
+  }
+
+  public void testBad_notWidget() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:StackLayoutPanel unit='EM'>");
+    b.append("  <g:stack>");
+    b.append("    <div/>");
+    b.append("  </g:stack>");
+    b.append("</g:StackLayoutPanel>");
+
+    parseAndFail(b, "Must be a widget");
+  }
+
+  public void testBad_twoWidgets() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:StackLayoutPanel unit='EM'>");
+    b.append("  <g:stack>");
+    b.append("    <g:Button/>");
+    b.append("    <g:Button/>");
+    b.append("  </g:stack>");
+    b.append("</g:StackLayoutPanel>");
+
+    parseAndFail(b, "May have only one body element");
+  }
+
+  public void testBad_noHeader() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:StackLayoutPanel unit='EM'>");
+    b.append("  <g:stack>");
+    b.append("    <g:Button/>");
+    b.append("  </g:stack>");
+    b.append("</g:StackLayoutPanel>");
+
+    parseAndFail(b, "Requires either a <g:header> or <g:customHeader>");
+  }
+
+  public void testBad_twoHeaders() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:StackLayoutPanel unit='EM'>");
+    b.append("  <g:stack>");
+    b.append("    <g:header size='3'>foo</g:header>");
+    b.append("    <g:header size='3'>bar</g:header>");
+    b.append("    <g:Button/>");
+    b.append("  </g:stack>");
+    b.append("</g:StackLayoutPanel>");
+
+    parseAndFail(b, "May have only one <g:header> or <g:customHeader>");
+  }
+
+  public void testBad_twoCustomHeaders() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:StackLayoutPanel unit='EM'>");
+    b.append("  <g:stack>");
+    b.append("    <g:customHeader size='3'><g:Label>111</g:Label></g:customHeader>");
+    b.append("    <g:customHeader size='3'><g:Label>222</g:Label></g:customHeader>");
+    b.append("    <g:Button/>");
+    b.append("  </g:stack>");
+    b.append("</g:StackLayoutPanel>");
+
+    parseAndFail(b, "May have only one <g:header> or <g:customHeader>");
+  }
+
+  public void testBad_withCustomHeader_notWidget() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:StackLayoutPanel unit='EM'>");
+    b.append("  <g:stack>");
+    b.append("    <g:customHeader size='3'><div/></g:customHeader>");
+    b.append("    <g:Button/>");
+    b.append("  </g:stack>");
+    b.append("</g:StackLayoutPanel>");
+
+    parseAndFail(b, "Is not a widget", "<div>");
+  }
+
+  /**
+   * Parses bad code in given {@link StringBuffer} and asserts that failure
+   * message has expected strings.
+   */
+  private void parseAndFail(StringBuffer b, String... expectedFailures)
+      throws Exception {
     try {
       tester.parse(b.toString());
       fail();
     } catch (UnableToCompleteException e) {
-      assertTrue("expect \"Only g:stack\" error", 
-          tester.logger.died.contains("Only <g:stack> children"));
+      String died = tester.logger.died;
+      for (String expectedFailure : expectedFailures) {
+        assertTrue(died, died.contains(expectedFailure));
+      }
     }
   }
 
-  public void testHappy() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testHappy() throws Exception {
     StringBuffer b = new StringBuffer();
     b.append("<g:StackLayoutPanel unit='PX'>");
     b.append("  <g:stack>");
@@ -71,24 +160,16 @@ public class StackLayoutPanelParserTest extends TestCase {
     b.append("  </g:stack>");
     b.append("</g:StackLayoutPanel>");
 
-    String[] expected = {
-        "fieldName.add(<g:Label id='able'>, \"Re<b>mark</b>able\", true, 3);",
-        "fieldName.add(<g:Label id='baker'>, " + "<g:Label id='custom'>, 3);",};
-
     FieldWriter w = tester.parse(b.toString());
     assertEquals("new " + PARSED_TYPE
         + "(com.google.gwt.dom.client.Style.Unit.PX)", w.getInitializer());
 
-    Iterator<String> i = tester.writer.statements.iterator();
-    for (String e : expected) {
-      assertEquals(e, i.next());
-    }
-    assertFalse(i.hasNext());
-    assertNull(tester.logger.died);
+    assertStatements(
+        "fieldName.add(<g:Label id='able'>, \"Re<b>mark</b>able\", true, 3);",
+        "fieldName.add(<g:Label id='baker'>, " + "<g:Label id='custom'>, 3);");
   }
 
-  public void testNoUnits() throws SAXException, IOException,
-      UnableToCompleteException {
+  public void testNoUnits() throws Exception {
     StringBuffer b = new StringBuffer();
     b.append("  <g:StackLayoutPanel>");
     b.append("  </g:StackLayoutPanel>");
@@ -97,7 +178,15 @@ public class StackLayoutPanelParserTest extends TestCase {
     assertEquals("new " + PARSED_TYPE
         + "(com.google.gwt.dom.client.Style.Unit.PX)", w.getInitializer());
 
+    assertStatements();
+  }
+
+  private void assertStatements(String... expected) {
     Iterator<String> i = tester.writer.statements.iterator();
+    for (String e : expected) {
+      assertEquals(e, i.next());
+    }
     assertFalse(i.hasNext());
+    assertNull(tester.logger.died);
   }
 }

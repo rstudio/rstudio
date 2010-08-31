@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,17 +47,16 @@ public class StackLayoutPanelParser implements ElementParser {
         unitEnumType);
 
     writer.setFieldInitializerAsConstructor(fieldName,
-        writer.getOracle().findType(StackLayoutPanel.class.getName()),
-        unit);
+        writer.getOracle().findType(StackLayoutPanel.class.getName()), unit);
 
     // Parse children.
     for (XMLElement stackElem : panelElem.consumeChildElements()) {
       // Get the stack element.
       if (!isElementType(panelElem, stackElem, STACK)) {
-        writer.die(stackElem, "Only <%s:%s> children are allowed.", 
+        writer.die(stackElem, "Only <%s:%s> children are allowed.",
             panelElem.getPrefix(), STACK);
       }
-      
+
       // Find all the children of the <stack>.
       Children children = findChildren(stackElem, writer);
 
@@ -79,8 +78,7 @@ public class StackLayoutPanelParser implements ElementParser {
         writer.addStatement("%s.add(%s, \"%s\", true, %s);", fieldName,
             childFieldName, html, size);
       } else if (children.customHeader != null) {
-        XMLElement headerElement =
-          children.customHeader.consumeSingleChildElement();
+        XMLElement headerElement = children.customHeader.consumeSingleChildElement();
         String size = children.customHeader.consumeRequiredDoubleAttribute("size");
         if (!writer.isWidgetElement(headerElement)) {
           writer.die(headerElement, "Is not a widget");
@@ -97,53 +95,45 @@ public class StackLayoutPanelParser implements ElementParser {
     }
   }
 
-private Children findChildren(final XMLElement elem,
-    final UiBinderWriter writer) throws UnableToCompleteException {
-  final Children children = new Children();
+  private Children findChildren(final XMLElement elem,
+      final UiBinderWriter writer) throws UnableToCompleteException {
+    final Children children = new Children();
 
-  elem.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
-    public Boolean interpretElement(XMLElement child)
-        throws UnableToCompleteException {
+    elem.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
+      public Boolean interpretElement(XMLElement child)
+          throws UnableToCompleteException {
 
-      if (hasTag(child, HEADER)) {
-        assertFirstHeader();
-        children.header = child;
+        if (isElementType(elem, child, HEADER)) {
+          assertFirstHeader();
+          children.header = child;
+          return true;
+        }
+
+        if (isElementType(elem, child, CUSTOM)) {
+          assertFirstHeader();
+          children.customHeader = child;
+          return true;
+        }
+
+        // Must be the body, then
+        if (children.body != null) {
+          writer.die(children.body, "May have only one body element");
+        }
+
+        children.body = child;
         return true;
       }
 
-      if (hasTag(child, CUSTOM)) {
-        assertFirstHeader();
-        children.customHeader = child;
-        return true;
+      void assertFirstHeader() throws UnableToCompleteException {
+        if (children.header != null || children.customHeader != null) {
+          writer.die(elem, "May have only one <%1$s:header> "
+              + "or <%1$s:customHeader>", elem.getPrefix());
+        }
       }
+    });
 
-      // Must be the body, then
-      if (null != children.body) {
-        writer.die(children.body, "May have only one body element");
-      }
-
-      children.body = child;
-      return true;
-    }
-
-    void assertFirstHeader() throws UnableToCompleteException {
-      if ((null != children.header) && (null != children.customHeader)) {
-        writer.die(elem, "May have only one %2$s:header "
-            + "or %2$s:customHeader", elem.getPrefix());
-      }
-    }
-
-    private boolean hasTag(XMLElement child, final String attribute) {
-      return rightNamespace(child) && child.getLocalName().equals(attribute);
-    }
-
-    private boolean rightNamespace(XMLElement child) {
-      return child.getNamespaceUri().equals(elem.getNamespaceUri());
-    }
-  });
-
-  return children;
-}
+    return children;
+  }
 
   private boolean isElementType(XMLElement parent, XMLElement child, String type) {
     return parent.getNamespaceUri().equals(child.getNamespaceUri())

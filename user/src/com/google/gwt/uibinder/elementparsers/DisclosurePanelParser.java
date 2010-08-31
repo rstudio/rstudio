@@ -41,16 +41,16 @@ public class DisclosurePanelParser implements ElementParser {
       throws UnableToCompleteException {
     Children children = findChildren(panelElem, writer);
 
-    if (null != children.body) {
+    if (children.body != null) {
       if (!writer.isWidgetElement(children.body)) {
         writer.die(children.body, "Must be a widget");
       }
 
       String bodyField = writer.parseElementToField(children.body);
-      writer.addInitStatement("%s.add(%s);", panelField, bodyField);
+      writer.addStatement("%s.add(%s);", panelField, bodyField);
     }
 
-    if (null != children.customHeader) {
+    if (children.customHeader != null) {
       XMLElement headerElement = children.customHeader.consumeSingleChildElement();
 
       if (!writer.isWidgetElement(headerElement)) {
@@ -58,16 +58,16 @@ public class DisclosurePanelParser implements ElementParser {
       }
 
       String headerField = writer.parseElementToField(headerElement);
-      writer.addInitStatement("%s.setHeader(%s);", panelField, headerField);
+      writer.addStatement("%s.setHeader(%s);", panelField, headerField);
     }
 
-    if (null != children.header) {
+    if (children.header != null) {
       String openImage = children.header.consumeImageResourceAttribute(OPEN_IMAGE);
       String closedImage = children.header.consumeImageResourceAttribute(CLOSED_IMAGE);
       String headerText = children.header.consumeInnerTextEscapedAsHtmlStringLiteral(new TextInterpreter(
           writer));
 
-      if ((openImage == null) ^ (closedImage == null)) {
+      if (openImage == null ^ closedImage == null) {
         writer.die(children.header,
             "Both %s and %s must be specified, or neither", OPEN_IMAGE,
             CLOSED_IMAGE);
@@ -79,8 +79,8 @@ public class DisclosurePanelParser implements ElementParser {
             "new %s(%s, %s, \"%s\")", panelTypeName, openImage, closedImage,
             headerText));
       } else {
-        writer.setFieldInitializer(panelField, String.format("new %s(\"%s\")",
-            panelTypeName, headerText));
+        writer.setFieldInitializer(panelField,
+            String.format("new %s(\"%s\")", panelTypeName, headerText));
       }
     }
   }
@@ -93,20 +93,20 @@ public class DisclosurePanelParser implements ElementParser {
       public Boolean interpretElement(XMLElement child)
           throws UnableToCompleteException {
 
-        if (hasAttribute(child, HEADER)) {
+        if (hasTag(child, HEADER)) {
           assertFirstHeader();
           children.header = child;
           return true;
         }
 
-        if (hasAttribute(child, CUSTOM)) {
+        if (hasTag(child, CUSTOM)) {
           assertFirstHeader();
           children.customHeader = child;
           return true;
         }
 
         // Must be the body, then
-        if (null != children.body) {
+        if (children.body != null) {
           writer.die(elem, "May have only one body element");
         }
 
@@ -115,18 +115,15 @@ public class DisclosurePanelParser implements ElementParser {
       }
 
       void assertFirstHeader() throws UnableToCompleteException {
-        if ((null != children.header) && (null != children.customHeader)) {
-          writer.die(elem, "May have only one %2$s:header "
-              + "or %2$s:customHeader", elem.getPrefix());
+        if (children.header != null || children.customHeader != null) {
+          writer.die(elem, "May have only one <%1$s:header> "
+              + "or <%1$s:customHeader>", elem.getPrefix());
         }
       }
 
-      private boolean hasAttribute(XMLElement child, final String attribute) {
-        return rightNamespace(child) && child.getLocalName().equals(attribute);
-      }
-
-      private boolean rightNamespace(XMLElement child) {
-        return child.getNamespaceUri().equals(elem.getNamespaceUri());
+      private boolean hasTag(XMLElement child, String tag) {
+        return elem.getNamespaceUri().equals(child.getNamespaceUri())
+            && tag.equals(child.getLocalName());
       }
     });
 

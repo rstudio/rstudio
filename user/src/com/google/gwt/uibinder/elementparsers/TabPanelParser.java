@@ -28,57 +28,65 @@ public class TabPanelParser implements ElementParser {
   private static final String TAG_TAB = "Tab";
   private static final String TAG_TABHTML = "TabHTML";
 
-  public void parse(XMLElement elem, String fieldName, JClassType type,
+  public void parse(XMLElement panelElem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-    writer.warn(elem,
+    writer.warn(panelElem,
         "%1$s:%2$s is deprecated. Use the %1$s:TabLayoutPanel instead.",
-        elem.getPrefix(), elem.getLocalName());
+        panelElem.getPrefix(), panelElem.getLocalName());
     // Parse children.
-    for (XMLElement child : elem.consumeChildElements()) {
+    for (XMLElement tabElem : panelElem.consumeChildElements()) {
       // TabPanel can only contain Tab elements.
-      String ns = child.getNamespaceUri();
-      String tagName = child.getLocalName();
-
-      if (!ns.equals(elem.getNamespaceUri())) {
-        writer.die(elem, "Invalid TabPanel child namespace: " + ns);
-      }
-      if (!tagName.equals(TAG_TAB)) {
-        writer.die(elem, "Invalid TabPanel child element: " + tagName);
+      if (!isElementType(panelElem, tabElem, TAG_TAB)) {
+        writer.die(tabElem, "Only <%s:%s> children are allowed.",
+            panelElem.getPrefix(), TAG_TAB);
       }
 
-      // Get the caption, if any.
-      String tabCaption = "";
-      if (child.hasAttribute("text")) {
-        tabCaption = child.consumeRawAttribute("text");
-      }
+      // Get the caption, or null if there is none
+      String tabCaption = tabElem.consumeStringAttribute("text");
 
       // Get the single required child widget.
       String tabHTML = null;
       String childFieldName = null;
-      for (XMLElement tabChild : child.consumeChildElements()) {
+      for (XMLElement tabChild : tabElem.consumeChildElements()) {
         if (tabChild.getLocalName().equals(TAG_TABHTML)) {
+          if (tabCaption != null || tabHTML != null) {
+            writer.die(tabElem,
+                "May have only one \"text\" attribute or <%1$s:%2$s>",
+                tabElem.getPrefix(), TAG_TABHTML);
+          }
           HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
               writer, fieldName);
           tabHTML = tabChild.consumeInnerHtml(interpreter);
         } else {
           if (childFieldName != null) {
-            writer.die(elem, "%s may only have a single child widget", child);
+            writer.die(tabChild, "May only have a single child widget");
+          }
+          if (!writer.isWidgetElement(tabChild)) {
+            writer.die(tabChild, "Must be a widget");
           }
           childFieldName = writer.parseElementToField(tabChild);
         }
       }
 
       if (childFieldName == null) {
-        writer.die(elem, "%s must have a child widget", child);
+        writer.die(tabElem, "Must have a child widget");
       }
-
       if (tabHTML != null) {
         writer.addStatement("%1$s.add(%2$s, \"%3$s\", true);", fieldName,
             childFieldName, tabHTML);
+      } else if (tabCaption != null) {
+        writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName, childFieldName,
+            tabCaption);
       } else {
-        writer.addStatement("%1$s.add(%2$s, \"%3$s\");", fieldName,
-            childFieldName, tabCaption);
+        writer.die(tabElem,
+            "Requires either a \"text\" attribute or <%1$s:%2$s>",
+            tabElem.getPrefix(), TAG_TABHTML);
       }
     }
+  }
+
+  private boolean isElementType(XMLElement parent, XMLElement child, String type) {
+    return parent.getNamespaceUri().equals(child.getNamespaceUri())
+        && type.equals(child.getLocalName());
   }
 }

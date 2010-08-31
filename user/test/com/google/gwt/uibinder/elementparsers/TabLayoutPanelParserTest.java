@@ -20,13 +20,10 @@ import com.google.gwt.uibinder.rebind.FieldWriter;
 
 import junit.framework.TestCase;
 
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * A unit test. Guess what of.
+ * Test for {@link TabLayoutPanelParser}.
  */
 public class TabLayoutPanelParserTest extends TestCase {
 
@@ -40,22 +37,122 @@ public class TabLayoutPanelParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new TabLayoutPanelParser());
   }
 
-  public void testBadChild() throws SAXException, IOException {
+  public void testBad_noBarHeight() throws Exception {
     StringBuffer b = new StringBuffer();
-    b.append("<g:TabLayoutPanel unit='EM'>");
-    b.append("  <g:west><foo/></g:west>");
+    b.append("<g:TabLayoutPanel/>");
+
+    parseAndFail(b, "Missing required attribute", "barHeight");
+  }
+
+  public void testBad_notTab() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:TabLayoutPanel barHeight='2'>");
+    b.append("  <div/>");
     b.append("</g:TabLayoutPanel>");
 
+    parseAndFail(b, "Only <g:tab> children are allowed");
+  }
+
+  public void testBad_noWidget() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:TabLayoutPanel barHeight='2'>");
+    b.append("  <g:tab>");
+    b.append("  </g:tab>");
+    b.append("</g:TabLayoutPanel>");
+
+    parseAndFail(b, "Must have a child widget");
+  }
+
+  public void testBad_notWidget() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:TabLayoutPanel barHeight='2'>");
+    b.append("  <g:tab>");
+    b.append("    <div/>");
+    b.append("  </g:tab>");
+    b.append("</g:TabLayoutPanel>");
+
+    parseAndFail(b, "Must be a widget");
+  }
+
+  public void testBad_twoWidgets() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:TabLayoutPanel barHeight='2'>");
+    b.append("  <g:tab>");
+    b.append("    <g:Button/>");
+    b.append("    <g:Button/>");
+    b.append("  </g:tab>");
+    b.append("</g:TabLayoutPanel>");
+
+    parseAndFail(b, "May have only one body element");
+  }
+
+  public void testBad_noHeader() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:TabLayoutPanel barHeight='2'>");
+    b.append("  <g:tab>");
+    b.append("    <g:Button/>");
+    b.append("  </g:tab>");
+    b.append("</g:TabLayoutPanel>");
+
+    parseAndFail(b, "Requires either a <g:header> or <g:customHeader>");
+  }
+
+  public void testBad_twoHeaders() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:TabLayoutPanel barHeight='2'>");
+    b.append("  <g:tab>");
+    b.append("    <g:header size='3'>foo</g:header>");
+    b.append("    <g:header size='3'>bar</g:header>");
+    b.append("    <g:Button/>");
+    b.append("  </g:tab>");
+    b.append("</g:TabLayoutPanel>");
+
+    parseAndFail(b, "May have only one <g:header> or <g:customHeader>");
+  }
+
+  public void testBad_twoCustomHeaders() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:TabLayoutPanel barHeight='2'>");
+    b.append("  <g:tab>");
+    b.append("    <g:customHeader size='3'><g:Label>foo</g:Label></g:customHeader>");
+    b.append("    <g:customHeader size='3'><g:Label>bar</g:Label></g:customHeader>");
+    b.append("    <g:Button/>");
+    b.append("  </g:tab>");
+    b.append("</g:TabLayoutPanel>");
+
+    parseAndFail(b, "May have only one <g:header> or <g:customHeader>");
+  }
+
+  public void testBad_customHeader_notWidget() throws Exception {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:TabLayoutPanel barHeight='2'>");
+    b.append("  <g:tab>");
+    b.append("    <g:customHeader size='3'><div/></g:customHeader>");
+    b.append("    <g:Button/>");
+    b.append("  </g:tab>");
+    b.append("</g:TabLayoutPanel>");
+
+    parseAndFail(b, "Is not a widget", "<div>");
+  }
+
+  /**
+   * Parses bad code in given {@link StringBuffer} and asserts that failure
+   * message has expected strings.
+   */
+  private void parseAndFail(StringBuffer b, String... expectedFailures)
+      throws Exception {
     try {
       tester.parse(b.toString());
       fail();
     } catch (UnableToCompleteException e) {
-      assertNotNull(tester.logger.died);
+      String died = tester.logger.died;
+      for (String expectedFailure : expectedFailures) {
+        assertTrue(died, died.contains(expectedFailure));
+      }
     }
   }
 
-  public void testHappy() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testHappy() throws Exception {
     StringBuffer b = new StringBuffer();
     b.append("<g:TabLayoutPanel barUnit='PX' barHeight='30'>");
     b.append("  <g:tab>");
@@ -86,8 +183,7 @@ public class TabLayoutPanelParserTest extends TestCase {
     assertNull(tester.logger.died);
   }
 
-  public void testNoUnits() throws SAXException, IOException,
-      UnableToCompleteException {
+  public void testNoUnits() throws Exception {
     StringBuffer b = new StringBuffer();
     b.append("<g:TabLayoutPanel barHeight='3'>");
     b.append("  </g:TabLayoutPanel>");
