@@ -891,8 +891,8 @@ public class UiBinderWriter implements Statements {
       /*
        * And initialize the field
        */
-      niceWriter.write("owner.%1$s = %2$s;", ownerField.getName(),
-          templateField);
+      niceWriter.write(designTime.getOwnerCheck() + "owner.%1$s = %2$s;",
+          ownerField.getName(), templateField);
     } else {
       /*
        * But with @UiField(provided=true) the user builds it, so reverse the
@@ -1149,9 +1149,11 @@ public class UiBinderWriter implements Statements {
 
       } else {
         // ownerField was not found as bundle resource or widget, must die.
-        die("Template %s has no %s attribute for %s.%s#%s", templatePath,
-            getUiFieldAttributeName(), uiOwnerType.getPackage().getName(),
-            uiOwnerType.getName(), fieldName);
+        if (!designTime.shouldIgnoreNoUiFieldAttribute()) {
+          die("Template %s has no %s attribute for %s.%s#%s", templatePath,
+              getUiFieldAttributeName(), uiOwnerType.getPackage().getName(),
+              uiOwnerType.getName(), fieldName);
+        }
       }
     }
   }

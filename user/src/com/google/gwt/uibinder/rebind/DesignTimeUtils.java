@@ -34,6 +34,13 @@ public interface DesignTimeUtils {
   String getImplName(String implName);
 
   /**
+   * @return the source to check that "owner" is not <code>null</code>. Problem
+   *         is that at design time we render template without owner, so can not
+   *         provide it.
+   */
+  String getOwnerCheck();
+
+  /**
    * @return the path of given {@link Element}.
    */
   String getPath(Element element);
@@ -65,6 +72,16 @@ public interface DesignTimeUtils {
    * s.
    */
   void rememberPathForElements(Document doc);
+
+  /**
+   * @return <code>true</code> if absence of "ui:field" attribute for
+   *         corresponding "@UiField" declaration is OK. Problem is that at
+   *         design time we create {@link ClassLoader} only once and can not
+   *         refresh Java type. So, when user asks to remove "ui:field" we
+   *         update both template and Java, but generator does not know about
+   *         Java change.
+   */
+  boolean shouldIgnoreNoUiFieldAttribute();
 
   /**
    * Writes remembered values of attributes.

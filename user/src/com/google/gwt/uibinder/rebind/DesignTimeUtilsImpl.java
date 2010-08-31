@@ -51,6 +51,10 @@ public class DesignTimeUtilsImpl implements DesignTimeUtils {
     return implName + "_designTime" + System.currentTimeMillis();
   }
 
+  public String getOwnerCheck() {
+    return "if (owner != null) ";
+  }
+
   public String getPath(Element element) {
     return elementPaths.get(element);
   }
@@ -90,6 +94,10 @@ public class DesignTimeUtilsImpl implements DesignTimeUtils {
 
   public void rememberPathForElements(Document doc) {
     rememberPathForElements(doc.getDocumentElement(), "0");
+  }
+
+  public boolean shouldIgnoreNoUiFieldAttribute() {
+    return true;
   }
 
   public void writeAttributes(Statements writer) {

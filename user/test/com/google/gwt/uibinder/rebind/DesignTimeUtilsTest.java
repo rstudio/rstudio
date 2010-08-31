@@ -185,6 +185,20 @@ public class DesignTimeUtilsTest extends TestCase {
   }
 
   /**
+   * Test for {@link DesignTimeUtils#getOwnerCheck()}.
+   */
+  public void test_getOwnerCheck_default() throws Exception {
+    assertEquals("", stub.getOwnerCheck());
+  }
+
+  /**
+   * Test for {@link DesignTimeUtils#getOwnerCheck()}.
+   */
+  public void test_getOwnerCheck_designTime() throws Exception {
+    assertEquals("if (owner != null) ", impl.getOwnerCheck());
+  }
+
+  /**
    * Test for {@link DesignTimeUtils#putAttribute(XMLElement, String, String)}
    * and {@link DesignTimeUtils#writeAttributes(Statements)}.
    */
@@ -310,4 +324,18 @@ public class DesignTimeUtilsTest extends TestCase {
       statements.add(String.format(format, args));
     }
   };
+
+  /**
+   * Test for {@link DesignTimeUtils#shouldIgnoreNoUiFieldAttribute()}.
+   */
+  public void test_shouldIgnoreNoUiFieldAttribute_default() throws Exception {
+    assertFalse(stub.shouldIgnoreNoUiFieldAttribute());
+  }
+
+  /**
+   * Test for {@link DesignTimeUtils#shouldIgnoreNoUiFieldAttribute()}.
+   */
+  public void test_shouldIgnoreNoUiFieldAttribute_designTime() throws Exception {
+    assertTrue(impl.shouldIgnoreNoUiFieldAttribute());
+  }
 }
