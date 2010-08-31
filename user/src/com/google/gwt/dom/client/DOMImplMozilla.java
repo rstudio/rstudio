@@ -66,6 +66,9 @@ class DOMImplMozilla extends DOMImplStandard {
     // elements). Trying to access relatedTarget.nodeName will throw an
     // exception if it's a XUL element.
     var relatedTarget = evt.relatedTarget;
+    if (!relatedTarget) {
+      return null;
+    }
     try {
       var nodeName = relatedTarget.nodeName;
       return relatedTarget;
