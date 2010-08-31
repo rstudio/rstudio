@@ -450,7 +450,8 @@ class ImageBundleBuilder {
     BufferedImage bundledImage = new BufferedImage(size.width, size.height,
         BufferedImage.TYPE_INT_ARGB_PRE);
     SpeedTracerLogger.Event createGraphicsEvent =
-      SpeedTracerLogger.start(CompilerEventType.GRAPHICS_INIT);
+      SpeedTracerLogger.start(CompilerEventType.GRAPHICS_INIT,
+          "java.awt.headless", System.getProperty("java.awt.headless"));
     Graphics2D g2d = bundledImage.createGraphics();
     createGraphicsEvent.end();
 

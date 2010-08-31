@@ -72,6 +72,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -372,6 +373,25 @@ public class Precompile {
   }
 
   /**
+   * Creates a Graphics2D context in a thread in order to go ahead and get first
+   * time initialization out of the way. Delays ranging from 200ms to 6s have
+   * been observed when initializing the library.
+   */
+  private static class GraphicsInitThread extends Thread {
+    public GraphicsInitThread() {
+      // We don't care if the program finishes before the initialization ends.
+      setDaemon(true);
+    }
+    public void run() {
+      SpeedTracerLogger.Event createGraphicsEvent = SpeedTracerLogger.start(
+          CompilerEventType.GRAPHICS_INIT, "java.awt.headless",
+          System.getProperty("java.awt.headless"));
+      GraphicsEnvironment.getLocalGraphicsEnvironment();
+      createGraphicsEvent.end();
+    }
+  };
+
+  /**
    * The file name for the result of Precompile.
    */
   public static final String PRECOMPILE_FILENAME = "precompilation.ser";
@@ -498,6 +518,11 @@ public class Precompile {
       PropertyPermutations allPermutations, File genDir, File dumpSignatureFile) {
 
     Event precompileEvent = SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
+
+    // This initializes the Java2D library in a thread so that the main program
+    // doesn't block when the library is accessed for the first time.
+    new GraphicsInitThread().start();
+
     try {
       CompilationState compilationState = module.getCompilationState(logger);
       if (dumpSignatureFile != null) {
