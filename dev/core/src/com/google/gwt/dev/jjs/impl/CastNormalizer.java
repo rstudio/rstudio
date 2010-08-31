@@ -99,7 +99,7 @@ public class CastNormalizer {
 
       // do String first (which will pull in Object also, it's superclass).
       computeSourceType(program.getTypeJavaLangString());
-      assert (castableTypeMaps.size() == 3);
+      assert (castableTypeMaps.size() == 2);
 
       /*
        * Compute the list of classes than can successfully satisfy cast
