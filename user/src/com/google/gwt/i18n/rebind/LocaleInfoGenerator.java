@@ -15,6 +15,8 @@
  */
 package com.google.gwt.i18n.rebind;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
@@ -117,47 +119,6 @@ public class LocaleInfoGenerator extends Generator {
     Arrays.sort(allLocales);
     PrintWriter pw = context.tryCreate(logger, packageName, superClassName);
     if (pw != null) {
-      String qualName = packageName + "." + superClassName;
-      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-          packageName, superClassName);
-      factory.setSuperclass(targetClass.getQualifiedSourceName());
-      factory.addImport("com.google.gwt.core.client.JavaScriptObject");
-      SourceWriter writer = factory.createSourceWriter(context, pw);
-      writer.println("private JavaScriptObject nativeDisplayNames;");
-      writer.println();
-      writer.println("@Override");
-      writer.println("public String[] getAvailableLocaleNames() {");
-      writer.println("  return new String[] {");
-      boolean hasAnyRtl = false;
-      for (GwtLocaleImpl possibleLocale : allLocales) {
-        writer.println("    \""
-            + possibleLocale.toString().replaceAll("\"", "\\\"") + "\",");
-        if (RTL_LOCALES.contains(
-            possibleLocale.getCanonicalForm().getLanguage())) {
-          hasAnyRtl = true;
-        }
-      }
-      writer.println("  };");
-      writer.println("}");
-      writer.println();
-      writer.println("@Override");
-      writer.println("public native String getLocaleNativeDisplayName(String localeName) /*-{");
-      writer.println("  this.@" + qualName + "::ensureNativeDisplayNames()();");
-      writer.println("  return this.@" + qualName
-          + "::nativeDisplayNames[localeName];");
-      writer.println("}-*/;");
-      writer.println();
-      writer.println("@Override");
-      writer.println("public boolean hasAnyRTL() {");
-      writer.println("  return " + hasAnyRtl + ";");
-      writer.println("}");
-      writer.println();
-      writer.println("private native void ensureNativeDisplayNames() /*-{");
-      writer.println("  if (this.@" + qualName
-          + "::nativeDisplayNames != null) {");
-      writer.println("    return;");
-      writer.println("  }");
-      writer.println("  this.@" + qualName + "::nativeDisplayNames = {");
       LocalizedProperties displayNames = new LocalizedProperties();
       LocalizedProperties displayNamesManual = new LocalizedProperties();
       LocalizedProperties displayNamesOverride = new LocalizedProperties();
@@ -184,28 +145,101 @@ public class LocaleInfoGenerator extends Generator {
             e);
         throw new UnableToCompleteException();
       }
-      boolean needComma = false;
+
+      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
+          packageName, superClassName);
+      factory.setSuperclass(targetClass.getQualifiedSourceName());
+      factory.addImport(GWT.class.getCanonicalName());
+      factory.addImport(JavaScriptObject.class.getCanonicalName());
+      factory.addImport(HashMap.class.getCanonicalName());
+      SourceWriter writer = factory.createSourceWriter(context, pw);
+      writer.println("private static native String getLocaleNativeDisplayName(");
+      writer.println("    JavaScriptObject nativeDisplayNamesNative,String localeName) /*-{");
+      writer.println("  return nativeDisplayNamesNative[localeName];");
+      writer.println("}-*/;");
+      writer.println();
+      writer.println("HashMap<String,String> nativeDisplayNamesJava;");
+      writer.println("private JavaScriptObject nativeDisplayNamesNative;");
+      writer.println();
+      writer.println("@Override");
+      writer.println("public String[] getAvailableLocaleNames() {");
+      writer.println("  return new String[] {");
+      boolean hasAnyRtl = false;
       for (GwtLocaleImpl possibleLocale : allLocales) {
-        String localeName = possibleLocale.toString();
-        String displayName = displayNamesOverride.getProperty(localeName);
-        if (displayName == null) {
-          displayName = displayNamesManual.getProperty(localeName);
-        }
-        if (displayName == null) {
-          displayName = displayNames.getProperty(localeName);
-        }
-        if (displayName != null && displayName.length() != 0) {
-          localeName = quoteQuotes(localeName);
-          displayName = quoteQuotes(displayName);
-          if (needComma) {
-            writer.println(",");
-          }
-          writer.print("    \"" + localeName + "\": \"" + displayName + "\"");
-          needComma = true;
+        writer.println("    \""
+            + possibleLocale.toString().replaceAll("\"", "\\\"") + "\",");
+        if (RTL_LOCALES.contains(
+            possibleLocale.getCanonicalForm().getLanguage())) {
+          hasAnyRtl = true;
         }
       }
-      if (needComma) {
-        writer.println();
+      writer.println("  };");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("public String getLocaleNativeDisplayName(String localeName) {");
+      writer.println("  if (GWT.isScript()) {");
+      writer.println("    if (nativeDisplayNamesNative == null) {");
+      writer.println("      nativeDisplayNamesNative = loadNativeDisplayNamesNative();");
+      writer.println("    }");
+      writer.println("    return getLocaleNativeDisplayName(nativeDisplayNamesNative, localeName);");
+      writer.println("  } else {");
+      writer.println("    if (nativeDisplayNamesJava == null) {");
+      writer.println("      nativeDisplayNamesJava = new HashMap<String, String>();");
+      {
+        for (GwtLocaleImpl possibleLocale : allLocales) {
+          String localeName = possibleLocale.toString();
+          String displayName = displayNamesOverride.getProperty(localeName);
+          if (displayName == null) {
+            displayName = displayNamesManual.getProperty(localeName);
+          }
+          if (displayName == null) {
+            displayName = displayNames.getProperty(localeName);
+          }
+          if (displayName != null && displayName.length() != 0) {
+            localeName = quoteQuotes(localeName);
+            displayName = quoteQuotes(displayName);
+            writer.println("      nativeDisplayNamesJava.put(\"" + localeName + "\", \"" + displayName + "\");");
+          }
+        }
+      }
+
+      writer.println("    }");
+      writer.println("    return nativeDisplayNamesJava.get(localeName);");
+      writer.println("  }");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("public boolean hasAnyRTL() {");
+      writer.println("  return " + hasAnyRtl + ";");
+      writer.println("}");
+      writer.println();
+      writer.println("private native JavaScriptObject loadNativeDisplayNamesNative() /*-{");
+      writer.println("  return {");
+      {
+        boolean needComma = false;
+        for (GwtLocaleImpl possibleLocale : allLocales) {
+          String localeName = possibleLocale.toString();
+          String displayName = displayNamesOverride.getProperty(localeName);
+          if (displayName == null) {
+            displayName = displayNamesManual.getProperty(localeName);
+          }
+          if (displayName == null) {
+            displayName = displayNames.getProperty(localeName);
+          }
+          if (displayName != null && displayName.length() != 0) {
+            localeName = quoteQuotes(localeName);
+            displayName = quoteQuotes(displayName);
+            if (needComma) {
+              writer.println(",");
+            }
+            writer.print("    \"" + localeName + "\": \"" + displayName + "\"");
+            needComma = true;
+          }
+        }
+        if (needComma) {
+          writer.println();
+        }
       }
       writer.println("  };");
       writer.println("}-*/;");
