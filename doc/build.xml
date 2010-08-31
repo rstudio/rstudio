@@ -30,8 +30,6 @@
     <pathelement location="${gwt.root}/user/super" />
     <pathelement location="${gwt.root}/dev/core/src" />
     <pathelement location="${gwt.root}/dev/core/super" />
-    <pathelement location="${gwt.root}/bikeshed/src" />
-    <pathelement location="${gwt.root}/bikeshed/super" />
   </path>
 
   <path id="USER_CLASS_PATH">
@@ -59,12 +57,6 @@
           <include name="**/*.java" />
         </fileset>
         <fileset dir="${gwt.root}/user/super">
-          <include name="**/*.java" />
-        </fileset>
-        <fileset dir="${gwt.root}/bikeshed/src">
-          <include name="**/*.java" />
-        </fileset>
-        <fileset dir="${gwt.root}/bikeshed/super">
           <include name="**/*.java" />
         </fileset>
         <fileset dir="${gwt.root}/dev/core/src">
