@@ -244,40 +244,50 @@ public class BrowserChannelTest extends TestCase {
       new LoadModuleMessage(trashableChannel, null, tabKey, sessionKey, moduleName,
           userAgent).send();
       fail("Expected exception with null url");
-    } catch (Exception expected) {
-      // will be AssertionError if assertions are turned on, otherwise NPE
+    } catch (AssertionError expected) {
+      // If assertions are on.
+    } catch (NullPointerException expected) {
+      // If assertions are off.
     }
 
     try {
       new LoadModuleMessage(trashableChannel, url, null, sessionKey, moduleName,
           userAgent).send();
       fail("Expected exception with null tabKey");
-    } catch (Exception expected) {
-      // will be AssertionError if assertions are turned on, otherwise NPE
+    } catch (AssertionError expected) {
+      // If assertions are on.
+    } catch (NullPointerException expected) {
+      // If assertions are off.
     }
 
     try {
       new LoadModuleMessage(trashableChannel, url, tabKey, null, moduleName,
           userAgent).send();
       fail("Expected exception with null sessionKey");
-    } catch (Exception expected) {
-      // will be AssertionError if assertions are turned on, otherwise NPE
+    } catch (AssertionError expected) {
+      // If assertions are on.
+    } catch (NullPointerException expected) {
+      // If assertions are off.
     }
 
     try {
       new LoadModuleMessage(trashableChannel, url, tabKey, sessionKey, null,
           userAgent).send();
       fail("Expected exception with null moduleName");
-    } catch (Exception expected) {
-      // will be AssertionError if assertions are turned on, otherwise NPE
+    } catch (AssertionError expected) {
+      // If assertions are on.
+    } catch (NullPointerException expected) {
+      // If assertions are off.
     }
 
     try {
       new LoadModuleMessage(trashableChannel, url, tabKey, sessionKey, moduleName,
           null).send();
       fail("Expected exception with null userAgent");
-    } catch (Exception expected) {
-      // will be AssertionError if assertions are turned on, otherwise NPE
+    } catch (AssertionError expected) {
+      // If assertions are on.
+    } catch (NullPointerException expected) {
+      // If assertions are off.
     }
   }
 
