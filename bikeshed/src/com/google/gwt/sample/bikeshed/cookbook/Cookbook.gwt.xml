@@ -1,7 +1,0 @@
-<module rename-to='cookbook'>
-  <inherits name="com.google.gwt.requestfactory.RequestFactory"/>
-  <inherits name='com.google.gwt.user.User'/>
-  <inherits name='com.google.gwt.user.cellview.CellView'/>
-
-  <entry-point class='com.google.gwt.sample.bikeshed.cookbook.client.Cookbook'/>
-</module>

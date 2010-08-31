@@ -33,13 +33,6 @@
   <property name="gwt.apicheck.config" 
     location="tools/api-checker/config/gwt20_21userApi.conf"/>
 
-  <target name="dist-bikeshed" depends="buildonly"
-          description="[action] Build bikeshed and minimal stuff, without distro packaging">
-    <call-subproject subproject="bikeshed" subtarget="build" />
-    <call-subproject subproject="soyc" subtarget="build" />
-    <gwt.ant dir="distro-source" target="build" />
-  </target>
-
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
     <call-subproject subproject="dev" subtarget="build" />
@@ -64,12 +57,6 @@
   <target name="user" description="[subdir] Builds (or runs ${target} if set) only the user library">
     <call-subproject subproject="dev" subtarget="build"/>
     <gwt.ant dir="user" />
-  </target>
-
-  <target name="bikeshed" description="[subdir] Builds (or runs ${target} if set) only the bikeshed library">
-    <call-subproject subproject="dev" subtarget="build"/>
-    <call-subproject subproject="user" subtarget="build"/>
-    <gwt.ant dir="bikeshed" />
   </target>
 
   <target name="soyc" description="[subdir] Builds (or runs ${target} if set) only the soyc library">
@@ -116,7 +103,6 @@
   </target>
 
   <target name="checkstyle" description="[action] Does static analysis of GWT source">
-    <call-subproject subproject="bikeshed" subtarget="checkstyle" />
     <call-subproject subproject="buildtools" subtarget="checkstyle" />
     <call-subproject subproject="dev" subtarget="checkstyle" />
     <call-subproject subproject="user" subtarget="checkstyle" />
