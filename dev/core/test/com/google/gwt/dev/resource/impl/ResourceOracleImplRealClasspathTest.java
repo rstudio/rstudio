@@ -29,33 +29,32 @@ import static com.google.gwt.dev.resource.impl.ResourceOracleImplTest.assertReso
 public class ResourceOracleImplRealClasspathTest extends
     AbstractResourceOrientedTestBase {
 
-  private static final PathPrefix JUNIT_PREFIX = new PathPrefix(
-      "junit/framework/", new ResourceFilter() {
-        public boolean allows(String path) {
-          return path.endsWith("TestCase.class");
-        }
-      });
-  private static final PathPrefix JUNIT_PREFIX_DUP = new PathPrefix(
-      "junit/framework/", new ResourceFilter() {
-        public boolean allows(String path) {
-          return path.endsWith("TestCase.class");
-        }
-      });
+  private static PathPrefix makeJunitPrefix() {
+    return new PathPrefix("junit/framework/", new ResourceFilter() {
+      public boolean allows(String path) {
+        return path.endsWith("TestCase.class");
+      }
+    });
+  }
 
-  private static final PathPrefix THIS_CLASS_PREFIX = new PathPrefix(
-      "com/google/gwt/dev/resource/impl/", new ResourceFilter() {
-        public boolean allows(String path) {
-          return path.endsWith("ResourceOracleImplRealClasspathTest.class");
-        }
-      });
+  private static PathPrefix makeThisClassPrefix() {
+    return new PathPrefix("com/google/gwt/dev/resource/impl/",
+        new ResourceFilter() {
+          public boolean allows(String path) {
+            return path.endsWith("ResourceOracleImplRealClasspathTest.class");
+          }
+        });
+  }
 
-  private static final PathPrefix THIS_CLASS_PREFIX_PLUS = new PathPrefix(
-      "com/google/gwt/dev/resource/impl/", new ResourceFilter() {
-        public boolean allows(String path) {
-          return path.endsWith("ResourceOracleImpl.class")
-              || path.endsWith("ResourceOracleImplRealClasspathTest.class");
-        }
-      });
+  private static PathPrefix makeThisClassPrefixPlus() {
+    return new PathPrefix("com/google/gwt/dev/resource/impl/",
+        new ResourceFilter() {
+          public boolean allows(String path) {
+            return path.endsWith("ResourceOracleImpl.class")
+                || path.endsWith("ResourceOracleImplRealClasspathTest.class");
+          }
+        });
+  }
 
   private final TreeLogger logger = createTestTreeLogger();
 
@@ -64,8 +63,8 @@ public class ResourceOracleImplRealClasspathTest extends
 
   public void testBasic() {
     PathPrefixSet pathPrefixSet = new PathPrefixSet();
-    pathPrefixSet.add(JUNIT_PREFIX);
-    pathPrefixSet.add(THIS_CLASS_PREFIX);
+    pathPrefixSet.add(makeJunitPrefix());
+    pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.refresh(logger);
     Map<String, Resource> resourceMap = resourceOracle.getResourceMap();
@@ -74,8 +73,8 @@ public class ResourceOracleImplRealClasspathTest extends
 
   public void testRefresh() {
     PathPrefixSet pathPrefixSet = new PathPrefixSet();
-    pathPrefixSet.add(JUNIT_PREFIX);
-    pathPrefixSet.add(THIS_CLASS_PREFIX);
+    pathPrefixSet.add(makeJunitPrefix());
+    pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.refresh(logger);
     Map<String, Resource> resourceMap = resourceOracle.getResourceMap();
@@ -92,19 +91,19 @@ public class ResourceOracleImplRealClasspathTest extends
 
     // Setting identical path entries should have no effect.
     pathPrefixSet = new PathPrefixSet();
-    pathPrefixSet.add(JUNIT_PREFIX);
-    pathPrefixSet.add(THIS_CLASS_PREFIX);
+    pathPrefixSet.add(makeJunitPrefix());
+    pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.refresh(logger);
     assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Setting identical result should have no effect.
-    pathPrefixSet.add(JUNIT_PREFIX_DUP);
+    pathPrefixSet.add(makeJunitPrefix());
     resourceOracle.refresh(logger);
     assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Actually change the working set.
-    pathPrefixSet.add(THIS_CLASS_PREFIX_PLUS);
+    pathPrefixSet.add(makeThisClassPrefixPlus());
     resourceOracle.refresh(logger);
     assertEquals(3, resourceOracle.getResourceMap().size());
   }

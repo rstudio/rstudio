@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -36,7 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarFile;
 
 /**
  * Tests {@link ResourceOracleImpl}.
@@ -134,12 +132,13 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
       }
       return null;
     }
-    
+
+    @SuppressWarnings("deprecation")
     public void assertResourcesGetURL() {
       for (Resource resource : resources) {
         URL url = resource.getURL();
         assertNotNull("Resource " + resource + " had a null getURL()", url);
-        
+
         InputStream is = resource.openContents();
         assertNotNull(is);
 
@@ -170,6 +169,26 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     assertResourcesEqual(expected.values(), actual.values());
   }
 
+  private static PathPrefix makeJavaLangPrefix() {
+    return new PathPrefix("java/lang/", null, false);
+  }
+
+  private static PathPrefix makeBarPrefix() {
+    return new PathPrefix("org/example/bar/client/", null, false);
+  }
+
+  private static PathPrefix makeRerootBarPrefix() {
+    return new PathPrefix("org/example/bar/client/", null, true);
+  }
+
+  private static PathPrefix makeRerootFooPrefix() {
+    return new PathPrefix("org/example/foo/client/", null, true);
+  }
+
+  private static PathPrefix makeTranslatablePrefix() {
+    return new PathPrefix("translatable/", null, true);
+  }
+
   public void testCachingOfJarResources() throws IOException,
       URISyntaxException {
     TreeLogger logger = createTestTreeLogger();
@@ -178,19 +197,19 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
     // test basic caching
     PathPrefixSet pps1 = new PathPrefixSet();
-    pps1.add(new PathPrefix("com/google/gwt", null, false));
+    pps1.add(new PathPrefix("com/google/gwt/", null, false));
     Map<AbstractResource, PathPrefix> resourceMap1 = cpe1jar.findApplicableResources(
         logger, pps1);
     assertSame(resourceMap1, cpe1jar.findApplicableResources(logger, pps1));
 
     // test that cache is invalidated if PathPrefixSet is modified.
-    pps1.add(new PathPrefix("com/google/gwt/user", null, false));
+    pps1.add(new PathPrefix("com/google/gwt/user/", null, false));
     Map<AbstractResource, PathPrefix> resourceMap2 = cpe1jar.findApplicableResources(
         logger, pps1);
     assertNotSame(resourceMap1, resourceMap2);
 
     PathPrefixSet pps2 = new PathPrefixSet();
-    pps2.add(new PathPrefix("org/example/bar", null, false));
+    pps2.add(new PathPrefix("org/example/bar/", null, false));
     Map<AbstractResource, PathPrefix> resourceMap3 = cpe1jar.findApplicableResources(
         logger, pps2);
     // check that the entry did go in the cache
@@ -200,7 +219,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     assertSame(resourceMap2, cpe1jar.findApplicableResources(logger, pps1));
     assertSame(resourceMap3, cpe1jar.findApplicableResources(logger, pps2));
   }
-  
+
   public void testGetUrlOnResources() throws URISyntaxException, IOException {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
     ClassPathEntry cpe1dir = getClassPathEntry1AsDirectory();
@@ -209,7 +228,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
     ClassPathEntry cpe2dir = getClassPathEntry2AsDirectory();
     ClassPathEntry cpe2zip = getClassPathEntry2AsZip();
-    
+
     testGetURLOnResourcesInCPE(cpe1jar);
     testGetURLOnResourcesInCPE(cpe1dir);
     testGetURLOnResourcesInCPE(cpe1zip);
@@ -217,10 +236,10 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     testGetURLOnResourcesInCPE(cpe2dir);
     testGetURLOnResourcesInCPE(cpe2zip);
   }
-  
+
   private void testGetURLOnResourcesInCPE(ClassPathEntry cpe) {
     TreeLogger logger = createTestTreeLogger();
-    
+
     ResourceOracleImpl oracle = createResourceOracle(cpe);
     ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
     s.assertResourcesGetURL();
@@ -242,16 +261,13 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry[] cp12 = new ClassPathEntry[]{cpe1jar, cpe2jar};
     ClassPathEntry[] cp21 = new ClassPathEntry[]{cpe2jar, cpe1jar};
     String resKeyNormal = "org/example/bar/client/BarClient2.txt";
-    String resKeyReroot = "/BarClient2.txt";
-    PathPrefix pathPrefixNormal = new PathPrefix("org/example/bar/client",
-        null, false);
-    PathPrefix pathPrefixReroot = new PathPrefix("org/example/bar/client",
-        null, true);
-
-    testResourceInCPE(logger, resKeyNormal, cpe1jar, cp12, pathPrefixNormal);
-    testResourceInCPE(logger, resKeyReroot, cpe1jar, cp12, pathPrefixReroot);
-    testResourceInCPE(logger, resKeyNormal, cpe2jar, cp21, pathPrefixNormal);
-    testResourceInCPE(logger, resKeyReroot, cpe2jar, cp21, pathPrefixReroot);
+    String resKeyReroot = "BarClient2.txt";
+    testResourceInCPE(logger, resKeyNormal, cpe1jar, cp12, makeBarPrefix());
+    testResourceInCPE(logger, resKeyReroot, cpe1jar, cp12,
+        makeRerootBarPrefix());
+    testResourceInCPE(logger, resKeyNormal, cpe2jar, cp21, makeBarPrefix());
+    testResourceInCPE(logger, resKeyReroot, cpe2jar, cp21,
+        makeRerootBarPrefix());
   }
 
   public void testNoClassPathEntries() {
@@ -280,20 +296,21 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry[] cp12 = new ClassPathEntry[]{cpe1jar, cpe2jar};
     ClassPathEntry[] cp21 = new ClassPathEntry[]{cpe2jar, cpe1jar};
 
-    String keyReroot = "/BarClient1.txt";
-
-    PathPrefix pp1 = new PathPrefix("org/example/bar/client", null, true);
-    PathPrefix pp2 = new PathPrefix("org/example/foo/client", null, true);
+    String keyReroot = "BarClient1.txt";
 
     // Resource in cpe2 wins because pp2 comes later.
-    testResourceInCPE(logger, keyReroot, cpe2jar, cp12, pp1, pp2);
+    testResourceInCPE(logger, keyReroot, cpe2jar, cp12, makeRerootBarPrefix(),
+        makeRerootFooPrefix());
     // Order of specifying classpath is reversed, it still matches cpe2.
-    testResourceInCPE(logger, keyReroot, cpe2jar, cp21, pp1, pp2);
+    testResourceInCPE(logger, keyReroot, cpe2jar, cp21, makeRerootBarPrefix(),
+        makeRerootFooPrefix());
 
     // Resource in cpe1 wins because pp1 comes later.
-    testResourceInCPE(logger, keyReroot, cpe1jar, cp12, pp2, pp1);
+    testResourceInCPE(logger, keyReroot, cpe1jar, cp12, makeRerootFooPrefix(),
+        makeRerootBarPrefix());
     // Order of specifying classpath is reversed, it still matches cpe1.
-    testResourceInCPE(logger, keyReroot, cpe1jar, cp21, pp2, pp1);
+    testResourceInCPE(logger, keyReroot, cpe1jar, cp21, makeRerootFooPrefix(),
+        makeRerootBarPrefix());
   }
 
   /**
@@ -314,11 +331,11 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     testReadingResource(cpe1jar, cpe2jar);
     testReadingResource(cpe1dir, cpe2jar);
     testReadingResource(cpe1zip, cpe2jar);
-    
+
     testReadingResource(cpe1jar, cpe2dir);
     testReadingResource(cpe1dir, cpe2dir);
     testReadingResource(cpe1zip, cpe2dir);
-    
+
     testReadingResource(cpe1jar, cpe2zip);
     testReadingResource(cpe1dir, cpe2zip);
     testReadingResource(cpe1zip, cpe2zip);
@@ -331,7 +348,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
    * 
    * @throws MalformedURLException
    */
-  public void testRemoveDuplicates() throws MalformedURLException {
+  public void testRemoveDuplicates() {
     TreeLogger logger = createTestTreeLogger();
     URL cpe1 = findUrl("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
     URL cpe2 = findUrl("com/google/gwt/dev/resource/impl/testdata/cpe2.zip");
@@ -375,7 +392,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     testResourceAddition(cpe1dir, cpe2mock);
     testResourceAddition(cpe1mock, cpe2mock);
     testResourceAddition(cpe1zip, cpe2mock);
-    
+
     testResourceAddition(cpe1jar, cpe2zip);
     testResourceAddition(cpe1dir, cpe2zip);
     testResourceAddition(cpe1mock, cpe2zip);
@@ -407,7 +424,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     testResourceDeletion(cpe1dir, cpe2mock);
     testResourceDeletion(cpe1mock, cpe2mock);
     testResourceDeletion(cpe1zip, cpe2mock);
-    
+
     testResourceDeletion(cpe1jar, cpe2zip);
     testResourceDeletion(cpe1dir, cpe2zip);
     testResourceDeletion(cpe1mock, cpe2zip);
@@ -439,7 +456,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     testResourceModification(cpe1dir, cpe2mock);
     testResourceModification(cpe1mock, cpe2mock);
     testResourceModification(cpe1zip, cpe2mock);
-    
+
     testResourceModification(cpe1jar, cpe2zip);
     testResourceModification(cpe1dir, cpe2zip);
     testResourceModification(cpe1mock, cpe2zip);
@@ -459,10 +476,9 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     TreeLogger logger = createTestTreeLogger();
     ClassPathEntry cpe1 = getClassPathEntry1AsMock();
     ClassPathEntry cpe2 = getClassPathEntry2AsMock();
-    PathPrefix pp1 = new PathPrefix("org/example/bar/client", null, false);
-    PathPrefix pp2 = new PathPrefix("org/example/bar", null, false);
     testResourceInCPE(logger, "org/example/bar/client/BarClient2.txt", cpe1,
-        new ClassPathEntry[]{cpe1, cpe2}, pp1, pp2);
+        new ClassPathEntry[]{cpe1, cpe2}, makeBarPrefix(), new PathPrefix(
+            "org/example/bar/", null, false));
   }
 
   /**
@@ -478,20 +494,21 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     MockClassPathEntry cpe2 = new MockClassPathEntry("/cpe2/");
     cpe2.addResource("translatable/java/lang/Object.java");
 
-    PathPrefix pp1 = new PathPrefix("java/lang/", null, false);
-    PathPrefix pp2 = new PathPrefix("translatable/", null, true);
-
     // Ensure the translatable overrides the basic despite swapping CPE order.
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[]{cpe1, cpe2}, pp1, pp2);
+        new ClassPathEntry[]{cpe1, cpe2}, makeJavaLangPrefix(),
+        makeTranslatablePrefix());
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[]{cpe2, cpe1}, pp1, pp2);
+        new ClassPathEntry[]{cpe2, cpe1}, makeJavaLangPrefix(),
+        makeTranslatablePrefix());
 
     // Ensure the translatable overrides the basic despite swapping PPS order.
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[]{cpe1, cpe2}, pp2, pp1);
+        new ClassPathEntry[]{cpe1, cpe2}, makeTranslatablePrefix(),
+        makeJavaLangPrefix());
     testResourceInCPE(logger, "java/lang/Object.java", cpe2,
-        new ClassPathEntry[]{cpe2, cpe1}, pp2, pp1);
+        new ClassPathEntry[]{cpe2, cpe1}, makeTranslatablePrefix(),
+        makeJavaLangPrefix());
   }
 
   /**
