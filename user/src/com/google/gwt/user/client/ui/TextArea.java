@@ -33,6 +33,14 @@ import com.google.gwt.dom.client.TextAreaElement;
  * </ul>
  *
  * <p>
+ * <h3>Built-in Bidi Text Support</h3>
+ * This widget is capable of automatically adjusting its direction according to
+ * the input text. This feature is controlled by {@link #setDirectionEstimator},
+ * and is available by default when at least one of the application's locales is
+ * right-to-left.
+ * </p>
+ *
+ * <p>
  * <h3>Example</h3> {@example com.google.gwt.examples.TextBoxExample}
  * </p>
  */
