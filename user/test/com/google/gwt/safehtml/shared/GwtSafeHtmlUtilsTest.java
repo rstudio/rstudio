@@ -16,13 +16,14 @@
 package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.junit.client.GWTTestCase;
-//import com.google.gwt.regexp.shared.RegExp;
-//import com.google.gwt.regexp.shared.SplitResult;
 
 /**
- * Unit tests for GwtEscapeUtils.
+ * Unit tests for {@link SafeHtmlUtils}.
  */
 public class GwtSafeHtmlUtilsTest extends GWTTestCase {
+
+  private static final String CONSTANT_HTML =
+      "<a href=\"javascript:trusted()\">click here &amp; enjoy</a>";
 
   public void testEscape_noEscape() {
     String escaped = SafeHtmlUtils.htmlEscape("foobar");
@@ -73,6 +74,16 @@ public class GwtSafeHtmlUtilsTest extends GWTTestCase {
     String escaped = SafeHtmlUtils.htmlEscapeAllowEntities(
         "&a mp;&;&x;&#;&#x;");
     assertEquals("&amp;a mp;&amp;;&x;&amp;#;&amp;#x;", escaped);
+  }
+
+  public void testFromSafeConstant() {
+    SafeHtml h = SafeHtmlUtils.fromSafeConstant(CONSTANT_HTML);
+    assertEquals(CONSTANT_HTML, h.asString());
+  }
+
+  public void testFromString() {
+    SafeHtml h = SafeHtmlUtils.fromString(CONSTANT_HTML);
+    assertEquals(SafeHtmlUtils.htmlEscape(CONSTANT_HTML), h.asString());
   }
 
   @Override

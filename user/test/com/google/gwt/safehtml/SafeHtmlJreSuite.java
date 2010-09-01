@@ -18,9 +18,9 @@ package com.google.gwt.safehtml;
 import com.google.gwt.safehtml.rebind.HtmlTemplateParserTest;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplateTest;
 import com.google.gwt.safehtml.server.UriUtilsTest;
-import com.google.gwt.safehtml.shared.SafeHtmlUtilsTest;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilderTest;
 import com.google.gwt.safehtml.shared.SafeHtmlStringTest;
+import com.google.gwt.safehtml.shared.SafeHtmlUtilsTest;
 import com.google.gwt.safehtml.shared.SimpleHtmlSanitizerTest;
 
 import junit.framework.Test;

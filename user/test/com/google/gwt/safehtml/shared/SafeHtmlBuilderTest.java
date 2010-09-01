@@ -15,34 +15,14 @@
  */
 package com.google.gwt.safehtml.shared;
 
-import junit.framework.TestCase;
-
 /**
- * Unit tests for SafeHtmlBuilder
+ * Unit tests for {@link SafeHtmlBuilder}.
  */
-public class SafeHtmlBuilderTest extends TestCase {
+public class SafeHtmlBuilderTest extends GwtSafeHtmlBuilderTest {
 
-  private static final String FOOBARBAZ_HTML = "foo<em>bar</em>baz";
-
-  public void testEmpty() {
-    SafeHtmlBuilder b = new SafeHtmlBuilder();
-    assertEquals("", b.toSafeHtml().asString());
-  }
-
-  public void testFromSafeHtml() {
-    SafeHtml html = new SafeHtmlString(FOOBARBAZ_HTML);
-    SafeHtmlBuilder b = new SafeHtmlBuilder().append(html);
-    assertEquals(FOOBARBAZ_HTML, b.toSafeHtml().asString());
-  }
-
-  public void testAppend() {
-    SafeHtml html = new SafeHtmlString(FOOBARBAZ_HTML);
-    SafeHtmlBuilder b = new SafeHtmlBuilder().appendHtmlConstant(
-        "Yabba dabba &amp; doo\n").appendEscaped("What's up so&so\n").append(
-        html);
-
-    String expected = "Yabba dabba &amp; doo\n" + "What&#39;s up so&amp;so\n"
-        + FOOBARBAZ_HTML;
-    assertEquals(expected, b.toSafeHtml().asString());
+  // This forces a GWTTestCase to run as a vanilla JUnit TestCase.
+  @Override
+  public String getModuleName() {
+    return null;
   }
 }

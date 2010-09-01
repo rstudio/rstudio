@@ -78,11 +78,11 @@ public final class SafeHtmlBuilder {
   /**
    * Appends the string representation of a char.
    *
-   * @param num the number whose string representation to append
+   * @param c the character whose string representation to append
    * @return a reference to this object
    */
-  public SafeHtmlBuilder append(char num) {
-    sb.append(num);
+  public SafeHtmlBuilder append(char c) {
+    sb.append(c);
     return this;
   }
 
