@@ -323,6 +323,10 @@ public class RegExp {
    * constituent characters. If the regular expression is not empty but matches
    * an empty string, the results are not well defined.
    * 
+   * Note: There are some browser inconsistencies with this implementation, as 
+   * it is delegated to the browser, and no browser follows the spec completely.
+   * A major difference is that IE will exclude empty strings in the result.
+   * 
    * @param input the string to be split.
    * @param limit the the maximum number of strings to split off and return,
    *        ignoring the rest of the input string. If negative, there is no
