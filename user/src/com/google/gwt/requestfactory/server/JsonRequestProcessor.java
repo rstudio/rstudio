@@ -387,7 +387,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
       cachedEntityLookup.put(entityKey, entityInstance);
 
-      Set<ConstraintViolation<Object>> violations = Collections.emptySet();
       Iterator<?> keys = recordObject.keys();
       while (keys.hasNext()) {
         String key = (String) keys.next();
@@ -419,6 +418,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         }
       }
 
+      Set<ConstraintViolation<Object>> violations = Collections.emptySet();
       // validations check..
       Validator validator = null;
       try {
@@ -674,6 +674,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     // Construct afterDvsDataMap.
     constructAfterDvsDataMap();
 
+    // violations are the only sideEffects at this point.
+    JSONObject sideEffectsBeforeExecution = getViolationsAsSideEffects();
+    if (sideEffectsBeforeExecution.length() > 0) {
+      JSONObject envelop = new JSONObject();
+      envelop.put(RequestData.SIDE_EFFECTS_TOKEN, sideEffectsBeforeExecution);
+      return envelop;
+    }
+
     // resolve parameters that are so far just EntityKeys.
     // TODO: resolve paramters other than the domainInstance
     EntityKey domainEntityKey = null;
@@ -907,22 +915,19 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     assert entityInstance != null;
     JSONObject returnObject = new JSONObject();
     returnObject.put("futureId", originalEntityKey.id + "");
-    boolean hasViolations = entityData.violations != null
-        && entityData.violations.length() > 0;
-    if (hasViolations) {
-      returnObject.put("violations", entityData.violations);
-    } else {
-      Object newId = encodePropertyValueFromDataStore(entityInstance,
-          Long.class, "id", propertyRefs);
-      if (newId == null) {
-        log.warning("Record with futureId " + originalEntityKey.id
-            + " not persisted");
-        return null; // no changeRecord for this CREATE.
-      }
-      returnObject.put("id", getSchemaAndId(originalEntityKey.record, newId));
-      returnObject.put("version", encodePropertyValueFromDataStore(
-          entityInstance, Integer.class, "version", propertyRefs));
+    // violations have already been taken care of.
+    Object newId = encodePropertyValueFromDataStore(entityInstance, Long.class,
+        "id", propertyRefs);
+    if (newId == null) {
+      log.warning("Record with futureId " + originalEntityKey.id
+          + " not persisted");
+      return null; // no changeRecord for this CREATE.
     }
+    returnObject.put("id", getSchemaAndId(originalEntityKey.record, newId));
+    returnObject.put(
+        "version",
+        encodePropertyValueFromDataStore(entityInstance, Integer.class,
+            "version", propertyRefs));
     return returnObject;
   }
 
@@ -1016,6 +1021,37 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
     if (updateArray.length() > 0) {
       sideEffects.put(WriteOperation.UPDATE.name(), updateArray);
+    }
+    return sideEffects;
+  }
+
+  private JSONObject getViolationsAsSideEffects() throws JSONException {
+    JSONObject sideEffects = new JSONObject();
+    for (EntityKey entityKey : involvedKeys) {
+      EntityData entityData = afterDvsDataMap.get(entityKey);
+      assert entityData != null;
+      if (entityData.violations == null || entityData.violations.length() == 0) {
+        continue;
+      }
+      // find the WriteOperation
+      DvsData dvsData = dvsDataMap.get(entityKey);
+      if (dvsData != null && dvsData.writeOperation != null) {
+        JSONObject returnObject = new JSONObject();
+        returnObject.put("violations", entityData.violations);
+        if (entityKey.isFuture) {
+          returnObject.put("futureId", entityKey.id + "");
+        } else {
+          returnObject.put("id",  getSchemaAndId(entityKey.record, entityKey.id));
+        }
+        JSONArray arrayForOperation = null;
+        if (sideEffects.has(dvsData.writeOperation.name())) {
+          arrayForOperation = sideEffects.getJSONArray(dvsData.writeOperation.name());
+        } else {
+          arrayForOperation = new JSONArray();
+          sideEffects.put(dvsData.writeOperation.name(), arrayForOperation);
+        }
+        arrayForOperation.put(returnObject);
+      }
     }
     return sideEffects;
   }
