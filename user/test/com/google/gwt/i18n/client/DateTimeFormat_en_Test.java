@@ -91,6 +91,22 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
         "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
   }
 
+  public void test_EEEEMMMddHHmmsszzzyy() {
+    DateTimeFormat dtf = DateTimeFormat.getFormat("EEE MMM dd HH:mm:ss zzz yyyy");
+    Date date = dtf.parse("Mon Aug 30 00:45:00 GMT 2010");
+    assertEquals(45, (date.getHours() * 60 + date.getMinutes()
+        + date.getTimezoneOffset()) % 1440);
+    date = dtf.parse("Mon Aug 30 01:45:00 GMT 2010");
+    assertEquals(105, (date.getHours() * 60 + date.getMinutes()
+        + date.getTimezoneOffset()) % 1440);
+    date = dtf.parse("Mon Aug 30 06:45:00 GMT 2010");
+    assertEquals(405, (date.getHours() * 60 + date.getMinutes()
+        + date.getTimezoneOffset()) % 1440);
+    date = dtf.parse("Mon Aug 30 07:45:00 GMT 2010");
+    assertEquals(465, (date.getHours() * 60 + date.getMinutes()
+        + date.getTimezoneOffset()) % 1440);
+  }
+
   public void test_EEEEMMMddyy() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("Thursday,July 27, 2006", DateTimeFormat.getFormat(

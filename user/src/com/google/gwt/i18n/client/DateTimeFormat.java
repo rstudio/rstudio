@@ -1587,7 +1587,7 @@ public class DateTimeFormat {
    * @param text the string that need to be parsed
    * @param start the character position in "text" where parsing should start
    * @param date the date object that will hold parsed value
-   * @param strict true to be strict when parsingm false to be lenient
+   * @param strict true to be strict when parsing, false to be lenient
    * 
    * @return 0 if parsing failed, otherwise the number of characters advanced
    */

@@ -184,13 +184,6 @@ public class DateRecord extends Date {
       }
     }
 
-    // Adjust time zone.
-    if (this.tzOffset > Integer.MIN_VALUE) {
-      int offset = date.getTimezoneOffset();
-      date.setTime(date.getTime() + (this.tzOffset - offset) * 60 * 1000);
-      // HBJ date.setTime(date.getTime() + this.tzOffset * 60 * 1000);
-    }
-
     // Resolve ambiguous year if needed.
     if (this.ambiguousYear) { // the two-digit year == the default start year
       Date defaultCenturyStart = new Date();
@@ -226,6 +219,14 @@ public class DateRecord extends Date {
         }
       }
     }
+
+    // Adjust time zone.
+    if (this.tzOffset > Integer.MIN_VALUE) {
+      int offset = date.getTimezoneOffset();
+      date.setTime(date.getTime() + (this.tzOffset - offset) * 60 * 1000);
+      // HBJ date.setTime(date.getTime() + this.tzOffset * 60 * 1000);
+    }
+
     return true;
   }
 
