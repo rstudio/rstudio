@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,8 +27,8 @@ public class AbstractSelectionModelTest extends GWTTestCase {
   /**
    * A mock {@link SelectionChangeEvent.Handler} used for testing.
    */
-  private static class MockSelectionChangeHandler implements
-      SelectionChangeEvent.Handler {
+  private static class MockSelectionChangeHandler
+      implements SelectionChangeEvent.Handler {
 
     private boolean eventFired;
 
@@ -43,7 +43,7 @@ public class AbstractSelectionModelTest extends GWTTestCase {
 
   /**
    * A mock {@link SelectionModel} used for testing.
-   * 
+   *
    * @param <T> the data type
    */
   private static class MockSelectionModel<T> extends AbstractSelectionModel<T> {
@@ -52,6 +52,7 @@ public class AbstractSelectionModelTest extends GWTTestCase {
     }
 
     public void setSelected(T object, boolean selected) {
+      scheduleSelectionChangeEvent();
     }
   }
 
@@ -68,6 +69,27 @@ public class AbstractSelectionModelTest extends GWTTestCase {
     model.setSelected("test", true);
     model.fireSelectionChangeEvent();
     handler.assertEventFired(true);
+  }
+
+  /**
+   * Test that resolving changes doesn't prevent an event from firing.
+   */
+  public void testResolveChanges() {
+    AbstractSelectionModel<String> model = createSelectionModel();
+    final MockSelectionChangeHandler handler = new MockSelectionChangeHandler();
+    model.addSelectionChangeHandler(handler);
+
+    model.setSelected("test1", true);
+    handler.assertEventFired(false);
+    model.isSelected("test1");
+
+    new Timer() {
+      @Override
+      public void run() {
+        handler.assertEventFired(true);
+        finishTest();
+      }
+    }.schedule(1000);
   }
 
   public void testScheduleSelectionChangeEvent() {

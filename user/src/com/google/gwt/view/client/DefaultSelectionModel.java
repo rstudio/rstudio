@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,8 +31,8 @@ import java.util.Map;
  *
  * @param <T> the data type of records in the list
  */
-public abstract class DefaultSelectionModel<T> extends
-    AbstractSelectionModel<T> {
+public abstract class DefaultSelectionModel<T> extends AbstractSelectionModel<
+    T> {
 
   private final Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
 
@@ -88,10 +88,7 @@ public abstract class DefaultSelectionModel<T> extends
     if (isEventScheduled()) {
       setEventCancelled(true);
     }
-
-    if (resolveChanges()) {
-      SelectionChangeEvent.fire(this);
-    }
+    resolveChanges();
   }
 
   /**
@@ -106,7 +103,7 @@ public abstract class DefaultSelectionModel<T> extends
     return output;
   }
 
-  private boolean resolveChanges() {
+  private void resolveChanges() {
     boolean changed = false;
     for (Map.Entry<T, Boolean> entry : selectionChanges.entrySet()) {
       T object = entry.getKey();
@@ -131,6 +128,10 @@ public abstract class DefaultSelectionModel<T> extends
     }
 
     selectionChanges.clear();
-    return changed;
+
+    // Fire a selection change event.
+    if (changed) {
+      SelectionChangeEvent.fire(this);
+    }
   }
 }

@@ -35,7 +35,7 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
 
   // Ensure one value per key
   private final HashMap<Object, T> selectedSet = new HashMap<Object, T>();
-  
+
   private final HashMap<T, Boolean> selectionChanges = new HashMap<T, Boolean>();
 
   /**
@@ -57,23 +57,20 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
     selectionChanges.put(object, selected);
     scheduleSelectionChangeEvent();
   }
-  
+
   @Override
   protected void fireSelectionChangeEvent() {
     if (isEventScheduled()) {
       setEventCancelled(true);
     }
-
-    if (resolveChanges()) {
-      SelectionChangeEvent.fire(this);
-    }
+    resolveChanges();
   }
 
-  private boolean resolveChanges() {
+  private void resolveChanges() {
     if (selectionChanges.isEmpty()) {
-      return false;
+      return;
     }
-  
+
     boolean changed = false;
     for (Map.Entry<T, Boolean> entry : selectionChanges.entrySet()) {
       T object = entry.getKey();
@@ -94,6 +91,10 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
       }
     }
     selectionChanges.clear();
-    return changed;
+
+    // Fire a selection change event.
+    if (changed) {
+      SelectionChangeEvent.fire(this);
+    }
   }
 }
