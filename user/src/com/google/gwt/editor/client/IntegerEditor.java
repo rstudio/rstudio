@@ -15,13 +15,13 @@
  */
 package com.google.gwt.editor.client;
 
-import com.google.gwt.user.client.ui.TakesValue;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * Adapts various interfaces that provide Integer values to the Editor
  * architecture.
  */
-public abstract class IntegerEditor extends PrimitiveValueEditor<Integer> {
+public abstract class IntegerEditor implements LeafValueEditor<Integer> {
   /**
    * Returns an editor with a <code>null</code> value.
    */

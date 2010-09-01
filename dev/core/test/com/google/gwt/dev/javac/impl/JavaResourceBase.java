@@ -237,6 +237,23 @@ public class JavaResourceBase {
       return code;
     }
   };
+  public static final MockJavaResource LONG = new MockJavaResource(
+      "java.lang.Long") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("public class Long extends Number {\n");
+      code.append("  private long value;\n");
+      code.append("  public Long(long value) {\n");
+      code.append("    this.value = value;\n");
+      code.append("  }\n");
+      code.append("  public static Long valueOf(int i) { return new Long(i); }\n");
+      code.append("  public long longValue() { return value; }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource MAP = new MockJavaResource(
       "java.util.Map") {
     @Override
@@ -382,7 +399,7 @@ public class JavaResourceBase {
     return new MockJavaResource[] {
         ANNOTATION, BYTE, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION,
         COLLECTION, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT, INTEGER,
-        IS_SERIALIZABLE, JAVASCRIPTOBJECT, MAP, NO_CLASS_DEF_FOUND_ERROR,
+        IS_SERIALIZABLE, JAVASCRIPTOBJECT, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR,
         NUMBER, OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,
         SUPPRESS_WARNINGS, THROWABLE};
   }

@@ -15,7 +15,11 @@
  */
 package com.google.gwt.editor.client;
 
-import java.util.Set;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Describes an editor whose behavior is not altered by the value being
@@ -24,19 +28,13 @@ import java.util.Set;
  * @param <T> the type of object the editor displays.
  */
 public interface Editor<T> {
-
   /**
-   * Used by the EditorDriver to traverse sub-editors. Plays nicely with
-   * UiFieldMapper.
-   * 
-   * @return the Editor associated with the path, or <code>null</code> if there
-   *         is no such sub-Editor.
+   * Maps a composite Editor's component Editors into the data-model.
    */
-  Editor<?> getEditorForPath(String path);
-
-  /**
-   * Returns the paths that the editor intends to display.
-   */
-  Set<String> getPaths();
-
+  @Documented
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(value = {ElementType.FIELD, ElementType.METHOD})
+  public @interface Path {
+    String value();
+  }
 }

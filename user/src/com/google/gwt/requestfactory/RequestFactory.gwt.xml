@@ -17,10 +17,16 @@
 -->
 <module>
   <inherits name='com.google.gwt.core.Core'/>
+  <inherits name='com.google.gwt.editor.Editor'/>
   <inherits name='com.google.gwt.http.HTTP'/>
 
   <source path="client"/>
   <source path="shared"/>
+  <generate-with
+    class="com.google.gwt.requestfactory.rebind.RequestFactoryEditorDriverGenerator">
+    <when-type-assignable
+      class="com.google.gwt.requestfactory.client.RequestFactoryEditorDriver" />
+  </generate-with>
   <generate-with class="com.google.gwt.requestfactory.rebind.RequestFactoryGenerator">
     <when-type-assignable class='com.google.gwt.requestfactory.shared.RequestFactory'/>
   </generate-with>

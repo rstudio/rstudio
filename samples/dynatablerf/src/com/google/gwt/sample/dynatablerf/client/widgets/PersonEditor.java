@@ -15,11 +15,6 @@
  */
 package com.google.gwt.sample.dynatablerf.client.widgets;
 
-import static com.google.gwt.sample.dynatablerf.client.StringConstants.ADDRESS;
-import static com.google.gwt.sample.dynatablerf.client.StringConstants.DESCRIPTION;
-import static com.google.gwt.sample.dynatablerf.client.StringConstants.NAME;
-import static com.google.gwt.sample.dynatablerf.client.StringConstants.NOTE;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -33,18 +28,12 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * Edits People.
  */
 public class PersonEditor extends Composite implements Editor<PersonProxy> {
   interface Binder extends UiBinder<Widget, PersonEditor> {
   }
-
-  static final String[] ALL_PROPERTIES = {NAME, DESCRIPTION, NOTE, ADDRESS};
 
   @UiField
   AddressEditor address;
@@ -58,7 +47,7 @@ public class PersonEditor extends Composite implements Editor<PersonProxy> {
   @UiField
   TextArea note;
 
-  // TODO UiBinderize?
+  // TODO: Allow UiBinder to configure this
   final StringEditor nameEditor;
   final StringEditor descriptionEditor;
   final StringEditor noteEditor;
@@ -76,22 +65,5 @@ public class PersonEditor extends Composite implements Editor<PersonProxy> {
         name.setFocus(true);
       }
     });
-  }
-
-  public Editor<?> getEditorForPath(String path) {
-    if (ADDRESS.equals(path)) {
-      return address;
-    } else if (DESCRIPTION.equals(path)) {
-      return descriptionEditor;
-    } else if (NOTE.equals(path)) {
-      return noteEditor;
-    } else if (NAME.equals(path)) {
-      return nameEditor;
-    }
-    return null;
-  }
-
-  public Set<String> getPaths() {
-    return new HashSet<String>(Arrays.asList(ALL_PROPERTIES));
   }
 }

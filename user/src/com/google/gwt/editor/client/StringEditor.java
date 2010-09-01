@@ -15,14 +15,14 @@
  */
 package com.google.gwt.editor.client;
 
+import com.google.gwt.user.client.TakesValue;
 import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.TakesValue;
 
 /**
  * Adapts various interfaces that provide String values to the Editor
  * architecture.
  */
-public abstract class StringEditor extends PrimitiveValueEditor<String> {
+public abstract class StringEditor implements LeafValueEditor<String> {
   /**
    * Returns an editor with a <code>null</code> value.
    */

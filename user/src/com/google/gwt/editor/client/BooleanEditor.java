@@ -15,13 +15,13 @@
  */
 package com.google.gwt.editor.client;
 
-import com.google.gwt.user.client.ui.TakesValue;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * Adapts various interfaces that provide Boolean values to the Editor
  * architecture.
  */
-public abstract class BooleanEditor extends PrimitiveValueEditor<Boolean> {
+public abstract class BooleanEditor implements LeafValueEditor<Boolean> {
   /**
    * Returns an editor with a <code>null</code> value.
    */

@@ -15,11 +15,6 @@
  */
 package com.google.gwt.sample.dynatablerf.client.widgets;
 
-import static com.google.gwt.sample.dynatablerf.client.StringConstants.CITY;
-import static com.google.gwt.sample.dynatablerf.client.StringConstants.STATE;
-import static com.google.gwt.sample.dynatablerf.client.StringConstants.STREET;
-import static com.google.gwt.sample.dynatablerf.client.StringConstants.ZIP;
-
 import com.google.gwt.app.client.IntegerBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
@@ -32,18 +27,12 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * Allows an AddressProxy to be edited.
  */
 public class AddressEditor extends Composite implements Editor<AddressProxy> {
   interface Binder extends UiBinder<Widget, AddressEditor> {
   }
-
-  private static final String[] ALL_PROPERTIES = {STREET, CITY, STATE, ZIP};
 
   @UiField
   TextBox street;
@@ -54,6 +43,7 @@ public class AddressEditor extends Composite implements Editor<AddressProxy> {
   @UiField
   IntegerBox zip;
 
+  // TODO: Allow UiBinder to configure this
   final StringEditor streetEditor;
   final StringEditor cityEditor;
   final StringEditor stateEditor;
@@ -67,22 +57,5 @@ public class AddressEditor extends Composite implements Editor<AddressProxy> {
     cityEditor = StringEditor.of(city);
     stateEditor = StringEditor.of(state);
     zipEditor = IntegerEditor.of(zip);
-  }
-
-  public Editor<?> getEditorForPath(String path) {
-    if (STREET.equals(path)) {
-      return streetEditor;
-    } else if (CITY.equals(path)) {
-      return cityEditor;
-    } else if (STATE.equals(path)) {
-      return stateEditor;
-    } else if (ZIP.equals(path)) {
-      return zipEditor;
-    }
-    return null;
-  }
-
-  public Set<String> getPaths() {
-    return new HashSet<String>(Arrays.asList(ALL_PROPERTIES));
   }
 }

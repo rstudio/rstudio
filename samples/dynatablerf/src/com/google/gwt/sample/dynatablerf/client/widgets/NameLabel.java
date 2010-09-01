@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.dynatablerf.client.widgets;
 
-import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.StringEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
@@ -23,13 +22,11 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.sample.dynatablerf.client.StringConstants;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 
-import java.util.Collections;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -40,7 +37,7 @@ import javax.validation.ConstraintViolation;
  */
 class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
   private final Label label = new Label();
-  private final StringEditor labelEditor = StringEditor.ofHasText(label);
+  final StringEditor nameEditor = StringEditor.ofHasText(label);
   private PersonProxy person;
   private HandlerRegistration subscription;
 
@@ -56,17 +53,6 @@ class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
 
   public void flush() {
     // No-op
-  }
-
-  public Editor<?> getEditorForPath(String path) {
-    if (StringConstants.NAME.equals(path)) {
-      return labelEditor;
-    }
-    return null;
-  }
-
-  public Set<String> getPaths() {
-    return Collections.singleton(StringConstants.NAME);
   }
 
   public void onPropertyChange(String... paths) {

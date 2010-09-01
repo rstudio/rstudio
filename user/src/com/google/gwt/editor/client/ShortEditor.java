@@ -15,13 +15,13 @@
  */
 package com.google.gwt.editor.client;
 
-import com.google.gwt.user.client.ui.TakesValue;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * Adapts various interfaces that provide Short values to the Editor
  * architecture.
  */
-public abstract class ShortEditor extends PrimitiveValueEditor<Short> {
+public abstract class ShortEditor implements LeafValueEditor<Short> {
   /**
    * Returns an editor with a <code>null</code> value.
    */

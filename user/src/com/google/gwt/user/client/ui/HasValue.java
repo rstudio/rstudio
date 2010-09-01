@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * Extends {@link TakesValue} to allow the value to be pulled back out, and to

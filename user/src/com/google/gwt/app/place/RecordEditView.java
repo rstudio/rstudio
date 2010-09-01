@@ -16,7 +16,7 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.user.client.ui.TakesValue;
+import com.google.gwt.user.client.TakesValue;
 
 import java.util.Map;
 

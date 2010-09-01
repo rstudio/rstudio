@@ -32,4 +32,6 @@ public interface SimpleBarRequest {
 
   @Instance
   RecordRequest<SimpleBarRecord> persistAndReturnSelf(SimpleBarRecord record);
+
+  RequestObject<Void> reset();
 }

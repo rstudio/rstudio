@@ -15,13 +15,13 @@
  */
 package com.google.gwt.editor.client;
 
-import com.google.gwt.user.client.ui.TakesValue;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * Adapts various interfaces that provide Double values to the Editor
  * architecture.
  */
-public abstract class DoubleEditor extends PrimitiveValueEditor<Double> {
+public abstract class DoubleEditor implements LeafValueEditor<Double> {
   /**
    * Returns an editor with a <code>null</code> value.
    */

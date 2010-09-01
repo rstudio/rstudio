@@ -15,37 +15,13 @@
  */
 package com.google.gwt.editor.client;
 
-import java.util.Collections;
-import java.util.Set;
+import com.google.gwt.user.client.TakesValue;
 
 /**
- * Used to edit non-object or immutable values.
+ * Used to edit non-object or immutable values. The Editor framework will not
+ * descend into a LeafValueEditor.
  * 
  * @param <T> The type of primitive value
  */
-public abstract class PrimitiveValueEditor<T> implements Editor<T> {
-
-  /**
-   * Always returns <code>null</code>.
-   */
-  public final ValueAwareEditor<?> getEditorForPath(String path) {
-    return null;
-  }
-
-  /**
-   * Always returns an empty set.
-   */
-  public final Set<String> getPaths() {
-    return Collections.emptySet();
-  }
-
-  /**
-   * Returns the value currently associated with the editor.
-   */
-  public abstract T getValue();
-
-  /**
-   * Sets the value to be displayed in the editor.
-   */
-  public abstract void setValue(T value);
+public interface LeafValueEditor<T> extends Editor<T>, TakesValue<T> {
 }

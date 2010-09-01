@@ -22,11 +22,11 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
-import com.google.gwt.sample.dynatablerf.client.gen.PersonRequestFactoryDriver;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
@@ -48,6 +48,10 @@ import java.util.Set;
 public class PersonEditorWorkflow {
   interface Binder extends UiBinder<DialogBox, PersonEditorWorkflow> {
     Binder BINDER = GWT.create(Binder.class);
+  }
+
+  interface Driver extends
+      RequestFactoryEditorDriver<PersonProxy, PersonEditor> {
   }
 
   static void register(EventBus eventBus,
@@ -72,10 +76,10 @@ public class PersonEditorWorkflow {
   @UiField
   PersonEditor personEditor;
 
+  private Driver editorDriver;
   private final FavoritesManager manager;
   private final PersonProxy person;
   private final DynaTableRequestFactory requestFactory;
-  private PersonRequestFactoryDriver topLevelDelegate;
 
   private PersonEditorWorkflow(DynaTableRequestFactory requestFactory,
       FavoritesManager manager, PersonProxy person) {
@@ -101,7 +105,7 @@ public class PersonEditorWorkflow {
   void onSave(ClickEvent e) {
     // MOVE TO ACTIVITY END
     dialog.hide();
-    topLevelDelegate.<Void> flush().fire(new Receiver<Void>() {
+    editorDriver.<Void> flush().fire(new Receiver<Void>() {
       public void onSuccess(Void response, Set<SyncResult> syncResults) {
       }
     });
@@ -113,22 +117,22 @@ public class PersonEditorWorkflow {
   }
 
   private void edit() {
-    // This would be a GWT.create Call
-    topLevelDelegate = new PersonRequestFactoryDriver();
-
-    // Regular code
-    topLevelDelegate.initialize(null, requestFactory, personEditor);
     // The request is configured arbitrarily
-    RecordRequest<PersonProxy> existingRequest = requestFactory.personRequest().findPerson(
+    RecordRequest<PersonProxy> fetchRequest = requestFactory.personRequest().findPerson(
         person.getId());
+
+    editorDriver = GWT.create(Driver.class);
+    editorDriver.initialize(null, requestFactory, personEditor);
+
     // Add the paths that the EditorDelegate computes are necessary
-    existingRequest.with(topLevelDelegate.getPaths());
+    fetchRequest.with(editorDriver.getPaths());
+
     // We could do more with the request, but we just fire it
-    existingRequest.fire(new Receiver<PersonProxy>() {
+    fetchRequest.fire(new Receiver<PersonProxy>() {
       public void onSuccess(PersonProxy person, Set<SyncResult> syncResults) {
         // Start the edit process
-        topLevelDelegate.edit(person, requestFactory.personRequest().persist(
-            person));
+        editorDriver.edit(person,
+            requestFactory.personRequest().persist(person));
         personEditor.focus();
       }
     });

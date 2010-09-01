@@ -38,11 +38,26 @@ public interface SourceWriter {
 
   void indentln(String s);
 
+  /**
+   * Emit a printf-style string.
+   */
+  void indentln(String s, Object... args);
+
   void outdent();
 
   void print(String s);
 
+  /**
+   * Emit a printf-style string.
+   */
+  void print(String s, Object... args);
+
   void println();
 
   void println(String s);
+
+  /**
+   * Emit a printf-style string.
+   */
+  void println(String s, Object... args);
 }

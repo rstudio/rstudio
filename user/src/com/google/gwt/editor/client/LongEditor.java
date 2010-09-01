@@ -15,13 +15,13 @@
  */
 package com.google.gwt.editor.client;
 
-import com.google.gwt.user.client.ui.TakesValue;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * Adapts various interfaces that provide Long values to the Editor
  * architecture.
  */
-public abstract class LongEditor extends PrimitiveValueEditor<Long> {
+public abstract class LongEditor implements LeafValueEditor<Long> {
   /**
    * Returns an editor with a <code>null</code> value.
    */

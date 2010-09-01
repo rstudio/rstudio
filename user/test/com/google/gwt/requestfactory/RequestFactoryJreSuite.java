@@ -28,7 +28,8 @@ import junit.framework.TestSuite;
  */
 public class RequestFactoryJreSuite {
   public static Test suite() {
-    TestSuite suite = new TestSuite("requestfactory package tests that require the JRE");
+    TestSuite suite = new TestSuite(
+        "requestfactory package tests that require the JRE");
     suite.addTestSuite(RecordKeyTest.class);
     suite.addTestSuite(JsonRequestProcessorTest.class);
     suite.addTestSuite(ReflectionBasedOperationRegistryTest.class);

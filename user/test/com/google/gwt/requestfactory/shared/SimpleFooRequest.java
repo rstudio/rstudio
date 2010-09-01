@@ -37,6 +37,8 @@ public interface SimpleFooRequest {
   @Instance
   RecordRequest<SimpleFooRecord> persistAndReturnSelf(SimpleFooRecord record);
 
+  RequestObject<Void> reset();
+
   @Instance
   RequestObject<String> hello(SimpleFooRecord instance, SimpleBarRecord record);
 }

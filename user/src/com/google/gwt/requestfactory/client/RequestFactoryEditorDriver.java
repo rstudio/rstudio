@@ -13,8 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.editor.client;
+package com.google.gwt.requestfactory.client;
 
+import com.google.gwt.editor.client.Editor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestFactory;
@@ -26,7 +27,7 @@ import com.google.gwt.requestfactory.shared.RequestObject;
  * created with
  * 
  * <pre>
- * interface MyRFED extends RequestFactoryEditorDelegate&lt;MyRequestFactory, MyObjectProxy> {}
+ * interface MyRFED extends RequestFactoryEditorDriver&lt;MyObjectProxy, MyObjectEditor> {}
  * MyRFED instance = GWT.create(MyRFED.class);
  * {
  * instance.initialize(.....);
@@ -39,11 +40,14 @@ import com.google.gwt.requestfactory.shared.RequestObject;
  * }
  * </pre>
  * 
- * @param <F> the type of RequestFactory that creates <code>R</code>
- * @param <R> the type of Record being edited
+ * @param <P> the type of Proxy being edited
+ * @param <E> the type of Editor that will edit the Record
  */
-public interface RequestFactoryEditorDriver<F extends RequestFactory, R extends Record> {
-  void edit(R record, RequestObject<?> saveRequest);
+public interface RequestFactoryEditorDriver<P extends Record, E extends Editor<? super P>> {
+  /**
+   * Initialize the Editor and its sub-editors with data.
+   */
+  void edit(P proxy, RequestObject<?> saveRequest);
 
   /**
    * Ensures that the Editor passed into {@link #initialize} and its
@@ -54,11 +58,14 @@ public interface RequestFactoryEditorDriver<F extends RequestFactory, R extends 
    */
   <T> RequestObject<T> flush();
 
+  /**
+   * Returns a new array.
+   */
   String[] getPaths();
 
   /**
    * In order to support object subscriptions, the EventBus passed into the
    * RequestFactory should be provided.
    */
-  void initialize(EventBus eventBus, F requestFactory, Editor<R> editor);
+  void initialize(EventBus eventBus, RequestFactory requestFactory, E editor);
 }

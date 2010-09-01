@@ -126,6 +126,10 @@ class ClassSourceFileComposer implements SourceWriter {
     outdent();
   }
 
+  public void indentln(String s, Object... args) {
+    indentln(String.format(s, args));
+  }
+
   public void outdent() {
     --indent;
   }
@@ -159,6 +163,10 @@ class ClassSourceFileComposer implements SourceWriter {
     }
   }
 
+  public void print(String s, Object... args) {
+    print(String.format(s, args));
+  }
+
   public void println() {
     print("\n");
     atStart = true;
@@ -167,6 +175,10 @@ class ClassSourceFileComposer implements SourceWriter {
   public void println(String s) {
     print(s + "\n");
     atStart = true;
+  }
+
+  public void println(String s, Object... args) {
+    println(String.format(s, args));
   }
 
   private void emitClassDecl(String targetClassShortName,

@@ -15,13 +15,13 @@
  */
 package com.google.gwt.editor.client;
 
-import com.google.gwt.user.client.ui.TakesValue;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * Adapts various interfaces that provide Float values to the Editor
  * architecture.
  */
-public abstract class FloatEditor extends PrimitiveValueEditor<Float> {
+public abstract class FloatEditor implements LeafValueEditor<Float> {
   /**
    * Returns an editor with a <code>null</code> value.
    */

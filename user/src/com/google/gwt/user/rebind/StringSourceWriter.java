@@ -61,6 +61,10 @@ public class StringSourceWriter implements SourceWriter {
     outdent();
   }
 
+  public void indentln(String s, Object... args) {
+    indentln(String.format(s, args));
+  }
+
   public void outdent() {
     indentLevel = Math.max(indentLevel - 1, 0);
   }
@@ -68,6 +72,10 @@ public class StringSourceWriter implements SourceWriter {
   public void print(String s) {
     maybeIndent();
     out.print(s);
+  }
+
+  public void print(String s, Object... args) {
+    print(String.format(s, args));
   }
 
   public void println() {
@@ -80,6 +88,10 @@ public class StringSourceWriter implements SourceWriter {
   public void println(String s) {
     print(s);
     println();
+  }
+
+  public void println(String s, Object... args) {
+    println(String.format(s, args));
   }
 
   @Override

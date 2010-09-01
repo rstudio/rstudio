@@ -18,12 +18,12 @@ package com.google.gwt.sample.dynatablerf.client.widgets;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.sample.dynatablerf.client.FavoritesManager;
 import com.google.gwt.sample.dynatablerf.client.events.MarkFavoriteEvent;
-import com.google.gwt.sample.dynatablerf.client.gen.PersonRequestFactoryDriver;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,6 +45,9 @@ public class FavoritesWidget extends Composite {
   interface Binder extends UiBinder<Widget, FavoritesWidget> {
   }
 
+  interface Driver extends RequestFactoryEditorDriver<PersonProxy, NameLabel> {
+  }
+
   interface Style extends CssResource {
     String favorite();
   }
@@ -54,11 +57,11 @@ public class FavoritesWidget extends Composite {
 
   @UiField
   Style style;
-
   private final EventBus eventBus;
   private final DynaTableRequestFactory factory;
   private FavoritesManager manager;
   private final Map<Long, NameLabel> map = new HashMap<Long, NameLabel>();
+
   private HandlerRegistration subscription;
 
   public FavoritesWidget(EventBus eventBus, DynaTableRequestFactory factory,
@@ -100,9 +103,9 @@ public class FavoritesWidget extends Composite {
     if (event.isFavorite()) {
       if (!map.containsKey(person.getId())) {
         NameLabel label = new NameLabel(eventBus);
-        PersonRequestFactoryDriver delegate = new PersonRequestFactoryDriver();
-        delegate.initialize(eventBus, factory, label);
-        delegate.edit(person, null);
+        Driver driver = GWT.create(Driver.class);
+        driver.initialize(eventBus, factory, label);
+        driver.edit(person, null);
         label.setStylePrimaryName(style.favorite());
 
         container.add(label);
