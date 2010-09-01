@@ -50,8 +50,8 @@ import com.google.gwt.user.rebind.rpc.SerializationUtils;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -133,9 +133,9 @@ public class RpcProxyCreator extends ProxyCreator {
 
     TypeOracle typeOracle = ctx.getTypeOracle();
     JClassType objectType = typeOracle.getJavaLangObject();
-    Set<JType> classLiterals = new HashSet<JType>();
-    Map<JType, JMethod> serializerMethods = new HashMap<JType, JMethod>();
-    Map<JType, List<String>> fields = new HashMap<JType, List<String>>();
+    Set<JType> classLiterals = new LinkedHashSet<JType>();
+    Map<JType, JMethod> serializerMethods = new LinkedHashMap<JType, JMethod>();
+    Map<JType, List<String>> fields = new LinkedHashMap<JType, List<String>>();
 
     StringBuilder sb = writeArtificialRescues(typeOracle, serializationSto,
         deserializationSto);
@@ -303,7 +303,7 @@ public class RpcProxyCreator extends ProxyCreator {
   private StringBuilder writeArtificialRescues(TypeOracle typeOracle,
       SerializableTypeOracle serializationSto,
       SerializableTypeOracle deserializationSto) {
-    Set<JType> serializableTypes = new HashSet<JType>();
+    Set<JType> serializableTypes = new LinkedHashSet<JType>();
     Collections.addAll(serializableTypes,
         serializationSto.getSerializableTypes());
     Collections.addAll(serializableTypes,

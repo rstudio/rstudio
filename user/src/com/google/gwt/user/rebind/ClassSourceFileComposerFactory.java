@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.GeneratorContext;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,9 +68,9 @@ public class ClassSourceFileComposerFactory {
 
   private String className;
 
-  private Set<String> imports = new HashSet<String>();
+  private Set<String> imports = new LinkedHashSet<String>();
 
-  private Set<String> interfaceNames = new HashSet<String>();
+  private Set<String> interfaceNames = new LinkedHashSet<String>();
 
   private String packageName;
 
