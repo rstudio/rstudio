@@ -7,7 +7,7 @@
 	<version>0.1.0.BUILD-SNAPSHOT</version>
 	<name>expenses</name>
 	<properties>
-		<roo.version>1.1.0.M4</roo.version>
+		<roo.version>1.1.0.M2</roo.version>
 		<spring.version>3.0.3.RELEASE</spring.version>
 		<aspectj.version>1.6.10.M1</aspectj.version>
 		<slf4j.version>1.6.1</slf4j.version>
