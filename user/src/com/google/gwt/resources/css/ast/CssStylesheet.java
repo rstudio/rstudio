@@ -15,6 +15,8 @@
  */
 package com.google.gwt.resources.css.ast;
 
+import com.google.gwt.resources.css.CssDebugInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +24,7 @@ import java.util.List;
  * An abstract representation of a CSS stylesheet.
  */
 public class CssStylesheet extends CssNode implements HasNodes {
+  private CssDebugInfo debugInfo = CssDebugInfo.NULL;
   private List<CssNode> rules = new ArrayList<CssNode>();
 
   public CssStylesheet() {
@@ -43,8 +46,20 @@ public class CssStylesheet extends CssNode implements HasNodes {
     rules.addAll(CssNodeCloner.clone(CssNode.class, other.rules));
   }
 
+  /**
+   * Returns {@link CssDebugInfo#NULL} unless {@link #setDebugInfo} has been
+   * called.
+   */
+  public CssDebugInfo getDebugInfo() {
+    return debugInfo;
+  }
+
   public List<CssNode> getNodes() {
     return rules;
+  }
+
+  public void setDebugInfo(CssDebugInfo debugInfo) {
+    this.debugInfo = debugInfo;
   }
 
   public void traverse(CssVisitor visitor, Context context) {

@@ -40,13 +40,6 @@ import java.util.regex.Matcher;
  */
 public class ClassRenamer extends CssVisitor {
 
-  /**
-   * A tag to indicate that an externally-defined CSS class has no JMethod that
-   * is used to access it.
-   */
-  private static final Replacement UNREFERENCED_EXTERNAL = new Replacement(
-      null, null);
-
   /*
    * TODO: Replace with Pair<A, B>.
    */
@@ -82,6 +75,13 @@ public class ClassRenamer extends CssVisitor {
   }
 
   /**
+   * A tag to indicate that an externally-defined CSS class has no JMethod that
+   * is used to access it.
+   */
+  private static final Replacement UNREFERENCED_EXTERNAL = new Replacement(
+      null, null);
+
+  /**
    * Records replacements that have actually been performed.
    */
   private final Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
@@ -93,6 +93,7 @@ public class ClassRenamer extends CssVisitor {
   private final Map<String, Replacement> potentialReplacements;
   private final TreeLogger logger;
   private final Set<JMethod> missingClasses;
+  private CssStylesheet sheet;
   private final boolean strict;
   private final Set<String> unknownClasses = new HashSet<String>();
 
@@ -132,11 +133,14 @@ public class ClassRenamer extends CssVisitor {
       Replacement entry = potentialReplacements.get(sourceClassName);
 
       if (entry == null) {
+        // This map is checked when in strict mode
         unknownClasses.add(sourceClassName);
+        sheet.getDebugInfo().addToClassMap(sourceClassName, sourceClassName);
         continue;
 
       } else if (entry == UNREFERENCED_EXTERNAL) {
         // An @external without an accessor method. This is OK.
+        sheet.getDebugInfo().addToClassMap(sourceClassName, sourceClassName);
         continue;
       }
 
@@ -150,6 +154,7 @@ public class ClassRenamer extends CssVisitor {
 
       actualReplacements.put(method, obfuscatedClassName);
       missingClasses.remove(method);
+      sheet.getDebugInfo().addToClassMap(sourceClassName, obfuscatedClassName);
     }
 
     if (start != 0) {
@@ -213,6 +218,12 @@ public class ClassRenamer extends CssVisitor {
    */
   public Map<JMethod, String> getReplacements() {
     return actualReplacements;
+  }
+
+  @Override
+  public boolean visit(CssStylesheet x, Context ctx) {
+    this.sheet = x;
+    return true;
   }
 
   /**

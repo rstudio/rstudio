@@ -37,7 +37,10 @@ import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.resources.client.CssResource.Shared;
+import com.google.gwt.resources.client.impl.CssResourceObserver;
 import com.google.gwt.resources.css.ClassRenamer;
+import com.google.gwt.resources.css.CssDebugInfo;
+import com.google.gwt.resources.css.CssDebugInfoImpl;
 import com.google.gwt.resources.css.CssGenerationVisitor;
 import com.google.gwt.resources.css.DefsCollector;
 import com.google.gwt.resources.css.ExternalClassesCollector;
@@ -74,6 +77,7 @@ import com.google.gwt.user.rebind.StringSourceWriter;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -97,6 +101,8 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       return o1.getQualifiedSourceName().compareTo(o2.getQualifiedSourceName());
     }
   }
+
+  private static final String ENABLE_DEBUG_INFO_PROPERTY = "CssResource.enableDebugInfo";
 
   /**
    * A lookup table of base-32 chars we use to encode CSS idents. Because CSS
@@ -429,12 +435,11 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
       JMethod method) throws UnableToCompleteException {
-
     TypeOracle typeOracle = context.getGeneratorContext().getTypeOracle();
     SourceWriter sw = new StringSourceWriter();
     // Write the expression to create the subtype.
-    sw.println("new " + method.getReturnType().getQualifiedSourceName()
-        + "() {");
+    sw.println(CssResourceObserver.class.getName() + ".register(new "
+        + method.getReturnType().getQualifiedSourceName() + "() {");
     sw.indent();
 
     JClassType cssResourceSubtype = method.getReturnType().isInterface();
@@ -488,8 +493,9 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     writeUserMethods(logger, sw, stylesheetMap.get(method),
         cssResourceSubtype.getOverridableMethods(), actualReplacements);
 
+    writeDebugInfo(sw, stylesheetMap.get(method).getDebugInfo());
     sw.outdent();
-    sw.println("}");
+    sw.println("})");
 
     return sw.toString();
   }
@@ -552,6 +558,22 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
 
     // Create the AST and do a quick scan for requirements
     CssStylesheet sheet = GenerateCssAst.exec(logger, resources);
+
+    // Start recording diagnostic info
+    CssDebugInfo debugInfo = makeDebugInfo(logger, context);
+    if (debugInfo.isEnabled()) {
+      debugInfo.setMethodName(method.getName());
+      debugInfo.setOwnerType(context.getClientBundleType().getQualifiedBinaryName());
+
+      String[] sources = new String[resources.length];
+      for (int i = 0, j = resources.length; i < j; i++) {
+        sources[i] = resources[i].toExternalForm();
+      }
+      debugInfo.setSource(sources);
+
+      sheet.setDebugInfo(debugInfo);
+    }
+
     stylesheetMap.put(method, sheet);
     (new RequirementsCollector(logger, requirements)).accept(sheet);
   }
@@ -849,6 +871,25 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   }
 
   /**
+   * Returns {@link CssDebugInfo#NULL} or a new instance of
+   * {@link CssDebugInfoImpl} based on the value of the
+   * {@value #ENABLE_DEBUG_INFO_PROPERTY} deferred binding property.
+   */
+  private CssDebugInfo makeDebugInfo(TreeLogger logger, ResourceContext context) {
+    CssDebugInfo debugInfo = CssDebugInfo.NULL;
+    try {
+      PropertyOracle oracle = context.getGeneratorContext().getPropertyOracle();
+      ConfigurationProperty debugInfoProperty = oracle.getConfigurationProperty(ENABLE_DEBUG_INFO_PROPERTY);
+      if (Boolean.valueOf(debugInfoProperty.getValues().get(0))) {
+        debugInfo = new CssDebugInfoImpl();
+      }
+    } catch (BadPropertyValueException e) {
+      // Unexpected, but non-fatal
+    }
+    return debugInfo;
+  }
+
+  /**
    * Create a Java expression that evaluates to the string representation of the
    * stylesheet resource.
    * 
@@ -934,6 +975,67 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     sw.println("}");
   }
 
+  private void writeDebugInfo(SourceWriter sw, CssDebugInfo debugInfo) {
+    if (debugInfo instanceof CssDebugInfoImpl) {
+      writeDebugInfoEnabled(sw, (CssDebugInfoImpl) debugInfo);
+    } else {
+      writeDebugInfoDisabled(sw);
+    }
+  }
+
+  /**
+   * Write the null implementation of <code>getDebugInfo</code>.
+   */
+  private void writeDebugInfoDisabled(SourceWriter sw) {
+    sw.println("public DebugInfo getDebugInfo() {");
+    sw.indentln("return null;");
+    sw.println("}");
+  }
+
+  /**
+   * Writes the real implementation of <code>getDebugInfo</code>.
+   */
+  private void writeDebugInfoEnabled(SourceWriter sw, CssDebugInfoImpl debugInfo) {
+    sw.println("public DebugInfo getDebugInfo() {");
+    sw.indent();
+    sw.println("final " + Map.class.getName() + "<String, String> map;");
+    // Instance initializer to populate the map
+    sw.println("{");
+    sw.indent();
+    sw.println(Map.class.getName() + "<String, String> temp = new "
+        + HashMap.class.getName() + "<String, String>();");
+    for (Map.Entry<String, String> entry : debugInfo.getClassNameMap().entrySet()) {
+      // temp.put("key", "value");
+      sw.println("temp.put(\"" + Generator.escape(entry.getKey()) + "\", \""
+          + Generator.escape(entry.getValue()) + "\");");
+    }
+    sw.println("map = " + Collections.class.getName()
+        + ".unmodifiableMap(temp);");
+    sw.outdent();
+    sw.println("}");
+    sw.println("return new DebugInfo() {");
+    sw.indent();
+
+    sw.println("public " + Map.class.getName()
+        + "<String, String> getClassMap() {return map;}");
+    sw.println("public String getMethodName() {return \""
+        + Generator.escape(debugInfo.getMethodName()) + "\";}");
+    sw.println("public String getOwnerType() {return \""
+        + Generator.escape(debugInfo.getOwnerType()) + "\";}");
+
+    // return new String[] {"foo", "bar",};
+    sw.println("public String[] getSource() {return new String[] {");
+    for (String s : debugInfo.getSource()) {
+      sw.indentln("\"" + Generator.escape(s) + "\",");
+    }
+    sw.println("};}");
+
+    sw.outdent();
+    sw.println("};");
+    sw.outdent();
+    sw.println("}");
+  }
+
   private void writeDefAssignment(TreeLogger logger, SourceWriter sw,
       JMethod toImplement, CssStylesheet cssStylesheet)
       throws UnableToCompleteException {
@@ -1008,6 +1110,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   }
 
   private void writeGetName(JMethod method, SourceWriter sw) {
+    stylesheetMap.get(method).getDebugInfo().setMethodName(method.getName());
     sw.println("public String getName() {");
     sw.indent();
     sw.println("return \"" + method.getName() + "\";");
@@ -1031,7 +1134,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     for (JMethod toImplement : methods) {
       String name = toImplement.getName();
       if ("getName".equals(name) || "getText".equals(name)
-          || "ensureInjected".equals(name)) {
+          || "ensureInjected".equals(name) || "getDebugInfo".equals(name)) {
         continue;
       }
 

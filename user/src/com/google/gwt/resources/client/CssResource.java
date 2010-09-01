@@ -24,6 +24,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Map;
 
 /**
  * Aggregates and minifies CSS stylesheets. A CssResource represents a regular
@@ -168,6 +169,42 @@ public interface CssResource extends ResourcePrototype {
   @Target(ElementType.METHOD)
   public @interface ClassName {
     String value();
+  }
+
+  /**
+   * This interface allows CssResources to be used with external testing
+   * infrastructure.
+   */
+  public interface DebugInfo {
+    /**
+     * Returns an immutable map of the raw CSS class names used in the source
+     * CSS to their obfuscated identifiers.
+     * <p>
+     * The object returned from this method is essentially a JSON map literal:
+     * 
+     * <pre>
+     * { 'someClass' : 'xyzzy', 'anotherClass' : 'xyzzz' }
+     * </pre>
+     * </p>
+     */
+    Map<String, String> getClassMap();
+
+    /**
+     * Equivalent to {@link CssResource#getName()}.
+     */
+    String getMethodName();
+
+    /**
+     * Returns the fully-qualified binary name of the ClientBundle in which the
+     * CssResource was declared.
+     */
+    String getOwnerType();
+
+    /**
+     * Returns the resolved locations of the resources specified in the
+     * CssResource's {@code @Source} annotation.
+     */
+    String[] getSource();
   }
 
   /**
@@ -317,6 +354,27 @@ public interface CssResource extends ResourcePrototype {
    * @return <code>true</code> if this method mutated the DOM.
    */
   boolean ensureInjected();
+
+  /**
+   * Returns diagnostic information associated with the CssResource if the
+   * <code>CssResource.enableDebugInfo</code> configuration property is set to
+   * <code>true</code>. Otherwise, this method returns <code>null</code>.
+   * <p>
+   * To enable this method, inherit the
+   * <code>com.google.gwt.resources.EnableCssResourceDebugging</code> module.
+   * Inheriting this module will also cause all class selectors used in a
+   * CssResource to be exported to a global object accessible on the main
+   * application window as <code>$wnd.gwtCssResource['moduleName']</code>.
+   * <p>
+   * The keys on the map object will be of the form
+   * <code>&lt;ClientBundle type name>.&lt;CssResource method name>.&lt;Raw css class selector></code>
+   * . An example key might be
+   * <code>com.example.Resources.superButton.button-outer-div</code>. The value
+   * associated with the key is the (possibly obfuscated) CSS class selector
+   * used in the injected code.
+   * </p>
+   */
+  DebugInfo getDebugInfo();
 
   /**
    * Provides the contents of the CssResource.
