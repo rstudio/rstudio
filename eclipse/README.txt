@@ -105,7 +105,7 @@ Annotations:
 
 Checkstyle is used to enforce good programming style.
 
-1. Install Checkstyle version 4.4.2 (newer versions will not work)
+1. Install Checkstyle version 4.4.3 (newer versions will not work)
 
 The Eclipse Checkstyle plugin can be found at:
   http://eclipse-cs.sourceforge.net/
