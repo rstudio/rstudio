@@ -237,6 +237,56 @@ public class GenerateJavaAST {
   private static class JavaASTGenerationVisitor {
 
     /**
+     * Used to cache {@link Method} lookups.
+     */
+    private static class MethodKey {
+      private Class<? extends Object> childClass;
+      private String name;
+
+      public MethodKey(String name, Class<? extends Object>childClass) {
+        this.name = name;
+        this.childClass = childClass;
+      }
+
+      public boolean equals(Object obj) {
+        if (obj instanceof MethodKey) {
+          MethodKey otherKey = (MethodKey) obj;
+          return name.equals(otherKey.name) && childClass.equals(otherKey.childClass);
+        }
+       return super.equals(obj);
+      }
+
+      @Override
+      public int hashCode() {
+        return name.hashCode() + (101 * childClass.hashCode());
+      }
+    }
+
+    /**
+     * Used to cache {@link Method} lookups.
+     */
+    private static class MethodValue {
+      private final NoSuchMethodException ex;
+      private final Method method;
+      public MethodValue(Method method) {
+        this.method = method;
+        this.ex = null;
+      }
+
+      public MethodValue(NoSuchMethodException ex) {
+        this.ex = ex;
+        this.method = null;
+      }
+
+      public Method getMethod() throws NoSuchMethodException {
+        if (this.ex != null) {
+          throw (ex);
+        }
+        return method;
+      }
+    }
+
+    /**
      * The literal for the JLS identifier that represents the length
      * field on an array.
      */
@@ -284,6 +334,8 @@ public class GenerateJavaAST {
     private final Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = new HashMap<JsniMethodBody, AbstractMethodDeclaration>();
 
     private final Map<JMethod, Map<String, JLabel>> labelMap = new IdentityHashMap<JMethod, Map<String, JLabel>>();
+
+    private final Map<MethodKey, MethodValue> methodCache = new HashMap<MethodKey, MethodValue>();
 
     private final JProgram program;
 
@@ -536,8 +588,7 @@ public class GenerateJavaAST {
       }
 
       try {
-        // TODO: This is really slow! Cache or otherwise fix.
-        Method method = getClass().getDeclaredMethod(name, child.getClass());
+        Method method = getCachedMethod(name, child.getClass());
         return (JNode) method.invoke(this, child);
       } catch (Throwable e) {
         if (e instanceof InvocationTargetException) {
@@ -2273,6 +2324,22 @@ public class GenerateJavaAST {
         typeBinding = typeBinding.erasure();
       }
       return typeBinding;
+    }
+
+    private Method getCachedMethod(String name, Class<? extends Object> childClass) throws NoSuchMethodException {
+      MethodKey key = new MethodKey(name, childClass);
+      MethodValue value = methodCache.get(key);
+      if (value == null) {
+        try {
+          Method method = getClass().getDeclaredMethod(name, childClass);
+          value = new MethodValue(method);
+        } catch (NoSuchMethodException ex) {
+          value = new MethodValue(ex);
+        }
+        methodCache.put(key, value);
+      }
+      // Might throw an exception here.
+      return value.getMethod();
     }
 
     private JInterfaceType getOrCreateExternalType(SourceInfo info,
