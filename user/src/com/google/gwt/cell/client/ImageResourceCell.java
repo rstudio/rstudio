@@ -16,17 +16,29 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 /**
  * A {@link AbstractCell} used to render an {@link ImageResource}.
+ *
+ * <p>
+ * This class assumes that the URL returned from ImageResource is safe from
+ * script attacks. If you do not generate the ImageResource from a
+ * {@link com.google.gwt.resources.client.ClientBundle ClientBundle}, you should
+ * use {@link com.google.gwt.safehtml.shared.UriUtils UriUtils} to sanitize the
+ * URL before returning it from {@link ImageResource#getURL()}.
  */
 public class ImageResourceCell extends AbstractCell<ImageResource> {
 
   @Override
-  public void render(ImageResource value, Object key, StringBuilder sb) {
+  public void render(ImageResource value, Object key, SafeHtmlBuilder sb) {
     if (value != null) {
-      sb.append(AbstractImagePrototype.create(value).getHTML());
+      SafeHtml html = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(
+          value).getHTML());
+      sb.append(html);
     }
   }
 }

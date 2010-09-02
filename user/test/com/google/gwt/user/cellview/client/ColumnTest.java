@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Timer;
 
 /**
@@ -182,8 +183,8 @@ public class ColumnTest extends GWTTestCase {
     TextCell cell = new TextCell();
     Column<String, String> column = new IdentityColumn<String>(cell);
 
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     column.render("test", null, sb);
-    assertEquals("test", sb.toString());
+    assertEquals("test", sb.toSafeHtml().asString());
   }
 }

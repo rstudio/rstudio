@@ -25,6 +25,10 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SimpleHtmlSanitizer;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
@@ -41,6 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
  */
 @ShowcaseRaw({"ContactDatabase.java"})
 public class CwCellValidation extends ContentWidget {
+
   /**
    * The constants used in this Content Widget.
    */
@@ -58,29 +63,9 @@ public class CwCellValidation extends ContentWidget {
     String cwCellValidationName();
   }
 
-  /**
-   * The ViewData used by {@link ValidatableInputCell}.
-   */
-  @ShowcaseSource
-  private static class ValidationData {
-    private String value;
-    private boolean invalid;
-
-    public String getValue() {
-      return value;
-    }
-
-    public boolean isInvalid() {
-      return invalid;
-    }
-
-    public void setInvalid(boolean invalid) {
-      this.invalid = invalid;
-    }
-
-    public void setValue(String value) {
-      this.value = value;
-    }
+  interface Template extends SafeHtmlTemplates {
+    @Template("<input type=\"text\" value=\"{0}\" style=\"color:{1}\"/>")
+    SafeHtml input(String value, String color);
   }
 
   /**
@@ -90,11 +75,14 @@ public class CwCellValidation extends ContentWidget {
   private static class ValidatableInputCell extends AbstractEditableCell<
       String, ValidationData> {
 
-    private String errorMessage;
+    private SafeHtml errorMessage;
 
     public ValidatableInputCell(String errorMessage) {
       super("change");
-      this.errorMessage = errorMessage;
+      if (template == null) {
+        template = GWT.create(Template.class);
+      }
+      this.errorMessage = SimpleHtmlSanitizer.sanitizeHtml(errorMessage);
     }
 
     @Override
@@ -124,7 +112,7 @@ public class CwCellValidation extends ContentWidget {
     }
 
     @Override
-    public void render(String value, Object key, StringBuilder sb) {
+    public void render(String value, Object key, SafeHtmlBuilder sb) {
       // Get the view data.
       ValidationData viewData = getViewData(key);
       if (viewData != null && viewData.getValue().equals(value)) {
@@ -141,27 +129,44 @@ public class CwCellValidation extends ContentWidget {
       String pendingValue = (viewData == null) ? null : viewData.getValue();
       boolean invalid = (viewData == null) ? false : viewData.isInvalid();
 
-      sb.append("<input type=\"text\" value=\"");
-      if (pendingValue != null) {
-        sb.append(pendingValue);
-      } else {
-        sb.append(value);
-      }
-      sb.append("\" style=\"color:");
-      if (pendingValue != null) {
-        sb.append(invalid ? "red" : "blue");
-      } else {
-        sb.append("black");
-      }
-      sb.append("\"></input>");
+      sb.append(template.input(pendingValue != null ? pendingValue : value,
+          pendingValue != null ? (invalid ? "red" : "blue") : ("black")));
 
       if (invalid) {
-        sb.append("&nbsp;<span style='color:red;'>");
+        sb.appendHtmlConstant("&nbsp;<span style='color:red;'>");
         sb.append(errorMessage);
-        sb.append("</span>");
+        sb.appendHtmlConstant("</span>");
       }
     }
   }
+
+  /**
+   * The ViewData used by {@link ValidatableInputCell}.
+   */
+  @ShowcaseSource
+  private static class ValidationData {
+    private boolean invalid;
+    private String value;
+
+    public String getValue() {
+      return value;
+    }
+
+    public boolean isInvalid() {
+      return invalid;
+    }
+
+    public void setInvalid(boolean invalid) {
+      this.invalid = invalid;
+    }
+
+    public void setValue(String value) {
+      this.value = value;
+    }
+  }
+
+  // Used by ValidatableInputCell
+  private static Template template;
 
   /**
    * Checks if an address is valid. A valid address consists of a number

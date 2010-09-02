@@ -13,40 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.cell.client;
+package com.google.gwt.user.cellview.client;
+
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
- * Tests for {@link TextCell}.
+ * A Header containing safe HTML data rendered by a SafeHtmlCell.
  */
-public class ImageCellTest extends CellTestBase<String> {
+public class SafeHtmlHeader extends Header<SafeHtml> {
 
-  @Override
-  protected Cell<String> createCell() {
-    return new ImageCell();
+  private SafeHtml text;
+
+  public SafeHtmlHeader(SafeHtml text) {
+    super(new SafeHtmlCell());
+    this.text = text;
   }
 
   @Override
-  protected String createCellValue() {
-    return "test.png";
-  }
-
-  @Override
-  protected boolean dependsOnSelection() {
-    return false;
-  }
-
-  @Override
-  protected String[] getConsumedEvents() {
-    return null;
-  }
-
-  @Override
-  protected String getExpectedInnerHtml() {
-    return "<img src=\"test.png\"></img>";
-  }
-
-  @Override
-  protected String getExpectedInnerHtmlNull() {
-    return "";
+  public SafeHtml getValue() {
+    return text;
   }
 }

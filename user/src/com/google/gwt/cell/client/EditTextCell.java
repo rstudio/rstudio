@@ -15,11 +15,17 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
+import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
  * An editable text cell. Click to edit, escape to cancel, return to commit.
@@ -35,6 +41,11 @@ import com.google.gwt.event.dom.client.KeyCodes;
 public class EditTextCell extends AbstractEditableCell<
     String, EditTextCell.ViewData> {
 
+  interface Template extends SafeHtmlTemplates {
+    @Template("<input type=\"text\" value=\"{0}\"></input>")
+    SafeHtml input(String value);
+  }
+
   /**
    * The view data object used by this cell. We need to store both the text and
    * the state because this cell is rendered differently in edit mode. If we did
@@ -43,18 +54,21 @@ public class EditTextCell extends AbstractEditableCell<
    * string.
    */
   static class ViewData {
-    /**
-     * Keep track of the original value at the start of the edit, which might be
-     * the edited value from the previous edit and NOT the actual value.
-     */
-    private String original;
-    private String text;
+
     private boolean isEditing;
 
     /**
      * If true, this is not the first edit.
      */
     private boolean isEditingAgain;
+
+    /**
+     * Keep track of the original value at the start of the edit, which might be
+     * the edited value from the previous edit and NOT the actual value.
+     */
+    private String original;
+
+    private String text;
 
     /**
      * Construct a new ViewData in editing mode.
@@ -122,8 +136,23 @@ public class EditTextCell extends AbstractEditableCell<
     }
   }
 
+  private static Template template;
+
+  private final SafeHtmlRenderer<String> renderer;
+
   public EditTextCell() {
+    this(SimpleSafeHtmlRenderer.getInstance());
+  }
+
+  public EditTextCell(SafeHtmlRenderer<String> renderer) {
     super("click", "keyup", "keydown", "blur");
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
+    if (renderer == null) {
+      throw new IllegalArgumentException("renderer == null");
+    }
+    this.renderer = renderer;
   }
 
   @Override
@@ -158,7 +187,7 @@ public class EditTextCell extends AbstractEditableCell<
   }
 
   @Override
-  public void render(String value, Object key, StringBuilder sb) {
+  public void render(String value, Object key, SafeHtmlBuilder sb) {
     // Get the view data.
     ViewData viewData = getViewData(key);
     if (viewData != null && !viewData.isEditing() && value != null
@@ -168,15 +197,18 @@ public class EditTextCell extends AbstractEditableCell<
     }
 
     if (viewData != null) {
+      String text = viewData.getText();
+      SafeHtml html = renderer.render(text);
       if (viewData.isEditing()) {
-        sb.append(
-            "<input type='text' value='" + viewData.getText() + "'></input>");
+        // Note the template will not treat SafeHtml specially
+        sb.append(template.input(html.asString()));
       } else {
         // The user pressed enter, but view data still exists.
-        sb.append(viewData.getText());
+        sb.append(html);
       }
     } else if (value != null) {
-      sb.append(value);
+      SafeHtml html = renderer.render(value);
+      sb.append(html);
     }
   }
 

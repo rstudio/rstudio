@@ -28,6 +28,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HasAnimation;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -380,12 +382,21 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
     String topItemImageValue();
   }
 
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div class=\"{0}\" style=\"position:absolute;{1}:0px;top:0px;"
+        + "height:{2}px;width:{3}px;background:url('{4}') no-repeat scroll "
+        + "center center transparent;\"></div>")
+    SafeHtml image(String classes, String direction, int height, int width, String url);
+  }
+
   /**
    * The default number of children to show under a tree node.
    */
   private static final int DEFAULT_LIST_SIZE = 25;
 
   private static Resources DEFAULT_RESOURCES;
+
+  private static Template template;
 
   private static Resources getDefaultResources() {
     if (DEFAULT_RESOURCES == null) {
@@ -404,12 +415,12 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
   /**
    * The HTML used to generate the closed image.
    */
-  private final String closedImageHtml;
+  private final SafeHtml closedImageHtml;
 
   /**
    * The HTML used to generate the closed image for the top items.
    */
-  private final String closedImageTopHtml;
+  private final SafeHtml closedImageTopHtml;
 
   /**
    * The default number of children to display under each node.
@@ -435,17 +446,17 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
   /**
    * The HTML used to generate the loading image.
    */
-  private final String loadingImageHtml;
+  private final SafeHtml loadingImageHtml;
 
   /**
    * The HTML used to generate the open image.
    */
-  private final String openImageHtml;
+  private final SafeHtml openImageHtml;
 
   /**
    * The HTML used to generate the open image for the top items.
    */
-  private final String openImageTopHtml;
+  private final SafeHtml openImageTopHtml;
 
   /**
    * The hidden root node in the tree.
@@ -479,6 +490,9 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
   public <T> CellTree(
       TreeViewModel viewModel, T rootValue, Resources resources) {
     super(viewModel);
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
     this.style = resources.cellTreeStyle();
     this.style.ensureInjected();
     initWidget(new SimplePanel());
@@ -645,7 +659,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
    * @param isTop true if the top element, false if not
    * @return the HTML string
    */
-  String getClosedImageHtml(boolean isTop) {
+  SafeHtml getClosedImageHtml(boolean isTop) {
     return isTop ? closedImageTopHtml : closedImageHtml;
   }
 
@@ -661,7 +675,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
   /**
    * @return the HTML to render the loading image.
    */
-  String getLoadingImageHtml() {
+  SafeHtml getLoadingImageHtml() {
     return loadingImageHtml;
   }
 
@@ -671,7 +685,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
    * @param isTop true if the top element, false if not
    * @return the HTML string
    */
-  String getOpenImageHtml(boolean isTop) {
+  SafeHtml getOpenImageHtml(boolean isTop) {
     return isTop ? openImageTopHtml : openImageHtml;
   }
 
@@ -735,31 +749,20 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
    * @param isTop true if the image is for a top level element.
    * @return the rendered HTML
    */
-  private String getImageHtml(ImageResource res, boolean isTop) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("<div class='").append(style.itemImage());
+  private SafeHtml getImageHtml(ImageResource res, boolean isTop) {
+    StringBuilder classesBuilder = new StringBuilder(style.itemImage());
     if (isTop) {
-      sb.append(" ").append(style.topItemImage());
+      classesBuilder.append(" ").append(style.topItemImage());
     }
-    sb.append("' ");
 
-    // Add the position and dimensions.
-    sb.append("style=\"position:absolute;top:0px;");
+    String direction;
     if (LocaleInfo.getCurrentLocale().isRTL()) {
-      sb.append("right:0px;");
+      direction = "right";
     } else {
-      sb.append("left:0px;");
+      direction = "left";
     }
-    sb.append("height:").append(res.getHeight()).append("px;");
-    sb.append("width:").append(res.getWidth()).append("px;");
-
-    // Add the background, vertically centered.
-    sb.append("background:url('").append(res.getURL()).append("') ");
-    sb.append("no-repeat scroll center center transparent;");
-
-    // Close the div and return.
-    sb.append("\"></div>");
-    return sb.toString();
+    return template.image(classesBuilder.toString(), direction,
+        res.getHeight(), res.getWidth(), res.getURL());
   }
 
   /**

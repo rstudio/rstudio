@@ -19,6 +19,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
@@ -165,12 +167,12 @@ class HasDataPresenter<T> implements HasData<T> {
      * Construct the HTML that represents the list of values, taking the
      * selection state into account.
      *
-     * @param sb the {@link StringBuilder} to build into
+     * @param sb the {@link SafeHtmlBuilder} to build into
      * @param values the values to render
      * @param start the start index that is being rendered
      * @param selectionModel the {@link SelectionModel}
      */
-    void render(StringBuilder sb, List<T> values, int start,
+    void render(SafeHtmlBuilder sb, List<T> values, int start,
         SelectionModel<? super T> selectionModel);
 
     /**
@@ -179,7 +181,7 @@ class HasDataPresenter<T> implements HasData<T> {
      * @param values the values of the new children
      * @param html the html to render in the child
      */
-    void replaceAllChildren(List<T> values, String html);
+    void replaceAllChildren(List<T> values, SafeHtml html);
 
     /**
      * Convert the specified HTML into DOM elements and replace the existing
@@ -191,7 +193,7 @@ class HasDataPresenter<T> implements HasData<T> {
      * @param start the start index to be replaced
      * @param html the HTML to convert
      */
-    void replaceChildren(List<T> values, int start, String html);
+    void replaceChildren(List<T> values, int start, SafeHtml html);
 
     /**
      * Re-establish focus on an element within the view if desired.
@@ -221,7 +223,7 @@ class HasDataPresenter<T> implements HasData<T> {
    * the contents do not change the next time we render, then we don't have to
    * set inner html.
    */
-  private String lastContents = null;
+  private SafeHtml lastContents = null;
 
   private int pageSize;
   private int pageStart = 0;
@@ -428,7 +430,7 @@ class HasDataPresenter<T> implements HasData<T> {
     List<T> boundedValues = rowData.subList(
         boundedStart - pageStart, boundedEnd - pageStart);
     int boundedSize = boundedValues.size();
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     view.render(sb, boundedValues, boundedStart, selectionModel);
 
     // Update the loading state.
@@ -440,7 +442,7 @@ class HasDataPresenter<T> implements HasData<T> {
         && (boundedSize >= childCount || boundedSize >= getCurrentPageSize()
             || rowData.size() < childCount)) {
       // If the contents have not changed, we're done.
-      String newContents = sb.toString();
+      SafeHtml newContents = sb.toSafeHtml();
       if (!newContents.equals(lastContents)) {
         lastContents = newContents;
         view.replaceAllChildren(boundedValues, newContents);
@@ -448,7 +450,7 @@ class HasDataPresenter<T> implements HasData<T> {
     } else {
       lastContents = null;
       view.replaceChildren(
-          boundedValues, boundedStart - pageStart, sb.toString());
+          boundedValues, boundedStart - pageStart, sb.toSafeHtml());
     }
 
     // Allow the view to reestablish focus after being re-rendered

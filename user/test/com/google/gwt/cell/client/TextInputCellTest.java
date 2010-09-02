@@ -63,16 +63,16 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<input type='text' value='hello'></input>";
+    return "<input type=\"text\" value=\"hello\"></input>";
   }
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    return "<input type='text'></input>";
+    return "<input type=\"text\"></input>";
   }
 
   @Override
   protected String getExpectedInnerHtmlViewData() {
-    return "<input type='text' value='newValue'></input>";
+    return "<input type=\"text\" value=\"newValue\"></input>";
   }
 }

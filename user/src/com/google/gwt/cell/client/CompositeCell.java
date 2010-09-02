@@ -18,6 +18,7 @@ package com.google.gwt.cell.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -137,7 +138,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
   }
 
   @Override
-  public void render(C value, Object key, StringBuilder sb) {
+  public void render(C value, Object key, SafeHtmlBuilder sb) {
     for (HasCell<C, ?> hasCell : hasCells) {
       render(value, key, sb, hasCell);
     }
@@ -165,11 +166,11 @@ public class CompositeCell<C> extends AbstractCell<C> {
   }
 
   protected <X> void render(
-      C value, Object key, StringBuilder sb, HasCell<C, X> hasCell) {
+      C value, Object key, SafeHtmlBuilder sb, HasCell<C, X> hasCell) {
     Cell<X> cell = hasCell.getCell();
-    sb.append("<span>");
+    sb.appendHtmlConstant("<span>");
     cell.render(hasCell.getValue(value), key, sb);
-    sb.append("</span>");
+    sb.appendHtmlConstant("</span>");
   }
 
   private <X> void onBrowserEventImpl(Element parent, final C object,

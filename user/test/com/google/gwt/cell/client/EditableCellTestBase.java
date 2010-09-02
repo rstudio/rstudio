@@ -18,6 +18,7 @@ package com.google.gwt.cell.client;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
  * Base class for testing {@link AbstractEditableCell}s that can be modified.
@@ -34,9 +35,11 @@ public abstract class EditableCellTestBase<T, V> extends CellTestBase<T> {
     AbstractEditableCell<T, V> cell = createCell();
     T value = createCellValue();
     cell.setViewData(DEFAULT_KEY, createCellViewData());
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     cell.render(value, DEFAULT_KEY, sb);
-    assertEquals(getExpectedInnerHtmlViewData(), sb.toString());
+    String expectedInnerHtmlViewData = getExpectedInnerHtmlViewData();
+    String asString = sb.toSafeHtml().asString();
+    assertEquals(expectedInnerHtmlViewData, asString);
   }
 
   @Override

@@ -28,6 +28,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.Category;
 import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.ContactInfo;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellList.ContactCell;
@@ -70,10 +71,10 @@ public class ContactTreeViewModel implements TreeViewModel {
     }
 
     @Override
-    public void render(Category value, Object key, StringBuilder sb) {
+    public void render(Category value, Object key, SafeHtmlBuilder sb) {
       if (value != null) {
-        sb.append(imageHtml).append(" ");
-        sb.append(value.getDisplayName());
+        sb.appendHtmlConstant(imageHtml).appendEscaped(" ");
+        sb.appendEscaped(value.getDisplayName());
       }
     }
   }
@@ -127,10 +128,9 @@ public class ContactTreeViewModel implements TreeViewModel {
   private static class LetterCountCell extends AbstractCell<LetterCount> {
 
     @Override
-    public void render(LetterCount value, Object key, StringBuilder sb) {
+    public void render(LetterCount value, Object key, SafeHtmlBuilder sb) {
       if (value != null) {
-        sb.append(value.firstLetter);
-        sb.append(" (").append(value.count).append(")");
+        sb.appendEscaped(value.firstLetter + " (" + value.count + ")");
       }
     }
   }
@@ -211,10 +211,10 @@ public class ContactTreeViewModel implements TreeViewModel {
       }
 
       @Override
-      public void render(ContactInfo value, Object key, StringBuilder sb) {
-        sb.append("<table><tbody><tr>");
+      public void render(ContactInfo value, Object key, SafeHtmlBuilder sb) {
+        sb.appendHtmlConstant("<table><tbody><tr>");
         super.render(value, key, sb);
-        sb.append("</tr></tbody></table>");
+        sb.appendHtmlConstant("</tr></tbody></table>");
       }
 
       @Override
@@ -224,12 +224,12 @@ public class ContactTreeViewModel implements TreeViewModel {
       }
 
       @Override
-      protected <X> void render(ContactInfo value, Object key, StringBuilder sb,
+      protected <X> void render(ContactInfo value, Object key, SafeHtmlBuilder sb,
           HasCell<ContactInfo, X> hasCell) {
         Cell<X> cell = hasCell.getCell();
-        sb.append("<td>");
+        sb.appendHtmlConstant("<td>");
         cell.render(hasCell.getValue(value), key, sb);
-        sb.append("</td>");
+        sb.appendHtmlConstant("</td>");
       }
     };
   }
@@ -263,7 +263,9 @@ public class ContactTreeViewModel implements TreeViewModel {
     } else if (value instanceof LetterCount) {
       // Return the contacts with the specified character and first name.
       LetterCount count = (LetterCount) value;
-          List<ContactInfo> contacts = ContactDatabase.get().queryContactsByCategoryAndFirstName(count.category, count.firstLetter + "");
+          List<ContactInfo> contacts =
+            ContactDatabase.get().queryContactsByCategoryAndFirstName(count.category,
+                count.firstLetter + "");
       ListDataProvider<ContactInfo> dataProvider = new ListDataProvider<
           ContactInfo>(contacts);
       dataProvider.setKeyProvider(ContactInfo.KEY_PROVIDER);

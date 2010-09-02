@@ -25,6 +25,8 @@ import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.UserInformationRecord;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.client.request.ExpenseRecordChanged;
@@ -69,20 +71,20 @@ public class Expenses implements EntryPoint {
     }
 
     private final String color;
-    private final String iconHtml;
+    private final SafeHtml iconHtml;
     private final String text;
 
     private Approval(String text, String color, ImageResource res) {
       this.text = text;
       this.color = color;
-      this.iconHtml = AbstractImagePrototype.create(res).getHTML();
+      this.iconHtml = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(res).getHTML());
     }
 
     public String getColor() {
       return color;
     }
 
-    public String getIconHtml() {
+    public SafeHtml getIconHtml() {
       return iconHtml;
     }
 
@@ -101,7 +103,8 @@ public class Expenses implements EntryPoint {
   /**
    * The key provider for {@link EmployeeRecord}s.
    */
-  public static final ProvidesKey<EmployeeRecord> EMPLOYEE_RECORD_KEY_PROVIDER = new ProvidesKey<EmployeeRecord>() {
+  public static final ProvidesKey<EmployeeRecord> EMPLOYEE_RECORD_KEY_PROVIDER =
+    new ProvidesKey<EmployeeRecord>() {
     public Object getKey(EmployeeRecord item) {
       return item == null ? null : item.getId();
     }
@@ -110,7 +113,8 @@ public class Expenses implements EntryPoint {
   /**
    * The key provider for {@link ExpenseRecord}s.
    */
-  public static final ProvidesKey<ExpenseRecord> EXPENSE_RECORD_KEY_PROVIDER = new ProvidesKey<ExpenseRecord>() {
+  public static final ProvidesKey<ExpenseRecord> EXPENSE_RECORD_KEY_PROVIDER =
+    new ProvidesKey<ExpenseRecord>() {
     public Object getKey(ExpenseRecord item) {
       return item == null ? null : item.getId();
     }
@@ -119,7 +123,8 @@ public class Expenses implements EntryPoint {
   /**
    * The key provider for {@link ReportRecord}s.
    */
-  public static final ProvidesKey<ReportRecord> REPORT_RECORD_KEY_PROVIDER = new ProvidesKey<ReportRecord>() {
+  public static final ProvidesKey<ReportRecord> REPORT_RECORD_KEY_PROVIDER =
+    new ProvidesKey<ReportRecord>() {
     public Object getKey(ReportRecord item) {
       return item == null ? null : item.getId();
     }
@@ -157,7 +162,8 @@ public class Expenses implements EntryPoint {
     // Add a login widget to the page
     final LoginWidget login = shell.getLoginWidget();
     Receiver<UserInformationRecord> receiver = new Receiver<UserInformationRecord>() {
-      public void onSuccess(UserInformationRecord userInformationRecord, Set<SyncResult> syncResults) {
+      public void onSuccess(UserInformationRecord userInformationRecord,
+          Set<SyncResult> syncResults) {
         login.setUserInformation(userInformationRecord);
       }       
      };

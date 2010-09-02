@@ -27,6 +27,10 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.ProvidesKey;
@@ -82,6 +86,11 @@ public class CellList<T> extends AbstractHasData<T> {
     String selectedItem();
   }
 
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\">{2}</div>")
+    SafeHtml div(int idx, String classes, SafeHtml cellContents);
+  }
+
   /**
    * The default page size.
    */
@@ -89,19 +98,21 @@ public class CellList<T> extends AbstractHasData<T> {
 
   private static Resources DEFAULT_RESOURCES;
 
+  private static final Template TEMPLATE = GWT.create(Template.class);
   private static Resources getDefaultResources() {
     if (DEFAULT_RESOURCES == null) {
       DEFAULT_RESOURCES = GWT.create(Resources.class);
     }
     return DEFAULT_RESOURCES;
   }
-
   private final Cell<T> cell;
   private final Element childContainer;
-  private String emptyListMessage = "";
+
+  private SafeHtml emptyListMessage = SafeHtmlUtils.fromSafeConstant("");
   private final Element emptyMessageElem;
 
   private final Style style;
+
   private ValueUpdater<T> valueUpdater;
 
   /**
@@ -150,7 +161,7 @@ public class CellList<T> extends AbstractHasData<T> {
    *
    * @return the empty message
    */
-  public String getEmptyListMessage() {
+  public SafeHtml getEmptyListMessage() {
     return emptyListMessage;
   }
 
@@ -209,9 +220,9 @@ public class CellList<T> extends AbstractHasData<T> {
    *
    * @param html the message to display when there are no results
    */
-  public void setEmptyListMessage(String html) {
+  public void setEmptyListMessage(SafeHtml html) {
     this.emptyListMessage = html;
-    emptyMessageElem.setInnerHTML(html);
+    emptyMessageElem.setInnerHTML(html.asString());
   }
 
   /**
@@ -224,7 +235,7 @@ public class CellList<T> extends AbstractHasData<T> {
   }
 
   @Override
-  protected void renderRowValues(StringBuilder sb, List<T> values, int start,
+  protected void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
       SelectionModel<? super T> selectionModel) {
     int length = values.size();
     int end = start + length;
@@ -233,15 +244,16 @@ public class CellList<T> extends AbstractHasData<T> {
       boolean isSelected = selectionModel == null
           ? false : selectionModel.isSelected(value);
       // TODO(jlabanca): Factor out __idx because rows can move.
-      sb.append("<div onclick='' __idx='").append(i).append("'");
-      sb.append(" class='");
-      sb.append(i % 2 == 0 ? style.evenItem() : style.oddItem());
+      StringBuilder classesBuilder = new StringBuilder();
+      classesBuilder.append(i % 2 == 0 ? style.evenItem() : style.oddItem());
       if (isSelected) {
-        sb.append(" ").append(style.selectedItem());
+        classesBuilder.append(" ").append(style.selectedItem());
       }
-      sb.append("'>");
-      cell.render(value, null, sb);
-      sb.append("</div>");
+
+      SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
+      cell.render(value, null, cellBuilder);
+
+      sb.append(TEMPLATE.div(i, classesBuilder.toString(), cellBuilder.toSafeHtml()));
     }
   }
 

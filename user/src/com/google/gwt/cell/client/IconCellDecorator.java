@@ -15,10 +15,15 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
@@ -35,11 +40,25 @@ import java.util.Set;
  */
 public class IconCellDecorator<C> implements Cell<C> {
 
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div style=\"position:relative;padding-{0}:{1}px;\">{2}<div>{3}</div></div>")
+    SafeHtml outerDiv(String direction, int width, SafeHtml icon, SafeHtml cellContents);
+
+    @Template("<div style=\"position:absolute;{0}:0px;top:0px;height:100%;width:{1}px;\"></div>")
+    SafeHtml imagePlaceholder(String direction, int width);
+  }
+
+  private static Template template;
+
   private final Cell<C> cell;
-  private final String iconHtml;
+
+  private final String direction = LocaleInfo.getCurrentLocale().isRTL() ? "right" : "left";
+
+  private final SafeHtml iconHtml;
+
   private final int imageWidth;
-  private final String outerDivHtml;
-  private final String placeHolderHtml;
+
+  private final SafeHtml placeHolderHtml;
 
   /**
    * Construct a new {@link IconCellDecorator}. The icon and the content will be
@@ -62,20 +81,13 @@ public class IconCellDecorator<C> implements Cell<C> {
    */
   public IconCellDecorator(ImageResource icon, Cell<C> cell,
       VerticalAlignmentConstant valign, int spacing) {
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
     this.cell = cell;
     this.iconHtml = getImageHtml(icon, valign, false);
     this.imageWidth = icon.getWidth() + 6;
     this.placeHolderHtml = getImageHtml(icon, valign, true);
-
-    // Cache the HTML for the outer div.
-    String theOuterDivHtml = "<div style='position:relative;";
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      theOuterDivHtml += "padding-right:";
-    } else {
-      theOuterDivHtml += "padding-left:";
-    }
-    theOuterDivHtml += imageWidth + "px;'>";
-    this.outerDivHtml = theOuterDivHtml;
   }
 
   public boolean dependsOnSelection() {
@@ -99,16 +111,12 @@ public class IconCellDecorator<C> implements Cell<C> {
     cell.onBrowserEvent(getCellParent(parent), value, key, event, valueUpdater);
   }
 
-  public void render(C value, Object key, StringBuilder sb) {
-    sb.append(outerDivHtml);
-    if (isIconUsed(value)) {
-      sb.append(getIconHtml(value));
-    } else {
-      sb.append(placeHolderHtml);
-    }
-    sb.append("<div>");
-    cell.render(value, key, sb);
-    sb.append("</div></div>");
+  public void render(C value, Object key, SafeHtmlBuilder sb) {
+    SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
+    cell.render(value, key, cellBuilder);
+
+    sb.append(template.outerDiv(direction, imageWidth, isIconUsed(value)
+        ? getIconHtml(value) : placeHolderHtml, cellBuilder.toSafeHtml()));
   }
 
   public void setValue(Element parent, C value, Object key) {
@@ -116,13 +124,13 @@ public class IconCellDecorator<C> implements Cell<C> {
   }
 
   /**
-   * Get the HTML string that represents the icon. Override this method to
+   * Get the safe HTML string that represents the icon. Override this method to
    * change the icon based on the value.
    *
    * @param value the value being rendered
    * @return the HTML string that represents the icon
    */
-  protected String getIconHtml(C value) {
+  protected SafeHtml getIconHtml(C value) {
     return iconHtml;
   }
 
@@ -147,30 +155,20 @@ public class IconCellDecorator<C> implements Cell<C> {
    * @return the rendered HTML
    */
   // TODO(jlabanca): Move this to a Utility class.
-  String getImageHtml(ImageResource res, VerticalAlignmentConstant valign,
+  SafeHtml getImageHtml(ImageResource res, VerticalAlignmentConstant valign,
       boolean isPlaceholder) {
-    // Add the position and dimensions.
-    StringBuilder sb = new StringBuilder();
-    sb.append("<div style=\"position:absolute;top:0px;height:100%;");
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      sb.append("right:0px;");
+    if (isPlaceholder) {
+      return template.imagePlaceholder(direction, res.getWidth());
     } else {
-      sb.append("left:0px;");
+      String vert = valign == HasVerticalAlignment.ALIGN_MIDDLE ? "center"
+          : valign.getVerticalAlignString();
+      // Templates are having problems with url('data:image/png;base64,...')
+      return SafeHtmlUtils.fromTrustedString("<div style=\"position:absolute;"
+          + direction + ":0px;top:0px;height:100%;width:" + res.getWidth()
+          + "px;background:url('" + res.getURL() + "') no-repeat scroll "
+          + SafeHtmlUtils.htmlEscape(vert) // for safety
+          + " center transparent;\"></div>");
     }
-    sb.append("width:").append(res.getWidth()).append("px;");
-
-    // Add the background, vertically centered.
-    if (!isPlaceholder) {
-      String vert = valign == HasVerticalAlignment.ALIGN_MIDDLE
-          ? "center" : valign.getVerticalAlignString();
-      sb.append("background:url('").append(res.getURL()).append("') ");
-      sb.append("no-repeat scroll ").append(vert).append(
-          " center transparent;");
-    }
-
-    // Close the div and return.
-    sb.append("\"></div>");
-    return sb.toString();
   }
 
   /**

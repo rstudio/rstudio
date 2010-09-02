@@ -23,6 +23,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -279,15 +281,20 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   }
 
   @Override
-  public String processHtml(String html) {
+  public SafeHtml processHtml(SafeHtml html) {
     // If the widget is listening for load events, we modify the HTML to add the
     // load/error listeners.
     if (loadEventsInitialized && html != null) {
       String moduleName = GWT.getModuleName();
       String listener = "__gwt_CellBasedWidgetImplLoadListeners[\"" + moduleName
           + "\"]();";
-      html = html.replaceAll("(<img)([\\s/>])",
+
+      String htmlString = html.asString();
+      htmlString = htmlString.replaceAll("(<img)([\\s/>])",
           "<img onload='" + listener + "' onerror='" + listener + "'$2");
+
+      // We assert that the resulting string is safe
+      html = SafeHtmlUtils.fromTrustedString(htmlString);
     }
     return html;
   }
@@ -346,7 +353,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
    */
   private native void initLoadEvents(String moduleName) /*-{
     // Initialize an array of listeners. Each module gets its own entry in the
-    // array to prevent conflicts on pages with multiple modules. 
+    // array to prevent conflicts on pages with multiple modules.
     if (!$wnd.__gwt_CellBasedWidgetImplLoadListeners) {
       $wnd.__gwt_CellBasedWidgetImplLoadListeners = new Array();
     }
@@ -363,7 +370,9 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
    * @param elem the element that will receive the events
    */
   private native void sinkFocusEvents(Element elem) /*-{
-    elem.attachEvent('onfocusin', @com.google.gwt.user.cellview.client.CellBasedWidgetImplTrident::dispatchFocusEvent);
-    elem.attachEvent('onfocusout', @com.google.gwt.user.cellview.client.CellBasedWidgetImplTrident::dispatchFocusEvent);
+    elem.attachEvent('onfocusin',
+        @com.google.gwt.user.cellview.client.CellBasedWidgetImplTrident::dispatchFocusEvent);
+    elem.attachEvent('onfocusout',
+        @com.google.gwt.user.cellview.client.CellBasedWidgetImplTrident::dispatchFocusEvent);
   }-*/;
 }

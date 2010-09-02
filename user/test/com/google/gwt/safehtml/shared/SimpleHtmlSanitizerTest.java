@@ -18,7 +18,7 @@ package com.google.gwt.safehtml.shared;
 import junit.framework.TestCase;
 
 /**
- * Unit tests for SanitizedHtml
+ * Unit tests for SanitizedHtml.
  */
 public class SimpleHtmlSanitizerTest extends TestCase {
 

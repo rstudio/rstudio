@@ -17,6 +17,10 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
+import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
  * A {@link Cell} used to render text. Clicking on the cell causes its
@@ -26,10 +30,14 @@ import com.google.gwt.dom.client.NativeEvent;
  * Note: This class is new and its interface subject to change.
  * </p>
  */
-public class ClickableTextCell extends AbstractCell<String> {
+public class ClickableTextCell extends AbstractSafeHtmlCell<String> {
 
   public ClickableTextCell() {
-    super("click");
+    super(SimpleSafeHtmlRenderer.getInstance(), "click");
+  }
+
+  public ClickableTextCell(SafeHtmlRenderer<String> renderer) {
+    super(renderer, "click");
   }
 
   @Override
@@ -42,7 +50,7 @@ public class ClickableTextCell extends AbstractCell<String> {
   }
 
   @Override
-  public void render(String value, Object key, StringBuilder sb) {
+  protected void render(SafeHtml value, Object key, SafeHtmlBuilder sb) {
     if (value != null) {
       sb.append(value);
     }

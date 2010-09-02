@@ -17,6 +17,10 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
+import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
  * A {@link Cell} used to render a button.
@@ -25,10 +29,14 @@ import com.google.gwt.dom.client.NativeEvent;
  * Note: This class is new and its interface subject to change.
  * </p>
  */
-public class ButtonCell extends AbstractCell<String> {
+public class ButtonCell extends AbstractSafeHtmlCell<String> {
 
   public ButtonCell() {
-    super("mouseup");
+    super(SimpleSafeHtmlRenderer.getInstance(), "mouseup");
+  }
+
+  public ButtonCell(SafeHtmlRenderer<String> renderer) {
+    super(renderer, "mouseup");
   }
 
   @Override
@@ -40,11 +48,11 @@ public class ButtonCell extends AbstractCell<String> {
   }
 
   @Override
-  public void render(String data, Object key, StringBuilder sb) {
-    sb.append("<button>");
+  public void render(SafeHtml data, Object key, SafeHtmlBuilder sb) {
+    sb.appendHtmlConstant("<button>");
     if (data != null) {
       sb.append(data);
     }
-    sb.append("</button>");
+    sb.appendHtmlConstant("</button>");
   }
 }

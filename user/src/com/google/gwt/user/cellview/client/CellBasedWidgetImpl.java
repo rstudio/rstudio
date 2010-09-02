@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -61,7 +62,7 @@ abstract class CellBasedWidgetImpl {
    * @param html the html string to process
    * @return the processed html string
    */
-  public String processHtml(String html) {
+  public SafeHtml processHtml(SafeHtml html) {
     return html;
   }
 

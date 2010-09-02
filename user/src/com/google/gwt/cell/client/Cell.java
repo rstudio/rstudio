@@ -17,6 +17,7 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.Set;
 
@@ -66,7 +67,7 @@ public interface Cell<C> {
    * given element and key. While a cell is editing, widgets containing the cell
    * may chooses to pass keystrokes directly to the cell rather than using them
    * for navigation purposes.
-   * 
+   *
    * @param parent the parent Element
    * @param value the value associated with the cell
    * @param key the unique key associated with the row object
@@ -91,15 +92,15 @@ public interface Cell<C> {
    * {@link Element#setInnerHTML} on a container element.
    * @param value the cell value to be rendered
    * @param key the unique key associated with the row object
-   * @param sb the StringBuilder to be written to
+   * @param sb the {@link SafeHtmlBuilder} to be written to
    */
-  void render(C value, Object key, StringBuilder sb);
+  void render(C value, Object key, SafeHtmlBuilder sb);
 
   /**
    * This method may be used by cell containers to set the value on a single
    * cell directly, rather than using {@link Element#setInnerHTML(String)}. See
    * {@link AbstractCell#setValue(Element, Object, Object)} for a default
-   * implementation that uses {@link #render(Object, Object, StringBuilder)}.
+   * implementation that uses {@link #render(Object, Object, SafeHtmlBuilder)}.
    *
    * @param parent the parent Element
    * @param value the value associated with the cell

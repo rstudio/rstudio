@@ -19,6 +19,10 @@ import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
@@ -27,6 +31,19 @@ import com.google.gwt.user.client.ui.AbstractImagePrototype;
  * to indicate the sort direction.
  */
 public class SortableHeader extends Header<String> {
+
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div style=\"position:relative;cursor:hand;cursor:pointer;"
+        + "padding-right:{0}px;\">{1}<div>{2}</div></div>")
+    SafeHtml sorted(int imageWidth, SafeHtml arrow, String text);
+
+    @Template("<div style=\"position:relative;cursor:hand;cursor:pointer;"
+        + "padding-right:{0}px;\"><div style=\"position:absolute;display:none;"
+        + "\"></div><div>{1}</div></div>")
+    SafeHtml unsorted(int imageWidth, String text);
+  }
+
+  private static Template template;
 
   /**
    * Image resources.
@@ -40,13 +57,14 @@ public class SortableHeader extends Header<String> {
 
   private static final Resources RESOURCES = GWT.create(Resources.class);
   private static final int IMAGE_WIDTH = 16;
-  private static final String DOWN_ARROW = makeImage(RESOURCES.downArrow());
-  private static final String UP_ARROW = makeImage(RESOURCES.upArrow());
+  private static final SafeHtml DOWN_ARROW = makeImage(RESOURCES.downArrow());
+  private static final SafeHtml UP_ARROW = makeImage(RESOURCES.upArrow());
 
-  private static String makeImage(ImageResource resource) {
+  private static SafeHtml makeImage(ImageResource resource) {
     AbstractImagePrototype proto = AbstractImagePrototype.create(resource);
-    return proto.getHTML().replace("style='",
+    String html = proto.getHTML().replace("style='",
         "style='position:absolute;right:0px;top:0px;");
+    return SafeHtmlUtils.fromTrustedString(html);
   }
 
   private boolean reverseSort = false;
@@ -55,6 +73,9 @@ public class SortableHeader extends Header<String> {
 
   SortableHeader(String text) {
     super(new ClickableTextCell());
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
     this.text = text;
   }
 
@@ -68,24 +89,12 @@ public class SortableHeader extends Header<String> {
   }
 
   @Override
-  public void render(StringBuilder sb) {
-    int imageWidth = IMAGE_WIDTH;
-    sb.append("<div style='position:relative;cursor:hand;cursor:pointer;");
-    sb.append("padding-right:");
-    sb.append(imageWidth);
-    sb.append("px;'>");
+  public void render(SafeHtmlBuilder sb) {
     if (sorted) {
-      if (reverseSort) {
-        sb.append(DOWN_ARROW);
-      } else {
-        sb.append(UP_ARROW);
-      }
+      sb.append(template.sorted(IMAGE_WIDTH, reverseSort ? DOWN_ARROW : UP_ARROW, text));
     } else {
-      sb.append("<div style='position:absolute;display:none;'></div>");
+      sb.append(template.unsorted(IMAGE_WIDTH, text));
     }
-    sb.append("<div>");
-    sb.append(text);
-    sb.append("</div></div>");
   }
 
   public void setReverseSort(boolean reverseSort) {

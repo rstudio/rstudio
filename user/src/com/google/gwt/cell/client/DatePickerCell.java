@@ -20,6 +20,9 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
+import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -60,6 +63,7 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   private Element lastParent;
   private Date lastValue;
   private PopupPanel panel;
+  private final SafeHtmlRenderer<String> renderer;
   private ValueUpdater<Date> valueUpdater;
 
   /**
@@ -68,15 +72,41 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
    */
   @SuppressWarnings("deprecation")
   public DatePickerCell() {
-    this(DateTimeFormat.getFullDateFormat());
+    this(DateTimeFormat.getFullDateFormat(),
+        SimpleSafeHtmlRenderer.getInstance());
   }
 
   /**
-   * Constructs a new DatePickerCell that uses the given date/time format.
+   * Constructs a new DatePickerCell that uses the given date/time format and a
+   * {@link SimpleSafeHtmlRenderer}.
    */
   public DatePickerCell(DateTimeFormat format) {
+    this(format, SimpleSafeHtmlRenderer.getInstance());
+  }
+
+  /**
+   * Constructs a new DatePickerCell that uses the date/time format given by
+   * {@link DateTimeFormat#getFullDateFormat} and the given
+   * {@link SafeHtmlRenderer}.
+   */
+  public DatePickerCell(SafeHtmlRenderer<String> renderer) {
+    this(DateTimeFormat.getFullDateFormat(), renderer);
+  }
+
+  /**
+   * Constructs a new DatePickerCell that uses the given date/time format and
+   * {@link SafeHtmlRenderer}.
+   */
+  public DatePickerCell(DateTimeFormat format, SafeHtmlRenderer<String> renderer) {
     super("click");
+    if (format == null) {
+      throw new IllegalArgumentException("format == null");
+    }
+    if (renderer == null) {
+      throw new IllegalArgumentException("renderer == null");
+    }
     this.format = format;
+    this.renderer = renderer;
 
     this.datePicker = new DatePicker();
     this.panel = new PopupPanel(true, true) {
@@ -129,7 +159,7 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   }
 
   @Override
-  public void render(Date value, Object key, StringBuilder sb) {
+  public void render(Date value, Object key, SafeHtmlBuilder sb) {
     // Get the view data.
     Date viewData = getViewData(key);
     if (viewData != null && viewData.equals(value)) {
@@ -137,10 +167,14 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
       viewData = null;
     }
 
+    String s = null;
     if (viewData != null) {
-      sb.append(format.format(viewData));
+      s = format.format(viewData);
     } else if (value != null) {
-      sb.append(format.format(value));
+      s = format.format(value);
+    }
+    if (s != null) {
+      sb.append(renderer.render(s));
     }
   }
 }

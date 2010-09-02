@@ -15,6 +15,11 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+
 /**
  * <p>
  * A {@link AbstractCell} used to render an image. The String value is the url
@@ -29,10 +34,24 @@ package com.google.gwt.cell.client;
  */
 public class ImageCell extends AbstractCell<String> {
 
+  interface Template extends SafeHtmlTemplates {
+    @Template("<img src=\"{0}\"/>")
+    SafeHtml img(String url);
+  }
+
+  private static Template template;
+
+  public ImageCell() {
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
+  }
+
   @Override
-  public void render(String value, Object key, StringBuilder sb) {
+  public void render(String value, Object key, SafeHtmlBuilder sb) {
     if (value != null) {
-      sb.append("<img src='").append(value).append("'/>");
+      // The template will sanitize the URI.
+      sb.append(template.img(value));
     }
   }
 }

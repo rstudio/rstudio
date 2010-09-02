@@ -15,9 +15,13 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,8 +36,17 @@ import java.util.List;
  */
 public class SelectionCell extends AbstractEditableCell<String, String> {
 
-  private HashMap<String, Integer> indexForOption = new HashMap<
-      String, Integer>();
+  interface Template extends SafeHtmlTemplates {
+    @Template("<option value=\"{0}\">{0}</option>")
+    SafeHtml deselected(String option);
+    @Template("<option value=\"{0}\" selected=\"selected\">{0}</option>")
+    SafeHtml selected(String option);
+  }
+
+  private static Template template;
+
+  private HashMap<String, Integer> indexForOption = new HashMap<String, Integer>();
+
   private final List<String> options;
 
   /**
@@ -43,6 +56,9 @@ public class SelectionCell extends AbstractEditableCell<String, String> {
    */
   public SelectionCell(List<String> options) {
     super("change");
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
     this.options = new ArrayList<String>(options);
     int index = 0;
     for (String option : options) {
@@ -65,7 +81,7 @@ public class SelectionCell extends AbstractEditableCell<String, String> {
   }
 
   @Override
-  public void render(String value, Object key, StringBuilder sb) {
+  public void render(String value, Object key, SafeHtmlBuilder sb) {
     // Get the view data.
     String viewData = getViewData(key);
     if (viewData != null && viewData.equals(value)) {
@@ -74,18 +90,16 @@ public class SelectionCell extends AbstractEditableCell<String, String> {
     }
 
     int selectedIndex = getSelectedIndex(viewData == null ? value : viewData);
-    sb.append("<select>");
+    sb.appendHtmlConstant("<select>");
     int index = 0;
     for (String option : options) {
-      sb.append("<option value='").append(option).append("'");
       if (index++ == selectedIndex) {
-        sb.append(" selected='selected'");
+        sb.append(template.selected(option));
+      } else {
+        sb.append(template.deselected(option));
       }
-      sb.append(">");
-      sb.append(option);
-      sb.append("</option>");
     }
-    sb.append("</select>");
+    sb.appendHtmlConstant("</select>");
   }
 
   private int getSelectedIndex(String value) {

@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.Set;
 
@@ -28,11 +29,6 @@ import java.util.Set;
  * @param <T> the cell type
  */
 public abstract class CellTestBase<T> extends GWTTestCase {
-
-  /**
-   * The default row value key used for all tests.
-   */
-  protected static final Object DEFAULT_KEY = new Object();
 
   /**
    * A mock cell used for testing.
@@ -76,9 +72,9 @@ public abstract class CellTestBase<T> extends GWTTestCase {
     }
 
     @Override
-    public void render(T value, Object key, StringBuilder sb) {
+    public void render(T value, Object key, SafeHtmlBuilder sb) {
       if (value != null) {
-        sb.append(value);
+        sb.appendEscaped(String.valueOf(value));
       }
     }
   }
@@ -101,6 +97,11 @@ public abstract class CellTestBase<T> extends GWTTestCase {
       this.lastValue = value;
     }
   }
+
+  /**
+   * The default row value key used for all tests.
+   */
+  protected static final Object DEFAULT_KEY = new Object();
 
   @Override
   public String getModuleName() {
@@ -146,9 +147,9 @@ public abstract class CellTestBase<T> extends GWTTestCase {
   public void testRender() {
     Cell<T> cell = createCell();
     T value = createCellValue();
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     cell.render(value, null, sb);
-    assertEquals(getExpectedInnerHtml(), sb.toString());
+    assertEquals(getExpectedInnerHtml(), sb.toSafeHtml().asString());
   }
 
   /**
@@ -156,17 +157,10 @@ public abstract class CellTestBase<T> extends GWTTestCase {
    */
   public void testRenderNull() {
     Cell<T> cell = createCell();
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     cell.render(null, null, sb);
-    assertEquals(getExpectedInnerHtmlNull(), sb.toString());
+    assertEquals(getExpectedInnerHtmlNull(), sb.toSafeHtml().asString());
   }
-
-  /**
-   * Get the expected events that the cell should consume.
-   *
-   * @return the consumed events.
-   */
-  protected abstract String[] getConsumedEvents();
 
   /**
    * Create a new cell to test.
@@ -188,6 +182,13 @@ public abstract class CellTestBase<T> extends GWTTestCase {
    * @return true expected value of dependsOnSelection
    */
   protected abstract boolean dependsOnSelection();
+
+  /**
+   * Get the expected events that the cell should consume.
+   *
+   * @return the consumed events.
+   */
+  protected abstract String[] getConsumedEvents();
 
   /**
    * Get the expected inner HTML value of the rendered cell.

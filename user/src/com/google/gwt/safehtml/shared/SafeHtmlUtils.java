@@ -24,9 +24,9 @@ public final class SafeHtmlUtils {
 
   private static final String HTML_ENTITY_REGEX =
       "[a-z]+|#[0-9]+|#x[0-9a-fA-F]+";
-  
+
   public static final SafeHtml EMPTY_SAFE_HTML = new SafeHtmlString("");
-  
+
   private static final RegExp AMP_RE = RegExp.compile("&", "g");
   private static final RegExp GT_RE = RegExp.compile(">", "g");
   private static final RegExp LT_RE = RegExp.compile("<", "g");
@@ -65,6 +65,15 @@ public final class SafeHtmlUtils {
   }
 
   /**
+   * Returns a SafeHtml constructed from a trusted string, i.e. without escaping
+   * the string. No checks are performed. The calling code should be carefully
+   * reviewed to ensure the argument meets the SafeHtml contract.
+   */
+  public static SafeHtml fromTrustedString(String s) {
+    return new SafeHtmlString(s);
+  }
+
+  /**
    * HTML-escapes a string.
    *
    *  Note: The following variants of this function were profiled on FF36,
@@ -73,7 +82,7 @@ public final class SafeHtmlUtils {
    * #2) for each case, check indexOf, then use s.replaceAll()
    * #3) check if any metachar is present using a regex, then use #1
    * #4) for each case, use s.replace(regex, string)
-   * 
+   *
    * #1 was found to be the fastest, and is used below.
    *
    * @param s the string to be escaped

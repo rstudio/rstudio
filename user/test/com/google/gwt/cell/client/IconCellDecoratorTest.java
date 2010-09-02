@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 
 /**
@@ -59,16 +60,16 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
     };
 
     // Render the cell.
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     cell.render("helloworld", null, sb);
 
     // Compare the expected render string.
-    String expected = "<div style='position:relative;padding-left:64px;'>";
+    String expected = "<div style=\"position:relative;padding-left:64px;\">";
     expected += cell.getImageHtml(
-        images.prettyPiccy(), HasVerticalAlignment.ALIGN_MIDDLE, true);
+        images.prettyPiccy(), HasVerticalAlignment.ALIGN_MIDDLE, true).asString();
     expected += "<div>helloworld</div>";
     expected += "</div>";
-    assertEquals(expected, sb.toString());
+    assertEquals(expected, sb.toSafeHtml().asString());
   }
 
   public void testSelectableDelegate() {
@@ -118,8 +119,8 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
   @Override
   protected String getExpectedInnerHtml() {
     IconCellDecorator<String> cell = createCell();
-    String html = "<div style='position:relative;padding-left:64px;'>";
-    html += cell.getIconHtml("helloworld");
+    String html = "<div style=\"position:relative;padding-left:64px;\">";
+    html += cell.getIconHtml("helloworld").asString();
     html += "<div>helloworld</div>";
     html += "</div>";
     return html;
@@ -128,8 +129,8 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
   @Override
   protected String getExpectedInnerHtmlNull() {
     IconCellDecorator<String> cell = createCell();
-    String html = "<div style='position:relative;padding-left:64px;'>";
-    html += cell.getIconHtml("helloworld");
+    String html = "<div style=\"position:relative;padding-left:64px;\">";
+    html += cell.getIconHtml("helloworld").asString();
     html += "<div></div>";
     html += "</div>";
     return html;

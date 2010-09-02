@@ -33,6 +33,9 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -197,6 +200,29 @@ public class CellTable<T> extends AbstractHasData<T> {
     String selectedRow();
   }
 
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div class=\"{0}\"/>")
+    SafeHtml loading(String loading);
+
+    @Template("<table><tbody>{0}</tbody></table>")
+    SafeHtml tbody(SafeHtml rowHtml);
+
+    @Template("<td class=\"{0}\"><div>{1}</div></td>")
+    SafeHtml td(String classes, SafeHtml contents);
+
+    @Template("<table><tfoot>{0}</tfoot></table>")
+    SafeHtml tfoot(SafeHtml rowHtml);
+
+    @Template("<th class=\"{0}\">{1}</th>")
+    SafeHtml th(String classes, SafeHtml contents);
+
+    @Template("<table><thead>{0}</thead></table>")
+    SafeHtml thead(SafeHtml rowHtml);
+
+    @Template("<tr onclick=\"\" class=\"{0}\">{1}</tr>")
+    SafeHtml tr(String classes, SafeHtml contents);
+  }
+
   /**
    * Implementation of {@link CellTable}.
    */
@@ -214,7 +240,7 @@ public class CellTable<T> extends AbstractHasData<T> {
      * @return the section element
      */
     protected TableSectionElement convertToSectionElement(
-        CellTable<?> table, String sectionTag, String rowHtml) {
+        CellTable<?> table, String sectionTag, SafeHtml rowHtml) {
       // Attach an event listener so we can catch synchronous load events from
       // cached images.
       DOM.setEventListener(tmpElem, table);
@@ -223,9 +249,16 @@ public class CellTable<T> extends AbstractHasData<T> {
       // IE doesn't support innerHtml on a TableSection or Table element, so we
       // generate the entire table.
       sectionTag = sectionTag.toLowerCase();
-      String innerHtml = "<table><" + sectionTag + ">" + rowHtml + "</"
-          + sectionTag + "></table>";
-      tmpElem.setInnerHTML(innerHtml);
+      if ("tbody".equals(sectionTag)) {
+        tmpElem.setInnerHTML(template.tbody(rowHtml).asString());
+      } else if ("thead".equals(sectionTag)) {
+        tmpElem.setInnerHTML(template.thead(rowHtml).asString());
+      } else if ("tfoot".equals(sectionTag)) {
+        tmpElem.setInnerHTML(template.tfoot(rowHtml).asString());
+      } else {
+        throw new IllegalArgumentException(
+            "Invalid table section tag: " + sectionTag);
+      }
       TableElement tableElem = tmpElem.getFirstChildElement().cast();
 
       // Detach the event listener.
@@ -238,9 +271,10 @@ public class CellTable<T> extends AbstractHasData<T> {
         return tableElem.getTHead();
       } else if ("tfoot".equals(sectionTag)) {
         return tableElem.getTFoot();
+      } else {
+        throw new IllegalArgumentException(
+            "Invalid table section tag: " + sectionTag);
       }
-      throw new IllegalArgumentException(
-          "Invalid table section tag: " + sectionTag);
     }
 
     /**
@@ -251,7 +285,7 @@ public class CellTable<T> extends AbstractHasData<T> {
      * @param html the html to render
      */
     protected void replaceAllRows(
-        CellTable<?> table, TableSectionElement section, String html) {
+        CellTable<?> table, TableSectionElement section, SafeHtml html) {
       // If the widget is not attached, attach an event listener so we can catch
       // synchronous load events from cached images.
       if (!table.isAttached()) {
@@ -259,7 +293,7 @@ public class CellTable<T> extends AbstractHasData<T> {
       }
 
       // Render the html.
-      section.setInnerHTML(html);
+      section.setInnerHTML(html.asString());
 
       // Detach the event listener.
       if (!table.isAttached()) {
@@ -281,7 +315,7 @@ public class CellTable<T> extends AbstractHasData<T> {
      */
     @Override
     protected void replaceAllRows(
-        CellTable<?> table, TableSectionElement section, String html) {
+        CellTable<?> table, TableSectionElement section, SafeHtml html) {
       // Remove all children.
       Element child = section.getFirstChildElement();
       while (child != null) {
@@ -314,6 +348,8 @@ public class CellTable<T> extends AbstractHasData<T> {
    */
   private static Impl TABLE_IMPL;
 
+  private static Template template;
+
   private static Resources getDefaultResources() {
     if (DEFAULT_RESOURCES == null) {
       DEFAULT_RESOURCES = GWT.create(CleanResources.class);
@@ -322,6 +358,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   private boolean cellIsEditing;
+
   private final TableColElement colgroup;
 
   private final List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
@@ -364,17 +401,17 @@ public class CellTable<T> extends AbstractHasData<T> {
           redraw();
         }
       };
-
   /**
    * Indicates whether or not a redraw is scheduled.
    */
   private boolean redrawScheduled;
-
   private final Style style;
   private final TableElement table;
   private final TableSectionElement tbody;
   private final TableSectionElement tbodyLoading;
+
   private final TableSectionElement tfoot;
+
   private final TableSectionElement thead;
 
   /**
@@ -405,6 +442,9 @@ public class CellTable<T> extends AbstractHasData<T> {
     if (TABLE_IMPL == null) {
       TABLE_IMPL = GWT.create(Impl.class);
     }
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
     this.style = resources.cellTableStyle();
     this.style.ensureInjected();
 
@@ -425,7 +465,7 @@ public class CellTable<T> extends AbstractHasData<T> {
       tbodyLoading.appendChild(tr);
       tr.appendChild(td);
       td.setAlign("center");
-      td.setInnerHTML("<div class='" + style.loading() + "'></div>");
+      td.setInnerHTML(template.loading(style.loading()).asString());
       setLoadingIconVisible(false);
     }
 
@@ -490,6 +530,13 @@ public class CellTable<T> extends AbstractHasData<T> {
   public void addColumn(Column<T, ?> col, String headerString) {
     addColumn(col, new TextHeader(headerString), null);
   }
+  
+  /**
+   * Adds a column to the table with an associated SafeHtml header.
+   */
+  public void addColumn(Column<T, ?> col, SafeHtml headerHtml) {
+    addColumn(col, new SafeHtmlHeader(headerHtml), null);
+  }
 
   /**
    * Adds a column to the table with an associated String header and footer.
@@ -497,6 +544,14 @@ public class CellTable<T> extends AbstractHasData<T> {
   public void addColumn(
       Column<T, ?> col, String headerString, String footerString) {
     addColumn(col, new TextHeader(headerString), new TextHeader(footerString));
+  }
+  
+  /**
+   * Adds a column to the table with an associated SafeHtml header and footer.
+   */
+  public void addColumn(
+      Column<T, ?> col, SafeHtml headerHtml, SafeHtml footerHtml) {
+    addColumn(col, new SafeHtmlHeader(headerHtml), new SafeHtmlHeader(footerHtml));
   }
 
   /**
@@ -677,7 +732,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   @Override
-  protected void renderRowValues(StringBuilder sb, List<T> values, int start,
+  protected void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
       SelectionModel<? super T> selectionModel) {
     createHeadersAndFooters();
 
@@ -695,35 +750,38 @@ public class CellTable<T> extends AbstractHasData<T> {
       T value = values.get(i - start);
       boolean isSelected = (selectionModel == null || value == null)
           ? false : selectionModel.isSelected(value);
-      sb.append("<tr onclick='' class='");
-      sb.append(i % 2 == 0 ? evenRowStyle : oddRowStyle);
+      String trClasses = i % 2 == 0 ? evenRowStyle : oddRowStyle;
       if (isSelected) {
-        sb.append(selectedRowStyle);
+        trClasses += selectedRowStyle;
       }
-      sb.append("'>");
+
+      SafeHtmlBuilder trBuilder = new SafeHtmlBuilder();
       int curColumn = 0;
       for (Column<T, ?> column : columns) {
-        sb.append("<td class='").append(cellStyle);
+        String tdClasses = cellStyle;
         if (curColumn == 0) {
-          sb.append(firstColumnStyle);
+          tdClasses += firstColumnStyle;
         }
         // The first and last column could be the same column.
         if (curColumn == columnCount - 1) {
-          sb.append(lastColumnStyle);
+          tdClasses += lastColumnStyle;
         }
-        sb.append("'><div>");
+
+        SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
         if (value != null) {
-          column.render(value, keyProvider, sb);
+          column.render(value, keyProvider, cellBuilder);
         }
-        sb.append("</div></td>");
+
+        trBuilder.append(template.td(tdClasses, cellBuilder.toSafeHtml()));
         curColumn++;
       }
-      sb.append("</tr>");
+
+      sb.append(template.tr(trClasses, trBuilder.toSafeHtml()));
     }
   }
 
   @Override
-  Element convertToElements(String html) {
+  Element convertToElements(SafeHtml html) {
     return TABLE_IMPL.convertToSectionElement(CellTable.this, "tbody", html);
   }
 
@@ -757,7 +815,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   @Override
-  void replaceAllChildren(List<T> values, String html) {
+  void replaceAllChildren(List<T> values, SafeHtml html) {
     // Cancel any pending redraw.
     if (redrawScheduled) {
       redrawCancelled = true;
@@ -816,35 +874,37 @@ public class CellTable<T> extends AbstractHasData<T> {
     String className = isFooter ? style.footer() : style.header();
 
     boolean hasHeader = false;
-    StringBuilder sb = new StringBuilder();
-    sb.append("<tr>");
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    sb.appendHtmlConstant("<tr>");
     int columnCount = columns.size();
     int curColumn = 0;
     for (Header<?> header : theHeaders) {
-      sb.append("<th class='").append(className);
+      StringBuilder classesBuilder = new StringBuilder(className);
       if (curColumn == 0) {
-        sb.append(" ");
-        sb.append(
+        classesBuilder.append(" ");
+        classesBuilder.append(
             isFooter ? style.firstColumnFooter() : style.firstColumnHeader());
       }
       // The first and last columns could be the same column.
       if (curColumn == columnCount - 1) {
-        sb.append(" ");
-        sb.append(
+        classesBuilder.append(" ");
+        classesBuilder.append(
             isFooter ? style.lastColumnFooter() : style.lastColumnHeader());
       }
-      sb.append("'>");
+
+      SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
       if (header != null) {
         hasHeader = true;
-        header.render(sb);
+        header.render(headerBuilder);
       }
-      sb.append("</th>");
+
+      sb.append(template.th(classesBuilder.toString(), headerBuilder.toSafeHtml()));
       curColumn++;
     }
-    sb.append("</tr>");
+    sb.appendHtmlConstant("</tr>");
 
     // Render the section contents.
-    TABLE_IMPL.replaceAllRows(this, section, sb.toString());
+    TABLE_IMPL.replaceAllRows(this, section, sb.toSafeHtml());
 
     // If the section isn't used, hide it.
     setVisible(section, hasHeader);

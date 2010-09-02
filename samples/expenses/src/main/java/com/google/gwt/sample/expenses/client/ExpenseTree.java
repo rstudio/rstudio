@@ -23,6 +23,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.style.Styles;
@@ -45,6 +48,13 @@ import java.util.Set;
  */
 public class ExpenseTree extends Composite {
 
+  interface Template extends SafeHtmlTemplates {
+    @Template("<span class=\"{0}\">{1}</span>")
+    SafeHtml span(String classes, String userName);
+  }
+
+  private static Template template;
+
   /**
    * Custom listener for this widget.
    */
@@ -66,7 +76,6 @@ public class ExpenseTree extends Composite {
 
     public EmployeeCell() {
       super(Styles.resources().userIcon(), new AbstractCell<EmployeeRecord>() {
-
         private final String usernameStyle = Styles.common().usernameTreeItem();
         private final String usernameStyleSelected =
             Styles.common().usernameTreeItemSelected();
@@ -78,20 +87,23 @@ public class ExpenseTree extends Composite {
 
         @Override
         public void render(
-            EmployeeRecord value, Object viewData, StringBuilder sb) {
+            EmployeeRecord value, Object viewData, SafeHtmlBuilder sb) {
           if (value != null) {
-            sb.append(value.getDisplayName()).append("<br>");
-            sb.append("<span class='").append(usernameStyle);
+            StringBuilder classesBuilder = new StringBuilder(usernameStyle);
             if (lastEmployee != null
                 && lastEmployee.getId().equals(value.getId())) {
-              sb.append(" ").append(usernameStyleSelected);
+              classesBuilder.append(" ").append(usernameStyleSelected);
             }
-            sb.append("'>");
-            sb.append(value.getUserName());
-            sb.append("</span>");
+
+            sb.appendEscaped(value.getDisplayName());
+            sb.appendHtmlConstant("<br>");
+            sb.append(template.span(classesBuilder.toString(), value.getUserName()));
           }
         }
       });
+      if (template == null) {
+        template = GWT.create(Template.class);
+      }
     }
   }
 
@@ -179,7 +191,9 @@ public class ExpenseTree extends Composite {
      * @return true if the object is a department
      */
     public boolean isDepartment(Object value) {
-      return departments.getList().contains(value.toString());
+      List<String> list = departments.getList();
+      String string = value.toString();
+      return list.contains(string);
     }
 
     public boolean isLeaf(Object value) {

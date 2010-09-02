@@ -37,6 +37,10 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -69,6 +73,14 @@ import java.util.Set;
  */
 public class CellBrowser extends AbstractCellTree
     implements ProvidesResize, RequiresResize, HasAnimation {
+
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div style=\"position:relative;padding-right:{0}px;\" class="
+        + "\"{1}\">{2}<div>{3}</div></div>")
+    SafeHtml div(int imageWidth, String classes, SafeHtml image, SafeHtml cellContents);
+  }
+
+  private static Template template;
 
   /**
    * A ClientBundle that provides images for this widget.
@@ -238,32 +250,34 @@ public class CellBrowser extends AbstractCellTree
       }
     }
 
-    public void render(C value, Object viewData, StringBuilder sb) {
+    public void render(C value, Object viewData, SafeHtmlBuilder sb) {
       boolean isOpen = (openKey == null) ? false : openKey.equals(
           getValueKey(value));
       boolean isSelected = (selectionModel == null)
           ? false : selectionModel.isSelected(value);
-      sb.append("<div style='position:relative;padding-right:");
-      sb.append(imageWidth);
-      sb.append("px;'");
-      sb.append(" class='").append(style.item());
+
+      StringBuilder classesBuilder = new StringBuilder();
+      classesBuilder.append(style.item());
       if (isOpen) {
-        sb.append(" ").append(style.openItem());
+        classesBuilder.append(" ").append(style.openItem());
       }
       if (isSelected) {
-        sb.append(" ").append(style.selectedItem());
+        classesBuilder.append(" ").append(style.selectedItem());
       }
-      sb.append("'>");
+      String classes = classesBuilder.toString();
+
+      SafeHtml image;
       if (isOpen) {
-        sb.append(openImageHtml);
+        image = openImageHtml;
       } else if (isLeaf(value)) {
-        sb.append(LEAF_IMAGE);
+        image = LEAF_IMAGE;
       } else {
-        sb.append(closedImageHtml);
+        image = closedImageHtml;
       }
-      sb.append("<div>");
-      cell.render(value, viewData, sb);
-      sb.append("</div></div>");
+      SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
+      cell.render(value, viewData, cellBuilder);
+      sb.append(template.div(imageWidth, classes, image,
+          cellBuilder.toSafeHtml()));
     }
 
     public void setValue(Element parent, C value, Object viewData) {
@@ -486,8 +500,8 @@ public class CellBrowser extends AbstractCellTree
   /**
    * The element used in place of an image when a node has no children.
    */
-  private static final String LEAF_IMAGE =
-      "<div style='position:absolute;display:none;'></div>";
+  private static final SafeHtml LEAF_IMAGE = SafeHtmlUtils.fromSafeConstant(
+      "<div style='position:absolute;display:none;'></div>");
 
   private static Resources DEFAULT_RESOURCES;
 
@@ -526,7 +540,7 @@ public class CellBrowser extends AbstractCellTree
   /**
    * The HTML used to generate the closed image.
    */
-  private final String closedImageHtml;
+  private final SafeHtml closedImageHtml;
 
   /**
    * A boolean indicating whether or not animations are enabled.
@@ -546,7 +560,7 @@ public class CellBrowser extends AbstractCellTree
   /**
    * The HTML used to generate the open image.
    */
-  private final String openImageHtml;
+  private final SafeHtml openImageHtml;
 
   /**
    * The styles used by this widget.
@@ -586,6 +600,9 @@ public class CellBrowser extends AbstractCellTree
   public <T> CellBrowser(
       TreeViewModel viewModel, T rootValue, Resources resources) {
     super(viewModel);
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
     this.style = resources.cellBrowserStyle();
     this.style.ensureInjected();
     initWidget(new SplitLayoutPanel());
@@ -791,24 +808,23 @@ public class CellBrowser extends AbstractCellTree
    * @param res the {@link ImageResource} to render as HTML
    * @return the rendered HTML
    */
-  private String getImageHtml(ImageResource res) {
-    // Add the position and dimensions.
-    StringBuilder sb = new StringBuilder();
-    sb.append("<div style=\"position:absolute;top:0px;height:100%;");
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      sb.append("left:0px;");
-    } else {
-      sb.append("right:0px;");
-    }
-    sb.append("width:").append(res.getWidth()).append("px;");
+  private SafeHtml getImageHtml(ImageResource res) {
+    // Right-justify image if LTR, left-justify if RTL
 
-    // Add the background, vertically centered.
-    sb.append("background:url('").append(res.getURL()).append("') ");
-    sb.append("no-repeat scroll center center transparent;");
+    // Note: templates can't handle the URL currently
 
-    // Close the div and return.
-    sb.append("\"></div>");
-    return sb.toString();
+    // Note: closing the tag with /> causes tests to fail
+    // in dev mode with HTMLUnit -- the close tag is lost
+    // when calling setInnerHTML on an Element.
+    // TODO(rice) find and fix the root cause of this failure
+
+    // CHECKSTYLE_OFF
+    return SafeHtmlUtils.fromTrustedString("<div style=\"position:absolute;"
+        + (LocaleInfo.getCurrentLocale().isRTL() ? "left" : "right")
+        + ":0px;top:0px;height:100%;width:" + res.getWidth()
+        + "px;background:url('" + res.getURL()
+        + "') no-repeat scroll center center transparent;\"></div>");
+    // CHECKSTYLE_ON
   }
 
   /**

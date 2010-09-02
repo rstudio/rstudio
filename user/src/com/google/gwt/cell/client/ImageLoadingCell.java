@@ -22,8 +22,12 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.text.shared.AbstractRenderer;
-import com.google.gwt.text.shared.Renderer;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 /**
@@ -43,7 +47,7 @@ public class ImageLoadingCell extends AbstractCell<String> {
      *
      * @return the {@link Renderer} used when the image doesn't load
      */
-    Renderer<String> getErrorRenderer();
+    SafeHtmlRenderer<String> getErrorRenderer();
 
     /**
      * Get the renderer used to render the image. This renderer must render an
@@ -52,7 +56,7 @@ public class ImageLoadingCell extends AbstractCell<String> {
      *
      * @return the {@link Renderer} used to render the image
      */
-    Renderer<String> getImageRenderer();
+    SafeHtmlRenderer<String> getImageRenderer();
 
     /**
      * Get the renderer used to render a loading message. By default, an
@@ -60,22 +64,35 @@ public class ImageLoadingCell extends AbstractCell<String> {
      *
      * @return the {@link Renderer} used to render the loading html
      */
-    Renderer<String> getLoadingRenderer();
+    SafeHtmlRenderer<String> getLoadingRenderer();
   }
+
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div style='height:0px;width:0px;overflow:hidden;'>{0}</div>")
+    SafeHtml image(SafeHtml imageHtml);
+
+    @Template("<img src=\"{0}\"/>")
+    SafeHtml img(String url);
+
+    @Template("<div>{0}</div>")
+    SafeHtml loading(SafeHtml loadingHtml);
+  }
+
+  private static Template template;
 
   /**
    * The default {@link Renderers}.
    */
   public static class DefaultRenderers implements Renderers {
 
-    private static Renderer<String> IMAGE_RENDERER;
-    private static Renderer<String> LOADING_RENDERER;
+    private static SafeHtmlRenderer<String> IMAGE_RENDERER;
+    private static SafeHtmlRenderer<String> LOADING_RENDERER;
 
     public DefaultRenderers() {
       if (IMAGE_RENDERER == null) {
-        IMAGE_RENDERER = new AbstractRenderer<String>() {
-          public String render(String object) {
-            return "<img src='" + object + "'/>";
+        IMAGE_RENDERER = new AbstractSafeHtmlRenderer<String>() {
+          public SafeHtml render(String object) {
+            return template.img(object);
           }
         };
       }
@@ -83,24 +100,24 @@ public class ImageLoadingCell extends AbstractCell<String> {
         Resources resources = GWT.create(Resources.class);
         ImageResource res = resources.loading();
         final String loadingHtml = AbstractImagePrototype.create(res).getHTML();
-        LOADING_RENDERER = new AbstractRenderer<String>() {
-          public String render(String object) {
-            return loadingHtml;
+        LOADING_RENDERER = new AbstractSafeHtmlRenderer<String>() {
+          public SafeHtml render(String object) {
+            return SafeHtmlUtils.fromSafeConstant(loadingHtml);
           }
         };
       }
     }
 
-    public Renderer<String> getErrorRenderer() {
+    public SafeHtmlRenderer<String> getErrorRenderer() {
       // Show the broken image on error.
       return getImageRenderer();
     }
 
-    public Renderer<String> getImageRenderer() {
+    public SafeHtmlRenderer<String> getImageRenderer() {
       return IMAGE_RENDERER;
     }
 
-    public Renderer<String> getLoadingRenderer() {
+    public SafeHtmlRenderer<String> getLoadingRenderer() {
       return LOADING_RENDERER;
     }
   }
@@ -112,9 +129,9 @@ public class ImageLoadingCell extends AbstractCell<String> {
     ImageResource loading();
   }
 
-  private final Renderer<String> errorRenderer;
-  private final Renderer<String> imageRenderer;
-  private final Renderer<String> loadingRenderer;
+  private final SafeHtmlRenderer<String> errorRenderer;
+  private final SafeHtmlRenderer<String> imageRenderer;
+  private final SafeHtmlRenderer<String> loadingRenderer;
 
   /**
    * <p>
@@ -137,6 +154,9 @@ public class ImageLoadingCell extends AbstractCell<String> {
    */
   public ImageLoadingCell(Renderers renderers) {
     super("load", "error");
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
     this.errorRenderer = renderers.getErrorRenderer();
     this.imageRenderer = renderers.getImageRenderer();
     this.loadingRenderer = renderers.getLoadingRenderer();
@@ -159,20 +179,18 @@ public class ImageLoadingCell extends AbstractCell<String> {
       imgWrapper.getStyle().setProperty("overflow", "auto");
     } else if ("error".equals(type) && eventOccurredOnImage(event, parent)) {
       // Replace the loading indicator with an error message.
-      parent.getFirstChildElement().setInnerHTML(errorRenderer.render(value));
+      parent.getFirstChildElement().setInnerHTML(
+          errorRenderer.render(value).asString());
     }
   }
 
   @Override
-  public void render(String value, Object key, StringBuilder sb) {
+  public void render(String value, Object key, SafeHtmlBuilder sb) {
     // We can't use ViewData because we don't know the caching policy of the
     // browser. The browser may fetch the image every time we render.
     if (value != null) {
-      sb.append("<div>");
-      sb.append(loadingRenderer.render(value));
-      sb.append("</div><div style='height:0px;width:0px;overflow:hidden;'>");
-      sb.append(imageRenderer.render(value));
-      sb.append("</div>");
+      sb.append(template.loading(loadingRenderer.render(value)));
+      sb.append(template.image(imageRenderer.render(value)));
     }
   }
 

@@ -19,6 +19,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.HasDataPresenter.ElementIterator;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.cellview.client.HasDataPresenter.View;
@@ -97,7 +99,7 @@ public class HasDataPresenterTest extends TestCase {
 
     private int childCount;
     private boolean dependsOnSelection;
-    private String lastHtml;
+    private SafeHtml lastHtml;
     private LoadingState loadingState;
     private boolean onUpdateSelectionFired;
     private boolean replaceAllChildrenCalled;
@@ -110,7 +112,11 @@ public class HasDataPresenterTest extends TestCase {
     }
 
     public void assertLastHtml(String html) {
-      assertEquals(html, lastHtml);
+      if (html == null) {
+        assertNull(lastHtml);
+      } else {
+        assertEquals(html, lastHtml.asString());
+      }
       lastHtml = null;
     }
 
@@ -163,19 +169,19 @@ public class HasDataPresenterTest extends TestCase {
       onUpdateSelectionFired = true;
     }
 
-    public void render(StringBuilder sb, List<T> values, int start,
+    public void render(SafeHtmlBuilder sb, List<T> values, int start,
         SelectionModel<? super T> selectionModel) {
-      sb.append("start=").append(start);
-      sb.append(",size=").append(values.size());
+      sb.appendHtmlConstant("start=").append(start);
+      sb.appendHtmlConstant(",size=").append(values.size());
     }
 
-    public void replaceAllChildren(List<T> values, String html) {
+    public void replaceAllChildren(List<T> values, SafeHtml html) {
       childCount = values.size();
       replaceAllChildrenCalled = true;
       lastHtml = html;
     }
 
-    public void replaceChildren(List<T> values, int start, String html) {
+    public void replaceChildren(List<T> values, int start, SafeHtml html) {
       childCount = Math.max(childCount, start + values.size());
       replaceChildrenCalled = true;
       lastHtml = html;

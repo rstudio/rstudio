@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
  * Tests for {@link EditTextCell}.
@@ -128,9 +129,9 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
     viewData.setText("newValue");
     viewData.setEditing(false);
     cell.setViewData(DEFAULT_KEY, viewData);
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     cell.render("originalValue", DEFAULT_KEY, sb);
-    assertEquals("newValue", sb.toString());
+    assertEquals("newValue", sb.toSafeHtml().asString());
   }
 
   public void testViewData() {
@@ -200,6 +201,6 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
 
   @Override
   protected String getExpectedInnerHtmlViewData() {
-    return "<input type='text' value='newValue'></input>";
+    return "<input type=\"text\" value=\"newValue\"></input>";
   }
 }

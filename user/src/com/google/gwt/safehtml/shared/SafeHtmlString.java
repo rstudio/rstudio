@@ -60,6 +60,7 @@ class SafeHtmlString implements SafeHtml {
   /**
    * Compares this string to the specified object.
    */
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof SafeHtml)) {
       return false;
@@ -70,6 +71,7 @@ class SafeHtmlString implements SafeHtml {
   /**
    * Returns a hash code for this string.
    */
+  @Override
   public int hashCode() {
     return html.hashCode();
   }

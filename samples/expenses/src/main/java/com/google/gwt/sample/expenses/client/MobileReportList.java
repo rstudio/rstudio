@@ -18,6 +18,7 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportRecord;
@@ -75,8 +76,10 @@ public class MobileReportList extends Composite implements MobilePage {
     reportList = new CellList<ReportRecord>(new AbstractCell<ReportRecord>() {
       @Override
       public void render(
-          ReportRecord value, Object viewData, StringBuilder sb) {
-        sb.append("<div class='item'>" + value.getPurpose() + "</div>");
+          ReportRecord value, Object viewData, SafeHtmlBuilder sb) {
+        sb.appendHtmlConstant("<div class='item'>");
+        sb.appendEscaped(value.getPurpose());
+        sb.appendHtmlConstant("</div>");
       }
     });
 

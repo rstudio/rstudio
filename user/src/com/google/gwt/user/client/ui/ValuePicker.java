@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,7 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -34,22 +35,22 @@ import java.util.Collection;
  * </span>
  * </p>
  * Allows the user to pick a single value from a list.
- * 
+ *
  * @param <T> the type of value
  */
 public class ValuePicker<T> extends Composite
     implements HasConstrainedValue<T> {
-  
+
   private static class DefaultCell<T> extends AbstractCell<T> {
     private final Renderer<T> renderer;
-    
+
     DefaultCell(Renderer<T> renderer) {
-      this.renderer = renderer; 
+      this.renderer = renderer;
     }
-    
+
     @Override
-    public void render(T value, Object viewData, StringBuilder sb) {
-      sb.append(renderer.render(value));
+    public void render(T value, Object viewData, SafeHtmlBuilder sb) {
+      sb.appendEscaped(renderer.render(value));
     }
   }
 
@@ -68,7 +69,7 @@ public class ValuePicker<T> extends Composite
       }
     });
   }
-  
+
   public ValuePicker(Renderer<T> renderer) {
     this(new CellList<T>(new DefaultCell<T>(renderer)));
   }
@@ -91,7 +92,7 @@ public class ValuePicker<T> extends Composite
   public T getValue() {
     return value;
   }
-  
+
   public void setAcceptableValues(Collection<T> places) {
     cellList.setRowData(0, new ArrayList<T>(places));
   }

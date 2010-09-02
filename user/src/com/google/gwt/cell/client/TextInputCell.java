@@ -15,9 +15,15 @@
  */
 package com.google.gwt.cell.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
+import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
  * A {@link AbstractCell} used to render a text input.
@@ -28,8 +34,37 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public class TextInputCell extends AbstractEditableCell<String, String> {
 
+  interface Template extends SafeHtmlTemplates {
+    @Template("<input type=\"text\" value=\"{0}\"></input>")
+    SafeHtml input(String value);
+  }
+
+  private static Template template;
+
+  private final SafeHtmlRenderer<String> renderer;
+
+  /**
+   * Constructs a TextInputCell that renders its text without HTML markup.
+   */
   public TextInputCell() {
+    this(SimpleSafeHtmlRenderer.getInstance());
+  }
+
+  /**
+   * Constructs a TextInputCell that renders its text using the
+   * given {@link SafeHtmlRenderer}.
+   *
+   * @param renderer a non-null SafeHtmlRenderer
+   */
+  public TextInputCell(SafeHtmlRenderer<String> renderer) {
     super("change", "keyup");
+    if (template == null) {
+      template = GWT.create(Template.class);
+    }
+    if (renderer == null) {
+      throw new IllegalArgumentException("renderer == null");
+    }
+    this.renderer = renderer;
   }
 
   @Override
@@ -51,7 +86,7 @@ public class TextInputCell extends AbstractEditableCell<String, String> {
   }
 
   @Override
-  public void render(String value, Object key, StringBuilder sb) {
+  public void render(String value, Object key, SafeHtmlBuilder sb) {
     // Get the view data.
     String viewData = getViewData(key);
     if (viewData != null && viewData.equals(value)) {
@@ -61,9 +96,11 @@ public class TextInputCell extends AbstractEditableCell<String, String> {
 
     String s = (viewData != null) ? viewData : (value != null ? value : null);
     if (s != null) {
-      sb.append("<input type='text' value='").append(s).append("'></input>");
+      SafeHtml html = renderer.render(s);
+      // Note: template will not treat SafeHtml specially
+      sb.append(template.input(html.asString()));
     } else {
-      sb.append("<input type='text'></input>");
+      sb.appendHtmlConstant("<input type=\"text\"></input>");
     }
   }
 }

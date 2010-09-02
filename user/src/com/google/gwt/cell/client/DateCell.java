@@ -17,6 +17,9 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
+import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 import java.util.Date;
 
@@ -31,27 +34,61 @@ public class DateCell extends AbstractCell<Date> {
 
   private final DateTimeFormat format;
 
+  private final SafeHtmlRenderer<String> renderer;
+
   /**
    * Construct a new {@link DateCell} using the format
-   * {@link PredefinedFormat#DATE_FULL}.
+   * {@link PredefinedFormat#DATE_FULL} and a {@link SimpleSafeHtmlRenderer}.
    */
   public DateCell() {
-    this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL));
+    this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL),
+        SimpleSafeHtmlRenderer.getInstance());
   }
 
   /**
-   * Construct a new {@link DateCell} using the specified format.
+   * Construct a new {@link DateCell} using the format
+   * {@link PredefinedFormat#DATE_FULL} and a {@link SimpleSafeHtmlRenderer}.
+   *
+   * @param renderer a non-null {@link SafeHtmlRenderer} used to render the
+   *          formatted date as HTML
+   */
+  public DateCell(SafeHtmlRenderer<String> renderer) {
+    this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL), renderer);
+  }
+
+  /**
+   * Construct a new {@link DateCell} using the specified format and a
+   * {@link SimpleSafeHtmlRenderer}.
    *
    * @param format the {@link DateTimeFormat} used to render the date
    */
   public DateCell(DateTimeFormat format) {
+    this(format, SimpleSafeHtmlRenderer.getInstance());
+  }
+
+  /**
+   * Construct a new {@link DateCell} using the specified format and the given
+   * {@link SafeHtmlRenderer}.
+   *
+   * @param format the {@link DateTimeFormat} used to render the date
+   * @param renderer a non-null {@link SafeHtmlRenderer} used to render the
+   *          formatted date
+   */
+  public DateCell(DateTimeFormat format, SafeHtmlRenderer<String> renderer) {
+    if (format == null) {
+      throw new IllegalArgumentException("format == null");
+    }
+    if (renderer == null) {
+      throw new IllegalArgumentException("renderer == null");
+    }
     this.format = format;
+    this.renderer = renderer;
   }
 
   @Override
-  public void render(Date value, Object key, StringBuilder sb) {
+  public void render(Date value, Object key, SafeHtmlBuilder sb) {
     if (value != null) {
-      sb.append(format.format(value));
+      sb.append(renderer.render(format.format(value)));
     }
   }
 }

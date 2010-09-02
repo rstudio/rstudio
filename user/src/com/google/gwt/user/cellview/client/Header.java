@@ -19,6 +19,7 @@ import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
  * A table column header or footer.
@@ -46,7 +47,7 @@ public abstract class Header<H> {
     cell.onBrowserEvent(elem, value, getKey(), event, updater);
   }
 
-  public void render(StringBuilder sb) {
+  public void render(SafeHtmlBuilder sb) {
     cell.render(getValue(), getKey(), sb);
   }
 

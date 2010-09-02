@@ -23,6 +23,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
@@ -203,7 +204,7 @@ public class CwCellTable extends ContentWidget {
         selectionModel.setSelected(object, value);
       }
     });
-    cellTable.addColumn(checkColumn, "<br>");
+    cellTable.addColumn(checkColumn, SafeHtmlUtils.fromSafeConstant("<br>"));
 
     // First name.
     Column<ContactInfo, String> firstNameColumn = new Column<

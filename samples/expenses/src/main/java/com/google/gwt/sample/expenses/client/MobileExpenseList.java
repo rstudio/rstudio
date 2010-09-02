@@ -16,8 +16,12 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportRecord;
@@ -38,6 +42,13 @@ import java.util.Set;
  * TODO: doc.
  */
 public class MobileExpenseList extends Composite implements MobilePage {
+
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div class=\"item\">{0}{1} ({2})</div>")
+    SafeHtml div(SafeHtml approvalIcon, String description, String amount);
+  }
+
+  private static Template template;
 
   /**
    * The auto refresh interval in milliseconds.
@@ -60,33 +71,34 @@ public class MobileExpenseList extends Composite implements MobilePage {
    */
   private class ExpenseCell extends AbstractCell<ExpenseRecord> {
 
-    private final String approvedHtml;
+    private final SafeHtml approvedHtml;
     private final String approvedText = Expenses.Approval.APPROVED.getText();
-    private final String blankHtml;
-    private final String deniedHtml;
+    private final SafeHtml blankHtml;
+    private final SafeHtml deniedHtml;
     private final String deniedText = Expenses.Approval.DENIED.getText();
 
     public ExpenseCell() {
+      if (template == null) {
+        template = GWT.create(Template.class);
+      }
       approvedHtml = Expenses.Approval.APPROVED.getIconHtml();
       blankHtml = Expenses.Approval.BLANK.getIconHtml();
       deniedHtml = Expenses.Approval.DENIED.getIconHtml();
     }
 
     @Override
-    public void render(ExpenseRecord value, Object viewData, StringBuilder sb) {
-      sb.append("<div class='item'>");
+    public void render(ExpenseRecord value, Object viewData, SafeHtmlBuilder sb) {
       String approval = value.getApproval();
+      SafeHtml approvalIcon;
       if (approvedText.equals(approval)) {
-        sb.append(approvedHtml);
+        approvalIcon = approvedHtml;
       } else if (deniedText.equals(approval)) {
-        sb.append(deniedHtml);
+        approvalIcon = deniedHtml;
       } else {
-        sb.append(blankHtml);
+        approvalIcon = blankHtml;
       }
-      sb.append(value.getDescription());
-      sb.append(" (");
-      sb.append(ExpensesMobile.formatCurrency(value.getAmount()));
-      sb.append(")</div>");
+      sb.append(template.div(approvalIcon, value.getDescription(),
+          ExpensesMobile.formatCurrency(value.getAmount())));
     }
   }
 

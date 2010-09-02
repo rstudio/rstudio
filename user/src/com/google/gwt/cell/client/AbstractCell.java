@@ -17,6 +17,7 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -95,12 +96,12 @@ public abstract class AbstractCell<C> implements Cell<C> {
       NativeEvent event, ValueUpdater<C> valueUpdater) {
   }
 
-  public abstract void render(C value, Object key, StringBuilder sb);
+  public abstract void render(C value, Object key, SafeHtmlBuilder sb);
 
   public void setValue(Element parent, C value, Object key) {
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     render(value, key, sb);
-    parent.setInnerHTML(sb.toString());
+    parent.setInnerHTML(sb.toSafeHtml().asString());
   }
 
   /**

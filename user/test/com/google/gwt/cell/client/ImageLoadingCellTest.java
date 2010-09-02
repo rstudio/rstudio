@@ -18,6 +18,7 @@ package com.google.gwt.cell.client;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
  * Tests for {@link TextCell}.
@@ -28,12 +29,12 @@ public class ImageLoadingCellTest extends CellTestBase<String> {
   public void testRender() {
     Cell<String> cell = createCell();
     String value = createCellValue();
-    StringBuilder sb = new StringBuilder();
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
     cell.render(value, null, sb);
 
     // Render the html.
     Element elem = Document.get().createDivElement();
-    elem.setInnerHTML(sb.toString());
+    elem.setInnerHTML(sb.toSafeHtml().asString());
 
     // Verify the image.
     assertEquals(2, elem.getChildCount());

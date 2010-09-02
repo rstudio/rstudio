@@ -44,6 +44,10 @@ import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
 import com.google.gwt.sample.expenses.client.request.ExpenseRecordChanged;
@@ -87,6 +91,20 @@ import java.util.Set;
  */
 public class ExpenseDetails extends Composite
     implements ExpenseRecordChanged.Handler, ReportRecordChanged.Handler {
+
+  interface Template extends SafeHtmlTemplates {
+    @Template("<select style=\"background-color:white;border:1px solid "
+        + "#707172;width:10em;margin-right:10px;\" disabled=\"true\"><option>"
+        + "</option>{0}{1}</select>")
+    SafeHtml disabled(SafeHtml approvedOption, SafeHtml deniedOption);
+
+    @Template("<select style=\"background-color:white;border:1px solid "
+        + "#707172;width:10em;margin-right:10px;\"><option></option>{0}{1}"
+        + "</select>")
+    SafeHtml enabled(SafeHtml approvedOption, SafeHtml deniedOption);
+  }
+
+  private static Template template;
 
   /**
    * The maximum amount that can be approved for a given report.
@@ -134,23 +152,26 @@ public class ExpenseDetails extends Composite
 
     private final String approvedText = Expenses.Approval.APPROVED.getText();
     private final String deniedText = Expenses.Approval.DENIED.getText();
-    private final String errorIconHtml;
-    private final String pendingIconHtml;
+    private final SafeHtml errorIconHtml;
+    private final SafeHtml pendingIconHtml;
 
     public ApprovalCell() {
       super("change", "click");
+      if (template == null) {
+        template = GWT.create(Template.class);
+      }
 
       // Cache the html string for the error icon.
       ImageResource errorIcon = Styles.resources().errorIcon();
       AbstractImagePrototype errorImg = AbstractImagePrototype.create(
           errorIcon);
-      errorIconHtml = errorImg.getHTML();
+      errorIconHtml = SafeHtmlUtils.fromTrustedString(errorImg.getHTML());
 
       // Cache the html string for the pending icon.
       ImageResource pendingIcon = Styles.resources().pendingCommit();
       AbstractImagePrototype pendingImg = AbstractImagePrototype.create(
           pendingIcon);
-      pendingIconHtml = pendingImg.getHTML();
+      pendingIconHtml = SafeHtmlUtils.fromTrustedString(pendingImg.getHTML());
     }
 
     @Override
@@ -166,7 +187,7 @@ public class ExpenseDetails extends Composite
         // Add the pending icon if it isn't already visible.
         if (viewData == null) {
           Element tmpElem = Document.get().createDivElement();
-          tmpElem.setInnerHTML(pendingIconHtml);
+          tmpElem.setInnerHTML(pendingIconHtml.asString());
           parent.appendChild(tmpElem.getFirstChildElement());
         }
 
@@ -198,7 +219,7 @@ public class ExpenseDetails extends Composite
     }
 
     @Override
-    public void render(String value, Object key, StringBuilder sb) {
+    public void render(String value, Object key, SafeHtmlBuilder sb) {
       // Get the view data.
       ApprovalViewData viewData = getViewData(key);
       if (viewData != null && viewData.getPendingApproval().equals(value)) {
@@ -223,41 +244,37 @@ public class ExpenseDetails extends Composite
       boolean isApproved = approvedText.equals(renderValue);
       boolean isDenied = deniedText.equals(renderValue);
 
+      SafeHtml approvedOption = createOption(isApproved, approvedText);
+      SafeHtml deniedOption = createOption(isDenied, deniedText);
       // Create the select element.
-      sb.append("<select style='background-color:white;");
-      sb.append("border:1px solid #707172;width:10em;margin-right:10px;'");
       if (isDisabled) {
-        sb.append(" disabled='true'");
+        sb.append(template.disabled(approvedOption, deniedOption));
+      } else {
+        sb.append(template.enabled(approvedOption, deniedOption));
       }
-      sb.append(">");
-      sb.append("<option></option>");
-
-      // Approved Option.
-      sb.append("<option");
-      if (isApproved) {
-        sb.append(" selected='selected'");
-      }
-      sb.append(">").append(approvedText).append("</option>");
-
-      // Denied Option.
-      sb.append("<option");
-      if (isDenied) {
-        sb.append(" selected='selected'");
-      }
-      sb.append(">").append(deniedText).append("</option>");
-
-      sb.append("</select>");
 
       // Add an icon indicating the commit state.
       if (isRejected) {
         // Add error icon if viewData does not match.
         sb.append(errorIconHtml);
-        sb.append(
+        sb.appendHtmlConstant(
             "<a style='padding-left:3px;color:red;' href='javascript:;'>Error!</a>");
       } else if (pendingValue != null) {
         // Add refresh icon if pending.
         sb.append(pendingIconHtml);
       }
+    }
+
+    private SafeHtml createOption(boolean selected, String text) {
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      if (selected) {
+        builder.appendHtmlConstant("<option selected=\"selected\">");
+      } else {
+        builder.appendHtmlConstant("<option>");
+      }
+      builder.appendEscaped(text);
+      builder.appendHtmlConstant("</option>");
+      return builder.toSafeHtml();
     }
   }
 
@@ -587,12 +604,7 @@ public class ExpenseDetails extends Composite
     view.addColumnStyleName(6, common.spacerColumn());
 
     // Spacer column.
-    view.addColumn(new Column<ExpenseRecord, String>(new TextCell()) {
-      @Override
-      public String getValue(ExpenseRecord object) {
-        return "<div style='display:none;'/>";
-      }
-    });
+    view.addColumn(new SpacerColumn<ExpenseRecord>());
 
     // Created column.
     GetValue<ExpenseRecord, Date> createdGetter = new GetValue<
@@ -679,12 +691,7 @@ public class ExpenseDetails extends Composite
     });
 
     // Spacer column.
-    view.addColumn(new Column<ExpenseRecord, String>(new TextCell()) {
-      @Override
-      public String getValue(ExpenseRecord object) {
-        return "<div style='display:none;'/>";
-      }
-    });
+    view.addColumn(new SpacerColumn<ExpenseRecord>());
 
     return view;
   }

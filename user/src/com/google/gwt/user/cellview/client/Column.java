@@ -21,6 +21,7 @@ import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.ProvidesKey;
 
 /**
@@ -74,7 +75,7 @@ public abstract class Column<T, C> implements HasCell<T, C> {
    * @param keyProvider the {@link ProvidesKey} for the object
    * @param sb the buffer to render into
    */
-  public void render(T object, ProvidesKey<T> keyProvider, StringBuilder sb) {
+  public void render(T object, ProvidesKey<T> keyProvider, SafeHtmlBuilder sb) {
     Object key = getKey(object, keyProvider);
     cell.render(getValue(object), key, sb);
   }

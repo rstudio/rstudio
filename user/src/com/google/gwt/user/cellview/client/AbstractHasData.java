@@ -22,6 +22,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.HasDataPresenter.ElementIterator;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.DOM;
@@ -80,17 +82,17 @@ public abstract class AbstractHasData<T> extends Widget
       hasData.onUpdateSelection();
     }
 
-    public void render(StringBuilder sb, List<T> values, int start,
+    public void render(SafeHtmlBuilder sb, List<T> values, int start,
         SelectionModel<? super T> selectionModel) {
       hasData.renderRowValues(sb, values, start, selectionModel);
     }
 
-    public void replaceAllChildren(List<T> values, String html) {
+    public void replaceAllChildren(List<T> values, SafeHtml html) {
       hasData.replaceAllChildren(values, html);
       fireValueChangeEvent();
     }
 
-    public void replaceChildren(List<T> values, int start, String html) {
+    public void replaceChildren(List<T> values, int start, SafeHtml html) {
       hasData.replaceChildren(values, start, html);
       fireValueChangeEvent();
     }
@@ -140,12 +142,12 @@ public abstract class AbstractHasData<T> extends Widget
    * @return the parent element
    */
   static Element convertToElements(
-      Widget widget, com.google.gwt.user.client.Element tmpElem, String html) {
+      Widget widget, com.google.gwt.user.client.Element tmpElem, SafeHtml html) {
     // Attach an event listener so we can catch synchronous load events from
     // cached images.
     DOM.setEventListener(tmpElem, widget);
 
-    tmpElem.setInnerHTML(html);
+    tmpElem.setInnerHTML(html.asString());
 
     // Detach the event listener.
     DOM.setEventListener(tmpElem, null);
@@ -161,7 +163,7 @@ public abstract class AbstractHasData<T> extends Widget
    * @param html the html to set
    */
   static void replaceAllChildren(
-      Widget widget, Element childContainer, String html) {
+      Widget widget, Element childContainer, SafeHtml html) {
     // If the widget is not attached, attach an event listener so we can catch
     // synchronous load events from cached images.
     if (!widget.isAttached()) {
@@ -169,7 +171,7 @@ public abstract class AbstractHasData<T> extends Widget
     }
 
     // Render the HTML.
-    childContainer.setInnerHTML(CellBasedWidgetImpl.get().processHtml(html));
+    childContainer.setInnerHTML(CellBasedWidgetImpl.get().processHtml(html).asString());
 
     // Detach the event listener.
     if (!widget.isAttached()) {
@@ -190,7 +192,7 @@ public abstract class AbstractHasData<T> extends Widget
    * @param html the HTML to convert
    */
   static void replaceChildren(Widget widget, Element childContainer,
-      Element newChildren, int start, String html) {
+      Element newChildren, int start, SafeHtml html) {
     // Get the first element to be replaced.
     int childCount = childContainer.getChildCount();
     Element toReplace = null;
@@ -384,14 +386,14 @@ public abstract class AbstractHasData<T> extends Widget
   }
 
   /**
-   * Render all row values into the specified {@link StringBuilder}.
+   * Render all row values into the specified {@link SafeHtmlBuilder}.
    *
-   * @param sb the {@link StringBuilder} to render into
+   * @param sb the {@link SafeHtmlBuilder} to render into
    * @param values the row values
    * @param start the start index of the values
    * @param selectionModel the {@link SelectionModel}
    */
-  protected abstract void renderRowValues(StringBuilder sb, List<T> values,
+  protected abstract void renderRowValues(SafeHtmlBuilder sb, List<T> values,
       int start, SelectionModel<? super T> selectionModel);
 
   /**
@@ -415,7 +417,7 @@ public abstract class AbstractHasData<T> extends Widget
    * @return the parent element
    */
   // TODO(jlabanca): Which of the following methods should we expose.
-  Element convertToElements(String html) {
+  Element convertToElements(SafeHtml html) {
     return convertToElements(this, getTmpElem(), html);
   }
 
@@ -479,7 +481,7 @@ public abstract class AbstractHasData<T> extends Widget
    * @param values the values of the new children
    * @param html the html to render in the child
    */
-  void replaceAllChildren(List<T> values, String html) {
+  void replaceAllChildren(List<T> values, SafeHtml html) {
     replaceAllChildren(this, getChildContainer(), html);
   }
 
@@ -493,7 +495,7 @@ public abstract class AbstractHasData<T> extends Widget
    * @param start the start index to be replaced
    * @param html the HTML to convert
    */
-  void replaceChildren(List<T> values, int start, String html) {
+  void replaceChildren(List<T> values, int start, SafeHtml html) {
     Element newChildren = convertToElements(html);
     replaceChildren(this, getChildContainer(), newChildren, start, html);
   }

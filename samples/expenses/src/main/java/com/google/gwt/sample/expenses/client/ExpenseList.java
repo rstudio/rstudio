@@ -36,6 +36,8 @@ import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportRecord;
@@ -190,12 +192,15 @@ public class ExpenseList extends Composite
         "<span style='color:red;font-weight:bold;'>$1</span>";
 
     @Override
-    public void render(String value, Object viewData, StringBuilder sb) {
+    public void render(String value, Object viewData, SafeHtmlBuilder sb) {
       if (value != null) {
         if (searchRegExp != null) {
-          value = searchRegExp.replace(value, replaceString);
+          // The search regex has already been html-escaped
+          value = searchRegExp.replace(SafeHtmlUtils.htmlEscape(value), replaceString);
+          sb.append(SafeHtmlUtils.fromTrustedString(value));
+        } else {
+          sb.appendEscaped(value);
         }
-        sb.append(value);
       }
     }
   }
@@ -325,7 +330,7 @@ public class ExpenseList extends Composite
         }
 
         // Highlight as the user types.
-        String text = searchBox.getText();
+        String text = SafeHtmlUtils.htmlEscape(searchBox.getText());
         if (text.length() > 0) {
           searchRegExp = RegExp.compile("(" + text + ")", "ig");
         } else {
@@ -480,12 +485,7 @@ public class ExpenseList extends Composite
         });
 
     // Spacer column.
-    table.addColumn(new Column<ReportRecord, String>(new TextCell()) {
-      @Override
-      public String getValue(ReportRecord object) {
-        return "<div style='display:none;'/>";
-      }
-    });
+    table.addColumn(new SpacerColumn<ReportRecord>());
 
     // Purpose column.
     addColumn(
@@ -520,12 +520,7 @@ public class ExpenseList extends Composite
         }, ReportRecord.created);
 
     // Spacer column.
-    table.addColumn(new Column<ReportRecord, String>(new TextCell()) {
-      @Override
-      public String getValue(ReportRecord object) {
-        return "<div style='display:none;'/>";
-      }
-    });
+    table.addColumn(new SpacerColumn<ReportRecord>());
   }
 
   /**

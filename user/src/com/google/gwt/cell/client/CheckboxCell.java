@@ -19,6 +19,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /**
  * A {@link Cell} used to render a checkbox. The value of the checkbox may be
@@ -33,13 +36,14 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
   /**
    * An html string representation of a checked input box.
    */
-  private static final String INPUT_CHECKED =
-      "<input type=\"checkbox\" checked/>";
+  private static final SafeHtml INPUT_CHECKED =
+    SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" checked/>");
 
   /**
    * An html string representation of an unchecked input box.
    */
-  private static final String INPUT_UNCHECKED = "<input type=\"checkbox\"/>";
+  private static final SafeHtml INPUT_UNCHECKED =
+    SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\"/>");
 
   private final boolean isSelectBox;
 
@@ -95,7 +99,7 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
   }
 
   @Override
-  public void render(Boolean value, Object key, StringBuilder sb) {
+  public void render(Boolean value, Object key, SafeHtmlBuilder sb) {
     // Get the view data.
     Boolean viewData = getViewData(key);
     if (viewData != null && viewData.equals(value)) {

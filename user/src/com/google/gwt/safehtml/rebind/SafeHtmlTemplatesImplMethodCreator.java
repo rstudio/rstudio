@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -65,7 +65,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
    * Fully-qualified class name of the {@link SafeHtmlUtils} class.
    */
   private static final String ESCAPE_UTILS_FQCN = SafeHtmlUtils.class.getName();
-  
+
   /**
    * Fully-qualified class name of the {@link UriUtils} class.
    */
@@ -81,7 +81,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
   private static final Set<String> URI_VALUED_ATTRIBUTES;
 
   static {
-    URI_VALUED_ATTRIBUTES = new TreeSet();
+    URI_VALUED_ATTRIBUTES = new TreeSet<String>();
     URI_VALUED_ATTRIBUTES.addAll(Arrays.asList(
           "action",
           "archive",
@@ -249,7 +249,7 @@ public class SafeHtmlTemplatesImplMethodCreator extends AbstractMethodCreator {
     outdent();
     println("return new " + BLESSED_STRING_FQCN + "(sb.toString());");
   }
-  
+
   /**
    * Emits an expression corresponding to a template parameter.
    *

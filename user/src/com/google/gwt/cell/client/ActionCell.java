@@ -17,6 +17,9 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /**
  * A cell that renders a button and takes a delegate to perform actions on
@@ -39,7 +42,7 @@ public class ActionCell<C> extends AbstractCell<C> {
     void execute(T object);
   }
 
-  private final String html;
+  private final SafeHtml html;
   private final Delegate<C> delegate;
 
   /**
@@ -48,10 +51,22 @@ public class ActionCell<C> extends AbstractCell<C> {
    * @param message the message to display on the button
    * @param delegate the delegate that will handle events
    */
-  public ActionCell(String message, Delegate<C> delegate) {
+  public ActionCell(SafeHtml message, Delegate<C> delegate) {
     super("click");
     this.delegate = delegate;
-    this.html = "<button>" + message + "</button>";
+    this.html = new SafeHtmlBuilder().appendHtmlConstant("<button>").append(
+        message).appendHtmlConstant("</button>").toSafeHtml();
+  }
+
+  /**
+   * Construct a new {@link ActionCell} with a text String that does not contain
+   * HTML markup.
+   *
+   * @param text the text to display on the button
+   * @param delegate the delegate that will handle events
+   */
+  public ActionCell(String text, Delegate<C> delegate) {
+    this(SafeHtmlUtils.fromString(text), delegate);
   }
 
   @Override
@@ -63,7 +78,7 @@ public class ActionCell<C> extends AbstractCell<C> {
   }
 
   @Override
-  public void render(C value, Object key, StringBuilder sb) {
+  public void render(C value, Object key, SafeHtmlBuilder sb) {
     sb.append(html);
   }
 }
