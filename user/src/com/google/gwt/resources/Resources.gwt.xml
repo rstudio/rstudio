@@ -58,10 +58,6 @@
     </all>
   </generate-with>
 
-  <!-- This enables CssResource.getDebugInfo() -->
-  <define-configuration-property name="CssResource.enableDebugInfo" is-multi-valued="false" />
-  <set-configuration-property name="CssResource.enableDebugInfo" value="false" />
-  
   <!-- This can be used to disable the use of strongly-named files -->
   <define-configuration-property name="ClientBundle.enableRenaming" is-multi-valued="false" />
   <set-configuration-property name="ClientBundle.enableRenaming" value="true" />

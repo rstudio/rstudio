@@ -337,9 +337,6 @@ public class CSSResourceTest extends GWTTestCase {
     assertTrue(text.contains(".externalA ." + css.replacement()));
     assertTrue(text.contains(".externalB"));
     assertTrue(text.contains(".externalC"));
-
-    // See CssResourceDebugInfoTest
-    assertNull(css.getDebugInfo());
   }
 
   public void testDefines() {
