@@ -33,7 +33,7 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -87,7 +87,7 @@ public class WebModeCompilerFrontEnd extends BasicWebModeCompiler {
   @Override
   protected String[] doFindAdditionalTypesUsingRebinds(TreeLogger logger,
       CompilationUnitDeclaration cud) {
-    Set<String> dependentTypeNames = new HashSet<String>();
+    Set<String> dependentTypeNames = new LinkedHashSet<String>();
 
     // Find all the deferred binding request types.
     FindDeferredBindingSitesVisitor v = new FindDeferredBindingSitesVisitor();

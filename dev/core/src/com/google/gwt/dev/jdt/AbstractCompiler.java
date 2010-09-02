@@ -246,12 +246,15 @@ public abstract class AbstractCompiler {
         String[] typeNames = outer.doFindAdditionalTypesUsingJsni(branch, unit);
         addAdditionalTypes(branch, typeNames);
 
-        typeNames = outer.doFindAdditionalTypesUsingRebinds(branch, unit);
-        addAdditionalTypes(branch, typeNames);
-
         typeNames = outer.doFindAdditionalTypesUsingArtificialRescues(branch,
             unit);
         addAdditionalTypes(branch, typeNames);
+
+        typeNames = outer.doFindAdditionalTypesUsingRebinds(branch, unit);
+        addAdditionalTypes(branch, typeNames);
+        if (typeNames.length > 0) {
+          refreshPackagesFromCompState();
+        }
 
         // Optionally remember this cud.
         //
@@ -516,10 +519,7 @@ public abstract class AbstractCompiler {
       compiler = new CompilerImpl(env, pol, options, req, probFact);
 
       // Initialize the packages list.
-      for (CompilationUnit unit : outer.compilationState.getCompilationUnits()) {
-        String packageName = Shared.getPackageName(unit.getTypeName());
-        rememberPackage(packageName);
-      }
+      refreshPackagesFromCompState();
     }
 
     public void clear() {
@@ -547,6 +547,13 @@ public abstract class AbstractCompiler {
       return unit;
     }
 
+    private void refreshPackagesFromCompState() {
+      for (CompilationUnit unit : outer.compilationState.getCompilationUnits()) {
+        String packageName = Shared.getPackageName(unit.getTypeName());
+        rememberPackage(packageName);
+      }
+    }
+
     /**
      * Causes the compilation service itself to recognize the specified package
      * name (and all its parent packages), avoiding a call back into the host.
@@ -557,13 +564,14 @@ public abstract class AbstractCompiler {
      * ShellJavaScriptHost.
      */
     private void rememberPackage(String packageName) {
-      int i = packageName.lastIndexOf('.');
-      if (i != -1) {
-        // Ensure the parent package is also created.
-        //
-        rememberPackage(packageName.substring(0, i));
+      if (knownPackages.add(packageName)) {
+        int i = packageName.lastIndexOf('.');
+        if (i != -1) {
+          // Ensure the parent package is also created.
+          //
+          rememberPackage(packageName.substring(0, i));
+        }
       }
-      knownPackages.add(packageName);
     }
   }
 
