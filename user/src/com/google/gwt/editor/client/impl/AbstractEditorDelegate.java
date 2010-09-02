@@ -17,6 +17,7 @@ package com.google.gwt.editor.client.impl;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorDelegate;
+import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -43,7 +44,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
   }
 
   protected EventBus eventBus;
-
+  protected LeafValueEditor<T> leafValueEditor;
   /**
    * This field avoids needing to repeatedly cast {@link #editor}.
    */
@@ -60,6 +61,13 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     if (valueAwareEditor != null) {
       valueAwareEditor.flush();
     }
+
+    // See comment in initialize about LeafValueEditors
+    if (leafValueEditor != null) {
+      setObject(leafValueEditor.getValue());
+      return;
+    }
+
     if (getObject() == null) {
       return;
     }
@@ -67,6 +75,8 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     setObject(ensureMutable(getObject()));
     flushValues();
   }
+
+  public abstract T getObject();
 
   public String getPath() {
     return path;
@@ -86,17 +96,33 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
 
   protected abstract void flushValues();
 
-  protected abstract T getObject();
-
   protected void initialize(EventBus eventBus, String pathSoFar, T object,
       E editor) {
     this.eventBus = eventBus;
     this.path = pathSoFar;
     setEditor(editor);
     setObject(object);
+
+    // Set up pre-casted fields to access the editor
+    if (editor instanceof LeafValueEditor<?>) {
+      leafValueEditor = (LeafValueEditor<T>) editor;
+    }
     if (editor instanceof ValueAwareEditor<?>) {
       valueAwareEditor = (ValueAwareEditor<T>) editor;
       valueAwareEditor.setDelegate(this);
+    }
+
+    /*
+     * Unusual case: The user may have installed an editor subtype that adds the
+     * LeafValueEditor interface into a plain Editor field. If this has
+     * happened, only set the value and don't descend into any sub-Editors.
+     */
+    if (leafValueEditor != null) {
+      leafValueEditor.setValue(object);
+      return;
+    }
+
+    if (valueAwareEditor != null) {
       valueAwareEditor.setValue(object);
     }
     if (object != null) {

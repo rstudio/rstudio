@@ -108,7 +108,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.println("protected void setEditor(%s editor) {this.editor=editor;}",
           editor.getQualifiedSourceName());
       sw.println("private %s object;", proxy.getQualifiedSourceName());
-      sw.println("protected %s getObject() {return object;}",
+      sw.println("public %s getObject() {return object;}",
           proxy.getQualifiedSourceName());
       sw.println("protected void setObject(%s object) {this.object=object;}",
           proxy.getQualifiedSourceName());
@@ -127,7 +127,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.println("protected void attachSubEditors() {");
       sw.indent();
       for (EditorData d : data) {
-        if (d.isBeanEditor()) {
+        if (d.isBeanEditor() && !d.isLeafValueEditor()
+            || d.isValueAwareEditor()) {
           String subDelegateType = getEditorDelegate(d.getEditedType(),
               d.getEditorType());
           sw.println("if (editor.%s != null) {", d.getSimpleExpression());
@@ -147,8 +148,15 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.indent();
       for (EditorData d : data) {
         if (d.isBeanEditor()) {
-          sw.println("if (%1$sDelegate != null) %1$sDelegate.flush();",
+          sw.println("if (%1$sDelegate != null) { %1$sDelegate.flush();",
               d.getPropertyName());
+          if (d.getSetterName() != null) {
+            String mutableObjectExpression = mutableObjectExpression(String.format(
+                "getObject()%s", d.getBeanOwnerExpression()));
+            sw.println("%s.%s(%sDelegate.getObject());",
+                mutableObjectExpression, d.getSetterName(), d.getPropertyName());
+          }
+          sw.println("}");
         }
       }
       sw.outdent();
@@ -158,7 +166,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.println("protected void flushValues() {");
       sw.indent();
       for (EditorData d : data) {
-        if (d.isLeafValueEditor() && d.getSetterName() != null) {
+        if ((d.isLeafValueEditor() && !d.isValueAwareEditor())
+            && d.getSetterName() != null) {
           String mutableObjectExpression = mutableObjectExpression(String.format(
               "getObject()%s", d.getBeanOwnerExpression()));
           sw.println("if (editor.%1$s != null)"
@@ -196,7 +205,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.println("protected void pushValues() {");
       sw.indent();
       for (EditorData d : data) {
-        if (d.isLeafValueEditor()) {
+        if (d.isLeafValueEditor() && !d.isValueAwareEditor()) {
           sw.println("if (editor.%1$s != null)"
               + " editor.%1$s.setValue(getObject()%2$s.%3$s());",
               d.getSimpleExpression(), d.getBeanOwnerExpression(),

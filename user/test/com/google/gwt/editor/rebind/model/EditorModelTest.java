@@ -218,7 +218,8 @@ public class EditorModelTest extends TestCase {
     EditorModel m = new EditorModel(logger,
         types.findType("t.CompositeEditorDriver"), rfedType);
 
-    assertNull(m.getEditorData(types.getJavaLangObject()));
+    assertNotNull(m.getEditorData(types.getJavaLangObject()));
+    assertEquals(0, m.getEditorData(types.getJavaLangObject()).length);
 
     EditorData[] composite = m.getEditorData(types.findType("t.CompositeEditor"));
     assertEquals(2, composite.length);

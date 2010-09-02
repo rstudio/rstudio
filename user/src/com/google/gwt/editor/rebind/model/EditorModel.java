@@ -38,6 +38,8 @@ import java.util.regex.Pattern;
  * Analyzes an Editor driver declaration.
  */
 public class EditorModel {
+  private static final EditorData[] EMPTY_EDITOR_DATA = new EditorData[0];
+
   /**
    * Given type assignable to <code>Editor&lt;Foo></code>, return
    * <code>Foo</code>. It is an error to call this method with a type not
@@ -193,10 +195,13 @@ public class EditorModel {
     return editorData;
   }
 
+  /**
+   * Guaranteed to never return null.
+   */
   public EditorData[] getEditorData(JClassType editor) {
     List<EditorData> toReturn = typeData.get(editor);
     if (toReturn == null) {
-      return null;
+      return EMPTY_EDITOR_DATA;
     }
     return toReturn.toArray(new EditorData[toReturn.size()]);
   }
