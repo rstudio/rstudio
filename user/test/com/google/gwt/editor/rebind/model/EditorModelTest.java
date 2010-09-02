@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.rebind;
+package com.google.gwt.editor.rebind.model;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -29,8 +29,8 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.LeafValueEditor;
-import com.google.gwt.editor.client.StringEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
+import com.google.gwt.editor.client.adapters.StringEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.Property;
@@ -131,7 +131,7 @@ public class EditorModelTest extends TestCase {
    */
   public void testBasicAttributes() throws UnableToCompleteException {
     EditorModel m = new EditorModel(logger,
-        types.findType("t.PersonEditorDriver"));
+        types.findType("t.PersonEditorDriver"), rfedType);
 
     assertEquals(types.findType("t.PersonEditor"), m.getEditorType());
     assertEquals(types.findType("t.PersonProxy"), m.getProxyType());
@@ -139,7 +139,7 @@ public class EditorModelTest extends TestCase {
 
   public void testCompositeDriver() throws UnableToCompleteException {
     EditorModel m = new EditorModel(logger,
-        types.findType("t.CompositeEditorDriver"));
+        types.findType("t.CompositeEditorDriver"), rfedType);
 
     EditorData[] data = m.getEditorData();
     assertEquals(6, data.length);
@@ -156,9 +156,9 @@ public class EditorModelTest extends TestCase {
     assertEquals(Arrays.asList("address", "address.city", "address.street",
         "person()", "person().name", "person().readonly"),
         Arrays.asList(expressions));
-    assertTrue(data[0].isProxyEditor());
+    assertTrue(data[0].isBeanEditor());
     assertFalse(data[0].isLeafValueEditor() || data[0].isValueAwareEditor());
-    assertTrue(data[3].isProxyEditor());
+    assertTrue(data[3].isBeanEditor());
     assertFalse(data[3].isLeafValueEditor() || data[3].isValueAwareEditor());
     checkPersonName(data[4]);
     checkPersonReadonly(data[5]);
@@ -174,7 +174,8 @@ public class EditorModelTest extends TestCase {
     builder.expectError(EditorModel.poisonedMessage(), null);
     UnitTestTreeLogger testLogger = builder.createLogger();
     try {
-      new EditorModel(testLogger, types.findType("t.CyclicEditorDriver"));
+      new EditorModel(testLogger, types.findType("t.CyclicEditorDriver"),
+          rfedType);
       fail("Should have complained about cycle");
     } catch (UnableToCompleteException expected) {
     }
@@ -183,7 +184,7 @@ public class EditorModelTest extends TestCase {
 
   public void testDottedPath() throws UnableToCompleteException {
     EditorModel m = new EditorModel(logger,
-        types.findType("t.DottedPathEditorDriver"));
+        types.findType("t.DottedPathEditorDriver"), rfedType);
     EditorData[] fields = m.getEditorData();
     assertEquals(2, fields.length);
     assertEquals("name", fields[0].getPath());
@@ -203,7 +204,7 @@ public class EditorModelTest extends TestCase {
    */
   public void testFieldEditors() throws UnableToCompleteException {
     EditorModel m = new EditorModel(logger,
-        types.findType("t.PersonEditorDriver"));
+        types.findType("t.PersonEditorDriver"), rfedType);
     EditorData[] fields = m.getEditorData();
     assertEquals(2, fields.length);
 
@@ -215,7 +216,7 @@ public class EditorModelTest extends TestCase {
 
   public void testFlatData() throws UnableToCompleteException {
     EditorModel m = new EditorModel(logger,
-        types.findType("t.CompositeEditorDriver"));
+        types.findType("t.CompositeEditorDriver"), rfedType);
 
     assertNull(m.getEditorData(types.getJavaLangObject()));
 
@@ -239,7 +240,7 @@ public class EditorModelTest extends TestCase {
    */
   public void testMethodEditors() throws UnableToCompleteException {
     EditorModel m = new EditorModel(logger,
-        types.findType("t.PersonEditorDriverUsingMethods"));
+        types.findType("t.PersonEditorDriverUsingMethods"), rfedType);
     EditorData[] fields = m.getEditorData();
     assertEquals(2, fields.length);
 
@@ -262,7 +263,8 @@ public class EditorModelTest extends TestCase {
     builder.expectError(EditorModel.poisonedMessage(), null);
     UnitTestTreeLogger testLogger = builder.createLogger();
     try {
-      new EditorModel(testLogger, types.findType("t.MissingGetterEditorDriver"));
+      new EditorModel(testLogger,
+          types.findType("t.MissingGetterEditorDriver"), rfedType);
       fail("Should have thrown exception");
     } catch (UnableToCompleteException expecetd) {
     }
@@ -284,18 +286,18 @@ public class EditorModelTest extends TestCase {
     UnitTestTreeLogger testLogger = builder.createLogger();
 
     try {
-      new EditorModel(testLogger, types.getJavaLangObject());
+      new EditorModel(testLogger, types.getJavaLangObject(), rfedType);
       fail("Should have thrown exception");
     } catch (UnableToCompleteException expected) {
     }
     try {
-      new EditorModel(testLogger, rfedType);
+      new EditorModel(testLogger, rfedType, rfedType);
       fail("Should have thrown exception");
     } catch (UnableToCompleteException expected) {
     }
     try {
       new EditorModel(testLogger,
-          types.findType("t.TooManyInterfacesEditorDriver"));
+          types.findType("t.TooManyInterfacesEditorDriver"), rfedType);
       fail("Should have thrown exception");
     } catch (UnableToCompleteException expected) {
     }
@@ -307,7 +309,7 @@ public class EditorModelTest extends TestCase {
     assertEquals(types.findType(StringEditor.class.getName()),
         editorField.getEditorType());
     assertTrue(editorField.isLeafValueEditor());
-    assertFalse(editorField.isProxyEditor());
+    assertFalse(editorField.isBeanEditor());
     assertFalse(editorField.isValueAwareEditor());
     assertEquals("getName", editorField.getGetterName());
     assertEquals("setName", editorField.getSetterName());
@@ -321,7 +323,7 @@ public class EditorModelTest extends TestCase {
     assertEquals(types.findType(StringEditor.class.getName()),
         editorField.getEditorType());
     assertTrue(editorField.isLeafValueEditor());
-    assertFalse(editorField.isProxyEditor());
+    assertFalse(editorField.isBeanEditor());
     assertFalse(editorField.isValueAwareEditor());
     assertEquals("getReadonly", editorField.getGetterName());
     assertNull(editorField.getSetterName());

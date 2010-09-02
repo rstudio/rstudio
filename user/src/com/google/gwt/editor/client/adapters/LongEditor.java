@@ -13,34 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.editor.client;
+package com.google.gwt.editor.client.adapters;
 
+import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.TakesValue;
 
 /**
- * Adapts various interfaces that provide Integer values to the Editor
+ * Adapts various interfaces that provide Long values to the Editor
  * architecture.
  */
-public abstract class IntegerEditor implements LeafValueEditor<Integer> {
+public abstract class LongEditor implements LeafValueEditor<Long> {
   /**
    * Returns an editor with a <code>null</code> value.
    */
-  public static IntegerEditor of() {
-    return of((Integer) null);
+  public static LongEditor of() {
+    return of((Long) null);
   }
 
   /**
    * Returns an editor with a default value.
    */
-  public static IntegerEditor of(final Integer value) {
-    return new IntegerEditor() {
-      private Integer v = value;
+  public static LongEditor of(final Long value) {
+    return new LongEditor() {
+      private Long v = value;
 
-      public Integer getValue() {
+      public Long getValue() {
         return v;
       }
 
-      public void setValue(Integer value) {
+      public void setValue(Long value) {
         this.v = value;
       }
     };
@@ -50,13 +51,13 @@ public abstract class IntegerEditor implements LeafValueEditor<Integer> {
    * Returns an editor backed by a {@link TakesValue}, which is implemented by
    * many Widgets.
    */
-  public static IntegerEditor of(final TakesValue<Integer> hasValue) {
-    return new IntegerEditor() {
-      public Integer getValue() {
+  public static LongEditor of(final TakesValue<Long> hasValue) {
+    return new LongEditor() {
+      public Long getValue() {
         return hasValue.getValue();
       }
 
-      public void setValue(Integer value) {
+      public void setValue(Long value) {
         hasValue.setValue(value);
       }
     };
@@ -65,6 +66,6 @@ public abstract class IntegerEditor implements LeafValueEditor<Integer> {
   /**
    * Prevent subclassing.
    */
-  IntegerEditor() {
+  LongEditor() {
   }
 }

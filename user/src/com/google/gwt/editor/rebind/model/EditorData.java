@@ -13,19 +13,39 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.rebind;
+package com.google.gwt.editor.rebind.model;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
-import com.google.gwt.requestfactory.shared.Record;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Describes how an Editor is related to bean properties. This type contains
  * answers to questions asked by the generator code.
  */
 public class EditorData {
+  private static final Set<String> VALUE_TYPES = Collections.unmodifiableSet(new HashSet<String>(
+      Arrays.asList(Boolean.class.getName(), Character.class.getName(),
+          Enum.class.getName(), Number.class.getName(), String.class.getName(),
+          Void.class.getName())));
+
+  static boolean isBeanEditor(TypeOracle oracle, JClassType editedType) {
+    for (String valueType : VALUE_TYPES) {
+      JClassType type = oracle.findType(valueType);
+      // null check to accommodate limited mock CompilationStates
+      if (type != null && type.isAssignableFrom(editedType)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private final String beanOwnerExpression;
   private final String declaredPath;
   private final JClassType editedType;
@@ -33,7 +53,7 @@ public class EditorData {
   private final String editorExpression;
   private final String getterName;
   private final boolean isLeaf;
-  private final boolean isProxyEditor;
+  private final boolean isBeanEditor;
   private final boolean isValueAware;
   private final String path;
   private final String setterName;
@@ -59,8 +79,7 @@ public class EditorData {
     JClassType leafType = oracle.findType(LeafValueEditor.class.getName());
     isLeaf = leafType.isAssignableFrom(editorType);
 
-    JClassType proxyType = oracle.findType(Record.class.getName());
-    isProxyEditor = proxyType.isAssignableFrom(editedType);
+    isBeanEditor = isBeanEditor(oracle, editedType);
 
     JClassType valueAwareType = oracle.findType(ValueAwareEditor.class.getName());
     isValueAware = valueAwareType.isAssignableFrom(editorType);
@@ -121,6 +140,13 @@ public class EditorData {
   }
 
   /**
+   * Indicates if the Editor accepts a bean-like type.
+   */
+  public boolean isBeanEditor() {
+    return isBeanEditor;
+  }
+
+  /**
    * Returns <code>true</code> if the editor "reaches through" an interstitial
    * property.
    */
@@ -133,13 +159,6 @@ public class EditorData {
    */
   public boolean isLeafValueEditor() {
     return isLeaf;
-  }
-
-  /**
-   * Indicates if the Editor accepts a RequestFactory Proxy type.
-   */
-  public boolean isProxyEditor() {
-    return isProxyEditor;
   }
 
   /**

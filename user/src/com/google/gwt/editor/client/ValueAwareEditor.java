@@ -34,7 +34,8 @@ public interface ValueAwareEditor<T> extends Editor<T> {
   void flush();
 
   /**
-   * Notifies the Editor that one or more value properties have changed.
+   * Notifies the Editor that one or more value properties have changed. Not all
+   * backing services support property-based notifications.
    */
   void onPropertyChange(String... paths);
 
@@ -46,12 +47,14 @@ public interface ValueAwareEditor<T> extends Editor<T> {
 
   /**
    * Called by the EditorDriver to provide access to the object the Editor is
-   * peered with.
+   * peered with. The instance provided to this method must not be mutated
+   * directly without calling {@link EditorDelegate#ensureMutable()} to obtain a
+   * guaranteed-mutable instance.
    */
   void setValue(T value);
 
   /**
-   * TODO(bobv) Not yet implemented.
+   * Not yet implemented. This API is likely to change.
    */
   void showErrors(Set<ConstraintViolation<T>> violations);
 }

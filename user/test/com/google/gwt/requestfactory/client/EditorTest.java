@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.StringEditor;
+import com.google.gwt.editor.client.adapters.StringEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;

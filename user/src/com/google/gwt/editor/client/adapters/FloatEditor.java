@@ -13,34 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.editor.client;
+package com.google.gwt.editor.client.adapters;
 
+import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.TakesValue;
 
 /**
- * Adapts various interfaces that provide Boolean values to the Editor
+ * Adapts various interfaces that provide Float values to the Editor
  * architecture.
  */
-public abstract class BooleanEditor implements LeafValueEditor<Boolean> {
+public abstract class FloatEditor implements LeafValueEditor<Float> {
   /**
    * Returns an editor with a <code>null</code> value.
    */
-  public static BooleanEditor of() {
-    return of((Boolean) null);
+  public static FloatEditor of() {
+    return of((Float) null);
   }
 
   /**
    * Returns an editor with a default value.
    */
-  public static BooleanEditor of(final Boolean value) {
-    return new BooleanEditor() {
-      private Boolean v = value;
+  public static FloatEditor of(final Float value) {
+    return new FloatEditor() {
+      private Float v = value;
 
-      public Boolean getValue() {
+      public Float getValue() {
         return v;
       }
 
-      public void setValue(Boolean value) {
+      public void setValue(Float value) {
         this.v = value;
       }
     };
@@ -50,13 +51,13 @@ public abstract class BooleanEditor implements LeafValueEditor<Boolean> {
    * Returns an editor backed by a {@link TakesValue}, which is implemented by
    * many Widgets.
    */
-  public static BooleanEditor of(final TakesValue<Boolean> hasValue) {
-    return new BooleanEditor() {
-      public Boolean getValue() {
+  public static FloatEditor of(final TakesValue<Float> hasValue) {
+    return new FloatEditor() {
+      public Float getValue() {
         return hasValue.getValue();
       }
 
-      public void setValue(Boolean value) {
+      public void setValue(Float value) {
         hasValue.setValue(value);
       }
     };
@@ -65,6 +66,6 @@ public abstract class BooleanEditor implements LeafValueEditor<Boolean> {
   /**
    * Prevent subclassing.
    */
-  BooleanEditor() {
+  FloatEditor() {
   }
 }

@@ -13,34 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.editor.client;
+package com.google.gwt.editor.client.adapters;
 
+import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.TakesValue;
 
 /**
- * Adapts various interfaces that provide Short values to the Editor
+ * Adapts various interfaces that provide Character values to the Editor
  * architecture.
  */
-public abstract class ShortEditor implements LeafValueEditor<Short> {
+public abstract class CharacterEditor implements LeafValueEditor<Character> {
   /**
    * Returns an editor with a <code>null</code> value.
    */
-  public static ShortEditor of() {
-    return of((Short) null);
+  public static CharacterEditor of() {
+    return of((Character) null);
   }
 
   /**
    * Returns an editor with a default value.
    */
-  public static ShortEditor of(final Short value) {
-    return new ShortEditor() {
-      private Short v = value;
+  public static CharacterEditor of(final Character value) {
+    return new CharacterEditor() {
+      private Character v = value;
 
-      public Short getValue() {
+      public Character getValue() {
         return v;
       }
 
-      public void setValue(Short value) {
+      public void setValue(Character value) {
         this.v = value;
       }
     };
@@ -50,13 +51,13 @@ public abstract class ShortEditor implements LeafValueEditor<Short> {
    * Returns an editor backed by a {@link TakesValue}, which is implemented by
    * many Widgets.
    */
-  public static ShortEditor of(final TakesValue<Short> hasValue) {
-    return new ShortEditor() {
-      public Short getValue() {
+  public static CharacterEditor of(final TakesValue<Character> hasValue) {
+    return new CharacterEditor() {
+      public Character getValue() {
         return hasValue.getValue();
       }
 
-      public void setValue(Short value) {
+      public void setValue(Character value) {
         hasValue.setValue(value);
       }
     };
@@ -65,6 +66,6 @@ public abstract class ShortEditor implements LeafValueEditor<Short> {
   /**
    * Prevent subclassing.
    */
-  ShortEditor() {
+  CharacterEditor() {
   }
 }

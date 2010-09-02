@@ -13,27 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory;
+package com.google.gwt.editor;
 
+import com.google.gwt.editor.client.SimpleBeanEditorTest;
+import com.google.gwt.editor.rebind.model.EditorModelTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.requestfactory.client.EditorTest;
-import com.google.gwt.requestfactory.client.RequestFactoryTest;
-import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImplTest;
-import com.google.gwt.requestfactory.client.impl.RecordJsoImplTest;
 
 import junit.framework.Test;
 
 /**
- * Tests of RequestFactory that require GWT.
+ * Tests of the Editor framework. These tests focus on core Editor behaviors,
+ * rather than on integration with backing stores.
  */
-public class RequestFactorySuite {
+public class EditorSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for requestfactory gwt code.");
-    suite.addTestSuite(EditorTest.class);
-    suite.addTestSuite(RecordJsoImplTest.class);
-    suite.addTestSuite(DeltaValueStoreJsonImplTest.class);
-    suite.addTestSuite(RequestFactoryTest.class);
+        "Test suite for core Editor functions");
+    suite.addTestSuite(EditorModelTest.class);
+    suite.addTestSuite(SimpleBeanEditorTest.class);
     return suite;
   }
 }

@@ -13,34 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.editor.client;
+package com.google.gwt.editor.client.adapters;
 
+import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.TakesValue;
 
 /**
- * Adapts various interfaces that provide Character values to the Editor
+ * Adapts various interfaces that provide Double values to the Editor
  * architecture.
  */
-public abstract class CharacterEditor implements LeafValueEditor<Character> {
+public abstract class DoubleEditor implements LeafValueEditor<Double> {
   /**
    * Returns an editor with a <code>null</code> value.
    */
-  public static CharacterEditor of() {
-    return of((Character) null);
+  public static DoubleEditor of() {
+    return of((Double) null);
   }
 
   /**
    * Returns an editor with a default value.
    */
-  public static CharacterEditor of(final Character value) {
-    return new CharacterEditor() {
-      private Character v = value;
+  public static DoubleEditor of(final Double value) {
+    return new DoubleEditor() {
+      private Double v = value;
 
-      public Character getValue() {
+      public Double getValue() {
         return v;
       }
 
-      public void setValue(Character value) {
+      public void setValue(Double value) {
         this.v = value;
       }
     };
@@ -50,13 +51,13 @@ public abstract class CharacterEditor implements LeafValueEditor<Character> {
    * Returns an editor backed by a {@link TakesValue}, which is implemented by
    * many Widgets.
    */
-  public static CharacterEditor of(final TakesValue<Character> hasValue) {
-    return new CharacterEditor() {
-      public Character getValue() {
+  public static DoubleEditor of(final TakesValue<Double> hasValue) {
+    return new DoubleEditor() {
+      public Double getValue() {
         return hasValue.getValue();
       }
 
-      public void setValue(Character value) {
+      public void setValue(Double value) {
         hasValue.setValue(value);
       }
     };
@@ -65,6 +66,6 @@ public abstract class CharacterEditor implements LeafValueEditor<Character> {
   /**
    * Prevent subclassing.
    */
-  CharacterEditor() {
+  DoubleEditor() {
   }
 }

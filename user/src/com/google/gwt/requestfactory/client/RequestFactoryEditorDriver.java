@@ -22,6 +22,11 @@ import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 
 /**
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
  * The interface that links RequestFactory and the Editor framework together.
  * Used for configuration and lifecycle control. Expected that this will be
  * created with
@@ -42,6 +47,7 @@ import com.google.gwt.requestfactory.shared.RequestObject;
  * 
  * @param <P> the type of Proxy being edited
  * @param <E> the type of Editor that will edit the Record
+ * @see com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver
  */
 public interface RequestFactoryEditorDriver<P extends Record, E extends Editor<? super P>> {
   /**
@@ -51,8 +57,8 @@ public interface RequestFactoryEditorDriver<P extends Record, E extends Editor<?
 
   /**
    * Ensures that the Editor passed into {@link #initialize} and its
-   * sub-editors, if any, have synced their UI state by invoking
-   * {@link ValueAwareEditor#flush} in a depth-first manner.
+   * sub-editors, if any, have synced their UI state by invoking flushing them
+   * in a depth-first manner.
    * 
    * @return the RequestObject passed into {@link #edit}
    */

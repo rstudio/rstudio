@@ -16,8 +16,8 @@
 package com.google.gwt.sample.dynatablerf.client.widgets;
 
 import com.google.gwt.editor.client.EditorDelegate;
-import com.google.gwt.editor.client.StringEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
+import com.google.gwt.editor.client.adapters.StringEditor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.EventBus;

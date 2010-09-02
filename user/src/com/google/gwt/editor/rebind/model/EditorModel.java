@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.rebind;
+package com.google.gwt.editor.rebind.model;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -26,7 +26,6 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +35,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Analyzes an RFED declaration.
+ * Analyzes an Editor driver declaration.
  */
 public class EditorModel {
   /**
@@ -82,10 +81,10 @@ public class EditorModel {
         type.getQualifiedSourceName(), path, getterExpression);
   }
 
-  static String mustExtendMessage(JType rfedType) {
+  static String mustExtendMessage(JType driverType) {
     return String.format(
         "You must declare an interface that extends the %s type",
-        rfedType.getSimpleSourceName());
+        driverType.getSimpleSourceName());
   }
 
   static String noGetterMessage(String propertyName, JType proxyType) {
@@ -103,9 +102,9 @@ public class EditorModel {
         intf.getQualifiedSourceName());
   }
 
-  static String unexpectedInputTypeMessage(JType rfedType, JType intf) {
+  static String unexpectedInputTypeMessage(JType driverType, JType intf) {
     return String.format("Unexpected input type: %s is not assignable from %s",
-        rfedType.getQualifiedSourceName(), intf.getQualifiedSourceName());
+        driverType.getQualifiedSourceName(), intf.getQualifiedSourceName());
   }
 
   /**
@@ -135,13 +134,13 @@ public class EditorModel {
   private final Map<JClassType, List<EditorData>> typeData;
 
   /**
-   * Constructor to use when starting with a RequestFactoryEditorDriver
-   * interface.
+   * Constructor to use when starting with an EditorDriver interface.
    */
-  public EditorModel(TreeLogger logger, JClassType intf)
+  public EditorModel(TreeLogger logger, JClassType intf, JClassType driverType)
       throws UnableToCompleteException {
     assert logger != null : "logger was null";
     assert intf != null : "intf was null";
+    assert driverType != null : "driver was null";
 
     editorSoFar = null;
     this.logger = logger.branch(TreeLogger.DEBUG, "Creating Editor model for "
@@ -149,16 +148,13 @@ public class EditorModel {
     parentModel = null;
     typeData = new IdentityHashMap<JClassType, List<EditorData>>();
 
-    TypeOracle oracle = intf.getOracle();
-    JClassType rfedType = oracle.findType(RequestFactoryEditorDriver.class.getName());
-    assert rfedType != null : "No RequestFactoryEditorDriver type";
-
-    if (!rfedType.isAssignableFrom(intf)) {
-      die(unexpectedInputTypeMessage(rfedType, intf));
-    } else if (intf.equals(rfedType)) {
-      die(mustExtendMessage(rfedType));
+    if (!driverType.isAssignableFrom(intf)) {
+      die(unexpectedInputTypeMessage(driverType, intf));
+    } else if (intf.equals(driverType)) {
+      die(mustExtendMessage(driverType));
     }
 
+    TypeOracle oracle = intf.getOracle();
     editorIntf = oracle.findType(Editor.class.getName()).isGenericType();
     assert editorIntf != null : "No Editor type";
 

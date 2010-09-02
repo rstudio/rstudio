@@ -13,34 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.editor.client;
+package com.google.gwt.editor.client.adapters;
 
+import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.TakesValue;
 
 /**
- * Adapts various interfaces that provide Double values to the Editor
+ * Adapts various interfaces that provide Short values to the Editor
  * architecture.
  */
-public abstract class DoubleEditor implements LeafValueEditor<Double> {
+public abstract class ShortEditor implements LeafValueEditor<Short> {
   /**
    * Returns an editor with a <code>null</code> value.
    */
-  public static DoubleEditor of() {
-    return of((Double) null);
+  public static ShortEditor of() {
+    return of((Short) null);
   }
 
   /**
    * Returns an editor with a default value.
    */
-  public static DoubleEditor of(final Double value) {
-    return new DoubleEditor() {
-      private Double v = value;
+  public static ShortEditor of(final Short value) {
+    return new ShortEditor() {
+      private Short v = value;
 
-      public Double getValue() {
+      public Short getValue() {
         return v;
       }
 
-      public void setValue(Double value) {
+      public void setValue(Short value) {
         this.v = value;
       }
     };
@@ -50,13 +51,13 @@ public abstract class DoubleEditor implements LeafValueEditor<Double> {
    * Returns an editor backed by a {@link TakesValue}, which is implemented by
    * many Widgets.
    */
-  public static DoubleEditor of(final TakesValue<Double> hasValue) {
-    return new DoubleEditor() {
-      public Double getValue() {
+  public static ShortEditor of(final TakesValue<Short> hasValue) {
+    return new ShortEditor() {
+      public Short getValue() {
         return hasValue.getValue();
       }
 
-      public void setValue(Double value) {
+      public void setValue(Short value) {
         hasValue.setValue(value);
       }
     };
@@ -65,6 +66,6 @@ public abstract class DoubleEditor implements LeafValueEditor<Double> {
   /**
    * Prevent subclassing.
    */
-  DoubleEditor() {
+  ShortEditor() {
   }
 }

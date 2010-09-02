@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorDelegate;
-import com.google.gwt.editor.client.ValueAwareEditor;
+import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.Record;
@@ -38,26 +38,12 @@ import javax.validation.ConstraintViolation;
  * @param <E> the type of Editor
  */
 public abstract class RequestFactoryEditorDelegate<P extends Record, E extends Editor<P>>
-    implements EditorDelegate<P> {
+    extends AbstractEditorDelegate<P, E> implements EditorDelegate<P> {
 
-  protected static String appendPath(String prefix, String path) {
-    if ("".equals(prefix)) {
-      return path;
-    } else {
-      return prefix + "." + path;
-    }
-  }
-
-  protected EventBus eventBus;
   protected RequestFactory factory;
   protected RequestObject<?> request;
-  /**
-   * This field avoids needing to repeatedly cast {@link #editor}.
-   */
-  protected ValueAwareEditor<P> valueAwareEditor;
 
-  private String path;
-
+  @Override
   public P ensureMutable(P object) {
     if (request == null) {
       throw new IllegalStateException("No RequestObject");
@@ -65,41 +51,14 @@ public abstract class RequestFactoryEditorDelegate<P extends Record, E extends E
     return request.edit(object);
   }
 
-  public void flush() {
-    if (valueAwareEditor != null) {
-      valueAwareEditor.flush();
-    }
-    if (getObject() == null) {
-      return;
-    }
-    flushSubEditors();
-    setObject(ensureMutable(getObject()));
-    flushValues();
-  }
-
-  public String getPath() {
-    return path;
-  }
-
   public void initialize(EventBus eventBus, RequestFactory factory,
       String pathSoFar, P object, E editor, RequestObject<?> editRequest) {
-    this.eventBus = eventBus;
     this.factory = factory;
-    this.path = pathSoFar;
-    setEditor(editor);
-    setObject(object);
     this.request = editRequest;
-    if (editor instanceof ValueAwareEditor<?>) {
-      valueAwareEditor = (ValueAwareEditor<P>) editor;
-      valueAwareEditor.setDelegate(this);
-      valueAwareEditor.setValue(object);
-    }
-    if (object != null) {
-      attachSubEditors();
-      pushValues();
-    }
+    super.initialize(eventBus, pathSoFar, object, editor);
   }
 
+  @Override
   public HandlerRegistration subscribe() {
     // Eventually will make use of pushValues()
     GWT.log("subscribe() is currently unimplemented pending RequestFactory changes");
@@ -109,26 +68,9 @@ public abstract class RequestFactoryEditorDelegate<P extends Record, E extends E
     };
   }
 
+  @Override
   public Set<ConstraintViolation<P>> validate(P object) {
     GWT.log("validate() is currently unimplemented");
     return Collections.emptySet();
   }
-
-  protected String appendPath(String path) {
-    return appendPath(this.path, path);
-  }
-
-  protected abstract void attachSubEditors();
-
-  protected abstract void flushSubEditors();
-
-  protected abstract void flushValues();
-
-  protected abstract P getObject();
-
-  protected abstract void pushValues();
-
-  protected abstract void setEditor(E editor);
-
-  protected abstract void setObject(P object);
 }

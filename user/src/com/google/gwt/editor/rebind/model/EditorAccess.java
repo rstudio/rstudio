@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.rebind;
+package com.google.gwt.editor.rebind.model;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -24,7 +24,7 @@ import com.google.gwt.editor.client.Editor.Path;
 /**
  * Encapsulates the various ways an Editor might be accessed.
  */
-public class EditorAccess {
+class EditorAccess {
   private static final String EDITOR_SUFFIX = "Editor";
 
   public static EditorAccess via(JField field) {

@@ -24,6 +24,21 @@ import java.lang.annotation.Target;
 /**
  * Describes an editor whose behavior is not altered by the value being
  * displayed.
+ * <p>
+ * Editors, which may be classes or interfaces, may expose their sub-editors in
+ * one or more of the following ways:
+ * <ul>
+ * <li>An instance field with at least package visibility whose name exactly is
+ * the property that will be edited or <code><em>propertyName</em>Editor</code>.
+ * </li>
+ * <li>A no-arg method with at least package visibility whose name exactly is
+ * the property that will be edited or <code><em>propertyName</em>Editor</code>.
+ * </li>
+ * <li>The {@link Path} annotation may be used on the field or accessor method
+ * to specify a dotted path or to bypass the implicit naming convention.</li>
+ * <li>Sub-Editors may be null. In this case, the Editor framework will ignore
+ * these sub-editors.</li>
+ * </ul>
  * 
  * @param <T> the type of object the editor displays.
  */

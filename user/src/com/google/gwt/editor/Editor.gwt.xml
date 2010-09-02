@@ -1,4 +1,7 @@
 <module>
   <inherits name="com.google.gwt.core.Core" />
   <inherits name="com.google.gwt.validation.Validation" />
+  <generate-with class="com.google.gwt.editor.rebind.SimpleBeanEditorDriverGenerator">
+    <when-type-assignable class="com.google.gwt.editor.client.SimpleBeanEditorDriver" />
+  </generate-with>
 </module>
