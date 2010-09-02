@@ -62,7 +62,7 @@ public interface RequestFactory {
    * 
    * @return a {@link com.google.gwt.user.client.History} compatible token
    */
-  String getToken(Class<? extends Record> clazz);
+  String getToken(Class<?> clazz);
 
   /**
    * Get a {@link com.google.gwt.user.client.History} compatible token that

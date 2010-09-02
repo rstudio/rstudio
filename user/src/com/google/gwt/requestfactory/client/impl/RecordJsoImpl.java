@@ -118,14 +118,10 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   @SuppressWarnings("unchecked")
   public final <V> V get(Property<V> property) {
-    // TODO lax for the moment b/c client code can't yet reasonably make the
-    // request
-    // assert isDefined(property.getName()) :
-    // "Cannot ask for a property before setting it: "
-    // + property.getName();
     if (isNullOrUndefined(property.getName())) {
       return null;
     }
+
     try {
       if (Boolean.class.equals(property.getType())) {
         return (V) Boolean.valueOf(getBoolean(property.getName()));
@@ -276,6 +272,11 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
   }
 
   public final <V> void set(Property<V> property, V value) {
+    if (value == null) {
+      setNull(property.getName());
+      return;
+    }
+    
     if (value instanceof String) {
       setString(property.getName(), (String) value);
       return;
@@ -323,7 +324,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     }
 
     throw new UnsupportedOperationException(
-        "Can't yet set properties of type " + value.getClass().getName());
+        "Cannot set properties of type " + value.getClass().getName());
   }
 
   // TODO: HACK! Need to look up token to schema for relatins
@@ -411,7 +412,12 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     this[name] = value;
   }-*/;
 
+  private native void setNull(String name) /*-{
+    this[name] = null;
+  }-*/;
+  
   private native void setString(String name, String value) /*-{
     this[name] = value;
   }-*/;
+
 }
