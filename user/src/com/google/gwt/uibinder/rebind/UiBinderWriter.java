@@ -30,6 +30,7 @@ import com.google.gwt.uibinder.elementparsers.AttributeMessageParser;
 import com.google.gwt.uibinder.elementparsers.BeanParser;
 import com.google.gwt.uibinder.elementparsers.ElementParser;
 import com.google.gwt.uibinder.elementparsers.IsEmptyParser;
+import com.google.gwt.uibinder.elementparsers.UiChildParser;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
@@ -646,10 +647,8 @@ public class UiBinderWriter implements Statements {
    */
   public void setFieldInitializerAsConstructor(String fieldName,
       JClassType type, String... args) {
-    setFieldInitializer(
-        fieldName,
-        formatCode("new %s(%s)", type.getQualifiedSourceName(),
-            asCommaSeparatedList(args)));
+    setFieldInitializer(fieldName, formatCode("new %s(%s)",
+        type.getQualifiedSourceName(), asCommaSeparatedList(args)));
   }
 
   /**
@@ -846,6 +845,7 @@ public class UiBinderWriter implements Statements {
      * something?
      */
     parsers.add(new AttributeMessageParser());
+    parsers.add(new UiChildParser());
 
     for (JClassType curType : getClassHierarchyBreadthFirst(type)) {
       try {
@@ -884,7 +884,8 @@ public class UiBinderWriter implements Statements {
        * the @UiField annotated field in the owning class
        */
       if (!templateClass.isAssignableTo(fieldType)) {
-        die("In @UiField %s, template field and owner field types don't match: %s is not assignable to %s",
+        die(
+            "In @UiField %s, template field and owner field types don't match: %s is not assignable to %s",
             ownerField.getName(), templateClass.getQualifiedSourceName(),
             fieldType.getQualifiedSourceName());
       }
@@ -899,8 +900,9 @@ public class UiBinderWriter implements Statements {
        * direction of the assignability check and do no init.
        */
       if (!fieldType.isAssignableTo(templateClass)) {
-        die("In UiField(provided = true) %s, template field and field types don't match: "
-            + "@UiField(provided=true)%s is not assignable to %s",
+        die(
+            "In UiField(provided = true) %s, template field and field types don't match: "
+                + "@UiField(provided=true)%s is not assignable to %s",
             ownerField.getName(), fieldType.getQualifiedSourceName(),
             templateClass.getQualifiedSourceName());
       }

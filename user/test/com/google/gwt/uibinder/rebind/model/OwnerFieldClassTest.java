@@ -22,12 +22,16 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.dev.util.Pair;
+import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.user.client.ui.Label;
 
 import junit.framework.TestCase;
+
+import java.util.Map;
 
 /**
  * Tests for descriptors of potential owner field classes.
@@ -68,7 +72,8 @@ public class OwnerFieldClassTest extends TestCase {
   /**
    * Class with lots of setters for testing.
    */
-  @SuppressWarnings("unused") // We know these methods are unused
+  @SuppressWarnings("unused")
+  // We know these methods are unused
   private static class SettersTestClass {
     // No ambiguity in these setters
     public void setBlaBla(int x) {
@@ -118,7 +123,7 @@ public class OwnerFieldClassTest extends TestCase {
     void setNothing(int x) {
       throw new UnsupportedOperationException("Should never get called");
     }
-    
+
     public void set() {
     }
 
@@ -136,8 +141,7 @@ public class OwnerFieldClassTest extends TestCase {
   }
 
   public void testOwnerFieldClass_setters() throws Exception {
-    JClassType settersType =
-        gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
+    JClassType settersType = gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
     OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
         MortalLogger.NULL);
@@ -159,8 +163,7 @@ public class OwnerFieldClassTest extends TestCase {
   }
 
   public void testOwnerFieldClass_ambiguousSetters() throws Exception {
-    JClassType settersType =
-        gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
+    JClassType settersType = gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
     OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
         MortalLogger.NULL);
@@ -182,7 +185,8 @@ public class OwnerFieldClassTest extends TestCase {
   /**
    * Class with overridden setters for testing.
    */
-  @SuppressWarnings("unused") // We know these methods are unused
+  @SuppressWarnings("unused")
+  // We know these methods are unused
   private static class OverriddenSettersTestClass extends SettersTestClass {
     // Simple override of parent method
     @Override
@@ -225,8 +229,7 @@ public class OwnerFieldClassTest extends TestCase {
   }
 
   public void testOwnerFieldClass_overriddenSetters() throws Exception {
-    JClassType settersType =
-        gwtTypeAdapter.adaptJavaClass(OverriddenSettersTestClass.class);
+    JClassType settersType = gwtTypeAdapter.adaptJavaClass(OverriddenSettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
     OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
         MortalLogger.NULL);
@@ -283,9 +286,92 @@ public class OwnerFieldClassTest extends TestCase {
   }
 
   /**
+   * Class with a {@link UiChild}-annotated methods.
+   */
+  @SuppressWarnings("unused")
+  // We know these methods are unused
+  private static class UiChildClass {
+    public UiChildClass() {
+      throw new UnsupportedOperationException("Should never get called");
+    }
+
+    @UiChild
+    void addChild(Object child) {
+      throw new UnsupportedOperationException("Should never get called");
+    }
+
+    @UiChild(tagname = "second", limit = 4)
+    void doesNotStartWithAdd(Object child) {
+      throw new UnsupportedOperationException("Should never get called");
+    }
+  }
+
+  public void testOwnerFieldClass_withUiChildren() throws Exception {
+    JClassType parentType = gwtTypeAdapter.adaptJavaClass(UiChildClass.class);
+    OwnerFieldClass parentClass = OwnerFieldClass.getFieldClass(parentType,
+        MortalLogger.NULL);
+    assertEquals(parentType, parentClass.getRawType());
+
+    Map<String, Pair<JMethod, Integer>> childMethods = parentClass.getUiChildMethods();
+    assertNotNull(childMethods);
+    assertEquals(2, childMethods.size());
+
+    Pair<JMethod, Integer> childPair = childMethods.get("child");
+    assertEquals("addChild", childPair.left.getName());
+    assertEquals(Integer.valueOf(-1), childPair.right);
+
+    Pair<JMethod, Integer> secondPair = childMethods.get("second");
+    assertEquals("doesNotStartWithAdd", secondPair.left.getName());
+    assertEquals(Integer.valueOf(4), secondPair.right);
+
+    gwtTypeAdapter.verifyAll();
+  }
+
+  public void testOwnerFieldClass_withNoUiChildren() throws Exception {
+    JClassType parentType = gwtTypeAdapter.adaptJavaClass(Object.class);
+    OwnerFieldClass parentClass = OwnerFieldClass.getFieldClass(parentType,
+        MortalLogger.NULL);
+    assertEquals(parentType, parentClass.getRawType());
+
+    Map<String, Pair<JMethod, Integer>> childMethods = parentClass.getUiChildMethods();
+    assertNotNull(childMethods);
+    assertEquals(0, childMethods.size());
+
+    gwtTypeAdapter.verifyAll();
+  }
+
+  /**
+   * Class with a {@link UiChild}-annotated methods.
+   */
+  @SuppressWarnings("unused")
+  // We know these methods are unused
+  private static class UiChildWithPoorMethodNames {
+    public UiChildWithPoorMethodNames() {
+      throw new UnsupportedOperationException("Should never get called");
+    }
+
+    @UiChild
+    void poorlyNamedMethodWithoutTag(Object child) {
+      throw new UnsupportedOperationException("Should never get called");
+    }
+  }
+
+  public void testOwnerFieldClass_withBadlyNamedMethod() {
+    JClassType parentType = gwtTypeAdapter.adaptJavaClass(UiChildWithPoorMethodNames.class);
+    try {
+      OwnerFieldClass parentClass = OwnerFieldClass.getFieldClass(parentType,
+          MortalLogger.NULL);
+      fail("Class should error because @UiChild method has invalid name (and no tag specified).");
+    } catch (UnableToCompleteException expected) {
+      gwtTypeAdapter.verifyAll();
+    }
+  }
+
+  /**
    * Class with a {@link UiConstructor}-annotated constructor.
    */
-  @SuppressWarnings("unused") // We know these methods are unused
+  @SuppressWarnings("unused")
+  // We know these methods are unused
   private static class UiConstructorClass {
     @UiConstructor
     public UiConstructorClass(boolean visible) {
@@ -294,10 +380,9 @@ public class OwnerFieldClassTest extends TestCase {
   }
 
   public void testOwnerFieldClass_withUiConstructor() throws Exception {
-    JClassType constructorsType =
-        gwtTypeAdapter.adaptJavaClass(UiConstructorClass.class);
-    OwnerFieldClass constructorsClass =
-        OwnerFieldClass.getFieldClass(constructorsType, MortalLogger.NULL);
+    JClassType constructorsType = gwtTypeAdapter.adaptJavaClass(UiConstructorClass.class);
+    OwnerFieldClass constructorsClass = OwnerFieldClass.getFieldClass(
+        constructorsType, MortalLogger.NULL);
     assertEquals(constructorsType, constructorsClass.getRawType());
 
     JConstructor constructor = constructorsClass.getUiConstructor();
@@ -315,7 +400,8 @@ public class OwnerFieldClassTest extends TestCase {
    * Class with (disallowed) multiple constructors annotated with
    * {@link UiConstructor}.
    */
-  @SuppressWarnings("unused") // We know these methods are unused
+  @SuppressWarnings("unused")
+  // We know these methods are unused
   private static class MultiUiConstructorsClass {
     @UiConstructor
     public MultiUiConstructorsClass(boolean visible) {
@@ -328,10 +414,8 @@ public class OwnerFieldClassTest extends TestCase {
     }
   }
 
-  public void testOwnerFieldClass_withMultipleUiConstructors()
-      throws Exception {
-    JClassType constructorsType =
-        gwtTypeAdapter.adaptJavaClass(MultiUiConstructorsClass.class);
+  public void testOwnerFieldClass_withMultipleUiConstructors() throws Exception {
+    JClassType constructorsType = gwtTypeAdapter.adaptJavaClass(MultiUiConstructorsClass.class);
 
     try {
       OwnerFieldClass.getFieldClass(constructorsType, MortalLogger.NULL);
@@ -343,7 +427,7 @@ public class OwnerFieldClassTest extends TestCase {
 
   /**
    * Asserts that the given method has the proper name and parameters.
-   *
+   * 
    * @param method the actual method
    * @param methodName the expected method name
    * @param parameterTypes the expected parameter types

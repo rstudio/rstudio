@@ -22,6 +22,8 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.dev.util.Pair;
+import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 
@@ -63,11 +65,17 @@ public class OwnerFieldClass {
     return clazz;
   }
 
+  private Set<String> ambiguousSetters;
+  private final MortalLogger logger;
   private final JClassType rawType;
   private final Map<String, JMethod> setters = new HashMap<String, JMethod>();
-  private Set<String> ambiguousSetters;
+  /**
+   * Mapping from all of the @UiChild tags to their corresponding methods and
+   * limits on being called.
+   */
+  private final Map<String, Pair<JMethod, Integer>> uiChildren = new HashMap<String, Pair<JMethod, Integer>>();
+
   private JConstructor uiConstructor;
-  private final MortalLogger logger;
 
   /**
    * Default constructor. This is package-visible for testing only.
@@ -83,6 +91,7 @@ public class OwnerFieldClass {
 
     findUiConstructor(forType);
     findSetters(forType);
+    findUiChildren(forType);
   }
 
   /**
@@ -110,6 +119,15 @@ public class OwnerFieldClass {
     }
 
     return setters.get(propertyName);
+  }
+
+  /**
+   * Returns a list of methods annotated with @UiChild.
+   * 
+   * @return a list of all add child methods
+   */
+  public Map<String, Pair<JMethod, Integer>> getUiChildMethods() {
+    return uiChildren;
   }
 
   /**
@@ -236,6 +254,38 @@ public class OwnerFieldClass {
   }
 
   /**
+   * Scans the class to find all methods annotated with @UiChild
+   *
+   * @param ownerType the type of the owner class
+   * @throws UnableToCompleteException
+   */
+  private void findUiChildren(JClassType ownerType)
+      throws UnableToCompleteException {
+    JMethod[] methods = ownerType.getMethods();
+    while (ownerType != null) {
+      for (JMethod method : methods) {
+        UiChild annotation = method.getAnnotation(UiChild.class);
+        if (annotation != null) {
+          String tag = annotation.tagname();
+          int limit = annotation.limit();
+          if (tag.equals("")) {
+            String name = method.getName();
+            if (name.startsWith("add")) {
+              tag = name.substring(3).toLowerCase();
+            } else {
+              logger.die(method.getName()
+                  + " must either specify a UiChild tagname or begin "
+                  + "with \"add\".");
+            }
+          }
+          uiChildren.put(tag, Pair.create(method, limit));
+        }
+      }
+      ownerType = ownerType.getSuperclass();
+    }
+  }
+
+  /**
    * Finds the constructor annotated with @UiConcontructor if there is one, and
    * puts it in the {@link #uiConstructor} field.
    *
@@ -264,8 +314,7 @@ public class OwnerFieldClass {
   private boolean isSetterMethod(JMethod method) {
     // All setter methods should be public void setSomething(...)
     return method.isPublic() && !method.isStatic()
-        && method.getName().startsWith("set")
-        && method.getName().length() > 3
+        && method.getName().startsWith("set") && method.getName().length() > 3
         && method.getReturnType() == JPrimitiveType.VOID;
   }
 
