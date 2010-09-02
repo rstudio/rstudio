@@ -105,8 +105,7 @@ public class LayoutImplIE8 extends LayoutImpl {
         break;
 
       default:
-        value = value
-            * (int) getUnitSizeInPixels(layer.container, unit, vertical);
+        value = value * getUnitSizeInPixels(layer.container, unit, vertical);
         unit = Unit.PX;
         break;
     }
@@ -117,6 +116,7 @@ public class LayoutImplIE8 extends LayoutImpl {
       }
     }
 
-    layer.getContainerElement().getStyle().setProperty(prop, value, unit);
+    layer.getContainerElement().getStyle().setProperty(prop,
+        (int) (value + 0.5), unit);
   }
 }
