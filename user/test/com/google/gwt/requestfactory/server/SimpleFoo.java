@@ -24,8 +24,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import javax.validation.constraints.Size;
-
 /**
  * Domain object for SimpleFooRequest.
  */
@@ -70,7 +68,6 @@ public class SimpleFoo {
 
   Integer version = 1;
 
-  @Size(min = 3, max = 30)
   private String userName;
   private String password;
 

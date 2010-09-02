@@ -61,10 +61,6 @@
     <pathelement location="${gwt.tools.lib}/objectweb/asm-3.1.jar"/>
     <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
     <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
-    <pathelement location="${gwt.tools.lib}/apache/log4j/log4j-1.2.16.jar" />
-    <pathelement location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final.jar" />
-    <pathelement location="${gwt.tools.lib}/slf4j/slf4j-api/slf4j-api-1.6.1.jar" />
-    <pathelement location="${gwt.tools.lib}/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar" />
     <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
     <pathelement location="${gwt.dev.jar}" />
   </path>
