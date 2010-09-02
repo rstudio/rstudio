@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
@@ -88,31 +89,25 @@ public class CwCellList extends ContentWidget {
     }
 
     @Override
-    public void render(ContactInfo value, Object key, StringBuilder sb) {
-      // Value can be null, so do a null check.
+    public void render(ContactInfo value, Object key, SafeHtmlBuilder sb) {
+      // Value can be null, so do a null check..
       if (value == null) {
         return;
       }
 
-      sb.append("<table>");
+      sb.appendHtmlConstant("<table>");
 
       // Add the contact image.
-      sb.append("<tr><td rowspan='3'>");
-      sb.append(imageHtml);
-      sb.append("</td>");
+      sb.appendHtmlConstant("<tr><td rowspan='3'>");
+      sb.appendHtmlConstant(imageHtml);
+      sb.appendHtmlConstant("</td>");
 
-      // Add the name.
-      sb.append("<td style='font-size:95%;'>");
-      sb.append(value.getFullName());
-      sb.append("</td>");
-      sb.append("</tr>");
-
-      // Add the address.
-      sb.append("<tr><td>");
-      sb.append(value.getAddress());
-      sb.append("</td></tr>");
-
-      sb.append("</table>");
+      // Add the name and address.
+      sb.appendHtmlConstant("<td style='font-size:95%;'>");
+      sb.appendEscaped(value.getFullName());
+      sb.appendHtmlConstant("</td></tr><tr><td>");
+      sb.appendEscaped(value.getAddress());
+      sb.appendHtmlConstant("</td></tr></table>");
     }
   }
 
