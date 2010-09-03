@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.client.request;
 
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -42,23 +42,23 @@ public abstract class ExpensesEntityTypesProcessor<T> {
   /**
    * Return a set of all proxy types available to this application.
    */
-  public static Set<Class<? extends Record>> getAll() {
-    Set<Class<? extends Record>> rtn = new HashSet<Class<? extends Record>>();
+  public static Set<Class<? extends EntityProxy>> getAll() {
+    Set<Class<? extends EntityProxy>> rtn = new HashSet<Class<? extends EntityProxy>>();
 
-    rtn.add(EmployeeRecord.class);
-    rtn.add(ReportRecord.class);
+    rtn.add(EmployeeProxy.class);
+    rtn.add(ReportProxy.class);
 
     return Collections.unmodifiableSet(rtn);
   }
 
   private static void process(ExpensesEntityTypesProcessor<?> processor,
       Class<?> clazz) {
-    if (EmployeeRecord.class.equals(clazz)) {
-      processor.handleEmployee((EmployeeRecord) null);
+    if (EmployeeProxy.class.equals(clazz)) {
+      processor.handleEmployee((EmployeeProxy) null);
       return;
     }
-    if (ReportRecord.class.equals(clazz)) {
-      processor.handleReport((ReportRecord) null);
+    if (ReportProxy.class.equals(clazz)) {
+      processor.handleReport((ReportProxy) null);
       return;
     }
     processor.handleNonProxy(null);
@@ -66,12 +66,12 @@ public abstract class ExpensesEntityTypesProcessor<T> {
 
   private static void process(ExpensesEntityTypesProcessor<?> processor,
       Object proxy) {
-    if (proxy instanceof EmployeeRecord) {
-      processor.handleEmployee((EmployeeRecord) proxy);
+    if (proxy instanceof EmployeeProxy) {
+      processor.handleEmployee((EmployeeProxy) proxy);
       return;
     }
-    if (proxy instanceof ReportRecord) {
-      processor.handleReport((ReportRecord) proxy);
+    if (proxy instanceof ReportProxy) {
+      processor.handleReport((ReportProxy) proxy);
       return;
     }
     processor.handleNonProxy(proxy);
@@ -98,7 +98,7 @@ public abstract class ExpensesEntityTypesProcessor<T> {
     this.defaultValue = defaultValue;
   }
 
-  public abstract void handleEmployee(EmployeeRecord proxy);
+  public abstract void handleEmployee(EmployeeProxy proxy);
 
   /**
    * Called if {@link #process} is called with a non-proxy object. This default
@@ -107,7 +107,7 @@ public abstract class ExpensesEntityTypesProcessor<T> {
   public void handleNonProxy(@SuppressWarnings("unused") Object object) {
   }
 
-  public abstract void handleReport(ReportRecord proxy);
+  public abstract void handleReport(ReportProxy proxy);
 
   /**
    * Call the handle method of the appropriate type, with a null argument. Note
@@ -115,7 +115,7 @@ public abstract class ExpensesEntityTypesProcessor<T> {
    * {@link #getClass()} method of a proxy object, due to limitations of GWT's
    * metadata. It will only work with against class objects in the set returned
    * by {@link #getAll()}, or returned by
-   * {@link com.google.gwt.requestfactory.shared.RequestFactory#getClass(Record)}
+   * {@link com.google.gwt.requestfactory.shared.RequestFactory#getClass(EntityProxy)}
    * or
    * {@link com.google.gwt.requestfactory.shared.RequestFactory#getClass(String)}
    * .

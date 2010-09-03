@@ -15,13 +15,13 @@
  */
 package com.google.gwt.sample.expenses.client.ui.report;
 
-import com.google.gwt.app.place.AbstractRecordListView;
+import com.google.gwt.app.place.AbstractProxyListView;
 import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormatRenderer;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.sample.expenses.client.ui.employee.EmployeeRenderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,38 +34,38 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * {@link AbstractRecordListView} specialized to {@link EmployeeKey} values.
+ * {@link AbstractProxyListView} specialized to {@link EmployeeKey} values.
  * <p>
  * TODO This should be a <g:table> in a ui.xml file
  */
-public class ReportListView extends AbstractRecordListView<ReportRecord> {
+public class ReportListView extends AbstractProxyListView<ReportProxy> {
   interface Binder extends UiBinder<HTMLPanel, ReportListView> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
 
-  @UiField CellTable<ReportRecord> table;
+  @UiField CellTable<ReportProxy> table;
   @UiField Button newButton;
 
   public ReportListView() {
     init(BINDER.createAndBindUi(this), table, newButton, getColumns());
   }
 
-  protected List<PropertyColumn<ReportRecord, ?>> getColumns() {
+  protected List<PropertyColumn<ReportProxy, ?>> getColumns() {
     // TODO These should be <g:col> elements in a <g:table> in the ui.xml file
 
-    List<PropertyColumn<ReportRecord, ?>> columns = new ArrayList<PropertyColumn<ReportRecord, ?>>();
+    List<PropertyColumn<ReportProxy, ?>> columns = new ArrayList<PropertyColumn<ReportProxy, ?>>();
 
-    columns.add(new PropertyColumn<ReportRecord, Date>(ReportRecord.created,
+    columns.add(new PropertyColumn<ReportProxy, Date>(ReportProxy.created,
         new DateTimeFormatRenderer(DateTimeFormat.getShortDateFormat())));
 
-    columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.purpose));
+    columns.add(PropertyColumn.<ReportProxy> getStringPropertyColumn(ReportProxy.purpose));
 
-    columns.add(new PropertyColumn<ReportRecord, EmployeeRecord>(
-        ReportRecord.reporter, EmployeeRenderer.instance()));
+    columns.add(new PropertyColumn<ReportProxy, EmployeeProxy>(
+        ReportProxy.reporter, EmployeeRenderer.instance()));
 
-    columns.add(new PropertyColumn<ReportRecord, EmployeeRecord>(
-        ReportRecord.approvedSupervisor, EmployeeRenderer.instance()));
+    columns.add(new PropertyColumn<ReportProxy, EmployeeProxy>(
+        ReportProxy.approvedSupervisor, EmployeeRenderer.instance()));
 
     return columns;
   }

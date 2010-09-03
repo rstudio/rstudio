@@ -21,7 +21,7 @@ package com.google.gwt.requestfactory.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Defines a property of a {@link Record}.
+ * Defines a property of a {@link EntityProxy}.
  *
  * @param <V> the type of the property's value
  */

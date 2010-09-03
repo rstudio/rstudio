@@ -32,7 +32,7 @@ public interface SyncResult {
   // TODO: futureId isn't working out so well, leaving soon
   Long getFutureId();
 
-  Record getRecord();
+  EntityProxy getProxy();
   
   Map<String, String> getViolations();
 }

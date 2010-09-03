@@ -17,14 +17,14 @@ package com.google.gwt.sample.dynatablerf.shared;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.requestfactory.shared.RecordChangedEvent;
+import com.google.gwt.requestfactory.shared.EntityProxyChangedEvent;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 /**
  * This class will no longer be necessary pending HandlerManager changes.
  */
 public class AddressProxyChanged extends
-    RecordChangedEvent<AddressProxy, AddressProxyChanged.Handler> {
+    EntityProxyChangedEvent<AddressProxy, AddressProxyChanged.Handler> {
 
   /**
    * Implemented by handlers of this type of event.

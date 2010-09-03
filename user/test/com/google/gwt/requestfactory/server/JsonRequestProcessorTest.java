@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.SimpleEnum;
-import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import junit.framework.TestCase;
@@ -225,10 +225,10 @@ public class JsonRequestProcessorTest extends TestCase {
   private JSONObject getResultFromServer(JSONObject foo) throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException,
       ClassNotFoundException {
-    JSONObject recordWithSchema = new JSONObject();
-    recordWithSchema.put(SimpleFooRecord.class.getName(), foo);
+    JSONObject proxyWithSchema = new JSONObject();
+    proxyWithSchema.put(SimpleFooProxy.class.getName(), foo);
     JSONArray arr = new JSONArray();
-    arr.put(recordWithSchema);
+    arr.put(proxyWithSchema);
     JSONObject operation = new JSONObject();
     operation.put(WriteOperation.UPDATE.toString(), arr);
     JSONObject sync = new JSONObject();
@@ -236,7 +236,7 @@ public class JsonRequestProcessorTest extends TestCase {
         "com.google.gwt.requestfactory.shared.SimpleFooRequest::persist");
     sync.put(RequestData.CONTENT_TOKEN, operation.toString());
     sync.put(RequestData.PARAM_TOKEN + "0", foo.getInt("id") + "-NO" + "-"
-        + SimpleFooRecord.class.getName());
+        + SimpleFooProxy.class.getName());
     return (JSONObject) requestProcessor.processJsonRequest(sync.toString());
   }
 }

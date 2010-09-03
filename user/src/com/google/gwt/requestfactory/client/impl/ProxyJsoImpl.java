@@ -21,7 +21,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.EnumProperty;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.PropertyReference;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -30,10 +30,10 @@ import java.util.Date;
 /**
  * <p> <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
- * </span> </p> JSO implementation of {@link Record}, used to back subclasses of
- * {@link RecordImpl}.
+ * </span> </p> JSO implementation of {@link EntityProxy}, used to back subclasses of
+ * {@link ProxyImpl}.
  */
-public class RecordJsoImpl extends JavaScriptObject implements Record {
+public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
 
   /**
    * JSO to hold result and related objects.
@@ -47,11 +47,11 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       return this.exception || null;
     }-*/;
 
-    public final native JsArray<RecordJsoImpl> getListResult() /*-{
+    public final native JsArray<ProxyJsoImpl> getListResult() /*-{
       return this.result;
     }-*/;
 
-    public final native RecordJsoImpl getRecordResult() /*-{
+    public final native ProxyJsoImpl getRecordResult() /*-{
       return this.result;
     }-*/;
 
@@ -67,31 +67,31 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     }-*/;
   }
 
-  public static native JsArray<RecordJsoImpl> arrayFromJson(String json) /*-{
+  public static native JsArray<ProxyJsoImpl> arrayFromJson(String json) /*-{
     return eval(json);
   }-*/;
 
-  public static RecordJsoImpl create(Long id, Integer version,
-      final RecordSchema<?> schema) {
-    RecordJsoImpl copy = create();
+  public static ProxyJsoImpl create(Long id, Integer version,
+      final ProxySchema<?> schema) {
+    ProxyJsoImpl copy = create();
     copy.setSchema(schema);
-    copy.set(Record.id, id);
-    copy.set(Record.version, version);
+    copy.set(EntityProxy.id, id);
+    copy.set(EntityProxy.version, version);
     return copy;
   }
 
-  public static RecordJsoImpl emptyCopy(RecordJsoImpl jso) {
-    Long id = jso.get(Record.id);
-    Integer version = jso.get(Record.version);
-    final RecordSchema<?> schema = jso.getSchema();
+  public static ProxyJsoImpl emptyCopy(ProxyJsoImpl jso) {
+    Long id = jso.get(EntityProxy.id);
+    Integer version = jso.get(EntityProxy.version);
+    final ProxySchema<?> schema = jso.getSchema();
 
-    RecordJsoImpl copy = create(id, version, schema);
+    ProxyJsoImpl copy = create(id, version, schema);
     copy.setRequestFactory(jso.getRequestFactory());
     copy.setValueStore(jso.getValueStore());
     return copy;
   }
 
-  public static native RecordJsoImpl fromJson(String json) /*-{
+  public static native ProxyJsoImpl fromJson(String json) /*-{
     // TODO: clean this
     eval("xyz=" + json);
     return xyz;
@@ -105,11 +105,11 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   /* Made protected, for testing */
 
-  protected static native RecordJsoImpl create() /*-{
+  protected static native ProxyJsoImpl create() /*-{
     return {};
   }-*/;
 
-  protected RecordJsoImpl() {
+  protected ProxyJsoImpl() {
   }
 
   public final native void delete(String name)/*-{
@@ -221,7 +221,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return this['__rf'];
   }-*/;
 
-  public final native RecordSchema<?> getSchema() /*-{
+  public final native ProxySchema<?> getSchema() /*-{
     return this['__key'];
   }-*/;
   
@@ -243,7 +243,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   public final boolean isEmpty() {
     for (Property<?> property : getSchema().allProperties()) {
-      if ((property != Record.id) && (property != Record.version) && (isDefined(
+      if ((property != EntityProxy.id) && (property != EntityProxy.version) && (isDefined(
           property.getName()))) {
         return false;
       }
@@ -258,7 +258,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return this[name] == null;
   }-*/;
 
-  public final boolean merge(RecordJsoImpl from) {
+  public final boolean merge(ProxyJsoImpl from) {
     assert getSchema() == from.getSchema();
 
     boolean changed = false;
@@ -318,8 +318,8 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       return;
     }
 
-    if (value instanceof RecordImpl) {
-      setString(property.getName(), ((RecordImpl) value).getUniqueId());
+    if (value instanceof ProxyImpl) {
+      setString(property.getName(), ((ProxyImpl) value).getUniqueId());
       return;
     }
 
@@ -332,7 +332,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     this['__rf'] = requestFactory;
   }-*/;
 
-  public final native void setSchema(RecordSchema<?> schema) /*-{
+  public final native void setSchema(ProxySchema<?> schema) /*-{
     this['__key'] = schema;
   }-*/;
 
@@ -376,7 +376,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
   }-*/;
 
   private native boolean copyPropertyIfDifferent(String name,
-      RecordJsoImpl from) /*-{
+      ProxyJsoImpl from) /*-{
     if (this[name] == from[name]) {
       return false;
     }

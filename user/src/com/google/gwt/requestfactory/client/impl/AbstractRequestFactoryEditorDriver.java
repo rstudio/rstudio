@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 
@@ -31,7 +31,7 @@ import java.util.List;
  * @param <R> the type of Record
  * @param <E> the type of Editor
  */
-public abstract class AbstractRequestFactoryEditorDriver<R extends Record, E extends Editor<R>>
+public abstract class AbstractRequestFactoryEditorDriver<R extends EntityProxy, E extends Editor<R>>
     implements RequestFactoryEditorDriver<R, E> {
 
   private RequestFactoryEditorDelegate<R, E> delegate;

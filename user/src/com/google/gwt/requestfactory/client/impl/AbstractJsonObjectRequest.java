@@ -15,8 +15,8 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.requestfactory.shared.RecordRequest;
+import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Set;
@@ -26,18 +26,18 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span> </p> Abstract implementation of {@link com.google.gwt.requestfactory.shared.RequestObject
  * RequestFactory.RequestObject} for requests that return single instances of
- * {@link Record}.
+ * {@link EntityProxy}.
  *
  * @param <T> the type of entities returned
  * @param <R> this request type
  */
 public abstract class //
-    AbstractJsonObjectRequest<T extends Record, R extends AbstractJsonObjectRequest<T, R>> //
-    extends AbstractRequest<T, R> implements RecordRequest<T> {
+    AbstractJsonObjectRequest<T extends EntityProxy, R extends AbstractJsonObjectRequest<T, R>> //
+    extends AbstractRequest<T, R> implements ProxyRequest<T> {
 
-  protected final RecordSchema<? extends T> schema;
+  protected final ProxySchema<? extends T> schema;
 
-  public AbstractJsonObjectRequest(RecordSchema<? extends T> schema,
+  public AbstractJsonObjectRequest(ProxySchema<? extends T> schema,
       RequestFactoryJsonImpl requestService) {
     super(requestService);
     this.schema = schema;
@@ -46,10 +46,10 @@ public abstract class //
   @Override
   public void handleResult(Object jsoResult, Set<SyncResult> syncResults) {
 
-    RecordJsoImpl jso = (RecordJsoImpl) jsoResult;
+    ProxyJsoImpl jso = (ProxyJsoImpl) jsoResult;
     jso.setSchema(schema);
 
-    requestFactory.getValueStore().setRecord(jso, requestFactory);
+    requestFactory.getValueStore().setProxy(jso, requestFactory);
 
     receiver.onSuccess(schema.create(jso), syncResults);
   }

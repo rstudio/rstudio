@@ -17,7 +17,7 @@ package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.PropertyReference;
-import com.google.gwt.requestfactory.shared.RecordListRequest;
+import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Expense;
@@ -35,30 +35,30 @@ public interface ExpenseRequest {
   /**
    * @return a request object
    */
-  RecordListRequest<ExpenseRecord> findAllExpenses();
+  ProxyListRequest<ExpenseProxy> findAllExpenses();
 
   /**
    * @return a request object
    */
-  RecordListRequest<ExpenseRecord> findExpense(
+  ProxyListRequest<ExpenseProxy> findExpense(
       PropertyReference<Long> id);
 
   /**
    * @return a request object
    */
-  RecordListRequest<ExpenseRecord> findExpensesByReport(
+  ProxyListRequest<ExpenseProxy> findExpensesByReport(
       PropertyReference<Long> reportId);
 
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist(ExpenseRecord record);
+  RequestObject<Void> persist(ExpenseProxy record);
 
  /**
   * @return a request object
   */
   @Instance
-  RequestObject<Void> remove(ExpenseRecord record);
+  RequestObject<Void> remove(ExpenseProxy record);
 
 }

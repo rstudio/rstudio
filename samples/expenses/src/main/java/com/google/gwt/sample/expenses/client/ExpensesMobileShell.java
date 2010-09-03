@@ -20,10 +20,10 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.requestfactory.client.LoginWidget;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -53,13 +53,13 @@ public class ExpensesMobileShell extends Composite {
   private MobileExpenseEntry expenseEntry;
   private MobileReportEntry reportEntry;
 
-  private final EmployeeRecord employee;
+  private final EmployeeProxy employee;
   private final HandlerManager eventBus;
   private final ExpensesRequestFactory requestFactory;
   private ArrayList<MobilePage> pages = new ArrayList<MobilePage>();
 
   public ExpensesMobileShell(HandlerManager eventBus,
-      ExpensesRequestFactory requestFactory, EmployeeRecord employee) {
+      ExpensesRequestFactory requestFactory, EmployeeProxy employee) {
     this.eventBus = eventBus;
     this.requestFactory = requestFactory;
     this.employee = employee;
@@ -112,11 +112,11 @@ public class ExpensesMobileShell extends Composite {
     showPage(page);
   }
 
-  private void showExpenseDetails(ExpenseRecord expense) {
+  private void showExpenseDetails(ExpenseProxy expense) {
     if (expenseDetails == null) {
       expenseDetails = new MobileExpenseDetails(
           new MobileExpenseDetails.Listener() {
-            public void onEditExpense(ExpenseRecord expense) {
+            public void onEditExpense(ExpenseProxy expense) {
               showExpenseEntry(expense);
             }
           }, eventBus, requestFactory);
@@ -126,7 +126,7 @@ public class ExpensesMobileShell extends Composite {
     pushPage(expenseDetails);
   }
 
-  private void showExpenseEntry(ExpenseRecord expense) {
+  private void showExpenseEntry(ExpenseProxy expense) {
     if (expenseEntry == null) {
       expenseEntry = new MobileExpenseEntry(new MobileExpenseEntry.Listener() {
         public void onExpenseUpdated() {
@@ -139,7 +139,7 @@ public class ExpensesMobileShell extends Composite {
     pushPage(expenseEntry);
   }
 
-  private void showReportEntry(ReportRecord report) {
+  private void showReportEntry(ReportProxy report) {
     if (reportEntry == null) {
       reportEntry = new MobileReportEntry(new MobileReportEntry.Listener() {
         public void onReportUpdated() {
@@ -152,18 +152,18 @@ public class ExpensesMobileShell extends Composite {
     pushPage(reportEntry);
   }
 
-  private void showExpenseList(final ReportRecord report) {
+  private void showExpenseList(final ReportProxy report) {
     if (expenseList == null) {
       expenseList = new MobileExpenseList(new MobileExpenseList.Listener() {
-        public void onCreateExpense(ReportRecord report) {
+        public void onCreateExpense(ReportProxy report) {
           showNewExpenseEntry(report);
         }
 
-        public void onEditReport(ReportRecord report) {
+        public void onEditReport(ReportProxy report) {
           showReportEntry(report);
         }
 
-        public void onExpenseSelected(ExpenseRecord expense) {
+        public void onExpenseSelected(ExpenseProxy expense) {
           showExpenseDetails(expense);
         }
       }, requestFactory);
@@ -173,7 +173,7 @@ public class ExpensesMobileShell extends Composite {
     pushPage(expenseList);
   }
 
-  private void showNewExpenseEntry(ReportRecord report) {
+  private void showNewExpenseEntry(ReportProxy report) {
     if (expenseEntry == null) {
       expenseEntry = new MobileExpenseEntry(new MobileExpenseEntry.Listener() {
         public void onExpenseUpdated() {
@@ -186,7 +186,7 @@ public class ExpensesMobileShell extends Composite {
     pushPage(expenseEntry);
   }
 
-  private void showNewReportEntry(EmployeeRecord reporter) {
+  private void showNewReportEntry(EmployeeProxy reporter) {
     if (reportEntry == null) {
       reportEntry = new MobileReportEntry(new MobileReportEntry.Listener() {
         public void onReportUpdated() {
@@ -224,11 +224,11 @@ public class ExpensesMobileShell extends Composite {
   private void showReportList() {
     if (reportList == null) {
       reportList = new MobileReportList(new MobileReportList.Listener() {
-        public void onCreateReport(EmployeeRecord reporter) {
+        public void onCreateReport(EmployeeProxy reporter) {
           showNewReportEntry(reporter);
         }
 
-        public void onReportSelected(ReportRecord report) {
+        public void onReportSelected(ReportProxy report) {
           showExpenseList(report);
         }
       }, requestFactory, employee);

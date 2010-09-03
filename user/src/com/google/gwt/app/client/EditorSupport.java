@@ -15,8 +15,8 @@
  */
 package com.google.gwt.app.client;
 
-import com.google.gwt.app.place.RecordEditView;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.app.place.ProxyEditView;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 
 import java.util.Map;
 
@@ -27,12 +27,12 @@ import java.util.Map;
  * </span>
  * </p>
  * Implemented by objects that provide data binding support for 
- * instances of {@link RecordEditView}. 
+ * instances of {@link ProxyEditView}. 
  * 
  * @param <R> the Record type
  * @param <V> the View type
  */
-public interface EditorSupport<R extends Record, V extends RecordEditView<R>> {
+public interface EditorSupport<R extends EntityProxy, V extends ProxyEditView<R>> {
   String[] getPaths();
   
   void init(final V view);

@@ -23,16 +23,16 @@ import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.SyncResult;
-import com.google.gwt.requestfactory.shared.UserInformationRecord;
+import com.google.gwt.requestfactory.shared.UserInformationProxy;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecordChanged;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxyChanged;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
-import com.google.gwt.sample.expenses.client.request.ReportRecordChanged;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
+import com.google.gwt.sample.expenses.client.request.ReportProxyChanged;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
@@ -101,37 +101,37 @@ public class Expenses implements EntryPoint {
       "Engineering", "Finance", "Marketing", "Operations", "Sales"};
 
   /**
-   * The key provider for {@link EmployeeRecord}s.
+   * The key provider for {@link EmployeeProxy}s.
    */
-  public static final ProvidesKey<EmployeeRecord> EMPLOYEE_RECORD_KEY_PROVIDER =
-    new ProvidesKey<EmployeeRecord>() {
-    public Object getKey(EmployeeRecord item) {
+  public static final ProvidesKey<EmployeeProxy> EMPLOYEE_RECORD_KEY_PROVIDER =
+    new ProvidesKey<EmployeeProxy>() {
+    public Object getKey(EmployeeProxy item) {
       return item == null ? null : item.getId();
     }
   };
 
   /**
-   * The key provider for {@link ExpenseRecord}s.
+   * The key provider for {@link ExpenseProxy}s.
    */
-  public static final ProvidesKey<ExpenseRecord> EXPENSE_RECORD_KEY_PROVIDER =
-    new ProvidesKey<ExpenseRecord>() {
-    public Object getKey(ExpenseRecord item) {
+  public static final ProvidesKey<ExpenseProxy> EXPENSE_RECORD_KEY_PROVIDER =
+    new ProvidesKey<ExpenseProxy>() {
+    public Object getKey(ExpenseProxy item) {
       return item == null ? null : item.getId();
     }
   };
 
   /**
-   * The key provider for {@link ReportRecord}s.
+   * The key provider for {@link ReportProxy}s.
    */
-  public static final ProvidesKey<ReportRecord> REPORT_RECORD_KEY_PROVIDER =
-    new ProvidesKey<ReportRecord>() {
-    public Object getKey(ReportRecord item) {
+  public static final ProvidesKey<ReportProxy> REPORT_RECORD_KEY_PROVIDER =
+    new ProvidesKey<ReportProxy>() {
+    public Object getKey(ReportProxy item) {
       return item == null ? null : item.getId();
     }
   };
 
   private String lastDepartment;
-  private EmployeeRecord lastEmployee;
+  private EmployeeProxy lastEmployee;
   private ExpensesRequestFactory requestFactory;
   private ExpensesShell shell;
 
@@ -161,9 +161,8 @@ public class Expenses implements EntryPoint {
 
     // Add a login widget to the page
     final LoginWidget login = shell.getLoginWidget();
-    Receiver<UserInformationRecord> receiver = new Receiver<UserInformationRecord>() {
-      public void onSuccess(UserInformationRecord userInformationRecord,
-          Set<SyncResult> syncResults) {
+    Receiver<UserInformationProxy> receiver = new Receiver<UserInformationProxy>() {
+      public void onSuccess(UserInformationProxy userInformationRecord, Set<SyncResult> syncResults) {
         login.setUserInformation(userInformationRecord);
       }       
      };
@@ -172,7 +171,7 @@ public class Expenses implements EntryPoint {
 
     // Listen for requests from ExpenseTree.
     expenseTree.setListener(new ExpenseTree.Listener() {
-      public void onSelection(String department, EmployeeRecord employee) {
+      public void onSelection(String department, EmployeeProxy employee) {
         lastDepartment = department;
         lastEmployee = employee;
         expenseList.setEmployee(department, employee);
@@ -183,17 +182,17 @@ public class Expenses implements EntryPoint {
 
     // Listen for requests from the ExpenseList.
     expenseList.setListener(new ExpenseList.Listener() {
-      public void onReportSelected(ReportRecord report) {
+      public void onReportSelected(ReportProxy report) {
         expenseDetails.setExpensesRequestFactory(requestFactory);
         expenseDetails.setReportRecord(report, lastDepartment, lastEmployee);
         shell.showExpenseDetails(true);
       }
     });
     expenseList.setRequestFactory(requestFactory);
-    eventBus.addHandler(ReportRecordChanged.TYPE, expenseList);
+    eventBus.addHandler(ReportProxyChanged.TYPE, expenseList);
 
     // Forward change events to the expense details.
-    eventBus.addHandler(ExpenseRecordChanged.TYPE, expenseDetails);
-    eventBus.addHandler(ReportRecordChanged.TYPE, expenseDetails);
+    eventBus.addHandler(ExpenseProxyChanged.TYPE, expenseDetails);
+    eventBus.addHandler(ReportProxyChanged.TYPE, expenseDetails);
   }
 }

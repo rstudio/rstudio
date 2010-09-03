@@ -38,10 +38,10 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
-import com.google.gwt.sample.expenses.client.request.ReportRecordChanged;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
+import com.google.gwt.sample.expenses.client.request.ReportProxyChanged;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
@@ -71,7 +71,7 @@ import java.util.Set;
  * The list of expense reports on the right side of the app.
  */
 public class ExpenseList extends Composite
-    implements ReportRecordChanged.Handler {
+    implements ReportProxyChanged.Handler {
 
   /**
    * The auto refresh interval in milliseconds.
@@ -90,7 +90,7 @@ public class ExpenseList extends Composite
    * @return the breadcrumb
    */
   public static String getBreadcrumb(
-      String department, EmployeeRecord employee) {
+      String department, EmployeeProxy employee) {
     if (employee != null) {
       return "Reports for " + employee.getDisplayName();
     } else if (department != null) {
@@ -159,7 +159,7 @@ public class ExpenseList extends Composite
      *
      * @param report the selected report
      */
-    void onReportSelected(ReportRecord report);
+    void onReportSelected(ReportProxy report);
   }
 
   /**
@@ -208,9 +208,9 @@ public class ExpenseList extends Composite
   /**
    * The data provider used to retrieve reports.
    */
-  private class ReportDataProvider extends AsyncDataProvider<ReportRecord> {
+  private class ReportDataProvider extends AsyncDataProvider<ReportProxy> {
     @Override
-    protected void onRangeChanged(HasData<ReportRecord> display) {
+    protected void onRangeChanged(HasData<ReportProxy> display) {
       requestReports(false);
     }
   }
@@ -229,7 +229,7 @@ public class ExpenseList extends Composite
    * {@link UiBinder#createAndBindUi(Object)} because the pager depends on it.
    */
   @UiField(provided = true)
-  CellTable<ReportRecord> table;
+  CellTable<ReportProxy> table;
 
   private List<SortableHeader> allHeaders = new ArrayList<SortableHeader>();
 
@@ -241,7 +241,7 @@ public class ExpenseList extends Composite
   /**
    * The employee being searched.
    */
-  private EmployeeRecord employee;
+  private EmployeeProxy employee;
 
   /**
    * Indicates that the report count is stale.
@@ -251,7 +251,7 @@ public class ExpenseList extends Composite
   /**
    * The field to sort by.
    */
-  private String orderBy = ReportRecord.purpose.getName();
+  private String orderBy = ReportProxy.purpose.getName();
 
   /**
    * The set of Report keys that we have seen. When a new key is added, we
@@ -262,7 +262,7 @@ public class ExpenseList extends Composite
   /**
    * Keep track of the last receiver so that we know if a response is stale.
    */
-  private Receiver<List<ReportRecord>> lastDataReceiver;
+  private Receiver<List<ReportProxy>> lastDataReceiver;
 
   /**
    * Keep track of the last receiver so that we know if a response is stale.
@@ -286,8 +286,8 @@ public class ExpenseList extends Composite
    * The columns to request with each report.
    */
   private final String[] reportColumns = new String[]{
-      ReportRecord.created.getName(), ReportRecord.purpose.getName(),
-      ReportRecord.notes.getName()};
+      ReportProxy.created.getName(), ReportProxy.purpose.getName(),
+      ReportProxy.notes.getName()};
 
   /**
    * The data provider that provides reports.
@@ -346,14 +346,14 @@ public class ExpenseList extends Composite
     });
   }
 
-  public void onReportChanged(ReportRecordChanged event) {
-    ReportRecord changed = event.getRecord();
+  public void onReportChanged(ReportProxyChanged event) {
+    ReportProxy changed = event.getProxy();
     Long changedId = changed.getId();
-    List<ReportRecord> records = table.getDisplayedItems();
+    List<ReportProxy> records = table.getDisplayedItems();
     int i = 0;
-    for (ReportRecord record : records) {
+    for (ReportProxy record : records) {
       if (record != null && changedId.equals(record.getId())) {
-        List<ReportRecord> changedList = new ArrayList<ReportRecord>();
+        List<ReportProxy> changedList = new ArrayList<ReportProxy>();
         changedList.add(changed);
         reports.updateRowData(i + table.getPageStart(), changedList);
       }
@@ -367,7 +367,7 @@ public class ExpenseList extends Composite
    * @param department the department, or null if none selected
    * @param employee the employee, or null if none selected
    */
-  public void setEmployee(String department, EmployeeRecord employee) {
+  public void setEmployee(String department, EmployeeProxy employee) {
     this.department = department;
     this.employee = employee;
     isCountStale = true;
@@ -408,12 +408,12 @@ public class ExpenseList extends Composite
    * @param property the property to sort by
    * @return the column
    */
-  private <C> Column<ReportRecord, C> addColumn(final String text,
-      final Cell<C> cell, final GetValue<ReportRecord, C> getter,
+  private <C> Column<ReportProxy, C> addColumn(final String text,
+      final Cell<C> cell, final GetValue<ReportProxy, C> getter,
       final Property<?> property) {
-    final Column<ReportRecord, C> column = new Column<ReportRecord, C>(cell) {
+    final Column<ReportProxy, C> column = new Column<ReportProxy, C>(cell) {
       @Override
-      public C getValue(ReportRecord object) {
+      public C getValue(ReportProxy object) {
         return getter.getValue(object);
       }
     };
@@ -421,7 +421,7 @@ public class ExpenseList extends Composite
     allHeaders.add(header);
 
     // Sort created by default.
-    if (property == ReportRecord.created) {
+    if (property == ReportProxy.created) {
       header.setSorted(true);
       header.setReverseSort(true);
       orderBy = property.getName() + " DESC";
@@ -462,7 +462,7 @@ public class ExpenseList extends Composite
    */
   private void createTable() {
     CellTable.Resources resources = GWT.create(TableResources.class);
-    table = new CellTable<ReportRecord>(20, resources);
+    table = new CellTable<ReportProxy>(20, resources);
     Styles.Common common = Styles.common();
     table.addColumnStyleName(0, common.spacerColumn());
     table.addColumnStyleName(1, common.expenseListPurposeColumn());
@@ -471,56 +471,56 @@ public class ExpenseList extends Composite
     table.addColumnStyleName(5, common.spacerColumn());
 
     // Add a selection model.
-    final NoSelectionModel<ReportRecord> selectionModel = new NoSelectionModel<
-        ReportRecord>();
+    final NoSelectionModel<ReportProxy> selectionModel = new NoSelectionModel<
+        ReportProxy>();
     table.setSelectionModel(selectionModel);
     selectionModel.addSelectionChangeHandler(
         new SelectionChangeEvent.Handler() {
           public void onSelectionChange(SelectionChangeEvent event) {
             Object selected = selectionModel.getLastSelectedObject();
             if (selected != null && listener != null) {
-              listener.onReportSelected((ReportRecord) selected);
+              listener.onReportSelected((ReportProxy) selected);
             }
           }
         });
 
     // Spacer column.
-    table.addColumn(new SpacerColumn<ReportRecord>());
+    table.addColumn(new SpacerColumn<ReportProxy>());
 
     // Purpose column.
     addColumn(
-        "Purpose", new HighlightCell(), new GetValue<ReportRecord, String>() {
-          public String getValue(ReportRecord object) {
+        "Purpose", new HighlightCell(), new GetValue<ReportProxy, String>() {
+          public String getValue(ReportProxy object) {
             return object.getPurpose();
           }
-        }, ReportRecord.purpose);
+        }, ReportProxy.purpose);
 
     // Notes column.
     addColumn(
-        "Notes", new HighlightCell(), new GetValue<ReportRecord, String>() {
-          public String getValue(ReportRecord object) {
+        "Notes", new HighlightCell(), new GetValue<ReportProxy, String>() {
+          public String getValue(ReportProxy object) {
             return object.getNotes();
           }
-        }, ReportRecord.notes);
+        }, ReportProxy.notes);
 
     // Department column.
     addColumn(
-        "Department", new TextCell(), new GetValue<ReportRecord, String>() {
-          public String getValue(ReportRecord object) {
+        "Department", new TextCell(), new GetValue<ReportProxy, String>() {
+          public String getValue(ReportProxy object) {
             return object.getDepartment();
           }
-        }, ReportRecord.department);
+        }, ReportProxy.department);
 
     // Created column.
     addColumn("Created", new DateCell(DateTimeFormat.getFormat("MMM dd yyyy")),
-        new GetValue<ReportRecord, Date>() {
-          public Date getValue(ReportRecord object) {
+        new GetValue<ReportProxy, Date>() {
+          public Date getValue(ReportProxy object) {
             return object.getCreated();
           }
-        }, ReportRecord.created);
+        }, ReportProxy.created);
 
     // Spacer column.
-    table.addColumn(new SpacerColumn<ReportRecord>());
+    table.addColumn(new SpacerColumn<ReportProxy>());
   }
 
   /**
@@ -580,9 +580,9 @@ public class ExpenseList extends Composite
     }
 
     // Request reports in the current range.
-    lastDataReceiver = new Receiver<List<ReportRecord>>() {
+    lastDataReceiver = new Receiver<List<ReportProxy>>() {
       public void onSuccess(
-          List<ReportRecord> newValues, Set<SyncResult> syncResults) {
+          List<ReportProxy> newValues, Set<SyncResult> syncResults) {
         if (this == lastDataReceiver) {
           int size = newValues.size();
           if (size < table.getPageSize()) {
@@ -598,10 +598,10 @@ public class ExpenseList extends Composite
           if (knownReportKeys == null) {
             knownReportKeys = new HashSet<Object>();
           }
-          for (ReportRecord value : newValues) {
+          for (ReportProxy value : newValues) {
             Object key = reports.getKey(value);
             if (!isInitialData && !knownReportKeys.contains(key)) {
-              (new PhaseAnimation.CellTablePhaseAnimation<ReportRecord>(
+              (new PhaseAnimation.CellTablePhaseAnimation<ReportProxy>(
                   table, value, reports)).run();
             }
             knownReportKeys.add(key);

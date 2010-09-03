@@ -24,7 +24,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RecordRequest;
+import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
@@ -118,7 +118,7 @@ public class PersonEditorWorkflow {
 
   private void edit() {
     // The request is configured arbitrarily
-    RecordRequest<PersonProxy> fetchRequest = requestFactory.personRequest().findPerson(
+    ProxyRequest<PersonProxy> fetchRequest = requestFactory.personRequest().findPerson(
         person.getId());
 
     editorDriver = GWT.create(Driver.class);

@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
@@ -63,10 +63,10 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   }
 
   @SuppressWarnings("unchecked")
-  public <P extends Record> P edit(P record) {
-    P returnRecordImpl = (P) ((RecordImpl) record).getSchema().create(
-        ((RecordImpl) record).asJso(), ((RecordImpl) record).isFuture());
-    ((RecordImpl) returnRecordImpl).setDeltaValueStore(deltaValueStore);
+  public <P extends EntityProxy> P edit(P record) {
+    P returnRecordImpl = (P) ((ProxyImpl) record).getSchema().create(
+        ((ProxyImpl) record).asJso(), ((ProxyImpl) record).isFuture());
+    ((ProxyImpl) returnRecordImpl).setDeltaValueStore(deltaValueStore);
     return returnRecordImpl;
   }
 
@@ -96,7 +96,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   }
 
   public void handleResponseText(String responseText) {
-    RecordJsoImpl.JsonResults results = RecordJsoImpl.fromResults(responseText);
+    ProxyJsoImpl.JsonResults results = ProxyJsoImpl.fromResults(responseText);
     if (results.getException() != null) {
       throw new RuntimeException(results.getException());
     }
@@ -114,9 +114,9 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, requestFactory);
   }
 
-  public void setSchemaAndRecord(String schemaToken, RecordJsoImpl jso) {
+  public void setSchemaAndRecord(String schemaToken, ProxyJsoImpl jso) {
     jso.setSchema(requestFactory.getSchema(schemaToken));
-    requestFactory.getValueStore().setRecord(jso, requestFactory);
+    requestFactory.getValueStore().setProxy(jso, requestFactory);
   }
 
   public R with(String... propertyRef) {
@@ -141,7 +141,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
       if (!related.hasOwnProperty(recordKey)) continue;
       var schemaAndId = recordKey.split(/-/, 2);
       var jso = related[recordKey];
-      this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::setSchemaAndRecord(Ljava/lang/String;Lcom/google/gwt/requestfactory/client/impl/RecordJsoImpl;)(schemaAndId[0], jso);
+      this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::setSchemaAndRecord(Ljava/lang/String;Lcom/google/gwt/requestfactory/client/impl/ProxyJsoImpl;)(schemaAndId[0], jso);
     }
   }-*/;
 }

@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 
@@ -49,7 +49,7 @@ import com.google.gwt.requestfactory.shared.RequestObject;
  * @param <E> the type of Editor that will edit the Record
  * @see com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver
  */
-public interface RequestFactoryEditorDriver<P extends Record, E extends Editor<? super P>> {
+public interface RequestFactoryEditorDriver<P extends EntityProxy, E extends Editor<? super P>> {
   /**
    * Initialize the Editor and its sub-editors with data.
    */

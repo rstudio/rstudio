@@ -15,13 +15,13 @@
  */
 package com.google.gwt.sample.expenses.client.ui.report;
 
-import com.google.gwt.app.place.RecordDetailsView;
+import com.google.gwt.app.place.ProxyDetailsView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.i18n.client.DateTimeFormatRenderer;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.sample.expenses.client.ui.employee.EmployeeRenderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,13 +34,13 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Details view for employee records.
  */
-public class ReportDetailsView extends Composite implements RecordDetailsView<ReportRecord> {
+public class ReportDetailsView extends Composite implements ProxyDetailsView<ReportProxy> {
   interface Binder extends UiBinder<HTMLPanel, ReportDetailsView> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
 
-  ReportRecord record;
+  ReportProxy record;
 
   @UiField
   SpanElement idSpan;
@@ -75,7 +75,7 @@ public class ReportDetailsView extends Composite implements RecordDetailsView<Re
     return Window.confirm(msg);
   }
 
-  public ReportRecord getValue() {
+  public ReportProxy getValue() {
     return record;
   }
 
@@ -93,7 +93,7 @@ public class ReportDetailsView extends Composite implements RecordDetailsView<Re
     this.delegate = delegate;
   }
 
-  public void setValue(ReportRecord record) {
+  public void setValue(ReportProxy record) {
     this.record = record;
     purpose.setInnerText(record.getPurpose());
     notes.setInnerText(record.getNotes());

@@ -21,22 +21,22 @@ package com.google.gwt.requestfactory.client.impl;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * The key used to store {@link com.google.gwt.requestfactory.shared.Record Record}s.
+ * The key used to store {@link com.google.gwt.requestfactory.shared.EntityProxy Proxy}.
  */
-class RecordKey {
-  final RecordSchema<?> schema;
+class EntityProxyId {
+  final ProxySchema<?> schema;
   final Long id;
   final boolean isFuture;
 
-  RecordKey(RecordImpl record) {
+  EntityProxyId(ProxyImpl record) {
     this(record.getId(), record.getSchema(), record.isFuture());
   }
 
-  RecordKey(RecordJsoImpl record, boolean isFuture) {
+  EntityProxyId(ProxyJsoImpl record, boolean isFuture) {
     this(record.getId(), record.getSchema(), isFuture);
   }
 
-  protected RecordKey(Long id, RecordSchema<?> schema, boolean isFuture) {
+  protected EntityProxyId(Long id, ProxySchema<?> schema, boolean isFuture) {
     assert id != null;
     assert schema != null;
 
@@ -56,7 +56,7 @@ class RecordKey {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    RecordKey other = (RecordKey) obj;
+    EntityProxyId other = (EntityProxyId) obj;
     if (isFuture != other.isFuture) {
       return false;
     }

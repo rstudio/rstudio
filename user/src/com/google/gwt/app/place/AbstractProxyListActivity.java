@@ -19,8 +19,8 @@ import com.google.gwt.app.place.ProxyPlace.Operation;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.requestfactory.shared.RecordListRequest;
+import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
@@ -44,27 +44,27 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract activity for requesting and displaying a list of {@link Record}.
+ * Abstract activity for requesting and displaying a list of {@link EntityProxy}.
  * <p>
  * Subclasses must:
  * 
  * <ul>
  * <li>implement methods to provide a full count, and request a specific
- * <li>provide a {@link RecordListView}
+ * <li>provide a {@link ProxyListView}
  * <li>respond to "show details" commands
  * </ul>
  * 
  * Only the properties required by the view will be requested.
  * 
- * @param <R> the type of {@link Record} listed
+ * @param <P> the type of {@link EntityProxy} listed
  */
-public abstract class AbstractRecordListActivity<R extends Record> implements
-    Activity, RecordListView.Delegate<R> {
+public abstract class AbstractProxyListActivity<P extends EntityProxy> implements
+    Activity, ProxyListView.Delegate<P> {
   /**
    * Used by the table and its selection model, to define record equality via
    * id.
    */
-  private static class RecordKeyProvider<R extends Record> implements
+  private static class RecordKeyProvider<R extends EntityProxy> implements
       ProvidesKey<R> {
     public Object getKey(R item) {
       return item == null ? null : item.getId();
@@ -78,43 +78,43 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
 
   private final RequestFactory requests;
   private final PlaceController placeController;
-  private final SingleSelectionModel<R> selectionModel;
-  private final Class<R> proxyType;
+  private final SingleSelectionModel<P> selectionModel;
+  private final Class<P> proxyType;
 
   /**
    * Used by the table and its selection model to rely on record id for
    * equality.
    */
-  private final RecordKeyProvider<R> keyProvider = new RecordKeyProvider<R>();
+  private final RecordKeyProvider<P> keyProvider = new RecordKeyProvider<P>();
 
   private HandlerRegistration rangeChangeHandler;
-  private RecordListView<R> view;
+  private ProxyListView<P> view;
   private Display display;
 
-  public AbstractRecordListActivity(RequestFactory requests,
-      PlaceController placeController, RecordListView<R> view,
-      Class<R> proxyType) {
+  public AbstractProxyListActivity(RequestFactory requests,
+      PlaceController placeController, ProxyListView<P> view,
+      Class<P> proxyType) {
     this.view = view;
     this.requests = requests;
     this.placeController = placeController;
     this.proxyType = proxyType;
     view.setDelegate(this);
 
-    final HasData<R> hasData = view.asHasData();
+    final HasData<P> hasData = view.asHasData();
     rangeChangeHandler = hasData.addRangeChangeHandler(new RangeChangeEvent.Handler() {
       public void onRangeChange(RangeChangeEvent event) {
-        AbstractRecordListActivity.this.onRangeChanged(hasData);
+        AbstractProxyListActivity.this.onRangeChanged(hasData);
       }
     });
 
-    selectionModel = new SingleSelectionModel<R>();
+    selectionModel = new SingleSelectionModel<P>();
     selectionModel.setKeyProvider(keyProvider);
     hasData.setSelectionModel(selectionModel);
-    ((AbstractHasData<R>) hasData).setKeyProvider(keyProvider);
+    ((AbstractHasData<P>) hasData).setKeyProvider(keyProvider);
 
     selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
-        R selectedObject = selectionModel.getSelectedObject();
+        P selectedObject = selectionModel.getSelectedObject();
         if (selectedObject != null) {
           showDetails(selectedObject);
         }
@@ -127,7 +127,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
         Operation.CREATE));
   }
 
-  public RecordListView<R> getView() {
+  public ProxyListView<P> getView() {
     return view;
   }
 
@@ -142,18 +142,18 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
   /**
    * Called by the table as it needs data.
    */
-  public void onRangeChanged(HasData<R> listView) {
+  public void onRangeChanged(HasData<P> listView) {
     final Range range = listView.getVisibleRange();
 
-    final Receiver<List<R>> callback = new Receiver<List<R>>() {
-      public void onSuccess(List<R> values, Set<SyncResult> syncResults) {
+    final Receiver<List<P>> callback = new Receiver<List<P>>() {
+      public void onSuccess(List<P> values, Set<SyncResult> syncResults) {
         if (view == null) {
           // This activity is dead
           return;
         }
         recordToRow.clear();
         for (int i = 0, row = range.getStart(); i < values.size(); i++, row++) {
-          R record = values.get(i);
+          P record = values.get(i);
           recordToRow.put(record.getId(), row);
         }
         getView().asHasData().setRowData(range.getStart(), values);
@@ -176,9 +176,9 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
   /**
    * Select the given record, or clear the selection if called with null.
    */
-  public void select(R record) {
+  public void select(P record) {
     if (record == null) {
-      R selected = selectionModel.getSelectedObject();
+      P selected = selectionModel.getSelectedObject();
       if (selected != null) {
         selectionModel.setSelected(selected, false);
       }
@@ -198,7 +198,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
     updateSelection(placeController.getWhere());
   }
 
-  public void update(WriteOperation writeOperation, R record) {
+  public void update(WriteOperation writeOperation, P record) {
     switch (writeOperation) {
       case UPDATE:
         update(record);
@@ -218,7 +218,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
     }
   }
 
-  protected abstract RecordListRequest<R> createRangeRequest(Range range);
+  protected abstract ProxyListRequest<P> createRangeRequest(Range range);
 
   protected abstract void fireCountRequest(Receiver<Long> callback);
 
@@ -228,12 +228,12 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
    *
    * @param record the chosen record
    */
-  protected void showDetails(R record) {
+  protected void showDetails(P record) {
     placeController.goTo(new ProxyPlace(record, Operation.DETAILS));
   }
 
   private void fireRangeRequest(final Range range,
-      final Receiver<List<R>> callback) {
+      final Receiver<List<P>> callback) {
     createRangeRequest(range).with(getView().getPaths()).fire(
         callback);
   }
@@ -241,7 +241,7 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
   private void getLastPage() {
     fireCountRequest(new Receiver<Long>() {
       public void onSuccess(Long response, Set<SyncResult> syncResults) {
-        HasData<R> table = getView().asHasData();
+        HasData<P> table = getView().asHasData();
         int rows = response.intValue();
         table.setRowCount(rows, true);
         int pageSize = table.getVisibleRange().getLength();
@@ -267,16 +267,16 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
 
   @SuppressWarnings("unchecked")
   private void selectCoerced(Place newPlace) {
-    select((R) ((ProxyPlace) newPlace).getProxy());
+    select((P) ((ProxyPlace) newPlace).getProxy());
   }
 
-  private void update(R record) {
+  private void update(P record) {
     final Integer row = recordToRow.get(record.getId());
     if (row == null) {
       return;
     }
-    fireRangeRequest(new Range(row, 1), new Receiver<List<R>>() {
-      public void onSuccess(List<R> response, Set<SyncResult> syncResults) {
+    fireRangeRequest(new Range(row, 1), new Receiver<List<P>>() {
+      public void onSuccess(List<P> response, Set<SyncResult> syncResults) {
         getView().asHasData().setRowData(row,
             Collections.singletonList(response.get(0)));
       }

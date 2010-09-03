@@ -13,39 +13,38 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
 /**
- * "API Generated" event posted when the values of a {@link UserInformationRecord}
- * change.
+ * Test implementation of {@link com.google.gwt.requestfactory.shared.EntityProxyChangedEvent} for
+ * {@link com.google.gwt.requestfactory.shared.SimpleFooProxy}.
  */
-public class UserInformationRecordChanged extends
-  RecordChangedEvent<UserInformationRecord, UserInformationRecordChanged.Handler> {
+public class SimpleBarProxyChanged extends
+    EntityProxyChangedEvent<SimpleBarProxy, SimpleBarProxyChanged.Handler> {
 
-  /**
-   * Implemented by handlers of this type of event.
-   */
+/**
+ *  Test Handler for SimpleFooChanged event.
+ */
   public interface Handler extends EventHandler {
-    void onUserInformationChanged(UserInformationRecordChanged event);
+    void onSimpleBarProxyChanged(SimpleBarProxyChanged proxy);
   }
-  
+
   public static final Type<Handler> TYPE = new Type<Handler>();
 
-  public UserInformationRecordChanged(UserInformationRecord record, WriteOperation writeOperation) {
-    super(record, writeOperation);
+  public SimpleBarProxyChanged(SimpleBarProxy proxy,
+      WriteOperation writeOperation) {
+    super(proxy, writeOperation);
   }
 
   @Override
-  public GwtEvent.Type<Handler> getAssociatedType() {
+  public Type<Handler> getAssociatedType() {
     return TYPE;
   }
 
   @Override
   protected void dispatch(Handler handler) {
-    handler.onUserInformationChanged(this);
+    handler.onSimpleBarProxyChanged(this);
   }
 }

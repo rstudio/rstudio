@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.view.client.HasData;
 
 /**
@@ -24,29 +24,29 @@ import com.google.gwt.view.client.HasData;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * A view of a list of {@link Record}s, which declares which properties it is
+ * A view of a list of {@link EntityProxy}s, which declares which properties it is
  * able to display.
  * <p>
  * It is expected that such views will typically (eventually) be defined largely
  * in ui.xml files which declare the properties of interest, which is why the
  * view is a source of a property set rather than a receiver of one.
  * 
- * @param <R> the type of the records to display
+ * @param <P> the type of the records to display
  */
-public interface RecordListView<R extends Record> extends IsWidget, PropertyView<R> {
+public interface ProxyListView<P extends EntityProxy> extends IsWidget, PropertyView<P> {
   /**
    * Implemented by the owner of a RecordTableView.
    * 
    * @param <R> the type of the records to display
    */
-  interface Delegate<R extends Record> {
+  interface Delegate<R extends EntityProxy> {
     void createClicked();
   }
 
-  HasData<R> asHasData();
+  HasData<P> asHasData();
   
   /**
    * Sets the delegate.
    */
-  void setDelegate(Delegate<R> delegate);
+  void setDelegate(Delegate<P> delegate);
 }

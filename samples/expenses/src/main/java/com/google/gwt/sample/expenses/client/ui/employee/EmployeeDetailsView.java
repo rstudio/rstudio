@@ -15,12 +15,12 @@
  */
 package com.google.gwt.sample.expenses.client.ui.employee;
 
-import com.google.gwt.app.place.RecordDetailsView;
+import com.google.gwt.app.place.ProxyDetailsView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -33,13 +33,13 @@ import com.google.gwt.user.client.ui.Widget;
  * Details view for employee records.
  */
 public class EmployeeDetailsView extends Composite implements
-    RecordDetailsView<EmployeeRecord> {
+    ProxyDetailsView<EmployeeProxy> {
   interface Binder extends UiBinder<HTMLPanel, EmployeeDetailsView> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
 
-  EmployeeRecord record;
+  EmployeeProxy record;
 
   @UiField
   SpanElement idSpan;
@@ -72,7 +72,7 @@ public class EmployeeDetailsView extends Composite implements
     return Window.confirm(msg);
   }
 
-  public EmployeeRecord getValue() {
+  public EmployeeProxy getValue() {
     return record;
   }
 
@@ -90,7 +90,7 @@ public class EmployeeDetailsView extends Composite implements
     this.delegate = delegate;
   }
 
-  public void setValue(EmployeeRecord record) {
+  public void setValue(EmployeeProxy record) {
     this.record = record;
     displayName.setInnerText(record.getDisplayName());
     userName.setInnerText(record.getUserName());

@@ -23,22 +23,22 @@ public interface SimpleFooRequest {
   RequestObject<Long> countSimpleFoo();
 
   @Instance
-  RequestObject<Long> countSimpleFooWithUserNameSideEffect(SimpleFooRecord record);
+  RequestObject<Long> countSimpleFooWithUserNameSideEffect(SimpleFooProxy proxy);
 
-  RecordListRequest<SimpleFooRecord> findAll();
+  ProxyListRequest<SimpleFooProxy> findAll();
 
-  RecordRequest<SimpleFooRecord> findSimpleFooById(Long id);
+  ProxyRequest<SimpleFooProxy> findSimpleFooById(Long id);
 
   RequestObject<Integer> privateMethod();
 
   @Instance
-  RequestObject<Void> persist(SimpleFooRecord record);
+  RequestObject<Void> persist(SimpleFooProxy proxy);
   
   @Instance
-  RecordRequest<SimpleFooRecord> persistAndReturnSelf(SimpleFooRecord record);
+  ProxyRequest<SimpleFooProxy> persistAndReturnSelf(SimpleFooProxy proxy);
 
   RequestObject<Void> reset();
 
   @Instance
-  RequestObject<String> hello(SimpleFooRecord instance, SimpleBarRecord record);
+  RequestObject<String> hello(SimpleFooProxy instance, SimpleBarProxy proxy);
 }

@@ -22,9 +22,9 @@ import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
@@ -59,17 +59,17 @@ public class MobileExpenseList extends Composite implements MobilePage {
    * TODO: doc.
    */
   public interface Listener {
-    void onCreateExpense(ReportRecord report);
+    void onCreateExpense(ReportProxy report);
 
-    void onEditReport(ReportRecord report);
+    void onEditReport(ReportProxy report);
 
-    void onExpenseSelected(ExpenseRecord expense);
+    void onExpenseSelected(ExpenseProxy expense);
   }
 
   /**
-   * The cell used to render {@link ExpenseRecord}s.
+   * The cell used to render {@link ExpenseProxy}s.
    */
-  private class ExpenseCell extends AbstractCell<ExpenseRecord> {
+  private class ExpenseCell extends AbstractCell<ExpenseProxy> {
 
     private final SafeHtml approvedHtml;
     private final String approvedText = Expenses.Approval.APPROVED.getText();
@@ -87,7 +87,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
     }
 
     @Override
-    public void render(ExpenseRecord value, Object viewData, SafeHtmlBuilder sb) {
+    public void render(ExpenseProxy value, Object viewData, SafeHtmlBuilder sb) {
       String approval = value.getApproval();
       SafeHtml approvalIcon;
       if (approvedText.equals(approval)) {
@@ -103,9 +103,9 @@ public class MobileExpenseList extends Composite implements MobilePage {
   }
 
   private final ExpensesRequestFactory requestFactory;
-  private final CellList<ExpenseRecord> expenseList;
-  private final AsyncDataProvider<ExpenseRecord> expenseDataProvider;
-  private final NoSelectionModel<ExpenseRecord> expenseSelection;
+  private final CellList<ExpenseProxy> expenseList;
+  private final AsyncDataProvider<ExpenseProxy> expenseDataProvider;
+  private final NoSelectionModel<ExpenseProxy> expenseSelection;
 
   /**
    * The set of Expense keys that we already know are denied. When a new key is
@@ -116,9 +116,9 @@ public class MobileExpenseList extends Composite implements MobilePage {
   /**
    * The receiver for the last request.
    */
-  private Receiver<List<ExpenseRecord>> lastReceiver;
+  private Receiver<List<ExpenseProxy>> lastReceiver;
 
-  private ReportRecord report;
+  private ReportProxy report;
   private final Listener listener;
 
   /**
@@ -135,17 +135,17 @@ public class MobileExpenseList extends Composite implements MobilePage {
       final Listener listener, final ExpensesRequestFactory requestFactory) {
     this.listener = listener;
     this.requestFactory = requestFactory;
-    expenseDataProvider = new AsyncDataProvider<ExpenseRecord>() {
+    expenseDataProvider = new AsyncDataProvider<ExpenseProxy>() {
       @Override
-      protected void onRangeChanged(HasData<ExpenseRecord> view) {
+      protected void onRangeChanged(HasData<ExpenseProxy> view) {
         requestExpenses();
       }
     };
     expenseDataProvider.setKeyProvider(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
 
-    expenseList = new CellList<ExpenseRecord>(new ExpenseCell());
+    expenseList = new CellList<ExpenseProxy>(new ExpenseCell());
 
-    expenseSelection = new NoSelectionModel<ExpenseRecord>();
+    expenseSelection = new NoSelectionModel<ExpenseProxy>();
     expenseList.setSelectionModel(expenseSelection);
     expenseSelection.addSelectionChangeHandler(
         new SelectionChangeEvent.Handler() {
@@ -194,7 +194,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
     requestExpenses();
   }
 
-  public void show(ReportRecord report) {
+  public void show(ReportProxy report) {
     this.report = report;
     knownDeniedKeys = null;
 
@@ -203,7 +203,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
 
   private String[] getExpenseColumns() {
     return new String[]{
-        ExpenseRecord.description.getName(), ExpenseRecord.amount.getName()};
+        ExpenseProxy.description.getName(), ExpenseProxy.amount.getName()};
   }
 
   /**
@@ -214,9 +214,9 @@ public class MobileExpenseList extends Composite implements MobilePage {
     if (requestFactory == null || report == null) {
       return;
     }
-    lastReceiver = new Receiver<List<ExpenseRecord>>() {
+    lastReceiver = new Receiver<List<ExpenseProxy>>() {
       public void onSuccess(
-          List<ExpenseRecord> newValues, Set<SyncResult> syncResults) {
+          List<ExpenseProxy> newValues, Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
           int size = newValues.size();
           expenseDataProvider.updateRowCount(size, true);
@@ -227,12 +227,12 @@ public class MobileExpenseList extends Composite implements MobilePage {
           if (knownDeniedKeys == null) {
             knownDeniedKeys = new HashSet<Object>();
           }
-          for (ExpenseRecord value : newValues) {
+          for (ExpenseProxy value : newValues) {
             Object key = expenseDataProvider.getKey(value);
             String approval = value.getApproval();
             if (Expenses.Approval.DENIED.getText().equals(approval)) {
               if (!isInitialData && !knownDeniedKeys.contains(key)) {
-                (new PhaseAnimation.CellListPhaseAnimation<ExpenseRecord>(
+                (new PhaseAnimation.CellListPhaseAnimation<ExpenseProxy>(
                     expenseList, value, expenseDataProvider)).run();
               }
               knownDeniedKeys.add(key);
@@ -246,7 +246,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
       }
     };
     requestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(ReportRecord.id)).with(getExpenseColumns()).fire(
+        report.getRef(ReportProxy.id)).with(getExpenseColumns()).fire(
         lastReceiver);
   }
 }

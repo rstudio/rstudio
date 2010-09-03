@@ -18,8 +18,8 @@ package com.google.gwt.app.place;
 import com.google.gwt.app.place.ProxyPlace.Operation;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.requestfactory.shared.RecordRequest;
+import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
@@ -36,25 +36,25 @@ import java.util.Set;
  * </p>
  * Abstract activity for editing a record.
  * 
- * @param <R> the type of Record being edited
+ * @param <P> the type of Proxy being edited
  */
-public abstract class AbstractRecordEditActivity<R extends Record> implements
-    Activity, RecordEditView.Delegate {
+public abstract class AbstractProxyEditActivity<P extends EntityProxy> implements
+    Activity, ProxyEditView.Delegate {
 
   private RequestObject<Void> requestObject;
 
   private final boolean creating;
-  private final RecordEditView<R> view;
-  private final Class<R> proxyType;
+  private final ProxyEditView<P> view;
+  private final Class<P> proxyType;
   private final RequestFactory requests;
   private final PlaceController placeController;
 
-  private R record;
+  private P record;
   private Long futureId;
   private Display display;
 
-  public AbstractRecordEditActivity(RecordEditView<R> view, R record,
-      Class<R> proxyType, boolean creating, RequestFactory requests,
+  public AbstractProxyEditActivity(ProxyEditView<P> view, P record,
+      Class<P> proxyType, boolean creating, RequestFactory requests,
       PlaceController placeController) {
 
     this.view = view;
@@ -77,11 +77,11 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     }
   }
 
-  public R getRecord() {
+  public P getRecord() {
     return record;
   }
 
-  public RecordEditView<R> getView() {
+  public ProxyEditView<P> getView() {
     return view;
   }
 
@@ -119,7 +119,7 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
         boolean hasViolations = false;
 
          for (SyncResult syncResult : response) {
-          Record syncRecord = syncResult.getRecord();
+          EntityProxy syncRecord = syncResult.getProxy();
           if (creating) {
             if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
               continue;
@@ -154,15 +154,15 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
     view.setCreating(creating);
 
     if (creating) {
-      R tempRecord = requests.create(proxyType);
+      P tempRecord = requests.create(proxyType);
       futureId = tempRecord.getId();
       doStart(display, tempRecord);
     } else {
-      RecordRequest<R> findRequest = getFindRequest(Value.of(getRecord().getId()));
-      findRequest.with(getView().getPaths()).fire(new Receiver<R>() {
-        public void onSuccess(R record, Set<SyncResult> syncResults) {
-          if (AbstractRecordEditActivity.this.display != null) {
-            doStart(AbstractRecordEditActivity.this.display, record);
+      ProxyRequest<P> findRequest = getFindRequest(Value.of(getRecord().getId()));
+      findRequest.with(getView().getPaths()).fire(new Receiver<P>() {
+        public void onSuccess(P record, Set<SyncResult> syncResults) {
+          if (AbstractProxyEditActivity.this.display != null) {
+            doStart(AbstractProxyEditActivity.this.display, record);
           }
         }
       });
@@ -190,18 +190,18 @@ public abstract class AbstractRecordEditActivity<R extends Record> implements
   /**
    * Called to fetch the details of the edited record.
    */
-  protected abstract RecordRequest<R> getFindRequest(Value<Long> id);
+  protected abstract ProxyRequest<P> getFindRequest(Value<Long> id);
 
-  protected abstract RequestObject<Void> getPersistRequest(R record);
+  protected abstract RequestObject<Void> getPersistRequest(P record);
 
   @SuppressWarnings("unchecked")
-  private R cast(Record syncRecord) {
-    return (R) syncRecord;
+  private P cast(EntityProxy syncRecord) {
+    return (P) syncRecord;
   }
 
-  private void doStart(final Display display, R record) {
+  private void doStart(final Display display, P record) {
     requestObject = getPersistRequest(record);
-    R editableRecord = requestObject.edit(record);
+    P editableRecord = requestObject.edit(record);
     view.setEnabled(true);
     view.setValue(editableRecord);
     view.showErrors(null);

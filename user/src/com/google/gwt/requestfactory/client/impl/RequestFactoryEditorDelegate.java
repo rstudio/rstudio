@@ -21,7 +21,7 @@ import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 
@@ -37,7 +37,7 @@ import javax.validation.ConstraintViolation;
  * @param <P> the type of Proxy
  * @param <E> the type of Editor
  */
-public abstract class RequestFactoryEditorDelegate<P extends Record, E extends Editor<P>>
+public abstract class RequestFactoryEditorDelegate<P extends EntityProxy, E extends Editor<P>>
     extends AbstractEditorDelegate<P, E> implements EditorDelegate<P> {
 
   protected RequestFactory factory;

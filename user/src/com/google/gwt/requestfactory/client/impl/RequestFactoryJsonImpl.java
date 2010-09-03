@@ -23,7 +23,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.client.RequestFactoryLogHandler;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -64,10 +64,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private EventBus eventBus;
 
-  public <R extends Record> R create(Class<R> token,
-      RecordToTypeMap recordToTypeMap) {
+  public <R extends EntityProxy> R create(Class<R> token,
+      ProxyToTypeMap recordToTypeMap) {
 
-    RecordSchema<R> schema = recordToTypeMap.getType(token);
+    ProxySchema<R> schema = recordToTypeMap.getType(token);
     if (schema == null) {
       throw new IllegalArgumentException("Unknown proxy type: " + token);
     }
@@ -118,11 +118,11 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
   }
 
-  public Class<? extends Record> getClass(Record proxy) {
-    return ((RecordImpl) proxy).getSchema().getProxyClass();
+  public Class<? extends EntityProxy> getClass(EntityProxy proxy) {
+    return ((ProxyImpl) proxy).getSchema().getProxyClass();
   }
 
-  public abstract RecordSchema<?> getSchema(String token);
+  public abstract ProxySchema<?> getSchema(String token);
 
   /**
    * @param eventBus
@@ -135,23 +135,23 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     logger.fine("Successfully initialized RequestFactory");
   }
 
-  protected Class<? extends Record> getClass(String token,
-      RecordToTypeMap recordToTypeMap) {
+  protected Class<? extends EntityProxy> getClass(String token,
+      ProxyToTypeMap recordToTypeMap) {
     String[] bits = token.split("-");
-    RecordSchema<? extends Record> schema = recordToTypeMap.getType(bits[0]);
+    ProxySchema<? extends EntityProxy> schema = recordToTypeMap.getType(bits[0]);
     if (schema == null) {
       return null;
     }
     return schema.getProxyClass();
   }
 
-  protected Record getProxy(String token, RecordToTypeMap recordToTypeMap) {
+  protected EntityProxy getProxy(String token, ProxyToTypeMap recordToTypeMap) {
     String[] bits = token.split("-");
     if (bits.length < 2 || bits.length > 3) {
       return null;
     }
 
-    RecordSchema<? extends Record> schema = recordToTypeMap.getType(bits[0]);
+    ProxySchema<? extends EntityProxy> schema = recordToTypeMap.getType(bits[0]);
     if (schema == null) {
       return null;
     }
@@ -167,13 +167,13 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       return null;
     }
 
-    return schema.create(RecordJsoImpl.create(id, -1, schema));
+    return schema.create(ProxyJsoImpl.create(id, -1, schema));
   }
 
-  protected String getToken(Record record, RecordToTypeMap recordToTypeMap) {
-    Class<? extends Record> proxyClass = ((RecordImpl) record).getSchema().getProxyClass();
+  protected String getToken(EntityProxy record, ProxyToTypeMap recordToTypeMap) {
+    Class<? extends EntityProxy> proxyClass = ((ProxyImpl) record).getSchema().getProxyClass();
     String rtn = recordToTypeMap.getClassToken(proxyClass) + "-";
-    if (((RecordImpl) record).isFuture()) {
+    if (((ProxyImpl) record).isFuture()) {
       rtn += "0-FUTURE";
     } else {
       rtn += record.getId();
@@ -185,20 +185,20 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return valueStore;
   }
 
-  void postChangeEvent(RecordJsoImpl newJsoRecord, WriteOperation op) {
+  void postChangeEvent(ProxyJsoImpl newJsoRecord, WriteOperation op) {
     /*
      * Ensure event receivers aren't accidentally using cached info by making an
      * unpopulated copy of the record.
      */
-    newJsoRecord = RecordJsoImpl.emptyCopy(newJsoRecord);
-    Record javaRecord = newJsoRecord.getSchema().create(newJsoRecord);
+    newJsoRecord = ProxyJsoImpl.emptyCopy(newJsoRecord);
+    EntityProxy javaRecord = newJsoRecord.getSchema().create(newJsoRecord);
     eventBus.fireEvent(newJsoRecord.getSchema().createChangeEvent(javaRecord,
         op));
   }
 
-  private <R extends Record> R createFuture(RecordSchema<R> schema) {
+  private <R extends EntityProxy> R createFuture(ProxySchema<R> schema) {
     Long futureId = ++currentFutureId;
-    RecordJsoImpl newRecord = RecordJsoImpl.create(futureId, INITIAL_VERSION,
+    ProxyJsoImpl newRecord = ProxyJsoImpl.create(futureId, INITIAL_VERSION,
         schema);
     return schema.create(newRecord, IS_FUTURE);
   }

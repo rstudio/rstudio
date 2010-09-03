@@ -23,8 +23,8 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecordChanged;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxyChanged;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -43,7 +43,7 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
    * TODO: doc.
    */
   public interface Listener {
-    void onEditExpense(ExpenseRecord expense);
+    void onEditExpense(ExpenseProxy expense);
   }
 
   interface Binder extends UiBinder<Widget, MobileExpenseDetails> {
@@ -55,7 +55,7 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
   Element approvalText, nameText, dateText, categoryText, priceText, reasonRow,
       reasonText;
 
-  private ExpenseRecord expense;
+  private ExpenseProxy expense;
   private final Listener listener;
   private final ExpensesRequestFactory requestFactory;
 
@@ -64,11 +64,11 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
     this.listener = listener;
     this.requestFactory = requestFactory;
 
-    eventBus.addHandler(ExpenseRecordChanged.TYPE,
-        new ExpenseRecordChanged.Handler() {
-          public void onExpenseRecordChanged(ExpenseRecordChanged event) {
+    eventBus.addHandler(ExpenseProxyChanged.TYPE,
+        new ExpenseProxyChanged.Handler() {
+          public void onExpenseRecordChanged(ExpenseProxyChanged event) {
             if (expense != null) {
-              ExpenseRecord newRecord = event.getRecord();
+              ExpenseProxy newRecord = event.getProxy();
               if (newRecord.getId().equals(expense.getId())) {
                 show(newRecord);
               }
@@ -108,18 +108,18 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
 
   public void onRefresh(boolean clear) {
     PropertyReference<Long> idRef = new PropertyReference<Long>(expense,
-        ExpenseRecord.id);
+        ExpenseProxy.id);
 
     requestFactory.expenseRequest().findExpense(idRef).fire(
-        new Receiver<List<ExpenseRecord>>() {
-          public void onSuccess(List<ExpenseRecord> response, Set<SyncResult> syncResults) {
+        new Receiver<List<ExpenseProxy>>() {
+          public void onSuccess(List<ExpenseProxy> response, Set<SyncResult> syncResults) {
             assert response.size() == 1;
             show(response.get(0));
           }
         });
   }
 
-  public void show(ExpenseRecord expense) {
+  public void show(ExpenseProxy expense) {
     this.expense = expense;
 
     @SuppressWarnings("deprecation")

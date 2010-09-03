@@ -15,10 +15,10 @@
  */
 package com.google.gwt.sample.expenses.client.ui.employee;
 
-import com.google.gwt.app.place.AbstractRecordListView;
+import com.google.gwt.app.place.AbstractProxyListView;
 import com.google.gwt.app.place.PropertyColumn;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -29,34 +29,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link AbstractRecordListView} specialized to {@link EmployeeKey} values.
+ * {@link AbstractProxyListView} specialized to {@link EmployeeKey} values.
  */
-public class EmployeeListView extends AbstractRecordListView<EmployeeRecord> {
+public class EmployeeListView extends AbstractProxyListView<EmployeeProxy> {
   interface Binder extends UiBinder<HTMLPanel, EmployeeListView> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
 
-  @UiField CellTable<EmployeeRecord> table;
+  @UiField CellTable<EmployeeProxy> table;
   @UiField Button newButton;
 
   public EmployeeListView() {
     init(BINDER.createAndBindUi(this), table, newButton, getColumns());
   }
 
-  protected List<PropertyColumn<EmployeeRecord, ?>> getColumns() {
+  protected List<PropertyColumn<EmployeeProxy, ?>> getColumns() {
     // TODO These should be <g:col> elements in a <g:table> in the ui.xml file
 
-    List<PropertyColumn<EmployeeRecord, ?>> columns = new ArrayList<PropertyColumn<EmployeeRecord, ?>>();
+    List<PropertyColumn<EmployeeProxy, ?>> columns = new ArrayList<PropertyColumn<EmployeeProxy, ?>>();
 
-    columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.userName));
+    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn(EmployeeProxy.userName));
 
-    columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.displayName));
+    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn(EmployeeProxy.displayName));
 
-    columns.add(PropertyColumn.<EmployeeRecord> getStringPropertyColumn(EmployeeRecord.password));
+    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn(EmployeeProxy.password));
 
-    columns.add(new PropertyColumn<EmployeeRecord, EmployeeRecord>(
-        EmployeeRecord.supervisor, EmployeeRenderer.instance()));
+    columns.add(new PropertyColumn<EmployeeProxy, EmployeeProxy>(
+        EmployeeProxy.supervisor, EmployeeRenderer.instance()));
 
     return columns;
   }

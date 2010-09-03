@@ -31,7 +31,7 @@ public interface RequestFactory {
   // TODO: this must be configurable
   String URL = "gwtRequest";
 
-  <R extends Record> R create(Class<R> token);
+  <R extends EntityProxy> R create(Class<R> token);
 
   /**
    * Return the class object which may be used to create new instances of the
@@ -39,21 +39,21 @@ public interface RequestFactory {
    * metadata system, calls to the proxy's getClass() method will not serve this
    * purpose.
    */
-  Class<? extends Record> getClass(Record proxy);
+  Class<? extends EntityProxy> getClass(EntityProxy proxy);
 
 /**
    * Return the class object which may be used to create new instances of the
    * type of this token, via {@link #create}. The token may represent either a
-   * proxy instance (see {@link #getToken(Record)) or a proxy class (see
+   * proxy instance (see {@link #getToken(Proxy)) or a proxy class (see
    * 
    * @link #getToken(Class)}).
    */
-  Class<? extends Record> getClass(String token);
+  Class<? extends EntityProxy> getClass(String token);
 
   /**
    * Return the appropriate proxy, which may have only its id attribute set.
    */
-  Record getProxy(String token);
+  EntityProxy getProxy(String token);
 
   /**
    * Get a {@link com.google.gwt.user.client.History} compatible token that
@@ -62,16 +62,16 @@ public interface RequestFactory {
    * 
    * @return a {@link com.google.gwt.user.client.History} compatible token
    */
-  String getToken(Class<?> clazz);
+  String getToken(Class<? extends EntityProxy> clazz);
 
   /**
    * Get a {@link com.google.gwt.user.client.History} compatible token that
    * represents the given proxy. It can be processed by
-   * {@link #getClass(String)} and {@link #getClass(Record)}.
+   * {@link #getClass(String)} and {@link #getClass(EntityProxy)}.
    * 
    * @return a {@link com.google.gwt.user.client.History} compatible token
    */
-  String getToken(Record proxy);
+  String getToken(EntityProxy proxy);
 
   /**
    * Start this request factory.

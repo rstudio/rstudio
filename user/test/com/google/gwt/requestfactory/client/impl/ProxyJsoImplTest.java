@@ -18,16 +18,16 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.client.SimpleRequestFactoryInstance;
-import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
 /**
- * Tests for {@link RecordJsoImpl}.
+ * Tests for {@link ProxyJsoImpl}.
  */
-public class RecordJsoImplTest extends GWTTestCase {
+public class ProxyJsoImplTest extends GWTTestCase {
 
   private static final String ALL_PROPERTIES_JSON;
   static {
@@ -90,19 +90,19 @@ public class RecordJsoImplTest extends GWTTestCase {
   }
 
   public void testEmptyCopy() {
-    RecordJsoImpl emptyCopy = RecordJsoImpl.emptyCopy(getPopulatedJso());
+    ProxyJsoImpl emptyCopy = ProxyJsoImpl.emptyCopy(getPopulatedJso());
     testMinimalJso(emptyCopy, SCHEMA_PRESENT);
   }
 
   public void testFromJson() {
-    testEmptyJso(RecordJsoImpl.fromJson(EMPTY_JSON), SCHEMA_ABSENT);
-    testMinimalJso(RecordJsoImpl.fromJson(ID_VERSION_JSON), SCHEMA_ABSENT);
-    testPopulatedJso(RecordJsoImpl.fromJson(ALL_PROPERTIES_JSON), SCHEMA_ABSENT);
+    testEmptyJso(ProxyJsoImpl.fromJson(EMPTY_JSON), SCHEMA_ABSENT);
+    testMinimalJso(ProxyJsoImpl.fromJson(ID_VERSION_JSON), SCHEMA_ABSENT);
+    testPopulatedJso(ProxyJsoImpl.fromJson(ALL_PROPERTIES_JSON), SCHEMA_ABSENT);
   }
 
   public void testFromJsonArray() {
     String jsonString = "[" + ID_VERSION_JSON + "," + ID_VERSION_JSON2 + "]";
-    JsArray<RecordJsoImpl> jsArray = RecordJsoImpl.arrayFromJson(jsonString);
+    JsArray<ProxyJsoImpl> jsArray = ProxyJsoImpl.arrayFromJson(jsonString);
     assertEquals(2, jsArray.length());
   }
 
@@ -119,30 +119,30 @@ public class RecordJsoImplTest extends GWTTestCase {
   }
 
   public void testSet() {
-    RecordJsoImpl jso = getMinimalJso();
+    ProxyJsoImpl jso = getMinimalJso();
 
-    jso.set(SimpleFooRecord.userName, "bovik");
-    jso.set(SimpleFooRecord.password, "bovik");
+    jso.set(SimpleFooProxy.userName, "bovik");
+    jso.set(SimpleFooProxy.password, "bovik");
 
-    jso.set(SimpleFooRecord.charField, 'c');
+    jso.set(SimpleFooProxy.charField, 'c');
 
-    jso.set(SimpleFooRecord.longField, 1234567890L);
-    jso.set(SimpleFooRecord.bigDecimalField, new BigDecimal(
+    jso.set(SimpleFooProxy.longField, 1234567890L);
+    jso.set(SimpleFooProxy.bigDecimalField, new BigDecimal(
         "12345678901234.5678901234567890"));
-    jso.set(SimpleFooRecord.bigIntField, new BigInteger(
+    jso.set(SimpleFooProxy.bigIntField, new BigInteger(
         "123456789012345678901234567890"));
 
-    jso.set(SimpleFooRecord.intId, 4);
-    jso.set(SimpleFooRecord.shortField, (short) 5);
-    jso.set(SimpleFooRecord.byteField, (byte) 6);
+    jso.set(SimpleFooProxy.intId, 4);
+    jso.set(SimpleFooProxy.shortField, (short) 5);
+    jso.set(SimpleFooProxy.byteField, (byte) 6);
 
-    jso.set(SimpleFooRecord.created, new Date(400));
+    jso.set(SimpleFooProxy.created, new Date(400));
 
-    jso.set(SimpleFooRecord.doubleField, 12345.6789);
-    jso.set(SimpleFooRecord.floatField, 12.3456789f);
+    jso.set(SimpleFooProxy.doubleField, 12345.6789);
+    jso.set(SimpleFooProxy.floatField, 12.3456789f);
 
-    jso.set(SimpleFooRecord.boolField, false);
-    jso.set(SimpleFooRecord.otherBoolField, true);
+    jso.set(SimpleFooProxy.boolField, false);
+    jso.set(SimpleFooProxy.otherBoolField, true);
 
     testPopulatedJso(jso, SCHEMA_PRESENT);
   }
@@ -151,31 +151,31 @@ public class RecordJsoImplTest extends GWTTestCase {
     assertEquals(ID_VERSION_JSON, getMinimalJso().toJson());
   }
 
-  private RecordJsoImpl getEmptyJso() {
-    return RecordJsoImpl.create();
+  private ProxyJsoImpl getEmptyJso() {
+    return ProxyJsoImpl.create();
   }
 
-  private RecordJsoImpl getMinimalJso() {
-    return RecordJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema());
+  private ProxyJsoImpl getMinimalJso() {
+    return ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema());
   }
 
-  private RecordJsoImpl getPopulatedJso() {
-    RecordJsoImpl jso = getMinimalJso();
-    jso.set(SimpleFooRecord.userName, "bovik");
-    jso.set(SimpleFooRecord.password, "bovik");
-    jso.set(SimpleFooRecord.intId, 4);
-    jso.set(SimpleFooRecord.created, new Date(400));
+  private ProxyJsoImpl getPopulatedJso() {
+    ProxyJsoImpl jso = getMinimalJso();
+    jso.set(SimpleFooProxy.userName, "bovik");
+    jso.set(SimpleFooProxy.password, "bovik");
+    jso.set(SimpleFooProxy.intId, 4);
+    jso.set(SimpleFooProxy.created, new Date(400));
     return jso;
   }
 
-  private void testEmptyJso(RecordJsoImpl jso, boolean schemaPresent) {
-    assertFalse(jso.isDefined(SimpleFooRecord.id.getName()));
-    assertFalse(jso.isDefined(SimpleFooRecord.version.getName()));
+  private void testEmptyJso(ProxyJsoImpl jso, boolean schemaPresent) {
+    assertFalse(jso.isDefined(SimpleFooProxy.id.getName()));
+    assertFalse(jso.isDefined(SimpleFooProxy.version.getName()));
     assertEquals("{}", jso.toJson());
     testSchema(jso, schemaPresent);
   }
 
-  private void testMinimalJso(RecordJsoImpl jso, boolean schemaPresent) {
+  private void testMinimalJso(ProxyJsoImpl jso, boolean schemaPresent) {
     for (String property : new String[] {"id", "version"}) {
       assertTrue(jso.isDefined(property));
     }
@@ -186,12 +186,12 @@ public class RecordJsoImplTest extends GWTTestCase {
     }
     assertEquals((Long) 42L, jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
-    assertEquals(null, jso.get(SimpleFooRecord.longField));
-    assertEquals(null, jso.get(SimpleFooRecord.enumField));
+    assertEquals(null, jso.get(SimpleFooProxy.longField));
+    assertEquals(null, jso.get(SimpleFooProxy.enumField));
     testSchema(jso, schemaPresent);
   }
 
-  private void testPopulatedJso(RecordJsoImpl jso, boolean schemaPresent) {
+  private void testPopulatedJso(ProxyJsoImpl jso, boolean schemaPresent) {
     for (String property : new String[] {
         "userName", "password", "charField", "longField", "bigDecimalField",
         "bigIntField", "intId", "shortField", "byteField", "created",
@@ -200,30 +200,30 @@ public class RecordJsoImplTest extends GWTTestCase {
       assertTrue("Expect " + property + " to be defined",
           jso.isDefined(property));
     }
-    assertEquals("bovik", jso.get(SimpleFooRecord.userName));
-    assertEquals("bovik", jso.get(SimpleFooRecord.password));
+    assertEquals("bovik", jso.get(SimpleFooProxy.userName));
+    assertEquals("bovik", jso.get(SimpleFooProxy.password));
 
-    assertEquals(new Character('c'), jso.get(SimpleFooRecord.charField));
+    assertEquals(new Character('c'), jso.get(SimpleFooProxy.charField));
 
-    assertEquals(new Long(1234567890L), jso.get(SimpleFooRecord.longField));
+    assertEquals(new Long(1234567890L), jso.get(SimpleFooProxy.longField));
     assertEquals(new BigDecimal("12345678901234.5678901234567890"),
-        jso.get(SimpleFooRecord.bigDecimalField));
+        jso.get(SimpleFooProxy.bigDecimalField));
     assertEquals(new BigInteger("123456789012345678901234567890"),
-        jso.get(SimpleFooRecord.bigIntField));
+        jso.get(SimpleFooProxy.bigIntField));
 
-    assertEquals(Integer.valueOf(4), jso.get(SimpleFooRecord.intId));
-    assertEquals(Short.valueOf((short) 5), jso.get(SimpleFooRecord.shortField));
-    assertEquals(Byte.valueOf((byte) 6), jso.get(SimpleFooRecord.byteField));
+    assertEquals(Integer.valueOf(4), jso.get(SimpleFooProxy.intId));
+    assertEquals(Short.valueOf((short) 5), jso.get(SimpleFooProxy.shortField));
+    assertEquals(Byte.valueOf((byte) 6), jso.get(SimpleFooProxy.byteField));
 
-    assertEquals(new Date(400), jso.get(SimpleFooRecord.created));
-    assertEquals(Double.valueOf(12345.6789), jso.get(SimpleFooRecord.doubleField));
+    assertEquals(new Date(400), jso.get(SimpleFooProxy.created));
+    assertEquals(Double.valueOf(12345.6789), jso.get(SimpleFooProxy.doubleField));
     
     int expected = (int) (Float.valueOf(12.3456789f) * 1000);
-    int actual = (int) (jso.get(SimpleFooRecord.floatField) * 1000);
+    int actual = (int) (jso.get(SimpleFooProxy.floatField) * 1000);
     assertEquals(expected, actual);
 
-    assertFalse(jso.get(SimpleFooRecord.boolField));
-    assertTrue(jso.get(SimpleFooRecord.otherBoolField));
+    assertFalse(jso.get(SimpleFooProxy.boolField));
+    assertTrue(jso.get(SimpleFooProxy.otherBoolField));
 
     assertEquals((Long) 42L, jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
@@ -231,7 +231,7 @@ public class RecordJsoImplTest extends GWTTestCase {
     testSchema(jso, schemaPresent);
   }
 
-  private void testSchema(RecordJsoImpl jso, boolean schemaPresent) {
+  private void testSchema(ProxyJsoImpl jso, boolean schemaPresent) {
     if (schemaPresent) {
       assertEquals(SimpleRequestFactoryInstance.schema(), jso.getSchema());
     } else {

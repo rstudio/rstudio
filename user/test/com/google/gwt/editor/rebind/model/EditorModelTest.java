@@ -33,8 +33,8 @@ import com.google.gwt.editor.client.ValueAwareEditor;
 import com.google.gwt.editor.client.adapters.StringEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.Record;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.user.client.TakesValue;
@@ -336,8 +336,8 @@ public class EditorModelTest extends TestCase {
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
-        code.append("import " + Record.class.getName() + ";\n");
-        code.append("interface AddressProxy extends Record {\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
+        code.append("interface AddressProxy extends EntityProxy {\n");
         code.append("String getCity();\n");
         code.append("void setCity(String city);\n");
         code.append("String getStreet();\n");
@@ -363,8 +363,8 @@ public class EditorModelTest extends TestCase {
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
-        code.append("import " + Record.class.getName() + ";\n");
-        code.append("interface CompositeProxy extends Record {\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
+        code.append("interface CompositeProxy extends EntityProxy {\n");
         code.append("AddressProxy getAddress();\n");
         code.append("PersonProxy getPerson();\n");
         code.append("}");
@@ -400,14 +400,14 @@ public class EditorModelTest extends TestCase {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
-        code.append("import " + Record.class.getName() + ";\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
             + ";\n");
         code.append("interface CyclicEditorDriver extends"
             + " RequestFactoryEditorDriver<CyclicEditorDriver.AProxy,"
             + " CyclicEditorDriver.AEditor> {\n");
-        code.append("  interface AProxy extends Record { BProxy getB(); }");
-        code.append("  interface BProxy extends Record { AProxy getA(); }");
+        code.append("  interface AProxy extends EntityProxy { BProxy getB(); }");
+        code.append("  interface BProxy extends EntityProxy { AProxy getA(); }");
         code.append("  interface AEditor extends Editor<AProxy> {");
         code.append("    BEditor bEditor();");
         code.append("  }");
@@ -424,7 +424,7 @@ public class EditorModelTest extends TestCase {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
-        code.append("import " + Record.class.getName() + ";\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
             + ";\n");
         code.append("import " + StringEditor.class.getName() + ";\n");
@@ -446,14 +446,14 @@ public class EditorModelTest extends TestCase {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
-        code.append("import " + Record.class.getName() + ";\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
             + ";\n");
         code.append("import " + StringEditor.class.getName() + ";\n");
         code.append("interface MissingGetterEditorDriver extends"
             + " RequestFactoryEditorDriver<MissingGetterEditorDriver.AProxy,"
             + " MissingGetterEditorDriver.AEditor> {\n");
-        code.append("  interface AProxy extends Record {}");
+        code.append("  interface AProxy extends EntityProxy {}");
         code.append("  interface AEditor extends Editor<AProxy> {");
         code.append("    StringEditor missingEditor();");
         code.append("    StringEditor yetAgain();");
@@ -466,8 +466,8 @@ public class EditorModelTest extends TestCase {
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
-        code.append("import " + Record.class.getName() + ";\n");
-        code.append("interface PersonProxy extends Record {\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
+        code.append("interface PersonProxy extends EntityProxy {\n");
         code.append("AddressProxy getAddress();\n");
         code.append("String getName();\n");
         code.append("void setName(String name);\n");
@@ -562,7 +562,7 @@ public class EditorModelTest extends TestCase {
         new RealJavaResource(HasText.class),
         new RealJavaResource(LeafValueEditor.class),
         new EmptyMockJavaResource(Property.class),
-        new EmptyMockJavaResource(Record.class),
+        new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(RequestFactory.class),
         new RealJavaResource(RequestFactoryEditorDriver.class),
         new EmptyMockJavaResource(RequestObject.class),

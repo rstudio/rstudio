@@ -20,8 +20,8 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.client.SimpleRequestFactoryInstance;
-import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.Date;
@@ -31,23 +31,23 @@ import java.util.Date;
  */
 public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
-  private static final String SIMPLE_FOO_CLASS_NAME = "com.google.gwt.requestfactory.shared.SimpleFooRecord";
+  private static final String SIMPLE_FOO_CLASS_NAME = "com.google.gwt.requestfactory.shared.SimpleFooProxy";
 
   /*
-   * sub-classed it here so that the protected constructor of {@link RecordImpl}
+   * sub-classed it here so that the protected constructor of {@link ProxyImpl}
    * can remain as such.
    */
-  private class MyRecordImpl extends RecordImpl {
+  private class MyProxyImpl extends ProxyImpl {
 
-    protected MyRecordImpl(RecordJsoImpl record) {
-      super(record, false);
+    protected MyProxyImpl(ProxyJsoImpl proxy) {
+      super(proxy, false);
     }
   }
 
   ValueStoreJsonImpl valueStore = null;
   RequestFactoryJsonImpl requestFactory = null;
 
-  RecordJsoImpl jso = null;
+  ProxyJsoImpl jso = null;
 
   @Override
   public String getModuleName() {
@@ -59,22 +59,22 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     valueStore = new ValueStoreJsonImpl();
     requestFactory = (RequestFactoryJsonImpl) SimpleRequestFactoryInstance.factory();
 
-    // add a record
-    jso = RecordJsoImpl.fromJson("{}");
-    jso.set(SimpleFooRecord.id, 42L);
-    jso.set(SimpleFooRecord.version, 1);
-    jso.set(SimpleFooRecord.userName, "bovik");
-    jso.set(SimpleFooRecord.password, "bovik");
-    jso.set(SimpleFooRecord.intId, 4);
-    jso.set(SimpleFooRecord.created, new Date());
-    jso.set(SimpleFooRecord.boolField, false);
-    jso.set(SimpleFooRecord.otherBoolField, true);
+    // add a proxy
+    jso = ProxyJsoImpl.fromJson("{}");
+    jso.set(SimpleFooProxy.id, 42L);
+    jso.set(SimpleFooProxy.version, 1);
+    jso.set(SimpleFooProxy.userName, "bovik");
+    jso.set(SimpleFooProxy.password, "bovik");
+    jso.set(SimpleFooProxy.intId, 4);
+    jso.set(SimpleFooProxy.created, new Date());
+    jso.set(SimpleFooProxy.boolField, false);
+    jso.set(SimpleFooProxy.otherBoolField, true);
     jso.setSchema(SimpleRequestFactoryInstance.schema());
-    valueStore.setRecord(jso, requestFactory);
+    valueStore.setProxy(jso, requestFactory);
   }
 
   public void testCreate() {
-    Record created = requestFactory.create(SimpleFooRecord.class);
+    EntityProxy created = requestFactory.create(SimpleFooProxy.class);
     assertNotNull(created.getId());
     assertNotNull(created.getVersion());
 
@@ -86,7 +86,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   }
 
   public void testCreateWithSet() {
-    Record created = requestFactory.create(SimpleFooRecord.class);
+    EntityProxy created = requestFactory.create(SimpleFooProxy.class);
     assertNotNull(created.getId());
     assertNotNull(created.getVersion());
     
@@ -94,37 +94,37 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         valueStore, requestFactory);
     // DVS does not know about the created entity.
     assertFalse(deltaValueStore.isChanged());
-    deltaValueStore.set(SimpleFooRecord.userName, created, "harry");
+    deltaValueStore.set(SimpleFooProxy.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
-    testAndGetChangeRecord(deltaValueStore.toJson(), WriteOperation.CREATE);
+    testAndGetChangeProxy(deltaValueStore.toJson(), WriteOperation.CREATE);
   }
 
   public void testCreateUpdate() {
-    Record created = requestFactory.create(SimpleFooRecord.class);
+    EntityProxy created = requestFactory.create(SimpleFooProxy.class);
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
     // DVS does not know about the created entity.
     assertFalse(deltaValueStore.isChanged());
-    deltaValueStore.set(SimpleFooRecord.userName, created, "harry");
+    deltaValueStore.set(SimpleFooProxy.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
-    JSONObject changeRecord = testAndGetChangeRecord(deltaValueStore.toJson(),
+    JSONObject changeProxy = testAndGetChangeProxy(deltaValueStore.toJson(),
         WriteOperation.CREATE);
     assertEquals(
         "harry",
-        changeRecord.get(SimpleFooRecord.userName.getName()).isString().stringValue());
+        changeProxy.get(SimpleFooProxy.userName.getName()).isString().stringValue());
   }
 
   public void testOperationAfterJson() {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
-    deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
+    deltaValueStore.set(SimpleFooProxy.userName, new MyProxyImpl(jso),
         "newHarry");
     assertTrue(deltaValueStore.isChanged());
 
     deltaValueStore.toJson();
 
     try {
-      deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
+      deltaValueStore.set(SimpleFooProxy.userName, new MyProxyImpl(jso),
           "harry");
       fail("Modifying DeltaValueStore after calling toJson should throw a RuntimeException");
     } catch (RuntimeException ex) {
@@ -132,23 +132,23 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     }
 
     deltaValueStore.clearUsed();
-    deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
+    deltaValueStore.set(SimpleFooProxy.userName, new MyProxyImpl(jso),
         "harry");
   }
 
   public void testSeparateIds() {
-    RecordImpl createRecord = (RecordImpl) requestFactory.create(SimpleFooRecord.class);
-    assertTrue(createRecord.isFuture());
-    Long futureId = createRecord.getId();
+    ProxyImpl createProxy = (ProxyImpl) requestFactory.create(SimpleFooProxy.class);
+    assertTrue(createProxy.isFuture());
+    Long futureId = createProxy.getId();
 
-    RecordImpl mockRecord = new RecordImpl(RecordJsoImpl.create(futureId, 1,
+    ProxyImpl mockProxy = new ProxyImpl(ProxyJsoImpl.create(futureId, 1,
         SimpleRequestFactoryInstance.schema()), RequestFactoryJsonImpl.NOT_FUTURE);
-    valueStore.setRecord(mockRecord.asJso(), requestFactory); // marked as non-future..
+    valueStore.setProxy(mockProxy.asJso(), requestFactory); // marked as non-future..
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
 
-    deltaValueStore.set(SimpleFooRecord.userName, createRecord, "harry");
-    deltaValueStore.set(SimpleFooRecord.userName, mockRecord, "bovik");
+    deltaValueStore.set(SimpleFooProxy.userName, createProxy, "harry");
+    deltaValueStore.set(SimpleFooProxy.userName, mockProxy, "bovik");
     assertTrue(deltaValueStore.isChanged());
     String jsonString = deltaValueStore.toJson();
     JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(jsonString);
@@ -161,30 +161,30 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertEquals(1, createOperationArray.size());
     assertEquals("harry", createOperationArray.get(0).isObject().get(
         SIMPLE_FOO_CLASS_NAME).isObject().get(
-        SimpleFooRecord.userName.getName()).isString().stringValue());
+        SimpleFooProxy.userName.getName()).isString().stringValue());
 
     JSONArray updateOperationArray = jsonObject.get(
         WriteOperation.UPDATE.name()).isArray();
     assertEquals(1, updateOperationArray.size());
     assertEquals("bovik", updateOperationArray.get(0).isObject().get(
         SIMPLE_FOO_CLASS_NAME).isObject().get(
-        SimpleFooRecord.userName.getName()).isString().stringValue());
+        SimpleFooProxy.userName.getName()).isString().stringValue());
   }
 
   public void testUpdate() {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
-    deltaValueStore.set(SimpleFooRecord.userName, new MyRecordImpl(jso),
+    deltaValueStore.set(SimpleFooProxy.userName, new MyProxyImpl(jso),
         "harry");
     assertTrue(deltaValueStore.isChanged());
-    JSONObject changeRecord = testAndGetChangeRecord(deltaValueStore.toJson(),
+    JSONObject changeProxy = testAndGetChangeProxy(deltaValueStore.toJson(),
         WriteOperation.UPDATE);
     assertEquals(
         "harry",
-        changeRecord.get(SimpleFooRecord.userName.getName()).isString().stringValue());
+        changeProxy.get(SimpleFooProxy.userName.getName()).isString().stringValue());
   }
 
-  private JSONObject testAndGetChangeRecord(String jsonString,
+  private JSONObject testAndGetChangeProxy(String jsonString,
       WriteOperation currentWriteOperation) {
     JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(jsonString);
     for (WriteOperation writeOperation : WriteOperation.values()) {
@@ -198,14 +198,14 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     JSONArray writeOperationArray = jsonObject.get(currentWriteOperation.name()).isArray();
     assertEquals(1, writeOperationArray.size());
 
-    JSONObject recordWithName = writeOperationArray.get(0).isObject();
-    assertEquals(1, recordWithName.size());
-    assertTrue(recordWithName.containsKey(SIMPLE_FOO_CLASS_NAME));
+    JSONObject proxyWithName = writeOperationArray.get(0).isObject();
+    assertEquals(1, proxyWithName.size());
+    assertTrue(proxyWithName.containsKey(SIMPLE_FOO_CLASS_NAME));
 
-    JSONObject record = recordWithName.get(SIMPLE_FOO_CLASS_NAME).isObject();
-    assertTrue(record.containsKey("id"));
-    assertTrue(record.containsKey("version"));
+    JSONObject proxy = proxyWithName.get(SIMPLE_FOO_CLASS_NAME).isObject();
+    assertTrue(proxy.containsKey("id"));
+    assertTrue(proxy.containsKey("version"));
 
-    return record;
+    return proxy;
   }
 }

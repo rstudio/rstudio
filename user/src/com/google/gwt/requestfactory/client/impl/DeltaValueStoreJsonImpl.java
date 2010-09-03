@@ -19,7 +19,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.client.SyncResultImpl;
 import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
@@ -109,12 +109,12 @@ class DeltaValueStoreJsonImpl {
   private final RequestFactoryJsonImpl requestFactory;
 
   // track C-U-D of CRUD operations
-  private final Map<RecordKey, RecordJsoImpl> creates = new HashMap<RecordKey, RecordJsoImpl>();
-  private final Map<RecordKey, RecordJsoImpl> updates = new HashMap<RecordKey, RecordJsoImpl>();
+  private final Map<EntityProxyId, ProxyJsoImpl> creates = new HashMap<EntityProxyId, ProxyJsoImpl>();
+  private final Map<EntityProxyId, ProxyJsoImpl> updates = new HashMap<EntityProxyId, ProxyJsoImpl>();
   // nothing for deletes because DeltaValueStore is not involved in deletes. The
   // operation alone suffices.
 
-  private final Map<RecordKey, WriteOperation> operations = new HashMap<RecordKey, WriteOperation>();
+  private final Map<EntityProxyId, WriteOperation> operations = new HashMap<EntityProxyId, WriteOperation>();
 
   public DeltaValueStoreJsonImpl(ValueStoreJsonImpl master,
       RequestFactoryJsonImpl requestFactory) {
@@ -135,7 +135,7 @@ class DeltaValueStoreJsonImpl {
     HashSet<String> keys = new HashSet<String>();
     ReturnRecord.fillKeys(returnedJso, keys);
 
-    Set<RecordKey> toRemove = new HashSet<RecordKey>();
+    Set<EntityProxyId> toRemove = new HashSet<EntityProxyId>();
     if (keys.contains(WriteOperation.CREATE.name())) {
       JsArray<ReturnRecord> newRecords = ReturnRecord.getRecords(returnedJso,
           WriteOperation.CREATE.name());
@@ -161,23 +161,23 @@ class DeltaValueStoreJsonImpl {
         }
       }
 
-      for (Map.Entry<RecordKey, RecordJsoImpl> entry : creates.entrySet()) {
-        final RecordKey futureKey = entry.getKey();
+      for (Map.Entry<EntityProxyId, ProxyJsoImpl> entry : creates.entrySet()) {
+        final EntityProxyId futureKey = entry.getKey();
         // TODO change violationsMap to <Long, String>
         Map<String, String> violations = violationsMap.get(futureKey.id);
         assert violations != null;
         if (violations == NULL_VIOLATIONS) {
           Long datastoreId = futureToDatastoreId.get(futureKey.id);
           assert datastoreId != null;
-          final RecordKey key = new RecordKey(datastoreId, futureKey.schema,
+          final EntityProxyId key = new EntityProxyId(datastoreId, futureKey.schema,
               RequestFactoryJsonImpl.NOT_FUTURE);
-          RecordJsoImpl value = entry.getValue();
-          value.set(Record.id, datastoreId);
-          RecordJsoImpl masterRecord = master.records.get(key);
+          ProxyJsoImpl value = entry.getValue();
+          value.set(EntityProxy.id, datastoreId);
+          ProxyJsoImpl masterRecord = master.records.get(key);
           assert masterRecord == null;
           master.records.put(key, value);
           masterRecord = value;
-          toRemove.add(new RecordKey(datastoreId, futureKey.schema,
+          toRemove.add(new EntityProxyId(datastoreId, futureKey.schema,
               RequestFactoryJsonImpl.IS_FUTURE));
           requestFactory.postChangeEvent(masterRecord, WriteOperation.CREATE);
           syncResults.add(makeSyncResult(masterRecord, null, futureKey.id));
@@ -198,7 +198,7 @@ class DeltaValueStoreJsonImpl {
       int length = deletedRecords.length();
 
       for (int i = 0; i < length; i++) {
-        final RecordKey key = new RecordKey(deletedRecords.get(i).getId(),
+        final EntityProxyId key = new EntityProxyId(deletedRecords.get(i).getId(),
             requestFactory.getSchema(deletedRecords.get(i).getSchema()),
             RequestFactoryJsonImpl.NOT_FUTURE);
         Map<String, String> violations = violationsMap.get(key.id);
@@ -210,10 +210,10 @@ class DeltaValueStoreJsonImpl {
          * with update events.
          */
         if (violations == NULL_VIOLATIONS) {
-          requestFactory.postChangeEvent(RecordJsoImpl.create(key.id, 1,
+          requestFactory.postChangeEvent(ProxyJsoImpl.create(key.id, 1,
               key.schema), WriteOperation.DELETE);
         }
-        RecordJsoImpl masterRecord = master.records.get(key);
+        ProxyJsoImpl masterRecord = master.records.get(key);
         if (masterRecord != null) {
           master.records.remove(key);
           syncResults.add(makeSyncResult(masterRecord, null, null));
@@ -230,19 +230,19 @@ class DeltaValueStoreJsonImpl {
 
       int length = updatedRecords.length();
       for (int i = 0; i < length; i++) {
-        final RecordKey key = new RecordKey(updatedRecords.get(i).getId(),
+        final EntityProxyId key = new EntityProxyId(updatedRecords.get(i).getId(),
             requestFactory.getSchema(updatedRecords.get(i).getSchema()),
             RequestFactoryJsonImpl.NOT_FUTURE);
         Map<String, String> violations = violationsMap.get(key.id);
         assert violations != null;
         // post change events if no violations.
         if (violations == NULL_VIOLATIONS) {
-          requestFactory.postChangeEvent(RecordJsoImpl.create(key.id, 1,
+          requestFactory.postChangeEvent(ProxyJsoImpl.create(key.id, 1,
               key.schema), WriteOperation.UPDATE);
         }
 
-        RecordJsoImpl masterRecord = master.records.get(key);
-        RecordJsoImpl value = updates.get(key);
+        ProxyJsoImpl masterRecord = master.records.get(key);
+        ProxyJsoImpl value = updates.get(key);
         if (masterRecord != null && value != null) {
           // no support for partial updates.
           masterRecord.merge(value);
@@ -265,12 +265,12 @@ class DeltaValueStoreJsonImpl {
     return !operations.isEmpty();
   }
 
-  public <V> void set(Property<V> property, Record record, V value) {
+  public <V> void set(Property<V> property, EntityProxy record, V value) {
     checkArgumentsAndState(record, "set");
-    RecordImpl recordImpl = (RecordImpl) record;
-    RecordKey recordKey = new RecordKey(recordImpl);
+    ProxyImpl recordImpl = (ProxyImpl) record;
+    EntityProxyId recordKey = new EntityProxyId(recordImpl);
 
-    RecordJsoImpl rawMasterRecord = master.records.get(recordKey);
+    ProxyJsoImpl rawMasterRecord = master.records.get(recordKey);
     WriteOperation priorOperation = operations.get(recordKey);
     if (rawMasterRecord == null && priorOperation == null) {
       operations.put(recordKey, WriteOperation.CREATE);
@@ -282,7 +282,7 @@ class DeltaValueStoreJsonImpl {
       return;
     }
 
-    RecordJsoImpl priorRecord = null;
+    ProxyJsoImpl priorRecord = null;
     switch (priorOperation) {
       case CREATE:
         // nothing to do here.
@@ -338,10 +338,10 @@ class DeltaValueStoreJsonImpl {
   /**
    * returns true if a new change record has been added.
    */
-  private <V> boolean addNewChangeRecord(RecordKey recordKey,
-      RecordImpl recordImpl, Property<V> property, V value) {
-    RecordJsoImpl rawMasterRecord = master.records.get(recordKey);
-    RecordJsoImpl changeRecord = newChangeRecord(recordImpl);
+  private <V> boolean addNewChangeRecord(EntityProxyId recordKey,
+      ProxyImpl recordImpl, Property<V> property, V value) {
+    ProxyJsoImpl rawMasterRecord = master.records.get(recordKey);
+    ProxyJsoImpl changeRecord = newChangeRecord(recordImpl);
     if (isRealChange(property, value, rawMasterRecord)) {
       changeRecord.set(property, value);
       updates.put(recordKey, changeRecord);
@@ -351,28 +351,28 @@ class DeltaValueStoreJsonImpl {
     return false;
   }
 
-  private void checkArgumentsAndState(Record record, String methodName) {
+  private void checkArgumentsAndState(EntityProxy record, String methodName) {
     if (used) {
       throw new IllegalStateException(methodName
           + " can only be called on an un-used DeltaValueStore");
     }
-    if (!(record instanceof RecordImpl)) {
+    if (!(record instanceof ProxyImpl)) {
       throw new IllegalArgumentException(record + " + must be an instance of "
-          + RecordImpl.class);
+          + ProxyImpl.class);
     }
   }
 
   private String getJsonForOperation(WriteOperation writeOperation) {
     assert (writeOperation == WriteOperation.CREATE || writeOperation == WriteOperation.UPDATE);
-    Map<RecordKey, RecordJsoImpl> recordsMap = getRecordsMap(writeOperation);
+    Map<EntityProxyId, ProxyJsoImpl> recordsMap = getRecordsMap(writeOperation);
     if (recordsMap.size() == 0) {
       return "";
     }
     StringBuffer requestData = new StringBuffer("\"" + writeOperation.name()
         + "\":[");
     boolean first = true;
-    for (Map.Entry<RecordKey, RecordJsoImpl> entry : recordsMap.entrySet()) {
-      RecordJsoImpl impl = entry.getValue();
+    for (Map.Entry<EntityProxyId, ProxyJsoImpl> entry : recordsMap.entrySet()) {
+      ProxyJsoImpl impl = entry.getValue();
       if (first) {
         first = false;
       } else {
@@ -387,7 +387,7 @@ class DeltaValueStoreJsonImpl {
     return requestData.toString();
   }
 
-  private Map<RecordKey, RecordJsoImpl> getRecordsMap(
+  private Map<EntityProxyId, ProxyJsoImpl> getRecordsMap(
       WriteOperation writeOperation) {
     switch (writeOperation) {
       case CREATE:
@@ -419,8 +419,8 @@ class DeltaValueStoreJsonImpl {
   }
 
   private <V> boolean isRealChange(Property<V> property, V value,
-      RecordJsoImpl rawMasterRecord) {
-    RecordJsoImpl masterRecord = null;
+      ProxyJsoImpl rawMasterRecord) {
+    ProxyJsoImpl masterRecord = null;
 
     if (rawMasterRecord == null) {
       return true;
@@ -445,18 +445,18 @@ class DeltaValueStoreJsonImpl {
     return true;
   }
 
-  private SyncResultImpl makeSyncResult(RecordJsoImpl jso,
+  private SyncResultImpl makeSyncResult(ProxyJsoImpl jso,
       Map<String, String> violations, Long futureId) {
     return new SyncResultImpl(jso.getSchema().create(jso), violations, futureId);
   }
 
-  private RecordJsoImpl newChangeRecord(RecordImpl fromRecord) {
-    return RecordJsoImpl.emptyCopy(fromRecord.asJso());
+  private ProxyJsoImpl newChangeRecord(ProxyImpl fromRecord) {
+    return ProxyJsoImpl.emptyCopy(fromRecord.asJso());
   }
 
-  private void processToRemove(Set<RecordKey> toRemove,
+  private void processToRemove(Set<EntityProxyId> toRemove,
       WriteOperation writeOperation) {
-    for (RecordKey recordKey : toRemove) {
+    for (EntityProxyId recordKey : toRemove) {
       operations.remove(recordKey);
       if (writeOperation == WriteOperation.CREATE) {
         creates.remove(recordKey);

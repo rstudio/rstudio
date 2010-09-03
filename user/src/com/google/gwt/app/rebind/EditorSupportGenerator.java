@@ -31,7 +31,7 @@ import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.TakesValue;
 import com.google.gwt.user.client.ui.HasText;
@@ -182,7 +182,7 @@ public class EditorSupportGenerator extends Generator {
     stringType = generatorContext.getTypeOracle().findType(
         String.class.getName());
     jrecordType = generatorContext.getTypeOracle().findType(
-        Record.class.getName());
+        EntityProxy.class.getName());
     writeGetPathsMethod(sw, recordType);
     writeInit(sw, viewType);
     writeIsChangedMethod(sw, recordType, viewType);

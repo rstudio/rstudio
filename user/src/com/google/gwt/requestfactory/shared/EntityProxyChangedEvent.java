@@ -24,36 +24,36 @@ import com.google.gwt.event.shared.GwtEvent;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract base class for an event announcing changes to a {@link Record}.
+ * Abstract base class for an event announcing changes to a {@link EntityProxy}.
  * <p>
- * Note that this event includes an unpopulated copy of the changed record
+ * Note that this event includes an unpopulated copy of the changed proxy
  * &mdash; all properties are undefined except it's id. That is, the event
  * includes only enough information for receivers to issue requests to get
- * themselves fresh copies of the record.
+ * themselves fresh copies of the proxy.
  * <p>
- * TODO: rather than an empty record, consider using a string token 
+ * TODO: rather than an empty proxy, consider using a string token 
  * 
- * @param <R> the type of the record
+ * @param <P> the type of the proxy
  * @param <H> the type of event handler
  */
 // TODO Should this provide a collection of changed values rather than fire for
 // each one?
-public abstract class RecordChangedEvent<R extends Record, H extends EventHandler>
+public abstract class EntityProxyChangedEvent<P extends EntityProxy, H extends EventHandler>
     extends GwtEvent<H> {
-  R record;
+  P proxy;
   WriteOperation writeOperation;
 
-  public RecordChangedEvent(R record, WriteOperation writeOperation) {
-    this.record = record;
+  public EntityProxyChangedEvent(P proxy, WriteOperation writeOperation) {
+    this.proxy = proxy;
     this.writeOperation = writeOperation;
   }
 
   /**
-   * @return an unpopulated copy of the changed record &mdash; all properties
-   *         are undefined except it's id
+   * @return an unpopulated copy of the changed proxy &mdash; all properties
+   *         are undefined except its id
    */
-  public R getRecord() {
-    return record;
+  public P getProxy() {
+    return proxy;
   }
 
   public WriteOperation getWriteOperation() {

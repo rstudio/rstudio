@@ -15,8 +15,8 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.requestfactory.shared.RecordChangedEvent;
+import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyChangedEvent;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import junit.framework.TestCase;
@@ -24,26 +24,26 @@ import junit.framework.TestCase;
 /**
  * Eponymous unit test.
  */
-public class RecordKeyTest extends TestCase {
+public class EntityProxyIdTest extends TestCase {
 
-  static class Schema1 extends RecordSchema<Record> {
+  static class Schema1 extends ProxySchema<EntityProxy> {
     public Schema1() {
       super("schemey");
     }
 
     @Override
-    public Record create(RecordJsoImpl jso, boolean isFuture) {
+    public EntityProxy create(ProxyJsoImpl jso, boolean isFuture) {
       throw new UnsupportedOperationException("Auto-generated method stub");
     }
 
     @Override
-    public RecordChangedEvent<?, ?> createChangeEvent(Record record,
+    public EntityProxyChangedEvent<?, ?> createChangeEvent(EntityProxy proxy,
         WriteOperation writeOperation) {
       throw new UnsupportedOperationException("Auto-generated method stub");
     }
 
     @Override
-    public Class<? extends Record> getProxyClass() {
+    public Class<? extends EntityProxy> getProxyClass() {
       throw new UnsupportedOperationException("Auto-generated method stub");
     }
   }
@@ -52,25 +52,25 @@ public class RecordKeyTest extends TestCase {
   }
 
   public void testEquals() {
-    RecordKey newKey1 = new RecordKey(1L, new Schema1(),
+    EntityProxyId newKey1 = new EntityProxyId(1L, new Schema1(),
         RequestFactoryJsonImpl.IS_FUTURE);
 
-    RecordKey anotherNewKey1 = new RecordKey(newKey1.id, newKey1.schema,
+    EntityProxyId anotherNewKey1 = new EntityProxyId(newKey1.id, newKey1.schema,
         newKey1.isFuture);
     assertTrue(newKey1.equals(anotherNewKey1));
     assertTrue(newKey1.hashCode() == anotherNewKey1.hashCode());
 
-    RecordKey newKey2 = new RecordKey(newKey1.id + 1, newKey1.schema,
+    EntityProxyId newKey2 = new EntityProxyId(newKey1.id + 1, newKey1.schema,
         newKey1.isFuture);
     assertFalse(newKey1.equals(newKey2));
     assertFalse(newKey1.hashCode() == newKey2.hashCode());
 
-    RecordKey newKey1NoSchema = new RecordKey(newKey1.id,
+    EntityProxyId newKey1NoSchema = new EntityProxyId(newKey1.id,
         new Schema2(), newKey1.isFuture);
     assertFalse(newKey1.equals(newKey1NoSchema));
     assertFalse(newKey1.hashCode() == newKey1NoSchema.hashCode());
 
-    RecordKey oldKey1 = new RecordKey(newKey1.id, newKey1.schema,
+    EntityProxyId oldKey1 = new EntityProxyId(newKey1.id, newKey1.schema,
         !newKey1.isFuture);
     assertFalse(newKey1.equals(oldKey1));
     assertFalse(newKey1.hashCode() == oldKey1.hashCode());

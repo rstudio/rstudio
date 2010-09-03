@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.HashMap;
@@ -32,38 +32,38 @@ import java.util.Map;
 public class ValueStoreJsonImpl {
   // package protected fields for use by DeltaValueStoreJsonImpl
 
-  final Map<RecordKey, RecordJsoImpl> records = new HashMap<RecordKey, RecordJsoImpl>();
+  final Map<EntityProxyId, ProxyJsoImpl> records = new HashMap<EntityProxyId, ProxyJsoImpl>();
 
-  public Record getRecordBySchemaAndId(RecordSchema<?> schema, 
+  public EntityProxy getRecordBySchemaAndId(ProxySchema<?> schema,
       Long id) {
     if (id == null) {
       return null;
     }
     // TODO: pass isFuture to this method from decoding ID string
-    RecordKey key = new RecordKey(id, schema, false);
+    EntityProxyId key = new EntityProxyId(id, schema, false);
     return schema.create(records.get(key));
   }
 
-  public void setRecord(RecordJsoImpl newRecord,
+  public void setProxy(ProxyJsoImpl newRecord,
       RequestFactoryJsonImpl requestFactory) {
     setRecordInList(newRecord, 0, null, requestFactory);
   }
 
-  public void setRecords(JsArray<RecordJsoImpl> newRecords,
+  public void setRecords(JsArray<ProxyJsoImpl> newRecords,
       RequestFactoryJsonImpl requestFactory) {
     for (int i = 0, l = newRecords.length(); i < l; i++) {
-      RecordJsoImpl newRecord = newRecords.get(i);
+      ProxyJsoImpl newRecord = newRecords.get(i);
       setRecordInList(newRecord, i, newRecords, requestFactory);
     }
   }
 
-  private void setRecordInList(RecordJsoImpl newJsoRecord, int i,
-      JsArray<RecordJsoImpl> array, RequestFactoryJsonImpl requestFactory) {
-    RecordKey recordKey = new RecordKey(newJsoRecord, RequestFactoryJsonImpl.NOT_FUTURE);
+  private void setRecordInList(ProxyJsoImpl newJsoRecord, int i,
+      JsArray<ProxyJsoImpl> array, RequestFactoryJsonImpl requestFactory) {
+    EntityProxyId recordKey = new EntityProxyId(newJsoRecord, RequestFactoryJsonImpl.NOT_FUTURE);
     newJsoRecord.setValueStore(this);
     newJsoRecord.setRequestFactory(requestFactory);
     
-    RecordJsoImpl oldRecord = records.get(recordKey);
+    ProxyJsoImpl oldRecord = records.get(recordKey);
     if (oldRecord == null) {
       records.put(recordKey, newJsoRecord);
       // TODO: need to fire a create event.

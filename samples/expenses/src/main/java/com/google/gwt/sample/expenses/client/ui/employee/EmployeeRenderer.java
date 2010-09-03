@@ -16,13 +16,13 @@
 package com.google.gwt.sample.expenses.client.ui.employee;
 
 import com.google.gwt.app.place.ProxyRenderer;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 
 /**
- * Renders {@link EmployeeRecord}s for display to the user. Requires the
+ * Renders {@link EmployeeProxy}s for display to the user. Requires the
  * displayName property to have been fetched.
  */
-public class EmployeeRenderer extends ProxyRenderer<EmployeeRecord> {
+public class EmployeeRenderer extends ProxyRenderer<EmployeeProxy> {
   private static EmployeeRenderer INSTANCE;
 
   public static EmployeeRenderer instance() {
@@ -37,7 +37,7 @@ public class EmployeeRenderer extends ProxyRenderer<EmployeeRecord> {
     super(new String[] { "displayName"} );
   }
 
-  public String render(EmployeeRecord object) {
+  public String render(EmployeeProxy object) {
     if (object == null) {
       return "";
     }

@@ -17,8 +17,8 @@ package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.PropertyReference;
-import com.google.gwt.requestfactory.shared.RecordListRequest;
-import com.google.gwt.requestfactory.shared.RecordRequest;
+import com.google.gwt.requestfactory.shared.ProxyListRequest;
+import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Report;
@@ -47,41 +47,41 @@ public interface ReportRequest {
   /**
    * @return a request object
    */
-  RecordListRequest<ReportRecord> findAllReports();
+  ProxyListRequest<ReportProxy> findAllReports();
 
   /**
    * @return a request object
    */
-  RecordRequest<ReportRecord> findReport(PropertyReference<Long> id);
+  ProxyRequest<ReportProxy> findReport(PropertyReference<Long> id);
 
   /**
    * @return a request object
    */
-  RecordListRequest<ReportRecord> findReportEntries(int firstResult,
+  ProxyListRequest<ReportProxy> findReportEntries(int firstResult,
       int maxResults);
 
   /**
    * @return a request object
    */
-  RecordListRequest<ReportRecord> findReportEntriesBySearch(Long employeeId,
+  ProxyListRequest<ReportProxy> findReportEntriesBySearch(Long employeeId,
       String department, String startsWith, String orderBy, int firstResult,
       int maxResults);
 
   /**
    * @return a request object
    */
-  RecordListRequest<ReportRecord> findReportsByEmployee(
+  ProxyListRequest<ReportProxy> findReportsByEmployee(
       PropertyReference<String> id);
 
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist(ReportRecord record);
+  RequestObject<Void> persist(ReportProxy record);
 
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> remove(ReportRecord record);
+  RequestObject<Void> remove(ReportProxy record);
 }

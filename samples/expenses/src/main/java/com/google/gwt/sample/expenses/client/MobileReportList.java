@@ -19,9 +19,9 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
@@ -42,48 +42,48 @@ public class MobileReportList extends Composite implements MobilePage {
    * TODO: doc.
    */
   public interface Listener {
-    void onCreateReport(EmployeeRecord reporter);
+    void onCreateReport(EmployeeProxy reporter);
 
-    void onReportSelected(ReportRecord report);
+    void onReportSelected(ReportProxy report);
   }
 
   /**
    * The receiver for the last request.
    */
-  private Receiver<List<ReportRecord>> lastReceiver;
+  private Receiver<List<ReportProxy>> lastReceiver;
 
-  private final EmployeeRecord employee;
+  private final EmployeeProxy employee;
   private final Listener listener;
-  private final CellList<ReportRecord> reportList;
-  private final AsyncDataProvider<ReportRecord> reportDataProvider;
-  private final NoSelectionModel<ReportRecord> reportSelection;
+  private final CellList<ReportProxy> reportList;
+  private final AsyncDataProvider<ReportProxy> reportDataProvider;
+  private final NoSelectionModel<ReportProxy> reportSelection;
   private final ExpensesRequestFactory requestFactory;
 
   public MobileReportList(final Listener listener,
-      final ExpensesRequestFactory requestFactory, EmployeeRecord employee) {
+      final ExpensesRequestFactory requestFactory, EmployeeProxy employee) {
     this.listener = listener;
     this.requestFactory = requestFactory;
     this.employee = employee;
 
-    reportDataProvider = new AsyncDataProvider<ReportRecord>() {
+    reportDataProvider = new AsyncDataProvider<ReportProxy>() {
       @Override
-      protected void onRangeChanged(HasData<ReportRecord> view) {
+      protected void onRangeChanged(HasData<ReportProxy> view) {
         requestReports();
       }
     };
     reportDataProvider.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
 
-    reportList = new CellList<ReportRecord>(new AbstractCell<ReportRecord>() {
+    reportList = new CellList<ReportProxy>(new AbstractCell<ReportProxy>() {
       @Override
       public void render(
-          ReportRecord value, Object viewData, SafeHtmlBuilder sb) {
+          ReportProxy value, Object viewData, SafeHtmlBuilder sb) {
         sb.appendHtmlConstant("<div class='item'>");
         sb.appendEscaped(value.getPurpose());
         sb.appendHtmlConstant("</div>");
       }
     });
 
-    reportSelection = new NoSelectionModel<ReportRecord>();
+    reportSelection = new NoSelectionModel<ReportProxy>();
     reportSelection.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
     reportSelection.addSelectionChangeHandler(
         new SelectionChangeEvent.Handler() {
@@ -135,23 +135,23 @@ public class MobileReportList extends Composite implements MobilePage {
 
   private String[] getReportColumns() {
     return new String[]{
-        ReportRecord.created.getName(), ReportRecord.purpose.getName()};
+        ReportProxy.created.getName(), ReportProxy.purpose.getName()};
   }
 
   private void requestReports() {
     if (requestFactory == null) {
       return;
     }
-    lastReceiver = new Receiver<List<ReportRecord>>() {
+    lastReceiver = new Receiver<List<ReportProxy>>() {
       public void onSuccess(
-          List<ReportRecord> newValues, Set<SyncResult> syncResults) {
+          List<ReportProxy> newValues, Set<SyncResult> syncResults) {
         int size = newValues.size();
         reportDataProvider.updateRowCount(size, true);
         reportDataProvider.updateRowData(0, newValues);
       }
     };
     requestFactory.reportRequest().findReportEntriesBySearch(employee.getId(),
-        "", "", ReportRecord.created.getName() + " DESC", 0, 25).with(
+        "", "", ReportProxy.created.getName() + " DESC", 0, 25).with(
         getReportColumns()).fire(lastReceiver);
   }
 }

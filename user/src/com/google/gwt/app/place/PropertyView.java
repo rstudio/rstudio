@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 
 /**
  * <p>
@@ -23,11 +23,11 @@ import com.google.gwt.requestfactory.shared.Record;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * A view that displays a set of property values for a type of {@link Record}.
+ * A view that displays a set of property values for a type of {@link EntityProxy}.
  * 
  * @param <R> the type of the record
  */
-public interface PropertyView<R extends Record> {
+public interface PropertyView<R extends EntityProxy> {
 
   /**
    * @return the set of properties this view displays

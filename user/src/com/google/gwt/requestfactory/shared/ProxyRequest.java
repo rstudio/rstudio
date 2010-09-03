@@ -15,19 +15,28 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.requestfactory.server.SimpleBar;
+
+import java.util.Collection;
 
 /**
- * A simple entity used for testing. Has an int field and date field. Add other data types as their
- * support gets built in.
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span>
+ * </p>
+ * A Request that returns specific properties for one or more {@link EntityProxy}
+ * instances.
+ * 
+ * @param <P> return type
  */
-@DataTransferObject(SimpleBar.class)
-public interface SimpleBarRecord extends Record {
+public interface ProxyRequest<P extends EntityProxy> extends
+    RequestObject<P> {
 
-  Property<String> userName = new Property<String>("userName", "User Name",
-      String.class);
+  ProxyRequest<P> with(String... propertyRefs);
 
-  String getUserName();
+  /**
+   * @deprecated use {@link #with(String...)} instead.
+   */
+  ProxyRequest<P> forProperties(Collection<Property<?>> properties);
 
-  void setUserName(String userName);
 }

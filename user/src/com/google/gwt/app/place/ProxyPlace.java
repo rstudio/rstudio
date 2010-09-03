@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 
 /**
@@ -52,15 +52,15 @@ public class ProxyPlace extends Place {
     }
   }
 
-  private final Record proxy;
+  private final EntityProxy proxy;
 
   private final Operation operation;
 
-  public ProxyPlace(Record record) {
+  public ProxyPlace(EntityProxy record) {
     this(record, Operation.DETAILS);
   }
   
-  public ProxyPlace(Record record, Operation operation) {
+  public ProxyPlace(EntityProxy record, Operation operation) {
     this.operation = operation;
     this.proxy = record;
   }
@@ -93,7 +93,7 @@ public class ProxyPlace extends Place {
     return operation;
   }
 
-  public Record getProxy() {
+  public EntityProxy getProxy() {
     return proxy;
   }
 

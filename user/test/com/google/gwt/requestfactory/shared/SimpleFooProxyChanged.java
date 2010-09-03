@@ -18,24 +18,24 @@ package com.google.gwt.requestfactory.shared;
 import com.google.gwt.event.shared.EventHandler;
 
 /**
- * Test implementation of {@link com.google.gwt.requestfactory.shared.RecordChangedEvent} for
- * {@link com.google.gwt.requestfactory.shared.SimpleFooRecord}.
+ * Test implementation of {@link EntityProxyChangedEvent} for 
+ * {@link SimpleFooProxy}.
  */
-public class SimpleBarRecordChanged extends
-    RecordChangedEvent<SimpleBarRecord, SimpleBarRecordChanged.Handler> {
+public class SimpleFooProxyChanged extends
+    EntityProxyChangedEvent<SimpleFooProxy, SimpleFooProxyChanged.Handler> {
 
 /**
  *  Test Handler for SimpleFooChanged event.
  */
   public interface Handler extends EventHandler {
-    void onSimpleBarRecordChanged(SimpleBarRecordChanged record);
+    void onSimpleFooProxyChanged(SimpleFooProxyChanged proxy);
   }
 
   public static final Type<Handler> TYPE = new Type<Handler>();
 
-  public SimpleBarRecordChanged(SimpleBarRecord record,
+  public SimpleFooProxyChanged(SimpleFooProxy proxy,
       WriteOperation writeOperation) {
-    super(record, writeOperation);
+    super(proxy, writeOperation);
   }
 
   @Override
@@ -45,6 +45,6 @@ public class SimpleBarRecordChanged extends
 
   @Override
   protected void dispatch(Handler handler) {
-    handler.onSimpleBarRecordChanged(this);
+    handler.onSimpleFooProxyChanged(this);
   }
 }

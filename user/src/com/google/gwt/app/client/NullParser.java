@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.client;
 
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.text.shared.Parser;
 
 import java.text.ParseException;
@@ -28,14 +28,14 @@ import java.text.ParseException;
  * A no-op renderer, always returns null
  * @param <T> a Record type.
  */
-public class NullParser<T extends Record> implements Parser<T> {
+public class NullParser<T extends EntityProxy> implements Parser<T> {
 
   private static NullParser INSTANCE;
 
   /**
    * @return the instance of the null parser
    */
-  public static <T extends Record> Parser<T> instance() {
+  public static <T extends EntityProxy> Parser<T> instance() {
     if (INSTANCE == null) {
       INSTANCE = new NullParser<T>();
     }

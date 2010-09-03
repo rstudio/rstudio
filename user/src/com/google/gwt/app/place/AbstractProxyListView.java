@@ -17,7 +17,7 @@ package com.google.gwt.app.place;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
@@ -35,24 +35,24 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract implementation of RecordListView. Subclasses must call {@link #init}
+ * Abstract implementation of ProxyListView. Subclasses must call {@link #init}
  * with the root widget, its {@link CellTable}, and a list of
  * {@link PropertyColumn}.
  * 
- * @param <R> the type of the records
+ * @param <P> the type of the proxy
  */
-public abstract class AbstractRecordListView<R extends Record> extends
-    Composite implements RecordListView<R> {
+public abstract class AbstractProxyListView<P extends EntityProxy> extends
+    Composite implements ProxyListView<P> {
 
-  private CellTable<R> table;
+  private CellTable<P> table;
   private Set<String> paths = new HashSet<String>();
-  private Delegate<R> delegate;
+  private Delegate<P> delegate;
 
-  public HasData<R> asHasData() {
+  public HasData<P> asHasData() {
     return table;
   }
 
-  public AbstractRecordListView<R> asWidget() {
+  public AbstractProxyListView<P> asWidget() {
     return this;
   }
 
@@ -60,16 +60,16 @@ public abstract class AbstractRecordListView<R extends Record> extends
     return paths.toArray(new String[paths.size()]);
   }
 
-  public void setDelegate(final Delegate<R> delegate) {
+  public void setDelegate(final Delegate<P> delegate) {
     this.delegate = delegate;
   }
 
-  protected void init(Widget root, CellTable<R> table, Button newButton,
-      List<PropertyColumn<R, ?>> columns) {
+  protected void init(Widget root, CellTable<P> table, Button newButton,
+      List<PropertyColumn<P, ?>> columns) {
     super.initWidget(root);
     this.table = table;
 
-    for (PropertyColumn<R, ?> column : columns) {
+    for (PropertyColumn<P, ?> column : columns) {
       table.addColumn(column, column.getDisplayName());
       paths.addAll(Arrays.asList(column.getPaths()));
     }

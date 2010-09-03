@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.client.testing;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 
@@ -29,7 +29,7 @@ import com.google.gwt.requestfactory.shared.RequestObject;
  * @param <P> the Proxy type being edited
  * @param <E> the Editor type
  */
-public class MockRequestFactoryEditorDriver<P extends Record, E extends Editor<P>>
+public class MockRequestFactoryEditorDriver<P extends EntityProxy, E extends Editor<P>>
     implements RequestFactoryEditorDriver<P, E> {
   private static final String[] EMPTY_STRING = new String[0];
 

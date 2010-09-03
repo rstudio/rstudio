@@ -152,7 +152,7 @@ public class SummaryWidget extends Composite {
 
   void onPersonChanged(PersonProxyChanged event) {
     if (WriteOperation.UPDATE.equals(event.getWriteOperation())) {
-      PersonProxy record = event.getRecord();
+      PersonProxy record = event.getProxy();
 
       // Is the changing record onscreen?
       int displayOffset = offsetOf(record);

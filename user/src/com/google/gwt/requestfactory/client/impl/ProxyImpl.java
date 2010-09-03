@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.PropertyReference;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 
 /**
  * <p>
@@ -25,25 +25,32 @@ import com.google.gwt.requestfactory.shared.Record;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Base class for implementations of {@link Record}. It wraps a
- * {@link RecordJsoImpl} that does all the actual work. This class has little
+ * Base class for implementations of {@link EntityProxy}. It wraps a
+ * {@link ProxyJsoImpl} that does all the actual work. This class has little
  * reason to exist except to allow client code to make instanceof checks, and to
  * work around issue 4859 (JSOs cannot have abstract superclasses). If the issue
  * is fixed it might be worth abandoning the instanceof capability, needs
  * thinking.
  */
-public class RecordImpl implements Record {
-  private final RecordJsoImpl jso;
+public class ProxyImpl implements EntityProxy {
+
+  protected static String getUniqueId(Long id, boolean isFuture,
+      ProxySchema<?> schema) {
+    return id + "-" + (isFuture ? "IS" : "NO") + "-" + schema.getToken();
+  }
+
+  private final ProxyJsoImpl jso;
   private final boolean isFuture;
+
   private DeltaValueStoreJsonImpl deltaValueStore;
 
-  protected RecordImpl(RecordJsoImpl record, boolean isFuture) {
+  protected ProxyImpl(ProxyJsoImpl record, boolean isFuture) {
     this.jso = record;
     this.isFuture = isFuture;
     deltaValueStore = null;
   }
 
-  public RecordJsoImpl asJso() {
+  public ProxyJsoImpl asJso() {
     return jso;
   }
 
@@ -59,13 +66,12 @@ public class RecordImpl implements Record {
     return jso.getRef(property);
   }
 
-  public RecordSchema<?> getSchema() {
+  public ProxySchema<?> getSchema() {
     return jso.getSchema();
   }
 
   public String getUniqueId() {
-    return jso.getId() + "-" + (isFuture ? "IS" : "NO") + "-"
-        + getSchema().getToken();
+    return getUniqueId(jso.getId(), isFuture, jso.getSchema());
   }
 
   public Integer getVersion() {
@@ -83,7 +89,7 @@ public class RecordImpl implements Record {
     return isFuture;
   }
 
-  public <V> void set(Property<V> property, RecordImpl record, V value) {
+  public <V> void set(Property<V> property, ProxyImpl record, V value) {
     if (deltaValueStore == null) {
       throw new UnsupportedOperationException(
           "Setter methods can't be called before calling edit()");

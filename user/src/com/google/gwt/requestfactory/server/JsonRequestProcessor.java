@@ -15,10 +15,10 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.DataTransferObject;
+import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.PropertyReference;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
@@ -81,9 +81,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     private final boolean isFuture;
     // TODO: update for non-long id?
     private final long id;
-    private final Class<? extends Record> record;
+    private final Class<? extends EntityProxy> record;
 
-    EntityKey(long id, boolean isFuture, Class<? extends Record> record) {
+    EntityKey(long id, boolean isFuture, Class<? extends EntityProxy> record) {
       this.id = id;
       this.isFuture = isFuture;
       assert record != null;
@@ -145,7 +145,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private Map<EntityKey, SerializedEntity> beforeDataMap = new HashMap<EntityKey, SerializedEntity>();
   private Map<EntityKey, EntityData> afterDvsDataMap = new HashMap<EntityKey, EntityData>();
 
-  public Collection<Property<?>> allProperties(Class<? extends Record> clazz) {
+  public Collection<Property<?>> allProperties(Class<? extends EntityProxy> clazz) {
     Set<Property<?>> rtn = new HashSet<Property<?>>();
     for (Field f : clazz.getFields()) {
       if (Modifier.isStatic(f.getModifiers())
@@ -262,14 +262,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (Date.class == parameterType) {
       return new Date(Long.parseLong(parameterValue));
     }
-    if (Record.class.isAssignableFrom(parameterType)) {
+    if (EntityProxy.class.isAssignableFrom(parameterType)) {
       /* TODO: 1. Don't resolve in this step, just get EntityKey. May need to
        * use DVS.
        *
        * 2. Merge the following and the object resolution code in getEntityKey.
        * 3. Update the involvedKeys set.
        */
-      DataTransferObject service = parameterType.getAnnotation(DataTransferObject.class);
+      ProxyFor service = parameterType.getAnnotation(ProxyFor.class);
       if (service != null) {
         Class<?> sClass = service.value();
         EntityKey entityKey = getEntityKey(parameterValue.toString());
@@ -337,7 +337,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     String methodName = getMethodNameFromPropertyName(propertyName, "get");
     Method method = entityElement.getClass().getMethod(methodName);
     Object returnValue = method.invoke(entityElement);
-    if (returnValue != null && Record.class.isAssignableFrom(propertyType)) {
+    if (returnValue != null && EntityProxy.class.isAssignableFrom(propertyType)) {
       Method idMethod = returnValue.getClass().getMethod("getId");
       Long id = (Long) idMethod.invoke(returnValue);
 
@@ -400,7 +400,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           }
         } else {
           Object propertyValue = null;
-          if (Record.class.isAssignableFrom(dtoType)) {
+          if (EntityProxy.class.isAssignableFrom(dtoType)) {
             EntityKey propKey = getEntityKey(recordObject.getString(key));
             Object cacheValue = cachedEntityLookup.get(propKey);
             if (cachedEntityLookup.containsKey(propKey)) {
@@ -449,8 +449,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   @SuppressWarnings("unchecked")
   public Class<Object> getEntityFromRecordAnnotation(
-      Class<? extends Record> record) {
-    DataTransferObject dtoAnn = record.getAnnotation(DataTransferObject.class);
+      Class<? extends EntityProxy> record) {
+    ProxyFor dtoAnn = record.getAnnotation(ProxyFor.class);
     if (dtoAnn != null) {
       return (Class<Object>) dtoAnn.value();
     }
@@ -480,7 +480,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * @return the JSONArray
    */
   public JSONArray getJsonArray(List<?> resultList,
-      Class<? extends Record> entityKeyClass)
+      Class<? extends EntityProxy> entityKeyClass)
       throws IllegalArgumentException, SecurityException,
       IllegalAccessException, JSONException, NoSuchMethodException,
       InvocationTargetException {
@@ -496,7 +496,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   public JSONObject getJsonObject(Object entityElement,
-      Class<? extends Record> entityKeyClass, RequestProperty propertyContext)
+      Class<? extends EntityProxy> entityKeyClass, RequestProperty propertyContext)
       throws JSONException, NoSuchMethodException, IllegalAccessException,
       InvocationTargetException {
     JSONObject jsonObject = new JSONObject();
@@ -589,7 +589,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * Returns the property fields (name => type) for a record.
    */
   public Map<String, Class<?>> getPropertiesFromRecord(
-      Class<? extends Record> record) throws SecurityException,
+      Class<? extends EntityProxy> record) throws SecurityException,
       IllegalAccessException, InvocationTargetException, NoSuchMethodException {
     Map<String, Class<?>> properties = new HashMap<String, Class<?>>();
     for (Field f : record.getFields()) {
@@ -612,12 +612,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   @SuppressWarnings("unchecked")
-  public Class<Record> getRecordFromClassToken(String recordToken) {
+  public Class<EntityProxy> getRecordFromClassToken(String recordToken) {
     try {
       Class<?> clazz = Class.forName(recordToken, false, 
           getClass().getClassLoader());
-      if (Record.class.isAssignableFrom(clazz)) {
-        return (Class<Record>) clazz;
+      if (EntityProxy.class.isAssignableFrom(clazz)) {
+        return (Class<EntityProxy>) clazz;
       }
       throw new SecurityException(
           "Attempt to access non-record class " + recordToken);
@@ -778,7 +778,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   private void addRelatedObject(String keyRef, Object returnValue,
-      Class<? extends Record> propertyType, RequestProperty propertyContext)
+      Class<? extends EntityProxy> propertyType, RequestProperty propertyContext)
       throws JSONException, IllegalAccessException, NoSuchMethodException,
       InvocationTargetException {
 
@@ -787,8 +787,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   @SuppressWarnings("unchecked")
-  private Class<? extends Record> castToRecordClass(Class<?> propertyType) {
-    return (Class<? extends Record>) propertyType;
+  private Class<? extends EntityProxy> castToRecordClass(Class<?> propertyType) {
+    return (Class<? extends EntityProxy>) propertyType;
   }
 
   /**
@@ -863,7 +863,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
                 "There cannot be more than one record token");
           }
           JSONObject recordObject = recordWithSchema.getJSONObject(recordToken);
-          Class<? extends Record> record = getRecordFromClassToken(recordToken);
+          Class<? extends EntityProxy> record = getRecordFromClassToken(recordToken);
           EntityKey entityKey = new EntityKey(recordObject.getLong("id"),
               (writeOperation == WriteOperation.CREATE), record);
           involvedKeys.add(entityKey);
@@ -962,7 +962,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         getRecordFromClassToken(parts[2]));
   }
 
-  private String getSchemaAndId(Class<? extends Record> record, Object newId) {
+  private String getSchemaAndId(Class<? extends EntityProxy> record, Object newId) {
     return record.getName() + "-" + newId;
   }
 
@@ -1066,7 +1066,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    */
   private boolean requestedProperty(Property<?> p,
       RequestProperty propertyContext) {
-    if (Record.class.isAssignableFrom(p.getType())) {
+    if (EntityProxy.class.isAssignableFrom(p.getType())) {
       return propertyContext.hasProperty(p.getName());
     }
 
@@ -1080,7 +1080,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * TODO: clean up the copy-paste from getJSONObject.
    */
   private JSONObject serializeEntity(Object entityInstance,
-      Class<? extends Record> recordClass) throws SecurityException,
+      Class<? extends EntityProxy> recordClass) throws SecurityException,
       NoSuchMethodException, IllegalArgumentException, IllegalAccessException,
       InvocationTargetException, JSONException {
     if (entityInstance == null) {
@@ -1094,7 +1094,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Object returnValue = method.invoke(entityInstance);
 
       Object propertyValue;
-      if (returnValue != null && Record.class.isAssignableFrom(p.getType())) {
+      if (returnValue != null && EntityProxy.class.isAssignableFrom(p.getType())) {
         Method idMethod = returnValue.getClass().getMethod("getId");
         Long id = (Long) idMethod.invoke(returnValue);
 
@@ -1113,7 +1113,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       throws IllegalAccessException, JSONException, NoSuchMethodException,
       InvocationTargetException {
     JSONArray jsonArray = getJsonArray((List<?>) result,
-        (Class<? extends Record>) operation.getReturnType());
+        (Class<? extends EntityProxy>) operation.getReturnType());
     return jsonArray;
   }
 
@@ -1122,7 +1122,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       throws JSONException, NoSuchMethodException, IllegalAccessException,
       InvocationTargetException {
     JSONObject jsonObject = getJsonObject(result,
-        (Class<? extends Record>) operation.getReturnType(), propertyRefs);
+        (Class<? extends EntityProxy>) operation.getReturnType(), propertyRefs);
     return jsonObject;
   }
 

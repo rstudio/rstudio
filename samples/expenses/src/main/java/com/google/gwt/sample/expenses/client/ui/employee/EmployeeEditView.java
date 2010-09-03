@@ -16,13 +16,13 @@
 package com.google.gwt.sample.expenses.client.ui.employee;
 
 import com.google.gwt.app.client.EditorSupport;
-import com.google.gwt.app.place.RecordEditView;
+import com.google.gwt.app.place.ProxyEditView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -40,11 +40,11 @@ import java.util.Map;
  * Edit view for employee records.
  */
 public class EmployeeEditView extends Composite implements
-    RecordEditView<EmployeeRecord> {
+    ProxyEditView<EmployeeProxy> {
   interface Binder extends UiBinder<HTMLPanel, EmployeeEditView> {
   }
 
-  interface DataBinder extends EditorSupport<EmployeeRecord, EmployeeEditView> {
+  interface DataBinder extends EditorSupport<EmployeeProxy, EmployeeEditView> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
@@ -55,7 +55,7 @@ public class EmployeeEditView extends Composite implements
   @UiField
   TextBox password;
   @UiField(provided = true)
-  ValueListBox<EmployeeRecord> supervisor = new ValueListBox<EmployeeRecord>(
+  ValueListBox<EmployeeProxy> supervisor = new ValueListBox<EmployeeProxy>(
       EmployeeRenderer.instance());
 
   @UiField
@@ -77,7 +77,7 @@ public class EmployeeEditView extends Composite implements
   Element createTitle;
 
   private Delegate delegate;
-  private EmployeeRecord record;
+  private EmployeeProxy record;
 
   public EmployeeEditView() {
     initWidget(BINDER.createAndBindUi(this));
@@ -92,7 +92,7 @@ public class EmployeeEditView extends Composite implements
     return DATA_BINDER.getPaths();
   }
 
-  public EmployeeRecord getValue() {
+  public EmployeeProxy getValue() {
     return record;
   }
 
@@ -114,7 +114,7 @@ public class EmployeeEditView extends Composite implements
     this.delegate = delegate;
   }
 
-  public void setEmployeePickerValues(Collection<EmployeeRecord> values) {
+  public void setEmployeePickerValues(Collection<EmployeeProxy> values) {
     supervisor.setAcceptableValues(values);
   }
 
@@ -123,7 +123,7 @@ public class EmployeeEditView extends Composite implements
     save.setEnabled(enabled);
   }
 
-  public void setValue(EmployeeRecord value) {
+  public void setValue(EmployeeProxy value) {
     this.record = value;
     DATA_BINDER.setValue(this, value);
   }

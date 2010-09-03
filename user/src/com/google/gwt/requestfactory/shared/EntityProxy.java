@@ -23,14 +23,14 @@ package com.google.gwt.requestfactory.shared;
  * </p>
  * A proxy for a server-side domain object.
  */
-public interface Record {
+public interface EntityProxy {
   Property<Long> id = new Property<Long>("id", Long.class);
                                                                                                                                             
   Property<Integer> version = new Property<Integer>("version", Integer.class);
 
   /**
-   * Get this record's value for the given property. Behavior is undefined if
-   * the record has no such property, or if the property has never been set. It
+   * Get this proxy's value for the given property. Behavior is undefined if
+   * the proxy has no such property, or if the property has never been set. It
    * is unusual to call this method directly. Rather it is expected to be called
    * by bean-style getter methods provided by implementing classes.
    * 
@@ -41,7 +41,7 @@ public interface Record {
   <V> V get(Property<V> property);
 
   /**
-   * @return the id of this Record
+   * @return the id of this Proxy.
    */
   Long getId();
 
@@ -56,7 +56,7 @@ public interface Record {
   <V> PropertyReference<V> getRef(Property<V> property);
 
   /**
-   * @return the version of this Record
+   * @return the version of this Proxy.
    */
   Integer getVersion();
 }

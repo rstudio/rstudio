@@ -22,8 +22,8 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.SimpleBarRecord;
-import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.SimpleBarProxy;
+import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
@@ -35,14 +35,14 @@ import java.util.Set;
  */
 public class EditorTest extends GWTTestCase {
   interface SimpleFooDriver extends
-      RequestFactoryEditorDriver<SimpleFooRecord, SimpleFooEditor> {
+      RequestFactoryEditorDriver<SimpleFooProxy, SimpleFooEditor> {
   }
 
-  static class SimpleBarEditor implements Editor<SimpleBarRecord> {
+  static class SimpleBarEditor implements Editor<SimpleBarProxy> {
     protected final StringEditor userName = StringEditor.of();
   }
 
-  static class SimpleFooEditor implements Editor<SimpleFooRecord> {
+  static class SimpleFooEditor implements Editor<SimpleFooProxy> {
     /**
      * Test field-based access.
      */
@@ -105,8 +105,8 @@ public class EditorTest extends GWTTestCase {
         Arrays.asList(driver.getPaths()));
 
     factory.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
-        new Receiver<SimpleFooRecord>() {
-          public void onSuccess(SimpleFooRecord response,
+        new Receiver<SimpleFooProxy>() {
+          public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResults) {
             driver.edit(response,
                 factory.simpleFooRequest().persistAndReturnSelf(response).with(
@@ -118,9 +118,9 @@ public class EditorTest extends GWTTestCase {
             // When there are duplicate paths, outermost editor wins
             editor.barEditor().userName.setValue("ignored");
             editor.barName.setValue("EditorBarTest");
-            driver.<SimpleFooRecord> flush().fire(
-                new Receiver<SimpleFooRecord>() {
-                  public void onSuccess(SimpleFooRecord response,
+            driver.<SimpleFooProxy> flush().fire(
+                new Receiver<SimpleFooProxy>() {
+                  public void onSuccess(SimpleFooProxy response,
                       Set<SyncResult> syncResults) {
                     assertEquals("EditorFooTest", response.getUserName());
                     assertEquals("EditorBarTest",

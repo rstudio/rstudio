@@ -33,7 +33,7 @@ public interface RequestObject<T> {
    */
   void clearUsed();
 
-  <P extends Record> P edit(P record);
+  <P extends EntityProxy> P edit(P record);
 
   void fire(Receiver<T> receiver);
 

@@ -26,10 +26,10 @@ package com.google.gwt.requestfactory.shared;
  * @param <V> Value type
  */
 public class PropertyReference<V> {
-  private final Record record;
+  private final EntityProxy record;
   private final Property<V> property;
 
-  public PropertyReference(Record record, Property<V> property) {
+  public PropertyReference(EntityProxy record, Property<V> property) {
     assert null != record;
     assert null != property;
 

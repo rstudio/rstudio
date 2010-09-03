@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory.client;
 
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Map;
@@ -30,11 +30,11 @@ import java.util.Map;
  */
 public class SyncResultImpl implements SyncResult {
 
-  private final Record record;
+  private final EntityProxy record;
   private final Map<String, String> violations;
   private final Long futureId;
   
-  public SyncResultImpl(Record record, Map<String, String> violations, Long futureId) {
+  public SyncResultImpl(EntityProxy record, Map<String, String> violations, Long futureId) {
     this.record = record;
     this.violations = violations;
     this.futureId = futureId;
@@ -44,7 +44,7 @@ public class SyncResultImpl implements SyncResult {
     return futureId;
   }
 
-  public Record getRecord() {
+  public EntityProxy getProxy() {
     return record;
   }
   

@@ -25,8 +25,8 @@ import java.util.Date;
  * A simple entity used for testing. Has an int field and date field. Add other
  * data types as their support gets built in.
  */
-@DataTransferObject(SimpleFoo.class)
-public interface SimpleFooRecord extends Record {
+@ProxyFor(SimpleFoo.class)
+public interface SimpleFooProxy extends EntityProxy {
 
   Property<String> userName = new Property<String>("userName", "User Name",
       String.class);
@@ -55,13 +55,13 @@ public interface SimpleFooRecord extends Record {
   Property<Boolean> boolField = new Property<Boolean>("boolField", Boolean.class);
   Property<Boolean> otherBoolField = new Property<Boolean>("otherBoolField", Boolean.class);
   
-  Property<SimpleBarRecord> barField = new Property<SimpleBarRecord>("barField",
-      SimpleBarRecord.class);
+  Property<SimpleBarProxy> barField = new Property<SimpleBarProxy>("barField",
+      SimpleBarProxy.class);
 
-  Property<SimpleFooRecord> fooField = new Property<SimpleFooRecord>("fooField",
-      SimpleFooRecord.class);
+  Property<SimpleFooProxy> fooField = new Property<SimpleFooProxy>("fooField",
+      SimpleFooProxy.class);
 
-  SimpleBarRecord getBarField();
+  SimpleBarProxy getBarField();
   
   BigDecimal getBigDecimalField();
   
@@ -81,7 +81,7 @@ public interface SimpleFooRecord extends Record {
   
   Float getFloatField();
   
-  SimpleFooRecord getFooField();
+  SimpleFooProxy getFooField();
   
   Integer getIntId();
   
@@ -95,7 +95,7 @@ public interface SimpleFooRecord extends Record {
   
   String getUserName();
   
-  void setBarField(SimpleBarRecord barField);
+  void setBarField(SimpleBarProxy barField);
 
   void setBigDecimalField(BigDecimal d);
 
@@ -113,7 +113,7 @@ public interface SimpleFooRecord extends Record {
 
   void setFloatField(Float f);
   
-  void setFooField(SimpleFooRecord fooField);
+  void setFooField(SimpleFooProxy fooField);
 
   void setIntId(Integer intId);
 

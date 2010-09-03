@@ -21,8 +21,8 @@ import com.google.gwt.requestfactory.server.UserInformation;
 /**
  * "API Generated" DTO interface based on {@link UserInformation}.
  */
-@DataTransferObject(UserInformation.class)
-public interface UserInformationRecord extends Record  {
+@ProxyFor(UserInformation.class)
+public interface UserInformationProxy extends EntityProxy  {
   Property<String> email =
     new Property<String>("email", "Email", String.class);
   Property<String> loginUrl =

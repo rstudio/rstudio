@@ -15,20 +15,19 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.google.gwt.requestfactory.server.SimpleBar;
 
 /**
- * <p> <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span> </p> Annotation on Record classes specifying 'type'. 'type'
- * represents the server-side counterpart of the Record.
+ * A simple entity used for testing. Has an int field and date field. Add other data types as their
+ * support gets built in.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface DataTransferObject {
+@ProxyFor(SimpleBar.class)
+public interface SimpleBarProxy extends EntityProxy {
 
-  Class<?> value();
+  Property<String> userName = new Property<String>("userName", "User Name",
+      String.class);
+
+  String getUserName();
+
+  void setUserName(String userName);
 }

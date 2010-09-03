@@ -23,15 +23,15 @@ public interface SimpleBarRequest {
 
   RequestObject<Long> countSimpleBar();
 
-  RecordListRequest<SimpleBarRecord> findAll();
+  ProxyListRequest<SimpleBarProxy> findAll();
 
-  RecordRequest<SimpleBarRecord> findSimpleBarById(Long id);
-
-  @Instance
-  RequestObject<Void> persist(SimpleBarRecord record);
+  ProxyRequest<SimpleBarProxy> findSimpleBarById(Long id);
 
   @Instance
-  RecordRequest<SimpleBarRecord> persistAndReturnSelf(SimpleBarRecord record);
+  RequestObject<Void> persist(SimpleBarProxy proxy);
+
+  @Instance
+  ProxyRequest<SimpleBarProxy> persistAndReturnSelf(SimpleBarProxy proxy);
 
   RequestObject<Void> reset();
 }

@@ -17,8 +17,8 @@ package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.PropertyReference;
-import com.google.gwt.requestfactory.shared.RecordListRequest;
-import com.google.gwt.requestfactory.shared.RecordRequest;
+import com.google.gwt.requestfactory.shared.ProxyListRequest;
+import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Employee;
@@ -47,34 +47,34 @@ public interface EmployeeRequest {
   /**
    * @return a request object
    */
-  RecordListRequest<EmployeeRecord> findAllEmployees();
+  ProxyListRequest<EmployeeProxy> findAllEmployees();
 
   /**
    * @return a request object
    */
-  RecordRequest<EmployeeRecord> findEmployee(PropertyReference<Long> id);
+  ProxyRequest<EmployeeProxy> findEmployee(PropertyReference<Long> id);
 
   /**
    * @return a request object
    */
-  RecordListRequest<EmployeeRecord> findEmployeeEntries(int firstResult,
+  ProxyListRequest<EmployeeProxy> findEmployeeEntries(int firstResult,
       int maxResults);
 
   /**
    * @return a request object
    */
-  RecordListRequest<EmployeeRecord> findEmployeeEntriesByDepartment(
+  ProxyListRequest<EmployeeProxy> findEmployeeEntriesByDepartment(
       String department, int firstResult, int maxResults);
 
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist(EmployeeRecord record);
+  RequestObject<Void> persist(EmployeeProxy record);
 
  /**
   * @return a request object
   */
   @Instance
-  RequestObject<Void> remove(EmployeeRecord record);
+  RequestObject<Void> remove(EmployeeProxy record);
 }

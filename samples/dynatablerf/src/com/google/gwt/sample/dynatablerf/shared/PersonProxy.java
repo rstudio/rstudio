@@ -15,16 +15,16 @@
  */
 package com.google.gwt.sample.dynatablerf.shared;
 
-import com.google.gwt.requestfactory.shared.DataTransferObject;
+import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.sample.dynatablerf.domain.Person;
 
 /**
  * Person DTO.
  */
-@DataTransferObject(Person.class)
-public interface PersonProxy extends Record {
+@ProxyFor(Person.class)
+public interface PersonProxy extends EntityProxy {
   /*
    * These property objects will soon no longer be necessary (and will no longer
    * be public api).

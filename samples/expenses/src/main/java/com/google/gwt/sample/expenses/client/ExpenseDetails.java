@@ -40,7 +40,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.resources.client.ImageResource;
@@ -48,12 +48,12 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecordChanged;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxyChanged;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
-import com.google.gwt.sample.expenses.client.request.ReportRecordChanged;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
+import com.google.gwt.sample.expenses.client.request.ReportProxyChanged;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
@@ -90,7 +90,7 @@ import java.util.Set;
  * including the list of expenses.
  */
 public class ExpenseDetails extends Composite
-    implements ExpenseRecordChanged.Handler, ReportRecordChanged.Handler {
+    implements ExpenseProxyChanged.Handler, ReportProxyChanged.Handler {
 
   interface Template extends SafeHtmlTemplates {
     @Template("<select style=\"background-color:white;border:1px solid "
@@ -295,7 +295,7 @@ public class ExpenseDetails extends Composite
       }
     });
 
-    private ExpenseRecord expenseRecord;
+    private ExpenseProxy expenseRecord;
     private TextBox reasonBox = new TextBox();
     private String reasonDenied;
 
@@ -319,7 +319,7 @@ public class ExpenseDetails extends Composite
           5.0, Unit.PX);
     }
 
-    public ExpenseRecord getExpenseRecord() {
+    public ExpenseProxy getExpenseRecord() {
       return expenseRecord;
     }
 
@@ -332,7 +332,7 @@ public class ExpenseDetails extends Composite
       reasonBox.setFocus(true);
     }
 
-    public void setExpenseRecord(ExpenseRecord expenseRecord) {
+    public void setExpenseRecord(ExpenseProxy expenseRecord) {
       this.expenseRecord = expenseRecord;
     }
 
@@ -397,7 +397,7 @@ public class ExpenseDetails extends Composite
   Anchor reportsLink;
 
   @UiField
-  CellTable<ExpenseRecord> table;
+  CellTable<ExpenseProxy> table;
 
   @UiField
   Element unreconciledLabel;
@@ -409,7 +409,7 @@ public class ExpenseDetails extends Composite
   /**
    * The default {@link Comparator} used for sorting.
    */
-  private Comparator<ExpenseRecord> defaultComparator;
+  private Comparator<ExpenseProxy> defaultComparator;
 
   /**
    * The popup used to display errors to the user.
@@ -426,20 +426,20 @@ public class ExpenseDetails extends Composite
   /**
    * The data provider that provides expense items.
    */
-  private final ListDataProvider<ExpenseRecord> items;
+  private final ListDataProvider<ExpenseProxy> items;
 
   /**
    * The set of Expense keys that we have seen. When a new key is added, we
    * compare it to the list of known keys to determine if it is new.
    */
-  private Map<Object, ExpenseRecord> knownExpenseKeys = null;
+  private Map<Object, ExpenseProxy> knownExpenseKeys = null;
 
-  private Comparator<ExpenseRecord> lastComparator;
+  private Comparator<ExpenseProxy> lastComparator;
 
   /**
    * Keep track of the last receiver so we can ignore stale responses.
    */
-  private Receiver<List<ExpenseRecord>> lastReceiver;
+  private Receiver<List<ExpenseProxy>> lastReceiver;
 
   /**
    * The {@link Timer} used to periodically refresh the table.
@@ -454,7 +454,7 @@ public class ExpenseDetails extends Composite
   /**
    * The current report being displayed.
    */
-  private ReportRecord report;
+  private ReportProxy report;
 
   /**
    * The total amount that has been approved.
@@ -464,7 +464,7 @@ public class ExpenseDetails extends Composite
   public ExpenseDetails() {
     createErrorPopup();
     initWidget(uiBinder.createAndBindUi(this));
-    items = new ListDataProvider<ExpenseRecord>();
+    items = new ListDataProvider<ExpenseProxy>();
     items.setKeyProvider(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
     table.setKeyProvider(items);
     items.addDataDisplay(table);
@@ -506,13 +506,13 @@ public class ExpenseDetails extends Composite
     return reportsLink;
   }
 
-  public void onExpenseRecordChanged(ExpenseRecordChanged event) {
-    ExpenseRecord newRecord = event.getRecord();
+  public void onExpenseRecordChanged(ExpenseProxyChanged event) {
+    ExpenseProxy newRecord = event.getProxy();
     Object newKey = items.getKey(newRecord);
 
     int index = 0;
-    List<ExpenseRecord> list = items.getList();
-    for (ExpenseRecord r : list) {
+    List<ExpenseProxy> list = items.getList();
+    for (ExpenseProxy r : list) {
       if (items.getKey(r).equals(newKey)) {
         list.set(index, newRecord);
 
@@ -532,16 +532,16 @@ public class ExpenseDetails extends Composite
     }
   }
 
-  public void onReportChanged(ReportRecordChanged event) {
-    ReportRecord changed = event.getRecord();
+  public void onReportChanged(ReportProxyChanged event) {
+    ReportProxy changed = event.getProxy();
     if (report != null && report.getId().equals(changed.getId())) {
       // Request the updated report.
       expensesRequestFactory.reportRequest().findReport(
-          report.getRef(ReportRecord.id)).with(
-          ReportRecord.notes.getName()).fire(new Receiver<ReportRecord>() {
+          report.getRef(ReportProxy.id)).with(
+          ReportProxy.notes.getName()).fire(new Receiver<ReportProxy>() {
         @Override
         public void onSuccess(
-            ReportRecord response, Set<SyncResult> syncResults) {
+            ReportProxy response, Set<SyncResult> syncResults) {
           report = response;
           setNotesEditState(false, false, response.getNotes());
         }
@@ -555,14 +555,14 @@ public class ExpenseDetails extends Composite
   }
 
   /**
-   * Set the {@link ReportRecord} to show.
+   * Set the {@link ReportProxy} to show.
    *
-   * @param report the {@link ReportRecord}
+   * @param report the {@link ReportProxy}
    * @param department the selected department
    * @param employee the selected employee
    */
   public void setReportRecord(
-      ReportRecord report, String department, EmployeeRecord employee) {
+      ReportProxy report, String department, EmployeeProxy employee) {
     this.report = report;
     knownExpenseKeys = null;
     reportName.setInnerText(report.getPurpose());
@@ -591,9 +591,9 @@ public class ExpenseDetails extends Composite
   }
 
   @UiFactory
-  CellTable<ExpenseRecord> createTable() {
+  CellTable<ExpenseProxy> createTable() {
     CellTable.Resources resources = GWT.create(TableResources.class);
-    CellTable<ExpenseRecord> view = new CellTable<ExpenseRecord>(
+    CellTable<ExpenseProxy> view = new CellTable<ExpenseProxy>(
         100, resources);
     Styles.Common common = Styles.common();
     view.addColumnStyleName(0, common.spacerColumn());
@@ -604,17 +604,17 @@ public class ExpenseDetails extends Composite
     view.addColumnStyleName(6, common.spacerColumn());
 
     // Spacer column.
-    view.addColumn(new SpacerColumn<ExpenseRecord>());
+    view.addColumn(new SpacerColumn<ExpenseProxy>());
 
     // Created column.
-    GetValue<ExpenseRecord, Date> createdGetter = new GetValue<
-        ExpenseRecord, Date>() {
-      public Date getValue(ExpenseRecord object) {
+    GetValue<ExpenseProxy, Date> createdGetter = new GetValue<
+        ExpenseProxy, Date>() {
+      public Date getValue(ExpenseProxy object) {
         return object.getCreated();
       }
     };
     defaultComparator = createColumnComparator(createdGetter, false);
-    Comparator<ExpenseRecord> createdDesc = createColumnComparator(
+    Comparator<ExpenseProxy> createdDesc = createColumnComparator(
         createdGetter, true);
     addColumn(view, "Created",
         new DateCell(DateTimeFormat.getFormat("MMM dd yyyy")), createdGetter,
@@ -623,34 +623,34 @@ public class ExpenseDetails extends Composite
 
     // Description column.
     addColumn(view, "Description", new TextCell(),
-        new GetValue<ExpenseRecord, String>() {
-          public String getValue(ExpenseRecord object) {
+        new GetValue<ExpenseProxy, String>() {
+          public String getValue(ExpenseProxy object) {
             return object.getDescription();
           }
         });
 
     // Category column.
     addColumn(view, "Category", new TextCell(),
-        new GetValue<ExpenseRecord, String>() {
-          public String getValue(ExpenseRecord object) {
+        new GetValue<ExpenseProxy, String>() {
+          public String getValue(ExpenseProxy object) {
             return object.getCategory();
           }
         });
 
     // Amount column.
-    final GetValue<ExpenseRecord, Double> amountGetter = new GetValue<
-        ExpenseRecord, Double>() {
-      public Double getValue(ExpenseRecord object) {
+    final GetValue<ExpenseProxy, Double> amountGetter = new GetValue<
+        ExpenseProxy, Double>() {
+      public Double getValue(ExpenseProxy object) {
         return object.getAmount();
       }
     };
-    Comparator<ExpenseRecord> amountAsc = createColumnComparator(
+    Comparator<ExpenseProxy> amountAsc = createColumnComparator(
         amountGetter, false);
-    Comparator<ExpenseRecord> amountDesc = createColumnComparator(
+    Comparator<ExpenseProxy> amountDesc = createColumnComparator(
         amountGetter, true);
     addColumn(view, "Amount", new NumberCell(NumberFormat.getCurrencyFormat()),
-        new GetValue<ExpenseRecord, Number>() {
-          public Number getValue(ExpenseRecord object) {
+        new GetValue<ExpenseProxy, Number>() {
+          public Number getValue(ExpenseProxy object) {
             return amountGetter.getValue(object);
           }
         }, amountAsc, amountDesc);
@@ -660,7 +660,7 @@ public class ExpenseDetails extends Composite
     denialPopup.addCloseHandler(new CloseHandler<PopupPanel>() {
       public void onClose(CloseEvent<PopupPanel> event) {
         String reasonDenied = denialPopup.getReasonDenied();
-        ExpenseRecord record = denialPopup.getExpenseRecord();
+        ExpenseProxy record = denialPopup.getExpenseRecord();
         if (reasonDenied == null || reasonDenied.length() == 0) {
           // We need to redraw the table to reset the select box.
           syncCommit(record, null);
@@ -672,14 +672,14 @@ public class ExpenseDetails extends Composite
 
     // Approval column.
     approvalCell = new ApprovalCell();
-    Column<ExpenseRecord, String> approvalColumn = addColumn(view,
-        "Approval Status", approvalCell, new GetValue<ExpenseRecord, String>() {
-          public String getValue(ExpenseRecord object) {
+    Column<ExpenseProxy, String> approvalColumn = addColumn(view,
+        "Approval Status", approvalCell, new GetValue<ExpenseProxy, String>() {
+          public String getValue(ExpenseProxy object) {
             return object.getApproval();
           }
         });
-    approvalColumn.setFieldUpdater(new FieldUpdater<ExpenseRecord, String>() {
-      public void update(int index, final ExpenseRecord object, String value) {
+    approvalColumn.setFieldUpdater(new FieldUpdater<ExpenseProxy, String>() {
+      public void update(int index, final ExpenseProxy object, String value) {
         if ("Denied".equals(value)) {
           denialPopup.setExpenseRecord(object);
           denialPopup.setReasonDenied(object.getReasonDenied());
@@ -691,7 +691,7 @@ public class ExpenseDetails extends Composite
     });
 
     // Spacer column.
-    view.addColumn(new SpacerColumn<ExpenseRecord>());
+    view.addColumn(new SpacerColumn<ExpenseProxy>());
 
     return view;
   }
@@ -706,9 +706,9 @@ public class ExpenseDetails extends Composite
    * @param getter the {@link GetValue} used to retrieve cell values
    * @return the new column
    */
-  private <C extends Comparable<C>> Column<ExpenseRecord, C> addColumn(
-      final CellTable<ExpenseRecord> table, final String text,
-      final Cell<C> cell, final GetValue<ExpenseRecord, C> getter) {
+  private <C extends Comparable<C>> Column<ExpenseProxy, C> addColumn(
+      final CellTable<ExpenseProxy> table, final String text,
+      final Cell<C> cell, final GetValue<ExpenseProxy, C> getter) {
     return addColumn(table, text, cell, getter,
         createColumnComparator(getter, false),
         createColumnComparator(getter, true));
@@ -726,16 +726,16 @@ public class ExpenseDetails extends Composite
    * @param descComparator the comparator used to sort ascending
    * @return the new column
    */
-  private <C> Column<ExpenseRecord, C> addColumn(
-      final CellTable<ExpenseRecord> table, final String text,
-      final Cell<C> cell, final GetValue<ExpenseRecord, C> getter,
-      final Comparator<ExpenseRecord> ascComparator,
-      final Comparator<ExpenseRecord> descComparator) {
+  private <C> Column<ExpenseProxy, C> addColumn(
+      final CellTable<ExpenseProxy> table, final String text,
+      final Cell<C> cell, final GetValue<ExpenseProxy, C> getter,
+      final Comparator<ExpenseProxy> ascComparator,
+      final Comparator<ExpenseProxy> descComparator) {
 
     // Create the column.
-    final Column<ExpenseRecord, C> column = new Column<ExpenseRecord, C>(cell) {
+    final Column<ExpenseProxy, C> column = new Column<ExpenseProxy, C>(cell) {
       @Override
-      public C getValue(ExpenseRecord object) {
+      public C getValue(ExpenseProxy object) {
         return getter.getValue(object);
       }
     };
@@ -773,10 +773,10 @@ public class ExpenseDetails extends Composite
    * @return the comparator
    */
   private <C extends Comparable<C>> Comparator<
-      ExpenseRecord> createColumnComparator(
-      final GetValue<ExpenseRecord, C> getter, final boolean descending) {
-    return new Comparator<ExpenseRecord>() {
-      public int compare(ExpenseRecord o1, ExpenseRecord o2) {
+      ExpenseProxy> createColumnComparator(
+      final GetValue<ExpenseProxy, C> getter, final boolean descending) {
+    return new Comparator<ExpenseProxy>() {
+      public int compare(ExpenseProxy o1, ExpenseProxy o2) {
         // Null check the row object.
         if (o1 == null && o2 == null) {
           return 0;
@@ -877,10 +877,10 @@ public class ExpenseDetails extends Composite
    */
   private String[] getExpenseColumns() {
     return new String[]{
-        ExpenseRecord.amount.getName(), ExpenseRecord.approval.getName(),
-        ExpenseRecord.category.getName(), ExpenseRecord.created.getName(),
-        ExpenseRecord.description.getName(),
-        ExpenseRecord.reasonDenied.getName()};
+        ExpenseProxy.amount.getName(), ExpenseProxy.approval.getName(),
+        ExpenseProxy.category.getName(), ExpenseProxy.created.getName(),
+        ExpenseProxy.description.getName(),
+        ExpenseProxy.reasonDenied.getName()};
   }
 
   /**
@@ -889,8 +889,8 @@ public class ExpenseDetails extends Composite
   private void refreshCost() {
     double totalCost = 0;
     totalApproved = 0;
-    List<ExpenseRecord> records = items.getList();
-    for (ExpenseRecord record : records) {
+    List<ExpenseProxy> records = items.getList();
+    for (ExpenseProxy record : records) {
       double cost = record.getAmount();
       totalCost += cost;
       if (Expenses.Approval.APPROVED.is(record.getApproval())) {
@@ -909,11 +909,11 @@ public class ExpenseDetails extends Composite
   private void requestExpenses() {
     // Cancel the timer since we are about to send a request.
     refreshTimer.cancel();
-    lastReceiver = new Receiver<List<ExpenseRecord>>() {
+    lastReceiver = new Receiver<List<ExpenseProxy>>() {
       public void onSuccess(
-          List<ExpenseRecord> newValues, Set<SyncResult> syncResults) {
+          List<ExpenseProxy> newValues, Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
-          List<ExpenseRecord> list = new ArrayList<ExpenseRecord>(newValues);
+          List<ExpenseProxy> list = new ArrayList<ExpenseProxy>(newValues);
           sortExpenses(list, lastComparator);
           items.setList(list);
           refreshCost();
@@ -921,17 +921,17 @@ public class ExpenseDetails extends Composite
           // Add the new keys and changed values to the known keys.
           boolean isInitialData = knownExpenseKeys == null;
           if (knownExpenseKeys == null) {
-            knownExpenseKeys = new HashMap<Object, ExpenseRecord>();
+            knownExpenseKeys = new HashMap<Object, ExpenseProxy>();
           }
-          for (ExpenseRecord value : newValues) {
+          for (ExpenseProxy value : newValues) {
             Object key = items.getKey(value);
             if (!isInitialData) {
-              ExpenseRecord existing = knownExpenseKeys.get(key);
+              ExpenseProxy existing = knownExpenseKeys.get(key);
               if (existing == null
                   || !value.getAmount().equals(existing.getAmount())
                   || !value.getDescription().equals(existing.getDescription())
                   || !value.getCategory().equals(existing.getCategory())) {
-                (new PhaseAnimation.CellTablePhaseAnimation<ExpenseRecord>(
+                (new PhaseAnimation.CellTablePhaseAnimation<ExpenseProxy>(
                     table, value, items)).run();
               }
             }
@@ -944,7 +944,7 @@ public class ExpenseDetails extends Composite
       }
     };
     expensesRequestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(Record.id)).with(getExpenseColumns()).fire(lastReceiver);
+        report.getRef(EntityProxy.id)).with(getExpenseColumns()).fire(lastReceiver);
   }
 
   /**
@@ -963,7 +963,7 @@ public class ExpenseDetails extends Composite
 
     // Submit the delta.
     RequestObject<Void> editRequest = expensesRequestFactory.reportRequest().persist(report);
-    ReportRecord editableReport = editRequest.edit(report);
+    ReportProxy editableReport = editRequest.edit(report);
     editableReport.setNotes(pendingNotes);
     editRequest.fire(new Receiver<Void>() {
       public void onSuccess(Void ignore, Set<SyncResult> response) {
@@ -1007,7 +1007,7 @@ public class ExpenseDetails extends Composite
   }
 
   private void sortExpenses(
-      List<ExpenseRecord> list, final Comparator<ExpenseRecord> comparator) {
+      List<ExpenseProxy> list, final Comparator<ExpenseProxy> comparator) {
     lastComparator = comparator;
     Collections.sort(list, comparator);
   }
@@ -1015,10 +1015,10 @@ public class ExpenseDetails extends Composite
   /**
    * Update the state of a pending approval change.
    *
-   * @param record the {@link ExpenseRecord} to sync
+   * @param record the {@link ExpenseProxy} to sync
    * @param message the error message if rejected, or null if accepted
    */
-  private void syncCommit(ExpenseRecord record, String message) {
+  private void syncCommit(ExpenseProxy record, String message) {
     final Object key = items.getKey(record);
     if (message != null) {
       final ApprovalViewData avd = approvalCell.getViewData(key);
@@ -1032,7 +1032,7 @@ public class ExpenseDetails extends Composite
   }
 
   private void updateExpenseRecord(
-      final ExpenseRecord record, String approval, String reasonDenied) {
+      final ExpenseProxy record, String approval, String reasonDenied) {
     // Verify that the total is under the cap.
     if (Expenses.Approval.APPROVED.is(approval)
         && !Expenses.Approval.APPROVED.is(record.getApproval())) {
@@ -1047,7 +1047,7 @@ public class ExpenseDetails extends Composite
 
     // Create a delta and sync with the value store.
     RequestObject<Void> editRequest = expensesRequestFactory.expenseRequest().persist(record);
-    ExpenseRecord editableRecord = editRequest.edit(record);
+    ExpenseProxy editableRecord = editRequest.edit(record);
     editableRecord.setApproval(approval);
     editableRecord.setReasonDenied(reasonDenied);
     editRequest.fire(new Receiver<Void>() {

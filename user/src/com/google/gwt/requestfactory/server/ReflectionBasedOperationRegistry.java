@@ -15,9 +15,9 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.DataTransferObject;
+import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Instance;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
 
@@ -82,9 +82,9 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
           domainMethod.getGenericReturnType());
       Class<?> requestReturnType = getReturnTypeFromParameter(requestMethod,
           requestMethod.getGenericReturnType());
-      if (Record.class.isAssignableFrom(requestReturnType)) {
-        DataTransferObject annotation =
-            requestReturnType.getAnnotation(DataTransferObject.class);
+      if (EntityProxy.class.isAssignableFrom(requestReturnType)) {
+        ProxyFor annotation =
+            requestReturnType.getAnnotation(ProxyFor.class);
         if (annotation != null) {
           Class<?> dtoClass = annotation.value();
           if (!dtoClass.equals(domainReturnType)) {

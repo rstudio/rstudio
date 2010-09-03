@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.user.client.TakesValue;
 
 import java.util.Map;
@@ -26,12 +26,12 @@ import java.util.Map;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Implemented by views that edit {@link Record}s.
+ * Implemented by views that edit {@link EntityProxy}s.
  * 
- * @param <R> the type of the record
+ * @param <P> the type of the proxy
  */
-public interface RecordEditView<R extends Record> extends TakesValue<R>,
-    IsWidget, PropertyView<R> {
+public interface ProxyEditView<P extends EntityProxy> extends TakesValue<P>,
+    IsWidget, PropertyView<P> {
   
   /**
    * Implemented by the owner of the view.

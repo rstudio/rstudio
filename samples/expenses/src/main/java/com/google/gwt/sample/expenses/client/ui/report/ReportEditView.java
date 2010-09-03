@@ -16,14 +16,14 @@
 package com.google.gwt.sample.expenses.client.ui.report;
 
 import com.google.gwt.app.client.EditorSupport;
-import com.google.gwt.app.place.RecordEditView;
+import com.google.gwt.app.place.ProxyEditView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.sample.expenses.client.ui.employee.EmployeeRenderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -43,11 +43,11 @@ import java.util.Map;
  * Edit view for employee records.
  */
 public class ReportEditView extends Composite implements
-    RecordEditView<ReportRecord> {
+    ProxyEditView<ReportProxy> {
   interface Binder extends UiBinder<HTMLPanel, ReportEditView> {
   }
 
-  interface DataBinder extends EditorSupport<ReportRecord, ReportEditView> {
+  interface DataBinder extends EditorSupport<ReportProxy, ReportEditView> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
@@ -55,10 +55,10 @@ public class ReportEditView extends Composite implements
 
   @UiField TextBox notes;
   @UiField TextBox purpose;
-  @UiField(provided = true) ValueListBox<EmployeeRecord> reporter =
-    new ValueListBox<EmployeeRecord>(EmployeeRenderer.instance());
-  @UiField(provided = true) ValueListBox<EmployeeRecord> approvedSupervisor =
-    new ValueListBox<EmployeeRecord>(EmployeeRenderer.instance());
+  @UiField(provided = true) ValueListBox<EmployeeProxy> reporter =
+    new ValueListBox<EmployeeProxy>(EmployeeRenderer.instance());
+  @UiField(provided = true) ValueListBox<EmployeeProxy> approvedSupervisor =
+    new ValueListBox<EmployeeProxy>(EmployeeRenderer.instance());
   @UiField DateBox created;
   @UiField Button cancel;
   @UiField Button save;
@@ -70,7 +70,7 @@ public class ReportEditView extends Composite implements
 
   private Delegate delegate;
 
-  private ReportRecord record;
+  private ReportProxy record;
 
   public ReportEditView() {
     initWidget(BINDER.createAndBindUi(this));
@@ -85,7 +85,7 @@ public class ReportEditView extends Composite implements
     return DATA_BINDER.getPaths();
   }
 
-  public ReportRecord getValue() {
+  public ReportProxy getValue() {
     return record;
   }
 
@@ -107,7 +107,7 @@ public class ReportEditView extends Composite implements
     this.delegate = delegate;
   }
 
-  public void setEmployeePickerValues(Collection<EmployeeRecord> values) {
+  public void setEmployeePickerValues(Collection<EmployeeProxy> values) {
     approvedSupervisor.setAcceptableValues(values);
     reporter.setAcceptableValues(values);
   }
@@ -117,7 +117,7 @@ public class ReportEditView extends Composite implements
     save.setEnabled(enabled);
   }
 
-  public void setValue(ReportRecord value) {
+  public void setValue(ReportProxy value) {
     this.record = value;
     DATA_BINDER.setValue(this, value);
   }

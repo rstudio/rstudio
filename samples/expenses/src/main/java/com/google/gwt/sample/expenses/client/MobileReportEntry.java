@@ -20,9 +20,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -58,7 +58,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
   @UiField
   Element errorText;
 
-  private ReportRecord report;
+  private ReportProxy report;
   private final ExpensesRequestFactory requestFactory;
   private final Listener listener;
   private RequestObject<Void> requestObject;
@@ -82,10 +82,10 @@ public class MobileReportEntry extends Composite implements MobilePage {
     return this;
   }
 
-  public void create(EmployeeRecord reporter) {
-    report = requestFactory.create(ReportRecord.class);
+  public void create(EmployeeProxy reporter) {
+    report = requestFactory.create(ReportProxy.class);
     requestObject = requestFactory.reportRequest().persist(report);
-    ReportRecord editableReport = requestObject.edit(report);
+    ReportProxy editableReport = requestObject.edit(report);
     editableReport.setReporter(reporter);
     displayReport();
   }
@@ -111,7 +111,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
-    ReportRecord editableReport = requestObject.edit(report);
+    ReportProxy editableReport = requestObject.edit(report);
     editableReport.setPurpose(purposeText.getText());
     editableReport.setNotes(notesText.getText());
     editableReport.setDepartment(departmentList.getValue(departmentList.getSelectedIndex()));
@@ -146,7 +146,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
   public void onRefresh(boolean clear) {
   }
 
-  public void show(ReportRecord report) {
+  public void show(ReportProxy report) {
     this.report = report;
     displayReport();
   }

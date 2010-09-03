@@ -16,7 +16,7 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.Record;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.text.shared.PassthroughRenderer;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -34,8 +34,8 @@ import com.google.gwt.user.cellview.client.TextColumn;
  * @param <R> the type of record in this table
  * @param <T> value type of the property
  */
-public class PropertyColumn<R extends Record, T> extends TextColumn<R> {
-  public static <R extends Record> PropertyColumn<R, String> getStringPropertyColumn(
+public class PropertyColumn<R extends EntityProxy, T> extends TextColumn<R> {
+  public static <R extends EntityProxy> PropertyColumn<R, String> getStringPropertyColumn(
       Property<String> property) {
     return new PropertyColumn<R, String>(property,
         PassthroughRenderer.instance());

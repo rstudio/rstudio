@@ -23,9 +23,9 @@ import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.SyncResult;
-import com.google.gwt.requestfactory.shared.UserInformationRecord;
+import com.google.gwt.requestfactory.shared.UserInformationProxy;
 import com.google.gwt.requestfactory.shared.Value;
-import com.google.gwt.sample.expenses.client.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
@@ -103,8 +103,8 @@ public class ExpensesMobile implements EntryPoint {
     requestFactory.init(eventBus);
 
     requestFactory.employeeRequest().findEmployee(Value.of(employeeId)).fire(
-        new Receiver<EmployeeRecord>() {
-          public void onSuccess(EmployeeRecord employee,
+        new Receiver<EmployeeProxy>() {
+          public void onSuccess(EmployeeProxy employee,
               Set<SyncResult> syncResults) {
             final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
                 requestFactory, employee);
@@ -116,9 +116,9 @@ public class ExpensesMobile implements EntryPoint {
 
             // Add a login widget to the page
             final LoginWidget login = shell.getLoginWidget();
-            Receiver<UserInformationRecord> receiver
-                = new Receiver<UserInformationRecord>() {
-              public void onSuccess(UserInformationRecord userInformationRecord,
+            Receiver<UserInformationProxy> receiver
+                = new Receiver<UserInformationProxy>() {
+              public void onSuccess(UserInformationProxy userInformationRecord,
                   Set<SyncResult> syncResults) {
                 login.setUserInformation(userInformationRecord);
               }

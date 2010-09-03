@@ -25,6 +25,6 @@ import com.google.gwt.requestfactory.server.UserInformation;
 @Service(UserInformation.class)
 public interface UserInformationRequest {
 
-  RecordRequest<UserInformationRecord> getCurrentUserInformation(String redirectUrl);
+  ProxyRequest<UserInformationProxy> getCurrentUserInformation(String redirectUrl);
  
 }

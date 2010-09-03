@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.SimpleFooRecord;
+import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 
 import junit.framework.TestCase;
 
@@ -40,7 +40,7 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
     assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
         request.getDomainClassName());
     assertEquals("findAll", request.getDomainMethodName());
-    assertEquals(SimpleFooRecord.class, request.getReturnType());
+    assertEquals(SimpleFooProxy.class, request.getReturnType());
     assertEquals(0, request.getParameterTypes().length);
     assertEquals(true, request.isReturnTypeList());
   }
@@ -62,7 +62,7 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
     assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
         request.getDomainClassName());
     assertEquals("findSimpleFooById", request.getDomainMethodName());
-    assertEquals(SimpleFooRecord.class, request.getReturnType());
+    assertEquals(SimpleFooProxy.class, request.getReturnType());
     assert request.getParameterTypes().length == 1
         && request.getParameterTypes()[0] == Long.class;
     assertEquals(false, request.isReturnTypeList());

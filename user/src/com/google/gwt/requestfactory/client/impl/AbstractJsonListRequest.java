@@ -16,8 +16,8 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.requestfactory.shared.RecordListRequest;
+import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.ArrayList;
@@ -33,17 +33,17 @@ import java.util.Set;
  * Abstract implementation of
  * {@link com.google.gwt.requestfactory.shared.RequestObject
  * RequestFactory.RequestObject} for requests that return lists of
- * {@link Record}.
+ * {@link EntityProxy}.
  * 
  * @param <T> the type of entities returned
  * @param <R> this request type
  */
 public abstract class //
-AbstractJsonListRequest<T extends Record, R extends AbstractJsonListRequest<T, R>> //
-    extends AbstractRequest<List<T>, R> implements RecordListRequest<T> {
-  protected final RecordSchema<? extends T> schema;
+AbstractJsonListRequest<T extends EntityProxy, R extends AbstractJsonListRequest<T, R>> //
+    extends AbstractRequest<List<T>, R> implements ProxyListRequest<T> {
+  protected final ProxySchema<? extends T> schema;
 
-  public AbstractJsonListRequest(RecordSchema<? extends T> schema,
+  public AbstractJsonListRequest(ProxySchema<? extends T> schema,
       RequestFactoryJsonImpl requestService) {
     super(requestService);
     this.schema = schema;
@@ -52,10 +52,10 @@ AbstractJsonListRequest<T extends Record, R extends AbstractJsonListRequest<T, R
   @Override
   public void handleResult(Object jsoResult, Set<SyncResult> syncResults) {
 
-    JsArray<RecordJsoImpl> valueJsos = (JsArray<RecordJsoImpl>) jsoResult;
+    JsArray<ProxyJsoImpl> valueJsos = (JsArray<ProxyJsoImpl>) jsoResult;
     List<T> valueList = new ArrayList<T>(valueJsos.length());
     for (int i = 0; i < valueJsos.length(); i++) {
-      RecordJsoImpl jso = valueJsos.get(i);
+      ProxyJsoImpl jso = valueJsos.get(i);
       jso.setSchema(schema);
       valueList.add(schema.create(jso));
     }

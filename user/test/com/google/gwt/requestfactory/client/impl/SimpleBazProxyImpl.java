@@ -16,8 +16,8 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.Record;
-import com.google.gwt.requestfactory.shared.RecordChangedEvent;
+import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyChangedEvent;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.Collections;
@@ -27,12 +27,12 @@ import java.util.Set;
 /**
  * Just a dummy class for testing purposes.
  */
-public class SimpleBazRecordImpl extends RecordImpl {
+public class SimpleBazProxyImpl extends ProxyImpl {
 
   /**
    * The Schema class.
    */
-  public static class MySchema extends RecordSchema<SimpleBazRecordImpl> {
+  public static class MySchema extends ProxySchema<SimpleBazProxyImpl> {
     
     private final Set<Property<?>> allProperties;
     {
@@ -42,7 +42,7 @@ public class SimpleBazRecordImpl extends RecordImpl {
     }
     
     public MySchema() {
-      super(SimpleBazRecordImpl.class.getName());
+      super(SimpleBazProxyImpl.class.getName());
     }
 
     @Override
@@ -51,27 +51,27 @@ public class SimpleBazRecordImpl extends RecordImpl {
     }
 
     @Override
-    public SimpleBazRecordImpl create(RecordJsoImpl jso, boolean isFuture) {
-      return new SimpleBazRecordImpl(jso, isFuture);
+    public SimpleBazProxyImpl create(ProxyJsoImpl jso, boolean isFuture) {
+      return new SimpleBazProxyImpl(jso, isFuture);
     }
 
     @Override
-    public RecordChangedEvent<?, ?> createChangeEvent(Record record,
+    public EntityProxyChangedEvent<?, ?> createChangeEvent(EntityProxy proxy,
         WriteOperation writeOperation) {
       // ignore
       return null;
     }
 
     @Override
-    public Class<? extends Record> getProxyClass() {
+    public Class<? extends EntityProxy> getProxyClass() {
       // ignore
       return null;
     }
   }
 
-  public static final RecordSchema<SimpleBazRecordImpl> SCHEMA = new MySchema();
+  public static final ProxySchema<SimpleBazProxyImpl> SCHEMA = new MySchema();
 
-  private SimpleBazRecordImpl(RecordJsoImpl jso, boolean isFuture) {
+  private SimpleBazProxyImpl(ProxyJsoImpl jso, boolean isFuture) {
     super(jso, isFuture);
   }
 }

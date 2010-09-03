@@ -20,9 +20,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
-import com.google.gwt.sample.expenses.client.request.ExpenseRecord;
+import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportRecord;
+import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -53,7 +53,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
   @UiField ListBox dateYear, dateMonth, dateDay;
   @UiField Element errorText;
 
-  private ExpenseRecord expense;
+  private ExpenseProxy expense;
   private final ExpensesRequestFactory requestFactory;
   private final Listener listener;
   private RequestObject<Void> requestObject;
@@ -73,10 +73,10 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
     return this;
   }
 
-  public void create(ReportRecord report) {
-    expense = requestFactory.create(ExpenseRecord.class);
+  public void create(ReportProxy report) {
+    expense = requestFactory.create(ExpenseProxy.class);
     requestObject = requestFactory.expenseRequest().persist(expense);
-    ExpenseRecord editableExpense = requestObject.edit(expense);
+    ExpenseProxy editableExpense = requestObject.edit(expense);
     editableExpense.setReport(report);
     displayExpense();
   }
@@ -102,7 +102,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
-    ExpenseRecord editableExpense = requestObject.edit(expense);
+    ExpenseProxy editableExpense = requestObject.edit(expense);
     editableExpense.setDescription(nameText.getText());
     editableExpense.setCategory(categoryText.getText());
 
@@ -144,7 +144,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
   public void onRefresh(boolean clear) {
   }
 
-  public void show(ExpenseRecord expense) {
+  public void show(ExpenseProxy expense) {
     this.expense = expense;
     displayExpense();
   }
