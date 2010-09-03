@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
 
 import java.io.Serializable;
 
@@ -23,15 +23,15 @@ import javax.validation.metadata.ConstraintDescriptor;
 
 /**
  * An implementation of {@link ConstraintViolation}.
- * 
+ *
  * @param <T> the type of bean validated.
  */
 public class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
     Serializable {
 
   /**
-   * Builder for ConstraintViolations;
-   * 
+   * Builder for ConstraintViolations.
+   *
    * @param <T> the type of bean validated.
    */
   public static class Builder<T> {
@@ -45,14 +45,8 @@ public class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
     private ConstraintDescriptor<?> constraintDescriptor;
 
     public ConstraintViolationImpl<T> build() {
-      return new ConstraintViolationImpl<T>(
-          message, 
-          messageTemplate, 
-          rootBean,
-          rootBeanClass, 
-          leafBean, 
-          propertyPath, 
-          invalidValue,
+      return new ConstraintViolationImpl<T>(message, messageTemplate, rootBean,
+          rootBeanClass, leafBean, propertyPath, invalidValue,
           constraintDescriptor);
     }
 
@@ -72,8 +66,9 @@ public class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
       return this;
     }
 
-    public void setMessage(String message) {
+    public Builder<T> setMessage(String message) {
       this.message = message;
+      return this;
     }
 
     public Builder<T> setMessageTemplate(String messageTemplate) {

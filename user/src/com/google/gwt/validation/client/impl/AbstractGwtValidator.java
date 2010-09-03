@@ -13,24 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.impl.NodeImplTest;
-import com.google.gwt.validation.client.impl.PathImplTest;
-
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import javax.validation.ValidationException;
+import javax.validation.Validator;
 
 /**
- * All validation client non GWT tests.
+ * Base methods for implementing {@link Validator} in GWT.
+ * <p>
+ * All methods that do not need to be generated go here.
  */
-public class ValidationClientJreSuite {
+public abstract class AbstractGwtValidator implements Validator {
 
-  public static Test suite() {
-    TestSuite suite = new TestSuite(
-        "Test suite for validation client code that does not require GWT.");
-    suite.addTestSuite(PathImplTest.class);
-    suite.addTestSuite(NodeImplTest.class);
-    return suite;
+  public <T> T unwrap(Class<T> type) {
+    throw new ValidationException();
   }
 }

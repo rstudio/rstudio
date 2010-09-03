@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class PathImpl implements Path, Serializable {
   /**
    * Create a new path with a node named <code>name</code> appended to the
    * existing path.
-   * 
+   *
    * @param name
    * @return The new path with appended node.
    */
@@ -58,7 +58,7 @@ public class PathImpl implements Path, Serializable {
   /**
    * Create a new path with a indexed node named <code>name</code> appended to
    * the existing path.
-   * 
+   *
    * @param name
    * @param key
    * @return The new path with appended node.
@@ -70,7 +70,7 @@ public class PathImpl implements Path, Serializable {
   /**
    * Create a new path with a keyed node named <code>name</code> appended to the
    * existing path.
-   * 
+   *
    * @param name
    * @param key
    * @return The new path with appended node.
@@ -95,7 +95,7 @@ public class PathImpl implements Path, Serializable {
   public int hashCode() {
     return nodes.hashCode();
   }
-  
+
   public Iterator<Node> iterator() {
     return nodes.iterator();
   }

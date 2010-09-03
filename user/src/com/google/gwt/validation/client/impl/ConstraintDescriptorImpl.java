@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client.metadata;
+package com.google.gwt.validation.client.impl;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -26,7 +26,7 @@ import javax.validation.metadata.ConstraintDescriptor;
 
 /**
  * A immutable GWT implementation of {@link ConstraintDescriptor}.
- * 
+ *
  * @param <T> the constraint annotation to describe.
  */
 public class ConstraintDescriptorImpl<T extends Annotation> implements
@@ -34,7 +34,7 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
 
   /**
    * Builder for {@link ConstraintDescriptorImpl}
-   * 
+   *
    * @param <T> the constraint annotation to describe.
    */
   public static class Builder<T extends Annotation> {
@@ -47,13 +47,13 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
     private boolean reportAsSingleViolation;
 
     public ConstraintDescriptorImpl<T> build() {
-      return new ConstraintDescriptorImpl<T>(
-          annotation, 
-          groups, 
-          payload,
-          constraintValidatorClasses, 
-          attributes, 
-          composingConstraints,
+      return new ConstraintDescriptorImpl<T>( //
+          annotation, //
+          groups, //
+          payload, //
+          constraintValidatorClasses, //
+          attributes, //
+          composingConstraints, //
           reportAsSingleViolation);
     }
 
@@ -107,15 +107,6 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
   private final Set<ConstraintDescriptor<?>> composingConstraints;
   private final boolean reportAsSingleViolation;
 
-  /**
-   * @param annotation
-   * @param groups
-   * @param payload
-   * @param constraintValidatorClasses
-   * @param attributes
-   * @param composingConstraints
-   * @param reportAsSingleViolation
-   */
   private ConstraintDescriptorImpl(
       T annotation,
       Set<Class<?>> groups,

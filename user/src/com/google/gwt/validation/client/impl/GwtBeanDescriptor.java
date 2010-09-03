@@ -13,24 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
+package com.google.gwt.validation.client.impl;
 
-import com.google.gwt.validation.client.impl.NodeImplTest;
-import com.google.gwt.validation.client.impl.PathImplTest;
-
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import javax.validation.metadata.BeanDescriptor;
 
 /**
- * All validation client non GWT tests.
+ * Marker interface used by GWT to generate a {@link BeanDescriptor} for a
+ * specific class T.
+ *
+ * @param <T>
  */
-public class ValidationClientJreSuite {
-
-  public static Test suite() {
-    TestSuite suite = new TestSuite(
-        "Test suite for validation client code that does not require GWT.");
-    suite.addTestSuite(PathImplTest.class);
-    suite.addTestSuite(NodeImplTest.class);
-    return suite;
-  }
+public interface GwtBeanDescriptor<T> extends BeanDescriptor {
 }

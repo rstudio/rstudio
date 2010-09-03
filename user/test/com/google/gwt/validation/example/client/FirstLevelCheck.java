@@ -13,24 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.validation.client;
-
-import com.google.gwt.validation.client.impl.NodeImplTest;
-import com.google.gwt.validation.client.impl.PathImplTest;
-
-import junit.framework.Test;
-import junit.framework.TestSuite;
+package com.google.gwt.validation.example.client;
 
 /**
- * All validation client non GWT tests.
+ * A example group for validation
  */
-public class ValidationClientJreSuite {
+public interface FirstLevelCheck {
 
-  public static Test suite() {
-    TestSuite suite = new TestSuite(
-        "Test suite for validation client code that does not require GWT.");
-    suite.addTestSuite(PathImplTest.class);
-    suite.addTestSuite(NodeImplTest.class);
-    return suite;
-  }
 }
