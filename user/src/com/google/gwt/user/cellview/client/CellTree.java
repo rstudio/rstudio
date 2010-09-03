@@ -53,12 +53,15 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
    */
   public static interface CleanResources extends Resources {
 
+    @ImageOptions(flipRtl = true)
     @Source("cellTreeClosedArrow.png")
     ImageResource cellTreeClosedItem();
 
+    @ImageOptions(flipRtl = true)
     @Source("cellTreeLoadingClean.gif")
     ImageResource cellTreeLoading();
 
+    @ImageOptions(flipRtl = true)
     @Source("cellTreeOpenArrow.png")
     ImageResource cellTreeOpenItem();
 
@@ -118,22 +121,25 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
     /**
      * An image indicating a closed branch.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource cellTreeClosedItem();
 
     /**
      * An image indicating that a node is loading.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource cellTreeLoading();
 
     /**
      * An image indicating an open branch.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource cellTreeOpenItem();
 
     /**
      * The background used for selected items.
      */
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellTreeSelectedBackground();
 
     /**
@@ -521,7 +527,6 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
         this, null, null, getElement(), rootValue);
     keyboardSelectedNode = rootNode = root;
     root.setOpen(true, false);
-    keyboardSelectedNode.keyboardEnter(0, false);
   }
 
   /**
