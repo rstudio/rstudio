@@ -27,7 +27,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
-import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
@@ -47,13 +46,12 @@ public class WebModeCompilerFrontEnd extends BasicWebModeCompiler {
 
   public static CompilationResults getCompilationUnitDeclarations(
       TreeLogger logger, String[] seedTypeNames,
-      RebindPermutationOracle rebindPermOracle, TypeLinker linker,
-      ICompilationUnit... additionalUnits) throws UnableToCompleteException {
+      RebindPermutationOracle rebindPermOracle, TypeLinker linker)
+      throws UnableToCompleteException {
     Event getCompilationUnitsEvent =
         SpeedTracerLogger.start(CompilerEventType.GET_COMPILATION_UNITS);
     CompilationResults results = new WebModeCompilerFrontEnd(rebindPermOracle,
-        linker).getCompilationUnitDeclarations(logger, seedTypeNames, 
-        additionalUnits);
+        linker).getCompilationUnitDeclarations(logger, seedTypeNames);
     getCompilationUnitsEvent.end();
     return results;
   }

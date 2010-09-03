@@ -54,7 +54,7 @@ public class UnifiedAst implements Serializable {
       return jProgram;
     }
 
-    public JsProgram getJsProgram() {
+    JsProgram getJsProgram() {
       return jsProgram;
     }
   }
