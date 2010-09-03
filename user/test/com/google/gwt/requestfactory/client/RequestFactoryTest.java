@@ -26,12 +26,60 @@ import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Tests for {@link com.google.gwt.requestfactory.shared.RequestFactory}.
  */
 public class RequestFactoryTest extends GWTTestCase {
+
+  public void testViolationPresent() {
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+
+    SimpleFooProxy newFoo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("A"); // will cause constraint violation
+
+    fooReq.fire(new Receiver<Void>() {
+      public void onSuccess(Void ignore, Set<SyncResult> syncResults) {
+        assertEquals(1, syncResults.size());
+        SyncResult syncResult = syncResults.iterator().next();
+        assertTrue(syncResult.hasViolations());
+        Map<String, String> violations = syncResult.getViolations();
+        assertEquals(1, violations.size());
+        assertEquals("size must be between 3 and 30", violations.get("userName"));
+        finishTest();
+      }
+    });
+  }
+
+  public void testViolationAbsent() {
+    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
+    HandlerManager hm = new HandlerManager(null);
+    req.init(hm);
+    delayTestFinish(5000);
+
+    SimpleFooProxy newFoo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("Amit"); // will not cause violation.
+
+    fooReq.fire(new Receiver<Void>() {
+      public void onSuccess(Void ignore, Set<SyncResult> syncResults) {
+        assertEquals(1, syncResults.size());
+        SyncResult syncResult = syncResults.iterator().next();
+        assertFalse(syncResult.hasViolations());
+        finishTest();
+      }
+    });
+  }
 
   /*
    * TODO: all these tests should check the final values. It will be easy when
@@ -204,7 +252,7 @@ public class RequestFactoryTest extends GWTTestCase {
     });
   }
 
-   public void testPersistRecursiveRelation() {
+  public void testPersistRecursiveRelation() {
     final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
     HandlerManager hm = new HandlerManager(null);
     req.init(hm);
@@ -328,8 +376,7 @@ public class RequestFactoryTest extends GWTTestCase {
             bar = helloReq.edit(bar);
             bar.setUserName("BAR");
             helloReq.fire(new Receiver<String>() {
-              public void onSuccess(String response,
-                  Set<SyncResult> syncResults) {
+              public void onSuccess(String response, Set<SyncResult> syncResults) {
                 assertEquals("Greetings BAR from GWT", response);
                 finishTest();
               }
@@ -339,8 +386,8 @@ public class RequestFactoryTest extends GWTTestCase {
   }
 
   /*
-   * tests that (a) any method can have a side effect that is handled correctly. (b)
-   * instance methods are handled correctly.
+   * tests that (a) any method can have a side effect that is handled correctly.
+   * (b) instance methods are handled correctly.
    */
   public void testMethodWithSideEffects() {
     final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
