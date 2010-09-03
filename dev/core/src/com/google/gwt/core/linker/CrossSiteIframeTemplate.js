@@ -56,24 +56,20 @@ function __MODULE_FUNC__() {
 
   ; // end of global vars
 
-  $stats && $stats({
-    moduleName: '__MODULE_NAME__',
-    sessionId: $sessionId,
-    subSystem: 'startup',
-    evtGroup: 'bootstrap', 
-    millis:(new Date()).getTime(), 
-    type: 'begin',
-  });
-
-  // ------------------ TRUE GLOBALS ------------------
-
-  // Maps to synchronize the loading of styles and scripts; resources are loaded
-  // only once, even when multiple modules depend on them.  This API must not
-  // change across GWT versions.
-  if (!$wnd.__gwt_stylesLoaded) { $wnd.__gwt_stylesLoaded = {}; }
-  if (!$wnd.__gwt_scriptsLoaded) { $wnd.__gwt_scriptsLoaded = {}; }
+  sendStats('bootstrap', 'begin');
 
   // --------------- INTERNAL FUNCTIONS ---------------
+  
+  function sendStats(evtGroupString, typeString) {
+    $stats && $stats({
+      moduleName: '__MODULE_NAME__',
+      sessionId: $sessionId,
+      subSystem: 'startup',
+      evtGroup: evtGroupString,
+      millis:(new Date()).getTime(),
+      type: typeString,
+    });
+  }
 
   function isHostedMode() {
     var result = false;
@@ -147,6 +143,53 @@ function __MODULE_FUNC__() {
     // Remove the tags to shrink the DOM a little.
     // It should have installed its code immediately after being added.
     docbody.removeChild(script);
+  }
+
+  // Setup code so that maybeCreateFrame() is called once the body is loaded
+  function setupWaitForBodyLoad() {
+    function isBodyLoaded() {
+      return (/loaded|complete/.test($doc.readyState));
+    }
+
+    if (isBodyLoaded()) {
+      // If this script is being added to an already loaded page, then just set
+      // the variable to true.
+      bodyDone = true;
+      // maybeCreateFrame will not do anything since we know the compiled script
+      // has not yet been downloaded, so we don't need to call it here like we
+      // do when bodyDone becomes true after a callback or timer.
+    }
+
+    // If the page is not already loaded, setup some listeners and timers to
+    // detect when it is done.
+    var onBodyDoneTimerId;
+    function onBodyDone() {
+      if (!bodyDone) {
+        bodyDone = true;
+        maybeCreateFrame();
+
+        if ($doc.removeEventListener) {
+          $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
+        }
+        if (onBodyDoneTimerId) {
+          clearInterval(onBodyDoneTimerId);
+        }
+      }
+    }
+
+    // For everyone that supports DOMContentLoaded.
+    if ($doc.addEventListener) {
+      $doc.addEventListener("DOMContentLoaded", function() {
+        onBodyDone();
+      }, false);
+    }
+
+    // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
+    var onBodyDoneTimerId = setInterval(function() {
+      if (isBodyLoaded()) {
+        onBodyDone();
+      }
+    }, 50);
   }
 
   __PROCESS_METAS__
@@ -227,20 +270,13 @@ function __MODULE_FUNC__() {
     }
     gwtOnLoadFunc(onLoadErrorFunc, '__MODULE_NAME__', base, softPermutationId);
     // Record when the module EntryPoints return.
-    $stats && $stats({
-      moduleName: '__MODULE_NAME__',
-      sessionId: $sessionId,
-      subSystem: 'startup',
-      evtGroup: 'moduleStartup',
-      millis:(new Date()).getTime(),
-      type: 'end',
-    });
+    sendStats('moduleStartup', 'end');
   }
   
   // Install code pulled in via runAsync
   //
   __MODULE_FUNC__.installCode = installCode;
-
+  
   // --------------- STRAIGHT-LINE CODE ---------------
 
   // do it early for compile/browse rebasing
@@ -249,14 +285,7 @@ function __MODULE_FUNC__() {
 
   // --------------- WINDOW ONLOAD HOOK ---------------
 
-  $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
-    sessionId: $sessionId,
-    subSystem:'startup', 
-    evtGroup: 'bootstrap', 
-    millis:(new Date()).getTime(), 
-    type: 'selectingPermutation'
-  });
+  sendStats('bootstrap', 'selectingPermutation');
 
   var strongName;
   if (!isHostedMode()) {
@@ -274,84 +303,19 @@ function __MODULE_FUNC__() {
       return;
     }
   }
+  
+  setupWaitForBodyLoad();
 
-  var onBodyDoneTimerId;
-  function onBodyDone() {
-    if (!bodyDone) {
-      bodyDone = true;
-// __MODULE_STYLES_BEGIN__
-     // Style resources are injected here to prevent operation aborted errors on ie
-// __MODULE_STYLES_END__
-      maybeCreateFrame();
+  sendStats('bootstrap', 'end');
+  sendStats('moduleStartup', 'moduleRequested');
 
-      if ($doc.removeEventListener) {
-        $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
-      }
-      if (onBodyDoneTimerId) {
-        clearInterval(onBodyDoneTimerId);
-      }
-    }
-  }
-
-  // For everyone that supports DOMContentLoaded.
-  if ($doc.addEventListener) {
-    $doc.addEventListener("DOMContentLoaded", function() {
-      onBodyDone();
-    }, false);
-  }
-
-  // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
-  var onBodyDoneTimerId = setInterval(function() {
-    if (/loaded|complete/.test($doc.readyState)) {
-      onBodyDone();
-    }
-  }, 50);
-
-  $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
-    sessionId: $sessionId,
-    subSystem:'startup', 
-    evtGroup: 'bootstrap', 
-    millis:(new Date()).getTime(), 
-    type: 'end'
-  });
-
-  $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
-    sessionId: $sessionId,
-    subSystem:'startup', 
-    evtGroup: 'loadExternalRefs', 
-    millis:(new Date()).getTime(), 
-    type: 'begin'
-  });
-
-// __MODULE_SCRIPTS_BEGIN__
-  // Script resources are injected here
-// __MODULE_SCRIPTS_END__
-  // This is a bit ugly, but serves a purpose. We need to ensure that the stats
-  // script runs before the compiled script. If they are both doc.write()n in
-  // sequence, that should be the effect. Except on IE it turns out that a
-  // script injected via doc.write() can execute immediately! Adding 'defer'
-  // attributes to both seemed to fix this, but caused startup problems for
-  // some apps. The final solution was simply to inject the compiled script
-  // from *within* the stats script, guaranteeing order at the expense of near
-  // total inscrutability :(
-  var compiledScriptWrite = '';
   if (!isHostedMode()) {
-    compiledScriptWrite = 'document.write("<script src=\\"' + base + strongName + '.cache.js\\"></scr" + "ipt>");';
+    var script = document.createElement('script');
+    script.src = base + strongName + '.cache.js;'
+    $doc.getElementsByTagName('head')[0].appendChild(script);
+  } else {
+	maybeCreateFrame();  
   }
-
-  $doc.write('<scr' + 'ipt><!-' + '-\n'
-    + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:"__MODULE_NAME__", sessionId:window.__gwtStatsSessionId, subSystem:"startup",'
-    + 'evtGroup: "loadExternalRefs", millis:(new Date()).getTime(),'
-    + 'type: "end"});'
-    + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:"__MODULE_NAME__", sessionId:window.__gwtStatsSessionId, subSystem:"startup",'
-    + 'evtGroup: "moduleStartup", millis:(new Date()).getTime(),'
-    + 'type: "moduleRequested"});'
-    + compiledScriptWrite
-    + '\n-' + '-></scr' + 'ipt>');
 }
 
 __MODULE_FUNC__();
