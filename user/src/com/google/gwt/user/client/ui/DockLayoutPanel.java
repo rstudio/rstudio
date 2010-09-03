@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.layout.client.Layout;
 import com.google.gwt.layout.client.Layout.Layer;
 
@@ -126,7 +127,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
   /**
    * Creates an empty dock panel.
-   * 
+   *
    * @param unit the unit to be used for layout
    */
   public DockLayoutPanel(Unit unit) {
@@ -140,7 +141,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Adds a widget at the center of the dock. No further widgets may be added
    * after this one.
-   * 
+   *
    * @param widget the widget to be added
    */
   @Override
@@ -150,7 +151,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
   /**
    * Adds a widget to the east edge of the dock.
-   * 
+   *
    * @param widget the widget to be added
    * @param size the child widget's size
    */
@@ -159,8 +160,30 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   /**
+   * Adds a widget to the end of the line. In LTR mode, the widget is added to
+   * the east. In RTL mode, the widget is added to the west.
+   *
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   */
+  public void addLineEnd(Widget widget, double size) {
+    insert(widget, Direction.LINE_END, size, null);
+  }
+
+  /**
+   * Adds a widget to the start of the line. In LTR mode, the widget is added to
+   * the west. In RTL mode, the widget is added to the east.
+   *
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   */
+  public void addLineStart(Widget widget, double size) {
+    insert(widget, Direction.LINE_START, size, null);
+  }
+
+  /**
    * Adds a widget to the north edge of the dock.
-   * 
+   *
    * @param widget the widget to be added
    * @param size the child widget's size
    */
@@ -170,7 +193,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
   /**
    * Adds a widget to the south edge of the dock.
-   * 
+   *
    * @param widget the widget to be added
    * @param size the child widget's size
    */
@@ -180,7 +203,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
   /**
    * Adds a widget to the west edge of the dock.
-   * 
+   *
    * @param widget the widget to be added
    * @param size the child widget's size
    */
@@ -205,7 +228,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
   /**
    * Gets the container element wrapping the given child widget.
-   * 
+   *
    * @param child
    * @return the widget's container element
    */
@@ -216,7 +239,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
   /**
    * Gets the layout direction of the given child widget.
-   * 
+   *
    * @param child the widget to be queried
    * @return the widget's layout direction, or <code>null</code> if it is not a
    *         child of this panel
@@ -232,7 +255,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Adds a widget to the east edge of the dock, inserting it before an existing
    * widget.
-   * 
+   *
    * @param widget the widget to be added
    * @param size the child widget's size
    * @param before the widget before which to insert the new child, or
@@ -243,9 +266,37 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   /**
+   * Adds a widget to the start of the line, inserting it before an existing
+   * widget. In LTR mode, the widget is added to the east. In RTL mode, the
+   * widget is added to the west.
+   *
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   * @param before the widget before which to insert the new child, or
+   *          <code>null</code> to append
+   */
+  public void insertLineEnd(Widget widget, double size, Widget before) {
+    insert(widget, Direction.LINE_END, size, before);
+  }
+
+  /**
+   * Adds a widget to the end of the line, inserting it before an existing
+   * widget. In LTR mode, the widget is added to the west. In RTL mode, the
+   * widget is added to the east.
+   *
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   * @param before the widget before which to insert the new child, or
+   *          <code>null</code> to append
+   */
+  public void insertLineStart(Widget widget, double size, Widget before) {
+    insert(widget, Direction.LINE_START, size, before);
+  }
+
+  /**
    * Adds a widget to the north edge of the dock, inserting it before an
    * existing widget.
-   * 
+   *
    * @param widget the widget to be added
    * @param size the child widget's size
    * @param before the widget before which to insert the new child, or
@@ -258,7 +309,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Adds a widget to the south edge of the dock, inserting it before an
    * existing widget.
-   * 
+   *
    * @param widget the widget to be added
    * @param size the child widget's size
    * @param before the widget before which to insert the new child, or
@@ -271,7 +322,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   /**
    * Adds a widget to the west edge of the dock, inserting it before an existing
    * widget.
-   * 
+   *
    * @param widget the widget to be added
    * @param size the child widget's size
    * @param before the widget before which to insert the new child, or
@@ -304,7 +355,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
     return removed;
   }
-  
+
   /**
    * Updates the size of the widget passed in as long as it is not the center
    * widget and updates the layout of the dock.
@@ -329,6 +380,27 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
     return center;
   }
 
+  /**
+   * Resolve the specified direction based on the current locale. If the
+   * direction is {@link Direction#LINE_START} or {@link Direction#LINE_END},
+   * the return value will be one of {@link Direction#EAST} or
+   * {@link Direction#WEST} depending on the RTL mode of the locale. For all
+   * other directions, the specified value is returned.
+   *
+   * @param direction the specified direction
+   * @return the locale
+   */
+  protected Direction getResolvedDirection(Direction direction) {
+    if (direction == Direction.LINE_START) {
+      return LocaleInfo.getCurrentLocale().isRTL()
+          ? Direction.EAST : Direction.WEST;
+    } else if (direction == Direction.LINE_END) {
+      return LocaleInfo.getCurrentLocale().isRTL()
+          ? Direction.WEST : Direction.EAST;
+    }
+    return direction;
+  }
+
   protected Unit getUnit() {
     return unit;
   }
@@ -337,7 +409,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
    * Adds a widget to the specified edge of the dock. If the widget is already a
    * child of this panel, this method behaves as though {@link #remove(Widget)}
    * had already been called.
-   * 
+   *
    * @param widget the widget to be added
    * @param direction the widget's direction in the dock
    * @param before the widget before which to insert the new child, or
@@ -398,13 +470,16 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   private void doLayout() {
-    double left = 0, top = 0, right = 0, bottom = 0;
+    double left = 0;
+    double top = 0;
+    double right = 0;
+    double bottom = 0;
 
     for (Widget child : getChildren()) {
       LayoutData data = (LayoutData) child.getLayoutData();
       Layer layer = data.layer;
 
-      switch (data.direction) {
+      switch (getResolvedDirection(data.direction)) {
         case NORTH:
           layer.setLeftRight(left, unit, right, unit);
           layer.setTopHeight(top, unit, data.size, unit);

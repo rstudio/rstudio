@@ -790,11 +790,7 @@ public class CellBrowser extends AbstractCellTree
 
     // Add the view to the LayoutPanel.
     SplitLayoutPanel splitPanel = getSplitLayoutPanel();
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      splitPanel.insertEast(scrollable, defaultWidth, null);
-    } else {
-      splitPanel.insertWest(scrollable, defaultWidth, null);
-    }
+    splitPanel.insertLineStart(scrollable, defaultWidth, null);
     splitPanel.setWidgetMinSize(scrollable, minWidth);
     splitPanel.forceLayout();
 

@@ -18,7 +18,7 @@ package com.google.gwt.user.client.ui;
 /**
  * Tests for {@link SplitLayoutPanel}.
  */
-public class SplitLayoutPanelTest extends WidgetTestBase {
+public class SplitLayoutPanelTest extends DockLayoutPanelTest {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
     public void addChild(HasWidgets container, Widget child) {
@@ -131,5 +131,10 @@ public class SplitLayoutPanelTest extends WidgetTestBase {
     assertEquals(2, children.size());
     assertEquals(l0, children.get(0));
     assertEquals(splitter0, children.get(1));
+  }
+  
+  @Override
+  protected DockLayoutPanel createDockLayoutPanel() {
+    return new SplitLayoutPanel();
   }
 }

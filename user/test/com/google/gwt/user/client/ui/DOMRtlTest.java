@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
@@ -40,6 +39,9 @@ public class DOMRtlTest extends GWTTestCase {
    */
   @DoNotRunWith({Platform.HtmlUnitBug})
   public void testGetAbsolutePositionWhenScrolled() {
+    // Force the document body into RTL mode.
+    RootPanel.get();
+
     assertTrue(LocaleInfo.getCurrentLocale().isRTL());
     final Element outer = DOM.createDiv();
     final Element inner = DOM.createDiv();
@@ -58,14 +60,19 @@ public class DOMRtlTest extends GWTTestCase {
     inner.getStyle().setPropertyPx("height", 300);
     outer.appendChild(inner);
     inner.setInnerText(":-)");
+    int absLeftStart = inner.getAbsoluteLeft();
 
-    // Check the position when scrolled
-    outer.setScrollLeft(50);
-    assertEquals(outer.getScrollLeft(), 50);
-    int absLeft = inner.getAbsoluteLeft() - Document.get().getBodyOffsetLeft();
-    // TODO (jlabanca): FF2 incorrectly reports the absolute left as 49.  When
-    // we drop FF2 support, the only valid return value is 50.
-    assertTrue(50 == absLeft || 49 == absLeft);
+    // Check the position when scrolled. In RTL mode, the absolute position of
+    // the inner element depends on the position of the scrollbar of the outer
+    // element. Some browsers render the scrollbar on the right even in RTL
+    // mode, which pushes the inner element about 15 pixels to the left. In
+    // order to work around this ambiguity, we compare the old scroll
+    // position to the new scroll position, but do not assume the absolute
+    // position.
+    outer.setScrollLeft(-50);
+    assertEquals(outer.getScrollLeft(), -50);
+    int absLeftScrolled = inner.getAbsoluteLeft();
+    assertEquals(50, absLeftScrolled - absLeftStart);
 
     // Cleanup test
     RootPanel.getBodyElement().removeChild(outer);

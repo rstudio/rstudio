@@ -45,6 +45,8 @@ import com.google.gwt.user.client.ui.DefaultSuggestionDisplayTest;
 import com.google.gwt.user.client.ui.DelegatingKeyboardListenerCollectionTest;
 import com.google.gwt.user.client.ui.DialogBoxTest;
 import com.google.gwt.user.client.ui.DisclosurePanelTest;
+import com.google.gwt.user.client.ui.DockLayoutPanelRtlTest;
+import com.google.gwt.user.client.ui.DockLayoutPanelTest;
 import com.google.gwt.user.client.ui.DockPanelTest;
 import com.google.gwt.user.client.ui.ElementWrappingTest;
 import com.google.gwt.user.client.ui.FastStringMapTest;
@@ -136,6 +138,8 @@ public class UISuite {
     suite.addTestSuite(DelegatingKeyboardListenerCollectionTest.class);
     suite.addTestSuite(DialogBoxTest.class);
     suite.addTestSuite(DisclosurePanelTest.class);
+    suite.addTestSuite(DockLayoutPanelRtlTest.class);
+    suite.addTestSuite(DockLayoutPanelTest.class);
     suite.addTestSuite(DockPanelTest.class);
     suite.addTestSuite(DOMTest.class);
     suite.addTestSuite(DOMRtlTest.class);

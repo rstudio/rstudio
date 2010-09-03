@@ -56,6 +56,8 @@ public class DockLayoutPanelParser implements ElementParser {
     DOCK_NAMES.put("south", "addSouth");
     DOCK_NAMES.put("east", "addEast");
     DOCK_NAMES.put("west", "addWest");
+    DOCK_NAMES.put("lineStart", "addLineStart");
+    DOCK_NAMES.put("lineEnd", "addLineEnd");
     DOCK_NAMES.put("center", "add");
   }
 

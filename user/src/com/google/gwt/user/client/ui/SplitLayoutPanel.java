@@ -274,7 +274,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     LayoutData layout = (LayoutData) widget.getLayoutData();
     Splitter splitter = null;
-    switch (layout.direction) {
+    switch (getResolvedDirection(layout.direction)) {
       case WEST:
         splitter = new HSplitter(widget, false);
         break;
