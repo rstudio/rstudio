@@ -333,20 +333,13 @@ $stats && $stats({moduleName:$moduleName, sessionId:$sessionId, subSystem:'start
 
 doBrowserSpecificFixes();
 
+// DevMode currently only supports iframe based linkers
+var query = parent.location.search;
 if (!findPluginXPCOM()) {
-  var embed = document.createElement('embed');
-  embed.id = 'pluginEmbed';
-  embed.type = 'application/x-gwt-hosted-mode';
-  embed.width = '10';
-  embed.height = '20';
-
-  var obj = document.createElement('object');
-  obj.id = 'pluginObject';
-  obj.CLASSID = 'CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E';
-
-  var dochead = doc.getElementsByTagName('head')[0];
-  dochead.append(embed);
-  dochead.append(obj);
+  document.write('<embed id="pluginEmbed" type="application/x-gwt-hosted-mode" width="10" height="10">');
+  document.write('</embed>');
+  document.write('<object id="pluginObject" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E">');
+  document.write('</object>');
 }
 
 setTimeout(function() { $wnd[$moduleName].onScriptInstalled(gwtOnLoad) }, 1);
