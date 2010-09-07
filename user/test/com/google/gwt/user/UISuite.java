@@ -20,6 +20,7 @@ import com.google.gwt.layout.client.LayoutTest;
 import com.google.gwt.user.client.AsyncProxyTest;
 import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
+import com.google.gwt.user.client.DoubleClickEventSinkTest;
 import com.google.gwt.user.client.EventTest;
 import com.google.gwt.user.client.HistoryDisabledTest;
 import com.google.gwt.user.client.WindowTest;
@@ -141,6 +142,7 @@ public class UISuite {
     suite.addTestSuite(DockLayoutPanelRtlTest.class);
     suite.addTestSuite(DockLayoutPanelTest.class);
     suite.addTestSuite(DockPanelTest.class);
+    suite.addTestSuite(DoubleClickEventSinkTest.class);
     suite.addTestSuite(DOMTest.class);
     suite.addTestSuite(DOMRtlTest.class);
     suite.addTestSuite(ElementWrappingTest.class);

@@ -125,7 +125,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
       image.replaceElement(impl.createStructure(url, left, top, width, height));
       // Todo(ecc) This is wrong, we should not be sinking these here on such a
       // common widget.After the branch is stable, this should be fixed.
-      image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL
+      image.sinkEvents(Event.ONCLICK | Event.ONDBLCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL
           | Event.ONLOAD);
     }
 
@@ -282,7 +282,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     UnclippedState(Element element) {
       // This case is relatively unusual, in that we swapped a clipped image
       // out, so does not need to be efficient.
-      Event.sinkEvents(element, Event.ONCLICK | Event.MOUSEEVENTS
+      Event.sinkEvents(element, Event.ONCLICK | Event.ONDBLCLICK | Event.MOUSEEVENTS
           | Event.ONLOAD | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
 
@@ -294,7 +294,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
       Event.sinkEvents(image.getElement(), Event.ONLOAD);
 
       // Todo(ecc) this could be more efficient overall.
-      image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONLOAD
+      image.sinkEvents(Event.ONCLICK | Event.ONDBLCLICK | Event.MOUSEEVENTS | Event.ONLOAD
           | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
 

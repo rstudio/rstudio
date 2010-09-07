@@ -725,7 +725,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   }
 
   public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
-    return addHandler(handler, DoubleClickEvent.getType());
+    return addDomHandler(handler, DoubleClickEvent.getType());
   }
 
   /**
