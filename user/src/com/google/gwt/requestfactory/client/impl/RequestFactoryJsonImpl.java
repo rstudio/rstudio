@@ -64,7 +64,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private EventBus eventBus;
 
-  public <R extends EntityProxy> R create(Class<R> token,
+  public <R extends ProxyImpl> R create(Class<R> token,
       ProxyToTypeMap recordToTypeMap) {
 
     ProxySchema<R> schema = recordToTypeMap.getType(token);
@@ -167,7 +167,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       return null;
     }
 
-    return schema.create(ProxyJsoImpl.create(id, -1, schema));
+    return schema.create(ProxyJsoImpl.create(id, -1, schema, this));
   }
 
   protected String getToken(EntityProxy record, ProxyToTypeMap recordToTypeMap) {
@@ -196,10 +196,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         op));
   }
 
-  private <R extends EntityProxy> R createFuture(ProxySchema<R> schema) {
+  private <R extends ProxyImpl> R createFuture(ProxySchema<R> schema) {
     Long futureId = ++currentFutureId;
     ProxyJsoImpl newRecord = ProxyJsoImpl.create(futureId, INITIAL_VERSION,
-        schema);
+        schema, this);
     return schema.create(newRecord, IS_FUTURE);
   }
 

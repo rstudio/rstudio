@@ -145,16 +145,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private Map<EntityKey, SerializedEntity> beforeDataMap = new HashMap<EntityKey, SerializedEntity>();
   private Map<EntityKey, EntityData> afterDvsDataMap = new HashMap<EntityKey, EntityData>();
 
-  public Collection<Property<?>> allProperties(Class<? extends EntityProxy> clazz) {
+  public Collection<Property<?>> allProperties(Class<? extends EntityProxy> clazz) throws IllegalArgumentException, IllegalAccessException {
     Set<Property<?>> rtn = new HashSet<Property<?>>();
     for (Field f : clazz.getFields()) {
       if (Modifier.isStatic(f.getModifiers())
           && Property.class.isAssignableFrom(f.getType())) {
-        try {
-          rtn.add((Property<?>) f.get(null));
-        } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-        }
+        rtn.add((Property<?>) f.get(null));
       }
     }
     return rtn;
@@ -182,9 +178,15 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Encodes parameter value.
+   * @throws InstantiationException 
+   * @throws NoSuchMethodException 
+   * @throws InvocationTargetException 
+   * @throws IllegalAccessException 
+   * @throws JSONException 
+   * @throws SecurityException 
    */
   public Object decodeParameterValue(Type genericParameterType,
-      String parameterValue) {
+      String parameterValue) throws SecurityException, JSONException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
     Class<?>parameterType = null;
     if (genericParameterType instanceof Class<?>) {
       parameterType = (Class<?>) genericParameterType;
@@ -229,35 +231,23 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       return new BigDecimal(parameterValue);
     }
     if (parameterType.isEnum()) {
-      try {
-        int ordinal = Integer.parseInt(parameterValue);
-        Method valuesMethod = parameterType.getDeclaredMethod("values",
-            new Class[0]);
+      int ordinal = Integer.parseInt(parameterValue);
+      Method valuesMethod = parameterType.getDeclaredMethod("values",
+          new Class[0]);
 
-        if (valuesMethod != null) {
-          valuesMethod.setAccessible(true);
-          Enum<?>[] values = (Enum<?>[]) valuesMethod.invoke(null);
-          // we use ordinal serialization instead of name since future compiler
-          // opts may remove names
-          for (Enum<?> e : values) {
-            if (ordinal == e.ordinal()) {
-              return e;
-            }
+      if (valuesMethod != null) {
+        valuesMethod.setAccessible(true);
+        Enum<?>[] values = (Enum<?>[]) valuesMethod.invoke(null);
+        // we use ordinal serialization instead of name since future compiler
+        // opts may remove names
+        for (Enum<?> e : values) {
+          if (ordinal == e.ordinal()) {
+            return e;
           }
         }
-        throw new IllegalArgumentException(
-            "Can't decode enum " + parameterType + " no matching ordinal "
-                + ordinal);
-      } catch (NoSuchMethodException e) {
-        throw new IllegalArgumentException(
-            "Can't decode enum " + parameterType);
-      } catch (InvocationTargetException e) {
-        throw new IllegalArgumentException(
-            "Can't decode enum " + parameterType);
-      } catch (IllegalAccessException e) {
-        throw new IllegalArgumentException(
-            "Can't decode enum " + parameterType);
       }
+      throw new IllegalArgumentException("Can't decode enum " + parameterType
+          + " no matching ordinal " + ordinal);
     }
     if (Date.class == parameterType) {
       return new Date(Long.parseLong(parameterValue));
@@ -275,7 +265,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         EntityKey entityKey = getEntityKey(parameterValue.toString());
 
         DvsData dvsData = dvsDataMap.get(entityKey);
-        try {
           if (dvsData != null) {
             EntityData entityData = getEntityDataForRecord(entityKey,
                 dvsData.jsonObject, dvsData.writeOperation);
@@ -286,15 +275,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
                 Long.class);
             return findMeth.invoke(null, entityKey.id);
           }
-        } catch (NoSuchMethodException e) {
-          throw new IllegalArgumentException(
-              "No such method " + getMethodNameFromPropertyName(
-                  sClass.getSimpleName(), "find"), e);
-        } catch (InvocationTargetException e) {
-          throw new IllegalArgumentException("Can't invoke method", e);
-        } catch (IllegalAccessException e) {
-          throw new IllegalArgumentException("Can't invoke method", e);
-        }
       }
     }
     throw new IllegalArgumentException(
@@ -369,11 +349,16 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * Returns the entityData for a record in the DeltaValueStore.
    * <p>
    * A <i>set</i> might have side-effects, but we don't handle that.
+   * @throws JSONException 
+   * @throws NoSuchMethodException 
+   * @throws InvocationTargetException 
+   * @throws IllegalAccessException 
+   * @throws SecurityException 
+   * @throws InstantiationException 
    */
   public EntityData getEntityDataForRecord(EntityKey entityKey,
-      JSONObject recordObject, WriteOperation writeOperation) {
+      JSONObject recordObject, WriteOperation writeOperation) throws JSONException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
 
-    try {
       Class<?> entity = getEntityFromRecordAnnotation(entityKey.record);
 
       Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(entityKey.record);
@@ -440,11 +425,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       }
       return new EntityData(entityInstance, (violations.isEmpty() ? null
           : getViolationsAsJson(violations)));
-    } catch (Exception ex) {
-      log.severe(String.format("Caught exception [%s] %s",
-          ex.getClass().getName(), ex.getLocalizedMessage()));
-      return getEntityDataForException(ex);
-    }
   }
 
   @SuppressWarnings("unchecked")
@@ -461,7 +441,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   public Object getEntityInstance(WriteOperation writeOperation,
       Class<?> entity, Object idValue, Class<?> idType)
       throws SecurityException, InstantiationException, IllegalAccessException,
-      InvocationTargetException, NoSuchMethodException {
+      InvocationTargetException, NoSuchMethodException, IllegalArgumentException, JSONException {
 
     if (writeOperation == WriteOperation.CREATE) {
       return entity.getConstructor().newInstance();
@@ -533,9 +513,15 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Returns Object[0][0] as the entityKey corresponding to the object instance
    * or null if it is a static method. Returns Object[1] as the params array.
+   * @throws InstantiationException 
+   * @throws NoSuchMethodException 
+   * @throws InvocationTargetException 
+   * @throws IllegalAccessException 
+   * @throws JSONException 
+   * @throws SecurityException 
    */
   public Object[][] getObjectsFromParameterMap(boolean isInstanceMethod,
-      Map<String, String> parameterMap, Type parameterClasses[]) {
+      Map<String, String> parameterMap, Type parameterClasses[]) throws SecurityException, JSONException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
     // TODO: create an EntityMethodCall (instance, args) instead.
     assert parameterClasses != null;
     Object args[][] = new Object[2][];
@@ -605,9 +591,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Returns the property value, in the specified type, from the request object.
    * The value is put in the DataStore.
+   * @throws InstantiationException 
+   * @throws NoSuchMethodException 
+   * @throws InvocationTargetException 
+   * @throws IllegalAccessException 
+   * @throws SecurityException 
    */
   public Object getPropertyValueFromRequest(JSONObject recordObject, String key,
-      Class<?> propertyType) throws JSONException {
+      Class<?> propertyType) throws JSONException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
     return decodeParameterValue(propertyType, recordObject.get(key).toString());
   }
 
@@ -644,7 +635,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public JSONObject processJsonRequest(String jsonRequestString)
       throws JSONException, NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException, ClassNotFoundException {
+      InvocationTargetException, ClassNotFoundException, SecurityException, InstantiationException {
     RequestDefinition operation;
     JSONObject topLevelJsonObject = new JSONObject(jsonRequestString);
 
@@ -741,7 +732,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * 
    * @throws JSONException
    */
-  boolean hasChanged(JSONObject before, JSONObject after) {
+  boolean hasChanged(JSONObject before, JSONObject after) throws JSONException {
     if (before == null) {
       return after != null;
     }
@@ -749,30 +740,24 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (after == null) {
       return true;
     }
-    try {
-      // before != null && after != null
-      Iterator<?> keyIterator = before.keys();
-      while (keyIterator.hasNext()) {
-        String key = keyIterator.next().toString();
-        Object beforeValue = before.get(key);
-        Object afterValue = after.get(key);
-        if (beforeValue == null) {
-          if (afterValue == null) {
-            continue;
-          }
-          return true;
-        }
+    // before != null && after != null
+    Iterator<?> keyIterator = before.keys();
+    while (keyIterator.hasNext()) {
+      String key = keyIterator.next().toString();
+      Object beforeValue = before.get(key);
+      Object afterValue = after.get(key);
+      if (beforeValue == null) {
         if (afterValue == null) {
-          return true;
+          continue;
         }
-        if (!beforeValue.equals(afterValue)) {
-          return true;
-        }
+        return true;
       }
-    } catch (JSONException ex) {
-      log.warning("Encountered a JSONException " + ex.getMessage()
-          + " in getChanged");
-      return false;
+      if (afterValue == null) {
+        return true;
+      }
+      if (!beforeValue.equals(afterValue)) {
+        return true;
+      }
     }
     return false;
   }
@@ -792,10 +777,15 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   /**
+   * @throws InstantiationException 
+   * @throws NoSuchMethodException 
+   * @throws InvocationTargetException 
+   * @throws IllegalAccessException 
+   * @throws SecurityException 
    * @throws JSONException 
    * 
    */
-  private void constructAfterDvsDataMap() {
+  private void constructAfterDvsDataMap() throws SecurityException, JSONException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
     afterDvsDataMap = new HashMap<EntityKey, EntityData>();
     for (EntityKey entityKey : involvedKeys) {
       // use the beforeDataMap and dvsDataMap
@@ -839,39 +829,36 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Decode deltaValueStore to populate involvedKeys and dvsDataMap.
+   * @throws JSONException 
    */
-  private void decodeDVS(String content) throws SecurityException {
-    try {
-      JSONObject jsonObject = new JSONObject(content);
-      for (WriteOperation writeOperation : WriteOperation.values()) {
-        if (!jsonObject.has(writeOperation.name())) {
-          continue;
-        }
-        JSONArray reportArray = new JSONArray(
-            jsonObject.getString(writeOperation.name()));
-        int length = reportArray.length();
-        if (length == 0) {
-          throw new IllegalArgumentException("No json array for "
-              + writeOperation.name() + " should have been sent");
-        }
-        for (int i = 0; i < length; i++) {
-          JSONObject recordWithSchema = reportArray.getJSONObject(i);
-          Iterator<?> iterator = recordWithSchema.keys();
-          String recordToken = (String) iterator.next();
-          if (iterator.hasNext()) {
-            throw new IllegalArgumentException(
-                "There cannot be more than one record token");
-          }
-          JSONObject recordObject = recordWithSchema.getJSONObject(recordToken);
-          Class<? extends EntityProxy> record = getRecordFromClassToken(recordToken);
-          EntityKey entityKey = new EntityKey(recordObject.getLong("id"),
-              (writeOperation == WriteOperation.CREATE), record);
-          involvedKeys.add(entityKey);
-          dvsDataMap.put(entityKey, new DvsData(recordObject, writeOperation));
-        }
+  private void decodeDVS(String content) throws SecurityException, JSONException {
+    JSONObject jsonObject = new JSONObject(content);
+    for (WriteOperation writeOperation : WriteOperation.values()) {
+      if (!jsonObject.has(writeOperation.name())) {
+        continue;
       }
-    } catch (JSONException e) {
-      throw new IllegalArgumentException("sync failed: ", e);
+      JSONArray reportArray = new JSONArray(
+          jsonObject.getString(writeOperation.name()));
+      int length = reportArray.length();
+      if (length == 0) {
+        throw new IllegalArgumentException("No json array for "
+            + writeOperation.name() + " should have been sent");
+      }
+      for (int i = 0; i < length; i++) {
+        JSONObject recordWithSchema = reportArray.getJSONObject(i);
+        Iterator<?> iterator = recordWithSchema.keys();
+        String recordToken = (String) iterator.next();
+        if (iterator.hasNext()) {
+          throw new IllegalArgumentException(
+              "There cannot be more than one record token");
+        }
+        JSONObject recordObject = recordWithSchema.getJSONObject(recordToken);
+        Class<? extends EntityProxy> record = getRecordFromClassToken(recordToken);
+        EntityKey entityKey = new EntityKey(recordObject.getLong("id"),
+            (writeOperation == WriteOperation.CREATE), record);
+        involvedKeys.add(entityKey);
+        dvsDataMap.put(entityKey, new DvsData(recordObject, writeOperation));
+      }
     }
   }
 
@@ -882,7 +869,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (entityData.entityInstance == null) {
       return null;
     }
-    
+
     Class<?> entityClass = getEntityFromRecordAnnotation(entityKey.record);
     // TODO: merge this lookup code with other uses.
     Object entityInstance = entityClass.getMethod(
@@ -929,24 +916,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         encodePropertyValueFromDataStore(entityInstance, Integer.class,
             "version", propertyRefs));
     return returnObject;
-  }
-
-  private EntityData getEntityDataForException(Exception ex) {
-
-    JSONObject violations = null;
-    try {
-      // expecting violations to be a JSON object.
-      violations = new JSONObject();
-      if (ex instanceof NumberFormatException) {
-        violations.put("Expected a number instead of String", ex.getMessage());
-      } else {
-        violations.put("", "unexpected server error");
-      }
-    } catch (JSONException e) {
-      // ignore.
-      e.printStackTrace();
-    }
-    return new EntityData(null, violations);
   }
 
   /**

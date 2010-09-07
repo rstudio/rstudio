@@ -26,13 +26,13 @@ import junit.framework.TestCase;
  */
 public class EntityProxyIdTest extends TestCase {
 
-  static class Schema1 extends ProxySchema<EntityProxy> {
+  static class Schema1 extends ProxySchema<ProxyImpl> {
     public Schema1() {
       super("schemey");
     }
 
     @Override
-    public EntityProxy create(ProxyJsoImpl jso, boolean isFuture) {
+    public ProxyImpl create(ProxyJsoImpl jso, boolean isFuture) {
       throw new UnsupportedOperationException("Auto-generated method stub");
     }
 

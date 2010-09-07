@@ -38,7 +38,7 @@ import java.util.Set;
  * 
  * @param <P> the type of the Proxies this schema describes
  */
-public abstract class ProxySchema<P extends EntityProxy> {
+public abstract class ProxySchema<P extends ProxyImpl> {
   
   private final String token;
   

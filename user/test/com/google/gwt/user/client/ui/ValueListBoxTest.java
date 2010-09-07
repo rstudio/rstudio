@@ -18,6 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.text.shared.AbstractRenderer;
+import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SimpleKeyProvider;
 
 import java.util.Arrays;
 
@@ -25,6 +27,7 @@ import java.util.Arrays;
  * Eponymous unit test.
  */
 public class ValueListBoxTest extends GWTTestCase {
+
   static class Foo {
     final String value;
 
@@ -47,6 +50,12 @@ public class ValueListBoxTest extends GWTTestCase {
     }
   }
 
+  static class KeyProvider implements ProvidesKey<Foo> {
+    public String getKey(Foo item) {
+      return item.value;
+    }
+  }
+
   private static final FooRenderer renderer = new FooRenderer();
 
   ValueListBox<Foo> subject;
@@ -56,7 +65,7 @@ public class ValueListBoxTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
-  public void xx_testExtraValueSet() {  // Strange failures on firefox
+  public void xx_testExtraValueSet() {  // TODO(rjrjr) Strange failures on firefox
     Foo[] values = new Foo[] {new Foo("able"), new Foo("baker")};
     Foo baz = new Foo("baz");
     
@@ -82,7 +91,7 @@ public class ValueListBoxTest extends GWTTestCase {
     assertEquals(renderer.render(barFoo), elm.getValue());
   }
 
-  public void xx_testNormalSet() { // Strange failures on firefox
+  public void xx_testNormalSet() { // TODO(rjrjr) Strange failures on firefox
     Foo[] values = new Foo[] {new Foo("able"), new Foo("baker")};
     subject.setAcceptableValues(Arrays.asList(values));
 
@@ -91,6 +100,30 @@ public class ValueListBoxTest extends GWTTestCase {
     setAndCheck(values[0]);
     setAndCheck(values[1]);
     setAndCheck(values[0]);
+
+    assertEquals(2, getSelect().getLength());
+  }
+
+  public void xx_testNormalSetWithKeyProvider() { // TODO(rjrjr) Strange failures on firefox
+    gwtTearDown(); // Tear down the usual test subject
+    
+    KeyProvider keyProvider = new KeyProvider();
+    subject = new ValueListBox<Foo>(renderer, keyProvider);
+    RootPanel.get().add(subject);
+    
+    Foo[] byReference = new Foo[] {new Foo("able"), new Foo("baker")};
+    subject.setAcceptableValues(Arrays.asList(byReference));
+    Foo[] byValue = new Foo[] {new Foo("able"), new Foo("baker")};
+
+    assertEquals(2, getSelect().getLength());
+
+    setAndCheck(byReference[0], keyProvider);
+    setAndCheck(byReference[1], keyProvider);
+    setAndCheck(byReference[0], keyProvider);
+
+    setAndCheck(byValue[0], keyProvider);
+    setAndCheck(byValue[1], keyProvider);
+    setAndCheck(byValue[0], keyProvider);
 
     assertEquals(2, getSelect().getLength());
   }
@@ -109,10 +142,13 @@ public class ValueListBoxTest extends GWTTestCase {
   private SelectElement getSelect() {
     return subject.getWidget().getElement().cast();
   }
-
   private void setAndCheck(Foo value) {
+    setAndCheck(value, new SimpleKeyProvider<Foo>());
+  }
+
+  private void setAndCheck(Foo value, ProvidesKey<Foo> keyProvider) {
     subject.setValue(value);
-    assertEquals(value, subject.getValue());
+    assertEquals(keyProvider.getKey(value), keyProvider.getKey(subject.getValue()));
     assertEquals(renderer.render(value), getSelect().getValue());
   }
 }

@@ -44,8 +44,20 @@ public class ProxyImpl implements EntityProxy {
 
   private DeltaValueStoreJsonImpl deltaValueStore;
 
-  protected ProxyImpl(ProxyJsoImpl record, boolean isFuture) {
-    this.jso = record;
+  /**
+   * For use by generated subclasses only. Other code should use
+   * {@link ProxySchema#create(ProxyJsoImpl, boolean)}, typically:
+   * <code><pre>proxyJsoImpl.getSchema().create(proxyJsoImpl.getSchema(), isFuture);
+   * </pre></code>
+   */
+  protected ProxyImpl(ProxyJsoImpl jso, boolean isFuture) {
+    /*
+     * A funny place for these asserts, but it's proved hard to control in the
+     * JSO itself
+     */
+    assert jso.getRequestFactory() != null;
+    assert jso.getSchema() != null;
+    this.jso = jso;
     this.isFuture = isFuture;
     deltaValueStore = null;
   }
@@ -57,7 +69,7 @@ public class ProxyImpl implements EntityProxy {
   public <V> V get(Property<V> property) {
     return jso.get(property);
   }
-  
+
   public Long getId() {
     return jso.getId();
   }
@@ -107,6 +119,6 @@ public class ProxyImpl implements EntityProxy {
   }
 
   protected ValueStoreJsonImpl getValueStore() {
-    return jso.getValueStore();
+    return jso.getRequestFactory().getValueStore();
   }
 }

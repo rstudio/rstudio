@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
@@ -41,7 +42,7 @@ import java.util.Set;
 public abstract class //
 AbstractJsonListRequest<T extends EntityProxy, R extends AbstractJsonListRequest<T, R>> //
     extends AbstractRequest<List<T>, R> implements ProxyListRequest<T> {
-  protected final ProxySchema<? extends T> schema;
+  protected final ProxySchema<?> schema;
 
   public AbstractJsonListRequest(ProxySchema<? extends T> schema,
       RequestFactoryJsonImpl requestService) {
@@ -51,17 +52,29 @@ AbstractJsonListRequest<T extends EntityProxy, R extends AbstractJsonListRequest
 
   @Override
   public void handleResult(Object jsoResult, Set<SyncResult> syncResults) {
+    @SuppressWarnings("unchecked")
+    JsArray<JavaScriptObject> rawJsos = (JsArray<JavaScriptObject>) jsoResult;
+    
+    JsArray<ProxyJsoImpl> proxyJsos = ProxyJsoImpl.create(rawJsos, schema, requestFactory);
+    requestFactory.getValueStore().setRecords(proxyJsos);
+    
+    /*
+     * TODO would it be a win if we come up with a List that does the 
+     * schema.create() call on demand during get() and iteration?
+     */
+    List<T> proxies = new ArrayList<T>();
+    for (int i = 0; i < proxyJsos.length(); i++) {
+      ProxyJsoImpl jso = proxyJsos.get(i);
 
-    JsArray<ProxyJsoImpl> valueJsos = (JsArray<ProxyJsoImpl>) jsoResult;
-    List<T> valueList = new ArrayList<T>(valueJsos.length());
-    for (int i = 0; i < valueJsos.length(); i++) {
-      ProxyJsoImpl jso = valueJsos.get(i);
-      jso.setSchema(schema);
-      valueList.add(schema.create(jso));
+      /*
+       * schema really should be ProxySchema<? extends T>, and then this cast
+       * wouldn't be necessary. But that tickles a bug in javac:
+       * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6437894
+       */
+      @SuppressWarnings("unchecked")
+      T proxy = (T) schema.create(jso);
+      proxies.add(proxy);
     }
-
-    requestFactory.getValueStore().setRecords(valueJsos, requestFactory);
-
-    receiver.onSuccess(valueList, syncResults);
+    receiver.onSuccess(proxies, syncResults);
   }
 }

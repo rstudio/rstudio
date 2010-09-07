@@ -18,8 +18,8 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
@@ -40,7 +40,7 @@ public class RequestFactoryTest extends GWTTestCase {
     req.init(hm);
     delayTestFinish(5000);
 
-    SimpleFooProxy newFoo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
     final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
 
     newFoo = fooReq.edit(newFoo);
@@ -50,10 +50,20 @@ public class RequestFactoryTest extends GWTTestCase {
       public void onSuccess(Void ignore, Set<SyncResult> syncResults) {
         assertEquals(1, syncResults.size());
         SyncResult syncResult = syncResults.iterator().next();
-        assertTrue(syncResult.hasViolations());
+        /*
+         * Make sure your class path includes:
+         * 
+         * tools/apache/log4j/log4j-1.2.16.jar
+         * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
+         * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
+         * tools/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar
+         */
+        assertTrue("Violations expected (you might be missing some jars, "
+            + "see the comment above this line)", syncResult.hasViolations());
         Map<String, String> violations = syncResult.getViolations();
         assertEquals(1, violations.size());
-        assertEquals("size must be between 3 and 30", violations.get("userName"));
+        assertEquals("size must be between 3 and 30",
+            violations.get("userName"));
         finishTest();
       }
     });
@@ -65,7 +75,7 @@ public class RequestFactoryTest extends GWTTestCase {
     req.init(hm);
     delayTestFinish(5000);
 
-    SimpleFooProxy newFoo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
     final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
 
     newFoo = fooReq.edit(newFoo);
@@ -124,7 +134,7 @@ public class RequestFactoryTest extends GWTTestCase {
     req.init(hm);
     delayTestFinish(5000);
 
-    SimpleBarProxy newBar = (SimpleBarProxy) req.create(SimpleBarProxy.class);
+    SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
 
     final RequestObject<Void> barReq = req.simpleBarRequest().persist(newBar);
     newBar = barReq.edit(newBar);
@@ -167,7 +177,7 @@ public class RequestFactoryTest extends GWTTestCase {
     HandlerManager hm = new HandlerManager(null);
     req.init(hm);
     delayTestFinish(5000);
-    SimpleFooProxy newFoo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
 
     final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
 
@@ -186,7 +196,8 @@ public class RequestFactoryTest extends GWTTestCase {
                     new Receiver<SimpleFooProxy>() {
                       public void onSuccess(SimpleFooProxy finalFooProxy,
                           Set<SyncResult> syncResults) {
-                        // newFoo hasn't been persisted, so userName is the old value.
+                        // newFoo hasn't been persisted, so userName is the old
+                        // value.
                         assertEquals("GWT", finalFooProxy.getUserName());
                         finishTest();
                       }
@@ -207,8 +218,8 @@ public class RequestFactoryTest extends GWTTestCase {
     HandlerManager hm = new HandlerManager(null);
     req.init(hm);
     delayTestFinish(5000);
-    SimpleFooProxy newFoo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
-    SimpleBarProxy newBar = (SimpleBarProxy) req.create(SimpleBarProxy.class);
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
 
     final RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
         newFoo);
@@ -258,7 +269,7 @@ public class RequestFactoryTest extends GWTTestCase {
     req.init(hm);
     delayTestFinish(5000);
 
-    SimpleFooProxy rayFoo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
     final RequestObject<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
         rayFoo);
     rayFoo = persistRay.edit(rayFoo);
@@ -278,7 +289,7 @@ public class RequestFactoryTest extends GWTTestCase {
     req.init(hm);
     delayTestFinish(5000);
 
-    SimpleFooProxy rayFoo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
     final RequestObject<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
         rayFoo);
     rayFoo = persistRay.edit(rayFoo);
@@ -288,7 +299,7 @@ public class RequestFactoryTest extends GWTTestCase {
       public void onSuccess(final SimpleFooProxy persistedRay,
           Set<SyncResult> ignored) {
 
-        SimpleBarProxy amitBar = (SimpleBarProxy) req.create(SimpleBarProxy.class);
+        SimpleBarProxy amitBar = req.create(SimpleBarProxy.class);
         final RequestObject<SimpleBarProxy> persistAmit = req.simpleBarRequest().persistAndReturnSelf(
             amitBar);
         amitBar = persistAmit.edit(amitBar);
@@ -371,8 +382,9 @@ public class RequestFactoryTest extends GWTTestCase {
         new Receiver<SimpleFooProxy>() {
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResult) {
-            SimpleBarProxy bar = (SimpleBarProxy) req.create(SimpleBarProxy.class);
-            RequestObject<String> helloReq = req.simpleFooRequest().hello(response, bar);
+            SimpleBarProxy bar = req.create(SimpleBarProxy.class);
+            RequestObject<String> helloReq = req.simpleFooRequest().hello(
+                response, bar);
             bar = helloReq.edit(bar);
             bar.setUserName("BAR");
             helloReq.fire(new Receiver<String>() {
@@ -414,7 +426,8 @@ public class RequestFactoryTest extends GWTTestCase {
                 assertNull(syncResultArray[0].getFutureId());
                 EntityProxy proxy = syncResultArray[0].getProxy();
                 assertEquals(new Long(999L), proxy.getId());
-                // confirm that the instance method did have the desired sideEffect.
+                // confirm that the instance method did have the desired
+                // sideEffect.
                 req.simpleFooRequest().findSimpleFooById(999L).fire(
                     new Receiver<SimpleFooProxy>() {
                       public void onSuccess(SimpleFooProxy finalFoo,

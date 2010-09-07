@@ -21,6 +21,8 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.text.shared.Renderer;
+import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SimpleKeyProvider;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,8 +35,7 @@ import java.util.Map;
  * {@link com.google.gwt.dom.client.SelectElement}.
  * <p>
  * A {@link Renderer<T>} is used to get user presentable strings to display in
- * the select element. It is an error for two values to render to the same
- * string.
+ * the select element.
  * 
  * @param <T> the value type
  */
@@ -42,12 +43,18 @@ public class ValueListBox<T> extends Composite implements
     HasConstrainedValue<T> {
 
   private final List<T> values = new ArrayList<T>();
-  private final Map<T, Integer> valueToIndex = new HashMap<T, Integer>();
+  private final Map<Object, Integer> valueKeyToIndex = new HashMap<Object, Integer>();
   private final Renderer<T> renderer;
+  private final ProvidesKey<T> keyProvider;
 
   private T value;
 
   public ValueListBox(Renderer<T> renderer) {
+    this(renderer, new SimpleKeyProvider<T>());
+  }
+  
+  public ValueListBox(Renderer<T> renderer, ProvidesKey<T> keyProvider) {
+    this.keyProvider = keyProvider;
     this.renderer = renderer;
     initWidget(new ListBox());
 
@@ -74,7 +81,7 @@ public class ValueListBox<T> extends Composite implements
 
   public void setAcceptableValues(Collection<T> newValues) {
     values.clear();
-    valueToIndex.clear();
+    valueKeyToIndex.clear();
     ListBox listBox = getListBox();
     listBox.clear();
 
@@ -108,11 +115,12 @@ public class ValueListBox<T> extends Composite implements
   }
 
   private void addValue(T value) {
-    if (valueToIndex.containsKey(value)) {
+    Object key = keyProvider.getKey(value);
+    if (valueKeyToIndex.containsKey(key)) {
       throw new IllegalArgumentException("Duplicate value: " + value);
     }
 
-    valueToIndex.put(value, values.size());
+    valueKeyToIndex.put(key, values.size());
     values.add(value);
     getListBox().addItem(renderer.render(value));
     assert values.size() == getListBox().getItemCount();
@@ -123,12 +131,13 @@ public class ValueListBox<T> extends Composite implements
   }
 
   private void updateListBox() {
-    Integer index = valueToIndex.get(value);
+    Object key = keyProvider.getKey(value);
+    Integer index = valueKeyToIndex.get(key);
     if (index == null) {
       addValue(value);
     }
 
-    index = valueToIndex.get(value);
+    index = valueKeyToIndex.get(key);
     getListBox().setSelectedIndex(index);
   }
 }

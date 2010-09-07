@@ -211,7 +211,7 @@ class DeltaValueStoreJsonImpl {
          */
         if (violations == NULL_VIOLATIONS) {
           requestFactory.postChangeEvent(ProxyJsoImpl.create(key.id, 1,
-              key.schema), WriteOperation.DELETE);
+              key.schema, requestFactory), WriteOperation.DELETE);
         }
         ProxyJsoImpl masterRecord = master.records.get(key);
         if (masterRecord != null) {
@@ -238,7 +238,7 @@ class DeltaValueStoreJsonImpl {
         // post change events if no violations.
         if (violations == NULL_VIOLATIONS) {
           requestFactory.postChangeEvent(ProxyJsoImpl.create(key.id, 1,
-              key.schema), WriteOperation.UPDATE);
+              key.schema, requestFactory), WriteOperation.UPDATE);
         }
 
         ProxyJsoImpl masterRecord = master.records.get(key);

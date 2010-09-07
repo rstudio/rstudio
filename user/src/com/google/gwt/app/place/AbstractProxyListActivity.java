@@ -18,15 +18,14 @@ package com.google.gwt.app.place;
 import com.google.gwt.app.place.ProxyPlace.Operation;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
+import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.view.client.HasData;
-import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -60,16 +59,6 @@ import java.util.Set;
  */
 public abstract class AbstractProxyListActivity<P extends EntityProxy> implements
     Activity, ProxyListView.Delegate<P> {
-  /**
-   * Used by the table and its selection model, to define record equality via
-   * id.
-   */
-  private static class RecordKeyProvider<R extends EntityProxy> implements
-      ProvidesKey<R> {
-    public Object getKey(R item) {
-      return item == null ? null : item.getId();
-    }
-  }
 
   /**
    * This mapping allows us to update individual rows as records change.
@@ -85,7 +74,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy> implement
    * Used by the table and its selection model to rely on record id for
    * equality.
    */
-  private final RecordKeyProvider<P> keyProvider = new RecordKeyProvider<P>();
+  private final EntityProxyKeyProvider<P> keyProvider = new EntityProxyKeyProvider<P>();
 
   private HandlerRegistration rangeChangeHandler;
   private ProxyListView<P> view;

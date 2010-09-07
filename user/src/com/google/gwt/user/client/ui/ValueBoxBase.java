@@ -26,7 +26,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.AutoDirectionHandler;
 import com.google.gwt.i18n.client.BidiPolicy;
 import com.google.gwt.i18n.client.BidiUtils;
-import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.text.shared.Parser;
@@ -64,8 +63,8 @@ import java.text.ParseException;
  */
 @SuppressWarnings("deprecation")
 public class ValueBoxBase<T> extends FocusWidget implements
-    SourcesChangeEvents, HasChangeHandlers, HasText, HasName, HasDirection,
-    HasDirectionEstimator, HasValue<T>, AutoDirectionHandler.Target {
+    SourcesChangeEvents, HasChangeHandlers, HasName, HasDirectionEstimator,
+    HasValue<T>, AutoDirectionHandler.Target {
 
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 

@@ -50,10 +50,10 @@ import com.google.gwt.requestfactory.client.impl.ProxySchema;
 import com.google.gwt.requestfactory.client.impl.ProxyToTypeMap;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
-import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChangedEvent;
+import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestData;
@@ -67,10 +67,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -181,8 +179,6 @@ public class RequestFactoryGenerator extends Generator {
       f.addImport(Collections.class.getName());
       f.addImport(HashSet.class.getName());
       f.addImport(Set.class.getName());
-      f.addImport(Map.class.getName());
-      f.addImport(HashMap.class.getName());
 
       f.setSuperclass(ProxyImpl.class.getSimpleName());
       f.addImplementedInterface(publicProxyType.getName());
@@ -437,7 +433,7 @@ public class RequestFactoryGenerator extends Generator {
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
     f.addImport(interfaceType.getQualifiedSourceName());
-    f.addImport(EntityProxy.class.getName());
+    f.addImport(ProxyImpl.class.getName());
     f.addImport(ProxySchema.class.getName());
     f.addImport(interfaceType.getQualifiedSourceName());
     f.addImplementedInterface(interfaceType.getName());
@@ -447,7 +443,8 @@ public class RequestFactoryGenerator extends Generator {
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
 
-    sw.println("public <R extends EntityProxy> ProxySchema<R> getType(Class<R> proxyClass) {");
+    sw.println("@SuppressWarnings(\"unchecked\")");
+    sw.println("public <R extends ProxyImpl> ProxySchema<R> getType(Class<R> proxyClass) {");
     sw.indent();
     for (JClassType publicProxyType : generatedProxyTypes) {
       String qualifiedSourceName = publicProxyType.getQualifiedSourceName();
@@ -464,7 +461,7 @@ public class RequestFactoryGenerator extends Generator {
     sw.outdent();
     sw.println("}");
 
-    sw.println("public ProxySchema<? extends EntityProxy> getType(String token) {");
+    sw.println("public ProxySchema<? extends ProxyImpl> getType(String token) {");
     sw.indent();
     sw.println("String[] bits = token.split(\"-\");");
     for (JClassType publicProxyType : generatedProxyTypes) {

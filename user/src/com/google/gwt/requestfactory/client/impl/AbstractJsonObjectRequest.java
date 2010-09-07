@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.SyncResult;
@@ -35,7 +36,7 @@ public abstract class //
     AbstractJsonObjectRequest<T extends EntityProxy, R extends AbstractJsonObjectRequest<T, R>> //
     extends AbstractRequest<T, R> implements ProxyRequest<T> {
 
-  protected final ProxySchema<? extends T> schema;
+  protected final ProxySchema<?> schema;
 
   public AbstractJsonObjectRequest(ProxySchema<? extends T> schema,
       RequestFactoryJsonImpl requestService) {
@@ -44,14 +45,19 @@ public abstract class //
   }
 
   @Override
-  public void handleResult(Object jsoResult, Set<SyncResult> syncResults) {
+  public void handleResult(Object result, Set<SyncResult> syncResults) {
+    JavaScriptObject rawJso = (JavaScriptObject) result;
+    ProxyJsoImpl jso = ProxyJsoImpl.create(rawJso, schema, requestFactory);
+    
+    requestFactory.getValueStore().setProxy(jso);
 
-    ProxyJsoImpl jso = (ProxyJsoImpl) jsoResult;
-    jso.setSchema(schema);
-
-    requestFactory.getValueStore().setProxy(jso, requestFactory);
-
-    receiver.onSuccess(schema.create(jso), syncResults);
+    /*
+     * schema really should be ProxySchema<? extends T>, and then this cast
+     * wouldn't be necessary. But that tickles a bug in javac:
+     * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6437894
+     */
+    @SuppressWarnings("unchecked")
+    T proxy = (T) schema.create(jso);
+    receiver.onSuccess(proxy, syncResults);
   }
-
 }

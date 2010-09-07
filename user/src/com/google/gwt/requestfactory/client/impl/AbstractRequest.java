@@ -54,10 +54,6 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
         requestFactory);
   }
 
-  protected String asString(Object jso) {
-    return String.valueOf(jso);
-  }
-
   public void clearUsed() {
     deltaValueStore.clearUsed();
   }
@@ -96,7 +92,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   }
 
   public void handleResponseText(String responseText) {
-    ProxyJsoImpl.JsonResults results = ProxyJsoImpl.fromResults(responseText);
+    JsonResults results = JsonResults.fromResults(responseText);
     if (results.getException() != null) {
       throw new RuntimeException(results.getException());
     }
@@ -104,9 +100,15 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     handleResult(results.getResult(),
         deltaValueStore.commit(results.getSideEffects()));
   }
-  
+
   public boolean isChanged() {
     return deltaValueStore.isChanged();
+  }
+  
+  public void pushToValueStore(String schemaToken, JavaScriptObject jso) {
+    requestFactory.getValueStore().setProxy(
+        ProxyJsoImpl.create(jso, requestFactory.getSchema(schemaToken),
+            requestFactory));
   }
 
   public void reset() {
@@ -114,16 +116,15 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, requestFactory);
   }
 
-  public void setSchemaAndRecord(String schemaToken, ProxyJsoImpl jso) {
-    jso.setSchema(requestFactory.getSchema(schemaToken));
-    requestFactory.getValueStore().setProxy(jso, requestFactory);
-  }
-
   public R with(String... propertyRef) {
     for (String ref : propertyRef) {
       propertyRefs.add(ref);
     }
     return getThis();
+  }
+
+  protected String asString(Object jso) {
+    return String.valueOf(jso);
   }
 
   /**
@@ -141,7 +142,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
       if (!related.hasOwnProperty(recordKey)) continue;
       var schemaAndId = recordKey.split(/-/, 2);
       var jso = related[recordKey];
-      this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::setSchemaAndRecord(Ljava/lang/String;Lcom/google/gwt/requestfactory/client/impl/ProxyJsoImpl;)(schemaAndId[0], jso);
+      this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::pushToValueStore(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(schemaAndId[0], jso);
     }
   }-*/;
 }

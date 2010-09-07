@@ -60,17 +60,17 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     requestFactory = (RequestFactoryJsonImpl) SimpleRequestFactoryInstance.factory();
 
     // add a proxy
-    jso = ProxyJsoImpl.fromJson("{}");
-    jso.set(SimpleFooProxy.id, 42L);
-    jso.set(SimpleFooProxy.version, 1);
+    jso = ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
+        SimpleRequestFactoryInstance.impl());
+    
     jso.set(SimpleFooProxy.userName, "bovik");
     jso.set(SimpleFooProxy.password, "bovik");
     jso.set(SimpleFooProxy.intId, 4);
     jso.set(SimpleFooProxy.created, new Date());
     jso.set(SimpleFooProxy.boolField, false);
     jso.set(SimpleFooProxy.otherBoolField, true);
-    jso.setSchema(SimpleRequestFactoryInstance.schema());
-    valueStore.setProxy(jso, requestFactory);
+
+    valueStore.setProxy(jso);
   }
 
   public void testCreate() {
@@ -142,8 +142,8 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     Long futureId = createProxy.getId();
 
     ProxyImpl mockProxy = new ProxyImpl(ProxyJsoImpl.create(futureId, 1,
-        SimpleRequestFactoryInstance.schema()), RequestFactoryJsonImpl.NOT_FUTURE);
-    valueStore.setProxy(mockProxy.asJso(), requestFactory); // marked as non-future..
+        SimpleRequestFactoryInstance.schema(), SimpleRequestFactoryInstance.impl()), RequestFactoryJsonImpl.NOT_FUTURE);
+    valueStore.setProxy(mockProxy.asJso()); // marked as non-future..
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
 

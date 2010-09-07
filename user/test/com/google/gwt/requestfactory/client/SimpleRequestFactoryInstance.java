@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.client.impl.ProxySchema;
+import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 
@@ -37,5 +38,9 @@ public class SimpleRequestFactoryInstance {
   
   public static ProxySchema<?> schema() {
     return ((ProxyImpl) factory().create(SimpleFooProxy.class)).getSchema();
+  }
+
+  public static RequestFactoryJsonImpl impl() {
+    return (RequestFactoryJsonImpl) factory();
   }
 }

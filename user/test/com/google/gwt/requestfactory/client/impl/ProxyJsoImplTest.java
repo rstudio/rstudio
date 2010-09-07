@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.client.SimpleRequestFactoryInstance;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
@@ -41,9 +41,9 @@ public class ProxyJsoImplTest extends GWTTestCase {
         "123456789012345678901234567890", "created", "400", "id", "42"};
 
     String[] literalBits = new String[] {
-        "version", "1", "intId", "4", "shortField", "5",
-        "byteField", "6", "floatField", "12.3456789", "doubleField",
-        "12345.6789", "boolField", "false", "otherBoolField", "true"};
+        "version", "1", "intId", "4", "shortField", "5", "byteField", "6",
+        "floatField", "12.3456789", "doubleField", "12345.6789", "boolField",
+        "false", "otherBoolField", "true"};
 
     boolean isFirst = true;
     boolean isLabel = true;
@@ -77,12 +77,8 @@ public class ProxyJsoImplTest extends GWTTestCase {
     ALL_PROPERTIES_JSON = b.toString();
   }
 
-  private static final String EMPTY_JSON = "{}";
   private static final String ID_VERSION_JSON = "{\"id\":\"42\",\"version\":1}";
   private static final String ID_VERSION_JSON2 = "{\"id\":\"43\",\"version\":1}";
-
-  private static final boolean SCHEMA_ABSENT = false;
-  private static final boolean SCHEMA_PRESENT = true;
 
   @Override
   public String getModuleName() {
@@ -91,29 +87,26 @@ public class ProxyJsoImplTest extends GWTTestCase {
 
   public void testEmptyCopy() {
     ProxyJsoImpl emptyCopy = ProxyJsoImpl.emptyCopy(getPopulatedJso());
-    testMinimalJso(emptyCopy, SCHEMA_PRESENT);
+    testMinimalJso(emptyCopy);
+  }
+
+  private native JavaScriptObject jsEval(String json) /*-{
+    eval("xyz=" + json);
+    return xyz;
+  }-*/;
+
+  private ProxyJsoImpl eval(String json) {
+    JavaScriptObject rawJso = jsEval(json);
+    return ProxyJsoImpl.create(rawJso, SimpleRequestFactoryInstance.schema(),
+        SimpleRequestFactoryInstance.impl());
   }
 
   public void testFromJson() {
-    testEmptyJso(ProxyJsoImpl.fromJson(EMPTY_JSON), SCHEMA_ABSENT);
-    testMinimalJso(ProxyJsoImpl.fromJson(ID_VERSION_JSON), SCHEMA_ABSENT);
-    testPopulatedJso(ProxyJsoImpl.fromJson(ALL_PROPERTIES_JSON), SCHEMA_ABSENT);
-  }
-
-  public void testFromJsonArray() {
-    String jsonString = "[" + ID_VERSION_JSON + "," + ID_VERSION_JSON2 + "]";
-    JsArray<ProxyJsoImpl> jsArray = ProxyJsoImpl.arrayFromJson(jsonString);
-    assertEquals(2, jsArray.length());
+    testMinimalJso(eval(ID_VERSION_JSON));
+    testPopulatedJso(eval(ALL_PROPERTIES_JSON));
   }
 
   public void testIsEmpty() {
-    try {
-      getEmptyJso().isEmpty();
-      fail("A Runtime Exception should be thrown because schema is not defined");
-    } catch (RuntimeException ex) {
-      // NullPointerException in dev mode, JavaScriptException in prod mode
-      // expected because schema is not defined.
-    }
     assertTrue(getMinimalJso().isEmpty());
     assertFalse(getPopulatedJso().isEmpty());
   }
@@ -144,19 +137,16 @@ public class ProxyJsoImplTest extends GWTTestCase {
     jso.set(SimpleFooProxy.boolField, false);
     jso.set(SimpleFooProxy.otherBoolField, true);
 
-    testPopulatedJso(jso, SCHEMA_PRESENT);
+    testPopulatedJso(jso);
   }
 
   public void testToJson() {
     assertEquals(ID_VERSION_JSON, getMinimalJso().toJson());
   }
 
-  private ProxyJsoImpl getEmptyJso() {
-    return ProxyJsoImpl.create();
-  }
-
   private ProxyJsoImpl getMinimalJso() {
-    return ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema());
+    return ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
+        SimpleRequestFactoryInstance.impl());
   }
 
   private ProxyJsoImpl getPopulatedJso() {
@@ -168,14 +158,15 @@ public class ProxyJsoImplTest extends GWTTestCase {
     return jso;
   }
 
-  private void testEmptyJso(ProxyJsoImpl jso, boolean schemaPresent) {
+  private void testEmptyJso(JavaScriptObject rawJso) {
+    ProxyJsoImpl jso = ProxyJsoImpl.create(rawJso, null, null);
     assertFalse(jso.isDefined(SimpleFooProxy.id.getName()));
     assertFalse(jso.isDefined(SimpleFooProxy.version.getName()));
     assertEquals("{}", jso.toJson());
-    testSchema(jso, schemaPresent);
+    testSchema(jso);
   }
 
-  private void testMinimalJso(ProxyJsoImpl jso, boolean schemaPresent) {
+  private void testMinimalJso(ProxyJsoImpl jso) {
     for (String property : new String[] {"id", "version"}) {
       assertTrue(jso.isDefined(property));
     }
@@ -188,10 +179,10 @@ public class ProxyJsoImplTest extends GWTTestCase {
     assertEquals(new Integer(1), jso.getVersion());
     assertEquals(null, jso.get(SimpleFooProxy.longField));
     assertEquals(null, jso.get(SimpleFooProxy.enumField));
-    testSchema(jso, schemaPresent);
+    testSchema(jso);
   }
 
-  private void testPopulatedJso(ProxyJsoImpl jso, boolean schemaPresent) {
+  private void testPopulatedJso(ProxyJsoImpl jso) {
     for (String property : new String[] {
         "userName", "password", "charField", "longField", "bigDecimalField",
         "bigIntField", "intId", "shortField", "byteField", "created",
@@ -216,8 +207,9 @@ public class ProxyJsoImplTest extends GWTTestCase {
     assertEquals(Byte.valueOf((byte) 6), jso.get(SimpleFooProxy.byteField));
 
     assertEquals(new Date(400), jso.get(SimpleFooProxy.created));
-    assertEquals(Double.valueOf(12345.6789), jso.get(SimpleFooProxy.doubleField));
-    
+    assertEquals(Double.valueOf(12345.6789),
+        jso.get(SimpleFooProxy.doubleField));
+
     int expected = (int) (Float.valueOf(12.3456789f) * 1000);
     int actual = (int) (jso.get(SimpleFooProxy.floatField) * 1000);
     assertEquals(expected, actual);
@@ -228,15 +220,10 @@ public class ProxyJsoImplTest extends GWTTestCase {
     assertEquals((Long) 42L, jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
 
-    testSchema(jso, schemaPresent);
+    testSchema(jso);
   }
 
-  private void testSchema(ProxyJsoImpl jso, boolean schemaPresent) {
-    if (schemaPresent) {
-      assertEquals(SimpleRequestFactoryInstance.schema(), jso.getSchema());
-    } else {
-      assertNull(jso.getSchema());
-    }
+  private void testSchema(ProxyJsoImpl jso) {
+    assertEquals(SimpleRequestFactoryInstance.schema(), jso.getSchema());
   }
-
 }

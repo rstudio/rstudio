@@ -49,7 +49,9 @@ public class JsonRequestProcessorTest extends TestCase {
         new DefaultSecurityProvider()));
   }
 
-  public void testDecodeParameterValue() {
+  public void testDecodeParameterValue() throws SecurityException,
+      JSONException, IllegalAccessException, InvocationTargetException,
+      NoSuchMethodException, InstantiationException {
     // primitives
     assertTypeAndValueEquals(String.class, "Hello", "Hello");
     assertTypeAndValueEquals(Integer.class, 1234, "1234");
@@ -95,7 +97,7 @@ public class JsonRequestProcessorTest extends TestCase {
     com.google.gwt.requestfactory.server.SimpleFoo.reset();
     try {
       // fetch object
-     JSONObject foo = fetchVerifyAndGetInitialObject();
+      JSONObject foo = fetchVerifyAndGetInitialObject();
 
       // modify fields and sync
       foo.put("intId", 45);
@@ -106,11 +108,12 @@ public class JsonRequestProcessorTest extends TestCase {
       Date now = new Date();
       foo.put("created", "" + now.getTime());
 
-     JSONObject result = getResultFromServer(foo);
+      JSONObject result = getResultFromServer(foo);
 
       // check modified fields and no violations
       SimpleFoo fooResult = SimpleFoo.getSingleton();
-      JSONArray updateArray = result.getJSONObject("sideEffects").getJSONArray("UPDATE");
+      JSONArray updateArray = result.getJSONObject("sideEffects").getJSONArray(
+          "UPDATE");
       assertEquals(1, updateArray.length());
       assertEquals(1, updateArray.getJSONObject(0).length());
       assertTrue(updateArray.getJSONObject(0).has("id"));
@@ -122,7 +125,7 @@ public class JsonRequestProcessorTest extends TestCase {
       assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.BAR,
           fooResult.getEnumField());
       assertEquals(false, (boolean) fooResult.getBoolField());
-      
+
     } catch (Exception e) {
       e.printStackTrace();
       fail(e.toString());
@@ -192,7 +195,9 @@ public class JsonRequestProcessorTest extends TestCase {
   }
 
   private <T> void assertTypeAndValueEquals(Class<T> expectedType,
-      T expectedValue, String paramValue) {
+      T expectedValue, String paramValue) throws SecurityException,
+      JSONException, IllegalAccessException, InvocationTargetException,
+      NoSuchMethodException, InstantiationException {
     Object val = requestProcessor.decodeParameterValue(expectedType, paramValue);
     assertEquals(expectedType, val.getClass());
     assertEquals(expectedValue, val);
@@ -200,8 +205,8 @@ public class JsonRequestProcessorTest extends TestCase {
 
   private JSONObject fetchVerifyAndGetInitialObject() throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException,
-      ClassNotFoundException {
-    JSONObject results = (JSONObject) requestProcessor.processJsonRequest("{ \""
+      ClassNotFoundException, SecurityException, InstantiationException {
+    JSONObject results = requestProcessor.processJsonRequest("{ \""
         + RequestData.OPERATION_TOKEN
         + "\": \""
         + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
@@ -224,7 +229,7 @@ public class JsonRequestProcessorTest extends TestCase {
 
   private JSONObject getResultFromServer(JSONObject foo) throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException,
-      ClassNotFoundException {
+      ClassNotFoundException, SecurityException, InstantiationException {
     JSONObject proxyWithSchema = new JSONObject();
     proxyWithSchema.put(SimpleFooProxy.class.getName(), foo);
     JSONArray arr = new JSONArray();
@@ -237,6 +242,6 @@ public class JsonRequestProcessorTest extends TestCase {
     sync.put(RequestData.CONTENT_TOKEN, operation.toString());
     sync.put(RequestData.PARAM_TOKEN + "0", foo.getInt("id") + "-NO" + "-"
         + SimpleFooProxy.class.getName());
-    return (JSONObject) requestProcessor.processJsonRequest(sync.toString());
+    return requestProcessor.processJsonRequest(sync.toString());
   }
 }

@@ -44,24 +44,20 @@ public class ValueStoreJsonImpl {
     return schema.create(records.get(key));
   }
 
-  public void setProxy(ProxyJsoImpl newRecord,
-      RequestFactoryJsonImpl requestFactory) {
-    setRecordInList(newRecord, 0, null, requestFactory);
+  public void setProxy(ProxyJsoImpl newRecord) {
+    setRecordInList(newRecord, 0, null);
   }
 
-  public void setRecords(JsArray<ProxyJsoImpl> newRecords,
-      RequestFactoryJsonImpl requestFactory) {
+  public void setRecords(JsArray<ProxyJsoImpl> newRecords) {
     for (int i = 0, l = newRecords.length(); i < l; i++) {
       ProxyJsoImpl newRecord = newRecords.get(i);
-      setRecordInList(newRecord, i, newRecords, requestFactory);
+      setRecordInList(newRecord, i, newRecords);
     }
   }
 
   private void setRecordInList(ProxyJsoImpl newJsoRecord, int i,
-      JsArray<ProxyJsoImpl> array, RequestFactoryJsonImpl requestFactory) {
+      JsArray<ProxyJsoImpl> array) {
     EntityProxyId recordKey = new EntityProxyId(newJsoRecord, RequestFactoryJsonImpl.NOT_FUTURE);
-    newJsoRecord.setValueStore(this);
-    newJsoRecord.setRequestFactory(requestFactory);
     
     ProxyJsoImpl oldRecord = records.get(recordKey);
     if (oldRecord == null) {
@@ -77,7 +73,7 @@ public class ValueStoreJsonImpl {
         array.set(i, newJsoRecord);
       }
       if (changed) {
-        requestFactory.postChangeEvent(newJsoRecord, WriteOperation.UPDATE);
+        newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord, WriteOperation.UPDATE);
       }
     }
   }

@@ -18,94 +18,70 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EnumProperty;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.PropertyReference;
-import com.google.gwt.requestfactory.shared.EntityProxy;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
 /**
- * <p> <span style="color:red">Experimental API: This class is still under rapid
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
- * </span> </p> JSO implementation of {@link EntityProxy}, used to back subclasses of
+ * </span>
+ * </p>
+ * JSO implementation of {@link EntityProxy}, used to back subclasses of
  * {@link ProxyImpl}.
  */
 public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
 
-  /**
-   * JSO to hold result and related objects.
-   */
-  public static class JsonResults extends JavaScriptObject {
+  public static ProxyJsoImpl create(JavaScriptObject rawJsoWithIdAndVersion,
+      ProxySchema<?> schema, RequestFactoryJsonImpl requestFactory) {
 
-    protected JsonResults() {
+    ProxyJsoImpl rtn = rawJsoWithIdAndVersion.cast();
+    assert rtn.getId() != null;
+    assert rtn.getVersion() != null;
+
+    rtn.setSchema(schema);
+    rtn.setRequestFactory(requestFactory);
+    return rtn;
+  };
+
+  public static JsArray<ProxyJsoImpl> create(
+      JsArray<JavaScriptObject> rawJsos, ProxySchema<?> schema,
+      RequestFactoryJsonImpl requestFactory) {
+    
+    for (int i = 0; i < rawJsos.length(); i++) {
+      ProxyJsoImpl.create(rawJsos.get(i), schema, requestFactory);
     }
-
-    public final native String getException() /*-{
-      return this.exception || null;
-    }-*/;
-
-    public final native JsArray<ProxyJsoImpl> getListResult() /*-{
-      return this.result;
-    }-*/;
-
-    public final native ProxyJsoImpl getRecordResult() /*-{
-      return this.result;
-    }-*/;
-
-    public final native JavaScriptObject getRelated() /*-{
-      return this.related;
-    }-*/;
-
-    public final native Object getResult() /*-{
-      return Object(this.result);
-    }-*/;
-    public final native JavaScriptObject getSideEffects() /*-{
-      return this.sideEffects;
-    }-*/;
+    
+    return rawJsos.cast();
   }
 
-  public static native JsArray<ProxyJsoImpl> arrayFromJson(String json) /*-{
-    return eval(json);
-  }-*/;
-
   public static ProxyJsoImpl create(Long id, Integer version,
-      final ProxySchema<?> schema) {
-    ProxyJsoImpl copy = create();
-    copy.setSchema(schema);
-    copy.set(EntityProxy.id, id);
-    copy.set(EntityProxy.version, version);
-    return copy;
+      ProxySchema<?> schema, RequestFactoryJsonImpl requestFactory) {
+    ProxyJsoImpl rtn = createEmpty();
+    rtn.set(EntityProxy.id, id);
+    rtn.set(EntityProxy.version, version);
+    return create(rtn, schema, requestFactory);
   }
 
   public static ProxyJsoImpl emptyCopy(ProxyJsoImpl jso) {
     Long id = jso.get(EntityProxy.id);
     Integer version = jso.get(EntityProxy.version);
-    final ProxySchema<?> schema = jso.getSchema();
+    ProxySchema<?> schema = jso.getSchema();
 
-    ProxyJsoImpl copy = create(id, version, schema);
-    copy.setRequestFactory(jso.getRequestFactory());
-    copy.setValueStore(jso.getValueStore());
+    ProxyJsoImpl copy = create(id, version, schema, jso.getRequestFactory());
     return copy;
   }
 
-  public static native ProxyJsoImpl fromJson(String json) /*-{
-    // TODO: clean this
-    eval("xyz=" + json);
-    return xyz;
-  }-*/;
-
-  public static native JsonResults fromResults(String json) /*-{
-    // TODO: clean this
-    eval("xyz=" + json);
-    return xyz;
-  }-*/;
-
-  /* Made protected, for testing */
-
-  protected static native ProxyJsoImpl create() /*-{
+  /** 
+   * Create an empty JSO, unsafe to return.
+   */
+  private static native ProxyJsoImpl createEmpty() /*-{
     return {};
   }-*/;
 
@@ -127,7 +103,8 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
         return (V) Boolean.valueOf(getBoolean(property.getName()));
       }
       if (Character.class.equals(property.getType())) {
-        return (V) Character.valueOf(String.valueOf(get(property.getName())).charAt(0));
+        return (V) Character.valueOf(String.valueOf(get(property.getName())).charAt(
+            0));
       }
       if (Byte.class.equals(property.getType())) {
         return (V) Byte.valueOf((byte) getInt(property.getName()));
@@ -169,9 +146,9 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
         }
       }
     } catch (final Exception ex) {
-      throw new IllegalStateException(
-          "Property  " + property.getName() + " has invalid " + " value "
-              + get(property.getName()) + " for type " + property.getType());
+      throw new IllegalStateException("Property  " + property.getName()
+          + " has invalid " + " value " + get(property.getName())
+          + " for type " + property.getType());
     }
 
     if (property instanceof EnumProperty) {
@@ -198,8 +175,9 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     } else {
       // TODO: should cache this or modify JSO field in place
       String schemaAndId[] = relatedId.split("-");
-      return (V) getValueStore().getRecordBySchemaAndId(
-          getRequestFactory().getSchema(schemaAndId[0]),
+      assert schemaAndId.length == 2;
+      ProxySchema<?> schema = getRequestFactory().getSchema(schemaAndId[0]);
+      return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(schema,
           Long.valueOf(schemaAndId[1]));
     }
   }
@@ -215,19 +193,13 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   public final <V> PropertyReference<V> getRef(Property<V> property) {
     return new PropertyReference<V>(this, property);
   }
-  
-  // TODO: HACK! Need to look up token to schema for relatins
+
   public final native RequestFactoryJsonImpl getRequestFactory() /*-{
     return this['__rf'];
   }-*/;
 
   public final native ProxySchema<?> getSchema() /*-{
     return this['__key'];
-  }-*/;
-  
-  // TODO: HACK! Make VS public and stash it in the record for relation lookups
-  public final native ValueStoreJsonImpl getValueStore() /*-{
-     return this['__vs'];  
   }-*/;
 
   public final Integer getVersion() {
@@ -243,8 +215,8 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
 
   public final boolean isEmpty() {
     for (Property<?> property : getSchema().allProperties()) {
-      if ((property != EntityProxy.id) && (property != EntityProxy.version) && (isDefined(
-          property.getName()))) {
+      if ((property != EntityProxy.id) && (property != EntityProxy.version)
+          && (isDefined(property.getName()))) {
         return false;
       }
     }
@@ -276,12 +248,12 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       setNull(property.getName());
       return;
     }
-    
+
     if (value instanceof String) {
       setString(property.getName(), (String) value);
       return;
     }
-     if (value instanceof Character) {
+    if (value instanceof Character) {
       setString(property.getName(), String.valueOf(value));
       return;
     }
@@ -323,28 +295,13 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       return;
     }
 
-    throw new UnsupportedOperationException(
-        "Cannot set properties of type " + value.getClass().getName());
+    throw new UnsupportedOperationException("Cannot set properties of type "
+        + value.getClass().getName());
   }
-
-  // TODO: HACK! Need to look up token to schema for relatins
-  public final native void setRequestFactory(RequestFactoryJsonImpl requestFactory) /*-{
-    this['__rf'] = requestFactory;
-  }-*/;
-
-  public final native void setSchema(ProxySchema<?> schema) /*-{
-    this['__key'] = schema;
-  }-*/;
-
-  // TODO: HACK! Make VS public and stash it in the record for relation lookups
-
-  public final native void setValueStore(ValueStoreJsonImpl valueStoreJson) /*-{
-    this['__vs']=valueStoreJson;
-  }-*/;
 
   /**
    * Return JSON representation using org.json library.
-   *
+   * 
    * @return returned string.
    */
   public final native String toJson() /*-{
@@ -362,21 +319,17 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     delete this.__key;
     var rf = this.__rf;
     delete this.__rf;
-    var vs = this.__vs;
-    delete this.__vs;
     var gwt = this.__gwt_ObjectId;
     delete this.__gwt_ObjectId;
     // TODO verify that the stringify() from json2.js works on IE
     var rtn = $wnd.JSON.stringify(this);
     this.__key = key;
     this.__rf = rf;
-    this.__vs = vs;
     this.__gwt_ObjectId = gwt;
     return rtn;
   }-*/;
 
-  private native boolean copyPropertyIfDifferent(String name,
-      ProxyJsoImpl from) /*-{
+  private native boolean copyPropertyIfDifferent(String name, ProxyJsoImpl from) /*-{
     if (this[name] == from[name]) {
       return false;
     }
@@ -415,9 +368,17 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   private native void setNull(String name) /*-{
     this[name] = null;
   }-*/;
-  
+
+  private final native void setRequestFactory(
+      RequestFactoryJsonImpl requestFactory) /*-{
+    this['__rf'] = requestFactory;
+  }-*/;
+
+  private final native void setSchema(ProxySchema<?> schema) /*-{
+    this['__key'] = schema;
+  }-*/;
+
   private native void setString(String name, String value) /*-{
     this[name] = value;
   }-*/;
-
 }
