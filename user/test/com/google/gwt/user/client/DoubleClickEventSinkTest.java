@@ -44,7 +44,6 @@ import com.google.gwt.user.client.ui.Widget;
 public class DoubleClickEventSinkTest extends GWTTestCase {
 
   private DoubleClickHandler dummyDoubleClickHandler = new DoubleClickHandler() {
-    @Override
     public void onDoubleClick(DoubleClickEvent event) {
     }
   };
@@ -54,7 +53,7 @@ public class DoubleClickEventSinkTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
-  public void testDoubleClickBitFieldNotTriviallyZero() throws Exception {
+  public void testDoubleClickBitFieldNotTriviallyZero() {
     assertNotSame(0, Event.ONDBLCLICK);
   }
   
