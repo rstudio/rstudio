@@ -104,7 +104,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   }
 
   public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
-    return addDomHandler(handler, DoubleClickEvent.getType());
+    return addHandler(handler, DoubleClickEvent.getType());
   }
 
   public HandlerRegistration addFocusHandler(FocusHandler handler) {
