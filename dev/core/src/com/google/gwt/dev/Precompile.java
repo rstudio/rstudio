@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,8 +40,8 @@ import com.google.gwt.dev.jjs.JavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.CheckForUpdates;
-import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.shell.StandardRebindOracle;
+import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.CollapsedPropertyKey;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Util;
@@ -62,7 +62,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
-import com.google.gwt.dev.util.arg.OptionDumpSignatures;
 import com.google.gwt.dev.util.arg.OptionEnableGeneratingOnShards;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionMaxPermsPerPrecompile;
@@ -99,8 +98,8 @@ public class Precompile {
    */
   public interface PrecompileOptions extends JJSOptions, CompileTaskOptions,
       OptionGenDir, OptionValidateOnly, OptionDisableUpdateCheck,
-      OptionDumpSignatures, OptionEnableGeneratingOnShards,
-      OptionMaxPermsPerPrecompile, PrecompilationResult {
+      OptionEnableGeneratingOnShards, OptionMaxPermsPerPrecompile,
+      PrecompilationResult {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -117,7 +116,7 @@ public class Precompile {
       registerHandler(new ArgHandlerDisableRunAsync(options));
       registerHandler(new ArgHandlerDraftCompile(options));
       registerHandler(new ArgHandlerDisableUpdateCheck(options));
-      registerHandler(new ArgHandlerDumpSignatures(options));
+      registerHandler(new ArgHandlerDumpSignatures());
       registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
       registerHandler(new ArgHandlerCompileReport(options));
       registerHandler(new ArgHandlerSoyc(options));
@@ -133,7 +132,6 @@ public class Precompile {
   static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements
       PrecompileOptions, Serializable {
     private boolean disableUpdateCheck;
-    private File dumpFile;
     private boolean enableGeneratingOnShards = true;
     private File genDir;
     private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
@@ -153,15 +151,10 @@ public class Precompile {
       jjsOptions.copyFrom(other);
 
       setDisableUpdateCheck(other.isUpdateCheckDisabled());
-      setDumpSignatureFile(other.getDumpSignatureFile());
       setGenDir(other.getGenDir());
       setMaxPermsPerPrecompile(other.getMaxPermsPerPrecompile());
       setValidateOnly(other.isValidateOnly());
       setEnabledGeneratingOnShards(other.isEnabledGeneratingOnShards());
-    }
-
-    public File getDumpSignatureFile() {
-      return dumpFile;
     }
 
     public File getGenDir() {
@@ -242,10 +235,6 @@ public class Precompile {
 
     public void setDraftCompile(boolean draft) {
       jjsOptions.setDraftCompile(draft);
-    }
-
-    public void setDumpSignatureFile(File dumpFile) {
-      this.dumpFile = dumpFile;
     }
 
     public void setEnableAssertions(boolean enableAssertions) {
@@ -382,6 +371,7 @@ public class Precompile {
       // We don't care if the program finishes before the initialization ends.
       setDaemon(true);
     }
+
     public void run() {
       SpeedTracerLogger.Event createGraphicsEvent = SpeedTracerLogger.start(
           CompilerEventType.GRAPHICS_INIT, "java.awt.headless",
@@ -444,7 +434,7 @@ public class Precompile {
 
   /**
    * Precompiles the given module.
-   *
+   * 
    * @param logger a logger to use
    * @param jjsOptions a set of compiler options
    * @param module the module to compile
@@ -453,17 +443,15 @@ public class Precompile {
    * @return the precompilation
    */
   public static Precompilation precompile(TreeLogger logger,
-      JJSOptions jjsOptions, ModuleDef module, File genDir,
-      File dumpSignatureFile) {
+      JJSOptions jjsOptions, ModuleDef module, File genDir) {
     PropertyPermutations allPermutations = new PropertyPermutations(
         module.getProperties(), module.getActiveLinkerNames());
-    return precompile(logger, jjsOptions, module, 0, allPermutations, genDir,
-        dumpSignatureFile);
+    return precompile(logger, jjsOptions, module, 0, allPermutations, genDir);
   }
 
   /**
    * Validates the given module can be compiled.
-   *
+   * 
    * @param logger a logger to use
    * @param jjsOptions a set of compiler options
    * @param module the module to compile
@@ -471,16 +459,10 @@ public class Precompile {
    *          <code>null</code>
    */
   public static boolean validate(TreeLogger logger, JJSOptions jjsOptions,
-      ModuleDef module, File genDir, File dumpSignatureFile) {
+      ModuleDef module, File genDir) {
     Event validateEvent = SpeedTracerLogger.start(CompilerEventType.VALIDATE);
     try {
       CompilationState compilationState = module.getCompilationState(logger);
-      if (dumpSignatureFile != null) {
-        // Dump early to avoid generated types.
-        SignatureDumper.dumpSignatures(logger,
-            compilationState.getTypeOracle(), dumpSignatureFile);
-      }
-
       String[] declEntryPts = module.getEntryPointTypeNames();
       String[] additionalRootTypes = null;
       if (declEntryPts.length == 0) {
@@ -515,7 +497,7 @@ public class Precompile {
 
   static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions,
       ModuleDef module, int permutationBase,
-      PropertyPermutations allPermutations, File genDir, File dumpSignatureFile) {
+      PropertyPermutations allPermutations, File genDir) {
 
     Event precompileEvent = SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
 
@@ -525,12 +507,6 @@ public class Precompile {
 
     try {
       CompilationState compilationState = module.getCompilationState(logger);
-      if (dumpSignatureFile != null) {
-        // Dump early to avoid generated types.
-        SignatureDumper.dumpSignatures(logger,
-            compilationState.getTypeOracle(), dumpSignatureFile);
-      }
-
       String[] declEntryPts = module.getEntryPointTypeNames();
       if (declEntryPts.length == 0) {
         logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
@@ -686,16 +662,6 @@ public class Precompile {
       } else if (options.isValidateOnly()) {
         // Don't bother running on shards for just a validation run
         generateOnShards = false;
-      } else if (options.getDumpSignatureFile() != null) {
-        logger.log(TreeLogger.INFO,
-            "Precompiling on the start node, because a dump signature file was specified");
-        /*
-         * It would be possible to shard in this case, too. However, each
-         * permutation would have its own signatures dumped. Either the output
-         * would need to be multiple dump files, or those files would need to be
-         * combined back into one.
-         */
-        generateOnShards = false;
       }
 
       if (generateOnShards) {
@@ -717,8 +683,7 @@ public class Precompile {
         if (options.isValidateOnly()) {
           TreeLogger branch = logger.branch(TreeLogger.INFO,
               "Validating compilation " + module.getName());
-          if (!validate(branch, options, module, options.getGenDir(),
-              options.getDumpSignatureFile())) {
+          if (!validate(branch, options, module, options.getGenDir())) {
             branch.log(TreeLogger.ERROR, "Validation failed");
             return false;
           }
@@ -728,7 +693,7 @@ public class Precompile {
               "Precompiling module " + module.getName());
 
           Precompilation precompilation = precompile(branch, options, module,
-              options.getGenDir(), options.getDumpSignatureFile());
+              options.getGenDir());
           if (precompilation == null) {
             branch.log(TreeLogger.ERROR, "Precompilation failed");
             return false;

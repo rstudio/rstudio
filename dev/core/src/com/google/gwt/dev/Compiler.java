@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -192,8 +192,7 @@ public class Compiler {
       for (ModuleDef module : modules) {
         String moduleName = module.getCanonicalName();
         if (options.isValidateOnly()) {
-          if (!Precompile.validate(logger, options, module,
-              options.getGenDir(), options.getDumpSignatureFile())) {
+          if (!Precompile.validate(logger, options, module, options.getGenDir())) {
             return false;
           }
         } else {
@@ -204,14 +203,12 @@ public class Compiler {
           // Optimize early since permutation compiles will run in process.
           options.setOptimizePrecompile(true);
           Precompilation precompilation = Precompile.precompile(branch,
-              options, module, options.getGenDir(),
-              options.getDumpSignatureFile());
+              options, module, options.getGenDir());
           if (precompilation == null) {
             return false;
           }
 
-          Event compilePermutationsEvent =
-              SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
+          Event compilePermutationsEvent = SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
           Permutation[] allPerms = precompilation.getPermutations();
           List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
               options.getCompilerWorkDir(moduleName), allPerms);

@@ -24,15 +24,12 @@ import java.io.File;
  */
 public final class ArgHandlerDumpSignatures extends ArgHandlerFile {
 
-  private final OptionDumpSignatures option;
-
-  public ArgHandlerDumpSignatures(OptionDumpSignatures option) {
-    this.option = option;
+  public ArgHandlerDumpSignatures() {
   }
 
   @Override
   public String getPurpose() {
-    return "Dump the signatures of all loaded types and their members";
+    return "(deprecated) Dump the signatures of all loaded types and their members";
   }
 
   @Override
@@ -42,7 +39,7 @@ public final class ArgHandlerDumpSignatures extends ArgHandlerFile {
 
   @Override
   public String[] getTagArgs() {
-    return new String[] {"style"};
+    return new String[]{"style"};
   }
 
   @Override
@@ -52,6 +49,6 @@ public final class ArgHandlerDumpSignatures extends ArgHandlerFile {
 
   @Override
   public void setFile(File file) {
-    option.setDumpSignatureFile(file);
+    System.err.println("[WARN] '" + getTag() + "' is deprecated; ignoring");
   }
 }

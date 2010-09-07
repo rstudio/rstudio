@@ -89,7 +89,7 @@ public class CompilePerms {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"permlist"};
+      return new String[]{"permlist"};
     }
 
     @Override
@@ -355,17 +355,16 @@ public class CompilePerms {
        */
       PropertyPermutations onePerm = collapsedPermutations.get(permId);
 
-      assert (precompilationOptions.getDumpSignatureFile() == null);
       Precompilation precompilation = Precompile.precompile(logger,
           precompilationOptions, module, permId, onePerm,
-          precompilationOptions.getGenDir(), null);
+          precompilationOptions.getGenDir());
       if (precompilation == null) {
         return false;
       }
 
       // Choose which permutations go with this precompilation
       Permutation[] subPerms = selectPermutationsForPrecompilation(
-          new int[] {permId}, precompilation);
+          new int[]{permId}, precompilation);
       assert subPerms.length == 1;
 
       PermutationResult permResult = compile(logger, subPerms[0],
