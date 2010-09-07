@@ -127,15 +127,13 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   }
 
   private String genCloseTag(String name) {
-    String closePlaceholder =
-        nextPlaceholder(name + "End", "</span>", "</span>");
+    String closePlaceholder = nextClosePlaceholder(name + "End", "</span>");
     return closePlaceholder;
   }
 
   private String genOpenTag(String name, String idHolder) {
     String openTag = String.format("<span id='\" + %s + \"'>", idHolder);
-    String openPlaceholder =
-        nextPlaceholder(name + "Begin", "<span>", openTag);
+    String openPlaceholder = nextOpenPlaceholder(name + "Begin", openTag);
     return openPlaceholder;
   }
 

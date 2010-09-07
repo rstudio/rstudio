@@ -31,6 +31,10 @@ import com.google.gwt.uibinder.rebind.messages.PlaceholderInterpreter;
  * {@link XMLElement#consumeInnerHtml}.)
  */
 class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
+  
+  private static final String EXAMPLE_OPEN_TAG = "<tag>";
+  private static final String EXAMPLE_CLOSE_TAG = "</tag>";
+  
   private int serial = 0;
   private final XMLElement.Interpreter<String> fieldAndComputed;
 
@@ -57,8 +61,7 @@ class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
 
       String openTag = elem.consumeOpeningTag();
       String openPlaceholder =
-          nextPlaceholder(name + "Begin", stripTokens(openTag),
-              uiWriter.detokenate(openTag));
+          nextOpenPlaceholder(name + "Begin", uiWriter.detokenate(openTag));
 
       /*
        * This recursive innerHtml call has already been escaped. Hide it in a
@@ -67,8 +70,7 @@ class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
       String body = tokenator.nextToken(elem.consumeInnerHtml(this));
 
       String closeTag = elem.getClosingTag();
-      String closePlaceholder =
-          nextPlaceholder(name + "End", closeTag, closeTag);
+      String closePlaceholder = nextClosePlaceholder(name + "End", closeTag);
 
       return openPlaceholder + body + closePlaceholder;
     }
@@ -80,6 +82,24 @@ class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
   protected String consumePlaceholderInnards(XMLElement elem)
       throws UnableToCompleteException {
     return elem.consumeInnerHtml(fieldAndComputed);
+  }
+
+  /**
+   * Returns the {@link #nextPlaceholder(String, String, String)}, using the
+   * given {@code name} and {@code value} and a standard opening tag as example
+   * text.
+   */
+  protected String nextOpenPlaceholder(String name, String value) {
+    return nextPlaceholder(name, EXAMPLE_OPEN_TAG, value);
+  }
+
+  /**
+   * Returns the {@link #nextPlaceholder(String, String, String)}, using the
+   * given {@code name} and {@code value} and a standard closing tag as example
+   * text.
+   */
+  protected String nextClosePlaceholder(String name, String value) {
+    return nextPlaceholder(name, EXAMPLE_CLOSE_TAG, value);
   }
 
   /**
