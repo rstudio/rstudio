@@ -86,20 +86,20 @@ class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
 
   /**
    * Returns the {@link #nextPlaceholder(String, String, String)}, using the
-   * given {@code name} and {@code value} and a standard opening tag as example
-   * text.
-   */
-  protected String nextOpenPlaceholder(String name, String value) {
-    return nextPlaceholder(name, EXAMPLE_OPEN_TAG, value);
-  }
-
-  /**
-   * Returns the {@link #nextPlaceholder(String, String, String)}, using the
    * given {@code name} and {@code value} and a standard closing tag as example
    * text.
    */
   protected String nextClosePlaceholder(String name, String value) {
     return nextPlaceholder(name, EXAMPLE_CLOSE_TAG, value);
+  }
+
+  /**
+   * Returns the {@link #nextPlaceholder(String, String, String)}, using the
+   * given {@code name} and {@code value} and a standard opening tag as example
+   * text.
+   */
+  protected String nextOpenPlaceholder(String name, String value) {
+    return nextPlaceholder(name, EXAMPLE_OPEN_TAG, value);
   }
 
   /**
