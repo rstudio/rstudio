@@ -21,55 +21,7 @@ package com.google.gwt.requestfactory.server;
  * user. Services that want real authentication should subclass this class.
  */
 public abstract class UserInformation {
-  
-  /**
-   * This implementation treats the user as constantly signed in, and
-   * without any information.
-   */
-  private static class UserInformationSimpleImpl extends UserInformation {
 
-    private Long id = 0L;
-
-    public UserInformationSimpleImpl(String redirectUrl) {
-      super(redirectUrl);
-    }
-  
-    @Override
-    public String getEmail() {
-      return "Dummy Email";
-    }
-
-    @Override
-    public Long getId() {
-      return this.id;
-    }
-
-    @Override
-    public String getLoginUrl() {
-      return "";
-    }
-  
-    @Override
-    public String getLogoutUrl() {
-      return "";
-    }
-  
-    @Override
-    public String getName() {
-      return "Dummy User";
-    }
-  
-    @Override
-    public boolean isUserLoggedIn() {
-      return true;
-    }
-
-    @Override
-    public void setId(Long id) {
-      this.id = id;
-    }
-  }
-  
   private static String userInformationImplClass = "";
   
   public static UserInformation getCurrentUserInformation(String redirectUrl) {
