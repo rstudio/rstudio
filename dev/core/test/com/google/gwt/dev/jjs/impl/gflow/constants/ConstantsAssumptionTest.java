@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -104,12 +105,13 @@ public class ConstantsAssumptionTest extends TestCase {
 
     assertTrue(a1.equals(a2));
   }
-  
+
   private JIntLiteral newIntLiteral(int value) {
-    return new JIntLiteral(null, value);
+    return new JIntLiteral(SourceOrigin.UNKNOWN, value);
   }
 
   private JLocal newLocal(String name, JPrimitiveType type) {
-    return JProgram.createLocal(null, name, type, false, new JMethodBody(null));
+    return JProgram.createLocal(SourceOrigin.UNKNOWN, name, type, false,
+        new JMethodBody(SourceOrigin.UNKNOWN));
   }
 }
