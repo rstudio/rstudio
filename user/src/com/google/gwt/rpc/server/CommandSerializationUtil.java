@@ -72,7 +72,9 @@ public class CommandSerializationUtil {
     BOOL {
       @Override
       public boolean canSet(Class<?> clazz) {
-        return Boolean.class.isAssignableFrom(clazz);
+        return Boolean.class.isAssignableFrom(clazz)
+            || Number.class.isAssignableFrom(clazz)
+            || String.class.isAssignableFrom(clazz);
       }
 
       @Override
