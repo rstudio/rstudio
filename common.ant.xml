@@ -160,6 +160,7 @@
          consolidate dev/core and dev/oophm, and that can instead more to the normal
          pattern.  Note also special casing regarding (dev/) core/test. -->
     <attribute name="test.args" default="" />
+    <attribute name="test.jvmargs" default="" />
     <attribute name="test.out" default="" />
     <attribute name="test.reports" default="@{test.out}/reports" />
     <attribute name="test.emma.coverage" default="@{test.out}/emma-coverage" />
@@ -195,6 +196,7 @@
         <jvmarg value="-Demma.coverage.out.file=@{test.emma.coverage}/coverage.emma" />
         <jvmarg value="-Demma.coverage.out.merge=true" />
         <jvmarg value="-Dcom.google.gwt.junit.reportPath=reports" />
+        <jvmarg line="@{test.jvmargs}" />
         <sysproperty key="gwt.args" value="@{test.args}" />
         <sysproperty key="java.awt.headless" value="true" />
         <classpath>

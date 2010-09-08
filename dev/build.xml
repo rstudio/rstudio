@@ -1,6 +1,8 @@
 <project name="dev" default="build" basedir=".">
   <property name="gwt.root" location=".." />
   <property name="project.tail" value="dev" />
+  <property name="test.args" value="-ea" />
+  <property name="test.jvmargs" value="-ea" />
   <import file="${gwt.root}/platforms.ant.xml" />
   <import file="${gwt.root}/common.ant.xml" />
 
@@ -265,6 +267,8 @@
   <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
     <fileset id="tests.dev.core" dir="${javac.junit.out}" includes="${gwt.junit.testcase.dev.core.includes}" excludes="${gwt.junit.testcase.dev.core.excludes}" />
     <gwt.junit test.name="dev" test.out="${junit.out}"
+        test.args="${test.args}"
+        test.jvmargs="${test.jvmargs}"
         test.cases="tests.dev.core" >
       <extraclasspaths>
         <pathelement location="${alldeps.jar}" />
