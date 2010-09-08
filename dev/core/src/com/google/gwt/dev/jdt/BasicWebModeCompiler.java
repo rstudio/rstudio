@@ -30,6 +30,7 @@ import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -64,8 +65,8 @@ public class BasicWebModeCompiler extends AbstractCompiler {
    * Build the initial set of compilation units.
    */
   public CompilationResults getCompilationUnitDeclarations(
-      TreeLogger logger, String[] seedTypeNames) 
-      throws UnableToCompleteException {
+      TreeLogger logger, String[] seedTypeNames,
+      ICompilationUnit... additionalUnits) throws UnableToCompleteException {
 
     TypeOracle oracle = compilationState.getTypeOracle();
     Set<JClassType> intfTypes = oracle.getSingleJsoImplInterfaces();
@@ -80,7 +81,9 @@ public class BasicWebModeCompiler extends AbstractCompiler {
     Set<CompilationUnit> alreadyAdded = new HashSet<CompilationUnit>();
 
     List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>(
-        seedTypeNames.length + intfTypes.size());
+        seedTypeNames.length + intfTypes.size() + additionalUnits.length);
+    
+    Collections.addAll(icus, additionalUnits);
 
     for (String seedTypeName : seedTypeNames) {
       CompilationUnit unit = getUnitForType(logger, classMapBySource,
