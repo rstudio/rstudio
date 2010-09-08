@@ -24,13 +24,16 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.client.RequestFactoryLogHandler;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.RequestEvent;
+import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.WriteOperation;
-import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.user.client.Window.Location;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,7 +59,39 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private static String SERVER_ERROR = "Server Error";
 
-  private static final Integer INITIAL_VERSION = 1;
+  private final Integer initialVersion = 1;
+  
+  /*
+   * Keeping these maps forever is not a desirable solution because of the
+   * memory overhead but need these if want to provide stable {@EntityProxyId}.
+   * 
+   * futureToDatastoreMap is currently not used, will be useful in find requests.
+   */
+  final Map<Object, Object> futureToDatastoreMap = new HashMap<Object, Object>();
+  final DataStoreToFutureMap datastoreToFutureMap = new DataStoreToFutureMap(); 
+  
+  final class DataStoreToFutureMap {
+    
+    Map<ProxySchema<? extends ProxyImpl>, Map<Object, Object>> internalMap = new HashMap<ProxySchema<? extends ProxyImpl>, Map<Object, Object>>();
+
+    /* returns the previous futureId, if any*/
+    Object put(Object datastoreId, ProxySchema<? extends ProxyImpl> schema, Object futureId) {
+      Map<Object, Object> perSchemaMap = internalMap.get(schema);
+      if (perSchemaMap == null) {
+        perSchemaMap = new HashMap<Object, Object>();
+        internalMap.put(schema, perSchemaMap);
+      }
+      return perSchemaMap.put(datastoreId, futureId);
+    }
+    
+    Object get(Object datastoreId, ProxySchema<? extends ProxyImpl> schema) {
+      Map<Object, Object> perSchemaMap = internalMap.get(schema);
+      if (perSchemaMap == null) {
+        return null;
+      }
+      return perSchemaMap.get(datastoreId);
+    }
+  }
 
   private long currentFutureId = 0;
 
@@ -144,7 +179,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
     return schema.getProxyClass();
   }
-
+  
+  /**
+   * TODO(amitmanjhi): remove this method, use getProxyId instead.
+   */
   protected EntityProxy getProxy(String token, ProxyToTypeMap recordToTypeMap) {
     String[] bits = token.split("-");
     if (bits.length < 2 || bits.length > 3) {
@@ -170,6 +208,31 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return schema.create(ProxyJsoImpl.create(id, -1, schema, this));
   }
 
+  protected EntityProxyId getProxyId(String token, ProxyToTypeMap recordToTypeMap) {
+    String[] bits = token.split(EntityProxyIdImpl.SEPARATOR);
+    if (bits.length != 2) {
+      return null;
+    }
+
+    ProxySchema<? extends EntityProxy> schema = recordToTypeMap.getType(bits[1]);
+    if (schema == null) {
+      return null;
+    }
+
+    Long id = null;
+    try {
+      id = Long.valueOf(bits[0]);
+    } catch (NumberFormatException e) {
+      return null;
+    }
+
+    Object futureId = datastoreToFutureMap.get(id, schema);
+    return new EntityProxyIdImpl(id, schema, false, futureId);
+  }
+
+  /*
+   * can this method use the EntityProxyIdImpl.asString() method?
+   */
   protected String getToken(EntityProxy record, ProxyToTypeMap recordToTypeMap) {
     Class<? extends EntityProxy> proxyClass = ((ProxyImpl) record).getSchema().getProxyClass();
     String rtn = recordToTypeMap.getClassToken(proxyClass) + "-";
@@ -185,6 +248,9 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return valueStore;
   }
 
+  /*
+   * use ProxyId instead here.
+   */
   void postChangeEvent(ProxyJsoImpl newJsoRecord, WriteOperation op) {
     /*
      * Ensure event receivers aren't accidentally using cached info by making an
@@ -198,7 +264,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private <R extends ProxyImpl> R createFuture(ProxySchema<R> schema) {
     Long futureId = ++currentFutureId;
-    ProxyJsoImpl newRecord = ProxyJsoImpl.create(futureId, INITIAL_VERSION,
+    ProxyJsoImpl newRecord = ProxyJsoImpl.create(futureId, initialVersion,
         schema, this);
     return schema.create(newRecord, IS_FUTURE);
   }

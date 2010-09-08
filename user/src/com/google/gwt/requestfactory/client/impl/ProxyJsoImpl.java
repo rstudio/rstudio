@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.EnumProperty;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.PropertyReference;
@@ -178,7 +179,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       assert schemaAndId.length == 2;
       ProxySchema<?> schema = getRequestFactory().getSchema(schemaAndId[0]);
       return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(schema,
-          Long.valueOf(schemaAndId[1]));
+          Long.valueOf(schemaAndId[1]), getRequestFactory());
     }
   }
 
@@ -201,6 +202,10 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   public final native ProxySchema<?> getSchema() /*-{
     return this['__key'];
   }-*/;
+  
+  public final EntityProxyId getStableId() {
+    throw new IllegalArgumentException("Can't call stableId on the jso");
+  }
 
   public final Integer getVersion() {
     return this.get(version);
@@ -291,7 +296,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     }
 
     if (value instanceof ProxyImpl) {
-      setString(property.getName(), ((ProxyImpl) value).getUniqueId());
+      setString(property.getName(), ((ProxyImpl) value).getWireFormatId());
       return;
     }
 

@@ -52,8 +52,15 @@ public interface RequestFactory {
 
   /**
    * Return the appropriate proxy, which may have only its id attribute set.
+   * 
+   * @deprecated, use the getProxyId method below.
    */
   EntityProxy getProxy(String token);
+
+  /**
+   * Return the appropriate {@link EntityProxyId}, a stable id for the Proxy.
+   */
+  EntityProxyId getProxyId(String token);
 
   /**
    * Get a {@link com.google.gwt.user.client.History} compatible token that

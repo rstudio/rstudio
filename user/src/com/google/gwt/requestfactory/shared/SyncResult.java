@@ -30,7 +30,7 @@ public interface SyncResult {
   boolean hasViolations();
   
   // TODO: futureId isn't working out so well, leaving soon
-  Long getFutureId();
+  Object getFutureId();
 
   EntityProxy getProxy();
   

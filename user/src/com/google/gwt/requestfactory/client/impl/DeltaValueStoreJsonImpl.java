@@ -18,8 +18,9 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.client.SyncResultImpl;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
@@ -162,23 +163,31 @@ class DeltaValueStoreJsonImpl {
       }
 
       for (Map.Entry<EntityProxyId, ProxyJsoImpl> entry : creates.entrySet()) {
-        final EntityProxyId futureKey = entry.getKey();
+        final EntityProxyIdImpl futureKey = (EntityProxyIdImpl) entry.getKey();
         // TODO change violationsMap to <Long, String>
         Map<String, String> violations = violationsMap.get(futureKey.id);
         assert violations != null;
         if (violations == NULL_VIOLATIONS) {
           Long datastoreId = futureToDatastoreId.get(futureKey.id);
           assert datastoreId != null;
-          final EntityProxyId key = new EntityProxyId(datastoreId, futureKey.schema,
-              RequestFactoryJsonImpl.NOT_FUTURE);
+          
+          // populate the two maps first.
+          requestFactory.datastoreToFutureMap.put(datastoreId, futureKey.schema, futureKey.id);
+          requestFactory.futureToDatastoreMap.put(futureKey.id, datastoreId);
+          final EntityProxyIdImpl key = getPersistedProxyId(datastoreId, futureKey.schema);
           ProxyJsoImpl value = entry.getValue();
-          value.set(EntityProxy.id, datastoreId);
+
+          // make a copy of value and set the id there.
+          // TODO (amitmanjhi): get all the data from the server.
+          ProxyJsoImpl copy = ProxyJsoImpl.emptyCopy(value);
+          copy.merge(value);
+          copy.set(EntityProxy.id, datastoreId);
+
           ProxyJsoImpl masterRecord = master.records.get(key);
           assert masterRecord == null;
-          master.records.put(key, value);
-          masterRecord = value;
-          toRemove.add(new EntityProxyId(datastoreId, futureKey.schema,
-              RequestFactoryJsonImpl.IS_FUTURE));
+
+          masterRecord = copy;
+          toRemove.add(key);
           requestFactory.postChangeEvent(masterRecord, WriteOperation.CREATE);
           syncResults.add(makeSyncResult(masterRecord, null, futureKey.id));
         } else {
@@ -198,9 +207,8 @@ class DeltaValueStoreJsonImpl {
       int length = deletedRecords.length();
 
       for (int i = 0; i < length; i++) {
-        final EntityProxyId key = new EntityProxyId(deletedRecords.get(i).getId(),
-            requestFactory.getSchema(deletedRecords.get(i).getSchema()),
-            RequestFactoryJsonImpl.NOT_FUTURE);
+        final EntityProxyIdImpl key = getPersistedProxyId(deletedRecords.get(i).getId(),
+            requestFactory.getSchema(deletedRecords.get(i).getSchema()));
         Map<String, String> violations = violationsMap.get(key.id);
         assert violations != null;
         /*
@@ -210,7 +218,7 @@ class DeltaValueStoreJsonImpl {
          * with update events.
          */
         if (violations == NULL_VIOLATIONS) {
-          requestFactory.postChangeEvent(ProxyJsoImpl.create(key.id, 1,
+          requestFactory.postChangeEvent(ProxyJsoImpl.create((Long) key.id, 1,
               key.schema, requestFactory), WriteOperation.DELETE);
         }
         ProxyJsoImpl masterRecord = master.records.get(key);
@@ -230,14 +238,13 @@ class DeltaValueStoreJsonImpl {
 
       int length = updatedRecords.length();
       for (int i = 0; i < length; i++) {
-        final EntityProxyId key = new EntityProxyId(updatedRecords.get(i).getId(),
-            requestFactory.getSchema(updatedRecords.get(i).getSchema()),
-            RequestFactoryJsonImpl.NOT_FUTURE);
+        final EntityProxyIdImpl key = getPersistedProxyId(updatedRecords.get(i).getId(),
+            requestFactory.getSchema(updatedRecords.get(i).getSchema()));
         Map<String, String> violations = violationsMap.get(key.id);
         assert violations != null;
         // post change events if no violations.
         if (violations == NULL_VIOLATIONS) {
-          requestFactory.postChangeEvent(ProxyJsoImpl.create(key.id, 1,
+          requestFactory.postChangeEvent(ProxyJsoImpl.create((Long) key.id, 1,
               key.schema, requestFactory), WriteOperation.UPDATE);
         }
 
@@ -268,7 +275,7 @@ class DeltaValueStoreJsonImpl {
   public <V> void set(Property<V> property, EntityProxy record, V value) {
     checkArgumentsAndState(record, "set");
     ProxyImpl recordImpl = (ProxyImpl) record;
-    EntityProxyId recordKey = new EntityProxyId(recordImpl);
+    EntityProxyId recordKey = recordImpl.getStableId();
 
     ProxyJsoImpl rawMasterRecord = master.records.get(recordKey);
     WriteOperation priorOperation = operations.get(recordKey);
@@ -387,6 +394,13 @@ class DeltaValueStoreJsonImpl {
     return requestData.toString();
   }
 
+  private EntityProxyIdImpl getPersistedProxyId(Long datastoreId,
+      ProxySchema<?> schema) {
+    return new EntityProxyIdImpl(datastoreId, schema,
+        RequestFactoryJsonImpl.NOT_FUTURE,
+        requestFactory.datastoreToFutureMap.get(datastoreId, schema));
+  }
+
   private Map<EntityProxyId, ProxyJsoImpl> getRecordsMap(
       WriteOperation writeOperation) {
     switch (writeOperation) {
@@ -446,7 +460,7 @@ class DeltaValueStoreJsonImpl {
   }
 
   private SyncResultImpl makeSyncResult(ProxyJsoImpl jso,
-      Map<String, String> violations, Long futureId) {
+      Map<String, String> violations, Object futureId) {
     return new SyncResultImpl(jso.getSchema().create(jso), violations, futureId);
   }
 

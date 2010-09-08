@@ -24,7 +24,7 @@ import junit.framework.TestCase;
 /**
  * Eponymous unit test.
  */
-public class EntityProxyIdTest extends TestCase {
+public class EntityProxyIdImplTest extends TestCase {
 
   static class Schema1 extends ProxySchema<ProxyImpl> {
     public Schema1() {
@@ -52,27 +52,47 @@ public class EntityProxyIdTest extends TestCase {
   }
 
   public void testEquals() {
-    EntityProxyId newKey1 = new EntityProxyId(1L, new Schema1(),
-        RequestFactoryJsonImpl.IS_FUTURE);
+    EntityProxyIdImpl newKey1 = new EntityProxyIdImpl(1L, new Schema1(),
+        RequestFactoryJsonImpl.IS_FUTURE, null);
 
-    EntityProxyId anotherNewKey1 = new EntityProxyId(newKey1.id, newKey1.schema,
-        newKey1.isFuture);
+    EntityProxyIdImpl anotherNewKey1 = new EntityProxyIdImpl(newKey1.id, newKey1.schema,
+        newKey1.isFuture, null);
     assertTrue(newKey1.equals(anotherNewKey1));
     assertTrue(newKey1.hashCode() == anotherNewKey1.hashCode());
 
-    EntityProxyId newKey2 = new EntityProxyId(newKey1.id + 1, newKey1.schema,
-        newKey1.isFuture);
+    EntityProxyIdImpl newKey2 = new EntityProxyIdImpl((Long) newKey1.id + 1, newKey1.schema,
+        newKey1.isFuture, null);
     assertFalse(newKey1.equals(newKey2));
     assertFalse(newKey1.hashCode() == newKey2.hashCode());
 
-    EntityProxyId newKey1NoSchema = new EntityProxyId(newKey1.id,
-        new Schema2(), newKey1.isFuture);
+    EntityProxyIdImpl newKey1NoSchema = new EntityProxyIdImpl(newKey1.id,
+        new Schema2(), newKey1.isFuture, null);
     assertFalse(newKey1.equals(newKey1NoSchema));
     assertFalse(newKey1.hashCode() == newKey1NoSchema.hashCode());
 
-    EntityProxyId oldKey1 = new EntityProxyId(newKey1.id, newKey1.schema,
-        !newKey1.isFuture);
+    EntityProxyIdImpl oldKey1 = new EntityProxyIdImpl(newKey1.id, newKey1.schema,
+        !newKey1.isFuture, null);
     assertFalse(newKey1.equals(oldKey1));
     assertFalse(newKey1.hashCode() == oldKey1.hashCode());
+  }
+  
+  public void testEqualsWithFuture() {
+    EntityProxyIdImpl newKey1 = new EntityProxyIdImpl(1L, new Schema1(),
+        RequestFactoryJsonImpl.IS_FUTURE, null);
+
+    EntityProxyIdImpl persistedNewKey1 = new EntityProxyIdImpl(1000L,
+        newKey1.schema, RequestFactoryJsonImpl.NOT_FUTURE, newKey1.id);
+    assertTrue(persistedNewKey1.equals(persistedNewKey1));
+    assertTrue(newKey1.equals(persistedNewKey1));
+    assertTrue(persistedNewKey1.equals(newKey1));
+    assertTrue(newKey1.hashCode() == persistedNewKey1.hashCode());
+
+    EntityProxyIdImpl anotherPersistedNewKey1 = new EntityProxyIdImpl(1024L,
+        newKey1.schema, RequestFactoryJsonImpl.NOT_FUTURE,
+        (Long) newKey1.id + 1);
+    assertTrue(anotherPersistedNewKey1.equals(anotherPersistedNewKey1));
+    assertFalse(persistedNewKey1.equals(anotherPersistedNewKey1));
+    assertFalse(anotherPersistedNewKey1.equals(persistedNewKey1));
+    assertFalse(newKey1.hashCode() == anotherPersistedNewKey1.hashCode());
   }
 }

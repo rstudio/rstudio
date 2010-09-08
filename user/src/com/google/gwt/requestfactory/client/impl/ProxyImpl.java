@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -34,7 +35,7 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
  */
 public class ProxyImpl implements EntityProxy {
 
-  protected static String getUniqueId(Long id, boolean isFuture,
+  protected static String getWireFormatId(Long id, boolean isFuture,
       ProxySchema<?> schema) {
     return id + "-" + (isFuture ? "IS" : "NO") + "-" + schema.getToken();
   }
@@ -82,12 +83,23 @@ public class ProxyImpl implements EntityProxy {
     return jso.getSchema();
   }
 
-  public String getUniqueId() {
-    return getUniqueId(jso.getId(), isFuture, jso.getSchema());
+  public EntityProxyId getStableId() {
+    if (!isFuture) {
+      return new EntityProxyIdImpl(
+          getId(),
+          getSchema(),
+          false,
+          jso.getRequestFactory().datastoreToFutureMap.get(getId(), getSchema()));
+    }
+    return new EntityProxyIdImpl(getId(), getSchema(), isFuture, null);
   }
 
   public Integer getVersion() {
     return jso.getVersion();
+  }
+
+  public String getWireFormatId() {
+    return getWireFormatId(jso.getId(), isFuture, jso.getSchema());
   }
 
   public boolean isChanged() {
@@ -109,16 +121,11 @@ public class ProxyImpl implements EntityProxy {
     deltaValueStore.set(property, record, value);
   }
 
-  /*
-   * TODO: this method is public for the time being. Will become
-   * package-protected once {@link RecordImpl} moves to the same package as
-   * {@link AbstractRequest}.
-   */
-  public void setDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore) {
-    this.deltaValueStore = deltaValueStore;
-  }
-
   protected ValueStoreJsonImpl getValueStore() {
     return jso.getRequestFactory().getValueStore();
+  }
+
+  void setDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore) {
+    this.deltaValueStore = deltaValueStore;
   }
 }

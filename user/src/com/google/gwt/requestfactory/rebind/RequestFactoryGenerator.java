@@ -52,6 +52,7 @@ import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChangedEvent;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
@@ -361,6 +362,14 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
     sw.println();
 
+    // write getProxyId(String)
+    sw.println("public " + EntityProxyId.class.getName() + " getProxyId(String token) {");
+    sw.indent();
+    sw.println("return getProxyId(token, new " + proxyToTypeMapName + "());");
+    sw.outdent();
+    sw.println("}");
+    sw.println();
+
     // write getToken(Proxy)
     sw.println("public String getToken(EntityProxy proxy) {");
     sw.indent();
@@ -492,7 +501,6 @@ public class RequestFactoryGenerator extends Generator {
     sw.outdent();
     sw.outdent();
     sw.println("}");
-
 
     sw.outdent();
     sw.println("}");
@@ -670,7 +678,7 @@ public class RequestFactoryGenerator extends Generator {
       }
       if (classType != null
           && classType.isAssignableTo(typeOracle.findType(EntityProxy.class.getName()))) {
-        sb.append(").getUniqueId()");
+        sb.append(").getWireFormatId()");
       }
     }
     return "new Object[] {" + sb.toString() + "}";

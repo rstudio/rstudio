@@ -29,26 +29,27 @@ import java.util.Map;
  * </span>
  * </p>
  */
-public class ValueStoreJsonImpl {
+class ValueStoreJsonImpl {
   // package protected fields for use by DeltaValueStoreJsonImpl
 
-  final Map<EntityProxyId, ProxyJsoImpl> records = new HashMap<EntityProxyId, ProxyJsoImpl>();
+  final Map<EntityProxyIdImpl, ProxyJsoImpl> records = new HashMap<EntityProxyIdImpl, ProxyJsoImpl>();
 
-  public EntityProxy getRecordBySchemaAndId(ProxySchema<?> schema,
-      Long id) {
+  EntityProxy getRecordBySchemaAndId(ProxySchema<?> schema, Long id,
+      RequestFactoryJsonImpl requestFactory) {
     if (id == null) {
       return null;
     }
     // TODO: pass isFuture to this method from decoding ID string
-    EntityProxyId key = new EntityProxyId(id, schema, false);
+    EntityProxyIdImpl key = new EntityProxyIdImpl(id, schema, false,
+        requestFactory.datastoreToFutureMap.get(id, schema));
     return schema.create(records.get(key));
   }
 
-  public void setProxy(ProxyJsoImpl newRecord) {
+  void setProxy(ProxyJsoImpl newRecord) {
     setRecordInList(newRecord, 0, null);
   }
 
-  public void setRecords(JsArray<ProxyJsoImpl> newRecords) {
+  void setRecords(JsArray<ProxyJsoImpl> newRecords) {
     for (int i = 0, l = newRecords.length(); i < l; i++) {
       ProxyJsoImpl newRecord = newRecords.get(i);
       setRecordInList(newRecord, i, newRecords);
@@ -57,8 +58,11 @@ public class ValueStoreJsonImpl {
 
   private void setRecordInList(ProxyJsoImpl newJsoRecord, int i,
       JsArray<ProxyJsoImpl> array) {
-    EntityProxyId recordKey = new EntityProxyId(newJsoRecord, RequestFactoryJsonImpl.NOT_FUTURE);
-    
+    EntityProxyIdImpl recordKey = new EntityProxyIdImpl(newJsoRecord.getId(),
+        newJsoRecord.getSchema(), RequestFactoryJsonImpl.NOT_FUTURE,
+        newJsoRecord.getRequestFactory().datastoreToFutureMap.get(
+            newJsoRecord.getId(), newJsoRecord.getSchema()));
+
     ProxyJsoImpl oldRecord = records.get(recordKey);
     if (oldRecord == null) {
       records.put(recordKey, newJsoRecord);
@@ -73,7 +77,8 @@ public class ValueStoreJsonImpl {
         array.set(i, newJsoRecord);
       }
       if (changed) {
-        newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord, WriteOperation.UPDATE);
+        newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord,
+            WriteOperation.UPDATE);
       }
     }
   }

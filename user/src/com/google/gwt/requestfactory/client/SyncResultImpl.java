@@ -32,15 +32,15 @@ public class SyncResultImpl implements SyncResult {
 
   private final EntityProxy record;
   private final Map<String, String> violations;
-  private final Long futureId;
+  private final Object futureId;
   
-  public SyncResultImpl(EntityProxy record, Map<String, String> violations, Long futureId) {
+  public SyncResultImpl(EntityProxy record, Map<String, String> violations, Object futureId) {
     this.record = record;
     this.violations = violations;
     this.futureId = futureId;
   }
 
-  public Long getFutureId() {
+  public Object getFutureId() {
     return futureId;
   }
 

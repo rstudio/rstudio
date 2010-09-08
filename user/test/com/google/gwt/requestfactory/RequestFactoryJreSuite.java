@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory;
 
-import com.google.gwt.requestfactory.client.impl.EntityProxyIdTest;
+import com.google.gwt.requestfactory.client.impl.EntityProxyIdImplTest;
 import com.google.gwt.requestfactory.server.JsonRequestProcessorTest;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistryTest;
 import com.google.gwt.requestfactory.server.RequestPropertyTest;
@@ -30,7 +30,7 @@ public class RequestFactoryJreSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite(
         "requestfactory package tests that require the JRE");
-    suite.addTestSuite(EntityProxyIdTest.class);
+    suite.addTestSuite(EntityProxyIdImplTest.class);
     suite.addTestSuite(JsonRequestProcessorTest.class);
     suite.addTestSuite(ReflectionBasedOperationRegistryTest.class);
     suite.addTestSuite(RequestPropertyTest.class);

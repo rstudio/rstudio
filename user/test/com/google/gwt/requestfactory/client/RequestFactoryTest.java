@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -34,10 +35,108 @@ import java.util.Set;
  */
 public class RequestFactoryTest extends GWTTestCase {
 
+  private SimpleRequestFactory req;
+  private HandlerManager eventBus;
+
+  @Override
+  public void gwtSetUp() {
+    req = GWT.create(SimpleRequestFactory.class);
+    eventBus = new HandlerManager(null);
+    req.init(eventBus);
+  }
+
+  @Override
+  public void gwtTearDown() {
+    req.simpleFooRequest().reset().fire(new Receiver<Void>() {
+      public void onSuccess(Void response, Set<SyncResult> syncResults) {
+      }
+    });
+    req.simpleBarRequest().reset().fire(new Receiver<Void>() {
+      public void onSuccess(Void response, Set<SyncResult> syncResults) {
+      }
+    });
+  }
+
+  /*
+   * TODO(amitmanjhi) : new test that needs to be re-enabled.
+   */
+  public void disabled_testDummyCreate() {
+    delayTestFinish(5000);
+
+    final SimpleFooProxy foo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
+        foo);
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+
+      public void onSuccess(final SimpleFooProxy returned,
+          Set<SyncResult> syncResults) {
+        assertNotSame(foo.getStableId(), returned.getStableId());
+        assertEquals(foo.getStableId(), returned.getStableId());
+        finishTest();
+      }
+    });
+  }
+
+  public void testStableId() {
+    delayTestFinish(5000);
+
+    final SimpleFooProxy foo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    final Object futureId = foo.getId();
+    assertTrue(((ProxyImpl) foo).isFuture());
+    RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
+        foo);
+        
+    final SimpleFooProxy newFoo = fooReq.edit(foo);
+    assertEquals(futureId, foo.getId());
+    assertTrue(((ProxyImpl) foo).isFuture());
+    assertEquals(futureId, newFoo.getId());
+    assertTrue(((ProxyImpl) newFoo).isFuture());
+    
+    newFoo.setUserName("GWT basic user"); 
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+
+      public void onSuccess(final SimpleFooProxy returned,
+          Set<SyncResult> syncResults) {
+        assertEquals(futureId, foo.getId());
+        assertTrue(((ProxyImpl) foo).isFuture());
+        assertEquals(futureId, newFoo.getId());
+        assertTrue(((ProxyImpl) newFoo).isFuture());
+
+        assertFalse(((ProxyImpl) returned).isFuture());
+
+        checkStableIdEquals(foo, returned);
+        checkStableIdEquals(newFoo, returned);
+        
+        RequestObject<SimpleFooProxy> editRequest = req.simpleFooRequest().persistAndReturnSelf(
+            returned);
+        final SimpleFooProxy editableFoo = editRequest.edit(returned);
+        editableFoo.setUserName("GWT power user");
+        editRequest.fire(new Receiver<SimpleFooProxy>() {
+
+          public void onSuccess(SimpleFooProxy returnedAfterEdit,
+              Set<SyncResult> syncResults) {
+            assertNotSame(returnedAfterEdit, editableFoo); // Mutation above.
+            assertEquals(returnedAfterEdit.getStableId(),
+                returned.getStableId());
+            assertEquals(returnedAfterEdit.getId(), returned.getId());
+            finishTest();
+          }
+        });
+      }
+    });
+  }
+  
+  private void checkStableIdEquals(SimpleFooProxy expected, SimpleFooProxy actual) {
+    assertNotSame(expected.getStableId(), actual.getStableId());
+    assertEquals(expected.getStableId(), actual.getStableId());
+    assertEquals(expected.getStableId().hashCode(), actual.getStableId().hashCode());
+    
+    // No assumptions about the proxy objects (being proxies and all)
+    assertNotSame(expected, actual);
+    assertFalse(expected.equals(actual));
+  }
+
   public void testViolationPresent() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
 
     SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
@@ -70,9 +169,6 @@ public class RequestFactoryTest extends GWTTestCase {
   }
 
   public void testViolationAbsent() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
 
     SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
@@ -96,9 +192,6 @@ public class RequestFactoryTest extends GWTTestCase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistExistingEntityExistingRelation() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
 
     req.simpleBarRequest().findSimpleBarById(999L).fire(
@@ -129,9 +222,6 @@ public class RequestFactoryTest extends GWTTestCase {
    * Find Entity Create Entity2 Relate Entity2 to Entity Persist Entity
    */
   public void testPersistExistingEntityNewRelation() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
 
     SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
@@ -173,9 +263,6 @@ public class RequestFactoryTest extends GWTTestCase {
    * Entity
    */
   public void testPersistNewEntityExistingRelation() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
     SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
 
@@ -214,9 +301,6 @@ public class RequestFactoryTest extends GWTTestCase {
    * to Entity Persist
    */
   public void testPersistNewEntityNewRelation() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
     SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
     SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
@@ -264,9 +348,6 @@ public class RequestFactoryTest extends GWTTestCase {
   }
 
   public void testPersistRecursiveRelation() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
 
     SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
@@ -284,9 +365,6 @@ public class RequestFactoryTest extends GWTTestCase {
   }
 
   public void testPersistRelation() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
 
     SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
@@ -333,9 +411,6 @@ public class RequestFactoryTest extends GWTTestCase {
   }
 
   public void testFetchEntity() {
-    SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
@@ -353,9 +428,6 @@ public class RequestFactoryTest extends GWTTestCase {
   }
 
   public void testFetchEntityWithRelation() {
-    SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
         new Receiver<SimpleFooProxy>() {
@@ -373,10 +445,6 @@ public class RequestFactoryTest extends GWTTestCase {
   }
 
   public void testProxysAsInstanceMethodParams() {
-
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
@@ -402,9 +470,6 @@ public class RequestFactoryTest extends GWTTestCase {
    * (b) instance methods are handled correctly.
    */
   public void testMethodWithSideEffects() {
-    final SimpleRequestFactory req = GWT.create(SimpleRequestFactory.class);
-    HandlerManager hm = new HandlerManager(null);
-    req.init(hm);
     delayTestFinish(5000);
 
     req.simpleFooRequest().findSimpleFooById(999L).fire(
