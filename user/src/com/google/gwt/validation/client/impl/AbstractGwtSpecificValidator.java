@@ -36,7 +36,8 @@ public abstract class AbstractGwtSpecificValidator<G> implements
       G object, V value, ConstraintValidator<A, V> validator,
       ConstraintDescriptorImpl<A> constraintDescriptor, Class<?>[] groups) {
     validator.initialize(constraintDescriptor.getAnnotation());
-    ConstraintValidatorContextImpl<A, V> constraintValidatorContext = context.createConstraintValidatorContext(constraintDescriptor);
+    ConstraintValidatorContextImpl<A, V> constraintValidatorContext =
+        context.createConstraintValidatorContext(constraintDescriptor);
     if (!validator.isValid(value, constraintValidatorContext)) {
       addViolations(//
           context, //

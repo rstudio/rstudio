@@ -16,8 +16,18 @@
   the License.
 -->
 <module>
-   <inherits name="com.google.gwt.user.User"/>
-   <inherits name="com.google.gwt.regexp.RegExp"/>
-   <inherits name="javax.validation.Validation"/>
-   <source path="client"/>
+  <inherits name="com.google.gwt.user.User" />
+  <inherits name="com.google.gwt.regexp.RegExp" />
+  <inherits name="javax.validation.Validation" />
+  <source path="client" />
+
+  <!-- Generators -->
+  <generate-with class="com.google.gwt.validation.rebind.ValidatorGenerator">
+    <when-type-assignable class="javax.validation.Validator" />
+  </generate-with>
+  <generate-with
+    class="com.google.gwt.validation.rebind.GwtSpecificValidatorGenerator">
+    <when-type-assignable
+      class="com.google.gwt.validation.client.impl.GwtSpecificValidator" />
+  </generate-with>
 </module>
