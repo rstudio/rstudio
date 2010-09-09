@@ -36,7 +36,7 @@ public class SqlDateTest extends GWTTestCase {
   }
 
   public void testInternalPrecision() {
-    long millis = System.currentTimeMillis();
+    long millis = 1283895273475L;
     Date now = new Date(millis);
     Date after = new Date(now.getTime() + 1);
     Date before = new Date(now.getTime() - 1);

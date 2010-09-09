@@ -124,7 +124,7 @@ public class SqlTimeTest extends GWTTestCase {
   }
 
   public void testInternalPrecision() {
-    long millis = System.currentTimeMillis();
+    long millis = 1283895273475L;
     Time today = new Time(millis);
     Time after = new Time(today.getTime() + 1);
     Time before = new Time(today.getTime() - 1);

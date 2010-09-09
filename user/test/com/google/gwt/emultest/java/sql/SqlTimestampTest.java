@@ -41,36 +41,13 @@ public class SqlTimestampTest extends GWTTestCase {
    * dates.
    */
   public void testDateComparison() {
-    long now = System.currentTimeMillis();
-    Date d = new Date(now);
-
-    Timestamp t = new Timestamp(d.getTime());
-    if (now % 1000 == 0) {
-      t.setNanos(1000001);
-    } else {
-      t.setNanos(1);
-    }
-
-    // Timestamps are stored at second-level precision
-    Date d2 = new Date(t.getTime());
-
-    assertFalse("d.equals(t)", d.equals(t));
-    assertEquals("d2, t", d2, t);
-    assertEquals("hashcode", d2.hashCode(), t.hashCode());
-    assertFalse("t.equals(d2)", t.equals(d2));
-    
-    // t is later then d2 by some number of nanoseconds
-    assertEquals(1, t.compareTo(d2));
-
-    Timestamp t2 = new Timestamp(d.getTime());
-    t2.setNanos(t.getNanos() + 1);
-
-    assertFalse("t.equals(t2)", t.equals(t2));
-    assertEquals("hashcode2", t.hashCode(), t2.hashCode());
+    /* Consider two cases, whether or not the time is a multiple of 1000 */
+    testDateComparisonOneValue(1283895274000L);
+    testDateComparisonOneValue(1283895273475L);
   }
 
   public void testNanosAffectTime() {
-    long now = System.currentTimeMillis();
+    long now = 1283895273475L;
     int millis = (int) (now % 1000);
     Timestamp t = new Timestamp(now);
 
@@ -85,7 +62,7 @@ public class SqlTimestampTest extends GWTTestCase {
   }
 
   public void testNanosComparison() {
-    long now = System.currentTimeMillis();
+    long now = 1283895273475L;
     Timestamp t = new Timestamp(now);
     t.setNanos(0);
 
@@ -107,7 +84,7 @@ public class SqlTimestampTest extends GWTTestCase {
   }
 
   public void testNanosRange() {
-    long now = System.currentTimeMillis();
+    long now = 1283895273475L;
     Timestamp t = new Timestamp(now);
 
     assertEquals(now, t.getTime());
@@ -134,7 +111,7 @@ public class SqlTimestampTest extends GWTTestCase {
 
   public void testTimeAffectsNanos() {
     // A value 5 millis past the current second
-    long now = (System.currentTimeMillis() / 1000) * 1000 + 5;
+    long now = 1283895273005L; // (1283895273475 / 1000) * 1000 + 5;
 
     Timestamp t = new Timestamp(now);
     assertEquals(5000000, t.getNanos());
@@ -201,5 +178,33 @@ public class SqlTimestampTest extends GWTTestCase {
     
     expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 123456780);
     actual = Timestamp.valueOf("2000-01-01 12:34:56.12345678");
+  }
+
+  private void testDateComparisonOneValue(long value) {
+    Date d = new Date(value);
+
+    Timestamp t = new Timestamp(d.getTime());
+    if (value % 1000 == 0) {
+      t.setNanos(1000001);
+    } else {
+      t.setNanos(1);
+    }
+
+    // Timestamps are stored at second-level precision
+    Date d2 = new Date(t.getTime());
+
+    assertFalse("d.equals(t)", d.equals(t));
+    assertEquals("d2, t", d2, t);
+    assertEquals("hashcode", d2.hashCode(), t.hashCode());
+    assertFalse("t.equals(d2)", t.equals(d2));
+
+    // t is later then d2 by some number of nanoseconds
+    assertEquals(1, t.compareTo(d2));
+
+    Timestamp t2 = new Timestamp(d.getTime());
+    t2.setNanos(t.getNanos() + 1);
+
+    assertFalse("t.equals(t2)", t.equals(t2));
+    assertEquals("hashcode2", t.hashCode(), t2.hashCode());
   }
 }
