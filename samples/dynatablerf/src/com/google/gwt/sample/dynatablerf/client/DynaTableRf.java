@@ -17,6 +17,7 @@ package com.google.gwt.sample.dynatablerf.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.sample.dynatablerf.client.widgets.DayFilterWidget;
@@ -25,17 +26,22 @@ import com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The entry point class which performs the initial loading of the DynaTableRf
  * application.
  */
 public class DynaTableRf implements EntryPoint {
-
   interface Binder extends UiBinder<Widget, DynaTableRf> {
   }
+
+  private static final Logger log = Logger.getLogger(DynaTableRf.class.getName());
 
   @UiField(provided = true)
   SummaryWidget calendar;
@@ -49,6 +55,12 @@ public class DynaTableRf implements EntryPoint {
   DayFilterWidget filter;
 
   public void onModuleLoad() {
+    GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      public void onUncaughtException(Throwable e) {
+        Window.alert("Error: " + e.getMessage());
+        log.log(Level.SEVERE, e.getMessage(), e);
+      }
+    });
 
     DynaTableRequestFactory requests = GWT.create(DynaTableRequestFactory.class);
     requests.init(eventBus);
