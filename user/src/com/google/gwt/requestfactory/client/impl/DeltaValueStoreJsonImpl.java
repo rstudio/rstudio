@@ -102,8 +102,6 @@ class DeltaValueStoreJsonImpl {
     }-*/;
   }
 
-  private static final HashMap<String, String> NULL_VIOLATIONS = new HashMap<String, String>();
-
   private boolean used = false;
 
   private final ValueStoreJsonImpl master;
@@ -131,6 +129,10 @@ class DeltaValueStoreJsonImpl {
     used = false;
   }
 
+  /*
+   * TODO: there needs to be a separate path for violations, not mingled
+   * with update events.
+   */
   public Set<SyncResult> commit(JavaScriptObject returnedJso) {
     Set<SyncResult> syncResults = new HashSet<SyncResult>();
     HashSet<String> keys = new HashSet<String>();
@@ -140,60 +142,39 @@ class DeltaValueStoreJsonImpl {
     if (keys.contains(WriteOperation.CREATE.name())) {
       JsArray<ReturnRecord> newRecords = ReturnRecord.getRecords(returnedJso,
           WriteOperation.CREATE.name());
-      /*
-       * construct 2 maps: (i) futureId to the datastore Id, (ii) futureId to
-       * violationsMap
-       */
-      Map<Long, Long> futureToDatastoreId = new HashMap<Long, Long>();
-      Map<Long, Map<String, String>> violationsMap = new HashMap<Long, Map<String, String>>();
       int length = newRecords.length();
       for (int i = 0; i < length; i++) {
-        ReturnRecord sync = newRecords.get(i);
-        if (sync.hasViolations()) {
-          // does not have an id.
-          assert !sync.hasId();
+        ReturnRecord newRecord = newRecords.get(i);
+        final EntityProxyIdImpl futureKey = new EntityProxyIdImpl(
+            Long.valueOf(newRecord.getFutureId()),
+            requestFactory.getSchema(newRecord.getSchema()),
+            RequestFactoryJsonImpl.IS_FUTURE, null);
+        ProxyJsoImpl copy = ProxyJsoImpl.create(Long.valueOf(newRecord.getFutureId()), 1,
+            futureKey.schema, requestFactory);
+        if (newRecord.hasViolations()) {
           HashMap<String, String> violations = new HashMap<String, String>();
-          sync.fillViolations(violations);
-          violationsMap.put(Long.valueOf(sync.getFutureId()), violations);
-        } else {
-          violationsMap.put(Long.valueOf(sync.getFutureId()), NULL_VIOLATIONS);
-          futureToDatastoreId.put(Long.valueOf(sync.getFutureId()),
-              sync.getId());
-        }
-      }
-
-      for (Map.Entry<EntityProxyId, ProxyJsoImpl> entry : creates.entrySet()) {
-        final EntityProxyIdImpl futureKey = (EntityProxyIdImpl) entry.getKey();
-        // TODO change violationsMap to <Long, String>
-        Map<String, String> violations = violationsMap.get(futureKey.id);
-        assert violations != null;
-        if (violations == NULL_VIOLATIONS) {
-          Long datastoreId = futureToDatastoreId.get(futureKey.id);
-          assert datastoreId != null;
-          
-          // populate the two maps first.
-          requestFactory.datastoreToFutureMap.put(datastoreId, futureKey.schema, futureKey.id);
-          requestFactory.futureToDatastoreMap.put(futureKey.id, datastoreId);
-          final EntityProxyIdImpl key = getPersistedProxyId(datastoreId, futureKey.schema);
-          ProxyJsoImpl value = entry.getValue();
-
-          // make a copy of value and set the id there.
-          // TODO (amitmanjhi): get all the data from the server.
-          ProxyJsoImpl copy = ProxyJsoImpl.emptyCopy(value);
-          copy.merge(value);
-          copy.set(EntityProxy.id, datastoreId);
-
-          ProxyJsoImpl masterRecord = master.records.get(key);
-          assert masterRecord == null;
-
-          masterRecord = copy;
-          toRemove.add(key);
-          requestFactory.postChangeEvent(masterRecord, WriteOperation.CREATE);
-          syncResults.add(makeSyncResult(masterRecord, null, futureKey.id));
-        } else {
+          newRecord.fillViolations(violations);
           // do not change the masterRecord or fire event
-          syncResults.add(makeSyncResult(entry.getValue(), violations,
-              futureKey.id));
+          syncResults.add(makeSyncResult(copy, violations,
+              Long.valueOf(newRecord.getFutureId())));
+        } else {
+          toRemove.add(futureKey);
+          requestFactory.datastoreToFutureMap.put(newRecord.getId(),
+              futureKey.schema, futureKey.id);
+          requestFactory.futureToDatastoreMap.put(futureKey.id,
+              newRecord.getId());
+
+          // TODO (amitmanjhi): get all the data from the server.
+          // make a copy of value and set the id there.
+          ProxyJsoImpl value = creates.get(futureKey);
+          if (value != null) {
+            copy.merge(value);
+            copy.set(EntityProxy.id, newRecord.getId());
+          }
+          ProxyJsoImpl masterRecord = master.records.get(futureKey);
+          assert masterRecord == null;
+          requestFactory.postChangeEvent(copy, WriteOperation.CREATE);
+          syncResults.add(makeSyncResult(copy, null, futureKey.id));
         }
       }
     }
@@ -203,30 +184,24 @@ class DeltaValueStoreJsonImpl {
     if (keys.contains(WriteOperation.DELETE.name())) {
       JsArray<ReturnRecord> deletedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.DELETE.name());
-      Map<Long, Map<String, String>> violationsMap = getViolationsMap(deletedRecords);
       int length = deletedRecords.length();
-
       for (int i = 0; i < length; i++) {
-        final EntityProxyIdImpl key = getPersistedProxyId(deletedRecords.get(i).getId(),
-            requestFactory.getSchema(deletedRecords.get(i).getSchema()));
-        Map<String, String> violations = violationsMap.get(key.id);
-        assert violations != null;
-        /*
-         * post change event if no violations.
-         *
-         * TODO: there needs to be a separate path for violations, not mingled
-         * with update events.
-         */
-        if (violations == NULL_VIOLATIONS) {
-          requestFactory.postChangeEvent(ProxyJsoImpl.create((Long) key.id, 1,
-              key.schema, requestFactory), WriteOperation.DELETE);
-        }
-        ProxyJsoImpl masterRecord = master.records.get(key);
-        if (masterRecord != null) {
-          master.records.remove(key);
-          syncResults.add(makeSyncResult(masterRecord, null, null));
+        ReturnRecord deletedRecord = deletedRecords.get(i);
+        final EntityProxyIdImpl key = getPersistedProxyId(
+            deletedRecord.getId(),
+            requestFactory.getSchema(deletedRecord.getSchema()));
+        ProxyJsoImpl copy = ProxyJsoImpl.create((Long) key.id, 1, key.schema,
+            requestFactory);
+        if (deletedRecord.hasViolations()) {
+          HashMap<String, String> violations = new HashMap<String, String>();
+          deletedRecord.fillViolations(violations);
+          // do not change the masterRecord or fire event
+          syncResults.add(makeSyncResult(copy, violations, null));
         } else {
-          syncResults.add(makeSyncResult(masterRecord, violations, null));
+          // post change event if no violations.
+          requestFactory.postChangeEvent(copy, WriteOperation.DELETE);
+          master.records.remove(key);
+          syncResults.add(makeSyncResult(copy, null, null));
         }
       }
     }
@@ -234,32 +209,36 @@ class DeltaValueStoreJsonImpl {
     if (keys.contains(WriteOperation.UPDATE.name())) {
       JsArray<ReturnRecord> updatedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.UPDATE.name());
-      Map<Long, Map<String, String>> violationsMap = getViolationsMap(updatedRecords);
-
       int length = updatedRecords.length();
       for (int i = 0; i < length; i++) {
-        final EntityProxyIdImpl key = getPersistedProxyId(updatedRecords.get(i).getId(),
-            requestFactory.getSchema(updatedRecords.get(i).getSchema()));
-        Map<String, String> violations = violationsMap.get(key.id);
-        assert violations != null;
-        // post change events if no violations.
-        if (violations == NULL_VIOLATIONS) {
-          requestFactory.postChangeEvent(ProxyJsoImpl.create((Long) key.id, 1,
-              key.schema, requestFactory), WriteOperation.UPDATE);
-        }
-
-        ProxyJsoImpl masterRecord = master.records.get(key);
-        ProxyJsoImpl value = updates.get(key);
-        if (masterRecord != null && value != null) {
-          // no support for partial updates.
-          masterRecord.merge(value);
-          toRemove.add(key);
-        }
-        if (masterRecord != null) {
-          syncResults.add(makeSyncResult(masterRecord, null, null));
-        } else {
+        ReturnRecord updatedRecord = updatedRecords.get(i);
+        final EntityProxyIdImpl key = getPersistedProxyId(
+            updatedRecord.getId(),
+            requestFactory.getSchema(updatedRecord.getSchema()));
+        ProxyJsoImpl copy = ProxyJsoImpl.create((Long) key.id, 1, key.schema,
+            requestFactory);
+        if (updatedRecord.hasViolations()) {
+          HashMap<String, String> violations = new HashMap<String, String>();
+          updatedRecord.fillViolations(violations);
           // do not change the masterRecord or fire event
-          syncResults.add(makeSyncResult(masterRecord, violations, null));
+          syncResults.add(makeSyncResult(copy, violations, null));
+        } else {
+          // post change events since no violations.
+          requestFactory.postChangeEvent(copy, WriteOperation.UPDATE);
+          ProxyJsoImpl masterRecord = master.records.get(key);
+          ProxyJsoImpl value = updates.get(key);
+          if (masterRecord != null && value != null) {
+            // no support for partial updates.
+            // TODO(amitmanjhi): instead of merging, get updates from server.
+            masterRecord.merge(value);
+            toRemove.add(key);
+          }
+          if (masterRecord != null) {
+            syncResults.add(makeSyncResult(masterRecord, null, null));
+          } else {
+            // do not change the masterRecord or fire event
+            syncResults.add(makeSyncResult(copy, null, null));
+          }
         }
       }
     }
@@ -412,24 +391,6 @@ class DeltaValueStoreJsonImpl {
         throw new IllegalStateException("unknow writeOperation "
             + writeOperation.name());
     }
-  }
-
-  private Map<Long, Map<String, String>> getViolationsMap(
-      JsArray<ReturnRecord> records) {
-    Map<Long, Map<String, String>> violationsMap = new HashMap<Long, Map<String, String>>();
-    int length = records.length();
-    for (int i = 0; i < length; i++) {
-      ReturnRecord record = records.get(i);
-      HashMap<String, String> violations = null;
-      if (record.hasViolations()) {
-        violations = new HashMap<String, String>();
-        record.fillViolations(violations);
-      } else {
-        violations = NULL_VIOLATIONS;
-      }
-      violationsMap.put(record.getId(), violations);
-    }
-    return violationsMap;
   }
 
   private <V> boolean isRealChange(Property<V> property, V value,

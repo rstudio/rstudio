@@ -114,7 +114,7 @@ final class EntityProxyIdImpl implements EntityProxyId {
 
   @Override
   public String toString() {
-    return "[RecordKey schema: " + schema.getClass().getName() + " id: " + id
+    return "[EntityProxyId schema: " + schema.getClass().getName() + " id: " + id
         + " isFuture: " + (isFuture ? "true" : "false")
         + (futureId != null ? ("futureId : " + futureId) : "") + "]";
   }

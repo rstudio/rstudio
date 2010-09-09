@@ -630,7 +630,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public Object invokeDomainMethod(Object domainObject, Method domainMethod, Object args[])
       throws IllegalAccessException, InvocationTargetException {
-    return domainMethod.invoke(domainObject, args);
+    Object returnValue = domainMethod.invoke(domainObject, args);
+    if (returnValue == null && domainMethod.getReturnType() != Void.class) {
+      // is this the right thing to do?
+      throw new IllegalStateException(domainMethod + " with arguments " + args
+          + " is returning null, even though its return type is "
+          + domainMethod.getReturnType());
+    }
+    return returnValue;
   }
 
   public JSONObject processJsonRequest(String jsonRequestString)
@@ -674,14 +681,15 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
 
     // resolve parameters that are so far just EntityKeys.
-    // TODO: resolve paramters other than the domainInstance
+    // TODO: resolve parameters other than the domainInstance
     EntityKey domainEntityKey = null;
     if (args[0][0] != null) {
       domainEntityKey = (EntityKey) args[0][0];
       EntityData domainEntityData = afterDvsDataMap.get(domainEntityKey);
-      assert domainEntityData != null;
-      args[0][0] = domainEntityData.entityInstance;
-      assert args[0][0] != null;
+      if (domainEntityData != null) {
+        args[0][0] = domainEntityData.entityInstance;
+        assert args[0][0] != null;
+      }
     }
     Object result = invokeDomainMethod(args[0][0], domainMethod, args[1]);
 
@@ -798,11 +806,20 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         }
         afterDvsDataMap.put(entityKey, entityData);
       } else {
-        assert !entityKey.isFuture;
-        SerializedEntity serializedEntity = beforeDataMap.get(entityKey);
-        assert serializedEntity.entityInstance != null;
-        afterDvsDataMap.put(entityKey, new EntityData(
-            serializedEntity.entityInstance, null));
+        if (entityKey.isFuture) {
+          // dummy create, i.e., an entity that the dvs does not know about.
+          JSONObject dummyJson = new JSONObject();
+          dummyJson.put("id", entityKey.id);
+          afterDvsDataMap.put(
+              entityKey,
+              getEntityDataForRecord(entityKey, dummyJson,
+                  WriteOperation.CREATE));
+        } else {
+          SerializedEntity serializedEntity = beforeDataMap.get(entityKey);
+          assert serializedEntity.entityInstance != null;
+          afterDvsDataMap.put(entityKey, new EntityData(
+              serializedEntity.entityInstance, null));
+        }
       }
     }
   }
@@ -998,8 +1015,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     JSONObject sideEffects = new JSONObject();
     for (EntityKey entityKey : involvedKeys) {
       EntityData entityData = afterDvsDataMap.get(entityKey);
-      assert entityData != null;
-      if (entityData.violations == null || entityData.violations.length() == 0) {
+      if (entityData == null || entityData.violations == null
+          || entityData.violations.length() == 0) {
         continue;
       }
       // find the WriteOperation
@@ -1009,6 +1026,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         returnObject.put("violations", entityData.violations);
         if (entityKey.isFuture) {
           returnObject.put("futureId", entityKey.id + "");
+          returnObject.put("id", getSchemaAndId(entityKey.record, null));
         } else {
           returnObject.put("id",  getSchemaAndId(entityKey.record, entityKey.id));
         }

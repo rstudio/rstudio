@@ -57,21 +57,24 @@ public class RequestFactoryTest extends GWTTestCase {
     });
   }
 
-  /*
-   * TODO(amitmanjhi) : new test that needs to be re-enabled.
-   */
-  public void disabled_testDummyCreate() {
+  public void testDummyCreate() {
     delayTestFinish(5000);
 
     final SimpleFooProxy foo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    Object futureId = foo.getId();
+    assertEquals(futureId, foo.getId());
+    assertTrue(((ProxyImpl) foo).isFuture());
     RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
         foo);
     fooReq.fire(new Receiver<SimpleFooProxy>() {
 
       public void onSuccess(final SimpleFooProxy returned,
           Set<SyncResult> syncResults) {
-        assertNotSame(foo.getStableId(), returned.getStableId());
-        assertEquals(foo.getStableId(), returned.getStableId());
+        Object futureId = foo.getId();
+        assertEquals(futureId, foo.getId());
+        assertTrue(((ProxyImpl) foo).isFuture());
+
+        checkStableIdEquals(foo, returned);
         finishTest();
       }
     });
@@ -115,9 +118,7 @@ public class RequestFactoryTest extends GWTTestCase {
 
           public void onSuccess(SimpleFooProxy returnedAfterEdit,
               Set<SyncResult> syncResults) {
-            assertNotSame(returnedAfterEdit, editableFoo); // Mutation above.
-            assertEquals(returnedAfterEdit.getStableId(),
-                returned.getStableId());
+            checkStableIdEquals(editableFoo, returnedAfterEdit);
             assertEquals(returnedAfterEdit.getId(), returned.getId());
             finishTest();
           }
@@ -136,7 +137,7 @@ public class RequestFactoryTest extends GWTTestCase {
     assertFalse(expected.equals(actual));
   }
 
-  public void testViolationPresent() {
+  public void testViolationsOnCreate() {
     delayTestFinish(5000);
 
     SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
@@ -164,6 +165,100 @@ public class RequestFactoryTest extends GWTTestCase {
         assertEquals("size must be between 3 and 30",
             violations.get("userName"));
         finishTest();
+      }
+    });
+  }
+
+  public void testViolationsOnEdit() {
+    delayTestFinish(5000);
+
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    final RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("GWT User");
+
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
+        assertEquals(1, syncResults.size());
+        SyncResult syncResult = syncResults.iterator().next();
+        assertFalse(syncResult.hasViolations());
+        
+        RequestObject<Void> editRequest = req.simpleFooRequest().persist(returned);
+        SimpleFooProxy editableFoo = editRequest.edit(returned);
+        editableFoo.setUserName("A");
+        
+        editRequest.fire(new Receiver<Void>() {
+          public void onSuccess(Void returned, Set<SyncResult> syncResults) {
+            assertEquals(1, syncResults.size());
+            SyncResult syncResult = syncResults.iterator().next();
+            /*
+             * Make sure your class path includes:
+             * 
+             * tools/apache/log4j/log4j-1.2.16.jar
+             * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
+             * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
+             * tools/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar
+             */
+            assertTrue("Violations expected (you might be missing some jars, "
+                + "see the comment above this line)", syncResult.hasViolations());
+            Map<String, String> violations = syncResult.getViolations();
+            assertEquals(1, violations.size());
+            assertEquals("size must be between 3 and 30",
+                violations.get("userName"));
+            finishTest();
+          }
+          
+        });
+      }
+    });
+  }
+
+  /*
+   * Disabling this new test for now. Will fix once the constraint violation portion of
+   * https://jira.springsource.org/browse/ROO-954 is done.
+   */
+  public void disabled_testViolationsOnEdit() {
+    delayTestFinish(5000);
+
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    final RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("GWT User");
+
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
+        assertEquals(1, syncResults.size());
+        SyncResult syncResult = syncResults.iterator().next();
+        assertFalse(syncResult.hasViolations());
+        
+        RequestObject<SimpleFooProxy> editRequest = req.simpleFooRequest().persistAndReturnSelf(returned);
+        SimpleFooProxy editableFoo = editRequest.edit(returned);
+        editableFoo.setUserName("A");
+        
+        editRequest.fire(new Receiver<SimpleFooProxy>() {
+          public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
+            assertEquals(1, syncResults.size());
+            SyncResult syncResult = syncResults.iterator().next();
+            /*
+             * Make sure your class path includes:
+             * 
+             * tools/apache/log4j/log4j-1.2.16.jar
+             * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
+             * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
+             * tools/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar
+             */
+            assertTrue("Violations expected (you might be missing some jars, "
+                + "see the comment above this line)", syncResult.hasViolations());
+            Map<String, String> violations = syncResult.getViolations();
+            assertEquals(1, violations.size());
+            assertEquals("size must be between 3 and 30",
+                violations.get("userName"));
+            finishTest();
+          }
+          
+        });
       }
     });
   }

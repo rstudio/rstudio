@@ -118,7 +118,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
         }
         boolean hasViolations = false;
 
-         for (SyncResult syncResult : response) {
+        for (SyncResult syncResult : response) {
           EntityProxy syncRecord = syncResult.getProxy();
           if (creating) {
             if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
