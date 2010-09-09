@@ -289,14 +289,14 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    * input element wrapped by this widget. For access to that property, see
    * {@link #setFormValue(String)}
    *
-   * @param value true to check, false to uncheck; must not be null
+   * @param value true to check, false to uncheck; null value implies false
    * @param fireEvents If true, and value has changed, fire a
    *          {@link ValueChangeEvent}
    * @throws IllegalArgumentException if value is null
    */
   public void setValue(Boolean value, boolean fireEvents) {
     if (value == null) {
-      throw new IllegalArgumentException("value must not be null");
+      value = Boolean.FALSE;
     }
 
     Boolean oldValue = getValue();

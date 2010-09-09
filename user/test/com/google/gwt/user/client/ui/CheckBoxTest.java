@@ -82,6 +82,10 @@ public class CheckBoxTest extends GWTTestCase {
     cb.setValue(false);
     assertFalse(cb.getValue());
 
+    // null implies false
+    cb.setValue(null);
+    assertFalse(cb.getValue());
+
     cb.setEnabled(false);
     assertFalse(cb.isEnabled());
     cb.setEnabled(true);
@@ -239,13 +243,6 @@ public class CheckBoxTest extends GWTTestCase {
 
     cb.setValue(true, true);
     assertTrue(h.received);
-
-    try {
-      cb.setValue(null);
-      fail("Should throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      /* pass */
-    }
     
     // Note that we cannot test this with a simulated click, the way
     // we do for the click handlers. IE does not change the value of

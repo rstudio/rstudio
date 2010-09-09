@@ -46,9 +46,10 @@ public interface HasValue<T> extends TakesValue<T>, HasValueChangeHandlers<T> {
    * It is acceptable to fail assertions or throw (documented) unchecked
    * exceptions in response to bad values.
    * <p>
-   * By convention, GWT widgets that can be cleared accept null for
-   * <code>value</code>, but it is acceptable for widgets that cannot be cleared
-   * to throw an exception for null values.
+   * Widgets must accept null as a valid value. By convention, setting a widget to 
+   * null clears value, calling getValue() on a cleared widget returns null. Widgets
+   * that can not be cleared (e.g. {@link CheckBox}) must find another valid meaning
+   * for null input.
    *
    * @param value the object's new value
    */
