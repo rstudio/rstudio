@@ -27,6 +27,7 @@ import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.user.client.ui.Label;
 
 import junit.framework.TestCase;
@@ -39,11 +40,12 @@ import java.util.Map;
 public class OwnerFieldClassTest extends TestCase {
 
   private JClassTypeAdapter gwtTypeAdapter;
+  private UiBinderContext uiBinderCtx;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
+    uiBinderCtx = new UiBinderContext();
     gwtTypeAdapter = new JClassTypeAdapter();
   }
 
@@ -53,7 +55,7 @@ public class OwnerFieldClassTest extends TestCase {
 
     // Now get its field class model
     OwnerFieldClass fieldClass = OwnerFieldClass.getFieldClass(labelType,
-        MortalLogger.NULL);
+        MortalLogger.NULL, uiBinderCtx);
 
     // Check the class model properties
     assertEquals(labelType, fieldClass.getRawType());
@@ -64,7 +66,7 @@ public class OwnerFieldClassTest extends TestCase {
 
     // Check that the same instance of the model is returned if asked again
     assertSame(fieldClass, OwnerFieldClass.getFieldClass(labelType,
-        MortalLogger.NULL));
+        MortalLogger.NULL, uiBinderCtx));
 
     gwtTypeAdapter.verifyAll();
   }
@@ -144,7 +146,7 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType settersType = gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
     OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
-        MortalLogger.NULL);
+        MortalLogger.NULL, uiBinderCtx);
     assertEquals(settersType, settersClass.getRawType());
     assertNull(settersClass.getUiConstructor());
 
@@ -166,7 +168,7 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType settersType = gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
     OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
-        MortalLogger.NULL);
+        MortalLogger.NULL, uiBinderCtx);
     assertEquals(settersType, settersClass.getRawType());
 
     JMethod bleSetter = settersClass.getSetter("ble");
@@ -232,7 +234,7 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType settersType = gwtTypeAdapter.adaptJavaClass(OverriddenSettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
     OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
-        MortalLogger.NULL);
+        MortalLogger.NULL, uiBinderCtx);
     assertEquals(settersType, settersClass.getRawType());
 
     // setBlaBla is not ambiguous, though overridden
@@ -309,7 +311,7 @@ public class OwnerFieldClassTest extends TestCase {
   public void testOwnerFieldClass_withUiChildren() throws Exception {
     JClassType parentType = gwtTypeAdapter.adaptJavaClass(UiChildClass.class);
     OwnerFieldClass parentClass = OwnerFieldClass.getFieldClass(parentType,
-        MortalLogger.NULL);
+        MortalLogger.NULL, uiBinderCtx);
     assertEquals(parentType, parentClass.getRawType());
 
     Map<String, Pair<JMethod, Integer>> childMethods = parentClass.getUiChildMethods();
@@ -330,7 +332,7 @@ public class OwnerFieldClassTest extends TestCase {
   public void testOwnerFieldClass_withNoUiChildren() throws Exception {
     JClassType parentType = gwtTypeAdapter.adaptJavaClass(Object.class);
     OwnerFieldClass parentClass = OwnerFieldClass.getFieldClass(parentType,
-        MortalLogger.NULL);
+        MortalLogger.NULL, uiBinderCtx);
     assertEquals(parentType, parentClass.getRawType());
 
     Map<String, Pair<JMethod, Integer>> childMethods = parentClass.getUiChildMethods();
@@ -360,7 +362,7 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType parentType = gwtTypeAdapter.adaptJavaClass(UiChildWithPoorMethodNames.class);
     try {
       OwnerFieldClass parentClass = OwnerFieldClass.getFieldClass(parentType,
-          MortalLogger.NULL);
+          MortalLogger.NULL, uiBinderCtx);
       fail("Class should error because @UiChild method has invalid name (and no tag specified).");
     } catch (UnableToCompleteException expected) {
       gwtTypeAdapter.verifyAll();
@@ -382,7 +384,7 @@ public class OwnerFieldClassTest extends TestCase {
   public void testOwnerFieldClass_withUiConstructor() throws Exception {
     JClassType constructorsType = gwtTypeAdapter.adaptJavaClass(UiConstructorClass.class);
     OwnerFieldClass constructorsClass = OwnerFieldClass.getFieldClass(
-        constructorsType, MortalLogger.NULL);
+        constructorsType, MortalLogger.NULL, uiBinderCtx);
     assertEquals(constructorsType, constructorsClass.getRawType());
 
     JConstructor constructor = constructorsClass.getUiConstructor();
@@ -418,7 +420,8 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType constructorsType = gwtTypeAdapter.adaptJavaClass(MultiUiConstructorsClass.class);
 
     try {
-      OwnerFieldClass.getFieldClass(constructorsType, MortalLogger.NULL);
+      OwnerFieldClass.getFieldClass(constructorsType, MortalLogger.NULL,
+          uiBinderCtx);
       fail("Expected exception not thrown");
     } catch (UnableToCompleteException utce) {
       // Expected

@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.dev.util.Pair;
+import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
@@ -43,6 +44,14 @@ public class UiChildParser implements ElementParser {
   private Map<String, Integer> numCallsToChildMethod = new HashMap<String, Integer>();
   private Map<String, Pair<JMethod, Integer>> uiChildMethods;
   private UiBinderWriter writer;
+  private final UiBinderContext uiBinderCtx;
+
+  /**
+   * @param uiBinderCtx
+   */
+  public UiChildParser(UiBinderContext uiBinderCtx) {
+    this.uiBinderCtx = uiBinderCtx;
+  }
 
   public void parse(final XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
@@ -50,7 +59,7 @@ public class UiChildParser implements ElementParser {
     this.writer = writer;
 
     OwnerFieldClass ownerFieldClass = OwnerFieldClass.getFieldClass(type,
-        writer.getLogger());
+        writer.getLogger(), uiBinderCtx);
 
     uiChildMethods = ownerFieldClass.getUiChildMethods();
 

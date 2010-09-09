@@ -222,10 +222,13 @@ public class UiBinderWriter implements Statements {
   private final AttributeParsers attributeParsers;
   private final BundleAttributeParsers bundleParsers;
 
+  private final UiBinderContext uiBinderCtx;
+
   public UiBinderWriter(JClassType baseClass, String implClassName,
       String templatePath, TypeOracle oracle, MortalLogger logger,
       FieldManager fieldManager, MessagesWriter messagesWriter,
-      DesignTimeUtils designTime) throws UnableToCompleteException {
+      DesignTimeUtils designTime, UiBinderContext uiBinderCtx)
+      throws UnableToCompleteException {
     this.baseClass = baseClass;
     this.implClassName = implClassName;
     this.oracle = oracle;
@@ -234,6 +237,7 @@ public class UiBinderWriter implements Statements {
     this.fieldManager = fieldManager;
     this.messages = messagesWriter;
     this.designTime = designTime;
+    this.uiBinderCtx = uiBinderCtx;
 
     // Check for possible misuse 'GWT.create(UiBinder.class)'
     JClassType uibinderItself = oracle.findType(UiBinder.class.getCanonicalName());
@@ -259,7 +263,7 @@ public class UiBinderWriter implements Statements {
     uiRootType = typeArgs[0];
     uiOwnerType = typeArgs[1];
 
-    ownerClass = new OwnerClass(uiOwnerType, logger);
+    ownerClass = new OwnerClass(uiOwnerType, logger, uiBinderCtx);
     bundleClass = new ImplicitClientBundle(baseClass.getPackage().getName(),
         this.implClassName, CLIENT_BUNDLE_FIELD, logger);
     handlerEvaluator = new HandlerEvaluator(ownerClass, logger, oracle);
@@ -845,7 +849,7 @@ public class UiBinderWriter implements Statements {
      * something?
      */
     parsers.add(new AttributeMessageParser());
-    parsers.add(new UiChildParser());
+    parsers.add(new UiChildParser(uiBinderCtx));
 
     for (JClassType curType : getClassHierarchyBreadthFirst(type)) {
       try {
@@ -863,7 +867,7 @@ public class UiBinderWriter implements Statements {
       }
     }
 
-    parsers.add(new BeanParser());
+    parsers.add(new BeanParser(uiBinderCtx));
     parsers.add(new IsEmptyParser());
 
     return parsers;

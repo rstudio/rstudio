@@ -17,9 +17,11 @@ package com.google.gwt.i18n.rebind;
 
 import static com.google.gwt.i18n.rebind.AnnotationUtil.getClassAnnotation;
 
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.StringKey;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
@@ -33,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 /**
  * Creates resources.
@@ -40,48 +43,11 @@ import java.util.Set;
 public abstract class ResourceFactory {
 
   /**
-   * Pair of JClassType and GwtLocale.
+   * A key based on JClassType and GwtLocale.
    */
-  private static class ClassLocale {
-
-    private final JClassType clazz;
-    private final GwtLocale locale;
-
+  static class ClassLocale extends StringKey {
     public ClassLocale(JClassType clazz, GwtLocale locale) {
-      assert clazz != null;
-      assert locale != null;
-      this.clazz = clazz;
-      this.locale = locale;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-      ClassLocale other = (ClassLocale) obj;
-      return clazz.equals(other.clazz) && locale.equals(other.locale);
-    }
-
-    public JClassType getJClass() {
-      return clazz;
-    }
-
-    public GwtLocale getLocale() {
-      return locale;
-    }
-
-    @Override
-    public int hashCode() {
-      return clazz.hashCode() + locale.hashCode() * 53;
-    }
-
-    @Override
-    public String toString() {
-      return clazz.getQualifiedSourceName() + "/" + locale.toString();
+      super(clazz.getQualifiedSourceName() + "/" + locale.toString());
     }
   }
 
@@ -91,18 +57,17 @@ public abstract class ResourceFactory {
    */
   public static final char LOCALE_SEPARATOR = '_';
 
-  private static Map<ClassLocale, ResourceList> cache = new HashMap<ClassLocale, ResourceList>();
   private static List<ResourceFactory> loaders = new ArrayList<ResourceFactory>();
+
+  /**
+   * Since multiple generators share the ResourceFactory, we tie the
+   * ResourceFactoryContext cache to the GeneratorContext.
+   */
+  private static final WeakHashMap<GeneratorContext, ResourceFactoryContext>
+      resourceFactoryCtxHolder = new WeakHashMap<GeneratorContext, ResourceFactoryContext>();
 
   static {
     loaders.add(new LocalizedPropertiesResource.Factory());
-  }
-
-  /**
-   * Clears the resource cache.
-   */
-  public static synchronized void clearCache() {
-    cache.clear();
   }
 
   /**
@@ -114,11 +79,12 @@ public abstract class ResourceFactory {
    * @param resourceMap a map of available {@link Resource Resources} by partial
    *          path; obtain this by calling
    *          {@link com.google.gwt.core.ext.GeneratorContext#getResourcesOracle()}.{@link com.google.gwt.dev.resource.ResourceOracle#getResourceMap() getResourceMap()}
+   * @param genCtx
    * @return resource list
    */
   public static synchronized ResourceList getBundle(TreeLogger logger,
       JClassType topClass, GwtLocale bundleLocale, boolean isConstants,
-      Map<String, Resource> resourceMap) {
+      Map<String, Resource> resourceMap, GeneratorContext genCtx) {
     List<GwtLocale> locales = bundleLocale.getCompleteSearchList();
     List<JClassType> classes = new ArrayList<JClassType>();
     Set<JClassType> seenClasses = new IdentityHashSet<JClassType>();
@@ -130,25 +96,22 @@ public abstract class ResourceFactory {
     // TODO(jat): handle explicit subinterface with other locales -- ie:
     // public interface Foo_es_MX extends Foo { ... }
     ResourceList allResources = new ResourceList();
+    ResourceFactoryContext localizableCtx = getResourceFactoryContext(genCtx);
     for (GwtLocale locale : locales) {
       for (JClassType clazz : classes) {
         ClassLocale key = new ClassLocale(clazz, locale);
         ResourceList resources;
-        if (cache.containsKey(key)) {
-          resources = cache.get(key);
-        } else {
-          cache.put(key, null);
+        resources = localizableCtx.getResourceList(key);
+        if (resources == null) {
           resources = new ResourceList();
           addFileResources(clazz, locale, resourceMap, resources);
           AnnotationsResource annotationsResource = annotations.get(key);
           if (annotationsResource != null) {
             resources.add(annotationsResource);
           }
-          cache.put(key, resources);
+          localizableCtx.putResourceList(key, resources);
         }
-        if (resources != null) {
-          allResources.addAll(resources);
-        }
+        allResources.addAll(resources);
       }
     }
     String className = topClass.getQualifiedSourceName();
@@ -196,6 +159,19 @@ public abstract class ResourceFactory {
         resources.add(found);
       }
     }
+  }
+
+  private static synchronized ResourceFactoryContext getResourceFactoryContext(
+      GeneratorContext context) {
+    if (context instanceof CachedGeneratorContext) {
+      context = ((CachedGeneratorContext) context).getWrappedGeneratorContext();
+    }
+    ResourceFactoryContext resourceFactoryCtx = resourceFactoryCtxHolder.get(context);
+    if (resourceFactoryCtx == null) {
+      resourceFactoryCtx = new ResourceFactoryContext();
+      resourceFactoryCtxHolder.put(context, resourceFactoryCtx);
+    }
+    return resourceFactoryCtx;
   }
 
   private static void walkInheritanceTree(TreeLogger logger, JClassType clazz,

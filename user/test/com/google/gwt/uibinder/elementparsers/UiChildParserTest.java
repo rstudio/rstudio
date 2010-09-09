@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.elementparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.uibinder.rebind.FieldWriter;
+import com.google.gwt.uibinder.rebind.UiBinderContext;
 
 import junit.framework.TestCase;
 
@@ -58,8 +59,9 @@ public class UiChildParserTest extends TestCase {
         return code;
       }
     };
-    tester = new ElementParserTester(PARSED_TYPE, new UiChildParser(),
-        itemSubclass);
+    UiBinderContext uiBinderCtx = new UiBinderContext();
+    tester = new ElementParserTester(PARSED_TYPE,
+        new UiChildParser(uiBinderCtx), itemSubclass);
   }
 
   public void testAddChildWithParameters() throws SAXParseException,

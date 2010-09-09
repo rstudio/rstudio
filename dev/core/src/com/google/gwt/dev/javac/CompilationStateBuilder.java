@@ -314,6 +314,10 @@ public class CompilationStateBuilder {
    * This map of weak keys to hard values exists solely to keep the most recent
    * version of any unit from being eagerly garbage collected.
    * 
+   * Once a resource gets its tag updated, the {@link #resourceContentCache}
+   * will drop the only hard reference to that resourceTag which transitively
+   * removes the old value from this cache.
+   * 
    * WRITE-ONLY
    */
   @SuppressWarnings("unchecked")

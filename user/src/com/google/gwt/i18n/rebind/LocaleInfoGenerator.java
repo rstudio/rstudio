@@ -97,8 +97,8 @@ public class LocaleInfoGenerator extends Generator {
     TypeOracle typeOracle = context.getTypeOracle();
     // Get the current locale and interface type.
     PropertyOracle propertyOracle = context.getPropertyOracle();
-    LocaleUtils localeUtils = LocaleUtils.getInstance(logger,
-        propertyOracle);
+    LocaleUtils localeUtils = LocaleUtils.getInstance(logger, propertyOracle,
+        context);
 
     JClassType targetClass;
     try {

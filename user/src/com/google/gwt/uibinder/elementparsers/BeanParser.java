@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -39,6 +40,12 @@ import java.util.Map.Entry;
  */
 public class BeanParser implements ElementParser {
 
+  private final UiBinderContext context;
+
+  public BeanParser(UiBinderContext context) {
+    this.context = context;
+  }
+
   /**
    * Generates code to initialize all bean attributes on the given element.
    * Includes support for &lt;ui:attribute /&gt; children that will apply to
@@ -56,7 +63,7 @@ public class BeanParser implements ElementParser {
     final Map<String, JType> unfilledRequiredParams = new HashMap<String, JType>();
 
     final OwnerFieldClass ownerFieldClass = OwnerFieldClass.getFieldClass(type,
-        writer.getLogger());
+        writer.getLogger(), context);
 
     /*
      * Handle @UiFactory and @UiConstructor, but only if the user

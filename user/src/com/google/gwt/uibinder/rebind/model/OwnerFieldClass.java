@@ -26,6 +26,7 @@ import com.google.gwt.dev.util.Pair;
 import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.UiBinderContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,26 +42,21 @@ import java.util.Set;
  * actually present as a field in the owner.
  */
 public class OwnerFieldClass {
-
-  /**
-   * Global map of field classes. This serves as a cache so each class is only
-   * processed once.
-   */
-  private static final Map<JClassType, OwnerFieldClass> FIELD_CLASSES = new HashMap<JClassType, OwnerFieldClass>();
-
   /**
    * Gets or creates the descriptor for the given field class.
    *
    * @param forType the field type to get a descriptor for
    * @param logger TODO
+   * @param context 
    * @return the descriptor
    */
   public static OwnerFieldClass getFieldClass(JClassType forType,
-      MortalLogger logger) throws UnableToCompleteException {
-    OwnerFieldClass clazz = FIELD_CLASSES.get(forType);
+      MortalLogger logger, UiBinderContext context)
+      throws UnableToCompleteException {
+    OwnerFieldClass clazz = context.getOwnerFieldClass(forType);
     if (clazz == null) {
       clazz = new OwnerFieldClass(forType, logger);
-      FIELD_CLASSES.put(forType, clazz);
+      context.putOwnerFieldClass(forType, clazz);
     }
     return clazz;
   }

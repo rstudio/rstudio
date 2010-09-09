@@ -283,8 +283,6 @@ public class TypeOracle {
    */
   private final List<JRealClassType> recentTypes = new ArrayList<JRealClassType>();
 
-  private int reloadCount = 0;
-
   private JWildcardType unboundWildCardType;
 
   @SuppressWarnings("unchecked")
@@ -495,8 +493,13 @@ public class TypeOracle {
     return getParameterizedType(genericType, null, typeArgs);
   }
 
+  /**
+   * @Deprecated This method will always return 0 because a TypeOracle never
+   *             gets reloaded anymore. Callers should not rely on this value to
+   *             manage static state.
+   */
   public long getReloadCount() {
-    return reloadCount;
+    return 0;
   }
 
   /**

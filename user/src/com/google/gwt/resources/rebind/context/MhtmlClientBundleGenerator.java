@@ -34,12 +34,13 @@ public class MhtmlClientBundleGenerator extends AbstractClientBundleGenerator {
   private String bundleBaseIdent;
   private MhtmlResourceContext resourceContext;
 
+  private final ClientBundleContext clientBundleCtx = new ClientBundleContext();
+
   @Override
   protected AbstractResourceContext createResourceContext(TreeLogger logger,
       GeneratorContext context, JClassType resourceBundleType) {
     resourceContext = new MhtmlResourceContext(logger, context,
-        resourceBundleType);
-
+        resourceBundleType, clientBundleCtx);
     return resourceContext;
   }
 

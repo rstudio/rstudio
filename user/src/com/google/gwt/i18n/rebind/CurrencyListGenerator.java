@@ -276,7 +276,8 @@ public class CurrencyListGenerator extends Generator {
     TypeOracle typeOracle = context.getTypeOracle();
 
     PropertyOracle propertyOracle = context.getPropertyOracle();
-    LocaleUtils localeUtils = LocaleUtils.getInstance(logger, propertyOracle);
+    LocaleUtils localeUtils = LocaleUtils.getInstance(logger, propertyOracle,
+        context);
     GwtLocale locale = localeUtils.getCompileLocale();
     Set<GwtLocale> runtimeLocales = localeUtils.getRuntimeLocales();
 

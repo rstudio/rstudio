@@ -35,8 +35,8 @@ class StaticResourceContext extends AbstractResourceContext {
   static final String ENABLE_RENAMING = "ClientBundle.enableRenaming";
 
   StaticResourceContext(TreeLogger logger, GeneratorContext context,
-      JClassType resourceBundleType) {
-    super(logger, context, resourceBundleType);
+      JClassType resourceBundleType, ClientBundleContext clientBundleCtx) {
+    super(logger, context, resourceBundleType, clientBundleCtx);
   }
 
   public String deploy(String suggestedFileName, String mimeType, byte[] data,

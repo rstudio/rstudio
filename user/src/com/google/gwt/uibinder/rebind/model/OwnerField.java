@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.UiBinderContext;
 
 /**
  * Descriptor for a field of the owner class.
@@ -40,8 +41,10 @@ public class OwnerField {
    *
    * @param field the field of the owner class
    * @param logger
+   * @param context 
    */
-  public OwnerField(JField field, MortalLogger logger) throws UnableToCompleteException {
+  public OwnerField(JField field, MortalLogger logger, UiBinderContext context)
+      throws UnableToCompleteException {
     this.name = field.getName();
 
     // Get the field type and ensure it's a class or interface
@@ -52,7 +55,8 @@ public class OwnerField {
           + field.getType().getSimpleSourceName());
     }
 
-    this.fieldType = OwnerFieldClass.getFieldClass(fieldClassType, logger);
+    this.fieldType = OwnerFieldClass.getFieldClass(fieldClassType, logger,
+        context);
 
     // Get the UiField annotation and process it
     UiField annotation = field.getAnnotation(UiField.class);

@@ -25,6 +25,7 @@ import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.UiBinderContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,15 +70,19 @@ public class OwnerClass {
 
   private final JClassType ownerType;
 
+  private final UiBinderContext context;
+
   /**
    * Constructor.
    *
    * @param ownerType the type of the owner class
    * @param logger
    */
-  public OwnerClass(JClassType ownerType, MortalLogger logger) throws UnableToCompleteException {
+  public OwnerClass(JClassType ownerType, MortalLogger logger,
+      UiBinderContext context) throws UnableToCompleteException {
     this.logger = logger;
     this.ownerType = ownerType;
+    this.context = context;
     findUiFields(ownerType);
     findUiFactories(ownerType);
     findUiHandlers(ownerType);
@@ -203,7 +208,7 @@ public class OwnerClass {
               + field.getName());
         }
 
-        OwnerField ownerField = new OwnerField(field, logger);
+        OwnerField ownerField = new OwnerField(field, logger, context);
         String ownerFieldName = field.getName();
 
         uiFields.put(ownerFieldName, ownerField);

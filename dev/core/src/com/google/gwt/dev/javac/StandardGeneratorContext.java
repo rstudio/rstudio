@@ -395,6 +395,10 @@ public class StandardGeneratorContext implements GeneratorContext {
     return module.getActiveLinkerNames();
   }
 
+  public GeneratorContext getCanonicalContext() {
+    return this;
+  }
+
   public final PropertyOracle getPropertyOracle() {
     return propOracle;
   }

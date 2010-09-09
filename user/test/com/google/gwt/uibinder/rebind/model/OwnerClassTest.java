@@ -29,6 +29,7 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.uibinder.test.UiJavaResources;
 
 import junit.framework.TestCase;
@@ -57,6 +58,7 @@ public class OwnerClassTest extends TestCase {
   private JClassType buttonType;
   private JClassType clickEventType;
   private JClassType mouseOverEventType;
+  private UiBinderContext uiBinderCtx;
 
   @Override
   protected void setUp() throws Exception {
@@ -64,6 +66,7 @@ public class OwnerClassTest extends TestCase {
     CompilationState state = CompilationStateBuilder.buildFrom(
         createCompileLogger(), getJavaResources());
     types = state.getTypeOracle();
+    uiBinderCtx = new UiBinderContext();
     labelType = types.findType("com.google.gwt.user.client.ui.Label");
     buttonType = types.findType("com.google.gwt.user.client.ui.Button");
     clickEventType = types.findType("com.google.gwt.event.dom.client.ClickEvent");
@@ -276,7 +279,8 @@ public class OwnerClassTest extends TestCase {
   @SuppressWarnings("deprecation")
   public void testOwnerClass_empty() throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.EmptyOwnerClass");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
+        uiBinderCtx);
 
     assertNull(ownerClass.getUiFactoryMethod(labelType));
     assertNull(ownerClass.getUiField("fieldName"));
@@ -287,7 +291,8 @@ public class OwnerClassTest extends TestCase {
 
   public void testOwnerClass_uiFactory() throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.UiFactoryClass");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
+        uiBinderCtx);
 
     JMethod uiFactoryMethod = ownerClass.getUiFactoryMethod(labelType);
     assertNotNull(uiFactoryMethod);
@@ -301,7 +306,8 @@ public class OwnerClassTest extends TestCase {
   public void testParameterizedWidgets() throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.ParamterizedWidgetFactory");
     JClassType abstractType = types.findType("com.google.gwt.uibinder.rebind.model.Abstract");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
+        uiBinderCtx);
 
     JMethod expected = ownerType.findMethod("createOne", new JType[] {});
     JMethod uiFactoryMethod = ownerClass.getUiFactoryMethod(abstractType);
@@ -312,7 +318,8 @@ public class OwnerClassTest extends TestCase {
   public void testWildcardWidgets() throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.WildcardWidgetFactory");
     JClassType abstractType = types.findType("com.google.gwt.uibinder.rebind.model.Abstract");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
+        uiBinderCtx);
 
     JMethod expected = ownerType.findMethod("createOne", new JType[] {});
     JMethod uiFactoryMethod = ownerClass.getUiFactoryMethod(abstractType);
@@ -324,7 +331,7 @@ public class OwnerClassTest extends TestCase {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.TooManyGenerics");
 
     try {
-      new OwnerClass(ownerType, MortalLogger.NULL);
+      new OwnerClass(ownerType, MortalLogger.NULL, uiBinderCtx);
       fail();
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -334,7 +341,7 @@ public class OwnerClassTest extends TestCase {
   public void testOwnerClass_uiFactoryBadType() {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.BadUiFactoryClass");
     try {
-      new OwnerClass(ownerType, MortalLogger.NULL);
+      new OwnerClass(ownerType, MortalLogger.NULL, uiBinderCtx);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected
@@ -344,7 +351,7 @@ public class OwnerClassTest extends TestCase {
   public void testOwnerClass_uiFactoryDuplicateType() {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.DuplicateUiFactoryClass");
     try {
-      new OwnerClass(ownerType, MortalLogger.NULL);
+      new OwnerClass(ownerType, MortalLogger.NULL, uiBinderCtx);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected
@@ -354,7 +361,8 @@ public class OwnerClassTest extends TestCase {
   @SuppressWarnings("deprecation")
   public void testOwnerClass_uiFields() throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.UiFieldsClass");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
+        uiBinderCtx);
 
     OwnerField labelField = ownerClass.getUiField("label1");
     OwnerField labelField2 = ownerClass.getUiFieldForType(labelType);
@@ -385,7 +393,7 @@ public class OwnerClassTest extends TestCase {
   public void testOwnerClass_uiFieldsBadType() {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.BadUiFieldsClass");
     try {
-      new OwnerClass(ownerType, MortalLogger.NULL);
+      new OwnerClass(ownerType, MortalLogger.NULL, uiBinderCtx);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected
@@ -394,7 +402,8 @@ public class OwnerClassTest extends TestCase {
 
   public void testOwnerClass_uiHandlers() throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.UiHandlersClass");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
+        uiBinderCtx);
 
     // Assert the two expected handlers are there
     List<JMethod> uiHandlers = ownerClass.getUiHandlers();
@@ -438,7 +447,8 @@ public class OwnerClassTest extends TestCase {
   @SuppressWarnings("deprecation")
   public void testOwnerClass_withParent() throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.ChildUiBinderClass");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
+        uiBinderCtx);
 
     // Test fields
     OwnerField labelField = ownerClass.getUiField("label1");

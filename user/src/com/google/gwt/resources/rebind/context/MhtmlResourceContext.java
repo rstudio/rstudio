@@ -58,8 +58,8 @@ public class MhtmlResourceContext extends StaticResourceContext {
   private PrintWriter pw;
 
   MhtmlResourceContext(TreeLogger logger, GeneratorContext context,
-      JClassType resourceBundleType) {
-    super(logger, context, resourceBundleType);
+      JClassType resourceBundleType, ClientBundleContext clientBundleCtx) {
+    super(logger, context, resourceBundleType, clientBundleCtx);
   }
 
   @Override

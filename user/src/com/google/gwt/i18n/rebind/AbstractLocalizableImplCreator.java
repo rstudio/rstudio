@@ -95,7 +95,7 @@ abstract class AbstractLocalizableImplCreator extends
     ResourceList resourceList = null;
     try {
       resourceList = ResourceFactory.getBundle(logger, targetClass, locale,
-          assignableToConstants, context.getResourcesOracle().getResourceMap());
+          assignableToConstants, context.getResourcesOracle().getResourceMap(), context);
     } catch (MissingResourceException e) {
       throw error(logger,
           "Localization failed; there must be at least one resource accessible through"

@@ -17,6 +17,7 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
@@ -25,68 +26,17 @@ import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.GwtLocaleFactory;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.WeakHashMap;
 
 /**
  * Utility methods for dealing with locales.
  */
 public class LocaleUtils {
-
-  /**
-   * A key for lookup of computed values in a cache.
-   */
-  private static class CacheKey {
-    private final SelectionProperty localeProperty;
-    private final ConfigurationProperty runtimeLocaleProperty;
-
-    /**
-     * Create a key for cache lookup.
-     * 
-     * @param localeProperty "locale" property, must not be null
-     * @param runtimeLocaleProperty "runtime.locales" property, must not be null
-     */
-    public CacheKey(SelectionProperty localeProperty,
-        ConfigurationProperty runtimeLocaleProperty) {
-      this.localeProperty = localeProperty;
-      this.runtimeLocaleProperty = runtimeLocaleProperty;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null) {
-        return false;
-      }
-      if (getClass() != obj.getClass()) {
-        return false;
-      }
-      CacheKey other = (CacheKey) obj;
-      return localeProperty.equals(other.localeProperty)
-          && runtimeLocaleProperty.equals(other.runtimeLocaleProperty);
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + localeProperty.hashCode();
-      result = prime * result + runtimeLocaleProperty.hashCode();
-      return result;
-    }
-  }
-
   private static final GwtLocaleFactoryImpl factory = new GwtLocaleFactoryImpl();
-
-  private static final Object cacheLock = new Object[0];
-  
-  private static Map<CacheKey, LocaleUtils> cache;
 
   /**
    * The token representing the locale property controlling Localization.
@@ -99,14 +49,11 @@ public class LocaleUtils {
   private static final String PROP_RUNTIME_LOCALES = "runtime.locales";
 
   /**
-   * Clear any static state associated with LocaleUtils.
+   * Multiple generators need to access the shared cache state of
+   * LocaleInfoContext.
    */
-  public static synchronized void clear() {
-    factory.clear();
-    synchronized (cacheLock) {
-      cache = null;
-    }
-  }
+  private static final WeakHashMap<GeneratorContext, LocaleInfoContext>
+      localeInfoCtxHolder = new WeakHashMap<GeneratorContext, LocaleInfoContext>();
 
   /**
    * Create a new LocaleUtils instance for the given PropertyOracle.  Returned
@@ -117,24 +64,19 @@ public class LocaleUtils {
    * @return LocaleUtils instance
    */
   public static LocaleUtils getInstance(TreeLogger logger,
-      PropertyOracle propertyOracle) {
+      PropertyOracle propertyOracle, GeneratorContext context) {
     try {
       SelectionProperty localeProp
           = propertyOracle.getSelectionProperty(logger, PROP_LOCALE);
       ConfigurationProperty runtimeLocaleProp
           = propertyOracle.getConfigurationProperty(PROP_RUNTIME_LOCALES);
-      CacheKey key = new CacheKey(localeProp, runtimeLocaleProp);
-      synchronized (cacheLock) {
-        if (cache == null) {
-          cache = new HashMap<CacheKey, LocaleUtils>();
-        }
-        LocaleUtils localeUtils = cache.get(key);
-        if (localeUtils == null) {
-          localeUtils = createInstance(localeProp, runtimeLocaleProp);
-          cache.put(key, localeUtils);
-        }
-        return localeUtils;
+      LocaleInfoContext localeInfoCtx = getLocaleInfoCtx(context);
+      LocaleUtils localeUtils = localeInfoCtx.getLocaleUtils(localeProp, runtimeLocaleProp);
+      if (localeUtils == null) {
+        localeUtils = createInstance(localeProp, runtimeLocaleProp);
+        localeInfoCtx.putLocaleUtils(localeProp, runtimeLocaleProp, localeUtils);
       }
+      return localeUtils;
     } catch (BadPropertyValueException e) {
       // if we don't have locale properties defined, just return a basic one
       logger.log(TreeLogger.WARN,
@@ -152,7 +94,7 @@ public class LocaleUtils {
    * 
    * @return singleton GwtLocaleFactory instance.
    */
-  public static synchronized GwtLocaleFactory getLocaleFactory() {
+  public static GwtLocaleFactory getLocaleFactory() {
     return factory;
   }
 
@@ -199,6 +141,19 @@ public class LocaleUtils {
     }
     return new LocaleUtils(compileLocale, allLocales, allCompileLocales,
         runtimeLocales);
+  }
+
+  private static synchronized LocaleInfoContext getLocaleInfoCtx(
+      GeneratorContext context) {
+    if (context instanceof CachedGeneratorContext) {
+      context = ((CachedGeneratorContext) context).getWrappedGeneratorContext();
+    }
+    LocaleInfoContext localeInfoCtx = localeInfoCtxHolder.get(context);
+    if (localeInfoCtx == null) {
+      localeInfoCtx = new LocaleInfoContext();
+      localeInfoCtxHolder.put(context, localeInfoCtx);
+    }
+    return localeInfoCtx;
   }
 
   private final Set<GwtLocale> allCompileLocales;

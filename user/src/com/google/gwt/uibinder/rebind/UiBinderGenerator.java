@@ -86,6 +86,8 @@ public class UiBinderGenerator extends Generator {
     return s.replace(".", "/");
   }
 
+  private final UiBinderContext uiBinderCtx = new UiBinderContext();
+
   @Override
   public String generate(TreeLogger logger, GeneratorContext genCtx,
       String fqInterfaceName) throws UnableToCompleteException {
@@ -133,7 +135,7 @@ public class UiBinderGenerator extends Generator {
 
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
         templatePath, oracle, logger, new FieldManager(oracle, logger),
-        messages, designTime);
+        messages, designTime, uiBinderCtx);
 
     Document doc = getW3cDoc(logger, designTime, resourceOracle, templatePath);
     designTime.rememberPathForElements(doc);

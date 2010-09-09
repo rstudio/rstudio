@@ -27,8 +27,8 @@ class InlineResourceContext extends StaticResourceContext {
   public static final int MAX_ENCODED_SIZE = (2 << 15) - 1;
 
   InlineResourceContext(TreeLogger logger, GeneratorContext context,
-      JClassType resourceBundleType) {
-    super(logger, context, resourceBundleType);
+      JClassType resourceBundleType, ClientBundleContext clientBundleCtx) {
+    super(logger, context, resourceBundleType, clientBundleCtx);
   }
 
   @Override

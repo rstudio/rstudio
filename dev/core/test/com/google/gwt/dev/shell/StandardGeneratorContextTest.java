@@ -25,7 +25,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
-import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.cfg.MockModuleDef;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
@@ -56,50 +56,6 @@ public class StandardGeneratorContextTest extends TestCase {
     public String generate(TreeLogger logger, GeneratorContext context,
         String typeName) throws UnableToCompleteException {
       return typeName;
-    }
-  }
-
-  private static class MockModuleDef extends ModuleDef {
-    public MockModuleDef() {
-      super("mock");
-    }
-
-    public Resource findPublicFile(String partialPath) {
-      if ("onPublicPath.txt".equals(partialPath)) {
-        return new Resource() {
-
-          @Override
-          public long getLastModified() {
-            return 0;
-          }
-
-          @Override
-          public String getLocation() {
-            return "/mock/onPublicPath.txt";
-          }
-
-          @Override
-          public String getPath() {
-            return "onPublicPath.txt";
-          }
-
-          @Override
-          public InputStream openContents() {
-            return new ByteArrayInputStream(Util.getBytes("w00t!"));
-          }
-
-          @Override
-          public boolean wasRerooted() {
-            return false;
-          }
-
-        };
-      }
-      return null;
-    }
-
-    public String[] getAllPublicFiles() {
-      return new String[] {"onPublicPath.txt"};
     }
   }
 

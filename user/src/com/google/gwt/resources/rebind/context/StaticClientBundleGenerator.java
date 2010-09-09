@@ -26,10 +26,13 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 public final class StaticClientBundleGenerator extends
     AbstractClientBundleGenerator {
 
+  private final ClientBundleContext clientBundleCtx = new ClientBundleContext();
+
   @Override
   protected AbstractResourceContext createResourceContext(TreeLogger logger,
       GeneratorContext context, JClassType resourceBundleType) {
     return new StaticResourceContext(logger.branch(TreeLogger.DEBUG,
-        "Using static resources", null), context, resourceBundleType);
+        "Using static resources", null), context, resourceBundleType,
+        clientBundleCtx);
   }
 }

@@ -70,6 +70,15 @@ class CachedGeneratorContext implements GeneratorContext {
     return context.getTypeOracle();
   }
 
+  /**
+   * Provide the canonical context represented by this context.
+   * 
+   * @return the GeneratorContext backing this implementation.
+   */
+  public GeneratorContext getWrappedGeneratorContext() {
+    return context;
+  }
+
   public PrintWriter tryCreate(TreeLogger logger, String packageName,
       String simpleName) {
     String typeName = packageName + '.' + simpleName;

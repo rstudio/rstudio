@@ -46,7 +46,6 @@ public class LocalizableGenerator extends Generator {
 
   public static final String MESSAGES_NAME = Messages.class.getName();
 
-  private static long lastReloadCount = -1;
   /**
    * The token representing the locale property controlling Localization.
    */
@@ -100,13 +99,7 @@ public class LocalizableGenerator extends Generator {
 
   public final String generate(TreeLogger logger, GeneratorContext context,
       String typeName, String localeName) throws UnableToCompleteException {
-    // Clear cache if reset was done.
     TypeOracle typeOracle = context.getTypeOracle();
-    if (lastReloadCount != typeOracle.getReloadCount()) {
-      ClearStaticData.clear();
-      lastReloadCount = typeOracle.getReloadCount();
-    }
-
     JClassType targetClass;
     try {
       targetClass = typeOracle.getType(typeName);
