@@ -50,7 +50,7 @@ final class DeleteNodeVisitor extends JModVisitor {
 
   @Override
   public boolean visit(JNode x, Context ctx) {
-    if (didChange) {
+    if (didChange()) {
       return false;
     }
 

@@ -67,6 +67,7 @@ import java.util.Set;
  * most cases the polymorphic version can be pruned later.
  */
 public class MakeCallsStatic {
+  private static final String NAME = MakeCallsStatic.class.getSimpleName();
 
   /**
    * For all methods that should be made static, move the contents of the method
@@ -75,7 +76,6 @@ public class MakeCallsStatic {
    * non-polymorphic call sites.
    */
   static class CreateStaticImplsVisitor extends JVisitor {
-
     /**
      * When code is moved from an instance method to a static method, all
      * thisRefs must be replaced with paramRefs to the synthetic this param.
@@ -111,7 +111,7 @@ public class MakeCallsStatic {
       private final JParameter thisParam;
       private final Map<JParameter, JParameter> varMap;
 
-      public RewriteMethodBody(JParameter thisParam,
+      public RewriteMethodBody(JParameter thisParam, 
           Map<JParameter, JParameter> varMap) {
         this.thisParam = thisParam;
         this.varMap = varMap;
@@ -191,9 +191,9 @@ public class MakeCallsStatic {
           CreateStaticImplsVisitor.class, "Degelgating to devirtualized method");
       JMethodBody newBody = new JMethodBody(delegateCallSourceInfo);
       x.setBody(newBody);
-      JMethodCall newCall = new JMethodCall(delegateCallSourceInfo, null,
+      JMethodCall newCall = new JMethodCall(delegateCallSourceInfo, null, 
           newMethod);
-      newCall.addArg(new JThisRef(delegateCallSourceInfo,
+      newCall.addArg(new JThisRef(delegateCallSourceInfo, 
           program.getNonNullType(enclosingType)));
       for (int i = 0; i < x.getParams().size(); ++i) {
         JParameter param = x.getParams().get(i);
@@ -217,10 +217,8 @@ public class MakeCallsStatic {
         // TODO: Do we really need to do that in BuildTypeMap?
         JsFunction jsFunc = ((JsniMethodBody) movedBody).getFunc();
         JsName paramName = jsFunc.getScope().declareName("this$static");
-        jsFunc.getParameters().add(
-            0,
-            new JsParameter(sourceInfo.makeChild(
-                CreateStaticImplsVisitor.class, "Static accessor"), paramName));
+        jsFunc.getParameters().add(0, new JsParameter(sourceInfo.makeChild(
+            CreateStaticImplsVisitor.class, "Static accessor"), paramName));
         RewriteJsniMethodBody rewriter = new RewriteJsniMethodBody(paramName);
         // Accept the body to avoid the recursion blocker.
         rewriter.accept(jsFunc.getBody());
@@ -247,7 +245,6 @@ public class MakeCallsStatic {
    * Record this fact so we can create static dispatch implementations.
    */
   private class FindStaticDispatchSitesVisitor extends JVisitor {
-
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
@@ -318,6 +315,7 @@ public class MakeCallsStatic {
           && !initiallyLive.getLiveFieldsAndMethods().contains(x.getTarget())) {
         /*
          * Don't devirtualize calls from initial code to non-initial code.
+         * 
          * TODO(spoon): similar prevention when the callee is exclusive to some
          * split point and the caller is not.
          */
@@ -327,7 +325,8 @@ public class MakeCallsStatic {
       if (isRunCallbacksMethod(x.getTarget())) {
         /*
          * Don't devirtualize these calls created by FragmentLoaderCreator,
-         * because it spoils code splitting.
+         * because it spoils code splitting. 
+         * 
          * TODO(spoon) remove this once FragmentLoaderCreator is gone
          */
         return;
@@ -338,8 +337,7 @@ public class MakeCallsStatic {
 
     @Override
     public boolean visit(JMethod x, Context ctx) {
-      currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(
-          x);
+      currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(x);
       return true;
     }
 
@@ -350,11 +348,12 @@ public class MakeCallsStatic {
     }
   }
 
-  public static boolean exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "MakeCallsStatic");
-    boolean didChange = new MakeCallsStatic(program).execImpl();
-    optimizeEvent.end("didChange", "" + didChange);
-    return didChange;
+  public static OptimizerStats exec(JProgram program) {
+    Event optimizeEvent = SpeedTracerLogger.start(
+        CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new MakeCallsStatic(program).execImpl();
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   static JExpression makeStaticCall(JMethodCall x, JMethod newMethod) {
@@ -404,7 +403,8 @@ public class MakeCallsStatic {
     this.program = program;
   }
 
-  private boolean execImpl() {
+  private OptimizerStats execImpl() {
+    OptimizerStats stats = new OptimizerStats(NAME);
     FindStaticDispatchSitesVisitor finder = new FindStaticDispatchSitesVisitor();
     finder.accept(program);
 
@@ -420,8 +420,8 @@ public class MakeCallsStatic {
      */
     RewriteCallSites rewriter = new RewriteCallSites();
     rewriter.accept(program);
+    stats.recordModified(rewriter.getNumMods());
     assert (rewriter.didChange() || toBeMadeStatic.isEmpty());
-    return rewriter.didChange();
+    return stats;
   }
-
 }

@@ -80,6 +80,7 @@ import java.util.Set;
  * Attempts to remove dead code.
  */
 public class DeadCodeElimination {
+  public static final String NAME = DeadCodeElimination.class.getSimpleName();
 
   /**
    * Eliminates dead or unreachable code when possible, and makes local
@@ -93,7 +94,6 @@ public class DeadCodeElimination {
    * that more simplifications can be made on a single pass through a tree.
    */
   public class DeadCodeVisitor extends JModVisitor {
-
     private JMethod currentMethod = null;
 
     /**
@@ -216,7 +216,7 @@ public class DeadCodeElimination {
             x.removeStmt(i);
             x.addStmts(i, block.getStatements());
             i--;
-            didChange = true;
+            madeChanges();
             continue;
           }
         }
@@ -240,7 +240,7 @@ public class DeadCodeElimination {
           // Abrupt change in flow, chop the remaining items from this block
           for (int j = i + 1; j < x.getStatements().size();) {
             x.removeStmt(j);
-            didChange = true;
+            madeChanges();
           }
         }
       }
@@ -401,7 +401,7 @@ public class DeadCodeElimination {
         ignoringExpressionOutput.remove(arg);
         if (!arg.hasSideEffects()) {
           x.removeArg(i--);
-          didChange = true;
+          madeChanges();
         }
       }
 
@@ -438,7 +438,7 @@ public class DeadCodeElimination {
         if (!expr.hasSideEffects()) {
           x.exprs.remove(i);
           --i;
-          didChange = true;
+          madeChanges();
           continue;
         }
 
@@ -447,7 +447,7 @@ public class DeadCodeElimination {
           x.exprs.remove(i);
           x.exprs.addAll(i, ((JMultiExpression) expr).exprs);
           i--;
-          didChange = true;
+          madeChanges();
           continue;
         }
       }
@@ -559,7 +559,7 @@ public class DeadCodeElimination {
             || type == program.getTypeNull()) {
           itA.remove();
           itB.remove();
-          didChange = true;
+          madeChanges();
         }
       }
 
@@ -1234,7 +1234,7 @@ public class DeadCodeElimination {
         boolean isBreak = isUnconditionalBreak(statement);
         if (isBreak && lastWasBreak) {
           body.removeStmt(i--);
-          didChange = true;
+          madeChanges();
         }
         lastWasBreak = isBreak;
       }
@@ -1243,7 +1243,7 @@ public class DeadCodeElimination {
       if (body.getStatements().size() > 0
           && isUnconditionalUnlabeledBreak(last(body.getStatements()))) {
         body.removeStmt(body.getStatements().size() - 1);
-        didChange = true;
+        madeChanges();
       }
     }
 
@@ -1276,7 +1276,7 @@ public class DeadCodeElimination {
       if (noOpCaseStatements.size() > 0) {
         for (JStatement statement : noOpCaseStatements) {
           body.removeStmt(body.getStatements().indexOf(statement));
-          didChange = true;
+          madeChanges();
         }
       }
     }
@@ -1780,14 +1780,12 @@ public class DeadCodeElimination {
     }
   }
 
-  public static boolean exec(JProgram program) {
-    boolean didChange = new DeadCodeElimination(program).execImpl(program);
-    return didChange;
+  public static OptimizerStats exec(JProgram program) {
+    return new DeadCodeElimination(program).execImpl(program);
   }
 
-  public static boolean exec(JProgram program, JNode node) {
-    boolean didChange = new DeadCodeElimination(program).execImpl(node);
-    return didChange;
+  public static OptimizerStats exec(JProgram program, JNode node) {
+    return new DeadCodeElimination(program).execImpl(node);
   }
 
   private final JProgram program;
@@ -1810,19 +1808,23 @@ public class DeadCodeElimination {
     typeClassMap.put(program.getTypePrimitiveShort(), short.class);
   }
 
-  private boolean execImpl(JNode node) {
+  private OptimizerStats execImpl(JNode node) {
+    OptimizerStats stats = new OptimizerStats(NAME);
     Event optimizeEvent =
-        SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "DeadCodeElimination");
-    boolean didChange = false;
+      SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+
+    // TODO(zundel): see if this loop can be removed and all work done in one
+    //   pass of the optimizer to improve performance.
     while (true) {
       DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor();
       deadCodeVisitor.accept(node);
+      stats.recordModified(deadCodeVisitor.getNumMods());
       if (!deadCodeVisitor.didChange()) {
         break;
       }
-      didChange = true;
     }
-    optimizeEvent.end("didChange", "" + didChange);
-    return didChange;
+    
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 }

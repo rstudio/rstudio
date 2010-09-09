@@ -144,7 +144,7 @@ public class LongCastNormalizer {
         JExpression newArg = checkAndReplace(arg, param.getType());
         if (arg != newArg) {
           x.setArg(i, newArg);
-          this.didChange = true;
+          madeChanges();
         }
       }
     }
@@ -159,7 +159,7 @@ public class LongCastNormalizer {
           JExpression newInitializer = checkAndReplace(initializer, elementType);
           if (initializer != newInitializer) {
             initializers.set(i, newInitializer);
-            this.didChange = true;
+            madeChanges();
           }
         }
       }

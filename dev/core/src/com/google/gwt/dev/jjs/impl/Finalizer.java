@@ -49,6 +49,7 @@ import java.util.Set;
  * optimize.
  */
 public class Finalizer {
+  private static final String NAME = Finalizer.class.getSimpleName();
 
   /**
    * Any items that weren't marked during MarkVisitor can be set final.
@@ -60,13 +61,6 @@ public class Finalizer {
    * come up as not instantiated and been culled. So I think it's not possible.
    */
   private class FinalizeVisitor extends JModVisitor {
-
-    private boolean didChange = false;
-
-    @Override
-    public boolean didChange() {
-      return didChange;
-    }
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
@@ -128,7 +122,7 @@ public class Finalizer {
     private void setFinal(CanBeSetFinal x) {
       x.setFinal();
       assert x.isFinal();
-      didChange = true;
+      madeChanges();
     }
   }
   /**
@@ -204,12 +198,12 @@ public class Finalizer {
     }
   }
 
-  public static boolean exec(JProgram program) {
+  public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE, "optimizer", "Finalizer");
-    boolean didChange = new Finalizer().execImpl(program);
-    optimizeEvent.end("didChange", "" + didChange);
-    return didChange;
+        CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new Finalizer().execImpl(program);
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   private final Set<JMethod> isOverriden = new HashSet<JMethod>();
@@ -221,13 +215,14 @@ public class Finalizer {
   private Finalizer() {
   }
 
-  private boolean execImpl(JProgram program) {
+  private OptimizerStats execImpl(JProgram program) {
     MarkVisitor marker = new MarkVisitor();
     marker.accept(program);
-
+    
     FinalizeVisitor finalizer = new FinalizeVisitor();
     finalizer.accept(program);
-    return finalizer.didChange();
-  }
 
+    return new OptimizerStats(NAME).recordModified(
+        finalizer.getNumMods());
+  }
 }

@@ -264,7 +264,6 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
-    boolean madeChanges = DataflowOptimizer.exec(program, method);
-    return madeChanges;
+    return DataflowOptimizer.exec(program, method).didChange();
   }
 }

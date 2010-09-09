@@ -54,6 +54,7 @@ import java.util.Set;
  * method expressions.
  */
 public class MethodInliner {
+  public static String NAME = MethodInliner.class.getSimpleName();
 
   /**
    * Clones an expression, ensuring no local or this refs.
@@ -76,7 +77,6 @@ public class MethodInliner {
    * Method inlining visitor.
    */
   private class InliningVisitor extends JModVisitor {
-
     protected final Set<JMethod> modifiedMethods = new HashSet<JMethod>();
 
     /**
@@ -370,7 +370,9 @@ public class MethodInliner {
       JMultiExpression multi = createMultiExpressionForInstanceAndClinit(x);
 
       // Replace all params in the target expression with the actual arguments.
-      new ParameterReplacer(x).accept(targetExpr);
+      ParameterReplacer replacer = new ParameterReplacer(x);
+      replacer.accept(targetExpr);
+      madeChanges(replacer.getNumMods());
 
       multi.exprs.add(targetExpr);
       replaceWithMulti(ctx, multi);
@@ -442,7 +444,7 @@ public class MethodInliner {
    */
   private class ParameterReplacer extends JModVisitor {
     private final JMethodCall methodCall;
-
+    
     public ParameterReplacer(JMethodCall methodCall) {
       this.methodCall = methodCall;
     }
@@ -458,7 +460,7 @@ public class MethodInliner {
       JExpression arg = methodCall.getArgs().get(paramIndex);
       JExpression clone = cloner.cloneExpression(arg);
 
-      clone = maybeCast(clone, x.getType());
+      clone = maybeCast(clone, x.getType());      
       ctx.replaceMe(clone);
     }
   }
@@ -490,12 +492,12 @@ public class MethodInliner {
     CORRECT_ORDER, FAILS, NO_REFERENCES
   }
 
-  public static boolean exec(JProgram program) {
+  public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE, "optimizer", "MethodInliner");
-    boolean didChange = new MethodInliner(program).execImpl();
-    optimizeEvent.end("didChange", "" + didChange);
-    return didChange;
+        CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new MethodInliner(program).execImpl();
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   /**
@@ -516,21 +518,22 @@ public class MethodInliner {
     this.program = program;
   }
 
-  private boolean execImpl() {
-    boolean madeChanges = false;
+  private OptimizerStats execImpl() {
+    OptimizerStats stats = new OptimizerStats(NAME);
     while (true) {
       InliningVisitor inliner = new InliningVisitor();
       inliner.accept(program);
+      stats.recordModified(inliner.getNumMods());
       if (!inliner.didChange()) {
         break;
       }
-      madeChanges = true;
 
       // Run a cleanup on the methods we just modified
       for (JMethod method : inliner.modifiedMethods) {
-        DeadCodeElimination.exec(program, method);
+        OptimizerStats innerStats = DeadCodeElimination.exec(program, method);
+        stats.recordModified(innerStats.getNumMods());
       }
     }
-    return madeChanges;
+    return stats;
   }
 }

@@ -69,7 +69,7 @@ public class LivenessTransformation implements
             }
             
             x.initializer = null;
-            didChange = true;
+            madeChanges();
           }
 
           @Override

@@ -40,6 +40,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
  * {@link com.google.gwt.dev.jjs.impl.TypeTightener}.
  */
 public class MethodCallTightener {
+  public static final String NAME = MethodCallTightener.class.getSimpleName();
 
   /**
    * Updates polymorphic method calls to tighter bindings based on the type of
@@ -140,12 +141,12 @@ public class MethodCallTightener {
     }
   }
 
-  public static boolean exec(JProgram program) {
+  public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE, "optimizer", "TypeTightener");
-    boolean didChange = new MethodCallTightener(program).execImpl();
-    optimizeEvent.end("didChange", "" + didChange);
-    return didChange;
+        CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new MethodCallTightener(program).execImpl();
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   private final JProgram program;
@@ -154,10 +155,9 @@ public class MethodCallTightener {
     this.program = program;
   }
 
-  private boolean execImpl() {
+  private OptimizerStats execImpl() {
     MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
     tightener.accept(program);
-    return tightener.didChange();
+    return new OptimizerStats(NAME).recordModified(tightener.getNumMods());
   }
-
 }

@@ -94,6 +94,8 @@ import java.util.Set;
  * Type flow is not supported for primitive types, only reference types.
  */
 public class TypeTightener {
+  private static final String NAME = TypeTightener.class.getSimpleName();
+  
   /*
    * TODO(later): handle recursion, self-assignment, arrays, method tightening
    * on invocations from within JSNI blocks
@@ -170,7 +172,6 @@ public class TypeTightener {
    * visitor each time.
    */
   public class RecordVisitor extends JVisitor {
-
     private JMethod currentMethod;
 
     @Override
@@ -377,18 +378,7 @@ public class TypeTightener {
    * Also optimize dynamic casts and instanceof operations where possible.
    */
   public class TightenTypesVisitor extends JModVisitor {
-
-    /**
-     * <code>true</code> if this visitor has changed the AST apart from calls to
-     * Context.
-     */
-    private boolean myDidChange = false;
-
-    @Override
-    public boolean didChange() {
-      return myDidChange || super.didChange();
-    }
-
+    
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
       JType argType = x.getExpr().getType();
@@ -446,7 +436,7 @@ public class TypeTightener {
             (JReferenceType) x.getElseExpr().getType());
         if (newType != x.getType()) {
           x.setType(newType);
-          didChange = true;
+          madeChanges();
         }
       }
     }
@@ -469,7 +459,7 @@ public class TypeTightener {
       JReferenceType resultType = program.generalizeTypes(typeList);
       if (x.getType() != resultType) {
         x.setType(resultType);
-        myDidChange = true;
+        madeChanges();
       }
     }
 
@@ -548,14 +538,14 @@ public class TypeTightener {
       // tighten based on non-instantiability
       if (!program.typeOracle.isInstantiatedType(refType)) {
         x.setType(typeNull);
-        myDidChange = true;
+        madeChanges();
         return;
       }
 
       JReferenceType concreteType = getSingleConcreteType(x.getType());
       if (concreteType != null) {
         x.setType(concreteType);
-        myDidChange = true;
+        madeChanges();
       }
 
       /*
@@ -592,7 +582,7 @@ public class TypeTightener {
       resultType = program.strongerType(refType, resultType);
       if (refType != resultType) {
         x.setType(resultType);
-        myDidChange = true;
+        madeChanges();
       }
     }
 
@@ -631,7 +621,7 @@ public class TypeTightener {
           }
         }
         x.setCannotBePolymorphic();
-        didChange = true;
+        madeChanges();
       }
     }
 
@@ -728,7 +718,7 @@ public class TypeTightener {
       // tighten based on non-instantiability
       if (!program.typeOracle.isInstantiatedType(refType)) {
         x.setType(typeNull);
-        myDidChange = true;
+        madeChanges();
         return;
       }
 
@@ -737,7 +727,7 @@ public class TypeTightener {
         JArrayType newArrayType = nullifyArrayType(arrayType);
         if (arrayType != newArrayType) {
           x.setType(newArrayType);
-          myDidChange = true;
+          madeChanges();
         }
       }
 
@@ -745,7 +735,7 @@ public class TypeTightener {
       JReferenceType leafType = getSingleConcreteType(refType);
       if (leafType != null) {
         x.setType(leafType);
-        myDidChange = true;
+        madeChanges();
         return;
       }
 
@@ -801,17 +791,17 @@ public class TypeTightener {
 
       if (refType != resultType) {
         x.setType(resultType);
-        myDidChange = true;
+        madeChanges();
       }
     }
   }
 
-  public static boolean exec(JProgram program) {
+  public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
-        "optimizer", "TypeTightener");
-    boolean didChange = new TypeTightener(program).execImpl();
-    optimizeEvent.end("didChange", "" + didChange);
-    return didChange;
+        "optimizer", NAME);
+    OptimizerStats stats = new TypeTightener(program).execImpl();
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   private static <T, V> void add(T target, V value, Map<T, Set<V>> map) {
@@ -867,7 +857,8 @@ public class TypeTightener {
     typeNull = program.getTypeNull();
   }
 
-  private boolean execImpl() {
+  private OptimizerStats execImpl() {
+    OptimizerStats stats = new OptimizerStats(NAME);
     RecordVisitor recorder = new RecordVisitor();
     recorder.accept(program);
 
@@ -876,18 +867,21 @@ public class TypeTightener {
      * more opportunities to do additional tightening for the things that depend
      * on it.
      */
-    boolean madeChanges = false;
+
+    // TODO(zundel): See if we can remove this loop, or otherwise run to less 
+    //   than completion if we compile with an option for less than 100% 
+    //   optimized output.
     while (true) {
       TightenTypesVisitor tightener = new TightenTypesVisitor();
       tightener.accept(program);
+      stats.recordModified(tightener.getNumMods());
       if (!tightener.didChange()) {
         break;
       }
-      madeChanges = true;
 
       FixDanglingRefsVisitor fixer = new FixDanglingRefsVisitor();
       fixer.accept(program);
     }
-    return madeChanges;
+    return stats;
   }
 }

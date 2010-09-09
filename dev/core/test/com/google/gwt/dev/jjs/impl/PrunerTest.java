@@ -144,6 +144,6 @@ public class PrunerTest extends OptimizerTestBase {
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     program.addEntryMethod(findMainMethod(program));
-    return Pruner.exec(program, true);
+    return Pruner.exec(program, true).didChange();
   }
 }

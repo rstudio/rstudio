@@ -49,10 +49,14 @@ import java.util.Set;
 // TODO: this optimization can mistakenly act on methods such as LongLib.fromInt
 // since only one call is seen in LongLib itself.
 public class SameParameterValueOptimizer {
+  private static final String NAME =
+      SameParameterValueOptimizer.class.getSimpleName();
+
   /**
    * Fill parameterValues map.
    */
   private class AnalysisVisitor extends JVisitor {
+
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.isAssignment() && x.getLhs() instanceof JParameterRef) {
@@ -166,7 +170,7 @@ public class SameParameterValueOptimizer {
     private final JExpression expression;
     private final JParameter parameter;
 
-    public SubstituteParameterVisitor(JParameter parameter,
+    public SubstituteParameterVisitor(JParameter parameter, 
         JExpression expression) {
       this.parameter = parameter;
       this.expression = expression;
@@ -181,12 +185,13 @@ public class SameParameterValueOptimizer {
     }
   }
 
-  public static boolean exec(JProgram program) {
+  public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE, "optimizer", "SameParameterValueOptimizer");
-    boolean didChange = new SameParameterValueOptimizer(program).execImpl(program);
-    optimizeEvent.end("didChange", "" + didChange);
-    return didChange;
+        CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new SameParameterValueOptimizer(program).execImpl(
+        program);
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   /**
@@ -214,24 +219,22 @@ public class SameParameterValueOptimizer {
     simplifier = new Simplifier(program);
   }
 
-  private boolean execImpl(JNode node) {
+  private OptimizerStats execImpl(JNode node) {
+    OptimizerStats stats = new OptimizerStats(NAME);
     AnalysisVisitor analysisVisitor = new AnalysisVisitor();
     analysisVisitor.accept(node);
 
-    boolean madeChanges = false;
     for (JParameter parameter : parameterValues.keySet()) {
       if (rescuedMethods.contains(parameter.getEnclosingMethod())) {
         continue;
       }
       JValueLiteral valueLiteral = parameterValues.get(parameter);
       if (valueLiteral != null) {
-        SubstituteParameterVisitor substituteParameterVisitor = new SubstituteParameterVisitor(
-            parameter, simplifier.cast(parameter.getType(), valueLiteral));
+        SubstituteParameterVisitor substituteParameterVisitor = new SubstituteParameterVisitor(parameter, simplifier.cast(parameter.getType(), valueLiteral));
         substituteParameterVisitor.accept(parameter.getEnclosingMethod());
-        madeChanges |= substituteParameterVisitor.didChange();
+        stats.recordModified(substituteParameterVisitor.getNumMods()); 
       }
     }
-
-    return madeChanges;
+    return stats;
   }
 }

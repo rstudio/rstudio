@@ -121,6 +121,6 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
-    return DeadCodeElimination.exec(program, method);
+    return DeadCodeElimination.exec(program, method).didChange();
   }
 }

@@ -110,6 +110,6 @@ public class FinalizerTest extends OptimizerTestBase {
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
-    return Finalizer.exec(program);
+    return Finalizer.exec(program).didChange();
   }
 }

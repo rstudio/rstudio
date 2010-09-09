@@ -41,6 +41,7 @@ import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.CorrelationFactory.RealCorrelationFactory;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.UnifiedAst.AST;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
@@ -51,9 +52,11 @@ import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JStatement;
+import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
@@ -81,6 +84,7 @@ import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
+import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
@@ -208,6 +212,20 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
+  private static class TreeStatistics extends JVisitor {
+    private int nodeCount = 0;
+
+    public int getNodeCount() {
+      return nodeCount;
+    }
+
+    @Override
+    public boolean visit(JNode x, Context ctx) {
+      nodeCount++;
+      return true;
+    }
+  }
+  
   /**
    * Compiles a particular permutation, based on a precompiled unified AST.
    *
@@ -584,7 +602,7 @@ public class JavaToJavaScriptCompiler {
            * perfectly parallelize the permutation compiles, so let's avoid
            * doing potentially superlinear optimizations on the unified AST.
            */
-          optimizeLoop(jprogram, false);
+          optimizeLoop("Early Optimization", jprogram, false);
         }
       }
 
@@ -642,6 +660,7 @@ public class JavaToJavaScriptCompiler {
   protected static void optimize(JJSOptions options, JProgram jprogram)
       throws InterruptedException {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
+    
     /*
      * Record the beginning of optimizations; this turns on certain checks that
      * guard against problematic late construction of things like class
@@ -649,35 +668,61 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
-    do {
+    List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
+    int counter = 0;
+    while (true) {
+      counter++;
       if (Thread.interrupted()) {
         optimizeEvent.end();
         throw new InterruptedException();
       }
       maybeDumpAST(jprogram);
-    } while (optimizeLoop(jprogram, options.isAggressivelyOptimize()));
+      OptimizerStats stats = optimizeLoop("Pass " + counter, jprogram, options.isAggressivelyOptimize());
+      allOptimizerStats.add(stats);
+      if (!stats.didChange()) {
+        break;
+      }
+    }
 
     if (options.isAggressivelyOptimize()) {
       // Just run it once, because it is very time consuming
-      DataflowOptimizer.exec(jprogram);
+      allOptimizerStats.add(DataflowOptimizer.exec(jprogram));
     }
+    
+    if (JProgram.isTracingEnabled()) {
+      for (OptimizerStats stats : allOptimizerStats) {
+        System.out.println(stats.prettyPrint());
+      }
+    }
+
     optimizeEvent.end();
   }
 
-  protected static boolean optimizeLoop(JProgram jprogram,
+  protected static OptimizerStats optimizeLoop(String passName, JProgram jprogram,
       boolean isAggressivelyOptimize) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "loop");
+
+    // Count the number of nodes in the AST so we can measure the efficiency of
+    // the optimizers.
+    Event countEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "countNodes");
+    TreeStatistics treeStats = new TreeStatistics();
+    treeStats.accept(jprogram);
+    int numNodes = treeStats.getNodeCount();
+    countEvent.end();
+    
     // Recompute clinits each time, they can become empty.
     jprogram.typeOracle.recomputeAfterOptimizations();
     // jprogram.methodOracle = MethodOracleBuilder.buildMethodOracle(jprogram);
-    boolean didChange = false;
+    OptimizerStats stats = new OptimizerStats(passName);
 
     // Remove unreferenced types, fields, methods, [params, locals]
-    didChange = Pruner.exec(jprogram, true) || didChange;
+    stats.add(Pruner.exec(jprogram, true).recordVisits(numNodes));
+
     // finalize locals, params, fields, methods, classes
-    didChange = Finalizer.exec(jprogram) || didChange;
+    stats.add(Finalizer.exec(jprogram).recordVisits(numNodes));
+
     // rewrite non-polymorphic calls as static calls; update all call sites
-    didChange = MakeCallsStatic.exec(jprogram) || didChange;
+    stats.add(MakeCallsStatic.exec(jprogram).recordVisits(numNodes));
 
     // type flow tightening
     // - fields, locals based on assignment
@@ -685,27 +730,27 @@ public class JavaToJavaScriptCompiler {
     // - method bodies based on return statements
     // - polymorphic methods based on return types of all implementors
     // - optimize casts and instance of
-    didChange = TypeTightener.exec(jprogram) || didChange;
+    stats.add(TypeTightener.exec(jprogram).recordVisits(numNodes));
 
     // tighten method call bindings
-    didChange = MethodCallTightener.exec(jprogram) || didChange;
+    stats.add(MethodCallTightener.exec(jprogram).recordVisits(numNodes));
 
     // dead code removal??
-    didChange = DeadCodeElimination.exec(jprogram) || didChange;
+    stats.add(DeadCodeElimination.exec(jprogram).recordVisits(numNodes));
 
     // inlining
-    didChange = MethodInliner.exec(jprogram) || didChange;
+    stats.add(MethodInliner.exec(jprogram).recordVisits(numNodes));
 
     if (isAggressivelyOptimize) {
       // remove same parameters value
-      didChange = SameParameterValueOptimizer.exec(jprogram) || didChange;
+      stats.add(SameParameterValueOptimizer.exec(jprogram).recordVisits(numNodes));
     }
 
     // prove that any types that have been culled from the main tree are
     // unreferenced due to type tightening?
-    optimizeEvent.end();
 
-    return didChange;
+    optimizeEvent.end();
+    return stats;
   }
 
   static void checkForErrors(TreeLogger logger,

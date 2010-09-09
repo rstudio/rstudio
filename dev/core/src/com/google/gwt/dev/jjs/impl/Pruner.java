@@ -81,6 +81,7 @@ import java.util.Stack;
  * Note: this class is limited to pruning parameters of static methods only.
  */
 public class Pruner {
+  private static final String NAME = Pruner.class.getSimpleName();
 
   /**
    * Remove assignments to pruned fields, locals and params. Nullify the return
@@ -329,10 +330,8 @@ public class Pruner {
    * unreferenced methods and fields from their containing classes.
    */
   private class PruneVisitor extends JModVisitor {
-    private boolean didChange = false;
     private final Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap = new HashMap<JMethod, ArrayList<JParameter>>();
     private final Set<? extends JNode> referencedNonTypes;
-
     private final Set<? extends JReferenceType> referencedTypes;
 
     public PruneVisitor(Set<? extends JReferenceType> referencedTypes,
@@ -341,18 +340,12 @@ public class Pruner {
       this.referencedNonTypes = referencedNodes;
     }
 
-    @Override
-    public boolean didChange() {
-      return didChange;
-    }
-
     public Map<JMethod, ArrayList<JParameter>> getMethodToOriginalParamsMap() {
       return methodToOriginalParamsMap;
     }
 
     @Override
     public boolean visit(JClassType type, Context ctx) {
-
       assert (referencedTypes.contains(type));
       boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
@@ -361,7 +354,7 @@ public class Pruner {
         if (!referencedNonTypes.contains(field)
             || pruneViaNoninstantiability(isInstantiated, field)) {
           type.removeField(i);
-          didChange = true;
+          madeChanges();
           --i;
         }
       }
@@ -371,7 +364,7 @@ public class Pruner {
         if (!methodIsReferenced(method)
             || pruneViaNoninstantiability(isInstantiated, method)) {
           type.removeMethod(i);
-          didChange = true;
+          madeChanges();
           --i;
         } else {
           accept(method);
@@ -391,7 +384,7 @@ public class Pruner {
         // all interface fields are static and final
         if (!isReferenced || !referencedNonTypes.contains(field)) {
           type.removeField(i);
-          didChange = true;
+          madeChanges();
           --i;
         }
       }
@@ -402,7 +395,7 @@ public class Pruner {
         // all other interface methods are instance and abstract
         if (!isInstantiated || !methodIsReferenced(method)) {
           type.removeMethod(i);
-          didChange = true;
+          madeChanges();
           --i;
         }
       }
@@ -453,7 +446,7 @@ public class Pruner {
           JParameter param = x.getParams().get(i);
           if (!referencedNonTypes.contains(param)) {
             x.removeParam(i);
-            didChange = true;
+            madeChanges();
             // Remove the associated JSNI parameter
             if (func != null) {
               func.getParameters().remove(i);
@@ -472,7 +465,7 @@ public class Pruner {
       for (int i = 0; i < x.getLocals().size(); ++i) {
         if (!referencedNonTypes.contains(x.getLocals().get(i))) {
           x.removeLocal(i--);
-          didChange = true;
+          madeChanges();
         }
       }
       return false;
@@ -490,7 +483,7 @@ public class Pruner {
           accept(type);
         } else {
           it.remove();
-          didChange = true;
+          madeChanges();
         }
       }
       return false;
@@ -527,11 +520,11 @@ public class Pruner {
     }
   }
 
-  public static boolean exec(JProgram program, boolean noSpecialTypes) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "Pruner");
-    boolean didChange = new Pruner(program, noSpecialTypes).execImpl();
-    optimizeEvent.end("didChange", "" + didChange);
-    return didChange;
+  public static OptimizerStats exec(JProgram program, boolean noSpecialTypes) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new Pruner(program, noSpecialTypes).execImpl();
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   /**
@@ -632,8 +625,11 @@ public class Pruner {
     this.saveCodeGenTypes = saveCodeGenTypes;
   }
 
-  private boolean execImpl() {
-    boolean madeChanges = false;
+  private OptimizerStats execImpl() {
+    OptimizerStats stats = new OptimizerStats(NAME);
+    
+    // TODO(zundel): see if this loop can be removed and all work done in one
+    //   pass of the optimizer to improve performance.
     while (true) {
       ControlFlowAnalyzer livenessAnalyzer = new ControlFlowAnalyzer(program);
       if (saveCodeGenTypes) {
@@ -655,18 +651,16 @@ public class Pruner {
           livenessAnalyzer.getReferencedTypes(),
           livenessAnalyzer.getLiveFieldsAndMethods());
       pruner.accept(program);
+      stats.recordModified(pruner.getNumMods());
       if (!pruner.didChange()) {
         break;
       }
-
       CleanupRefsVisitor cleaner = new CleanupRefsVisitor(
           livenessAnalyzer.getLiveFieldsAndMethods(),
           pruner.getMethodToOriginalParamsMap());
       cleaner.accept(program.getDeclaredTypes());
-
-      madeChanges = true;
     }
-    return madeChanges;
+    return stats;
   }
 
   /**

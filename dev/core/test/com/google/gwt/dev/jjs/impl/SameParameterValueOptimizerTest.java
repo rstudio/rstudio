@@ -146,6 +146,6 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     MakeCallsStatic.exec(program);
-    return SameParameterValueOptimizer.exec(program);
+    return SameParameterValueOptimizer.exec(program).didChange();
   }
 }

@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
+import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgBuilder;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
@@ -40,14 +41,16 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 /**
  */
 public class DataflowOptimizer {
-  public static boolean exec(JProgram jprogram, JNode node) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", "DataflowOptimizer");
-    boolean didChange = new DataflowOptimizer(jprogram).execImpl(node);
+  public static String NAME = DataflowOptimizer.class.getSimpleName();
+  
+  public static OptimizerStats exec(JProgram jprogram, JNode node) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new DataflowOptimizer(jprogram).execImpl(node);
     optimizeEvent.end();
-    return didChange;
+    return stats;
   }
 
-  public static boolean exec(JProgram jprogram) {
+  public static OptimizerStats exec(JProgram jprogram) {
     return exec(jprogram, jprogram);
   }
 
@@ -58,6 +61,7 @@ public class DataflowOptimizer {
   }
 
   private class DataflowOptimizerVisitor extends JModVisitor {
+    
     @Override
     public boolean visit(JMethodBody methodBody, Context ctx) {
       Cfg cfg = CfgBuilder.build(program, methodBody.getBlock());
@@ -96,7 +100,7 @@ public class DataflowOptimizer {
             || madeChanges;
 
         if (madeChanges) {
-          didChange = true;
+          madeChanges();
 
           DeadCodeElimination.exec(program, methodBody);
         }
@@ -108,9 +112,9 @@ public class DataflowOptimizer {
     }
   }
 
-  private boolean execImpl(JNode node) {
+  private OptimizerStats execImpl(JNode node) {
     DataflowOptimizerVisitor visitor = new DataflowOptimizerVisitor();
     visitor.accept(node);
-    return visitor.didChange();
+    return new OptimizerStats(NAME).recordModified(visitor.getNumMods());
   }
 }
