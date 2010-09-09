@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
 
 import java.util.ArrayList;
@@ -41,31 +42,57 @@ public class EditorModel {
   private static final EditorData[] EMPTY_EDITOR_DATA = new EditorData[0];
 
   /**
+   * Given type assignable to <code>ComposedEditor&lt;Foo,Bar></code>, return
+   * <code>{Foo, Bar}</code>. It is an error to call this method with a type not
+   * assignable to {@link ComposedEditor}.
+   */
+  static JClassType[] calculateCompositeTypes(JClassType editorType) {
+    JClassType compositeEditorIntf = editorType.getOracle().findType(
+        CompositeEditor.class.getName());
+    assert compositeEditorIntf.isAssignableFrom(editorType) : editorType.getQualifiedSourceName()
+        + " is not a ComposedEditor";
+
+    for (JClassType supertype : editorType.getFlattenedSupertypeHierarchy()) {
+      JParameterizedType parameterized = supertype.isParameterized();
+      if (parameterized != null) {
+        // Found the Editor<Foo> supertype
+        if (compositeEditorIntf.equals(parameterized.getBaseType())) {
+          JClassType[] typeArgs = parameterized.getTypeArgs();
+          assert typeArgs.length == 3;
+          return new JClassType[] {typeArgs[1], typeArgs[2]};
+        }
+      }
+    }
+    assert false : "Did not find ComposedEditor parameterization for "
+        + editorType.getQualifiedSourceName();
+    throw new RuntimeException();
+  }
+
+  /**
    * Given type assignable to <code>Editor&lt;Foo></code>, return
    * <code>Foo</code>. It is an error to call this method with a type not
    * assignable to {@link Editor}.
    */
-  static JClassType calculateEditedType(JClassType editorType) {
+  static JClassType calculateEditedType(TreeLogger logger, JClassType editorType)
+      throws UnableToCompleteException {
     JClassType editorIntf = editorType.getOracle().findType(
         Editor.class.getName());
     assert editorIntf.isAssignableFrom(editorType) : editorType.getQualifiedSourceName()
         + " is not an Editor";
 
-    JClassType toReturn = null;
     for (JClassType supertype : editorType.getFlattenedSupertypeHierarchy()) {
       JParameterizedType parameterized = supertype.isParameterized();
       if (parameterized != null) {
         // Found the Editor<Foo> supertype
         if (editorIntf.equals(parameterized.getBaseType())) {
           assert parameterized.getTypeArgs().length == 1;
-          toReturn = parameterized.getTypeArgs()[0].isClassOrInterface();
-          break;
+          return parameterized.getTypeArgs()[0].isClassOrInterface();
         }
       }
     }
-    assert toReturn != null : "Did not find editor parameterization for "
-        + editorType.getQualifiedSourceName();
-    return toReturn;
+    logger.log(TreeLogger.ERROR, noEditorParameterizationMessage(editorIntf,
+        editorType));
+    throw new UnableToCompleteException();
   }
 
   static String cycleErrorMessage(JType editorType, String originalPath,
@@ -87,6 +114,13 @@ public class EditorModel {
     return String.format(
         "You must declare an interface that extends the %s type",
         driverType.getSimpleSourceName());
+  }
+
+  static String noEditorParameterizationMessage(JClassType editorIntf,
+      JClassType type) {
+    return String.format("The type %s is assignable to the raw %s type, but"
+        + " a type parameterization is required.",
+        type.getParameterizedQualifiedSourceName(), editorIntf.getName());
   }
 
   static String noGetterMessage(String propertyName, JType proxyType) {
@@ -214,6 +248,13 @@ public class EditorModel {
     return proxyType;
   }
 
+  public EditorData getRootData() throws UnableToCompleteException {
+    return new EditorData(logger.branch(TreeLogger.DEBUG,
+        "Calculating root data for "
+            + getEditorType().getParameterizedQualifiedSourceName()), null,
+        EditorAccess.root(getEditorType()), "", null, null);
+  }
+
   /**
    * Create the EditorData objects for the {@link #editorData} type.
    */
@@ -271,15 +312,18 @@ public class EditorModel {
 
   private EditorData createEditorData(EditorAccess access)
       throws UnableToCompleteException {
+    TreeLogger subLogger = logger.branch(TreeLogger.DEBUG, "Examining "
+        + access.toString());
     // Determine the Foo in Editor<Foo>
-    JClassType expectedToEdit = calculateEditedType(access.getEditorType());
+    JClassType expectedToEdit = calculateEditedType(subLogger,
+        access.getEditorType());
 
     // Find the bean methods on the proxy interface
     String[] methods = findBeanPropertyMethods(access.getPath(), expectedToEdit);
     assert methods.length == 3;
 
-    return new EditorData(editorSoFar, access, methods[0], methods[1],
-        methods[2]);
+    return new EditorData(subLogger, editorSoFar, access, methods[0],
+        methods[1], methods[2]);
   }
 
   /**
@@ -302,7 +346,7 @@ public class EditorModel {
 
     if (!data.isLeafValueEditor()) {
       EditorModel subModel = new EditorModel(this, data.getEditorType(), data,
-          calculateEditedType(data.getEditorType()));
+          calculateEditedType(logger, data.getEditorType()));
       accumulator.addAll(Arrays.asList(subModel.getEditorData()));
       poisoned |= subModel.poisoned;
     }

@@ -27,6 +27,10 @@ import com.google.gwt.editor.client.Editor.Path;
 class EditorAccess {
   private static final String EDITOR_SUFFIX = "Editor";
 
+  public static EditorAccess root(JClassType rootType) {
+    return new EditorAccess("", rootType, "");
+  }
+
   public static EditorAccess via(JField field) {
     String path = field.getName();
     Path pathAnnotation = field.getAnnotation(Editor.Path.class);
@@ -40,7 +44,7 @@ class EditorAccess {
         field.getName());
   }
 
-  public static EditorAccess via(final JMethod method) {
+  public static EditorAccess via(JMethod method) {
     String path = method.getName();
     Path pathAnnotation = method.getAnnotation(Editor.Path.class);
     if (pathAnnotation != null) {
@@ -73,5 +77,12 @@ class EditorAccess {
 
   public String getPath() {
     return path;
+  }
+
+  /**
+   * For debugging use only.
+   */
+  public String toString() {
+    return path + " = " + type.getParameterizedQualifiedSourceName();
   }
 }

@@ -36,7 +36,7 @@ public abstract class AbstractSimpleBeanEditorDriver<T, E extends Editor<T>>
     checkEditor();
     this.object = object;
     delegate = createDelegate();
-    delegate.initialize(null, "", object, editor);
+    delegate.initialize("", object, editor);
   }
 
   public T flush() {

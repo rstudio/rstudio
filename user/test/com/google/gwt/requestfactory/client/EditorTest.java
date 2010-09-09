@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.adapters.StringEditor;
+import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -39,20 +39,20 @@ public class EditorTest extends GWTTestCase {
   }
 
   static class SimpleBarEditor implements Editor<SimpleBarProxy> {
-    protected final StringEditor userName = StringEditor.of();
+    protected final SimpleEditor<String> userName = SimpleEditor.of();
   }
 
   static class SimpleFooEditor implements Editor<SimpleFooProxy> {
     /**
      * Test field-based access.
      */
-    final StringEditor userName = StringEditor.of();
+    final SimpleEditor<String> userName = SimpleEditor.of();
 
     /**
      * Test nested path access.
      */
     @Path("barField.userName")
-    final StringEditor barName = StringEditor.of();
+    final SimpleEditor<String> barName = SimpleEditor.of();
 
     private final SimpleBarEditor barEditor = new SimpleBarEditor();
 

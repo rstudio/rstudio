@@ -18,8 +18,7 @@ package com.google.gwt.sample.dynatablerf.client.widgets;
 import com.google.gwt.app.client.IntegerBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.adapters.IntegerEditor;
-import com.google.gwt.editor.client.adapters.StringEditor;
+import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.sample.dynatablerf.shared.AddressProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -44,18 +43,18 @@ public class AddressEditor extends Composite implements Editor<AddressProxy> {
   IntegerBox zip;
 
   // TODO: Allow UiBinder to configure this
-  final StringEditor streetEditor;
-  final StringEditor cityEditor;
-  final StringEditor stateEditor;
-  final IntegerEditor zipEditor;
+  final TakesValueEditor<String> streetEditor;
+  final TakesValueEditor<String> cityEditor;
+  final TakesValueEditor<String> stateEditor;
+  final TakesValueEditor<Integer> zipEditor;
 
   public AddressEditor() {
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
 
     // TODO: Let UiBinder wire this up
-    streetEditor = StringEditor.of(street);
-    cityEditor = StringEditor.of(city);
-    stateEditor = StringEditor.of(state);
-    zipEditor = IntegerEditor.of(zip);
+    streetEditor = TakesValueEditor.of(street);
+    cityEditor = TakesValueEditor.of(city);
+    stateEditor = TakesValueEditor.of(state);
+    zipEditor = TakesValueEditor.of(zip);
   }
 }

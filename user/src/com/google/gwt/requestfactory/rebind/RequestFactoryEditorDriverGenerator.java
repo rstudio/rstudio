@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.rebind;
 
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.editor.rebind.AbstractEditorDriverGenerator;
 import com.google.gwt.editor.rebind.model.EditorData;
 import com.google.gwt.editor.rebind.model.EditorModel;
@@ -54,11 +55,12 @@ public class RequestFactoryEditorDriverGenerator extends
 
   @Override
   protected void writeAdditionalContent(TreeLogger logger,
-      GeneratorContext context, EditorModel model, SourceWriter sw) {
+      GeneratorContext context, EditorModel model, SourceWriter sw)
+      throws UnableToCompleteException {
     sw.println("protected void traverseEditors(%s<String> paths) {",
         List.class.getName());
-    sw.println("  %s.traverseEditor(getEditor(), \"\", paths);",
-        getEditorDelegate(model.getProxyType(), model.getEditorType()));
+    sw.indentln("%s.traverseEditor(getEditor(), \"\", paths);",
+        getEditorDelegate(model.getRootData()));
     sw.println("}");
   }
 

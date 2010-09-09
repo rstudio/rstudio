@@ -15,13 +15,15 @@
  */
 package com.google.gwt.editor.client.impl;
 
+import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -35,6 +37,30 @@ import javax.validation.ConstraintViolation;
 public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     EditorDelegate<T> {
 
+  private class Chain<R, S extends Editor<R>> implements
+      CompositeEditor.EditorChain<R, S> {
+    private Map<S, AbstractEditorDelegate<R, S>> map = new IdentityHashMap<S, AbstractEditorDelegate<R, S>>();
+
+    public void attach(R object, S subEditor) {
+      AbstractEditorDelegate<R, S> subDelegate = createComposedDelegate();
+      map.put(subEditor, subDelegate);
+      @SuppressWarnings("unchecked")
+      Editor<Object> temp = (Editor<Object>) subEditor;
+      subDelegate.initialize(path + composedEditor.getPathElement(temp),
+          object, subEditor);
+    }
+
+    public void detach(S subEditor) {
+      map.remove(subEditor).flush();
+    }
+
+    public R getValue(S subEditor) {
+      AbstractEditorDelegate<R, S> subDelegate = map.get(subEditor);
+      subDelegate.flush();
+      return subDelegate.getObject();
+    }
+  }
+
   protected static String appendPath(String prefix, String path) {
     if ("".equals(prefix)) {
       return path;
@@ -43,7 +69,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     }
   }
 
-  protected EventBus eventBus;
+  protected CompositeEditor<T, Object, Editor<Object>> composedEditor;
   protected LeafValueEditor<T> leafValueEditor;
   /**
    * This field avoids needing to repeatedly cast {@link #editor}.
@@ -92,13 +118,18 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
 
   protected abstract void attachSubEditors();
 
+  /**
+   * Only implemented by delegates for a {@link CompositeEditor}.
+   */
+  protected <C, D extends Editor<C>> AbstractEditorDelegate<C, D> createComposedDelegate() {
+    throw new IllegalStateException();
+  }
+
   protected abstract void flushSubEditors();
 
   protected abstract void flushValues();
 
-  protected void initialize(EventBus eventBus, String pathSoFar, T object,
-      E editor) {
-    this.eventBus = eventBus;
+  protected void initialize(String pathSoFar, T object, E editor) {
     this.path = pathSoFar;
     setEditor(editor);
     setObject(object);
@@ -110,6 +141,12 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     if (editor instanceof ValueAwareEditor<?>) {
       valueAwareEditor = (ValueAwareEditor<T>) editor;
       valueAwareEditor.setDelegate(this);
+      if (editor instanceof CompositeEditor<?, ?, ?>) {
+        @SuppressWarnings("unchecked")
+        CompositeEditor<T, Object, Editor<Object>> temp = (CompositeEditor<T, Object, Editor<Object>>) editor;
+        composedEditor = temp;
+        composedEditor.setEditorChain(new Chain<Object, Editor<Object>>());
+      }
     }
 
     /*

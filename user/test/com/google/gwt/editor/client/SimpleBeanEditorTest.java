@@ -16,10 +16,17 @@
 package com.google.gwt.editor.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.editor.client.adapters.StringEditor;
+import com.google.gwt.editor.client.adapters.EditorSource;
+import com.google.gwt.editor.client.adapters.ListEditor;
+import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import javax.validation.ConstraintViolation;
 
@@ -50,8 +57,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   }
 
   class AddressEditor implements Editor<Address> {
-    StringEditor city = StringEditor.of(UNINITIALIZED);
-    StringEditor street = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> city = SimpleEditor.of(UNINITIALIZED);
+    SimpleEditor<String> street = SimpleEditor.of(UNINITIALIZED);
   }
 
   class LeafAddressEditor extends AddressEditor implements
@@ -73,6 +80,11 @@ public class SimpleBeanEditorTest extends GWTTestCase {
       setValueCalled++;
       value = new Address();
     }
+  }
+
+  interface ListEditorDriver
+      extends
+      SimpleBeanEditorDriver<List<String>, ListEditor<String, SimpleEditor<String>>> {
   }
 
   class Person {
@@ -107,9 +119,9 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   class PersonEditor implements Editor<Person> {
     AddressEditor addressEditor = new AddressEditor();
-    StringEditor name = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
     @Path("manager.name")
-    StringEditor managerName = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> managerName = SimpleEditor.of(UNINITIALIZED);
   }
 
   interface PersonEditorDriver extends
@@ -118,9 +130,9 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   class PersonEditorWithLeafAddressEditor implements Editor<Person> {
     LeafAddressEditor addressEditor = new LeafAddressEditor();
-    StringEditor name = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
     @Path("manager.name")
-    StringEditor managerName = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> managerName = SimpleEditor.of(UNINITIALIZED);
   }
 
   interface PersonEditorWithLeafAddressEditorDriver extends
@@ -129,9 +141,9 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   class PersonEditorWithValueAwareAddressEditor implements Editor<Person> {
     ValueAwareAddressEditor addressEditor = new ValueAwareAddressEditor();
-    StringEditor name = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
     @Path("manager.name")
-    StringEditor managerName = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> managerName = SimpleEditor.of(UNINITIALIZED);
   }
 
   interface PersonEditorWithValueAwareAddressEditorDriver extends
@@ -140,9 +152,9 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   class PersonEditorWithValueAwareLeafAddressEditor implements Editor<Person> {
     ValueAwareLeafAddressEditor addressEditor = new ValueAwareLeafAddressEditor();
-    StringEditor name = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
     @Path("manager.name")
-    StringEditor managerName = StringEditor.of(UNINITIALIZED);
+    SimpleEditor<String> managerName = SimpleEditor.of(UNINITIALIZED);
   }
 
   interface PersonEditorWithValueAwareLeafAddressEditorDriver
@@ -278,6 +290,74 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     }
     driver.edit(person);
     driver.flush();
+  }
+
+  public void testListEditor() {
+    final SortedMap<Integer, SimpleEditor<String>> positionMap = new TreeMap<Integer, SimpleEditor<String>>();
+    @SuppressWarnings("unchecked")
+    final SimpleEditor<String>[] disposed = new SimpleEditor[1];
+    class StringSource extends EditorSource<SimpleEditor<String>> {
+      public SimpleEditor<String> create(int index) {
+        SimpleEditor<String> editor = SimpleEditor.of();
+        positionMap.put(index, editor);
+        return editor;
+      }
+
+      public void dispose(SimpleEditor<String> editor) {
+        disposed[0] = editor;
+        positionMap.values().remove(editor);
+      }
+
+      public void setIndex(SimpleEditor<String> editor, int index) {
+        positionMap.values().remove(editor);
+        positionMap.put(index, editor);
+      }
+    };
+
+    ListEditorDriver driver = GWT.create(ListEditorDriver.class);
+    ListEditor<String, SimpleEditor<String>> editor = ListEditor.of(new StringSource());
+
+    driver.initialize(editor);
+
+    List<String> rawData = new ArrayList<String>(Arrays.asList("foo", "bar",
+        "baz"));
+    driver.edit(rawData);
+
+    List<SimpleEditor<String>> editors = editor.getEditors();
+    assertEquals(rawData.size(), editors.size());
+    assertEquals(rawData, Arrays.asList(editors.get(0).getValue(), editors.get(
+        1).getValue(), editors.get(2).getValue()));
+    assertEquals(editors, new ArrayList<SimpleEditor<String>>(
+        positionMap.values()));
+
+    List<String> mutableList = editor.getList();
+    assertEquals(rawData, mutableList);
+
+    // Test through wrapped list
+    mutableList.set(1, "Hello");
+    assertEquals("Hello", editors.get(1).getValue());
+
+    // Test using editor
+    editors.get(2).setValue("World");
+    assertEquals("baz", rawData.get(2));
+    driver.flush();
+    assertEquals("World", rawData.get(2));
+
+    // Change list size
+    mutableList.add("quux");
+    assertEquals(4, editors.size());
+    assertEquals("quux", editors.get(3).getValue());
+    assertEquals(editors, new ArrayList<SimpleEditor<String>>(
+        positionMap.values()));
+
+    // Delete an element
+    SimpleEditor<String> expectedDisposed = editors.get(0);
+    mutableList.remove(0);
+    assertSame(expectedDisposed, disposed[0]);
+    assertEquals(3, editors.size());
+    assertEquals("quux", editors.get(2).getValue());
+    assertEquals(editors, new ArrayList<SimpleEditor<String>>(
+        positionMap.values()));
   }
 
   public void testValueAwareEditorInPlainSlot() {

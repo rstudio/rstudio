@@ -15,8 +15,11 @@
  */
 package com.google.gwt.editor.rebind.model;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
 
@@ -47,6 +50,7 @@ public class EditorData {
   }
 
   private final String beanOwnerExpression;
+  private final EditorData composedData;
   private final String declaredPath;
   private final JClassType editedType;
   private final JClassType editorType;
@@ -54,19 +58,21 @@ public class EditorData {
   private final String getterName;
   private final boolean isLeaf;
   private final boolean isBeanEditor;
+  private final boolean isCompositeEditor;
   private final boolean isValueAware;
   private final String path;
   private final String setterName;
   private final String simpleExpression;
 
-  EditorData(EditorData parent, EditorAccess access,
-      String beanOwnerExpression, String getterName, String setterName) {
+  EditorData(TreeLogger logger, EditorData parent, EditorAccess access,
+      String beanOwnerExpression, String getterName, String setterName)
+      throws UnableToCompleteException {
     this.beanOwnerExpression = beanOwnerExpression;
     this.getterName = getterName;
     this.setterName = setterName;
 
     editorType = access.getEditorType();
-    editedType = EditorModel.calculateEditedType(editorType);
+    editedType = EditorModel.calculateEditedType(logger, editorType);
 
     editorExpression = (parent == null ? "" : (parent.getExpression() + "."))
         + access.getExpresson();
@@ -83,10 +89,26 @@ public class EditorData {
 
     JClassType valueAwareType = oracle.findType(ValueAwareEditor.class.getName());
     isValueAware = valueAwareType.isAssignableFrom(editorType);
+
+    JClassType composedType = oracle.findType(CompositeEditor.class.getName());
+    isCompositeEditor = composedType.isAssignableFrom(editorType);
+
+    if (!isCompositeEditor) {
+      composedData = null;
+    } else {
+      JClassType[] data = EditorModel.calculateCompositeTypes(editorType);
+      composedData = new EditorData(logger.branch(TreeLogger.DEBUG,
+          "Examining composite editor at " + path), this,
+          EditorAccess.root(data[1]), "", null, null);
+    }
   }
 
   public String getBeanOwnerExpression() {
     return beanOwnerExpression;
+  }
+
+  public EditorData getComposedData() {
+    return composedData;
   }
 
   /**
@@ -144,6 +166,13 @@ public class EditorData {
    */
   public boolean isBeanEditor() {
     return isBeanEditor;
+  }
+
+  /**
+   * Indicates if the Editor is a {@link ComposedEditor .
+   */
+  public boolean isCompositeEditor() {
+    return isCompositeEditor;
   }
 
   /**

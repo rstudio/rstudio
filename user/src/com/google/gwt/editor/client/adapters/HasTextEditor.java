@@ -13,16 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.editor.client;
+package com.google.gwt.editor.client.adapters;
 
-import com.google.gwt.user.client.TakesValue;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.user.client.ui.HasText;
 
 /**
- * Used to edit non-object or immutable values. The Editor framework will not
- * descend into a LeafValueEditor.
- * 
- * @param <T> The type of primitive value
- * @see com.google.gwt.editor.client.adapters.SimpleEditor
+ * Adapts the HasText interface to the Editor framework.
  */
-public interface LeafValueEditor<T> extends Editor<T>, TakesValue<T> {
+public class HasTextEditor implements LeafValueEditor<String> {
+  public static HasTextEditor of(HasText peer) {
+    return new HasTextEditor(peer);
+  }
+
+  private HasText peer;
+
+  protected HasTextEditor(HasText peer) {
+    this.peer = peer;
+  }
+
+  public String getValue() {
+    return peer.getText();
+  }
+
+  public void setValue(String value) {
+    peer.setText(value);
+  }
 }

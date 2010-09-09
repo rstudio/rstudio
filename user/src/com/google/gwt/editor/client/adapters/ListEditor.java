@@ -1,0 +1,112 @@
+/*
+ * Copyright 2010 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.editor.client.adapters;
+
+import com.google.gwt.editor.client.CompositeEditor;
+import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorDelegate;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+
+/**
+ * Manages a list of objects and their associated Editors.
+ * 
+ * @param <T> The type of data being managed
+ * @param <E> The type of Editor
+ */
+public class ListEditor<T, E extends Editor<T>> implements
+    CompositeEditor<List<T>, T, E> {
+
+  /**
+   * Create a ListEditor backed by an EditorSource.
+   * 
+   * @param <T> The type of data being managed
+   * @param <E> The type of Editor
+   * @param source the EditorSource which will create sub-Editors
+   * @return a new instance of ListEditor
+   */
+  public static <T, E extends Editor<T>> ListEditor<T, E> of(
+      EditorSource<E> source) {
+    return new ListEditor<T, E>(source);
+  }
+
+  private CompositeEditor.EditorChain<T, E> chain;
+  private EditorSource<E> editorSource;
+  private ListEditorWrapper<T, E> list;
+
+  protected ListEditor(EditorSource<E> source) {
+    this.editorSource = source;
+  }
+
+  public void flush() {
+    list.flush();
+  }
+
+  /**
+   * Returns an unmodifiable, live view of the Editors managed by the
+   * ListEditor.
+   */
+  public List<E> getEditors() {
+    return Collections.unmodifiableList(list.getEditors());
+  }
+
+  /**
+   * Returns a live view of the ListEditor's backing data. The structure of the
+   * List may be mutated arbitrarily, subject to the limitations of the backing
+   * List, but the elements themselves should not be mutated except through
+   * {@link #getEditors()} to avoid data inconsistency.
+   * 
+   * <pre>
+   * ListEditor&lt;Foo, MyFooEditor> listEditor = ListEditor.of(...);
+   * listEditor.setValue(listOfFoo); // Usually called by EditorDriver
+   * listEditor.getList().set(1, new Foo());
+   * listEditor.getEditors().get(1).getFooFieldEditor().setValue(....);
+   * </pre>
+   */
+  public List<T> getList() {
+    return list;
+  }
+
+  public String getPathElement(E subEditor) {
+    return "[" + list.getEditors().indexOf(subEditor) + "]";
+  }
+
+  public void onPropertyChange(String... paths) {
+  }
+
+  public void setDelegate(EditorDelegate<List<T>> delegate) {
+  }
+
+  public void setEditorChain(CompositeEditor.EditorChain<T, E> chain) {
+    this.chain = chain;
+  }
+
+  public void setValue(List<T> value) {
+    if (list != null) {
+      // Having entire value reset, so dump the wrapper gracefully
+      list.detach();
+    }
+    list = new ListEditorWrapper<T, E>(value, chain, editorSource);
+    list.attach();
+  }
+
+  public void showErrors(Set<ConstraintViolation<List<T>>> violations) {
+  }
+}

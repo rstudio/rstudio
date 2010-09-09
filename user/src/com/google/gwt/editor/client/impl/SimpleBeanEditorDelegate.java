@@ -17,7 +17,6 @@ package com.google.gwt.editor.client.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import java.util.Collections;
@@ -45,8 +44,8 @@ public abstract class SimpleBeanEditorDelegate<T, E extends Editor<T>> extends
   }
 
   @Override
-  public void initialize(EventBus eventBus, String pathSoFar, T object, E editor) {
-    super.initialize(eventBus, pathSoFar, object, editor);
+  public void initialize(String pathSoFar, T object, E editor) {
+    super.initialize(pathSoFar, object, editor);
   }
 
   @Override

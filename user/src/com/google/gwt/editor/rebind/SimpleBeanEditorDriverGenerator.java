@@ -49,9 +49,8 @@ public class SimpleBeanEditorDriverGenerator extends
 
   @Override
   protected void writeDelegateInitialization(SourceWriter sw, EditorData d) {
-    sw.println("%1$sDelegate.initialize(eventBus, "
-        + "appendPath(\"%1$s\"), getObject()%2$s.%3$s()," + " editor.%4$s);",
-        d.getPropertyName(), d.getBeanOwnerExpression(), d.getGetterName(),
-        d.getSimpleExpression());
+    sw.println("%1$sDelegate.initialize(appendPath(\"%1$s\"),"
+        + " getObject()%2$s.%3$s()," + " editor.%4$s);", d.getPropertyName(),
+        d.getBeanOwnerExpression(), d.getGetterName(), d.getSimpleExpression());
   }
 }

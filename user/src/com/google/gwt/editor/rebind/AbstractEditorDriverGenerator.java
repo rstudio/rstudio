@@ -66,8 +66,9 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
     ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
         packageName, simpleSourceName);
     factory.setSuperclass(Name.getSourceNameForClass(getDriverSuperclassType())
-        + "<" + model.getProxyType().getQualifiedSourceName() + ", "
-        + model.getEditorType().getQualifiedSourceName() + ">");
+        + "<" + model.getProxyType().getParameterizedQualifiedSourceName()
+        + ", " + model.getEditorType().getParameterizedQualifiedSourceName()
+        + ">");
     factory.addImplementedInterface(typeName);
     SourceWriter sw = factory.createSourceWriter(context, pw);
     writeCreateDelegate(sw);
@@ -81,11 +82,19 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
 
   protected abstract Class<?> getDriverSuperclassType();
 
-  protected String getEditorDelegate(JClassType proxy, JClassType editor) {
-    String delegateSimpleName = BinaryName.getClassName(
-        editor.getQualifiedBinaryName()).replace("_", "_1").replace('$', '_')
-        + "_"
-        + BinaryName.getShortClassName(Name.getBinaryNameForClass(getEditorDelegateType()));
+  protected String getEditorDelegate(EditorData delegateData) {
+    JClassType edited = delegateData.getEditedType();
+    JClassType editor = delegateData.getEditorType();
+
+    /*
+     * The binary name of the edited type is included so that the same editor
+     * type may be used with different parameterizations.
+     */
+    String delegateSimpleName = String.format(
+        "%s_%s_%s",
+        escapedBinaryName(BinaryName.getClassName(editor.getQualifiedBinaryName())),
+        escapedBinaryName(edited.getQualifiedBinaryName()),
+        BinaryName.getShortClassName(Name.getBinaryNameForClass(getEditorDelegateType())));
 
     String packageName = editor.getPackage().getName();
     PrintWriter pw = context.tryCreate(logger, packageName, delegateSimpleName);
@@ -94,7 +103,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           packageName, delegateSimpleName);
       factory.setSuperclass(String.format("%s<%s, %s>",
           Name.getSourceNameForClass(getEditorDelegateType()),
-          proxy.getQualifiedSourceName(), editor.getQualifiedSourceName()));
+          edited.getParameterizedQualifiedSourceName(),
+          editor.getParameterizedQualifiedSourceName()));
       SourceWriter sw = factory.createSourceWriter(context, pw);
 
       EditorData[] data = model.getEditorData(editor);
@@ -104,22 +114,36 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
        * being edited. This decreases casting over having a generic field in the
        * supertype.
        */
-      sw.println("private %s editor;", editor.getQualifiedSourceName());
+      sw.println("private %s editor;",
+          editor.getParameterizedQualifiedSourceName());
       sw.println("protected void setEditor(%s editor) {this.editor=editor;}",
-          editor.getQualifiedSourceName());
-      sw.println("private %s object;", proxy.getQualifiedSourceName());
+          editor.getParameterizedQualifiedSourceName());
+      sw.println("private %s object;",
+          edited.getParameterizedQualifiedSourceName());
       sw.println("public %s getObject() {return object;}",
-          proxy.getQualifiedSourceName());
+          edited.getParameterizedQualifiedSourceName());
       sw.println("protected void setObject(%s object) {this.object=object;}",
-          proxy.getQualifiedSourceName());
+          edited.getParameterizedQualifiedSourceName());
+
+      if (delegateData.isCompositeEditor()) {
+        sw.println(
+            "protected %s<%s, %s> createComposedDelegate() {",
+            Name.getSourceNameForClass(this.getEditorDelegateType()),
+            delegateData.getComposedData().getEditedType().getParameterizedQualifiedSourceName(),
+            delegateData.getComposedData().getEditorType().getParameterizedQualifiedSourceName());
+        sw.indentln("return new %s();",
+            getEditorDelegate(delegateData.getComposedData()));
+        sw.println("}");
+      }
 
       // Fields for the sub-delegates that must be managed
       for (EditorData d : data) {
-        if (d.isBeanEditor()) {
+        if (d.isBeanEditor() || d.isValueAwareEditor()) {
           sw.println("%s<%s, %s> %sDelegate;",
               Name.getSourceNameForClass(getEditorDelegateType()),
-              d.getEditedType().getQualifiedSourceName(),
-              d.getEditorType().getQualifiedSourceName(), d.getPropertyName());
+              d.getEditedType().getParameterizedQualifiedSourceName(),
+              d.getEditorType().getParameterizedQualifiedSourceName(),
+              d.getPropertyName());
         }
       }
 
@@ -129,8 +153,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       for (EditorData d : data) {
         if (d.isBeanEditor() && !d.isLeafValueEditor()
             || d.isValueAwareEditor()) {
-          String subDelegateType = getEditorDelegate(d.getEditedType(),
-              d.getEditorType());
+          String subDelegateType = getEditorDelegate(d);
           sw.println("if (editor.%s != null) {", d.getSimpleExpression());
           sw.indent();
           sw.println("%sDelegate = new %s();", d.getPropertyName(),
@@ -147,7 +170,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.println("protected void flushSubEditors() {");
       sw.indent();
       for (EditorData d : data) {
-        if (d.isBeanEditor()) {
+        if (d.isBeanEditor() || d.isValueAwareEditor()) {
           sw.println("if (%1$sDelegate != null) { %1$sDelegate.flush();",
               d.getPropertyName());
           if (d.getSetterName() != null) {
@@ -180,7 +203,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
 
       sw.println("public static void traverseEditor(%s editor,"
           + " String prefix, %s<String> paths) {",
-          editor.getQualifiedSourceName(), List.class.getName());
+          editor.getParameterizedQualifiedSourceName(), List.class.getName());
       sw.indent();
       for (EditorData d : data) {
         if (d.isBeanEditor() || d.isDeclaredPathNested()) {
@@ -191,8 +214,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           sw.println("paths.add(localPath);");
           if (d.isBeanEditor()) {
             sw.println("%s.traverseEditor(editor.%s, localPath, paths);",
-                getEditorDelegate(d.getEditedType(), d.getEditorType()),
-                d.getSimpleExpression());
+                getEditorDelegate(d), d.getSimpleExpression());
           }
           sw.outdent();
           sw.println("}");
@@ -226,20 +248,25 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       String sourceObjectExpression);
 
   protected void writeAdditionalContent(TreeLogger logger,
-      GeneratorContext context, EditorModel model, SourceWriter sw) {
+      GeneratorContext context, EditorModel model, SourceWriter sw)
+      throws UnableToCompleteException {
   }
 
   protected abstract void writeDelegateInitialization(SourceWriter sw,
       EditorData d);
 
-  private void writeCreateDelegate(SourceWriter sw) {
-    String editorDelegateName = getEditorDelegate(model.getProxyType(),
-        model.getEditorType());
+  private String escapedBinaryName(String binaryName) {
+    return binaryName.replace("_", "_1").replace('$', '_').replace('.', '_');
+  }
+
+  private void writeCreateDelegate(SourceWriter sw)
+      throws UnableToCompleteException {
+    String editorDelegateName = getEditorDelegate(model.getRootData());
 
     sw.println("protected %s<%s,%s> createDelegate() {",
         Name.getSourceNameForClass(getEditorDelegateType()),
-        model.getProxyType().getQualifiedSourceName(),
-        model.getEditorType().getQualifiedSourceName());
+        model.getProxyType().getParameterizedQualifiedSourceName(),
+        model.getEditorType().getParameterizedQualifiedSourceName());
     sw.indent();
     sw.println("return new %1$s();", editorDelegateName);
     sw.outdent();

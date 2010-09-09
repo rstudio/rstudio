@@ -27,10 +27,11 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
-import com.google.gwt.editor.client.adapters.StringEditor;
+import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -236,6 +237,20 @@ public class EditorModelTest extends TestCase {
     assertEquals("street", address[1].getPropertyName());
   }
 
+  public void testListDriver() throws UnableToCompleteException {
+    EditorModel m = new EditorModel(logger,
+        types.findType("t.ListEditorDriver"), rfedType);
+
+    EditorData data = m.getRootData();
+    assertTrue(data.isCompositeEditor());
+    assertEquals(types.findType("t.AddressProxy"),
+        data.getComposedData().getEditedType());
+    assertEquals(types.findType("t.AddressEditor"),
+        data.getComposedData().getEditorType());
+    assertEquals(types.findType("t.PersonProxy"), m.getProxyType());
+    assertEquals(types.findType("t.ListEditor"), m.getEditorType());
+  }
+
   /**
    * Make sure we can find all method-based editors.
    */
@@ -305,10 +320,26 @@ public class EditorModelTest extends TestCase {
     testLogger.assertCorrectLogEntries();
   }
 
+  public void testUnparameterizedEditor() {
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.ERROR);
+    builder.expectError(EditorModel.noEditorParameterizationMessage(
+        types.findType(Editor.class.getName()), types.findType(
+            SimpleEditor.class.getName()).isGenericType().getRawType()), null);
+    UnitTestTreeLogger testLogger = builder.createLogger();
+    try {
+      new EditorModel(testLogger,
+          types.findType("t.UnparameterizedEditorEditorDriver"), rfedType);
+      fail("Should have thrown exception");
+    } catch (UnableToCompleteException expecetd) {
+    }
+    testLogger.assertCorrectLogEntries();
+  }
+
   private void checkPersonName(EditorData editorField) {
     assertNotNull(editorField);
-    assertEquals(types.findType(StringEditor.class.getName()),
-        editorField.getEditorType());
+    assertEquals(types.findType(SimpleEditor.class.getName()),
+        editorField.getEditorType().isParameterized().getBaseType());
     assertTrue(editorField.isLeafValueEditor());
     assertFalse(editorField.isBeanEditor());
     assertFalse(editorField.isValueAwareEditor());
@@ -321,8 +352,8 @@ public class EditorModelTest extends TestCase {
    */
   private void checkPersonReadonly(EditorData editorField) {
     assertNotNull(editorField);
-    assertEquals(types.findType(StringEditor.class.getName()),
-        editorField.getEditorType());
+    assertEquals(types.findType(SimpleEditor.class.getName()),
+        editorField.getEditorType().isParameterized().getBaseType());
     assertTrue(editorField.isLeafValueEditor());
     assertFalse(editorField.isBeanEditor());
     assertFalse(editorField.isValueAwareEditor());
@@ -351,10 +382,10 @@ public class EditorModelTest extends TestCase {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
-        code.append("import " + StringEditor.class.getName() + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
         code.append("class AddressEditor implements Editor<AddressProxy> {\n");
-        code.append("public StringEditor city;\n");
-        code.append("public StringEditor street;\n");
+        code.append("public SimpleEditor<String> city;\n");
+        code.append("public SimpleEditor<String> street;\n");
         code.append("}");
         return code;
       }
@@ -427,15 +458,38 @@ public class EditorModelTest extends TestCase {
         code.append("import " + EntityProxy.class.getName() + ";\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
             + ";\n");
-        code.append("import " + StringEditor.class.getName() + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
         code.append("interface DottedPathEditorDriver extends"
             + " RequestFactoryEditorDriver<PersonProxy,"
             + " DottedPathEditorDriver.PersonEditor> {\n");
         code.append("  interface PersonEditor extends Editor<PersonProxy> {");
-        code.append("  StringEditor nameEditor();");
+        code.append("  SimpleEditor<String> nameEditor();");
         code.append("  @Editor.Path(\"address.street\")");
-        code.append("  StringEditor streetEditor();");
+        code.append("  SimpleEditor<String> streetEditor();");
         code.append("  }");
+        code.append("}");
+        return code;
+      }
+    }, new MockJavaResource("t.ListEditor") {
+      // Tests error-detection when the editor graph isn't a DAG
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + CompositeEditor.class.getName() + ";\n");
+        code.append("import " + Editor.class.getName() + ";\n");
+        code.append("interface ListEditor extends CompositeEditor<PersonProxy, AddressProxy, AddressEditor>, Editor<PersonProxy> {\n");
+        code.append("}");
+        return code;
+      }
+    }, new MockJavaResource("t.ListEditorDriver") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + RequestFactoryEditorDriver.class.getName()
+            + ";\n");
+        code.append("interface ListEditorDriver extends RequestFactoryEditorDriver<PersonProxy, ListEditor> {\n");
         code.append("}");
         return code;
       }
@@ -449,14 +503,14 @@ public class EditorModelTest extends TestCase {
         code.append("import " + EntityProxy.class.getName() + ";\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
             + ";\n");
-        code.append("import " + StringEditor.class.getName() + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
         code.append("interface MissingGetterEditorDriver extends"
             + " RequestFactoryEditorDriver<MissingGetterEditorDriver.AProxy,"
             + " MissingGetterEditorDriver.AEditor> {\n");
         code.append("  interface AProxy extends EntityProxy {}");
         code.append("  interface AEditor extends Editor<AProxy> {");
-        code.append("    StringEditor missingEditor();");
-        code.append("    StringEditor yetAgain();");
+        code.append("    SimpleEditor<String> missingEditor();");
+        code.append("    SimpleEditor<String> yetAgain();");
         code.append("  }");
         code.append("}");
         return code;
@@ -481,12 +535,12 @@ public class EditorModelTest extends TestCase {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
-        code.append("import " + StringEditor.class.getName() + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
         code.append("class PersonEditor implements Editor<PersonProxy> {\n");
-        code.append("public StringEditor name;\n");
-        code.append("StringEditor readonly;\n");
-        code.append("public static StringEditor ignoredStatic;\n");
-        code.append("private StringEditor ignoredPrivate;\n");
+        code.append("public SimpleEditor<String> name;\n");
+        code.append("SimpleEditor<String> readonly;\n");
+        code.append("public static SimpleEditor ignoredStatic;\n");
+        code.append("private SimpleEditor<String> ignoredPrivate;\n");
         code.append("}");
         return code;
       }
@@ -496,12 +550,12 @@ public class EditorModelTest extends TestCase {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
-        code.append("import " + StringEditor.class.getName() + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
         code.append("abstract class PersonEditorUsingMethods implements Editor<PersonProxy> {\n");
-        code.append("public abstract StringEditor nameEditor();\n");
-        code.append("protected abstract StringEditor readonlyEditor();\n");
-        code.append("public static StringEditor ignoredStatic() {return null;}\n");
-        code.append("private StringEditor ignoredPrivate() {return null;}\n");
+        code.append("public abstract SimpleEditor<String> nameEditor();\n");
+        code.append("protected abstract SimpleEditor<String> readonlyEditor();\n");
+        code.append("public static SimpleEditor<String> ignoredStatic() {return null;}\n");
+        code.append("private SimpleEditor<String> ignoredPrivate() {return null;}\n");
         code.append("}");
         return code;
       }
@@ -553,10 +607,42 @@ public class EditorModelTest extends TestCase {
         code.append("}");
         return code;
       }
+    }, new MockJavaResource("t.UnparameterizedEditorEditorDriver") {
+      // Tests error-detection when the editor structure doesn't match the proxy
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + Editor.class.getName() + ";\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
+        code.append("import " + RequestFactoryEditorDriver.class.getName()
+            + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
+        code.append("interface UnparameterizedEditorEditorDriver extends"
+            + " RequestFactoryEditorDriver<UnparameterizedEditorEditorDriver.AProxy,"
+            + " UnparameterizedEditorEditorDriver.AEditor> {\n");
+        code.append("  interface AProxy extends EntityProxy {}");
+        code.append("  interface AEditor extends Editor<AProxy> {");
+        code.append("    SimpleEditor needsParameterization();");
+        code.append("  }");
+        code.append("}");
+        return code;
+      }
+    }, new MockJavaResource("java.util.List") {
+      // Tests a Driver interface that extends more than RFED
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package java.util;\n");
+        code.append("interface List<T> {\n");
+        code.append("}");
+        return code;
+      }
     }};
 
     Set<Resource> toReturn = new HashSet<Resource>(Arrays.asList(javaFiles));
     toReturn.addAll(Arrays.asList(new Resource[] {
+        new RealJavaResource(CompositeEditor.class),
         new RealJavaResource(Editor.class),
         new EmptyMockJavaResource(EventBus.class),
         new RealJavaResource(HasText.class),
@@ -566,7 +652,7 @@ public class EditorModelTest extends TestCase {
         new EmptyMockJavaResource(RequestFactory.class),
         new RealJavaResource(RequestFactoryEditorDriver.class),
         new EmptyMockJavaResource(RequestObject.class),
-        new RealJavaResource(StringEditor.class),
+        new RealJavaResource(SimpleEditor.class),
         new RealJavaResource(TakesValue.class),
         new EmptyMockJavaResource(ValueAwareEditor.class),}));
     toReturn.addAll(Arrays.asList(JavaResourceBase.getStandardResources()));

@@ -13,16 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.editor.client;
+package com.google.gwt.editor.client.testing;
 
-import com.google.gwt.user.client.TakesValue;
+import com.google.gwt.editor.client.LeafValueEditor;
 
 /**
- * Used to edit non-object or immutable values. The Editor framework will not
- * descend into a LeafValueEditor.
+ * A no-op Editor.
  * 
- * @param <T> The type of primitive value
- * @see com.google.gwt.editor.client.adapters.SimpleEditor
+ * @param <T> the type not being edited
  */
-public interface LeafValueEditor<T> extends Editor<T>, TakesValue<T> {
+public class FakeLeafValueEditor<T> implements LeafValueEditor<T> {
+  private T value;
+
+  public T getValue() {
+    return value;
+  }
+
+  public void setValue(T value) {
+    this.value = value;
+  }
 }

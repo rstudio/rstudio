@@ -37,9 +37,10 @@ import javax.validation.ConstraintViolation;
  * @param <P> the type of Proxy
  * @param <E> the type of Editor
  */
-public abstract class RequestFactoryEditorDelegate<P extends EntityProxy, E extends Editor<P>>
+public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     extends AbstractEditorDelegate<P, E> implements EditorDelegate<P> {
 
+  protected EventBus eventBus;
   protected RequestFactory factory;
   protected RequestObject<?> request;
 
@@ -47,15 +48,22 @@ public abstract class RequestFactoryEditorDelegate<P extends EntityProxy, E exte
   public P ensureMutable(P object) {
     if (request == null) {
       throw new IllegalStateException("No RequestObject");
+    } else if (object instanceof EntityProxy) {
+      @SuppressWarnings("unchecked")
+      P toReturn = (P) request.edit(((EntityProxy) object));
+      return toReturn;
+    } else {
+      // Likely a value object
+      return object;
     }
-    return request.edit(object);
   }
 
   public void initialize(EventBus eventBus, RequestFactory factory,
       String pathSoFar, P object, E editor, RequestObject<?> editRequest) {
+    this.eventBus = eventBus;
     this.factory = factory;
     this.request = editRequest;
-    super.initialize(eventBus, pathSoFar, object, editor);
+    super.initialize(pathSoFar, object, editor);
   }
 
   @Override
