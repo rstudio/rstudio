@@ -630,14 +630,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public Object invokeDomainMethod(Object domainObject, Method domainMethod, Object args[])
       throws IllegalAccessException, InvocationTargetException {
-    Object returnValue = domainMethod.invoke(domainObject, args);
-    if (returnValue == null && domainMethod.getReturnType() != Void.class) {
-      // is this the right thing to do?
-      throw new IllegalStateException(domainMethod + " with arguments " + args
-          + " is returning null, even though its return type is "
-          + domainMethod.getReturnType());
-    }
-    return returnValue;
+    return domainMethod.invoke(domainObject, args);
   }
 
   public JSONObject processJsonRequest(String jsonRequestString)
