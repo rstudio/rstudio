@@ -104,9 +104,12 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public boolean isChanged() {
     return deltaValueStore.isChanged();
   }
-  
+
+  /*
+   * used from the JSNI method processRelated.
+   */
   public void pushToValueStore(String schemaToken, JavaScriptObject jso) {
-    requestFactory.getValueStore().setProxy(
+    requestFactory.getValueStore().putInValueStore(
         ProxyJsoImpl.create(jso, requestFactory.getSchema(schemaToken),
             requestFactory));
   }

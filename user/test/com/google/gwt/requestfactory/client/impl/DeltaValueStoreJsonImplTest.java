@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -58,11 +59,12 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   public void gwtSetUp() {
     valueStore = new ValueStoreJsonImpl();
     requestFactory = (RequestFactoryJsonImpl) SimpleRequestFactoryInstance.factory();
+    HandlerManager eventBus = new HandlerManager(null);
+    requestFactory.init(eventBus);
 
     // add a proxy
     jso = ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
         SimpleRequestFactoryInstance.impl());
-    
     jso.set(SimpleFooProxy.userName, "bovik");
     jso.set(SimpleFooProxy.password, "bovik");
     jso.set(SimpleFooProxy.intId, 4);
@@ -70,7 +72,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     jso.set(SimpleFooProxy.boolField, false);
     jso.set(SimpleFooProxy.otherBoolField, true);
 
-    valueStore.setProxy(jso);
+    valueStore.putInValueStore(jso);
   }
 
   public void testCreate() {
@@ -143,7 +145,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
     ProxyImpl mockProxy = new ProxyImpl(ProxyJsoImpl.create(futureId, 1,
         SimpleRequestFactoryInstance.schema(), SimpleRequestFactoryInstance.impl()), RequestFactoryJsonImpl.NOT_FUTURE);
-    valueStore.setProxy(mockProxy.asJso()); // marked as non-future..
+    valueStore.putInValueStore(mockProxy.asJso()); // marked as non-future..
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
 

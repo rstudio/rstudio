@@ -334,6 +334,22 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return rtn;
   }-*/;
 
+  final boolean hasChanged(ProxyJsoImpl newJso) {
+    assert getSchema() == newJso.getSchema();
+    for (Property<?> property : getSchema().allProperties()) {
+      if (newJso.isDefined(property.getName())) {
+        if (isDefined(property.getName())) {
+          if (hasValueChanged(property.getName(), newJso)) {
+            return true;
+          }
+        } else {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private native boolean copyPropertyIfDifferent(String name, ProxyJsoImpl from) /*-{
     if (this[name] == from[name]) {
       return false;
@@ -358,6 +374,13 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return this[name];
   }-*/;
 
+  private native boolean hasValueChanged(String name, ProxyJsoImpl from) /*-{
+    if (this[name] == from[name]) {
+      return false;
+    }
+    return true;
+  }-*/;
+
   private native void setBoolean(String name, boolean value) /*-{
     this[name] = value;
   }-*/;
@@ -374,12 +397,12 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     this[name] = null;
   }-*/;
 
-  private final native void setRequestFactory(
+  private native void setRequestFactory(
       RequestFactoryJsonImpl requestFactory) /*-{
     this['__rf'] = requestFactory;
   }-*/;
 
-  private final native void setSchema(ProxySchema<?> schema) /*-{
+  private native void setSchema(ProxySchema<?> schema) /*-{
     this['__key'] = schema;
   }-*/;
 

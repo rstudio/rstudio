@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-
 import java.util.Set;
 
 /**

@@ -20,6 +20,7 @@ import com.google.gwt.requestfactory.client.EditorTest;
 import com.google.gwt.requestfactory.client.RequestFactoryTest;
 import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImplTest;
 import com.google.gwt.requestfactory.client.impl.ProxyJsoImplTest;
+import com.google.gwt.requestfactory.client.impl.ValueStoreJsonImplTest;
 
 import junit.framework.Test;
 
@@ -32,6 +33,7 @@ public class RequestFactorySuite {
         "Test suite for requestfactory gwt code.");
     suite.addTestSuite(EditorTest.class);
     suite.addTestSuite(ProxyJsoImplTest.class);
+    suite.addTestSuite(ValueStoreJsonImplTest.class);
     suite.addTestSuite(DeltaValueStoreJsonImplTest.class);
     suite.addTestSuite(RequestFactoryTest.class);
     return suite;

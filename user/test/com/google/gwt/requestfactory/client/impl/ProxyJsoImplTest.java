@@ -80,6 +80,20 @@ public class ProxyJsoImplTest extends GWTTestCase {
   private static final String ID_VERSION_JSON = "{\"id\":\"42\",\"version\":1}";
   private static final String ID_VERSION_JSON2 = "{\"id\":\"43\",\"version\":1}";
 
+  static ProxyJsoImpl getMinimalJso() {
+    return ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
+        SimpleRequestFactoryInstance.impl());
+  }
+
+  static ProxyJsoImpl getPopulatedJso() {
+    ProxyJsoImpl jso = getMinimalJso();
+    jso.set(SimpleFooProxy.userName, "bovik");
+    jso.set(SimpleFooProxy.password, "bovik");
+    jso.set(SimpleFooProxy.intId, 4);
+    jso.set(SimpleFooProxy.created, new Date(400));
+    return jso;
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
@@ -90,20 +104,27 @@ public class ProxyJsoImplTest extends GWTTestCase {
     testMinimalJso(emptyCopy);
   }
 
-  private native JavaScriptObject jsEval(String json) /*-{
-    eval("xyz=" + json);
-    return xyz;
-  }-*/;
-
-  private ProxyJsoImpl eval(String json) {
-    JavaScriptObject rawJso = jsEval(json);
-    return ProxyJsoImpl.create(rawJso, SimpleRequestFactoryInstance.schema(),
-        SimpleRequestFactoryInstance.impl());
-  }
-
   public void testFromJson() {
     testMinimalJso(eval(ID_VERSION_JSON));
     testPopulatedJso(eval(ALL_PROPERTIES_JSON));
+  }
+
+  /*
+   * TODO(amitmanjhi): test null values.
+   */
+  public void testHasChanged() {
+    ProxyJsoImpl minimalJso = getMinimalJso();
+    ProxyJsoImpl populatedJso = getPopulatedJso();
+    assertFalse(minimalJso.hasChanged(minimalJso));
+    assertFalse(populatedJso.hasChanged(populatedJso));
+    
+    assertTrue(minimalJso.hasChanged(populatedJso));
+    assertFalse(populatedJso.hasChanged(minimalJso));
+    
+    ProxyJsoImpl minimalJsoCopy = getMinimalJso();
+    assertFalse(minimalJso.hasChanged(minimalJsoCopy));
+    minimalJsoCopy.set(SimpleFooProxy.id, minimalJso.getId() + 42);
+    assertTrue(minimalJso.hasChanged(minimalJsoCopy));
   }
 
   public void testIsEmpty() {
@@ -144,19 +165,16 @@ public class ProxyJsoImplTest extends GWTTestCase {
     assertEquals(ID_VERSION_JSON, getMinimalJso().toJson());
   }
 
-  private ProxyJsoImpl getMinimalJso() {
-    return ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
+  private ProxyJsoImpl eval(String json) {
+    JavaScriptObject rawJso = jsEval(json);
+    return ProxyJsoImpl.create(rawJso, SimpleRequestFactoryInstance.schema(),
         SimpleRequestFactoryInstance.impl());
   }
 
-  private ProxyJsoImpl getPopulatedJso() {
-    ProxyJsoImpl jso = getMinimalJso();
-    jso.set(SimpleFooProxy.userName, "bovik");
-    jso.set(SimpleFooProxy.password, "bovik");
-    jso.set(SimpleFooProxy.intId, 4);
-    jso.set(SimpleFooProxy.created, new Date(400));
-    return jso;
-  }
+  private native JavaScriptObject jsEval(String json) /*-{
+    eval("xyz=" + json);
+    return xyz;
+  }-*/;
 
   private void testEmptyJso(JavaScriptObject rawJso) {
     ProxyJsoImpl jso = ProxyJsoImpl.create(rawJso, null, null);

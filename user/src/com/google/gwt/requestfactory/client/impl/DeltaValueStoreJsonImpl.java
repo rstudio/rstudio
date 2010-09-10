@@ -228,13 +228,17 @@ class DeltaValueStoreJsonImpl {
           ProxyJsoImpl masterRecord = master.records.get(key);
           ProxyJsoImpl value = updates.get(key);
           if (masterRecord != null && value != null) {
-            // no support for partial updates.
-            // TODO(amitmanjhi): instead of merging, get updates from server.
-            masterRecord.merge(value);
+            /*
+             * Currently, no support for partial updates. When the updates
+             * return all fields that have changed (the version number can be
+             * used to optimize the payload), it will fix partial updates.
+             */
+            copy.merge(masterRecord);
+            copy.merge(value);
             toRemove.add(key);
           }
           if (masterRecord != null) {
-            syncResults.add(makeSyncResult(masterRecord, null, null));
+            syncResults.add(makeSyncResult(copy, null, null));
           } else {
             // do not change the masterRecord or fire event
             syncResults.add(makeSyncResult(copy, null, null));

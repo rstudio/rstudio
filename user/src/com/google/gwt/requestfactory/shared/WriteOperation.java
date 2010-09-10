@@ -21,9 +21,10 @@ package com.google.gwt.requestfactory.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * The write operation enum used in DeltaValueStore.
+ * The write operation enum used in {@link EntityProxyChangedEvent}.
  */
 public enum WriteOperation {
+  ACQUIRE("ACQUIRE"),
   CREATE("CREATE"), 
   UPDATE("UPDATE"), 
   DELETE("DELETE");

@@ -45,19 +45,15 @@ class ValueStoreJsonImpl {
     return schema.create(records.get(key));
   }
 
-  void setProxy(ProxyJsoImpl newRecord) {
-    setRecordInList(newRecord, 0, null);
-  }
-
-  void setRecords(JsArray<ProxyJsoImpl> newRecords) {
-    for (int i = 0, l = newRecords.length(); i < l; i++) {
-      ProxyJsoImpl newRecord = newRecords.get(i);
-      setRecordInList(newRecord, i, newRecords);
-    }
-  }
-
-  private void setRecordInList(ProxyJsoImpl newJsoRecord, int i,
-      JsArray<ProxyJsoImpl> array) {
+  /**
+   * Puts a {@link ProxyJsoImpl} newJsoRecord in the valueStore following a
+   * copy-on-write scheme, and sends appropriate events. If the valuestore had a
+   * Jso that was the same or a superset of newJsoRecord, returns the valuestore
+   * jso. Otherwise, puts newJsoRecord in the valuestore and returns null.
+   * <p>
+   * package-protected for testing purposes.
+   */
+  ProxyJsoImpl putInValueStore(ProxyJsoImpl newJsoRecord) {
     EntityProxyIdImpl recordKey = new EntityProxyIdImpl(newJsoRecord.getId(),
         newJsoRecord.getSchema(), RequestFactoryJsonImpl.NOT_FUTURE,
         newJsoRecord.getRequestFactory().datastoreToFutureMap.get(
@@ -66,19 +62,24 @@ class ValueStoreJsonImpl {
     ProxyJsoImpl oldRecord = records.get(recordKey);
     if (oldRecord == null) {
       records.put(recordKey, newJsoRecord);
-      // TODO: need to fire a create event.
-    } else {
-      // TODO: Merging is not the correct thing to do but it works as long as we
-      // don't have filtering by properties. Need to revisit this once response
-      // only has a subset of all properties.
-      boolean changed = oldRecord.merge(newJsoRecord);
-      newJsoRecord = oldRecord.cast();
-      if (array != null) {
-        array.set(i, newJsoRecord);
-      }
-      if (changed) {
-        newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord,
-            WriteOperation.UPDATE);
+      newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord,
+          WriteOperation.ACQUIRE);
+      return null;
+    }
+    if (oldRecord.hasChanged(newJsoRecord)) {
+      records.put(recordKey, newJsoRecord);
+      newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord,
+          WriteOperation.UPDATE);
+      return null;
+    }
+    return oldRecord;
+  }
+
+  void setRecords(JsArray<ProxyJsoImpl> newRecords) {
+    for (int i = 0, l = newRecords.length(); i < l; i++) {
+      ProxyJsoImpl oldRecord = putInValueStore(newRecords.get(i));
+      if (oldRecord != null) {
+        newRecords.set(i, oldRecord);
       }
     }
   }

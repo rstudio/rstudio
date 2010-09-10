@@ -49,7 +49,10 @@ public abstract class //
     JavaScriptObject rawJso = (JavaScriptObject) result;
     ProxyJsoImpl jso = ProxyJsoImpl.create(rawJso, schema, requestFactory);
     
-    requestFactory.getValueStore().setProxy(jso);
+    ProxyJsoImpl oldJso = requestFactory.getValueStore().putInValueStore(jso);
+    if (oldJso != null) {
+      jso = oldJso;
+    }
 
     /*
      * schema really should be ProxySchema<? extends T>, and then this cast
