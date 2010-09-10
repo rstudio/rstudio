@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * A standard push-button widget which will automatically reset its enclosing
@@ -64,16 +63,7 @@ public class ResetButton extends Button {
 
   /**
    * Creates a button with the given HTML caption.
-   *
-   * @param html the HTML caption
-   */
-  public ResetButton(SafeHtml html) {
-    this(html.asString());
-  }
-
-  /**
-   * Creates a button with the given HTML caption.
-   *
+   * 
    * @param html the HTML caption
    */
   public ResetButton(String html) {
@@ -83,17 +73,7 @@ public class ResetButton extends Button {
 
   /**
    * Creates a button with the given HTML caption and click listener.
-   *
-   * @param html the HTML caption
-   * @param handler the click handler
-   */
-  public ResetButton(SafeHtml html, ClickHandler handler) {
-    this(html.asString(), handler);
-  }
-
-  /**
-   * Creates a button with the given HTML caption and click listener.
-   *
+   * 
    * @param html the HTML caption
    * @param handler the click handler
    */

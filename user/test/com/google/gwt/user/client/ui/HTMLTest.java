@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.client.LocaleInfo;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /**
  * Tests {@link HTML}.
@@ -27,7 +26,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
  */
 public class HTMLTest extends LabelTest {
 
-  private static final String html = "<b>hello</b><i>world</i>";
   private final String EN_HTML = "<b style=\"color: red\">" + EN_TEXT + "</b>";
   private final String IW_HTML = "<b style=\"color: red\">" + IW_TEXT + "</b>";
   private HTML label;
@@ -35,27 +33,6 @@ public class HTMLTest extends LabelTest {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
-  }
-
-  // test that the SafeHtml constructor creates the HTML element correctly.
-  public void testSafeHtmlConstructor() {
-    HTML htmlElement = new HTML(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html, htmlElement.getHTML().toLowerCase());
-  }
-
-  // test that the SafeHtml constructor creates the wordwrapped'ed HTML.
-  public void testSafeHtmlConstructorWithDirection() {
-    HTML htmlElementLTR = new HTML(
-        SafeHtmlUtils.fromSafeConstant(html), Direction.LTR);
-    HTML htmlElementRTL = new HTML(
-        SafeHtmlUtils.fromSafeConstant(html), Direction.RTL);
-    
-    assertEquals(html, htmlElementRTL.getHTML().toLowerCase());
-    assertEquals(html, htmlElementLTR.getHTML().toLowerCase());
-    
-    assertEquals(Direction.LTR, htmlElementLTR.getTextDirection());
-    assertEquals(Direction.RTL, htmlElementRTL.getTextDirection());
   }
 
   // setDirection is deprecated; this only assures backwards compatibility.
@@ -93,22 +70,6 @@ public class HTMLTest extends LabelTest {
 
   public void testSetDirectionEstimatorAndSetText() {
     testSetDirectionEstimatorAndSetTextOrHtml(false);
-  }
-
-  public void testSetSafeHtml() {
-    HTML htmlElement = new HTML("<b>foo</b>");
-    htmlElement.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html, htmlElement.getHTML().toLowerCase());
-  }
-
-  @SuppressWarnings("deprecation")
-  public void testSetSafeHtmlWithDirection() {
-    HTML htmlElement = new HTML("<b>foo</b>");
-    htmlElement.setHTML(SafeHtmlUtils.fromSafeConstant(html), Direction.LTR);
-    
-    assertEquals(html, htmlElement.getHTML().toLowerCase());
-    assertEquals(Direction.LTR, htmlElement.getDirection());
   }
 
   /**
@@ -206,3 +167,4 @@ public class HTMLTest extends LabelTest {
     }
   }
 }
+

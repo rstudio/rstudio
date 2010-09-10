@@ -30,7 +30,6 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -160,18 +159,6 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    * stack header.
    * 
    * @param widget the child widget to be added
-   * @param header the html to be shown on its header
-   * @param headerSize the size of the header widget
-   */
-  public void add(final Widget widget, SafeHtml header, double headerSize) {
-    add(widget, header.asString(), true, headerSize);
-  }
-  
-  /**
-   * Adds a child widget to this stack, along with a widget representing the
-   * stack header.
-   * 
-   * @param widget the child widget to be added
    * @param header the text to be shown on its header
    * @param asHtml <code>true</code> to treat the specified text as HTML
    * @param headerSize the size of the header widget
@@ -279,20 +266,6 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     return (index - 1) / 2;
   }
 
-  /**
-   * Inserts a widget into the panel. If the Widget is already attached, it will
-   * be moved to the requested index.
-   * 
-   * @param child the widget to be added
-   * @param html the safe html to be shown on its header
-   * @param headerSize the size of the header widget
-   * @param beforeIndex the index before which it will be inserted
-   */
-  public void insert(Widget child, SafeHtml html, double headerSize, 
-      int beforeIndex) {
-    insert(child, html.asString(), true, headerSize, beforeIndex);
-  }
-  
   /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
@@ -412,7 +385,6 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    * 
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
-   * {@link #setHeaderSafeHtml(int, SafeHtml)} or 
    * {@link #setHeaderText(int, String)} whenever possible.
    * 
    * @param index the index of the header whose HTML is to be set
@@ -427,16 +399,6 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     ((HasHTML) headerWidget).setHTML(html);
   }
 
-  /**
-   * Sets a stack header's HTML contents.
-   * 
-   * @param index the index of the header whose HTML is to be set
-   * @param html the header's new HTML contents
-   */
-  public void setHeaderHTML(int index, SafeHtml html) {
-    setHeaderHTML(index, html.asString());
-  }
-  
   /**
    * Sets a stack header's text contents.
    * 

@@ -17,15 +17,12 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
 
 /**
  * Tests {@link CaptionPanel}.
  */
 public class CaptionPanelTest extends GWTTestCase {
-
-  private static final String html = "<b>hello</b><i>world</i>";
 
   @Override
   public String getModuleName() {
@@ -295,16 +292,4 @@ public class CaptionPanelTest extends GWTTestCase {
     }
   }
 
-  public void testSafeHtmlConstructor() {
-    CaptionPanel panel = new CaptionPanel(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html, panel.getCaptionHTML().toLowerCase());
-  }
-
-  public void testSetCaptionSafeHtml() {
-    CaptionPanel panel = new CaptionPanel("hiworld");
-    panel.setCaptionHTML(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html, panel.getCaptionHTML().toLowerCase());
-  }
 }

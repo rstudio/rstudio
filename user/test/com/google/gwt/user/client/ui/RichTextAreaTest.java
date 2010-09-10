@@ -27,7 +27,6 @@ import com.google.gwt.event.logical.shared.InitializeHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
@@ -41,8 +40,7 @@ import java.util.List;
  */
 public class RichTextAreaTest extends GWTTestCase {
   static final int RICH_TEXT_ASYNC_DELAY = 3000;
-  private static final String html = "<b>hello</b><i>world</i>";
-
+  
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
@@ -325,49 +323,6 @@ public class RichTextAreaTest extends GWTTestCase {
     richTextArea.setHTML("<b>foo</b>");
     RootPanel.get().add(richTextArea);
     assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
-  }
-
-  /**
-   * Test that a delayed set of safe html is reflected. Some platforms have
-   * timing subtleties that need to be tested.
-   */
-  @DoNotRunWith(Platform.HtmlUnitUnknown)
-  public void testSetSafeHtmlAfterInit() {
-    final RichTextArea richTextArea = new RichTextArea();
-    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
-    richTextArea.addInitializeHandler(new InitializeHandler() {
-      public void onInitialize(InitializeEvent event) {
-        richTextArea.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-        assertEquals(html, richTextArea.getHTML().toLowerCase());
-        finishTest();
-      }
-    });
-    RootPanel.get().add(richTextArea);
-  }
-
-  /**
-   * Test that an immediate set of safe html is reflected immediately and after
-   * the area loads. Some platforms have timing subtleties that need to be
-   * tested.
-   */
-  @DoNotRunWith(Platform.HtmlUnitUnknown)
-  public void testSetSafeHtmlBeforeInit() {
-    final RichTextArea richTextArea = new RichTextArea();
-    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
-    richTextArea.addInitializeHandler(new InitializeHandler() {
-      public void onInitialize(InitializeEvent event) {
-        new Timer() {
-          @Override
-          public void run() {
-            assertEquals(html, richTextArea.getHTML().toLowerCase());
-            finishTest();
-          }
-        }.schedule(100);
-      }
-    });
-    richTextArea.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-    RootPanel.get().add(richTextArea);
-    assertEquals(html, richTextArea.getHTML().toLowerCase());
   }
 
   /**

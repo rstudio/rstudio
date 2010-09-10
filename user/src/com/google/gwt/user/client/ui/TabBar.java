@@ -33,7 +33,6 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 /**
@@ -224,15 +223,6 @@ public class TabBar extends Composite implements SourcesTabEvents,
   /**
    * Adds a new tab with the specified text.
    * 
-   * @param html the new tab's html
-   */
-  public void addTab(SafeHtml html) {
-    addTab(html.asString(), true);
-  }
-  
-  /**
-   * Adds a new tab with the specified text.
-   * 
    * @param text the new tab's text
    */
   public void addTab(String text) {
@@ -329,16 +319,6 @@ public class TabBar extends Composite implements SourcesTabEvents,
     }
   }
 
-  /**
-   * Inserts a new tab at the specified index.
-   * 
-   * @param html the new tab's html
-   * @param beforeIndex the index before which this tab will be inserted
-   */
-  public void insertTab(SafeHtml html, int beforeIndex) {
-    insertTab(html.asString(), true, beforeIndex);
-  }
-  
   /**
    * Inserts a new tab at the specified index.
    * 
@@ -522,8 +502,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * 
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
-   * {@link #setTabText(int, String)} or {@link setTabHTML(int, SafeHtml)}
-   * whenever possible.
+   * {@link #setTabText(int, String)} whenever possible.
    * 
    * @param index the index of the tab whose HTML is to be set
    * @param html the tab new HTML
@@ -536,16 +515,6 @@ public class TabBar extends Composite implements SourcesTabEvents,
     focusablePanel.setWidget(new HTML(html, false));
   }
 
-  /**
-   * Sets a tab's contents via safe html.
-   * 
-   * @param index the index of the tab whose HTML is to be set
-   * @param html the tab new HTML
-   */
-  public void setTabHTML(int index, SafeHtml html) {
-    setTabHTML(index, html.asString());
-  }
-  
   /**
    * Sets a tab's text contents.
    * 

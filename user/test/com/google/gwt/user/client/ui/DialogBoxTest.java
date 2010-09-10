@@ -19,7 +19,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -28,8 +27,6 @@ import com.google.gwt.user.client.DeferredCommand;
  * Unit test for {@link DialogBox}.
  */
 public class DialogBoxTest extends PopupTest {
-
-  private static final String html = "<b>hello</b><i>world</i>";
 
   @Override
   public String getModuleName() {
@@ -142,13 +139,6 @@ public class DialogBoxTest extends PopupTest {
     primaryPopup.setAnimationEnabled(true);
 
     testDependantPopupPanel(primaryPopup);
-  }
-
-  public void testSafeHtmlConstructor() {
-    DialogBox box = new DialogBox();
-    box.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-
-    assertEquals(html, box.getHTML().toLowerCase());
   }
 
   @Override

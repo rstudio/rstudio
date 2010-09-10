@@ -20,8 +20,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
-import com.google.gwt.safehtml.client.HasSafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * A widget that represents a simple &lt;a&gt; element.
@@ -39,7 +37,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  * @see Hyperlink
  */
 public class Anchor extends FocusWidget implements HasHorizontalAlignment,
-    HasName, HasHTML, HasWordWrap, HasDirection, HasSafeHtml {
+    HasName, HasHTML, HasWordWrap, HasDirection {
 
   /**
    * Creates an Anchor widget that wraps an existing &lt;a&gt; element.
@@ -87,19 +85,10 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates an anchor for scripting.
-   *
-   * @param html the anchor's text
-   */
-  public Anchor(SafeHtml html) {
-    this(html.asString(), true);
-  }
-
-  /**
-   * Creates an anchor for scripting.
-   *
-   * The anchor's href is set to <code>javascript : ;</code>, based on the
+   * 
+   * The anchor's href is set to <code>javascript:;</code>, based on the
    * expectation that listeners will be added to the anchor.
-   *
+   * 
    * @param text the anchor's text
    * @param asHtml <code>true</code> to treat the specified text as html
    */
@@ -109,17 +98,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates an anchor with its text and href (target URL) specified.
-   *
-   * @param html the anchor's html
-   * @param href the url to which it will link
-   */
-  public Anchor(SafeHtml html, String href) {
-    this(html.asString(), true, href);
-  }
-
-  /**
-   * Creates an anchor with its text and href (target URL) specified.
-   *
+   * 
    * @param text the anchor's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param href the url to which it will link
@@ -136,25 +115,12 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Creates a source anchor (link to URI).
-   *
+   * 
    * That is, an anchor with an href attribute specifying the destination URI.
-   *
-   * @param html the anchor's html
-   * @param href the url to which it will link
-   * @param target the target frame (e.g. "_blank" to open the link in a new
-   *          window)
-   */
-  public Anchor(SafeHtml html, String href, String target) {
-    this(html.asString(), true, href, target);
-  }
-
-  /**
-   * Creates a source anchor (link to URI).
-   *
-   * That is, an anchor with an href attribute specifying the destination URI.
-   *
+   * 
    * @param text the anchor's text
-   * @param asHtml asHTML <code>true</code> to treat the specified text as html
+   * @param asHtml asHTML <code>true</code> to treat the specified text as
+   *          html
    * @param href the url to which it will link
    * @param target the target frame (e.g. "_blank" to open the link in a new
    *          window)
@@ -277,10 +243,6 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    */
   public void setHref(String href) {
     getAnchorElement().setHref(href);
-  }
-
-  public void setHTML(SafeHtml html) {
-    setHTML(html.asString());
   }
 
   public void setHTML(String html) {

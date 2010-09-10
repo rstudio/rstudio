@@ -20,7 +20,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 
 /**
@@ -45,7 +44,6 @@ public class AnchorTest extends GWTTestCase {
     }
   }
 
-  private static final String html = "<b>hello</b><i>world</i>";
   private static final String TEST_URL0 = "http://www.google.com/";
   private static final String TEST_URL1 = "http://code.google.com/";
 
@@ -113,28 +111,6 @@ public class AnchorTest extends GWTTestCase {
     for (String attribute : attrs) {
       assertAttributeNotPresent(attribute, anchor.getElement());
     }
-  }
-
-  public void testSafeHtmlConstructors() {
-    String href = "http://example.com/example.png";
-    String target = "_blank";
-    Anchor anchor1 = new Anchor(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html.toLowerCase(), anchor1.getHTML().toLowerCase());
-    
-    Anchor anchor2 = new Anchor(
-        SafeHtmlUtils.fromSafeConstant(html), href, target);
-    
-    assertEquals(html, anchor2.getHTML().toLowerCase());
-    assertEquals(href, anchor2.getHref());
-    assertEquals(target, anchor2.getTarget());
-  }
-
-  public void testSetSafeHtml() {
-    Anchor anchor = new Anchor("hello");
-    anchor.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html, anchor.getHTML().toLowerCase());
   }
 
   public void testScriptAnchor() {

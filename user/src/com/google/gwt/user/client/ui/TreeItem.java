@@ -19,8 +19,6 @@ import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.i18n.client.LocaleInfo;
-import com.google.gwt.safehtml.client.HasSafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -39,7 +37,7 @@ import java.util.List;
  * {@example com.google.gwt.examples.TreeExample}
  * </p>
  */
-public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
+public class TreeItem extends UIObject implements HasHTML {
 
   /**
    * The margin applied to child items.
@@ -286,15 +284,6 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
   public TreeItem(String html) {
     this();
     setHTML(html);
-  }
-  
-  /**
-   * Constructs a tree item with the given HTML.
-   * 
-   * @param html the item's HTML
-   */
-  public TreeItem(SafeHtml html) {
-    this(html.asString());
   }
 
   /**
@@ -610,10 +599,6 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
     DOM.setInnerHTML(contentElem, html);
   }
 
-  public void setHTML(SafeHtml html) {
-    setHTML(html.asString());
-  }
-  
   /**
    * Selects or deselects this item.
    * 

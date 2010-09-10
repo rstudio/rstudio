@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
@@ -32,13 +31,12 @@ import java.util.List;
  * Base test for HTMLTable derived classes.
  */
 public abstract class HTMLTableTestBase extends GWTTestCase {
+
   static class Adder implements HasWidgetsTester.WidgetAdder {
     public void addChild(HasWidgets container, Widget child) {
       ((HTMLTable) container).setWidget(0, 0, child);
     }
   }
-
-  private static final String html = "<b>hello</b><i>world</i>";
 
   public static void assertEquals(Object[] x, Object[] y) {
     assertEquals(x.length, y.length);
@@ -237,12 +235,6 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     formatter.setVerticalAlignment(0, 1, HasVerticalAlignment.ALIGN_BOTTOM);
     formatter.setHorizontalAlignment(1, 1, HasHorizontalAlignment.ALIGN_RIGHT);
     formatter.setWidth(0, 2, "100%");
-  }
-
-  public void testSafeHtml() {
-    HTMLTable table = getTable(1, 1);
-    table.setHTML(0, 0, SafeHtmlUtils.fromSafeConstant(html));
-    assertEquals(html, table.getHTML(0, 0).toLowerCase());
   }
 
   public void testStyles() {

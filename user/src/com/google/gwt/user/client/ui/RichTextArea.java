@@ -20,8 +20,6 @@ import com.google.gwt.event.logical.shared.HasInitializeHandlers;
 import com.google.gwt.event.logical.shared.InitializeEvent;
 import com.google.gwt.event.logical.shared.InitializeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.client.HasSafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
 
 /**
@@ -45,7 +43,7 @@ import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
  * </dl>
  */
 public class RichTextArea extends FocusWidget implements HasHTML,
-    HasInitializeHandlers, HasSafeHtml {
+    HasInitializeHandlers {
 
   /**
    * <p>
@@ -656,10 +654,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
 
   public void setHTML(String html) {
     impl.setHTML(html);
-  }
-
-  public void setHTML(SafeHtml html) {
-    setHTML(html.asString());
   }
 
   public void setText(String text) {

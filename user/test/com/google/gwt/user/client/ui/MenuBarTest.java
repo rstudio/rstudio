@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 
@@ -30,8 +29,6 @@ import java.util.List;
  * Tests the DockPanel widget.
  */
 public class MenuBarTest extends WidgetTestBase {
-
-  private static final String html = "<b>hello</b><i>world</i>";
 
   /**
    * A blank command.
@@ -310,24 +307,6 @@ public class MenuBarTest extends WidgetTestBase {
     } catch (IndexOutOfBoundsException e) {
       // Expected exception
     }
-  }
-
-  public void testSafeHtml() {
-    MenuBar bar = new MenuBar(true);
-    
-    // ensure safehtml passes through when a command is set.
-    MenuItem item1 = 
-      bar.addItem(SafeHtmlUtils.fromSafeConstant(html), BLANK_COMMAND);
-    assertEquals(html, item1.getHTML().toLowerCase());
-    assertEquals(BLANK_COMMAND, item1.getCommand());
-    assertEquals(bar, item1.getParentMenu());
-    
-    // ensure safehtml passes through when a submenu/popup is set.
-    MenuBar foo = new MenuBar(true);
-    MenuItem item2 = foo.addItem(SafeHtmlUtils.fromSafeConstant(html), bar);
-    assertEquals(html, item2.getHTML().toLowerCase());
-    assertEquals(bar, item2.getSubMenu());
-    assertEquals(foo, item2.getParentMenu());
   }
 
   /**

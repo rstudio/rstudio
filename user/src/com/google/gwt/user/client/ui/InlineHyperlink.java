@@ -16,8 +16,6 @@
 
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-
 /**
  * A widget that serves as an "internal" hyperlink. That is, it is a link to
  * another state of the running application. It should behave exactly like
@@ -41,19 +39,8 @@ public class InlineHyperlink extends Hyperlink {
   }
 
   /**
-   * Creates a hyperlink with its html and target history token specified.
-   *
-   * @param html the hyperlink's html
-   * @param targetHistoryToken the history token to which it will link
-   * @see #setTargetHistoryToken
-   */
-  public InlineHyperlink(SafeHtml html, String targetHistoryToken) {
-    this(html.asString(), true, targetHistoryToken);
-  }
-
-  /**
    * Creates a hyperlink with its text and target history token specified.
-   *
+   * 
    * @param text the hyperlink's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param targetHistoryToken the history token to which it will link

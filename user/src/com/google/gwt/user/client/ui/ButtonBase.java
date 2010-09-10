@@ -16,16 +16,13 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.client.HasSafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * Abstract base class for {@link com.google.gwt.user.client.ui.Button},
  * {@link com.google.gwt.user.client.ui.CheckBox},
  * {@link com.google.gwt.user.client.ui.RadioButton}.
  */
-public abstract class ButtonBase extends FocusWidget 
-    implements HasHTML, HasSafeHtml {
+public abstract class ButtonBase extends FocusWidget implements HasHTML {
 
   /**
    * Creates a new ButtonBase that wraps the given browser element.
@@ -46,10 +43,6 @@ public abstract class ButtonBase extends FocusWidget
 
   public void setHTML(String html) {
     getElement().setInnerHTML(html);
-  }
-
-  public void setHTML(SafeHtml html) {
-    setHTML(html.asString());
   }
 
   public void setText(String text) {

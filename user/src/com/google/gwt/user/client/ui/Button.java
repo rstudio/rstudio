@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * A standard push-button widget.
@@ -73,16 +72,7 @@ public class Button extends ButtonBase {
 
   /**
    * Creates a button with the given HTML caption.
-   *
-   * @param html the HTML caption
-   */
-  public Button(SafeHtml html) {
-    this(html.asString());
-  }
-
-  /**
-   * Creates a button with the given HTML caption.
-   *
+   * 
    * @param html the HTML caption
    */
   public Button(String html) {
@@ -105,17 +95,7 @@ public class Button extends ButtonBase {
 
   /**
    * Creates a button with the given HTML caption and click listener.
-   *
-   * @param html the html caption
-   * @param handler the click handler
-   */
-  public Button(SafeHtml html, ClickHandler handler) {
-    this(html.asString(), handler);
-  }
-
-  /**
-   * Creates a button with the given HTML caption and click listener.
-   *
+   * 
    * @param html the HTML caption
    * @param handler the click handler
    */

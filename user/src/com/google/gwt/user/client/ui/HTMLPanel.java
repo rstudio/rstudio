@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.NoSuchElementException;
 
@@ -56,17 +55,6 @@ public class HTMLPanel extends ComplexPanel {
      */
     setElement(Document.get().createDivElement());
     getElement().setInnerHTML(html);
-  }
-  
-  /**
-   * Initializes the panel's HTML from a given {@link SafeHtml} object.
-   * 
-   * Similar to {@link #HTMLPanel(String)}
-   * 
-   * @param safeHtml the html to set.
-   */
-  public HTMLPanel(SafeHtml safeHtml) {
-    this(safeHtml.asString());
   }
 
   /**

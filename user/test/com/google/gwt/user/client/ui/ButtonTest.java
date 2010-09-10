@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
@@ -28,8 +27,6 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
  * Tests for {@link Button}.
  */
 public class ButtonTest extends GWTTestCase {
-
-  private static final String html = "<b>hello</b><i>world</i>";
 
   @Override
   public String getModuleName() {
@@ -105,25 +102,5 @@ public class ButtonTest extends GWTTestCase {
     }.schedule(2500);
 
     b.click();
-  }
-
-  public void testSetSafeHtml() {
-    Button button = new Button("hello");
-    button.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html, button.getHTML().toLowerCase());
-  }
-
-  public void testSafeHtmlConstructor() {
-    Button button = new Button(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html, button.getHTML().toLowerCase());
-  }
-
-  public void testSafeHtmlWithHandler() {
-    H handler = new H();
-    Button button = new Button(SafeHtmlUtils.fromSafeConstant(html), handler);
-    
-    assertEquals(html, button.getHTML().toLowerCase());
   }
 }

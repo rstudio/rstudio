@@ -16,15 +16,12 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 
 /**
  * Tests {@link HyperlinkTest}.
  */
 public class HyperlinkTest extends GWTTestCase {
-
-  static final String html = "<b>hello</b><i>world</i>";
 
   @Override
   public String getModuleName() {
@@ -36,20 +33,5 @@ public class HyperlinkTest extends GWTTestCase {
     link.ensureDebugId("myLink");
     UIObjectTest.assertDebugId("myLink-wrapper", link.getElement());
     UIObjectTest.assertDebugId("myLink", DOM.getFirstChild(link.getElement()));
-  }
-
-  public void testSafeHtmlConstructor() {
-    String token = "myToken";
-    Hyperlink link = new Hyperlink(SafeHtmlUtils.fromSafeConstant(html), token);
-    
-    assertEquals(html, link.getHTML().toLowerCase());
-  }
-
-  public void testSetSafeHtml() {
-    String token = "myToken";
-    Hyperlink link = new Hyperlink("foobar", token);
-    link.setHTML(SafeHtmlUtils.fromSafeConstant(html));
-    
-    assertEquals(html, link.getHTML().toLowerCase());
   }
 }

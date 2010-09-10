@@ -20,7 +20,6 @@ import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -30,13 +29,12 @@ import java.util.List;
  * Tests for {@link StackLayoutPanel}.
  */
 public class StackLayoutPanelTest extends WidgetTestBase {
+
   static class Adder implements HasWidgetsTester.WidgetAdder {
     public void addChild(HasWidgets container, Widget child) {
       ((StackLayoutPanel) container).add(child, new Label("Header"), 1);
     }
   }
-
-  private static final String html = "<b>hello</b><i>world</i>";
 
   private class TestSelectionHandler implements
       BeforeSelectionHandler<Integer>, SelectionHandler<Integer> {
@@ -60,15 +58,6 @@ public class StackLayoutPanelTest extends WidgetTestBase {
       assertTrue(onBeforeSelectionFired);
       onSelectionFired = true;
     }
-  }
-
-  public void testAddWithSafeHtml() {
-    StackLayoutPanel panel = new StackLayoutPanel(Unit.EM);
-    panel.add(new HTML("foo"), SafeHtmlUtils.fromSafeConstant(html), 1.0);
-    
-    assertEquals(1, panel.getWidgetCount());
-    assertEquals(html, 
-        panel.getHeaderWidget(0).getElement().getInnerHTML().toLowerCase());
   }
 
   public void testAttachDetachOrder() {
@@ -118,15 +107,6 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     assertEquals(2, p.getWidgetCount());
     assertEquals(0, p.getWidgetIndex(tb));
     assertEquals(1, p.getWidgetIndex(l));
-  }
-
-  public void testInsertSafeHtml() {
-    StackLayoutPanel panel = new StackLayoutPanel(Unit.EM);
-    panel.insert(new HTML("foo"), SafeHtmlUtils.fromSafeConstant(html), 1.0, 0);
-    
-    assertEquals(1, panel.getWidgetCount());
-    assertEquals(html, 
-        panel.getHeaderWidget(0).getElement().getInnerHTML().toLowerCase());
   }
 
   public void testInsertWithHTML() {
@@ -219,16 +199,6 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     p.showWidget(1, false);
     handler.assertOnBeforeSelectionFired(false);
     handler.assertOnSelectionFired(false);
-  }
-
-  public void testSetHeaderSafeHtml() {
-    StackLayoutPanel panel = new StackLayoutPanel(Unit.PX);
-    RootPanel.get().add(panel);
-    panel.add(new HTML("bar"), "foo", 1.0);
-    panel.setHeaderHTML(0, SafeHtmlUtils.fromSafeConstant(html));
-    Widget header = panel.getHeaderWidget(0);
-    
-    assertEquals(html, header.getElement().getInnerHTML().toLowerCase());
   }
 
   /**

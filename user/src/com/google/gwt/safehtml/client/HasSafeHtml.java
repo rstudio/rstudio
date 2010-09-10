@@ -39,5 +39,5 @@ public interface HasSafeHtml {
    *
    * @param html the object's new HTML, represented as a {@link SafeHtml} object
    */
-  void setHTML(SafeHtml html);
+  void setSafeHtml(SafeHtml html);
 }

@@ -17,7 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.i18n.client.HasDirection.Direction;
 
 /**
  * A widget that can contain arbitrary HTML.
@@ -42,8 +42,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  * {@example com.google.gwt.examples.HTMLExample}
  * </p>
  */
-public class HTML extends Label 
-    implements HasDirectionalHtml, HasDirectionalSafeHtml {
+public class HTML extends Label implements HasDirectionalHtml {
 
   /**
    * Creates an HTML widget that wraps an existing &lt;div&gt; or &lt;span&gt;
@@ -77,15 +76,6 @@ public class HTML extends Label
   }
 
   /**
-   * Initializes the widget's HTML from a given {@link SafeHtml} object.
-   *
-   * @param html the new widget's HTML contents
-   */
-  public HTML(SafeHtml html) {
-    this(html.asString());
-  }
-
-  /**
    * Creates an HTML widget with the specified HTML contents.
    *
    * @param html the new widget's HTML contents
@@ -93,18 +83,6 @@ public class HTML extends Label
   public HTML(String html) {
     this();
     setHTML(html);
-  }
-
-  /**
-   * Creates an HTML widget with the specified contents and with the
-   * specified direction.
-   *
-   * @param html the new widget's SafeHtml contents
-   * @param dir the content's direction. Note: {@code Direction.DEFAULT} means
-   *        direction should be inherited from the widget's parent element.
-   */
-  public HTML(SafeHtml html, Direction dir) {
-    this(html.asString(), dir);
   }
 
   /**
@@ -159,6 +137,7 @@ public class HTML extends Label
     setTextOrHtml(html, true);
   }
 
+
   /**
    * Sets the label's content to the given HTML, applying the given direction.
    * See {@link #setText(String, Direction)} for details on potential effects on
@@ -170,19 +149,5 @@ public class HTML extends Label
    */
   public void setHTML(String html, Direction dir) {
     setTextOrHtml(html, dir, true);
-  }
-
-  /**
-   * Sets this object's contents via known-safe HTML.
-   * 
-   * @see com.google.gwt.safehtml.client.HasSafeHtml#setSafeHtml
-   * @param html the html to set.
-   */
-  public void setHTML(SafeHtml html) {
-    setHTML(html.asString());
-  }
-
-  public void setHTML(SafeHtml html, Direction dir) {
-    setHTML(html.asString(), dir);
   }
 }

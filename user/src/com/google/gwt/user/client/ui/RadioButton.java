@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -68,21 +67,6 @@ public class RadioButton extends CheckBox {
     sinkEvents(Event.ONMOUSEUP);
     sinkEvents(Event.ONBLUR);
     sinkEvents(Event.ONKEYDOWN);
-  }
-
-  /**
-   * Creates a new radio associated with a particular group, and initialized
-   * with the given HTML label. All radio buttons associated with the same group
-   * name belong to a mutually-exclusive set.
-   * 
-   * Radio buttons are grouped by their name attribute, so changing their name
-   * using the setName() method will also change their associated group.
-   * 
-   * @param name the group name with which to associate the radio button
-   * @param label this radio button's html label
-   */
-  public RadioButton(String name, SafeHtml label) {
-    this(name, label.asString(), true);
   }
 
   /**

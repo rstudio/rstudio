@@ -32,8 +32,6 @@ import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.client.HasSafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -104,7 +102,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
  */
 @SuppressWarnings("deprecation")
 public class DialogBox extends DecoratedPopupPanel implements HasHTML,
-    HasSafeHtml, MouseListener {
+    MouseListener {
   /**
    * Set of characteristic interfaces supported by the {@link DialogBox} caption
    * 
@@ -326,23 +324,11 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
   }
 
   /**
-   * Sets the html string inside the caption.
-   *
-   * Use {@link #setWidget(Widget)} to set the contents inside the
-   * {@link DialogBox}.
-   *
-   * @param html the object's new HTML
-   */
-  public void setHTML(SafeHtml html) {
-    setHTML(html.asString());
-  }
-
-  /**
    * Sets the text inside the caption.
-   *
+   * 
    * Use {@link #setWidget(Widget)} to set the contents inside the
    * {@link DialogBox}.
-   *
+   * 
    * @param text the object's new text
    */
   public void setText(String text) {

@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FieldSetElement;
 import com.google.gwt.dom.client.LegendElement;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 
@@ -36,13 +35,7 @@ public class CaptionPanel extends Composite implements HasWidgets {
    * Implementation class without browser-specific hacks.
    */
   public static class CaptionPanelImpl {
-    public void setCaption(
-        FieldSetElement fieldset, Element legend, SafeHtml caption) {
-      setCaption(fieldset, legend, caption.asString(), true);
-    }
-
-    public void setCaption(FieldSetElement fieldset, Element legend,
-        String caption, boolean asHTML) {
+    public void setCaption(FieldSetElement fieldset, Element legend, String caption, boolean asHTML) {
       // TODO(bruce): rewrite to be inlinable
       assert (caption != null);
 
@@ -70,14 +63,8 @@ public class CaptionPanel extends Composite implements HasWidgets {
    */
   public static class CaptionPanelImplMozilla extends CaptionPanelImpl {
     @Override
-    public void setCaption(
-        final FieldSetElement fieldset, Element legend, SafeHtml caption) {
-      setCaption(fieldset, legend, caption.asString(), true);
-    }
-
-    @Override
-    public void setCaption(final FieldSetElement fieldset, Element legend,
-        String caption, boolean asHTML) {
+    public void setCaption(final FieldSetElement fieldset, Element legend, String caption,
+        boolean asHTML) {
       fieldset.getStyle().setProperty("display", "none");
       super.setCaption(fieldset, legend, caption, asHTML);
       fieldset.getStyle().setProperty("display", "");
@@ -89,14 +76,8 @@ public class CaptionPanel extends Composite implements HasWidgets {
    */
   public static class CaptionPanelImplSafari extends CaptionPanelImpl {
     @Override
-    public void setCaption(
-        final FieldSetElement fieldset, Element legend, SafeHtml caption) {
-      setCaption(fieldset, legend, caption.asString(), true);
-    }
-
-    @Override
-    public void setCaption(final FieldSetElement fieldset, Element legend,
-        String caption, boolean asHTML) {
+    public void setCaption(final FieldSetElement fieldset, Element legend, String caption,
+        boolean asHTML) {
       fieldset.getStyle().setProperty("visibility", "hidden");
       super.setCaption(fieldset, legend, caption, asHTML);
       DeferredCommand.addCommand(new Command() {
@@ -126,16 +107,7 @@ public class CaptionPanel extends Composite implements HasWidgets {
 
   /**
    * Constructs a CaptionPanel with specified caption text.
-   *
-   * @param caption the text of the caption
-   */
-  public CaptionPanel(SafeHtml caption) {
-    this(caption.asString(), true);
-  }
-
-  /**
-   * Constructs a CaptionPanel with specified caption text.
-   *
+   * 
    * @param captionText the text of the caption, which is automatically escaped
    */
   public CaptionPanel(String captionText) {
@@ -235,19 +207,10 @@ public class CaptionPanel extends Composite implements HasWidgets {
   }
 
   /**
-   * Sets the caption for the panel using a SafeHtml string.
-   *
-   * @param html HTML for the new caption; must not be <code>null</code>
-   */
-  public void setCaptionHTML(SafeHtml html) {
-    setCaptionHTML(html.asString());
-  }
-
-  /**
    * Sets the caption for the panel using text that will be automatically
    * escaped. Pass in empty string to remove the caption completely, leaving
    * just the unadorned panel.
-   *
+   * 
    * @param text text for the new caption; must not be <code>null</code>
    */
   public void setCaptionText(String text) {

@@ -23,8 +23,6 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.client.HasSafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -65,7 +63,7 @@ import com.google.gwt.user.client.ui.impl.HyperlinkImpl;
  */
 @SuppressWarnings("deprecation")
 public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
-    HasClickHandlers, HasDoubleClickHandlers, HasSafeHtml {
+    HasClickHandlers, HasDoubleClickHandlers {
 
   private static HyperlinkImpl impl = GWT.create(HyperlinkImpl.class);
   
@@ -80,19 +78,8 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   }
 
   /**
-   * Creates a hyperlink with its html and target history token specified.
-   *
-   * @param html the hyperlink's safe html
-   * @param targetHistoryToken the history token to which it will link
-   * @see #setTargetHistoryToken
-   */
-  public Hyperlink(SafeHtml html, String targetHistoryToken) {
-    this(html.asString(), true, targetHistoryToken);
-  }
-
-  /**
    * Creates a hyperlink with its text and target history token specified.
-   *
+   * 
    * @param text the hyperlink's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param targetHistoryToken the history token to which it will link
@@ -110,11 +97,11 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
 
   /**
    * Creates a hyperlink with its text and target history token specified.
-   *
+   * 
    * @param text the hyperlink's text
    * @param targetHistoryToken the history token to which it will link, which
-   *          may not be null (use {@link Anchor} instead if you don't need
-   *          history processing)
+   *     may not be null (use {@link Anchor} instead if you don't need history
+   *     processing)
    */
   public Hyperlink(String text, String targetHistoryToken) {
     this();
@@ -198,17 +185,13 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     DOM.setInnerHTML(anchorElem, html);
   }
 
-  public void setHTML(SafeHtml html) {
-    setHTML(html.asString());
-  }
-
   /**
    * Sets the history token referenced by this hyperlink. This is the history
    * token that will be passed to {@link History#newItem} when this link is
    * clicked.
-   *
+   * 
    * @param targetHistoryToken the new history token, which may not be null (use
-   *          {@link Anchor} instead if you don't need history processing)
+   *        {@link Anchor} instead if you don't need history processing)
    */
   public void setTargetHistoryToken(String targetHistoryToken) {
     assert targetHistoryToken != null

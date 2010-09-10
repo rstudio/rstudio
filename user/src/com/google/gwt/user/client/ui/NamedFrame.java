@@ -56,7 +56,6 @@ public class NamedFrame extends Frame {
    * @throws IllegalArgumentException if the supplied name is not allowed 
    */
   private static IFrameElement createIFrame(String src, String name) {
-    // TODO(pdr): add SafeHtml support here to prevent XSS
     if (name == null || !isValidName(name.trim())) {
       throw new IllegalArgumentException(
           "expecting one or more non-whitespace chars with no '<', '>', or '&'");
