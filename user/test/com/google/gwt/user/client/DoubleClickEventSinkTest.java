@@ -43,11 +43,6 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class DoubleClickEventSinkTest extends GWTTestCase {
 
-  private DoubleClickHandler dummyDoubleClickHandler = new DoubleClickHandler() {
-    public void onDoubleClick(DoubleClickEvent event) {
-    }
-  };
-
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
@@ -56,16 +51,20 @@ public class DoubleClickEventSinkTest extends GWTTestCase {
   public void testDoubleClickBitFieldNotTriviallyZero() {
     assertNotSame(0, Event.ONDBLCLICK);
   }
-  
+
+  public void testFocusPanelDoubleClickEventSinkByAddingHandler() {
+    verifyEventSinkOnAddHandler(new FocusPanel(), false);
+  }
+
   public void testFocusWidgetDoubleClickEventSinkByAddingHandler() {
     verifyEventSinkOnAddHandler(new Anchor(), false);
     verifyEventSinkOnAddHandler(new Button(), false);
-    
+
     CheckBox checkBox = new CheckBox();
     // Get the inputElem on which events are sunk
     Element e = (Element) checkBox.getElement().getFirstChildElement();
     verifyEventSinkOnAddHandler(checkBox, e, false);
-    
+
     verifyEventSinkOnAddHandler(new ToggleButton(), false);
     verifyEventSinkOnAddHandler(new ListBox(), false);
     verifyEventSinkOnAddHandler(new RichTextArea(), false);
@@ -75,17 +74,18 @@ public class DoubleClickEventSinkTest extends GWTTestCase {
     verifyEventSinkOnAddHandler(new SimpleRadioButton("foo"), false);
   }
 
-  public void testFocusPanelDoubleClickEventSinkByAddingHandler() {
-    verifyEventSinkOnAddHandler(new FocusPanel(), false);
-  }
-
   public void testHTMLTableDoubleClickEventSinkByAddingHandler() {
     verifyEventSinkOnAddHandler(new Grid(), false);
     verifyEventSinkOnAddHandler(new FlexTable(), false);
   }
 
   public void testImageDoubleClickEventSinkByAddingHandler() {
-    // allow Image to sink events early
+    /*
+     * The Image widget currently sinks events too early, before handlers are
+     * attached. We verify that (broken) behavior in this test.
+     * TODO(fredsa) Once Image has been fixed to lazily sink events, update
+     * this test and remove verifyEventSinkOnAddHandler's second parameter.
+     */
     verifyEventSinkOnAddHandler(new Image(), true);
   }
 
@@ -93,25 +93,38 @@ public class DoubleClickEventSinkTest extends GWTTestCase {
     verifyEventSinkOnAddHandler(new Label(), false);
   }
 
-  private <W extends Widget & HasDoubleClickHandlers> void verifyEventSinkOnAddHandler(
-      W w, boolean allowEarlySink) {
+  private boolean isDoubleClickEventSunk(Element e) {
+    return (DOM.getEventsSunk(e) & Event.ONDBLCLICK) != 0;
+  }
+
+  private <W extends Widget & HasDoubleClickHandlers>
+      void verifyEventSinkOnAddHandler(W w, boolean allowEarlySink) {
     verifyEventSinkOnAddHandler(w, w.getElement(), allowEarlySink);
   }
 
-  private <W extends Widget & HasDoubleClickHandlers> void verifyEventSinkOnAddHandler(
-      W w, Element e, boolean allowEarlySink) {
+  private <W extends Widget & HasDoubleClickHandlers>
+      void verifyEventSinkOnAddHandler(W w, Element e, boolean widgetSinksEventsOnAttach) {
     RootPanel.get().add(w);
 
-    if (!allowEarlySink) {
-      assertEquals("Event should not be sunk on " + w.getClass().getName() + " until a "
-          + DoubleClickEvent.getType().getName() + " handler has been added",
-         0, DOM.getEventsSunk(e) & Event.ONDBLCLICK);
+    if (widgetSinksEventsOnAttach) {
+      assertTrue("Event should have been sunk on " + w.getClass().getName()
+          + " once the widget has been attached", isDoubleClickEventSunk(e));
+    } else {
+      assertFalse(
+          "Event should not be sunk on " + w.getClass().getName() + " until a "
+              + DoubleClickEvent.getType().getName()
+              + " handler has been added", isDoubleClickEventSunk(e));
     }
 
-    w.addDoubleClickHandler(dummyDoubleClickHandler);
+    w.addDoubleClickHandler(new DoubleClickHandler() {
+      public void onDoubleClick(DoubleClickEvent event) {
+      }
+    });
 
-    assertEquals("Event should have been sunk on " + w.getClass().getName()
-        + " once the widget has been attached and a " + DoubleClickEvent.getType().getName()
-        + " handler has been added", Event.ONDBLCLICK, DOM.getEventsSunk(e) & Event.ONDBLCLICK);
+    assertTrue(
+        "Event should have been sunk on " + w.getClass().getName()
+            + " once the widget has been attached and a "
+            + DoubleClickEvent.getType().getName() + " handler has been added",
+        isDoubleClickEventSunk(e));
   }
 }

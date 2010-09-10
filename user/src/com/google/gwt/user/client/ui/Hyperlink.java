@@ -18,10 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.DoubleClickEvent;
-import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -63,7 +60,7 @@ import com.google.gwt.user.client.ui.impl.HyperlinkImpl;
  */
 @SuppressWarnings("deprecation")
 public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
-    HasClickHandlers, HasDoubleClickHandlers {
+    HasClickHandlers {
 
   private static HyperlinkImpl impl = GWT.create(HyperlinkImpl.class);
   
@@ -139,10 +136,6 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   @Deprecated
   public void addClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.add(this, listener);
-  }
-
-  public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
-    return addHandler(handler, DoubleClickEvent.getType());
   }
 
   public String getHTML() {

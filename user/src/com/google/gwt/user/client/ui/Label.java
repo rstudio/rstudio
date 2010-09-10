@@ -216,7 +216,7 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
   }
 
   public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
-    return addHandler(handler, DoubleClickEvent.getType());
+    return addDomHandler(handler, DoubleClickEvent.getType());
   }
 
   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
