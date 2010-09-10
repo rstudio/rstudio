@@ -151,7 +151,15 @@ public class HistoryTest extends GWTTestCase {
       // History.back() is broken on Safari2, so we skip this test.
       return;
     }
-    delayTestFinish(5000);
+    
+    /*
+     * Sentinel token which should only be seen if tokens are lost during the
+     * rest of the test. Without this, History.back() might send the browser too
+     * far back, i.e. back to before the web app containing our test module.
+     */
+    History.newItem("if-you-see-this-then-history-went-back-too-far");
+
+    delayTestFinish(10000);
     addHistoryListenerImpl(new HistoryListener() {
       private int state = 0;
 
@@ -179,7 +187,7 @@ public class HistoryTest extends GWTTestCase {
 
           case 2: {
             if (!historyToken.equals("foo bar")) {
-              fail("Expecting token 'foo bar' after back, but got: " + historyToken);
+              fail("Expecting token 'foo bar' after History.back(), but got: " + historyToken);
             }
             finishTest();
             break;
@@ -187,8 +195,17 @@ public class HistoryTest extends GWTTestCase {
         }
       }
     });
-
-    History.newItem("foo bar");
+    
+    /*
+     * Delay kicking off the history transitions, so the browser has time to process
+     * the initial sentinel token
+     */
+    new Timer() {
+      @Override
+      public void run() {
+        History.newItem("foo bar");
+      }
+    }.schedule(5000);
   }
 
   /**
