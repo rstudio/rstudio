@@ -203,10 +203,6 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return this['__key'];
   }-*/;
   
-  public final EntityProxyId getStableId() {
-    throw new IllegalArgumentException("Can't call stableId on the jso");
-  }
-
   public final Integer getVersion() {
     return this.get(version);
   }
@@ -302,6 +298,10 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
 
     throw new UnsupportedOperationException("Cannot set properties of type "
         + value.getClass().getName());
+  }
+
+  public final EntityProxyId stableId() {
+    throw new IllegalArgumentException("Can't call stableId on the jso");
   }
 
   /**

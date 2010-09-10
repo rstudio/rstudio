@@ -56,12 +56,12 @@ public interface EntityProxy {
   <V> PropertyReference<V> getRef(Property<V> property);
 
   /**
-   * @return {@link EntityProxyId} that is stable across changes.
-   */
-  EntityProxyId getStableId();
-
-  /**
    * @return the version of this Proxy.
    */
   Integer getVersion();
+
+  /**
+   * @return {@link EntityProxyId} that is stable across changes.
+   */
+  EntityProxyId stableId();
 }

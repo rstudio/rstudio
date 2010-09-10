@@ -83,17 +83,6 @@ public class ProxyImpl implements EntityProxy {
     return jso.getSchema();
   }
 
-  public EntityProxyId getStableId() {
-    if (!isFuture) {
-      return new EntityProxyIdImpl(
-          getId(),
-          getSchema(),
-          false,
-          jso.getRequestFactory().datastoreToFutureMap.get(getId(), getSchema()));
-    }
-    return new EntityProxyIdImpl(getId(), getSchema(), isFuture, null);
-  }
-
   public Integer getVersion() {
     return jso.getVersion();
   }
@@ -119,6 +108,17 @@ public class ProxyImpl implements EntityProxy {
           "Setter methods can't be called before calling edit()");
     }
     deltaValueStore.set(property, record, value);
+  }
+
+  public EntityProxyId stableId() {
+    if (!isFuture) {
+      return new EntityProxyIdImpl(
+          getId(),
+          getSchema(),
+          false,
+          jso.getRequestFactory().datastoreToFutureMap.get(getId(), getSchema()));
+    }
+    return new EntityProxyIdImpl(getId(), getSchema(), isFuture, null);
   }
 
   protected ValueStoreJsonImpl getValueStore() {

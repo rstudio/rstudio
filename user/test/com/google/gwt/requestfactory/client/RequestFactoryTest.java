@@ -128,9 +128,9 @@ public class RequestFactoryTest extends GWTTestCase {
   }
   
   private void checkStableIdEquals(SimpleFooProxy expected, SimpleFooProxy actual) {
-    assertNotSame(expected.getStableId(), actual.getStableId());
-    assertEquals(expected.getStableId(), actual.getStableId());
-    assertEquals(expected.getStableId().hashCode(), actual.getStableId().hashCode());
+    assertNotSame(expected.stableId(), actual.stableId());
+    assertEquals(expected.stableId(), actual.stableId());
+    assertEquals(expected.stableId().hashCode(), actual.stableId().hashCode());
     
     // No assumptions about the proxy objects (being proxies and all)
     assertNotSame(expected, actual);

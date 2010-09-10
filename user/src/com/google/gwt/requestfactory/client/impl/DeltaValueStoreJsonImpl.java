@@ -254,7 +254,7 @@ class DeltaValueStoreJsonImpl {
   public <V> void set(Property<V> property, EntityProxy record, V value) {
     checkArgumentsAndState(record, "set");
     ProxyImpl recordImpl = (ProxyImpl) record;
-    EntityProxyId recordKey = recordImpl.getStableId();
+    EntityProxyId recordKey = recordImpl.stableId();
 
     ProxyJsoImpl rawMasterRecord = master.records.get(recordKey);
     WriteOperation priorOperation = operations.get(recordKey);
