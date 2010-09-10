@@ -82,7 +82,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         valueStore, requestFactory);
     String json = deltaValueStore.toJson();
     JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(json);
-    assertFalse(jsonObject.containsKey(WriteOperation.CREATE.name()));
+    assertFalse(jsonObject.containsKey(WriteOperation.CREATE.getUnObfuscatedEnumName()));
   }
 
   public void testCreateWithSet() {
@@ -152,19 +152,19 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertTrue(deltaValueStore.isChanged());
     String jsonString = deltaValueStore.toJson();
     JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(jsonString);
-    assertFalse(jsonObject.containsKey(WriteOperation.DELETE.name()));
-    assertTrue(jsonObject.containsKey(WriteOperation.CREATE.name()));
-    assertTrue(jsonObject.containsKey(WriteOperation.UPDATE.name()));
+    assertFalse(jsonObject.containsKey(WriteOperation.DELETE.getUnObfuscatedEnumName()));
+    assertTrue(jsonObject.containsKey(WriteOperation.CREATE.getUnObfuscatedEnumName()));
+    assertTrue(jsonObject.containsKey(WriteOperation.UPDATE.getUnObfuscatedEnumName()));
 
     JSONArray createOperationArray = jsonObject.get(
-        WriteOperation.CREATE.name()).isArray();
+        WriteOperation.CREATE.getUnObfuscatedEnumName()).isArray();
     assertEquals(1, createOperationArray.size());
     assertEquals("harry", createOperationArray.get(0).isObject().get(
         SIMPLE_FOO_CLASS_NAME).isObject().get(
         SimpleFooProxy.userName.getName()).isString().stringValue());
 
     JSONArray updateOperationArray = jsonObject.get(
-        WriteOperation.UPDATE.name()).isArray();
+        WriteOperation.UPDATE.getUnObfuscatedEnumName()).isArray();
     assertEquals(1, updateOperationArray.size());
     assertEquals("bovik", updateOperationArray.get(0).isObject().get(
         SIMPLE_FOO_CLASS_NAME).isObject().get(
@@ -189,13 +189,14 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(jsonString);
     for (WriteOperation writeOperation : WriteOperation.values()) {
       if (writeOperation != currentWriteOperation) {
-        assertFalse(jsonObject.containsKey(writeOperation.name()));
+        assertFalse(jsonObject.containsKey(writeOperation.getUnObfuscatedEnumName()));
       } else {
-        assertTrue(jsonObject.containsKey(writeOperation.name()));
+        assertTrue(jsonObject.containsKey(writeOperation.getUnObfuscatedEnumName()));
       }
     }
 
-    JSONArray writeOperationArray = jsonObject.get(currentWriteOperation.name()).isArray();
+    JSONArray writeOperationArray = 
+          jsonObject.get(currentWriteOperation.getUnObfuscatedEnumName()).isArray();
     assertEquals(1, writeOperationArray.size());
 
     JSONObject proxyWithName = writeOperationArray.get(0).isObject();

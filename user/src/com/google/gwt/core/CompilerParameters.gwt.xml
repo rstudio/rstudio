@@ -33,6 +33,15 @@
   <set-property name="compiler.predeclare.cross.fragment.references"
     value="false" />
 
+  <!--
+    Whether or not the compiler should alter Enum.name() to return
+    ordinal() as a way of obfuscating Enum field identifiers.
+  -->
+   <define-configuration-property name="compiler.enum.obfuscate.names"
+      is-multi-valued='false' />
+   <set-configuration-property name="compiler.enum.obfuscate.names"
+      value="false" />
+    
   <!-- From here down, the properties are unsupported and are only available for test cases -->
 
   <!--
@@ -53,7 +62,7 @@
     JsIEBlockSizeVisitor has its usual effect.
   -->
   <define-configuration-property name="iframe.linker.script.chunk.size"
-  is-multi-valued="false" />
+    is-multi-valued="false" />
   <set-configuration-property name="iframe.linker.script.chunk.size"
     value="30000" />
 

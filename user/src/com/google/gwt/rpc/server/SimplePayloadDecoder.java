@@ -198,16 +198,22 @@ public class SimplePayloadDecoder {
         break;
       }
       case ENUM_TYPE: {
-        // ETypeSeedName~"9~FieldName
+        // ETypeSeedName~IOrdinal~
         EnumValueCommand x = new EnumValueCommand();
         push(x);
-        String name = readCommand(StringValueCommand.class).getValue();
+        
+        // use ordinal (and not name), since name might have been obfuscated
+        int ordinal = readCommand(IntValueCommand.class).getValue();
 
         @SuppressWarnings("unchecked")
         Class<? extends Enum> clazz = findClass(token).asSubclass(Enum.class);
-        @SuppressWarnings("unchecked")
-        Enum<?> enumValue = Enum.valueOf(clazz, name);
-        x.setValue(enumValue);
+        
+        /*
+         * TODO: Note this approach could be prone to subtle corruption or
+         * an ArrayOutOfBoundsException if the client and server have drifted.
+         */
+        Enum<?> enumConstants[] = clazz.getEnumConstants();
+        x.setValue(enumConstants[ordinal]);
         break;
       }
       case ARRAY_TYPE: {

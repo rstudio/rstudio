@@ -73,10 +73,11 @@ public class SimplePayloadSink extends CommandSink {
 
     @Override
     public void endVisit(EnumValueCommand x, Context ctx) {
-      // ETypeSeedName~"9~FieldName
+      // ETypeSeedName~IOrdinal~
       if (appendIdentity(x)) {
         appendTypedData(ENUM_TYPE, x.getValue().getDeclaringClass().getName());
-        accept(new StringValueCommand(x.getValue().name()));
+        // use ordinal (and not name), since name might have been obfuscated
+        appendTypedData(INT_TYPE, String.valueOf(x.getValue().ordinal()));
       }
     }
 

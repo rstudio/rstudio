@@ -39,7 +39,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
       T[] enumConstants) {
     JavaScriptObject result = JavaScriptObject.createObject();
     for (T value : enumConstants) {
-      put0(result, ":" + value.name, value);
+       put0(result, ":" + value.name(), value);
     }
     return result;
   }
@@ -115,13 +115,16 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     return name;
   }
 
+  public final String obfuscatedName() {
+    return "" + ordinal;
+  }
+
   public final int ordinal() {
     return ordinal;
   }
 
   @Override
   public String toString() {
-    return name;
+    return name();
   }
-
 }

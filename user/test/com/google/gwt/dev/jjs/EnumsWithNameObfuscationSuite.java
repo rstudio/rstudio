@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,21 +13,27 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.rpc.client.ast;
+package com.google.gwt.dev.jjs;
+
+import com.google.gwt.dev.jjs.test.EnumsWithNameObfuscationTest;
+import com.google.gwt.junit.tools.GWTTestSuite;
+
+import junit.framework.Test;
 
 /**
- * Represents a hierarchy of value types that must maintain distinct object
- * identity on the client. This type finalizes <code>equals</code> and
- * <code>hashCode</code> to give subtypes identity equality semantics.
+ * The complete compiler suite.
  */
-public abstract class IdentityValueCommand extends ValueCommand {
-  @Override
-  public final boolean equals(Object o) {
-    return this == o;
+public class EnumsWithNameObfuscationSuite {
+
+  public static Test suite() {
+    GWTTestSuite suite = new GWTTestSuite(
+        "Test for com.google.gwt.dev.jjs (with enum name obfuscation)");
+
+    // $JUnit-BEGIN$
+    suite.addTestSuite(EnumsWithNameObfuscationTest.class);
+    // $JUnit-END$
+
+    return suite;
   }
 
-  @Override
-  public final int hashCode() {
-    return System.identityHashCode(this);
-  }
 }

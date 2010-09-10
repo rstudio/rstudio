@@ -162,6 +162,9 @@ public final class MathContext implements Serializable {
    *           or if the precision specified is < 0.
    */
   public MathContext(String val) {
+    if (val == null) {
+      throw new NullPointerException("null string");
+    }
     char[] charVal = val.toCharArray();
     int i; // Index of charVal
     int j; // Index of chRoundingMode
@@ -219,8 +222,13 @@ public final class MathContext implements Serializable {
       // math.0E=bad string format
       throw new IllegalArgumentException("bad string format"); //$NON-NLS-1$
     }
+
     // Parsing the value for "roundingMode"...
-    this.roundingMode = RoundingMode.valueOf(String.valueOf(charVal, i,
+    /*  
+     * don't use implicit calls to RoundingMode.valueOf here, since it will break
+     * if enum name obfuscation is enabled.
+     */
+    this.roundingMode = RoundingMode.valueOfExplicit(String.valueOf(charVal, i,
         charVal.length - i));
   }
 
@@ -237,7 +245,8 @@ public final class MathContext implements Serializable {
   @Override
   public boolean equals(Object x) {
     return ((x instanceof MathContext)
-        && (((MathContext) x).getPrecision() == precision) && (((MathContext) x).getRoundingMode() == roundingMode));
+        && (((MathContext) x).getPrecision() == precision) 
+        && (((MathContext) x).getRoundingMode() == roundingMode));
   }
 
   /**

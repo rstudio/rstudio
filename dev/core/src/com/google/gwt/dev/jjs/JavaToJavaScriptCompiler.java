@@ -34,6 +34,7 @@ import com.google.gwt.core.ext.soyc.impl.SplitPointRecorder;
 import com.google.gwt.core.ext.soyc.impl.StoryRecorder;
 import com.google.gwt.core.linker.SoycReportLinker;
 import com.google.gwt.dev.Permutation;
+import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
@@ -161,6 +162,10 @@ import javax.xml.parsers.ParserConfigurationException;
  * JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
+  
+  private static final String ENUM_NAME_OBFUSCATION_PROPERTY = 
+                                                "compiler.enum.obfuscate.names";
+  
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
@@ -537,7 +542,17 @@ public class JavaToJavaScriptCompiler {
 
       Memory.maybeDumpMemory("AstOnly");
       maybeDumpAST(jprogram);
-
+      
+      // See if we should run the EnumNameObfuscator
+      if (module != null) {
+        ConfigurationProperty enumNameObfuscationProp = 
+            (ConfigurationProperty) module.getProperties().find(ENUM_NAME_OBFUSCATION_PROPERTY);
+        if (enumNameObfuscationProp != null &&
+            Boolean.parseBoolean(enumNameObfuscationProp.getValue())) {
+          EnumNameObfuscator.exec(jprogram, logger);
+        }
+      }
+      
       // (3) Perform Java AST normalizations.
       ArtificialRescueRecorder.exec(jprogram);
       FixAssignmentToUnbox.exec(jprogram);
@@ -558,7 +573,7 @@ public class JavaToJavaScriptCompiler {
       ReplaceRebinds.exec(logger, jprogram, rpo);
 
       // Fix up GWT.runAsync()
-      if (options.isRunAsyncEnabled()) {
+      if (module != null && options.isRunAsyncEnabled()) {
         ReplaceRunAsyncs.exec(logger, jprogram);
         CodeSplitter.pickInitialLoadSequence(logger, jprogram,
             module.getProperties());

@@ -30,6 +30,7 @@ import com.google.gwt.emultest.java.lang.StringBufferDefaultImplTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
 import com.google.gwt.emultest.java.lang.StringTest;
 import com.google.gwt.emultest.java.lang.SystemTest;
+import com.google.gwt.emultest.java.math.MathContextTest;
 import com.google.gwt.emultest.java.math.RoundingModeTest;
 import com.google.gwt.emultest.java.security.MessageDigestTest;
 import com.google.gwt.emultest.java.sql.SqlDateTest;
@@ -88,6 +89,7 @@ public class EmulSuite {
     // BigDecimal is tested in {@link BigDecimalSuite}
     // BigInteger is tested in {@link BigIntegerSuite}
     suite.addTestSuite(RoundingModeTest.class);
+    suite.addTestSuite(MathContextTest.class);
 
     //-- java.util
     suite.addTestSuite(ApacheMapTest.class);

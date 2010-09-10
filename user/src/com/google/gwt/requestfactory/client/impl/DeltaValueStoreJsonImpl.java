@@ -139,9 +139,9 @@ class DeltaValueStoreJsonImpl {
     ReturnRecord.fillKeys(returnedJso, keys);
 
     Set<EntityProxyId> toRemove = new HashSet<EntityProxyId>();
-    if (keys.contains(WriteOperation.CREATE.name())) {
+    if (keys.contains(WriteOperation.CREATE.getUnObfuscatedEnumName())) {
       JsArray<ReturnRecord> newRecords = ReturnRecord.getRecords(returnedJso,
-          WriteOperation.CREATE.name());
+          WriteOperation.CREATE.getUnObfuscatedEnumName());
       int length = newRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord newRecord = newRecords.get(i);
@@ -181,9 +181,9 @@ class DeltaValueStoreJsonImpl {
     processToRemove(toRemove, WriteOperation.CREATE);
     toRemove.clear();
 
-    if (keys.contains(WriteOperation.DELETE.name())) {
+    if (keys.contains(WriteOperation.DELETE.getUnObfuscatedEnumName())) {
       JsArray<ReturnRecord> deletedRecords = ReturnRecord.getRecords(
-          returnedJso, WriteOperation.DELETE.name());
+          returnedJso, WriteOperation.DELETE.getUnObfuscatedEnumName());
       int length = deletedRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord deletedRecord = deletedRecords.get(i);
@@ -206,9 +206,9 @@ class DeltaValueStoreJsonImpl {
       }
     }
 
-    if (keys.contains(WriteOperation.UPDATE.name())) {
+    if (keys.contains(WriteOperation.UPDATE.getUnObfuscatedEnumName())) {
       JsArray<ReturnRecord> updatedRecords = ReturnRecord.getRecords(
-          returnedJso, WriteOperation.UPDATE.name());
+          returnedJso, WriteOperation.UPDATE.getUnObfuscatedEnumName());
       int length = updatedRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord updatedRecord = updatedRecords.get(i);
@@ -354,7 +354,7 @@ class DeltaValueStoreJsonImpl {
     if (recordsMap.size() == 0) {
       return "";
     }
-    StringBuffer requestData = new StringBuffer("\"" + writeOperation.name()
+    StringBuffer requestData = new StringBuffer("\"" + writeOperation.getUnObfuscatedEnumName()
         + "\":[");
     boolean first = true;
     for (Map.Entry<EntityProxyId, ProxyJsoImpl> entry : recordsMap.entrySet()) {
@@ -389,7 +389,7 @@ class DeltaValueStoreJsonImpl {
         return updates;
       default:
         throw new IllegalStateException("unknow writeOperation "
-            + writeOperation.name());
+            + writeOperation.getUnObfuscatedEnumName());
     }
   }
 

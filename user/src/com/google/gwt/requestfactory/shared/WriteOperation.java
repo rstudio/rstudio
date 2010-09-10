@@ -24,5 +24,19 @@ package com.google.gwt.requestfactory.shared;
  * The write operation enum used in DeltaValueStore.
  */
 public enum WriteOperation {
-  CREATE, UPDATE, DELETE
+  CREATE("CREATE"), 
+  UPDATE("UPDATE"), 
+  DELETE("DELETE");
+  
+  // use an unObfuscatedEnumName field to bypass the implicit name() method, 
+  // to be safe in the case enum name obfuscation is enabled.
+  private final String unObfuscatedEnumName;
+  
+  private WriteOperation(String unObfuscatedEnumName) {
+    this.unObfuscatedEnumName = unObfuscatedEnumName;
+  }
+  
+  public String getUnObfuscatedEnumName() {
+    return this.unObfuscatedEnumName;
+  }
 }
