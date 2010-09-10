@@ -119,7 +119,7 @@ class Shared {
     JType leafType = type.getLeafType();
     if (leafType.isPrimitive() != null) {
       className = leafType.getSimpleSourceName();
-      packageName = "";
+      packageName = "com.google.gwt.user.client.rpc.core";
     } else {
       JClassType classOrInterface = leafType.isClassOrInterface();
       assert (classOrInterface != null);

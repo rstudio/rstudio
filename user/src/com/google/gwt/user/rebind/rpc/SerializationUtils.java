@@ -105,24 +105,7 @@ public class SerializationUtils {
 
     assert (type.isClassOrInterface() != null || type.isArray() != null);
     JClassType classType = (JClassType) type;
-    String[] name = Shared.synthesizeTopLevelClassName(classType,
-        SerializationUtils.GENERATED_FIELD_SERIALIZER_SUFFIX);
-    if (name[0].length() > 0) {
-      String serializerName = name[0] + "." + name[1];
-      if (SerializableTypeOracleBuilder.isInStandardJavaPackage(type.getQualifiedSourceName())) {
-        /*
-         * Don't generate code into java packages. If you do hosted mode
-         * CompilingClassLoader will fail to resolve references to the generated
-         * code.
-         */
-        serializerName = "com.google.gwt.user.client.rpc.core."
-            + serializerName;
-      }
-
-      return serializerName;
-    } else {
-      return name[1];
-    }
+    return getStandardSerializerName(classType);
   }
 
   /**
@@ -143,6 +126,30 @@ public class SerializationUtils {
     }
 
     return Long.toString(crc.getValue());
+  }
+
+  /**
+   * Returns the name of the generated field serializer.
+   */
+  static String getStandardSerializerName(JClassType classType) {
+    String[] name = Shared.synthesizeTopLevelClassName(classType,
+        SerializationUtils.GENERATED_FIELD_SERIALIZER_SUFFIX);
+    if (name[0].length() > 0) {
+      String serializerName = name[0] + "." + name[1];
+      if (SerializableTypeOracleBuilder.isInStandardJavaPackage(classType.getQualifiedSourceName())) {
+        /*
+         * Don't generate code into java packages. If you do hosted mode
+         * CompilingClassLoader will fail to resolve references to the generated
+         * code.
+         */
+        serializerName = "com.google.gwt.user.client.rpc.core."
+            + serializerName;
+      }
+
+      return serializerName;
+    } else {
+      return name[1];
+    }
   }
 
   /**
