@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.editor.rebind.model.EditorData;
@@ -29,7 +30,9 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A base class for generating Editor drivers.
@@ -85,6 +88,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
   protected String getEditorDelegate(EditorData delegateData) {
     JClassType edited = delegateData.getEditedType();
     JClassType editor = delegateData.getEditorType();
+    Map<EditorData, String> delegateFields = new IdentityHashMap<EditorData, String>();
+    NameFactory nameFactory = new NameFactory();
 
     /*
      * The binary name of the edited type is included so that the same editor
@@ -139,11 +144,14 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       // Fields for the sub-delegates that must be managed
       for (EditorData d : data) {
         if (d.isBeanEditor() || d.isValueAwareEditor()) {
-          sw.println("%s<%s, %s> %sDelegate;",
+          String fieldName = nameFactory.createName(d.getPropertyName()
+              + "Delegate");
+          delegateFields.put(d, fieldName);
+          sw.println("%s<%s, %s> %s;",
               Name.getSourceNameForClass(getEditorDelegateType()),
               d.getEditedType().getParameterizedQualifiedSourceName(),
               d.getEditorType().getParameterizedQualifiedSourceName(),
-              d.getPropertyName());
+              fieldName);
         }
       }
 
@@ -156,8 +164,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           String subDelegateType = getEditorDelegate(d);
           sw.println("if (editor.%s != null) {", d.getSimpleExpression());
           sw.indent();
-          sw.println("%sDelegate = new %s();", d.getPropertyName(),
-              subDelegateType);
+          sw.println("%s = new %s();", delegateFields.get(d), subDelegateType);
           writeDelegateInitialization(sw, d);
           sw.outdent();
           sw.println("}");
@@ -171,13 +178,17 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.indent();
       for (EditorData d : data) {
         if (d.isBeanEditor() || d.isValueAwareEditor()) {
-          sw.println("if (%1$sDelegate != null) { %1$sDelegate.flush();",
-              d.getPropertyName());
+          sw.println("if (%1$s != null) { %1$s.flush();", delegateFields.get(d));
           if (d.getSetterName() != null) {
-            String mutableObjectExpression = mutableObjectExpression(String.format(
-                "getObject()%s", d.getBeanOwnerExpression()));
-            sw.println("%s.%s(%sDelegate.getObject());",
-                mutableObjectExpression, d.getSetterName(), d.getPropertyName());
+            String mutableObjectExpression;
+            if (d.getBeanOwnerExpression().length() > 0) {
+              mutableObjectExpression = mutableObjectExpression(String.format(
+                  "getObject()%s", d.getBeanOwnerExpression()));
+            } else {
+              mutableObjectExpression = "getObject()";
+            }
+            sw.println("%s.%s(%s.getObject());", mutableObjectExpression,
+                d.getSetterName(), delegateFields.get(d));
           }
           sw.println("}");
         }

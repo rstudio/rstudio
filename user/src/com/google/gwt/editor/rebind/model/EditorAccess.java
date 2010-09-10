@@ -18,7 +18,10 @@ package com.google.gwt.editor.rebind.model;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.Editor.Path;
 
 /**
@@ -29,6 +32,14 @@ class EditorAccess {
 
   public static EditorAccess root(JClassType rootType) {
     return new EditorAccess("", rootType, "");
+  }
+
+  /**
+   * Constructs an EditorAccess for an IsEditor type.
+   */
+  public static EditorAccess via(EditorAccess access, JClassType type) {
+    return new EditorAccess(access.getPath(), type, access.getExpresson()
+        + ".asEditor()");
   }
 
   public static EditorAccess via(JField field) {
@@ -57,6 +68,16 @@ class EditorAccess {
         method.getName() + "()");
   }
 
+  private static boolean isEditor(JType type) {
+    JClassType classType = type.isClassOrInterface();
+    if (classType == null) {
+      return false;
+    }
+    TypeOracle oracle = classType.getOracle();
+    return oracle.findType(IsEditor.class.getName()).isAssignableFrom(classType);
+  }
+
+  private final boolean isEditor;
   private final String expression;
   private final String path;
   private final JClassType type;
@@ -65,6 +86,7 @@ class EditorAccess {
     this.expression = expression;
     this.path = path;
     this.type = type;
+    isEditor = isEditor(type);
   }
 
   public JClassType getEditorType() {
@@ -77,6 +99,14 @@ class EditorAccess {
 
   public String getPath() {
     return path;
+  }
+
+  /**
+   * Returns <code> true if the editor accessed by this EditorAccess
+   * implements the IsEditor interface.
+   */
+  public boolean isEditor() {
+    return isEditor;
   }
 
   /**

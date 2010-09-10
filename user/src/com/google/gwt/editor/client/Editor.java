@@ -39,6 +39,10 @@ import java.lang.annotation.Target;
  * <li>Sub-Editors may be null. In this case, the Editor framework will ignore
  * these sub-editors.</li>
  * </ul>
+ * Any exposed field or method whose type is Editor may also use the
+ * {@link IsEditor} interface to provide an Editor instance. This allows view
+ * objects to be written that can be attached to an Editor hierarchy without the
+ * view directly implementing an Editor interface.
  * 
  * @param <T> the type of object the editor displays.
  */

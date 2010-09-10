@@ -97,8 +97,8 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     if (getObject() == null) {
       return;
     }
-    flushSubEditors();
     setObject(ensureMutable(getObject()));
+    flushSubEditors();
     flushValues();
   }
 

@@ -29,6 +29,7 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
@@ -235,6 +236,44 @@ public class EditorModelTest extends TestCase {
     EditorData[] address = m.getEditorData(types.findType("t.AddressEditor"));
     assertEquals("city", address[0].getPropertyName());
     assertEquals("street", address[1].getPropertyName());
+  }
+
+  /**
+   * Tests a plain IsEditor that allows the editor instance to be swapped in by
+   * a view object.
+   */
+  public void testIsEditor() throws UnableToCompleteException {
+    EditorModel m = new EditorModel(logger,
+        types.findType("t.UsesIsEditorDriver"), rfedType);
+
+    EditorData[] data = m.getEditorData();
+    assertNotNull(data);
+    assertEquals(2, data.length);
+    assertEquals(Arrays.asList("b", "b.string"), Arrays.asList(
+        data[0].getPath(), data[1].getPath()));
+    assertEquals(Arrays.asList("bEditor().asEditor()", "stringEditor()"),
+        Arrays.asList(data[0].getSimpleExpression(),
+            data[1].getSimpleExpression()));
+  }
+
+  /**
+   * Tests the case where an IsEditor also implements the Editor interface.
+   */
+  public void testIsEditorAndEditor() throws UnableToCompleteException {
+    EditorModel m = new EditorModel(logger,
+        types.findType("t.UsesIsEditorAndEditorDriver"), rfedType);
+
+    EditorData[] data = m.getEditorData();
+    assertNotNull(data);
+    assertEquals(4, data.length);
+    assertEquals(Arrays.asList("b", "b.string", "b", "b.string"),
+        Arrays.asList(data[0].getPath(), data[1].getPath(), data[2].getPath(),
+            data[3].getPath()));
+    assertEquals(Arrays.asList("bEditor().asEditor()",
+        "bEditor().asEditor().coEditor()", "bEditor()",
+        "bEditor().viewEditor()"), Arrays.asList(data[0].getExpression(),
+        data[1].getExpression(), data[2].getExpression(),
+        data[3].getExpression()));
   }
 
   public void testListDriver() throws UnableToCompleteException {
@@ -628,6 +667,64 @@ public class EditorModelTest extends TestCase {
         code.append("}");
         return code;
       }
+    }, new MockJavaResource("t.UsesIsEditorDriver") {
+      // Tests error-detection when the editor structure doesn't match the proxy
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + Editor.class.getName() + ";\n");
+        code.append("import " + IsEditor.class.getName() + ";\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
+        code.append("import " + RequestFactoryEditorDriver.class.getName()
+            + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
+        code.append("interface UsesIsEditorDriver extends"
+            + " RequestFactoryEditorDriver<UsesIsEditorDriver.AProxy,"
+            + " UsesIsEditorDriver.AEditor> {\n");
+        code.append("  interface AProxy extends EntityProxy { BProxy getB();}");
+        code.append("  interface BProxy extends EntityProxy { String getString();}");
+        code.append("  interface AEditor extends Editor<AProxy> {");
+        code.append("    BView bEditor();");
+        code.append("  }");
+        code.append("  interface BView extends IsEditor<BEditor> {");
+        code.append("    @Editor.Path(\"string\") BEditor unseen();");
+        code.append("  }");
+        code.append("  interface BEditor extends Editor<BProxy> {");
+        code.append("    SimpleEditor<String> stringEditor();");
+        code.append("  }");
+        code.append("}");
+        return code;
+      }
+    }, new MockJavaResource("t.UsesIsEditorAndEditorDriver") {
+      // Tests error-detection when the editor structure doesn't match the proxy
+      @Override
+      protected CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        code.append("package t;\n");
+        code.append("import " + Editor.class.getName() + ";\n");
+        code.append("import " + IsEditor.class.getName() + ";\n");
+        code.append("import " + EntityProxy.class.getName() + ";\n");
+        code.append("import " + RequestFactoryEditorDriver.class.getName()
+            + ";\n");
+        code.append("import " + SimpleEditor.class.getName() + ";\n");
+        code.append("interface UsesIsEditorAndEditorDriver extends"
+            + " RequestFactoryEditorDriver<UsesIsEditorAndEditorDriver.AProxy,"
+            + " UsesIsEditorAndEditorDriver.AEditor> {\n");
+        code.append("  interface AProxy extends EntityProxy { BProxy getB();}");
+        code.append("  interface BProxy extends EntityProxy { String getString();}");
+        code.append("  interface AEditor extends Editor<AProxy> {");
+        code.append("    BView bEditor();");
+        code.append("  }");
+        code.append("  interface BView extends IsEditor<BEditor>, Editor<BProxy> {");
+        code.append("    @Editor.Path(\"string\") SimpleEditor<String> viewEditor();");
+        code.append("  }");
+        code.append("  interface BEditor extends Editor<BProxy> {");
+        code.append("    @Editor.Path(\"string\") SimpleEditor<String> coEditor();");
+        code.append("  }");
+        code.append("}");
+        return code;
+      }
     }, new MockJavaResource("java.util.List") {
       // Tests a Driver interface that extends more than RFED
       @Override
@@ -646,6 +743,7 @@ public class EditorModelTest extends TestCase {
         new RealJavaResource(Editor.class),
         new EmptyMockJavaResource(EventBus.class),
         new RealJavaResource(HasText.class),
+        new RealJavaResource(IsEditor.class),
         new RealJavaResource(LeafValueEditor.class),
         new EmptyMockJavaResource(Property.class),
         new EmptyMockJavaResource(EntityProxy.class),

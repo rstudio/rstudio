@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.IsEditor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,18 +78,29 @@ public class EditorModel {
       throws UnableToCompleteException {
     JClassType editorIntf = editorType.getOracle().findType(
         Editor.class.getName());
-    assert editorIntf.isAssignableFrom(editorType) : editorType.getQualifiedSourceName()
-        + " is not an Editor";
+    JClassType parameterization[] = findParameterizationOf(editorIntf,
+        editorType);
+    if (parameterization != null) {
+      return parameterization[0];
+    }
+    logger.log(TreeLogger.ERROR, noEditorParameterizationMessage(editorIntf,
+        editorType));
+    throw new UnableToCompleteException();
+  }
 
-    for (JClassType supertype : editorType.getFlattenedSupertypeHierarchy()) {
-      JParameterizedType parameterized = supertype.isParameterized();
-      if (parameterized != null) {
-        // Found the Editor<Foo> supertype
-        if (editorIntf.equals(parameterized.getBaseType())) {
-          assert parameterized.getTypeArgs().length == 1;
-          return parameterized.getTypeArgs()[0].isClassOrInterface();
-        }
-      }
+  /**
+   * Given type assignable to <code>IsEditor&lt;Foo, FooEditor></code>, return
+   * <code>FooEditor</code>. It is an error to call this method with a type not
+   * assignable to {@link IsEditor}.
+   */
+  static JClassType calculateIsEditedType(TreeLogger logger,
+      JClassType editorType) throws UnableToCompleteException {
+    JClassType editorIntf = editorType.getOracle().findType(
+        IsEditor.class.getName());
+    JClassType[] parameterization = findParameterizationOf(editorIntf,
+        editorType);
+    if (parameterization != null) {
+      return parameterization[0];
     }
     logger.log(TreeLogger.ERROR, noEditorParameterizationMessage(editorIntf,
         editorType));
@@ -143,6 +155,25 @@ public class EditorModel {
         driverType.getQualifiedSourceName(), intf.getQualifiedSourceName());
   }
 
+  private static JClassType[] findParameterizationOf(JClassType intfType,
+      JClassType subType) {
+    assert intfType.isAssignableFrom(subType) : subType.getParameterizedQualifiedSourceName()
+        + " is not assignable to "
+        + subType.getParameterizedQualifiedSourceName();
+
+    for (JClassType supertype : subType.getFlattenedSupertypeHierarchy()) {
+      JParameterizedType parameterized = supertype.isParameterized();
+      if (parameterized != null) {
+        // Found the desired supertype
+        if (intfType.equals(parameterized.getBaseType())) {
+          assert parameterized.getTypeArgs().length == 1;
+          return parameterized.getTypeArgs();
+        }
+      }
+    }
+    return null;
+  }
+
   /**
    * The structural model.
    */
@@ -155,6 +186,11 @@ public class EditorModel {
   private final JClassType editorType;
 
   private final EditorData editorSoFar;
+
+  /**
+   * A reference to {@link IsEditor}.
+   */
+  private final JGenericType isEditorIntf;
 
   private final TreeLogger logger;
 
@@ -193,6 +229,8 @@ public class EditorModel {
     TypeOracle oracle = intf.getOracle();
     editorIntf = oracle.findType(Editor.class.getName()).isGenericType();
     assert editorIntf != null : "No Editor type";
+    isEditorIntf = oracle.findType(IsEditor.class.getName()).isGenericType();
+    assert isEditorIntf != null : "No IsEditor type";
 
     JClassType[] interfaces = intf.getImplementedInterfaces();
     if (interfaces.length != 1) {
@@ -218,6 +256,7 @@ public class EditorModel {
     this.editorIntf = parent.editorIntf;
     this.editorType = editorType;
     this.editorSoFar = subEditor;
+    this.isEditorIntf = parent.isEditorIntf;
     this.parentModel = parent;
     this.proxyType = proxyType;
     this.typeData = parent.typeData;
@@ -266,14 +305,15 @@ public class EditorModel {
         if (field.isPrivate() || field.isStatic()) {
           continue;
         }
-        JClassType fieldClassType = field.getType().isClassOrInterface();
-        if (fieldClassType != null
-            && editorIntf.isAssignableFrom(fieldClassType)) {
-          EditorData data = createEditorData(EditorAccess.via(field));
-          flatData.add(data);
-          toReturn.add(data);
-          if (!data.isLeafValueEditor()) {
-            descendIntoSubEditor(toReturn, data);
+        JType fieldClassType = field.getType();
+        if (shouldExamine(fieldClassType)) {
+          List<EditorData> data = createEditorData(EditorAccess.via(field));
+          flatData.addAll(data);
+          toReturn.addAll(data);
+          for (EditorData d : data) {
+            if (!d.isLeafValueEditor()) {
+              descendIntoSubEditor(toReturn, d);
+            }
           }
         }
       }
@@ -281,15 +321,22 @@ public class EditorModel {
         if (method.isPrivate() || method.isStatic()) {
           continue;
         }
-        JClassType methodReturnType = method.getReturnType().isClassOrInterface();
-        if (methodReturnType != null
-            && editorIntf.isAssignableFrom(methodReturnType)
+        JType methodReturnType = method.getReturnType();
+        if (shouldExamine(methodReturnType)
             && method.getParameters().length == 0) {
-          EditorData data = createEditorData(EditorAccess.via(method));
-          flatData.add(data);
-          toReturn.add(data);
-          if (!data.isLeafValueEditor()) {
-            descendIntoSubEditor(toReturn, data);
+          EditorAccess access = EditorAccess.via(method);
+          if (access.getPath().equals("as")
+              && isEditorIntf.isAssignableFrom(editorType)) {
+            // Ignore IsEditor.asEditor()
+            continue;
+          }
+          List<EditorData> data = createEditorData(access);
+          flatData.addAll(data);
+          toReturn.addAll(data);
+          for (EditorData d : data) {
+            if (!d.isLeafValueEditor()) {
+              descendIntoSubEditor(toReturn, d);
+            }
           }
         }
       }
@@ -310,10 +357,25 @@ public class EditorModel {
     return sb.toString();
   }
 
-  private EditorData createEditorData(EditorAccess access)
+  private List<EditorData> createEditorData(EditorAccess access)
       throws UnableToCompleteException {
     TreeLogger subLogger = logger.branch(TreeLogger.DEBUG, "Examining "
         + access.toString());
+
+    List<EditorData> toReturn = new ArrayList<EditorData>();
+
+    // Are we looking at a view that implements IsEditor?
+    if (access.isEditor()) {
+      EditorAccess subAccess = EditorAccess.via(access, calculateIsEditedType(
+          subLogger, access.getEditorType()));
+      toReturn = createEditorData(subAccess);
+
+      // If an object only implements IsEditor, return now
+      if (!editorIntf.isAssignableFrom(access.getEditorType())) {
+        return toReturn;
+      }
+    }
+
     // Determine the Foo in Editor<Foo>
     JClassType expectedToEdit = calculateEditedType(subLogger,
         access.getEditorType());
@@ -322,8 +384,10 @@ public class EditorModel {
     String[] methods = findBeanPropertyMethods(access.getPath(), expectedToEdit);
     assert methods.length == 3;
 
-    return new EditorData(subLogger, editorSoFar, access, methods[0],
-        methods[1], methods[2]);
+    EditorData data = new EditorData(subLogger, editorSoFar, access,
+        methods[0], methods[1], methods[2]);
+    toReturn.add(data);
+    return toReturn;
   }
 
   /**
@@ -347,7 +411,8 @@ public class EditorModel {
     if (!data.isLeafValueEditor()) {
       EditorModel subModel = new EditorModel(this, data.getEditorType(), data,
           calculateEditedType(logger, data.getEditorType()));
-      accumulator.addAll(Arrays.asList(subModel.getEditorData()));
+      accumulator.addAll(accumulator.indexOf(data) + 1,
+          Arrays.asList(subModel.getEditorData()));
       poisoned |= subModel.poisoned;
     }
   }
@@ -430,5 +495,18 @@ public class EditorModel {
   private void poison(String message) {
     logger.log(TreeLogger.ERROR, message);
     poisoned = true;
+  }
+
+  /**
+   * Returns <code>true</code> if the given type participates in Editor
+   * hierarchies.
+   */
+  private boolean shouldExamine(JType type) {
+    JClassType classType = type.isClassOrInterface();
+    if (classType == null) {
+      return false;
+    }
+    return editorIntf.isAssignableFrom(classType)
+        || isEditorIntf.isAssignableFrom(classType);
   }
 }
