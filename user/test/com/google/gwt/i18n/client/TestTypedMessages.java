@@ -13,11 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.i18n.client;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+
 /**
- * TODO: document me.
+ * Test messages that take particular types for parameters.
  */
 public interface TestTypedMessages extends Messages {
 
@@ -28,19 +29,39 @@ public interface TestTypedMessages extends Messages {
   String testAllTypes(int a, float f, long l, boolean bool, Object obj, char c,
       byte b, short s);
 
+  @Key("testAllTypes")
+  SafeHtml testAllTypesAsSafeHtml(int a, float f, long l, boolean bool, Object obj, char c,
+      byte b, short s);
+
   // testLotsOfInts = {0}, {1},{2},{3}
   String testLotsOfInts(int a, int b, int c, int d);
 
+  @Key("testLotsOfInts")
+  SafeHtml testLotsOfIntsAsSafeHtml(int a, int b, int c, int d);
+
   // testSomeObjectTypes = this({0}), StringBuffer({1}), Integer({2}), null{3});
-  String testSomeObjectTypes(I18NTest test, StringBuffer buf, Integer i,
+  String testSomeObjectTypes(Object test, StringBuffer buf, Integer i,
       Object giveMeANull);
+
+  @Key("testSomeObjectTypes")
+  SafeHtml testSomeObjectTypesAsSafeHtml(Object test, StringBuffer buf,
+      Integer i, Object giveMeANull);
 
   // testSingleQuotes = ''A'', ''{0}'', '','''
   String testSingleQuotes(String someArg);
 
+  @Key("testSingleQuotes")
+  SafeHtml testSingleQuotesAsSafeHtml(String someArg);
+
   // simpleMessageTest={0}
   String simpleMessageTest(float arg);
 
+  @Key("simpleMessageTest")
+  SafeHtml simpleMessageTestAsSafeHtml(float arg);
+
   // stringEscaping= "'\ \\ \\\ & \t \n\r\"\' \ end
   String stringEscaping(int a);
+
+  @Key("stringEscaping")
+  SafeHtml stringEscapingAsSafeHtml(int a);
 }

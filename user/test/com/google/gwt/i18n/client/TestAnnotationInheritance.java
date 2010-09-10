@@ -15,6 +15,8 @@
  */
 package com.google.gwt.i18n.client;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+
 /**
  * Verifies that class-level annotations on superinterface are still used
  * by this interface.  In this case, we verify that this interface's keys
@@ -22,6 +24,10 @@ package com.google.gwt.i18n.client;
  */
 public interface TestAnnotationInheritance extends CommonInterfaceAnnotations {
 
-  @DefaultMessage("bar")
+  @Messages.DefaultMessage("bar")
   String bar();
+
+  @Messages.DefaultMessage("bar")
+  @Key("37B51D194A7513E45B56F6524F2D51F2")
+  SafeHtml barAsSafeHtml();
 }

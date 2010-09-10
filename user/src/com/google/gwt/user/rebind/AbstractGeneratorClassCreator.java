@@ -17,6 +17,7 @@ package com.google.gwt.user.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
@@ -252,9 +253,16 @@ public abstract class AbstractGeneratorClassCreator extends
       if (i != 0) {
         getWriter().print(",");
       }
-      getWriter().print(
-          params[i].getType().getParameterizedQualifiedSourceName() + " arg"
-              + (i));
+      if (method.isVarArgs() && i == params.length - 1) {
+        JArrayType arrayType = params[i].getType().isArray();
+        getWriter().print(
+            arrayType.getComponentType().getParameterizedQualifiedSourceName()
+            + "... arg" + (i));
+      } else {
+        getWriter().print(
+            params[i].getType().getParameterizedQualifiedSourceName() + " arg"
+                + (i));
+      }
     }
     getWriter().println(") {");
     getWriter().indent();

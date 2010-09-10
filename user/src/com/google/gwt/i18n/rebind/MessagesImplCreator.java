@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.rebind.SourceWriter;
 
 /**
@@ -46,8 +47,11 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
       throws UnableToCompleteException {
     super(logger, writer, localizableClass, resourceList, false);
     try {
+      MessagesMethodCreator creator = new MessagesMethodCreator(this);
       JClassType stringClass = oracle.getType(String.class.getName());
-      register(stringClass, new MessagesMethodCreator(this));
+      register(stringClass, creator);
+      JClassType safeHtmlClass = oracle.getType(SafeHtml.class.getName());
+      register(safeHtmlClass, creator);
     } catch (NotFoundException e) {
       // never expect this error in practice
       throw error(logger, e);
@@ -64,9 +68,13 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
   private void checkMessagesMethod(TreeLogger logger, JMethod method)
       throws UnableToCompleteException {
     if (!method.getReturnType().getQualifiedSourceName().equals(
-      "java.lang.String")) {
+            "java.lang.String") &&
+        !method.getReturnType().getQualifiedSourceName().equals(
+            MessagesMethodCreator.SAFE_HTML_FQCN)
+        ) {
       throw error(logger,
-        "All methods in interfaces extending Messages must have a return type of String.");
+        "All methods in interfaces extending Messages must have a return type "
+            + "of String or " + MessagesMethodCreator.SAFE_HTML_FQCN + ".");
     }
   }
 

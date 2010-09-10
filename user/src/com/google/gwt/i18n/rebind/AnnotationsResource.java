@@ -88,6 +88,29 @@ public class AnnotationsResource extends AbstractResource {
     }
   }
 
+  private static class EntryWrapper implements ResourceEntry {
+
+    private final String key;
+    private final MethodEntry entry;
+
+    public EntryWrapper(String key, MethodEntry entry) {
+      this.key = key;
+      this.entry = entry;
+    }
+
+    public String getForm(String form) {
+      return form == null ? entry.text : entry.pluralText.get(form);
+    }
+
+    public Collection<String> getForms() {
+      return entry.pluralText.keySet();
+    }
+
+    public String getKey() {
+      return key;
+    }
+  }
+
   /**
    * Class to keep annotation information about a particular method.
    */
@@ -511,6 +534,12 @@ public class AnnotationsResource extends AbstractResource {
   public String getDescription(String key) {
     MethodEntry entry = map.get(key);
     return entry == null ? null : entry.description;
+  }
+
+  @Override
+  public ResourceEntry getEntry(String key) {
+    MethodEntry entry = map.get(key);
+    return entry == null ? null : new EntryWrapper(key, entry);
   }
 
   @Override

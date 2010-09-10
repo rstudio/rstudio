@@ -22,7 +22,10 @@ import org.apache.tapestry.util.text.LocalizedProperties;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * Resource wrapper for localized properties.
@@ -43,22 +46,42 @@ class LocalizedPropertiesResource extends AbstractResource {
     }
   }
 
-  private LocalizedProperties props;
+  private Map<String, MultipleFormEntry> entries;
 
+  @SuppressWarnings("unchecked")
   public LocalizedPropertiesResource(InputStream m, GwtLocale locale) {
     super(locale);
-    props = new LocalizedProperties();
+    LocalizedProperties props = new LocalizedProperties();
     try {
       props.load(m, Util.DEFAULT_ENCODING);
     } catch (IOException e) {
       throw new RuntimeException("Failed to load " + this.getPath(), e);
     }
+    entries = new HashMap<String, MultipleFormEntry>();
+    for (Object propEntryObj : props.getPropertyMap().entrySet()) {
+      Map.Entry<String, String> propEntry = (Entry<String, String>) propEntryObj;
+      String key = propEntry.getKey().trim();
+      String value = propEntry.getValue();
+      int startBracket = key.indexOf('[');
+      int endBracket = key.indexOf(']', startBracket + 1);
+      String form = null;
+      if (startBracket >= 0 && endBracket == key.length() - 1) {
+        form = key.substring(startBracket + 1, endBracket);
+        key = key.substring(0, startBracket);
+      }
+      MultipleFormEntry entry = entries.get(key);
+      if (entry == null) {
+        entry = new MultipleFormEntry(key);
+        entries.put(key, entry);
+      }
+      entry.addForm(form, value);
+    }
   }
 
   @Override
   public void addToKeySet(Set<String> s) {
-    for (Object keyObj : props.getPropertyMap().keySet()) {
-      String key = (String) keyObj;
+    s.addAll(entries.keySet());
+    for (String key : entries.keySet()) {
       /*
        * Remove plural forms from the key list.  They will be looked up as
        * extensions to the base key (@see getStringExt()).
@@ -70,19 +93,19 @@ class LocalizedPropertiesResource extends AbstractResource {
   }
 
   @Override
+  public ResourceEntry getEntry(String key) {
+    return entries.get(key);
+  }
+
+  @Override
   public String getStringExt(String key, String extension) {
-    if (extension != null) {
-      String s = getStringExt(getExtendedKey(key, extension), null);
-      if (s != null) {
-        return s;
-      }
-    }
-    return props.getProperty(key);
+    ResourceEntry entry = getEntry(key);
+    return entry == null ? null : entry.getForm(extension);
   }
 
   @Override
   public boolean notEmpty() {
-    return props != null && !props.getPropertyMap().isEmpty();
+    return !entries.isEmpty();
   }
 
   @Override

@@ -16,10 +16,11 @@
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.i18n.client.LocalizableResource.GenerateKeys;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * Base interface to test annotation inheritance.
- * 
+ *
  * <p>This works by setting the key generator to MD5 on this interface,
  * then verifying that keys in the subinterface are looked up with
  * MD5 hashes rather than method names.
@@ -29,4 +30,8 @@ public interface CommonInterfaceAnnotations extends Messages {
 
   @DefaultMessage("foo")
   String foo();
+
+  @DefaultMessage("foo")
+  @Key("foo")
+  SafeHtml fooAsSafeHtml();
 }

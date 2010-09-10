@@ -22,6 +22,7 @@ import com.google.gwt.i18n.shared.GwtLocale;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -86,6 +87,33 @@ public abstract class AbstractResource {
     public void setMethod(String method) {
       this.method = method;
     }
+  }
+
+  /**
+   * Definition of a single entry for a resource.
+   */
+  public interface ResourceEntry {
+    
+    /**
+     * Retrieve a particular form for this entry.
+     * 
+     * @param form form to retrieve (null for the default)
+     * @return null if the requested form is not present
+     */
+    String getForm(String form);
+    
+    /**
+     * @return list of forms associated with this entry.
+     * 
+     * The default form (also the only form for anything other than messages
+     * with plural support) is always available and not present in this list.
+     */
+    Collection<String> getForms();
+    
+    /**
+     * @return key for this entry (must not be null).
+     */
+    String getKey();
   }
 
   /**
@@ -186,6 +214,22 @@ public abstract class AbstractResource {
         if (resource instanceof AnnotationsResource
             && resource.keySet.contains(key)) {
           return (AnnotationsResource) resource;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Get an entry from the first resource in this list containing a match.
+     *
+     * @param key
+     * @return a ResourceEntry instance
+     */
+    public ResourceEntry getEntry(String key) {
+      for (AbstractResource resource : list) {
+        ResourceEntry e = resource.getEntry(key);
+        if (e != null) {
+          return e;
         }
       }
       return null;
@@ -333,6 +377,82 @@ public abstract class AbstractResource {
   }
 
   /**
+   * Implementation of ResourceEntry that supports multiple forms per entry.
+   */
+  protected static class MultipleFormEntry implements ResourceEntry {
+
+    private final String key;
+    private final Map<String, String> values = new HashMap<String, String>();
+    private final Set<String> forms = new HashSet<String>();
+ 
+    public MultipleFormEntry(String key) {
+      this.key = key;
+    }
+
+    public void addForm(String form, String value) {
+      values.put(form, value);
+      if (form != null) {
+        forms.add(form);
+      }
+    }
+ 
+    public String getForm(String form) {
+      return values.get(form);
+    }
+
+    public Collection<String> getForms() {
+      return forms;
+    }
+
+    public String getKey() {
+      return key;
+    }
+  }
+
+  /**
+   * A simple resource entry with no alternate forms, only a key and a value.
+   */
+  protected static class SimpleEntry implements ResourceEntry {
+
+    private final String key;
+    private final String value;
+  
+    public SimpleEntry(String key, String value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      SimpleEntry other = (SimpleEntry) obj;
+      return key.equals(other.key) && value.equals(other.value);
+    }
+
+    public String getForm(String form) {
+      return form != null ? null : value;
+    }
+
+    public Collection<String> getForms() {
+      return Collections.emptyList();
+    }
+
+    public String getKey() {
+      return key;
+    }
+
+    @Override
+    public int hashCode() {
+      return key.hashCode() + 31 * value.hashCode();
+    }
+  }
+
+  /**
    * Error messages concerning missing keys should include the defined keys if
    * the number of keys is below this threshold.
    */
@@ -355,6 +475,17 @@ public abstract class AbstractResource {
     this.matchLocale = matchLocale;
   }
   
+  /**
+   * Return an entry in this resource.
+   *
+   * @param key
+   * @return ResourceEntry instance
+   */
+  public ResourceEntry getEntry(String key) {
+    String value = getString(key);
+    return value == null ? null : new SimpleEntry(key, value);
+  }
+
   /**
    * @param key
    */

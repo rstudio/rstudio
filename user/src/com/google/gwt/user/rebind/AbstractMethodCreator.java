@@ -48,7 +48,7 @@ public abstract class AbstractMethodCreator extends AbstractSourceCreator {
    * 
    * @param logger TreeLogger for logging
    * @param targetMethod Method
-   * @param resourceList base resource to use for lookup
+   * @param resourceList resource list to use for this method
    * @throws UnableToCompleteException
    */
   public abstract void createMethodFor(TreeLogger logger, JMethod targetMethod,

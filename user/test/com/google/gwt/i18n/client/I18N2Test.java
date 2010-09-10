@@ -17,10 +17,14 @@ package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.TestAnnotatedMessages.Nested;
+import com.google.gwt.i18n.client.constants.TimeZoneConstants;
 import com.google.gwt.i18n.client.gen.Colors;
 import com.google.gwt.i18n.client.gen.TestBadKeys;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -53,7 +57,7 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("13 widgets", m.pluralWidgetsOther(13));
 //    assertEquals("A widget", m.pluralWidgetsOther(1));
   }
-  
+
   public void testBadKeys() {
     TestBadKeys test = GWT.create(TestBadKeys.class);
     assertEquals("zh_spacer", test.zh_spacer());
@@ -132,6 +136,83 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("a circle", s.circle());
   }
 
+  public void testDynamicCurrency() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("The total is AU$1,001.02", m.totalAmount(1001.02, "AUD"));
+    assertEquals("The total is US$1,001.02", m.totalAmount(1001.02, "USD"));
+
+    assertEquals("The total is AU$1,001.02", m.totalAmountAsSafeHtml(1001.02, "AUD").asString());
+    assertEquals("The total is US$1,001.02", m.totalAmountAsSafeHtml(1001.02, "USD").asString());
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testDynamicTimeZone() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    Date date = new Date(Date.UTC(2010 - 1900, 1, 2, 3, 4, 5));
+    TimeZoneConstants timeZoneData = GWT.create(TimeZoneConstants.class);
+    String str = timeZoneData.americaLosAngeles();
+    TimeZoneInfo tzInfo = TimeZoneInfo.buildTimeZoneData(str);
+    TimeZone tz = TimeZone.createTimeZone(tzInfo);
+    assertEquals("in timezone: 2/1/2010 7:04:05 PM", m.inTimezone(date, tz));
+
+    assertEquals("in timezone: 2/1/2010 7:04:05 PM", m.inTimezoneAsSafeHtml(date, tz).asString());
+}
+
+  public void testListWithArray() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("There are no values", m.valuesArray(new int[0]));
+    assertEquals("The value is -1,001", m.valuesArray(new int[]{-1001}));
+    assertEquals("The values are 1 and 2", m.valuesArray(new int[]{1, 2}));
+    assertEquals("The values are 1, 3, 5, 7, and 9,009",
+        m.valuesArray(new int[]{1, 3, 5, 7, 9009}));
+
+    assertEquals(
+        "There are no values", m.valuesArrayAsSafeHtml(new int[0]).asString());
+    assertEquals("The value is -1,001",
+        m.valuesArrayAsSafeHtml(new int[]{-1001}).asString());
+    assertEquals("The values are 1 and 2",
+        m.valuesArrayAsSafeHtml(new int[]{1, 2}).asString());
+    assertEquals("The values are 1, 3, 5, 7, and 9,009",
+        m.valuesArrayAsSafeHtml(new int[]{1, 3, 5, 7, 9009}).asString());
+  }
+
+  public void testListWithList() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals(
+        "There are no values", m.valuesList(Arrays.<Integer> asList()));
+    assertEquals("The value is -1,001", m.valuesList(Arrays.asList(-1001)));
+    assertEquals("The values are 1 and 2", m.valuesList(Arrays.asList(1, 2)));
+    assertEquals("The values are 1, 3, 5, 7, and 9,009",
+        m.valuesList(Arrays.asList(1, 3, 5, 7, 9009)));
+
+    assertEquals("There are no values",
+        m.valuesListAsSafeHtml(Arrays.<Integer> asList()).asString());
+    assertEquals("The value is -1,001",
+        m.valuesListAsSafeHtml(Arrays.asList(-1001)).asString());
+    assertEquals("The values are 1 and 2",
+        m.valuesListAsSafeHtml(Arrays.asList(1, 2)).asString());
+    assertEquals("The values are 1, 3, 5, 7, and 9,009",
+        m.valuesListAsSafeHtml(Arrays.asList(1, 3, 5, 7, 9009)).asString());
+  }
+
+  public void testListWtihVarArgs() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("There are no values", m.valuesVarArgs());
+    assertEquals("The value is -1,001", m.valuesVarArgs(-1001));
+    assertEquals("The values are 1 and 2", m.valuesVarArgs(1, 2));
+    assertEquals("The values are 1, 3, 5, 7, and 9,009",
+        m.valuesVarArgs(1, 3, 5, 7, 9009));
+
+    assertEquals("There are no names", m.valuesVarArgsAsSafeHtml().asString());
+    assertEquals(
+        "The name is John", m.valuesVarArgsAsSafeHtml(sh("John")).asString());
+    assertEquals("The names are John and Jeff",
+        m.valuesVarArgsAsSafeHtml(sh("John"), sh("Jeff")).asString());
+    assertEquals("The names are John, Jeff, and Bob",
+        m.valuesVarArgsAsSafeHtml(sh("John"), sh("Jeff"), sh("Bob")).asString(
+        ));
+  }
+
   /**
    * Verify that nested annotations are looked up with both A$B names
    * and A_B names.  Note that $ takes precedence and only one file for a
@@ -144,6 +225,58 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("nested underscore b", m.nestedUnderscore());
   }
 
+  public void testSpecialPlurals() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("No widgets", m.specialPlurals(0));
+    assertEquals("A widget", m.specialPlurals(1));
+    assertEquals("2 widgets", m.specialPlurals(2));
+    assertEquals("No one has reviewed this movie", m.reviewers(0, null, null));
+    assertEquals(
+        "John Doe has reviewed this movie", m.reviewers(1, "John Doe", null));
+    assertEquals("John Doe and Betty Smith have reviewed this movie",
+        m.reviewers(2, "John Doe", "Betty Smith"));
+    assertEquals(
+        "John Doe, Betty Smith, and one other have reviewed this movie",
+        m.reviewers(3, "John Doe", "Betty Smith"));
+
+    assertEquals("No widgets", m.specialPluralsAsSafeHtml(0).asString());
+    assertEquals("A widget", m.specialPluralsAsSafeHtml(1).asString());
+    assertEquals("2 widgets", m.specialPluralsAsSafeHtml(2).asString());
+    assertEquals("No one has reviewed this movie",
+        m.reviewersAsSafeHtml(0, null, null).asString());
+    assertEquals("John Doe has reviewed this movie", m.reviewersAsSafeHtml(1,
+        "John Doe", null).asString());
+    assertEquals("John Doe and Betty Smith have reviewed this movie",
+        m.reviewersAsSafeHtml(2, "John Doe", sh("Betty Smith")).asString());
+    assertEquals(
+        "John Doe, Betty Smith, and one other have reviewed this movie",
+        m.reviewersAsSafeHtml(3, "John Doe", sh("Betty Smith")).asString());
+}
+
+  public void testStaticArg() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("This is <b>bold</b>", m.staticArgs());
+    assertEquals("This is <b>bold</b>", m.staticArgsSafeHtml().asString());
+  }
+
+  public void testStaticCurrency() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("The total is AU$1,001.02", m.australianDollars(1001.02));
+
+    assertEquals("The total is AU$1,001.02", m.australianDollarsAsSafeHtml(
+        1001.02).asString());
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testStaticTimeZone() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    Date date = new Date(Date.UTC(2010 - 1900, 1, 2, 3, 4, 5));
+    assertEquals("in GMT: 2/2/2010 3:04:05 AM", m.gmt(date));
+
+    assertEquals("in GMT: 2/2/2010 3:04:05 AM", m.gmtAsSafeHtml(date).asString(
+        ));
+  }
+
   public void testWalkUpColorTree() {
     Colors colors = GWT.create(Colors.class);
     assertEquals("red_b_C_d", colors.red());
@@ -151,4 +284,15 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("yellow_b", colors.yellow());
   }
 
+  /**
+   * Wrapper to easily convert a String literal to a SafeHtml instance.
+   * 
+   * @param string
+   * @return a SafeHtml wrapper around the supplied string
+   */
+  private SafeHtml sh(String string) {
+    SafeHtmlBuilder buf = new SafeHtmlBuilder();
+    buf.appendHtmlConstant(string);
+    return buf.toSafeHtml();
+  }
 }

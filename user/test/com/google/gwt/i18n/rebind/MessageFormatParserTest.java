@@ -16,17 +16,49 @@
 package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.i18n.rebind.MessageFormatParser.ArgumentChunk;
+import com.google.gwt.i18n.rebind.MessageFormatParser.StaticArgChunk;
+import com.google.gwt.i18n.rebind.MessageFormatParser.StringChunk;
 import com.google.gwt.i18n.rebind.MessageFormatParser.TemplateChunk;
 
 import junit.framework.TestCase;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test for {@link MessageFormatParser}.
  */
 public class MessageFormatParserTest extends TestCase {
+
+  public void testList() throws ParseException {
+    String str = "{0,list:max=3,number:curcode=1:space,currency}";
+    List<TemplateChunk> parsed = MessageFormatParser.parse(str);
+    assertEquals(1, parsed.size());
+    ArgumentChunk chunk = (ArgumentChunk) parsed.get(0);
+    assertTrue(chunk.isList());
+    assertEquals("number", chunk.getFormat());
+    assertEquals("currency", chunk.getSubFormat());
+    Map<String, String> args = chunk.getListArgs();
+    assertEquals(1, args.size());
+    assertEquals("3", args.get("max"));
+    args = chunk.getFormatArgs();
+    assertEquals(2, args.size());
+    assertEquals("1", args.get("curcode"));
+    assertEquals("", args.get("space"));
+
+    str = "{0,list,number}";
+    parsed = MessageFormatParser.parse(str);
+    assertEquals(1, parsed.size());
+    chunk = (ArgumentChunk) parsed.get(0);
+    assertTrue(chunk.isList());
+    assertEquals("number", chunk.getFormat());
+    assertNull(chunk.getSubFormat());
+    args = chunk.getListArgs();
+    assertEquals(0, args.size());
+    args = chunk.getFormatArgs();
+    assertEquals(0, args.size());
+}
 
   public void testParseLiteral() throws ParseException {
     String str = "Simple string literal";
@@ -88,18 +120,41 @@ public class MessageFormatParserTest extends TestCase {
   }
 
   public void testRoundTrip() throws ParseException {
-    // Note that we the quoting will not necessarily be reproduced, only
-    // that the returned result is functionally equivalent.
+    // Note that the quoting will not necessarily be reproduced, only that the
+    // returned result is functionally equivalent.  So, some of these strings
+    // are carefully constructed to match the form which will be returned.
     String[] testStrings = new String[] {
       "Simple string literal",
       "{0}",
       "'{'0'}'",
       "Don''t tell me it''s broken",
+      "'{'0'}' {1,list:max=3,a'{'0'}'=''b''}",
     };
     for (String str : testStrings) {
       List<TemplateChunk> parsed = MessageFormatParser.parse(str);
       String out = MessageFormatParser.assemble(parsed);
       assertEquals(str, out);
     }
+  }
+
+  public void testStaticArg() throws ParseException {
+    String str = "{beginBold,<b>}bold{endBold,</b>}";
+    List<TemplateChunk> parsed = MessageFormatParser.parse(str);
+    assertEquals(3, parsed.size());
+    StaticArgChunk staticArg = (StaticArgChunk) parsed.get(0);
+    assertEquals("beginBold", staticArg.getArgName());
+    assertEquals("<b>", staticArg.getReplacement());
+    StringChunk stringChunk = (StringChunk) parsed.get(1);
+    assertEquals("bold", stringChunk.getString());
+    staticArg = (StaticArgChunk) parsed.get(2);
+    assertEquals("endBold", staticArg.getArgName());
+    assertEquals("</b>", staticArg.getReplacement());
+    
+    str = "{test,'{}'''}";
+    parsed = MessageFormatParser.parse(str);
+    assertEquals(1, parsed.size());
+    staticArg = (StaticArgChunk) parsed.get(0);
+    assertEquals("test", staticArg.getArgName());
+    assertEquals("{}'", staticArg.getReplacement());
   }
 }

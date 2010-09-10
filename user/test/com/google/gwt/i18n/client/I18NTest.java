@@ -32,6 +32,7 @@ import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass.InnerInner;
 import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass.InnerInnerMessages;
 import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass.LocalizableInnerInner;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SimpleHtmlSanitizer;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -48,6 +49,24 @@ import java.util.Set;
  * Tests Internationalization. Assumes locale is set to piglatin_UK
  */
 public class I18NTest extends GWTTestCase {
+
+  /**
+   * A test object to verify that when formatting a message with an arbitrary
+   * object passed as an argument, that object's toString method is called.
+   */
+  public static class TestObjectToString {
+    @Override
+    public String toString() {
+      return "TestObjectToString";
+    }
+  }
+
+  private static final String HTML_TO_SANITIZE =
+      "<em>this</em> gets escaped: <script>evil</script>";
+  private static final String SANITIZED_HTML =
+      "<em>this</em> gets escaped: &lt;script&gt;evil&lt;/script&gt;";
+  private static final String STRING_WITH_B_TAG = "<b>text</b>";
+  private static final String STRING_WITH_B_TAG_ESCAPED = "&lt;b&gt;text&lt;/b&gt;";
 
   @Override
   public String getModuleName() {
@@ -126,6 +145,75 @@ public class I18NTest extends GWTTestCase {
     assertEquals("PL: 13 widgets", m.pluralWidgetsOther(13));
     assertEquals("Too many widgets to count (150) in pig-latin",
         m.pluralWidgetsOther(150));
+    assertEquals("PL: A widget", m.pluralWidgetsOther(1));
+    
+    assertEquals("PL: A thingy", m.twoParamPlural("thingy", 1));
+    assertEquals("PL: 42 thingies", m.twoParamPlural("thingies", 42));
+    assertEquals("PL: Tons (249) of thingies", m.twoParamPlural("thingies", 249));
+  }
+
+  public void testAnnotatedMessagesAsSafeHtml() {
+    // Duplicate of non-SafeHtml tests
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("Estay emay", m.basicTextAsSafeHtml().asString());
+    assertEquals("Oncay oremay, ithway eaningmay", m.withMeaningAsSafeHtml().asString());
+    assertEquals("PL: One argument: one", m.oneArgumentAsSafeHtml("one").asString());
+    assertEquals("PL: One argument (where am I?), which is optional",
+        m.optionalArgumentAsSafeHtml("where am I?").asString());
+    assertEquals("Two arguments, second and first, inverted",
+        m.invertedArgumentsAsSafeHtml("first", "second").asString()); // from default locale
+    assertEquals("PL: Don't tell me I can't {quote things in braces}",
+        m.quotedTextAsSafeHtml().asString());
+    assertEquals("PL: This {0} would be an argument if not quoted",
+        m.quotedArgAsSafeHtml().asString());
+    assertEquals("PL: Total is US$11,305.01",
+        m.currencyFormatAsSafeHtml(11305.01).asString());
+    assertEquals("PL: Default number format is 1,017.1",
+        m.defaultNumberFormatAsSafeHtml(1017.1).asString());
+    @SuppressWarnings("deprecation")
+    Date date = new Date(107, 11, 1, 12, 1, 2);
+    assertEquals("PL: It is 12:01 PM on Saturday, December 1, 2007",
+        m.getTimeDateAsSafeHtml(date).asString());
+    assertEquals("PL: 13 widgets", m.pluralWidgetsOtherAsSafeHtml(13).asString());
+    assertEquals("Too many widgets to count (150) in pig-latin",
+        m.pluralWidgetsOtherAsSafeHtml(150).asString());
+
+    assertEquals("PL: A widget", m.pluralWidgetsOtherAsSafeHtml(1).asString());
+
+    assertEquals("PL: A thingy",
+        m.twoParamPluralAsSafeHtml("thingy", 1).asString());
+    assertEquals("PL: 42 thingies",
+        m.twoParamPluralAsSafeHtml("thingies", 42).asString());
+    assertEquals("PL: Tons (249) of thingies",
+        m.twoParamPluralAsSafeHtml("thingies", 249).asString());
+
+    // Additional SafeHtml-specific tests
+    assertEquals("PL: One argument: " + STRING_WITH_B_TAG_ESCAPED,
+        m.oneArgumentAsSafeHtml(STRING_WITH_B_TAG).asString());
+    assertEquals("PL: One argument: " + SANITIZED_HTML,
+        m.oneArgumentAsSafeHtml(SimpleHtmlSanitizer.sanitizeHtml(HTML_TO_SANITIZE)).asString());
+    assertEquals(
+        "Two arguments, " + STRING_WITH_B_TAG_ESCAPED + " and " + SANITIZED_HTML + ", inverted",
+        m.invertedArgumentsAsSafeHtml(
+            SimpleHtmlSanitizer.sanitizeHtml(HTML_TO_SANITIZE),
+            STRING_WITH_B_TAG).asString());
+
+    assertEquals("PL: A " + STRING_WITH_B_TAG_ESCAPED,
+        m.twoParamPluralAsSafeHtml(STRING_WITH_B_TAG, 1).asString());
+    assertEquals("PL: 42 " + STRING_WITH_B_TAG_ESCAPED,
+        m.twoParamPluralAsSafeHtml(STRING_WITH_B_TAG, 42).asString());
+    assertEquals("PL: Tons (249) of " + STRING_WITH_B_TAG_ESCAPED,
+        m.twoParamPluralAsSafeHtml(STRING_WITH_B_TAG, 249).asString());
+
+    assertEquals("PL: A " + SANITIZED_HTML,
+        m.twoParamPluralAsSafeHtml(
+            SimpleHtmlSanitizer.sanitizeHtml(HTML_TO_SANITIZE), 1).asString());
+    assertEquals("PL: 42 " + SANITIZED_HTML,
+        m.twoParamPluralAsSafeHtml(
+            SimpleHtmlSanitizer.sanitizeHtml(HTML_TO_SANITIZE), 42).asString());
+    assertEquals("PL: Tons (249) of " + SANITIZED_HTML,
+        m.twoParamPluralAsSafeHtml(
+            SimpleHtmlSanitizer.sanitizeHtml(HTML_TO_SANITIZE), 249).asString());
   }
 
   public void testAnnotationInheritance() {
@@ -133,6 +221,14 @@ public class I18NTest extends GWTTestCase {
     assertEquals("foo", m.foo());
     assertEquals("bar_piglatin", m.bar());
     assertEquals("baz_piglatin", m.baz());
+  }
+
+  public void testAnnotationInheritanceAsSafeHtml() {
+    // Duplicate of non-SafeHtml tests
+    TestAnnotationGrandchild m = GWT.create(TestAnnotationGrandchild.class);
+    assertEquals("foo", m.fooAsSafeHtml().asString());
+    assertEquals("bar_piglatin", m.barAsSafeHtml().asString());
+    assertEquals("baz_piglatin", m.bazAsSafeHtml().asString());
   }
 
   public void testBindings() {
@@ -521,6 +617,14 @@ public class I18NTest extends GWTTestCase {
     assertEquals("estednay underscoray", m.nestedUnderscore());
   }
 
+  public void testNestedAnnotationsAsSafeHtml() {
+    // Duplicate of non-SafeHtml tests
+    TestAnnotatedMessages.Nested m = GWT.create(TestAnnotatedMessages.Nested.class);
+    // no translation exists in piglatin for nested dollar
+    assertEquals("nested dollar", m.nestedDollarAsSafeHtml().asString());
+    assertEquals("estednay underscoray", m.nestedUnderscoreAsSafeHtml().asString());
+  }
+
   /**
    * Test that messages works with Number subclasses.
    */
@@ -548,6 +652,13 @@ public class I18NTest extends GWTTestCase {
     assertEquals("Îñţérñåţîöñåļîžåţîöñ", s.internationalization());
   }
 
+  public void testSpecialPlurals() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("No widgets", m.specialPlurals(0));
+    assertEquals("A widget", m.specialPlurals(1));
+    assertEquals("2 widgets", m.specialPlurals(2));
+  }
+
   public void testTestMessages() {
     TestMessages s = GWT.create(TestMessages.class);
     assertEquals("no args", s.args0());
@@ -563,6 +674,22 @@ public class I18NTest extends GWTTestCase {
     assertEquals("{quoted}", s.quotedBraces());
   }
 
+  public void testTestMessagesAsSafeHtml() {
+    // Duplicate of non-SafeHtml tests
+    TestMessages m = (TestMessages) GWT.create(TestMessages.class);
+    assertEquals("no args", m.args0AsSafeHtml().asString());
+    assertEquals("a,b,c,d,e,f,g,h,i,j", m.args10AsSafeHtml("a", "b", "c", "d", "e", "f",
+        "g", "h", "i", "j").asString());
+    String shouldHave = "x,y, \"a\",\"b\", \"x\", \"y\", \'a\', b, {0}, \'y\'";
+    assertEquals(shouldHave, m.argsWithQuotesAsSafeHtml("x", "y").asString());
+    assertEquals("repeatedArgs: a, b, a, b, a, b, a, b",
+        m.testLotsOfUsageOfArgsAsSafeHtml("a", "b").asString());
+    assertEquals("\"~\" ~~ \"~~~~ \"\"", m.testWithXsAsSafeHtml().asString());
+    assertEquals("お好你好好", m.unicodeAsSafeHtml("好", "好").asString());
+    assertEquals("", m.emptyAsSafeHtml().asString());
+    assertEquals("{quoted}", m.quotedBracesAsSafeHtml().asString());
+  }
+
   public void testTypedMessages() {
     TestTypedMessages typed = GWT.create(TestTypedMessages.class);
     String expected = "int(0) float(1.5), long(0), boolean(true), Object([], char(a), byte(127), short(-32768);";
@@ -574,11 +701,47 @@ public class I18NTest extends GWTTestCase {
     assertEquals("2.25", oneFloat);
     String singleQuotes = typed.testSingleQuotes("arg");
     assertEquals("'A', 'arg', ','", singleQuotes);
-    String testSomeObjectTypes = typed.testSomeObjectTypes(new I18NTest(),
-        new StringBuffer("hello"), new Integer("34"), null);
-    assertEquals("this(null(" + I18NTest.class.getName()
-        + ")), StringBuffer(hello), Integer(34), " + "null(null);",
-        testSomeObjectTypes);
+    String testSomeObjectTypes = typed.testSomeObjectTypes(
+        new TestObjectToString(), new StringBuffer("hello"), new Integer("34"),
+        null);
+    assertEquals("obj(TestObjectToString), StringBuffer(hello), "
+        + "Integer(34), " + "null(null);", testSomeObjectTypes);
+  }
+
+  public void testTypedMessagesAsSafeHtml() {
+    // Duplicate of non-SafeHtml tests
+    TestTypedMessages m = (TestTypedMessages) GWT.create(TestTypedMessages.class);
+    String expected = "int(0) float(1.5), long(0), boolean(true), Object([],"
+        + " char(a), byte(127), short(-32768);";
+    assertEquals(expected, m.testAllTypesAsSafeHtml(0, (float) 1.5, 0, true,
+        new ArrayList<String>(), 'a', Byte.MAX_VALUE,
+        Short.MIN_VALUE).asString());
+    String lotsOfInts = m.testLotsOfIntsAsSafeHtml(1, 2, 3, 4).asString();
+    assertEquals("1, 2,3,4 ", lotsOfInts);
+    String oneFloat = m.simpleMessageTestAsSafeHtml((float) 2.25).asString();
+    assertEquals("2.25", oneFloat);
+    String singleQuotes = m.testSingleQuotesAsSafeHtml("arg").asString();
+    assertEquals("'A', 'arg', ','", singleQuotes);
+    String testSomeObjectTypes = m.testSomeObjectTypesAsSafeHtml(
+        new TestObjectToString(), new StringBuffer("hello"), new Integer("34"),
+        null).asString();
+    assertEquals("obj(TestObjectToString), StringBuffer(hello), "
+        + "Integer(34), null(null);",
+      testSomeObjectTypes);
+
+    // Additional SafeHtml-specific tests
+    Object someObject = new Object() {
+      @Override
+      public String toString() {
+        return STRING_WITH_B_TAG;
+      }
+    };
+    testSomeObjectTypes = m.testSomeObjectTypesAsSafeHtml(
+        new TestObjectToString(), new StringBuffer(STRING_WITH_B_TAG),
+        new Integer("34"), someObject).asString();
+    assertEquals("obj(TestObjectToString), StringBuffer("
+        + STRING_WITH_B_TAG_ESCAPED + "), Integer(34), null("
+        + STRING_WITH_B_TAG_ESCAPED + ");", testSomeObjectTypes);
   }
 
   private void assertArrayEquals(String[] shouldBe, String[] test) {

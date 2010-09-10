@@ -15,12 +15,18 @@
  */
 package com.google.gwt.i18n.client;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+
 /**
  * Verifies that class-level annotations on grandparent interface are still honored,
  * to make sure multiple levels of inheritance are handled.
  */
 public interface TestAnnotationGrandchild extends TestAnnotationInheritance {
 
-  @DefaultMessage("baz")
+  @Messages.DefaultMessage("baz")
   String baz();
+
+  @Messages.DefaultMessage("baz")
+  @Key("73FEFFA4B7F6BB68E44CF984C85F6E88")
+  SafeHtml bazAsSafeHtml();
 }

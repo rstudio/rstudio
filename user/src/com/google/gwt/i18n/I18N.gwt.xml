@@ -16,6 +16,7 @@
 <!--                                                                        -->
 <module>
   <inherits name="com.google.gwt.regexp.RegExp"/>
+  <inherits name="com.google.gwt.safehtml.SafeHtml"/>
   <source path="" includes="client/,shared/" />
 
   <!-- Browser-sensitive code should use the 'locale' client property. -->

@@ -25,6 +25,7 @@ import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 @DefaultLocale("en")
 public interface PluralMessages extends Messages {
   @DefaultMessage("You have {0} trees.")
-  @PluralText({"one", "You have one tree."})
+  @PluralText({"one", "You have one tree.",
+      "=0", "You have no trees"})
   String treeCount(@PluralCount int count);
 }

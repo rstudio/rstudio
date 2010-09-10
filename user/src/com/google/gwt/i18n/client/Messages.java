@@ -206,6 +206,37 @@ public interface Messages extends LocalizableResource {
     String value();
   }
 
+
+  /**
+   * Ignored except on parameters also tagged with {@link PluralCount}, and
+   * provides an offset to be subtracted from the value before a plural rule
+   * is chosen or the value is formatted.  Note that "=n" forms are evaluated
+   * before this offset is applied.
+   * 
+   * <p>Example:
+   * <code><pre>
+   *   &#64;PluralText({"=0", "No one has recommended this movie",
+   *     "=1", "{0} has recommended this movie",
+   *     "=2", "{0} and {1} have recommended this movie",
+   *     "one", "{0}, {1} and one other have recommended this movie"})
+   *   &#64;DefaultMessage("{0}, {1} and {2,number} others have recommended this movie")
+   *   String recommenders(&#64;Optional String rec1, &#64;Optional String rec2,
+   *     &#64;PluralCount &#64;Offset(2) int count);
+   * </pre></code>
+   * would result in
+   * <code><pre>
+   * recommenders("John", null, 1) => "John has..."
+   * recommenders("John", "Jane", 3) => "John, Jane, and one other..."
+   * recommenders("John", "Jane", 1402) => "John, Jane, and 1,400 others..."
+   * </pre></code>
+   * </p>
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.PARAMETER)
+  public @interface Offset {
+    int value();
+  }
+
   /**
    * Indicates the specified parameter is optional and need not appear in a
    * particular translation of this message.
