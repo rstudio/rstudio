@@ -47,11 +47,19 @@ public class HistoryTest extends GWTTestCase {
   }-*/;
 
   /*
-   * Copied from HistoryImplSafari.
+   * Copied from UserAgent.gwt.xml and HistoryImplSafari.
    */
   private static native boolean isSafari2() /*-{
+    var ua = navigator.userAgent;
+    
+    // copied from UserAgent.gwt.xml
+    if (ua.indexOf("webkit") == -1) {
+      return false;
+    }
+    
+    // copied from HistoryImplSafari
     var exp = / AppleWebKit\/([\d]+)/;
-    var result = exp.exec(navigator.userAgent);
+    var result = exp.exec(ua);
     if (result) {
       // The standard history implementation works fine on WebKit >= 522
       // (Safari 3 beta).
@@ -62,7 +70,7 @@ public class HistoryTest extends GWTTestCase {
   
     // The standard history implementation works just fine on the iPhone, which
     // unfortunately reports itself as WebKit/420+.
-    if (navigator.userAgent.indexOf('iPhone') != -1) {
+    if (ua.indexOf('iPhone') != -1) {
       return false;
     }
   
@@ -146,6 +154,7 @@ public class HistoryTest extends GWTTestCase {
    * Ensure that non-url-safe strings (such as those containing spaces) are
    * encoded/decoded correctly, and that programmatic 'back' works.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testHistory() {
     if (isSafari2()) {
       // History.back() is broken on Safari2, so we skip this test.
@@ -260,6 +269,12 @@ public class HistoryTest extends GWTTestCase {
     History.newItem(shouldBeEncoded);
   }
 
+  /*
+   * HtmlUnit reports:
+   *   expected=abc;,/?:@&=+$-_.!~*()ABC123foo
+   *   actual  =abc;,/?:@&=%20$-_.!~*()ABC123foo
+   */
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testTokenNonescaping() {
     final String shouldNotChange = "abc;,/?:@&=+$-_.!~*()ABC123foo";
 
