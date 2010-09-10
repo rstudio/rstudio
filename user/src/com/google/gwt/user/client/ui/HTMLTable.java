@@ -25,6 +25,7 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -227,7 +228,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
 
     /**
      * Sets the style name associated with the specified cell.
-     * 
+     *
      * @param row the row of the cell whose style name is to be set
      * @param column the column of the cell whose style name is to be set
      * @param styleName the new style name
@@ -1050,8 +1051,20 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   }
 
   /**
+   * Sets the HTML contents of the specified cell.
+   *
+   * @param row the cell's row
+   * @param column the cell's column
+   * @param html the cell's safe html contents
+   * @throws IndexOutOfBoundsException
+   */
+  public void setHTML(int row, int column, SafeHtml html) {
+    setHTML(row, column, html.asString());
+  }
+
+  /**
    * Sets the text within the specified cell.
-   * 
+   *
    * @param row the cell's row
    * @param column cell's column
    * @param text the cell's text contents

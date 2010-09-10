@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.CustomButton.Face;
@@ -36,6 +37,8 @@ import java.util.Map.Entry;
  * released.
  */
 public class CustomButtonTest extends GWTTestCase {
+
+  private static final String html = "<b>hello</b><i>world</i>";
 
   public String getModuleName() {
     return "com.google.gwt.user.User";
@@ -146,6 +149,13 @@ public class CustomButtonTest extends GWTTestCase {
       assertEquals(f.getHTML().toLowerCase(), "<b>" + faceName.toLowerCase()
           + "</b>");
     }
+  }
+
+  public void testSetSafeHtml() {
+    PushButton button = new PushButton();
+    button.setHTML(SafeHtmlUtils.fromSafeConstant(html));
+    
+    assertEquals(html, button.getHTML().toLowerCase());
   }
 
   public void testSyntheticClick() {

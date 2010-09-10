@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 
 /**
@@ -23,9 +24,22 @@ import com.google.gwt.user.client.Command;
  */
 public class MenuItemTest extends GWTTestCase {
 
+  private static final String html = "<b>hello</b><i>world</i>";
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.UserTest";
+  }
+
+  public void testSafeHtmlWithCommand() {
+    Command command = new Command() {
+      public void execute() {
+      }
+    };
+    MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), command);
+    
+    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(command, item.getCommand());
   }
 
   public void testSetCommandWithMenuBar() {
@@ -44,6 +58,14 @@ public class MenuItemTest extends GWTTestCase {
     assertEquals(command, item.getCommand());
   }
 
+  public void testSafeHtmlWithSubMenu() {
+    MenuBar subMenu = new MenuBar();
+    MenuItem item = new MenuItem(SafeHtmlUtils.fromSafeConstant(html), subMenu);
+    
+    assertEquals(html, item.getHTML().toLowerCase());
+    assertEquals(subMenu, item.getSubMenu());
+  }
+
   public void testSetCommandWithoutMenuBar() {
     Command command = new Command() {
       public void execute() {
@@ -56,6 +78,18 @@ public class MenuItemTest extends GWTTestCase {
     assertNull(item.getCommand());
 
     item.setCommand(command);
+    assertEquals(command, item.getCommand());
+  }
+
+  public void testSetSafeHtml() {
+    Command command = new Command() {
+      public void execute() {
+      }
+    };
+    MenuItem item = new MenuItem("foo", command);
+    item.setHTML(SafeHtmlUtils.fromSafeConstant(html));
+    
+    assertEquals(html, item.getHTML().toLowerCase());
     assertEquals(command, item.getCommand());
   }
 

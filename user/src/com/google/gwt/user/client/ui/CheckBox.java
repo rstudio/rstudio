@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -67,7 +68,16 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
   /**
    * Creates a check box with the specified text label.
-   * 
+   *
+   * @param label the check box's label
+   */
+  public CheckBox(SafeHtml label) {
+    this(label.asString(), true);
+  }
+
+  /**
+   * Creates a check box with the specified text label.
+   *
    * @param label the check box's label
    */
   public CheckBox(String label) {

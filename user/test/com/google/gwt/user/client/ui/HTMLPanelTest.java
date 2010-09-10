@@ -15,15 +15,17 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * Tests the HTMLPanel widget.
  */
 public class HTMLPanelTest extends GWTTestCase {
-
   static class Adder implements HasWidgetsTester.WidgetAdder {
     public void addChild(HasWidgets container, Widget child) {
       ((HTMLPanel) container).add(child, "w00t");
@@ -32,6 +34,14 @@ public class HTMLPanelTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.user.User";
+  }
+
+  /**
+   * A SafeHtmlTemplates interface for testing.
+   */
+  public interface TestTemplates extends SafeHtmlTemplates {
+    @Template("<table><tr><td>{0} <span id='labelHere'></span></td></tr></table>")
+    SafeHtml tableTemplate(String body);
   }
 
   /**
@@ -240,5 +250,33 @@ public class HTMLPanelTest extends GWTTestCase {
     assertEquals("Unattached's parent element should be unaffected",
         attachedParentElem, attached.getElement().getParentElement());
   }
-}
 
+  /**
+   * Tests SafeHtml constructor
+   */
+  public void testSafeHtml() {
+    TestTemplates templates = GWT.create(TestTemplates.class);
+    SafeHtml table = templates.tableTemplate("Hello");
+    
+    HTMLPanel hp = new HTMLPanel(table);
+    InlineLabel label = new InlineLabel("World");
+    hp.addAndReplaceElement(label, "labelHere");
+
+    Element parent = label.getElement().getParentElement();
+    assertEquals("td", parent.getTagName().toLowerCase());
+
+    parent = parent.getParentElement();
+    assertEquals("tr", parent.getTagName().toLowerCase());
+
+    // Look for the table in the main panel div
+    Element firstChild = null;
+    while (parent != null && parent != hp.getElement()) {
+      firstChild = parent;
+      parent = parent.getParentElement();
+    }
+
+    assertNotNull(parent);
+    assertEquals("div", parent.getTagName().toLowerCase());
+    assertEquals("table", firstChild.getTagName().toLowerCase());
+  }
+}

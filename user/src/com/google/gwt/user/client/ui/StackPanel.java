@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -88,7 +89,18 @@ public class StackPanel extends ComplexPanel implements InsertPanel {
   /**
    * Adds a new child with the given widget and header, optionally interpreting
    * the header as HTML.
-   * 
+   *
+   * @param w the widget to be added
+   * @param stackHtml the header html associated with this widget
+   */
+  public void add(Widget w, SafeHtml stackHtml) {
+    add(w, stackHtml.asString(), true);
+  }
+
+  /**
+   * Adds a new child with the given widget and header, optionally interpreting
+   * the header as HTML.
+   *
    * @param w the widget to be added
    * @param stackText the header text associated with this widget
    * @param asHTML <code>true</code> to treat the specified text as HTML
@@ -190,8 +202,18 @@ public class StackPanel extends ComplexPanel implements InsertPanel {
   }
 
   /**
+   * Sets the html associated with a child by its index.
+   *
+   * @param index the index of the child whose text is to be set
+   * @param html the html to be associated with it
+   */
+  public void setStackText(int index, SafeHtml html) {
+    setStackText(index, html.asString(), true);
+  }
+
+  /**
    * Sets the text associated with a child by its index.
-   * 
+   *
    * @param index the index of the child whose text is to be set
    * @param text the text to be associated with it
    * @param asHTML <code>true</code> to treat the specified text as HTML

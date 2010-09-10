@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.HasDirection.Direction;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * A widget that can contain arbitrary HTML.
@@ -71,6 +72,15 @@ public class InlineHTML extends HTML {
   }
 
   /**
+   * Initializes the widget's HTML from a given {@link SafeHtml} object.
+   *
+   * @param html the new widget's HTML contents
+   */
+  public InlineHTML(SafeHtml html) {
+    this(html.asString());
+  }
+
+  /**
    * Creates an HTML widget with the specified HTML contents.
    *
    * @param html the new widget's HTML contents
@@ -78,6 +88,18 @@ public class InlineHTML extends HTML {
   public InlineHTML(String html) {
     this();
     setHTML(html);
+  }
+
+  /**
+   * Creates an HTML widget with the specified contents and with the
+   * specified direction.
+   *
+   * @param html the new widget's SafeHtml contents
+   * @param dir the content's direction. Note: {@code Direction.DEFAULT} means
+   *        direction should be inherited from the widget's parent element.
+   */
+  public InlineHTML(SafeHtml html, Direction dir) {
+    this(html.asString(), dir);
   }
 
   /**

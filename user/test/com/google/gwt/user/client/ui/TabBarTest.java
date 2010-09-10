@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -52,12 +53,21 @@ public class TabBarTest extends GWTTestCase {
     }
   }
 
+  private static final String html = "<b>hello</b><i>world</i>";
+
   int selected;
   int beforeSelection;
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
+  }
+
+  public void testAddTab() {
+    TabBar bar = createTabBar();
+    bar.addTab(SafeHtmlUtils.fromSafeConstant(html));
+    
+    assertEquals(html, bar.getTabHTML(0).toLowerCase());
   }
 
   public void testDebugId() {
@@ -94,6 +104,13 @@ public class TabBarTest extends GWTTestCase {
     assertFalse(bar.isTabEnabled(1));
     bar.setTabEnabled(1, true);
     assertTrue(bar.isTabEnabled(1));
+  }
+
+  public void testInsertTab() {
+    TabBar bar = createTabBar();
+    bar.insertTab(SafeHtmlUtils.fromSafeConstant(html), 0);
+    
+    assertEquals(html, bar.getTabHTML(0).toLowerCase());
   }
 
   public void testSelect() {
@@ -168,6 +185,14 @@ public class TabBarTest extends GWTTestCase {
     bar.selectTab(1, false);
     handler.assertOnBeforeSelectionFired(false);
     handler.assertOnSelectionFired(false);
+  }
+
+  public void testSetTabSafeHtml() {
+    TabBar bar = createTabBar();
+    bar.insertTab("foo", 0);
+    bar.setTabHTML(0, SafeHtmlUtils.fromSafeConstant(html));
+    
+    assertEquals(html, bar.getTabHTML(0).toLowerCase());
   }
 
   public void testGetHTML() {
