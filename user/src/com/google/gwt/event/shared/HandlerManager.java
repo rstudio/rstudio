@@ -25,7 +25,7 @@ import com.google.gwt.event.shared.GwtEvent.Type;
  * @deprecated use {@link SimpleEventBus}.
  */
 @Deprecated
-public class HandlerManager {
+public class HandlerManager implements HasHandlers {
 
   private SimpleEventBus eventBus;
 
