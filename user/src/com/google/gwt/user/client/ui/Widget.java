@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.event.shared.GwtEvent.Type;
@@ -43,7 +42,8 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    */
   int eventsToSink;
   private boolean attached;
-  private HandlerManager handlerManager;
+  @SuppressWarnings("deprecation")
+  private com.google.gwt.event.shared.HandlerManager handlerManager;
   private Object layoutData;
   private Widget parent;
 
@@ -57,6 +57,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * @param handler the handler
    * @return {@link HandlerRegistration} used to remove the handler
    */
+  @SuppressWarnings("deprecation")
   public final <H extends EventHandler> HandlerRegistration addDomHandler(
       final H handler, DomEvent.Type<H> type) {
     assert handler != null : "handler must not be null";
@@ -73,11 +74,13 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * @param handler the handler
    * @return {@link HandlerRegistration} used to remove the handler
    */
+  @SuppressWarnings("deprecation")
   public final <H extends EventHandler> HandlerRegistration addHandler(
       final H handler, GwtEvent.Type<H> type) {
     return ensureHandlers().addHandler(type, handler);
   }
 
+  @SuppressWarnings("deprecation")
   public void fireEvent(GwtEvent<?> event) {
     if (handlerManager != null) {
       handlerManager.fireEvent(event);
@@ -199,13 +202,14 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   }
 
   /**
-   * Creates the {@link HandlerManager} used by this Widget. You can overwrite
+   * Creates the {@link HandlerManager} used by this Widget. You can override
    * this method to create a custom {@link HandlerManager}.
    * 
    * @return the {@link HandlerManager} you want to use
    */
-  protected HandlerManager createHandlerManager() {
-    return new HandlerManager(this);
+  @SuppressWarnings("deprecation")
+  protected com.google.gwt.event.shared.HandlerManager createHandlerManager() {
+    return new com.google.gwt.event.shared.HandlerManager(this);
   }
 
   /**
@@ -247,6 +251,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * @param type the event type
    * @return the number of registered handlers
    */
+  @SuppressWarnings("deprecation")
   protected int getHandlerCount(Type<?> type) {
     return handlerManager == null ? 0 : handlerManager.getHandlerCount(type);
   }
@@ -368,12 +373,14 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * 
    * @return the handler manager
    * */
-  HandlerManager ensureHandlers() {
+  @SuppressWarnings("deprecation")
+  com.google.gwt.event.shared.HandlerManager ensureHandlers() {
     return handlerManager == null ? handlerManager = createHandlerManager()
         : handlerManager;
   }
 
-  HandlerManager getHandlerManager() {
+  @SuppressWarnings("deprecation")
+  com.google.gwt.event.shared.HandlerManager getHandlerManager() {
     return handlerManager;
   }
 

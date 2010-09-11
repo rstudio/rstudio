@@ -18,13 +18,13 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
-import com.google.gwt.sample.expenses.client.request.ExpenseProxyChanged;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -59,14 +59,14 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
   private final Listener listener;
   private final ExpensesRequestFactory requestFactory;
 
-  public MobileExpenseDetails(Listener listener, HandlerManager eventBus,
+  public MobileExpenseDetails(Listener listener, EventBus eventBus,
       ExpensesRequestFactory requestFactory) {
     this.listener = listener;
     this.requestFactory = requestFactory;
 
-    eventBus.addHandler(ExpenseProxyChanged.TYPE,
-        new ExpenseProxyChanged.Handler() {
-          public void onExpenseRecordChanged(ExpenseProxyChanged event) {
+    EntityProxyChange.registerForProxyType(eventBus, ExpenseProxy.class,
+        new EntityProxyChange.Handler<ExpenseProxy>() {
+          public void onProxyChange(EntityProxyChange<ExpenseProxy> event) {
             if (expense != null) {
               ExpenseProxy newRecord = event.getProxy();
               if (newRecord.getId().equals(expense.getId())) {

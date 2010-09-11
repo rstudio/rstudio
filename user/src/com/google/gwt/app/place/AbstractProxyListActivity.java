@@ -19,6 +19,7 @@ import com.google.gwt.app.place.ProxyPlace.Operation;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
@@ -43,7 +44,8 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract activity for requesting and displaying a list of {@link EntityProxy}.
+ * Abstract activity for requesting and displaying a list of {@link EntityProxy}
+ * .
  * <p>
  * Subclasses must:
  * 
@@ -57,8 +59,8 @@ import java.util.Set;
  * 
  * @param <P> the type of {@link EntityProxy} listed
  */
-public abstract class AbstractProxyListActivity<P extends EntityProxy> implements
-    Activity, ProxyListView.Delegate<P> {
+public abstract class AbstractProxyListActivity<P extends EntityProxy>
+    implements Activity, ProxyListView.Delegate<P> {
 
   /**
    * This mapping allows us to update individual rows as records change.
@@ -81,8 +83,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy> implement
   private Display display;
 
   public AbstractProxyListActivity(RequestFactory requests,
-      PlaceController placeController, ProxyListView<P> view,
-      Class<P> proxyType) {
+      PlaceController placeController, ProxyListView<P> view, Class<P> proxyType) {
     this.view = view;
     this.requests = requests;
     this.placeController = placeController;
@@ -177,6 +178,12 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy> implement
   }
 
   public void start(Display display, EventBus eventBus) {
+    EntityProxyChange.registerForProxyType(eventBus, proxyType,
+        new EntityProxyChange.Handler<P>() {
+          public void onProxyChange(EntityProxyChange<P> event) {
+            update(event.getWriteOperation(), event.getProxy());
+          }
+        });
     eventBus.addHandler(PlaceChangeEvent.TYPE, new PlaceChangeEvent.Handler() {
       public void onPlaceChange(PlaceChangeEvent event) {
         updateSelection(event.getNewPlace());
@@ -214,7 +221,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy> implement
   /**
    * Called when the user chooses a record to view. This default implementation
    * sends the {@link PlaceController} to an appropriate {@link ProxyPlace}.
-   *
+   * 
    * @param record the chosen record
    */
   protected void showDetails(P record) {
@@ -223,8 +230,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy> implement
 
   private void fireRangeRequest(final Range range,
       final Receiver<List<P>> callback) {
-    createRangeRequest(range).with(getView().getPaths()).fire(
-        callback);
+    createRangeRequest(range).with(getView().getPaths()).fire(callback);
   }
 
   private void getLastPage() {

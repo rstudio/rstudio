@@ -19,9 +19,13 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 
 /**
  * Default implementation of {@link HandlerRegistration}.
+ * 
+ * @deprecated with no replacement; this class is no longer used by any GWT code
  */
+@Deprecated
 public class DefaultHandlerRegistration implements HandlerRegistration {
 
+  @SuppressWarnings("deprecation")
   private final HandlerManager manager;
   private final EventHandler handler;
   private final Type<?> type;
@@ -36,7 +40,8 @@ public class DefaultHandlerRegistration implements HandlerRegistration {
    * @param handler the handler
    */
   protected <H extends EventHandler> DefaultHandlerRegistration(
-      HandlerManager manager, Type<H> type, H handler) {
+      @SuppressWarnings("deprecation") HandlerManager manager, Type<H> type,
+      H handler) {
     this.manager = manager;
     this.handler = handler;
     this.type = type;
@@ -45,7 +50,7 @@ public class DefaultHandlerRegistration implements HandlerRegistration {
   /**
    * Removes the given handler from its manager.
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "deprecation"})
   // This is safe because when the elements were passed in they conformed to
   // Type<H>,H.
   public void removeHandler() {

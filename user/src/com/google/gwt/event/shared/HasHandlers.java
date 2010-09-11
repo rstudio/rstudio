@@ -23,7 +23,7 @@ public interface HasHandlers {
   
   /**
    * Fires the given event to the handlers listening to the event's type.
-   * 
+   * <p>
    * Any exceptions thrown by handlers will be bundled into a
    * {@link UmbrellaException} and then re-thrown after all handlers have
    * completed. An exception thrown by a handler will not prevent other handlers

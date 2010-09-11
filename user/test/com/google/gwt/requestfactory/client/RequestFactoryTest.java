@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -36,13 +36,11 @@ import java.util.Set;
 public class RequestFactoryTest extends GWTTestCase {
 
   private SimpleRequestFactory req;
-  private HandlerManager eventBus;
 
   @Override
   public void gwtSetUp() {
     req = GWT.create(SimpleRequestFactory.class);
-    eventBus = new HandlerManager(null);
-    req.init(eventBus);
+    req.init(new SimpleEventBus());
   }
 
   @Override
@@ -60,7 +58,7 @@ public class RequestFactoryTest extends GWTTestCase {
   public void testDummyCreate() {
     delayTestFinish(5000);
 
-    final SimpleFooProxy foo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    final SimpleFooProxy foo = req.create(SimpleFooProxy.class);
     Object futureId = foo.getId();
     assertEquals(futureId, foo.getId());
     assertTrue(((ProxyImpl) foo).isFuture());
@@ -83,19 +81,19 @@ public class RequestFactoryTest extends GWTTestCase {
   public void testStableId() {
     delayTestFinish(5000);
 
-    final SimpleFooProxy foo = (SimpleFooProxy) req.create(SimpleFooProxy.class);
+    final SimpleFooProxy foo = req.create(SimpleFooProxy.class);
     final Object futureId = foo.getId();
     assertTrue(((ProxyImpl) foo).isFuture());
     RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
         foo);
-        
+
     final SimpleFooProxy newFoo = fooReq.edit(foo);
     assertEquals(futureId, foo.getId());
     assertTrue(((ProxyImpl) foo).isFuture());
     assertEquals(futureId, newFoo.getId());
     assertTrue(((ProxyImpl) newFoo).isFuture());
-    
-    newFoo.setUserName("GWT basic user"); 
+
+    newFoo.setUserName("GWT basic user");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
 
       public void onSuccess(final SimpleFooProxy returned,
@@ -109,7 +107,7 @@ public class RequestFactoryTest extends GWTTestCase {
 
         checkStableIdEquals(foo, returned);
         checkStableIdEquals(newFoo, returned);
-        
+
         RequestObject<SimpleFooProxy> editRequest = req.simpleFooRequest().persistAndReturnSelf(
             returned);
         final SimpleFooProxy editableFoo = editRequest.edit(returned);
@@ -126,12 +124,12 @@ public class RequestFactoryTest extends GWTTestCase {
       }
     });
   }
-  
+
   private void checkStableIdEquals(SimpleFooProxy expected, SimpleFooProxy actual) {
     assertNotSame(expected.stableId(), actual.stableId());
     assertEquals(expected.stableId(), actual.stableId());
     assertEquals(expected.stableId().hashCode(), actual.stableId().hashCode());
-    
+
     // No assumptions about the proxy objects (being proxies and all)
     assertNotSame(expected, actual);
     assertFalse(expected.equals(actual));
@@ -152,7 +150,7 @@ public class RequestFactoryTest extends GWTTestCase {
         SyncResult syncResult = syncResults.iterator().next();
         /*
          * Make sure your class path includes:
-         * 
+         *
          * tools/apache/log4j/log4j-1.2.16.jar
          * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
          * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
@@ -183,18 +181,18 @@ public class RequestFactoryTest extends GWTTestCase {
         assertEquals(1, syncResults.size());
         SyncResult syncResult = syncResults.iterator().next();
         assertFalse(syncResult.hasViolations());
-        
+
         RequestObject<Void> editRequest = req.simpleFooRequest().persist(returned);
         SimpleFooProxy editableFoo = editRequest.edit(returned);
         editableFoo.setUserName("A");
-        
+
         editRequest.fire(new Receiver<Void>() {
           public void onSuccess(Void returned, Set<SyncResult> syncResults) {
             assertEquals(1, syncResults.size());
             SyncResult syncResult = syncResults.iterator().next();
             /*
              * Make sure your class path includes:
-             * 
+             *
              * tools/apache/log4j/log4j-1.2.16.jar
              * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
              * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
@@ -208,7 +206,6 @@ public class RequestFactoryTest extends GWTTestCase {
                 violations.get("userName"));
             finishTest();
           }
-          
         });
       }
     });
@@ -232,18 +229,18 @@ public class RequestFactoryTest extends GWTTestCase {
         assertEquals(1, syncResults.size());
         SyncResult syncResult = syncResults.iterator().next();
         assertFalse(syncResult.hasViolations());
-        
+
         RequestObject<SimpleFooProxy> editRequest = req.simpleFooRequest().persistAndReturnSelf(returned);
         SimpleFooProxy editableFoo = editRequest.edit(returned);
         editableFoo.setUserName("A");
-        
+
         editRequest.fire(new Receiver<SimpleFooProxy>() {
           public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
             assertEquals(1, syncResults.size());
             SyncResult syncResult = syncResults.iterator().next();
             /*
              * Make sure your class path includes:
-             * 
+             *
              * tools/apache/log4j/log4j-1.2.16.jar
              * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
              * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
@@ -257,7 +254,6 @@ public class RequestFactoryTest extends GWTTestCase {
                 violations.get("userName"));
             finishTest();
           }
-          
         });
       }
     });

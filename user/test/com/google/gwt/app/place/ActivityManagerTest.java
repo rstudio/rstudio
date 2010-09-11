@@ -18,11 +18,12 @@ package com.google.gwt.app.place;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.UmbrellaException;
+import com.google.gwt.event.shared.testing.CountingEventBus;
 import com.google.gwt.user.client.ui.Widget;
 
 import junit.framework.TestCase;
+
 
 /**
  * Eponymous unit test.
@@ -128,7 +129,7 @@ public class ActivityManagerTest extends TestCase {
     }
   };
 
-  private HandlerManager eventBus = new HandlerManager(null);
+  private CountingEventBus eventBus = new CountingEventBus();
 
   private ActivityManager manager = new ActivityManager(
       myMap, eventBus);
@@ -259,7 +260,7 @@ public class ActivityManagerTest extends TestCase {
   public void testDropHandlersOnStop() {
     manager.setDisplay(realDisplay);
 
-    assertEquals(0, eventBus.getHandlerCount(Event.TYPE));
+    assertEquals(0, eventBus.getCount(Event.TYPE));
 
     activity1 = new SyncActivity(null) {
       @Override
@@ -277,30 +278,30 @@ public class ActivityManagerTest extends TestCase {
 
     PlaceChangeEvent event = new PlaceChangeEvent(place1);
     eventBus.fireEvent(event);
-    assertEquals(1, eventBus.getHandlerCount(Event.TYPE));
+    assertEquals(1, eventBus.getCount(Event.TYPE));
 
     event = new PlaceChangeEvent(place2);
     eventBus.fireEvent(event);
-    assertEquals(0, eventBus.getHandlerCount(Event.TYPE));
+    assertEquals(0, eventBus.getCount(Event.TYPE));
 
     // Make sure we didn't nuke the ActivityManager's own handlers
-    assertEquals(1, eventBus.getHandlerCount(PlaceChangeEvent.TYPE));
-    assertEquals(1, eventBus.getHandlerCount(PlaceChangeRequesteEvent.TYPE));
+    assertEquals(1, eventBus.getCount(PlaceChangeEvent.TYPE));
+    assertEquals(1, eventBus.getCount(PlaceChangeRequesteEvent.TYPE));
   }
 
   public void testEventSetupAndTeardown() {
-    assertEquals(0, eventBus.getHandlerCount(PlaceChangeEvent.TYPE));
-    assertEquals(0, eventBus.getHandlerCount(PlaceChangeRequesteEvent.TYPE));
+    assertEquals(0, eventBus.getCount(PlaceChangeEvent.TYPE));
+    assertEquals(0, eventBus.getCount(PlaceChangeRequesteEvent.TYPE));
 
     manager.setDisplay(realDisplay);
 
-    assertEquals(1, eventBus.getHandlerCount(PlaceChangeEvent.TYPE));
-    assertEquals(1, eventBus.getHandlerCount(PlaceChangeRequesteEvent.TYPE));
+    assertEquals(1, eventBus.getCount(PlaceChangeEvent.TYPE));
+    assertEquals(1, eventBus.getCount(PlaceChangeRequesteEvent.TYPE));
 
     manager.setDisplay(null);
 
-    assertEquals(0, eventBus.getHandlerCount(PlaceChangeEvent.TYPE));
-    assertEquals(0, eventBus.getHandlerCount(PlaceChangeRequesteEvent.TYPE));
+    assertEquals(0, eventBus.getCount(PlaceChangeEvent.TYPE));
+    assertEquals(0, eventBus.getCount(PlaceChangeRequesteEvent.TYPE));
   }
 
   public void testExceptionsOnStopAndStart() {
@@ -331,7 +332,7 @@ public class ActivityManagerTest extends TestCase {
     try {
       PlaceChangeEvent event = new PlaceChangeEvent(place1);
       eventBus.fireEvent(event);
-      assertEquals(1, eventBus.getHandlerCount(Event.TYPE));
+      assertEquals(1, eventBus.getCount(Event.TYPE));
 
       event = new PlaceChangeEvent(place2);
       eventBus.fireEvent(event);
@@ -347,7 +348,7 @@ public class ActivityManagerTest extends TestCase {
 
     assertTrue(activity1.stopped);
     assertNotNull(activity2.display);
-    assertEquals(0, eventBus.getHandlerCount(Event.TYPE));
+    assertEquals(0, eventBus.getCount(Event.TYPE));
   }
 
   public void testRejected() {

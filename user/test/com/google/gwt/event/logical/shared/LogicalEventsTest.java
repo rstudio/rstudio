@@ -75,7 +75,7 @@ public class LogicalEventsTest extends TestCase {
 
   @SuppressWarnings("unchecked")
   private <H extends EventHandler> void simpleFire(GwtEvent.Type<H> type,
-      GwtEvent instance) {
+      @SuppressWarnings("rawtypes") GwtEvent instance) {
     Fire f = new Fire();
     manager.addHandler(type, (H) f);
     manager.fireEvent(instance);

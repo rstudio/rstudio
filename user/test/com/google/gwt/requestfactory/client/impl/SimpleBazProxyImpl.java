@@ -15,10 +15,8 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyChangedEvent;
-import com.google.gwt.requestfactory.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.Property;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,13 +51,6 @@ public class SimpleBazProxyImpl extends ProxyImpl {
     @Override
     public SimpleBazProxyImpl create(ProxyJsoImpl jso, boolean isFuture) {
       return new SimpleBazProxyImpl(jso, isFuture);
-    }
-
-    @Override
-    public EntityProxyChangedEvent<?, ?> createChangeEvent(EntityProxy proxy,
-        WriteOperation writeOperation) {
-      // ignore
-      return null;
     }
 
     @Override

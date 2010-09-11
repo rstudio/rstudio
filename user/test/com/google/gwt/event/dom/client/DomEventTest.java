@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.RootPanel;
 /**
  * Events test.
  */
-// TODO(ECC) check that max handlers work properly.
 public class DomEventTest extends HandlerTestBase {
   private HandlerManager manager;
   static class Flag {

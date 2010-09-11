@@ -15,10 +15,10 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.PropertyReference;
-import com.google.gwt.requestfactory.shared.EntityProxy;
 
 /**
  * <p>

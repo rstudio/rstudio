@@ -18,6 +18,7 @@ package com.google.gwt.sample.dynatablerf.client.widgets;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
@@ -25,14 +26,13 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
-import com.google.gwt.sample.dynatablerf.shared.PersonProxyChanged;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.CellTable.CleanStyle;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.SimplePager;
-import com.google.gwt.user.cellview.client.CellTable.CleanStyle;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -134,23 +134,23 @@ public class SummaryWidget extends Composite {
     table.setRowCount(numRows, false);
     table.setSelectionModel(selectionModel);
 
-    eventBus.addHandler(PersonProxyChanged.TYPE,
-        new PersonProxyChanged.Handler() {
-          public void onPersonChanged(PersonProxyChanged event) {
+    EntityProxyChange.registerForProxyType(eventBus, PersonProxy.class,
+        new EntityProxyChange.Handler<PersonProxy>() {
+          public void onProxyChange(EntityProxyChange<PersonProxy> event) {
             SummaryWidget.this.onPersonChanged(event);
           }
         });
 
     selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
-        SummaryWidget.this.onSelectionChange(event);
+        SummaryWidget.this.refreshSelection();
       }
     });
 
     fetch(0);
   }
 
-  void onPersonChanged(PersonProxyChanged event) {
+  void onPersonChanged(EntityProxyChange<PersonProxy> event) {
     if (WriteOperation.UPDATE.equals(event.getWriteOperation())) {
       PersonProxy record = event.getProxy();
 
@@ -182,7 +182,7 @@ public class SummaryWidget extends Composite {
     fetch(start);
   }
 
-  void onSelectionChange(SelectionChangeEvent event) {
+  void refreshSelection() {
     PersonProxy person = selectionModel.getSelectedObject();
     if (person == null) {
       return;

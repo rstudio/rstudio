@@ -37,23 +37,24 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
+import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
-import com.google.gwt.sample.expenses.client.request.ExpenseProxyChanged;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
-import com.google.gwt.sample.expenses.client.request.ReportProxyChanged;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
@@ -89,8 +90,7 @@ import java.util.Set;
  * Details about the current expense report on the right side of the app,
  * including the list of expenses.
  */
-public class ExpenseDetails extends Composite
-    implements ExpenseProxyChanged.Handler, ReportProxyChanged.Handler {
+public class ExpenseDetails extends Composite {
 
   interface Template extends SafeHtmlTemplates {
     @Template("<select style=\"background-color:white;border:1px solid "
@@ -501,12 +501,29 @@ public class ExpenseDetails extends Composite
       }
     });
   }
+  
+  public void init(EventBus eventBus) {
+    EntityProxyChange.registerForProxyType(eventBus,
+        ExpenseProxy.class, new EntityProxyChange.Handler<ExpenseProxy>() {
+          @Override
+          public void onProxyChange(EntityProxyChange<ExpenseProxy> event) {
+            onExpenseRecordChanged(event);
+          }
+    });
+    EntityProxyChange.registerForProxyType(eventBus,
+        ReportProxy.class, new EntityProxyChange.Handler<ReportProxy>() {
+          @Override
+          public void onProxyChange(EntityProxyChange<ReportProxy> event) {
+            onReportChanged(event);
+          }
+    });
+  }
 
   public Anchor getReportsLink() {
     return reportsLink;
   }
 
-  public void onExpenseRecordChanged(ExpenseProxyChanged event) {
+  public void onExpenseRecordChanged(EntityProxyChange<ExpenseProxy> event) {
     ExpenseProxy newRecord = event.getProxy();
     Object newKey = items.getKey(newRecord);
 
@@ -532,7 +549,7 @@ public class ExpenseDetails extends Composite
     }
   }
 
-  public void onReportChanged(ReportProxyChanged event) {
+  public void onReportChanged(EntityProxyChange<ReportProxy> event) {
     ReportProxy changed = event.getProxy();
     if (report != null && report.getId().equals(changed.getId())) {
       // Request the updated report.

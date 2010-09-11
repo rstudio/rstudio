@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -33,8 +33,7 @@ public class ValueStoreJsonImplTest extends GWTTestCase {
     ProxyJsoImpl minimalJso = ProxyJsoImplTest.getMinimalJso();
     ProxyJsoImpl populatedJso = ProxyJsoImplTest.getPopulatedJso();
     ProxyJsoImpl copyPopulatedJso = ProxyJsoImplTest.getPopulatedJso();
-    HandlerManager eventBus = new HandlerManager(null);
-    minimalJso.getRequestFactory().init(eventBus);
+    minimalJso.getRequestFactory().init(new SimpleEventBus());
 
     assertNull(valueStore.putInValueStore(minimalJso));
     assertNull(valueStore.putInValueStore(populatedJso));

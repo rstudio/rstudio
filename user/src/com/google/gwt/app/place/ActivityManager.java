@@ -18,6 +18,7 @@ package com.google.gwt.app.place;
 import com.google.gwt.app.place.Activity.Display;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.ResettableEventBus;
 import com.google.gwt.event.shared.UmbrellaException;
 
 import java.util.LinkedHashSet;
@@ -63,7 +64,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
   private final ActivityMapper mapper;
 
   private final EventBus eventBus;
-  private final StopperedEventBus stopperedEventBus;
+  private final ResettableEventBus stopperedEventBus;
 
   private Activity currentActivity = NULL_ACTIVITY;
 
@@ -83,7 +84,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
   public ActivityManager(ActivityMapper mapper, EventBus eventBus) {
     this.mapper = mapper;
     this.eventBus = eventBus;
-    this.stopperedEventBus = new StopperedEventBus(eventBus);
+    this.stopperedEventBus = new ResettableEventBus(eventBus);
   }
 
   /**

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -59,8 +59,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   public void gwtSetUp() {
     valueStore = new ValueStoreJsonImpl();
     requestFactory = (RequestFactoryJsonImpl) SimpleRequestFactoryInstance.factory();
-    HandlerManager eventBus = new HandlerManager(null);
-    requestFactory.init(eventBus);
+    requestFactory.init(new SimpleEventBus());
 
     // add a proxy
     jso = ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),

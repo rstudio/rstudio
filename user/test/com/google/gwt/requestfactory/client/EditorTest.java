@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
@@ -71,7 +71,7 @@ public class EditorTest extends GWTTestCase {
   @Override
   public void gwtSetUp() {
     factory = GWT.create(SimpleRequestFactory.class);
-    eventBus = new HandlerManager(null);
+    eventBus = new SimpleEventBus();
     factory.init(eventBus);
   }
 

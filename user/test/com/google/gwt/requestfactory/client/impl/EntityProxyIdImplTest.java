@@ -16,8 +16,6 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyChangedEvent;
-import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import junit.framework.TestCase;
 
@@ -33,12 +31,6 @@ public class EntityProxyIdImplTest extends TestCase {
 
     @Override
     public ProxyImpl create(ProxyJsoImpl jso, boolean isFuture) {
-      throw new UnsupportedOperationException("Auto-generated method stub");
-    }
-
-    @Override
-    public EntityProxyChangedEvent<?, ?> createChangeEvent(EntityProxy proxy,
-        WriteOperation writeOperation) {
       throw new UnsupportedOperationException("Auto-generated method stub");
     }
 

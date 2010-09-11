@@ -17,129 +17,27 @@ package com.google.gwt.event.shared;
 
 import com.google.gwt.event.shared.GwtEvent.Type;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Manager responsible for adding handlers to event sources and firing those
- * handlers on passed in events.
+ * handlers on passed in events. Primitive ancestor of {@link EventBus}, 
+ * and used at the core of {com.google.gwt.user.client.ui.Widget}.
+ * 
+ * @deprecated use {@link SimpleEventBus}.
  */
-public class HandlerManager implements EventBus {
+@Deprecated
+public class HandlerManager {
 
-  /**
-   * Interface for queued add/remove operations.
-   */
-  private interface AddOrRemoveCommand {
-    void execute();
-  }
+  private SimpleEventBus eventBus;
 
-  /**
-   * Inner class used to actually contain the handlers.
-   */
-  private static class HandlerRegistry {
-    private final HashMap<GwtEvent.Type<?>, ArrayList<?>> map = new HashMap<GwtEvent.Type<?>, ArrayList<?>>();
-
-    private <H extends EventHandler> void addHandler(Type<H> type, H handler) {
-      ArrayList<H> l = get(type);
-      if (l == null) {
-        l = new ArrayList<H>();
-        map.put(type, l);
-      }
-      l.add(handler);
-    }
-
-    private <H extends EventHandler> void fireEvent(GwtEvent<H> event,
-        boolean isReverseOrder) {
-      Type<H> type = event.getAssociatedType();
-      int count = getHandlerCount(type);
-      Set<Throwable> causes = null;
-
-      if (isReverseOrder) {
-        for (int i = count - 1; i >= 0; i--) {
-          H handler = this.<H> getHandler(type, i);
-          try {
-            event.dispatch(handler);
-          } catch (Throwable e) {
-            if (causes == null) {
-              // create lazily to avoid excess creation in general case
-              causes = new HashSet<Throwable>();
-            }
-            causes.add(e);
-          }
-        }
-      } else {
-        for (int i = 0; i < count; i++) {
-          H handler = this.<H> getHandler(type, i);
-          try {
-            event.dispatch(handler);
-          } catch (Throwable e) {
-            if (causes == null) {
-              // create lazily to avoid excess creation in general case
-              causes = new HashSet<Throwable>();
-            }
-            causes.add(e);
-          }
-        }
-      }
-
-      if (causes != null) {
-        throw new UmbrellaException(causes);
-      }
-    }
-
-    @SuppressWarnings("unchecked")
-    private <H> ArrayList<H> get(GwtEvent.Type<H> type) {
-      // This cast is safe because we control the puts.
-      return (ArrayList<H>) map.get(type);
-    }
-
-    private <H extends EventHandler> H getHandler(GwtEvent.Type<H> eventKey,
-        int index) {
-      ArrayList<H> l = get(eventKey);
-      return l.get(index);
-    }
-
-    private int getHandlerCount(GwtEvent.Type<?> eventKey) {
-      ArrayList<?> l = map.get(eventKey);
-      return l == null ? 0 : l.size();
-    }
-
-    private boolean isEventHandled(GwtEvent.Type<?> eventKey) {
-      return map.containsKey(eventKey);
-    }
-
-    private <H> void removeHandler(GwtEvent.Type<H> eventKey, H handler) {
-      ArrayList<H> l = get(eventKey);
-      boolean result = (l == null) ? false : l.remove(handler);
-      if (result && l.size() == 0) {
-        map.remove(eventKey);
-      }
-      assert result : "Tried to remove unknown handler: " + handler + " from "
-          + eventKey;
-    }
-  }
-
-  private int firingDepth = 0;
-  private boolean isReverseOrder;
-
-  // map storing the actual handlers
-  private HandlerRegistry registry;
-
-  // source of the event.
+  // source of the events
   private final Object source;
 
-  // Add and remove operations received during dispatch.
-  private List<AddOrRemoveCommand> deferredDeltas;
-
   /**
-   * Creates a handler manager with the given source. Handlers will be fired in
-   * the order that they are added.
+   * Creates a handler manager with a source to be set on all events fired via
+   * {@link #fireEvent(GwtEvent)}. Handlers will be fired in the order that they
+   * are added.
    * 
-   * @param source the event source
+   * @param source the default event source
    */
   public HandlerManager(Object source) {
     this(source, false);
@@ -153,9 +51,8 @@ public class HandlerManager implements EventBus {
    * @param fireInReverseOrder true to fire handlers in reverse order
    */
   public HandlerManager(Object source, boolean fireInReverseOrder) {
-    registry = new HandlerRegistry();
+    eventBus = new SimpleEventBus(fireInReverseOrder);
     this.source = source;
-    this.isReverseOrder = fireInReverseOrder;
   }
 
   /**
@@ -169,28 +66,20 @@ public class HandlerManager implements EventBus {
    */
   public <H extends EventHandler> HandlerRegistration addHandler(
       GwtEvent.Type<H> type, final H handler) {
-    assert type != null : "Cannot add a handler with a null type";
-    assert handler != null : "Cannot add a null handler";
-    if (firingDepth > 0) {
-      enqueueAdd(type, handler);
-    } else {
-      doAdd(type, handler);
-    }
-
-    return new DefaultHandlerRegistration(this, type, handler);
+    return eventBus.addHandler(type, handler);
   }
 
   /**
    * Fires the given event to the handlers listening to the event's type.
-   * 
-   * Note, any subclass should be very careful about overriding this method, as
-   * adds/removes of handlers will not be safe except within this
-   * implementation.
-   *
+   * <p>
    * Any exceptions thrown by handlers will be bundled into a
    * {@link UmbrellaException} and then re-thrown after all handlers have
    * completed. An exception thrown by a handler will not prevent other handlers
    * from executing.
+   * <p> 
+   * Note, any subclass should be very careful about overriding this method, as
+   * adds/removes of handlers will not be safe except within this
+   * implementation.
    * 
    * @param event the event
    */
@@ -202,17 +91,11 @@ public class HandlerManager implements EventBus {
     Object oldSource = event.getSource();
     event.setSource(source);
     try {
-      firingDepth++;
 
       // May throw an UmbrellaException.
-      registry.fireEvent(event, isReverseOrder);
+      eventBus.fireEvent(event);
 
     } finally {
-      firingDepth--;
-      if (firingDepth == 0) {
-        handleQueuedAddsAndRemoves();
-      }
-
       if (oldSource == null) {
         // This was my event, so I should kill it now that I'm done.
         event.kill();
@@ -232,10 +115,7 @@ public class HandlerManager implements EventBus {
    * @return the given handler
    */
   public <H extends EventHandler> H getHandler(GwtEvent.Type<H> type, int index) {
-    assert index < getHandlerCount(type) : "handlers for " + type.getClass()
-        + " have size: " + getHandlerCount(type)
-        + " so do not have a handler at index: " + index;
-    return registry.getHandler(type, index);
+    return eventBus.getHandler(type, index);
   }
 
   /**
@@ -245,7 +125,7 @@ public class HandlerManager implements EventBus {
    * @return the number of registered handlers
    */
   public int getHandlerCount(Type<?> type) {
-    return registry.getHandlerCount(type);
+    return eventBus.getHandlerCount(type);
   }
 
   /**
@@ -255,13 +135,11 @@ public class HandlerManager implements EventBus {
    * @return whether the given event type is handled
    */
   public boolean isEventHandled(Type<?> e) {
-    return registry.isEventHandled(e);
+    return eventBus.isEventHandled(e);
   }
 
   /**
-   * Removes the given handler from the specified event type. Normally,
-   * applications should call {@link HandlerRegistration#removeHandler()}
-   * instead.
+   * Removes the given handler from the specified event type.
    * 
    * @param <H> handler type
    * 
@@ -270,67 +148,6 @@ public class HandlerManager implements EventBus {
    */
   public <H extends EventHandler> void removeHandler(GwtEvent.Type<H> type,
       final H handler) {
-    if (firingDepth > 0) {
-      enqueueRemove(type, handler);
-    } else {
-      doRemove(type, handler);
-    }
-  }
-
-  /**
-   * Not part of the public API, available only to allow visualization tools to
-   * be developed in gwt-incubator.
-   * 
-   * @return a map of all handlers in this handler manager
-   */
-  Map<GwtEvent.Type<?>, ArrayList<?>> createHandlerInfo() {
-    return registry.map;
-  }
-
-  private void defer(AddOrRemoveCommand command) {
-    if (deferredDeltas == null) {
-      deferredDeltas = new ArrayList<AddOrRemoveCommand>();
-    }
-    deferredDeltas.add(command);
-  }
-
-  private <H extends EventHandler> void doAdd(GwtEvent.Type<H> type,
-      final H handler) {
-    registry.addHandler(type, handler);
-  }
-
-  private <H extends EventHandler> void doRemove(GwtEvent.Type<H> type,
-      final H handler) {
-    registry.removeHandler(type, handler);
-  }
-
-  private <H extends EventHandler> void enqueueAdd(final GwtEvent.Type<H> type,
-      final H handler) {
-    defer(new AddOrRemoveCommand() {
-      public void execute() {
-        doAdd(type, handler);
-      }
-    });
-  }
-
-  private <H extends EventHandler> void enqueueRemove(
-      final GwtEvent.Type<H> type, final H handler) {
-    defer(new AddOrRemoveCommand() {
-      public void execute() {
-        doRemove(type, handler);
-      }
-    });
-  }
-
-  private void handleQueuedAddsAndRemoves() {
-    if (deferredDeltas != null) {
-      try {
-        for (AddOrRemoveCommand c : deferredDeltas) {
-          c.execute();
-        }
-      } finally {
-        deferredDeltas = null;
-      }
-    }
+      eventBus.doRemove(type, null, handler);
   }
 }

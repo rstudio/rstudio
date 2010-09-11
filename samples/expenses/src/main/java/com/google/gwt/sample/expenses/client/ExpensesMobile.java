@@ -17,7 +17,8 @@ package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
@@ -46,7 +47,7 @@ public class ExpensesMobile implements EntryPoint {
 
   /**
    * TODO(jgw): Put this some place more sensible.
-   *
+   * 
    * @param amount the amount in dollars
    */
   public static String formatCurrency(double amount) {
@@ -81,10 +82,10 @@ public class ExpensesMobile implements EntryPoint {
     GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
       public void onUncaughtException(Throwable e) {
         Window.alert("Error: " + e.getMessage());
-//        placeController.goTo(Place.NOWHERE);
+        // placeController.goTo(Place.NOWHERE);
       }
     });
-    
+
     // Get the employee ID from the URL.
     long employeeId = 1;
     try {
@@ -97,9 +98,8 @@ public class ExpensesMobile implements EntryPoint {
       return;
     }
 
-    final HandlerManager eventBus = new HandlerManager(null);
-    final ExpensesRequestFactory requestFactory = GWT.create(
-        ExpensesRequestFactory.class);
+    final EventBus eventBus = new SimpleEventBus();
+    final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
     requestFactory.init(eventBus);
 
     requestFactory.employeeRequest().findEmployee(Value.of(employeeId)).fire(
@@ -111,13 +111,11 @@ public class ExpensesMobile implements EntryPoint {
             RootPanel.get().add(shell);
 
             // Check for Authentication failures or mismatches
-            eventBus.addHandler(RequestEvent.TYPE,
-                new AuthenticationFailureHandler());
+            RequestEvent.register(eventBus, new AuthenticationFailureHandler());
 
             // Add a login widget to the page
             final LoginWidget login = shell.getLoginWidget();
-            Receiver<UserInformationProxy> receiver
-                = new Receiver<UserInformationProxy>() {
+            Receiver<UserInformationProxy> receiver = new Receiver<UserInformationProxy>() {
               public void onSuccess(UserInformationProxy userInformationRecord,
                   Set<SyncResult> syncResults) {
                 login.setUserInformation(userInformationRecord);

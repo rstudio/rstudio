@@ -15,7 +15,8 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.event.shared.SimpleEventBus;
 
 import junit.framework.TestCase;
 
@@ -51,7 +52,7 @@ public class PlaceControllerTest extends TestCase {
   private Logger deadLogger = new Logger("shut up", null) {
   };
 
-  private HandlerManager eventBus = new HandlerManager(null);
+  private EventBus eventBus = new SimpleEventBus();
   private MockPlaceControllerDelegate delegate = new MockPlaceControllerDelegate();
   private PlaceController placeController = new PlaceController(
       eventBus, delegate) {

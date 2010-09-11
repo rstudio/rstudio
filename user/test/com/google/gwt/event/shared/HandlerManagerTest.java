@@ -24,17 +24,14 @@ import com.google.gwt.event.dom.client.MouseDownHandler;
 import java.util.Set;
 
 /**
- * Handler manager test.
+ * Handler manager test. Very redundant with {@link SimpleEventBusTest}, but
+ * preserved to guard against regressions.
  */
+@SuppressWarnings("deprecation")
 public class HandlerManagerTest extends HandlerTestBase {
 
-  public void testAddHandlers() {
-
+  public void testAddAndRemoveHandlers() {
     HandlerManager manager = new HandlerManager("bogus source");
-    addHandlers(manager);
-  }
-
-  private void addHandlers(HandlerManager manager) {
     manager.addHandler(MouseDownEvent.getType(), mouse1);
     manager.addHandler(MouseDownEvent.getType(), mouse2);
     manager.addHandler(MouseDownEvent.getType(), adaptor1);
@@ -64,11 +61,6 @@ public class HandlerManagerTest extends HandlerTestBase {
     });
     assertFired(mouse1, mouse2, mouse3, adaptor1);
     assertNotFired(click1, click2);
-  }
-
-  public void testRemoveHandlers() {
-    HandlerManager manager = new HandlerManager("bogus source");
-    addHandlers(manager);
     // Gets rid of first instance.
     manager.removeHandler(MouseDownEvent.getType(), adaptor1);
     manager.fireEvent(new MouseDownEvent() {
@@ -190,8 +182,7 @@ public class HandlerManagerTest extends HandlerTestBase {
     assertNotFired(two);
   }
 
-  // This test is disabled because it fails '-ea'
-  public void notestConcurrentAddAfterRemoveIsNotClobbered() {
+  public void testConcurrentAddAfterRemoveIsNotClobbered() {
     final HandlerManager manager = new HandlerManager("bogus source");
 
     MouseDownHandler one = new MouseDownHandler() {
@@ -203,7 +194,9 @@ public class HandlerManagerTest extends HandlerTestBase {
     };
     manager.addHandler(MouseDownEvent.getType(), one);
 
-    if (!GWT.isScript()) {
+    boolean assertsOn = getClass().desiredAssertionStatus();
+
+    if (assertsOn) {
       try {
         manager.fireEvent(new MouseDownEvent() {
         });
@@ -225,6 +218,9 @@ public class HandlerManagerTest extends HandlerTestBase {
 
   public void testMultiFiring() {
 
+    final MouseDownEvent masterEvent = new MouseDownEvent() {
+    };
+
     HandlerManager manager = new HandlerManager("source1");
 
     final HandlerManager manager2 = new HandlerManager("source2");
@@ -244,6 +240,7 @@ public class HandlerManagerTest extends HandlerTestBase {
 
       public void onMouseDown(MouseDownEvent event) {
         assertEquals("source2", event.getSource());
+        assertSame(masterEvent, event);
       }
 
     });
@@ -251,14 +248,15 @@ public class HandlerManagerTest extends HandlerTestBase {
 
       public void onMouseDown(MouseDownEvent event) {
         assertEquals("source1", event.getSource());
+        assertSame(masterEvent, event);
       }
 
     });
 
     reset();
-    manager.fireEvent(new MouseDownEvent() {
-    });
+    manager.fireEvent(masterEvent);
     assertFired(mouse1, adaptor1, mouse3);
+    assertFalse("Event should be dead", masterEvent.isLive());
   }
 
   // This test is disabled because it fails '-ea'
@@ -352,6 +350,20 @@ public class HandlerManagerTest extends HandlerTestBase {
     // Exception should not have prevented all three mouse handlers from getting
     // the event.
     assertFired(mouse1, mouse2, mouse3);
-    assertFalse("Event should be dead", event.isLive());
+  }
+  
+  public void testNullSourceOkay() {
+    SimpleEventBus reg = new SimpleEventBus();
+    
+    MouseDownHandler handler = new MouseDownHandler() {
+      public void onMouseDown(MouseDownEvent event) {
+        add(this);
+        assertNull(event.getSource());
+      }
+    };
+    reg.addHandler(MouseDownEvent.getType(), handler);
+    reg.fireEvent(new MouseDownEvent() {
+    });
+    assertFired(handler);
   }
 }

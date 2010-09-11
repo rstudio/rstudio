@@ -16,8 +16,8 @@
 package com.google.gwt.sample.dynatablerf.client;
 
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.sample.dynatablerf.client.events.MarkFavoriteEvent;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.user.client.Cookies;
@@ -34,7 +34,7 @@ import java.util.Set;
  */
 public class FavoritesManager {
   private static final String COOKIE_NAME = "Favorites";
-  private final EventBus eventBus = new HandlerManager(this);
+  private final EventBus eventBus = new SimpleEventBus();
   private final Set<Long> favoriteIds = new HashSet<Long>();
 
   public FavoritesManager() {
@@ -89,6 +89,6 @@ public class FavoritesManager {
       favoriteIds.remove(person.getId());
     }
 
-    eventBus.fireEvent(new MarkFavoriteEvent(person, isFavorite));
+    eventBus.fireEventFromSource(new MarkFavoriteEvent(person, isFavorite), this);
   }
 }

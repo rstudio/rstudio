@@ -15,8 +15,10 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.Response;
 
 /**
@@ -28,33 +30,41 @@ import com.google.gwt.http.client.Response;
  * An event posted whenever an RPC request is sent or its response is received.
  */
 public class RequestEvent extends GwtEvent<RequestEvent.Handler> {
+  
   /**
    * Implemented by handlers of this type of event.
    */
   public interface Handler extends EventHandler {
     void onRequestEvent(RequestEvent requestEvent);
   }
-  
+
   /**
    * The request state.
    */
   public enum State {
     SENT, RECEIVED
   }
-  
-  public static final Type<Handler> TYPE = new Type<Handler>();
+
+  private static final Type<Handler> TYPE = new Type<Handler>();
+
+  public static HandlerRegistration register(EventBus eventBus,
+      RequestEvent.Handler handler) {
+    return eventBus.addHandler(TYPE, handler);
+  }
 
   private final State state;
-  
-  // Will only be non-null if this is an event of type RECIEVED, and the
-  // RPC was successful
+
+  /**
+   * Will only be non-null if this is an event of type {@link State#RECEIVED},
+   * and the RPC was successful
+   */
   private final Response response;
 
   public RequestEvent(State state, Response response) {
     this.state = state;
     this.response = response;
   }
-  
+
   @Override
   public GwtEvent.Type<Handler> getAssociatedType() {
     return TYPE;
@@ -63,7 +73,7 @@ public class RequestEvent extends GwtEvent<RequestEvent.Handler> {
   public Response getResponse() {
     return response;
   }
-  
+
   public State getState() {
     return state;
   }

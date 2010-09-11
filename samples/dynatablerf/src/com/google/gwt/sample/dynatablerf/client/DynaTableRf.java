@@ -19,7 +19,7 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.sample.dynatablerf.client.widgets.DayFilterWidget;
 import com.google.gwt.sample.dynatablerf.client.widgets.FavoritesWidget;
 import com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget;
@@ -46,7 +46,7 @@ public class DynaTableRf implements EntryPoint {
   @UiField(provided = true)
   SummaryWidget calendar;
 
-  EventBus eventBus = new HandlerManager(null);
+  EventBus eventBus = new SimpleEventBus();
 
   @UiField(provided = true)
   FavoritesWidget favorites;

@@ -257,9 +257,11 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
      * unpopulated copy of the record.
      */
     newJsoRecord = ProxyJsoImpl.emptyCopy(newJsoRecord);
-    EntityProxy javaRecord = newJsoRecord.getSchema().create(newJsoRecord);
-    eventBus.fireEvent(newJsoRecord.getSchema().createChangeEvent(javaRecord,
-        op));
+    ProxySchema<?> schema = newJsoRecord.getSchema();
+    EntityProxy javaRecord = schema.create(newJsoRecord);
+
+    eventBus.fireEventFromSource(schema.createChangeEvent(javaRecord, op),
+        schema.getProxyClass());
   }
 
   private <R extends ProxyImpl> R createFuture(ProxySchema<R> schema) {

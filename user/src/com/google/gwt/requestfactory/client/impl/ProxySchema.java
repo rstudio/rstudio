@@ -15,9 +15,9 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyChangedEvent;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
+import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.Collections;
@@ -34,7 +34,7 @@ import java.util.Set;
  * {@link com.google.gwt.requestfactory.rebind.RequestFactoryGenerator
  * RequestFactoryGenerator}. Defines the set of properties for a class of
  * Proxy, and serves as a factory for these proxies and their
- * {@link EntityProxyChangedEvent}s.
+ * {@link EntityProxyChange}s.
  * 
  * @param <P> the type of the Proxies this schema describes
  */
@@ -64,12 +64,25 @@ public abstract class ProxySchema<P extends ProxyImpl> {
 
   public abstract P create(ProxyJsoImpl jso, boolean isFuture);
 
-  public abstract EntityProxyChangedEvent<?, ?> createChangeEvent(EntityProxy record,
-      WriteOperation writeOperation);
-
+  @SuppressWarnings("unchecked")
+  public EntityProxyChange<P> createChangeEvent(EntityProxy proxy,
+      WriteOperation operation) {
+    assert isCorrectClass(proxy);
+    return new EntityProxyChange<P>((P) proxy, operation);
+  }
+  
   public abstract Class<? extends EntityProxy> getProxyClass();
 
   public String getToken() {
     return token;
+  }
+
+  private boolean isCorrectClass(EntityProxy proxy) {
+    // What we really want to check is isAssignableFrom. Sigh.
+    Class<? extends EntityProxy> actual = ((ProxyImpl) proxy).asJso().getRequestFactory().getClass(
+        proxy);
+    Class<? extends EntityProxy> expected = getProxyClass();
+    boolean equals = actual.equals(expected);
+    return equals;
   }
 }

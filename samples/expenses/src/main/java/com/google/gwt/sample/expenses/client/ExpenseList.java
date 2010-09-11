@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,8 +31,10 @@ import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.regexp.shared.RegExp;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
@@ -41,7 +43,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
-import com.google.gwt.sample.expenses.client.request.ReportProxyChanged;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
@@ -70,34 +71,44 @@ import java.util.Set;
 /**
  * The list of expense reports on the right side of the app.
  */
-public class ExpenseList extends Composite
-    implements ReportProxyChanged.Handler {
+public class ExpenseList extends Composite implements
+    EntityProxyChange.Handler<ReportProxy> {
+
+  interface ExpenseListUiBinder extends UiBinder<Widget, ExpenseList> {
+  }
 
   /**
-   * The auto refresh interval in milliseconds.
+   * Custom listener for this widget.
    */
-  private static final int REFRESH_INTERVAL = 5000;
+  interface Listener {
 
-  private static ExpenseListUiBinder uiBinder = GWT.create(
-      ExpenseListUiBinder.class);
+    /**
+     * Called when the user selects a report.
+     * 
+     * @param report the selected report
+     */
+    void onReportSelected(ReportProxy report);
+  }
 
   /**
-   * Utility method to get the first part of the breadcrumb based on the
-   * department and employee.
-   *
-   * @param department the selected department
-   * @param employee the selected employee
-   * @return the breadcrumb
+   * The resources applied to the table.
    */
-  public static String getBreadcrumb(
-      String department, EmployeeProxy employee) {
-    if (employee != null) {
-      return "Reports for " + employee.getDisplayName();
-    } else if (department != null) {
-      return "Reports for " + department;
-    } else {
-      return "All Reports";
-    }
+  interface TableResources extends CellTable.CleanResources {
+    @Source("ExpenseListCellTable.css")
+    TableStyle cellTableStyle();
+  }
+
+  /**
+   * The styles applied to the table.
+   */
+  interface TableStyle extends CellTable.CleanStyle {
+    String evenRow();
+
+    String hoveredRow();
+
+    String oddRow();
+
+    String selectedRow();
   }
 
   /**
@@ -147,56 +158,20 @@ public class ExpenseList extends Composite
     }
   }
 
-  interface ExpenseListUiBinder extends UiBinder<Widget, ExpenseList> {
-  }
-  /**
-   * Custom listener for this widget.
-   */
-  interface Listener {
-
-    /**
-     * Called when the user selects a report.
-     *
-     * @param report the selected report
-     */
-    void onReportSelected(ReportProxy report);
-  }
-
-  /**
-   * The styles applied to the table.
-   */
-  interface TableStyle extends CellTable.CleanStyle {
-    String evenRow();
-
-    String hoveredRow();
-
-    String oddRow();
-
-    String selectedRow();
-  }
-
-  /**
-   * The resources applied to the table.
-   */
-  interface TableResources extends CellTable.CleanResources {
-    @Source("ExpenseListCellTable.css")
-    TableStyle cellTableStyle();
-  }
-
   /**
    * A cell used to highlight search text.
    */
   private class HighlightCell extends AbstractCell<String> {
 
-    private static final String replaceString =
-        "<span style='color:red;font-weight:bold;'>$1</span>";
+    private static final String replaceString = "<span style='color:red;font-weight:bold;'>$1</span>";
 
     @Override
     public void render(String value, Object viewData, SafeHtmlBuilder sb) {
       if (value != null) {
         if (searchRegExp != null) {
           // The search regex has already been html-escaped
-          value = searchRegExp.replace(SafeHtmlUtils.htmlEscape(value), replaceString);
+          value = searchRegExp.replace(SafeHtmlUtils.htmlEscape(value),
+              replaceString);
           sb.append(SafeHtmlUtils.fromTrustedString(value));
         } else {
           sb.appendEscaped(value);
@@ -204,7 +179,6 @@ public class ExpenseList extends Composite
       }
     }
   }
-
   /**
    * The data provider used to retrieve reports.
    */
@@ -215,15 +189,40 @@ public class ExpenseList extends Composite
     }
   }
 
+  /**
+   * The auto refresh interval in milliseconds.
+   */
+  private static final int REFRESH_INTERVAL = 5000;
+
+  private static ExpenseListUiBinder uiBinder = GWT.create(ExpenseListUiBinder.class);
+
+  /**
+   * Utility method to get the first part of the breadcrumb based on the
+   * department and employee.
+   * 
+   * @param department the selected department
+   * @param employee the selected employee
+   * @return the breadcrumb
+   */
+  public static String getBreadcrumb(String department, EmployeeProxy employee) {
+    if (employee != null) {
+      return "Reports for " + employee.getDisplayName();
+    } else if (department != null) {
+      return "Reports for " + department;
+    } else {
+      return "All Reports";
+    }
+  }
+
   @UiField
   Element breadcrumb;
+
   @UiField
   SimplePager pager;
   @UiField(provided = true)
   DefaultTextBox searchBox;
   @UiField
   Image searchButton;
-
   /**
    * The main table. We provide this in the constructor before calling
    * {@link UiBinder#createAndBindUi(Object)} because the pager depends on it.
@@ -285,7 +284,7 @@ public class ExpenseList extends Composite
   /**
    * The columns to request with each report.
    */
-  private final String[] reportColumns = new String[]{
+  private final String[] reportColumns = new String[] {
       ReportProxy.created.getName(), ReportProxy.purpose.getName(),
       ReportProxy.notes.getName()};
 
@@ -346,7 +345,7 @@ public class ExpenseList extends Composite
     });
   }
 
-  public void onReportChanged(ReportProxyChanged event) {
+  public void onProxyChange(EntityProxyChange<ReportProxy> event) {
     ReportProxy changed = event.getProxy();
     Long changedId = changed.getId();
     List<ReportProxy> records = table.getDisplayedItems();
@@ -363,7 +362,7 @@ public class ExpenseList extends Composite
 
   /**
    * Set the current department and employee to filter on.
-   *
+   * 
    * @param department the department, or null if none selected
    * @param employee the employee, or null if none selected
    */
@@ -385,7 +384,8 @@ public class ExpenseList extends Composite
     this.listener = listener;
   }
 
-  public void setRequestFactory(ExpensesRequestFactory factory) {
+  public void init(ExpensesRequestFactory factory, EventBus eventBus) {
+    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class, this);
     this.requestFactory = factory;
     requestReports(false);
   }
@@ -400,7 +400,7 @@ public class ExpenseList extends Composite
 
   /**
    * Add a sortable column to the table.
-   *
+   * 
    * @param <C> the data type for the column
    * @param text the header text
    * @param cell the cell used to render the column
@@ -471,41 +471,39 @@ public class ExpenseList extends Composite
     table.addColumnStyleName(5, common.spacerColumn());
 
     // Add a selection model.
-    final NoSelectionModel<ReportProxy> selectionModel = new NoSelectionModel<
-        ReportProxy>();
+    final NoSelectionModel<ReportProxy> selectionModel = new NoSelectionModel<ReportProxy>();
     table.setSelectionModel(selectionModel);
-    selectionModel.addSelectionChangeHandler(
-        new SelectionChangeEvent.Handler() {
-          public void onSelectionChange(SelectionChangeEvent event) {
-            Object selected = selectionModel.getLastSelectedObject();
-            if (selected != null && listener != null) {
-              listener.onReportSelected((ReportProxy) selected);
-            }
-          }
-        });
+    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+      public void onSelectionChange(SelectionChangeEvent event) {
+        Object selected = selectionModel.getLastSelectedObject();
+        if (selected != null && listener != null) {
+          listener.onReportSelected((ReportProxy) selected);
+        }
+      }
+    });
 
     // Spacer column.
     table.addColumn(new SpacerColumn<ReportProxy>());
 
     // Purpose column.
-    addColumn(
-        "Purpose", new HighlightCell(), new GetValue<ReportProxy, String>() {
+    addColumn("Purpose", new HighlightCell(),
+        new GetValue<ReportProxy, String>() {
           public String getValue(ReportProxy object) {
             return object.getPurpose();
           }
         }, ReportProxy.purpose);
 
     // Notes column.
-    addColumn(
-        "Notes", new HighlightCell(), new GetValue<ReportProxy, String>() {
+    addColumn("Notes", new HighlightCell(),
+        new GetValue<ReportProxy, String>() {
           public String getValue(ReportProxy object) {
             return object.getNotes();
           }
         }, ReportProxy.notes);
 
     // Department column.
-    addColumn(
-        "Department", new TextCell(), new GetValue<ReportProxy, String>() {
+    addColumn("Department", new TextCell(),
+        new GetValue<ReportProxy, String>() {
           public String getValue(ReportProxy object) {
             return object.getDepartment();
           }
@@ -525,7 +523,7 @@ public class ExpenseList extends Composite
 
   /**
    * Send a request for reports in the current range.
-   *
+   * 
    * @param isPolling true if this request is caused by polling
    */
   private void requestReports(boolean isPolling) {
@@ -575,14 +573,14 @@ public class ExpenseList extends Composite
           }
         }
       };
-      requestFactory.reportRequest().countReportsBySearch(
-          employeeId, dept, startsWith).fire(lastDataSizeReceiver);
+      requestFactory.reportRequest().countReportsBySearch(employeeId, dept,
+          startsWith).fire(lastDataSizeReceiver);
     }
 
     // Request reports in the current range.
     lastDataReceiver = new Receiver<List<ReportProxy>>() {
-      public void onSuccess(
-          List<ReportProxy> newValues, Set<SyncResult> syncResults) {
+      public void onSuccess(List<ReportProxy> newValues,
+          Set<SyncResult> syncResults) {
         if (this == lastDataReceiver) {
           int size = newValues.size();
           if (size < table.getPageSize()) {
@@ -601,8 +599,8 @@ public class ExpenseList extends Composite
           for (ReportProxy value : newValues) {
             Object key = reports.getKey(value);
             if (!isInitialData && !knownReportKeys.contains(key)) {
-              (new PhaseAnimation.CellTablePhaseAnimation<ReportProxy>(
-                  table, value, reports)).run();
+              (new PhaseAnimation.CellTablePhaseAnimation<ReportProxy>(table,
+                  value, reports)).run();
             }
             knownReportKeys.add(key);
           }

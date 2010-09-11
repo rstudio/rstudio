@@ -17,7 +17,8 @@ package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
@@ -29,10 +30,8 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
-import com.google.gwt.sample.expenses.client.request.ExpenseProxyChanged;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
-import com.google.gwt.sample.expenses.client.request.ReportProxyChanged;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
@@ -143,7 +142,7 @@ public class Expenses implements EntryPoint {
       }
     });
     
-    final HandlerManager eventBus = new HandlerManager(null);
+    final EventBus eventBus = new SimpleEventBus();
     requestFactory = GWT.create(ExpensesRequestFactory.class);
     requestFactory.init(eventBus);
 
@@ -157,7 +156,7 @@ public class Expenses implements EntryPoint {
     root.add(shell);
     
     // Check for Authentication failures or mismatches
-    eventBus.addHandler(RequestEvent.TYPE, new AuthenticationFailureHandler());
+    RequestEvent.register(eventBus, new AuthenticationFailureHandler());
 
     // Add a login widget to the page
     final LoginWidget login = shell.getLoginWidget();
@@ -188,11 +187,7 @@ public class Expenses implements EntryPoint {
         shell.showExpenseDetails(true);
       }
     });
-    expenseList.setRequestFactory(requestFactory);
-    eventBus.addHandler(ReportProxyChanged.TYPE, expenseList);
-
-    // Forward change events to the expense details.
-    eventBus.addHandler(ExpenseProxyChanged.TYPE, expenseDetails);
-    eventBus.addHandler(ReportProxyChanged.TYPE, expenseDetails);
+    expenseList.init(requestFactory, eventBus);
+    expenseDetails.init(eventBus);
   }
 }

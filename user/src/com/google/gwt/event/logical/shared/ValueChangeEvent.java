@@ -31,7 +31,7 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
 
   /**
    * Fires a value change event on all registered handlers in the handler
-   * manager.If no such handlers exist, this method will do nothing.
+   * manager. If no such handlers exist, this method will do nothing.
    * 
    * @param <I> the old value type
    * @param source the source of the handlers
@@ -103,7 +103,7 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
 
   // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
   // field itself does not, so we have to do an unsafe cast here.
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public final Type<ValueChangeHandler<I>> getAssociatedType() {
     return (Type) TYPE;

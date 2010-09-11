@@ -22,8 +22,8 @@ import com.google.gwt.app.place.testplaces.TokenizerFactory;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.SimpleEventBus;
 
 import junit.framework.TestCase;
 
@@ -116,7 +116,7 @@ public class AbstractPlaceHistoryHandlerTest extends TestCase {
   Logger deadLogger = new Logger("shut up", null) {
   };
 
-  EventBus eventBus = new HandlerManager(null);
+  EventBus eventBus = new SimpleEventBus();
 
   PlaceController placeController = new PlaceController(eventBus,
       new MockPlaceControllerDelegate()) {

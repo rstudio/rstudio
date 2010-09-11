@@ -18,7 +18,7 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
@@ -54,11 +54,11 @@ public class ExpensesMobileShell extends Composite {
   private MobileReportEntry reportEntry;
 
   private final EmployeeProxy employee;
-  private final HandlerManager eventBus;
+  private final EventBus eventBus;
   private final ExpensesRequestFactory requestFactory;
   private ArrayList<MobilePage> pages = new ArrayList<MobilePage>();
 
-  public ExpensesMobileShell(HandlerManager eventBus,
+  public ExpensesMobileShell(EventBus eventBus,
       ExpensesRequestFactory requestFactory, EmployeeProxy employee) {
     this.eventBus = eventBus;
     this.requestFactory = requestFactory;
