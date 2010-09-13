@@ -24,6 +24,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.shared.BidiFormatter;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
@@ -41,14 +42,13 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseRaw( {"BlogMessages.java", "BlogMessages.properties"})
+@ShowcaseRaw({"BlogMessages.java", "BlogMessages.properties"})
 public class CwBidiFormatting extends ContentWidget {
   /**
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwBidiFormattingArg0Label();
 
     String cwBidiFormattingArg1Label();
@@ -98,7 +98,7 @@ public class CwBidiFormatting extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * The blog messages used in this example.
@@ -124,25 +124,10 @@ public class CwBidiFormatting extends ContentWidget {
    * @param constants the constants
    */
   public CwBidiFormatting(CwConstants constants) {
-    super(constants);
+    super(constants.cwBidiFormattingName(),
+        constants.cwBidiFormattingDescription(), false, "BlogMessages.java",
+        "BlogMessages.properties");
     this.constants = constants;
-    registerSource("BlogMessages.java");
-    registerSource("BlogMessages.properties");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwBidiFormattingDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwBidiFormattingName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -160,10 +145,11 @@ public class CwBidiFormatting extends ContentWidget {
     layout.setCellSpacing(5);
 
     // Add a link to the source code of the Interface
-    Anchor link = new Anchor("BlogMessages");
+    final String rawFile = getSimpleName(BlogMessages.class);
+    Anchor link = new Anchor(rawFile);
     link.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        selectTab(2);
+        fireRawSourceRequest(rawFile + ".java");
       }
     });
     HorizontalPanel linkPanel = new HorizontalPanel();
@@ -182,8 +168,8 @@ public class CwBidiFormatting extends ContentWidget {
     arg0Box = new TextBox();
     // Using an initial value whose direction is opposite the locale's direction
     // demonstrates the need for and effect of bidi formatting.
-    arg0Box.setText(LocaleInfo.getCurrentLocale().isRTL() ? "Tom Bombadil" :
-      "תומר גרין");
+    arg0Box.setText(
+        LocaleInfo.getCurrentLocale().isRTL() ? "Tom Bombadil" : "תומר גרין");
     layout.setHTML(2, 0, constants.cwBidiFormattingArg0Label());
     layout.setWidget(2, 1, arg0Box);
 
@@ -197,8 +183,8 @@ public class CwBidiFormatting extends ContentWidget {
     arg2Box = new TextBox();
     // Using an initial value whose direction is opposite the locale's direction
     // demonstrates the need for and effect of bidi formatting.
-    arg2Box.setText(LocaleInfo.getCurrentLocale().isRTL() ?
-        "How deep is your love?" : "כמה חול יש בחוף?");
+    arg2Box.setText(LocaleInfo.getCurrentLocale().isRTL()
+        ? "How deep is your love?" : "כמה חול יש בחוף?");
     layout.setHTML(4, 0, constants.cwBidiFormattingArg2Label());
     layout.setWidget(4, 1, arg2Box);
 
@@ -244,20 +230,6 @@ public class CwBidiFormatting extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchInternationalization();
-  }
-
-  /**
-   * Html-escape the input String.
-   * TODO(tomerigo): Use SafeHtml when it becomes available.
-   */
-  @ShowcaseSource
-  private String htmlEscape(String str) {
-      return str.replace("&", "&amp;").replace("<", "&lt;");
-  }
-
   /**
    * Update the formatted message.
    */
@@ -268,11 +240,10 @@ public class CwBidiFormatting extends ContentWidget {
     String arg2 = arg2Box.getText().trim();
     message.setText(blogMessages.userComment(arg0, arg1, arg2));
 
-    bidiFormattedMessage.setHTML(blogMessages.userComment(
-        bidiFormatter.spanWrap(arg0),
+    bidiFormattedMessage.setHTML(
+        blogMessages.userComment(bidiFormatter.spanWrap(arg0),
         // arg1 is intended to be an unsigned number, so bidi formatting is not
         // needed. However, HTML escaping is a must to avoid an XSS attack hole!
-        htmlEscape(arg1),
-        bidiFormatter.spanWrap(arg2)));
+            SafeHtmlUtils.htmlEscape(arg1), bidiFormatter.spanWrap(arg2)));
   }
 }

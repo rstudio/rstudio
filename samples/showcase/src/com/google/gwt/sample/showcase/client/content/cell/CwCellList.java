@@ -58,8 +58,7 @@ public class CwCellList extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwCellListDescription();
 
     String cwCellListName();
@@ -146,39 +145,14 @@ public class CwCellList extends ContentWidget {
   private CellList<ContactInfo> cellList;
 
   /**
-   * An instance of the constants.
-   */
-  @ShowcaseData
-  private CwConstants constants;
-
-  /**
    * Constructor.
    *
    * @param constants the constants
    */
   public CwCellList(CwConstants constants) {
-    super(constants);
-    this.constants = constants;
-    registerSource("ContactDatabase.java");
-    registerSource("CwCellList.ui.xml");
-    registerSource("ContactInfoForm.java");
-    registerSource("ShowMorePagerPanel.java");
-    registerSource("RangeLabelPager");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwCellListDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwCellListName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
+    super(constants.cwCellListName(), constants.cwCellListDescription(), false,
+        "ContactDatabase.java", "CwCellList.ui.xml", "ContactInfoForm.java",
+        "ShowMorePagerPanel.java", "RangeLabelPager.java");
   }
 
   /**
@@ -246,10 +220,5 @@ public class CwCellList extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchCellWidgets();
   }
 }

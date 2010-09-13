@@ -76,8 +76,7 @@ public class CwCellSampler extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwCellSamplerDescription();
 
     String cwCellSamplerName();
@@ -219,12 +218,6 @@ public class CwCellSampler extends ContentWidget {
   Button redrawButton;
 
   /**
-   * An instance of the constants.
-   */
-  @ShowcaseData
-  private CwConstants constants;
-
-  /**
    * The list of cells that are editable.
    */
   @ShowcaseData
@@ -243,25 +236,8 @@ public class CwCellSampler extends ContentWidget {
    * @param constants the constants
    */
   public CwCellSampler(CwConstants constants) {
-    super(constants);
-    this.constants = constants;
-    registerSource("ContactDatabase.java");
-    registerSource("CwCellSampler.ui.xml");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwCellSamplerDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwCellSamplerName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
+    super(constants.cwCellSamplerName(), constants.cwCellSamplerDescription(),
+        false, "ContactDatabase.java", "CwCellSampler.ui.xml");
   }
 
   /**
@@ -473,11 +449,6 @@ public class CwCellSampler extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchCellWidgets();
   }
 
   /**

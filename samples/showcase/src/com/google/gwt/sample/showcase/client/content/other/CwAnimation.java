@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -86,7 +86,7 @@ public class CwAnimation extends ContentWidget {
 
     /**
      * Update the position of the widget, adding a rotational offset.
-     * 
+     *
      * @param w the widget to move
      * @param radian the progress in radian
      * @param offset the offset in radian
@@ -103,8 +103,7 @@ public class CwAnimation extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     @DefaultStringValue("Cancel")
     String cwAnimationCancel();
 
@@ -165,7 +164,7 @@ public class CwAnimation extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * The {@link Button} used to start the {@link Animation}.
@@ -175,27 +174,13 @@ public class CwAnimation extends ContentWidget {
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwAnimation(CwConstants constants) {
-    super(constants);
+    super(
+        constants.cwAnimationName(), constants.cwAnimationDescription(), false);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwAnimationDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwAnimationName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -257,15 +242,10 @@ public class CwAnimation extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchOther();
-  }
-
   /**
    * Create an options panel that allows users to select a widget and reposition
    * it.
-   * 
+   *
    * @return the new options panel
    */
   @ShowcaseSource

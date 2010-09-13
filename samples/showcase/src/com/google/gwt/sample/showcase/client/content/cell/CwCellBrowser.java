@@ -55,8 +55,7 @@ public class CwCellBrowser extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwCellBrowserDescription();
 
     String cwCellBrowserName();
@@ -77,38 +76,14 @@ public class CwCellBrowser extends ContentWidget {
   Label selectedLabel;
 
   /**
-   * An instance of the constants.
-   */
-  @ShowcaseData
-  private CwConstants constants;
-
-  /**
    * Constructor.
    *
    * @param constants the constants
    */
-  // TODO(jlabanca): Add 4th level with more details of the selected contact.
   public CwCellBrowser(CwConstants constants) {
-    super(constants);
-    this.constants = constants;
-    registerSource("ContactDatabase.java");
-    registerSource("ContactTreeViewModel.java");
-    registerSource("CwCellBrowser.ui.xml");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwCellBrowserDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwCellBrowserName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
+    super(constants.cwCellBrowserName(), constants.cwCellBrowserDescription(),
+        false, "ContactDatabase.java", "ContactTreeViewModel.java",
+        "CwCellBrowser.ui.xml");
   }
 
   /**
@@ -161,10 +136,5 @@ public class CwCellBrowser extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchCellWidgets();
   }
 }

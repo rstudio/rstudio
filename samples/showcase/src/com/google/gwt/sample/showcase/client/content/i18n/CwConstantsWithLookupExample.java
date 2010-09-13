@@ -27,6 +27,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTML;
@@ -45,8 +46,7 @@ public class CwConstantsWithLookupExample extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwConstantsWithLookupExampleDescription();
 
     String cwConstantsWithLookupExampleLinkText();
@@ -83,7 +83,7 @@ public class CwConstantsWithLookupExample extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
@@ -91,25 +91,10 @@ public class CwConstantsWithLookupExample extends ContentWidget {
    * @param constants the constants
    */
   public CwConstantsWithLookupExample(CwConstants constants) {
-    super(constants);
+    super(constants.cwConstantsWithLookupExampleName(),
+        constants.cwConstantsWithLookupExampleDescription(), false,
+        "ColorConstants.java", "ColorConstants.properties");
     this.constants = constants;
-    registerSource("ColorConstants.java");
-    registerSource("ColorConstants.properties");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwConstantsWithLookupExampleDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwConstantsWithLookupExampleName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -127,10 +112,11 @@ public class CwConstantsWithLookupExample extends ContentWidget {
     layout.setCellSpacing(5);
 
     // Add a link to the source code of the Interface
-    HTML link = new HTML(" <a href=\"javascript:void(0);\">ColorConstants</a>");
+    final String rawFile = getSimpleName(ColorConstants.class);
+    Anchor link = new Anchor(rawFile);
     link.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        selectTab(2);
+        fireRawSourceRequest(rawFile + ".java");
       }
     });
     HorizontalPanel linkPanel = new HorizontalPanel();
@@ -178,11 +164,6 @@ public class CwConstantsWithLookupExample extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchInternationalization();
   }
 
   /**

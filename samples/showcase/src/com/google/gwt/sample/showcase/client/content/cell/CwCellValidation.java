@@ -50,8 +50,7 @@ public class CwCellValidation extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwCellValidationColumnAddress();
 
     String cwCellValidationColumnName();
@@ -203,7 +202,7 @@ public class CwCellValidation extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
@@ -211,24 +210,9 @@ public class CwCellValidation extends ContentWidget {
    * @param constants the constants
    */
   public CwCellValidation(CwConstants constants) {
-    super(constants);
+    super(constants.cwCellValidationName(),
+        constants.cwCellValidationDescription(), false, "ContactDatabase.java");
     this.constants = constants;
-    registerSource("ContactDatabase.java");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwCellValidationDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwCellValidationName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -306,10 +290,5 @@ public class CwCellValidation extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchCellWidgets();
   }
 }

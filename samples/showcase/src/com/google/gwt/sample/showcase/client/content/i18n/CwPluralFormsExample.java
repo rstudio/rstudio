@@ -27,6 +27,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTML;
@@ -45,8 +46,7 @@ public class CwPluralFormsExample extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwPluralFormsExampleArg0Label();
 
     String cwPluralFormsExampleDescription();
@@ -68,7 +68,7 @@ public class CwPluralFormsExample extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * The {@link Label} used to display the message.
@@ -88,25 +88,10 @@ public class CwPluralFormsExample extends ContentWidget {
    * @param constants the constants
    */
   public CwPluralFormsExample(CwConstants constants) {
-    super(constants);
+    super(constants.cwPluralFormsExampleName(),
+        constants.cwPluralFormsExampleDescription(), false,
+        "PluralMessages.java", "PluralMessages_fr.properties");
     this.constants = constants;
-    registerSource("PluralMessages.java");
-    registerSource("PluralMessages_fr.properties");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwPluralFormsExampleDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwPluralFormsExampleName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -124,10 +109,11 @@ public class CwPluralFormsExample extends ContentWidget {
     layout.setCellSpacing(5);
 
     // Add a link to the source code of the Interface
-    HTML link = new HTML(" <a href=\"javascript:void(0);\">PluralMessages</a>");
+    final String rawFile = getSimpleName(PluralMessages.class);
+    Anchor link = new Anchor(rawFile);
     link.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        selectTab(2);
+        fireRawSourceRequest(rawFile + ".java");
       }
     });
     HorizontalPanel linkPanel = new HorizontalPanel();
@@ -174,11 +160,6 @@ public class CwPluralFormsExample extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchInternationalization();
   }
 
   /**

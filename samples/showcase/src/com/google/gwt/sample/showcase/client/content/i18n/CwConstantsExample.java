@@ -25,6 +25,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTML;
@@ -44,8 +45,7 @@ public class CwConstantsExample extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwConstantsExampleDescription();
 
     String cwConstantsExampleLinkText();
@@ -57,7 +57,7 @@ public class CwConstantsExample extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
@@ -65,25 +65,10 @@ public class CwConstantsExample extends ContentWidget {
    * @param constants the constants
    */
   public CwConstantsExample(CwConstants constants) {
-    super(constants);
+    super(constants.cwConstantsExampleName(),
+        constants.cwConstantsExampleDescription(), false,
+        "ExampleConstants.java", "ExampleConstants.properties");
     this.constants = constants;
-    registerSource("ExampleConstants.java");
-    registerSource("ExampleConstants.properties");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwConstantsExampleDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwConstantsExampleName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -101,11 +86,11 @@ public class CwConstantsExample extends ContentWidget {
     layout.setCellSpacing(5);
 
     // Add a link to the source code of the Interface
-    HTML link = new HTML(
-        " <a href=\"javascript:void(0);\">ExampleConstants</a>");
+    final String rawFile = getSimpleName(ExampleConstants.class);
+    Anchor link = new Anchor(rawFile);
     link.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        selectTab(2);
+        fireRawSourceRequest(rawFile + ".java");
       }
     });
     HorizontalPanel linkPanel = new HorizontalPanel();
@@ -156,10 +141,5 @@ public class CwConstantsExample extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchInternationalization();
   }
 }

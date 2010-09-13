@@ -38,8 +38,7 @@ public class CwBidiInput extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwBidiInputRtlAreaLabel();
 
     String cwBidiInputBidiAreaLabel();
@@ -53,7 +52,7 @@ public class CwBidiInput extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
@@ -61,18 +60,9 @@ public class CwBidiInput extends ContentWidget {
    * @param constants the constants
    */
   public CwBidiInput(CwConstants constants) {
-    super(constants);
+    super(
+        constants.cwBidiInputName(), constants.cwBidiInputDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwBidiInputDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwBidiInputName();
   }
 
   /**
@@ -117,10 +107,5 @@ public class CwBidiInput extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchTextInput();
   }
 }

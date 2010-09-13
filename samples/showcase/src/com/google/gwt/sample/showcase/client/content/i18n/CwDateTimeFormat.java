@@ -48,8 +48,7 @@ public class CwDateTimeFormat extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwDateTimeFormatDescription();
 
     String cwDateTimeFormatFailedToParseInput();
@@ -76,7 +75,7 @@ public class CwDateTimeFormat extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * The {@link Label} where the formatted value is displayed.
@@ -108,18 +107,9 @@ public class CwDateTimeFormat extends ContentWidget {
    * @param constants the constants
    */
   public CwDateTimeFormat(CwConstants constants) {
-    super(constants);
+    super(constants.cwDateTimeFormatName(),
+        constants.cwDateTimeFormatDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwDateTimeFormatDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwDateTimeFormatName();
   }
 
   /**
@@ -198,11 +188,6 @@ public class CwDateTimeFormat extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchInternationalization();
   }
 
   /**

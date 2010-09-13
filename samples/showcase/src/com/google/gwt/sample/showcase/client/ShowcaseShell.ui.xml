@@ -1,0 +1,278 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:c="urn:import:com.google.gwt.user.cellview.client"
+  ui:generateFormat='com.google.gwt.i18n.rebind.format.PropertiesFormat'
+  ui:generateLocales='default'>
+
+  <ui:with
+    field='res'
+    type='com.google.gwt.sample.showcase.client.ShowcaseResources' />
+
+  <ui:style>
+    .linkBar {
+      padding: 2px 22px 2px 0px;
+      background: white;
+      text-align: right;
+    }
+    
+    .link {
+      font-size: 8pt;
+      line-height: 10pt;
+    }
+    
+    .titleBar {
+      padding: 0 10px;
+      border-bottom: 1px solid #C3C3C3;
+    }
+    
+    .title {
+      color: #7b8fae;
+      font-size: 20pt;
+      font-weight: bold;
+      text-shadow: #ddd 3px 3px 1px;
+      margin: 0;
+      padding: 0 0 0 4px;
+    }
+    
+    .subtitle {
+      color: #888;
+      font-size: 16pt;
+      margin: 0;
+      padding: 0 0 0 6px;
+    }
+    
+    .options {
+      padding: 6px 10px 0 0;
+    }
+    
+    .localeBox {
+      color: blue;
+      font-size: 8pt;
+      margin-left: 4px;
+    }
+    
+    .styleSelectionButton {
+      width: 36px;
+      height: 16px;
+      margin: 3px 0px 0px 10px;
+      padding: 0px;
+    }
+    
+    .styleSelectionStandard {
+      background: #d0e4f6;
+    }
+    
+    .styleSelectionChrome {
+      background: #ccc;
+    }
+    
+    .styleSelectionDark {
+      background: #3d3d3d;
+    }
+    
+    .mainMenu {
+      background-color: #d7dde8;
+      border-right: 1px solid #c3c3c3;
+    }
+    
+    .contentButtons {
+      background-color: #d7dde8;
+      border-bottom: 1px solid #c3c3c3;
+      padding: 0px 10px;
+    }
+    
+    .contentButton {
+      margin-right: 20px;
+      color: #888888;
+      font-weight: bold;
+      cursor: hand;
+      cursor: pointer;
+      line-height: 20pt;
+      vertical-align: middle;
+    }
+    
+    .contentButton:hover {
+      color: #4B4A4A;
+      text-decoration: underline;
+    }
+    
+    .contentButtonSource {
+      margin-right: 4px;
+    }
+    
+    .contentList {
+      font-size: 8pt;
+      color: #4B4A4A;
+      direction: ltr;
+    }
+    
+    .contentPanel {
+      padding: 10px;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit='PT'>
+
+    <!-- Links Bar. -->
+    <g:north
+      size='12'>
+      <g:HTMLPanel
+        styleName='{style.linkBar}'>
+        <table
+          ui:field='linkCell'
+          cellpadding='0'
+          cellspacing='0'
+          align='right'>
+          <tr>
+            <td
+              class='{style.link}'>
+              <a
+                href='http://code.google.com/webtoolkit/'>
+                <ui:msg
+                  key='mainLinkHomepage'>GWT Homepage</ui:msg>
+              </a>
+            </td>
+            <td
+              class='{style.link}'>&nbsp;|&nbsp;
+            </td>
+            <td
+              class='{style.link}'>
+              <a
+                href='http://code.google.com/webtoolkit/examples/'>
+                <ui:msg
+                  key='mainLinkExamples'>More Examples</ui:msg>
+              </a>
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:north>
+
+    <!-- Title Bar. -->
+    <g:north
+      size='55'>
+      <g:HTMLPanel
+        styleName='{style.titleBar}'>
+        <table
+          cellpadding='0'
+          cellspacing='0'
+          width='100%'>
+          <tr>
+            <td>
+              <table
+                cellpadding='0'
+                cellspacing='0'>
+                <tr>
+                  <td
+                    style='line-height:0px'>
+                    <!-- Logo Image. -->
+                    <g:Image
+                      resource='{res.gwtLogo}' />
+                  </td>
+                  <td>
+                    <!-- Title and subtitle. -->
+                    <h1
+                      class='{style.title}'>
+                      <ui:msg
+                        key='mainTitle'>Google Web Toolkit</ui:msg>
+                    </h1>
+                    <h2
+                      class='{style.subtitle}'>
+                      <ui:msg
+                        key='mainSubTitle'>Showcase of Features</ui:msg>
+                    </h2>
+                  </td>
+                </tr>
+              </table>
+            </td>
+            <td
+              ui:field='localeSelectionCell'
+              align='right'
+              valign='top'
+              class='{style.options}'>
+              <!-- Locale selection. -->
+              <table
+                cellpadding='0'
+                cellspacing='0'>
+                <tr>
+                  <td
+                    valign='middle'>
+                    <g:Image
+                      resource='{res.locale}' />
+                  </td>
+                  <td
+                    valign='middle'>
+                    <g:ListBox
+                      addStyleNames='{style.localeBox}'
+                      ui:field='localeBox' />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:north>
+
+    <g:center>
+      <g:DockLayoutPanel
+        unit='PX'>
+        <!-- Main menu tree. -->
+        <g:lineStart
+          size='225'>
+          <g:ScrollPanel
+            styleName='{style.mainMenu}'>
+            <c:CellTree
+              ui:field='mainMenu' />
+          </g:ScrollPanel>
+        </g:lineStart>
+
+        <!-- Main content area. -->
+        <g:center>
+          <g:DockLayoutPanel
+            unit='PT'>
+            <g:north
+              size='20'>
+              <g:FlowPanel
+                ui:field='contentButtons'
+                styleName='{style.contentButtons}'>
+                <g:Anchor
+                  ui:field='tabExample'
+                  addStyleNames='{style.contentButton}'>
+                  <ui:msg
+                    key='contentWidgetExample'>Example</ui:msg>
+                </g:Anchor>
+                <g:Anchor
+                  ui:field='tabStyle'
+                  addStyleNames='{style.contentButton}'>
+                  <ui:msg
+                    key='contentWidgetStyle'>CSS Style</ui:msg>
+                </g:Anchor>
+                <g:Anchor
+                  ui:field='tabSource'
+                  addStyleNames='{style.contentButton} {style.contentButtonSource}'>
+                  <ui:msg
+                    key='contentWidgetSource'>Source Code</ui:msg>
+                </g:Anchor>
+                <g:ListBox
+                  ui:field='tabSourceList'
+                  addStyleNames='{style.contentList}' />
+              </g:FlowPanel>
+            </g:north>
+
+            <g:center>
+              <g:ScrollPanel
+                addStyleNames='{style.contentPanel}'
+                ui:field='contentPanel' />
+            </g:center>
+          </g:DockLayoutPanel>
+        </g:center>
+      </g:DockLayoutPanel>
+    </g:center>
+
+  </g:DockLayoutPanel>
+
+</ui:UiBinder> 

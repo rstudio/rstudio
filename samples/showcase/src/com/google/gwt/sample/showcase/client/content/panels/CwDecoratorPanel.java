@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -41,10 +41,9 @@ public class CwDecoratorPanel extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
-    @DefaultStringValue("Add rounded corners to any Widget using the Decorator Panel")
-    String cwDecoratorPanelDescription();
+  public static interface CwConstants extends Constants {
+        @DefaultStringValue("Add rounded corners to any Widget using the Decorator Panel")
+        String cwDecoratorPanelDescription();
 
     @DefaultStringValue("Description:")
     String cwDecoratorPanelFormDescription();
@@ -63,26 +62,17 @@ public class CwDecoratorPanel extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwDecoratorPanel(CwConstants constants) {
-    super(constants);
+    super(constants.cwDecoratorPanelName(),
+        constants.cwDecoratorPanelDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwDecoratorPanelDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwDecoratorPanelName();
   }
 
   /**
@@ -99,8 +89,8 @@ public class CwDecoratorPanel extends ContentWidget {
     // Add a title to the form
     layout.setHTML(0, 0, constants.cwDecoratorPanelFormTitle());
     cellFormatter.setColSpan(0, 0, 2);
-    cellFormatter.setHorizontalAlignment(0, 0,
-        HasHorizontalAlignment.ALIGN_CENTER);
+    cellFormatter.setHorizontalAlignment(
+        0, 0, HasHorizontalAlignment.ALIGN_CENTER);
 
     // Add some standard form options
     layout.setHTML(1, 0, constants.cwDecoratorPanelFormName());
@@ -126,10 +116,5 @@ public class CwDecoratorPanel extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchPanels();
   }
 }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,8 +47,7 @@ public class CwCookies extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwCookiesDeleteCookie();
 
     String cwCookiesDescription();
@@ -76,7 +75,7 @@ public class CwCookies extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * A {@link TextBox} that holds the name of the cookie.
@@ -98,27 +97,12 @@ public class CwCookies extends ContentWidget {
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwCookies(CwConstants constants) {
-    super(constants);
+    super(constants.cwCookiesName(), constants.cwCookiesDescription(), false);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwCookiesDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwCookiesName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -134,8 +118,8 @@ public class CwCookies extends ContentWidget {
     existingCookiesBox = new ListBox();
     Button deleteCookieButton = new Button(constants.cwCookiesDeleteCookie());
     deleteCookieButton.addStyleName("sc-FixedWidthButton");
-    mainLayout.setHTML(0, 0, "<b>" + constants.cwCookiesExistingLabel()
-        + "</b>");
+    mainLayout.setHTML(
+        0, 0, "<b>" + constants.cwCookiesExistingLabel() + "</b>");
     mainLayout.setWidget(0, 1, existingCookiesBox);
     mainLayout.setWidget(0, 2, deleteCookieButton);
 
@@ -211,14 +195,9 @@ public class CwCookies extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchOther();
-  }
-
   /**
    * Refresh the list of existing cookies.
-   * 
+   *
    * @param selectedCookie the cookie to select by default
    */
   @ShowcaseSource

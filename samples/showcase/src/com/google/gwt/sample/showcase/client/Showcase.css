@@ -1,0 +1,62 @@
+/**
+ * Applied to buttons that should have a fixed width.
+ */
+.sc-FixedWidthButton {
+  width: 10em;
+}
+
+/**
+ * Applied to specific components in Content Widgets.
+ */
+.cw-BasicPopup-thumb {
+  cursor: pointer;
+  cursor: hand;
+}
+
+@noflip {
+  .cw-DictionaryExample-header {
+    color: #7aa5d6;
+    text-decoration: underline;
+    font-weight: bold;
+    padding-right: 20px;
+  }
+}
+
+@noflip {
+  .cw-DictionaryExample-data {
+    padding-right: 20px;
+  }
+}
+
+.cw-DockPanel td {
+  border: 1px solid #BBBBBB;
+  padding: 3px;
+}
+
+.cw-FlexTable td {
+  border: 1px solid #BBBBBB;
+  padding: 3px;
+}
+
+.cw-FlexTable-buttonPanel td {
+  border: 0px;
+}
+
+.cw-FlowPanel-checkBox {
+  margin-right: 20px;
+}
+
+.cw-RedText {
+  color: red;
+}
+
+.cw-RichText {
+  border: 1px solid #BBBBBB;
+  border-spacing: 0px;
+}
+
+.cw-StackPanelHeader {
+  padding-left: 7px;
+  font-weight: bold;
+  font-size: 1.4em;
+}

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -33,16 +33,15 @@ import com.google.gwt.user.client.ui.Widget;
  * Example file.
  */
 @ShowcaseStyle({
-    ".gwt-SuggestBox", ".gwt-SuggestBoxPopup",
-    "html>body .gwt-SuggestBoxPopup", "* html .gwt-SuggestBoxPopup"})
+    ".gwt-SuggestBox", ".gwt-SuggestBoxPopup", "html>body .gwt-SuggestBoxPopup",
+    "* html .gwt-SuggestBoxPopup"})
 public class CwSuggestBox extends ContentWidget {
 
   /**
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwSuggestBoxDescription();
 
     String cwSuggestBoxLabel();
@@ -56,26 +55,17 @@ public class CwSuggestBox extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwSuggestBox(CwConstants constants) {
-    super(constants);
+    super(constants.cwSuggestBoxName(), constants.cwSuggestBoxDescription(),
+        true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwSuggestBoxDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwSuggestBoxName();
   }
 
   /**
@@ -114,10 +104,5 @@ public class CwSuggestBox extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchListsAndMenus();
   }
 }

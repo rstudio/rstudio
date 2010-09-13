@@ -5,8 +5,6 @@
   <inherits name="com.google.gwt.i18n.I18N"/>
   <inherits name="com.google.gwt.i18n.CldrLocales"/>
   <inherits name="com.google.gwt.user.theme.standard.StandardResources"/>
-  <inherits name="com.google.gwt.user.theme.chrome.ChromeResources"/>
-  <inherits name="com.google.gwt.user.theme.dark.DarkResources"/>
 
   <!-- Enable debug ID. -->
   <inherits name="com.google.gwt.user.Debug"/>

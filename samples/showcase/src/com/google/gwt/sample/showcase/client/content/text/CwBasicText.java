@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -48,8 +48,7 @@ public class CwBasicText extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwBasicTextAreaLabel();
 
     String cwBasicTextDescription();
@@ -69,26 +68,17 @@ public class CwBasicText extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwBasicText(CwConstants constants) {
-    super(constants);
+    super(
+        constants.cwBasicTextName(), constants.cwBasicTextDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwBasicTextDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwBasicTextName();
   }
 
   /**
@@ -152,22 +142,17 @@ public class CwBasicText extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchTextInput();
-  }
-
   /**
    * Create a TextBox example that includes the text box and an optional handler
    * that updates a Label with the currently selected text.
-   * 
+   *
    * @param textBox the text box to handle
    * @param addSelection add handlers to update label
    * @return the Label that will be updated
    */
   @ShowcaseSource
-  private HorizontalPanel createTextExample(final TextBoxBase textBox,
-      boolean addSelection) {
+  private HorizontalPanel createTextExample(
+      final TextBoxBase textBox, boolean addSelection) {
     // Add the text box and label to a panel
     HorizontalPanel hPanel = new HorizontalPanel();
     hPanel.setSpacing(4);
@@ -202,13 +187,14 @@ public class CwBasicText extends ContentWidget {
 
   /**
    * Update the text in one of the selection labels.
-   * 
+   *
    * @param textBox the text box
    * @param label the label to update
    */
   @ShowcaseSource
   private void updateSelectionLabel(TextBoxBase textBox, Label label) {
-    label.setText(constants.cwBasicTextSelected() + ": "
-        + textBox.getCursorPos() + ", " + textBox.getSelectionLength());
+    label.setText(
+        constants.cwBasicTextSelected() + ": " + textBox.getCursorPos() + ", "
+            + textBox.getSelectionLength());
   }
 }

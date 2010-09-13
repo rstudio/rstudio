@@ -27,6 +27,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTML;
@@ -44,8 +45,7 @@ public class CwMessagesExample extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwMessagesExampleArg0Label();
 
     String cwMessagesExampleArg1Label();
@@ -85,7 +85,7 @@ public class CwMessagesExample extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * The error messages used in this example.
@@ -105,25 +105,10 @@ public class CwMessagesExample extends ContentWidget {
    * @param constants the constants
    */
   public CwMessagesExample(CwConstants constants) {
-    super(constants);
+    super(constants.cwMessagesExampleName(),
+        constants.cwMessagesExampleDescription(), false, "ErrorMessages.java",
+        "ErrorMessages.properties");
     this.constants = constants;
-    registerSource("ErrorMessages.java");
-    registerSource("ErrorMessages.properties");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwMessagesExampleDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwMessagesExampleName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -141,10 +126,11 @@ public class CwMessagesExample extends ContentWidget {
     layout.setCellSpacing(5);
 
     // Add a link to the source code of the Interface
-    HTML link = new HTML(" <a href=\"javascript:void(0);\">ErrorMessages</a>");
+    final String rawFile = getSimpleName(ErrorMessages.class);
+    Anchor link = new Anchor(rawFile);
     link.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        selectTab(2);
+        fireRawSourceRequest(rawFile + ".java");
       }
     });
     HorizontalPanel linkPanel = new HorizontalPanel();
@@ -210,11 +196,6 @@ public class CwMessagesExample extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchInternationalization();
   }
 
   /**

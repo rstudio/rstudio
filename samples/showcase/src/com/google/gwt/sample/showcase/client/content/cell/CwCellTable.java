@@ -61,8 +61,7 @@ public class CwCellTable extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwCellTableColumnAddress();
 
     String cwCellTableColumnCategory();
@@ -94,7 +93,7 @@ public class CwCellTable extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
@@ -102,25 +101,9 @@ public class CwCellTable extends ContentWidget {
    * @param constants the constants
    */
   public CwCellTable(CwConstants constants) {
-    super(constants);
+    super(constants.cwCellTableName(), constants.cwCellTableDescription(),
+        false, "ContactDatabase.java", "CwCellTable.ui.xml");
     this.constants = constants;
-    registerSource("ContactDatabase.java");
-    registerSource("CwCellTable.ui.xml");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwCellTableDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwCellTableName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
   }
 
   /**
@@ -174,11 +157,6 @@ public class CwCellTable extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchCellWidgets();
   }
 
   /**

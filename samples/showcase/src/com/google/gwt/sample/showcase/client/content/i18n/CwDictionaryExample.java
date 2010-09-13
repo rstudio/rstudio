@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,6 +26,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,8 +41,7 @@ public class CwDictionaryExample extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwDictionaryExampleDescription();
 
     String cwDictionaryExampleLinkText();
@@ -53,26 +53,17 @@ public class CwDictionaryExample extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwDictionaryExample(CwConstants constants) {
-    super(constants);
+    super(constants.cwDictionaryExampleName(),
+        constants.cwDictionaryExampleDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwDictionaryExampleDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwDictionaryExampleName();
   }
 
   /**
@@ -85,10 +76,11 @@ public class CwDictionaryExample extends ContentWidget {
     VerticalPanel layout = new VerticalPanel();
 
     // Show the HTML variable that defines the dictionary
-    HTML source = new HTML("<pre>var userInfo = {\n"
-        + "&nbsp;&nbsp;name: \"Amelie Crutcher\",\n"
-        + "&nbsp;&nbsp;timeZone: \"EST\",\n" + "&nbsp;&nbsp;userID: \"123\",\n"
-        + "&nbsp;&nbsp;lastLogOn: \"2/2/2006\"\n" + "};</pre>\n");
+    HTML source = new HTML(
+        "<pre>var userInfo = {\n" + "&nbsp;&nbsp;name: \"Amelie Crutcher\",\n"
+            + "&nbsp;&nbsp;timeZone: \"EST\",\n"
+            + "&nbsp;&nbsp;userID: \"123\",\n"
+            + "&nbsp;&nbsp;lastLogOn: \"2/2/2006\"\n" + "};</pre>\n");
     source.getElement().setDir("ltr");
     source.getElement().getStyle().setProperty("textAlign", "left");
     layout.add(new HTML(constants.cwDictionaryExampleLinkText()));
@@ -96,6 +88,7 @@ public class CwDictionaryExample extends ContentWidget {
 
     // Create the Dictionary of data
     FlexTable userInfoGrid = new FlexTable();
+    CellFormatter formatter = userInfoGrid.getCellFormatter();
     Dictionary userInfo = Dictionary.getDictionary("userInfo");
     Set<String> keySet = userInfo.keySet();
     int columnCount = 0;
@@ -105,15 +98,13 @@ public class CwDictionaryExample extends ContentWidget {
 
       // Add a column with the data
       userInfoGrid.setHTML(0, columnCount, key);
+      formatter.addStyleName(0, columnCount, "cw-DictionaryExample-header");
       userInfoGrid.setHTML(1, columnCount, value);
+      formatter.addStyleName(1, columnCount, "cw-DictionaryExample-data");
 
       // Go to the next column
       columnCount++;
     }
-    userInfoGrid.getRowFormatter().setStyleName(0,
-        "cw-DictionaryExample-headerRow");
-    userInfoGrid.getRowFormatter().setStyleName(1,
-        "cw-DictionaryExample-dataRow");
     layout.add(new HTML("<br><br>"));
     layout.add(userInfoGrid);
 
@@ -134,10 +125,4 @@ public class CwDictionaryExample extends ContentWidget {
       }
     });
   }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchInternationalization();
-  }
-
 }

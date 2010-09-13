@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -44,8 +44,7 @@ public class CwDisclosurePanel extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwDisclosurePanelDescription();
 
     String cwDisclosurePanelFormAdvancedCriteria();
@@ -69,26 +68,17 @@ public class CwDisclosurePanel extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwDisclosurePanel(CwConstants constants) {
-    super(constants);
+    super(constants.cwDisclosurePanelName(),
+        constants.cwDisclosurePanelDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwDisclosurePanelDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwDisclosurePanelName();
   }
 
   /**
@@ -120,11 +110,6 @@ public class CwDisclosurePanel extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchPanels();
-  }
-
   /**
    * Create a form that contains undisclosed advanced options.
    */
@@ -139,8 +124,8 @@ public class CwDisclosurePanel extends ContentWidget {
     // Add a title to the form
     layout.setHTML(0, 0, constants.cwDisclosurePanelFormTitle());
     cellFormatter.setColSpan(0, 0, 2);
-    cellFormatter.setHorizontalAlignment(0, 0,
-        HasHorizontalAlignment.ALIGN_CENTER);
+    cellFormatter.setHorizontalAlignment(
+        0, 0, HasHorizontalAlignment.ALIGN_CENTER);
 
     // Add some standard form options
     layout.setHTML(1, 0, constants.cwDisclosurePanelFormName());

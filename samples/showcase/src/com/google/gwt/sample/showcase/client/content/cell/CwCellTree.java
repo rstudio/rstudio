@@ -54,8 +54,7 @@ public class CwCellTree extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants
-      extends Constants, ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwCellTreeDescription();
 
     String cwCellTreeName();
@@ -76,37 +75,14 @@ public class CwCellTree extends ContentWidget {
   Label selectedLabel;
 
   /**
-   * An instance of the constants.
-   */
-  @ShowcaseData
-  private CwConstants constants;
-
-  /**
    * Constructor.
    *
    * @param constants the constants
    */
   public CwCellTree(CwConstants constants) {
-    super(constants);
-    this.constants = constants;
-    registerSource("ContactDatabase.java");
-    registerSource("ContactTreeViewModel.java");
-    registerSource("CwCellTree.ui.xml");
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwCellTreeDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwCellTreeName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
+    super(constants.cwCellTreeName(), constants.cwCellTreeDescription(), false,
+        "ContactDatabase.java", "ContactTreeViewModel.java",
+        "CwCellTree.ui.xml");
   }
 
   /**
@@ -158,10 +134,5 @@ public class CwCellTree extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchCellWidgets();
   }
 }

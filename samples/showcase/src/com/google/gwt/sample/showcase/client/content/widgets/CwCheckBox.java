@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,8 +35,7 @@ public class CwCheckBox extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwCheckBoxCheckAll();
 
     String[] cwCheckBoxDays();
@@ -50,26 +49,16 @@ public class CwCheckBox extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwCheckBox(CwConstants constants) {
-    super(constants);
+    super(constants.cwCheckBoxName(), constants.cwCheckBoxDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwCheckBoxDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwCheckBoxName();
   }
 
   /**
@@ -109,10 +98,5 @@ public class CwCheckBox extends ContentWidget {
      * CheckBox is the first demo loaded, so go ahead and load it synchronously.
      */
     callback.onSuccess(onInitialize());
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchWidgets();
   }
 }

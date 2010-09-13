@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.Showcase;
 import com.google.gwt.sample.showcase.client.ShowcaseConstants;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
@@ -38,8 +39,7 @@ public class CwHyperlink extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwHyperlinkChoose();
 
     String cwHyperlinkDescription();
@@ -51,26 +51,17 @@ public class CwHyperlink extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwHyperlink(CwConstants constants) {
-    super(constants);
+    super(
+        constants.cwHyperlinkName(), constants.cwHyperlinkDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwHyperlinkDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwHyperlinkName();
   }
 
   /**
@@ -87,14 +78,16 @@ public class CwHyperlink extends ContentWidget {
     // Add a hyper link to each section in the Widgets category
     ShowcaseConstants allConstants = (ShowcaseConstants) constants;
     vPanel.add(getHyperlink(CwCheckBox.class, allConstants.cwCheckBoxName()));
-    vPanel.add(getHyperlink(CwRadioButton.class,
-        allConstants.cwRadioButtonName()));
-    vPanel.add(getHyperlink(CwBasicButton.class,
-        allConstants.cwBasicButtonName()));
-    vPanel.add(getHyperlink(CwCustomButton.class,
-        allConstants.cwCustomButtonName()));
-    vPanel.add(getHyperlink(CwFileUpload.class, allConstants.cwFileUploadName()));
-    vPanel.add(getHyperlink(CwDatePicker.class, allConstants.cwDatePickerName()));
+    vPanel.add(
+        getHyperlink(CwRadioButton.class, allConstants.cwRadioButtonName()));
+    vPanel.add(
+        getHyperlink(CwBasicButton.class, allConstants.cwBasicButtonName()));
+    vPanel.add(
+        getHyperlink(CwCustomButton.class, allConstants.cwCustomButtonName()));
+    vPanel.add(
+        getHyperlink(CwFileUpload.class, allConstants.cwFileUploadName()));
+    vPanel.add(
+        getHyperlink(CwDatePicker.class, allConstants.cwDatePickerName()));
 
     // Return the panel
     return vPanel;
@@ -114,27 +107,20 @@ public class CwHyperlink extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchWidgets();
-  }
-
   /**
    * Get a {@link Hyperlink} to a section based on the name of the
    * {@link ContentWidget} example.
-   * 
+   *
    * @param cwClass the {@link ContentWidget} class
    * @param name the name to display for the link
    * @return a {@link Hyperlink}
    */
-  private Hyperlink getHyperlink(Class<?> cwClass, String name) {
-    // Get the class name of the content widget
-    String className = cwClass.getName();
-    className = className.substring(className.lastIndexOf('.') + 1);
-
-    // Convert to a hyper link
-    Hyperlink link = new Hyperlink(name, "!" + className);
-    link.ensureDebugId("cwHyperlink-" + className);
+  @ShowcaseSource
+  private <C extends ContentWidget> Hyperlink getHyperlink(
+      Class<C> cwClass, String name) {
+    Hyperlink link = new Hyperlink(
+        name, Showcase.getContentWidgetToken(cwClass));
+    link.ensureDebugId("cwHyperlink-" + cwClass.getName());
     return link;
   }
 }

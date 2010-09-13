@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,7 +20,6 @@ import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
-import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Grid;
@@ -35,42 +34,19 @@ public class CwGrid extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwGridDescription();
 
     String cwGridName();
   }
 
   /**
-   * An instance of the constants.
-   */
-  @ShowcaseData
-  private CwConstants constants;
-
-  /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwGrid(CwConstants constants) {
-    super(constants);
-    this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwGridDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwGridName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
+    super(constants.cwGridName(), constants.cwGridDescription(), false);
   }
 
   /**
@@ -108,10 +84,5 @@ public class CwGrid extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchTables();
   }
 }

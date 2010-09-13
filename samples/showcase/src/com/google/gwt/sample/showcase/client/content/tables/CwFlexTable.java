@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -44,8 +44,7 @@ public class CwFlexTable extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String cwFlexTableAddRow();
 
     String cwFlexTableDescription();
@@ -61,26 +60,17 @@ public class CwFlexTable extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwFlexTable(CwConstants constants) {
-    super(constants);
+    super(
+        constants.cwFlexTableName(), constants.cwFlexTableDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwFlexTableDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwFlexTableName();
   }
 
   /**
@@ -98,22 +88,22 @@ public class CwFlexTable extends ContentWidget {
     flexTable.setCellPadding(3);
 
     // Add some text
-    cellFormatter.setHorizontalAlignment(0, 1,
-        HasHorizontalAlignment.ALIGN_LEFT);
+    cellFormatter.setHorizontalAlignment(
+        0, 1, HasHorizontalAlignment.ALIGN_LEFT);
     flexTable.setHTML(0, 0, constants.cwFlexTableDetails());
     cellFormatter.setColSpan(0, 0, 2);
 
     // Add a button that will add more rows to the table
-    Button addRowButton = new Button(constants.cwFlexTableAddRow(),
-        new ClickHandler() {
+    Button addRowButton = new Button(
+        constants.cwFlexTableAddRow(), new ClickHandler() {
           public void onClick(ClickEvent event) {
             addRow(flexTable);
           }
         });
     addRowButton.addStyleName("sc-FixedWidthButton");
 
-    Button removeRowButton = new Button(constants.cwFlexTableRemoveRow(),
-        new ClickHandler() {
+    Button removeRowButton = new Button(
+        constants.cwFlexTableRemoveRow(), new ClickHandler() {
           public void onClick(ClickEvent event) {
             removeRow(flexTable);
           }
@@ -147,11 +137,6 @@ public class CwFlexTable extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
-  }
-
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchTables();
   }
 
   /**

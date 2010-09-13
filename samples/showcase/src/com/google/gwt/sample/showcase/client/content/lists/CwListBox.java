@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,8 +40,7 @@ public class CwListBox extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String[] cwListBoxCars();
 
     String[] cwListBoxCategories();
@@ -63,26 +62,16 @@ public class CwListBox extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwListBox(CwConstants constants) {
-    super(constants);
+    super(constants.cwListBoxName(), constants.cwListBoxDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwListBoxDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwListBoxName();
   }
 
   /**
@@ -149,14 +138,9 @@ public class CwListBox extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchListsAndMenus();
-  }
-
   /**
    * Display the options for a given category in the list box.
-   * 
+   *
    * @param listBox the ListBox to add the options to
    * @param category the category index
    */

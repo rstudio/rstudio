@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,6 +27,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DecoratedStackPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -50,8 +51,7 @@ public class CwStackPanel extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String[] cwStackPanelContacts();
 
     String[] cwStackPanelContactsEmails();
@@ -73,7 +73,7 @@ public class CwStackPanel extends ContentWidget {
 
   /**
    * Specifies the images that will be bundled for this example.
-   * 
+   *
    * We will override the leaf image used in the tree. Instead of using a blank
    * 16x16 image, we will use a blank 1x1 image so it does not take up any
    * space. Each TreeItem will use its own custom image.
@@ -109,31 +109,17 @@ public class CwStackPanel extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwStackPanel(CwConstants constants) {
-    super(constants);
+    super(constants.cwStackPanelName(), constants.cwStackPanelDescription(),
+        true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwStackPanelDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwStackPanelName();
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return true;
   }
 
   /**
@@ -150,8 +136,8 @@ public class CwStackPanel extends ContentWidget {
     stackPanel.setWidth("200px");
 
     // Add the Mail folders
-    String mailHeader = getHeaderString(constants.cwStackPanelMailHeader(),
-        images.mailgroup());
+    String mailHeader = getHeaderString(
+        constants.cwStackPanelMailHeader(), images.mailgroup());
     stackPanel.add(createMailItem(images), mailHeader, true);
 
     // Add a list of filters
@@ -183,18 +169,13 @@ public class CwStackPanel extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchListsAndMenus();
-  }
-
   private void addItem(TreeItem root, ImageResource image, String label) {
     root.addItem(AbstractImagePrototype.create(image).getHTML() + " " + label);
   }
 
   /**
    * Create the list of Contacts.
-   * 
+   *
    * @param images the {@link Images} used in the Contacts
    * @return the list of contacts
    */
@@ -217,8 +198,7 @@ public class CwStackPanel extends ContentWidget {
     for (int i = 0; i < contactNames.length; i++) {
       final String contactName = contactNames[i];
       final String contactEmail = contactEmails[i];
-      final HTML contactLink = new HTML("<a href=\"javascript:undefined;\">"
-          + contactName + "</a>");
+      final Anchor contactLink = new Anchor(contactName);
       contactsPanel.add(contactLink);
 
       // Open the contact info popup when the user clicks a contact
@@ -240,7 +220,7 @@ public class CwStackPanel extends ContentWidget {
 
   /**
    * Create the list of filters for the Filters item.
-   * 
+   *
    * @return the list of filters
    */
   @ShowcaseSource
@@ -255,7 +235,7 @@ public class CwStackPanel extends ContentWidget {
 
   /**
    * Create the {@link Tree} of Mail options.
-   * 
+   *
    * @param images the {@link Images} used in the Mail options
    * @return the {@link Tree} of mail options
    */
@@ -276,7 +256,7 @@ public class CwStackPanel extends ContentWidget {
   /**
    * Get a string representation of the header that includes an image and some
    * text.
-   * 
+   *
    * @param text the header text
    * @param image the {@link ImageResource} to add next to the header
    * @return the header as a string

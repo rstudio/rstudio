@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -46,12 +46,12 @@ public class ShowcaseGenerator extends Generator {
   /**
    * The paths to the CSS style sheets used in Showcase. The paths are relative
    * to the root path of the {@link ClassLoader}. The variable $THEME will be
-   * replaced by the current theme. An extension of "_rtl.css" will be used for
-   * RTL mode.
+   * replaced by the current theme. The variable $RTL will be replaced by "_rtl"
+   * for RTL locales.
    */
   private static final String[] SRC_CSS = {
-      "com/google/gwt/user/theme/$THEME/public/gwt/$THEME/$THEME.css",
-      "com/google/gwt/sample/showcase/public/$THEME/Showcase.css"};
+      "com/google/gwt/user/theme/$THEME/public/gwt/$THEME/$THEME$RTL.css",
+      "com/google/gwt/sample/showcase/client/Showcase.css"};
 
   /**
    * The class loader used to get resources.
@@ -75,8 +75,9 @@ public class ShowcaseGenerator extends Generator {
   private Set<String> rawFiles = new HashSet<String>();
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context,
-      String typeName) throws UnableToCompleteException {
+  public String generate(
+      TreeLogger logger, GeneratorContext context, String typeName)
+      throws UnableToCompleteException {
     this.logger = logger;
     this.context = context;
     this.classLoader = Thread.currentThread().getContextClassLoader();
@@ -103,7 +104,8 @@ public class ShowcaseGenerator extends Generator {
     }
 
     // Generate the CSS source files
-    for (String theme : ShowcaseConstants.STYLE_THEMES) {
+    String[] themes = new String[]{"standard"};
+    for (String theme : themes) {
       String styleDefsLTR = getStyleDefinitions(theme, false);
       String styleDefsRTL = getStyleDefinitions(theme, true);
       String outDirLTR = ShowcaseConstants.DST_SOURCE_STYLE + theme + "/";
@@ -119,7 +121,7 @@ public class ShowcaseGenerator extends Generator {
 
   /**
    * Set the full contents of a resource in the public directory.
-   * 
+   *
    * @param partialPath the path to the file relative to the public directory
    * @param contents the file contents
    */
@@ -144,7 +146,7 @@ public class ShowcaseGenerator extends Generator {
 
   /**
    * Generate the raw files used by a {@link ContentWidget}.
-   * 
+   *
    * @param type the {@link ContentWidget} subclass
    */
   private void generateRawFiles(JClassType type)
@@ -185,7 +187,7 @@ public class ShowcaseGenerator extends Generator {
 
   /**
    * Generate the formatted source code for a {@link ContentWidget}.
-   * 
+   *
    * @param type the {@link ContentWidget} subclass
    */
   private void generateSourceFiles(JClassType type)
@@ -201,7 +203,8 @@ public class ShowcaseGenerator extends Generator {
     int dataTagIndex = fileContents.indexOf(dataTag);
     int srcTagIndex = fileContents.indexOf(sourceTag);
     while (dataTagIndex >= 0 || srcTagIndex >= 0) {
-      if (dataTagIndex >= 0 && (dataTagIndex < srcTagIndex || srcTagIndex < 0)) {
+      if (dataTagIndex >= 0
+          && (dataTagIndex < srcTagIndex || srcTagIndex < 0)) {
         // Get the boundaries of a DATA tag
         int beginIndex = fileContents.lastIndexOf("  /*", dataTagIndex);
         int beginTagIndex = fileContents.lastIndexOf("\n", dataTagIndex) + 1;
@@ -246,13 +249,14 @@ public class ShowcaseGenerator extends Generator {
 
   /**
    * Generate the styles used by a {@link ContentWidget}.
-   * 
+   *
    * @param type the {@link ContentWidget} subclass
    * @param styleDefs the concatenated style definitions
    * @param outDir the output directory
    */
-  private void generateStyleFiles(JClassType type, String styleDefs,
-      String outDir) throws UnableToCompleteException {
+  private void generateStyleFiles(
+      JClassType type, String styleDefs, String outDir)
+      throws UnableToCompleteException {
     // Look for annotation
     if (!type.isAnnotationPresent(ShowcaseStyle.class)) {
       return;
@@ -299,7 +303,7 @@ public class ShowcaseGenerator extends Generator {
 
   /**
    * Get the full contents of a resource.
-   * 
+   *
    * @param path the path to the resource
    * @return the contents of the resource
    */
@@ -338,7 +342,7 @@ public class ShowcaseGenerator extends Generator {
   /**
    * Load the contents of all CSS files used in the Showcase for a given
    * theme/RTL mode, concatenated into one string.
-   * 
+   *
    * @param theme the style theme
    * @param isRTL true if RTL mode
    * @return the concatenated styles
@@ -349,7 +353,9 @@ public class ShowcaseGenerator extends Generator {
     for (String path : SRC_CSS) {
       path = path.replace("$THEME", theme);
       if (isRTL) {
-        path = path.replace(".css", "_rtl.css");
+        path = path.replace("$RTL", "_rtl");
+      } else {
+        path = path.replace("$RTL", "");
       }
       cssContents += getResourceContents(path) + "\n\n";
     }
@@ -359,7 +365,7 @@ public class ShowcaseGenerator extends Generator {
   /**
    * Ensure that we only generate files once by creating a placeholder file,
    * then looking for it on subsequent generates.
-   * 
+   *
    * @return true if this is the first pass, false if not
    */
   private boolean isFirstPass() {

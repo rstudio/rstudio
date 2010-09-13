@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -43,8 +43,7 @@ public class CwTree extends ContentWidget {
    * The constants used in this Content Widget.
    */
   @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
+  public static interface CwConstants extends Constants {
     String[] cwTreeBeethovenWorkConcertos();
 
     String[] cwTreeBeethovenWorkQuartets();
@@ -88,26 +87,16 @@ public class CwTree extends ContentWidget {
    * An instance of the constants.
    */
   @ShowcaseData
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * Constructor.
-   * 
+   *
    * @param constants the constants
    */
   public CwTree(CwConstants constants) {
-    super(constants);
+    super(constants.cwTreeName(), constants.cwTreeDescription(), true);
     this.constants = constants;
-  }
-
-  @Override
-  public String getDescription() {
-    return constants.cwTreeDescription();
-  }
-
-  @Override
-  public String getName() {
-    return constants.cwTreeName();
   }
 
   /**
@@ -168,21 +157,16 @@ public class CwTree extends ContentWidget {
     });
   }
 
-  @Override
-  protected void setRunAsyncPrefetches() {
-    prefetchListsAndMenus();
-  }
-
   /**
    * Add a new section of music created by a specific composer.
-   * 
+   *
    * @param parent the parent {@link TreeItem} where the section will be added
    * @param label the label of the new section of music
    * @param composerWorks an array of works created by the composer
    */
   @ShowcaseSource
-  private void addMusicSection(TreeItem parent, String label,
-      String[] composerWorks) {
+  private void addMusicSection(
+      TreeItem parent, String label, String[] composerWorks) {
     TreeItem section = parent.addItem(label);
     for (String work : composerWorks) {
       section.addItem(work);
@@ -192,7 +176,7 @@ public class CwTree extends ContentWidget {
   /**
    * Create a dynamic tree that will add a random number of children to each
    * node as it is clicked.
-   * 
+   *
    * @return the new tree
    */
   @ShowcaseSource
@@ -239,7 +223,7 @@ public class CwTree extends ContentWidget {
 
   /**
    * Create a static tree with some data in it.
-   * 
+   *
    * @return the new tree
    */
   @ShowcaseSource
@@ -256,28 +240,28 @@ public class CwTree extends ContentWidget {
     TreeItem beethovenItem = staticTree.addItem(composers[0]);
     addMusicSection(beethovenItem, concertosLabel,
         constants.cwTreeBeethovenWorkConcertos());
-    addMusicSection(beethovenItem, quartetsLabel,
-        constants.cwTreeBeethovenWorkQuartets());
-    addMusicSection(beethovenItem, sonatasLabel,
-        constants.cwTreeBeethovenWorkSonatas());
+    addMusicSection(
+        beethovenItem, quartetsLabel, constants.cwTreeBeethovenWorkQuartets());
+    addMusicSection(
+        beethovenItem, sonatasLabel, constants.cwTreeBeethovenWorkSonatas());
     addMusicSection(beethovenItem, symphoniesLabel,
         constants.cwTreeBeethovenWorkSymphonies());
 
     // Add some of Brahms's music
     TreeItem brahmsItem = staticTree.addItem(composers[1]);
-    addMusicSection(brahmsItem, concertosLabel,
-        constants.cwTreeBrahmsWorkConcertos());
-    addMusicSection(brahmsItem, quartetsLabel,
-        constants.cwTreeBrahmsWorkQuartets());
-    addMusicSection(brahmsItem, sonatasLabel,
-        constants.cwTreeBrahmsWorkSonatas());
-    addMusicSection(brahmsItem, symphoniesLabel,
-        constants.cwTreeBrahmsWorkSymphonies());
+    addMusicSection(
+        brahmsItem, concertosLabel, constants.cwTreeBrahmsWorkConcertos());
+    addMusicSection(
+        brahmsItem, quartetsLabel, constants.cwTreeBrahmsWorkQuartets());
+    addMusicSection(
+        brahmsItem, sonatasLabel, constants.cwTreeBrahmsWorkSonatas());
+    addMusicSection(
+        brahmsItem, symphoniesLabel, constants.cwTreeBrahmsWorkSymphonies());
 
     // Add some of Mozart's music
     TreeItem mozartItem = staticTree.addItem(composers[2]);
-    addMusicSection(mozartItem, concertosLabel,
-        constants.cwTreeMozartWorkConcertos());
+    addMusicSection(
+        mozartItem, concertosLabel, constants.cwTreeMozartWorkConcertos());
 
     // Return the tree
     return staticTree;
