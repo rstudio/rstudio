@@ -24,7 +24,7 @@ import java.util.NoSuchElementException;
 /**
  * Base class for panels that contain only one widget.
  */
-public class SimplePanel extends Panel {
+public class SimplePanel extends Panel implements HasOneWidget {
 
   private Widget widget;
 
@@ -44,7 +44,7 @@ public class SimplePanel extends Panel {
   protected SimplePanel(Element elem) {
     setElement(elem);
   }
-
+  
   /**
    * Adds a widget to this panel.
    * 
@@ -113,6 +113,10 @@ public class SimplePanel extends Panel {
       widget = null;
     }
     return true;
+  }
+  
+  public void setWidget(IsWidget w) {
+    setWidget(asWidgetOrNull(w));
   }
 
   /**

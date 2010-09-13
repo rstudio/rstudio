@@ -27,6 +27,11 @@ public class WidgetTestBase extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  public void testAsWidget() {
+    Widget a = new Widget();
+    assertSame(a, a.asWidget());
+  }
+
   /**
    * A replacement for JUnit's {@link #tearDown()} method. This method runs once
    * per test method in your subclass, just after your each test method runs and
@@ -34,7 +39,7 @@ public class WidgetTestBase extends GWTTestCase {
    * {@link #tearDown()}.
    */
   @Override
-  protected void gwtTearDown() throws Exception {
+  protected void gwtTearDown() {
     RootPanel.get().clear();
   }
 }

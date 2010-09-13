@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,28 +38,31 @@ import java.util.Iterator;
  * A panel that represents a tabbed set of pages, each of which contains another
  * widget. Its child widgets are shown as the user selects the various tabs
  * associated with them. The tabs can contain arbitrary text, HTML, or widgets.
- * 
+ *
  * <p>
  * This widget will <em>only</em> work in standards mode, which requires that
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
- * 
+ *
  * <h3>CSS Style Rules</h3>
  * <dl>
- * <dt>.gwt-TabLayoutPanel <dd> the panel itself 
- * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabs <dd> the tab bar element 
- * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab <dd> an individual tab 
- * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabInner <dd> an element nested in
- * each tab (useful for styling)
- * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelContent<dd> applied to all child
- * content widgets
+ * <dt>.gwt-TabLayoutPanel
+ * <dd>the panel itself
+ * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabs
+ * <dd>the tab bar element
+ * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab
+ * <dd>an individual tab
+ * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabInner
+ * <dd>an element nested in each tab (useful for styling)
+ * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelContent
+ * <dd>applied to all child content widgets
  * </dl>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TabLayoutPanelExample}
- * 
+ *
  * <h3>Use in UiBinder Templates</h3>
  * <p>
  * A TabLayoutPanel element in a {@link com.google.gwt.uibinder.client.UiBinder
@@ -73,7 +76,7 @@ import java.util.Iterator;
  * elements. A &lt;g:header> element can hold html, or a &lt;g:customHeader>
  * element can hold a widget. (Note that the tags of the header elements are
  * not capitalized. This is meant to signal that the head is not a runtime
- * object, and so cannot have a <code>ui:field</code> attribute.) 
+ * object, and so cannot have a <code>ui:field</code> attribute.)
  * <p>
  * For example:<pre>
  * &lt;g:TabLayoutPanel barUnit='EM' barHeight='3'>
@@ -91,14 +94,8 @@ import java.util.Iterator;
  * </pre>
  */
 public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
-    ProvidesResize, IndexedPanel, HasBeforeSelectionHandlers<Integer>,
-    HasSelectionHandlers<Integer> {
-
-  private static final String CONTENT_STYLE = "gwt-TabLayoutPanelContent";
-  private static final String TAB_STYLE = "gwt-TabLayoutPanelTab";
-  private static final String TAB_INNER_STYLE = "gwt-TabLayoutPanelTabInner";
-
-  private static final int BIG_ENOUGH_TO_NOT_WRAP = 16384;
+    ProvidesResize, IndexedPanel.ForIsWidget,
+    HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 
   private static class Tab extends SimplePanel {
     private Element inner;
@@ -135,18 +132,24 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       return inner.cast();
     }
   }
+  private static final String CONTENT_STYLE = "gwt-TabLayoutPanelContent";
+  private static final String TAB_STYLE = "gwt-TabLayoutPanelTab";
 
-  private WidgetCollection children = new WidgetCollection(this);
-  private FlowPanel tabBar = new FlowPanel();
-  private ArrayList<Tab> tabs = new ArrayList<Tab>();
+  private static final String TAB_INNER_STYLE = "gwt-TabLayoutPanelTabInner";
+
+  private static final int BIG_ENOUGH_TO_NOT_WRAP = 16384;
+
+  private final WidgetCollection children = new WidgetCollection(this);
+  private final FlowPanel tabBar = new FlowPanel();
+  private final ArrayList<Tab> tabs = new ArrayList<Tab>();
   private final double barHeight;
   private final Unit barUnit;
-  private LayoutPanel panel;
+  private final LayoutPanel panel;
   private int selectedIndex = -1;
 
   /**
    * Creates an empty tab panel.
-   * 
+   *
    * @param barHeight the size of the tab bar
    * @param barUnit the unit in which the tab bar size is specified
    */
@@ -170,6 +173,34 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     setStyleName("gwt-TabLayoutPanel");
   }
 
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void add(IsWidget w) {
+    add(asWidgetOrNull(w));
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void add(IsWidget w, IsWidget tab) {
+    add(asWidgetOrNull(w), asWidgetOrNull(tab));
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void add(IsWidget w, String text) {
+    add(asWidgetOrNull(w), text);
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void add(IsWidget w, String text, boolean asHtml) {
+    add(asWidgetOrNull(w), text, asHtml);
+  }
+
   public void add(Widget w) {
     insert(w, getWidgetCount());
   }
@@ -177,7 +208,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Adds a widget to the panel. If the Widget is already attached, it will be
    * moved to the right-most index.
-   * 
+   *
    * @param child the widget to be added
    * @param text the text to be shown on its tab
    */
@@ -188,7 +219,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Adds a widget to the panel. If the Widget is already attached, it will be
    * moved to the right-most index.
-   * 
+   *
    * @param child the widget to be added
    * @param text the text to be shown on its tab
    * @param asHtml <code>true</code> to treat the specified text as HTML
@@ -200,7 +231,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Adds a widget to the panel. If the Widget is already attached, it will be
    * moved to the right-most index.
-   * 
+   *
    * @param child the widget to be added
    * @param tab the widget to be placed in the associated tab
    */
@@ -228,7 +259,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Gets the index of the currently-selected tab.
-   * 
+   *
    * @return the selected index, or <code>-1</code> if none is selected.
    */
   public int getSelectedIndex() {
@@ -237,7 +268,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Gets the widget in the tab at the given index.
-   * 
+   *
    * @param index the index of the tab to be retrieved
    * @return the tab's widget
    */
@@ -247,8 +278,15 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public Widget getTabWidget(IsWidget child) {
+    return getTabWidget(asWidgetOrNull(child));
+  }
+
+  /**
    * Gets the widget in the tab associated with the given child widget.
-   * 
+   *
    * @param child the child whose tab is to be retrieved
    * @return the tab's widget
    */
@@ -257,23 +295,67 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     return getTabWidget(getWidgetIndex(child));
   }
 
+  /**
+   * @return the widget at the given index.
+   */
   public Widget getWidget(int index) {
     checkIndex(index);
     return children.get(index);
   }
 
+  /**
+   * @return the number of tabs and widgets
+   */
   public int getWidgetCount() {
     return children.size();
   }
 
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public int getWidgetIndex(IsWidget child) {
+    return getWidgetIndex(asWidgetOrNull(child));
+  }
+
+  /**
+   * @return the index of the given child, or -1 if it is not a child
+   */
   public int getWidgetIndex(Widget child) {
     return children.indexOf(child);
   }
 
   /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void insert(IsWidget child, int beforeIndex) {
+    insert(asWidgetOrNull(child), beforeIndex);
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void insert(IsWidget child, IsWidget tab, int beforeIndex) {
+    insert(asWidgetOrNull(child), asWidgetOrNull(tab), beforeIndex);
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void insert(IsWidget child, String text, boolean asHtml, int beforeIndex) {
+    insert(asWidgetOrNull(child), text, asHtml, beforeIndex);
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void insert(IsWidget child, String text, int beforeIndex) {
+    insert(asWidgetOrNull(child), text, beforeIndex);
+  }
+
+  /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
-   * 
+   *
    * @param child the widget to be added
    * @param beforeIndex the index before which it will be inserted
    */
@@ -284,7 +366,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
-   * 
+   *
    * @param child the widget to be added
    * @param text the text to be shown on its tab
    * @param asHtml <code>true</code> to treat the specified text as HTML
@@ -303,7 +385,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
-   * 
+   *
    * @param child the widget to be added
    * @param text the text to be shown on its tab
    * @param beforeIndex the index before which it will be inserted
@@ -315,7 +397,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
-   * 
+   *
    * @param child the widget to be added
    * @param tab the widget to be placed in the associated tab
    * @param beforeIndex the index before which it will be inserted
@@ -367,7 +449,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Programmatically selects the specified tab and fires events.
-   * 
+   *
    * @param index the index of the tab to be selected
    */
   public void selectTab(int index) {
@@ -376,7 +458,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Programmatically selects the specified tab.
-   * 
+   *
    * @param index the index of the tab to be selected
    * @param fireEvents true to fire events, false not to
    */
@@ -413,10 +495,24 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       SelectionEvent.fire(this, index);
     }
   }
-  
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void selectTab(IsWidget child) {
+    selectTab(asWidgetOrNull(child));
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void selectTab(IsWidget child, boolean fireEvents) {
+    selectTab(asWidgetOrNull(child), fireEvents);
+  }
+
   /**
    * Programmatically selects the specified tab and fires events.
-   * 
+   *
    * @param child the child whose tab is to be selected
    */
   public void selectTab(Widget child) {
@@ -425,7 +521,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Programmatically selects the specified tab.
-   * 
+   *
    * @param child the child whose tab is to be selected
    * @param fireEvents true to fire events, false not to
    */
@@ -435,11 +531,11 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Sets a tab's HTML contents.
-   * 
+   *
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
    * {@link #setTabText(int, String)} whenever possible.
-   * 
+   *
    * @param index the index of the tab whose HTML is to be set
    * @param html the tab's new HTML contents
    */
@@ -450,7 +546,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Sets a tab's text contents.
-   * 
+   *
    * @param index the index of the tab whose text is to be set
    * @param text the object's new text
    */

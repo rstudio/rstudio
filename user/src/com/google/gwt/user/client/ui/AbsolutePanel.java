@@ -40,8 +40,8 @@ import com.google.gwt.user.client.Element;
  * AbsolutePanel elements in {@link com.google.gwt.uibinder.client.UiBinder
  * UiBinder} templates lay out their children with absolute position, using
  * &lt;g:at> elements. Each at element should have <code>left</code> and
- * <code>top</code> attributes in pixels. They also can contain
- * widget children directly, with no position specified.
+ * <code>top</code> attributes in pixels. They also can contain widget children
+ * directly, with no position specified.
  * 
  * <p>
  * For example:
@@ -55,7 +55,8 @@ import com.google.gwt.user.client.Element;
  * &lt;/g:AbsolutePanel>
  * </pre>
  */
-public class AbsolutePanel extends ComplexPanel implements InsertPanel {
+public class AbsolutePanel extends ComplexPanel implements
+    InsertPanel.ForIsWidget {
 
   /**
    * Changes a DOM element's positioning to static.
@@ -95,7 +96,7 @@ public class AbsolutePanel extends ComplexPanel implements InsertPanel {
   public void add(Widget w) {
     super.add(w, getElement());
   }
-
+  
   /**
    * Adds a widget to the panel at the specified position. Setting a position of
    * <code>(-1, -1)</code> will cause the child widget to be positioned
@@ -145,6 +146,13 @@ public class AbsolutePanel extends ComplexPanel implements InsertPanel {
 
   public void insert(Widget w, int beforeIndex) {
     insert(w, getElement(), beforeIndex, true);
+  }
+  
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void insert(IsWidget w, int beforeIndex) {
+    insert(asWidgetOrNull(w), beforeIndex);
   }
 
   /**

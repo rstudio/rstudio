@@ -46,7 +46,8 @@ import com.google.gwt.user.client.Event;
  * 
  * @see StackLayoutPanel
  */
-public class StackPanel extends ComplexPanel implements InsertPanel {
+public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget {
+
   private static final String DEFAULT_STYLENAME = "gwt-StackPanel";
   private static final String DEFAULT_ITEM_STYLENAME = DEFAULT_STYLENAME
       + "Item";
@@ -105,6 +106,10 @@ public class StackPanel extends ComplexPanel implements InsertPanel {
    */
   public int getSelectedIndex() {
     return visibleStack;
+  }
+
+  public void insert(IsWidget w, int beforeIndex) {
+    insert(asWidgetOrNull(w), beforeIndex);
   }
 
   public void insert(Widget w, int beforeIndex) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,16 +29,16 @@ import java.util.Iterator;
  * A panel that represents a tabbed set of pages, each of which contains another
  * widget. Its child widgets are shown as the user selects the various tabs
  * associated with them. The tabs can contain arbitrary HTML.
- * 
+ *
  * <p>
  * This widget will <em>only</em> work in quirks mode. If your application is in
  * Standards Mode, use {@link TabLayoutPanel} instead.
  * </p>
- * 
+ *
  * <p>
  * <img class='gallery' src='doc-files/TabPanel.png'/>
  * </p>
- * 
+ *
  * <p>
  * Note that this widget is not a panel per se, but rather a
  * {@link com.google.gwt.user.client.ui.Composite} that aggregates a
@@ -46,31 +46,32 @@ import java.util.Iterator;
  * {@link com.google.gwt.user.client.ui.DeckPanel}. It does, however, implement
  * {@link com.google.gwt.user.client.ui.HasWidgets}.
  * </p>
- * 
- * <h3>CSS Style Rules</h3> 
- * <ul class='css'> 
- * <li>.gwt-TabPanel { the tab panel itself }</li> 
+ *
+ * <h3>CSS Style Rules</h3>
+ * <ul class='css'>
+ * <li>.gwt-TabPanel { the tab panel itself }</li>
  * <li>.gwt-TabPanelBottom { the bottom section of the tab panel
- * (the deck containing the widget) }</li> 
+ * (the deck containing the widget) }</li>
  * </ul>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TabPanelExample}
  * </p>
- * 
+ *
  * @deprecated Use {@link TabLayoutPanel} instead, but understand that it is
  *             not a drop in replacement for this class. It requires standards
  *             mode, and is most easily used under a {@link RootLayoutPanel} (as
  *             opposed to a {@link RootPanel}
- * 
+ *
  * @see TabLayoutPanel
  */
 
+@SuppressWarnings("deprecation")
 //Cannot do anything about tab panel implementing TabListener until next release.
 @Deprecated
 public class TabPanel extends Composite implements TabListener,
-    SourcesTabEvents, HasWidgets, HasAnimation, IndexedPanel,
+    SourcesTabEvents, HasWidgets, HasAnimation, IndexedPanel.ForIsWidget,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
   /**
    * This extension of DeckPanel overrides the public mutator methods to prevent
@@ -86,7 +87,7 @@ public class TabPanel extends Composite implements TabListener,
    * </p>
    */
   private static class TabbedDeckPanel extends DeckPanel {
-    private UnmodifiableTabBar tabBar;
+    private final UnmodifiableTabBar tabBar;
 
     public TabbedDeckPanel(UnmodifiableTabBar tabBar) {
       this.tabBar = tabBar;
@@ -201,8 +202,8 @@ public class TabPanel extends Composite implements TabListener,
     }
   }
 
-  private UnmodifiableTabBar tabBar = new UnmodifiableTabBar();
-  private TabbedDeckPanel deck = new TabbedDeckPanel(tabBar);
+  private final UnmodifiableTabBar tabBar = new UnmodifiableTabBar();
+  private final TabbedDeckPanel deck = new TabbedDeckPanel(tabBar);
 
   /**
    * Creates an empty tab panel.
@@ -223,6 +224,27 @@ public class TabPanel extends Composite implements TabListener,
     Accessibility.setRole(deck.getElement(), Accessibility.ROLE_TABPANEL);
   }
 
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void add(IsWidget w, IsWidget tabWidget) {
+    add(asWidgetOrNull(w), asWidgetOrNull(tabWidget));
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void add(IsWidget w, String tabText) {
+    add(asWidgetOrNull(w), tabText);
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void add(IsWidget w, String tabText, boolean asHTML) {
+    add(asWidgetOrNull(w), tabText, asHTML);
+  }
+
   public void add(Widget w) {
     throw new UnsupportedOperationException(
         "A tabText parameter must be specified with add().");
@@ -231,7 +253,7 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Adds a widget to the tab panel. If the Widget is already attached to the
    * TabPanel, it will be moved to the right-most index.
-   * 
+   *
    * @param w the widget to be added
    * @param tabText the text to be shown on its tab
    */
@@ -242,7 +264,7 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Adds a widget to the tab panel. If the Widget is already attached to the
    * TabPanel, it will be moved to the right-most index.
-   * 
+   *
    * @param w the widget to be added
    * @param tabText the text to be shown on its tab
    * @param asHTML <code>true</code> to treat the specified text as HTML
@@ -254,7 +276,7 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Adds a widget to the tab panel. If the Widget is already attached to the
    * TabPanel, it will be moved to the right-most index.
-   * 
+   *
    * @param w the widget to be added
    * @param tabWidget the widget to be shown in the tab
    */
@@ -291,7 +313,7 @@ public class TabPanel extends Composite implements TabListener,
    * Gets the deck panel within this tab panel. Adding or removing Widgets from
    * the DeckPanel is not supported and will throw
    * UnsupportedOperationExceptions.
-   * 
+   *
    * @return the deck panel
    */
   public DeckPanel getDeckPanel() {
@@ -301,7 +323,7 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Gets the tab bar within this tab panel. Adding or removing tabs from from
    * the TabBar is not supported and will throw UnsupportedOperationExceptions.
-   * 
+   *
    * @return the tab bar
    */
   public TabBar getTabBar() {
@@ -316,14 +338,43 @@ public class TabPanel extends Composite implements TabListener,
     return deck.getWidgetCount();
   }
 
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public int getWidgetIndex(IsWidget child) {
+    return getWidgetIndex(asWidgetOrNull(child));
+  }
+
   public int getWidgetIndex(Widget widget) {
     return deck.getWidgetIndex(widget);
   }
 
   /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void insert(IsWidget widget, IsWidget tabWidget, int beforeIndex) {
+    insert(asWidgetOrNull(widget), asWidgetOrNull(tabWidget), beforeIndex);
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void insert(IsWidget widget, String tabText, boolean asHTML,
+      int beforeIndex) {
+    insert(asWidgetOrNull(widget), tabText, asHTML, beforeIndex);
+  }
+
+  /**
+   * Convenience overload to allow {@link IsWidget} to be used directly.
+   */
+  public void insert(IsWidget widget, String tabText, int beforeIndex) {
+    insert(asWidgetOrNull(widget), tabText, beforeIndex);
+  }
+
+  /**
    * Inserts a widget into the tab panel. If the Widget is already attached to
    * the TabPanel, it will be moved to the requested index.
-   * 
+   *
    * @param widget the widget to be inserted
    * @param tabText the text to be shown on its tab
    * @param asHTML <code>true</code> to treat the specified text as HTML
@@ -338,7 +389,19 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Inserts a widget into the tab panel. If the Widget is already attached to
    * the TabPanel, it will be moved to the requested index.
-   * 
+   *
+   * @param widget the widget to be inserted
+   * @param tabText the text to be shown on its tab
+   * @param beforeIndex the index before which it will be inserted
+   */
+  public void insert(Widget widget, String tabText, int beforeIndex) {
+    insert(widget, tabText, false, beforeIndex);
+  }
+
+  /**
+   * Inserts a widget into the tab panel. If the Widget is already attached to
+   * the TabPanel, it will be moved to the requested index.
+   *
    * @param widget the widget to be inserted.
    * @param tabWidget the widget to be shown on its tab.
    * @param beforeIndex the index before which it will be inserted.
@@ -346,18 +409,6 @@ public class TabPanel extends Composite implements TabListener,
   public void insert(Widget widget, Widget tabWidget, int beforeIndex) {
     // Delegate updates to the TabBar to our DeckPanel implementation
     deck.insertProtected(widget, tabWidget, beforeIndex);
-  }
-
-  /**
-   * Inserts a widget into the tab panel. If the Widget is already attached to
-   * the TabPanel, it will be moved to the requested index.
-   * 
-   * @param widget the widget to be inserted
-   * @param tabText the text to be shown on its tab
-   * @param beforeIndex the index before which it will be inserted
-   */
-  public void insert(Widget widget, String tabText, int beforeIndex) {
-    insert(widget, tabText, false, beforeIndex);
   }
 
   public boolean isAnimationEnabled() {
@@ -395,7 +446,7 @@ public class TabPanel extends Composite implements TabListener,
 
   /**
    * Removes the given widget, and its associated tab.
-   * 
+   *
    * @param widget the widget to be removed
    */
   public boolean remove(Widget widget) {
@@ -414,7 +465,7 @@ public class TabPanel extends Composite implements TabListener,
 
   /**
    * Programmatically selects the specified tab and fires events.
-   * 
+   *
    * @param index the index of the tab to be selected
    */
   public void selectTab(int index) {
@@ -423,7 +474,7 @@ public class TabPanel extends Composite implements TabListener,
 
   /**
    * Programmatically selects the specified tab.
-   * 
+   *
    * @param index the index of the tab to be selected
    * @param fireEvents true to fire events, false not to
    */
@@ -438,7 +489,7 @@ public class TabPanel extends Composite implements TabListener,
   /**
    * Create a {@link SimplePanel} that will wrap the contents in a tab.
    * Subclasses can use this method to wrap tabs in decorator panels.
-   * 
+   *
    * @return a {@link SimplePanel} to wrap the tab contents, or null to leave
    *         tabs unwrapped
    */
@@ -454,7 +505,7 @@ public class TabPanel extends Composite implements TabListener,
    * <li>-bar-tab-wrapper# = The cell containing the tab at the index.</li>
    * <li>-bottom = The panel beneath the tab bar.</li>
    * </ul>
-   * 
+   *
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override

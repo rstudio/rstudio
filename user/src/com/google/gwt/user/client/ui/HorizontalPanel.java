@@ -26,12 +26,11 @@ import com.google.gwt.user.client.Element;
  * </p>
  */
 public class HorizontalPanel extends CellPanel implements HasAlignment,
-    InsertPanel {
+    InsertPanel.ForIsWidget {
 
   private HorizontalAlignmentConstant horzAlign = ALIGN_DEFAULT;
   private Element tableRow;
   private VerticalAlignmentConstant vertAlign = ALIGN_TOP;
-
   /**
    * Creates an empty horizontal panel.
    */
@@ -56,6 +55,10 @@ public class HorizontalPanel extends CellPanel implements HasAlignment,
 
   public VerticalAlignmentConstant getVerticalAlignment() {
     return vertAlign;
+  }
+
+  public void insert(IsWidget w, int beforeIndex) {
+    insert(asWidgetOrNull(w), beforeIndex);
   }
 
   public void insert(Widget w, int beforeIndex) {

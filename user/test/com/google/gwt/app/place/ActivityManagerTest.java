@@ -20,6 +20,8 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.event.shared.testing.CountingEventBus;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 import junit.framework.TestCase;
@@ -35,12 +37,12 @@ public class ActivityManagerTest extends TestCase {
     }
 
     @Override
-    public void start(Display display, EventBus eventBus) {
+    public void start(AcceptsOneWidget display, EventBus eventBus) {
       this.display = display;
     }
 
     void finish() {
-      display.showActivityWidget(view);
+      display.setWidget(view);
     }
   }
 
@@ -61,10 +63,10 @@ public class ActivityManagerTest extends TestCase {
   private static class Handler implements EventHandler {
   };
 
-  private static class MyDisplay implements Activity.Display {
+  private static class MyDisplay implements AcceptsOneWidget {
     IsWidget widget = null;
 
-    public void showActivityWidget(IsWidget widget) {
+    public void setWidget(IsWidget widget) {
       this.widget = widget;
     }
   }
@@ -80,7 +82,7 @@ public class ActivityManagerTest extends TestCase {
   private static class SyncActivity implements Activity {
     boolean canceled = false;
     boolean stopped = false;
-    Display display;
+    AcceptsOneWidget display;
     String stopWarning;
     MyView view;
     EventBus bus;
@@ -101,10 +103,10 @@ public class ActivityManagerTest extends TestCase {
       stopped = true;
     }
 
-    public void start(Display display, EventBus eventBus) {
+    public void start(AcceptsOneWidget display, EventBus eventBus) {
       this.display = display;
       this.bus = eventBus;
-      display.showActivityWidget(view);
+      display.setWidget(view);
     }
   }
 
@@ -264,7 +266,7 @@ public class ActivityManagerTest extends TestCase {
 
     activity1 = new SyncActivity(null) {
       @Override
-      public void start(Display panel, EventBus eventBus) {
+      public void start(AcceptsOneWidget panel, EventBus eventBus) {
         super.start(panel, eventBus);
         bus.addHandler(Event.TYPE, new Handler());
       }
@@ -307,7 +309,7 @@ public class ActivityManagerTest extends TestCase {
   public void testExceptionsOnStopAndStart() {
     activity1 = new SyncActivity(null) {
       @Override
-      public void start(Display panel, EventBus eventBus) {
+      public void start(AcceptsOneWidget panel, EventBus eventBus) {
         super.start(panel, eventBus);
         bus.addHandler(Event.TYPE, new Handler());
       }
@@ -321,7 +323,7 @@ public class ActivityManagerTest extends TestCase {
 
     activity2 = new SyncActivity(null) {
       @Override
-      public void start(Display panel, EventBus eventBus) {
+      public void start(AcceptsOneWidget panel, EventBus eventBus) {
         super.start(panel, eventBus);
         throw new UnsupportedOperationException("Auto-generated method stub");
       }

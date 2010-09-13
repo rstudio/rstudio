@@ -26,8 +26,7 @@ import com.google.gwt.user.client.DOM;
  * <img class='gallery' src='doc-files/FlowPanel.png'/>
  * </p>
  */
-public class FlowPanel extends ComplexPanel implements InsertPanel {
-
+public class FlowPanel extends ComplexPanel implements InsertPanel.ForIsWidget {
   /**
    * Creates an empty flow panel.
    */
@@ -57,6 +56,10 @@ public class FlowPanel extends ComplexPanel implements InsertPanel {
         child = getElement().getFirstChild();
       }
     }
+  }
+
+  public void insert(IsWidget w, int beforeIndex) {
+    insert(asWidgetOrNull(w), beforeIndex);
   }
 
   /**

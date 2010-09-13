@@ -26,6 +26,7 @@ import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.user.cellview.client.AbstractHasData;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
@@ -80,7 +81,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
 
   private HandlerRegistration rangeChangeHandler;
   private ProxyListView<P> view;
-  private Display display;
+  private AcceptsOneWidget display;
 
   public AbstractProxyListActivity(RequestFactory requests,
       PlaceController placeController, ProxyListView<P> view, Class<P> proxyType) {
@@ -148,7 +149,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
         }
         getView().asHasData().setRowData(range.getStart(), values);
         if (display != null) {
-          display.showActivityWidget(getView());
+          display.setWidget(getView());
         }
       }
     };
@@ -177,7 +178,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     }
   }
 
-  public void start(Display display, EventBus eventBus) {
+  public void start(AcceptsOneWidget display, EventBus eventBus) {
     EntityProxyChange.registerForProxyType(eventBus, proxyType,
         new EntityProxyChange.Handler<P>() {
           public void onProxyChange(EntityProxyChange<P> event) {

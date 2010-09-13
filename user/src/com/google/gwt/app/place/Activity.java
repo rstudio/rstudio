@@ -16,6 +16,7 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
 
 /**
  * <p>
@@ -28,18 +29,6 @@ import com.google.gwt.event.shared.EventBus;
  * {@link PlaceChangeEvent} events as the user navigates through the app.
  */
 public interface Activity {
-
-  /**
-   * Implemented by objects responsible for displaying the widgets that
-   * activities drive.
-   * 
-   * TODO perhaps this is actually com.google.gwt.user.client.ui.HasWidget,
-   * and implemented by SimplePanel
-   */
-  public interface Display {
-    void showActivityWidget(IsWidget widget);
-  }
-
   /**
    * Called when the user is trying to navigate away from this activity.
    * 
@@ -61,18 +50,18 @@ public interface Activity {
   void onStop();
 
   /**
-   * Called when the Activity should prepare its {@link IsWidget} for the user.
-   * Once the widget is ready (typically after an RPC response has been
-   * received), receiver should present it via
-   * {@link Display#showActivityWidget(IsWidget)}.
+   * Called when the Activity should ready its widget for the user. When the
+   * widget is ready (typically after an RPC response has been received),
+   * receiver should present it by calling
+   * {@link AcceptsOneWidget#setWidget()} on the given panel
    * <p>
    * Any handlers attached to the provided event bus will be de-registered when
    * the activity is stopped, so activities will rarely need to hold on to the
-   * {@link HandlerRegistration} instances returned by
-   * {@link EventBus#addHandler}.
+   * {@link com.google.gwt.event.shared.HandlerRegistration HandlerRegistration}
+   * instances returned by {@link EventBus#addHandler}.
    * 
    * @param panel the panel to display this activity's widget when it is ready
    * @param eventBus the event bus
    */
-  void start(Display panel, EventBus eventBus);
+  void start(AcceptsOneWidget panel, EventBus eventBus);
 }

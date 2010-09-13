@@ -17,14 +17,15 @@ package com.google.gwt.app.place;
 
 import com.google.gwt.app.place.ProxyPlace.Operation;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
+import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Value;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
 
 import java.util.Set;
 
@@ -51,7 +52,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
 
   private P record;
   private Long futureId;
-  private Display display;
+  private AcceptsOneWidget display;
 
   public AbstractProxyEditActivity(ProxyEditView<P> view, P record,
       Class<P> proxyType, boolean creating, RequestFactory requests,
@@ -147,7 +148,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
     toCommit.fire(receiver);
   }
 
-  public void start(Display display, EventBus eventBus) {
+  public void start(AcceptsOneWidget display, EventBus eventBus) {
     this.display = display;
 
     view.setDelegate(this);
@@ -181,7 +182,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
    */
   protected void exit(boolean saved) {
     if (!saved && creating) {
-      display.showActivityWidget(null);
+      display.setWidget(null);
     } else {
       placeController.goTo(new ProxyPlace(getRecord(), Operation.DETAILS));
     }
@@ -199,12 +200,12 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
     return (P) syncRecord;
   }
 
-  private void doStart(final Display display, P record) {
+  private void doStart(final AcceptsOneWidget display, P record) {
     requestObject = getPersistRequest(record);
     P editableRecord = requestObject.edit(record);
     view.setEnabled(true);
     view.setValue(editableRecord);
     view.showErrors(null);
-    display.showActivityWidget(view);
+    display.setWidget(view);
   }
 }

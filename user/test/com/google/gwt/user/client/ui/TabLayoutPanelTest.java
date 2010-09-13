@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -184,6 +184,70 @@ public class TabLayoutPanelTest extends GWTTestCase {
     assertNotNull(p.getTabWidget(1));
     assertNotNull(p.getTabWidget(2));
     assertEquals(3, p.getWidgetCount());
+  }
+
+  public void testIsWidget() {
+    TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
+
+    IsWidgetImpl add = new IsWidgetImpl(new Label("add"));
+    IsWidgetImpl addText = new IsWidgetImpl(new Label("addText"));
+    IsWidgetImpl addHtml = new IsWidgetImpl(new Label("addHtml"));
+    IsWidgetImpl addWidget = new IsWidgetImpl(new Label("addWidget"));
+    IsWidgetImpl added = new IsWidgetImpl(new Label("added widget"));
+
+    IsWidgetImpl insert = new IsWidgetImpl(new Label("insText"));
+    IsWidgetImpl insText = new IsWidgetImpl(new Label("insText"));
+    IsWidgetImpl insHtml = new IsWidgetImpl(new Label("insHtml"));
+    IsWidgetImpl insWidget = new IsWidgetImpl(new Label("insWidget"));
+    IsWidgetImpl inserted = new IsWidgetImpl(new Label("inserted widget"));
+
+    p.add(add);
+    p.add(addText, "added text");
+    p.add(addHtml, "<b>added html</b>", true);
+    p.add(addWidget, added);
+
+    p.insert(insert, 0);
+    p.insert(insText, "inserted text", 2);
+    p.insert(insHtml, "<b>inserted html</b>", true, 4);
+    p.insert(insWidget, inserted, 6);
+
+    assertEquals(8, p.getWidgetCount());
+    assertEquals(0, p.getWidgetIndex(insert));
+    assertEquals(1, p.getWidgetIndex(add));
+    assertEquals(2, p.getWidgetIndex(insText));
+    assertEquals(3, p.getWidgetIndex(addText));
+    assertEquals(4, p.getWidgetIndex(insHtml));
+    assertEquals(5, p.getWidgetIndex(addHtml));
+    assertEquals(6, p.getWidgetIndex(insWidget));
+    assertEquals(7, p.getWidgetIndex(addWidget));
+
+    assertEquals("", p.getTabWidget(insert).getElement().getInnerHTML());
+    assertEquals("", p.getTabWidget(add).getElement().getInnerHTML());
+    assertEquals("inserted text", p.getTabWidget(insText).getElement().getInnerHTML());
+    assertEquals("added text", p.getTabWidget(addText).getElement().getInnerHTML());
+    assertEquals("<b>inserted html</b>", p.getTabWidget(insHtml).getElement().getInnerHTML().toLowerCase());
+    assertEquals("<b>added html</b>", p.getTabWidget(addHtml).getElement().getInnerHTML().toLowerCase());
+    assertEquals(inserted.w, p.getTabWidget(insWidget));
+    assertEquals(added.w, p.getTabWidget(addWidget));
+
+    class Handler implements SelectionHandler<Integer> {
+      boolean fired = false;
+      public void onSelection(SelectionEvent<Integer> event) {
+        fired = true;
+      }
+    }
+
+    Handler handler = new Handler();
+    p.addSelectionHandler(handler);
+
+    p.selectTab(addText, true);
+    assertTrue(handler.fired);
+    assertEquals(3, p.getSelectedIndex());
+
+    handler.fired = false;
+    p.selectTab(insWidget);
+    assertTrue(handler.fired);
+    assertEquals(6, p.getSelectedIndex());
   }
 
   public void testIterator() {

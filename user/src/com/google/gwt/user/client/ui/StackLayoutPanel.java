@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,16 +38,16 @@ import java.util.NoSuchElementException;
 /**
  * A panel that stacks its children vertically, displaying only one at a time,
  * with a header for each child which the user can click to display.
- * 
+ *
  * <p>
  * This widget will <em>only</em> work in standards mode, which requires that
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
- * 
+ *
  * <h3>CSS Style Rules</h3>
  * <dl>
- * <dt>.gwt-StackLayoutPanel <dd> the panel itself 
+ * <dt>.gwt-StackLayoutPanel <dd> the panel itself
  * <dt>.gwt-StackLayoutPanel .gwt-StackLayoutPanelHeader <dd> applied to each
  * header widget
  * <dt>.gwt-StackLayoutPanel .gwt-StackLayoutPanelHeader-hovering <dd> applied to each
@@ -55,12 +55,12 @@ import java.util.NoSuchElementException;
  * <dt>.gwt-StackLayoutPanel .gwt-StackLayoutPanelContent <dd> applied to each
  * child widget
  * </dl>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.StackLayoutPanelExample}
  * </p>
- * 
+ *
  * <h3>Use in UiBinder Templates</h3>
  * <p>
  * A StackLayoutPanel element in a
@@ -77,7 +77,7 @@ import java.util.NoSuchElementException;
  * and so cannot have a <code>ui:field</code> attribute.)
  * <p>
  * For example:
- * 
+ *
  * <pre>
  * &lt;g:StackLayoutPanel unit='PX'>
  *  &lt;g:stack>
@@ -94,7 +94,7 @@ import java.util.NoSuchElementException;
  * </pre>
  */
 public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
-    ProvidesResize, IndexedPanel,
+    ProvidesResize, IndexedPanel.ForIsWidget,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 
   private class Header extends Composite implements HasClickHandlers {
@@ -135,13 +135,13 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   private static final int ANIMATION_TIME = 250;
 
   private LayoutPanel layoutPanel;
-  private Unit unit;
-  private ArrayList<LayoutData> layoutData = new ArrayList<LayoutData>();
+  private final Unit unit;
+  private final ArrayList<LayoutData> layoutData = new ArrayList<LayoutData>();
   private int selectedIndex = -1;
 
   /**
    * Creates an empty stack panel.
-   * 
+   *
    * @param unit the unit to be used for layout
    */
   public StackLayoutPanel(Unit unit) {
@@ -157,7 +157,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Adds a child widget to this stack, along with a widget representing the
    * stack header.
-   * 
+   *
    * @param widget the child widget to be added
    * @param header the text to be shown on its header
    * @param asHtml <code>true</code> to treat the specified text as HTML
@@ -170,7 +170,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Adds a child widget to this stack, along with a widget representing the
    * stack header.
-   * 
+   *
    * @param widget the child widget to be added
    * @param header the text to be shown on its header
    * @param headerSize the size of the header widget
@@ -182,7 +182,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Adds a child widget to this stack, along with a widget representing the
    * stack header.
-   * 
+   *
    * @param widget the child widget to be added
    * @param header the header widget
    * @param headerSize the size of the header widget
@@ -209,7 +209,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Gets the widget in the stack header at the given index.
-   * 
+   *
    * @param index the index of the stack header to be retrieved
    * @return the header widget
    */
@@ -220,7 +220,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Gets the widget in the stack header associated with the given child widget.
-   * 
+   *
    * @param child the child whose stack header is to be retrieved
    * @return the header widget
    */
@@ -231,7 +231,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Gets the currently-selected index.
-   * 
+   *
    * @return the selected index, or <code>-1</code> if none is selected
    */
   public int getVisibleIndex() {
@@ -240,7 +240,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Gets the currently-selected widget.
-   * 
+   *
    * @return the selected widget, or <code>null</code> if none exist
    */
   public Widget getVisibleWidget() {
@@ -258,6 +258,10 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     return layoutPanel.getWidgetCount() / 2;
   }
 
+  public int getWidgetIndex(IsWidget child) {
+    return getWidgetIndex(asWidgetOrNull(child));
+  }
+
   public int getWidgetIndex(Widget child) {
     int index = layoutPanel.getWidgetIndex(child);
     if (index == -1) {
@@ -269,7 +273,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
-   * 
+   *
    * @param child the widget to be added
    * @param text the text to be shown on its header
    * @param asHtml <code>true</code> to treat the specified text as HTML
@@ -290,7 +294,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
-   * 
+   *
    * @param child the widget to be added
    * @param text the text to be shown on its header
    * @param headerSize the size of the header widget
@@ -303,7 +307,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Inserts a widget into the panel. If the Widget is already attached, it will
    * be moved to the requested index.
-   * 
+   *
    * @param child the widget to be added
    * @param header the widget to be placed in the associated header
    * @param headerSize the size of the header widget
@@ -382,11 +386,11 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Sets a stack header's HTML contents.
-   * 
+   *
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
    * {@link #setHeaderText(int, String)} whenever possible.
-   * 
+   *
    * @param index the index of the header whose HTML is to be set
    * @param html the header's new HTML contents
    */
@@ -401,7 +405,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Sets a stack header's text contents.
-   * 
+   *
    * @param index the index of the header whose text is to be set
    * @param text the object's new text
    */
@@ -416,7 +420,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Shows the widget at the specified index and fires events.
-   * 
+   *
    * @param index the index of the child widget to be shown.
    */
   public void showWidget(int index) {
@@ -425,7 +429,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Shows the widget at the specified index.
-   * 
+   *
    * @param index the index of the child widget to be shown.
    * @param fireEvents true to fire events, false not to
    */
@@ -436,7 +440,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Shows the specified widget and fires events.
-   * 
+   *
    * @param child the child widget to be shown.
    */
   public void showWidget(Widget child) {
@@ -445,7 +449,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
 
   /**
    * Shows the specified widget.
-   * 
+   *
    * @param child the child widget to be shown.
    * @param fireEvents true to fire events, false not to
    */

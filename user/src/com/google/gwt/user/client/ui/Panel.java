@@ -24,7 +24,7 @@ import java.util.Iterator;
  * Abstract base class for all panels, which are widgets that can contain other
  * widgets.
  */
-public abstract class Panel extends Widget implements HasWidgets {
+public abstract class Panel extends Widget implements HasWidgets.ForIsWidget {
 
   /**
    * Adds a child widget.
@@ -67,6 +67,10 @@ public abstract class Panel extends Widget implements HasWidgets {
         "This panel does not support no-arg add()");
   }
 
+  public void add(IsWidget child) {
+    this.add(asWidgetOrNull(child));
+  }
+
   public void clear() {
     Iterator<Widget> it = iterator();
     while (it.hasNext()) {
@@ -103,6 +107,10 @@ public abstract class Panel extends Widget implements HasWidgets {
    * @return <code>true</code> if the child was present
    */
   public abstract boolean remove(Widget child);
+
+  public boolean remove(IsWidget child) {
+    return remove(asWidgetOrNull(child));
+  }
 
   /**
    * Finalize the attachment of a Widget to this Panel. This method is the

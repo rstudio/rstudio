@@ -16,9 +16,18 @@
 package com.google.gwt.user.client.ui;
 
 /**
- * A panel that allows indexed insertions.
+ * Implemented by {@link IndexedPanel}s that also allow insertions.
  */
 public interface InsertPanel extends IndexedPanel {
+
+  /**
+   * Extends this interface with convenience methods to handle {@link IsWidget}.
+   */
+  interface ForIsWidget extends InsertPanel, IndexedPanel.ForIsWidget {
+    void add(IsWidget w);
+
+    void insert(IsWidget w, int beforeIndex);
+  }
 
   /**
    * Adds a child widget to this panel.
@@ -38,4 +47,3 @@ public interface InsertPanel extends IndexedPanel {
    */
   void insert(Widget w, int beforeIndex);
 }
-

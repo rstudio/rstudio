@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -45,16 +44,23 @@ public class WidgetTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  @SuppressWarnings("deprecation")
   public void testCreateHandlerManager() {
-    final HandlerManager manager = new HandlerManager(null);
+    final com.google.gwt.event.shared.HandlerManager manager = new com.google.gwt.event.shared.HandlerManager(
+        null);
     Widget w = new Widget() {
       @Override
-      protected HandlerManager createHandlerManager() {
+      protected com.google.gwt.event.shared.HandlerManager createHandlerManager() {
         return manager;
       }
     };
     w.ensureHandlers();
     assertEquals(manager, w.getHandlerManager());
+  }
+  
+  public void testAsWidget() {
+    Widget a = new Widget();
+    assertSame(a, a.asWidget());
   }
 
   public void testHandlerCount() {

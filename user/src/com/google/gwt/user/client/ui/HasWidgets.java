@@ -24,6 +24,15 @@ import java.util.Iterator;
 public interface HasWidgets extends Iterable<Widget> {
 
   /**
+   * Extends this interface with convenience methods to handle {@link IsWidget}.
+   */
+  interface ForIsWidget extends HasWidgets {
+    void add(IsWidget w);
+
+    boolean remove(IsWidget w);
+  }
+
+  /**
    * Adds a child widget.
    * 
    * @param w the widget to be added

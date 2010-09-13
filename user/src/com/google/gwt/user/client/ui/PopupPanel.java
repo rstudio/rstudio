@@ -719,6 +719,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return <code>false</code> to suppress the event
    * @deprecated Use {@link #onPreviewNativeEvent} instead
    */
+  @SuppressWarnings("unused")
   @Deprecated
   public boolean onKeyDownPreview(char key, int modifiers) {
     return true;
@@ -734,6 +735,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return <code>false</code> to suppress the event
    * @deprecated Use {@link #onPreviewNativeEvent} instead
    */
+  @SuppressWarnings("unused")
   @Deprecated
   public boolean onKeyPressPreview(char key, int modifiers) {
     return true;
@@ -749,6 +751,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return <code>false</code> to suppress the event
    * @deprecated Use {@link #onPreviewNativeEvent} instead
    */
+  @SuppressWarnings("unused")
   @Deprecated
   public boolean onKeyUpPreview(char key, int modifiers) {
     return true;

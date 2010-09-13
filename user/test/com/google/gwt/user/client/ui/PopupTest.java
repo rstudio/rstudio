@@ -337,8 +337,10 @@ public class PopupTest extends GWTTestCase {
 
     // DecoratorPanel adds width and height because it wraps the content in a
     // 3x3 table.
-    assertTrue(popup.getOffsetWidth() >= 384);
-    assertTrue(popup.getOffsetHeight() >= 128);
+    assertTrue("Expected >= 384, got " + popup.getOffsetWidth(),
+        popup.getOffsetWidth() >= 384);
+    assertTrue("Expected >= 128, got " + popup.getOffsetHeight(),
+        popup.getOffsetHeight() >= 128);
     assertEquals(128, popup.getPopupLeft());
     assertEquals(64, popup.getPopupTop());
 
@@ -473,7 +475,7 @@ public class PopupTest extends GWTTestCase {
   }
 
   @Override
-  protected void gwtTearDown() throws Exception {
+  protected void gwtTearDown() {
     RootPanel.get().clear();
   }
 

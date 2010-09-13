@@ -31,12 +31,8 @@ import com.google.gwt.user.client.Element;
  * cleared.
  * </p>
  */
-public class DeckPanel extends ComplexPanel implements HasAnimation, InsertPanel {
-  /**
-   * The duration of the animation.
-   */
-  private static final int ANIMATION_DURATION = 350;
-
+public class DeckPanel extends ComplexPanel implements HasAnimation,
+    InsertPanel.ForIsWidget {
   /**
    * An {@link Animation} used to slide in the new content.
    */
@@ -219,6 +215,11 @@ public class DeckPanel extends ComplexPanel implements HasAnimation, InsertPanel
   }
 
   /**
+   * The duration of the animation.
+   */
+  private static final int ANIMATION_DURATION = 350;
+
+  /**
    * The {@link Animation} used to slide in the new {@link Widget}.
    */
   private static SlideAnimation slideAnimation;
@@ -269,6 +270,10 @@ public class DeckPanel extends ComplexPanel implements HasAnimation, InsertPanel
    */
   public int getVisibleWidget() {
     return getWidgetIndex(visibleWidget);
+  }
+
+  public void insert(IsWidget w, int beforeIndex) {
+    insert(asWidgetOrNull(w), beforeIndex);
   }
 
   public void insert(Widget w, int beforeIndex) {
@@ -341,7 +346,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation, InsertPanel
   private void finishWidgetInitialization(Element container, Widget w) {
     UIObject.setVisible(container, false);
     DOM.setStyleAttribute(container, "height", "100%");
-    
+
     // Set 100% by default.
     Element element = w.getElement();
     if (DOM.getStyleAttribute(element, "width").equals("")) {

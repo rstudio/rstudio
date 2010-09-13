@@ -17,6 +17,7 @@ package com.google.gwt.app.place;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.user.client.TakesValue;
+import com.google.gwt.user.client.ui.IsWidget;
 
 import java.util.Map;
 

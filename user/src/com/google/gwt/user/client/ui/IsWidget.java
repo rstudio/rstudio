@@ -13,19 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place;
+package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.ui.Widget;
 
 /**
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * <p>
  * Extended by view interfaces that are likely to be implemented by Widgets.
  * Provides access to that widget, if it exists, without compromising the
  * ability to provide a mock view instance in JRE unit tests.
  */
 public interface IsWidget {
+  
+  /**
+   * @return the {@link Widget} aspect of the receiver
+   */
   Widget asWidget();
 }

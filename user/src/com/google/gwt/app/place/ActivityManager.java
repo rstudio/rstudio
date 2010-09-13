@@ -15,11 +15,12 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.app.place.Activity.Display;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.ResettableEventBus;
 import com.google.gwt.event.shared.UmbrellaException;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
+import com.google.gwt.user.client.ui.IsWidget;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -41,23 +42,23 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
    * Wraps our real display to prevent an Activity from taking it over if it is
    * not the currentActivity.
    */
-  private class ProtectedDisplay implements Display {
+  private class ProtectedDisplay implements AcceptsOneWidget {
     private final Activity activity;
 
     ProtectedDisplay(Activity activity) {
       this.activity = activity;
     }
 
-    public void showActivityWidget(IsWidget view) {
+    public void setWidget(IsWidget view) {
       if (this.activity == ActivityManager.this.currentActivity) {
         startingNext = false;
-        display.showActivityWidget(view);
+        display.setWidget(view);
       }
     }
   }
 
   private static final Activity NULL_ACTIVITY = new AbstractActivity() {
-    public void start(Display panel, EventBus eventBus) {
+    public void start(AcceptsOneWidget panel, EventBus eventBus) {
     }
   };
 
@@ -68,7 +69,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
 
   private Activity currentActivity = NULL_ACTIVITY;
 
-  private Activity.Display display;
+  private AcceptsOneWidget display;
 
   private boolean startingNext = false;
 
@@ -142,7 +143,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     currentActivity = nextActivity;
 
     if (currentActivity.equals(NULL_ACTIVITY)) {
-      display.showActivityWidget(null);
+      display.setWidget(null);
       return;
     }
 
@@ -194,7 +195,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
    * 
    * @param display
    */
-  public void setDisplay(Activity.Display display) {
+  public void setDisplay(AcceptsOneWidget display) {
     boolean wasActive = (null != this.display);
     boolean willBeActive = (null != display);
     this.display = display;
