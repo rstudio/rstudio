@@ -122,6 +122,11 @@ abstract class JDelegatingClassType extends JClassType {
   }
 
   @Override
+  public JMethod[] getInheritableMethods() {
+    return baseType.getInheritableMethods();
+  }
+
+  @Override
   public String getJNISignature() {
     return baseType.getJNISignature();
   }
@@ -292,20 +297,20 @@ abstract class JDelegatingClassType extends JClassType {
   }
 
   @Override
+  protected void getInheritableMethodsOnSuperclassesAndThisClass(
+      Map<String, JMethod> methodsBySignature) {
+    baseType.getInheritableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+  }
+
+  @Override
+  protected void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
+      Map<String, JMethod> methodsBySignature) {
+    baseType.getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
+  }
+
+  @Override
   protected int getModifierBits() {
     return baseType.getModifierBits();
-  }
-
-  @Override
-  protected void getOverridableMethodsOnSuperclassesAndThisClass(
-      Map<String, JMethod> methodsBySignature) {
-    baseType.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
-  }
-
-  @Override
-  protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
-      Map<String, JMethod> methodsBySignature) {
-    baseType.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
   }
 
   @Override

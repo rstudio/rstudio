@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import java.util.TreeMap;
 abstract class AbstractMembers {
 
   protected final JClassType classType;
+  private JMethod[] cachedInheritableMethods;
   private JMethod[] cachedOverridableMethods;
 
   public AbstractMembers(JClassType classType) {
@@ -79,6 +81,24 @@ abstract class AbstractMembers {
 
   public abstract JField[] getFields();
 
+  public JMethod[] getInheritableMethods() {
+    if (cachedInheritableMethods == null) {
+      Map<String, JMethod> methodsBySignature = new TreeMap<String, JMethod>();
+      getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
+      if (classType.isClass() != null) {
+        getInheritableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+      }
+      int size = methodsBySignature.size();
+      if (size == 0) {
+        cachedInheritableMethods = TypeOracle.NO_JMETHODS;
+      } else {
+        Collection<JMethod> leafMethods = methodsBySignature.values();
+        cachedInheritableMethods = leafMethods.toArray(new JMethod[size]);
+      }
+    }
+    return cachedInheritableMethods;
+  }
+
   public JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException {
     JMethod result = findMethod(name, paramTypes);
@@ -106,17 +126,19 @@ abstract class AbstractMembers {
 
   public JMethod[] getOverridableMethods() {
     if (cachedOverridableMethods == null) {
-      Map<String, JMethod> methodsBySignature = new TreeMap<String, JMethod>();
-      getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
-      if (classType.isClass() != null) {
-        getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+      JMethod[] inheritableMethods = getInheritableMethods();
+      ArrayList<JMethod> methods = new ArrayList<JMethod>(
+          inheritableMethods.length);
+      for (JMethod method : inheritableMethods) {
+        if (!method.isFinal()) {
+          methods.add(method);
+        }
       }
-      int size = methodsBySignature.size();
+      int size = methods.size();
       if (size == 0) {
         cachedOverridableMethods = TypeOracle.NO_JMETHODS;
       } else {
-        Collection<JMethod> leafMethods = methodsBySignature.values();
-        cachedOverridableMethods = leafMethods.toArray(new JMethod[size]);
+        cachedOverridableMethods = methods.toArray(new JMethod[size]);
       }
     }
     return cachedOverridableMethods;
@@ -143,7 +165,7 @@ abstract class AbstractMembers {
     }
   }
 
-  protected void getOverridableMethodsOnSuperclassesAndThisClass(
+  protected void getInheritableMethodsOnSuperclassesAndThisClass(
       Map<String, JMethod> methodsBySignature) {
     assert (classType.isClass() != null);
 
@@ -151,29 +173,22 @@ abstract class AbstractMembers {
     // methods.
     JClassType superClass = classType.getSuperclass();
     if (superClass != null) {
-      superClass.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+      superClass.getInheritableMethodsOnSuperclassesAndThisClass(methodsBySignature);
     }
 
     JMethod[] declaredMethods = getMethods();
     for (int i = 0; i < declaredMethods.length; i++) {
       JMethod method = declaredMethods[i];
 
-      // Ensure that this method is inherited.
+      // Ensure that this method is inheritable.
       if (method.isPrivate() || method.isStatic()) {
-        // We don't inherit this method, so skip it.
+        // We cannot inherit this method, so skip it.
         continue;
       }
 
+      // We can override this method, so record it.
       String sig = computeInternalSignature(method);
-
-      // Ensure that this method is overridable.
-      if (method.isFinal()) {
-        // We cannot override this method, but it might override another method, so remove any possibly overridden method.
-        methodsBySignature.remove(sig);
-      } else {
-        // We can override this method, so record it.
-        methodsBySignature.put(sig, method);
-      }
+      methodsBySignature.put(sig, method);
     }
   }
 
@@ -185,14 +200,14 @@ abstract class AbstractMembers {
    * 
    * @param methodsBySignature
    */
-  protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
+  protected void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
       Map<String, JMethod> methodsBySignature) {
     // Recurse first so that more derived methods will clobber less derived
     // methods.
     JClassType[] superIntfs = classType.getImplementedInterfaces();
     for (int i = 0; i < superIntfs.length; i++) {
       JClassType superIntf = superIntfs[i];
-      superIntf.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
+      superIntf.getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
     }
 
     if (classType.isInterface() == null) {

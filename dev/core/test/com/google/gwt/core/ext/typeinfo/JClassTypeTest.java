@@ -33,7 +33,8 @@ public class JClassTypeTest extends TestCase {
   public JClassTypeTest() throws UnableToCompleteException {
   }
 
-  public void testGetOverridableMethods() throws TypeOracleException {
+  public void testGetInheritableOrOverridableMethods()
+      throws TypeOracleException {
     TypeOracle typeOracle = moduleContext.getOracle();
     // TypeOracle typeOracle = buildOracleFromTestPackage(logger);
 
@@ -198,55 +199,67 @@ public class JClassTypeTest extends TestCase {
           "com.google.gwt.core.ext.typeinfo.test.IC", "foo", noParams);
     }
 
-    // Check that we aren't including methods that aren't actually overridable
-    // because they are final and/or private.
+    // Both IA and CB define foo(), foo() being final in CB, so searching for
+    // foo() on CA should return IA.foo() as overridable, while searching for
+    // foo() on CB or CC should return CB.foo() as inheritable but not
+    // overridable.
     {
       assertMethodOverridable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.IA",
           "com.google.gwt.core.ext.typeinfo.test.CA", "foo",
           noParams);
 
-      assertMethodNotOverridable(typeOracle,
+      assertMethodInheritableNotOverridable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.CB",
           "com.google.gwt.core.ext.typeinfo.test.CB", "foo",
           noParams);
 
-      assertMethodNotOverridable(typeOracle,
+      assertMethodInheritableNotOverridable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.CB",
           "com.google.gwt.core.ext.typeinfo.test.CC", "foo",
           noParams);
 
-      assertMethodNotOverridable(typeOracle,
+      // Check that we aren't including methods that aren't actually overridable
+      // (but are inheritable) because they are final (but non-private).
+      assertMethodInheritableNotOverridable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.CA",
           "com.google.gwt.core.ext.typeinfo.test.CA", "caNotOverridableFinal",
           noParams);
 
-      assertMethodNotOverridable(typeOracle,
+      // Check that we aren't including methods that aren't actually inheritable
+      // because they are private.
+      assertMethodNotInheritable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.CA",
           "com.google.gwt.core.ext.typeinfo.test.CA",
           "caNotOverridablePrivate", noParams);
     }
   }
 
-  private void assertMethodNotOverridable(TypeOracle typeOracle,
+  private void assertMethodInheritableNotOverridable(TypeOracle typeOracle,
       String expectedTypeName, String searchTypeName, String methodName,
       String[] paramTypeNames) throws TypeOracleException {
-    assertOverridableMethodInclusion(false, typeOracle, expectedTypeName,
-        searchTypeName, methodName, paramTypeNames);
+    assertInheritableOrOverridableMethod(true, false, typeOracle,
+        expectedTypeName, searchTypeName, methodName, paramTypeNames);
+  }
+
+  private void assertMethodNotInheritable(TypeOracle typeOracle,
+      String expectedTypeName, String searchTypeName, String methodName,
+      String[] paramTypeNames) throws TypeOracleException {
+    assertInheritableOrOverridableMethod(false, false, typeOracle,
+        expectedTypeName, searchTypeName, methodName, paramTypeNames);
   }
 
   private void assertMethodOverridable(TypeOracle typeOracle,
       String expectedTypeName, String searchTypeName, String methodName,
       String[] paramTypeNames) throws TypeOracleException {
-    assertOverridableMethodInclusion(true, typeOracle, expectedTypeName,
-        searchTypeName, methodName, paramTypeNames);
+    assertInheritableOrOverridableMethod(true, true, typeOracle,
+        expectedTypeName, searchTypeName, methodName, paramTypeNames);
   }
 
-  private void assertOverridableMethodInclusion(boolean shouldBeFound,
+  private void assertInheritableOrOverridableMethod(
+      boolean shouldBeInheritable, boolean shouldBeOverridable,
       TypeOracle oracle, String expectedTypeName, String searchTypeName,
       String methodName, String[] paramTypeNames) throws TypeOracleException {
-
-    boolean wasFound = false;
 
     JType[] paramTypes = new JType[paramTypeNames.length];
     for (int i = 0; i < paramTypeNames.length; i++) {
@@ -256,7 +269,20 @@ public class JClassTypeTest extends TestCase {
 
     JClassType expectedType = oracle.getType(expectedTypeName);
     JClassType searchType = oracle.getType(searchTypeName);
-    JMethod[] leafMethods = searchType.getOverridableMethods();
+
+    assertMethodInclusion(shouldBeInheritable,
+        searchType.getInheritableMethods(), methodName, expectedType,
+        paramTypes);
+    assertMethodInclusion(shouldBeOverridable,
+        searchType.getOverridableMethods(), methodName, expectedType,
+        paramTypes);
+  }
+
+  private void assertMethodInclusion(boolean shouldBeFound,
+      JMethod[] leafMethods, String methodName, JClassType expectedType,
+      JType[] paramTypes) {
+    boolean wasFound = false;
+
     for (int i = 0; i < leafMethods.length; i++) {
       JMethod method = leafMethods[i];
       if (method.getName().equals(methodName)) {
@@ -273,13 +299,13 @@ public class JClassTypeTest extends TestCase {
         // Good. We wanted to find it and we did.
       } else {
         fail("Did not find expected method '" + methodName + "' on type '"
-            + expectedTypeName + "'");
+            + expectedType.getQualifiedSourceName() + "'");
       }
     } else {
       // We want to *not* find it.
       if (wasFound) {
         fail("Did not expect to find method '" + methodName + "' on type '"
-            + expectedTypeName + "'");
+            + expectedType.getQualifiedSourceName() + "'");
       } else {
         // Good. We didn't want to find it and didn't.
       }

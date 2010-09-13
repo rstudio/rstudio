@@ -152,6 +152,12 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
   }
 
   @Override
+  public void testGetInheritableMethods() throws NotFoundException {
+    // Tested via testOverridableMethods_Base, testOverridableMethods_Derived,
+    // testOverridableMethods_Derived_Integer
+  }
+
+  @Override
   public void testGetNestedType() {
     // TODO: complete this test method
   }
@@ -370,9 +376,11 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     List<JMethod> expected = new ArrayList<JMethod>(
         Arrays.asList(type.getOverloads("m")));
     List<JMethod> actual = new ArrayList<JMethod>(
-        Arrays.asList(type.getOverridableMethods()));
+        Arrays.asList(type.getInheritableMethods()));
+    validateInheritableOrOverridableMethods(expected, actual, true);
 
-    validateOverridableMethods(expected, actual, true);
+    actual = new ArrayList<JMethod>(Arrays.asList(type.getOverridableMethods()));
+    validateInheritableOrOverridableMethods(expected, actual, true);
   }
 
   public void testOverridableMethods_Derived() throws NotFoundException {
@@ -392,9 +400,11 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
         new JType[] {paramType.getTypeArgs()[0]}));
 
     List<JMethod> actual = new ArrayList<JMethod>(
-        Arrays.asList(type.getOverridableMethods()));
+        Arrays.asList(type.getInheritableMethods()));
+    validateInheritableOrOverridableMethods(expected, actual, true);
 
-    validateOverridableMethods(expected, actual, true);
+    actual = new ArrayList<JMethod>(Arrays.asList(type.getOverridableMethods()));
+    validateInheritableOrOverridableMethods(expected, actual, true);
   }
 
   public void testOverridableMethods_Derived_Integer() throws NotFoundException {
@@ -410,9 +420,13 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     expected.addAll(Arrays.asList(paramType.getOverloads("m")));
 
     List<JMethod> actual = new ArrayList<JMethod>(
+        Arrays.asList(paramType.getInheritableMethods()));
+    validateInheritableOrOverridableMethods(expected, actual, true);
+
+    actual = new ArrayList<JMethod>(
         Arrays.asList(paramType.getOverridableMethods()));
 
-    validateOverridableMethods(expected, actual, true);
+    validateInheritableOrOverridableMethods(expected, actual, true);
   }
 
   /**
@@ -467,7 +481,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     return parameterizedInnerClass;
   }
 
-  private void validateOverridableMethods(List<JMethod> expected,
+  private void validateInheritableOrOverridableMethods(List<JMethod> expected,
       List<JMethod> actual, boolean addObjectMethods) {
     Set<JMethod> expectedMethods = new HashSet<JMethod>();
     expectedMethods.addAll(expected);

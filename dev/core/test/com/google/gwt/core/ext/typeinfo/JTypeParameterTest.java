@@ -69,6 +69,14 @@ public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
   }
 
   @Override
+  public void testGetInheritableMethods() throws NotFoundException {
+    JTypeParameter testType = getTestType();
+
+    assertTrue(Arrays.deepEquals(testType.getInheritableMethods(),
+        testType.getFirstBound().getInheritableMethods()));
+  }
+
+  @Override
   public void testGetName() throws NotFoundException {
     assertEquals("T", getTestType().getName());
   }

@@ -460,6 +460,21 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   public abstract JClassType[] getImplementedInterfaces();
 
+  /**
+   * Iterates over the most-derived declaration of each unique inheritable
+   * method available in the type hierarchy of the specified type, including
+   * those found in superclasses and superinterfaces. A method is inheritable if
+   * its accessibility is <code>public</code>, <code>protected</code>, or
+   * package protected.
+   * 
+   * This method offers a convenient way for Generators to find candidate
+   * methods to call from a subclass.
+   * 
+   * @return an array of {@link JMethod} objects representing inheritable
+   *         methods
+   */
+  public abstract JMethod[] getInheritableMethods();
+
   @Deprecated
   public final String[][] getMetaData(String tagName) {
     return TypeOracle.NO_STRING_ARR_ARR;
@@ -631,9 +646,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   protected abstract void acceptSubtype(JClassType me);
 
-  protected abstract int getModifierBits();
-
-  protected abstract void getOverridableMethodsOnSuperclassesAndThisClass(
+  protected abstract void getInheritableMethodsOnSuperclassesAndThisClass(
       Map<String, JMethod> methodsBySignature);
 
   /**
@@ -644,8 +657,10 @@ public abstract class JClassType extends JType implements HasAnnotations,
    * 
    * @param methodsBySignature
    */
-  protected abstract void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
+  protected abstract void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
       Map<String, JMethod> methodsBySignature);
+
+  protected abstract int getModifierBits();
 
   protected JMaybeParameterizedType isMaybeParameterizedType() {
     return null;

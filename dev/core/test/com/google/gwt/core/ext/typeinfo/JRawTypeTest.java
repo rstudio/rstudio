@@ -48,6 +48,11 @@ public class JRawTypeTest extends JDelegatingClassTypeTestBase {
   }
 
   @Override
+  public void testGetInheritableMethods() {
+    // TODO Auto-generated method stub
+  }
+
+  @Override
   public void testGetNestedType() {
     // TODO Auto-generated method stub
   }

@@ -459,6 +459,12 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getInheritableMethods()}.
+   */
+  public abstract void testGetInheritableMethods() throws NotFoundException;
+
+  /**
+   * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getJNISignature()}.
    */
   public void testGetJNISignature() {

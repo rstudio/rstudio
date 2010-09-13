@@ -75,6 +75,11 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   }
 
   @Override
+  public void testGetInheritableMethods() {
+    // No inheritable methods
+  }
+
+  @Override
   public void testGetMethods() throws NotFoundException {
     super.testGetMethods();
   }

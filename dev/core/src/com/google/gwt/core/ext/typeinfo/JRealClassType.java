@@ -162,6 +162,11 @@ public class JRealClassType extends JClassType {
   }
 
   @Override
+  public JMethod[] getInheritableMethods() {
+    return members.getInheritableMethods();
+  }
+
+  @Override
   public String getJNISignature() {
     String typeName = nestedName.replace('.', '$');
     String packageName = getPackage().getName().replace('.', '/');
@@ -424,14 +429,9 @@ public class JRealClassType extends JClassType {
   }
 
   @Override
-  protected int getModifierBits() {
-    return modifierBits;
-  }
-
-  @Override
-  protected void getOverridableMethodsOnSuperclassesAndThisClass(
+  protected void getInheritableMethodsOnSuperclassesAndThisClass(
       Map<String, JMethod> methodsBySignature) {
-    members.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+    members.getInheritableMethodsOnSuperclassesAndThisClass(methodsBySignature);
   }
 
   /**
@@ -443,9 +443,14 @@ public class JRealClassType extends JClassType {
    * @param methodsBySignature
    */
   @Override
-  protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
+  protected void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
       Map<String, JMethod> methodsBySignature) {
-    members.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
+    members.getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
+  }
+
+  @Override
+  protected int getModifierBits() {
+    return modifierBits;
   }
 
   /**

@@ -105,6 +105,11 @@ public class JArrayType extends JClassType {
   }
 
   @Override
+  public JMethod[] getInheritableMethods() {
+    return getOracle().getJavaLangObject().getInheritableMethods();
+  }
+
+  @Override
   public String getJNISignature() {
     return "[" + componentType.getJNISignature();
   }
@@ -333,22 +338,22 @@ public class JArrayType extends JClassType {
   }
 
   @Override
+  protected void getInheritableMethodsOnSuperclassesAndThisClass(
+      Map<String, JMethod> methodsBySignature) {
+    getOracle().getJavaLangObject().getInheritableMethodsOnSuperclassesAndThisClass(
+        methodsBySignature);
+  }
+
+  @Override
+  protected void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
+      Map<String, JMethod> methodsBySignature) {
+    getOracle().getJavaLangObject().getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
+        methodsBySignature);
+  }
+
+  @Override
   protected int getModifierBits() {
     return 0;
-  }
-
-  @Override
-  protected void getOverridableMethodsOnSuperclassesAndThisClass(
-      Map<String, JMethod> methodsBySignature) {
-    getOracle().getJavaLangObject().getOverridableMethodsOnSuperclassesAndThisClass(
-        methodsBySignature);
-  }
-
-  @Override
-  protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
-      Map<String, JMethod> methodsBySignature) {
-    getOracle().getJavaLangObject().getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
-        methodsBySignature);
   }
 
   @Override

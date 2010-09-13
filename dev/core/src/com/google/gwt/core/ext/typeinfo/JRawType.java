@@ -100,6 +100,11 @@ public class JRawType extends JMaybeParameterizedType {
   }
 
   @Override
+  public JMethod[] getInheritableMethods() {
+    return members.getInheritableMethods();
+  }
+
+  @Override
   public JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException {
     return members.getMethod(name, paramTypes);
