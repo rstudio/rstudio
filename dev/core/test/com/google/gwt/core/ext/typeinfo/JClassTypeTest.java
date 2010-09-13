@@ -201,6 +201,21 @@ public class JClassTypeTest extends TestCase {
     // Check that we aren't including methods that aren't actually overridable
     // because they are final and/or private.
     {
+      assertMethodOverridable(typeOracle,
+          "com.google.gwt.core.ext.typeinfo.test.IA",
+          "com.google.gwt.core.ext.typeinfo.test.CA", "foo",
+          noParams);
+
+      assertMethodNotOverridable(typeOracle,
+          "com.google.gwt.core.ext.typeinfo.test.CB",
+          "com.google.gwt.core.ext.typeinfo.test.CB", "foo",
+          noParams);
+
+      assertMethodNotOverridable(typeOracle,
+          "com.google.gwt.core.ext.typeinfo.test.CB",
+          "com.google.gwt.core.ext.typeinfo.test.CC", "foo",
+          noParams);
+
       assertMethodNotOverridable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.CA",
           "com.google.gwt.core.ext.typeinfo.test.CA", "caNotOverridableFinal",

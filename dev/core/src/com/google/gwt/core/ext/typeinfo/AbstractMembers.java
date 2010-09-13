@@ -158,15 +158,22 @@ abstract class AbstractMembers {
     for (int i = 0; i < declaredMethods.length; i++) {
       JMethod method = declaredMethods[i];
 
-      // Ensure that this method is overridable.
-      if (method.isFinal() || method.isPrivate() || method.isStatic()) {
-        // We cannot override this method, so skip it.
+      // Ensure that this method is inherited.
+      if (method.isPrivate() || method.isStatic()) {
+        // We don't inherit this method, so skip it.
         continue;
       }
 
-      // We can override this method, so record it.
       String sig = computeInternalSignature(method);
-      methodsBySignature.put(sig, method);
+
+      // Ensure that this method is overridable.
+      if (method.isFinal()) {
+        // We cannot override this method, but it might override another method, so remove any possibly overridden method.
+        methodsBySignature.remove(sig);
+      } else {
+        // We can override this method, so record it.
+        methodsBySignature.put(sig, method);
+      }
     }
   }
 

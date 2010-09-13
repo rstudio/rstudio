@@ -148,12 +148,12 @@ public class JEnumTypeTest extends TestCase {
     assertEquals("A", annotation.value());
     JClassType aClass = constants[0].getType().isClass();
     JMethod[] methods = aClass.getOverridableMethods();
-    assertEquals(7, methods.length);
+    assertEquals(4, methods.length);
     // TODO(jat): verify getExtra is from A's anonymous subclass of
     //     EnumInterface when/if that is implemented.
     boolean found = false;
     for (JMethod method : methods) {
-      if ("name".equals(method.getName())) {
+      if ("getExtra".equals(method.getName())) {
         found = true;
         // TODO(jat); any other verification here?
       }
