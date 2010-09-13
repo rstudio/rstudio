@@ -317,17 +317,6 @@ public class RequestFactoryGenerator extends Generator {
       requestSelectors.add(method);
     }
 
-    // In addition to the request selectors in the generated interface, there
-    // are a few which are in RequestFactory which also need to have
-    // implementations generated. Hard coding the addition of these here for now
-    JClassType t = generatorContext.getTypeOracle().findType(
-        RequestFactory.class.getName());
-    try {
-      requestSelectors.add(t.getMethod("loggingRequest", new JType[0]));
-    } catch (NotFoundException e) {
-      e.printStackTrace();
-    }
-
     JClassType proxyToTypeInterface = generatorContext.getTypeOracle().findType(
         ProxyToTypeMap.class.getName());
     // TODO: note, this seems like a bug. What if you have 2 RequestFactories?

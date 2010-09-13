@@ -16,8 +16,8 @@
 
 package com.google.gwt.requestfactory.client;
 
+import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Set;
@@ -30,7 +30,15 @@ import java.util.logging.Logger;
  * A Handler that does remote logging for applications using RequestFactory.
  */
 public class RequestFactoryLogHandler extends Handler {
-  class LoggingReceiver implements Receiver<Long> {
+  
+  /** 
+   * Provides a logging request
+   */
+  public static interface LoggingRequestProvider {
+    LoggingRequest getLoggingRequest();
+  }
+  
+  private class LoggingReceiver implements Receiver<Long> {
     public void onSuccess(Long response, Set<SyncResult> syncResults) {
       if (response > 0) {
         logger.finest("Remote logging successful");
@@ -44,7 +52,7 @@ public class RequestFactoryLogHandler extends Handler {
     Logger.getLogger(RequestFactoryLogHandler.class.getName());
   
   private boolean closed;
-  private RequestFactory requestFactory;
+  private LoggingRequestProvider requestProvider;
   private String ignoredLoggerSubstring;
   
   /**
@@ -56,9 +64,9 @@ public class RequestFactoryLogHandler extends Handler {
    * activity going accross the wire. If we did not exclude these loggers, an
    * infinite loop would occur.
    */
-  public RequestFactoryLogHandler(RequestFactory requestFactory, Level level,
-      String ignoredLoggerSubstring) {
-    this.requestFactory = requestFactory;
+  public RequestFactoryLogHandler(LoggingRequestProvider requestProvider,
+      Level level, String ignoredLoggerSubstring) {
+    this.requestProvider = requestProvider;
     this.ignoredLoggerSubstring = ignoredLoggerSubstring;
     closed = false;
     setLevel(level);
@@ -85,7 +93,7 @@ public class RequestFactoryLogHandler extends Handler {
     }
     
     Receiver<Long> loggingReceiver = new LoggingReceiver();
-    requestFactory.loggingRequest().logMessage(
+    requestProvider.getLoggingRequest().logMessage(
         record.getLevel().toString(),
         record.getLoggerName(),
         record.getMessage()).fire(loggingReceiver);

@@ -85,10 +85,5 @@ public interface RequestFactory {
    */
   void init(EventBus eventBus);
 
-  // The following methods match the format for the generated sub-interfaces
-  // and implementations are generated using the same code we use to generate
-  // those. In order to ensure this happens, each of the request selectors
-  // needs to be manually added to the requestSelectors list in
-  // RequestFactoryGenerator.java
-  LoggingRequest loggingRequest();
+
 }

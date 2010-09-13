@@ -22,7 +22,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.requestfactory.client.RequestFactoryLogHandler;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.RequestEvent;
@@ -165,8 +164,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   public void init(EventBus eventBus) {
     this.valueStore = new ValueStoreJsonImpl();
     this.eventBus = eventBus;
-    Logger.getLogger("").addHandler(
-        new RequestFactoryLogHandler(this, Level.WARNING, wireLogger.getName()));
     logger.fine("Successfully initialized RequestFactory");
   }
 

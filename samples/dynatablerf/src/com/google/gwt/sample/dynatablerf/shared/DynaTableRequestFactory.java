@@ -16,6 +16,7 @@
 package com.google.gwt.sample.dynatablerf.shared;
 
 import com.google.gwt.requestfactory.shared.Instance;
+import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
@@ -63,6 +64,8 @@ public interface DynaTableRequestFactory extends RequestFactory {
   }
 
   AddressRequest addressRequest();
+
+  LoggingRequest loggingRequest();
 
   PersonRequest personRequest();
 

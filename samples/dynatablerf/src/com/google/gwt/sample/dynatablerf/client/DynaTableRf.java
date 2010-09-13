@@ -20,6 +20,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
+import com.google.gwt.requestfactory.client.RequestFactoryLogHandler;
+import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.sample.dynatablerf.client.widgets.DayFilterWidget;
 import com.google.gwt.sample.dynatablerf.client.widgets.FavoritesWidget;
 import com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget;
@@ -62,8 +64,22 @@ public class DynaTableRf implements EntryPoint {
       }
     });
 
-    DynaTableRequestFactory requests = GWT.create(DynaTableRequestFactory.class);
+    final DynaTableRequestFactory requests = 
+      GWT.create(DynaTableRequestFactory.class);
     requests.init(eventBus);
+    
+    // Add remote logging handler
+    RequestFactoryLogHandler.LoggingRequestProvider provider =
+      new RequestFactoryLogHandler.LoggingRequestProvider() {
+        @Override
+        public LoggingRequest getLoggingRequest() {
+          return requests.loggingRequest();
+        }
+      };
+    Logger.getLogger("").addHandler(
+        new RequestFactoryLogHandler(provider, Level.WARNING,
+            "WireActivityLogger"));
+    
     FavoritesManager manager = new FavoritesManager();
     PersonEditorWorkflow.register(eventBus, requests, manager);
 
