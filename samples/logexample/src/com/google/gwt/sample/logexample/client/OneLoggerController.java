@@ -64,13 +64,6 @@ public class OneLoggerController {
     logger.setLevel(level);
   }
 
-  @UiHandler("logButton")
-  void handleLogClick(ClickEvent e) {
-    Level level = Level.parse(logTextBox.getItemText(
-        logTextBox.getSelectedIndex()));
-    logger.log(level, "This is a client log message");
-  }
-
   @UiHandler("exceptionButton")
   void handleExceptionClick(ClickEvent e) {
     try {
@@ -79,6 +72,13 @@ public class OneLoggerController {
     } catch (NullPointerException ex) {
       logger.log(Level.SEVERE, "Null Exception Hit", ex);
     }
+  }
+  
+  @UiHandler("logButton")
+  void handleLogClick(ClickEvent e) {
+    Level level = Level.parse(logTextBox.getItemText(
+        logTextBox.getSelectedIndex()));
+    logger.log(level, "This is a client log message");
   }
 
   private void addLevelButtons() {

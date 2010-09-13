@@ -43,7 +43,10 @@ public class DevModeLoggingFixes {
    * maintain a pseudo tree of loggers for each thread.
    */
   public static String getLoggerName(LogRecord record) {
-    return removeLoggerPrefix(record.getLoggerName());
+    if (record.getLoggerName() != null) {
+      return removeLoggerPrefix(record.getLoggerName());
+    }
+    return null;
   }
   
   /**
@@ -52,7 +55,10 @@ public class DevModeLoggingFixes {
    * a pseudo tree of loggers for each thread.
    */
   public static String getName(Logger logger) {
-    return removeLoggerPrefix(logger.getName());
+    if (logger.getName() != null) {
+      return removeLoggerPrefix(logger.getName());
+    }
+    return null;
   }
   
   /**

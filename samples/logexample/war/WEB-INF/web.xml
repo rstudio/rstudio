@@ -3,12 +3,12 @@
 
   <!-- Servlets -->
   <servlet>
-    <servlet-name>logServlet</servlet-name>
-    <servlet-class>com.google.gwt.sample.logexample.server.LoggingServiceImpl</servlet-class>
+    <servlet-name>myServlet</servlet-name>
+    <servlet-class>com.google.gwt.sample.logexample.server.MyServiceImpl</servlet-class>
   </servlet>
   
   <servlet-mapping>
-    <servlet-name>logServlet</servlet-name>
+    <servlet-name>myServlet</servlet-name>
     <url-pattern>/logexample/log</url-pattern>
   </servlet-mapping>
 
