@@ -31,7 +31,7 @@ import com.google.gwt.editor.client.IsEditor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -166,13 +166,14 @@ public class EditorModel {
       if (parameterized != null) {
         // Found the desired supertype
         if (intfType.equals(parameterized.getBaseType())) {
-          assert parameterized.getTypeArgs().length == 1;
           return parameterized.getTypeArgs();
         }
       }
     }
     return null;
   }
+
+  private final JGenericType compositeEditorIntf;
 
   /**
    * The structural model.
@@ -218,7 +219,7 @@ public class EditorModel {
     this.logger = logger.branch(TreeLogger.DEBUG, "Creating Editor model for "
         + intf.getQualifiedSourceName());
     parentModel = null;
-    typeData = new IdentityHashMap<JClassType, List<EditorData>>();
+    typeData = new HashMap<JClassType, List<EditorData>>();
 
     if (!driverType.isAssignableFrom(intf)) {
       die(unexpectedInputTypeMessage(driverType, intf));
@@ -231,13 +232,15 @@ public class EditorModel {
     assert editorIntf != null : "No Editor type";
     isEditorIntf = oracle.findType(IsEditor.class.getName()).isGenericType();
     assert isEditorIntf != null : "No IsEditor type";
+    compositeEditorIntf = oracle.findType(CompositeEditor.class.getName()).isGenericType();
+    assert compositeEditorIntf != null : "No CompositeEditor type";
 
     JClassType[] interfaces = intf.getImplementedInterfaces();
     if (interfaces.length != 1) {
       die(tooManyInterfacesMessage(intf));
     }
 
-    JClassType[] parameters = interfaces[0].isParameterized().getTypeArgs();
+    JClassType[] parameters = findParameterizationOf(driverType, intf);
     assert parameters.length == 2 : "Unexpected number of type parameters";
     proxyType = parameters[0];
     editorType = parameters[1];
@@ -253,6 +256,7 @@ public class EditorModel {
       throws UnableToCompleteException {
     logger = parent.logger.branch(TreeLogger.DEBUG, "Descending into "
         + subEditor.getPath());
+    this.compositeEditorIntf = parent.compositeEditorIntf;
     this.editorIntf = parent.editorIntf;
     this.editorType = editorType;
     this.editorSoFar = subEditor;
@@ -288,10 +292,23 @@ public class EditorModel {
   }
 
   public EditorData getRootData() throws UnableToCompleteException {
-    return new EditorData(logger.branch(TreeLogger.DEBUG,
+    TreeLogger rootLogger = logger.branch(TreeLogger.DEBUG,
         "Calculating root data for "
-            + getEditorType().getParameterizedQualifiedSourceName()), null,
-        EditorAccess.root(getEditorType()), "", null, null);
+            + getEditorType().getParameterizedQualifiedSourceName());
+    return new EditorData.Builder(rootLogger).access(
+        EditorAccess.root(getEditorType())).build();
+  }
+
+  private void accumulateEditorData(List<EditorData> data,
+      List<EditorData> flatData, List<EditorData> allData)
+      throws UnableToCompleteException {
+    flatData.addAll(data);
+    allData.addAll(data);
+    for (EditorData d : data) {
+      if (!d.isLeafValueEditor()) {
+        descendIntoSubEditor(allData, d);
+      }
+    }
   }
 
   /**
@@ -300,6 +317,7 @@ public class EditorModel {
   private EditorData[] calculateEditorData() throws UnableToCompleteException {
     List<EditorData> flatData = new ArrayList<EditorData>();
     List<EditorData> toReturn = new ArrayList<EditorData>();
+
     for (JClassType type : editorType.getFlattenedSupertypeHierarchy()) {
       for (JField field : type.getFields()) {
         if (field.isPrivate() || field.isStatic()) {
@@ -308,13 +326,7 @@ public class EditorModel {
         JType fieldClassType = field.getType();
         if (shouldExamine(fieldClassType)) {
           List<EditorData> data = createEditorData(EditorAccess.via(field));
-          flatData.addAll(data);
-          toReturn.addAll(data);
-          for (EditorData d : data) {
-            if (!d.isLeafValueEditor()) {
-              descendIntoSubEditor(toReturn, d);
-            }
-          }
+          accumulateEditorData(data, flatData, toReturn);
         }
       }
       for (JMethod method : type.getMethods()) {
@@ -331,16 +343,19 @@ public class EditorModel {
             continue;
           }
           List<EditorData> data = createEditorData(access);
-          flatData.addAll(data);
-          toReturn.addAll(data);
-          for (EditorData d : data) {
-            if (!d.isLeafValueEditor()) {
-              descendIntoSubEditor(toReturn, d);
-            }
-          }
+          accumulateEditorData(data, flatData, toReturn);
         }
       }
       type = type.getSuperclass();
+    }
+
+    if (compositeEditorIntf.isAssignableFrom(editorType)) {
+      JClassType subEditorType = calculateCompositeTypes(editorType)[1];
+      EditorAccess access = EditorAccess.root(subEditorType);
+      EditorData subEditor = new EditorData.Builder(logger).access(access).parent(
+          editorSoFar).build();
+      List<EditorData> accumulator = new ArrayList<EditorData>();
+      descendIntoSubEditor(accumulator, subEditor);
     }
 
     if (!typeData.containsKey(editorType)) {
@@ -380,13 +395,14 @@ public class EditorModel {
     JClassType expectedToEdit = calculateEditedType(subLogger,
         access.getEditorType());
 
-    // Find the bean methods on the proxy interface
-    String[] methods = findBeanPropertyMethods(access.getPath(), expectedToEdit);
-    assert methods.length == 3;
+    EditorData.Builder builder = new EditorData.Builder(subLogger);
+    builder.access(access);
+    builder.parent(editorSoFar);
 
-    EditorData data = new EditorData(subLogger, editorSoFar, access,
-        methods[0], methods[1], methods[2]);
-    toReturn.add(data);
+    // Find the bean methods on the proxy interface
+    findBeanPropertyMethods(access.getPath(), expectedToEdit, builder);
+
+    toReturn.add(builder.build());
     return toReturn;
   }
 
@@ -431,9 +447,10 @@ public class EditorModel {
    * <code>foo.bar.baz</code> might return
    * <code>{ ".getFoo().getBar()", "getBaz", "setBaz" }</code>.
    */
-  private String[] findBeanPropertyMethods(String path, JClassType propertyType)
-      throws UnableToCompleteException {
+  private void findBeanPropertyMethods(String path, JClassType propertyType,
+      EditorData.Builder builder) throws UnableToCompleteException {
     StringBuilder interstitialGetters = new StringBuilder();
+    StringBuilder interstitialGuard = new StringBuilder("true");
     String[] parts = path.split(Pattern.quote("."));
     String setterName = null;
 
@@ -464,21 +481,31 @@ public class EditorModel {
           if (lookingAt == null) {
             poison(foundPrimitiveMessage(returnType,
                 interstitialGetters.toString(), path));
-            return new String[] {null, null, null};
+            return;
           }
           interstitialGetters.append(".").append(getterName).append("()");
+          interstitialGuard.append(" && %1$s").append(interstitialGetters).append(
+              " != null");
+          builder.propertyOwnerType(search);
           continue part;
         }
       }
       poison(noGetterMessage(path, proxyType));
-      return new String[] {null, null, null};
+      return;
     }
 
     int idx = interstitialGetters.lastIndexOf(".");
-    return new String[] {
-        idx == 0 ? "" : interstitialGetters.substring(0, idx),
-        interstitialGetters.substring(idx + 1, interstitialGetters.length() - 2),
-        setterName};
+    builder.beanOwnerExpression(idx == 0 ? "" : interstitialGetters.substring(
+        0, idx));
+    if (parts.length > 1) {
+      // Strip after last && since null is a valid value
+      interstitialGuard.delete(interstitialGuard.lastIndexOf(" &&"),
+          interstitialGuard.length());
+      builder.beanOwnerGuard(interstitialGuard.substring(8));
+    }
+    builder.getterName(interstitialGetters.substring(idx + 1,
+        interstitialGetters.length() - 2));
+    builder.setterName(setterName);
   }
 
   private String getPath() {

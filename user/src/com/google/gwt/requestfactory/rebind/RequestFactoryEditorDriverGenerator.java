@@ -18,24 +18,33 @@ package com.google.gwt.requestfactory.rebind;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.editor.rebind.AbstractEditorDriverGenerator;
 import com.google.gwt.editor.rebind.model.EditorData;
 import com.google.gwt.editor.rebind.model.EditorModel;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.client.impl.AbstractRequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryEditorDelegate;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Generates implementations of RFEDs.
  */
 public class RequestFactoryEditorDriverGenerator extends
     AbstractEditorDriverGenerator {
+
+  private JClassType entityProxyType;
+
   @Override
-  protected Class<?> getDriverSuperclassType() {
-    return AbstractRequestFactoryEditorDriver.class;
+  public String generate(TreeLogger logger, GeneratorContext context,
+      String typeName) throws UnableToCompleteException {
+    entityProxyType = context.getTypeOracle().findType(
+        EntityProxy.class.getCanonicalName());
+    return super.generate(logger, context, typeName);
   }
 
   @Override
@@ -44,13 +53,25 @@ public class RequestFactoryEditorDriverGenerator extends
   }
 
   @Override
+  protected Class<?> getDriverSuperclassType() {
+    return AbstractRequestFactoryEditorDriver.class;
+  }
+
+  @Override
   protected Class<?> getEditorDelegateType() {
     return RequestFactoryEditorDelegate.class;
   }
 
   @Override
-  protected String mutableObjectExpression(String sourceObjectExpression) {
-    return String.format("request.edit(%s)", sourceObjectExpression);
+  protected String mutableObjectExpression(EditorData data,
+      String sourceObjectExpression) {
+    if (entityProxyType.isAssignableFrom(data.getPropertyOwnerType())) {
+      return String.format("((%s) request.edit((%s)))",
+          data.getPropertyOwnerType().getQualifiedSourceName(),
+          sourceObjectExpression);
+    } else {
+      return sourceObjectExpression;
+    }
   }
 
   @Override
@@ -65,10 +86,11 @@ public class RequestFactoryEditorDriverGenerator extends
   }
 
   @Override
-  protected void writeDelegateInitialization(SourceWriter sw, EditorData d) {
-    sw.println("%1$sDelegate.initialize(eventBus, factory, "
-        + "appendPath(\"%1$s\"), getObject()%2$s.%3$s(),"
-        + " editor.%4$s, request);", d.getPropertyName(),
-        d.getBeanOwnerExpression(), d.getGetterName(), d.getSimpleExpression());
+  protected void writeDelegateInitialization(SourceWriter sw, EditorData d,
+      Map<EditorData, String> delegateFields) {
+    sw.println("%s.initialize(eventBus, factory, "
+        + "appendPath(\"%s\"), getObject()%s.%s()," + " editor.%s, request);",
+        delegateFields.get(d), d.getPropertyName(), d.getBeanOwnerExpression(),
+        d.getGetterName(), d.getSimpleExpression());
   }
 }

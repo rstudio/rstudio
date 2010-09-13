@@ -16,4 +16,13 @@
     <url-pattern>/gwtRequest</url-pattern>
   </servlet-mapping>
 
+  <filter>
+    <filter-name>TransactionContext</filter-name>
+    <filter-class>com.google.gwt.sample.dynatablerf.server.SchoolCalendarService</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>TransactionContext</filter-name>
+    <url-pattern>/gwtRequest</url-pattern>
+  </filter-mapping>
 </web-app>

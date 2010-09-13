@@ -18,11 +18,6 @@ package com.google.gwt.editor.client.testing;
 import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.event.shared.HandlerRegistration;
 
-import java.util.Collections;
-import java.util.Set;
-
-import javax.validation.ConstraintViolation;
-
 /**
  * A mock implementation of {@link EditorDelegate}.
  * 
@@ -51,6 +46,12 @@ public class MockEditorDelegate<T> implements EditorDelegate<T> {
   }
 
   /**
+   * No-op.
+   */
+  public void recordError(String message, Object value, Object userData) {
+  }
+
+  /**
    * Controls the return value of {@link #getPath()}.
    */
   public void setPath(String path) {
@@ -62,12 +63,5 @@ public class MockEditorDelegate<T> implements EditorDelegate<T> {
    */
   public HandlerRegistration subscribe() {
     return FAKE_REGISTRATION;
-  }
-
-  /**
-   * Returns an empty set.
-   */
-  public Set<ConstraintViolation<T>> validate(T object) {
-    return Collections.emptySet();
   }
 }

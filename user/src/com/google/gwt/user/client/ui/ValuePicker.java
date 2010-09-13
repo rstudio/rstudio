@@ -16,6 +16,9 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -39,7 +42,7 @@ import java.util.Collection;
  * @param <T> the type of value
  */
 public class ValuePicker<T> extends Composite
-    implements HasConstrainedValue<T> {
+    implements HasConstrainedValue<T>, IsEditor<LeafValueEditor<T>> {
 
   private static class DefaultCell<T> extends AbstractCell<T> {
     private final Renderer<T> renderer;
@@ -76,6 +79,13 @@ public class ValuePicker<T> extends Composite
 
   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<T> handler) {
     return addHandler(handler, ValueChangeEvent.getType());
+  }
+
+  /**
+   * Returns a {@link TakesValueEditor} backed by the ValuePicker.
+   */
+  public LeafValueEditor<T> asEditor() {
+    return TakesValueEditor.of(this);
   }
 
   /**

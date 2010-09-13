@@ -17,10 +17,6 @@ package com.google.gwt.editor.client;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-import java.util.Set;
-
-import javax.validation.ConstraintViolation;
-
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -51,6 +47,21 @@ public interface EditorDelegate<T> {
   String getPath();
 
   /**
+   * This method should be called from {@link ValueAwareEditor#flush()} or
+   * {@link LeafValueEditor#getValue()} to record an error that will be reported
+   * to the nearest super-Editor that implements the {@link HasEditorErrors}
+   * interface.
+   * 
+   * @param message a textual description of the error
+   * @param value the value to be returned by {@link EditorError#getValue()} or
+   *          <code>null</code> if the value currently associated with the
+   *          Editor should be used
+   * @param userData an arbitrary object, possibly <code>null</code>, that can
+   *          be retrieved with {@link EditorError#getUserData()}
+   */
+  void recordError(String message, Object value, Object userData);
+
+  /**
    * Register for notifications if object being edited is updated. Not all
    * backends support subscriptions.
    * <p>
@@ -61,9 +72,4 @@ public interface EditorDelegate<T> {
    * @return a HandlerRegistration to unsubscribe from the notifications
    */
   HandlerRegistration subscribe();
-
-  /**
-   * Not yet implemented. This API will likely change.
-   */
-  Set<ConstraintViolation<T>> validate(T object);
 }

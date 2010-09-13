@@ -27,10 +27,6 @@ import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 
-import java.util.Set;
-
-import javax.validation.ConstraintViolation;
-
 /**
  * This NameLabel uses the EditorDelegate to receive notifications on updates to
  * the displayed object.
@@ -64,9 +60,6 @@ class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
 
   public void setValue(PersonProxy value) {
     person = value;
-  }
-
-  public void showErrors(Set<ConstraintViolation<PersonProxy>> violations) {
   }
 
   /**

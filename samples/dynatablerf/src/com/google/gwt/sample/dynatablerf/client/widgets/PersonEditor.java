@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -47,16 +46,8 @@ public class PersonEditor extends Composite implements Editor<PersonProxy> {
   @UiField
   TextArea note;
 
-  // TODO: Allow UiBinder to configure this
-  final TakesValueEditor<String> nameEditor;
-  final TakesValueEditor<String> descriptionEditor;
-  final TakesValueEditor<String> noteEditor;
-
   public PersonEditor() {
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
-    nameEditor = TakesValueEditor.of(name);
-    descriptionEditor = TakesValueEditor.of(description);
-    noteEditor = TakesValueEditor.of(note);
   }
 
   public void focus() {

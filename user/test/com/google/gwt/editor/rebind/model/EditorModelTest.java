@@ -29,6 +29,9 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.editor.client.CompositeEditor;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.HasEditorDelegate;
+import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
@@ -158,9 +161,9 @@ public class EditorModelTest extends TestCase {
     assertEquals(Arrays.asList("address", "address.city", "address.street",
         "person()", "person().name", "person().readonly"),
         Arrays.asList(expressions));
-    assertTrue(data[0].isBeanEditor());
+    assertTrue(data[0].isDelegateRequired());
     assertFalse(data[0].isLeafValueEditor() || data[0].isValueAwareEditor());
-    assertTrue(data[3].isBeanEditor());
+    assertTrue(data[3].isDelegateRequired());
     assertFalse(data[3].isLeafValueEditor() || data[3].isValueAwareEditor());
     checkPersonName(data[4]);
     checkPersonReadonly(data[5]);
@@ -192,13 +195,18 @@ public class EditorModelTest extends TestCase {
     assertEquals("name", fields[0].getPath());
     assertFalse(fields[0].isDeclaredPathNested());
     assertEquals("", fields[0].getBeanOwnerExpression());
+    assertEquals("true", fields[0].getBeanOwnerGuard("object"));
     assertEquals("getName", fields[0].getGetterName());
     assertEquals("address.street", fields[1].getPath());
     assertEquals(".getAddress()", fields[1].getBeanOwnerExpression());
+    assertEquals("object.getAddress() != null",
+        fields[1].getBeanOwnerGuard("object"));
     assertEquals("getStreet", fields[1].getGetterName());
     assertEquals("setStreet", fields[1].getSetterName());
     assertEquals("street", fields[1].getPropertyName());
     assertTrue(fields[1].isDeclaredPathNested());
+    assertEquals(types.findType("t.AddressProxy"),
+        fields[1].getPropertyOwnerType());
   }
 
   /**
@@ -274,20 +282,31 @@ public class EditorModelTest extends TestCase {
         "bEditor().viewEditor()"), Arrays.asList(data[0].getExpression(),
         data[1].getExpression(), data[2].getExpression(),
         data[3].getExpression()));
+    assertEquals(Arrays.asList(true, false, true, false), Arrays.asList(
+        data[0].isDelegateRequired(), data[1].isDelegateRequired(),
+        data[2].isDelegateRequired(), data[3].isDelegateRequired()));
   }
 
   public void testListDriver() throws UnableToCompleteException {
     EditorModel m = new EditorModel(logger,
         types.findType("t.ListEditorDriver"), rfedType);
+    assertEquals(types.findType("t.PersonProxy"), m.getProxyType());
+    assertEquals(types.findType("t.ListEditor"), m.getEditorType());
 
     EditorData data = m.getRootData();
     assertTrue(data.isCompositeEditor());
-    assertEquals(types.findType("t.AddressProxy"),
-        data.getComposedData().getEditedType());
-    assertEquals(types.findType("t.AddressEditor"),
-        data.getComposedData().getEditorType());
-    assertEquals(types.findType("t.PersonProxy"), m.getProxyType());
-    assertEquals(types.findType("t.ListEditor"), m.getEditorType());
+
+    EditorData composed = data.getComposedData();
+    assertEquals(types.findType("t.AddressProxy"), composed.getEditedType());
+    assertEquals(types.findType("t.AddressEditor"), composed.getEditorType());
+
+    // Nonsensical for the list editor to have any data
+    EditorData[] listEditorData = m.getEditorData(m.getEditorType());
+    assertEquals(0, listEditorData.length);
+
+    // Make sure we have EditorData for the sub-editor
+    EditorData[] subEditorData = m.getEditorData(composed.getEditorType());
+    assertEquals(2, subEditorData.length);
   }
 
   /**
@@ -380,7 +399,7 @@ public class EditorModelTest extends TestCase {
     assertEquals(types.findType(SimpleEditor.class.getName()),
         editorField.getEditorType().isParameterized().getBaseType());
     assertTrue(editorField.isLeafValueEditor());
-    assertFalse(editorField.isBeanEditor());
+    assertFalse(editorField.isDelegateRequired());
     assertFalse(editorField.isValueAwareEditor());
     assertEquals("getName", editorField.getGetterName());
     assertEquals("setName", editorField.getSetterName());
@@ -394,7 +413,7 @@ public class EditorModelTest extends TestCase {
     assertEquals(types.findType(SimpleEditor.class.getName()),
         editorField.getEditorType().isParameterized().getBaseType());
     assertTrue(editorField.isLeafValueEditor());
-    assertFalse(editorField.isBeanEditor());
+    assertFalse(editorField.isDelegateRequired());
     assertFalse(editorField.isValueAwareEditor());
     assertEquals("getReadonly", editorField.getGetterName());
     assertNull(editorField.getSetterName());
@@ -703,6 +722,7 @@ public class EditorModelTest extends TestCase {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
         code.append("import " + Editor.class.getName() + ";\n");
+        code.append("import " + HasEditorErrors.class.getName() + ";\n");
         code.append("import " + IsEditor.class.getName() + ";\n");
         code.append("import " + EntityProxy.class.getName() + ";\n");
         code.append("import " + RequestFactoryEditorDriver.class.getName()
@@ -716,7 +736,7 @@ public class EditorModelTest extends TestCase {
         code.append("  interface AEditor extends Editor<AProxy> {");
         code.append("    BView bEditor();");
         code.append("  }");
-        code.append("  interface BView extends IsEditor<BEditor>, Editor<BProxy> {");
+        code.append("  interface BView extends IsEditor<BEditor>, Editor<BProxy>, HasEditorErrors {");
         code.append("    @Editor.Path(\"string\") SimpleEditor<String> viewEditor();");
         code.append("  }");
         code.append("  interface BEditor extends Editor<BProxy> {");
@@ -731,7 +751,7 @@ public class EditorModelTest extends TestCase {
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package java.util;\n");
-        code.append("interface List<T> {\n");
+        code.append("public interface List<T> {\n");
         code.append("}");
         return code;
       }
@@ -741,7 +761,10 @@ public class EditorModelTest extends TestCase {
     toReturn.addAll(Arrays.asList(new Resource[] {
         new RealJavaResource(CompositeEditor.class),
         new RealJavaResource(Editor.class),
+        new RealJavaResource(EditorError.class),
         new EmptyMockJavaResource(EventBus.class),
+        new EmptyMockJavaResource(HasEditorDelegate.class),
+        new EmptyMockJavaResource(HasEditorErrors.class),
         new RealJavaResource(HasText.class),
         new RealJavaResource(IsEditor.class),
         new RealJavaResource(LeafValueEditor.class),

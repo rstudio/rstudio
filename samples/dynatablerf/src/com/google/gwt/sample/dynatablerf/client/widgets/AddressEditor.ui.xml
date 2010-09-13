@@ -1,5 +1,5 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:a='urn:import:com.google.gwt.app.client'>
+  xmlns:a='urn:import:com.google.gwt.app.client' xmlns:e='urn:import:com.google.gwt.editor.client.ui'>
   <ui:style src="../common.css">
     
   </ui:style>
@@ -15,7 +15,11 @@
       <g:TextBox ui:field="state" stylePrimaryName="{style.editField}" />
       <br />
       Zip:
-      <a:IntegerBox ui:field="zip" stylePrimaryName="{style.editField}" />
+      <e:EditorErrorPanel ui:field="zip" stylePrimaryName="{style.editField}">
+        <e:contents>
+          <a:IntegerBox stylePrimaryName="{style.editField}"/>
+        </e:contents>
+      </e:EditorErrorPanel>
       <br />
     </div>
   </g:HTMLPanel>

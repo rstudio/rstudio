@@ -15,17 +15,13 @@
  */
 package com.google.gwt.editor.client;
 
-import java.util.Set;
-
-import javax.validation.ConstraintViolation;
-
 /**
  * Editors whose behavior changes based on the value being edited will implement
  * this interface.
  * 
  * @param <T> the type of composite object the editor can display
  */
-public interface ValueAwareEditor<T> extends Editor<T> {
+public interface ValueAwareEditor<T> extends Editor<T>, HasEditorDelegate<T> {
   /**
    * Indicates that the Editor cycle is finished. This method will be called in
    * a depth-first order by the EditorDriver, so Editors do not generally need
@@ -40,21 +36,14 @@ public interface ValueAwareEditor<T> extends Editor<T> {
   void onPropertyChange(String... paths);
 
   /**
-   * Called by the EditorDriver to provide access to the EditorDelegate the
-   * Editor is peered with.
-   */
-  void setDelegate(EditorDelegate<T> delegate);
-
-  /**
-   * Called by the EditorDriver to provide access to the object the Editor is
-   * peered with. The instance provided to this method must not be mutated
-   * directly without calling {@link EditorDelegate#ensureMutable()} to obtain a
-   * guaranteed-mutable instance.
+   * Called by the EditorDriver to set the object the Editor is peered with
+   * <p>
+   * ValueAwareEditors should preferentially use sub-editors to alter the
+   * properties of the object being edited. If this is not feasible, the value
+   * provided to this method must not be mutated directly without calling
+   * {@link EditorDelegate#ensureMutable()} to obtain a guaranteed-mutable
+   * instance.
+   * <p>
    */
   void setValue(T value);
-
-  /**
-   * Not yet implemented. This API is likely to change.
-   */
-  void showErrors(Set<ConstraintViolation<T>> violations);
 }

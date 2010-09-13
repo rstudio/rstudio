@@ -16,10 +16,13 @@
 package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+
+import java.util.List;
 
 /**
  * <p>
@@ -65,9 +68,19 @@ public interface RequestFactoryEditorDriver<P extends EntityProxy, E extends Edi
   <T> RequestObject<T> flush();
 
   /**
+   * Returns any unconsumed EditorErrors from the last call to {@link #flush()}.
+   */
+  List<EditorError> getErrors();
+
+  /**
    * Returns a new array.
    */
   String[] getPaths();
+
+  /**
+   * Indicates if the last call to {@link #flush()} resulted in any errors.
+   */
+  boolean hasErrors();
 
   /**
    * In order to support object subscriptions, the EventBus passed into the

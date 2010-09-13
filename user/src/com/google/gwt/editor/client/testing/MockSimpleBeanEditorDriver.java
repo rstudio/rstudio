@@ -16,7 +16,11 @@
 package com.google.gwt.editor.client.testing;
 
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.editor.client.SimpleBeanEditorDriver;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A no-op implementation of {@link SimpleBeanEditorDriver} that records its
@@ -54,10 +58,24 @@ public class MockSimpleBeanEditorDriver<T, E extends Editor<T>> implements
   }
 
   /**
+   * Returns an empty list.
+   */
+  public List<EditorError> getErrors() {
+    return Collections.emptyList();
+  }
+
+  /**
    * Returns <code>null</code> or the last value provided to {@link #edit}.
    */
   public T getObject() {
     return object;
+  }
+
+  /**
+   * Returns <code>false</code>.
+   */
+  public boolean hasErrors() {
+    return false;
   }
 
   /**

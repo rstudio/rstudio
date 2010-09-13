@@ -17,6 +17,9 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.editor.client.adapters.ValueBoxEditor;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
@@ -64,7 +67,7 @@ import java.text.ParseException;
 @SuppressWarnings("deprecation")
 public class ValueBoxBase<T> extends FocusWidget implements
     SourcesChangeEvents, HasChangeHandlers, HasName, HasDirectionEstimator,
-    HasValue<T>, AutoDirectionHandler.Target {
+    HasValue<T>, AutoDirectionHandler.Target, IsEditor<LeafValueEditor<T>> {
 
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 
@@ -113,6 +116,16 @@ public class ValueBoxBase<T> extends FocusWidget implements
       });
     }
     return addHandler(handler, ValueChangeEvent.getType());
+  }
+
+  /**
+   * Returns an Editor that is backed by the ValueBoxBase. The default
+   * implementation returns {@link ValueBoxEditor#of(ValueBoxBase)}. Subclasses
+   * may override this method to provide custom error-handling when using the
+   * Editor framework.
+   */
+  public LeafValueEditor<T> asEditor() {
+    return ValueBoxEditor.of(this);
   }
 
   /**
@@ -196,7 +209,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
    */
   public T getValueOrThrow() throws ParseException {
     String text = getText();
-    
+
     T parseResult = parser.parse(text);
 
     if ("".equals(text)) {

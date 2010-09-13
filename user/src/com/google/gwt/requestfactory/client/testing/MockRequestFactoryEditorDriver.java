@@ -16,11 +16,15 @@
 package com.google.gwt.requestfactory.client.testing;
 
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A no-op implementation of {@link RequestFactoryEditorDriver} that records its
@@ -63,6 +67,13 @@ public class MockRequestFactoryEditorDriver<P extends EntityProxy, E extends Edi
   }
 
   /**
+   * Returns an empty list.
+   */
+  public List<EditorError> getErrors() {
+    return Collections.emptyList();
+  }
+
+  /**
    * Returns <code>null</code> or the last value recorded.
    */
   public EventBus getEventBus() {
@@ -95,6 +106,13 @@ public class MockRequestFactoryEditorDriver<P extends EntityProxy, E extends Edi
    */
   public RequestObject<?> getSaveRequest() {
     return saveRequest;
+  }
+
+  /**
+   * Returns <code>false</code>.
+   */
+  public boolean hasErrors() {
+    return false;
   }
 
   /**

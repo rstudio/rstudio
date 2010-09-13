@@ -21,7 +21,7 @@ package com.google.gwt.editor.client;
  * <p>
  * For example, the {@link com.google.gwt.editor.client.adapters.ListEditor
  * ListEditor} type is a
- * <code>CompositeEditor&lt;List&lt;T>, T, E extends Editor&lt;T></code>; that
+ * <code>CompositeEditor&lt;List&lt;T>, T, E extends Editor&lt;T>></code>; that
  * is, ListEditor will accept a List&lt;T> and will edit some unknown number of
  * <code>T</code>'s using the Editor type <code>E</code>. Another example might
  * be:

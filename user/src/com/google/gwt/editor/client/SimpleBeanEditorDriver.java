@@ -15,6 +15,8 @@
  */
 package com.google.gwt.editor.client;
 
+import java.util.List;
+
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -59,6 +61,16 @@ public interface SimpleBeanEditorDriver<T, E extends Editor<? super T>> {
    * @throws IllegalStateException if {@link #edit} has not been called
    */
   T flush();
+
+  /**
+   * Returns any unconsumed EditorErrors from the last call to {@link #flush()}.
+   */
+  List<EditorError> getErrors();
+
+  /**
+   * Indicates if the last call to {@link #flush()} resulted in any errors.
+   */
+  boolean hasErrors();
 
   /**
    * Initialize the editor driver.

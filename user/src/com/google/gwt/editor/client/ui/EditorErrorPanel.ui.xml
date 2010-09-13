@@ -1,0 +1,16 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <ui:style>
+    .contents {
+    	display: inline;
+    }
+    
+    .errorLabel {
+    	display: none;
+    	white-space: pre;
+    }
+  </ui:style>
+  <g:HTMLPanel>
+    <div class="{style.errorLabel}" ui:field="errorLabel" />
+    <g:SimplePanel ui:field="contents" stylePrimaryName="{style.contents}" />
+  </g:HTMLPanel>
+</ui:UiBinder>

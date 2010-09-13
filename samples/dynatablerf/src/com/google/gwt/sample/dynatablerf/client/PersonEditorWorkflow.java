@@ -23,8 +23,9 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
+import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
@@ -104,9 +105,19 @@ public class PersonEditorWorkflow {
   @UiHandler("save")
   void onSave(ClickEvent e) {
     // MOVE TO ACTIVITY END
+    RequestObject<Void> request = editorDriver.<Void> flush();
+    if (editorDriver.hasErrors()) {
+      dialog.setText("Errors detected");
+      return;
+    }
     dialog.hide();
-    editorDriver.<Void> flush().fire(new Receiver<Void>() {
+    request.fire(new Receiver<Void>() {
       public void onSuccess(Void response, Set<SyncResult> syncResults) {
+        for (SyncResult result : syncResults) {
+          if (result.hasViolations()) {
+            System.out.println(result.getViolations());
+          }
+        }
       }
     });
   }

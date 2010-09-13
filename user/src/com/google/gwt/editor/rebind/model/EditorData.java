@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.client.CompositeEditor;
+import com.google.gwt.editor.client.HasEditorDelegate;
+import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
 
@@ -33,6 +35,100 @@ import java.util.Set;
  * answers to questions asked by the generator code.
  */
 public class EditorData {
+  /**
+   * Used to construct EditorData objects.
+   */
+  public static class Builder {
+    private EditorAccess access;
+    private EditorData data = new EditorData();
+    private final TreeLogger logger;
+    private EditorData parent;
+
+    public Builder(TreeLogger logger) {
+      this.logger = logger;
+    }
+
+    public Builder access(EditorAccess access) throws UnableToCompleteException {
+      this.access = access;
+      data.declaredPath = access.getPath();
+      data.editorType = access.getEditorType();
+      data.editedType = EditorModel.calculateEditedType(logger, data.editorType);
+      data.simpleExpression = access.getExpresson();
+
+      TypeOracle oracle = data.editorType.getOracle();
+      JClassType leafType = oracle.findType(LeafValueEditor.class.getName());
+      data.isLeaf = leafType.isAssignableFrom(data.editorType);
+
+      JClassType composedType = oracle.findType(CompositeEditor.class.getName());
+      data.isCompositeEditor = composedType.isAssignableFrom(data.editorType);
+
+      JClassType hasDelegateType = oracle.findType(HasEditorDelegate.class.getName());
+      JClassType hasEditorErrorsType = oracle.findType(HasEditorErrors.class.getName());
+      data.isDelegateRequired = hasDelegateType.isAssignableFrom(data.editorType)
+          || hasEditorErrorsType.isAssignableFrom(data.editorType)
+          || isBeanEditor(oracle, data.editedType);
+
+      JClassType valueAwareType = oracle.findType(ValueAwareEditor.class.getName());
+      data.isValueAware = valueAwareType.isAssignableFrom(data.editorType);
+
+      return this;
+    }
+
+    public Builder beanOwnerExpression(String value) {
+      data.beanOwnerExpression = value;
+      return this;
+    }
+
+    public Builder beanOwnerGuard(String value) {
+      data.beanOwnerGuard = value;
+      return this;
+    }
+
+    public EditorData build() throws UnableToCompleteException {
+      if (data == null) {
+        throw new IllegalStateException();
+      }
+      try {
+        data.editorExpression = (parent == null ? ""
+            : (parent.getExpression() + "."))
+            + access.getExpresson();
+        data.path = (parent == null ? "" : (parent.getPath() + "."))
+            + access.getPath();
+
+        if (data.isCompositeEditor) {
+          TreeLogger compositeLogger = logger.branch(TreeLogger.DEBUG,
+              "Examining composite editor at " + data.path);
+          JClassType subEditorType = EditorModel.calculateCompositeTypes(data.editorType)[1];
+          data.composedData = new Builder(compositeLogger).access(
+              EditorAccess.root(subEditorType)).parent(data).build();
+        }
+        return data;
+      } finally {
+        data = null;
+      }
+    }
+
+    public Builder getterName(String value) {
+      data.getterName = value;
+      return this;
+    }
+
+    public Builder parent(EditorData value) {
+      parent = value;
+      return this;
+    }
+
+    public Builder propertyOwnerType(JClassType ownerType) {
+      data.propertyOwnerType = ownerType;
+      return this;
+    }
+
+    public Builder setterName(String value) {
+      data.setterName = value;
+      return this;
+    }
+  }
+
   private static final Set<String> VALUE_TYPES = Collections.unmodifiableSet(new HashSet<String>(
       Arrays.asList(Boolean.class.getName(), Character.class.getName(),
           Enum.class.getName(), Number.class.getName(), String.class.getName(),
@@ -49,62 +145,32 @@ public class EditorData {
     return true;
   }
 
-  private final String beanOwnerExpression;
-  private final EditorData composedData;
-  private final String declaredPath;
-  private final JClassType editedType;
-  private final JClassType editorType;
-  private final String editorExpression;
-  private final String getterName;
-  private final boolean isLeaf;
-  private final boolean isBeanEditor;
-  private final boolean isCompositeEditor;
-  private final boolean isValueAware;
-  private final String path;
-  private final String setterName;
-  private final String simpleExpression;
+  private String beanOwnerExpression = "";
+  private String beanOwnerGuard = "true";
+  private EditorData composedData;
+  private String declaredPath;
+  private JClassType editedType;
+  private JClassType editorType;
+  private String editorExpression;
+  private String getterName;
+  private boolean isLeaf;
+  private boolean isCompositeEditor;
+  private boolean isDelegateRequired;
+  private boolean isValueAware;
+  private String path;
+  private JClassType propertyOwnerType;
+  private String setterName;
+  private String simpleExpression;
 
-  EditorData(TreeLogger logger, EditorData parent, EditorAccess access,
-      String beanOwnerExpression, String getterName, String setterName)
-      throws UnableToCompleteException {
-    this.beanOwnerExpression = beanOwnerExpression;
-    this.getterName = getterName;
-    this.setterName = setterName;
-
-    editorType = access.getEditorType();
-    editedType = EditorModel.calculateEditedType(logger, editorType);
-
-    editorExpression = (parent == null ? "" : (parent.getExpression() + "."))
-        + access.getExpresson();
-    simpleExpression = access.getExpresson();
-
-    declaredPath = access.getPath();
-    path = (parent == null ? "" : (parent.getPath() + ".")) + access.getPath();
-
-    TypeOracle oracle = editorType.getOracle();
-    JClassType leafType = oracle.findType(LeafValueEditor.class.getName());
-    isLeaf = leafType.isAssignableFrom(editorType);
-
-    isBeanEditor = isBeanEditor(oracle, editedType);
-
-    JClassType valueAwareType = oracle.findType(ValueAwareEditor.class.getName());
-    isValueAware = valueAwareType.isAssignableFrom(editorType);
-
-    JClassType composedType = oracle.findType(CompositeEditor.class.getName());
-    isCompositeEditor = composedType.isAssignableFrom(editorType);
-
-    if (!isCompositeEditor) {
-      composedData = null;
-    } else {
-      JClassType[] data = EditorModel.calculateCompositeTypes(editorType);
-      composedData = new EditorData(logger.branch(TreeLogger.DEBUG,
-          "Examining composite editor at " + path), this,
-          EditorAccess.root(data[1]), "", null, null);
-    }
+  private EditorData() {
   }
 
   public String getBeanOwnerExpression() {
     return beanOwnerExpression;
+  }
+
+  public String getBeanOwnerGuard(String ownerExpression) {
+    return String.format(beanOwnerGuard, ownerExpression);
   }
 
   public EditorData getComposedData() {
@@ -149,6 +215,14 @@ public class EditorData {
     return getPath().substring(getPath().lastIndexOf('.') + 1);
   }
 
+  /**
+   * Mainly useful for nested properties where there may not be an editor for
+   * the enclosing instance (e.g. <code>person.manager.name</code>).
+   */
+  public JClassType getPropertyOwnerType() {
+    return propertyOwnerType;
+  }
+
   public String getSetterName() {
     return setterName;
   }
@@ -159,13 +233,6 @@ public class EditorData {
    */
   public String getSimpleExpression() {
     return simpleExpression;
-  }
-
-  /**
-   * Indicates if the Editor accepts a bean-like type.
-   */
-  public boolean isBeanEditor() {
-    return isBeanEditor;
   }
 
   /**
@@ -181,6 +248,13 @@ public class EditorData {
    */
   public boolean isDeclaredPathNested() {
     return declaredPath.contains(".");
+  }
+
+  /**
+   * Returns <code>true<code> if the editor requires an EditorDelegate.
+   */
+  public boolean isDelegateRequired() {
+    return isDelegateRequired;
   }
 
   /**

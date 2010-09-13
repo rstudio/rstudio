@@ -25,6 +25,11 @@ public class Professor extends Person {
   public Professor() {
   }
 
+  private Professor(Professor copyFrom) {
+    super(copyFrom);
+    teachingSchedule = copyFrom.teachingSchedule;
+  }
+
   @Override
   public String getSchedule(boolean[] daysFilter) {
     return teachingSchedule.getDescription(daysFilter);
@@ -32,5 +37,10 @@ public class Professor extends Person {
 
   public Schedule getTeachingSchedule() {
     return teachingSchedule;
+  }
+
+  @Override
+  public Professor makeCopy() {
+    return new Professor(this);
   }
 }

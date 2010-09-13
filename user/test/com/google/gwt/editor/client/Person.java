@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,34 +13,37 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.dynatablerf.domain;
+package com.google.gwt.editor.client;
 
 /**
- * Holds relevant data for a Student type Person.
+ * Simple data object used by multiple tests.
  */
-public class Student extends Person {
+public class Person {
+  String name;
+  Address address;
+  Person manager;
 
-  private Schedule classSchedule = new Schedule();
-
-  public Student() {
+  public Address getAddress() {
+    return address;
   }
 
-  private Student(Student copyFrom) {
-    super(copyFrom);
-    classSchedule = copyFrom.classSchedule;
+  public Person getManager() {
+    return manager;
   }
 
-  public Schedule getClassSchedule() {
-    return classSchedule;
+  public String getName() {
+    return name;
   }
 
-  @Override
-  public String getSchedule(boolean[] daysFilter) {
-    return classSchedule.getDescription(daysFilter);
+  public void setAddress(Address address) {
+    this.address = address;
   }
 
-  @Override
-  public Student makeCopy() {
-    return new Student(this);
+  public void setManager(Person manager) {
+    this.manager = manager;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 }

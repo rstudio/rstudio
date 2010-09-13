@@ -16,7 +16,11 @@
 package com.google.gwt.editor.client.impl;
 
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.editor.client.SimpleBeanEditorDriver;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A base implementation class for generated SimpleBeanEditorDriver
@@ -30,6 +34,7 @@ public abstract class AbstractSimpleBeanEditorDriver<T, E extends Editor<T>>
 
   private SimpleBeanEditorDelegate<T, E> delegate;
   private E editor;
+  private List<EditorError> errors;
   private T object;
 
   public void edit(T object) {
@@ -41,8 +46,17 @@ public abstract class AbstractSimpleBeanEditorDriver<T, E extends Editor<T>>
 
   public T flush() {
     checkDelegate();
-    delegate.flush();
+    errors = new ArrayList<EditorError>();
+    delegate.flush(errors);
     return object;
+  }
+
+  public List<EditorError> getErrors() {
+    return errors;
+  }
+
+  public boolean hasErrors() {
+    return !errors.isEmpty();
   }
 
   public void initialize(E editor) {

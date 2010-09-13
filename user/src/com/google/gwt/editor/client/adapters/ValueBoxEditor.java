@@ -18,29 +18,45 @@ package com.google.gwt.editor.client.adapters;
 import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.editor.client.LeafValueEditor;
-import com.google.gwt.user.client.TakesValue;
+import com.google.gwt.user.client.ui.ValueBoxBase;
+
+import java.text.ParseException;
 
 /**
- * Adapts the {@link TakesValue} interface to the Editor framework.
+ * Adapts the {@link ValueBoxBase} interface to the Editor framework. This
+ * adapter uses {@link ValueBoxBase#getValueOrThrow()} to report parse errors to
+ * the Editor framework.
  * 
  * @param <T> the type of value to be edited
  */
-public class TakesValueEditor<T> implements LeafValueEditor<T>,
+public class ValueBoxEditor<T> implements LeafValueEditor<T>,
     HasEditorDelegate<T> {
 
-  public static <T> TakesValueEditor<T> of(TakesValue<T> peer) {
-    return new TakesValueEditor<T>(peer);
+  public static <T> ValueBoxEditor<T> of(ValueBoxBase<T> valueBox) {
+    return new ValueBoxEditor<T>(valueBox);
   }
 
   private EditorDelegate<T> delegate;
-  private final TakesValue<T> peer;
+  private ValueBoxBase<T> peer;
+  private T value;
 
-  protected TakesValueEditor(TakesValue<T> peer) {
+  protected ValueBoxEditor(ValueBoxBase<T> peer) {
     this.peer = peer;
   }
 
+  /**
+   * Calls {@link ValueBoxBase#getValueOrThrow()}. If a {@link ParseException}
+   * is thrown, it will be available through
+   * {@link com.google.gwt.editor.client.EditorError#getUserData()
+   * EditorError.getUserData()}.
+   */
   public T getValue() {
-    return peer.getValue();
+    try {
+      value = peer.getValueOrThrow();
+    } catch (ParseException e) {
+      delegate.recordError(e.getMessage(), peer.getText(), e);
+    }
+    return value;
   }
 
   public void setDelegate(EditorDelegate<T> delegate) {
@@ -48,14 +64,6 @@ public class TakesValueEditor<T> implements LeafValueEditor<T>,
   }
 
   public void setValue(T value) {
-    peer.setValue(delegate.ensureMutable(value));
-  }
-
-  protected EditorDelegate<T> getDelegate() {
-    return delegate;
-  }
-
-  protected TakesValue<T> getPeer() {
-    return peer;
+    peer.setValue(this.value = value);
   }
 }

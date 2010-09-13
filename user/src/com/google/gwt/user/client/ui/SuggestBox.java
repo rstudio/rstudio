@@ -17,6 +17,9 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -102,7 +105,8 @@ import java.util.List;
 public class SuggestBox extends Composite implements HasText, HasFocus,
     HasAnimation, SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,
     SourcesKeyboardEvents, FiresSuggestionEvents, HasAllKeyHandlers,
-    HasValue<String>, HasSelectionHandlers<Suggestion> {
+    HasValue<String>, HasSelectionHandlers<Suggestion>,
+    IsEditor<LeafValueEditor<String>> {
 
   /**
    * The callback used when a user selects a {@link Suggestion}.
@@ -784,6 +788,13 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   public HandlerRegistration addValueChangeHandler(
       ValueChangeHandler<String> handler) {
     return addHandler(handler, ValueChangeEvent.getType());
+  }
+
+  /**
+   * Returns a {@link TakesValueEditor} backed by the DateBox.
+   */
+  public LeafValueEditor<String> asEditor() {
+    return TakesValueEditor.of(this);
   }
 
   /**

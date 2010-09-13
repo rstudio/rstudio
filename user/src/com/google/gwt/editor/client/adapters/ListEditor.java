@@ -21,9 +21,6 @@ import com.google.gwt.editor.client.EditorDelegate;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-
-import javax.validation.ConstraintViolation;
 
 /**
  * Manages a list of objects and their associated Editors.
@@ -64,6 +61,9 @@ public class ListEditor<T, E extends Editor<T>> implements
    * ListEditor.
    */
   public List<E> getEditors() {
+    if (list == null) {
+      throw new IllegalStateException("Must call EditorDriver.edit() first");
+    }
     return Collections.unmodifiableList(list.getEditors());
   }
 
@@ -105,8 +105,5 @@ public class ListEditor<T, E extends Editor<T>> implements
     }
     list = new ListEditorWrapper<T, E>(value, chain, editorSource);
     list.attach();
-  }
-
-  public void showErrors(Set<ConstraintViolation<List<T>>> violations) {
   }
 }

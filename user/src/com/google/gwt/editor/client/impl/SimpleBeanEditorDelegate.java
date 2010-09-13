@@ -15,14 +15,8 @@
  */
 package com.google.gwt.editor.client.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.event.shared.HandlerRegistration;
-
-import java.util.Collections;
-import java.util.Set;
-
-import javax.validation.ConstraintViolation;
 
 /**
  * A limited EditorDelegate for editing standard bean-like objects.
@@ -54,8 +48,10 @@ public abstract class SimpleBeanEditorDelegate<T, E extends Editor<T>> extends
   }
 
   @Override
-  public Set<ConstraintViolation<T>> validate(T object) {
-    GWT.log("SimpleBeanEditorDelegate.validate() not yet implemented");
-    return Collections.emptySet();
+  protected <R, S extends Editor<R>> void initializeSubDelegate(
+      AbstractEditorDelegate<R, S> subDelegate, String path, R object,
+      S subEditor) {
+    ((SimpleBeanEditorDelegate<R, S>) subDelegate).initialize(path, object,
+        subEditor);
   }
 }

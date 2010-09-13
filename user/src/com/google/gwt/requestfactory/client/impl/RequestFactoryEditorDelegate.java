@@ -17,18 +17,12 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
-
-import java.util.Collections;
-import java.util.Set;
-
-import javax.validation.ConstraintViolation;
 
 /**
  * Base class for generated EditorDelegates using a RequestFactory as the
@@ -38,7 +32,7 @@ import javax.validation.ConstraintViolation;
  * @param <E> the type of Editor
  */
 public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
-    extends AbstractEditorDelegate<P, E> implements EditorDelegate<P> {
+    extends AbstractEditorDelegate<P, E> {
 
   protected EventBus eventBus;
   protected RequestFactory factory;
@@ -77,8 +71,10 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
   }
 
   @Override
-  public Set<ConstraintViolation<P>> validate(P object) {
-    GWT.log("validate() is currently unimplemented");
-    return Collections.emptySet();
+  protected <R, S extends Editor<R>> void initializeSubDelegate(
+      AbstractEditorDelegate<R, S> subDelegate, String path, R object,
+      S subEditor) {
+    ((RequestFactoryEditorDelegate<R, S>) subDelegate).initialize(eventBus,
+        factory, path, object, subEditor, request);
   }
 }

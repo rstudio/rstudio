@@ -17,6 +17,11 @@ package com.google.gwt.sample.dynatablerf.domain;
 
 import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
 
+import javax.validation.Valid;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 /**
  * Hold relevant data for Person.
  */
@@ -33,19 +38,41 @@ public abstract class Person {
     return SchoolCalendarService.findPerson(id);
   }
 
+  @NotNull
+  @Valid
   private final Address address = new Address();
 
+  @NotNull
   private String description = "DESC";
 
+  @NotNull
+  @Size(min = 1, message = "Persons must have names")
   private String name;
 
+  @NotNull
   private Long id;
 
+  @NotNull
+  @DecimalMin("0")
   private Integer version = 0;
 
+  @NotNull
   private String note;
 
   public Person() {
+  }
+
+  protected Person(Person copyFrom) {
+    copyFrom(copyFrom);
+  }
+
+  public void copyFrom(Person copyFrom) {
+    address.copyFrom(copyFrom.address);
+    description = copyFrom.description;
+    name = copyFrom.name;
+    id = copyFrom.id;
+    version = copyFrom.version;
+    note = copyFrom.note;
   }
 
   public Address getAddress() {
@@ -88,6 +115,8 @@ public abstract class Person {
   public Integer getVersion() {
     return version;
   }
+
+  public abstract Person makeCopy();
 
   /**
    * When this was written the RequestFactory required a persist method per

@@ -17,6 +17,9 @@
 package com.google.gwt.user.datepicker.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -62,7 +65,8 @@ import java.util.Date;
  * {@example com.google.gwt.examples.DateBoxExample}
  * </p>
  */
-public class DateBox extends Composite implements HasValue<Date> {
+public class DateBox extends Composite implements HasValue<Date>,
+    IsEditor<LeafValueEditor<Date>> {
   /**
    * Default {@link DateBox.Format} class. The date is first parsed using the
    * {@link DateTimeFormat} supplied by the user, or
@@ -86,6 +90,7 @@ public class DateBox extends Composite implements HasValue<Date> {
     /**
      * Creates a new default format instance.
      */
+    @SuppressWarnings("deprecation")
     public DefaultFormat() {
       dateTimeFormat = DateTimeFormat.getMediumDateTimeFormat();
     }
@@ -224,7 +229,7 @@ public class DateBox extends Composite implements HasValue<Date> {
     }
 
     public void onValueChange(ValueChangeEvent<Date> event) {
-      setValue(parseDate(false), event.getValue(),true);
+      setValue(parseDate(false), event.getValue(), true);
       hideDatePicker();
       preventDatePickerPopup();
       box.setFocus(true);
@@ -240,8 +245,7 @@ public class DateBox extends Composite implements HasValue<Date> {
    * Default style name.
    */
   public static final String DEFAULT_STYLENAME = "gwt-DateBox";
-  private static final DefaultFormat DEFAULT_FORMAT = 
-    GWT.create(DefaultFormat.class);
+  private static final DefaultFormat DEFAULT_FORMAT = GWT.create(DefaultFormat.class);
   private final PopupPanel popup;
   private final TextBox box = new TextBox();
   private final DatePicker picker;
@@ -288,6 +292,13 @@ public class DateBox extends Composite implements HasValue<Date> {
   public HandlerRegistration addValueChangeHandler(
       ValueChangeHandler<Date> handler) {
     return addHandler(handler, ValueChangeEvent.getType());
+  }
+
+  /**
+   * Returns a {@link TakesValueEditor} backed by the DateBox.
+   */
+  public LeafValueEditor<Date> asEditor() {
+    return TakesValueEditor.of(this);
   }
 
   /**
@@ -481,7 +492,7 @@ public class DateBox extends Composite implements HasValue<Date> {
   private void updateDateFromTextBox() {
     Date parsedDate = parseDate(true);
     if (parsedDate != null) {
-      setValue(picker.getValue(), parsedDate,true);
+      setValue(picker.getValue(), parsedDate, true);
     }
   }
 }

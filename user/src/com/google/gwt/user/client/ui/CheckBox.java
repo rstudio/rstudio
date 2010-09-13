@@ -18,6 +18,9 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
+import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -52,7 +55,7 @@ import com.google.gwt.user.client.EventListener;
  * </p>
  */
 public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
-    HasWordWrap {
+    HasWordWrap, IsEditor<LeafValueEditor<Boolean>> {
   InputElement inputElem;
   LabelElement labelElem;
   private boolean valueChangeHandlerInitialized;
@@ -118,6 +121,10 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
       valueChangeHandlerInitialized = true;
     }
     return addHandler(handler, ValueChangeEvent.getType());
+  }
+
+  public LeafValueEditor<Boolean> asEditor() {
+    return TakesValueEditor.of(this);
   }
 
   /**

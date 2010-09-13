@@ -17,6 +17,10 @@ package com.google.gwt.sample.dynatablerf.domain;
 
 import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
 
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 /**
  * Represents an address.
  */
@@ -29,12 +33,44 @@ public class Address {
     return SchoolCalendarService.findPerson(id).getAddress();
   }
 
+  @NotNull
+  @Size(min = 1)
   private String city;
+
+  @NotNull
   private Long id;
+
+  @NotNull
+  @Size(min = 1)
   private String state;
+
+  @NotNull
+  @Size(min = 1)
   private String street;
+
+  @NotNull
+  @DecimalMin("0")
   private Integer version = 0;
+
+  @NotNull
+  @DecimalMin("10000")
   private Integer zip;
+
+  public Address() {
+  }
+
+  private Address(Address copyFrom) {
+    copyFrom(copyFrom);
+  }
+
+  public void copyFrom(Address copyFrom) {
+    city = copyFrom.city;
+    id = copyFrom.id;
+    state = copyFrom.state;
+    street = copyFrom.street;
+    version = copyFrom.version;
+    zip = copyFrom.zip;
+  }
 
   public String getCity() {
     return city;
@@ -58,6 +94,10 @@ public class Address {
 
   public Integer getZip() {
     return zip;
+  }
+
+  public Address makeCopy() {
+    return new Address(this);
   }
 
   /**

@@ -15,10 +15,10 @@
  */
 package com.google.gwt.sample.dynatablerf.client.widgets;
 
-import com.google.gwt.app.client.IntegerBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.adapters.TakesValueEditor;
+import com.google.gwt.editor.client.adapters.ValueBoxEditor;
+import com.google.gwt.editor.client.ui.EditorErrorPanel;
 import com.google.gwt.sample.dynatablerf.shared.AddressProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -40,21 +40,9 @@ public class AddressEditor extends Composite implements Editor<AddressProxy> {
   @UiField
   TextBox state;
   @UiField
-  IntegerBox zip;
-
-  // TODO: Allow UiBinder to configure this
-  final TakesValueEditor<String> streetEditor;
-  final TakesValueEditor<String> cityEditor;
-  final TakesValueEditor<String> stateEditor;
-  final TakesValueEditor<Integer> zipEditor;
+  EditorErrorPanel<Integer, ValueBoxEditor<Integer>> zip;
 
   public AddressEditor() {
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
-
-    // TODO: Let UiBinder wire this up
-    streetEditor = TakesValueEditor.of(street);
-    cityEditor = TakesValueEditor.of(city);
-    stateEditor = TakesValueEditor.of(state);
-    zipEditor = TakesValueEditor.of(zip);
   }
 }

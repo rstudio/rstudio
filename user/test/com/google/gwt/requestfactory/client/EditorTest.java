@@ -115,9 +115,9 @@ public class EditorTest extends GWTTestCase {
             assertEquals("FOO", editor.barEditor().userName.getValue());
             assertEquals("FOO", editor.barName.getValue());
             editor.userName.setValue("EditorFooTest");
-            // When there are duplicate paths, outermost editor wins
-            editor.barEditor().userName.setValue("ignored");
-            editor.barName.setValue("EditorBarTest");
+            // When there are duplicate paths, last declared editor wins
+            editor.barEditor().userName.setValue("EditorBarTest");
+            editor.barName.setValue("ignored");
             driver.<SimpleFooProxy> flush().fire(
                 new Receiver<SimpleFooProxy>() {
                   public void onSuccess(SimpleFooProxy response,

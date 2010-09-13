@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -37,6 +38,7 @@ public abstract class AbstractRequestFactoryEditorDriver<R extends EntityProxy, 
   private RequestFactoryEditorDelegate<R, E> delegate;
   private E editor;
   private EventBus eventBus;
+  private List<EditorError> errors;
   private List<String> paths = new ArrayList<String>();
   private RequestFactory requestFactory;
   private RequestObject<?> saveRequest;
@@ -53,12 +55,21 @@ public abstract class AbstractRequestFactoryEditorDriver<R extends EntityProxy, 
   public <T> RequestObject<T> flush() {
     checkDelegate();
     checkSaveRequest();
-    delegate.flush();
+    errors = new ArrayList<EditorError>();
+    delegate.flush(errors);
     return (RequestObject<T>) saveRequest;
+  }
+
+  public List<EditorError> getErrors() {
+    return errors;
   }
 
   public String[] getPaths() {
     return paths.toArray(new String[paths.size()]);
+  }
+
+  public boolean hasErrors() {
+    return !errors.isEmpty();
   }
 
   public void initialize(EventBus eventBus, RequestFactory requestFactory,

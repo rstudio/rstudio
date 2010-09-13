@@ -17,165 +17,72 @@ package com.google.gwt.sample.dynatablerf.server;
 
 import com.google.gwt.sample.dynatablerf.domain.Address;
 import com.google.gwt.sample.dynatablerf.domain.Person;
-import com.google.gwt.sample.dynatablerf.domain.Professor;
-import com.google.gwt.sample.dynatablerf.domain.Schedule;
-import com.google.gwt.sample.dynatablerf.domain.Student;
-import com.google.gwt.sample.dynatablerf.domain.TimeSlot;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
 /**
  * The server side service class.
  */
-public class SchoolCalendarService {
-  private static Long serial = 0L;
-
-  private static final String[] FIRST_NAMES = new String[] {
-      "Inman", "Sally", "Omar", "Teddy", "Jimmy", "Cathy", "Barney", "Fred",
-      "Eddie", "Carlos"};
-
-  private static final String[] LAST_NAMES = new String[] {
-      "Smith", "Jones", "Epps", "Gibbs", "Webber", "Blum", "Mendez",
-      "Crutcher", "Needler", "Wilson", "Chase", "Edelstein"};
-
-  private static final String[] SUBJECTS = new String[] {
-      "Chemistry", "Phrenology", "Geometry", "Underwater Basket Weaving",
-      "Basketball", "Computer Science", "Statistics", "Materials Engineering",
-      "English Literature", "Geology"};
-
-  private static final int CLASS_LENGTH_MINS = 50;
-
-  private static final int MAX_SCHED_ENTRIES = 5;
-
-  private static final int MIN_SCHED_ENTRIES = 1;
-
-  private static final int MAX_PEOPLE = 100;
-
-  private static final int STUDENTS_PER_PROF = 5;
-
-  private static final Map<Long, Person> people = new LinkedHashMap<Long, Person>();
-
-  private static final Random rnd = new Random(3);
+public class SchoolCalendarService implements Filter {
+  private static final ThreadLocal<PersonSource> PERSON_SOURCE = new ThreadLocal<PersonSource>();
 
   public static Person findPerson(Long id) {
-    return people.get(id);
+    checkPersonSource();
+    return PERSON_SOURCE.get().findPerson(id);
   }
 
   public static List<Person> getPeople(int startIndex, int maxCount) {
-    generateRandomPeople();
-
-    int peopleCount = people.size();
-
-    int start = startIndex;
-    if (start >= peopleCount) {
-      return Collections.emptyList();
-    }
-
-    int end = Math.min(startIndex + maxCount, peopleCount);
-    if (start == end) {
-      return Collections.emptyList();
-    }
-
-    return new ArrayList<Person>(people.values()).subList(startIndex, end);
+    checkPersonSource();
+    return PERSON_SOURCE.get().getPeople(startIndex, maxCount);
   }
-  
+
   public static void persist(Address address) {
-    address.setVersion(address.getVersion() + 1);
+    checkPersonSource();
+    PERSON_SOURCE.get().persist(address);
   }
 
   public static void persist(Person person) {
-    if (person.getId() == null) {
-      person.setId(++serial);
-    }
-    person.setVersion(person.getVersion() + 1);
-    people.put(person.getId(), person);
+    checkPersonSource();
+    PERSON_SOURCE.get().persist(person);
   }
 
-  private static void generateRandomPeople() {
-    if (people.isEmpty()) {
-      for (int i = 0; i < MAX_PEOPLE; ++i) {
-        Person person = generateRandomPerson();
-        AddressFuzzer.fuzz(rnd, person.getAddress());
-        persist(person);
-      }
+  private static void checkPersonSource() {
+    if (PERSON_SOURCE.get() == null) {
+      throw new IllegalStateException(
+          "Calling service method outside of HTTP request");
     }
   }
 
-  private static Person generateRandomPerson() {
-    // 1 out of every so many people is a prof.
-    //
-    if (rnd.nextInt(STUDENTS_PER_PROF) == 1) {
-      return generateRandomProfessor();
-    } else {
-      return generateRandomStudent();
+  private PersonSource backingStore;
+
+  public void destroy() {
+  }
+
+  public void doFilter(ServletRequest req, ServletResponse resp,
+      FilterChain chain) throws IOException, ServletException {
+    try {
+      PERSON_SOURCE.set(PersonSource.of(backingStore));
+      chain.doFilter(req, resp);
+    } finally {
+      PERSON_SOURCE.set(null);
     }
   }
 
-  private static Person generateRandomProfessor() {
-    Professor prof = new Professor();
-
-    String firstName = pickRandomString(FIRST_NAMES);
-    String lastName = pickRandomString(LAST_NAMES);
-    prof.setName("Dr. " + firstName + " " + lastName);
-
-    String subject = pickRandomString(SUBJECTS);
-    prof.setDescription("Professor of " + subject);
-
-    generateRandomSchedule(prof.getTeachingSchedule());
-
-    return prof;
-  }
-
-  private static void generateRandomSchedule(Schedule sched) {
-    int range = MAX_SCHED_ENTRIES - MIN_SCHED_ENTRIES + 1;
-    int howMany = MIN_SCHED_ENTRIES + rnd.nextInt(range);
-
-    TimeSlot[] timeSlots = new TimeSlot[howMany];
-
-    for (int i = 0; i < howMany; ++i) {
-      int startHrs = 8 + rnd.nextInt(9); // 8 am - 5 pm
-      int startMins = 15 * rnd.nextInt(4); // on the hour or some quarter
-      int dayOfWeek = 1 + rnd.nextInt(5); // Mon - Fri
-
-      int absStartMins = 60 * startHrs + startMins; // convert to minutes
-      int absStopMins = absStartMins + CLASS_LENGTH_MINS;
-
-      timeSlots[i] = new TimeSlot(dayOfWeek, absStartMins, absStopMins);
+  public void init(FilterConfig config) throws ServletException {
+    backingStore = (PersonSource) config.getServletContext().getAttribute(
+        SchoolCalendarService.class.getName());
+    if (backingStore == null) {
+      backingStore = PersonSource.of(PersonFuzzer.generateRandomPeople());
+      config.getServletContext().setAttribute(
+          SchoolCalendarService.class.getName(), backingStore);
     }
-
-    Arrays.sort(timeSlots);
-
-    for (int i = 0; i < howMany; ++i) {
-      sched.addTimeSlot(timeSlots[i]);
-    }
-  }
-
-  private static Person generateRandomStudent() {
-    Student student = new Student();
-
-    String firstName = pickRandomString(FIRST_NAMES);
-    String lastName = pickRandomString(LAST_NAMES);
-    student.setName(firstName + " " + lastName);
-
-    String subject = pickRandomString(SUBJECTS);
-    student.setDescription("Majoring in " + subject);
-
-    generateRandomSchedule(student.getClassSchedule());
-
-    return student;
-  }
-
-  private static String pickRandomString(String[] a) {
-    int i = rnd.nextInt(a.length);
-    return a[i];
-  }
-
-  public SchoolCalendarService() {
   }
 }

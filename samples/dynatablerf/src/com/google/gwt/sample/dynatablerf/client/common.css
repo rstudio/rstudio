@@ -2,6 +2,7 @@
 @def fieldWidth 30em;
 
 .editField {
+  display: inline;
   width: fieldWidth;
 }
 

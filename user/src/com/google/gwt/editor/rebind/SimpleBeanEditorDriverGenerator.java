@@ -21,6 +21,8 @@ import com.google.gwt.editor.client.impl.SimpleBeanEditorDelegate;
 import com.google.gwt.editor.rebind.model.EditorData;
 import com.google.gwt.user.rebind.SourceWriter;
 
+import java.util.Map;
+
 /**
  * Generates implementations of {@link SimpleBeanEditorDriver}.
  */
@@ -43,14 +45,18 @@ public class SimpleBeanEditorDriverGenerator extends
   }
 
   @Override
-  protected String mutableObjectExpression(String sourceObjectExpression) {
+  protected String mutableObjectExpression(EditorData data,
+      String sourceObjectExpression) {
     return sourceObjectExpression;
   }
 
   @Override
-  protected void writeDelegateInitialization(SourceWriter sw, EditorData d) {
-    sw.println("%1$sDelegate.initialize(appendPath(\"%1$s\"),"
-        + " getObject()%2$s.%3$s()," + " editor.%4$s);", d.getPropertyName(),
+  protected void writeDelegateInitialization(SourceWriter sw, EditorData d,
+      Map<EditorData, String> delegateFields) {
+    // fooDelegate.initialize(appendPath("foo"), getObject().getFoo(),
+    // editor.fooEditor);
+    sw.println("%s.initialize(appendPath(\"%s\"), getObject()%s.%s(),"
+        + " editor.%s);", delegateFields.get(d), d.getPropertyName(),
         d.getBeanOwnerExpression(), d.getGetterName(), d.getSimpleExpression());
   }
 }
