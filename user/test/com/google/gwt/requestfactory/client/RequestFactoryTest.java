@@ -211,11 +211,7 @@ public class RequestFactoryTest extends GWTTestCase {
     });
   }
 
-  /*
-   * Disabling this new test for now. Will fix once the constraint violation portion of
-   * https://jira.springsource.org/browse/ROO-954 is done.
-   */
-  public void disabled_testViolationsOnEdit() {
+  public void testViolationsOnEdit_withReturnValue() {
     delayTestFinish(5000);
 
     SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);

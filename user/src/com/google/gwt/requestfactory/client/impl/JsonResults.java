@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 /**
  * JSO to hold result and related objects.
@@ -45,5 +46,9 @@ public class JsonResults extends JavaScriptObject {
 
   public final native JavaScriptObject getSideEffects() /*-{
     return this.sideEffects;
+  }-*/;
+  
+  public final native JsArray<DeltaValueStoreJsonImpl.ReturnRecord> getViolations()/*-{
+    return this.violations || null;
   }-*/;
 }

@@ -666,10 +666,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     constructAfterDvsDataMap();
 
     // violations are the only sideEffects at this point.
-    JSONObject sideEffectsBeforeExecution = getViolationsAsSideEffects();
-    if (sideEffectsBeforeExecution.length() > 0) {
+    JSONArray violationsAsJson = getViolations();
+    if (violationsAsJson.length() > 0) {
       JSONObject envelop = new JSONObject();
-      envelop.put(RequestData.SIDE_EFFECTS_TOKEN, sideEffectsBeforeExecution);
+      envelop.put("violations", violationsAsJson);
       return envelop;
     }
 
@@ -1004,17 +1004,16 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return sideEffects;
   }
 
-  private JSONObject getViolationsAsSideEffects() throws JSONException {
-    JSONObject sideEffects = new JSONObject();
+  private JSONArray getViolations() throws JSONException {
+    JSONArray violations = new JSONArray();
     for (EntityKey entityKey : involvedKeys) {
       EntityData entityData = afterDvsDataMap.get(entityKey);
       if (entityData == null || entityData.violations == null
           || entityData.violations.length() == 0) {
         continue;
       }
-      // find the WriteOperation
       DvsData dvsData = dvsDataMap.get(entityKey);
-      if (dvsData != null && dvsData.writeOperation != null) {
+      if (dvsData != null) {
         JSONObject returnObject = new JSONObject();
         returnObject.put("violations", entityData.violations);
         if (entityKey.isFuture) {
@@ -1023,17 +1022,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         } else {
           returnObject.put("id",  getSchemaAndId(entityKey.record, entityKey.id));
         }
-        JSONArray arrayForOperation = null;
-        if (sideEffects.has(dvsData.writeOperation.name())) {
-          arrayForOperation = sideEffects.getJSONArray(dvsData.writeOperation.name());
-        } else {
-          arrayForOperation = new JSONArray();
-          sideEffects.put(dvsData.writeOperation.name(), arrayForOperation);
-        }
-        arrayForOperation.put(returnObject);
+        violations.put(returnObject);
       }
     }
-    return sideEffects;
+    return violations;
   }
   
   /**

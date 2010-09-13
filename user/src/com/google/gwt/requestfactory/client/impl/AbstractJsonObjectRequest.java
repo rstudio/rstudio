@@ -46,6 +46,11 @@ public abstract class //
 
   @Override
   public void handleResult(Object result, Set<SyncResult> syncResults) {
+    // TODO (amitmanjhi): remove this check once Receiver has the onViolations method.
+    if (result == null) {
+      receiver.onSuccess(null, syncResults);
+      return;
+    }
     JavaScriptObject rawJso = (JavaScriptObject) result;
     ProxyJsoImpl jso = ProxyJsoImpl.create(rawJso, schema, requestFactory);
     

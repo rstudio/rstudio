@@ -52,6 +52,11 @@ AbstractJsonListRequest<T extends EntityProxy, R extends AbstractJsonListRequest
 
   @Override
   public void handleResult(Object jsoResult, Set<SyncResult> syncResults) {
+    // TODO (amitmanjhi): remove this check once Receiver has the onViolations method.
+    if (jsoResult == null) {
+      receiver.onSuccess(null, syncResults);
+      return;
+    }
     @SuppressWarnings("unchecked")
     JsArray<JavaScriptObject> rawJsos = (JsArray<JavaScriptObject>) jsoResult;
     

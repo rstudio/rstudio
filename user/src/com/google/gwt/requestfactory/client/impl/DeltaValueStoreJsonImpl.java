@@ -102,13 +102,19 @@ class DeltaValueStoreJsonImpl {
     }-*/;
   }
 
+  // TODO: remove this method when SyncResult is removed.
+  static SyncResultImpl makeSyncResult(ProxyJsoImpl jso,
+      Map<String, String> violations, Object futureId) {
+    return new SyncResultImpl(jso.getSchema().create(jso), violations, futureId);
+  }
+
   private boolean used = false;
-
   private final ValueStoreJsonImpl master;
-  private final RequestFactoryJsonImpl requestFactory;
 
+  private final RequestFactoryJsonImpl requestFactory;
   // track C-U-D of CRUD operations
   private final Map<EntityProxyId, ProxyJsoImpl> creates = new HashMap<EntityProxyId, ProxyJsoImpl>();
+
   private final Map<EntityProxyId, ProxyJsoImpl> updates = new HashMap<EntityProxyId, ProxyJsoImpl>();
   // nothing for deletes because DeltaValueStore is not involved in deletes. The
   // operation alone suffices.
@@ -129,10 +135,6 @@ class DeltaValueStoreJsonImpl {
     used = false;
   }
 
-  /*
-   * TODO: there needs to be a separate path for violations, not mingled
-   * with update events.
-   */
   public Set<SyncResult> commit(JavaScriptObject returnedJso) {
     Set<SyncResult> syncResults = new HashSet<SyncResult>();
     HashSet<String> keys = new HashSet<String>();
@@ -149,33 +151,25 @@ class DeltaValueStoreJsonImpl {
             Long.valueOf(newRecord.getFutureId()),
             requestFactory.getSchema(newRecord.getSchema()),
             RequestFactoryJsonImpl.IS_FUTURE, null);
-        ProxyJsoImpl copy = ProxyJsoImpl.create(Long.valueOf(newRecord.getFutureId()), 1,
-            futureKey.schema, requestFactory);
-        if (newRecord.hasViolations()) {
-          HashMap<String, String> violations = new HashMap<String, String>();
-          newRecord.fillViolations(violations);
-          // do not change the masterRecord or fire event
-          syncResults.add(makeSyncResult(copy, violations,
-              Long.valueOf(newRecord.getFutureId())));
-        } else {
-          toRemove.add(futureKey);
-          requestFactory.datastoreToFutureMap.put(newRecord.getId(),
-              futureKey.schema, futureKey.id);
-          requestFactory.futureToDatastoreMap.put(futureKey.id,
-              newRecord.getId());
+        ProxyJsoImpl copy = ProxyJsoImpl.create(
+            Long.valueOf(newRecord.getFutureId()), 1, futureKey.schema,
+            requestFactory);
+        toRemove.add(futureKey);
+        requestFactory.datastoreToFutureMap.put(newRecord.getId(),
+            futureKey.schema, futureKey.id);
+        requestFactory.futureToDatastoreMap.put(futureKey.id, newRecord.getId());
 
-          // TODO (amitmanjhi): get all the data from the server.
-          // make a copy of value and set the id there.
-          ProxyJsoImpl value = creates.get(futureKey);
-          if (value != null) {
-            copy.merge(value);
-            copy.set(EntityProxy.id, newRecord.getId());
-          }
-          ProxyJsoImpl masterRecord = master.records.get(futureKey);
-          assert masterRecord == null;
-          requestFactory.postChangeEvent(copy, WriteOperation.CREATE);
-          syncResults.add(makeSyncResult(copy, null, futureKey.id));
+        // TODO (amitmanjhi): get all the data from the server.
+        // make a copy of value and set the id there.
+        ProxyJsoImpl value = creates.get(futureKey);
+        if (value != null) {
+          copy.merge(value);
+          copy.set(EntityProxy.id, newRecord.getId());
         }
+        ProxyJsoImpl masterRecord = master.records.get(futureKey);
+        assert masterRecord == null;
+        requestFactory.postChangeEvent(copy, WriteOperation.CREATE);
+        syncResults.add(makeSyncResult(copy, null, futureKey.id));
       }
     }
     processToRemove(toRemove, WriteOperation.CREATE);
@@ -192,17 +186,9 @@ class DeltaValueStoreJsonImpl {
             requestFactory.getSchema(deletedRecord.getSchema()));
         ProxyJsoImpl copy = ProxyJsoImpl.create((Long) key.id, 1, key.schema,
             requestFactory);
-        if (deletedRecord.hasViolations()) {
-          HashMap<String, String> violations = new HashMap<String, String>();
-          deletedRecord.fillViolations(violations);
-          // do not change the masterRecord or fire event
-          syncResults.add(makeSyncResult(copy, violations, null));
-        } else {
-          // post change event if no violations.
-          requestFactory.postChangeEvent(copy, WriteOperation.DELETE);
-          master.records.remove(key);
-          syncResults.add(makeSyncResult(copy, null, null));
-        }
+        requestFactory.postChangeEvent(copy, WriteOperation.DELETE);
+        master.records.remove(key);
+        syncResults.add(makeSyncResult(copy, null, null));
       }
     }
 
@@ -217,33 +203,20 @@ class DeltaValueStoreJsonImpl {
             requestFactory.getSchema(updatedRecord.getSchema()));
         ProxyJsoImpl copy = ProxyJsoImpl.create((Long) key.id, 1, key.schema,
             requestFactory);
-        if (updatedRecord.hasViolations()) {
-          HashMap<String, String> violations = new HashMap<String, String>();
-          updatedRecord.fillViolations(violations);
-          // do not change the masterRecord or fire event
-          syncResults.add(makeSyncResult(copy, violations, null));
-        } else {
-          // post change events since no violations.
-          requestFactory.postChangeEvent(copy, WriteOperation.UPDATE);
-          ProxyJsoImpl masterRecord = master.records.get(key);
-          ProxyJsoImpl value = updates.get(key);
-          if (masterRecord != null && value != null) {
-            /*
-             * Currently, no support for partial updates. When the updates
-             * return all fields that have changed (the version number can be
-             * used to optimize the payload), it will fix partial updates.
-             */
-            copy.merge(masterRecord);
-            copy.merge(value);
-            toRemove.add(key);
-          }
-          if (masterRecord != null) {
-            syncResults.add(makeSyncResult(copy, null, null));
-          } else {
-            // do not change the masterRecord or fire event
-            syncResults.add(makeSyncResult(copy, null, null));
-          }
+        requestFactory.postChangeEvent(copy, WriteOperation.UPDATE);
+        ProxyJsoImpl masterRecord = master.records.get(key);
+        ProxyJsoImpl value = updates.get(key);
+        if (masterRecord != null && value != null) {
+          /*
+           * Currently, no support for partial updates. When the updates return
+           * all fields that have changed (the version number can be used to
+           * optimize the payload), it will fix partial updates.
+           */
+          copy.merge(masterRecord);
+          copy.merge(value);
+          toRemove.add(key);
         }
+        syncResults.add(makeSyncResult(copy, null, null));
       }
     }
     processToRemove(toRemove, WriteOperation.UPDATE);
@@ -422,11 +395,6 @@ class DeltaValueStoreJsonImpl {
     }
 
     return true;
-  }
-
-  private SyncResultImpl makeSyncResult(ProxyJsoImpl jso,
-      Map<String, String> violations, Object futureId) {
-    return new SyncResultImpl(jso.getSchema().create(jso), violations, futureId);
   }
 
   private ProxyJsoImpl newChangeRecord(ProxyImpl fromRecord) {

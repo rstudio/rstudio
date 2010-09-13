@@ -16,14 +16,17 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImpl.ReturnRecord;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -97,8 +100,41 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
       throw new RuntimeException(results.getException());
     }
     processRelated(results.getRelated());
-    handleResult(results.getResult(),
-        deltaValueStore.commit(results.getSideEffects()));
+
+    // handle violations
+    JsArray<DeltaValueStoreJsonImpl.ReturnRecord> violationsArray = results.getViolations();
+    Set<SyncResult> syncResults = new HashSet<SyncResult>();
+    if (violationsArray != null) {
+      int length = violationsArray.length();
+      for (int i = 0; i < length; i++) {
+        ReturnRecord violationRecord = violationsArray.get(i);
+        Long id = null;
+        if (violationRecord.hasFutureId()) {
+          id = Long.valueOf(violationRecord.getFutureId());
+        } else {
+          id = violationRecord.getId();
+        }
+        final EntityProxyIdImpl key = new EntityProxyIdImpl(id,
+            requestFactory.getSchema(violationRecord.getSchema()),
+            violationRecord.hasFutureId(), null);
+        ProxyJsoImpl copy = ProxyJsoImpl.create(id, 1, key.schema,
+            requestFactory);
+        assert violationRecord.hasViolations();
+        HashMap<String, String> violations = new HashMap<String, String>();
+        violationRecord.fillViolations(violations);
+        syncResults.add(DeltaValueStoreJsonImpl.makeSyncResult(copy,
+            violations, id));
+      }
+      /*
+       * TODO (amitmanjhi): call onViolations once the Receiver interface has
+       * been updated. remove null checks from all implementations once Receiver
+       * has the onViolations method.
+       */
+      handleResult(null, syncResults);
+    } else {
+      handleResult(results.getResult(),
+          deltaValueStore.commit(results.getSideEffects()));
+    }
   }
 
   public boolean isChanged() {

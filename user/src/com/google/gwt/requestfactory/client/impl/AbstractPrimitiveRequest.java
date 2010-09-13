@@ -40,6 +40,11 @@ public abstract class AbstractPrimitiveRequest<T, R extends AbstractRequest<T, R
 
   @Override
   public void handleResult(Object result, Set<SyncResult> syncResults) {
+    // TODO (amitmanjhi): remove this check once Receiver has the onViolations method.
+    if (result == null) {
+      handlePrimitiveResult(null, syncResults);
+      return;
+    }
     handlePrimitiveResult(asString(result), syncResults);
   }
 
