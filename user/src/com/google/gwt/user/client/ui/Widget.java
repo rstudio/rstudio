@@ -17,11 +17,14 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.AttachEvent.Handler;
+import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -31,7 +34,8 @@ import com.google.gwt.user.client.EventListener;
  * support for receiving events from the browser and being added directly to
  * {@link com.google.gwt.user.client.ui.Panel panels}.
  */
-public class Widget extends UIObject implements EventListener, HasHandlers, IsWidget {
+public class Widget extends UIObject implements EventListener, HasAttachHandlers,
+    IsWidget {
 
   /**
    * This convenience method makes a null-safe call to
@@ -52,9 +56,13 @@ public class Widget extends UIObject implements EventListener, HasHandlers, IsWi
   int eventsToSink;
   private boolean attached;
   @SuppressWarnings("deprecation")
-  private com.google.gwt.event.shared.HandlerManager handlerManager;
+  private HandlerManager handlerManager;
   private Object layoutData;
   private Widget parent;
+
+  public HandlerRegistration addAttachHandler(Handler handler) {
+    return addHandler(handler, AttachEvent.getType());
+  }
 
   /**
    * Adds a native event handler to the widget and sinks the corresponding
@@ -286,8 +294,8 @@ public class Widget extends UIObject implements EventListener, HasHandlers, IsWi
    * </p>
    * <p>
    * It is strongly recommended that you override {@link #onLoad()} or
-   * {@link #doAttachChildren()} instead of this method to avoid
-   * inconsistencies between logical and physical attachment states.
+   * {@link #doAttachChildren()} instead of this method to avoid inconsistencies
+   * between logical and physical attachment states.
    * </p>
    * <p>
    * Subclasses that override this method must call
@@ -330,8 +338,8 @@ public class Widget extends UIObject implements EventListener, HasHandlers, IsWi
    * </p>
    * <p>
    * It is strongly recommended that you override {@link #onUnload()} or
-   * {@link #doDetachChildren()} instead of this method to avoid
-   * inconsistencies between logical and physical attachment states.
+   * {@link #doDetachChildren()} instead of this method to avoid inconsistencies
+   * between logical and physical attachment states.
    * </p>
    * <p>
    * Subclasses that override this method must call
@@ -369,16 +377,20 @@ public class Widget extends UIObject implements EventListener, HasHandlers, IsWi
 
   /**
    * This method is called immediately after a widget becomes attached to the
-   * browser's document.
+   * browser's document. This default implementation notifies the widgets
+   * {@link AttachEvent.Handler}s.
    */
   protected void onLoad() {
+    AttachEvent.fire(this, true);
   }
 
   /**
    * This method is called immediately before a widget will be detached from the
-   * browser's document.
+   * browser's document. This default implementation notifies the widgets
+   * {@link AttachEvent.Handler}s.
    */
   protected void onUnload() {
+    AttachEvent.fire(this, false);
   }
 
   /**

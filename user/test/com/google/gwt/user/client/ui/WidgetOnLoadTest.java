@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -24,16 +25,6 @@ import com.google.gwt.user.client.Element;
  */
 public class WidgetOnLoadTest extends GWTTestCase {
 
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
-
-  static int orderIndex;
-
-  static boolean isElementAttached(Element elem) {
-    return DOM.isOrHasChild(RootPanel.getBodyElement(), elem);
-  }
-
   static class TestPanel extends FlowPanel {
     int onAttachOrder;
     int onLoadOrder;
@@ -42,22 +33,26 @@ public class WidgetOnLoadTest extends GWTTestCase {
     boolean domAttachedOnLoad;
     boolean domAttachedOnUnload;
 
+    @Override
     protected void onAttach() {
       onAttachOrder = ++orderIndex;
       super.onAttach();
     }
 
+    @Override
+    protected void onDetach() {
+      onDetachOrder = ++orderIndex;
+      super.onDetach();
+    }
+
+    @Override
     protected void onLoad() {
       onLoadOrder = ++orderIndex;
       domAttachedOnLoad = isElementAttached(getElement());
       super.onLoad();
     }
 
-    protected void onDetach() {
-      onDetachOrder = ++orderIndex;
-      super.onDetach();
-    }
-
+    @Override
     protected void onUnload() {
       onUnloadOrder = ++orderIndex;
       domAttachedOnUnload = isElementAttached(getElement());
@@ -73,22 +68,26 @@ public class WidgetOnLoadTest extends GWTTestCase {
     boolean domAttachedOnLoad;
     boolean domAttachedOnUnload;
 
+    @Override
     protected void onAttach() {
       onAttachOrder = ++orderIndex;
       super.onAttach();
     }
 
+    @Override
+    protected void onDetach() {
+      onDetachOrder = ++orderIndex;
+      super.onDetach();
+    }
+
+    @Override
     protected void onLoad() {
       domAttachedOnLoad = isElementAttached(getElement());
       onLoadOrder = ++orderIndex;
       super.onLoad();
     }
 
-    protected void onDetach() {
-      onDetachOrder = ++orderIndex;
-      super.onDetach();
-    }
-
+    @Override
     protected void onUnload() {
       onUnloadOrder = ++orderIndex;
       domAttachedOnUnload = isElementAttached(getElement());
@@ -96,9 +95,34 @@ public class WidgetOnLoadTest extends GWTTestCase {
     }
   }
 
+  static int orderIndex;
+
+  static boolean isElementAttached(Element elem) {
+    return DOM.isOrHasChild(RootPanel.getBodyElement(), elem);
+  }
+
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.user.User";
+  }
+
   public void testOnLoadAndUnloadOrder() {
+    class TestAttachHandler implements AttachEvent.Handler {
+      int delegateAttachOrder;
+      int delegateDetachOrder;
+
+      public void onAttach(AttachEvent event) {
+        delegateAttachOrder = ++orderIndex;
+      }
+      public void onDetach(AttachEvent event) {
+        delegateDetachOrder = ++orderIndex;
+      }
+    }
+
     TestPanel tp = new TestPanel();
     TestWidget tw = new TestWidget();
+    TestAttachHandler ta = new TestAttachHandler();
+    tw.addAttachHandler(ta);
 
     tp.add(tw);
     RootPanel.get().add(tp);
@@ -109,7 +133,9 @@ public class WidgetOnLoadTest extends GWTTestCase {
     assertTrue(tp.onAttachOrder < tp.onLoadOrder);
     assertTrue(tp.onDetachOrder < tp.onUnloadOrder);
     assertTrue(tw.onAttachOrder < tw.onLoadOrder);
+    assertTrue(tw.onLoadOrder < ta.delegateAttachOrder);
     assertTrue(tw.onDetachOrder < tw.onUnloadOrder);
+    assertTrue(tw.onUnloadOrder < ta.delegateDetachOrder);
 
     // Also trivial. Ensure that the panel's onAttach/onDetach is called before
     // its child's onAttach/onDetach.

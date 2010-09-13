@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,15 +19,15 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 
 /**
  * Manager responsible for adding handlers to event sources and firing those
- * handlers on passed in events. Primitive ancestor of {@link EventBus}, 
+ * handlers on passed in events. Primitive ancestor of {@link EventBus},
  * and used at the core of {com.google.gwt.user.client.ui.Widget}.
- * 
+ *
  * @deprecated use {@link SimpleEventBus}.
  */
 @Deprecated
 public class HandlerManager implements HasHandlers {
 
-  private SimpleEventBus eventBus;
+  private final SimpleEventBus eventBus;
 
   // source of the events
   private final Object source;
@@ -36,7 +36,7 @@ public class HandlerManager implements HasHandlers {
    * Creates a handler manager with a source to be set on all events fired via
    * {@link #fireEvent(GwtEvent)}. Handlers will be fired in the order that they
    * are added.
-   * 
+   *
    * @param source the default event source
    */
   public HandlerManager(Object source) {
@@ -46,10 +46,11 @@ public class HandlerManager implements HasHandlers {
   /**
    * Creates a handler manager with the given source, specifying the order in
    * which handlers are fired.
-   * 
+   *
    * @param source the event source
    * @param fireInReverseOrder true to fire handlers in reverse order
    */
+  @SuppressWarnings("deprecation")
   public HandlerManager(Object source, boolean fireInReverseOrder) {
     eventBus = new SimpleEventBus(fireInReverseOrder);
     this.source = source;
@@ -57,7 +58,7 @@ public class HandlerManager implements HasHandlers {
 
   /**
    * Adds a handler.
-   * 
+   *
    * @param <H> The type of handler
    * @param type the event type associated with this handler
    * @param handler the handler
@@ -76,11 +77,11 @@ public class HandlerManager implements HasHandlers {
    * {@link UmbrellaException} and then re-thrown after all handlers have
    * completed. An exception thrown by a handler will not prevent other handlers
    * from executing.
-   * <p> 
+   * <p>
    * Note, any subclass should be very careful about overriding this method, as
    * adds/removes of handlers will not be safe except within this
    * implementation.
-   * 
+   *
    * @param event the event
    */
   public void fireEvent(GwtEvent<?> event) {
@@ -108,41 +109,44 @@ public class HandlerManager implements HasHandlers {
 
   /**
    * Gets the handler at the given index.
-   * 
+   *
    * @param <H> the event handler type
    * @param index the index
    * @param type the handler's event type
    * @return the given handler
    */
+  @SuppressWarnings("deprecation")
   public <H extends EventHandler> H getHandler(GwtEvent.Type<H> type, int index) {
     return eventBus.getHandler(type, index);
   }
 
   /**
    * Gets the number of handlers listening to the event type.
-   * 
+   *
    * @param type the event type
    * @return the number of registered handlers
    */
+  @SuppressWarnings("deprecation")
   public int getHandlerCount(Type<?> type) {
     return eventBus.getHandlerCount(type);
   }
 
   /**
    * Does this handler manager handle the given event type?
-   * 
+   *
    * @param e the event type
    * @return whether the given event type is handled
    */
+  @SuppressWarnings("deprecation")
   public boolean isEventHandled(Type<?> e) {
     return eventBus.isEventHandled(e);
   }
 
   /**
    * Removes the given handler from the specified event type.
-   * 
+   *
    * @param <H> handler type
-   * 
+   *
    * @param type the event type
    * @param handler the handler
    */
