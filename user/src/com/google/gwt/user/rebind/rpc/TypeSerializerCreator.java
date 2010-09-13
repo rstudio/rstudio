@@ -29,7 +29,6 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.TypeOracleMediator;
-import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.SerializerBase;
@@ -275,9 +274,6 @@ public class TypeSerializerCreator {
 
     composerFactory.addImport(GWT.class.getName());
     composerFactory.addImport(JsArrayString.class.getName());
-    composerFactory.addImport(SerializationException.class.getName());
-    composerFactory.addImport(SerializationStreamReader.class.getName());
-    composerFactory.addImport(SerializationStreamWriter.class.getName());
     composerFactory.addImport(TypeHandler.class.getName());
     composerFactory.addImport(HashMap.class.getName());
     composerFactory.addImport(Map.class.getName());
@@ -305,6 +301,15 @@ public class TypeSerializerCreator {
         customSerializer, (JClassType) type) != null;
   }
 
+  /**
+   * Writes constructor.
+   * 
+   * <pre>
+   * public SchoolCalendarService_TypeSerializer() {
+   *   super(methodMapJava, methodMapNative, signatureMapJava, signatureMapNative);
+   * }
+   * </pre>
+   */
   private void writeConstructor() {
     srcWriter.println("public " + typeSerializerSimpleName + "() {");
     srcWriter.indentln("super(methodMapJava, methodMapNative, signatureMapJava, signatureMapNative);");
@@ -312,6 +317,21 @@ public class TypeSerializerCreator {
     srcWriter.println();
   }
 
+  /**
+   * Writes a method to produce a map of type string -> {@link TypeHandler}
+   * for Java.
+   * 
+   * <pre>
+   * private static Map&lt;String, TypeHandler&gt; loadMethodsJava() {
+   *   Map&lt;String, TypeHandler&gt; result = new HashMap&lt;String, TypeHandler&gt;();
+   *   result.put(
+   *       &quot;java.lang.String/2004016611&quot;,
+   *       new com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer.Handler());
+   *   ...
+   *   return result;
+   * }
+   * </pre>
+   */
   private void writeLoadMethodsJava() {
     srcWriter.println("private static Map<String, TypeHandler> loadMethodsJava() {");
     srcWriter.indent();
@@ -343,6 +363,22 @@ public class TypeSerializerCreator {
     srcWriter.println();
   }
 
+  /**
+   * Writes a method to produce a native map of type string -> handler funcs.
+   * 
+   * <pre>
+   * private static native MethodMap loadMethodsNative() /&#42;-{
+   *     var result = {};
+   *     result["java.lang.String/2004016611"] = [
+   *         @com.google.gwt.user.client.rpc.core.java.lang.String_CustomFieldSerializer::instantiate(Lcom/google/gwt/user/client/rpc/SerializationStreamReader;),
+   *         @com.google.gwt.user.client.rpc.core.java.lang.String_CustomFieldSerializer::deserialize(Lcom/google/gwt/user/client/rpc/SerializationStreamReader;Ljava/lang/String;),
+   *         @com.google.gwt.user.client.rpc.core.java.lang.String_CustomFieldSerializer::serialize(Lcom/google/gwt/user/client/rpc/SerializationStreamWriter;Ljava/lang/String;)
+   *       ];
+   *     ...
+   *     return result;
+   *   }-&#42;/;
+   * </pre>
+   */
   private void writeLoadMethodsNative() {
     srcWriter.println("private static native MethodMap loadMethodsNative() /*-{");
     srcWriter.indent();
@@ -395,6 +431,20 @@ public class TypeSerializerCreator {
     srcWriter.println();
   }
 
+  /**
+   * Writes a method to produce a map of class to type string for Java.
+   * 
+   * <pre>
+   * private static Map&lt;Class&lt;?&gt;, String&gt; loadSignaturesJava() {
+   *   Map&lt;Class&lt;?&gt;, String&gt; result = new HashMap&lt;Class&lt;?&gt;, String&gt;();
+   *   result.put(
+   *       com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer.concreteType(),
+   *       &quot;java.lang.String/2004016611&quot;);
+   *   ...
+   *   return result;
+   * }
+   * </pre>
+   */
   private void writeLoadSignaturesJava() {
     srcWriter.println("private static Map<Class<?>, String> loadSignaturesJava() {");
     srcWriter.indent();
@@ -435,6 +485,18 @@ public class TypeSerializerCreator {
     srcWriter.println();
   }
 
+  /**
+   * Writes a method to produce a native map of system hash code to type string.
+   * 
+   * <pre>
+   * private static native JsArrayString loadSignaturesNative() /*-{
+   *   var result = [];
+   *   result[@com.google.gwt.core.client.impl.Impl::getHashCode(Ljava/lang/Object;)(@java.lang.String::class)] = &quot;java.lang.String/2004016611&quot;;
+   *   ...
+   *   return result;
+   * }-&#42;/;
+   * </pre>
+   */
   private void writeLoadSignaturesNative() {
     srcWriter.println("private static native JsArrayString loadSignaturesNative() /*-{");
     srcWriter.indent();
@@ -481,6 +543,16 @@ public class TypeSerializerCreator {
     srcWriter.println();
   }
 
+  /**
+   * Writes the class's static fields.
+   * 
+   * <pre>
+   * private static final Map&lt;String, TypeHandler&gt; methodMapJava;
+   * private static final MethodMap methodMapNative;
+   * private static final Map&lt;Class&lt;?&gt;, String&gt; signatureMapJava;
+   * private static final JsArrayString signatureMapNative;
+   * </pre>
+   */
   private void writeStaticFields() {
     srcWriter.println("private static final Map<String, TypeHandler> methodMapJava;");
     srcWriter.println("private static final MethodMap methodMapNative;");
@@ -489,6 +561,25 @@ public class TypeSerializerCreator {
     srcWriter.println();
   }
 
+  /**
+   * Statically initializes the class fields either for script or JVM.
+   * 
+   * <pre>
+   * static {
+   *   if (GWT.isScript()) {
+   *     methodMapJava = null;
+   *     methodMapNative = loadMethodsNative();
+   *     signatureMapJava = null;
+   *     signatureMapNative = loadSignaturesNative();
+   *   } else {
+   *     methodMapJava = loadMethodsJava();
+   *     methodMapNative = null;
+   *     signatureMapJava = loadSignaturesJava();
+   *     signatureMapNative = null;
+   *   }
+   * }
+   * </pre>
+   */
   private void writeStaticInitializer() {
     srcWriter.println("static {");
     srcWriter.indent();

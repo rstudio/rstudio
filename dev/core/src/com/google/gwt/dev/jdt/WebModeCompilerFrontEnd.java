@@ -136,11 +136,7 @@ public class WebModeCompilerFrontEnd extends BasicWebModeCompiler {
     }
 
     if (doFinish) {
-      try {
-        rebindPermOracle.getGeneratorContext().finish(logger);
-      } catch (UnableToCompleteException e) {
-        throw new RuntimeException("Unable to commit generated files", e);
-      }
+      rebindPermOracle.getGeneratorContext().finish(logger);
     }
 
     // Sanity check all rebind answers.

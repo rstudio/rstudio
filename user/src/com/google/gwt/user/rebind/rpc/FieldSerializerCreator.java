@@ -144,7 +144,7 @@ public class FieldSerializerCreator {
 
     sb.append("new ");
     sb.append(array.getLeafType().getQualifiedSourceName());
-    sb.append("[rank]");
+    sb.append("[size]");
     for (int i = 0; i < array.getRank() - 1; ++i) {
       sb.append("[]");
     }
@@ -225,6 +225,49 @@ public class FieldSerializerCreator {
     }
   }
 
+  /**
+   * Writes an instantiate method. Examples:
+   * 
+   * <h2>Class</h2>
+   * 
+   * <pre>
+   * public static com.google.gwt.sample.client.Student instantiate(
+   *     SerializationStreamReader streamReader) throws SerializationException {
+   *   return new com.google.gwt.sample.client.Student();
+   * }
+   * </pre>
+   * 
+   * <h2>Class with private ctor</h2>
+   * 
+   * <pre>
+   * public static native com.google.gwt.sample.client.Student instantiate(
+   *     SerializationStreamReader streamReader) throws SerializationException /*-{
+   * return @com.google.gwt.sample.client.Student::new()();
+   * }-&#42;/;
+   * </pre>
+   * 
+   * <h2>Array</h2>
+   * 
+   * <pre>
+   * public static com.google.gwt.sample.client.Student[] instantiate(
+   *     SerializationStreamReader streamReader) throws SerializationException {
+   *   int size = streamReader.readInt();
+   *   return new com.google.gwt.sample.client.Student[size];
+   * }
+   * </pre>
+   * 
+   * <h2>Enum</h2>
+   * 
+   * <pre>
+   * public static com.google.gwt.sample.client.Role instantiate(
+   *     SerializationStreamReader streamReader) throws SerializationException {
+   *   int ordinal = streamReader.readInt();
+   *   com.google.gwt.sample.client.Role[] values = com.google.gwt.sample.client.Role.values();
+   *   assert (ordinal &gt;= 0 &amp;&amp; ordinal &lt; values.length);
+   *   return values[ordinal];
+   * }
+   * </pre>
+   */
   private void maybeWriteInstatiateMethod() {
     if (serializableClass.isEnum() == null
         && (serializableClass.isAbstract() || !serializableClass.isDefaultInstantiable())) {
@@ -267,7 +310,7 @@ public class FieldSerializerCreator {
     sourceWriter.indent();
 
     if (isArray != null) {
-      sourceWriter.println("int rank = streamReader.readInt();");
+      sourceWriter.println("int size = streamReader.readInt();");
       sourceWriter.println("return "
           + createArrayInstantiationExpression(isArray) + ";");
     } else if (isEnum != null) {
@@ -287,6 +330,31 @@ public class FieldSerializerCreator {
     sourceWriter.println();
   }
 
+  /**
+   * Write a {@link TypeHandler} for the class, used by Java.
+   * 
+   * <pre>
+   * public static class Handler implements
+   *     com.google.gwt.user.client.rpc.impl.TypeHandler {
+   *   public void deserialize(SerializationStreamReader reader, Object object)
+   *       throws SerializationException {
+   *     com.google.gwt.sample.client.Student_FieldSerializer.deserialize(
+   *         reader, (com.google.gwt.sample.client.Student) object);
+   *   }
+   * 
+   *   public Object instantiate(SerializationStreamReader reader)
+   *       throws SerializationException {
+   *     return com.google.gwt.sample.client.Student_FieldSerializer.instantiate(reader);
+   *   }
+   * 
+   *   public void serialize(SerializationStreamWriter writer, Object object)
+   *       throws SerializationException {
+   *     com.google.gwt.sample.client.Student_FieldSerializer.serialize(
+   *         writer, (com.google.gwt.sample.client.Student) object);
+   *   }
+   * }
+   * </pre>
+   */
   private void maybeWriteTypeHandlerClass() {
     if (serializableClass.isEnum() == null && serializableClass.isAbstract()) {
       /*
@@ -518,6 +586,16 @@ public class FieldSerializerCreator {
     }
   }
 
+  /**
+   * Writes the concreteType method, for loading a Java Class -> TypeHandler
+   * map.
+   * 
+   * <pre>
+   * public static Class&lt;?&gt; concreteType() {
+   *   return com.google.gwt.sample.client.Student.class;
+   * }
+   * </pre>
+   */
   private void writeConcreteTypeMethod() {
     if (customFieldSerializer != null
         && CustomFieldSerializerValidator.getConcreteTypeMethod(customFieldSerializer) != null) {
