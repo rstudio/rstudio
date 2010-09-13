@@ -146,36 +146,28 @@ public class GwtLocaleImpl implements GwtLocale {
 
   /**
    * Add special aliases for a given locale.
-   * 
-   * This includes things like choosing the default script/region for Chinese
-   * based on the other one, handling Norwegian language changes, and treating
-   * pt_BR as the default pt type.
-   * 
+   *
+   * This includes things like choosing the default region for Chinese based on
+   * the script, handling Norwegian language changes, and treating pt_BR as the
+   * default pt type.
+   *
    * @param factory GwtLocaleFactory to create new instances with
    * @param locale locale to add deprecated pair for
    * @param aliases where to store the alias if present
    */
   private static void addSpecialAliases(GwtLocaleFactory factory,
-      GwtLocale locale, List<GwtLocale> aliases) {
+      GwtLocale locale, String initialScript, List<GwtLocale> aliases) {
     String language = locale.getLanguage();
     String script = locale.getScript();
     String region = locale.getRegion();
     String variant = locale.getVariant();
-    if ("zh".equals(language)) {
-      if (script == null) {
-        // infer script from region
-        if ("TW".equals(region)) {
-          aliases.add(factory.fromComponents("zh", "Hant", region, variant));
-        } else if ("CN".equals(region)) {
-          aliases.add(factory.fromComponents("zh", "Hans", region, variant));
-        }
-      } else {
-        if (region == null) {
-          // Add aliases for main users of particular scripts
-          aliases.add(factory.fromComponents("zh", script,
-              "Hant".equals(script) ? "TW" : "CN", variant));
-        }
-      }
+    if ("zh".equals(language) && region == null
+        && (initialScript == null || initialScript.equals(script))) {
+      // Add aliases for main users of particular scripts, but only if the
+      // script matches what was initially supplied.  This is to avoid cases
+      // like zh_TW => zh => zh_CN, while still allowing zh => zh_CN.
+      aliases.add(factory.fromComponents("zh", script,
+          "Hant".equals(script) ? "TW" : "CN", variant));
     } else if ("no".equals(language)) {
       if (variant == null || "BOKMAL".equals(variant)) {
         aliases.add(factory.fromComponents("nb", script, region, null));
@@ -293,7 +285,8 @@ public class GwtLocaleImpl implements GwtLocale {
         ArrayList<GwtLocale> nextGroup = new ArrayList<GwtLocale>();
         nextGroup.add(this);
         // Account for default script
-        String defaultScript = DefaultLanguageScripts.getDefaultScript(language);
+        String defaultScript = DefaultLanguageScripts.getDefaultScript(language,
+            region);
         if (defaultScript != null) {
           if (script == null) {
             nextGroup.add(factory.fromComponents(language, defaultScript,
@@ -303,6 +296,7 @@ public class GwtLocaleImpl implements GwtLocale {
                 variant));
           }
         }
+        String initialScript = script == null ? defaultScript : script;
         while (!nextGroup.isEmpty()) {
           List<GwtLocale> thisGroup = nextGroup;
           nextGroup = new ArrayList<GwtLocale>();
@@ -315,7 +309,7 @@ public class GwtLocaleImpl implements GwtLocale {
               cachedAliases.add(locale);
             }
             addDeprecatedPairs(factory, locale, nextGroup);
-            addSpecialAliases(factory, locale, nextGroup);
+            addSpecialAliases(factory, locale, initialScript, nextGroup);
           }
         }
         cachedAliases = Collections.unmodifiableList(cachedAliases);
@@ -407,7 +401,7 @@ public class GwtLocaleImpl implements GwtLocale {
     }
     // Remove any default script for the language
     if (canonScript != null && canonScript.equals(
-        DefaultLanguageScripts.getDefaultScript(canonLanguage))) {
+        DefaultLanguageScripts.getDefaultScript(canonLanguage, canonRegion))) {
       canonScript = null;
     }
     return factory.fromComponents(canonLanguage, canonScript, canonRegion,
@@ -415,11 +409,20 @@ public class GwtLocaleImpl implements GwtLocale {
   }
 
   public List<GwtLocale> getCompleteSearchList() {
-    // TODO(jat): get zh_Hant to come before zh in search list for zh_TW
+    // TODO(jat): base order on distance from the initial locale, such as the
+    // draft proposal at:
+    //   http://cldr.unicode.org/development/design-proposals/languagedistance
+    // This will ensure that zh_Hant will come before zh in the search list for
+    // zh_TW, and pa_Arab to come before pa in the search list for pa_PK.
     synchronized (cacheLock) {
       if (cachedSearchList == null) {
         cachedSearchList = new ArrayList<GwtLocale>();
         Set<GwtLocale> seen = new HashSet<GwtLocale>();
+        String initialScript = script;
+        if (initialScript == null) {
+          initialScript = DefaultLanguageScripts.getDefaultScript(language,
+              region);
+        }
         List<GwtLocale> thisGroup = new ArrayList<GwtLocale>(this.getAliases());
         seen.addAll(thisGroup);
         GwtLocale defLocale = factory.getDefault();
@@ -428,7 +431,9 @@ public class GwtLocaleImpl implements GwtLocale {
           cachedSearchList.addAll(thisGroup);
           List<GwtLocale> nextGroup = new ArrayList<GwtLocale>();
           for (GwtLocale locale : thisGroup) {
-            List<GwtLocale> work = new ArrayList<GwtLocale>(locale.getAliases());
+            List<GwtLocale> aliases = locale.getAliases();
+            aliases = filterBadScripts(aliases, initialScript);
+            List<GwtLocale> work = new ArrayList<GwtLocale>(aliases);
             work.removeAll(seen);
             nextGroup.addAll(work);
             seen.addAll(work);
@@ -575,5 +580,28 @@ public class GwtLocaleImpl implements GwtLocale {
       }
     }
     return false;
+  }
+
+  /**
+   * Remove aliases which are incompatible with the initial script provided or
+   * defaulted in a locale.
+   * 
+   * @param aliases
+   * @param initialScript
+   * @return copy of aliases with incompatible scripts removed
+   */
+  private List<GwtLocale> filterBadScripts(List<GwtLocale> aliases,
+      String initialScript) {
+    if (initialScript == null) {
+      return aliases;
+    }
+    List<GwtLocale> result = new ArrayList<GwtLocale>();
+    for (GwtLocale alias : aliases) {
+      String aliasScript = alias.getScript();
+      if (aliasScript == null || aliasScript.equals(initialScript)) {
+        result.add(alias);
+      }
+    }
+    return result;
   }
 }

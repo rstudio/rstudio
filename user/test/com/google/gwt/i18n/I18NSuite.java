@@ -31,6 +31,8 @@ import com.google.gwt.i18n.client.I18N_es_MX_RuntimeTest;
 import com.google.gwt.i18n.client.I18N_es_MX_Test;
 import com.google.gwt.i18n.client.I18N_iw_Test;
 import com.google.gwt.i18n.client.I18N_nb_Test;
+import com.google.gwt.i18n.client.I18N_pa_Arab_Test;
+import com.google.gwt.i18n.client.I18N_pa_PK_Test;
 import com.google.gwt.i18n.client.LocaleInfoTest;
 import com.google.gwt.i18n.client.LocaleInfo_ar_Test;
 import com.google.gwt.i18n.client.NumberFormat_ar_Test;
@@ -81,6 +83,8 @@ public class I18NSuite {
     suite.addTestSuite(GwtLocaleTest.class);
     suite.addTestSuite(I18NTest.class);
     suite.addTestSuite(I18N2Test.class);
+    suite.addTestSuite(I18N_pa_Arab_Test.class);
+    suite.addTestSuite(I18N_pa_PK_Test.class);
     suite.addTestSuite(I18N_iw_Test.class);
     suite.addTestSuite(I18N_es_MX_Test.class);
     suite.addTestSuite(I18N_es_MX_RuntimeTest.class);

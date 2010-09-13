@@ -31,22 +31,8 @@ public class GwtLocaleTest extends TestCase {
   private GwtLocaleFactory factory = new GwtLocaleFactoryImpl();
   
   public void testAliases() {
-    GwtLocale zhCN = factory.fromString("zh_CN");
-    List<GwtLocale> aliases = zhCN.getAliases();
-    assertEquals(2, aliases.size());
-    assertEquals(aliases.get(0), zhCN);
-    assertContainsAndGetPosition(aliases, factory.fromString("zh_Hans_CN"));
-    GwtLocale zhHant = factory.fromString("zh_Hant");
-    aliases = zhHant.getAliases();
-    assertEquals(aliases.get(0), factory.fromString("zh_TW"));
-    assertContainsAndGetPosition(aliases, factory.fromString("zh_Hant_TW"));
-    GwtLocale zhHans = factory.fromString("zh_Hans");
-    aliases = zhHans.getAliases();
-    assertEquals(aliases.get(0), zhCN);
-    assertContainsAndGetPosition(aliases, factory.fromString("zh_Hans_CN"));
-    assertContainsAndGetPosition(aliases, zhHans);
     GwtLocale en = factory.fromString("en");
-    aliases = en.getAliases();
+    List<GwtLocale> aliases = en.getAliases();
     assertEquals(aliases.get(0), en);
     GwtLocale enLatn = factory.fromString("en_Latn");
     assertContainsAndGetPosition(aliases, enLatn);
@@ -76,6 +62,22 @@ public class GwtLocaleTest extends TestCase {
     GwtLocale ji = factory.fromString("ji");
     aliases = ji.getAliases();
     assertContainsAndGetPosition(aliases, factory.fromString("yi"));
+  }
+
+  public void testCanonicalForm() {
+    GwtLocale zhCN = factory.fromString("zh_CN");
+    GwtLocale zhHansCN = factory.fromString("zh_Hans_CN");
+    GwtLocale zhHant = factory.fromString("zh_Hant");
+    GwtLocale zhTW = factory.fromString("zh_TW");
+    GwtLocale zhHantTW = factory.fromString("zh_Hant_TW");
+    GwtLocale zhHans = factory.fromString("zh_Hans");
+    assertEquals(zhCN, zhHansCN.getCanonicalForm());
+    assertEquals(zhTW, zhHantTW.getCanonicalForm());
+    assertEquals(zhCN, zhHans.getCanonicalForm());
+    assertEquals(zhTW, zhHant.getCanonicalForm());
+    GwtLocale paPK = factory.fromString("pa_PK");
+    GwtLocale paArabPK = factory.fromString("pa_Arab_PK");
+    assertEquals(paPK, paArabPK.getCanonicalForm());
   }
 
   public void testCompare() {
@@ -207,6 +209,27 @@ public class GwtLocaleTest extends TestCase {
     assertNull(priv.getVariant());
     assertFalse(priv.isDefault());
   }
+  public void testScriptAliases() {
+    GwtLocale zhCN = factory.fromString("zh_CN");
+    List<GwtLocale> aliases = zhCN.getAliases();
+    assertEquals(2, aliases.size());
+    assertEquals(aliases.get(0), zhCN);
+    assertContainsAndGetPosition(aliases, factory.fromString("zh_Hans_CN"));
+    GwtLocale zhHant = factory.fromString("zh_Hant");
+    aliases = zhHant.getAliases();
+    assertEquals(aliases.get(0), factory.fromString("zh_TW"));
+    assertContainsAndGetPosition(aliases, factory.fromString("zh_Hant_TW"));
+    GwtLocale zhHans = factory.fromString("zh_Hans");
+    aliases = zhHans.getAliases();
+    assertEquals(aliases.get(0), zhCN);
+    assertContainsAndGetPosition(aliases, factory.fromString("zh_Hans_CN"));
+    assertContainsAndGetPosition(aliases, zhHans);
+    GwtLocale pa = factory.fromString("pa");
+    GwtLocale paPK = factory.fromString("pa_PK");
+    GwtLocale paArabPK = factory.fromString("pa_Arab_PK");
+    aliases = paPK.getAliases();
+    assertContainsAndGetPosition(aliases, paArabPK);
+  }
 
   public void testSearchList() {
     GwtLocale nbNO = factory.fromString("nb_NO");
@@ -243,6 +266,18 @@ public class GwtLocaleTest extends TestCase {
     idx_default = assertContainsAndGetPosition(searchList,
         factory.getDefault());
     assertEquals(searchList.size() - 1, idx_default);
+    GwtLocale pa = factory.fromString("pa");
+    GwtLocale paPK = factory.fromString("pa_PK");
+    GwtLocale paArab = factory.fromString("pa_Arab");
+    GwtLocale paGuru = factory.fromString("pa_Guru");
+    searchList = paPK.getCompleteSearchList();
+    int arabPos = assertContainsAndGetPosition(searchList, paArab);
+    int paPos = assertContainsAndGetPosition(searchList, pa);
+    assertNotContains(searchList, paGuru);
+    // See TODO in {@link GwtLocaleImpl#getCompleteSearchList()} for what is
+    // needed for this test to pass (and likewise for zh_Hant appearing before
+    // zh in the search list for zh_TW).
+    // assertTrue(arabPos < paPos);
   }
   
   private <T> int assertContainsAndGetPosition(List<T> list, T value) {
