@@ -62,7 +62,7 @@ public class LoadExpensesDB implements EntryPoint {
     generateButton = new Button("Generate Data");
     deleteButton = new Button("Delete everything");
     amountTextBox = new TextBox();
-    amountTextBox.setText("20000");
+    amountTextBox.setText("200");
     
     countEmployeesButton = new Button("Count Employees");
     countEmployeesLabel = new Label("-- Employees");

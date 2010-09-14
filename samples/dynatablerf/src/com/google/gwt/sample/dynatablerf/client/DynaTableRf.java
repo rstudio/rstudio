@@ -71,7 +71,6 @@ public class DynaTableRf implements EntryPoint {
     // Add remote logging handler
     RequestFactoryLogHandler.LoggingRequestProvider provider =
       new RequestFactoryLogHandler.LoggingRequestProvider() {
-        @Override
         public LoggingRequest getLoggingRequest() {
           return requests.loggingRequest();
         }

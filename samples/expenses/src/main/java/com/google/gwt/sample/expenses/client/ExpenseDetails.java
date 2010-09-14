@@ -92,6 +92,23 @@ import java.util.Set;
  */
 public class ExpenseDetails extends Composite {
 
+  interface ExpenseDetailsUiBinder extends UiBinder<Widget, ExpenseDetails> {
+  }
+
+  /**
+   * The resources applied to the table.
+   */
+  interface TableResources extends CellTable.Resources {
+    @Source({CellTable.Style.DEFAULT_CSS, "ExpenseDetailsCellTable.css"})
+    TableStyle cellTableStyle();
+  }
+
+  /**
+   * The styles applied to the table.
+   */
+  interface TableStyle extends CellTable.Style {
+  }
+
   interface Template extends SafeHtmlTemplates {
     @Template("<select style=\"background-color:white;border:1px solid "
         + "#707172;width:10em;margin-right:10px;\" disabled=\"true\"><option>"
@@ -102,46 +119,6 @@ public class ExpenseDetails extends Composite {
         + "#707172;width:10em;margin-right:10px;\"><option></option>{0}{1}"
         + "</select>")
     SafeHtml enabled(SafeHtml approvedOption, SafeHtml deniedOption);
-  }
-
-  private static Template template;
-
-  /**
-   * The maximum amount that can be approved for a given report.
-   */
-  private static final int MAX_COST = 250;
-
-  /**
-   * The auto refresh interval in milliseconds.
-   */
-  private static final int REFRESH_INTERVAL = 5000;
-
-  /**
-   * The ViewData associated with the {@link ApprovalCell}.
-   */
-  private static class ApprovalViewData {
-    private final String pendingApproval;
-    private String rejectionText;
-
-    public ApprovalViewData(String approval) {
-      this.pendingApproval = approval;
-    }
-
-    public String getPendingApproval() {
-      return pendingApproval;
-    }
-
-    public String getRejectionText() {
-      return rejectionText;
-    }
-
-    public boolean isRejected() {
-      return rejectionText != null;
-    }
-
-    public void reject(String text) {
-      this.rejectionText = text;
-    }
   }
 
   /**
@@ -279,16 +256,44 @@ public class ExpenseDetails extends Composite {
   }
 
   /**
+   * The ViewData associated with the {@link ApprovalCell}.
+   */
+  private static class ApprovalViewData {
+    private final String pendingApproval;
+    private String rejectionText;
+
+    public ApprovalViewData(String approval) {
+      this.pendingApproval = approval;
+    }
+
+    public String getPendingApproval() {
+      return pendingApproval;
+    }
+
+    public String getRejectionText() {
+      return rejectionText;
+    }
+
+    public boolean isRejected() {
+      return rejectionText != null;
+    }
+
+    public void reject(String text) {
+      this.rejectionText = text;
+    }
+  }
+
+  /**
    * The popup used to enter the rejection reason.
    */
   private class DenialPopup extends PopupPanel {
-    private Button cancelButton = new Button("Cancel", new ClickHandler() {
+    private final Button cancelButton = new Button("Cancel", new ClickHandler() {
       public void onClick(ClickEvent event) {
         reasonDenied = "";
         hide();
       }
     });
-    private Button confirmButton = new Button("Confirm", new ClickHandler() {
+    private final Button confirmButton = new Button("Confirm", new ClickHandler() {
       public void onClick(ClickEvent event) {
         reasonDenied = reasonBox.getText();
         hide();
@@ -296,7 +301,7 @@ public class ExpenseDetails extends Composite {
     });
 
     private ExpenseProxy expenseRecord;
-    private TextBox reasonBox = new TextBox();
+    private final TextBox reasonBox = new TextBox();
     private String reasonDenied;
 
     public DenialPopup() {
@@ -342,22 +347,17 @@ public class ExpenseDetails extends Composite {
     }
   }
 
-  interface ExpenseDetailsUiBinder extends UiBinder<Widget, ExpenseDetails> {
-  }
+  private static Template template;
 
   /**
-   * The styles applied to the table.
+   * The maximum amount that can be approved for a given report.
    */
-  interface TableStyle extends CellTable.Style {
-  }
+  private static final int MAX_COST = 250;
 
   /**
-   * The resources applied to the table.
+   * The auto refresh interval in milliseconds.
    */
-  interface TableResources extends CellTable.Resources {
-    @Source({CellTable.Style.DEFAULT_CSS, "ExpenseDetailsCellTable.css"})
-    TableStyle cellTableStyle();
-  }
+  private static final int REFRESH_INTERVAL = 5000;
 
   private static ExpenseDetailsUiBinder uiBinder = GWT.create(
       ExpenseDetailsUiBinder.class);
@@ -395,7 +395,7 @@ public class ExpenseDetails extends Composite {
   @UiField
   Element unreconciledLabel;
 
-  private List<SortableHeader> allHeaders = new ArrayList<SortableHeader>();
+  private final List<SortableHeader> allHeaders = new ArrayList<SortableHeader>();
 
   private ApprovalCell approvalCell;
 
@@ -495,25 +495,23 @@ public class ExpenseDetails extends Composite {
     });
   }
 
+  public Anchor getReportsLink() {
+    return reportsLink;
+  }
+
   public void init(EventBus eventBus) {
     EntityProxyChange.registerForProxyType(eventBus, ExpenseProxy.class,
         new EntityProxyChange.Handler<ExpenseProxy>() {
-          @Override
           public void onProxyChange(EntityProxyChange<ExpenseProxy> event) {
             onExpenseRecordChanged(event);
           }
         });
     EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class,
         new EntityProxyChange.Handler<ReportProxy>() {
-          @Override
           public void onProxyChange(EntityProxyChange<ReportProxy> event) {
             onReportChanged(event);
           }
         });
-  }
-
-  public Anchor getReportsLink() {
-    return reportsLink;
   }
 
   public void onExpenseRecordChanged(EntityProxyChange<ExpenseProxy> event) {
@@ -908,6 +906,7 @@ public class ExpenseDetails extends Composite {
     // Cancel the timer since we are about to send a request.
     refreshTimer.cancel();
     lastReceiver = new Receiver<List<ExpenseProxy>>() {
+      @Override
       public void onSuccess(List<ExpenseProxy> newValues,
           Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
@@ -966,6 +965,7 @@ public class ExpenseDetails extends Composite {
     ReportProxy editableReport = editRequest.edit(report);
     editableReport.setNotes(pendingNotes);
     editRequest.fire(new Receiver<Void>() {
+      @Override
       public void onSuccess(Void ignore, Set<SyncResult> response) {
         // We expect onReportChanged to be called if there are no errors.
         String errorMessage = getErrorMessageFromSync(response);
@@ -1052,6 +1052,7 @@ public class ExpenseDetails extends Composite {
     editableRecord.setApproval(approval);
     editableRecord.setReasonDenied(reasonDenied);
     editRequest.fire(new Receiver<Void>() {
+      @Override
       public void onSuccess(Void ignore, Set<SyncResult> response) {
         String errorMessage = getErrorMessageFromSync(response);
         if (errorMessage.length() > 0) {
