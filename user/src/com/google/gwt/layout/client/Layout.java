@@ -159,6 +159,7 @@ public class Layout {
         targetHeight;
 
     Alignment hPos = Alignment.STRETCH, vPos = Alignment.STRETCH;
+    boolean visible = true;
 
     Layer(Element container, Element child, Object userObject) {
       this.container = container;
@@ -172,7 +173,7 @@ public class Layout {
      * <p>
      * This is the element that sits between the parent and child elements. It
      * is normally necessary to operate on this element only when you need to
-     * modify certain CSS properties, such as visibility.
+     * modify CSS properties that are not directly modeled by the Layer class.
      * </p>
      * 
      * @return the container element
@@ -314,6 +315,15 @@ public class Layout {
       this.targetHeight = height;
       this.targetTopUnit = topUnit;
       this.targetHeightUnit = heightUnit;
+    }
+
+    /**
+     * Sets the layer's visibility.
+     * 
+     * @param visible
+     */
+    public void setVisible(boolean visible) {
+      this.visible = visible;
     }
   }
 

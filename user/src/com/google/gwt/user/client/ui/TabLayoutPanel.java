@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -601,8 +600,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   private void layoutChild(Widget child) {
     panel.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
     panel.setWidgetTopBottom(child, barHeight, barUnit, 0, Unit.PX);
-    panel.getWidgetContainerElement(child).getStyle().setDisplay(
-        Display.NONE);
+    panel.setWidgetVisible(child, false);
     child.addStyleName(CONTENT_STYLE);
     child.setVisible(false);
   }

@@ -107,6 +107,49 @@ public class TabLayoutPanelTest extends GWTTestCase {
     });
   }
 
+  /**
+   * Ensures that hidden children are layed out properly when their tabs are
+   * selected, when they're sized in EM units. This has been a problem on IE8
+   * (see issue 4694).
+   */
+  @DoNotRunWith({Platform.HtmlUnitBug})
+  public void testHiddenChildLayoutEM() {
+    final TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
+    p.setSize("128px", "128px");
+    RootPanel.get().add(p);
+
+    final Label foo = new Label("foo");
+    p.add(foo, new Label("foo"));
+
+    // Add the 'bar' label in a nested LayoutPanel. This is meant to test that
+    // layout propagates correctly into nested layout panels (something that
+    // should happen naturally, but we have a specific hack for on IE8).
+    final DockLayoutPanel inner = new DockLayoutPanel(Unit.EM);
+    final Label bar = new Label("bar");
+    inner.addSouth(bar, 2);
+    inner.add(new Label("center"));
+    p.add(inner, new Label("bar"));
+
+    delayTestFinish(2000);
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        p.selectTab(1);
+        DeferredCommand.addCommand(new Command() {
+          public void execute() {
+            // Assert that the 'bar' label is of non-zero size on both axes.
+            // The problem fixed in issue 4694 was causing its height to be
+            // zero on IE8, because the EM units weren't being calculated
+            // properly when it was initially hidden.
+            assertTrue(bar.getOffsetWidth() > 0);
+            assertTrue(bar.getOffsetHeight() > 0);
+
+            finishTest();
+          }
+        });
+      }
+    });
+  }
+
   public void testInsertBeforeSelected() {
     TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
     p.add(new Label("foo"), "foo");

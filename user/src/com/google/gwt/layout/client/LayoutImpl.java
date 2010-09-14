@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
@@ -137,6 +138,12 @@ class LayoutImpl {
 
   public void layout(Layer layer) {
     Style style = layer.container.getStyle();
+
+    if (layer.visible) {
+      style.clearDisplay();
+    } else {
+      style.setDisplay(Display.NONE);
+    }
 
     style.setProperty(
         "left", layer.setLeft ? (layer.left + layer.leftUnit.getType()) : "");

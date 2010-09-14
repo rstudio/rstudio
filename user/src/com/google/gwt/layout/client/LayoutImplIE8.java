@@ -15,22 +15,53 @@
  */
 package com.google.gwt.layout.client;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.layout.client.Layout.Layer;
 
 /**
- * This implementation is used on IE7 and IE8. Unlike {@link LayoutImpl}, it
- * converts all values to pixels before setting them. This is necessary because
- * these browsers incorrectly calculate the relative sizes and positions of CSS
+ * This implementation is used on IE8. Unlike {@link LayoutImpl}, it converts
+ * all values to pixels before setting them. This is necessary because this
+ * browser incorrectly calculates the relative sizes and positions of CSS
  * properties specified in certain units (e.g., when the value of an 'em' is
  * non-integral in pixels).
  */
 public class LayoutImplIE8 extends LayoutImpl {
 
+  private static native Layer getLayer(Element container) /*-{
+    return container.__layer;
+  }-*/;
+
+  private static native void setLayer(Element container, Layer layer) /*-{
+    // Potential leak: This is cleaned up in detach().
+    container.__layer = layer;
+  }-*/;
+
   @Override
   public void layout(Layer layer) {
     Style style = layer.container.getStyle();
+    setLayer(layer.container, layer);
+
+    // Whenever the visibility of a layer changes, we need to ensure that
+    // layout() is run again for it. This is because the translation of units
+    // to pixel values will be incorrect for invisible elements, and thus must
+    // be fixed when they become visible.
+    if (layer.visible) {
+      String oldDisplay = style.getDisplay();
+      style.clearDisplay();
+
+      // We control the layer element, so assume that any non-zero display
+      // property means it was set to 'none'.
+      if (oldDisplay.length() > 0) {
+        updateVisibility(layer.container);
+      }
+    } else {
+      style.setDisplay(Display.NONE);
+    }
 
     if (layer.setLeft) {
       setValue(layer, "left", layer.left, layer.leftUnit, false, false);
@@ -95,6 +126,20 @@ public class LayoutImplIE8 extends LayoutImpl {
     }
   }
 
+  @Override
+  public void onDetach(Element parent) {
+    removeLayerRefs(parent);
+  }
+
+  private native void removeLayerRefs(Element parent) /*-{
+    for (var i = 0; i < parent.childNodes.length; ++i) {
+      var container = parent.childNodes[i];
+      if (container.__layer) {
+        container.__layer = null;
+      }
+    }
+  }-*/;
+
   private void setValue(Layer layer, String prop, double value, Unit unit,
       boolean vertical, boolean noNegative) {
     switch (unit) {
@@ -118,5 +163,24 @@ public class LayoutImplIE8 extends LayoutImpl {
 
     layer.getContainerElement().getStyle().setProperty(prop,
         (int) (value + 0.5), unit);
+  }
+
+  private void updateVisibility(Element container) {
+    // If this element has an associated layer, re-run layout for it.
+    Layer layer = getLayer(container);
+    if (layer != null) {
+      layout(layer);
+    }
+
+    // Walk all children, looking for elements with a '__layer' property. If one
+    // exists, call layout() for that element. This is not cheap, but it's the
+    // only way to correctly ensure that layout units get translated correctly.
+    NodeList<Node> nodes = container.getChildNodes();
+    for (int i = 0; i < nodes.getLength(); ++i) {
+      Node node = nodes.getItem(i);
+      if (node.getNodeType() == Node.ELEMENT_NODE) {
+        updateVisibility(node.<Element>cast());
+      }
+    }
   }
 }

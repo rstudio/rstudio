@@ -20,6 +20,8 @@ import static com.google.gwt.dom.client.Style.Unit.PX;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -154,7 +156,15 @@ class LayoutImplIE6 extends LayoutImplIE8 {
 
   @Override
   public void layout(Layer layer) {
-    Element elem = layer.getContainerElement();
+    Element elem = layer.container;
+    Style style = elem.getStyle();
+
+    if (layer.visible) {
+      style.clearDisplay();
+    } else {
+      style.setDisplay(Display.NONE);
+    }
+
     setLayer(elem, layer);
   }
 

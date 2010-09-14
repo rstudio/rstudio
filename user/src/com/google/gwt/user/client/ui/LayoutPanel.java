@@ -344,8 +344,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
    */
   public void setWidgetVisible(Widget child, boolean visible) {
     assertIsChild(child);
-    Element container = getWidgetContainerElement(child);
-    setVisible(container, visible);
+    getLayer(child).setVisible(visible);
     child.setVisible(visible);
     animate(0);
   }
