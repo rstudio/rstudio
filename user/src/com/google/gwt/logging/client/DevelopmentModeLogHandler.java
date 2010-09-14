@@ -29,7 +29,7 @@ import java.util.logging.LogRecord;
 public class DevelopmentModeLogHandler extends Handler {
   
   public DevelopmentModeLogHandler() {
-    setFormatter(new TextLogFormatter());
+    setFormatter(new TextLogFormatter(false));
     setLevel(Level.ALL);
   }
 

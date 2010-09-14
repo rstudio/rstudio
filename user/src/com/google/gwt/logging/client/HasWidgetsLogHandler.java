@@ -37,7 +37,7 @@ public class HasWidgetsLogHandler extends Handler {
 
   public HasWidgetsLogHandler(HasWidgets container) {
     this.widgetContainer = container;
-    setFormatter(new HtmlLogFormatter());
+    setFormatter(new HtmlLogFormatter(true));
     setLevel(Level.ALL);
   }
 

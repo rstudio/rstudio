@@ -16,8 +16,9 @@
 
 package com.google.gwt.logging.client;
 
+import com.google.gwt.logging.impl.FormatterImpl;
+
 import java.util.Date;
-import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
@@ -26,13 +27,25 @@ import java.util.logging.LogRecord;
  * and GetHtmlSuffix methods rather than format to ensure that the message
  * is properly escaped.
  */
-public class HtmlLogFormatter extends Formatter {
+public class HtmlLogFormatter extends FormatterImpl {
+  private static String newline = "__GWT_LOG_FORMATTER_BR__";
+  private boolean showStackTraces;
+  
+  public HtmlLogFormatter(boolean showStackTraces) {
+    this.showStackTraces = showStackTraces;
+  }
 
   // TODO(unnurg): Handle the outputting of Throwables.
   @Override
   public String format(LogRecord event) {
     StringBuilder html = new StringBuilder(getHtmlPrefix(event));
-    html.append(getEscapedMessage(event));
+    html.append(getHtmlPrefix(event));
+    html.append(getRecordInfo(event, " "));
+    html.append(getEscaped(event.getMessage()));
+    if (showStackTraces) {
+      html.append(getEscaped(getStackTraceAsString(
+          event.getThrown(), newline, "&nbsp;&nbsp;&nbsp;")));
+    }
     html.append(getHtmlSuffix(event));
     return html.toString();
   }
@@ -44,17 +57,10 @@ public class HtmlLogFormatter extends Formatter {
     prefix.append(getColor(event.getLevel().intValue()));
     prefix.append("'>");
     prefix.append("<code>");
-    prefix.append(date.toString());
-    prefix.append(" ");
-    prefix.append(event.getLoggerName());
-    prefix.append(" ");
-    prefix.append(event.getLevel().getName());
-    prefix.append(": ");
     return prefix.toString();
   }
   
   protected String getHtmlSuffix(LogRecord event) {
-    // TODO(unnurg): output throwables correctly
     return "</code></span>";
   }
   
@@ -86,11 +92,11 @@ public class HtmlLogFormatter extends Formatter {
     return "#000"; // black
   }
 
-  // TODO(unnurg): There must be a cleaner way to do this...
-  private String getEscapedMessage(LogRecord event) {
-    String text = event.getMessage();
+  private String getEscaped(String text) {
     text = text.replaceAll("<", "&lt;");
     text = text.replaceAll(">", "&gt;");
+    // but allow the line breaks that we put in ourselves
+    text = text.replaceAll(newline, "<br>");
     return text;
   }
 

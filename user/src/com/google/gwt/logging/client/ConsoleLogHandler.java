@@ -29,7 +29,7 @@ import java.util.logging.LogRecord;
 public class ConsoleLogHandler extends Handler {
 
   public ConsoleLogHandler() {
-    setFormatter(new TextLogFormatter());
+    setFormatter(new TextLogFormatter(true));
     setLevel(Level.ALL);
   }
   

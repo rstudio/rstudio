@@ -28,7 +28,7 @@ import java.util.logging.LogRecord;
 public class FirebugLogHandler extends Handler {
   
   public FirebugLogHandler() {
-    setFormatter(new TextLogFormatter());
+    setFormatter(new TextLogFormatter(true));
     setLevel(Level.ALL);  
   }
 

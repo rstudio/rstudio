@@ -28,7 +28,7 @@ import java.util.logging.LogRecord;
 public class SystemLogHandler extends Handler {
 
   public SystemLogHandler() {
-    setFormatter(new TextLogFormatter());
+    setFormatter(new TextLogFormatter(true));
     setLevel(Level.ALL);
   }
   

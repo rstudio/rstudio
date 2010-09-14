@@ -16,28 +16,27 @@
 
 package com.google.gwt.logging.client;
 
-import java.util.Date;
-import java.util.logging.Formatter;
+import com.google.gwt.logging.impl.FormatterImpl;
+
 import java.util.logging.LogRecord;
 
 /**
  * Formats LogRecords into 2 lines of text.
  */
-public class TextLogFormatter extends Formatter {
+public class TextLogFormatter extends FormatterImpl {
+  private boolean showStackTraces;
+  
+  public TextLogFormatter(boolean showStackTraces) {
+    this.showStackTraces = showStackTraces;
+  }
 
   @Override
   public String format(LogRecord event) {
-    Date date = new Date(event.getMillis());
     StringBuilder message = new StringBuilder();
-    message.append(date.toString());
-    message.append(" ");
-    message.append(event.getLoggerName());
-    message.append("\n");
-    message.append(event.getLevel().getName());
-    message.append(": ");
+    message.append(getRecordInfo(event, "\n"));
     message.append(event.getMessage());
-    if (event.getThrown() != null) {
-      // TODO(unnurg): output throwables correctly
+    if (showStackTraces) {
+      message.append(getStackTraceAsString(event.getThrown(), "\n", "\t"));
     }
     return message.toString();
   }
