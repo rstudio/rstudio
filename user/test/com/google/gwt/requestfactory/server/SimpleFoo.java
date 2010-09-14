@@ -97,6 +97,9 @@ public class SimpleFoo {
 
   private SimpleBar barField;
   private SimpleFoo fooField;
+  
+  private String nullField;
+  private SimpleBar barNullField;
 
   public SimpleFoo() {
     intId = 42;
@@ -107,6 +110,8 @@ public class SimpleFoo {
     created = new Date();
     barField = SimpleBar.getSingleton();
     boolField = true;
+    nullField = null;
+    barNullField = null;
   }
 
   public Long countSimpleFooWithUserNameSideEffect() {
@@ -116,6 +121,10 @@ public class SimpleFoo {
 
   public SimpleBar getBarField() {
     return barField;
+  }
+
+  public SimpleBar getBarNullField() {
+    return barNullField;
   }
 
   /**
@@ -188,6 +197,10 @@ public class SimpleFoo {
     return longField;
   }
 
+  public String getNullField() {
+    return nullField;
+  }
+
   /**
    * @return the otherBoolField
    */
@@ -228,6 +241,10 @@ public class SimpleFoo {
 
   public void setBarField(SimpleBar barField) {
     this.barField = barField;
+  }
+
+  public void setBarNullField(SimpleBar barNullField) {
+    this.barNullField = barNullField;
   }
 
   /**
@@ -298,6 +315,10 @@ public class SimpleFoo {
 
   public void setLongField(Long longField) {
     this.longField = longField;
+  }
+
+  public void setNullField(String nullField) {
+    this.nullField = nullField;
   }
 
   /**

@@ -58,10 +58,18 @@ public interface SimpleFooProxy extends EntityProxy {
   Property<SimpleBarProxy> barField = new Property<SimpleBarProxy>("barField",
       SimpleBarProxy.class);
 
+  Property<SimpleBarProxy> barNullField = new Property<SimpleBarProxy>("barNullField",
+      SimpleBarProxy.class);
+
   Property<SimpleFooProxy> fooField = new Property<SimpleFooProxy>("fooField",
       SimpleFooProxy.class);
 
+  Property<String> nullField = new Property<String>("nullField", "A nullable field",
+      String.class);
+  
   SimpleBarProxy getBarField();
+  
+  SimpleBarProxy getBarNullField();
   
   BigDecimal getBigDecimalField();
   
@@ -87,6 +95,8 @@ public interface SimpleFooProxy extends EntityProxy {
   
   Long getLongField();
   
+  String getNullField();
+  
   Boolean getOtherBoolField();
   
   String getPassword();
@@ -96,6 +106,8 @@ public interface SimpleFooProxy extends EntityProxy {
   String getUserName();
   
   void setBarField(SimpleBarProxy barField);
+
+  void setBarNullField(SimpleBarProxy barNullField);
 
   void setBigDecimalField(BigDecimal d);
 
@@ -118,6 +130,8 @@ public interface SimpleFooProxy extends EntityProxy {
   void setIntId(Integer intId);
 
   void setLongField(Long longField);
+
+  void setNullField(String nullField);
 
   void setOtherBoolField(Boolean boolField);
 

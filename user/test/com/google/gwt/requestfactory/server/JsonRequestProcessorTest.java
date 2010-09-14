@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.RequestData;
+import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleEnum;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.WriteOperation;
@@ -40,7 +41,7 @@ public class JsonRequestProcessorTest extends TestCase {
     BAR, BAZ
   }
 
-  private JsonRequestProcessor requestProcessor;;
+  private JsonRequestProcessor requestProcessor;
 
   @Override
   public void setUp() {
@@ -73,6 +74,20 @@ public class JsonRequestProcessorTest extends TestCase {
         dec.toBigInteger().toString());
     // enums
     assertTypeAndValueEquals(Foo.class, Foo.BAR, "" + Foo.BAR.ordinal());
+    
+    // nulls
+    assertTypeAndValueEquals(String.class, null, null);
+    assertTypeAndValueEquals(Integer.class, null, null);
+    assertTypeAndValueEquals(Byte.class, null, null);
+    assertTypeAndValueEquals(Short.class, null, null);
+    assertTypeAndValueEquals(Float.class, null, null);
+    assertTypeAndValueEquals(Double.class, null, null);
+    assertTypeAndValueEquals(Long.class, null, null);
+    assertTypeAndValueEquals(Boolean.class, null, null);
+    assertTypeAndValueEquals(Date.class, null, null);
+    assertTypeAndValueEquals(BigDecimal.class, null, null);
+    assertTypeAndValueEquals(BigInteger.class, null, null);
+    assertTypeAndValueEquals(Foo.class, null, null);
   }
 
   public void testEncodePropertyValue() {
@@ -91,102 +106,119 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEncodedType(Double.class, Foo.BAR);
     assertEncodedType(Boolean.class, true);
     assertEncodedType(Boolean.class, false);
+    // nulls stay null
+    assertNull(requestProcessor.encodePropertyValue(null));
   }
 
-  public void testEndToEnd() {
+  public void testEndToEnd() throws Exception {
     com.google.gwt.requestfactory.server.SimpleFoo.reset();
-    try {
-      // fetch object
-      JSONObject foo = fetchVerifyAndGetInitialObject();
+    // fetch object
+    JSONObject foo = fetchVerifyAndGetInitialObject();
 
-      // modify fields and sync
-      foo.put("intId", 45);
-      foo.put("userName", "JSC");
-      foo.put("longField", "" + 9L);
-      foo.put("enumField", SimpleEnum.BAR.ordinal());
-      foo.put("boolField", false);
-      Date now = new Date();
-      foo.put("created", "" + now.getTime());
+    // modify fields and sync
+    foo.put("intId", 45);
+    foo.put("userName", "JSC");
+    foo.put("longField", "" + 9L);
+    foo.put("enumField", SimpleEnum.BAR.ordinal());
+    foo.put("boolField", false);
+    Date now = new Date();
+    foo.put("created", "" + now.getTime());
 
-      JSONObject result = getResultFromServer(foo);
+    JSONObject result = getResultFromServer(foo);
 
-      // check modified fields and no violations
-      SimpleFoo fooResult = SimpleFoo.getSingleton();
-      JSONArray updateArray = result.getJSONObject("sideEffects").getJSONArray(
-          "UPDATE");
-      assertEquals(1, updateArray.length());
-      assertEquals(1, updateArray.getJSONObject(0).length());
-      assertTrue(updateArray.getJSONObject(0).has("id"));
-      assertFalse(updateArray.getJSONObject(0).has("violations"));
-      assertEquals(45, (int) fooResult.getIntId());
-      assertEquals("JSC", fooResult.getUserName());
-      assertEquals(now, fooResult.getCreated());
-      assertEquals(9L, (long) fooResult.getLongField());
-      assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.BAR,
-          fooResult.getEnumField());
-      assertEquals(false, (boolean) fooResult.getBoolField());
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail(e.toString());
-    }
+    // check modified fields and no violations
+    SimpleFoo fooResult = SimpleFoo.getSingleton();
+    JSONArray updateArray = result.getJSONObject("sideEffects").getJSONArray(
+        "UPDATE");
+    assertEquals(1, updateArray.length());
+    assertEquals(1, updateArray.getJSONObject(0).length());
+    assertTrue(updateArray.getJSONObject(0).has("id"));
+    assertFalse(updateArray.getJSONObject(0).has("violations"));
+    assertEquals(45, (int) fooResult.getIntId());
+    assertEquals("JSC", fooResult.getUserName());
+    assertEquals(now, fooResult.getCreated());
+    assertEquals(9L, (long) fooResult.getLongField());
+    assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.BAR,
+        fooResult.getEnumField());
+    assertEquals(false, (boolean) fooResult.getBoolField());
   }
 
-  public void testEndToEndSmartDiff_NoChange() {
+  public void testEndToEndSmartDiff_NoChange() throws Exception {
     com.google.gwt.requestfactory.server.SimpleFoo.reset();
-    try {
-      // fetch object
-      JSONObject foo = fetchVerifyAndGetInitialObject();
+    // fetch object
+    JSONObject foo = fetchVerifyAndGetInitialObject();
 
-      // change the value on the server behind the back
-      SimpleFoo fooResult = SimpleFoo.getSingleton();
-      fooResult.setUserName("JSC");
-      fooResult.setIntId(45);
+    // change the value on the server behind the back
+    SimpleFoo fooResult = SimpleFoo.getSingleton();
+    fooResult.setUserName("JSC");
+    fooResult.setIntId(45);
 
-      // modify fields and sync -- there should be no change on the server.
-      foo.put("intId", 45);
-      foo.put("userName", "JSC");
-      JSONObject result = getResultFromServer(foo);
+    // modify fields and sync -- there should be no change on the server.
+    foo.put("intId", 45);
+    foo.put("userName", "JSC");
+    JSONObject result = getResultFromServer(foo);
 
-      // check modified fields and no violations
-      assertFalse(result.getJSONObject("sideEffects").has("UPDATE"));
-      fooResult = SimpleFoo.getSingleton();
-      assertEquals(45, (int) fooResult.getIntId());
-      assertEquals("JSC", fooResult.getUserName());
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail(e.toString());
-    }
+    // check modified fields and no violations
+    assertFalse(result.getJSONObject("sideEffects").has("UPDATE"));
+    fooResult = SimpleFoo.getSingleton();
+    assertEquals(45, (int) fooResult.getIntId());
+    assertEquals("JSC", fooResult.getUserName());
   }
 
-  public void testEndToEndSmartDiff_SomeChange() {
+  public void testEndToEndSmartDiff_SomeChangeWithNull() throws Exception {
     com.google.gwt.requestfactory.server.SimpleFoo.reset();
-    try {
-      // fetch object
-      JSONObject foo = fetchVerifyAndGetInitialObject();
+    // fetch object
+    JSONObject foo = fetchVerifyAndGetInitialObject();
 
-      // change some fields but don't change other fields.
-      SimpleFoo fooResult = SimpleFoo.getSingleton();
-      fooResult.setUserName("JSC");
-      fooResult.setIntId(45);
-      foo.put("userName", "JSC");
-      foo.put("intId", 45);
-      Date now = new Date();
-      long newTime = now.getTime() + 10000;
-      foo.put("created", "" + newTime);
+    // change some fields but don't change other fields.
+    SimpleFoo fooResult = SimpleFoo.getSingleton();
+    fooResult.setUserName("JSC");
+    fooResult.setIntId(45);
+    fooResult.setNullField(null);
+    fooResult.setBarField(SimpleBar.getSingleton());
+    fooResult.setBarNullField(null);
+    foo.put("userName", JSONObject.NULL);
+    foo.put("intId", 45);
+    foo.put("nullField", "test");
+    foo.put("barNullField", SimpleBar.getSingleton().getId() 
+        + "-IS-" + SimpleBarProxy.class.getName());
+    foo.put("barField", JSONObject.NULL);
 
-      JSONObject result = getResultFromServer(foo);
+    JSONObject result = getResultFromServer(foo);
 
-      // check modified fields and no violations
-      assertTrue(result.getJSONObject("sideEffects").has("UPDATE"));
-      fooResult = SimpleFoo.getSingleton();
-      assertEquals(45, (int) fooResult.getIntId());
-      assertEquals("JSC", fooResult.getUserName());
-      assertEquals(newTime, fooResult.getCreated().getTime());
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail(e.toString());
-    }
+    // check modified fields and no violations
+    assertTrue(result.getJSONObject("sideEffects").has("UPDATE"));
+    fooResult = SimpleFoo.getSingleton();
+    assertEquals(45, (int) fooResult.getIntId());
+    assertNull(fooResult.getUserName());
+    assertEquals("test", fooResult.getNullField());
+    assertEquals(SimpleBar.getSingleton(), fooResult.getBarNullField());
+    assertNull(fooResult.getBarField());
+  }
+
+  public void testEndToEndSmartDiff_SomeChange() throws Exception {
+    com.google.gwt.requestfactory.server.SimpleFoo.reset();
+    // fetch object
+    JSONObject foo = fetchVerifyAndGetInitialObject();
+
+    // change some fields but don't change other fields.
+    SimpleFoo fooResult = SimpleFoo.getSingleton();
+    fooResult.setUserName("JSC");
+    fooResult.setIntId(45);
+    foo.put("userName", "JSC");
+    foo.put("intId", 45);
+    Date now = new Date();
+    long newTime = now.getTime() + 10000;
+    foo.put("created", "" + newTime);
+
+    JSONObject result = getResultFromServer(foo);
+
+    // check modified fields and no violations
+    assertTrue(result.getJSONObject("sideEffects").has("UPDATE"));
+    fooResult = SimpleFoo.getSingleton();
+    assertEquals(45, (int) fooResult.getIntId());
+    assertEquals("JSC", fooResult.getUserName());
+    assertEquals(newTime, fooResult.getCreated().getTime());
   }
 
   private void assertEncodedType(Class<?> expected, Object value) {
@@ -199,7 +231,9 @@ public class JsonRequestProcessorTest extends TestCase {
       JSONException, IllegalAccessException, InvocationTargetException,
       NoSuchMethodException, InstantiationException {
     Object val = requestProcessor.decodeParameterValue(expectedType, paramValue);
-    assertEquals(expectedType, val.getClass());
+    if (val != null) {
+      assertEquals(expectedType, val.getClass());
+    }
     assertEquals(expectedValue, val);
   }
 

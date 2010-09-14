@@ -183,7 +183,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * @throws InvocationTargetException 
    * @throws IllegalAccessException 
    * @throws JSONException 
-   * @throws SecurityException 
+   * @throws SecurityException
+   * @throws NullPointerException 
    */
   public Object decodeParameterValue(Type genericParameterType,
       String parameterValue) throws SecurityException, JSONException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
@@ -196,6 +197,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       if (PropertyReference.class == pType.getRawType()) {
         parameterType = (Class<?>) pType.getActualTypeArguments()[0];
       }
+    }
+    if (parameterValue == null) {
+      return null;
     }
     if (String.class == parameterType) {
       return parameterValue;
@@ -283,7 +287,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public Object encodePropertyValue(Object value) {
     if (value == null) {
-      return value;
+      return null;
     }
     Class<?> type = value.getClass();
     if (Boolean.class == type) {
@@ -385,7 +389,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           }
         } else {
           Object propertyValue = null;
-          if (EntityProxy.class.isAssignableFrom(dtoType)) {
+          if (!recordObject.isNull(key) && EntityProxy.class.isAssignableFrom(dtoType)) {
             EntityKey propKey = getEntityKey(recordObject.getString(key));
             Object cacheValue = cachedEntityLookup.get(propKey);
             if (cachedEntityLookup.containsKey(propKey)) {
@@ -599,7 +603,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    */
   public Object getPropertyValueFromRequest(JSONObject recordObject, String key,
       Class<?> propertyType) throws JSONException, SecurityException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
-    return decodeParameterValue(propertyType, recordObject.get(key).toString());
+    return decodeParameterValue(propertyType,
+        recordObject.isNull(key) ? null : recordObject.get(key).toString());
   }
 
   @SuppressWarnings("unchecked")
@@ -745,8 +750,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Iterator<?> keyIterator = before.keys();
     while (keyIterator.hasNext()) {
       String key = keyIterator.next().toString();
-      Object beforeValue = before.get(key);
-      Object afterValue = after.get(key);
+      Object beforeValue = before.isNull(key) ? null : before.get(key);
+      Object afterValue = after.isNull(key) ? null : after.get(key);
       if (beforeValue == null) {
         if (afterValue == null) {
           continue;
