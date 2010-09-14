@@ -16,7 +16,10 @@
 
 package com.google.gwt.requestfactory.server;
 
-import java.util.logging.Level;
+import com.google.gwt.logging.server.JsonLogRecordServerUtil;
+import com.google.gwt.logging.shared.SerializableLogRecord;
+
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
@@ -25,20 +28,17 @@ import java.util.logging.Logger;
  */
 public class Logging {
   private static Logger logger = Logger.getLogger(Logging.class.getName());
-  
-  public static Long logMessage(
-      String levelString, String loggerName, String originalMessage) {
-    Level level = Level.SEVERE;
-    try {
-      level = Level.parse(levelString);
-    } catch (IllegalArgumentException e) {
-      return 0L;
+
+  public static Boolean logMessage(String serializedLogRecordString) {
+    SerializableLogRecord slr =
+      JsonLogRecordServerUtil.serializableLogRecordFromJson(
+          serializedLogRecordString);
+    LogRecord lr = slr.getLogRecord();
+    if (lr == null) {
+      return false;
     }
-    String message = String.format("Client Side Logger: %s Message: %s",
-        loggerName, originalMessage);
-    
-    logger.log(level, message);
-    return 1L;
+    logger.log(lr);
+    return true;
   }
   
   private Long id = 0L;

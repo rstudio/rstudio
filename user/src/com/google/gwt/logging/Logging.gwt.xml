@@ -13,6 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <module>
+  <inherits name='com.google.gwt.json.JSON'/>
   <inherits name="com.google.gwt.logging.LogImpl"/>
   <source path="client" />
   <source path="shared" />

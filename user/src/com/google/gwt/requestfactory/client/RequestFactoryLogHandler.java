@@ -16,6 +16,8 @@
 
 package com.google.gwt.requestfactory.client;
 
+import com.google.gwt.logging.client.JsonLogRecordClientUtil;
+import com.google.gwt.logging.shared.SerializableLogRecord;
 import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
@@ -87,16 +89,22 @@ public class RequestFactoryLogHandler extends Handler {
     if (closed || !isLoggable(record)) {
       return;
     }
-    
     if (record.getLoggerName().contains(ignoredLoggerSubstring)) {
       return;
     }
-    
-    Receiver<Long> loggingReceiver = new LoggingReceiver();
-    requestProvider.getLoggingRequest().logMessage(
-        record.getLevel().toString(),
-        record.getLoggerName(),
-        record.getMessage()).fire(loggingReceiver);
+    SerializableLogRecord slr = new SerializableLogRecord(record);
+    String json = JsonLogRecordClientUtil.serializableLogRecordAsJson(slr);
+    requestProvider.getLoggingRequest().logMessage(json).fire(
+        new Receiver<Boolean>() {
+          @Override
+          public void onSuccess(Boolean response, Set<SyncResult> syncResults) {
+            if (!response) {
+              // A separate logger for wire activity, which does not get logged
+              // by the remote log handler, so we avoid infinite loops.
+              Logger wireLogger = Logger.getLogger("WireActivityLogger");
+              wireLogger.severe("Remote Logging failed to parse JSON");
+            }
+          }
+        });
   }
-
 }

@@ -25,11 +25,8 @@ import com.google.gwt.requestfactory.server.Logging;
 @Service(Logging.class)
 public interface LoggingRequest {
 
-  // Should be returning something better than a Long, but that's all that is
-  // supported for now, so using it as a boolean.
-  // Should also be passing something better than a series of strings, but
-  // that's the only possibility for now.
-  RequestObject<Long> logMessage(
-      String level, String loggerName, String message);
+  // TODO(unnurg): Pass a SerializableLogRecord here rather than it's
+  // serialized string.
+  RequestObject<Boolean> logMessage(String serializedLogRecordString);
  
 }

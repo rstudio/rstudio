@@ -31,13 +31,9 @@ public class SerializableLogRecord implements IsSerializable {
   private String level;
   private String loggerName = "";
   private String msg;
-  private long timestamp;
   private SerializableThrowable thrown = null;
+  private long timestamp;
 
-  protected SerializableLogRecord() {
-    // for serialization
-  }
-  
   /**
    * Create a new SerializableLogRecord from a LogRecord.
    */
@@ -50,7 +46,28 @@ public class SerializableLogRecord implements IsSerializable {
       thrown = new SerializableThrowable(lr.getThrown());
     }
   }
-
+  
+  public SerializableLogRecord(String level, String loggerName, String msg,
+      SerializableThrowable thrown, long timestamp) {
+    this.level = level;
+    this.loggerName = loggerName;
+    this.msg = msg;
+    this.timestamp = timestamp;
+    this.thrown = thrown;
+  }
+  
+  protected SerializableLogRecord() {
+    // for serialization
+  }
+  
+  public String getLevel() {
+    return level;
+  }
+  
+  public String getLoggerName() {
+    return loggerName;
+  }
+  
   /**
    * Create a new LogRecord from this SerializableLogRecord.
    */
@@ -62,5 +79,17 @@ public class SerializableLogRecord implements IsSerializable {
       lr.setThrown(thrown.getThrowable());
     }
     return lr;
+  }
+  
+  public String getMsg() {
+    return msg;
+  }
+  
+  public SerializableThrowable getThrown() {
+    return thrown;
+  }
+  
+  public Long getTimestamp() {
+    return timestamp;
   }
 }

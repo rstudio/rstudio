@@ -25,25 +25,44 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  * subclasses will cause the client side JS to be very big.
  */
 public class SerializableThrowable implements IsSerializable {
-  private String message;
   private SerializableThrowable cause = null;
+  private String message;
   private StackTraceElement[] stackTrace;
-
-  protected SerializableThrowable() {
-    // for serialization
-  }
   
   /**
    * Create a new SerializableThrowable from a Throwable.
    */
   public SerializableThrowable(Throwable t) {
     message = t.getMessage();
-    stackTrace = t.getStackTrace();
     if (t.getCause() != null) {
       cause = new SerializableThrowable(t.getCause());
     }
+    stackTrace = t.getStackTrace();
+  }
+  
+  public SerializableThrowable(String message, SerializableThrowable cause,
+      StackTraceElement[] stackTrace) {
+    this.message = message;
+    this.cause = cause;
+    this.stackTrace = stackTrace;
+  }
+  
+  protected SerializableThrowable() {
+    // for serialization
+  }
+  
+  public SerializableThrowable getCause() {
+    return cause;
   }
 
+  public String getMessage() {
+    return message;
+  }
+  
+  public StackTraceElement[] getStackTrace() {
+    return stackTrace;
+  }
+  
   /**
    * Create a new Throwable from this SerializableThrowable.
    */
