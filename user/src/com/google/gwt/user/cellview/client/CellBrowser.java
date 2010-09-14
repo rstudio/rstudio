@@ -34,6 +34,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -80,13 +81,10 @@ public class CellBrowser extends AbstractCellTree
     SafeHtml div(int imageWidth, String classes, SafeHtml image, SafeHtml cellContents);
   }
 
-  private static Template template;
-
   /**
    * A ClientBundle that provides images for this widget.
    */
-  public static interface Resources extends ClientBundle {
-
+  public interface Resources extends ClientBundle {
     /**
      * An image indicating a closed branch.
      */
@@ -115,46 +113,56 @@ public class CellBrowser extends AbstractCellTree
     /**
      * The styles used in this widget.
      */
-    @Source("CellBrowser.css")
+    @Source(Style.DEFAULT_CSS)
     Style cellBrowserStyle();
   }
 
   /**
    * Styles used by this widget.
    */
-  public static interface Style extends CssResource {
+  @ImportedWithPrefix("gwt-CellBrowser")
+  public interface Style extends CssResource {
+    /**
+     * The path to the default CSS styles used by this resource.
+     */
+    String DEFAULT_CSS = "com/google/gwt/user/cellview/client/CellBrowser.css";
 
     /**
      * Applied to all columns.
      */
-    String column();
+    String cellBrowserColumn();
 
     /**
      * Applied to the first column.
      */
-    String firstColumn();
+    String cellBrowserFirstColumn();
 
     /**
      * Applied to all list items.
      */
-    String item();
+    String cellBrowserItem();
 
     /***
      * Applied to open items.
      */
-    String openItem();
+    String cellBrowserOpenItem();
 
     /***
      * Applied to selected items.
      */
-    String selectedItem();
+    String cellBrowserSelectedItem();
+
+    /**
+     * Applied to the widget.
+     */
+    String cellBrowserWidget();
   }
 
   /**
    * We override the Resources in {@link CellList} so that the styles in
    * {@link CellList} don't conflict with the styles in {@link CellBrowser}.
    */
-  static interface CellListResources extends CellList.Resources {
+  interface CellListResources extends CellList.Resources {
     @Source("CellBrowserOverride.css")
     CellList.Style cellListStyle();
   }
@@ -251,18 +259,18 @@ public class CellBrowser extends AbstractCellTree
     }
 
     public void render(C value, Object viewData, SafeHtmlBuilder sb) {
-      boolean isOpen = (openKey == null) ? false : openKey.equals(
-          getValueKey(value));
-      boolean isSelected = (selectionModel == null)
-          ? false : selectionModel.isSelected(value);
+      boolean isOpen = (openKey == null) ? false
+          : openKey.equals(getValueKey(value));
+      boolean isSelected = (selectionModel == null) ? false
+          : selectionModel.isSelected(value);
 
       StringBuilder classesBuilder = new StringBuilder();
-      classesBuilder.append(style.item());
+      classesBuilder.append(style.cellBrowserItem());
       if (isOpen) {
-        classesBuilder.append(" ").append(style.openItem());
+        classesBuilder.append(" ").append(style.cellBrowserOpenItem());
       }
       if (isSelected) {
-        classesBuilder.append(" ").append(style.selectedItem());
+        classesBuilder.append(" ").append(style.cellBrowserSelectedItem());
       }
       String classes = classesBuilder.toString();
 
@@ -510,6 +518,8 @@ public class CellBrowser extends AbstractCellTree
    */
   private static CellListResources cellListResource;
 
+  private static Template template;
+
   /**
    * Get the {@link CellList.Resources} overrides.
    */
@@ -607,7 +617,7 @@ public class CellBrowser extends AbstractCellTree
     this.style.ensureInjected();
     initWidget(new SplitLayoutPanel());
     getElement().getStyle().setOverflow(Overflow.AUTO);
-    setStyleName("gwt-SideBySideTreeView");
+    setStyleName(this.style.cellBrowserWidget());
 
     // Initialize the open and close images strings.
     ImageResource treeOpen = resources.cellBrowserOpen();
@@ -774,9 +784,9 @@ public class CellBrowser extends AbstractCellTree
     } else {
       scrollable.setWidget(view);
     }
-    scrollable.setStyleName(style.column());
+    scrollable.setStyleName(style.cellBrowserColumn());
     if (level == 0) {
-      scrollable.addStyleName(style.firstColumn());
+      scrollable.addStyleName(style.cellBrowserFirstColumn());
     }
 
     // Create a TreeNode.

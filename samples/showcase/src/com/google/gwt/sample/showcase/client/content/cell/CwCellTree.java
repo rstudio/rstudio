@@ -113,7 +113,9 @@ public class CwCellTree extends ContentWidget {
           }
         });
 
-    cellTree = new CellTree(new ContactTreeViewModel(selectionModel), null);
+    CellTree.Resources res = GWT.create(CellTree.BasicResources.class);
+    cellTree = new CellTree(
+        new ContactTreeViewModel(selectionModel), null, res);
     cellTree.setAnimationEnabled(true);
 
     // Create the UiBinder.

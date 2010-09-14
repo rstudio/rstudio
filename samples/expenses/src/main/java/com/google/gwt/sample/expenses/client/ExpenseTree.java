@@ -302,8 +302,7 @@ public class ExpenseTree extends Composite {
     });
 
     // Create a CellBrowser.
-    CellTree.Resources resources = GWT.create(CellTree.CleanResources.class);
-    tree = new CellTree(model, null, resources);
+    tree = new CellTree(model, null);
     tree.setAnimationEnabled(true);
   }
 

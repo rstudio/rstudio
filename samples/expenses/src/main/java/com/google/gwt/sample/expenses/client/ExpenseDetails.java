@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -147,8 +147,8 @@ public class ExpenseDetails extends Composite {
   /**
    * The cell used for approval status.
    */
-  private class ApprovalCell extends AbstractEditableCell<
-      String, ApprovalViewData> {
+  private class ApprovalCell extends
+      AbstractEditableCell<String, ApprovalViewData> {
 
     private final String approvedText = Expenses.Approval.APPROVED.getText();
     private final String deniedText = Expenses.Approval.DENIED.getText();
@@ -348,21 +348,14 @@ public class ExpenseDetails extends Composite {
   /**
    * The styles applied to the table.
    */
-  interface TableStyle extends CellTable.CleanStyle {
-    String evenRow();
-
-    String hoveredRow();
-
-    String oddRow();
-
-    String selectedRow();
+  interface TableStyle extends CellTable.Style {
   }
 
   /**
    * The resources applied to the table.
    */
-  interface TableResources extends CellTable.CleanResources {
-    @Source("ExpenseDetailsCellTable.css")
+  interface TableResources extends CellTable.Resources {
+    @Source({CellTable.Style.DEFAULT_CSS, "ExpenseDetailsCellTable.css"})
     TableStyle cellTableStyle();
   }
 
@@ -501,22 +494,22 @@ public class ExpenseDetails extends Composite {
       }
     });
   }
-  
+
   public void init(EventBus eventBus) {
-    EntityProxyChange.registerForProxyType(eventBus,
-        ExpenseProxy.class, new EntityProxyChange.Handler<ExpenseProxy>() {
+    EntityProxyChange.registerForProxyType(eventBus, ExpenseProxy.class,
+        new EntityProxyChange.Handler<ExpenseProxy>() {
           @Override
           public void onProxyChange(EntityProxyChange<ExpenseProxy> event) {
             onExpenseRecordChanged(event);
           }
-    });
-    EntityProxyChange.registerForProxyType(eventBus,
-        ReportProxy.class, new EntityProxyChange.Handler<ReportProxy>() {
+        });
+    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class,
+        new EntityProxyChange.Handler<ReportProxy>() {
           @Override
           public void onProxyChange(EntityProxyChange<ReportProxy> event) {
             onReportChanged(event);
           }
-    });
+        });
   }
 
   public Anchor getReportsLink() {
@@ -554,15 +547,15 @@ public class ExpenseDetails extends Composite {
     if (report != null && report.getId().equals(changed.getId())) {
       // Request the updated report.
       expensesRequestFactory.reportRequest().findReport(
-          report.getRef(ReportProxy.id)).with(
-          ReportProxy.notes.getName()).fire(new Receiver<ReportProxy>() {
-        @Override
-        public void onSuccess(
-            ReportProxy response, Set<SyncResult> syncResults) {
-          report = response;
-          setNotesEditState(false, false, response.getNotes());
-        }
-      });
+          report.getRef(ReportProxy.id)).with(ReportProxy.notes.getName()).fire(
+          new Receiver<ReportProxy>() {
+            @Override
+            public void onSuccess(ReportProxy response,
+                Set<SyncResult> syncResults) {
+              report = response;
+              setNotesEditState(false, false, response.getNotes());
+            }
+          });
     }
   }
 
@@ -573,13 +566,13 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Set the {@link ReportProxy} to show.
-   *
+   * 
    * @param report the {@link ReportProxy}
    * @param department the selected department
    * @param employee the selected employee
    */
-  public void setReportRecord(
-      ReportProxy report, String department, EmployeeProxy employee) {
+  public void setReportRecord(ReportProxy report, String department,
+      EmployeeProxy employee) {
     this.report = report;
     knownExpenseKeys = null;
     reportName.setInnerText(report.getPurpose());
@@ -610,8 +603,7 @@ public class ExpenseDetails extends Composite {
   @UiFactory
   CellTable<ExpenseProxy> createTable() {
     CellTable.Resources resources = GWT.create(TableResources.class);
-    CellTable<ExpenseProxy> view = new CellTable<ExpenseProxy>(
-        100, resources);
+    CellTable<ExpenseProxy> view = new CellTable<ExpenseProxy>(100, resources);
     Styles.Common common = Styles.common();
     view.addColumnStyleName(0, common.spacerColumn());
     view.addColumnStyleName(1, common.expenseDetailsDateColumn());
@@ -624,8 +616,7 @@ public class ExpenseDetails extends Composite {
     view.addColumn(new SpacerColumn<ExpenseProxy>());
 
     // Created column.
-    GetValue<ExpenseProxy, Date> createdGetter = new GetValue<
-        ExpenseProxy, Date>() {
+    GetValue<ExpenseProxy, Date> createdGetter = new GetValue<ExpenseProxy, Date>() {
       public Date getValue(ExpenseProxy object) {
         return object.getCreated();
       }
@@ -655,16 +646,15 @@ public class ExpenseDetails extends Composite {
         });
 
     // Amount column.
-    final GetValue<ExpenseProxy, Double> amountGetter = new GetValue<
-        ExpenseProxy, Double>() {
+    final GetValue<ExpenseProxy, Double> amountGetter = new GetValue<ExpenseProxy, Double>() {
       public Double getValue(ExpenseProxy object) {
         return object.getAmount();
       }
     };
-    Comparator<ExpenseProxy> amountAsc = createColumnComparator(
-        amountGetter, false);
-    Comparator<ExpenseProxy> amountDesc = createColumnComparator(
-        amountGetter, true);
+    Comparator<ExpenseProxy> amountAsc = createColumnComparator(amountGetter,
+        false);
+    Comparator<ExpenseProxy> amountDesc = createColumnComparator(amountGetter,
+        true);
     addColumn(view, "Amount", new NumberCell(NumberFormat.getCurrencyFormat()),
         new GetValue<ExpenseProxy, Number>() {
           public Number getValue(ExpenseProxy object) {
@@ -715,7 +705,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Add a column of a {@link Comparable} type using default comparators.
-   *
+   * 
    * @param <C> the column type
    * @param table the table
    * @param text the header text
@@ -733,7 +723,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Add a column with the specified comparators.
-   *
+   * 
    * @param <C> the column type
    * @param table the table
    * @param text the header text
@@ -772,8 +762,8 @@ public class ExpenseDetails extends Composite {
           }
         }
 
-        sortExpenses(items.getList(),
-            header.getReverseSort() ? descComparator : ascComparator);
+        sortExpenses(items.getList(), header.getReverseSort() ? descComparator
+            : ascComparator);
         table.redrawHeaders();
       }
     });
@@ -783,14 +773,13 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Create a comparator for the column.
-   *
+   * 
    * @param <C> the column type
    * @param getter the {@link GetValue} used to get the cell value
    * @param descending true if descending, false if ascending
    * @return the comparator
    */
-  private <C extends Comparable<C>> Comparator<
-      ExpenseProxy> createColumnComparator(
+  private <C extends Comparable<C>> Comparator<ExpenseProxy> createColumnComparator(
       final GetValue<ExpenseProxy, C> getter, final boolean descending) {
     return new Comparator<ExpenseProxy>() {
       public int compare(ExpenseProxy o1, ExpenseProxy o2) {
@@ -844,7 +833,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Return a formatted currency string.
-   *
+   * 
    * @param amount the amount in dollars
    * @return a formatted string
    */
@@ -872,7 +861,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Get the error message from a sync operation.
-   *
+   * 
    * @param response the response of the operation
    * @return the error message, or an empty string if no error.
    */
@@ -896,8 +885,7 @@ public class ExpenseDetails extends Composite {
     return new String[]{
         ExpenseProxy.amount.getName(), ExpenseProxy.approval.getName(),
         ExpenseProxy.category.getName(), ExpenseProxy.created.getName(),
-        ExpenseProxy.description.getName(),
-        ExpenseProxy.reasonDenied.getName()};
+        ExpenseProxy.description.getName(), ExpenseProxy.reasonDenied.getName()};
   }
 
   /**
@@ -927,8 +915,8 @@ public class ExpenseDetails extends Composite {
     // Cancel the timer since we are about to send a request.
     refreshTimer.cancel();
     lastReceiver = new Receiver<List<ExpenseProxy>>() {
-      public void onSuccess(
-          List<ExpenseProxy> newValues, Set<SyncResult> syncResults) {
+      public void onSuccess(List<ExpenseProxy> newValues,
+          Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
           List<ExpenseProxy> list = new ArrayList<ExpenseProxy>(newValues);
           sortExpenses(list, lastComparator);
@@ -961,7 +949,8 @@ public class ExpenseDetails extends Composite {
       }
     };
     expensesRequestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(EntityProxy.id)).with(getExpenseColumns()).fire(lastReceiver);
+        report.getRef(EntityProxy.id)).with(getExpenseColumns()).fire(
+        lastReceiver);
   }
 
   /**
@@ -979,7 +968,8 @@ public class ExpenseDetails extends Composite {
     setNotesEditState(false, true, pendingNotes);
 
     // Submit the delta.
-    RequestObject<Void> editRequest = expensesRequestFactory.reportRequest().persist(report);
+    RequestObject<Void> editRequest = expensesRequestFactory.reportRequest().persist(
+        report);
     ReportProxy editableReport = editRequest.edit(report);
     editableReport.setNotes(pendingNotes);
     editRequest.fire(new Receiver<Void>() {
@@ -996,13 +986,13 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Set the state of the notes section.
-   *
+   * 
    * @param editable true for edit state, false for view state
    * @param pending true if changes are pending, false if not
    * @param notesText the current notes
    */
-  private void setNotesEditState(
-      boolean editable, boolean pending, String notesText) {
+  private void setNotesEditState(boolean editable, boolean pending,
+      String notesText) {
     notesBox.setText(notesText);
     notes.setInnerText(notesText);
 
@@ -1015,7 +1005,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Show the error popup.
-   *
+   * 
    * @param errorMessage the error message
    */
   private void showErrorPopup(String errorMessage) {
@@ -1023,15 +1013,15 @@ public class ExpenseDetails extends Composite {
     errorPopup.center();
   }
 
-  private void sortExpenses(
-      List<ExpenseProxy> list, final Comparator<ExpenseProxy> comparator) {
+  private void sortExpenses(List<ExpenseProxy> list,
+      final Comparator<ExpenseProxy> comparator) {
     lastComparator = comparator;
     Collections.sort(list, comparator);
   }
 
   /**
    * Update the state of a pending approval change.
-   *
+   * 
    * @param record the {@link ExpenseProxy} to sync
    * @param message the error message if rejected, or null if accepted
    */
@@ -1048,8 +1038,8 @@ public class ExpenseDetails extends Composite {
     table.redraw();
   }
 
-  private void updateExpenseRecord(
-      final ExpenseProxy record, String approval, String reasonDenied) {
+  private void updateExpenseRecord(final ExpenseProxy record, String approval,
+      String reasonDenied) {
     // Verify that the total is under the cap.
     if (Expenses.Approval.APPROVED.is(approval)
         && !Expenses.Approval.APPROVED.is(record.getApproval())) {
@@ -1063,7 +1053,8 @@ public class ExpenseDetails extends Composite {
     }
 
     // Create a delta and sync with the value store.
-    RequestObject<Void> editRequest = expensesRequestFactory.expenseRequest().persist(record);
+    RequestObject<Void> editRequest = expensesRequestFactory.expenseRequest().persist(
+        record);
     ExpenseProxy editableRecord = editRequest.edit(record);
     editableRecord.setApproval(approval);
     editableRecord.setReasonDenied(reasonDenied);

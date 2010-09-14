@@ -93,22 +93,15 @@ public class ExpenseList extends Composite implements
   /**
    * The resources applied to the table.
    */
-  interface TableResources extends CellTable.CleanResources {
-    @Source("ExpenseListCellTable.css")
+  interface TableResources extends CellTable.Resources {
+    @Source({CellTable.Style.DEFAULT_CSS, "ExpenseListCellTable.css"})
     TableStyle cellTableStyle();
   }
 
   /**
    * The styles applied to the table.
    */
-  interface TableStyle extends CellTable.CleanStyle {
-    String evenRow();
-
-    String hoveredRow();
-
-    String oddRow();
-
-    String selectedRow();
+  interface TableStyle extends CellTable.Style {
   }
 
   /**

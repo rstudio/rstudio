@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,6 +30,7 @@ import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -49,155 +50,161 @@ import java.util.Set;
 
 /**
  * A list view that supports paging and columns.
- *
+ * 
  * @param <T> the data type of each row
  */
 public class CellTable<T> extends AbstractHasData<T> {
 
   /**
-   * A cleaner version of the table that uses less graphics.
-   */
-  public static interface CleanResources extends Resources {
-
-    @Source("CellTableClean.css")
-    CleanStyle cellTableStyle();
-  }
-
-  /**
-   * A cleaner version of the table that uses less graphics.
-   */
-  public static interface CleanStyle extends Style {
-    String footer();
-
-    String header();
-  }
-
-  /**
    * A ClientBundle that provides images for this widget.
    */
-  public static interface Resources extends ClientBundle {
-
+  public interface Resources extends ClientBundle {
     /**
      * The background used for footer cells.
      */
     @Source("cellTableHeaderBackground.png")
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellTableFooterBackground();
 
     /**
      * The background used for header cells.
      */
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellTableHeaderBackground();
 
     /**
      * The loading indicator used while the table is waiting for data.
      */
+    @ImageOptions(flipRtl = true)
     ImageResource cellTableLoading();
 
     /**
      * The background used for selected cells.
      */
     @Source("cellListSelectedBackground.png")
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellTableSelectedBackground();
 
+    @Source(Style.DEFAULT_CSS)
+    Style cellTableStyle();
+  }
+
+  /**
+   * Resources that match the GWT standard style theme.
+   */
+  public interface BasicResources extends Resources {
     /**
      * The styles used in this widget.
      */
-    @Source("CellTable.css")
-    Style cellTableStyle();
+    @Source(BasicStyle.DEFAULT_CSS)
+    BasicStyle cellTableStyle();
   }
 
   /**
    * Styles used by this widget.
    */
-  public static interface Style extends CssResource {
+  @ImportedWithPrefix("gwt-CellTable")
+  public interface Style extends CssResource {
+    /**
+     * The path to the default CSS styles used by this resource.
+     */
+    String DEFAULT_CSS = "com/google/gwt/user/cellview/client/CellTable.css";
 
     /**
      * Applied to every cell.
      */
-    String cell();
-
-    /**
-     * Applied to the table.
-     */
-    String cellTable();
+    String cellTableCell();
 
     /**
      * Applied to even rows.
      */
-    String evenRow();
+    String cellTableEvenRow();
 
     /**
      * Applied to the first column.
      */
-    String firstColumn();
+    String cellTableFirstColumn();
 
     /**
      * Applied to the first column footers.
      */
-    String firstColumnFooter();
+    String cellTableFirstColumnFooter();
 
     /**
      * Applied to the first column headers.
      */
-    String firstColumnHeader();
+    String cellTableFirstColumnHeader();
 
     /**
      * Applied to footers cells.
      */
-    String footer();
+    String cellTableFooter();
 
     /**
      * Applied to headers cells.
      */
-    String header();
+    String cellTableHeader();
 
     /**
      * Applied to the hovered row.
      */
-    String hoveredRow();
+    String cellTableHoveredRow();
 
     /**
      * Applied to the keyboard selected cell.
      */
-    String keyboardSelectedCell();
+    String cellTableKeyboardSelectedCell();
 
     /**
      * Applied to the keyboard selected row.
      */
-    String keyboardSelectedRow();
+    String cellTableKeyboardSelectedRow();
 
     /**
      * Applied to the last column.
      */
-    String lastColumn();
+    String cellTableLastColumn();
 
     /**
      * Applied to the last column footers.
      */
-    String lastColumnFooter();
+    String cellTableLastColumnFooter();
 
     /**
      * Applied to the last column headers.
      */
-    String lastColumnHeader();
+    String cellTableLastColumnHeader();
 
     /**
      * Applied to the loading indicator.
      */
-    String loading();
+    String cellTableLoading();
 
     /**
      * Applied to odd rows.
      */
-    String oddRow();
+    String cellTableOddRow();
 
     /**
      * Applied to selected rows.
      */
-    String selectedRow();
+    String cellTableSelectedRow();
+
+    /**
+     * Applied to the table.
+     */
+    String cellTableWidget();
+  }
+
+  /**
+   * Styles used by {@link BasicResources}.
+   */
+  @ImportedWithPrefix("gwt-CellTable")
+  interface BasicStyle extends Style {
+    /**
+     * The path to the default CSS styles used by this resource.
+     */
+    String DEFAULT_CSS = "com/google/gwt/user/cellview/client/CellTableBasic.css";
   }
 
   interface Template extends SafeHtmlTemplates {
@@ -233,14 +240,14 @@ public class CellTable<T> extends AbstractHasData<T> {
 
     /**
      * Convert the rowHtml into Elements wrapped by the specified table section.
-     *
+     * 
      * @param table the {@link CellTable}
      * @param sectionTag the table section tag
      * @param rowHtml the Html for the rows
      * @return the section element
      */
-    protected TableSectionElement convertToSectionElement(
-        CellTable<?> table, String sectionTag, SafeHtml rowHtml) {
+    protected TableSectionElement convertToSectionElement(CellTable<?> table,
+        String sectionTag, SafeHtml rowHtml) {
       // Attach an event listener so we can catch synchronous load events from
       // cached images.
       DOM.setEventListener(tmpElem, table);
@@ -256,8 +263,8 @@ public class CellTable<T> extends AbstractHasData<T> {
       } else if ("tfoot".equals(sectionTag)) {
         tmpElem.setInnerHTML(template.tfoot(rowHtml).asString());
       } else {
-        throw new IllegalArgumentException(
-            "Invalid table section tag: " + sectionTag);
+        throw new IllegalArgumentException("Invalid table section tag: "
+            + sectionTag);
       }
       TableElement tableElem = tmpElem.getFirstChildElement().cast();
 
@@ -272,20 +279,20 @@ public class CellTable<T> extends AbstractHasData<T> {
       } else if ("tfoot".equals(sectionTag)) {
         return tableElem.getTFoot();
       } else {
-        throw new IllegalArgumentException(
-            "Invalid table section tag: " + sectionTag);
+        throw new IllegalArgumentException("Invalid table section tag: "
+            + sectionTag);
       }
     }
 
     /**
      * Render a table section in the table.
-     *
+     * 
      * @param table the {@link CellTable}
      * @param section the {@link TableSectionElement} to replace
      * @param html the html to render
      */
-    protected void replaceAllRows(
-        CellTable<?> table, TableSectionElement section, SafeHtml html) {
+    protected void replaceAllRows(CellTable<?> table,
+        TableSectionElement section, SafeHtml html) {
       // If the widget is not attached, attach an event listener so we can catch
       // synchronous load events from cached images.
       if (!table.isAttached()) {
@@ -314,8 +321,8 @@ public class CellTable<T> extends AbstractHasData<T> {
      * themselves.
      */
     @Override
-    protected void replaceAllRows(
-        CellTable<?> table, TableSectionElement section, SafeHtml html) {
+    protected void replaceAllRows(CellTable<?> table,
+        TableSectionElement section, SafeHtml html) {
       // Remove all children.
       Element child = section.getFirstChildElement();
       while (child != null) {
@@ -325,8 +332,8 @@ public class CellTable<T> extends AbstractHasData<T> {
       }
 
       // Add new child elements.
-      TableSectionElement newSection = convertToSectionElement(
-          table, section.getTagName(), html);
+      TableSectionElement newSection = convertToSectionElement(table,
+          section.getTagName(), html);
       child = newSection.getFirstChildElement();
       while (child != null) {
         Element next = child.getNextSiblingElement();
@@ -352,7 +359,7 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   private static Resources getDefaultResources() {
     if (DEFAULT_RESOURCES == null) {
-      DEFAULT_RESOURCES = GWT.create(CleanResources.class);
+      DEFAULT_RESOURCES = GWT.create(Resources.class);
     }
     return DEFAULT_RESOURCES;
   }
@@ -390,17 +397,16 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * The command used to redraw the table after adding columns.
    */
-  private final Scheduler.ScheduledCommand redrawCommand =
-      new Scheduler.ScheduledCommand() {
-        public void execute() {
-          redrawScheduled = false;
-          if (redrawCancelled) {
-            redrawCancelled = false;
-            return;
-          }
-          redraw();
-        }
-      };
+  private final Scheduler.ScheduledCommand redrawCommand = new Scheduler.ScheduledCommand() {
+    public void execute() {
+      redrawScheduled = false;
+      if (redrawCancelled) {
+        redrawCancelled = false;
+        return;
+      }
+      redraw();
+    }
+  };
   /**
    * Indicates whether or not a redraw is scheduled.
    */
@@ -423,7 +429,7 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Constructs a table with the given page size.
-   *
+   * 
    * @param pageSize the page size
    */
   public CellTable(final int pageSize) {
@@ -433,7 +439,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Constructs a table with the given page size with the specified
    * {@link Resources}.
-   *
+   * 
    * @param pageSize the page size
    * @param resources the resources to use for this widget
    */
@@ -456,7 +462,7 @@ public class CellTable<T> extends AbstractHasData<T> {
     table.appendChild(tbody = Document.get().createTBodyElement());
     table.appendChild(tbodyLoading = Document.get().createTBodyElement());
     tfoot = table.createTFoot();
-    setStyleName(this.style.cellTable());
+    setStyleName(this.style.cellTableWidget());
 
     // Create the loading indicator.
     {
@@ -465,14 +471,13 @@ public class CellTable<T> extends AbstractHasData<T> {
       tbodyLoading.appendChild(tr);
       tr.appendChild(td);
       td.setAlign("center");
-      td.setInnerHTML(template.loading(style.loading()).asString());
+      td.setInnerHTML(template.loading(style.cellTableLoading()).asString());
       setLoadingIconVisible(false);
     }
 
     // Sink events.
-    sinkEvents(
-        Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONKEYUP
-            | Event.ONKEYDOWN);
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT
+        | Event.ONKEYUP | Event.ONKEYDOWN);
   }
 
   /**
@@ -530,7 +535,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   public void addColumn(Column<T, ?> col, String headerString) {
     addColumn(col, new TextHeader(headerString), null);
   }
-  
+
   /**
    * Adds a column to the table with an associated SafeHtml header.
    */
@@ -541,23 +546,24 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Adds a column to the table with an associated String header and footer.
    */
-  public void addColumn(
-      Column<T, ?> col, String headerString, String footerString) {
+  public void addColumn(Column<T, ?> col, String headerString,
+      String footerString) {
     addColumn(col, new TextHeader(headerString), new TextHeader(footerString));
   }
-  
+
   /**
    * Adds a column to the table with an associated SafeHtml header and footer.
    */
-  public void addColumn(
-      Column<T, ?> col, SafeHtml headerHtml, SafeHtml footerHtml) {
-    addColumn(col, new SafeHtmlHeader(headerHtml), new SafeHtmlHeader(footerHtml));
+  public void addColumn(Column<T, ?> col, SafeHtml headerHtml,
+      SafeHtml footerHtml) {
+    addColumn(col, new SafeHtmlHeader(headerHtml), new SafeHtmlHeader(
+        footerHtml));
   }
 
   /**
    * Add a style name to the {@link TableColElement} at the specified index,
    * creating it if necessary.
-   *
+   * 
    * @param index the column index
    * @param styleName the style name to add
    */
@@ -578,7 +584,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Get the {@link TableRowElement} for the specified row. If the row element
    * has not been created, null is returned.
-   *
+   * 
    * @param row the row index
    * @return the row element, or null if it doesn't exists
    * @throws IndexOutOfBoundsException if the row index is outside of the
@@ -638,14 +644,12 @@ public class CellTable<T> extends AbstractHasData<T> {
     int col = tableCell.getCellIndex();
     if (section == thead) {
       Header<?> header = headers.get(col);
-      if (header != null
-          && cellConsumesEventType(header.getCell(), eventType)) {
+      if (header != null && cellConsumesEventType(header.getCell(), eventType)) {
         header.onBrowserEvent(tableCell, event);
       }
     } else if (section == tfoot) {
       Header<?> footer = footers.get(col);
-      if (footer != null
-          && cellConsumesEventType(footer.getCell(), eventType)) {
+      if (footer != null && cellConsumesEventType(footer.getCell(), eventType)) {
         footer.onBrowserEvent(tableCell, event);
       }
     } else if (section == tbody) {
@@ -653,13 +657,13 @@ public class CellTable<T> extends AbstractHasData<T> {
       int row = tr.getSectionRowIndex();
       if ("mouseover".equals(eventType)) {
         if (hoveringRow != null) {
-          hoveringRow.removeClassName(style.hoveredRow());
+          hoveringRow.removeClassName(style.cellTableHoveredRow());
         }
         hoveringRow = tr;
-        tr.addClassName(style.hoveredRow());
+        tr.addClassName(style.cellTableHoveredRow());
       } else if ("mouseout".equals(eventType)) {
         hoveringRow = null;
-        tr.removeClassName(style.hoveredRow());
+        tr.removeClassName(style.cellTableHoveredRow());
       }
 
       // Update selection. Selection occurs before firing the event to the cell
@@ -685,7 +689,7 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Remove a column.
-   *
+   * 
    * @param col the column to remove
    */
   public void removeColumn(Column<T, ?> col) {
@@ -699,7 +703,7 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Remove a column.
-   *
+   * 
    * @param index the column index
    */
   public void removeColumn(int index) {
@@ -720,7 +724,7 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Remove a style from the {@link TableColElement} at the specified index.
-   *
+   * 
    * @param index the column index
    * @param styleName the style name to remove
    */
@@ -737,19 +741,19 @@ public class CellTable<T> extends AbstractHasData<T> {
     createHeadersAndFooters();
 
     ProvidesKey<T> keyProvider = getKeyProvider();
-    String evenRowStyle = style.evenRow();
-    String oddRowStyle = style.oddRow();
-    String cellStyle = style.cell();
-    String firstColumnStyle = " " + style.firstColumn();
-    String lastColumnStyle = " " + style.lastColumn();
-    String selectedRowStyle = " " + style.selectedRow();
+    String evenRowStyle = style.cellTableEvenRow();
+    String oddRowStyle = style.cellTableOddRow();
+    String cellStyle = style.cellTableCell();
+    String firstColumnStyle = " " + style.cellTableFirstColumn();
+    String lastColumnStyle = " " + style.cellTableLastColumn();
+    String selectedRowStyle = " " + style.cellTableSelectedRow();
     int columnCount = columns.size();
     int length = values.size();
     int end = start + length;
     for (int i = start; i < end; i++) {
       T value = values.get(i - start);
-      boolean isSelected = (selectionModel == null || value == null)
-          ? false : selectionModel.isSelected(value);
+      boolean isSelected = (selectionModel == null || value == null) ? false
+          : selectionModel.isSelected(value);
       String trClasses = i % 2 == 0 ? evenRowStyle : oddRowStyle;
       if (isSelected) {
         trClasses += selectedRowStyle;
@@ -820,8 +824,8 @@ public class CellTable<T> extends AbstractHasData<T> {
     if (redrawScheduled) {
       redrawCancelled = true;
     }
-    TABLE_IMPL.replaceAllRows(
-        CellTable.this, tbody, CellBasedWidgetImpl.get().processHtml(html));
+    TABLE_IMPL.replaceAllRows(CellTable.this, tbody,
+        CellBasedWidgetImpl.get().processHtml(html));
   }
 
   @Override
@@ -834,8 +838,8 @@ public class CellTable<T> extends AbstractHasData<T> {
         && keyboardSelectedColumn < columns.size()) {
       TableRowElement tr = getRowElement(offset);
       TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
-      tr.addClassName(style.keyboardSelectedRow());
-      td.addClassName(style.keyboardSelectedCell());
+      tr.addClassName(style.cellTableKeyboardSelectedRow());
+      td.addClassName(style.cellTableKeyboardSelectedCell());
       td.setTabIndex(0);
       td.focus(); // TODO (rice) only focus if we were focused previously
     }
@@ -848,12 +852,12 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   @Override
   void setSelected(Element elem, boolean selected) {
-    setStyleName(elem, style.selectedRow(), selected);
+    setStyleName(elem, style.cellTableSelectedRow(), selected);
   }
 
   /**
    * Check if a cell consumes the specified event type.
-   *
+   * 
    * @param cell the cell
    * @param eventType the event type to check
    * @return true if consumed, false if not
@@ -865,13 +869,14 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Render the header or footer.
-   *
+   * 
    * @param isFooter true if this is the footer table, false if the header table
    */
   private void createHeaders(boolean isFooter) {
     List<Header<?>> theHeaders = isFooter ? footers : headers;
     TableSectionElement section = isFooter ? tfoot : thead;
-    String className = isFooter ? style.footer() : style.header();
+    String className = isFooter ? style.cellTableFooter()
+        : style.cellTableHeader();
 
     boolean hasHeader = false;
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
@@ -882,14 +887,14 @@ public class CellTable<T> extends AbstractHasData<T> {
       StringBuilder classesBuilder = new StringBuilder(className);
       if (curColumn == 0) {
         classesBuilder.append(" ");
-        classesBuilder.append(
-            isFooter ? style.firstColumnFooter() : style.firstColumnHeader());
+        classesBuilder.append(isFooter ? style.cellTableFirstColumnFooter()
+            : style.cellTableFirstColumnHeader());
       }
       // The first and last columns could be the same column.
       if (curColumn == columnCount - 1) {
         classesBuilder.append(" ");
-        classesBuilder.append(
-            isFooter ? style.lastColumnFooter() : style.lastColumnHeader());
+        classesBuilder.append(isFooter ? style.cellTableLastColumnFooter()
+            : style.cellTableLastColumnHeader());
       }
 
       SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
@@ -898,7 +903,8 @@ public class CellTable<T> extends AbstractHasData<T> {
         header.render(headerBuilder);
       }
 
-      sb.append(template.th(classesBuilder.toString(), headerBuilder.toSafeHtml()));
+      sb.append(template.th(classesBuilder.toString(),
+          headerBuilder.toSafeHtml()));
       curColumn++;
     }
     sb.appendHtmlConstant("</tr>");
@@ -921,7 +927,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Get the {@link TableColElement} at the specified index, creating it if
    * necessary.
-   *
+   * 
    * @param index the column index
    * @return the {@link TableColElement}
    */
@@ -936,7 +942,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Find the cell that contains the element. Note that the TD element is not
    * the parent. The parent is the div inside the TD cell.
-   *
+   * 
    * @param elem the element
    * @return the parent cell
    */
@@ -967,8 +973,8 @@ public class CellTable<T> extends AbstractHasData<T> {
       Object key = providesKey == null ? value : providesKey.getKey(value);
       Element parentElem = tableCell.getFirstChildElement();
       boolean cellWasEditing = cell.isEditing(parentElem, cellValue, key);
-      column.onBrowserEvent(
-          parentElem, getPageStart() + row, value, event, providesKey);
+      column.onBrowserEvent(parentElem, getPageStart() + row, value, event,
+          providesKey);
       cellIsEditing = cell.isEditing(parentElem, cellValue, key);
       if (cellWasEditing && !cellIsEditing) {
         resetFocus();
@@ -1022,9 +1028,9 @@ public class CellTable<T> extends AbstractHasData<T> {
 
       // Remove old selection markers
       TableRowElement row = getRowElement(oldRow - pageStart);
-      row.removeClassName(style.keyboardSelectedRow());
+      row.removeClassName(style.cellTableKeyboardSelectedRow());
       TableCellElement td = row.getCells().getItem(oldColumn);
-      td.removeClassName(style.keyboardSelectedCell());
+      td.removeClassName(style.cellTableKeyboardSelectedCell());
       td.removeAttribute("tabIndex");
 
       // Move page start if needed
@@ -1055,7 +1061,7 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Show or hide the loading icon.
-   *
+   * 
    * @param visible true to show, false to hide.
    */
   private void setLoadingIconVisible(boolean visible) {

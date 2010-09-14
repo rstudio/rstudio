@@ -120,13 +120,13 @@ class CellTreeNodeView<T> extends UIObject {
           SelectionModel<? super C> selectionModel) {
         // Cache the style names that will be used for each child.
         CellTree.Style style = nodeView.tree.getStyle();
-        String itemValueStyle = style.itemValue();
-        String selectedStyle = " " + style.selectedItem();
-        String itemStyle = style.item();
-        String itemImageValueStyle = " " + style.itemImageValue();
-        String openStyle = " " + style.openItem();
-        String topStyle = " " + style.topItem();
-        String topImageValueStyle = " " + style.topItemImageValue();
+        String itemValueStyle = style.cellTreeItemValue();
+        String selectedStyle = " " + style.cellTreeSelectedItem();
+        String itemStyle = style.cellTreeItem();
+        String itemImageValueStyle = " " + style.cellTreeItemImageValue();
+        String openStyle = " " + style.cellTreeOpenItem();
+        String topStyle = " " + style.cellTreeTopItem();
+        String topImageValueStyle = " " + style.cellTreeTopItemImageValue();
         boolean isRootNode = nodeView.isRootNode();
         SafeHtml openImage = nodeView.tree.getOpenImageHtml(isRootNode);
         SafeHtml closedImage = nodeView.tree.getClosedImageHtml(isRootNode);
@@ -246,7 +246,7 @@ class CellTreeNodeView<T> extends UIObject {
 
       public void setSelected(Element elem, boolean selected) {
         setStyleName(getSelectionElement(elem),
-            nodeView.tree.getStyle().selectedItem(), selected);
+            nodeView.tree.getStyle().cellTreeSelectedItem(), selected);
       }
 
       /**
@@ -820,7 +820,7 @@ class CellTreeNodeView<T> extends UIObject {
         showOrHide(showMoreElem, false);
         showOrHide(emptyMessageElem, false);
         if (!isRootNode()) {
-          setStyleName(getCellParent(), tree.getStyle().openItem(), true);
+          setStyleName(getCellParent(), tree.getStyle().cellTreeOpenItem(), true);
         }
         ensureAnimationFrame().getStyle().setProperty("display", "");
         onOpen(nodeInfo);
@@ -834,7 +834,7 @@ class CellTreeNodeView<T> extends UIObject {
       }
     } else {
       if (!isRootNode()) {
-        setStyleName(getCellParent(), tree.getStyle().openItem(), false);
+        setStyleName(getCellParent(), tree.getStyle().cellTreeOpenItem(), false);
       }
       cleanup(false);
       tree.maybeAnimateTreeNode(this);
@@ -1010,14 +1010,14 @@ class CellTreeNodeView<T> extends UIObject {
       // TODO(jlabanca): I18N no data string.
       emptyMessageElem = Document.get().createDivElement();
       emptyMessageElem.setInnerHTML("no data");
-      setStyleName(emptyMessageElem, tree.getStyle().emptyMessage(), true);
+      setStyleName(emptyMessageElem, tree.getStyle().cellTreeEmptyMessage(), true);
       showOrHide(emptyMessageElem, false);
       contentContainer.appendChild(emptyMessageElem);
 
       showMoreElem = Document.get().createAnchorElement();
       showMoreElem.setHref("javascript:;");
       showMoreElem.setInnerText("Show more");
-      setStyleName(showMoreElem, tree.getStyle().showMoreButton(), true);
+      setStyleName(showMoreElem, tree.getStyle().cellTreeShowMoreButton(), true);
       showOrHide(showMoreElem, false);
       contentContainer.appendChild(showMoreElem);
     }
@@ -1139,7 +1139,7 @@ class CellTreeNodeView<T> extends UIObject {
     Element parent = keyboardSelection.getFirstChildElement();
     Element child = parent.getFirstChildElement();
     child.removeAttribute("tabIndex");
-    child.removeClassName(tree.getStyle().keyboardSelectedItem());
+    child.removeClassName(tree.getStyle().cellTreeKeyboardSelectedItem());
     keyboardSelection = null;
     keyboardFocused = false;
   }
@@ -1188,7 +1188,7 @@ class CellTreeNodeView<T> extends UIObject {
   private void keyboardEnterAtElement(Element item, boolean focus) {
     if (item != null) {
       Element child = item.getFirstChildElement().getFirstChildElement();
-      child.addClassName(tree.getStyle().keyboardSelectedItem());
+      child.addClassName(tree.getStyle().cellTreeKeyboardSelectedItem());
       child.setTabIndex(0);
       if (focus) {
         child.focus();

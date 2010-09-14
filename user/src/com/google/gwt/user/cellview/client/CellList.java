@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -42,7 +43,7 @@ import java.util.Set;
 
 /**
  * A single column list of cells.
- *
+ * 
  * @param <T> the data type of list items
  */
 public class CellList<T> extends AbstractHasData<T> {
@@ -50,40 +51,49 @@ public class CellList<T> extends AbstractHasData<T> {
   /**
    * A ClientBundle that provides images for this widget.
    */
-  public static interface Resources extends ClientBundle {
-
+  public interface Resources extends ClientBundle {
     /**
      * The background used for selected items.
      */
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellListSelectedBackground();
 
     /**
      * The styles used in this widget.
      */
-    @Source("CellList.css")
+    @Source(Style.DEFAULT_CSS)
     Style cellListStyle();
   }
 
   /**
    * Styles used by this widget.
    */
-  public static interface Style extends CssResource {
+  @ImportedWithPrefix("gwt-CellList")
+  public interface Style extends CssResource {
+    /**
+     * The path to the default CSS styles used by this resource.
+     */
+    String DEFAULT_CSS = "com/google/gwt/user/cellview/client/CellList.css";
 
     /**
      * Applied to even items.
      */
-    String evenItem();
+    String cellListEvenItem();
 
     /**
      * Applied to odd items.
      */
-    String oddItem();
+    String cellListOddItem();
 
     /**
      * Applied to selected items.
      */
-    String selectedItem();
+    String cellListSelectedItem();
+
+    /**
+     * Applied to the widget.
+     */
+    String cellListWidget();
   }
 
   interface Template extends SafeHtmlTemplates {
@@ -99,12 +109,14 @@ public class CellList<T> extends AbstractHasData<T> {
   private static Resources DEFAULT_RESOURCES;
 
   private static final Template TEMPLATE = GWT.create(Template.class);
+
   private static Resources getDefaultResources() {
     if (DEFAULT_RESOURCES == null) {
       DEFAULT_RESOURCES = GWT.create(Resources.class);
     }
     return DEFAULT_RESOURCES;
   }
+
   private final Cell<T> cell;
   private final Element childContainer;
 
@@ -117,7 +129,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Construct a new {@link CellList}.
-   *
+   * 
    * @param cell the cell used to render each item
    */
   public CellList(final Cell<T> cell) {
@@ -126,7 +138,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Construct a new {@link CellList} with the specified {@link Resources}.
-   *
+   * 
    * @param cell the cell used to render each item
    * @param resources the resources used for this widget
    */
@@ -135,6 +147,7 @@ public class CellList<T> extends AbstractHasData<T> {
     this.cell = cell;
     this.style = resources.cellListStyle();
     this.style.ensureInjected();
+    addStyleName(this.style.cellListWidget());
 
     // Create the DOM hierarchy.
     childContainer = Document.get().createDivElement();
@@ -158,7 +171,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Get the message that is displayed when there is no data.
-   *
+   * 
    * @return the empty message
    */
   public SafeHtml getEmptyListMessage() {
@@ -168,7 +181,7 @@ public class CellList<T> extends AbstractHasData<T> {
   /**
    * Get the {@link Element} for the specified index. If the element has not
    * been created, null is returned.
-   *
+   * 
    * @param indexOnPage the index on the page
    * @return the element, or null if it doesn't exists
    * @throws IndexOutOfBoundsException if the index is outside of the current
@@ -217,7 +230,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Set the message to display when there is no data.
-   *
+   * 
    * @param html the message to display when there are no results
    */
   public void setEmptyListMessage(SafeHtml html) {
@@ -227,7 +240,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Set the value updater to use when cells modify items.
-   *
+   * 
    * @param valueUpdater the {@link ValueUpdater}
    */
   public void setValueUpdater(ValueUpdater<T> valueUpdater) {
@@ -241,19 +254,21 @@ public class CellList<T> extends AbstractHasData<T> {
     int end = start + length;
     for (int i = start; i < end; i++) {
       T value = values.get(i - start);
-      boolean isSelected = selectionModel == null
-          ? false : selectionModel.isSelected(value);
+      boolean isSelected = selectionModel == null ? false
+          : selectionModel.isSelected(value);
       // TODO(jlabanca): Factor out __idx because rows can move.
       StringBuilder classesBuilder = new StringBuilder();
-      classesBuilder.append(i % 2 == 0 ? style.evenItem() : style.oddItem());
+      classesBuilder.append(i % 2 == 0 ? style.cellListEvenItem()
+          : style.cellListOddItem());
       if (isSelected) {
-        classesBuilder.append(" ").append(style.selectedItem());
+        classesBuilder.append(" ").append(style.cellListSelectedItem());
       }
 
       SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
       cell.render(value, null, cellBuilder);
 
-      sb.append(TEMPLATE.div(i, classesBuilder.toString(), cellBuilder.toSafeHtml()));
+      sb.append(TEMPLATE.div(i, classesBuilder.toString(),
+          cellBuilder.toSafeHtml()));
     }
   }
 
@@ -275,13 +290,13 @@ public class CellList<T> extends AbstractHasData<T> {
 
   @Override
   void setSelected(Element elem, boolean selected) {
-    setStyleName(elem, style.selectedItem(), selected);
+    setStyleName(elem, style.cellListSelectedItem(), selected);
   }
 
   /**
    * Get the key for a given value. Defaults to the value if new
    * {@link ProvidesKey} is specified.
-   *
+   * 
    * @param value the value
    * @return the key for the value
    */
@@ -292,7 +307,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Show or hide an element.
-   *
+   * 
    * @param element the element
    * @param show true to show, false to hide
    */

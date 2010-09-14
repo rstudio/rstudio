@@ -14,32 +14,32 @@
  * the License.
  */
 .cellTreeWidget {
-	
+  
 }
 
 .cellTreeEmptyMessage {
-	padding-left: 16px;
-	font-style: italic;
+  padding-left: 16px;
+  font-style: italic;
 }
 
 .cellTreeItem {
-	padding-top: 4px;
-	padding-bottom: 4px;
-	cursor: hand;
-	cursor: pointer;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  cursor: hand;
+  cursor: pointer;
 }
 
 .cellTreeItemImage {
-	
+  
 }
 
 .cellTreeItemImageValue {
-	
+  
 }
 
 .cellTreeItemValue {
-	padding-left: 3px;
-	padding-right: 3px;
+  padding-left: 3px;
+  padding-right: 3px;
 }
 
 /*
@@ -50,34 +50,30 @@ div:focus { outline: none; }
 }
 
 .cellTreeOpenItem {
-	
+  
 }
 
 .cellTreeTopItem {
-	font-weight: bold;
-	color: #4b4a4a;
-	margin-top: 20px;
-	padding: 3px 13px 3px 10px !important;
+  
 }
 
 .cellTreeTopItemImage {
-	
+  
 }
 
 .cellTreeTopItemImageValue {
-	border-bottom: 1px solid #6f7277;
-	padding-bottom: 1px;
+  
 }
 
 @sprite .cellTreeSelectedItem {
-	gwt-image: 'cellTreeSelectedBackground';
-	background-color: #628cd5;
-	color: white;
-	height: auto;
-	overflow: auto;
+  gwt-image: 'cellTreeSelectedBackground';
+  background-color: #628cd5;
+  color: white;
+  height: auto;
+  overflow: auto;
 }
 
 .cellTreeShowMoreButton {
-	padding-left: 16px;
-	outline: none;
+  padding-left: 16px;
+  outline: none;
 }

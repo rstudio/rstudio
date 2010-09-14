@@ -30,7 +30,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.CellTable.CleanStyle;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.client.ui.Composite;
@@ -57,11 +56,9 @@ public class SummaryWidget extends Composite {
     String thirty();
   }
 
-  interface TableResources extends CellTable.CleanResources {
-    @Source(value = {
-        "com/google/gwt/user/cellview/client/CellTableClean.css",
-        "CellTablePatch.css"})
-    CleanStyle cellTableStyle();
+  interface TableResources extends CellTable.Resources {
+    @Source(value = {CellTable.Style.DEFAULT_CSS, "CellTablePatch.css"})
+    CellTable.Style cellTableStyle();
   }
 
   private class DescriptionColumn extends Column<PersonProxy, String> {

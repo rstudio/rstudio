@@ -174,8 +174,7 @@ public class ShowcaseShell extends Composite {
     loadingHtml = proto.getHTML();
 
     // Create the cell tree.
-    CellTree.Resources res = GWT.create(CellTree.CleanResources.class);
-    mainMenu = new CellTree(treeModel, null, res);
+    mainMenu = new CellTree(treeModel, null);
     mainMenu.setAnimationEnabled(true);
 
     // Initialize the ui binder.

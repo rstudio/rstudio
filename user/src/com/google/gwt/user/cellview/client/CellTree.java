@@ -25,6 +25,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -49,33 +50,22 @@ import java.util.ArrayList;
 public class CellTree extends AbstractCellTree implements HasAnimation {
 
   /**
-   * A cleaner version of the table that uses less graphics.
+   * Resources that match the GWT standard style theme.
    */
-  public static interface CleanResources extends Resources {
+  public interface BasicResources extends Resources {
 
     @ImageOptions(flipRtl = true)
-    @Source("cellTreeClosedArrow.png")
     ImageResource cellTreeClosedItem();
 
     @ImageOptions(flipRtl = true)
-    @Source("cellTreeLoadingClean.gif")
+    @Source("cellTreeLoadingBasic.gif")
     ImageResource cellTreeLoading();
 
     @ImageOptions(flipRtl = true)
-    @Source("cellTreeOpenArrow.png")
     ImageResource cellTreeOpenItem();
 
-    @Source("CellTreeClean.css")
-    CleanStyle cellTreeStyle();
-  }
-
-  /**
-   * A cleaner version of the table that uses less graphics.
-   */
-  public static interface CleanStyle extends Style {
-    String topItem();
-
-    String topItemImageValue();
+    @Source(BasicStyle.DEFAULT_CSS)
+    BasicStyle cellTreeStyle();
   }
 
   /**
@@ -116,12 +106,13 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
   /**
    * A ClientBundle that provides images for this widget.
    */
-  public static interface Resources extends ClientBundle {
+  public interface Resources extends ClientBundle {
 
     /**
      * An image indicating a closed branch.
      */
     @ImageOptions(flipRtl = true)
+    @Source("cellTreeClosedArrow.png")
     ImageResource cellTreeClosedItem();
 
     /**
@@ -134,6 +125,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
      * An image indicating an open branch.
      */
     @ImageOptions(flipRtl = true)
+    @Source("cellTreeOpenArrow.png")
     ImageResource cellTreeOpenItem();
 
     /**
@@ -145,7 +137,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
     /**
      * The styles used in this widget.
      */
-    @Source("CellTree.css")
+    @Source(Style.DEFAULT_CSS)
     Style cellTreeStyle();
   }
 
@@ -325,74 +317,96 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
   /**
    * Styles used by this widget.
    */
-  public static interface Style extends CssResource {
+  @ImportedWithPrefix("gwt-CellTree")
+  public interface Style extends CssResource {
+    /**
+     * The path to the default CSS styles used by this resource.
+     */
+    String DEFAULT_CSS = "com/google/gwt/user/cellview/client/CellTree.css";
 
     /**
      * Applied to the empty message.
      */
-    String emptyMessage();
+    String cellTreeEmptyMessage();
 
     /**
      * Applied to tree items.
      */
-    String item();
+    String cellTreeItem();
 
     /**
      * Applied to open/close icon.
      */
-    String itemImage();
+    String cellTreeItemImage();
 
     /**
      * Applied to the wrapper around the image and value.
      */
-    String itemImageValue();
+    String cellTreeItemImageValue();
 
     /**
      * Applied to the value in an item.
      */
-    String itemValue();
+    String cellTreeItemValue();
 
     /**
      * Applied to the keyboard selected item.
      */
-    String keyboardSelectedItem();
+    String cellTreeKeyboardSelectedItem();
 
     /**
      * Applied to open tree items.
      */
-    String openItem();
+    String cellTreeOpenItem();
 
     /**
      * Applied to selected tree items.
      */
-    String selectedItem();
+    String cellTreeSelectedItem();
 
     /**
      * Applied to the show more button.
      */
-    String showMoreButton();
+    String cellTreeShowMoreButton();
 
     /**
      * Applied to top level items.
      */
-    String topItem();
+    String cellTreeTopItem();
 
     /**
      * Applied to open/close icon at the top level.
      */
-    String topItemImage();
+    String cellTreeTopItemImage();
 
     /**
      * Applied to the wrapper around the image and value of top level items.
      */
-    String topItemImageValue();
+    String cellTreeTopItemImageValue();
+
+    /**
+     * Applies to the widget.
+     */
+    String cellTreeWidget();
+  }
+
+  /**
+   * Styles used by {@link BasicResources}.
+   */
+  @ImportedWithPrefix("gwt-CellTree")
+  interface BasicStyle extends Style {
+    /**
+     * The path to the default CSS styles used by this resource.
+     */
+    String DEFAULT_CSS = "com/google/gwt/user/cellview/client/CellTreeBasic.css";
   }
 
   interface Template extends SafeHtmlTemplates {
     @Template("<div class=\"{0}\" style=\"position:absolute;{1}:0px;top:0px;"
         + "height:{2}px;width:{3}px;background:url('{4}') no-repeat scroll "
         + "center center transparent;\"></div>")
-    SafeHtml image(String classes, String direction, int height, int width, String url);
+    SafeHtml image(String classes, String direction, int height, int width,
+        String url);
   }
 
   /**
@@ -502,7 +516,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
     this.style = resources.cellTreeStyle();
     this.style.ensureInjected();
     initWidget(new SimplePanel());
-    setStyleName("gwt-StandardTreeView");
+    setStyleName(this.style.cellTreeWidget());
 
     // Initialize the open and close images strings.
     ImageResource treeOpen = resources.cellTreeOpenItem();
@@ -755,9 +769,9 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
    * @return the rendered HTML
    */
   private SafeHtml getImageHtml(ImageResource res, boolean isTop) {
-    StringBuilder classesBuilder = new StringBuilder(style.itemImage());
+    StringBuilder classesBuilder = new StringBuilder(style.cellTreeItemImage());
     if (isTop) {
-      classesBuilder.append(" ").append(style.topItemImage());
+      classesBuilder.append(" ").append(style.cellTreeTopItemImage());
     }
 
     String direction;
@@ -766,8 +780,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation {
     } else {
       direction = "left";
     }
-    return template.image(classesBuilder.toString(), direction,
-        res.getHeight(), res.getWidth(), res.getURL());
+    return template.image(classesBuilder.toString(), direction, res.getHeight(),
+        res.getWidth(), res.getURL());
   }
 
   /**
