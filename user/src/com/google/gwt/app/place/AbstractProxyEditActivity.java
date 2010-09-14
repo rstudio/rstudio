@@ -18,15 +18,19 @@ package com.google.gwt.app.place;
 import com.google.gwt.app.place.ProxyPlace.Operation;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Value;
+import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -39,8 +43,8 @@ import java.util.Set;
  * 
  * @param <P> the type of Proxy being edited
  */
-public abstract class AbstractProxyEditActivity<P extends EntityProxy> implements
-    Activity, ProxyEditView.Delegate {
+public abstract class AbstractProxyEditActivity<P extends EntityProxy>
+    implements Activity, ProxyEditView.Delegate {
 
   private RequestObject<Void> requestObject;
 
@@ -50,9 +54,9 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
   private final RequestFactory requests;
   private final PlaceController placeController;
 
-  private P record;
-  private Long futureId;
   private AcceptsOneWidget display;
+  private P record;
+  private EntityProxyId stableId;
 
   public AbstractProxyEditActivity(ProxyEditView<P> view, P record,
       Class<P> proxyType, boolean creating, RequestFactory requests,
@@ -93,7 +97,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
 
     return null;
   }
-  
+
   public void onCancel() {
     onStop();
   }
@@ -114,15 +118,15 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
 
     Receiver<Void> receiver = new Receiver<Void>() {
       public void onSuccess(Void ignore, Set<SyncResult> response) {
+        // TODO(rjrjr): This can be simplified with RequestFactory.refresh()
         if (display == null) {
           return;
         }
-        boolean hasViolations = false;
 
         for (SyncResult syncResult : response) {
           EntityProxy syncRecord = syncResult.getProxy();
           if (creating) {
-            if (futureId == null || !futureId.equals(syncResult.getFutureId())) {
+            if (!stableId.equals(syncRecord.stableId())) {
               continue;
             }
             record = cast(syncRecord);
@@ -131,18 +135,22 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
               continue;
             }
           }
-          if (syncResult.hasViolations()) {
-            hasViolations = true;
-            view.showErrors(syncResult.getViolations());
+        }
+        exit(true);
+      }
+
+      @Override
+      public void onViolation(Set<Violation> errors) {
+        Map<String, String> toShow = new HashMap<String, String>();
+        for (Violation error : errors) {
+          if (error.getProxyId().equals(stableId)) {
+            toShow.put(error.getPath(), error.getMessage());
           }
         }
-        if (!hasViolations) {
-          exit(true);
-        } else {
-          requestObject = toCommit;
-          requestObject.clearUsed();
-          view.setEnabled(true);
-        }
+        view.showErrors(toShow);
+        requestObject = toCommit;
+        requestObject.clearUsed();
+        view.setEnabled(true);
       }
     };
     toCommit.fire(receiver);
@@ -156,7 +164,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
 
     if (creating) {
       P tempRecord = requests.create(proxyType);
-      futureId = tempRecord.getId();
+      stableId = tempRecord.stableId();
       doStart(display, tempRecord);
     } else {
       ProxyRequest<P> findRequest = getFindRequest(Value.of(getRecord().getId()));

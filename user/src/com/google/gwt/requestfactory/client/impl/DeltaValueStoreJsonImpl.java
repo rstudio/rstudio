@@ -104,8 +104,8 @@ class DeltaValueStoreJsonImpl {
 
   // TODO: remove this method when SyncResult is removed.
   static SyncResultImpl makeSyncResult(ProxyJsoImpl jso,
-      Map<String, String> violations, Object futureId) {
-    return new SyncResultImpl(jso.getSchema().create(jso), violations, futureId);
+      Object futureId) {
+    return new SyncResultImpl(jso.getSchema().create(jso), futureId);
   }
 
   private boolean used = false;
@@ -169,7 +169,7 @@ class DeltaValueStoreJsonImpl {
         ProxyJsoImpl masterRecord = master.records.get(futureKey);
         assert masterRecord == null;
         requestFactory.postChangeEvent(copy, WriteOperation.CREATE);
-        syncResults.add(makeSyncResult(copy, null, futureKey.id));
+        syncResults.add(makeSyncResult(copy, futureKey.id));
       }
     }
     processToRemove(toRemove, WriteOperation.CREATE);
@@ -188,7 +188,7 @@ class DeltaValueStoreJsonImpl {
             requestFactory);
         requestFactory.postChangeEvent(copy, WriteOperation.DELETE);
         master.records.remove(key);
-        syncResults.add(makeSyncResult(copy, null, null));
+        syncResults.add(makeSyncResult(copy, null));
       }
     }
 
@@ -216,7 +216,7 @@ class DeltaValueStoreJsonImpl {
           copy.merge(value);
           toRemove.add(key);
         }
-        syncResults.add(makeSyncResult(copy, null, null));
+        syncResults.add(makeSyncResult(copy, null));
       }
     }
     processToRemove(toRemove, WriteOperation.UPDATE);

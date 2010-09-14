@@ -18,8 +18,6 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
-import java.util.Map;
-
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -31,12 +29,10 @@ import java.util.Map;
 public class SyncResultImpl implements SyncResult {
 
   private final EntityProxy record;
-  private final Map<String, String> violations;
   private final Object futureId;
   
-  public SyncResultImpl(EntityProxy record, Map<String, String> violations, Object futureId) {
+  public SyncResultImpl(EntityProxy record, Object futureId) {
     this.record = record;
-    this.violations = violations;
     this.futureId = futureId;
   }
 
@@ -46,14 +42,5 @@ public class SyncResultImpl implements SyncResult {
 
   public EntityProxy getProxy() {
     return record;
-  }
-  
-  public Map<String, String> getViolations() {
-    return violations;
-  }
-
-  public boolean hasViolations() {
-    return violations != null && violations.size() > 0;
-  }
-  
+  }  
 }

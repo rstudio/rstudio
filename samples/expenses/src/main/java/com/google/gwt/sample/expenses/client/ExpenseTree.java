@@ -112,7 +112,7 @@ public class ExpenseTree extends Composite {
    * The {@link ListDataProvider} used for Employee lists.
    */
   private class EmployeeListDataProvider extends AsyncDataProvider<
-      EmployeeProxy> implements Receiver<List<EmployeeProxy>> {
+      EmployeeProxy> extends Receiver<List<EmployeeProxy>> {
 
     private final String department;
 

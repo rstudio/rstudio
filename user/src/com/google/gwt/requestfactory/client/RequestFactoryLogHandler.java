@@ -38,7 +38,7 @@ public class RequestFactoryLogHandler extends Handler {
     LoggingRequest getLoggingRequest();
   }
   
-  private class LoggingReceiver implements Receiver<Long> {
+  private class LoggingReceiver extends Receiver<Long> {
     public void onSuccess(Long response, Set<SyncResult> syncResults) {
       if (response > 0) {
         logger.finest("Remote logging successful");

@@ -20,14 +20,15 @@ import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.Violation;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -35,7 +36,46 @@ import java.util.Set;
  */
 public class RequestFactoryTest extends GWTTestCase {
 
+  private class ShouldNotSuccedReceiver<T> extends Receiver<T> {
+
+    private final EntityProxyId expectedId;
+
+    public ShouldNotSuccedReceiver(EntityProxyId expectedId) {
+      this.expectedId = expectedId;
+    }
+
+    @Override
+    public void onSuccess(T response, Set<SyncResult> syncResults) {
+      /*
+       * Make sure your class path includes:
+       * 
+       * tools/apache/log4j/log4j-1.2.16.jar
+       * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
+       * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
+       * tools/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar
+       */
+      fail("Violations expected (you might be missing some jars, "
+          + "see the comment above this line)");
+    }
+
+    @Override
+    public void onViolation(Set<Violation> errors) {
+      assertEquals(1, errors.size());
+      Violation error = errors.iterator().next();
+      assertEquals("userName", error.getPath());
+      assertEquals("size must be between 3 and 30", error.getMessage());
+      assertEquals("Did not receive expeceted id", expectedId,
+          error.getProxyId());
+      finishTest();
+    }
+  }
+
   private SimpleRequestFactory req;
+
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.requestfactory.RequestFactorySuite";
+  }
 
   @Override
   public void gwtSetUp() {
@@ -78,200 +118,79 @@ public class RequestFactoryTest extends GWTTestCase {
     });
   }
 
-  public void testStableId() {
+  public void testFetchEntity() {
+    delayTestFinish(5000);
+    req.simpleFooRequest().findSimpleFooById(999L).fire(
+        new Receiver<SimpleFooProxy>() {
+          public void onSuccess(SimpleFooProxy response,
+              Set<SyncResult> syncResult) {
+            assertEquals(42, (int) response.getIntId());
+            assertEquals("GWT", response.getUserName());
+            assertEquals(8L, (long) response.getLongField());
+            assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.FOO,
+                response.getEnumField());
+            assertEquals(null, response.getBarField());
+            finishTest();
+          }
+        });
+  }
+
+  public void testFetchEntityWithRelation() {
+    delayTestFinish(5000);
+    req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
+        new Receiver<SimpleFooProxy>() {
+          public void onSuccess(SimpleFooProxy response,
+              Set<SyncResult> syncResult) {
+            assertEquals(42, (int) response.getIntId());
+            assertEquals("GWT", response.getUserName());
+            assertEquals(8L, (long) response.getLongField());
+            assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.FOO,
+                response.getEnumField());
+            assertNotNull(response.getBarField());
+            finishTest();
+          }
+        });
+  }
+
+  /*
+   * tests that (a) any method can have a side effect that is handled correctly.
+   * (b) instance methods are handled correctly.
+   */
+  public void testMethodWithSideEffects() {
     delayTestFinish(5000);
 
-    final SimpleFooProxy foo = req.create(SimpleFooProxy.class);
-    final Object futureId = foo.getId();
-    assertTrue(((ProxyImpl) foo).isFuture());
-    RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
-        foo);
+    req.simpleFooRequest().findSimpleFooById(999L).fire(
+        new Receiver<SimpleFooProxy>() {
 
-    final SimpleFooProxy newFoo = fooReq.edit(foo);
-    assertEquals(futureId, foo.getId());
-    assertTrue(((ProxyImpl) foo).isFuture());
-    assertEquals(futureId, newFoo.getId());
-    assertTrue(((ProxyImpl) newFoo).isFuture());
-
-    newFoo.setUserName("GWT basic user");
-    fooReq.fire(new Receiver<SimpleFooProxy>() {
-
-      public void onSuccess(final SimpleFooProxy returned,
-          Set<SyncResult> syncResults) {
-        assertEquals(futureId, foo.getId());
-        assertTrue(((ProxyImpl) foo).isFuture());
-        assertEquals(futureId, newFoo.getId());
-        assertTrue(((ProxyImpl) newFoo).isFuture());
-
-        assertFalse(((ProxyImpl) returned).isFuture());
-
-        checkStableIdEquals(foo, returned);
-        checkStableIdEquals(newFoo, returned);
-
-        RequestObject<SimpleFooProxy> editRequest = req.simpleFooRequest().persistAndReturnSelf(
-            returned);
-        final SimpleFooProxy editableFoo = editRequest.edit(returned);
-        editableFoo.setUserName("GWT power user");
-        editRequest.fire(new Receiver<SimpleFooProxy>() {
-
-          public void onSuccess(SimpleFooProxy returnedAfterEdit,
+          public void onSuccess(SimpleFooProxy newFoo,
               Set<SyncResult> syncResults) {
-            checkStableIdEquals(editableFoo, returnedAfterEdit);
-            assertEquals(returnedAfterEdit.getId(), returned.getId());
-            finishTest();
+            final RequestObject<Long> fooReq = req.simpleFooRequest().countSimpleFooWithUserNameSideEffect(
+                newFoo);
+            newFoo = fooReq.edit(newFoo);
+            newFoo.setUserName("Ray");
+            fooReq.fire(new Receiver<Long>() {
+              public void onSuccess(Long response, Set<SyncResult> syncResults) {
+                assertEquals(new Long(1L), response);
+                // confirm that there was a sideEffect.
+                assertEquals(1, syncResults.size());
+                SyncResult syncResultArray[] = syncResults.toArray(new SyncResult[0]);
+                assertNull(syncResultArray[0].getFutureId());
+                EntityProxy proxy = syncResultArray[0].getProxy();
+                assertEquals(new Long(999L), proxy.getId());
+                // confirm that the instance method did have the desired
+                // sideEffect.
+                req.simpleFooRequest().findSimpleFooById(999L).fire(
+                    new Receiver<SimpleFooProxy>() {
+                      public void onSuccess(SimpleFooProxy finalFoo,
+                          Set<SyncResult> syncResults) {
+                        assertEquals("Ray", finalFoo.getUserName());
+                        finishTest();
+                      }
+                    });
+              }
+            });
           }
         });
-      }
-    });
-  }
-
-  private void checkStableIdEquals(SimpleFooProxy expected, SimpleFooProxy actual) {
-    assertNotSame(expected.stableId(), actual.stableId());
-    assertEquals(expected.stableId(), actual.stableId());
-    assertEquals(expected.stableId().hashCode(), actual.stableId().hashCode());
-
-    // No assumptions about the proxy objects (being proxies and all)
-    assertNotSame(expected, actual);
-    assertFalse(expected.equals(actual));
-  }
-
-  public void testViolationsOnCreate() {
-    delayTestFinish(5000);
-
-    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
-    final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
-
-    newFoo = fooReq.edit(newFoo);
-    newFoo.setUserName("A"); // will cause constraint violation
-
-    fooReq.fire(new Receiver<Void>() {
-      public void onSuccess(Void ignore, Set<SyncResult> syncResults) {
-        assertEquals(1, syncResults.size());
-        SyncResult syncResult = syncResults.iterator().next();
-        /*
-         * Make sure your class path includes:
-         *
-         * tools/apache/log4j/log4j-1.2.16.jar
-         * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
-         * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
-         * tools/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar
-         */
-        assertTrue("Violations expected (you might be missing some jars, "
-            + "see the comment above this line)", syncResult.hasViolations());
-        Map<String, String> violations = syncResult.getViolations();
-        assertEquals(1, violations.size());
-        assertEquals("size must be between 3 and 30",
-            violations.get("userName"));
-        finishTest();
-      }
-    });
-  }
-
-  public void testViolationsOnEdit() {
-    delayTestFinish(5000);
-
-    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
-    final RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(newFoo);
-
-    newFoo = fooReq.edit(newFoo);
-    newFoo.setUserName("GWT User");
-
-    fooReq.fire(new Receiver<SimpleFooProxy>() {
-      public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
-        assertEquals(1, syncResults.size());
-        SyncResult syncResult = syncResults.iterator().next();
-        assertFalse(syncResult.hasViolations());
-
-        RequestObject<Void> editRequest = req.simpleFooRequest().persist(returned);
-        SimpleFooProxy editableFoo = editRequest.edit(returned);
-        editableFoo.setUserName("A");
-
-        editRequest.fire(new Receiver<Void>() {
-          public void onSuccess(Void returned, Set<SyncResult> syncResults) {
-            assertEquals(1, syncResults.size());
-            SyncResult syncResult = syncResults.iterator().next();
-            /*
-             * Make sure your class path includes:
-             *
-             * tools/apache/log4j/log4j-1.2.16.jar
-             * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
-             * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
-             * tools/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar
-             */
-            assertTrue("Violations expected (you might be missing some jars, "
-                + "see the comment above this line)", syncResult.hasViolations());
-            Map<String, String> violations = syncResult.getViolations();
-            assertEquals(1, violations.size());
-            assertEquals("size must be between 3 and 30",
-                violations.get("userName"));
-            finishTest();
-          }
-        });
-      }
-    });
-  }
-
-  public void testViolationsOnEdit_withReturnValue() {
-    delayTestFinish(5000);
-
-    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
-    final RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(newFoo);
-
-    newFoo = fooReq.edit(newFoo);
-    newFoo.setUserName("GWT User");
-
-    fooReq.fire(new Receiver<SimpleFooProxy>() {
-      public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
-        assertEquals(1, syncResults.size());
-        SyncResult syncResult = syncResults.iterator().next();
-        assertFalse(syncResult.hasViolations());
-
-        RequestObject<SimpleFooProxy> editRequest = req.simpleFooRequest().persistAndReturnSelf(returned);
-        SimpleFooProxy editableFoo = editRequest.edit(returned);
-        editableFoo.setUserName("A");
-
-        editRequest.fire(new Receiver<SimpleFooProxy>() {
-          public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
-            assertEquals(1, syncResults.size());
-            SyncResult syncResult = syncResults.iterator().next();
-            /*
-             * Make sure your class path includes:
-             *
-             * tools/apache/log4j/log4j-1.2.16.jar
-             * tools/hibernate/validator/hibernate-validator-4.1.0.Final.jar
-             * tools/slf4j/slf4j-api/slf4j-api-1.6.1.jar
-             * tools/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar
-             */
-            assertTrue("Violations expected (you might be missing some jars, "
-                + "see the comment above this line)", syncResult.hasViolations());
-            Map<String, String> violations = syncResult.getViolations();
-            assertEquals(1, violations.size());
-            assertEquals("size must be between 3 and 30",
-                violations.get("userName"));
-            finishTest();
-          }
-        });
-      }
-    });
-  }
-
-  public void testViolationAbsent() {
-    delayTestFinish(5000);
-
-    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
-    final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
-
-    newFoo = fooReq.edit(newFoo);
-    newFoo.setUserName("Amit"); // will not cause violation.
-
-    fooReq.fire(new Receiver<Void>() {
-      public void onSuccess(Void ignore, Set<SyncResult> syncResults) {
-        assertEquals(1, syncResults.size());
-        SyncResult syncResult = syncResults.iterator().next();
-        assertFalse(syncResult.hasViolations());
-        finishTest();
-      }
-    });
   }
 
   /*
@@ -492,45 +411,6 @@ public class RequestFactoryTest extends GWTTestCase {
     });
   }
 
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.requestfactory.RequestFactorySuite";
-  }
-
-  public void testFetchEntity() {
-    delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
-        new Receiver<SimpleFooProxy>() {
-          public void onSuccess(SimpleFooProxy response,
-              Set<SyncResult> syncResult) {
-            assertEquals(42, (int) response.getIntId());
-            assertEquals("GWT", response.getUserName());
-            assertEquals(8L, (long) response.getLongField());
-            assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.FOO,
-                response.getEnumField());
-            assertEquals(null, response.getBarField());
-            finishTest();
-          }
-        });
-  }
-
-  public void testFetchEntityWithRelation() {
-    delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
-        new Receiver<SimpleFooProxy>() {
-          public void onSuccess(SimpleFooProxy response,
-              Set<SyncResult> syncResult) {
-            assertEquals(42, (int) response.getIntId());
-            assertEquals("GWT", response.getUserName());
-            assertEquals(8L, (long) response.getLongField());
-            assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.FOO,
-                response.getEnumField());
-            assertNotNull(response.getBarField());
-            finishTest();
-          }
-        });
-  }
-
   public void testProxysAsInstanceMethodParams() {
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
@@ -552,45 +432,139 @@ public class RequestFactoryTest extends GWTTestCase {
         });
   }
 
-  /*
-   * tests that (a) any method can have a side effect that is handled correctly.
-   * (b) instance methods are handled correctly.
-   */
-  public void testMethodWithSideEffects() {
+  public void testStableId() {
     delayTestFinish(5000);
 
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
-        new Receiver<SimpleFooProxy>() {
+    final SimpleFooProxy foo = req.create(SimpleFooProxy.class);
+    final Object futureId = foo.getId();
+    assertTrue(((ProxyImpl) foo).isFuture());
+    RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
+        foo);
 
-          public void onSuccess(SimpleFooProxy newFoo,
+    final SimpleFooProxy newFoo = fooReq.edit(foo);
+    assertEquals(futureId, foo.getId());
+    assertTrue(((ProxyImpl) foo).isFuture());
+    assertEquals(futureId, newFoo.getId());
+    assertTrue(((ProxyImpl) newFoo).isFuture());
+
+    newFoo.setUserName("GWT basic user");
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+
+      public void onSuccess(final SimpleFooProxy returned,
+          Set<SyncResult> syncResults) {
+        assertEquals(futureId, foo.getId());
+        assertTrue(((ProxyImpl) foo).isFuture());
+        assertEquals(futureId, newFoo.getId());
+        assertTrue(((ProxyImpl) newFoo).isFuture());
+
+        assertFalse(((ProxyImpl) returned).isFuture());
+
+        checkStableIdEquals(foo, returned);
+        checkStableIdEquals(newFoo, returned);
+
+        RequestObject<SimpleFooProxy> editRequest = req.simpleFooRequest().persistAndReturnSelf(
+            returned);
+        final SimpleFooProxy editableFoo = editRequest.edit(returned);
+        editableFoo.setUserName("GWT power user");
+        editRequest.fire(new Receiver<SimpleFooProxy>() {
+
+          public void onSuccess(SimpleFooProxy returnedAfterEdit,
               Set<SyncResult> syncResults) {
-            final RequestObject<Long> fooReq = req.simpleFooRequest().countSimpleFooWithUserNameSideEffect(
-                newFoo);
-            newFoo = fooReq.edit(newFoo);
-            newFoo.setUserName("Ray");
-            fooReq.fire(new Receiver<Long>() {
-              public void onSuccess(Long response, Set<SyncResult> syncResults) {
-                assertEquals(new Long(1L), response);
-                // confirm that there was a sideEffect.
-                assertEquals(1, syncResults.size());
-                SyncResult syncResultArray[] = syncResults.toArray(new SyncResult[0]);
-                assertFalse(syncResultArray[0].hasViolations());
-                assertNull(syncResultArray[0].getFutureId());
-                EntityProxy proxy = syncResultArray[0].getProxy();
-                assertEquals(new Long(999L), proxy.getId());
-                // confirm that the instance method did have the desired
-                // sideEffect.
-                req.simpleFooRequest().findSimpleFooById(999L).fire(
-                    new Receiver<SimpleFooProxy>() {
-                      public void onSuccess(SimpleFooProxy finalFoo,
-                          Set<SyncResult> syncResults) {
-                        assertEquals("Ray", finalFoo.getUserName());
-                        finishTest();
-                      }
-                    });
-              }
-            });
+            checkStableIdEquals(editableFoo, returnedAfterEdit);
+            assertEquals(returnedAfterEdit.getId(), returned.getId());
+            finishTest();
           }
         });
+      }
+    });
+  }
+
+  public void testViolationAbsent() {
+    delayTestFinish(5000);
+
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("Amit"); // will not cause violation.
+
+    fooReq.fire(new Receiver<Void>() {
+      public void onSuccess(Void ignore, Set<SyncResult> syncResults) {
+        assertEquals(1, syncResults.size());
+        finishTest();
+      }
+    });
+  }
+
+  public void testViolationsOnCreate() {
+    delayTestFinish(5000);
+
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    final RequestObject<Void> fooReq = req.simpleFooRequest().persist(newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("A"); // will cause constraint violation
+
+    fooReq.fire(new ShouldNotSuccedReceiver<Void>(newFoo.stableId()));
+  }
+
+  public void testViolationsOnEdit() {
+    delayTestFinish(5000);
+
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    final RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
+        newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("GWT User");
+
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
+        assertEquals(1, syncResults.size());
+
+        RequestObject<Void> editRequest = req.simpleFooRequest().persist(
+            returned);
+        SimpleFooProxy editableFoo = editRequest.edit(returned);
+        editableFoo.setUserName("A");
+
+        editRequest.fire(new ShouldNotSuccedReceiver<Void>(returned.stableId()));
+      }
+    });
+  }
+
+  public void testViolationsOnEdit_withReturnValue() {
+    delayTestFinish(5000);
+
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    final RequestObject<SimpleFooProxy> fooReq = req.simpleFooRequest().persistAndReturnSelf(
+        newFoo);
+
+    newFoo = fooReq.edit(newFoo);
+    newFoo.setUserName("GWT User");
+
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
+        assertEquals(1, syncResults.size());
+
+        RequestObject<SimpleFooProxy> editRequest = req.simpleFooRequest().persistAndReturnSelf(
+            returned);
+        SimpleFooProxy editableFoo = editRequest.edit(returned);
+        editableFoo.setUserName("A");
+
+        editRequest.fire(new ShouldNotSuccedReceiver<SimpleFooProxy>(
+            returned.stableId()));
+      }
+    });
+  }
+
+  private void checkStableIdEquals(SimpleFooProxy expected,
+      SimpleFooProxy actual) {
+    assertNotSame(expected.stableId(), actual.stableId());
+    assertEquals(expected.stableId(), actual.stableId());
+    assertEquals(expected.stableId().hashCode(), actual.stableId().hashCode());
+
+    // No assumptions about the proxy objects (being proxies and all)
+    assertNotSame(expected, actual);
+    assertFalse(expected.equals(actual));
   }
 }

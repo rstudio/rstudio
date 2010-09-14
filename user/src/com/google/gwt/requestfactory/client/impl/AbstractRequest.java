@@ -19,19 +19,24 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImpl.ReturnRecord;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * <p> <span style="color:red">Experimental API: This class is still under rapid
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
@@ -97,15 +102,17 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public void handleResponseText(String responseText) {
     JsonResults results = JsonResults.fromResults(responseText);
     if (results.getException() != null) {
-      throw new RuntimeException(results.getException());
+      receiver.onFailure(new ServerFailure(results.getException()));
+      return;
     }
     processRelated(results.getRelated());
 
     // handle violations
     JsArray<DeltaValueStoreJsonImpl.ReturnRecord> violationsArray = results.getViolations();
-    Set<SyncResult> syncResults = new HashSet<SyncResult>();
     if (violationsArray != null) {
       int length = violationsArray.length();
+      Set<Violation> errors = new HashSet<Violation>(length);
+
       for (int i = 0; i < length; i++) {
         ReturnRecord violationRecord = violationsArray.get(i);
         Long id = null;
@@ -117,20 +124,31 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
         final EntityProxyIdImpl key = new EntityProxyIdImpl(id,
             requestFactory.getSchema(violationRecord.getSchema()),
             violationRecord.hasFutureId(), null);
-        ProxyJsoImpl copy = ProxyJsoImpl.create(id, 1, key.schema,
-            requestFactory);
         assert violationRecord.hasViolations();
+
         HashMap<String, String> violations = new HashMap<String, String>();
         violationRecord.fillViolations(violations);
-        syncResults.add(DeltaValueStoreJsonImpl.makeSyncResult(copy,
-            violations, id));
+
+        for (Map.Entry<String, String> entry : violations.entrySet()) {
+          final String path = entry.getKey();
+          final String message = entry.getValue();
+          errors.add(new Violation() {
+            public String getMessage() {
+              return message;
+            }
+
+            public String getPath() {
+              return path;
+            }
+
+            public EntityProxyId getProxyId() {
+              return key;
+            }
+          });
+        }
       }
-      /*
-       * TODO (amitmanjhi): call onViolations once the Receiver interface has
-       * been updated. remove null checks from all implementations once Receiver
-       * has the onViolations method.
-       */
-      handleResult(null, syncResults);
+
+      receiver.onViolation(errors);
     } else {
       handleResult(results.getResult(),
           deltaValueStore.commit(results.getSideEffects()));

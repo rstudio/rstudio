@@ -27,6 +27,7 @@ import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
@@ -112,11 +113,14 @@ public class PersonEditorWorkflow {
     }
     dialog.hide();
     request.fire(new Receiver<Void>() {
+      @Override
       public void onSuccess(Void response, Set<SyncResult> syncResults) {
-        for (SyncResult result : syncResults) {
-          if (result.hasViolations()) {
-            System.out.println(result.getViolations());
-          }
+      }
+
+      @Override
+      public void onViolation(Set<Violation> errors) {
+        for (Violation error : errors) {
+          System.out.println(error.getPath() + " " + error.getMessage());
         }
       }
     });
