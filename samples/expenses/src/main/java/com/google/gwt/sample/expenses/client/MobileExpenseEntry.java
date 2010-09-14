@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.GWT;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -31,7 +32,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Date;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -124,14 +124,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
           public void onSuccess(Void ignore, Set<SyncResult> response) {
             // Check for commit errors.
             String errorMessage = "";
-            for (SyncResult result : response) {
-              if (result.hasViolations()) {
-                Map<String, String> violations = result.getViolations();
-                for (String message : violations.values()) {
-                  errorMessage += message + " ";
-                }
-              }
-            }
+            // FIXME: Error handling disabled...
             if (errorMessage.length() > 0) {
               errorText.setInnerText(errorMessage);
             } else {

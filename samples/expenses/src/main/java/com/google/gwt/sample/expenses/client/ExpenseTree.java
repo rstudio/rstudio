@@ -111,8 +111,7 @@ public class ExpenseTree extends Composite {
   /**
    * The {@link ListDataProvider} used for Employee lists.
    */
-  private class EmployeeListDataProvider extends AsyncDataProvider<
-      EmployeeProxy> extends Receiver<List<EmployeeProxy>> {
+  private class EmployeeListDataProvider extends AsyncDataProvider<EmployeeProxy> {
 
     private final String department;
 
@@ -133,17 +132,17 @@ public class ExpenseTree extends Composite {
       });
     }
 
-    public void onSuccess(
-        List<EmployeeProxy> response, Set<SyncResult> syncResults) {
-      updateRowData(0, response);
-    }
-
     @Override
     protected void onRangeChanged(HasData<EmployeeProxy> view) {
       Range range = view.getVisibleRange();
       requestFactory.employeeRequest().findEmployeeEntriesByDepartment(
           department, range.getStart(), range.getLength()).with(
-          getEmployeeMenuProperties()).fire(this);
+          getEmployeeMenuProperties()).fire(new Receiver<List<EmployeeProxy>>(){
+            @Override
+            public void onSuccess(List<EmployeeProxy> response,
+                Set<SyncResult> syncResults) {
+              updateRowData(0, response);
+            }});
     }
   }
 

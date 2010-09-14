@@ -867,14 +867,7 @@ public class ExpenseDetails extends Composite {
    */
   private String getErrorMessageFromSync(Set<SyncResult> response) {
     String errorMessage = "";
-    for (SyncResult result : response) {
-      if (result.hasViolations()) {
-        Map<String, String> violations = result.getViolations();
-        for (String message : violations.values()) {
-          errorMessage += message + " ";
-        }
-      }
-    }
+    // TODO: Remove this method..
     return errorMessage;
   }
 
