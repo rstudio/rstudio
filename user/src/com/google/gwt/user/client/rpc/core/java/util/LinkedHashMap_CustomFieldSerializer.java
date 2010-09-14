@@ -21,14 +21,32 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Custom field serializer for {@link java.util.LinkedHashMap} for the server
  * (uses reflection).
  */
+@SuppressWarnings("unchecked")
 public final class LinkedHashMap_CustomFieldSerializer {
 
-  @SuppressWarnings("unchecked") // raw LinkedHashMap
+  /**
+   * We use an atomic reference to avoid having to synchronize. This is safe
+   * because it's only used as a cache; it's okay to read a stale value.
+   */
+  private static AtomicReference<Field> accessOrderField = new AtomicReference<Field>(
+      null);
+
+  private static Object KEY1 = new Object();
+  private static Object KEY2 = new Object();
+
+  /**
+   * We use an atomic reference to avoid having to synchronize. This is safe
+   * because it's only used as a cache; it's okay to read a stale value.
+   */
+  private static AtomicBoolean reflectionHasFailed = new AtomicBoolean(false);
+
   public static void deserialize(SerializationStreamReader streamReader,
       LinkedHashMap instance) throws SerializationException {
     Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
@@ -42,12 +60,11 @@ public final class LinkedHashMap_CustomFieldSerializer {
    * @param instance the instance to check
    * @return the value of instance.accessOrder
    */
-  @SuppressWarnings("unchecked") // raw LinkedHashMap
-  public static boolean getAccessOrderNoReflection(LinkedHashMap instance) {    
+  public static boolean getAccessOrderNoReflection(LinkedHashMap instance) {
     /*
-     * Clone the instance so our modifications won't affect the original.
-     * In particular, if the original overrides removeEldestEntry, adding
-     * elements to the map could cause existing elements to be removed.
+     * Clone the instance so our modifications won't affect the original. In
+     * particular, if the original overrides removeEldestEntry, adding elements
+     * to the map could cause existing elements to be removed.
      */
     instance = (LinkedHashMap) instance.clone();
     instance.clear();
@@ -63,56 +80,49 @@ public final class LinkedHashMap_CustomFieldSerializer {
      * (accessOrder = true), we will encounter key2 first, since key1 has been
      * accessed more recently.
      */
-    Object key1 = new Object();
-    Object key2 = new Object();
-    instance.put(key1, key1); // INSERT key1
-    instance.put(key2, key2); // INSERT key2
-    instance.get(key1);       // ACCESS key1
-    boolean accessOrder = false;
-    for (Object key : instance.keySet()) {
-      if (key == key1) {
-        break;
-      }
-      if (key == key2) {
-        accessOrder = true;
-        break;
-      }
-    }
-
-    return accessOrder;
+    instance.put(KEY1, KEY1); // INSERT key1
+    instance.put(KEY2, KEY2); // INSERT key2
+    instance.get(KEY1); // ACCESS key1
+    return instance.keySet().iterator().next() == KEY2;
   }
 
-  @SuppressWarnings("unchecked") // raw LinkedHashMap
   public static LinkedHashMap instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
     boolean accessOrder = streamReader.readBoolean();
     return new LinkedHashMap(16, .75f, accessOrder);
   }
 
-  @SuppressWarnings("unchecked") // raw LinkedHashMap
   public static void serialize(SerializationStreamWriter streamWriter,
       LinkedHashMap instance) throws SerializationException {
     streamWriter.writeBoolean(getAccessOrder(instance));
     Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
-  @SuppressWarnings("unchecked") // raw LinkedHashMap
   private static boolean getAccessOrder(LinkedHashMap instance) {
-    Field accessOrderField;
-    try {
-      accessOrderField = LinkedHashMap.class.getDeclaredField("accessOrder");
-      accessOrderField.setAccessible(true);
-      return ((Boolean) accessOrderField.get(instance)).booleanValue();
-    } catch (SecurityException e) {
-      // fall through
-    } catch (NoSuchFieldException e) {
-      // fall through
-    } catch (IllegalArgumentException e) {
-      // fall through
-    } catch (IllegalAccessException e) {
-      // fall through
+    if (!reflectionHasFailed.get()) {
+      try {
+        Field f = accessOrderField.get();
+        if (f == null || !f.isAccessible()) {
+          f = LinkedHashMap.class.getDeclaredField("accessOrder");
+          synchronized (f) {
+            // Ensure all threads can see the accessibility.
+            f.setAccessible(true);
+          }
+          accessOrderField.set(f);
+        }
+        return ((Boolean) f.get(instance)).booleanValue();
+      } catch (SecurityException e) {
+        // fall through
+      } catch (NoSuchFieldException e) {
+        // fall through
+      } catch (IllegalArgumentException e) {
+        // fall through
+      } catch (IllegalAccessException e) {
+        // fall through
+      }
+      reflectionHasFailed.set(true);
     }
-    
+
     // Use a (possibly slower) technique that does not require reflection.
     return getAccessOrderNoReflection(instance);
   }
