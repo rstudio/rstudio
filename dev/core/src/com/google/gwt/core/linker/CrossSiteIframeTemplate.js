@@ -236,10 +236,6 @@ function __MODULE_FUNC__() {
       type: 'end',
     });
   }
-  
-  // Install code pulled in via runAsync
-  //
-  __MODULE_FUNC__.installCode = installCode;
 
   // --------------- STRAIGHT-LINE CODE ---------------
 

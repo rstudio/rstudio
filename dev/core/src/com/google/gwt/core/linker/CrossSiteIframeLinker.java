@@ -44,20 +44,6 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String generateDeferredFragment(TreeLogger logger,
-      LinkerContext context, int fragment, String js) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("$wnd.");
-    sb.append(context.getModuleFunctionName());
-    sb.append(".runAsyncCallback");
-    sb.append(fragment);
-    sb.append("(");
-    sb.append(JsToStringGenerationVisitor.javaScriptString(js));
-    sb.append(");\n");
-    return sb.toString();
-  }
-
-  @Override
   protected byte[] generatePrimaryFragment(TreeLogger logger,
       LinkerContext context, CompilationResult result, String[] js) {
     // Wrap the script code with its prefix and suffix

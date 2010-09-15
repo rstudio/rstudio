@@ -113,18 +113,7 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
      }
    }-*/;
 
-  private static native JavaScriptObject removeTagAndEvalCode(int fragment,
-      JavaScriptObject tag) /*-{
-     return function(code) {
-       var head = document.getElementsByTagName('head').item(0);
-       @com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy::clearOnSuccess(*)(fragment);
-       @com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy::clearCallbacks(*)(tag);
-       head.removeChild(tag);
-       __gwtModuleFunction.installCode(code, false);
-     }
-   }-*/;
-
-  private static native void setOnFailure(JavaScriptObject script,
+  private static native void setOnTerminated(JavaScriptObject script,
       JavaScriptObject callback) /*-{
     var exception = @com.google.gwt.core.client.impl.CrossSiteIframeLoadingStrategy::LoadTerminated;
     script.onerror = function() {
@@ -141,21 +130,12 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
     }
   }-*/;
 
-  /**
-   * Set the success callback for fragment <code>fragment</code>
-   * to the supplied JavaScript function.
-   */
-  private static native void setOnSuccess(int fragment, JavaScriptObject callback) /*-{
-    __gwtModuleFunction['runAsyncCallback'+fragment] = callback;
-  }-*/;
-
   private final IntToIntMap serialNumbers = IntToIntMap.create();
 
   public void startLoadingFragment(int fragment,
       LoadTerminatedHandler loadFinishedHandler) {
     JavaScriptObject tag = createScriptTag(getUrl(fragment));
-    setOnSuccess(fragment, removeTagAndEvalCode(fragment, tag));
-    setOnFailure(tag, removeTagAndCallErrorHandler(fragment, tag,
+    setOnTerminated(tag, removeTagAndCallErrorHandler(fragment, tag,
         loadFinishedHandler));
     installScriptTag(tag);
   }
