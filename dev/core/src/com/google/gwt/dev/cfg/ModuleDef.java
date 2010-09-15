@@ -340,7 +340,7 @@ public class ModuleDef {
             NON_JAVA_RESOURCES, pathPrefix.shouldReroot()));
       }
       lazyResourcesOracle.setPathPrefixes(newPathPrefixes);
-      lazyResourcesOracle.refresh(TreeLogger.NULL);
+      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyResourcesOracle);
     }
     return lazyResourcesOracle;
   }
@@ -402,11 +402,11 @@ public class ModuleDef {
         + "'");
 
     // Refresh resource oracles.
-    lazyPublicOracle.refresh(logger);
-    lazySourceOracle.refresh(logger);
-
-    if (lazyResourcesOracle != null) {
-      lazyResourcesOracle.refresh(logger);
+    if (lazyResourcesOracle == null) {
+      ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle);
+    } else {
+      ResourceOracleImpl.refresh(
+          logger, lazyPublicOracle, lazySourceOracle, lazyResourcesOracle);
     }
     moduleDefEvent.end();
   }
@@ -482,13 +482,13 @@ public class ModuleDef {
       lazyPublicOracle = new ResourceOracleImpl(branch);
       lazyPublicOracle.setPathPrefixes(publicPrefixSet);
     }
-    lazyPublicOracle.refresh(branch);
 
     // Create the source path.
     branch = Messages.SOURCE_PATH_LOCATIONS.branch(logger, null);
     lazySourceOracle = new ResourceOracleImpl(branch);
     lazySourceOracle.setPathPrefixes(sourcePrefixSet);
-    lazySourceOracle.refresh(branch);
+    
+    ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle);
     if (lazySourceOracle.getResources().isEmpty()) {
       branch.log(TreeLogger.WARN,
           "No source path entries; expect subsequent failures", null);
