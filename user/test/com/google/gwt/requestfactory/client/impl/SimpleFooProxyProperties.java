@@ -18,6 +18,8 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleEnum;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
+import com.google.gwt.requestfactory.shared.impl.EnumProperty;
+import com.google.gwt.requestfactory.shared.impl.Property;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

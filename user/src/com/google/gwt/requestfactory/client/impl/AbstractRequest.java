@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
+
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImpl.ReturnRecord;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -25,6 +26,7 @@ import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
+import com.google.gwt.requestfactory.shared.impl.Property;
 
 import java.util.Collection;
 import java.util.Collections;

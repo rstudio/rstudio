@@ -16,10 +16,12 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.GWT;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.impl.Property;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

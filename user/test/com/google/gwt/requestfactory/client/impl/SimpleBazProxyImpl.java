@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.impl.Property;
 
 import java.util.Collections;
 import java.util.HashSet;

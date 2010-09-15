@@ -15,12 +15,12 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.client.impl.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.impl.Property;
 
 import org.json.JSONArray;
 import org.json.JSONException;

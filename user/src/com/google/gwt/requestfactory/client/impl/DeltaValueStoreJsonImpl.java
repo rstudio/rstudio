@@ -16,12 +16,14 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
+
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.client.SyncResultImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.impl.Property;
 
 import java.util.HashMap;
 import java.util.HashSet;
