@@ -45,6 +45,8 @@ import com.google.gwt.requestfactory.client.impl.AbstractShortRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractStringRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractVoidRequest;
 import com.google.gwt.requestfactory.client.impl.EnumProperty;
+import com.google.gwt.requestfactory.client.impl.FindRequest;
+import com.google.gwt.requestfactory.client.impl.FindRequestObjectImpl;
 import com.google.gwt.requestfactory.client.impl.Property;
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.client.impl.ProxyJsoImpl;
@@ -189,10 +191,14 @@ public class RequestFactoryGenerator extends Generator {
       JClassType publicProxyType) throws UnableToCompleteException {
     TypeOracle typeOracle = generatorContext.getTypeOracle();
 
-    if (!publicProxyType.isAssignableTo(typeOracle.findType(EntityProxy.class.getName()))) {
+    JClassType entityProxyClass = typeOracle.findType(EntityProxy.class.getName());
+    if (!publicProxyType.isAssignableTo(entityProxyClass)) {
       return;
     }
 
+    if (publicProxyType.equals(entityProxyClass)) {
+      return;
+    }
     if (generatedProxyTypes.contains(publicProxyType)) {
       return;
     }
@@ -372,6 +378,16 @@ public class RequestFactoryGenerator extends Generator {
         throw new UnableToCompleteException();
       }
       requestSelectors.add(method);
+    }
+    /*
+     * Hard-code the requestSelectors specified in RequestFactory.
+     */
+    JClassType t = generatorContext.getTypeOracle().findType(
+        RequestFactoryJsonImpl.class.getName());
+    try {
+      requestSelectors.add(t.getMethod("findRequest", new JType[0]));
+    } catch (NotFoundException e) {
+      e.printStackTrace();
     }
 
     JClassType proxyToTypeInterface = generatorContext.getTypeOracle().findType(
@@ -598,12 +614,17 @@ public class RequestFactoryGenerator extends Generator {
       String requestClassName = null;
 
       TypeOracle typeOracle = generatorContext.getTypeOracle();
-      String enumArgument = "";
+      String enumOrFindArgument = "";
       // TODO: refactor this into some kind of extensible map lookup
       if (isProxyListRequest(typeOracle, requestType)) {
         requestClassName = asInnerImplClass("ListRequestImpl", returnType);
       } else if (isProxyRequest(typeOracle, requestType)) {
-        requestClassName = asInnerImplClass("ObjectRequestImpl", returnType);
+        if (selectorInterface.isAssignableTo(typeOracle.findType(FindRequest.class.getName()))) {
+          enumOrFindArgument = ", proxyId";
+          requestClassName = FindRequestObjectImpl.class.getName();
+        } else {
+          requestClassName = asInnerImplClass("ObjectRequestImpl", returnType);
+        }
       } else if (isStringRequest(typeOracle, requestType)) {
         requestClassName = AbstractStringRequest.class.getName();
       } else if (isLongRequest(typeOracle, requestType)) {
@@ -630,7 +651,7 @@ public class RequestFactoryGenerator extends Generator {
         requestClassName = AbstractBigIntegerRequest.class.getName();
       } else if (isEnumRequest(typeOracle, requestType)) {
         requestClassName = AbstractEnumRequest.class.getName();
-        enumArgument = ", " + requestType.isParameterized().getTypeArgs()[0]
+        enumOrFindArgument = ", " + requestType.isParameterized().getTypeArgs()[0]
             + ".values()";
       } else if (isVoidRequest(typeOracle, requestType)) {
         requestClassName = AbstractVoidRequest.class.getName();
@@ -642,14 +663,14 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println(getMethodDeclaration(method) + " {");
       sw.indent();
-      sw.println("return new " + requestClassName + "(factory" + enumArgument
+      sw.println("return new " + requestClassName + "(factory" + enumOrFindArgument
           + ") {");
       sw.indent();
       String requestDataName = RequestData.class.getSimpleName();
       sw.println("public " + requestDataName + " getRequestData() {");
       sw.indent();
       sw.println("return new " + requestDataName + "(\"" + operationName
-          + "\", " + getParametersAsString(method, typeOracle) + ","
+          + "\", " + getParametersAsString(method, typeOracle) + ", "
           + "getPropertyRefs());");
       sw.outdent();
       sw.println("}");
@@ -705,6 +726,10 @@ public class RequestFactoryGenerator extends Generator {
       JClassType classType = parameter.getType().isClassOrInterface();
 
       JType paramType = parameter.getType();
+      if (paramType.getQualifiedSourceName().equals(EntityProxyId.class.getName())) {
+        sb.append("factory.getWireFormat(" + parameter.getName() + ")");
+        continue;
+      }
       JParameterizedType params = paramType.isParameterized();
       if (params != null) {
         classType = params.getTypeArgs()[0];

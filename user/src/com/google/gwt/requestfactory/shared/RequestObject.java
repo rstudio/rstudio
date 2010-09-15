@@ -48,5 +48,5 @@ public interface RequestObject<T> {
 
   // reset the DeltaValueStore.
   void reset();
-  
+
 }

@@ -24,6 +24,7 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.RequestFactory;
@@ -46,32 +47,17 @@ import java.util.logging.Logger;
  */
 public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
-  static final boolean IS_FUTURE = true;
-  static final boolean NOT_FUTURE = false;
-  private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
-
-  // A separate logger for wire activity, which does not get logged by the
-  // remote log handler, so we avoid infinite loops. All log messages that
-  // could happen every time a request is made from the server should be logged
-  // to this logger.
-  private static Logger wireLogger = Logger.getLogger("WireActivityLogger");
-
-  private static String SERVER_ERROR = "Server Error";
-
-  private final Integer initialVersion = 1;
-  
-  /*
-   * Keeping these maps forever is not a desirable solution because of the
-   * memory overhead but need these if want to provide stable {@EntityProxyId}.
-   * 
-   * futureToDatastoreMap is currently not used, will be useful in find requests.
-   */
-  final Map<Object, Object> futureToDatastoreMap = new HashMap<Object, Object>();
-  final DataStoreToFutureMap datastoreToFutureMap = new DataStoreToFutureMap(); 
-  
   final class DataStoreToFutureMap {
-    
+
     Map<ProxySchema<? extends ProxyImpl>, Map<Object, Object>> internalMap = new HashMap<ProxySchema<? extends ProxyImpl>, Map<Object, Object>>();
+
+    Object get(Object datastoreId, ProxySchema<? extends ProxyImpl> schema) {
+      Map<Object, Object> perSchemaMap = internalMap.get(schema);
+      if (perSchemaMap == null) {
+        return null;
+      }
+      return perSchemaMap.get(datastoreId);
+    }
 
     /* returns the previous futureId, if any*/
     Object put(Object datastoreId, ProxySchema<? extends ProxyImpl> schema, Object futureId) {
@@ -82,15 +68,30 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       }
       return perSchemaMap.put(datastoreId, futureId);
     }
-    
-    Object get(Object datastoreId, ProxySchema<? extends ProxyImpl> schema) {
-      Map<Object, Object> perSchemaMap = internalMap.get(schema);
-      if (perSchemaMap == null) {
-        return null;
-      }
-      return perSchemaMap.get(datastoreId);
-    }
   }
+  static final boolean IS_FUTURE = true;
+  static final boolean NOT_FUTURE = false;
+
+  private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
+
+  // A separate logger for wire activity, which does not get logged by the
+  // remote log handler, so we avoid infinite loops. All log messages that
+  // could happen every time a request is made from the server should be logged
+  // to this logger.
+  private static Logger wireLogger = Logger.getLogger("WireActivityLogger");
+
+  private static String SERVER_ERROR = "Server Error";
+  
+  private final Integer initialVersion = 1;
+  /*
+   * Keeping these maps forever is not a desirable solution because of the
+   * memory overhead but need these if want to provide stable {@EntityProxyId}.
+   * 
+   * futureToDatastoreMap is currently not used, will be useful in find requests.
+   */
+  final Map<Object, Object> futureToDatastoreMap = new HashMap<Object, Object>();
+
+  final DataStoreToFutureMap datastoreToFutureMap = new DataStoreToFutureMap();
 
   private long currentFutureId = 0;
 
@@ -107,6 +108,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
 
     return createFuture(schema);
+  }
+
+  public ProxyRequest<EntityProxy> find(EntityProxyId proxyId) {
+    return findRequest().find(proxyId);
   }
 
   public void fire(final RequestObject<?> requestObject) {
@@ -158,6 +163,20 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   public abstract ProxySchema<?> getSchema(String token);
 
+  public String getWireFormat(EntityProxyId proxyId) {
+    EntityProxyIdImpl proxyIdImpl = (EntityProxyIdImpl) proxyId;
+    Long id = (Long) proxyIdImpl.id;
+    if (proxyIdImpl.isFuture) {
+      // search for the datastore id for this futureId.
+      Long datastoreId = (Long) futureToDatastoreMap.get(id);
+      if (datastoreId == null) {
+        throw new IllegalArgumentException("Cannot call find on a proxyId before persisting");
+      }
+      id = datastoreId;
+    }
+    return ProxyImpl.getWireFormatId(id, NOT_FUTURE, proxyIdImpl.schema);
+  }
+
   /**
    * @param eventBus
    */
@@ -166,6 +185,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     this.eventBus = eventBus;
     logger.fine("Successfully initialized RequestFactory");
   }
+
+  protected abstract FindRequest findRequest();
 
   protected Class<? extends EntityProxy> getClass(String token,
       ProxyToTypeMap recordToTypeMap) {

@@ -34,6 +34,11 @@ public interface RequestFactory {
   <R extends EntityProxy> R create(Class<R> token);
 
   /**
+   * Provide a general purpose find request.
+   */
+  ProxyRequest<EntityProxy> find(EntityProxyId proxyId);
+
+  /**
    * Return the class object which may be used to create new instances of the
    * type of the given proxy, via {@link #create}. Due to limitations of GWT's
    * metadata system, calls to the proxy's getClass() method will not serve this
@@ -84,6 +89,4 @@ public interface RequestFactory {
    * Start this request factory.
    */
   void init(EventBus eventBus);
-
-
 }
