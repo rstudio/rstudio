@@ -79,11 +79,13 @@ public class ProxyImpl implements EntityProxy {
    * @return the value
    */
   public <V> V get(Property<V> property) {
-    return jso.get(property);
+    // javac 1.6.0_20 on mac has problems without the explicit parameterization
+    return jso.<V> get(property);
   }
 
   public <V> V get(String propertyName, Class<?> propertyType) {
-    return jso.get(propertyName, propertyType);
+    // javac 1.6.0_20 on mac has problems without the explicit parameterization
+    return jso.<V> get(propertyName, propertyType);
   }
   
   public Long getId() {

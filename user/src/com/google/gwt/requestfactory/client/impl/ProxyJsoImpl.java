@@ -94,7 +94,8 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     String name = property.getName();
     Class<V> type = property.getType();
     
-    return get(name, type);
+    // javac 1.6.0_20 on mac has problems without the explicit parameterization
+    return this.<V> get(name, type);
   }
 
   @SuppressWarnings("unchecked")
