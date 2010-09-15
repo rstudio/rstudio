@@ -32,6 +32,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean runAsyncEnabled = true;
   private boolean soycEnabled = false;
   private boolean soycExtra = false;
+  private boolean strict = false;
 
   public JJSOptionsImpl() {
   }
@@ -50,6 +51,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setRunAsyncEnabled(other.isRunAsyncEnabled());
     setSoycEnabled(other.isSoycEnabled());
     setSoycExtra(other.isSoycExtra());
+    setStrict(other.isStrict());
   }
 
   public JsOutputOption getOutput() {
@@ -92,6 +94,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     return soycExtra;
   }
 
+  @Override
+  public boolean isStrict() {
+    return strict;
+  }
+
   public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     this.aggressivelyOptimize = aggressivelyOptimize;
   }
@@ -130,5 +137,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setSoycExtra(boolean enabled) {
     soycExtra = enabled;
+  }
+
+  @Override
+  public void setStrict(boolean strict) {
+    this.strict = strict;
   }
 }

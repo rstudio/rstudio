@@ -133,6 +133,18 @@ public class CompilationState {
   }
 
   /**
+   * Whether any errors were encountered while building this compilation state.
+   */
+  public boolean hasErrors() {
+    for (CompilationUnit unit : unitMap.values()) {
+      if (unit.isError()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * For testing.
    */
   TypeOracleMediator getMediator() {

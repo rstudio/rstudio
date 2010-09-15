@@ -25,6 +25,7 @@ import com.google.gwt.dev.util.arg.OptionRunAsyncEnabled;
 import com.google.gwt.dev.util.arg.OptionScriptStyle;
 import com.google.gwt.dev.util.arg.OptionSoycDetailed;
 import com.google.gwt.dev.util.arg.OptionSoycEnabled;
+import com.google.gwt.dev.util.arg.OptionStrict;
 
 /**
  * Controls options for the {@link JavaToJavaScriptCompiler}.
@@ -32,5 +33,6 @@ import com.google.gwt.dev.util.arg.OptionSoycEnabled;
 public interface JJSOptions extends OptionAggressivelyOptimize,
     OptionDisableClassMetadata, OptionDisableCastChecking, OptionDraftCompile,
     OptionEnableAssertions, OptionRunAsyncEnabled, OptionScriptStyle,
-    OptionSoycEnabled, OptionSoycDetailed, OptionOptimizePrecompile {
+    OptionSoycEnabled, OptionSoycDetailed, OptionOptimizePrecompile,
+    OptionStrict {
 }

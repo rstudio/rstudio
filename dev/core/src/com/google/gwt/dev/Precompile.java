@@ -60,6 +60,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
+import com.google.gwt.dev.util.arg.ArgHandlerStrict;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.OptionEnableGeneratingOnShards;
@@ -121,6 +122,7 @@ public class Precompile {
       registerHandler(new ArgHandlerCompileReport(options));
       registerHandler(new ArgHandlerSoyc(options));
       registerHandler(new ArgHandlerSoycDetailed(options));
+      registerHandler(new ArgHandlerStrict(options));
     }
 
     @Override
@@ -209,6 +211,11 @@ public class Precompile {
       return jjsOptions.isSoycExtra();
     }
 
+    @Override
+    public boolean isStrict() {
+      return jjsOptions.isStrict();
+    }
+
     public boolean isUpdateCheckDisabled() {
       return disableUpdateCheck;
     }
@@ -271,6 +278,11 @@ public class Precompile {
 
     public void setSoycExtra(boolean soycExtra) {
       jjsOptions.setSoycExtra(soycExtra);
+    }
+
+    @Override
+    public void setStrict(boolean strict) {
+      jjsOptions.setStrict(strict);
     }
 
     public void setValidateOnly(boolean validateOnly) {
@@ -463,6 +475,9 @@ public class Precompile {
     Event validateEvent = SpeedTracerLogger.start(CompilerEventType.VALIDATE);
     try {
       CompilationState compilationState = module.getCompilationState(logger);
+      if (jjsOptions.isStrict() && compilationState.hasErrors()) {
+        abortDueToStrictMode(logger);
+      }
       String[] declEntryPts = module.getEntryPointTypeNames();
       String[] additionalRootTypes = null;
       if (declEntryPts.length == 0) {
@@ -507,6 +522,10 @@ public class Precompile {
 
     try {
       CompilationState compilationState = module.getCompilationState(logger);
+      if (jjsOptions.isStrict() && compilationState.hasErrors()) {
+        abortDueToStrictMode(logger);
+      }
+
       String[] declEntryPts = module.getEntryPointTypeNames();
       if (declEntryPts.length == 0) {
         logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
@@ -551,6 +570,13 @@ public class Precompile {
     } finally {
       precompileEvent.end();
     }
+  }
+
+  private static void abortDueToStrictMode(TreeLogger logger)
+      throws UnableToCompleteException {
+    logger.log(TreeLogger.ERROR,
+        "Aborting compile due to errors in some input files");
+    throw new UnableToCompleteException();
   }
 
   private static AbstractCompiler getCompiler(ModuleDef module) {

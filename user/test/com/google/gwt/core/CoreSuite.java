@@ -25,6 +25,7 @@ import com.google.gwt.core.client.impl.AsyncFragmentLoaderTest;
 import com.google.gwt.core.client.impl.SchedulerImplTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorTest;
 import com.google.gwt.core.client.impl.XhrLoadingStrategyTest;
+import com.google.gwt.dev.StrictModeTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -46,6 +47,7 @@ public class CoreSuite {
     suite.addTestSuite(SchedulerImplTest.class);
     suite.addTestSuite(SchedulerTest.class);
     suite.addTestSuite(StackTraceCreatorTest.class);
+    suite.addTestSuite(StrictModeTest.class);
     suite.addTestSuite(XhrLoadingStrategyTest.class);
     // $JUnit-END$
 

@@ -1,0 +1,4 @@
+<module>
+  <inherits name='com.google.gwt.junit.JUnit'/>
+  <entry-point class='com.google.gwt.dev.strict.good.client.Entry'/>
+</module>
