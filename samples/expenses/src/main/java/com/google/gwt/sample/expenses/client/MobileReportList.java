@@ -134,8 +134,7 @@ public class MobileReportList extends Composite implements MobilePage {
   }
 
   private String[] getReportColumns() {
-    return new String[]{
-        ReportProxy.created.getName(), ReportProxy.purpose.getName()};
+    return new String[]{"created", "purpose"};
   }
 
   private void requestReports() {
@@ -151,7 +150,7 @@ public class MobileReportList extends Composite implements MobilePage {
       }
     };
     requestFactory.reportRequest().findReportEntriesBySearch(employee.getId(),
-        "", "", ReportProxy.created.getName() + " DESC", 0, 25).with(
+        "", "", "created" + " DESC", 0, 25).with(
         getReportColumns()).fire(lastReceiver);
   }
 }

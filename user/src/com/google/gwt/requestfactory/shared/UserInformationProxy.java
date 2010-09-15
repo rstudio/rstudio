@@ -23,15 +23,6 @@ import com.google.gwt.requestfactory.server.UserInformation;
  */
 @ProxyFor(UserInformation.class)
 public interface UserInformationProxy extends EntityProxy  {
-  Property<String> email =
-    new Property<String>("email", "Email", String.class);
-  Property<String> loginUrl =
-    new Property<String>("loginUrl", "LoginUrl", String.class);
-  Property<String> logoutUrl =
-    new Property<String>("logoutUrl", "LogoutUrl", String.class);
-  Property<String> name =
-    new Property<String>("name", "Name", String.class);
-
   String getEmail();
   String getLoginUrl();
   String getLogoutUrl();

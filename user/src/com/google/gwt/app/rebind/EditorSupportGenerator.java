@@ -30,7 +30,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.client.impl.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.TakesValue;

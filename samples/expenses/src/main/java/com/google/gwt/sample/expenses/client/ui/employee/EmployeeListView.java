@@ -49,14 +49,14 @@ public class EmployeeListView extends AbstractProxyListView<EmployeeProxy> {
 
     List<PropertyColumn<EmployeeProxy, ?>> columns = new ArrayList<PropertyColumn<EmployeeProxy, ?>>();
 
-    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn(EmployeeProxy.userName));
+    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn("userName", "User Name"));
 
-    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn(EmployeeProxy.displayName));
+    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn("displayName", "Display Name"));
 
-    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn(EmployeeProxy.password));
+    columns.add(PropertyColumn.<EmployeeProxy> getStringPropertyColumn("password", "Password"));
 
     columns.add(new PropertyColumn<EmployeeProxy, EmployeeProxy>(
-        EmployeeProxy.supervisor, EmployeeRenderer.instance()));
+        "supervisor", "Supervisor", EmployeeRenderer.instance()));
 
     return columns;
   }

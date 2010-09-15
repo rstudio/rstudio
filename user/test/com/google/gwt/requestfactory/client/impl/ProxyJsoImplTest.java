@@ -18,7 +18,6 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.client.SimpleRequestFactoryInstance;
-import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -34,13 +33,13 @@ public class ProxyJsoImplTest extends GWTTestCase {
     StringBuilder b = new StringBuilder();
     b.append("{");
 
-    String[] stringBits = new String[] {
+    String[] stringBits = new String[]{
         "userName", "bovik", "password", "bovik", "charField", "c",
         "longField", "1234567890", "bigDecimalField",
         "12345678901234.5678901234567890", "bigIntField",
         "123456789012345678901234567890", "created", "400", "id", "42"};
 
-    String[] literalBits = new String[] {
+    String[] literalBits = new String[]{
         "version", "1", "intId", "4", "shortField", "5", "byteField", "6",
         "floatField", "12.3456789", "doubleField", "12345.6789", "boolField",
         "false", "otherBoolField", "true"};
@@ -84,13 +83,13 @@ public class ProxyJsoImplTest extends GWTTestCase {
     return ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
         SimpleRequestFactoryInstance.impl());
   }
-
+  
   static ProxyJsoImpl getPopulatedJso() {
     ProxyJsoImpl jso = getMinimalJso();
-    jso.set(SimpleFooProxy.userName, "bovik");
-    jso.set(SimpleFooProxy.password, "bovik");
-    jso.set(SimpleFooProxy.intId, 4);
-    jso.set(SimpleFooProxy.created, new Date(400));
+    jso.set(SimpleFooProxyProperties.userName, "bovik");
+    jso.set(SimpleFooProxyProperties.password, "bovik");
+    jso.set(SimpleFooProxyProperties.intId, 4);
+    jso.set(SimpleFooProxyProperties.created, new Date(400));
     return jso;
   }
 
@@ -123,7 +122,7 @@ public class ProxyJsoImplTest extends GWTTestCase {
     
     ProxyJsoImpl minimalJsoCopy = getMinimalJso();
     assertFalse(minimalJso.hasChanged(minimalJsoCopy));
-    minimalJsoCopy.set(SimpleFooProxy.id, minimalJso.getId() + 42);
+    minimalJsoCopy.set(SimpleFooProxyProperties.id, minimalJso.getId() + 42);
     assertTrue(minimalJso.hasChanged(minimalJsoCopy));
   }
 
@@ -135,28 +134,28 @@ public class ProxyJsoImplTest extends GWTTestCase {
   public void testSet() {
     ProxyJsoImpl jso = getMinimalJso();
 
-    jso.set(SimpleFooProxy.userName, "bovik");
-    jso.set(SimpleFooProxy.password, "bovik");
+    jso.set(SimpleFooProxyProperties.userName, "bovik");
+    jso.set(SimpleFooProxyProperties.password, "bovik");
 
-    jso.set(SimpleFooProxy.charField, 'c');
+    jso.set(SimpleFooProxyProperties.charField, 'c');
 
-    jso.set(SimpleFooProxy.longField, 1234567890L);
-    jso.set(SimpleFooProxy.bigDecimalField, new BigDecimal(
+    jso.set(SimpleFooProxyProperties.longField, 1234567890L);
+    jso.set(SimpleFooProxyProperties.bigDecimalField, new BigDecimal(
         "12345678901234.5678901234567890"));
-    jso.set(SimpleFooProxy.bigIntField, new BigInteger(
+    jso.set(SimpleFooProxyProperties.bigIntField, new BigInteger(
         "123456789012345678901234567890"));
 
-    jso.set(SimpleFooProxy.intId, 4);
-    jso.set(SimpleFooProxy.shortField, (short) 5);
-    jso.set(SimpleFooProxy.byteField, (byte) 6);
+    jso.set(SimpleFooProxyProperties.intId, 4);
+    jso.set(SimpleFooProxyProperties.shortField, (short) 5);
+    jso.set(SimpleFooProxyProperties.byteField, (byte) 6);
 
-    jso.set(SimpleFooProxy.created, new Date(400));
+    jso.set(SimpleFooProxyProperties.created, new Date(400));
 
-    jso.set(SimpleFooProxy.doubleField, 12345.6789);
-    jso.set(SimpleFooProxy.floatField, 12.3456789f);
+    jso.set(SimpleFooProxyProperties.doubleField, 12345.6789);
+    jso.set(SimpleFooProxyProperties.floatField, 12.3456789f);
 
-    jso.set(SimpleFooProxy.boolField, false);
-    jso.set(SimpleFooProxy.otherBoolField, true);
+    jso.set(SimpleFooProxyProperties.boolField, false);
+    jso.set(SimpleFooProxyProperties.otherBoolField, true);
 
     testPopulatedJso(jso);
   }
@@ -178,30 +177,30 @@ public class ProxyJsoImplTest extends GWTTestCase {
 
   private void testEmptyJso(JavaScriptObject rawJso) {
     ProxyJsoImpl jso = ProxyJsoImpl.create(rawJso, null, null);
-    assertFalse(jso.isDefined(SimpleFooProxy.id.getName()));
-    assertFalse(jso.isDefined(SimpleFooProxy.version.getName()));
+    assertFalse(jso.isDefined(SimpleFooProxyProperties.id.getName()));
+    assertFalse(jso.isDefined(SimpleFooProxyProperties.version.getName()));
     assertEquals("{}", jso.toJson());
     testSchema(jso);
   }
 
   private void testMinimalJso(ProxyJsoImpl jso) {
-    for (String property : new String[] {"id", "version"}) {
+    for (String property : new String[]{"id", "version"}) {
       assertTrue(jso.isDefined(property));
     }
-    for (String property : new String[] {
+    for (String property : new String[]{
         "created", "intId", "userName", "password"}) {
       assertFalse(jso.isDefined(property));
       assertNull(jso.get(property));
     }
     assertEquals((Long) 42L, jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
-    assertEquals(null, jso.get(SimpleFooProxy.longField));
-    assertEquals(null, jso.get(SimpleFooProxy.enumField));
+    assertEquals(null, jso.get(SimpleFooProxyProperties.longField));
+    assertEquals(null, jso.get(SimpleFooProxyProperties.enumField));
     testSchema(jso);
   }
 
   private void testPopulatedJso(ProxyJsoImpl jso) {
-    for (String property : new String[] {
+    for (String property : new String[]{
         "userName", "password", "charField", "longField", "bigDecimalField",
         "bigIntField", "intId", "shortField", "byteField", "created",
         "doubleField", "floatField", "boolField", "otherBoolField", "id",
@@ -209,31 +208,31 @@ public class ProxyJsoImplTest extends GWTTestCase {
       assertTrue("Expect " + property + " to be defined",
           jso.isDefined(property));
     }
-    assertEquals("bovik", jso.get(SimpleFooProxy.userName));
-    assertEquals("bovik", jso.get(SimpleFooProxy.password));
+    assertEquals("bovik", jso.get(SimpleFooProxyProperties.userName));
+    assertEquals("bovik", jso.get(SimpleFooProxyProperties.password));
 
-    assertEquals(new Character('c'), jso.get(SimpleFooProxy.charField));
+    assertEquals(new Character('c'), jso.get(SimpleFooProxyProperties.charField));
 
-    assertEquals(new Long(1234567890L), jso.get(SimpleFooProxy.longField));
+    assertEquals(new Long(1234567890L), jso.get(SimpleFooProxyProperties.longField));
     assertEquals(new BigDecimal("12345678901234.5678901234567890"),
-        jso.get(SimpleFooProxy.bigDecimalField));
+        jso.get(SimpleFooProxyProperties.bigDecimalField));
     assertEquals(new BigInteger("123456789012345678901234567890"),
-        jso.get(SimpleFooProxy.bigIntField));
+        jso.get(SimpleFooProxyProperties.bigIntField));
 
-    assertEquals(Integer.valueOf(4), jso.get(SimpleFooProxy.intId));
-    assertEquals(Short.valueOf((short) 5), jso.get(SimpleFooProxy.shortField));
-    assertEquals(Byte.valueOf((byte) 6), jso.get(SimpleFooProxy.byteField));
+    assertEquals(Integer.valueOf(4), jso.get(SimpleFooProxyProperties.intId));
+    assertEquals(Short.valueOf((short) 5), jso.get(SimpleFooProxyProperties.shortField));
+    assertEquals(Byte.valueOf((byte) 6), jso.get(SimpleFooProxyProperties.byteField));
 
-    assertEquals(new Date(400), jso.get(SimpleFooProxy.created));
+    assertEquals(new Date(400), jso.get(SimpleFooProxyProperties.created));
     assertEquals(Double.valueOf(12345.6789),
-        jso.get(SimpleFooProxy.doubleField));
+        jso.get(SimpleFooProxyProperties.doubleField));
 
     int expected = (int) (Float.valueOf(12.3456789f) * 1000);
-    int actual = (int) (jso.get(SimpleFooProxy.floatField) * 1000);
+    int actual = (int) (jso.get(SimpleFooProxyProperties.floatField) * 1000);
     assertEquals(expected, actual);
 
-    assertFalse(jso.get(SimpleFooProxy.boolField));
-    assertTrue(jso.get(SimpleFooProxy.otherBoolField));
+    assertFalse(jso.get(SimpleFooProxyProperties.boolField));
+    assertTrue(jso.get(SimpleFooProxyProperties.otherBoolField));
 
     assertEquals((Long) 42L, jso.getId());
     assertEquals(new Integer(1), jso.getVersion());

@@ -23,10 +23,6 @@ import com.google.gwt.requestfactory.server.SimpleBar;
  */
 @ProxyFor(SimpleBar.class)
 public interface SimpleBarProxy extends EntityProxy {
-
-  Property<String> userName = new Property<String>("userName", "User Name",
-      String.class);
-
   String getUserName();
 
   void setUserName(String userName);

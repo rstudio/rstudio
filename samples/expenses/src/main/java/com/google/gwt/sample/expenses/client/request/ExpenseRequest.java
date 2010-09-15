@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
-import com.google.gwt.requestfactory.shared.PropertyReference;
+
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Service;
@@ -40,14 +40,12 @@ public interface ExpenseRequest {
   /**
    * @return a request object
    */
-  ProxyListRequest<ExpenseProxy> findExpense(
-      PropertyReference<Long> id);
+  ProxyListRequest<ExpenseProxy> findExpense(Long id);
 
   /**
    * @return a request object
    */
-  ProxyListRequest<ExpenseProxy> findExpensesByReport(
-      PropertyReference<Long> reportId);
+  ProxyListRequest<ExpenseProxy> findExpensesByReport(Long id);
 
   /**
    * @return a request object

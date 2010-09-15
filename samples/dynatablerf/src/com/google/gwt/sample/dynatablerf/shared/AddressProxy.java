@@ -15,9 +15,8 @@
  */
 package com.google.gwt.sample.dynatablerf.shared;
 
-import com.google.gwt.requestfactory.shared.ProxyFor;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.sample.dynatablerf.domain.Address;
 
 /**
@@ -25,15 +24,6 @@ import com.google.gwt.sample.dynatablerf.domain.Address;
  */
 @ProxyFor(Address.class)
 public interface AddressProxy extends EntityProxy {
-  /*
-   * These property objects will soon no longer be necessary (and will no longer
-   * be public api).
-   */
-  Property<String> city = new Property<String>("city", "City", String.class);
-  Property<String> state = new Property<String>("state", "State", String.class);
-  Property<String> street = new Property<String>("street", "Street", String.class);
-  Property<Integer> zip = new Property<Integer>("zip", "Zip", Integer.class);
-
   String getCity();
 
   String getState();

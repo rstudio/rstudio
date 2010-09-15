@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.Property;
+import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.text.shared.PassthroughRenderer;
 import com.google.gwt.text.shared.Renderer;
@@ -36,29 +36,32 @@ import com.google.gwt.user.cellview.client.TextColumn;
  */
 public class PropertyColumn<R extends EntityProxy, T> extends TextColumn<R> {
   public static <R extends EntityProxy> PropertyColumn<R, String> getStringPropertyColumn(
-      Property<String> property) {
-    return new PropertyColumn<R, String>(property,
+      String property, String displayName) {
+    return new PropertyColumn<R, String>(property, displayName,
         PassthroughRenderer.instance());
   }
 
+  private String displayName;
   private final Renderer<T> renderer;
-  private final Property<T> property;
+  private final String property;
   private final String[] paths;
 
-  public PropertyColumn(Property<T> property, ProxyRenderer<T> renderer) {
+  public PropertyColumn(String property, String displayName, ProxyRenderer<T> renderer) {
+    this.displayName = displayName;
     this.property = property;
     this.renderer = renderer;
     this.paths = pathinate(property, renderer);
   }
 
-  public PropertyColumn(Property<T> property, Renderer<T> renderer) {
+  public PropertyColumn(String property, String displayName, Renderer<T> renderer) {
+    this.displayName = displayName;
     this.property = property;
     this.renderer = renderer;
-    this.paths = new String[] {property.getName()};
+    this.paths = new String[] {property};
   }
 
   public String getDisplayName() {
-    return property.getDisplayName();
+    return displayName;
   }
 
   public String[] getPaths() {
@@ -67,14 +70,15 @@ public class PropertyColumn<R extends EntityProxy, T> extends TextColumn<R> {
 
   @Override
   public String getValue(R object) {
-    return renderer.render(object.get(property));
+    ProxyImpl proxyImpl = (ProxyImpl) object;
+    return renderer.render(proxyImpl.<T>get(property, String.class));
   }
 
-  private String[] pathinate(Property<T> property, ProxyRenderer<T> renderer) {
+  private String[] pathinate(String property, ProxyRenderer<T> renderer) {
     String[] rtn = new String[renderer.getPaths().length];
     int i = 0;
     for (String rendererPath : renderer.getPaths()) {
-      rtn[i++] = property.getName() + "." + rendererPath;
+      rtn[i++] = property + "." + rendererPath;
     }
 
     return rtn;

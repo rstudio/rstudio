@@ -20,9 +20,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.EnumProperty;
-import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.PropertyReference;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -65,17 +62,17 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   public static ProxyJsoImpl create(Long id, Integer version,
       ProxySchema<?> schema, RequestFactoryJsonImpl requestFactory) {
     ProxyJsoImpl rtn = createEmpty();
-    rtn.set(EntityProxy.id, id);
-    rtn.set(EntityProxy.version, version);
+    rtn.set(ProxyImpl.id, id);
+    rtn.set(ProxyImpl.version, version);
     return create(rtn, schema, requestFactory);
   }
 
   public static ProxyJsoImpl emptyCopy(ProxyJsoImpl jso) {
-    Long id = jso.get(EntityProxy.id);
-    Integer version = jso.get(EntityProxy.version);
+    Long tempId = jso.get(ProxyImpl.id);
+    Integer tempVersion = jso.get(ProxyImpl.version);
     ProxySchema<?> schema = jso.getSchema();
 
-    ProxyJsoImpl copy = create(id, version, schema, jso.getRequestFactory());
+    ProxyJsoImpl copy = create(tempId, tempVersion, schema, jso.getRequestFactory());
     return copy;
   }
 
@@ -93,51 +90,58 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     delete this[name];
   }-*/;
 
-  @SuppressWarnings("unchecked")
   public final <V> V get(Property<V> property) {
-    if (isNullOrUndefined(property.getName())) {
+    String name = property.getName();
+    Class<V> type = property.getType();
+    
+    return get(name, type);
+  }
+
+  @SuppressWarnings("unchecked")
+  public final <V> V get(String name, Class<?> type) {
+    if (isNullOrUndefined(name)) {
       return null;
     }
-
+    
     try {
-      if (Boolean.class.equals(property.getType())) {
-        return (V) Boolean.valueOf(getBoolean(property.getName()));
+      if (Boolean.class.equals(type)) {
+        return (V) Boolean.valueOf(getBoolean(name));
       }
-      if (Character.class.equals(property.getType())) {
-        return (V) Character.valueOf(String.valueOf(get(property.getName())).charAt(
+      if (Character.class.equals(type)) {
+        return (V) Character.valueOf(String.valueOf(get(name)).charAt(
             0));
       }
-      if (Byte.class.equals(property.getType())) {
-        return (V) Byte.valueOf((byte) getInt(property.getName()));
+      if (Byte.class.equals(type)) {
+        return (V) Byte.valueOf((byte) getInt(name));
       }
-      if (Short.class.equals(property.getType())) {
-        return (V) Short.valueOf((short) getInt(property.getName()));
+      if (Short.class.equals(type)) {
+        return (V) Short.valueOf((short) getInt(name));
       }
-      if (Float.class.equals(property.getType())) {
-        return (V) Float.valueOf((float) getDouble(property.getName()));
+      if (Float.class.equals(type)) {
+        return (V) Float.valueOf((float) getDouble(name));
       }
-      if (BigInteger.class.equals(property.getType())) {
-        return (V) new BigDecimal((String) get(property.getName())).toBigInteger();
+      if (BigInteger.class.equals(type)) {
+        return (V) new BigDecimal((String) get(name)).toBigInteger();
       }
-      if (BigDecimal.class.equals(property.getType())) {
-        return (V) new BigDecimal((String) get(property.getName()));
+      if (BigDecimal.class.equals(type)) {
+        return (V) new BigDecimal((String) get(name));
       }
-      if (Integer.class.equals(property.getType())) {
-        return (V) Integer.valueOf(getInt(property.getName()));
+      if (Integer.class.equals(type)) {
+        return (V) Integer.valueOf(getInt(name));
       }
-      if (Long.class.equals(property.getType())) {
-        return (V) Long.valueOf((String) get(property.getName()));
+      if (Long.class.equals(type)) {
+        return (V) Long.valueOf((String) get(name));
       }
-      if (Double.class.equals(property.getType())) {
-        if (!isDefined(property.getName())) {
+      if (Double.class.equals(type)) {
+        if (!isDefined(name)) {
           return (V) new Double(0.0);
         }
-        return (V) Double.valueOf(getDouble(property.getName()));
+        return (V) Double.valueOf(getDouble(name));
       }
-      if (Date.class.equals(property.getType())) {
+      if (Date.class.equals(type)) {
         double millis = new Date().getTime();
-        if (isDefined(property.getName())) {
-          millis = Double.parseDouble((String) get(property.getName()));
+        if (isDefined(name)) {
+          millis = Double.parseDouble((String) get(name));
         }
         if (GWT.isScript()) {
           return (V) dateForDouble(millis);
@@ -147,15 +151,15 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
         }
       }
     } catch (final Exception ex) {
-      throw new IllegalStateException("Property  " + property.getName()
-          + " has invalid " + " value " + get(property.getName())
-          + " for type " + property.getType());
+      throw new IllegalStateException("Property  " + name
+          + " has invalid " + " value " + get(name)
+          + " for type " + type);
     }
 
-    if (property instanceof EnumProperty) {
-      EnumProperty<V> eProperty = (EnumProperty<V>) property;
-      Enum<?>[] values = (Enum[]) eProperty.getValues();
-      int ordinal = getInt(property.getName());
+    if (type.isEnum()) {
+      // TODO: Can't we just use Enum.valueOf()?
+      Enum<?>[] values = (Enum[]) type.getEnumConstants();
+      int ordinal = getInt(name);
       for (Enum<?> value : values) {
         if (ordinal == value.ordinal()) {
           return (V) value;
@@ -163,14 +167,14 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       }
     }
 
-    if (String.class == property.getType()) {
-      return (V) get(property.getName());
+    if (String.class == type) {
+      return (V) get(name);
     }
     // at this point, we checked all the known primitive/value types we support
     // TODO: handle embedded types, List, Set, Map
 
     // else, it must be a record type
-    String relatedId = (String) get(property.getName());
+    String relatedId = (String) get(name);
     if (relatedId == null) {
       return null;
     } else {
@@ -188,11 +192,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   }-*/;
 
   public final Long getId() {
-    return this.get(id);
-  }
-
-  public final <V> PropertyReference<V> getRef(Property<V> property) {
-    return new PropertyReference<V>(this, property);
+    return this.get(ProxyImpl.id);
   }
 
   public final native RequestFactoryJsonImpl getRequestFactory() /*-{
@@ -204,7 +204,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   }-*/;
   
   public final Integer getVersion() {
-    return this.get(version);
+    return this.get(ProxyImpl.version);
   }
 
   /**
@@ -216,7 +216,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
 
   public final boolean isEmpty() {
     for (Property<?> property : getSchema().allProperties()) {
-      if ((property != EntityProxy.id) && (property != EntityProxy.version)
+      if ((property != ProxyImpl.id) && (property != ProxyImpl.version)
           && (isDefined(property.getName()))) {
         return false;
       }

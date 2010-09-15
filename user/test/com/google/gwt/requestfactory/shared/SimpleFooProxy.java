@@ -27,46 +27,6 @@ import java.util.Date;
  */
 @ProxyFor(SimpleFoo.class)
 public interface SimpleFooProxy extends EntityProxy {
-
-  Property<String> userName = new Property<String>("userName", "User Name",
-      String.class);
-  Property<String> password = new Property<String>("password", "Password",
-      String.class);
-
-  Property<Character> charField = new Property<Character>("charField", Character.class);
-  
-  Property<Long> longField = new Property<Long>("longField", Long.class);
-  Property<BigDecimal> bigDecimalField = new Property<BigDecimal>("bigDecimalField", BigDecimal.class);
-  Property<BigInteger> bigIntField = new Property<BigInteger>("bigIntField", BigInteger.class);
-  
-  Property<Integer> intId = new Property<Integer>("intId", Integer.class);
-  Property<Short> shortField = new Property<Short>("shortField", Short.class);
-  Property<Byte> byteField = new Property<Byte>("byteField", Byte.class);
-  
-  Property<Date> created = new Property<Date>("created", Date.class);
-
-  Property<Double> doubleField = new Property<Double>("doubleField", Double.class);
-  Property<Float> floatField = new Property<Float>("floatField", Float.class);
-  
-  Property<SimpleEnum> enumField =
-      new EnumProperty<SimpleEnum>("enumField",
-          SimpleEnum.class, SimpleEnum.values());
-
-  Property<Boolean> boolField = new Property<Boolean>("boolField", Boolean.class);
-  Property<Boolean> otherBoolField = new Property<Boolean>("otherBoolField", Boolean.class);
-  
-  Property<SimpleBarProxy> barField = new Property<SimpleBarProxy>("barField",
-      SimpleBarProxy.class);
-
-  Property<SimpleBarProxy> barNullField = new Property<SimpleBarProxy>("barNullField",
-      SimpleBarProxy.class);
-
-  Property<SimpleFooProxy> fooField = new Property<SimpleFooProxy>("fooField",
-      SimpleFooProxy.class);
-
-  Property<String> nullField = new Property<String>("nullField", "A nullable field",
-      String.class);
-  
   SimpleBarProxy getBarField();
   
   SimpleBarProxy getBarNullField();

@@ -20,10 +20,10 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -44,6 +44,8 @@ import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractShortRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractStringRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractVoidRequest;
+import com.google.gwt.requestfactory.client.impl.EnumProperty;
+import com.google.gwt.requestfactory.client.impl.Property;
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.client.impl.ProxyJsoImpl;
 import com.google.gwt.requestfactory.client.impl.ProxySchema;
@@ -52,8 +54,6 @@ import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestData;
@@ -62,13 +62,16 @@ import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
+import java.beans.Introspector;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -82,6 +85,24 @@ import java.util.Set;
  * and its nested interfaces.
  */
 public class RequestFactoryGenerator extends Generator {
+
+  private static class EntityProperty {
+    private final String name;
+    private final JType type;
+
+    public EntityProperty(String name, JType type) {
+      this.name = name;
+      this.type = type;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public JType getType() {
+      return type;
+    }
+  }
 
   private final Set<JClassType> generatedProxyTypes = new HashSet<JClassType>();
 
@@ -133,6 +154,36 @@ public class RequestFactoryGenerator extends Generator {
     return name.substring(0, 1).toUpperCase() + name.substring(1);
   }
 
+  /**
+   * Compute the list of EntityProperties from the given proxy type. Properties
+   * contributed from EntityProxy are excluded.
+   */
+  private List<EntityProperty> computeEntityPropertiesFromProxyType(
+      JClassType publicProxyType) {
+    List<EntityProperty> entityProperties = new ArrayList<RequestFactoryGenerator.EntityProperty>();
+    Set<String> propertyNames = new HashSet<String>();
+    JClassType entityProxyType = publicProxyType.getOracle().findType(
+        EntityProxy.class.getCanonicalName());
+
+    for (JMethod method : publicProxyType.getOverridableMethods()) {
+      if (method.getEnclosingType() == entityProxyType) {
+        // Properties on EntityProxy are handled by ProxyJsoImpl
+        continue;
+      }
+
+      EntityProperty entityProperty = maybeComputePropertyFromMethod(method);
+      if (entityProperty != null) {
+        String propertyName = entityProperty.getName();
+        if (!propertyNames.contains(propertyName)) {
+          propertyNames.add(propertyName);
+          entityProperties.add(entityProperty);
+        }
+      }
+    }
+
+    return entityProperties;
+  }
+
   private void ensureProxyType(TreeLogger logger,
       GeneratorContext generatorContext, String packageName,
       JClassType publicProxyType) throws UnableToCompleteException {
@@ -163,6 +214,7 @@ public class RequestFactoryGenerator extends Generator {
       f.addImport(AbstractJsonObjectRequest.class.getName());
       f.addImport(RequestFactoryJsonImpl.class.getName());
       f.addImport(Property.class.getName());
+      f.addImport(EnumProperty.class.getName());
       f.addImport(EntityProxy.class.getName());
       f.addImport(ProxyImpl.class.getName());
       f.addImport(ProxyJsoImpl.class.getName());
@@ -176,11 +228,35 @@ public class RequestFactoryGenerator extends Generator {
       f.setSuperclass(ProxyImpl.class.getSimpleName());
       f.addImplementedInterface(publicProxyType.getName());
 
+      List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(publicProxyType);
+      for (EntityProperty entityProperty : entityProperties) {
+        JType type = entityProperty.getType();
+        if (type.isPrimitive() == null) {
+          f.addImport(type.getErasedType().getQualifiedSourceName());
+        }
+      }
+
       SourceWriter sw = f.createSourceWriter(generatorContext, pw);
       sw.println();
 
-      JClassType propertyType = printSchema(typeOracle, publicProxyType,
-          proxyImplTypeName, sw);
+      // write the Property fields
+      for (EntityProperty entityProperty : entityProperties) {
+        sw.println();
+        String name = entityProperty.getName();
+        if (entityProperty.getType().isEnum() != null) {
+          sw.println(String.format(
+              "private static final Property<%1$s> %2$s = new EnumProperty<%1$s>(\"%2$s\", %1$s.class, %1$s.values());",
+              entityProperty.getType().getSimpleSourceName(),
+              name));
+        } else {
+          sw.println(String.format(
+              "private static final Property<%1$s> %2$s = new Property<%1$s>(\"%2$s\", \"%3$s\", %1$s.class);",
+              entityProperty.getType().getSimpleSourceName(), name,
+              capitalize(name)));
+        }
+      }
+
+      printSchema(typeOracle, publicProxyType, proxyImplTypeName, sw);
 
       sw.println();
       String simpleImplName = publicProxyType.getSimpleSourceName() + "Impl";
@@ -201,55 +277,37 @@ public class RequestFactoryGenerator extends Generator {
       sw.println("}");
 
       // getter methods
-      for (JField field : publicProxyType.getFields()) {
-        JType fieldType = field.getType();
-        if (propertyType.getErasedType() == fieldType.getErasedType()) {
-          JParameterizedType parameterized = fieldType.isParameterized();
-          if (parameterized == null) {
-            logger.log(TreeLogger.ERROR, fieldType
-                + " must have its param type set.");
-            throw new UnableToCompleteException();
-          }
-          JClassType returnType = parameterized.getTypeArgs()[0];
-          sw.println();
-          sw.println(String.format("public %s get%s() {",
-              returnType.getQualifiedSourceName(), capitalize(field.getName())));
-          sw.indent();
-          sw.println(String.format("return get(%s);", field.getName()));
-          sw.outdent();
-          sw.println("}");
-          /*
-           * Because a Proxy A may relate to B which relates to C, we need to
-           * ensure transitively.
-           */
-          if (isProxyType(typeOracle, returnType)) {
-            transitiveDeps.add(returnType);
-          }
+      for (EntityProperty entityProperty : entityProperties) {
+        JClassType returnType = entityProperty.getType().isClassOrInterface();
+        sw.println();
+        sw.println(String.format("public %s get%s() {",
+            returnType.getQualifiedSourceName(),
+            capitalize(entityProperty.getName())));
+        sw.indent();
+        sw.println(String.format("return get(%s);", entityProperty.getName()));
+        sw.outdent();
+        sw.println("}");
+
+        /*
+         * Because a Proxy A may relate to B which relates to C, we need to
+         * ensure transitively.
+         */
+        if (isProxyType(typeOracle, returnType)) {
+          transitiveDeps.add(returnType);
         }
       }
 
       // setter methods
-      for (JField field : publicProxyType.getFields()) {
-        JType fieldType = field.getType();
-        if (propertyType.getErasedType() == fieldType.getErasedType()) {
-          JParameterizedType parameterized = fieldType.isParameterized();
-          if (parameterized == null) {
-            logger.log(TreeLogger.ERROR, fieldType
-                + " must have its param type set.");
-            throw new UnableToCompleteException();
-          }
-          JClassType returnType = parameterized.getTypeArgs()[0];
-          sw.println();
-          String varName = field.getName();
-          sw.println(String.format("public void set%s(%s %s) {",
-              capitalize(field.getName()), returnType.getQualifiedSourceName(),
-              varName));
-          sw.indent();
-          sw.println(String.format("set(this.%s, this, %s);", field.getName(),
-              varName));
-          sw.outdent();
-          sw.println("}");
-        }
+      for (EntityProperty entityProperty : entityProperties) {
+        JClassType returnType = entityProperty.getType().isClassOrInterface();
+        sw.println();
+        String varName = entityProperty.getName();
+        sw.println(String.format("public void set%s(%s %s) {",
+            capitalize(varName), returnType.getQualifiedSourceName(), varName));
+        sw.indent();
+        sw.println(String.format("set(this.%s, this, %s);", varName, varName));
+        sw.outdent();
+        sw.println("}");
       }
 
       sw.outdent();
@@ -302,9 +360,8 @@ public class RequestFactoryGenerator extends Generator {
       JType returnType = method.getReturnType();
       if (null == returnType) {
         logger.log(TreeLogger.ERROR, String.format(
-            "Illegal return type for %s. Methods of %s "
-                + "must return interfaces, found void", method.getName(),
-            interfaceType.getName()));
+            "Illegal return type for %s. Methods of %s must return interfaces, found void",
+                method.getName(), interfaceType.getName()));
         throw new UnableToCompleteException();
       }
       JClassType asInterface = returnType.isInterface();
@@ -648,8 +705,6 @@ public class RequestFactoryGenerator extends Generator {
       JClassType classType = parameter.getType().isClassOrInterface();
 
       JType paramType = parameter.getType();
-      boolean isRef = PropertyReference.class.getName().equals(
-          paramType.getQualifiedBinaryName());
       JParameterizedType params = paramType.isParameterized();
       if (params != null) {
         classType = params.getTypeArgs()[0];
@@ -659,12 +714,6 @@ public class RequestFactoryGenerator extends Generator {
         sb.append("((" + classType.getQualifiedBinaryName() + "Impl" + ")");
       }
       sb.append(parameter.getName());
-      // TODO No. This defeats the entire purpose of PropertyReference. It's
-      // supposed
-      // to be dereferenced server side, not client side.
-      if (isRef) {
-        sb.append(".get()");
-      }
       if (classType != null
           && classType.isAssignableTo(typeOracle.findType(EntityProxy.class.getName()))) {
         sb.append(").getWireFormatId()");
@@ -746,6 +795,34 @@ public class RequestFactoryGenerator extends Generator {
   }
 
   /**
+   * Returns an {@link EntityProperty} if the method looks like a bean property
+   * accessor or <code>null</code>.
+   */
+  private EntityProperty maybeComputePropertyFromMethod(JMethod method) {
+    String propertyName = null;
+    JType propertyType = null;
+    String methodName = method.getName();
+    if (methodName.startsWith("get")) {
+      propertyName = Introspector.decapitalize(methodName.substring(3));
+      propertyType = method.getReturnType();
+    } else if (methodName.startsWith("set")) {
+      propertyName = Introspector.decapitalize(methodName.substring(3));
+      JParameter[] parameters = method.getParameters();
+      if (parameters.length > 0) {
+        propertyType = parameters[parameters.length - 1].getType();
+      }
+    }
+
+    // TODO: handle boolean "is" getters, indexed properties?
+
+    if (propertyType != null && propertyType != JPrimitiveType.VOID) {
+      return new EntityProperty(propertyName, propertyType);
+    }
+
+    return null;
+  }
+
+  /**
    * Prints a ListRequestImpl or ObjectRequestImpl class.
    */
   private void printRequestImplClass(SourceWriter sw, JClassType returnType,
@@ -810,10 +887,9 @@ public class RequestFactoryGenerator extends Generator {
       throw new RuntimeException(e);
     }
 
-    for (JField field : publicProxyType.getFields()) {
-      if (propertyType.getErasedType() == field.getType().getErasedType()) {
-        sw.println(String.format("set.add(%s);", field.getName()));
-      }
+    List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(publicProxyType);
+    for (EntityProperty entityProperty : entityProperties) {
+      sw.println(String.format("set.add(%s);", entityProperty.getName()));
     }
 
     sw.println("allProperties = Collections.unmodifiableSet(set);");

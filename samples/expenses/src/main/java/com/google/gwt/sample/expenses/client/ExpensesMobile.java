@@ -25,7 +25,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.UserInformationProxy;
-import com.google.gwt.requestfactory.shared.Value;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.user.client.Window;
@@ -102,7 +101,7 @@ public class ExpensesMobile implements EntryPoint {
     final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
     requestFactory.init(eventBus);
 
-    requestFactory.employeeRequest().findEmployee(Value.of(employeeId)).fire(
+    requestFactory.employeeRequest().findEmployee(employeeId).fire(
         new Receiver<EmployeeProxy>() {
           public void onSuccess(EmployeeProxy employee,
               Set<SyncResult> syncResults) {

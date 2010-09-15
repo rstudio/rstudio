@@ -15,8 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -31,9 +29,4 @@ public interface ProxyListRequest<P extends EntityProxy>
     extends RequestObject<List<P>> {
 
   ProxyListRequest<P> with(String... propertyRefs);
-
-  /**
-   * @deprecated use {@link #with(String...)} instead.
-   */
-  ProxyListRequest<P> forProperties(Collection<Property<?>> properties);
 }

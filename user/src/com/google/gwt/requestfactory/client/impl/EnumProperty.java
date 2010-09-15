@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
+package com.google.gwt.requestfactory.client.impl;
 
 /**
  * <p>
@@ -21,32 +21,28 @@ package com.google.gwt.requestfactory.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * A pointer to a particular property value.
+ * Defines a property of a {@link com.google.gwt.requestfactory.shared.EntityProxy}.
  *
- * @param <V> Value type
+ * @param <V> the type of the property's value
  */
-public class PropertyReference<V> {
-  private final EntityProxy record;
-  private final Property<V> property;
+public class EnumProperty<V> extends Property<V> {
 
-  public PropertyReference(EntityProxy record, Property<V> property) {
-    assert null != record;
-    assert null != property;
+  private V[] values;
 
-    this.record = record;
-    this.property = property;
-  }
-  
-  protected PropertyReference() {
-    this.record = null;
-    this.property = null;
+  /**
+   * @param name the property's name and displayName
+   * @param type the class of the property's value
+   * @param values the result of Enum.values() method
+   */
+  public EnumProperty(String name, Class<V> type, V[] values) {
+    super(name, type);
+    this.values = values;
   }
 
-  public V get() {
-    return record.get(property);
-  }
-
-  Property<V> getProperty() {
-    return property;
+  /**
+   * Returns the values that the enum may take on.
+   */
+  public V[] getValues() {
+    return values;
   }
 }

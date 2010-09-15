@@ -16,7 +16,6 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
-import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -52,7 +51,7 @@ public interface ReportRequest {
   /**
    * @return a request object
    */
-  ProxyRequest<ReportProxy> findReport(PropertyReference<Long> id);
+  ProxyRequest<ReportProxy> findReport(Long id);
 
   /**
    * @return a request object
@@ -70,8 +69,7 @@ public interface ReportRequest {
   /**
    * @return a request object
    */
-  ProxyListRequest<ReportProxy> findReportsByEmployee(
-      PropertyReference<String> id);
+  ProxyListRequest<ReportProxy> findReportsByEmployee(Long employeeId);
 
   /**
    * @return a request object

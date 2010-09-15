@@ -35,7 +35,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -243,7 +242,7 @@ public class ExpenseList extends Composite implements
   /**
    * The field to sort by.
    */
-  private String orderBy = ReportProxy.purpose.getName();
+  private String orderBy = "purpose";
 
   /**
    * The set of Report keys that we have seen. When a new key is added, we
@@ -278,8 +277,7 @@ public class ExpenseList extends Composite implements
    * The columns to request with each report.
    */
   private final String[] reportColumns = new String[] {
-      ReportProxy.created.getName(), ReportProxy.purpose.getName(),
-      ReportProxy.notes.getName()};
+      "created", "purpose", "notes"};
 
   /**
    * The data provider that provides reports.
@@ -403,7 +401,7 @@ public class ExpenseList extends Composite implements
    */
   private <C> Column<ReportProxy, C> addColumn(final String text,
       final Cell<C> cell, final GetValue<ReportProxy, C> getter,
-      final Property<?> property) {
+      final String property) {
     final Column<ReportProxy, C> column = new Column<ReportProxy, C>(cell) {
       @Override
       public C getValue(ReportProxy object) {
@@ -414,10 +412,10 @@ public class ExpenseList extends Composite implements
     allHeaders.add(header);
 
     // Sort created by default.
-    if (property == ReportProxy.created) {
+    if ("created".equals(property)) {
       header.setSorted(true);
       header.setReverseSort(true);
-      orderBy = property.getName() + " DESC";
+      orderBy = "created" + " DESC";
     }
 
     header.setUpdater(new ValueUpdater<String>() {
@@ -434,7 +432,7 @@ public class ExpenseList extends Composite implements
         table.redrawHeaders();
 
         // Request sorted rows.
-        orderBy = property.getName();
+        orderBy = property;
         if (header.getReverseSort()) {
           orderBy += " DESC";
         }
@@ -484,7 +482,7 @@ public class ExpenseList extends Composite implements
           public String getValue(ReportProxy object) {
             return object.getPurpose();
           }
-        }, ReportProxy.purpose);
+        }, "purpose");
 
     // Notes column.
     addColumn("Notes", new HighlightCell(),
@@ -492,7 +490,7 @@ public class ExpenseList extends Composite implements
           public String getValue(ReportProxy object) {
             return object.getNotes();
           }
-        }, ReportProxy.notes);
+        }, "notes");
 
     // Department column.
     addColumn("Department", new TextCell(),
@@ -500,7 +498,7 @@ public class ExpenseList extends Composite implements
           public String getValue(ReportProxy object) {
             return object.getDepartment();
           }
-        }, ReportProxy.department);
+        }, "department");
 
     // Created column.
     addColumn("Created", new DateCell(DateTimeFormat.getFormat("MMM dd yyyy")),
@@ -508,7 +506,7 @@ public class ExpenseList extends Composite implements
           public Date getValue(ReportProxy object) {
             return object.getCreated();
           }
-        }, ReportProxy.created);
+        }, "created");
 
     // Spacer column.
     table.addColumn(new SpacerColumn<ReportProxy>());

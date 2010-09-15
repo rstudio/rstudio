@@ -16,6 +16,7 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.app.place.ProxyPlace.Operation;
+
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
@@ -24,7 +25,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
-import com.google.gwt.requestfactory.shared.Value;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
@@ -167,7 +167,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
       stableId = tempRecord.stableId();
       doStart(display, tempRecord);
     } else {
-      ProxyRequest<P> findRequest = getFindRequest(Value.of(getRecord().getId()));
+      ProxyRequest<P> findRequest = getFindRequest(getRecord().getId());
       findRequest.with(getView().getPaths()).fire(new Receiver<P>() {
         public void onSuccess(P record, Set<SyncResult> syncResults) {
           if (AbstractProxyEditActivity.this.display != null) {
@@ -199,7 +199,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
   /**
    * Called to fetch the details of the edited record.
    */
-  protected abstract ProxyRequest<P> getFindRequest(Value<Long> id);
+  protected abstract ProxyRequest<P> getFindRequest(Long id);
 
   protected abstract RequestObject<Void> getPersistRequest(P record);
 

@@ -20,7 +20,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImpl.ReturnRecord;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.ServerFailure;

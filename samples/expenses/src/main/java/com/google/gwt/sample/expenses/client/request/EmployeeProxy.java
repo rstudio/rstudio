@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.ProxyFor;
-import com.google.gwt.requestfactory.shared.Property;
+
 import com.google.gwt.requestfactory.shared.EntityProxy;
 
 /**
@@ -27,16 +27,6 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
  */
 @ProxyFor(com.google.gwt.sample.expenses.server.domain.Employee.class)
 public interface EmployeeProxy extends EntityProxy {
-
-  Property<String> userName = new Property<String>("userName", "User Name", String.class);
-  Property<String> displayName = new Property<String>("displayName", "Display Name",
-      String.class);
-  Property<String> password = new Property<String>("password", "Password", String.class);
-  Property<EmployeeProxy> supervisor = new Property<EmployeeProxy>("supervisor", "Supervisor",
-      EmployeeProxy.class);
-
-  Property<String> department = new Property<String>("department", "Department", String.class);
-
   String getDepartment();
 
   String getDisplayName();

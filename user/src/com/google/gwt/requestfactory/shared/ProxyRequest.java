@@ -15,9 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-
-import java.util.Collection;
-
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -33,10 +30,4 @@ public interface ProxyRequest<P extends EntityProxy> extends
     RequestObject<P> {
 
   ProxyRequest<P> with(String... propertyRefs);
-
-  /**
-   * @deprecated use {@link #with(String...)} instead.
-   */
-  ProxyRequest<P> forProperties(Collection<Property<?>> properties);
-
 }

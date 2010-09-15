@@ -306,8 +306,6 @@ public class ExpenseTree extends Composite {
   }
 
   private String[] getEmployeeMenuProperties() {
-    return new String[]{
-        EmployeeProxy.displayName.getName(),
-        EmployeeProxy.userName.getName()};
+    return new String[]{"displayName", "userName"};
   }
 }

@@ -17,7 +17,6 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.Collections;
@@ -46,8 +45,8 @@ public abstract class ProxySchema<P extends ProxyImpl> {
   
   {
     Set<Property<?>> set = new HashSet<Property<?>>();
-    set.add(EntityProxy.id);
-    set.add(EntityProxy.version);
+    set.add(ProxyImpl.id);
+    set.add(ProxyImpl.version);
     allProperties = Collections.unmodifiableSet(set);
   }
   

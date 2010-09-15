@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.ProxyFor;
-import com.google.gwt.requestfactory.shared.Property;
+
 import com.google.gwt.requestfactory.shared.EntityProxy;
 
 import java.util.Date;
@@ -29,16 +29,6 @@ import java.util.Date;
  */
 @ProxyFor(com.google.gwt.sample.expenses.server.domain.Report.class)
 public interface ReportProxy extends EntityProxy {
-
-  Property<EmployeeProxy> approvedSupervisor = new Property<EmployeeProxy>("approvedSupervisor", "Approved Supervisor Key",
-      EmployeeProxy.class);
-  Property<Date> created = new Property<Date>("created", "Created", Date.class);
-  Property<String> department = new Property<String>("department", "Department", String.class);
-  Property<String> notes = new Property<String>("notes", "Notes", String.class);
-  Property<String> purpose = new Property<String>("purpose", "Purpose", String.class);
-  Property<EmployeeProxy> reporter = new Property<EmployeeProxy>("reporter", "Reporter",
-      EmployeeProxy.class);
-
   EmployeeProxy getApprovedSupervisor();
 
   Date getCreated();

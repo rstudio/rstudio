@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
+
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.DateCell;
 import com.google.gwt.cell.client.FieldUpdater;
@@ -40,14 +41,12 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -545,15 +544,14 @@ public class ExpenseDetails extends Composite {
     if (report != null && report.getId().equals(changed.getId())) {
       // Request the updated report.
       expensesRequestFactory.reportRequest().findReport(
-          report.getRef(ReportProxy.id)).with(ReportProxy.notes.getName()).fire(
-          new Receiver<ReportProxy>() {
-            @Override
-            public void onSuccess(ReportProxy response,
-                Set<SyncResult> syncResults) {
-              report = response;
-              setNotesEditState(false, false, response.getNotes());
-            }
-          });
+          report.getId()).fire(new Receiver<ReportProxy>() {
+        @Override
+        public void onSuccess(
+            ReportProxy response, Set<SyncResult> syncResults) {
+          report = response;
+          setNotesEditState(false, false, response.getNotes());
+        }
+      });
     }
   }
 
@@ -873,10 +871,8 @@ public class ExpenseDetails extends Composite {
    * Get the columns displayed in the expense table.
    */
   private String[] getExpenseColumns() {
-    return new String[]{
-        ExpenseProxy.amount.getName(), ExpenseProxy.approval.getName(),
-        ExpenseProxy.category.getName(), ExpenseProxy.created.getName(),
-        ExpenseProxy.description.getName(), ExpenseProxy.reasonDenied.getName()};
+    return new String[]{ "amount", "approval", "category", "created", 
+        "description", "reasonDenied"};
   }
 
   /**
@@ -940,9 +936,9 @@ public class ExpenseDetails extends Composite {
         refreshTimer.schedule(REFRESH_INTERVAL);
       }
     };
+
     expensesRequestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(EntityProxy.id)).with(getExpenseColumns()).fire(
-        lastReceiver);
+        report.getId()).with(getExpenseColumns()).fire(lastReceiver);
   }
 
   /**

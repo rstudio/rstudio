@@ -64,12 +64,12 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     // add a proxy
     jso = ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
         SimpleRequestFactoryInstance.impl());
-    jso.set(SimpleFooProxy.userName, "bovik");
-    jso.set(SimpleFooProxy.password, "bovik");
-    jso.set(SimpleFooProxy.intId, 4);
-    jso.set(SimpleFooProxy.created, new Date());
-    jso.set(SimpleFooProxy.boolField, false);
-    jso.set(SimpleFooProxy.otherBoolField, true);
+    jso.set(SimpleFooProxyProperties.userName, "bovik");
+    jso.set(SimpleFooProxyProperties.password, "bovik");
+    jso.set(SimpleFooProxyProperties.intId, 4);
+    jso.set(SimpleFooProxyProperties.created, new Date());
+    jso.set(SimpleFooProxyProperties.boolField, false);
+    jso.set(SimpleFooProxyProperties.otherBoolField, true);
 
     valueStore.putInValueStore(jso);
   }
@@ -95,7 +95,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         valueStore, requestFactory);
     // DVS does not know about the created entity.
     assertFalse(deltaValueStore.isChanged());
-    deltaValueStore.set(SimpleFooProxy.userName, created, "harry");
+    deltaValueStore.set(SimpleFooProxyProperties.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
     testAndGetChangeProxy(deltaValueStore.toJson(), WriteOperation.CREATE);
   }
@@ -106,26 +106,26 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         valueStore, requestFactory);
     // DVS does not know about the created entity.
     assertFalse(deltaValueStore.isChanged());
-    deltaValueStore.set(SimpleFooProxy.userName, created, "harry");
+    deltaValueStore.set(SimpleFooProxyProperties.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
     JSONObject changeProxy = testAndGetChangeProxy(deltaValueStore.toJson(),
         WriteOperation.CREATE);
     assertEquals(
         "harry",
-        changeProxy.get(SimpleFooProxy.userName.getName()).isString().stringValue());
+        changeProxy.get(SimpleFooProxyProperties.userName.getName()).isString().stringValue());
   }
 
   public void testOperationAfterJson() {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
-    deltaValueStore.set(SimpleFooProxy.userName, new MyProxyImpl(jso),
+    deltaValueStore.set(SimpleFooProxyProperties.userName, new MyProxyImpl(jso),
         "newHarry");
     assertTrue(deltaValueStore.isChanged());
 
     deltaValueStore.toJson();
 
     try {
-      deltaValueStore.set(SimpleFooProxy.userName, new MyProxyImpl(jso),
+      deltaValueStore.set(SimpleFooProxyProperties.userName, new MyProxyImpl(jso),
           "harry");
       fail("Modifying DeltaValueStore after calling toJson should throw a RuntimeException");
     } catch (RuntimeException ex) {
@@ -133,7 +133,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     }
 
     deltaValueStore.clearUsed();
-    deltaValueStore.set(SimpleFooProxy.userName, new MyProxyImpl(jso),
+    deltaValueStore.set(SimpleFooProxyProperties.userName, new MyProxyImpl(jso),
         "harry");
   }
 
@@ -148,8 +148,8 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
 
-    deltaValueStore.set(SimpleFooProxy.userName, createProxy, "harry");
-    deltaValueStore.set(SimpleFooProxy.userName, mockProxy, "bovik");
+    deltaValueStore.set(SimpleFooProxyProperties.userName, createProxy, "harry");
+    deltaValueStore.set(SimpleFooProxyProperties.userName, mockProxy, "bovik");
     assertTrue(deltaValueStore.isChanged());
     String jsonString = deltaValueStore.toJson();
     JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(jsonString);
@@ -162,27 +162,27 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertEquals(1, createOperationArray.size());
     assertEquals("harry", createOperationArray.get(0).isObject().get(
         SIMPLE_FOO_CLASS_NAME).isObject().get(
-        SimpleFooProxy.userName.getName()).isString().stringValue());
+            SimpleFooProxyProperties.userName.getName()).isString().stringValue());
 
     JSONArray updateOperationArray = jsonObject.get(
         WriteOperation.UPDATE.getUnObfuscatedEnumName()).isArray();
     assertEquals(1, updateOperationArray.size());
     assertEquals("bovik", updateOperationArray.get(0).isObject().get(
         SIMPLE_FOO_CLASS_NAME).isObject().get(
-        SimpleFooProxy.userName.getName()).isString().stringValue());
+            SimpleFooProxyProperties.userName.getName()).isString().stringValue());
   }
 
   public void testUpdate() {
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
-    deltaValueStore.set(SimpleFooProxy.userName, new MyProxyImpl(jso),
+    deltaValueStore.set(SimpleFooProxyProperties.userName, new MyProxyImpl(jso),
         "harry");
     assertTrue(deltaValueStore.isChanged());
     JSONObject changeProxy = testAndGetChangeProxy(deltaValueStore.toJson(),
         WriteOperation.UPDATE);
     assertEquals(
         "harry",
-        changeProxy.get(SimpleFooProxy.userName.getName()).isString().stringValue());
+        changeProxy.get(SimpleFooProxyProperties.userName.getName()).isString().stringValue());
   }
 
   private JSONObject testAndGetChangeProxy(String jsonString,

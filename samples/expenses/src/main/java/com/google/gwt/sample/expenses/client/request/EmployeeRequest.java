@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
-import com.google.gwt.requestfactory.shared.PropertyReference;
+
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.RequestObject;
@@ -52,7 +52,7 @@ public interface EmployeeRequest {
   /**
    * @return a request object
    */
-  ProxyRequest<EmployeeProxy> findEmployee(PropertyReference<Long> id);
+  ProxyRequest<EmployeeProxy> findEmployee(Long id);
 
   /**
    * @return a request object

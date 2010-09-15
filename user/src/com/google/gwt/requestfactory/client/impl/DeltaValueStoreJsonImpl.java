@@ -20,7 +20,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.client.SyncResultImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.Property;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
@@ -164,7 +163,7 @@ class DeltaValueStoreJsonImpl {
         ProxyJsoImpl value = creates.get(futureKey);
         if (value != null) {
           copy.merge(value);
-          copy.set(EntityProxy.id, newRecord.getId());
+          copy.set(ProxyImpl.id, newRecord.getId());
         }
         ProxyJsoImpl masterRecord = master.records.get(futureKey);
         assert masterRecord == null;

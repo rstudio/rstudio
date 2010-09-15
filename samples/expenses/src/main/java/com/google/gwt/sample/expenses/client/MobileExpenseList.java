@@ -202,8 +202,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
   }
 
   private String[] getExpenseColumns() {
-    return new String[]{
-        ExpenseProxy.description.getName(), ExpenseProxy.amount.getName()};
+    return new String[]{"description", "amount"};
   }
 
   /**
@@ -246,7 +245,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
       }
     };
     requestFactory.expenseRequest().findExpensesByReport(
-        report.getRef(ReportProxy.id)).with(getExpenseColumns()).fire(
+        report.getId()).with(getExpenseColumns()).fire(
         lastReceiver);
   }
 }

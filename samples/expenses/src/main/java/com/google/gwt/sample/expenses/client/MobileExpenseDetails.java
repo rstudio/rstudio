@@ -16,12 +16,12 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.GWT;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
-import com.google.gwt.requestfactory.shared.PropertyReference;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
@@ -107,10 +107,7 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
   }
 
   public void onRefresh(boolean clear) {
-    PropertyReference<Long> idRef = new PropertyReference<Long>(expense,
-        ExpenseProxy.id);
-
-    requestFactory.expenseRequest().findExpense(idRef).fire(
+    requestFactory.expenseRequest().findExpense(expense.getId()).fire(
         new Receiver<List<ExpenseProxy>>() {
           public void onSuccess(List<ExpenseProxy> response, Set<SyncResult> syncResults) {
             assert response.size() == 1;

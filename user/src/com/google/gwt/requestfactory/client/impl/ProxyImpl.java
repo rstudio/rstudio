@@ -17,8 +17,6 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.Property;
-import com.google.gwt.requestfactory.shared.PropertyReference;
 
 /**
  * <p>
@@ -35,6 +33,9 @@ import com.google.gwt.requestfactory.shared.PropertyReference;
  */
 public class ProxyImpl implements EntityProxy {
 
+  static final Property<Long> id = new Property<Long>("id", Long.class);
+  static final Property<Integer> version = new Property<Integer>("version", Integer.class);
+
   protected static String getWireFormatId(Long id, boolean isFuture,
       ProxySchema<?> schema) {
     return id + "-" + (isFuture ? "IS" : "NO") + "-" + schema.getToken();
@@ -44,7 +45,7 @@ public class ProxyImpl implements EntityProxy {
   private final boolean isFuture;
 
   private DeltaValueStoreJsonImpl deltaValueStore;
-
+  
   /**
    * For use by generated subclasses only. Other code should use
    * {@link ProxySchema#create(ProxyJsoImpl, boolean)}, typically:
@@ -67,16 +68,26 @@ public class ProxyImpl implements EntityProxy {
     return jso;
   }
 
+  /**
+   * Get this proxy's value for the given property. Behavior is undefined if
+   * the proxy has no such property, or if the property has never been set. It
+   * is unusual to call this method directly. Rather it is expected to be called
+   * by bean-style getter methods provided by implementing classes.
+   * 
+   * @param <V> the type of the property's value
+   * @param property the property to fetch
+   * @return the value
+   */
   public <V> V get(Property<V> property) {
     return jso.get(property);
   }
 
+  public <V> V get(String propertyName, Class<?> propertyType) {
+    return jso.get(propertyName, propertyType);
+  }
+  
   public Long getId() {
     return jso.getId();
-  }
-
-  public <V> PropertyReference<V> getRef(Property<V> property) {
-    return jso.getRef(property);
   }
 
   public ProxySchema<?> getSchema() {
