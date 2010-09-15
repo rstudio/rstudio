@@ -94,7 +94,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     return soycExtra;
   }
 
-  @Override
   public boolean isStrict() {
     return strict;
   }
@@ -139,7 +138,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     soycExtra = enabled;
   }
 
-  @Override
   public void setStrict(boolean strict) {
     this.strict = strict;
   }

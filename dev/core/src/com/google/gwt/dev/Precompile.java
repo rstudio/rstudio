@@ -211,7 +211,6 @@ public class Precompile {
       return jjsOptions.isSoycExtra();
     }
 
-    @Override
     public boolean isStrict() {
       return jjsOptions.isStrict();
     }
@@ -280,7 +279,6 @@ public class Precompile {
       jjsOptions.setSoycExtra(soycExtra);
     }
 
-    @Override
     public void setStrict(boolean strict) {
       jjsOptions.setStrict(strict);
     }
