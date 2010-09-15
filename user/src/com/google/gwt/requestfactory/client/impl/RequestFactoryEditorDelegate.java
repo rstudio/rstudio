@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
+import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -53,11 +54,12 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
   }
 
   public void initialize(EventBus eventBus, RequestFactory factory,
-      String pathSoFar, P object, E editor, RequestObject<?> editRequest) {
+      String pathSoFar, P object, E editor, DelegateMap delegateMap,
+      RequestObject<?> editRequest) {
     this.eventBus = eventBus;
     this.factory = factory;
     this.request = editRequest;
-    super.initialize(pathSoFar, object, editor);
+    super.initialize(pathSoFar, object, editor, delegateMap);
   }
 
   @Override
@@ -73,8 +75,8 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
   @Override
   protected <R, S extends Editor<R>> void initializeSubDelegate(
       AbstractEditorDelegate<R, S> subDelegate, String path, R object,
-      S subEditor) {
+      S subEditor, DelegateMap delegateMap) {
     ((RequestFactoryEditorDelegate<R, S>) subDelegate).initialize(eventBus,
-        factory, path, object, subEditor, request);
+        factory, path, object, subEditor, delegateMap, request);
   }
 }

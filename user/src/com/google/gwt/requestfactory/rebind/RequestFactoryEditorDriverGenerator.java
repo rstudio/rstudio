@@ -89,8 +89,9 @@ public class RequestFactoryEditorDriverGenerator extends
   protected void writeDelegateInitialization(SourceWriter sw, EditorData d,
       Map<EditorData, String> delegateFields) {
     sw.println("%s.initialize(eventBus, factory, "
-        + "appendPath(\"%s\"), getObject()%s.%s()," + " editor.%s, request);",
-        delegateFields.get(d), d.getPropertyName(), d.getBeanOwnerExpression(),
-        d.getGetterName(), d.getSimpleExpression());
+        + "appendPath(\"%s\"), getObject()%s.%s()," + " editor.%s,"
+        + " delegateMap, request);", delegateFields.get(d),
+        d.getPropertyName(), d.getBeanOwnerExpression(), d.getGetterName(),
+        d.getSimpleExpression());
   }
 }

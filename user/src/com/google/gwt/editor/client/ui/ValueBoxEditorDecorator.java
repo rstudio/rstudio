@@ -18,30 +18,47 @@ package com.google.gwt.editor.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.adapters.ValueBoxEditor;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ValueBoxBase;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
 /**
- * A simple decorator to display an Editor's EditorErrors in conjunction with a
- * Widget.
+ * A simple decorator to display leaf widgets with an error message.
+ * <p>
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * The decorator may have exactly one ValueBoxBase added though an
+ * <code>&lt;e:valuebox></code> child tag.
+ * <p>
+ * For example:
+ * <pre>
+ * &#64;UiField
+ * ValueBoxEditorDecorator<String> name;
+ * </pre>
+ * <pre>
+ * &lt;e:ValueBoxEditorDecorator ui:field='name'>
+ *   &lt;e:valuebox>
+ *     &lt;g:TextBox />
+ *   &lt;/e:valuebox>
+ * &lt;/e:ValueBoxEditorDecorator>
+ * </pre>
  * 
- * @param <T> the type of data being editod
- * @param <E> the type of Editor
+ * @param <T> the type of data being edited
  */
-public class EditorErrorPanel<T, E extends Editor<T>> extends Composite
-    implements HasEditorErrors<T>, IsEditor<E> {
-  interface Binder extends UiBinder<Widget, EditorErrorPanel<?, ?>> {
+public class ValueBoxEditorDecorator<T> extends Composite implements
+    HasEditorErrors<T>, IsEditor<ValueBoxEditor<T>> {
+  interface Binder extends UiBinder<Widget, ValueBoxEditorDecorator<?>> {
     Binder BINDER = GWT.create(Binder.class);
   }
 
@@ -51,45 +68,36 @@ public class EditorErrorPanel<T, E extends Editor<T>> extends Composite
   @UiField
   DivElement errorLabel;
 
-  private E editor;
+  private ValueBoxEditor<T> editor;
 
   @UiConstructor
-  public EditorErrorPanel() {
+  public ValueBoxEditorDecorator() {
     initWidget(Binder.BINDER.createAndBindUi(this));
   }
 
-  public EditorErrorPanel(Widget widget, E editor) {
+  public ValueBoxEditorDecorator(ValueBoxBase<T> widget,
+      ValueBoxEditor<T> editor) {
     this();
-    setWidget(widget);
-    setEditor(editor);
+    contents.add(widget);
+    this.editor = editor;
   }
 
-  public E asEditor() {
+  public ValueBoxEditor<T> asEditor() {
     return editor;
   }
 
-  public void setEditor(E editor) {
+  public void setEditor(ValueBoxEditor<T> editor) {
     this.editor = editor;
   }
 
   /**
-   * Set the widget that the EditorPanel will display. If the widget is also an
-   * {@link Editor} or implements {@link IsEditor}, this method will
+   * Set the widget that the EditorPanel will display. This method will
    * automatically call {@link #setEditor}.
    */
-  @UiChild(limit = 1, tagname = "contents")
-  public void setWidget(Widget widget) {
+  @UiChild(limit = 1, tagname = "valuebox")
+  public void setValueBox(ValueBoxBase<T> widget) {
     contents.add(widget);
-
-    if (widget instanceof Editor<?>) {
-      @SuppressWarnings("unchecked")
-      E isEditor = (E) widget;
-      setEditor(isEditor);
-    } else if (widget instanceof IsEditor<?>) {
-      @SuppressWarnings("unchecked")
-      E isEditor = ((IsEditor<E>) widget).asEditor();
-      setEditor(isEditor);
-    }
+    setEditor(widget.asEditor());
   }
 
   /**
@@ -98,18 +106,19 @@ public class EditorErrorPanel<T, E extends Editor<T>> extends Composite
    * passed into {@link #setEditor()}.
    */
   public void showErrors(List<EditorError> errors) {
-    if (errors.isEmpty()) {
-      errorLabel.setInnerText("");
-      errorLabel.getStyle().setDisplay(Display.NONE);
-      return;
-    }
-
     StringBuilder sb = new StringBuilder();
     for (EditorError error : errors) {
       if (error.getEditor().equals(editor)) {
         sb.append("\n").append(error.getMessage());
       }
     }
+
+    if (sb.length() == 0) {
+      errorLabel.setInnerText("");
+      errorLabel.getStyle().setDisplay(Display.NONE);
+      return;
+    }
+
     errorLabel.setInnerText(sb.substring(1));
     errorLabel.getStyle().setDisplay(Display.INLINE_BLOCK);
   }

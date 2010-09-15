@@ -38,8 +38,8 @@ public abstract class SimpleBeanEditorDelegate<T, E extends Editor<T>> extends
   }
 
   @Override
-  public void initialize(String pathSoFar, T object, E editor) {
-    super.initialize(pathSoFar, object, editor);
+  public void initialize(String pathSoFar, T object, E editor, DelegateMap map) {
+    super.initialize(pathSoFar, object, editor, map);
   }
 
   @Override
@@ -50,8 +50,8 @@ public abstract class SimpleBeanEditorDelegate<T, E extends Editor<T>> extends
   @Override
   protected <R, S extends Editor<R>> void initializeSubDelegate(
       AbstractEditorDelegate<R, S> subDelegate, String path, R object,
-      S subEditor) {
+      S subEditor, DelegateMap map) {
     ((SimpleBeanEditorDelegate<R, S>) subDelegate).initialize(path, object,
-        subEditor);
+        subEditor, map);
   }
 }

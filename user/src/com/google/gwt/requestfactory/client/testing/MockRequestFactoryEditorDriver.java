@@ -22,6 +22,7 @@ import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,10 +38,10 @@ public class MockRequestFactoryEditorDriver<P extends EntityProxy, E extends Edi
     implements RequestFactoryEditorDriver<P, E> {
   private static final String[] EMPTY_STRING = new String[0];
 
-  private RequestObject<?> saveRequest;
   private EventBus eventBus;
   private E editor;
   private P proxy;
+  private RequestObject<?> saveRequest;
   private RequestFactory requestFactory;
 
   /**
@@ -123,5 +124,12 @@ public class MockRequestFactoryEditorDriver<P extends EntityProxy, E extends Edi
     this.eventBus = eventBus;
     this.requestFactory = requestFactory;
     this.editor = editor;
+  }
+
+  /**
+   * A no-op method that always returns false.
+   */
+  public boolean setViolations(Iterable<Violation> errors) {
+    return false;
   }
 }

@@ -25,6 +25,7 @@ import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.editor.rebind.model.EditorData;
 import com.google.gwt.editor.rebind.model.EditorModel;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -159,7 +160,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       }
 
       // For each entity property, create a sub-delegate and initialize
-      sw.println("protected void attachSubEditors() {");
+      sw.println("protected void attachSubEditors(%s delegateMap) {",
+          DelegateMap.class.getCanonicalName());
       sw.indent();
       for (EditorData d : data) {
         String subDelegateType = getEditorDelegate(d);
@@ -168,11 +170,16 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
         if (d.isDelegateRequired()) {
           sw.println("%s = new %s();", delegateFields.get(d), subDelegateType);
           writeDelegateInitialization(sw, d, delegateFields);
+          sw.println("delegateMap.put(%1$s.getObject(), %1$s);",
+              delegateFields.get(d));
         } else if (d.isLeafValueEditor()) {
           // if (can().access().without().npe()) { editor.subEditor.setValue() }
           sw.println("if (%4$s) editor.%1$s.setValue(getObject()%2$s.%3$s());",
               d.getSimpleExpression(), d.getBeanOwnerExpression(),
               d.getGetterName(), d.getBeanOwnerGuard("getObject()"));
+          // simpleEditor.put("some.path", editor.simpleEditor());
+          sw.println("simpleEditors.put(\"%s\", editor.%s);",
+              d.getDeclaredPath(), d.getSimpleExpression());
         }
         sw.outdent();
         sw.println("}");
@@ -221,6 +228,20 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
 
           sw.outdent();
           sw.println("}");
+        }
+      }
+      sw.outdent();
+      sw.println("}");
+
+      // Flush each sub-delegate
+      sw.println("protected void flushSubEditorErrors(%s errorAccumulator) {",
+          List.class.getCanonicalName());
+      sw.indent();
+      for (EditorData d : data) {
+        if (d.isDelegateRequired()) {
+          // if (fooDelegate != null) fooDelegate.flushErrors(accumulator);
+          sw.println("if (%1$s != null) %1$s.flushErrors(errorAccumulator);",
+              delegateFields.get(d));
         }
       }
       sw.outdent();

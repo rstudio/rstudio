@@ -27,6 +27,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,7 +44,12 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
 
   private class Chain<R, S extends Editor<R>> implements
       CompositeEditor.EditorChain<R, S> {
+    private DelegateMap delegateMap;
     private Map<S, AbstractEditorDelegate<R, S>> map = new LinkedHashMap<S, AbstractEditorDelegate<R, S>>();
+
+    public Chain(DelegateMap delegateMap) {
+      this.delegateMap = delegateMap;
+    }
 
     public void attach(R object, S subEditor) {
       AbstractEditorDelegate<R, S> subDelegate = createComposedDelegate();
@@ -51,7 +57,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
       @SuppressWarnings("unchecked")
       Editor<Object> temp = (Editor<Object>) subEditor;
       initializeSubDelegate(subDelegate, path
-          + composedEditor.getPathElement(temp), object, subEditor);
+          + composedEditor.getPathElement(temp), object, subEditor, delegateMap);
     }
 
     public void detach(S subEditor) {
@@ -82,10 +88,15 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
 
   protected CompositeEditor<T, Object, Editor<Object>> composedEditor;
   protected Chain<Object, Editor<Object>> editorChain;
-  protected List<EditorError> errors = new ArrayList<EditorError>();
+  protected List<EditorError> errors;
   protected HasEditorErrors<T> hasEditorErrors;
   protected LeafValueEditor<T> leafValueEditor;
   protected String path;
+  /**
+   * A map of local paths to sub-editors that do not have EditorDelegates (and
+   * will not be in the DelegateMap).
+   */
+  protected Map<String, Editor<?>> simpleEditors;
   /**
    * This field avoids needing to repeatedly cast {@link #editor}.
    */
@@ -97,6 +108,9 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
 
   public abstract T ensureMutable(T object);
 
+  /**
+   * Flushes both data and errors.
+   */
   public void flush(List<EditorError> errorAccumulator) {
     try {
       if (valueAwareEditor != null) {
@@ -119,37 +133,13 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
         editorChain.collectErrors();
       }
     } finally {
-      if (hasEditorErrors != null) {
-        // Allow higher-priority co-editor to spy on errors
-        for (Iterator<EditorError> it = errorAccumulator.iterator(); it.hasNext();) {
-          EditorError error = it.next();
-          if (error.getAbsolutePath().startsWith(getPath())) {
-            errors.add(error);
-            it.remove();
-          }
-        }
-        // Include the trailing dot
-        int length = getPath().length();
-        int pathPrefixLength = length == 0 ? 0 : (length + 1);
-        for (EditorError error : errors) {
-          ((SimpleError) error).setPathPrefixLength(pathPrefixLength);
-        }
-        // Give all of the errors to the handler and use a new local accumulator
-        hasEditorErrors.showErrors(Collections.unmodifiableList(errors));
-
-        for (EditorError error : errors) {
-          if (!error.isConsumed()) {
-            errorAccumulator.add(error);
-          }
-        }
-
-        // Reset local error list
-        errors = new ArrayList<EditorError>();
-      } else {
-        errorAccumulator.addAll(errors);
-        errors.clear();
-      }
+      showErrors(errorAccumulator);
     }
+  }
+
+  public void flushErrors(List<EditorError> errorAccumulator) {
+    flushSubEditorErrors(errorAccumulator);
+    showErrors(errorAccumulator);
   }
 
   public abstract T getObject();
@@ -163,13 +153,20 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     errors.add(error);
   }
 
+  public void recordError(String message, Object value, Object userData,
+      String extraPath) {
+    EditorError error = new SimpleError(this, message, value, userData,
+        extraPath);
+    errors.add(error);
+  }
+
   public abstract HandlerRegistration subscribe();
 
   protected String appendPath(String path) {
     return appendPath(this.path, path);
   }
 
-  protected abstract void attachSubEditors();
+  protected abstract void attachSubEditors(DelegateMap delegates);
 
   /**
    * Only implemented by delegates for a {@link CompositeEditor}.
@@ -178,14 +175,24 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     throw new IllegalStateException();
   }
 
+  protected abstract void flushSubEditorErrors(
+      List<EditorError> errorAccumulator);
+
   protected abstract void flushSubEditors(List<EditorError> errorAccumulator);
 
   protected abstract E getEditor();
 
-  protected void initialize(String pathSoFar, T object, E editor) {
+  protected Editor<?> getSimpleEditor(String declaredPath) {
+    return simpleEditors.get(declaredPath);
+  }
+
+  protected void initialize(String pathSoFar, T object, E editor,
+      DelegateMap map) {
     this.path = pathSoFar;
     setEditor(editor);
     setObject(object);
+    errors = new ArrayList<EditorError>();
+    simpleEditors = new HashMap<String, Editor<?>>();
 
     // Set up pre-casted fields to access the editor
     if (editor instanceof HasEditorErrors<?>) {
@@ -203,7 +210,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
         @SuppressWarnings("unchecked")
         CompositeEditor<T, Object, Editor<Object>> temp = (CompositeEditor<T, Object, Editor<Object>>) editor;
         composedEditor = temp;
-        editorChain = new Chain<Object, Editor<Object>>();
+        editorChain = new Chain<Object, Editor<Object>>(map);
         composedEditor.setEditorChain(editorChain);
       }
     }
@@ -222,7 +229,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
       valueAwareEditor.setValue(object);
     }
     if (object != null) {
-      attachSubEditors();
+      attachSubEditors(map);
     }
   }
 
@@ -231,9 +238,47 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
    */
   protected abstract <R, S extends Editor<R>> void initializeSubDelegate(
       AbstractEditorDelegate<R, S> subDelegate, String path, R object,
-      S subEditor);
+      S subEditor, DelegateMap map);
 
   protected abstract void setEditor(E editor);
 
   protected abstract void setObject(T object);
+
+  /**
+   * @param errorAccumulator an out parameter to which unhandled EditorErrors
+   *          will be added.
+   */
+  private void showErrors(List<EditorError> errorAccumulator) {
+    assert errors != errorAccumulator;
+    if (hasEditorErrors != null) {
+      // Allow higher-priority co-editor to spy on errors
+      for (Iterator<EditorError> it = errorAccumulator.iterator(); it.hasNext();) {
+        EditorError error = it.next();
+        if (error.getAbsolutePath().startsWith(getPath())) {
+          errors.add(error);
+          it.remove();
+        }
+      }
+      // Include the trailing dot
+      int length = getPath().length();
+      int pathPrefixLength = length == 0 ? 0 : (length + 1);
+      for (EditorError error : errors) {
+        ((SimpleError) error).setPathPrefixLength(pathPrefixLength);
+      }
+      // Give all of the errors to the handler and use a new local accumulator
+      hasEditorErrors.showErrors(Collections.unmodifiableList(errors));
+
+      for (EditorError error : errors) {
+        if (!error.isConsumed()) {
+          errorAccumulator.add(error);
+        }
+      }
+
+      // Reset local error list
+      errors = new ArrayList<EditorError>();
+    } else {
+      errorAccumulator.addAll(errors);
+      errors.clear();
+    }
+  }
 }

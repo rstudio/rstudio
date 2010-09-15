@@ -64,10 +64,9 @@ public class DynaTableRf implements EntryPoint {
       }
     });
 
-    final DynaTableRequestFactory requests = 
-      GWT.create(DynaTableRequestFactory.class);
+    final DynaTableRequestFactory requests = GWT.create(DynaTableRequestFactory.class);
     requests.init(eventBus);
-    
+
     // Add remote logging handler
     RequestFactoryLogHandler.LoggingRequestProvider provider =
       new RequestFactoryLogHandler.LoggingRequestProvider() {
@@ -78,7 +77,7 @@ public class DynaTableRf implements EntryPoint {
     Logger.getLogger("").addHandler(
         new RequestFactoryLogHandler(provider, Level.WARNING,
             "WireActivityLogger"));
-    
+
     FavoritesManager manager = new FavoritesManager();
     PersonEditorWorkflow.register(eventBus, requests, manager);
 

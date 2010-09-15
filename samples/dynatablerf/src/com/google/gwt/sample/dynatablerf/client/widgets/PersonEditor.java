@@ -19,12 +19,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.ui.ValueBoxEditorDecorator;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -38,13 +38,16 @@ public class PersonEditor extends Composite implements Editor<PersonProxy> {
   AddressEditor address;
 
   @UiField
-  TextBox name;
+  ValueBoxEditorDecorator<String> description;
 
   @UiField
-  TextBox description;
+  ValueBoxEditorDecorator<String> name;
 
   @UiField
-  TextArea note;
+  ValueBoxEditorDecorator<String> note;
+
+  @UiField
+  Focusable nameBox;
 
   public PersonEditor() {
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
@@ -53,7 +56,7 @@ public class PersonEditor extends Composite implements Editor<PersonProxy> {
   public void focus() {
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
-        name.setFocus(true);
+        nameBox.setFocus(true);
       }
     });
   }

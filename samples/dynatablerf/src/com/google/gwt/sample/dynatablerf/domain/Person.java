@@ -17,7 +17,6 @@ package com.google.gwt.sample.dynatablerf.domain;
 
 import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
 
-import javax.validation.Valid;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -39,14 +38,13 @@ public abstract class Person {
   }
 
   @NotNull
-  @Valid
   private final Address address = new Address();
 
   @NotNull
   private String description = "DESC";
 
   @NotNull
-  @Size(min = 1, message = "Persons must have names")
+  @Size(min = 2, message = "Persons aren't just characters")
   private String name;
 
   @NotNull
@@ -56,7 +54,6 @@ public abstract class Person {
   @DecimalMin("0")
   private Integer version = 0;
 
-  @NotNull
   private String note;
 
   public Person() {

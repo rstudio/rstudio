@@ -320,7 +320,8 @@ public class EditorModel {
 
     for (JClassType type : editorType.getFlattenedSupertypeHierarchy()) {
       for (JField field : type.getFields()) {
-        if (field.isPrivate() || field.isStatic()) {
+        if (field.isPrivate() || field.isStatic()
+            || field.getAnnotation(Editor.Ignore.class) != null) {
           continue;
         }
         JType fieldClassType = field.getType();
@@ -330,7 +331,8 @@ public class EditorModel {
         }
       }
       for (JMethod method : type.getMethods()) {
-        if (method.isPrivate() || method.isStatic()) {
+        if (method.isPrivate() || method.isStatic()
+            || method.getAnnotation(Editor.Ignore.class) != null) {
           continue;
         }
         JType methodReturnType = method.getReturnType();

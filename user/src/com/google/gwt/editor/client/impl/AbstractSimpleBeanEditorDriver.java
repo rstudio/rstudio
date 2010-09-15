@@ -33,6 +33,7 @@ public abstract class AbstractSimpleBeanEditorDriver<T, E extends Editor<T>>
     implements SimpleBeanEditorDriver<T, E> {
 
   private SimpleBeanEditorDelegate<T, E> delegate;
+  private DelegateMap delegateMap = new DelegateMap(DelegateMap.IDENTITY);
   private E editor;
   private List<EditorError> errors;
   private T object;
@@ -41,7 +42,8 @@ public abstract class AbstractSimpleBeanEditorDriver<T, E extends Editor<T>>
     checkEditor();
     this.object = object;
     delegate = createDelegate();
-    delegate.initialize("", object, editor);
+    delegate.initialize("", object, editor, delegateMap);
+    delegateMap.put(object, delegate);
   }
 
   public T flush() {
@@ -64,6 +66,13 @@ public abstract class AbstractSimpleBeanEditorDriver<T, E extends Editor<T>>
   }
 
   protected abstract SimpleBeanEditorDelegate<T, E> createDelegate();
+
+  /**
+   * Visible for testing.
+   */
+  DelegateMap getDelegateMap() {
+    return delegateMap;
+  }
 
   private void checkDelegate() {
     if (delegate == null) {

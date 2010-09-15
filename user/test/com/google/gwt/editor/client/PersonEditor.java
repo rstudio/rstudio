@@ -21,8 +21,8 @@ import com.google.gwt.editor.client.adapters.SimpleEditor;
  * Simple editor used by multiple tests.
  */
 class PersonEditor implements Editor<Person> {
-  AddressEditor addressEditor = new AddressEditor();
-  SimpleEditor<String> name = SimpleEditor.of(SimpleBeanEditorTest.UNINITIALIZED);
+  public AddressEditor addressEditor = new AddressEditor();
+  public SimpleEditor<String> name = SimpleEditor.of(SimpleBeanEditorTest.UNINITIALIZED);
   @Path("manager.name")
-  SimpleEditor<String> managerName = SimpleEditor.of(SimpleBeanEditorTest.UNINITIALIZED);
+  public SimpleEditor<String> managerName = SimpleEditor.of(SimpleBeanEditorTest.UNINITIALIZED);
 }

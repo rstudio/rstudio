@@ -17,13 +17,11 @@ package com.google.gwt.sample.dynatablerf.client.widgets;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.adapters.ValueBoxEditor;
-import com.google.gwt.editor.client.ui.EditorErrorPanel;
+import com.google.gwt.editor.client.ui.ValueBoxEditorDecorator;
 import com.google.gwt.sample.dynatablerf.shared.AddressProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -34,13 +32,13 @@ public class AddressEditor extends Composite implements Editor<AddressProxy> {
   }
 
   @UiField
-  TextBox street;
+  ValueBoxEditorDecorator<String> street;
   @UiField
-  TextBox city;
+  ValueBoxEditorDecorator<String> city;
   @UiField
-  TextBox state;
+  ValueBoxEditorDecorator<String> state;
   @UiField
-  EditorErrorPanel<Integer, ValueBoxEditor<Integer>> zip;
+  ValueBoxEditorDecorator<Integer> zip;
 
   public AddressEditor() {
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));

@@ -17,6 +17,8 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
@@ -26,23 +28,27 @@ import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
- * Integration test of the Editor framework.
+ * Integration test of the Editor framework. Only tests for
+ * RequestFactory-specific features belong here; all other tests should use the
+ * SimpleBeanEditorDriver to make the tests simpler.
  */
 public class EditorTest extends GWTTestCase {
-  interface SimpleFooDriver extends
-      RequestFactoryEditorDriver<SimpleFooProxy, SimpleFooEditor> {
-  }
-
   static class SimpleBarEditor implements Editor<SimpleBarProxy> {
     protected final SimpleEditor<String> userName = SimpleEditor.of();
   }
 
-  static class SimpleFooEditor implements Editor<SimpleFooProxy> {
+  interface SimpleFooDriver extends
+      RequestFactoryEditorDriver<SimpleFooProxy, SimpleFooEditor> {
+  }
+
+  static class SimpleFooEditor implements HasEditorErrors<SimpleFooProxy> {
     /**
      * Test field-based access.
      */
@@ -56,6 +62,12 @@ public class EditorTest extends GWTTestCase {
 
     private final SimpleBarEditor barEditor = new SimpleBarEditor();
 
+    List<EditorError> errors;
+
+    public void showErrors(List<EditorError> errors) {
+      this.errors = errors;
+    }
+
     /**
      * Test method-based access with path override.
      */
@@ -67,6 +79,13 @@ public class EditorTest extends GWTTestCase {
 
   private EventBus eventBus;
   private SimpleRequestFactory factory;
+
+  private static final int TEST_TIMEOUT = 5000;
+
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.requestfactory.RequestFactorySuite";
+  }
 
   @Override
   public void gwtSetUp() {
@@ -86,13 +105,6 @@ public class EditorTest extends GWTTestCase {
       }
     });
   }
-
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.requestfactory.RequestFactorySuite";
-  }
-
-  private static final int TEST_TIMEOUT = 5000;
 
   public void test() {
     delayTestFinish(TEST_TIMEOUT);
@@ -125,6 +137,52 @@ public class EditorTest extends GWTTestCase {
                     assertEquals("EditorFooTest", response.getUserName());
                     assertEquals("EditorBarTest",
                         response.getBarField().getUserName());
+                    finishTest();
+                  }
+                });
+          }
+        });
+  }
+
+  public void testViolations() {
+    delayTestFinish(TEST_TIMEOUT);
+    final SimpleFooEditor editor = new SimpleFooEditor();
+
+    final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
+    driver.initialize(eventBus, factory, editor);
+
+    factory.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
+        new Receiver<SimpleFooProxy>() {
+          public void onSuccess(SimpleFooProxy response,
+              Set<SyncResult> syncResults) {
+            driver.edit(response,
+                factory.simpleFooRequest().persistAndReturnSelf(response).with(
+                    driver.getPaths()));
+            // Set to an illegal value
+            editor.userName.setValue("");
+
+            driver.<SimpleFooProxy> flush().fire(
+                new Receiver<SimpleFooProxy>() {
+                  @Override
+                  public void onSuccess(SimpleFooProxy response,
+                      Set<SyncResult> syncResults) {
+                    fail("Expected errors");
+                  }
+
+                  @Override
+                  public void onViolation(Set<Violation> errors) {
+                    assertEquals(1, errors.size());
+                    Violation v = errors.iterator().next();
+
+                    driver.setViolations(errors);
+                    assertEquals(1, editor.errors.size());
+                    EditorError error = editor.errors.get(0);
+                    assertEquals("userName", error.getAbsolutePath());
+                    assertSame(editor.userName, error.getEditor());
+                    assertTrue(error.getMessage().length() > 0);
+                    assertEquals("userName", error.getPath());
+                    assertSame(v, error.getUserData());
+                    assertNull(error.getValue());
                     finishTest();
                   }
                 });

@@ -21,6 +21,6 @@ import com.google.gwt.editor.client.adapters.SimpleEditor;
  * Simple editor used by multiple tests.
  */
 public class AddressEditor implements Editor<Address> {
-  SimpleEditor<String> city = SimpleEditor.of(SimpleBeanEditorTest.UNINITIALIZED);
-  SimpleEditor<String> street = SimpleEditor.of(SimpleBeanEditorTest.UNINITIALIZED);
+  public SimpleEditor<String> city = SimpleEditor.of(SimpleBeanEditorTest.UNINITIALIZED);
+  public SimpleEditor<String> street = SimpleEditor.of(SimpleBeanEditorTest.UNINITIALIZED);
 }

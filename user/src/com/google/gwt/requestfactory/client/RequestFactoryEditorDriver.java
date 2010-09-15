@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.List;
 
@@ -87,4 +88,15 @@ public interface RequestFactoryEditorDriver<P extends EntityProxy, E extends Edi
    * RequestFactory should be provided.
    */
   void initialize(EventBus eventBus, RequestFactory requestFactory, E editor);
+
+  /**
+   * Show Violations returned from an attempt to submit a request. The
+   * violations will be converted into {@link EditorError} objects whose
+   * {@link EditorError#getUserData() getUserData()} method can be used to
+   * access the original Violation object.
+   * 
+   * @return <code>true</code> if there were any unconsumed EditorErrors which
+   *         can be retrieved from {@link #getErrors()}
+   */
+  boolean setViolations(Iterable<Violation> errors);
 }

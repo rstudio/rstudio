@@ -42,6 +42,7 @@ import com.google.gwt.requestfactory.client.impl.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.user.client.TakesValue;
 import com.google.gwt.user.client.ui.HasText;
 
@@ -599,6 +600,7 @@ public class EditorModelTest extends TestCase {
         code.append("SimpleEditor<String> readonly;\n");
         code.append("public static SimpleEditor ignoredStatic;\n");
         code.append("private SimpleEditor<String> ignoredPrivate;\n");
+        code.append("@Editor.Ignore public SimpleEditor<String> ignoredPublic;\n");
         code.append("}");
         return code;
       }
@@ -614,6 +616,7 @@ public class EditorModelTest extends TestCase {
         code.append("protected abstract SimpleEditor<String> readonlyEditor();\n");
         code.append("public static SimpleEditor<String> ignoredStatic() {return null;}\n");
         code.append("private SimpleEditor<String> ignoredPrivate() {return null;}\n");
+        code.append("@Editor.Ignore public abstract SimpleEditor<String> ignoredPublic();\n");
         code.append("}");
         return code;
       }
@@ -767,6 +770,7 @@ public class EditorModelTest extends TestCase {
         new EmptyMockJavaResource(HasEditorErrors.class),
         new RealJavaResource(HasText.class),
         new RealJavaResource(IsEditor.class),
+        new EmptyMockJavaResource(Iterable.class),
         new RealJavaResource(LeafValueEditor.class),
         new EmptyMockJavaResource(Property.class),
         new EmptyMockJavaResource(EntityProxy.class),
@@ -775,7 +779,8 @@ public class EditorModelTest extends TestCase {
         new EmptyMockJavaResource(RequestObject.class),
         new RealJavaResource(SimpleEditor.class),
         new RealJavaResource(TakesValue.class),
-        new EmptyMockJavaResource(ValueAwareEditor.class),}));
+        new EmptyMockJavaResource(ValueAwareEditor.class),
+        new EmptyMockJavaResource(Violation.class),}));
     toReturn.addAll(Arrays.asList(JavaResourceBase.getStandardResources()));
     return toReturn;
   }

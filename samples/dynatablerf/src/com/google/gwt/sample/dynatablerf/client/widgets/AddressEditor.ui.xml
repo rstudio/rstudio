@@ -6,20 +6,36 @@
   <g:HTMLPanel>
     <div class="{style.rightAlign}">
       Street:
-      <g:TextBox ui:field="street" stylePrimaryName="{style.editField}" />
+      <e:ValueBoxEditorDecorator ui:field="street"
+        stylePrimaryName="{style.editField}">
+        <e:valuebox>
+          <g:TextBox stylePrimaryName="{style.editField}" />
+        </e:valuebox>
+      </e:ValueBoxEditorDecorator>
       <br />
       City:
-      <g:TextBox ui:field="city" stylePrimaryName="{style.editField}" />
+      <e:ValueBoxEditorDecorator ui:field="city"
+        stylePrimaryName="{style.editField}">
+        <e:valuebox>
+          <g:TextBox stylePrimaryName="{style.editField}" />
+        </e:valuebox>
+      </e:ValueBoxEditorDecorator>
       <br />
       State:
-      <g:TextBox ui:field="state" stylePrimaryName="{style.editField}" />
+      <e:ValueBoxEditorDecorator ui:field="state"
+        stylePrimaryName="{style.editField}">
+        <e:valuebox>
+          <g:TextBox stylePrimaryName="{style.editField}" />
+        </e:valuebox>
+      </e:ValueBoxEditorDecorator>
       <br />
       Zip:
-      <e:EditorErrorPanel ui:field="zip" stylePrimaryName="{style.editField}">
-        <e:contents>
-          <a:IntegerBox stylePrimaryName="{style.editField}"/>
-        </e:contents>
-      </e:EditorErrorPanel>
+      <e:ValueBoxEditorDecorator ui:field="zip"
+        stylePrimaryName="{style.editField}">
+        <e:valuebox>
+          <a:IntegerBox stylePrimaryName="{style.editField}" />
+        </e:valuebox>
+      </e:ValueBoxEditorDecorator>
       <br />
     </div>
   </g:HTMLPanel>

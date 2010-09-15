@@ -106,22 +106,22 @@ public class PersonEditorWorkflow {
   @UiHandler("save")
   void onSave(ClickEvent e) {
     // MOVE TO ACTIVITY END
-    RequestObject<Void> request = editorDriver.<Void> flush();
+    final RequestObject<Void> request = editorDriver.<Void> flush();
     if (editorDriver.hasErrors()) {
-      dialog.setText("Errors detected");
+      dialog.setText("Errors detected locally");
       return;
     }
-    dialog.hide();
     request.fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void response, Set<SyncResult> syncResults) {
+        dialog.hide();
       }
 
       @Override
       public void onViolation(Set<Violation> errors) {
-        for (Violation error : errors) {
-          System.out.println(error.getPath() + " " + error.getMessage());
-        }
+        dialog.setText("Errors detected on the server");
+        request.clearUsed();
+        editorDriver.setViolations(errors);
       }
     });
   }

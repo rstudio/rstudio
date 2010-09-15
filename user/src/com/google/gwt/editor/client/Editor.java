@@ -48,6 +48,15 @@ import java.lang.annotation.Target;
  */
 public interface Editor<T> {
   /**
+   * Tells the Editor framework to ignore an Editor accessor.
+   */
+  @Documented
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(value = {ElementType.FIELD, ElementType.METHOD})
+  public @interface Ignore {
+  }
+
+  /**
    * Maps a composite Editor's component Editors into the data-model.
    */
   @Documented

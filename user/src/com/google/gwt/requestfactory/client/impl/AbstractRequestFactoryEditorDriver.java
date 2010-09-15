@@ -17,11 +17,14 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
+import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +38,17 @@ import java.util.List;
 public abstract class AbstractRequestFactoryEditorDriver<R extends EntityProxy, E extends Editor<R>>
     implements RequestFactoryEditorDriver<R, E> {
 
+  private static final DelegateMap.KeyMethod PROXY_ID_KEY = new DelegateMap.KeyMethod() {
+    public Object key(Object object) {
+      if (object instanceof EntityProxy) {
+        return ((EntityProxy) object).stableId();
+      }
+      return null;
+    }
+  };
+
   private RequestFactoryEditorDelegate<R, E> delegate;
+  private DelegateMap delegateMap = new DelegateMap(PROXY_ID_KEY);
   private E editor;
   private EventBus eventBus;
   private List<EditorError> errors;
@@ -48,16 +61,19 @@ public abstract class AbstractRequestFactoryEditorDriver<R extends EntityProxy, 
     this.saveRequest = saveRequest;
     delegate = createDelegate();
     delegate.initialize(eventBus, requestFactory, "", object, editor,
-        saveRequest);
+        delegateMap, saveRequest);
+    delegateMap.put(object, delegate);
   }
 
-  @SuppressWarnings("unchecked")
   public <T> RequestObject<T> flush() {
     checkDelegate();
     checkSaveRequest();
     errors = new ArrayList<EditorError>();
     delegate.flush(errors);
-    return (RequestObject<T>) saveRequest;
+
+    @SuppressWarnings("unchecked")
+    RequestObject<T> toReturn = (RequestObject<T>) saveRequest;
+    return toReturn;
   }
 
   public List<EditorError> getErrors() {
@@ -79,6 +95,49 @@ public abstract class AbstractRequestFactoryEditorDriver<R extends EntityProxy, 
     this.editor = editor;
 
     traverseEditors(paths);
+  }
+
+  public boolean setViolations(Iterable<Violation> violations) {
+    checkDelegate();
+
+    // For each violation
+    for (Violation error : violations) {
+
+      /*
+       * Find the delegates that are attached to the object. Use getRaw() here
+       * since the violation doesn't include an EntityProxy reference
+       */
+      List<AbstractEditorDelegate<?, ?>> delegateList = delegateMap.getRaw(error.getProxyId());
+      if (delegateList != null) {
+
+        // For each delegate editing some record...
+        for (AbstractEditorDelegate<?, ?> baseDelegate : delegateList) {
+
+          // compute its base path in the hierarchy...
+          String basePath = baseDelegate.getPath();
+
+          // and the absolute path of the leaf editor receiving the error.
+          String absolutePath = (basePath.length() > 0 ? basePath + "." : "")
+              + error.getPath();
+
+          // Find the leaf editor's delegate.
+          List<AbstractEditorDelegate<?, ?>> leafDelegates = delegateMap.getPath(absolutePath);
+          if (leafDelegates != null) {
+            // Only attach the error to the first delegate in a co-editor chain.
+            leafDelegates.get(0).recordError(error.getMessage(), null, error);
+          } else {
+            // No EditorDelegate to attach it to, stick it on the base.
+            baseDelegate.recordError(error.getMessage(), null, error,
+                error.getPath());
+          }
+        }
+      }
+    }
+
+    // Flush the errors, which will take care of co-editor chains.
+    errors = new ArrayList<EditorError>();
+    delegate.flushErrors(errors);
+    return !errors.isEmpty();
   }
 
   protected abstract RequestFactoryEditorDelegate<R, E> createDelegate();

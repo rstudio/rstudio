@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.editor.client.IsEditor;
-import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.adapters.ValueBoxEditor;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -67,7 +66,7 @@ import java.text.ParseException;
 @SuppressWarnings("deprecation")
 public class ValueBoxBase<T> extends FocusWidget implements
     SourcesChangeEvents, HasChangeHandlers, HasName, HasDirectionEstimator,
-    HasValue<T>, AutoDirectionHandler.Target, IsEditor<LeafValueEditor<T>> {
+    HasValue<T>, AutoDirectionHandler.Target, IsEditor<ValueBoxEditor<T>> {
 
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 
@@ -124,7 +123,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
    * may override this method to provide custom error-handling when using the
    * Editor framework.
    */
-  public LeafValueEditor<T> asEditor() {
+  public ValueBoxEditor<T> asEditor() {
     return ValueBoxEditor.of(this);
   }
 
