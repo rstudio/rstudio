@@ -160,6 +160,16 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     errors.add(error);
   }
 
+  public void refresh(T object) {
+    setObject(object);
+    if (leafValueEditor != null) {
+      leafValueEditor.setValue(object);
+    } else if (valueAwareEditor != null) {
+      valueAwareEditor.setValue(object);
+    }
+    refreshEditors();
+  }
+
   public abstract HandlerRegistration subscribe();
 
   protected String appendPath(String path) {
@@ -228,6 +238,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     if (valueAwareEditor != null) {
       valueAwareEditor.setValue(object);
     }
+
     if (object != null) {
       attachSubEditors(map);
     }
@@ -240,9 +251,19 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
       AbstractEditorDelegate<R, S> subDelegate, String path, R object,
       S subEditor, DelegateMap map);
 
+  /**
+   * Refresh all of the sub-editors.
+   */
+  protected abstract void refreshEditors();
+
   protected abstract void setEditor(E editor);
 
   protected abstract void setObject(T object);
+
+  /**
+   * Collect all paths being edited.
+   */
+  protected abstract void traverse(List<String> paths);
 
   /**
    * @param errorAccumulator an out parameter to which unhandled EditorErrors

@@ -247,6 +247,48 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       sw.outdent();
       sw.println("}");
 
+      // Reset the data being displayed
+      sw.println("protected void refreshEditors() {",
+          DelegateMap.class.getCanonicalName());
+      sw.indent();
+      for (EditorData d : data) {
+        if (d.isDelegateRequired()) {
+          // if (subEditorDelegate != null) {
+          sw.println("if (%s != null) {", delegateFields.get(d));
+          sw.indent();
+          // if (can().access().without().npe()) {
+          sw.println("if (%s) {", d.getBeanOwnerGuard("getObject()"));
+          // subDelegate.refresh(getObject().getFoo().getBar());
+          sw.indentln("%s.refresh(getObject()%s.%s());", delegateFields.get(d),
+              d.getBeanOwnerExpression(), d.getGetterName());
+          // } else { subDelegate.refresh(null); }
+          sw.println("} else { %s.refresh(null); }", delegateFields.get(d));
+          sw.outdent();
+          sw.println("}");
+        } else if (d.isLeafValueEditor()) {
+          // if (editor.subEditor != null) {
+          sw.println("if (editor.%s != null) {", d.getSimpleExpression());
+          sw.indent();
+          // if (can().access().without().npe()) { editor.subEditor.setValue() }
+          sw.println("if (%4$s) editor.%1$s.setValue(getObject()%2$s.%3$s());",
+              d.getSimpleExpression(), d.getBeanOwnerExpression(),
+              d.getGetterName(), d.getBeanOwnerGuard("getObject()"));
+          // else { editor.subEditor.setValue(null); }
+          sw.println("else { editor.%s.setValue(null); }",
+              d.getSimpleExpression());
+          sw.outdent();
+          sw.println("}");
+        }
+      }
+      sw.outdent();
+      sw.println("}");
+
+      // Write instance delegate to static implementation
+      sw.println("protected void traverse(%s paths) {",
+          List.class.getCanonicalName());
+      sw.indentln("traverseEditor(getEditor(), \"\", paths);");
+      sw.println("}");
+
       sw.println("public static void traverseEditor(%s editor,"
           + " String prefix, %s<String> paths) {",
           editor.getQualifiedSourceName(), List.class.getName());

@@ -63,13 +63,14 @@ public interface EditorDelegate<T> {
 
   /**
    * Register for notifications if object being edited is updated. Not all
-   * backends support subscriptions.
+   * backends support subscriptions and will return <code>null</code>.
    * <p>
    * The notification will occur via {@link ValueAwareEditor#onPropertyChange}
    * if the backend supports in-place property updates, otherwise updates will
    * be passed via {@link ValueAwareEditor#setValue}.
    * 
-   * @return a HandlerRegistration to unsubscribe from the notifications
+   * @return a HandlerRegistration to unsubscribe from the notifications or
+   *         <code>null</code> if the delegate does not support subscription
    */
   HandlerRegistration subscribe();
 }

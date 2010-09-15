@@ -27,11 +27,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public abstract class SimpleBeanEditorDelegate<T, E extends Editor<T>> extends
     AbstractEditorDelegate<T, E> {
 
-  private static final HandlerRegistration FAKE_REGISTRATION = new HandlerRegistration() {
-    public void removeHandler() {
-    }
-  };
-
   @Override
   public T ensureMutable(T object) {
     return object;
@@ -44,7 +39,7 @@ public abstract class SimpleBeanEditorDelegate<T, E extends Editor<T>> extends
 
   @Override
   public HandlerRegistration subscribe() {
-    return FAKE_REGISTRATION;
+    return null;
   }
 
   @Override

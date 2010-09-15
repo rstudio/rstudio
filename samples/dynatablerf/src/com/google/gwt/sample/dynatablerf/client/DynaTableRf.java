@@ -78,7 +78,7 @@ public class DynaTableRf implements EntryPoint {
         new RequestFactoryLogHandler(provider, Level.WARNING,
             "WireActivityLogger"));
 
-    FavoritesManager manager = new FavoritesManager();
+    FavoritesManager manager = new FavoritesManager(requests);
     PersonEditorWorkflow.register(eventBus, requests, manager);
 
     calendar = new SummaryWidget(eventBus, requests, 15);

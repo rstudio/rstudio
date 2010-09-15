@@ -19,12 +19,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
+import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.sample.dynatablerf.client.FavoritesManager;
 import com.google.gwt.sample.dynatablerf.client.events.MarkFavoriteEvent;
-import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -58,13 +60,12 @@ public class FavoritesWidget extends Composite {
   @UiField
   Style style;
   private final EventBus eventBus;
-  private final DynaTableRequestFactory factory;
+  private final RequestFactory factory;
   private FavoritesManager manager;
-  private final Map<Long, NameLabel> map = new HashMap<Long, NameLabel>();
-
+  private final Map<EntityProxyId, NameLabel> map = new HashMap<EntityProxyId, NameLabel>();
   private HandlerRegistration subscription;
 
-  public FavoritesWidget(EventBus eventBus, DynaTableRequestFactory factory,
+  public FavoritesWidget(EventBus eventBus, RequestFactory factory,
       FavoritesManager manager) {
     this.eventBus = eventBus;
     this.factory = factory;
@@ -80,10 +81,11 @@ public class FavoritesWidget extends Composite {
       }
     });
 
-    for (Long id : manager.getFavoriteIds()) {
-      factory.personRequest().findPerson(id).fire(new Receiver<PersonProxy>() {
-        public void onSuccess(PersonProxy response, Set<SyncResult> syncResults) {
-          onMarkFavorite(new MarkFavoriteEvent(response, true));
+    for (EntityProxyId id : manager.getFavoriteIds()) {
+      factory.find(id).fire(new Receiver<EntityProxy>() {
+        public void onSuccess(EntityProxy response, Set<SyncResult> syncResults) {
+          PersonProxy person = (PersonProxy) response;
+          onMarkFavorite(new MarkFavoriteEvent(person, true));
         }
       });
     }
@@ -101,7 +103,7 @@ public class FavoritesWidget extends Composite {
     }
 
     if (event.isFavorite()) {
-      if (!map.containsKey(person.getId())) {
+      if (!map.containsKey(person.stableId())) {
         NameLabel label = new NameLabel(eventBus);
         Driver driver = GWT.create(Driver.class);
         driver.initialize(eventBus, factory, label);
@@ -109,10 +111,10 @@ public class FavoritesWidget extends Composite {
         label.setStylePrimaryName(style.favorite());
 
         container.add(label);
-        map.put(person.getId(), label);
+        map.put(person.stableId(), label);
       }
     } else {
-      NameLabel toRemove = map.remove(person.getId());
+      NameLabel toRemove = map.remove(person.stableId());
       if (toRemove != null) {
         container.remove(toRemove);
       }

@@ -15,15 +15,23 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.impl.AbstractEditorDelegate;
 import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.SyncResult;
+import com.google.gwt.requestfactory.shared.WriteOperation;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Base class for generated EditorDelegates using a RequestFactory as the
@@ -34,6 +42,31 @@ import com.google.gwt.requestfactory.shared.RequestObject;
  */
 public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     extends AbstractEditorDelegate<P, E> {
+
+  private class SubscriptionHandler implements
+      EntityProxyChange.Handler<EntityProxy> {
+
+    public void onProxyChange(EntityProxyChange<EntityProxy> event) {
+      if (event.getWriteOperation().equals(WriteOperation.UPDATE)
+          && event.getProxy().stableId().equals(
+              ((EntityProxy) getObject()).stableId())) {
+        List<String> paths = new ArrayList<String>();
+        traverse(paths);
+        EntityProxyId id = event.getProxy().stableId();
+        factory.find(id).with(paths.toArray(new String[paths.size()])).fire(
+            new SubscriptionReceiver());
+      }
+    }
+  }
+
+  private class SubscriptionReceiver extends Receiver<EntityProxy> {
+    @Override
+    public void onSuccess(EntityProxy response, Set<SyncResult> syncResults) {
+      @SuppressWarnings("unchecked")
+      P cast = (P) response;
+      refresh(cast);
+    }
+  }
 
   protected EventBus eventBus;
   protected RequestFactory factory;
@@ -64,12 +97,21 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
   @Override
   public HandlerRegistration subscribe() {
-    // Eventually will make use of pushValues()
-    GWT.log("subscribe() is currently unimplemented pending RequestFactory changes");
-    return new HandlerRegistration() {
-      public void removeHandler() {
-      }
-    };
+    if (!(getObject() instanceof EntityProxy)) {
+      /*
+       * This is kind of weird. The user is asking for notifications on a
+       * String, which means there's a HasEditorDelegate<String> in play and not
+       * the usual LeafValueEditor<String>.
+       */
+      return null;
+    }
+
+    // Can't just use getObject().getClass() because it's not the proxy type
+    @SuppressWarnings("unchecked")
+    Class<EntityProxy> clazz = (Class<EntityProxy>) factory.getClass((EntityProxy) getObject());
+    HandlerRegistration toReturn = EntityProxyChange.<EntityProxy> registerForProxyType(
+        eventBus, clazz, new SubscriptionHandler());
+    return toReturn;
   }
 
   @Override

@@ -18,6 +18,8 @@ package com.google.gwt.sample.dynatablerf.client;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.sample.dynatablerf.client.events.MarkFavoriteEvent;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.user.client.Cookies;
@@ -35,9 +37,9 @@ import java.util.Set;
 public class FavoritesManager {
   private static final String COOKIE_NAME = "Favorites";
   private final EventBus eventBus = new SimpleEventBus();
-  private final Set<Long> favoriteIds = new HashSet<Long>();
+  private final Set<EntityProxyId> favoriteIds = new HashSet<EntityProxyId>();
 
-  public FavoritesManager() {
+  public FavoritesManager(RequestFactory requestFactory) {
     String cookie = Cookies.getCookie(COOKIE_NAME);
     if (cookie != null) {
       try {
@@ -45,7 +47,7 @@ public class FavoritesManager {
           if (fragment.length() == 0) {
             continue;
           }
-          Long id = Long.parseLong(fragment);
+          EntityProxyId id = requestFactory.getProxyId(fragment);
           favoriteIds.add(id);
         }
       } catch (NumberFormatException e) {
@@ -57,8 +59,8 @@ public class FavoritesManager {
     Window.addWindowClosingHandler(new ClosingHandler() {
       public void onWindowClosing(ClosingEvent event) {
         StringBuilder sb = new StringBuilder();
-        for (Long id : favoriteIds) {
-          sb.append(id.toString()).append(",");
+        for (EntityProxyId id : favoriteIds) {
+          sb.append(id.asString()).append(",");
         }
         Cookies.setCookie(COOKIE_NAME, sb.toString());
       }
@@ -70,25 +72,22 @@ public class FavoritesManager {
     return eventBus.addHandler(MarkFavoriteEvent.TYPE, handler);
   }
 
-  public Set<Long> getFavoriteIds() {
+  public Set<EntityProxyId> getFavoriteIds() {
     return Collections.unmodifiableSet(favoriteIds);
   }
 
   public boolean isFavorite(PersonProxy person) {
-    return favoriteIds.contains(person.getId());
+    return favoriteIds.contains(person.stableId());
   }
 
   public void setFavorite(PersonProxy person, boolean isFavorite) {
-    if (person.getId() == null) {
-      return;
-    }
-
     if (isFavorite) {
-      favoriteIds.add(person.getId());
+      favoriteIds.add(person.stableId());
     } else {
-      favoriteIds.remove(person.getId());
+      favoriteIds.remove(person.stableId());
     }
 
-    eventBus.fireEventFromSource(new MarkFavoriteEvent(person, isFavorite), this);
+    eventBus.fireEventFromSource(new MarkFavoriteEvent(person, isFavorite),
+        this);
   }
 }

@@ -16,13 +16,18 @@
 package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.editor.client.Editor;
+import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.EditorError;
+import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
@@ -77,6 +82,15 @@ public class EditorTest extends GWTTestCase {
     }
   }
 
+  static class SimpleFooEditorWithDelegate extends SimpleFooEditor implements
+      HasEditorDelegate<SimpleFooProxy> {
+    EditorDelegate<SimpleFooProxy> delegate;
+
+    public void setDelegate(EditorDelegate<SimpleFooProxy> delegate) {
+      this.delegate = delegate;
+    }
+  }
+
   private EventBus eventBus;
   private SimpleRequestFactory factory;
 
@@ -113,9 +127,6 @@ public class EditorTest extends GWTTestCase {
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
     driver.initialize(eventBus, factory, editor);
 
-    assertEquals(Arrays.asList("barField.userName", "barField"),
-        Arrays.asList(driver.getPaths()));
-
     factory.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
           public void onSuccess(SimpleFooProxy response,
@@ -123,6 +134,7 @@ public class EditorTest extends GWTTestCase {
             driver.edit(response,
                 factory.simpleFooRequest().persistAndReturnSelf(response).with(
                     driver.getPaths()));
+
             assertEquals("GWT", editor.userName.getValue());
             assertEquals("FOO", editor.barEditor().userName.getValue());
             assertEquals("FOO", editor.barName.getValue());
@@ -140,6 +152,52 @@ public class EditorTest extends GWTTestCase {
                     finishTest();
                   }
                 });
+          }
+        });
+  }
+
+  public void testSubscription() {
+    delayTestFinish(TEST_TIMEOUT);
+    final SimpleFooEditorWithDelegate editor = new SimpleFooEditorWithDelegate();
+
+    final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
+    driver.initialize(eventBus, factory, editor);
+
+    assertEquals(Arrays.asList("barField.userName", "barField"),
+        Arrays.asList(driver.getPaths()));
+
+    factory.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
+        new Receiver<SimpleFooProxy>() {
+          public void onSuccess(SimpleFooProxy response,
+              Set<SyncResult> syncResults) {
+            // Set up driver in read-only mode
+            driver.edit(response, null);
+            assertNotNull(editor.delegate.subscribe());
+
+            // Simulate edits occurring elsewhere in the module
+            ProxyRequest<SimpleFooProxy> request = factory.simpleFooRequest().persistAndReturnSelf(
+                response);
+            SimpleBarProxy newBar = factory.create(SimpleBarProxy.class);
+            newBar = request.edit(newBar);
+            newBar.setUserName("newBar");
+            response = request.edit(response);
+            response.setBarField(newBar);
+            response.setUserName("updated");
+
+            request.fire(new Receiver<SimpleFooProxy>() {
+              public void onSuccess(SimpleFooProxy response,
+                  Set<SyncResult> syncResults) {
+                // EventBus notifications occurr after the onSuccess()
+                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+                  public void execute() {
+                    assertEquals("updated", editor.userName.getValue());
+                    assertEquals("newBar",
+                        editor.barEditor().userName.getValue());
+                    finishTest();
+                  }
+                });
+              }
+            });
           }
         });
   }
