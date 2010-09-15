@@ -274,8 +274,8 @@ public final class SpeedTracerLogger {
    * Adds a LOG_MESSAGE SpeedTracer event to the log. This represents a single
    * point in time and has a special representation in the SpeedTracer UI.
    */
-  public static void markTimeline(String... data) {
-    SpeedTracerLogger.get().markTimelineImpl(data);
+  public static void markTimeline(String message) {
+    SpeedTracerLogger.get().markTimelineImpl(message);
   }
 
   /**
@@ -366,7 +366,7 @@ public final class SpeedTracerLogger {
     currentEvent.addData(data);
   }
 
-  public void markTimelineImpl(String... data) {
+  public void markTimelineImpl(String message) {
     Stack<Event> threadPendingEvents = pendingEvents.get();
     Event parent = null;
     if (!threadPendingEvents.isEmpty()) {
@@ -374,7 +374,7 @@ public final class SpeedTracerLogger {
     }
     Event newEvent = new MarkTimelineEvent(parent);
     threadPendingEvents.push(newEvent);
-    newEvent.end(data);
+    newEvent.end("message", message);
   }
 
   void endImpl(Event event, String... data) {

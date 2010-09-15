@@ -18,6 +18,7 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -56,9 +57,12 @@ import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
-import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,6 +83,7 @@ import java.util.Stack;
  * migrate other stuff to that class perhaps.
  */
 public class JsInliner {
+  private static final String NAME = JsInliner.class.getSimpleName();
 
   /**
    * Determines if the evaluation of a JsNode may be affected by side effects.
@@ -1613,22 +1618,12 @@ public class JsInliner {
   /**
    * Static entry point used by JavaToJavaScriptCompiler.
    */
-  public static boolean exec(JsProgram program) {
-    RedefinedFunctionCollector d = new RedefinedFunctionCollector();
-    d.accept(program);
-
-    RecursionCollector rc = new RecursionCollector();
-    rc.accept(program);
-
-    InliningVisitor v = new InliningVisitor(program);
-    v.blacklist(d.getRedefined());
-    v.blacklist(rc.getRecursive());
-    v.accept(program);
-
-    DuplicateXORemover r = new DuplicateXORemover(program);
-    r.accept(program);
-
-    return v.didChange() || r.didChange();
+  public static OptimizerStats exec(JsProgram program) {
+    Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS, 
+        "optimizer", NAME);
+    OptimizerStats stats = execImpl(program);
+    optimizeJsEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   /**
@@ -1668,6 +1663,34 @@ public class JsInliner {
     NestedFunctionVisitor v = new NestedFunctionVisitor();
     v.accept(func.getBody());
     return v.containsNestedFunctions();
+  }
+
+  /**
+   * @param program
+   * @return
+   */
+  private static OptimizerStats execImpl(JsProgram program) {
+    OptimizerStats stats = new OptimizerStats(NAME);
+    RedefinedFunctionCollector d = new RedefinedFunctionCollector();
+    d.accept(program);
+
+    RecursionCollector rc = new RecursionCollector();
+    rc.accept(program);
+
+    InliningVisitor v = new InliningVisitor(program);
+    v.blacklist(d.getRedefined());
+    v.blacklist(rc.getRecursive());
+    v.accept(program);
+    if (v.didChange()) {
+      stats.recordModified();
+    }
+
+    DuplicateXORemover r = new DuplicateXORemover(program);
+    r.accept(program);
+    if (r.didChange()) {
+      stats.recordModified();
+    }
+    return stats;
   }
 
   /**

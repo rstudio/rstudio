@@ -16,6 +16,7 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -26,6 +27,9 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +38,7 @@ import java.util.Map;
  * Removes JsFunctions that are never referenced in the program.
  */
 public class JsUnusedFunctionRemover {
+  public static final String NAME = JsUnusedFunctionRemover.class.getSimpleName();
 
   /**
    * Finds all functions in the program.
@@ -90,8 +95,12 @@ public class JsUnusedFunctionRemover {
     }
   }
 
-  public static boolean exec(JsProgram program) {
-    return (new JsUnusedFunctionRemover(program)).execImpl();
+  public static OptimizerStats exec(JsProgram program) {
+    Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS,
+        "optimizer", NAME);
+    OptimizerStats stats = new JsUnusedFunctionRemover(program).execImpl();
+    optimizeJsEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   private final Map<JsName, JsFunction> toRemove = new HashMap<JsName, JsFunction>();
@@ -101,7 +110,9 @@ public class JsUnusedFunctionRemover {
     this.program = program;
   }
 
-  public boolean execImpl() {
+  public OptimizerStats execImpl() {
+    OptimizerStats stats = new OptimizerStats(NAME);
+
     // Find all functions
     (new JsFunctionVisitor()).accept(program);
 
@@ -112,6 +123,9 @@ public class JsUnusedFunctionRemover {
     RemovalVisitor removalVisitor = new RemovalVisitor();
     removalVisitor.accept(program);
 
-    return removalVisitor.didChange();
+    if (removalVisitor.didChange()) {
+      stats.recordModified();
+    }
+    return stats;
   }
 }

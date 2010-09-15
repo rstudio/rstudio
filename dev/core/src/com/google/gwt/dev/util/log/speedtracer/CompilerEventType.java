@@ -28,11 +28,14 @@ public enum CompilerEventType implements EventType {
   JJS_COMPILE_PERMUTATION("JjsCompilePermutation", "Moccasin"), //
   DRAFT_OPTIMIZE("DraftOptimizer", "Blue"), //
   GENERATOR("Generator", "Red"), //
-  JDT_COMPILER("JdtCompiler", "Tomato"), //
+  JDT_COMPILER("JdtCompiler1", "#6c6"), //
+  JDT_COMPILER2("JdtCompiler2", "#0c0"), //
+  JDT_COMPILER3("JdtCompiler3", "#494"), //
   LINK("Link", "LawnGreen"), //
   MAKE_SOYC_ARTIFACTS("MakeSoycArtifacts", "Chartreuse"), //
   MODULE_DEF("ModuleDef", "BlueViolet"), //
   OPTIMIZE("Optimize", "LightSlateGray"), //
+  OPTIMIZE_JS("OptimizeJs", "#8b8bab"), //
   PRECOMPILE("Precompile", "CornflowerBlue"), //
   RESOURCE_ORACLE("ResourceOracle", "GoldenRod"), //
   TYPE_ORACLE_MEDIATOR("TypeOracleMediator", "LightSteelBlue"), //
@@ -47,7 +50,7 @@ public enum CompilerEventType implements EventType {
   VALIDATE("Validate", "YellowGreen"), //
   NORMALIZER("Normalizer", "Peru"), //
   RECORD_REBINDS("RecordRebinds", "Chocolate"), //
-  BUILD_TYPE_MAP("BuildTypeMap", "LightSeaGreen"), //
+  BUILD_TYPE_MAP_FOR_AST("BuildTypeMapForAST", "LightSeaGreen"), //
   GET_COMPILATION_UNITS("GetCompilationUnitDeclarations", "Gainsboro"), //
   GENERATE_JAVA_AST("GenerateJavaAST", "DodgerBlue"),
   ARTIFICIAL_RESCUE_REORDER("ArtificialRescueReorder", "LightCyan"), //

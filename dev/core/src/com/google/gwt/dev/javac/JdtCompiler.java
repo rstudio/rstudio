@@ -612,7 +612,7 @@ public class JdtCompiler {
     }
 
     Event jdtCompilerEvent = SpeedTracerLogger.start(
-        CompilerEventType.JDT_COMPILER, "phase", "compile");
+        CompilerEventType.JDT_COMPILER2, "phase", "compile");
     compilerImpl = new CompilerImpl();
     compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     compilerImpl = null;

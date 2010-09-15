@@ -200,7 +200,7 @@ public class SpeedTracerLoggerTest extends TestCase {
    Writer writer = new StringWriter();
     SpeedTracerLogger logger = new SpeedTracerLogger(writer, Format.RAW);
     Event dummyOneEvent = logger.startImpl(dummyOne);
-    logger.markTimelineImpl("name", "value");
+    logger.markTimelineImpl("Test Message");
     dummyOneEvent.end();
     logger.flush();
 
@@ -214,7 +214,8 @@ public class SpeedTracerLoggerTest extends TestCase {
     JsonObject markTimelineObject = children.get(0).asObject();
     assertEquals(11.0, markTimelineObject.get("type").asNumber().getDecimal(), .001);
     JsonObject dataObject = markTimelineObject.get("data").asObject();
-    assertEquals("json=" + logString, "value", dataObject.get("name").asString().getString());
+    assertEquals("json=" + logString, "Test Message", 
+        dataObject.get("message").asString().getString());
   }
 
 

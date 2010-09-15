@@ -17,6 +17,7 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.js.ast.CanBooleanEval;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
@@ -43,10 +44,13 @@ import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsValueLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
-import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -60,7 +64,6 @@ import java.util.Set;
  * Removes JsFunctions that are never referenced in the program.
  */
 public class JsStaticEval {
-
   /**
    * Examines code to find out whether it contains any break or continue
    * statements.
@@ -818,6 +821,8 @@ public class JsStaticEval {
     }
   }
 
+  private static final String NAME = JsStaticEval.class.getSimpleName();
+
   /**
    * A set of the JS operators that are mathematically associative in nature.
    */
@@ -826,13 +831,21 @@ public class JsStaticEval {
       JsBinaryOperator.BIT_OR, JsBinaryOperator.BIT_XOR,
       JsBinaryOperator.COMMA, JsBinaryOperator.MUL, JsBinaryOperator.OR);
 
-  public static boolean exec(JsProgram program) {
-    return (new JsStaticEval(program)).execImpl();
-  }
-
   @SuppressWarnings("unchecked")
   public static <T extends JsVisitable> T exec(JsProgram program, T node) {
-    return (new JsStaticEval(program)).execImpl(node);
+    Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS, 
+        "optimizer", NAME);
+    T result = new JsStaticEval(program).execImpl(node);
+    optimizeJsEvent.end();
+    return result;
+  }
+
+  public static OptimizerStats exec(JsProgram program) {
+    Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS, 
+        "optimizer", NAME);
+    OptimizerStats stats = new JsStaticEval(program).execImpl();
+    optimizeJsEvent.end("didChange", "" + stats.didChange());
+    return stats;
   }
 
   /**
@@ -933,15 +946,18 @@ public class JsStaticEval {
     this.program = program;
   }
 
-  public boolean execImpl() {
-    StaticEvalVisitor sev = new StaticEvalVisitor();
-    sev.accept(program);
-
-    return sev.didChange();
-  }
-
   @SuppressWarnings("unchecked")
   public <T extends JsVisitable> T execImpl(T node) {
     return new StaticEvalVisitor().accept(node);
+  }
+
+  public OptimizerStats execImpl() {
+    StaticEvalVisitor sev = new StaticEvalVisitor();
+    sev.accept(program);
+    OptimizerStats stats = new OptimizerStats(NAME);
+    if (sev.didChange()) {
+      stats.recordModified();
+    }
+    return stats;
   }
 }

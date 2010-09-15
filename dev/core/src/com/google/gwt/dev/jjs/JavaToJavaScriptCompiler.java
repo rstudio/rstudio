@@ -312,20 +312,7 @@ public class JavaToJavaScriptCompiler {
 
       // (9) Optimize the JS AST.
       if (!options.isDraftCompile()) {
-        boolean didChange;
-        do {
-          if (Thread.interrupted()) {
-            throw new InterruptedException();
-          }
-
-          didChange = false;
-          // Remove unused functions, possible
-          didChange = JsStaticEval.exec(jsProgram) || didChange;
-          // Inline JavaScript function invocations
-          didChange = JsInliner.exec(jsProgram) || didChange;
-          // Remove unused functions, possible
-          didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
-        } while (didChange);
+        optimizeJs(jsProgram);
       }
 
       /*
@@ -665,7 +652,7 @@ public class JavaToJavaScriptCompiler {
   }
 
   protected static void optimize(JJSOptions options, JProgram jprogram)
-      throws InterruptedException {
+  throws InterruptedException {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
     
     /*
@@ -697,12 +684,54 @@ public class JavaToJavaScriptCompiler {
     }
     
     if (JProgram.isTracingEnabled()) {
+      System.out.println("");
+      System.out.println("                Java Optimization Stats");
+      System.out.println("");
       for (OptimizerStats stats : allOptimizerStats) {
         System.out.println(stats.prettyPrint());
       }
     }
 
     optimizeEvent.end();
+  }
+
+  protected static void optimizeJs(JsProgram jsProgram) throws InterruptedException {
+    List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
+    int counter = 0;
+    while (true) {
+      counter++;
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
+      }
+      Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS);
+      
+      OptimizerStats stats = new OptimizerStats("Pass " + counter);
+      
+      // Remove unused functions, possible
+      stats.add(JsStaticEval.exec(jsProgram));
+      // Inline JavaScript function invocations
+      stats.add(JsInliner.exec(jsProgram));
+      // Remove unused functions, possible
+      stats.add(JsUnusedFunctionRemover.exec(jsProgram));
+
+      // Save the stats to print out after optimizers finish.
+      allOptimizerStats.add(stats);
+      
+      optimizeJsEvent.end();
+      
+      if (!stats.didChange()) {
+        break;
+      }
+    }
+
+    if (JProgram.isTracingEnabled()) {
+      System.out.println("");
+      System.out.println("               JavaScript Optimization Stats");
+      System.out.println("");
+      for (OptimizerStats stats : allOptimizerStats) {
+        System.out.println(stats.prettyPrint());
+      }
+    }
   }
 
   protected static OptimizerStats optimizeLoop(String passName, JProgram jprogram,

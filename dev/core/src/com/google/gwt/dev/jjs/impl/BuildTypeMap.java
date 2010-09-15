@@ -533,7 +533,7 @@ public class BuildTypeMap {
       CompilationResults results, JsProgram jsProgram, TypeLinker linker) {
     BuildTypeMap btm = new BuildTypeMap(typeMap, jsProgram, linker,
         results.compiledUnits);
-    Event buildTypeMapEvent = SpeedTracerLogger.start(CompilerEventType.BUILD_TYPE_MAP);
+    Event buildTypeMapEvent = SpeedTracerLogger.start(CompilerEventType.BUILD_TYPE_MAP_FOR_AST);
     btm.createPeersForUnits();
     btm.resolveExternalTypes(results.binaryBindings);
     TypeDeclaration[] result = btm.createPeersForNonTypeDecls();
