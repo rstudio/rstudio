@@ -38,10 +38,9 @@ import javax.servlet.http.HttpServletResponse;
  * request, returning SC_UNAUTHORIZED if authentication fails, as well as a
  * header named "login" which contains the URL the user should be sent in to
  * login. Note that the servlet expects a "pageurl" header in the request,
- * indicating the page to redirect to after authentication.
- * If authentication succeeds, a header named "userId" is returned, which
- * will be unique to the user (so the app can react if the signed in user has
- * changed).
+ * indicating the page to redirect to after authentication. If authentication
+ * succeeds, a header named "userId" is returned, which will be unique to the
+ * user (so the app can react if the signed in user has changed).
  * 
  * Configured via servlet init params.
  * <p>
@@ -60,39 +59,62 @@ public class RequestFactoryServlet extends HttpServlet {
   private static final String JSON_CHARSET = "UTF-8";
   private static final String JSON_CONTENT_TYPE = "application/json";
   private static final Logger log = Logger.getLogger(RequestFactoryServlet.class.getCanonicalName());
-  
+
+  /**
+   * These ThreadLocals are used to allow service objects to obtain access to
+   * the HTTP transaction.
+   */
+  private static final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
+  private static final ThreadLocal<HttpServletResponse> perThreadResponse = new ThreadLocal<HttpServletResponse>();
+
+  public static HttpServletRequest getThreadLocalRequest() {
+    return perThreadRequest.get();
+  }
+
+  public static HttpServletResponse getThreadLocalResponse() {
+    return perThreadResponse.get();
+  }
+
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException {
 
-    ensureConfig();
-    String jsonRequestString = RPCServletUtils.readContent(
-        request, JSON_CONTENT_TYPE, JSON_CHARSET);
-    response.setStatus(HttpServletResponse.SC_OK);
-    PrintWriter writer = response.getWriter();
-
+    perThreadRequest.set(request);
+    perThreadResponse.set(response);
+    
+    // No new code should be placed outside of this try block.
     try {
-      // Check that user is logged in before proceeding
-      UserInformation userInfo =
-        UserInformation.getCurrentUserInformation(request.getHeader("pageurl"));
-      if (!userInfo.isUserLoggedIn()) {
-        response.setHeader("login", userInfo.getLoginUrl());
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-      } else {
-        response.setHeader("userId", String.format("%d", userInfo.getId()));
-        response.setStatus(HttpServletResponse.SC_OK);
-        RequestProcessor<String> requestProcessor = new JsonRequestProcessor();
-        requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(
-            new DefaultSecurityProvider()));
-        response.setHeader(
-            "Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
-        writer.print(requestProcessor.decodeAndInvokeRequest(jsonRequestString));
+      ensureConfig();
+      String jsonRequestString = RPCServletUtils.readContent(request,
+          JSON_CONTENT_TYPE, JSON_CHARSET);
+      response.setStatus(HttpServletResponse.SC_OK);
+      PrintWriter writer = response.getWriter();
+
+      try {
+        // Check that user is logged in before proceeding
+        UserInformation userInfo = UserInformation.getCurrentUserInformation(request.getHeader("pageurl"));
+        if (!userInfo.isUserLoggedIn()) {
+          response.setHeader("login", userInfo.getLoginUrl());
+          response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+        } else {
+          response.setHeader("userId", String.format("%d", userInfo.getId()));
+          response.setStatus(HttpServletResponse.SC_OK);
+          RequestProcessor<String> requestProcessor = new JsonRequestProcessor();
+          requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(
+              new DefaultSecurityProvider()));
+          response.setHeader("Content-Type",
+              RequestFactory.JSON_CONTENT_TYPE_UTF8);
+          writer.print(requestProcessor.decodeAndInvokeRequest(jsonRequestString));
+          writer.flush();
+        }
+      } catch (RequestProcessingException e) {
+        writer.print((String) e.getResponse());
         writer.flush();
+        log.log(Level.SEVERE, "Unexpected error", e);
       }
-    } catch (RequestProcessingException e) {
-      writer.print((String) e.getResponse());
-      writer.flush();
-      log.log(Level.SEVERE, "Unexpected error", e);
+    } finally {
+      perThreadRequest.set(null);
+      perThreadResponse.set(null);
     }
   }
 

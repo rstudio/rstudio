@@ -20,12 +20,32 @@ import com.google.gwt.requestfactory.shared.Id;
 import java.util.Collections;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Domain object for SimpleFooRequest.
  */
 public class SimpleBar {
 
-  static SimpleBar singleton = new SimpleBar();
+  /**
+   * This is an ugly hack.
+   */
+  static ThreadLocal<SimpleBar> singleton = new ThreadLocal<SimpleBar>() {
+    @Override
+    protected SimpleBar initialValue() {
+      SimpleBar value = null;
+      HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
+      // May be in a JRE test case
+      if (req != null) {
+        value = (SimpleBar) req.getSession().getAttribute(
+            SimpleBar.class.getCanonicalName());
+      }
+      if (value == null) {
+        value = reset();
+      }
+      return value;
+    }
+  };
 
   private static Long nextId = 1L;
 
@@ -34,7 +54,7 @@ public class SimpleBar {
   }
 
   public static List<SimpleBar> findAll() {
-    return Collections.singletonList(singleton);
+    return Collections.singletonList(singleton.get());
   }
 
   public static SimpleBar findSimpleBar(Long id) {
@@ -42,16 +62,23 @@ public class SimpleBar {
   }
 
   public static SimpleBar findSimpleBarById(Long id) {
-    singleton.setId(id);
-    return singleton;
+    singleton.get().setId(id);
+    return singleton.get();
   }
 
   public static SimpleBar getSingleton() {
-    return singleton;
+    return singleton.get();
   }
 
-  public static void reset() {
-    singleton = new SimpleBar();
+  public static SimpleBar reset() {
+    SimpleBar instance = new SimpleBar();
+    singleton.set(instance);
+    HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
+    if (req != null) {
+      req.getSession().setAttribute(SimpleBar.class.getCanonicalName(),
+          instance);
+    }
+    return instance;
   }
 
   Integer version = 1;
@@ -80,9 +107,9 @@ public class SimpleBar {
 
   public void persist() {
     setId(nextId++);
-    singleton.setUserName(userName);
+    singleton.get().setUserName(userName);
   }
-  
+
   public SimpleBar persistAndReturnSelf() {
     persist();
     return this;

@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Size;
 
 /**
@@ -31,7 +32,25 @@ import javax.validation.constraints.Size;
  */
 public class SimpleFoo {
 
-  static SimpleFoo singleton = new SimpleFoo();
+  /**
+   * This is an ugly hack.
+   */
+  static ThreadLocal<SimpleFoo> singleton = new ThreadLocal<SimpleFoo>() {
+    @Override
+    protected SimpleFoo initialValue() {
+      SimpleFoo value = null;
+      HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
+      // May be in a JRE test case
+      if (req != null) {
+        value = (SimpleFoo) req.getSession().getAttribute(
+            SimpleFoo.class.getCanonicalName());
+      }
+      if (value == null) {
+        value = reset();
+      }
+      return value;
+    }
+  };
 
   private static Long nextId = 1L;
 
@@ -40,7 +59,7 @@ public class SimpleFoo {
   }
 
   public static List<SimpleFoo> findAll() {
-    return Collections.singletonList(singleton);
+    return Collections.singletonList(singleton.get());
   }
 
   public static SimpleFoo findSimpleFoo(Long id) {
@@ -48,16 +67,23 @@ public class SimpleFoo {
   }
 
   public static SimpleFoo findSimpleFooById(Long id) {
-    singleton.setId(id);
-    return singleton;
+    singleton.get().setId(id);
+    return singleton.get();
   }
 
   public static SimpleFoo getSingleton() {
-    return singleton;
+    return singleton.get();
   }
 
-  public static void reset() {
-    singleton = new SimpleFoo();
+  public static SimpleFoo reset() {
+    SimpleFoo instance = new SimpleFoo();
+    singleton.set(instance);
+    HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
+    if (req != null) {
+      req.getSession().setAttribute(SimpleFoo.class.getCanonicalName(),
+          instance);
+    }
+    return instance;
   }
 
   @SuppressWarnings("unused")
@@ -78,18 +104,18 @@ public class SimpleFoo {
   private Long longField;
 
   private BigDecimal bigDecimalField;
-  
+
   private BigInteger bigIntField;
   private Integer intId = -1;
   private Short shortField;
-  
+
   private Byte byteField;
-  
+
   private Date created;
   private Double doubleField;
-  
+
   private Float floatField;
-  
+
   private SimpleEnum enumField;
   private Boolean boolField;
 
@@ -97,7 +123,7 @@ public class SimpleFoo {
 
   private SimpleBar barField;
   private SimpleFoo fooField;
-  
+
   private String nullField;
   private SimpleBar barNullField;
 
@@ -115,7 +141,7 @@ public class SimpleFoo {
   }
 
   public Long countSimpleFooWithUserNameSideEffect() {
-    singleton.setUserName(userName);
+    singleton.get().setUserName(userName);
     return 1L;
   }
 
@@ -207,6 +233,7 @@ public class SimpleFoo {
   public Boolean getOtherBoolField() {
     return otherBoolField;
   }
+
   public String getPassword() {
     return password;
   }
@@ -227,7 +254,7 @@ public class SimpleFoo {
   }
 
   public String hello(SimpleBar bar) {
-    return "Greetings " + bar.getUserName() + " from " + getUserName();  
+    return "Greetings " + bar.getUserName() + " from " + getUserName();
   }
 
   public void persist() {
@@ -300,7 +327,7 @@ public class SimpleFoo {
   public void setFloatField(Float floatField) {
     this.floatField = floatField;
   }
-  
+
   public void setFooField(SimpleFoo fooField) {
     this.fooField = fooField;
   }
