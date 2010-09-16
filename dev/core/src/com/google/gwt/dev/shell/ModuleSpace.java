@@ -445,6 +445,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     Throwable caught = null;
     String msg = null;
     String resultName = null;
+    Class<?> resolvedClass = null;
 
     Event moduleSpaceRebindAndCreate =
         SpeedTracerLogger.start(DevModeEventType.MODULE_SPACE_REBIND_AND_CREATE);
@@ -455,7 +456,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       resultName = rebind(sourceName);
       moduleSpaceRebindAndCreate.addData(
           "Requested Class", requestedClassName, "Result Name", resultName);
-      Class<?> resolvedClass = loadClassFromSourceName(resultName);
+      resolvedClass = loadClassFromSourceName(resultName);
       if (Modifier.isAbstract(resolvedClass.getModifiers())) {
         msg = "Deferred binding result type '" + resultName
             + "' should not be abstract";
@@ -473,9 +474,18 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       caught = e;
     } catch (ExceptionInInitializerError e) {
       caught = e.getException();
-    } catch (NoSuchMethodException e) {
-      msg = "Rebind result '" + resultName
-          + "' has no default (zero argument) constructors.";
+    } catch (NoSuchMethodException e) { 
+      // If it is a nested class and not declared as static, 
+      // then it's not accessible from outside.
+      //
+      if (resolvedClass.getEnclosingClass() != null 
+          && !Modifier.isStatic(resolvedClass.getModifiers())) {
+        msg = "Rebind result '" + resultName
+        + " is a non-static inner class";
+      } else {
+        msg = "Rebind result '" + resultName
+        + "' has no default (zero argument) constructors.";
+      }
       caught = e;
     } catch (InvocationTargetException e) {
       caught = e.getTargetException();
