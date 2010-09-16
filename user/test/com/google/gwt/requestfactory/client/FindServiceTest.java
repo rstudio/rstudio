@@ -15,14 +15,10 @@
  */
 package com.google.gwt.requestfactory.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
-import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.Set;
@@ -30,33 +26,14 @@ import java.util.Set;
 /**
  * Tests for {@link com.google.gwt.requestfactory.shared.RequestFactory}.
  */
-public class FindServiceTest extends GWTTestCase {
-
-  private SimpleRequestFactory req;
+public class FindServiceTest extends RequestFactoryTestBase {
+  /*
+   * DO NOT USE finishTest(). Instead, call finishTestAndReset();
+   */
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
-  }
-
-  @Override
-  public void gwtSetUp() {
-    req = GWT.create(SimpleRequestFactory.class);
-    req.init(new SimpleEventBus());
-  }
-
-  @Override
-  public void gwtTearDown() {
-    req.simpleFooRequest().reset().fire(new Receiver<Void>() {
-      @Override
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
-      }
-    });
-    req.simpleBarRequest().reset().fire(new Receiver<Void>() {
-      @Override
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
-      }
-    });
   }
 
   public void testFetchEntity() {
@@ -68,23 +45,23 @@ public class FindServiceTest extends GWTTestCase {
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResult) {
             checkReturnedProxy(response, relationsAbsent);
-            
-            final EntityProxyId stableId = response.stableId();
-            req.find(stableId).fire(
-                new Receiver<EntityProxy>() {
 
-                  @Override
-                  public void onSuccess(EntityProxy returnedProxy,
-                      Set<SyncResult> syncResults) {
-                    assertEquals(stableId, returnedProxy.stableId());
-                    checkReturnedProxy((SimpleFooProxy) returnedProxy, relationsAbsent);
-                    finishTest();
-                  }
-                });
+            final EntityProxyId stableId = response.stableId();
+            req.find(stableId).fire(new Receiver<EntityProxy>() {
+
+              @Override
+              public void onSuccess(EntityProxy returnedProxy,
+                  Set<SyncResult> syncResults) {
+                assertEquals(stableId, returnedProxy.stableId());
+                checkReturnedProxy((SimpleFooProxy) returnedProxy,
+                    relationsAbsent);
+                finishTestAndReset();
+              }
+            });
           }
         });
   }
-  
+
   public void testFetchEntityWithRelation() {
     final boolean relationsPresent = true;
     delayTestFinish(5000);
@@ -94,7 +71,7 @@ public class FindServiceTest extends GWTTestCase {
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResult) {
             checkReturnedProxy(response, relationsPresent);
-            
+
             final EntityProxyId stableId = response.stableId();
             req.find(stableId).with("barField").fire(
                 new Receiver<EntityProxy>() {
@@ -103,15 +80,17 @@ public class FindServiceTest extends GWTTestCase {
                   public void onSuccess(EntityProxy returnedProxy,
                       Set<SyncResult> syncResults) {
                     assertEquals(stableId, returnedProxy.stableId());
-                    checkReturnedProxy((SimpleFooProxy) returnedProxy, relationsPresent);
-                    finishTest();
+                    checkReturnedProxy((SimpleFooProxy) returnedProxy,
+                        relationsPresent);
+                    finishTestAndReset();
                   }
                 });
           }
         });
   }
 
-  private void checkReturnedProxy(SimpleFooProxy response, boolean checkForRelations) {
+  private void checkReturnedProxy(SimpleFooProxy response,
+      boolean checkForRelations) {
     assertEquals(42, (int) response.getIntId());
     assertEquals("GWT", response.getUserName());
     assertEquals(8L, (long) response.getLongField());

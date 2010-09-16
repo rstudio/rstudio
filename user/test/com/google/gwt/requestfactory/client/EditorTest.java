@@ -24,14 +24,10 @@ import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
-import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
-import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
 
@@ -44,7 +40,11 @@ import java.util.Set;
  * RequestFactory-specific features belong here; all other tests should use the
  * SimpleBeanEditorDriver to make the tests simpler.
  */
-public class EditorTest extends GWTTestCase {
+public class EditorTest extends RequestFactoryTestBase {
+  /*
+   * DO NOT USE finishTest(). Instead, call finishTestAndReset();
+   */
+
   static class SimpleBarEditor implements Editor<SimpleBarProxy> {
     protected final SimpleEditor<String> userName = SimpleEditor.of();
   }
@@ -91,9 +91,6 @@ public class EditorTest extends GWTTestCase {
     }
   }
 
-  private EventBus eventBus;
-  private SimpleRequestFactory factory;
-
   private static final int TEST_TIMEOUT = 5000;
 
   @Override
@@ -101,39 +98,19 @@ public class EditorTest extends GWTTestCase {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
   }
 
-  @Override
-  public void gwtSetUp() {
-    factory = GWT.create(SimpleRequestFactory.class);
-    eventBus = new SimpleEventBus();
-    factory.init(eventBus);
-  }
-
-  @Override
-  public void gwtTearDown() {
-    factory.simpleFooRequest().reset().fire(new Receiver<Void>() {
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
-      }
-    });
-    factory.simpleBarRequest().reset().fire(new Receiver<Void>() {
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
-      }
-    });
-  }
-
   public void test() {
     delayTestFinish(TEST_TIMEOUT);
     final SimpleFooEditor editor = new SimpleFooEditor();
 
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
-    driver.initialize(eventBus, factory, editor);
+    driver.initialize(eventBus, req, editor);
 
-    factory.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
+    req.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResults) {
-            driver.edit(response,
-                factory.simpleFooRequest().persistAndReturnSelf(response).with(
-                    driver.getPaths()));
+            driver.edit(response, req.simpleFooRequest().persistAndReturnSelf(
+                response).with(driver.getPaths()));
 
             assertEquals("GWT", editor.userName.getValue());
             assertEquals("FOO", editor.barEditor().userName.getValue());
@@ -149,7 +126,7 @@ public class EditorTest extends GWTTestCase {
                     assertEquals("EditorFooTest", response.getUserName());
                     assertEquals("EditorBarTest",
                         response.getBarField().getUserName());
-                    finishTest();
+                    finishTestAndReset();
                   }
                 });
           }
@@ -161,12 +138,12 @@ public class EditorTest extends GWTTestCase {
     final SimpleFooEditorWithDelegate editor = new SimpleFooEditorWithDelegate();
 
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
-    driver.initialize(eventBus, factory, editor);
+    driver.initialize(eventBus, req, editor);
 
     assertEquals(Arrays.asList("barField.userName", "barField"),
         Arrays.asList(driver.getPaths()));
 
-    factory.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
+    req.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResults) {
@@ -175,9 +152,9 @@ public class EditorTest extends GWTTestCase {
             assertNotNull(editor.delegate.subscribe());
 
             // Simulate edits occurring elsewhere in the module
-            ProxyRequest<SimpleFooProxy> request = factory.simpleFooRequest().persistAndReturnSelf(
+            ProxyRequest<SimpleFooProxy> request = req.simpleFooRequest().persistAndReturnSelf(
                 response);
-            SimpleBarProxy newBar = factory.create(SimpleBarProxy.class);
+            SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
             newBar = request.edit(newBar);
             newBar.setUserName("newBar");
             response = request.edit(response);
@@ -193,7 +170,7 @@ public class EditorTest extends GWTTestCase {
                     assertEquals("updated", editor.userName.getValue());
                     assertEquals("newBar",
                         editor.barEditor().userName.getValue());
-                    finishTest();
+                    finishTestAndReset();
                   }
                 });
               }
@@ -207,15 +184,14 @@ public class EditorTest extends GWTTestCase {
     final SimpleFooEditor editor = new SimpleFooEditor();
 
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
-    driver.initialize(eventBus, factory, editor);
+    driver.initialize(eventBus, req, editor);
 
-    factory.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
+    req.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResults) {
-            driver.edit(response,
-                factory.simpleFooRequest().persistAndReturnSelf(response).with(
-                    driver.getPaths()));
+            driver.edit(response, req.simpleFooRequest().persistAndReturnSelf(
+                response).with(driver.getPaths()));
             // Set to an illegal value
             editor.userName.setValue("");
 
@@ -241,10 +217,11 @@ public class EditorTest extends GWTTestCase {
                     assertEquals("userName", error.getPath());
                     assertSame(v, error.getUserData());
                     assertNull(error.getValue());
-                    finishTest();
+                    finishTestAndReset();
                   }
                 });
           }
         });
   }
+
 }

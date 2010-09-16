@@ -15,9 +15,6 @@
  */
 package com.google.gwt.requestfactory.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
@@ -25,7 +22,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
-import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
 
@@ -34,7 +30,10 @@ import java.util.Set;
 /**
  * Tests for {@link com.google.gwt.requestfactory.shared.RequestFactory}.
  */
-public class RequestFactoryTest extends GWTTestCase {
+public class RequestFactoryTest extends RequestFactoryTestBase {
+  /*
+   * DO NOT USE finishTest(). Instead, call finishTestAndReset();
+   */
 
   private class ShouldNotSuccedReceiver<T> extends Receiver<T> {
 
@@ -66,33 +65,13 @@ public class RequestFactoryTest extends GWTTestCase {
       assertEquals("size must be between 3 and 30", error.getMessage());
       assertEquals("Did not receive expeceted id", expectedId,
           error.getProxyId());
-      finishTest();
+      finishTestAndReset();
     }
   }
-
-  private SimpleRequestFactory req;
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
-  }
-
-  @Override
-  public void gwtSetUp() {
-    req = GWT.create(SimpleRequestFactory.class);
-    req.init(new SimpleEventBus());
-  }
-
-  @Override
-  public void gwtTearDown() {
-    req.simpleFooRequest().reset().fire(new Receiver<Void>() {
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
-      }
-    });
-    req.simpleBarRequest().reset().fire(new Receiver<Void>() {
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
-      }
-    });
   }
 
   public void testDummyCreate() {
@@ -113,7 +92,7 @@ public class RequestFactoryTest extends GWTTestCase {
         assertTrue(((ProxyImpl) foo).isFuture());
 
         checkStableIdEquals(foo, returned);
-        finishTest();
+        finishTestAndReset();
       }
     });
   }
@@ -130,7 +109,7 @@ public class RequestFactoryTest extends GWTTestCase {
             assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.FOO,
                 response.getEnumField());
             assertEquals(null, response.getBarField());
-            finishTest();
+            finishTestAndReset();
           }
         });
   }
@@ -147,7 +126,7 @@ public class RequestFactoryTest extends GWTTestCase {
             assertEquals(com.google.gwt.requestfactory.shared.SimpleEnum.FOO,
                 response.getEnumField());
             assertNotNull(response.getBarField());
-            finishTest();
+            finishTestAndReset();
           }
         });
   }
@@ -184,7 +163,7 @@ public class RequestFactoryTest extends GWTTestCase {
                       public void onSuccess(SimpleFooProxy finalFoo,
                           Set<SyncResult> syncResults) {
                         assertEquals("Ray", finalFoo.getUserName());
-                        finishTest();
+                        finishTestAndReset();
                       }
                     });
               }
@@ -215,7 +194,7 @@ public class RequestFactoryTest extends GWTTestCase {
                     updReq.fire(new Receiver<Void>() {
                       public void onSuccess(Void response,
                           Set<SyncResult> syncResults) {
-                        finishTest();
+                        finishTestAndReset();
                       }
                     });
                   }
@@ -254,7 +233,7 @@ public class RequestFactoryTest extends GWTTestCase {
                     // barReq hasn't been persisted, so old value
                     assertEquals("FOO",
                         finalFooProxy.getBarField().getUserName());
-                    finishTest();
+                    finishTestAndReset();
                   }
 
                 });
@@ -292,9 +271,8 @@ public class RequestFactoryTest extends GWTTestCase {
                         // newFoo hasn't been persisted, so userName is the old
                         // value.
                         assertEquals("GWT", finalFooProxy.getUserName());
-                        finishTest();
+                        finishTestAndReset();
                       }
-
                     });
               }
             });
@@ -341,9 +319,8 @@ public class RequestFactoryTest extends GWTTestCase {
                       Set<SyncResult> syncResults) {
                     assertEquals("Amit",
                         finalFooProxy.getBarField().getUserName());
-                    finishTest();
+                    finishTestAndReset();
                   }
-
                 });
               }
             });
@@ -365,7 +342,7 @@ public class RequestFactoryTest extends GWTTestCase {
     persistRay.fire(new Receiver<SimpleFooProxy>() {
       public void onSuccess(final SimpleFooProxy persistedRay,
           Set<SyncResult> ignored) {
-        finishTest();
+        finishTestAndReset();
       }
     });
   }
@@ -402,7 +379,7 @@ public class RequestFactoryTest extends GWTTestCase {
               public void onSuccess(SimpleFooProxy relatedRay,
                   Set<SyncResult> ignored) {
                 assertEquals("Amit", relatedRay.getBarField().getUserName());
-                finishTest();
+                finishTestAndReset();
               }
             });
           }
@@ -425,7 +402,7 @@ public class RequestFactoryTest extends GWTTestCase {
             helloReq.fire(new Receiver<String>() {
               public void onSuccess(String response, Set<SyncResult> syncResults) {
                 assertEquals("Greetings BAR from GWT", response);
-                finishTest();
+                finishTestAndReset();
               }
             });
           }
@@ -472,7 +449,7 @@ public class RequestFactoryTest extends GWTTestCase {
               Set<SyncResult> syncResults) {
             checkStableIdEquals(editableFoo, returnedAfterEdit);
             assertEquals(returnedAfterEdit.getId(), returned.getId());
-            finishTest();
+            finishTestAndReset();
           }
         });
       }
@@ -491,7 +468,7 @@ public class RequestFactoryTest extends GWTTestCase {
     fooReq.fire(new Receiver<Void>() {
       public void onSuccess(Void ignore, Set<SyncResult> syncResults) {
         assertEquals(1, syncResults.size());
-        finishTest();
+        finishTestAndReset();
       }
     });
   }
