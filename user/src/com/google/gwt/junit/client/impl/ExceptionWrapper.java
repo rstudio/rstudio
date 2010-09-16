@@ -18,50 +18,62 @@ package com.google.gwt.junit.client.impl;
 import java.io.Serializable;
 
 /**
- * A helper class for converting a generic {@link Throwable} into an Object that
- * can be serialized for RPC.
+ * Wraps a {@link Throwable}, and explicitly serializes cause and stack trace.
  */
-public final class ExceptionWrapper implements Serializable {
+final class ExceptionWrapper implements Serializable {
 
   /**
-   * Corresponds to {@link Throwable#getCause()}.
+   * Stand-in for the transient {@link Throwable#getCause()} in GWT JRE.
    */
-  public ExceptionWrapper cause;
+  ExceptionWrapper causeWrapper;
 
   /**
-   * Corresponds to {@link Throwable#getMessage()}.
+   * The wrapped exception.
    */
-  public String message;
+  Throwable exception;
 
   /**
-   * Corresponds to {@link Throwable#getStackTrace()}.
+   * Stand-in for the transient {@link Throwable#getStackTrace()} in GWT JRE.
    */
-  public StackTraceWrapper[] stackTrace;
+  StackTraceElement[] stackTrace;
 
   /**
-   * The run-time type of the exception.
+   * If true, the exception's inner stack trace and cause have been initialized.
+   * Defaults to false immediate after deserialization.
    */
-  public String typeName;
-
-  /**
-   * Creates an empty {@link ExceptionWrapper}.
-   */
-  public ExceptionWrapper() {
-  }
+  private transient boolean isExceptionInitialized;
 
   /**
    * Creates an {@link ExceptionWrapper} around an existing {@link Throwable}.
    * 
-   * @param e the {@link Throwable} to wrap.
+   * @param exception the {@link Throwable} to wrap.
    */
-  public ExceptionWrapper(Throwable e) {
-    typeName = e.getClass().getName();
-    message = e.getMessage();
-    stackTrace = StackTraceWrapper.wrapStackTrace(e.getStackTrace());
-    Throwable ecause = e.getCause();
-    if (ecause != null) {
-      cause = new ExceptionWrapper(ecause);
+  public ExceptionWrapper(Throwable exception) {
+    this.exception = exception;
+    this.stackTrace = exception.getStackTrace();
+    Throwable cause = exception.getCause();
+    if (cause != null) {
+      this.causeWrapper = new ExceptionWrapper(cause);
     }
+    this.isExceptionInitialized = true;
   }
 
+  /**
+   * Deserialization constructor.
+   */
+  ExceptionWrapper() {
+    this.isExceptionInitialized = false;
+  }
+
+  public Throwable getException() {
+    if (!isExceptionInitialized) {
+      exception.setStackTrace(stackTrace);
+      if (causeWrapper != null) {
+        exception.initCause(causeWrapper.getException());
+      }
+      isExceptionInitialized = true;
+    }
+    return exception;
+  }
 }
+

@@ -17,7 +17,6 @@ package com.google.gwt.junit.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.junit.client.impl.ExceptionWrapper;
 import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.user.client.Timer;
@@ -305,13 +304,11 @@ public abstract class GWTTestCase extends TestCase {
 
     JUnitResult myResult = __getOrCreateTestResult();
     if (ex != null) {
-      ExceptionWrapper ew = new ExceptionWrapper(ex);
+      myResult.setException(ex);
       if (checkPoints != null) {
-        for (int i = 0, c = checkPoints.size(); i < c; ++i) {
-          ew.message += "\n" + checkPoints.get(i);
-        }
+        String[] cpArray = checkPoints.toArray(new String[checkPoints.size()]);
+        myResult.setCheckPoints(cpArray);
       }
-      myResult.setExceptionWrapper(ew);
     }
 
     testIsFinished = true;

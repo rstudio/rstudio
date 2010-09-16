@@ -245,7 +245,7 @@ public abstract class GWTRunner implements EntryPoint {
     }
     if (result != null && failureMessage != null) {
       RuntimeException ex = new RuntimeException(failureMessage);
-      result.setExceptionWrapper(new ExceptionWrapper(ex));
+      result.setException(ex);
     }   
     TestInfo currentTest = getCurrentTest();
     currentResults.put(currentTest, result);
@@ -357,7 +357,7 @@ public abstract class GWTRunner implements EntryPoint {
       RuntimeException ex = new RuntimeException(currentTest
           + ": could not instantiate the requested class", caught);
       JUnitResult result = new JUnitResult();
-      result.setExceptionWrapper(new ExceptionWrapper(ex));
+      result.setException(ex);
       reportResultsAndGetNextMethod(result);
       return;
     }

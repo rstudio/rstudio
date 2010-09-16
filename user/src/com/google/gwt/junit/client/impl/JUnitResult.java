@@ -33,9 +33,14 @@ public class JUnitResult implements Serializable {
   // Computed at the server, via HTTP header.
   private transient String agent;
 
-  // Deserialized from exceptionWrapper on the server-side
-  private transient Throwable exception;
+  /**
+   * If non-null, check points that were encountered during the run.
+   */
+  private String[] checkPoints;
 
+  /**
+   * If non-null, an exception that occurred during the run.
+   */
   private ExceptionWrapper exceptionWrapper;
 
   // Computed at the server, via HTTP header.
@@ -45,12 +50,12 @@ public class JUnitResult implements Serializable {
     return agent;
   }
 
-  public Throwable getException() {
-    return exception;
+  public String[] getCheckPoints() {
+    return checkPoints;
   }
 
-  public ExceptionWrapper getExceptionWrapper() {
-    return exceptionWrapper;
+  public Throwable getException() {
+    return (exceptionWrapper == null) ? null : exceptionWrapper.getException();
   }
 
   public String getHost() {
@@ -61,12 +66,12 @@ public class JUnitResult implements Serializable {
     this.agent = agent;
   }
 
-  public void setException(Throwable exception) {
-    this.exception = exception;
+  public void setCheckPoints(String[] checkPoints) {
+    this.checkPoints = checkPoints;
   }
 
-  public void setExceptionWrapper(ExceptionWrapper exceptionWrapper) {
-    this.exceptionWrapper = exceptionWrapper;
+  public void setException(Throwable exception) {
+    this.exceptionWrapper = new ExceptionWrapper(exception);
   }
 
   public void setHost(String host) {
