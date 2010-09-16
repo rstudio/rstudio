@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.EditorError;
@@ -164,15 +164,19 @@ public class EditorTest extends RequestFactoryTestBase {
             request.fire(new Receiver<SimpleFooProxy>() {
               public void onSuccess(SimpleFooProxy response,
                   Set<SyncResult> syncResults) {
-                // EventBus notifications occurr after the onSuccess()
-                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                  public void execute() {
-                    assertEquals("updated", editor.userName.getValue());
-                    assertEquals("newBar",
-                        editor.barEditor().userName.getValue());
-                    finishTestAndReset();
+                // EventBus notifications occur after the onSuccess()
+                Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+                  public boolean execute() {
+                    if ("updated".equals(editor.userName.getValue())) {
+                      assertEquals("updated", editor.userName.getValue());
+                      assertEquals("newBar",
+                          editor.barEditor().userName.getValue());
+                      finishTestAndReset();
+                      return false;
+                    }
+                    return true;
                   }
-                });
+                }, 50);
               }
             });
           }

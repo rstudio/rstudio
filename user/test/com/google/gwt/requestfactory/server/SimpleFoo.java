@@ -31,26 +31,10 @@ import javax.validation.constraints.Size;
  * Domain object for SimpleFooRequest.
  */
 public class SimpleFoo {
-
   /**
-   * This is an ugly hack.
+   * DO NOT USE THIS UGLY HACK DIRECTLY! Call {@link #get} instead.
    */
-  static ThreadLocal<SimpleFoo> singleton = new ThreadLocal<SimpleFoo>() {
-    @Override
-    protected SimpleFoo initialValue() {
-      SimpleFoo value = null;
-      HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
-      // May be in a JRE test case
-      if (req != null) {
-        value = (SimpleFoo) req.getSession().getAttribute(
-            SimpleFoo.class.getCanonicalName());
-      }
-      if (value == null) {
-        value = reset();
-      }
-      return value;
-    }
-  };
+  private static SimpleFoo jreTestSingleton = new SimpleFoo();
 
   private static Long nextId = 1L;
 
@@ -59,7 +43,7 @@ public class SimpleFoo {
   }
 
   public static List<SimpleFoo> findAll() {
-    return Collections.singletonList(singleton.get());
+    return Collections.singletonList(get());
   }
 
   public static SimpleFoo findSimpleFoo(Long id) {
@@ -67,19 +51,40 @@ public class SimpleFoo {
   }
 
   public static SimpleFoo findSimpleFooById(Long id) {
-    singleton.get().setId(id);
-    return singleton.get();
+    get().setId(id);
+    return get();
+  }
+
+  public static synchronized SimpleFoo get() {
+    HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
+    if (req == null) {
+      // May be in a JRE test case, use the singleton
+      return jreTestSingleton;
+    } else {
+      /*
+       * This will not behave entirely correctly unless we have a servlet filter
+       * that doesn't allow any requests to be processed unless they're
+       * associated with an existing session.
+       */
+      SimpleFoo value = (SimpleFoo) req.getSession().getAttribute(
+          SimpleFoo.class.getCanonicalName());
+      if (value == null) {
+        value = reset();
+      }
+      return value;
+    }
   }
 
   public static SimpleFoo getSingleton() {
-    return singleton.get();
+    return get();
   }
 
-  public static SimpleFoo reset() {
+  public static synchronized SimpleFoo reset() {
     SimpleFoo instance = new SimpleFoo();
-    singleton.set(instance);
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
-    if (req != null) {
+    if (req == null) {
+      jreTestSingleton = instance;
+    } else {
       req.getSession().setAttribute(SimpleFoo.class.getCanonicalName(),
           instance);
     }
@@ -141,7 +146,7 @@ public class SimpleFoo {
   }
 
   public Long countSimpleFooWithUserNameSideEffect() {
-    singleton.get().setUserName(userName);
+    get().setUserName(userName);
     return 1L;
   }
 

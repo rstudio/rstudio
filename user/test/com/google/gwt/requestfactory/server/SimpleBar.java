@@ -26,26 +26,10 @@ import javax.servlet.http.HttpServletRequest;
  * Domain object for SimpleFooRequest.
  */
 public class SimpleBar {
-
   /**
-   * This is an ugly hack.
+   * DO NOT USE THIS UGLY HACK DIRECTLY! Call {@link #get} instead.
    */
-  static ThreadLocal<SimpleBar> singleton = new ThreadLocal<SimpleBar>() {
-    @Override
-    protected SimpleBar initialValue() {
-      SimpleBar value = null;
-      HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
-      // May be in a JRE test case
-      if (req != null) {
-        value = (SimpleBar) req.getSession().getAttribute(
-            SimpleBar.class.getCanonicalName());
-      }
-      if (value == null) {
-        value = reset();
-      }
-      return value;
-    }
-  };
+  private static SimpleBar jreTestSingleton = new SimpleBar();
 
   private static Long nextId = 1L;
 
@@ -54,7 +38,7 @@ public class SimpleBar {
   }
 
   public static List<SimpleBar> findAll() {
-    return Collections.singletonList(singleton.get());
+    return Collections.singletonList(get());
   }
 
   public static SimpleBar findSimpleBar(Long id) {
@@ -62,19 +46,40 @@ public class SimpleBar {
   }
 
   public static SimpleBar findSimpleBarById(Long id) {
-    singleton.get().setId(id);
-    return singleton.get();
+    get().setId(id);
+    return get();
+  }
+
+  public static synchronized SimpleBar get() {
+    HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
+    if (req == null) {
+      // May be in a JRE test case, use the the singleton
+      return jreTestSingleton;
+    } else {
+      /*
+       * This will not behave entirely correctly unless we have a servlet filter
+       * that doesn't allow any requests to be processed unless they're
+       * associated with an existing session.
+       */
+      SimpleBar value = (SimpleBar) req.getSession().getAttribute(
+          SimpleBar.class.getCanonicalName());
+      if (value == null) {
+        value = reset();
+      }
+      return value;
+    }
   }
 
   public static SimpleBar getSingleton() {
-    return singleton.get();
+    return get();
   }
 
-  public static SimpleBar reset() {
+  public static synchronized SimpleBar reset() {
     SimpleBar instance = new SimpleBar();
-    singleton.set(instance);
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
-    if (req != null) {
+    if (req == null) {
+      jreTestSingleton = instance;
+    } else {
       req.getSession().setAttribute(SimpleBar.class.getCanonicalName(),
           instance);
     }
@@ -107,7 +112,7 @@ public class SimpleBar {
 
   public void persist() {
     setId(nextId++);
-    singleton.get().setUserName(userName);
+    get().setUserName(userName);
   }
 
   public SimpleBar persistAndReturnSelf() {
