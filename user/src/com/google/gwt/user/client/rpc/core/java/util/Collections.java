@@ -33,10 +33,6 @@ public final class Collections {
    */
   public static final class EmptyList_CustomFieldSerializer {
 
-    public static Class<?> concreteType() {
-      return java.util.Collections.emptyList().getClass();
-    }
-
     @SuppressWarnings({"unused", "unchecked"})
     public static void deserialize(SerializationStreamReader streamReader,
         List instance) throws SerializationException {
@@ -60,10 +56,6 @@ public final class Collections {
    * Custom field serializer for {@link java.util.Collections$EmptyMap}.
    */
   public static final class EmptyMap_CustomFieldSerializer {
-
-    public static Class<?> concreteType() {
-      return java.util.Collections.emptyMap().getClass();
-    }
 
     @SuppressWarnings({"unused", "unchecked"})
     public static void deserialize(SerializationStreamReader streamReader,
@@ -89,10 +81,6 @@ public final class Collections {
    */
   public static final class EmptySet_CustomFieldSerializer {
 
-    public static Class<?> concreteType() {
-      return java.util.Collections.emptySet().getClass();
-    }
-
     @SuppressWarnings({"unused", "unchecked"})
     public static void deserialize(SerializationStreamReader streamReader,
         Set instance) throws SerializationException {
@@ -116,10 +104,6 @@ public final class Collections {
    * Custom field serializer for {@link java.util.Collections$SingletonList}.
    */
   public static final class SingletonList_CustomFieldSerializer {
-
-    public static Class<?> concreteType() {
-      return java.util.Collections.singletonList(null).getClass();
-    }
 
     @SuppressWarnings({"unused", "unchecked"})
     public static void deserialize(SerializationStreamReader streamReader,

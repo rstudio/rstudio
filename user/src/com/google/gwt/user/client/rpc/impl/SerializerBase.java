@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
@@ -34,7 +35,7 @@ import java.util.Map;
 public abstract class SerializerBase implements Serializer {
 
   /**
-   * Used in JavaScript to map a type to a set of serialization functions.
+   * Represents a collection of functions that perform type-specific functions.
    */
   protected static final class MethodMap extends JavaScriptObject {
     protected MethodMap() {
@@ -64,64 +65,91 @@ public abstract class SerializerBase implements Serializer {
     }-*/;
   }
 
-  private final Map<String, TypeHandler> methodMapJava;
+  private static final Map<JsArrayString, Map<Class<?>, String>> hostedSignatureMaps;
 
-  private final MethodMap methodMapNative;
+  static {
+    if (GWT.isScript()) {
+      hostedSignatureMaps = null;
+    } else {
+      hostedSignatureMaps = new IdentityHashMap<JsArrayString, Map<Class<?>, String>>();
+    }
+  }
 
-  private final Map<Class<?>, String> signatureMapJava;
+  protected static final void registerMethods(MethodMap methodMap,
+      String signature, JsArray<JavaScriptObject> methods) {
+    assert signature != null : "signature";
+    assert methodMap.get(signature) == null : "Duplicate signature "
+        + signature;
 
-  private final JsArrayString signatureMapNative;
+    methodMap.put(signature, methods);
+  }
 
-  public SerializerBase(Map<String, TypeHandler> methodMapJava,
-      MethodMap methodMapNative, Map<Class<?>, String> signatureMapJava,
-      JsArrayString signatureMapNative) {
-    this.methodMapJava = methodMapJava;
-    this.methodMapNative = methodMapNative;
-    this.signatureMapJava = signatureMapJava;
-    this.signatureMapNative = signatureMapNative;
+  protected static final void registerSignature(JsArrayString signatureMap,
+      Class<?> clazz, String signature) {
+    assert clazz != null : "clazz";
+    assert signature != null : "signature";
+
+    if (GWT.isScript()) {
+      assert signatureMap.get(clazz.hashCode()) == null : "Duplicate signature "
+          + signature;
+      signatureMap.set(clazz.hashCode(), signature);
+
+    } else {
+      Map<Class<?>, String> subMap = getSubMap(signatureMap);
+
+      assert !subMap.containsKey(clazz);
+      subMap.put(clazz, signature);
+    }
+  }
+
+  /**
+   * Hashcodes in hosted mode are unpredictable. Each signature map is
+   * associated with a proper IdentityHashMap. This method should only be used
+   * in hosted mode.
+   */
+  private static Map<Class<?>, String> getSubMap(JsArrayString signatureMap) {
+    assert !GWT.isScript() : "Should only use this in hosted mode";
+    Map<Class<?>, String> subMap = hostedSignatureMaps.get(signatureMap);
+    if (subMap == null) {
+      subMap = new IdentityHashMap<Class<?>, String>();
+      hostedSignatureMaps.put(signatureMap, subMap);
+    }
+    return subMap;
   }
 
   public final void deserialize(SerializationStreamReader stream,
       Object instance, String typeSignature) throws SerializationException {
-    if (GWT.isScript()) {
-      check(typeSignature, 2);
-      methodMapNative.deserialize(stream, instance, typeSignature);
-    } else {
-      TypeHandler typeHandler = getTypeHandler(typeSignature);
-      typeHandler.deserialize(stream, instance);
-    }
+    check(typeSignature, 2);
+
+    getMethodMap().deserialize(stream, instance, typeSignature);
   }
 
   public final String getSerializationSignature(Class<?> clazz) {
     assert clazz != null : "clazz";
     if (GWT.isScript()) {
-      return signatureMapNative.get(clazz.hashCode());
+      return getSignatureMap().get(clazz.hashCode());
     } else {
-      return signatureMapJava.get(clazz);
+      return getSubMap(getSignatureMap()).get(clazz);
     }
   }
 
   public final Object instantiate(SerializationStreamReader stream,
       String typeSignature) throws SerializationException {
-    if (GWT.isScript()) {
-      check(typeSignature, 1);
-      return methodMapNative.instantiate(stream, typeSignature);
-    } else {
-      TypeHandler typeHandler = getTypeHandler(typeSignature);
-      return typeHandler.instantiate(stream);
-    }
+    check(typeSignature, 1);
+
+    return getMethodMap().instantiate(stream, typeSignature);
   }
 
   public final void serialize(SerializationStreamWriter stream,
       Object instance, String typeSignature) throws SerializationException {
-    if (GWT.isScript()) {
-      check(typeSignature, 3);
-      methodMapNative.serialize(stream, instance, typeSignature);
-    } else {
-      TypeHandler typeHandler = getTypeHandler(typeSignature);
-      typeHandler.serialize(stream, instance);
-    }
+    check(typeSignature, 3);
+
+    getMethodMap().serialize(stream, instance, typeSignature);
   }
+
+  protected abstract MethodMap getMethodMap();
+
+  protected abstract JsArrayString getSignatureMap();
 
   private void check(String typeSignature, int length)
       throws SerializationException {
@@ -129,24 +157,11 @@ public abstract class SerializerBase implements Serializer {
      * Probably trying to serialize a type that isn't supposed to be
      * serializable.
      */
-    if (methodMapNative.get(typeSignature) == null) {
+    if (getMethodMap().get(typeSignature) == null) {
       throw new SerializationException(typeSignature);
     }
 
-    assert methodMapNative.get(typeSignature).length() >= length : "Not enough methods, expecting "
-        + length + " saw " + methodMapNative.get(typeSignature).length();
-  }
-
-  private TypeHandler getTypeHandler(String typeSignature)
-      throws SerializationException {
-    TypeHandler typeHandler = methodMapJava.get(typeSignature);
-    if (typeHandler == null) {
-      /*
-       * Probably trying to serialize a type that isn't supposed to be
-       * serializable.
-       */
-      throw new SerializationException(typeSignature);
-    }
-    return typeHandler;
+    assert getMethodMap().get(typeSignature).length() >= length : "Not enough methods, expecting "
+        + length + " saw " + getMethodMap().get(typeSignature).length();
   }
 }

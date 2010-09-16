@@ -328,7 +328,9 @@ public class StandardGeneratorContext implements GeneratorContext {
    *
    * @return any newly generated artifacts since the last call
    */
-  public final ArtifactSet finish(TreeLogger logger) {
+  public final ArtifactSet finish(TreeLogger logger)
+      throws UnableToCompleteException {
+
     abortUncommittedResources(logger);
 
     // Process pending generated types.
@@ -358,6 +360,16 @@ public class StandardGeneratorContext implements GeneratorContext {
 
         compilationState.addGeneratedCompilationUnits(logger,
             committedGeneratedCups);
+      }
+
+      // Make sure all generated types can be found in TypeOracle.
+      TypeOracle typeOracle = getTypeOracle();
+      for (String genTypeName : genTypeNames) {
+        if (typeOracle.findType(genTypeName) == null) {
+          String msg = "Unable to find recently-generated type '" + genTypeName;
+          logger.log(TreeLogger.ERROR, msg, null);
+          throw new UnableToCompleteException();
+        }
       }
       return newlyGeneratedArtifacts;
     } finally {

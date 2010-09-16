@@ -31,11 +31,6 @@ public final class Arrays {
    * Custom field serializer for {@link java.util.Arrays$ArrayList}.
    */
   public static final class ArrayList_CustomFieldSerializer {
-
-    public static Class<?> concreteType() {
-      return java.util.Arrays.asList().getClass();
-    }
-
     /*
      * Note: the reason this implementation differs from that of a standard List
      * (which serializes a number and then each element) is the requirement that
