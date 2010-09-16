@@ -29,6 +29,23 @@ import java.util.List;
  */
 public abstract class AsyncDataProvider<T> extends AbstractDataProvider<T> {
 
+  /**
+   * Constructs an AsyncDataProvider without a key provider.
+   */
+  protected AsyncDataProvider() {
+    super(null);
+  }
+
+  /**
+   * Constructs an AsyncDataProvider with the given key provider.
+   *
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  protected AsyncDataProvider(ProvidesKey<T> keyProvider) {
+    super(keyProvider);
+  }
+
   @Override
   public void updateRowCount(int size, boolean exact) {
     super.updateRowCount(size, exact);

@@ -250,8 +250,7 @@ public class CwCellSampler extends ContentWidget {
 
     // Create the table.
     editableCells = new ArrayList<AbstractEditableCell<?, ?>>();
-    cellTable = new CellTable<ContactInfo>(6);
-    cellTable.setKeyProvider(ContactInfo.KEY_PROVIDER);
+    cellTable = new CellTable<ContactInfo>(6, ContactInfo.KEY_PROVIDER);
     ContactDatabase.get().addDataDisplay(cellTable);
 
     // CheckboxCell.

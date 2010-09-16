@@ -21,7 +21,7 @@ package com.google.gwt.view.client;
 public class NoSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testGetLastSelectedObject() {
-    NoSelectionModel<String> model = createSelectionModel();
+    NoSelectionModel<String> model = createSelectionModel(null);
     assertNull(model.getLastSelectedObject());
 
     model.setSelected("test", true);
@@ -32,7 +32,7 @@ public class NoSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSelectedChangeEvent() {
-    NoSelectionModel<String> model = createSelectionModel();
+    NoSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
@@ -45,7 +45,7 @@ public class NoSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSetSelected() {
-    NoSelectionModel<String> model = createSelectionModel();
+    NoSelectionModel<String> model = createSelectionModel(null);
     assertFalse(model.isSelected("test0"));
 
     model.setSelected("test0", true);
@@ -56,13 +56,12 @@ public class NoSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSetSelectedWithKeyProvider() {
-    NoSelectionModel<String> model = createSelectionModel();
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
       public Object getKey(String item) {
         return item.toUpperCase();
       }
     };
-    model.setKeyProvider(keyProvider);
+    NoSelectionModel<String> model = createSelectionModel(keyProvider);
     assertFalse(model.isSelected("test0"));
 
     model.setSelected("test0", true);
@@ -78,7 +77,7 @@ public class NoSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   @Override
-  protected NoSelectionModel<String> createSelectionModel() {
-    return new NoSelectionModel<String>();
+  protected NoSelectionModel<String> createSelectionModel(ProvidesKey<String> keyProvider) {
+    return new NoSelectionModel<String>(keyProvider);
   }
 }

@@ -78,7 +78,8 @@ public class Employee {
     }
     EntityManager em = entityManager();
     try {
-      return em.find(Employee.class, id);
+      Employee employee = em.find(Employee.class, id);
+      return employee;
     } finally {
       em.close();
     }

@@ -39,6 +39,23 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
   private final HashMap<T, Boolean> selectionChanges = new HashMap<T, Boolean>();
 
   /**
+   * Constructs a MultiSelectionModel without a key provider.
+   */
+  public MultiSelectionModel() {
+    super(null);
+  }
+  
+  /**
+   * Constructs a MultiSelectionModel with the given key provider.
+   *
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public MultiSelectionModel(ProvidesKey<T> keyProvider) {
+    super(keyProvider);
+  }
+
+  /**
    * Get the set of selected items as a copy.
    *
    * @return the set of selected items

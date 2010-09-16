@@ -116,6 +116,7 @@ public class ExpenseTree extends Composite {
     private final String department;
 
     public EmployeeListDataProvider(String department) {
+      super(null);
       this.department = department;
     }
 
@@ -126,6 +127,7 @@ public class ExpenseTree extends Composite {
       // Request the count anytime a view is added.
       requestFactory.employeeRequest().countEmployeesByDepartment(
           department).fire(new Receiver<Long>() {
+        @Override
         public void onSuccess(Long response, Set<SyncResult> syncResults) {
           updateRowCount(response.intValue(), true);
         }
@@ -229,8 +231,15 @@ public class ExpenseTree extends Composite {
   /**
    * The shared {@link SingleSelectionModel}.
    */
-  private final SingleSelectionModel<Object> selectionModel =
-      new SingleSelectionModel<Object>();
+  private final SingleSelectionModel<Object> selectionModel = new SingleSelectionModel<Object>(
+      new ProvidesKey<Object>() {
+        public Object getKey(Object item) {
+          if (item instanceof EmployeeProxy) {
+            return Expenses.EMPLOYEE_RECORD_KEY_PROVIDER.getKey((EmployeeProxy) item);
+          }
+          return item;
+        }
+      });
 
   /**
    * The main widget.
@@ -290,15 +299,6 @@ public class ExpenseTree extends Composite {
             }
           }
         });
-    selectionModel.setKeyProvider(new ProvidesKey<Object>() {
-      public Object getKey(Object item) {
-        if (item instanceof EmployeeProxy) {
-          return Expenses.EMPLOYEE_RECORD_KEY_PROVIDER.getKey(
-              (EmployeeProxy) item);
-        }
-        return item;
-      }
-    });
 
     // Create a CellBrowser.
     tree = new CellTree(model, null);

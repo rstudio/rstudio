@@ -65,13 +65,12 @@ public class MobileReportList extends Composite implements MobilePage {
     this.requestFactory = requestFactory;
     this.employee = employee;
 
-    reportDataProvider = new AsyncDataProvider<ReportProxy>() {
+    reportDataProvider = new AsyncDataProvider<ReportProxy>(Expenses.REPORT_RECORD_KEY_PROVIDER) {
       @Override
       protected void onRangeChanged(HasData<ReportProxy> view) {
         requestReports();
       }
     };
-    reportDataProvider.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
 
     reportList = new CellList<ReportProxy>(new AbstractCell<ReportProxy>() {
       @Override
@@ -83,8 +82,7 @@ public class MobileReportList extends Composite implements MobilePage {
       }
     });
 
-    reportSelection = new NoSelectionModel<ReportProxy>();
-    reportSelection.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
+    reportSelection = new NoSelectionModel<ReportProxy>(Expenses.REPORT_RECORD_KEY_PROVIDER);
     reportSelection.addSelectionChangeHandler(
         new SelectionChangeEvent.Handler() {
           public void onSelectionChange(SelectionChangeEvent event) {
@@ -99,6 +97,7 @@ public class MobileReportList extends Composite implements MobilePage {
     onRefresh(false);
   }
 
+  @Override
   public Widget asWidget() {
     return this;
   }
@@ -142,6 +141,7 @@ public class MobileReportList extends Composite implements MobilePage {
       return;
     }
     lastReceiver = new Receiver<List<ReportProxy>>() {
+      @Override
       public void onSuccess(
           List<ReportProxy> newValues, Set<SyncResult> syncResults) {
         int size = newValues.size();

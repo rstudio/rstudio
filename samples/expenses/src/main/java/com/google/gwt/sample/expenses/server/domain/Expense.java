@@ -148,7 +148,7 @@ public class Expense {
     return this.reasonDenied;
   }
 
-  public Report getReporter() {
+  public Report getReport() {
     return reportId != null ? Report.findReport(reportId) : null;
   }
 

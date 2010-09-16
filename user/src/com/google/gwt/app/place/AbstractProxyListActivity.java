@@ -28,6 +28,7 @@ import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -73,12 +74,6 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   private final SingleSelectionModel<P> selectionModel;
   private final Class<P> proxyType;
 
-  /**
-   * Used by the table and its selection model to rely on record id for
-   * equality.
-   */
-  private final EntityProxyKeyProvider<P> keyProvider = new EntityProxyKeyProvider<P>();
-
   private HandlerRegistration rangeChangeHandler;
   private ProxyListView<P> view;
   private AcceptsOneWidget display;
@@ -98,10 +93,10 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
       }
     });
 
-    selectionModel = new SingleSelectionModel<P>();
-    selectionModel.setKeyProvider(keyProvider);
+    // Inherit the view's key provider
+    ProvidesKey<P> keyProvider = ((AbstractHasData<P>) hasData).getKeyProvider();
+    selectionModel = new SingleSelectionModel<P>(keyProvider);
     hasData.setSelectionModel(selectionModel);
-    ((AbstractHasData<P>) hasData).setKeyProvider(keyProvider);
 
     selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
@@ -137,6 +132,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     final Range range = listView.getVisibleRange();
 
     final Receiver<List<P>> callback = new Receiver<List<P>>() {
+      @Override
       public void onSuccess(List<P> values, Set<SyncResult> syncResults) {
         if (view == null) {
           // This activity is dead
@@ -236,6 +232,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
 
   private void getLastPage() {
     fireCountRequest(new Receiver<Long>() {
+      @Override
       public void onSuccess(Long response, Set<SyncResult> syncResults) {
         HasData<P> table = getView().asHasData();
         int rows = response.intValue();
@@ -254,6 +251,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
 
   private void init() {
     fireCountRequest(new Receiver<Long>() {
+      @Override
       public void onSuccess(Long response, Set<SyncResult> syncResults) {
         getView().asHasData().setRowCount(response.intValue(), true);
         onRangeChanged(view.asHasData());
@@ -272,6 +270,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
       return;
     }
     fireRangeRequest(new Range(row, 1), new Receiver<List<P>>() {
+      @Override
       public void onSuccess(List<P> response, Set<SyncResult> syncResults) {
         getView().asHasData().setRowData(row,
             Collections.singletonList(response.get(0)));

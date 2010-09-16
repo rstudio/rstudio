@@ -29,6 +29,10 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
    */
   private static class MockDefaultSelectionModel extends
       DefaultSelectionModel<String> {
+    
+    public MockDefaultSelectionModel(ProvidesKey<String> keyProvider) {
+      super(keyProvider);
+    }
 
     @Override
     public boolean isDefaultSelected(String object) {
@@ -37,7 +41,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testIsSelectedWithoutExceptions() {
-    DefaultSelectionModel<String> model = createSelectionModel();
+    DefaultSelectionModel<String> model = createSelectionModel(null);
     assertFalse(model.isSelected(null));
     assertFalse(model.isSelected("test"));
     assertTrue(model.isSelected("selected"));
@@ -45,7 +49,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSelectedChangeEvent() {
-    DefaultSelectionModel<String> model = createSelectionModel();
+    DefaultSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
@@ -58,7 +62,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testNoDuplicateChangeEvent() {
-    DefaultSelectionModel<String> model = createSelectionModel();
+    DefaultSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
@@ -73,7 +77,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testSetSelectedDefault() {
     Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
-    DefaultSelectionModel<String> model = createSelectionModel();
+    DefaultSelectionModel<String> model = createSelectionModel(null);
     assertTrue(model.isSelected("selected0"));
     assertTrue(model.isSelected("selected1"));
     assertEquals(0, model.getExceptions(exceptions).size());
@@ -96,7 +100,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSetSelectedNonDefault() {
-    DefaultSelectionModel<String> model = createSelectionModel();
+    DefaultSelectionModel<String> model = createSelectionModel(null);
     assertFalse(model.isSelected("test0"));
     assertFalse(model.isSelected("test1"));
     assertTrue(model.isSelected("selected0"));
@@ -119,13 +123,12 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testSetSelectedWithKeyProvider() {
     Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
-    DefaultSelectionModel<String> model = createSelectionModel();
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
       public Object getKey(String item) {
         return item.toUpperCase();
       }
     };
-    model.setKeyProvider(keyProvider);
+    DefaultSelectionModel<String> model = createSelectionModel(keyProvider);
     assertFalse(model.isSelected("test"));
     assertTrue(model.isSelected("selected0"));
     assertFalse(model.isSelected("SELECTED0"));
@@ -168,7 +171,7 @@ public class DefaultSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   @Override
-  protected DefaultSelectionModel<String> createSelectionModel() {
-    return new MockDefaultSelectionModel();
+  protected DefaultSelectionModel<String> createSelectionModel(ProvidesKey<String> keyProvider) {
+    return new MockDefaultSelectionModel(keyProvider);
   }
 }

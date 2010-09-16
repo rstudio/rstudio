@@ -40,7 +40,7 @@ public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
   /**
    * The provider of keys for list items.
    */
-  private ProvidesKey<T> keyProvider;
+  private final ProvidesKey<T> keyProvider;
 
   /**
    * The last row count.
@@ -57,6 +57,14 @@ public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
    */
   private Map<HasData<T>, HandlerRegistration> rangeChangeHandlers =
       new HashMap<HasData<T>, HandlerRegistration>();
+  
+  protected AbstractDataProvider() {
+    this.keyProvider = null;
+  }
+  
+  protected AbstractDataProvider(ProvidesKey<T> keyProvider) {
+    this.keyProvider = keyProvider;
+  }
 
   /**
    * Adds a data display to this adapter. The current range of interest of the
@@ -145,15 +153,6 @@ public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
     // Remove the handler.
     HandlerRegistration handler = rangeChangeHandlers.remove(display);
     handler.removeHandler();
-  }
-
-  /**
-   * Set the {@link ProvidesKey} that provides keys for list items.
-   *
-   * @param keyProvider the {@link ProvidesKey}
-   */
-  public void setKeyProvider(ProvidesKey<T> keyProvider) {
-    this.keyProvider = keyProvider;
   }
 
   /**

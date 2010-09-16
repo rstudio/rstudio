@@ -36,6 +36,23 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
   private T newSelectedObject = null;
 
   /**
+   * Constructs a SingleSelectionModel without a key provider.
+   */
+  public SingleSelectionModel() {
+    super(null);
+  }
+  
+  /**
+   * Constructs a SingleSelectionModel with the given key provider.
+   *
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public SingleSelectionModel(ProvidesKey<T> keyProvider) {
+    super(keyProvider);
+  }
+
+  /**
    * Gets the currently-selected object.
    */
   public T getSelectedObject() {

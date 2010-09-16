@@ -113,7 +113,11 @@ public class CwCellTable extends ContentWidget {
   @Override
   public Widget onInitialize() {
     // Create a CellTable.
-    cellTable = new CellTable<ContactInfo>();
+
+    // Set a key provider that provides a unique key for each contact. If key is
+    // used to identify contacts when fields (such as the name and address)
+    // change.
+    cellTable = new CellTable<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
 
     // Create a Pager to control the table.
     SimplePager.Resources pagerResources = GWT.create(
@@ -123,17 +127,11 @@ public class CwCellTable extends ContentWidget {
     pager.setDisplay(cellTable);
 
     // Add a selection model so we can select cells.
-    final MultiSelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>();
+    final MultiSelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
     cellTable.setSelectionModel(selectionModel);
 
     // Initialize the columns.
     initTableColumns(selectionModel);
-
-    // Set a key provider that provides a unique key for each contact. If key is
-    // used to identify contacts when fields (such as the name and address)
-    // change.
-    cellTable.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
-    selectionModel.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
 
     // Add the CellList to the adapter in the database.
     ContactDatabase.get().addDataDisplay(cellTable);

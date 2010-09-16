@@ -31,7 +31,7 @@ public class DefaultNodeInfoTest extends TestCase {
     ListDataProvider<String> provider = new ListDataProvider<String>();
     TextCell cell = new TextCell();
     SingleSelectionModel<String> selectionModel = new SingleSelectionModel<
-        String>();
+        String>(null);
     ValueUpdater<String> valueUpdater = new ValueUpdater<String>() {
       public void update(String value) {
       }
@@ -46,7 +46,7 @@ public class DefaultNodeInfoTest extends TestCase {
   }
 
   public void testSetDataDisplay() {
-    MockDataProvider<String> provider = new MockDataProvider<String>();
+    MockDataProvider<String> provider = new MockDataProvider<String>(null);
     DefaultNodeInfo<String> nodeInfo = new DefaultNodeInfo<String>(
         provider, new TextCell());
     MockHasData<String> display = new MockHasData<String>();

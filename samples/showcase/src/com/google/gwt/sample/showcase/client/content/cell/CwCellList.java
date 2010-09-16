@@ -165,11 +165,15 @@ public class CwCellList extends ContentWidget {
 
     // Create a CellList.
     ContactCell contactCell = new ContactCell(images.contact());
-    cellList = new CellList<ContactInfo>(contactCell);
+
+    // Set a key provider that provides a unique key for each contact. If key is
+    // used to identify contacts when fields (such as the name and address)
+    // change.
+    cellList = new CellList<ContactInfo>(contactCell, ContactDatabase.ContactInfo.KEY_PROVIDER);
     cellList.setPageSize(30);
 
     // Add a selection model so we can select cells.
-    final SingleSelectionModel<ContactInfo> selectionModel = new SingleSelectionModel<ContactInfo>();
+    final SingleSelectionModel<ContactInfo> selectionModel = new SingleSelectionModel<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
     cellList.setSelectionModel(selectionModel);
     selectionModel.addSelectionChangeHandler(
         new SelectionChangeEvent.Handler() {
@@ -177,12 +181,6 @@ public class CwCellList extends ContentWidget {
             contactForm.setContact(selectionModel.getSelectedObject());
           }
         });
-
-    // Set a key provider that provides a unique key for each contact. If key is
-    // used to identify contacts when fields (such as the name and address)
-    // change.
-    cellList.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
-    selectionModel.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
 
     // Add the CellList to the data provider in the database.
     ContactDatabase.get().addDataDisplay(cellList);

@@ -18,6 +18,7 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.core.client.GWT;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.SyncResult;
@@ -103,6 +104,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
+    requestObject = requestFactory.expenseRequest().persist(expense);
     ExpenseProxy editableExpense = requestObject.edit(expense);
     editableExpense.setDescription(nameText.getText());
     editableExpense.setCategory(categoryText.getText());

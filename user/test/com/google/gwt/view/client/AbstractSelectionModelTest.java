@@ -47,6 +47,11 @@ public class AbstractSelectionModelTest extends GWTTestCase {
    * @param <T> the data type
    */
   private static class MockSelectionModel<T> extends AbstractSelectionModel<T> {
+
+    public MockSelectionModel(ProvidesKey<T> keyProvider) {
+      super(keyProvider);
+    }
+    
     public boolean isSelected(T object) {
       return false;
     }
@@ -62,7 +67,7 @@ public class AbstractSelectionModelTest extends GWTTestCase {
   }
 
   public void testFireSelectionChangeEvent() {
-    AbstractSelectionModel<String> model = createSelectionModel();
+    AbstractSelectionModel<String> model = createSelectionModel(null);
     MockSelectionChangeHandler handler = new MockSelectionChangeHandler();
     model.addSelectionChangeHandler(handler);
 
@@ -75,7 +80,7 @@ public class AbstractSelectionModelTest extends GWTTestCase {
    * Test that resolving changes doesn't prevent an event from firing.
    */
   public void testResolveChanges() {
-    AbstractSelectionModel<String> model = createSelectionModel();
+    AbstractSelectionModel<String> model = createSelectionModel(null);
     final MockSelectionChangeHandler handler = new MockSelectionChangeHandler();
     model.addSelectionChangeHandler(handler);
 
@@ -93,7 +98,7 @@ public class AbstractSelectionModelTest extends GWTTestCase {
   }
 
   public void testScheduleSelectionChangeEvent() {
-    AbstractSelectionModel<String> model = createSelectionModel();
+    AbstractSelectionModel<String> model = createSelectionModel(null);
     final MockSelectionChangeHandler handler = new MockSelectionChangeHandler() {
       @Override
       public void onSelectionChange(SelectionChangeEvent event) {
@@ -130,7 +135,7 @@ public class AbstractSelectionModelTest extends GWTTestCase {
   }
 
   public void testSetKeyProvider() {
-    AbstractSelectionModel<String> model = createSelectionModel();
+    AbstractSelectionModel<String> model = createSelectionModel(null);
 
     // By default, use the object as a key.
     assertNull(model.getKeyProvider());
@@ -143,13 +148,13 @@ public class AbstractSelectionModelTest extends GWTTestCase {
         return item == null ? item : item.toUpperCase();
       }
     };
-    model.setKeyProvider(keyProvider);
+    model = createSelectionModel(keyProvider);
     assertEquals(keyProvider, model.getKeyProvider());
     assertEquals("TEST", model.getKey("test"));
     assertEquals(null, model.getKey(null));
   }
 
-  protected AbstractSelectionModel<String> createSelectionModel() {
-    return new MockSelectionModel<String>();
+  protected AbstractSelectionModel<String> createSelectionModel(ProvidesKey<String> keyProvider) {
+    return new MockSelectionModel<String>(keyProvider);
   }
 }

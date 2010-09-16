@@ -32,6 +32,23 @@ public class NoSelectionModel<T> extends AbstractSelectionModel<T> {
 
   private Object lastKey;
   private T lastSelection;
+  
+  /**
+   * Constructs a NoSelectionModel without a key provider.
+   */
+  public NoSelectionModel() {
+    super(null);
+  }
+  
+  /**
+   * Constructs a NoSelectionModel with the given key provider.
+   *
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public NoSelectionModel(ProvidesKey<T> keyProvider) {
+    super(keyProvider);
+  }
 
   /**
    * Gets the object that was last selected.

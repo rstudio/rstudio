@@ -22,6 +22,10 @@ package com.google.gwt.view.client;
  * @param <T> the selection type
  */
 public class MockSelectionModel<T> extends MultiSelectionModel<T> {
+  
+  public MockSelectionModel(ProvidesKey<T> keyProvider) {
+    super(keyProvider);
+  }
 
   @Override
   protected void scheduleSelectionChangeEvent() {

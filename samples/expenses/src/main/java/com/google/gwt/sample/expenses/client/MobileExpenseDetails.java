@@ -70,7 +70,7 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
             if (expense != null) {
               ExpenseProxy newRecord = event.getProxy();
               if (newRecord.getId().equals(expense.getId())) {
-                show(newRecord);
+                onRefresh(false);
               }
             }
           }
@@ -109,11 +109,10 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
 
   public void onRefresh(boolean clear) {
     requestFactory.expenseRequest().findExpense(expense.getId()).fire(
-        new Receiver<List<ExpenseProxy>>() {
+        new Receiver<ExpenseProxy>() {
           @Override
-          public void onSuccess(List<ExpenseProxy> response, Set<SyncResult> syncResults) {
-            assert response.size() == 1;
-            show(response.get(0));
+          public void onSuccess(ExpenseProxy response, Set<SyncResult> syncResults) {
+            show(response);
           }
         });
   }

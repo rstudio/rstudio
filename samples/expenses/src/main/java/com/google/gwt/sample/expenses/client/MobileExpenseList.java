@@ -135,13 +135,12 @@ public class MobileExpenseList extends Composite implements MobilePage {
       final Listener listener, final ExpensesRequestFactory requestFactory) {
     this.listener = listener;
     this.requestFactory = requestFactory;
-    expenseDataProvider = new AsyncDataProvider<ExpenseProxy>() {
+    expenseDataProvider = new AsyncDataProvider<ExpenseProxy>(Expenses.EXPENSE_RECORD_KEY_PROVIDER) {
       @Override
       protected void onRangeChanged(HasData<ExpenseProxy> view) {
         requestExpenses();
       }
     };
-    expenseDataProvider.setKeyProvider(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
 
     expenseList = new CellList<ExpenseProxy>(new ExpenseCell());
 
@@ -159,6 +158,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
     initWidget(expenseList);
   }
 
+  @Override
   public Widget asWidget() {
     return this;
   }
@@ -214,6 +214,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
       return;
     }
     lastReceiver = new Receiver<List<ExpenseProxy>>() {
+      @Override
       public void onSuccess(
           List<ExpenseProxy> newValues, Set<SyncResult> syncResults) {
         if (this == lastReceiver) {

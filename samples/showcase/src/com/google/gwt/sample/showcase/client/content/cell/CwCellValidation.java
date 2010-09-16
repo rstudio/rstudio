@@ -222,8 +222,7 @@ public class CwCellValidation extends ContentWidget {
   @Override
   public Widget onInitialize() {
     // Create a table.
-    final CellTable<ContactInfo> table = new CellTable<ContactInfo>(10);
-    table.setKeyProvider(ContactInfo.KEY_PROVIDER);
+    final CellTable<ContactInfo> table = new CellTable<ContactInfo>(10, ContactInfo.KEY_PROVIDER);
 
     // Add the Name column.
     table.addColumn(new Column<ContactInfo, String>(new TextCell()) {

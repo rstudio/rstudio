@@ -33,14 +33,4 @@ public interface HasKeyProvider<T> {
    * @return the {@link ProvidesKey}
    */
   ProvidesKey<T> getKeyProvider();
-
-  /**
-   * Sets the {@link ProvidesKey} instance that will be used to generate keys
-   * for each record object as needed.
-   *
-   * @param keyProvider an instance of {@link ProvidesKey} used to generate keys
-   *          for record objects.
-   */
-  // TODO(jlabanca) - Do we rehash the view data if it changes?
-  void setKeyProvider(ProvidesKey<T> keyProvider);
 }

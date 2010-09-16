@@ -21,7 +21,7 @@ package com.google.gwt.view.client;
 public class SingleSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testGetSelectedObject() {
-    SingleSelectionModel<String> model = createSelectionModel();
+    SingleSelectionModel<String> model = createSelectionModel(null);
     assertNull(model.getSelectedObject());
 
     model.setSelected("test", true);
@@ -32,7 +32,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSelectedChangeEvent() {
-    SingleSelectionModel<String> model = createSelectionModel();
+    SingleSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
@@ -45,7 +45,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
   }
   
   public void testNoDuplicateChangeEvent() {
-    SingleSelectionModel<String> model = createSelectionModel();
+    SingleSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
@@ -59,7 +59,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
   }
   
   public void testNoDuplicateChangeEvent2() {
-    SingleSelectionModel<String> model = createSelectionModel();
+    SingleSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
@@ -74,7 +74,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSetSelected() {
-    SingleSelectionModel<String> model = createSelectionModel();
+    SingleSelectionModel<String> model = createSelectionModel(null);
     assertFalse(model.isSelected("test0"));
 
     model.setSelected("test0", true);
@@ -90,13 +90,12 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSetSelectedWithKeyProvider() {
-    SingleSelectionModel<String> model = createSelectionModel();
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
       public Object getKey(String item) {
         return item.toUpperCase();
       }
     };
-    model.setKeyProvider(keyProvider);
+    SingleSelectionModel<String> model = createSelectionModel(keyProvider);
     assertFalse(model.isSelected("test0"));
 
     model.setSelected("test0", true);
@@ -114,7 +113,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   @Override
-  protected SingleSelectionModel<String> createSelectionModel() {
-    return new SingleSelectionModel<String>();
+  protected SingleSelectionModel<String> createSelectionModel(ProvidesKey<String> keyProvider) {
+    return new SingleSelectionModel<String>(keyProvider);
   }
 }

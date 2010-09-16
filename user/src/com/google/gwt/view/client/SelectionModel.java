@@ -53,7 +53,15 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
      */
     private boolean isEventScheduled;
 
-    private ProvidesKey<T> keyProvider;
+    private final ProvidesKey<T> keyProvider;
+    
+    /**
+     * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+     *        object should act as its own key
+     */
+    protected AbstractSelectionModel(ProvidesKey<T> keyProvider) {
+      this.keyProvider = keyProvider;
+    }
 
     public HandlerRegistration addSelectionChangeHandler(
         SelectionChangeEvent.Handler handler) {
@@ -73,15 +81,6 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
      */
     public ProvidesKey<T> getKeyProvider() {
       return keyProvider;
-    }
-
-    /**
-     * Set the key provider for items in this model.
-     * 
-     * @param keyProvider the {@link ProvidesKey}
-     */
-    public void setKeyProvider(ProvidesKey<T> keyProvider) {
-      this.keyProvider = keyProvider;
     }
 
     protected void fireSelectionChangeEvent() {

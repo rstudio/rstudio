@@ -304,7 +304,7 @@ public class HasDataPresenterTest extends TestCase {
     view.assertLastHtml("start=0,size=10");
 
     // Set the selection model.
-    SelectionModel<String> model = new MockSelectionModel<String>();
+    SelectionModel<String> model = new MockSelectionModel<String>(null);
     model.setSelected("test 0", true);
     presenter.setSelectionModel(model);
     view.assertReplaceAllChildrenCalled(true);
@@ -906,7 +906,7 @@ public class HasDataPresenterTest extends TestCase {
     view.assertLastHtml("start=0,size=10");
 
     // Set the selection model.
-    SelectionModel<String> model = new MockSelectionModel<String>();
+    SelectionModel<String> model = new MockSelectionModel<String>(null);
     model.setSelected("test 0", true);
     presenter.setSelectionModel(model);
     view.assertReplaceAllChildrenCalled(true);
@@ -951,7 +951,7 @@ public class HasDataPresenterTest extends TestCase {
     view.assertLastHtml("start=0,size=10");
 
     // Set the selection model.
-    SelectionModel<String> model = new MockSelectionModel<String>();
+    SelectionModel<String> model = new MockSelectionModel<String>(null);
     model.setSelected("test 0", true);
     presenter.setSelectionModel(model);
     view.assertReplaceAllChildrenCalled(false);

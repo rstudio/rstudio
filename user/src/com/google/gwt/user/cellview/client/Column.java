@@ -54,12 +54,12 @@ public abstract class Column<T, C> implements HasCell<T, C> {
   public abstract C getValue(T object);
 
   /**
-   * @param providesKey an instance of ProvidesKey<T>, or null if the record
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
    *          object should act as its own key.
    */
   public void onBrowserEvent(Element elem, final int index, final T object,
-      NativeEvent event, ProvidesKey<T> providesKey) {
-    Object key = getKey(object, providesKey);
+      NativeEvent event, ProvidesKey<T> keyProvider) {
+    Object key = getKey(object, keyProvider);
     ValueUpdater<C> valueUpdater = (fieldUpdater == null)
         ? null : new ValueUpdater<C>() {
           public void update(C value) {

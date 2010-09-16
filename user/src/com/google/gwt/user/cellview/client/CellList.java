@@ -133,7 +133,7 @@ public class CellList<T> extends AbstractHasData<T> {
    * @param cell the cell used to render each item
    */
   public CellList(final Cell<T> cell) {
-    this(cell, getDefaultResources());
+    this(cell, getDefaultResources(), null);
   }
 
   /**
@@ -143,7 +143,31 @@ public class CellList<T> extends AbstractHasData<T> {
    * @param resources the resources used for this widget
    */
   public CellList(final Cell<T> cell, Resources resources) {
-    super(Document.get().createDivElement(), DEFAULT_PAGE_SIZE);
+    this(cell, resources, null);
+  }
+
+  /**
+   * Construct a new {@link CellList} with the specified {@link ProvidesKey key provider}.
+   * 
+   * @param cell the cell used to render each item
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public CellList(final Cell<T> cell, ProvidesKey<T> keyProvider) {
+    this(cell, getDefaultResources(), keyProvider);
+  }
+
+  /**
+   * Construct a new {@link CellList} with the specified {@link Resources}
+   * and {@link ProvidesKey key provider}.
+   * 
+   * @param cell the cell used to render each item
+   * @param resources the resources used for this widget
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public CellList(final Cell<T> cell, Resources resources, ProvidesKey<T> keyProvider) {
+    super(Document.get().createDivElement(), DEFAULT_PAGE_SIZE, keyProvider);
     this.cell = cell;
     this.style = resources.cellListStyle();
     this.style.ensureInjected();

@@ -725,9 +725,9 @@ public class CellBrowser extends AbstractCellTree
   // TODO(jlabanca): Move createDisplay into constructor factory arg?
   protected <C> AbstractHasData<C> createDisplay(
       NodeInfo<C> nodeInfo, Cell<C> cell) {
-    CellList<C> display = new CellList<C>(cell, getCellListResources());
+    CellList<C> display = new CellList<C>(cell, getCellListResources(),
+        nodeInfo.getProvidesKey());
     display.setValueUpdater(nodeInfo.getValueUpdater());
-    display.setKeyProvider(nodeInfo.getProvidesKey());
     return display;
   }
 

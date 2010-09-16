@@ -433,9 +433,19 @@ public class CellTable<T> extends AbstractHasData<T> {
    * @param pageSize the page size
    */
   public CellTable(final int pageSize) {
-    this(pageSize, getDefaultResources());
+    this(pageSize, getDefaultResources(), null);
   }
 
+  /**
+   * Constructs a table with a default page size of 15, and the given {@link ProvidesKey key provider}.
+   * 
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public CellTable(ProvidesKey<T> keyProvider) {
+    this(DEFAULT_PAGESIZE, getDefaultResources(), keyProvider);
+  }
+  
   /**
    * Constructs a table with the given page size with the specified
    * {@link Resources}.
@@ -444,7 +454,31 @@ public class CellTable<T> extends AbstractHasData<T> {
    * @param resources the resources to use for this widget
    */
   public CellTable(final int pageSize, Resources resources) {
-    super(Document.get().createTableElement(), pageSize);
+    this(pageSize, resources, null);
+  }
+
+  /**
+   * Constructs a table with the given page size and the given {@link ProvidesKey key provider}.
+   * 
+   * @param pageSize the page size
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public CellTable(final int pageSize, ProvidesKey<T> keyProvider) {
+    this(pageSize, getDefaultResources(), keyProvider);
+  }
+
+  /**
+   * Constructs a table with the given page size, the specified
+   * {@link Resources}, and the given key provider.
+   * 
+   * @param pageSize the page size
+   * @param resources the resources to use for this widget
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public CellTable(final int pageSize, Resources resources, ProvidesKey<T> keyProvider) {
+    super(Document.get().createTableElement(), pageSize, keyProvider);
     if (TABLE_IMPL == null) {
       TABLE_IMPL = GWT.create(Impl.class);
     }

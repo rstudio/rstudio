@@ -267,8 +267,7 @@ public class ContactTreeViewModel implements TreeViewModel {
             ContactDatabase.get().queryContactsByCategoryAndFirstName(count.category,
                 count.firstLetter + "");
       ListDataProvider<ContactInfo> dataProvider = new ListDataProvider<
-          ContactInfo>(contacts);
-      dataProvider.setKeyProvider(ContactInfo.KEY_PROVIDER);
+          ContactInfo>(contacts, ContactInfo.KEY_PROVIDER);
       return new DefaultNodeInfo<ContactInfo>(
           dataProvider, contactCell, selectionModel, null);
     }

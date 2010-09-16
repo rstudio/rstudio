@@ -112,7 +112,7 @@ public class ReportBack {
     EntityManager em = entityManager();
     try {
       List<ReportBack> reportList = em.createQuery("select o from Report o").setFirstResult(
-          0).setMaxResults(maxResults).getResultList();
+          firstResult).setMaxResults(maxResults).getResultList();
       // force it to materialize
       reportList.size();
       return reportList;
@@ -453,6 +453,7 @@ public class ReportBack {
     this.version = version;
   }
 
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("Id: ").append(getId()).append(", ");

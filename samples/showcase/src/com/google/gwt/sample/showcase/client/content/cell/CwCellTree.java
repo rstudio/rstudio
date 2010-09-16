@@ -91,8 +91,8 @@ public class CwCellTree extends ContentWidget {
   @ShowcaseSource
   @Override
   public Widget onInitialize() {
-    final MultiSelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>();
-    selectionModel.setKeyProvider(ContactDatabase.ContactInfo.KEY_PROVIDER);
+    final MultiSelectionModel<ContactInfo> selectionModel =
+      new MultiSelectionModel<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
     selectionModel.addSelectionChangeHandler(
         new SelectionChangeEvent.Handler() {
           public void onSelectionChange(SelectionChangeEvent event) {

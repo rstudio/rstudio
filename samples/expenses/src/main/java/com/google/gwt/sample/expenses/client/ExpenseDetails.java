@@ -388,8 +388,8 @@ public class ExpenseDetails extends Composite {
   @UiField
   Anchor reportsLink;
 
-  @UiField
-  CellTable<ExpenseProxy> table;
+  @UiField(provided = true)
+  CellTable<ExpenseProxy> table = new CellTable<ExpenseProxy>(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
 
   @UiField
   Element unreconciledLabel;
@@ -456,9 +456,7 @@ public class ExpenseDetails extends Composite {
   public ExpenseDetails() {
     createErrorPopup();
     initWidget(uiBinder.createAndBindUi(this));
-    items = new ListDataProvider<ExpenseProxy>();
-    items.setKeyProvider(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
-    table.setKeyProvider(items);
+    items = new ListDataProvider<ExpenseProxy>(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
     items.addDataDisplay(table);
 
     // Switch to edit notes.
@@ -584,13 +582,15 @@ public class ExpenseDetails extends Composite {
 
     // Reset sorting state of table
     lastComparator = defaultComparator;
-    for (SortableHeader header : allHeaders) {
-      header.setSorted(false);
-      header.setReverseSort(true);
+    if (allHeaders.size() > 0) {
+      for (SortableHeader header : allHeaders) {
+        header.setSorted(false);
+        header.setReverseSort(true);
+      }
+      allHeaders.get(0).setSorted(true);
+      allHeaders.get(0).setReverseSort(false);
+      table.redrawHeaders();
     }
-    allHeaders.get(0).setSorted(true);
-    allHeaders.get(0).setReverseSort(false);
-    table.redrawHeaders();
 
     // Request the expenses.
     requestExpenses();
@@ -907,7 +907,9 @@ public class ExpenseDetails extends Composite {
           Set<SyncResult> syncResults) {
         if (this == lastReceiver) {
           List<ExpenseProxy> list = new ArrayList<ExpenseProxy>(newValues);
-          sortExpenses(list, lastComparator);
+          if (lastComparator != null) {
+            sortExpenses(list, lastComparator);
+          }
           items.setList(list);
           refreshCost();
 

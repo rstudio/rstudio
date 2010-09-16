@@ -24,7 +24,7 @@ import java.util.Set;
 public class MultiSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testGetSelectedSet() {
-    MultiSelectionModel<String> model = createSelectionModel();
+    MultiSelectionModel<String> model = createSelectionModel(null);
     Set<String> selected = new HashSet<String>();
     assertEquals(selected, model.getSelectedSet());
 
@@ -42,7 +42,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSelectedChangeEvent() {
-    MultiSelectionModel<String> model = createSelectionModel();
+    MultiSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
@@ -55,7 +55,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
   }
   
   public void testNoDuplicateChangeEvent() {
-    MultiSelectionModel<String> model = createSelectionModel();
+    MultiSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
@@ -69,7 +69,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
   }
   
   public void testNoDuplicateChangeEvent2() {
-    MultiSelectionModel<String> model = createSelectionModel();
+    MultiSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         fail();
@@ -84,7 +84,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSetSelected() {
-    MultiSelectionModel<String> model = createSelectionModel();
+    MultiSelectionModel<String> model = createSelectionModel(null);
     assertFalse(model.isSelected("test0"));
 
     model.setSelected("test0", true);
@@ -100,13 +100,12 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   public void testSetSelectedWithKeyProvider() {
-    MultiSelectionModel<String> model = createSelectionModel();
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
       public Object getKey(String item) {
         return item.toUpperCase();
       }
     };
-    model.setKeyProvider(keyProvider);
+    MultiSelectionModel<String> model = createSelectionModel(keyProvider);
     assertFalse(model.isSelected("test0"));
 
     model.setSelected("test0", true);
@@ -127,7 +126,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
   }
 
   @Override
-  protected MultiSelectionModel<String> createSelectionModel() {
-    return new MultiSelectionModel<String>();
+  protected MultiSelectionModel<String> createSelectionModel(ProvidesKey<String> keyProvider) {
+    return new MultiSelectionModel<String>(keyProvider);
   }
 }

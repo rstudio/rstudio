@@ -436,7 +436,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
    * Creates an empty model.
    */
   public ListDataProvider() {
-    this(new ArrayList<T>());
+    this(new ArrayList<T>(), null);
   }
 
   /**
@@ -445,6 +445,29 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
    * to displays.
    */
   public ListDataProvider(List<T> wrappee) {
+    this(wrappee, null);
+  }
+
+  /**
+   * Creates an empty list model that wraps the given collection.
+   *
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public ListDataProvider(ProvidesKey<T> keyProvider) {
+    this(new ArrayList<T>(), keyProvider);
+  }
+
+  /**
+   * Creates a list model that wraps the given collection. Changes to the
+   * wrapped list must be made via this model in order to be correctly applied
+   * to displays.
+   *
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public ListDataProvider(List<T> wrappee, ProvidesKey<T> keyProvider) {
+    super(keyProvider);
     listWrapper = new ListWrapper(wrappee);
   }
 

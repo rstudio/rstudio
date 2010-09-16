@@ -40,6 +40,23 @@ public abstract class DefaultSelectionModel<T> extends AbstractSelectionModel<
   private final HashMap<T, Boolean> selectionChanges = new HashMap<T, Boolean>();
 
   /**
+   * Constructs a DefaultSelectionModel without a key provider.
+   */
+  public DefaultSelectionModel() {
+    super(null);
+  }
+  
+  /**
+   * Constructs a DefaultSelectionModel with the given key provider.
+   *
+   * @param keyProvider an instance of ProvidesKey<T>, or null if the record
+   *        object should act as its own key
+   */
+  public DefaultSelectionModel(ProvidesKey<T> keyProvider) {
+    super(keyProvider);
+  }
+  
+  /**
    * Removes all exceptions.
    */
   public void clearExceptions() {

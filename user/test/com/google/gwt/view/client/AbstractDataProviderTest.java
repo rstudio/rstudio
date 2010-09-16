@@ -35,6 +35,10 @@ public class AbstractDataProviderTest extends GWTTestCase {
   static class MockDataProvider<T> extends AbstractDataProvider<T> {
 
     private HasData<T> lastChanged;
+    
+    public MockDataProvider(ProvidesKey<T> keyProvider) {
+      super(keyProvider);
+    }
 
     public void assertLastRangeChanged(HasData<T> expected) {
       assertEquals(expected, lastChanged);
@@ -56,7 +60,7 @@ public class AbstractDataProviderTest extends GWTTestCase {
   }
 
   public void testAddRemoveDataDisplay() {
-    MockDataProvider<String> provider = new MockDataProvider<String>();
+    MockDataProvider<String> provider = new MockDataProvider<String>(null);
 
     // Test with no displays.
     provider.updateRowCount(10, true);
@@ -150,21 +154,20 @@ public class AbstractDataProviderTest extends GWTTestCase {
     assertTrue(displays.contains(display1));
   }
 
-  public void testSetKeyProvider() {
-    AbstractDataProvider<String> provider = createDataProvider();
-
+  public void testKeyProvider() {
     // By default, use the object as a key.
+    AbstractDataProvider<String> provider = createDataProvider(null);
     assertNull(provider.getKeyProvider());
     assertEquals("test", provider.getKey("test"));
     assertEquals(null, provider.getKey(null));
-
-    // Defer to the key provider if one is set.
+    
+    // Set a key provider
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
       public Object getKey(String item) {
         return item == null ? item : item.toUpperCase();
       }
     };
-    provider.setKeyProvider(keyProvider);
+    provider = createDataProvider(keyProvider);
     assertEquals(keyProvider, provider.getKeyProvider());
     assertEquals("TEST", provider.getKey("test"));
     assertEquals(null, provider.getKey(null));
@@ -300,7 +303,16 @@ public class AbstractDataProviderTest extends GWTTestCase {
    * @return the data provider
    */
   protected AbstractDataProvider<String> createDataProvider() {
-    return new MockDataProvider<String>();
+    return new MockDataProvider<String>(null);
+  }
+
+  /**
+   * Create an {@link AbstractDataProvider} for testing.
+   *
+   * @return the data provider
+   */
+  protected AbstractDataProvider<String> createDataProvider(ProvidesKey<String> keyProvider) {
+    return new MockDataProvider<String>(keyProvider);
   }
 
   /**

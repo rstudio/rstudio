@@ -58,6 +58,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
+import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
@@ -175,6 +176,11 @@ public class ExpenseList extends Composite implements
    * The data provider used to retrieve reports.
    */
   private class ReportDataProvider extends AsyncDataProvider<ReportProxy> {
+
+    ReportDataProvider(ProvidesKey<ReportProxy> keyProvider) {
+      super(keyProvider);
+    }
+
     @Override
     protected void onRangeChanged(HasData<ReportProxy> display) {
       requestReports(false);
@@ -282,7 +288,7 @@ public class ExpenseList extends Composite implements
   /**
    * The data provider that provides reports.
    */
-  private final ReportDataProvider reports = new ReportDataProvider();
+  private final ReportDataProvider reports = new ReportDataProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
 
   /**
    * The factory used to send requests.
@@ -300,8 +306,6 @@ public class ExpenseList extends Composite implements
   private String startsWithSearch;
 
   public ExpenseList() {
-    reports.setKeyProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
-
     // Initialize the widget.
     createTable();
     searchBox = new DefaultTextBox("search");
@@ -556,6 +560,7 @@ public class ExpenseList extends Composite implements
         pager.startLoading();
       }
       lastDataSizeReceiver = new Receiver<Long>() {
+        @Override
         public void onSuccess(Long response, Set<SyncResult> syncResults) {
           if (this == lastDataSizeReceiver) {
             int count = response.intValue();
@@ -570,6 +575,7 @@ public class ExpenseList extends Composite implements
 
     // Request reports in the current range.
     lastDataReceiver = new Receiver<List<ReportProxy>>() {
+      @Override
       public void onSuccess(List<ReportProxy> newValues,
           Set<SyncResult> syncResults) {
         if (this == lastDataReceiver) {

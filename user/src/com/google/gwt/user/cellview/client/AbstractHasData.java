@@ -239,9 +239,10 @@ public abstract class AbstractHasData<T> extends Widget
    *
    * @param pageSize the page size
    */
-  public AbstractHasData(Element elem, final int pageSize) {
+  public AbstractHasData(Element elem, final int pageSize, final ProvidesKey<T> keyProvider) {
     setElement(elem);
     this.presenter = new HasDataPresenter<T>(this, new View<T>(this), pageSize);
+    this.providesKey = keyProvider;
   }
 
   public HandlerRegistration addRangeChangeHandler(
@@ -314,10 +315,6 @@ public abstract class AbstractHasData<T> extends Widget
    */
   public void redraw() {
     presenter.redraw();
-  }
-
-  public void setKeyProvider(ProvidesKey<T> keyProvider) {
-    this.providesKey = keyProvider;
   }
 
   /**

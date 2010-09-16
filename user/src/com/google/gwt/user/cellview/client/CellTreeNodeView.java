@@ -148,10 +148,10 @@ class CellTreeNodeView<T> extends UIObject {
         }
 
         // Render the child nodes.
-        ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
+        ProvidesKey<C> keyProvider = nodeInfo.getProvidesKey();
         TreeViewModel model = nodeView.tree.getTreeViewModel();
         for (C value : values) {
-          Object key = providesKey.getKey(value);
+          Object key = keyProvider.getKey(value);
           boolean isOpen = openNodes.contains(key);
 
           // Outer div contains image, value, and children (when open)
@@ -261,7 +261,7 @@ class CellTreeNodeView<T> extends UIObject {
         int len = values.size();
         int end = start + len;
         int childCount = nodeView.getChildCount();
-        ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
+        ProvidesKey<C> keyProvider = nodeInfo.getProvidesKey();
 
         Element container = nodeView.ensureChildContainer();
         Element childElem = container.getFirstChildElement();
@@ -269,7 +269,7 @@ class CellTreeNodeView<T> extends UIObject {
           C childValue = values.get(i - start);
           CellTreeNodeView<C> child = nodeView.createTreeNodeView(nodeInfo,
               childElem, childValue, null);
-          CellTreeNodeView<?> savedChild = savedViews.remove(providesKey.getKey(childValue));
+          CellTreeNodeView<?> savedChild = savedViews.remove(keyProvider.getKey(childValue));
           // Copy the saved child's state into the new child
           if (savedChild != null) {
             child.animationFrame = savedChild.animationFrame;
@@ -342,12 +342,12 @@ class CellTreeNodeView<T> extends UIObject {
         }
 
         // Trim the saved views down to the children that still exists.
-        ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
+        ProvidesKey<C> keyProvider = nodeInfo.getProvidesKey();
         Map<Object, CellTreeNodeView<?>> savedViews = new HashMap<Object, CellTreeNodeView<?>>();
         for (C childValue : values) {
           // Remove any child elements that correspond to prior children
           // so the call to setInnerHtml will not destroy them
-          Object key = providesKey.getKey(childValue);
+          Object key = keyProvider.getKey(childValue);
           CellTreeNodeView<?> savedView = openNodes.remove(key);
           if (savedView != null) {
             savedView.ensureAnimationFrame().removeFromParent();
