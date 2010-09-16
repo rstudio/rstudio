@@ -119,9 +119,30 @@ public abstract class SuggestOracle {
 
   /**
    * {@link com.google.gwt.user.client.ui.SuggestOracle} response.
+   * 
+   * <p>Can optionally have truncation information provided. To indicate that
+   * there are more results but the number is not known, use:
+   * 
+   * <p><code>response.setMoreSuggestions(true);</code>
+   * 
+   * <p>Or to indicate more results with an exact number, use:
+   * 
+   * <p><code>response.setMoreSuggestionsCount(102);</code>
    */
   public static class Response implements IsSerializable {
     private Collection<? extends Suggestion> suggestions;
+
+    /**
+     * The response is considered to have "more suggestions" when the number of 
+     * matching suggestions exceeds {@link Request#getLimit}, so the response
+     * suggestion list is truncated.
+     */
+    private boolean moreSuggestions = false;
+
+    /**
+     * Number of truncated suggestions.
+     */
+    private int numMoreSuggestions = 0;
 
     /**
      * Constructor for {@link Response}.
@@ -140,6 +161,16 @@ public abstract class SuggestOracle {
     }
 
     /**
+     * Gets how many more suggestions there are.
+     * 
+     * @return the count. if there no more suggestions or the number of more
+     *         suggestions is unknown, returns 0.
+     */
+    public int getMoreSuggestionsCount() {
+      return this.numMoreSuggestions;
+    }
+    
+    /**
      * Gets the collection of suggestions. Each suggestion must implement the
      * {@link Suggestion} interface.
      * 
@@ -147,6 +178,36 @@ public abstract class SuggestOracle {
      */
     public Collection<? extends Suggestion> getSuggestions() {
       return this.suggestions;
+    }
+
+    /**
+     * Gets whether or not the suggestion list was truncated due to the
+     * {@Request#getLimit}.
+     */
+    public boolean hasMoreSuggestions() {
+      return this.moreSuggestions;
+    }
+
+    /**
+     * Sets whether or not the suggestion list was truncated due to the
+     * {@Request#getLimit}.
+     */
+    public void setMoreSuggestions(boolean moreSuggestions) {
+      this.moreSuggestions = moreSuggestions;
+    }
+
+    /**
+     * Sets whether or not the suggestion list was truncated due to the
+     * {@Request#getLimit}, by providing an exact count of remaining 
+     * suggestions.
+     * 
+     * @param count number of truncated suggestions. Pass 0 to indicate there
+     *        are no other suggestions, which is equivlent to 
+     *        {@link #setMoreSuggestions(false)}.
+     */
+    public void setMoreSuggestionsCount(int count) {
+      this.numMoreSuggestions = count;
+      this.moreSuggestions = (count > 0);
     }
 
     /**

@@ -219,9 +219,25 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
   @Override
   public void requestSuggestions(Request request, Callback callback) {
-    final List<MultiWordSuggestion> suggestions = computeItemsFor(
-        request.getQuery(), request.getLimit());
+    String query = normalizeSearch(request.getQuery());
+    int limit = request.getLimit();
+
+    // Get candidates from search words.
+    List<String> candidates = createCandidatesFromSearch(query);
+
+    // Respect limit for number of choices.
+    int numberTruncated = Math.max(0, candidates.size() - limit);
+    for (int i = candidates.size() - 1; i > limit; i--) {
+      candidates.remove(i);
+    }
+
+    // Convert candidates to suggestions.
+    List<MultiWordSuggestion> suggestions = 
+        convertToFormattedSuggestions(query, candidates);
+
     Response response = new Response(suggestions);
+    response.setMoreSuggestionsCount(numberTruncated);
+
     callback.onSuggestionsReady(request, response);
   }
 
@@ -268,23 +284,6 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     convertMe.setText(escapeMe);
     String escaped = convertMe.getHTML();
     return escaped;
-  }
-
-  /**
-   * Compute the suggestions that are matches for a given query.
-   * 
-   * @param query search string
-   * @param limit limit
-   * @return matching suggestions
-   */
-  private List<MultiWordSuggestion> computeItemsFor(String query, int limit) {
-    query = normalizeSearch(query);
-
-    // Get candidates from search words.
-    List<String> candidates = createCandidatesFromSearch(query, limit);
-
-    // Convert candidates to suggestions.
-    return convertToFormattedSuggestions(query, candidates);
   }
 
   /**
@@ -344,7 +343,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
   /**
    * Find the sorted list of candidates that are matches for the given query.
    */
-  private List<String> createCandidatesFromSearch(String query, int limit) {
+  private List<String> createCandidatesFromSearch(String query) {
     ArrayList<String> candidates = new ArrayList<String>();
 
     if (query.length() == 0) {
@@ -381,10 +380,6 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     if (candidateSet != null) {
       candidates.addAll(candidateSet);
       Collections.sort(candidates);
-      // Respect limit for number of choices.
-      for (int i = candidates.size() - 1; i > limit; i--) {
-        candidates.remove(i);
-      }
     }
     return candidates;
   }
