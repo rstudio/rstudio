@@ -56,16 +56,16 @@ public class ReportListView extends AbstractProxyListView<ReportProxy> {
 
     List<PropertyColumn<ReportProxy, ?>> columns = new ArrayList<PropertyColumn<ReportProxy, ?>>();
 
-    columns.add(new PropertyColumn<ReportProxy, Date>("created", "Created",
+    columns.add(new PropertyColumn<ReportProxy, Date>("created", "Created", Date.class,
         new DateTimeFormatRenderer(DateTimeFormat.getShortDateFormat())));
 
     columns.add(PropertyColumn.<ReportProxy> getStringPropertyColumn("purpose", "Purpose"));
 
     columns.add(new PropertyColumn<ReportProxy, EmployeeProxy>(
-        "reporter", "Reporter", EmployeeRenderer.instance()));
+        "reporter", "Reporter", EmployeeProxy.class, EmployeeRenderer.instance()));
 
     columns.add(new PropertyColumn<ReportProxy, EmployeeProxy>(
-        "approvedSupervisor", "Approved Supervisor Key", EmployeeRenderer.instance()));
+        "approvedSupervisor", "Approved Supervisor Key", EmployeeProxy.class, EmployeeRenderer.instance()));
 
     return columns;
   }
