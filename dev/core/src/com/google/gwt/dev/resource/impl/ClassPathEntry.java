@@ -17,8 +17,6 @@ package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,22 +37,6 @@ public abstract class ClassPathEntry {
    */
   public abstract Map<AbstractResource, PathPrefix> findApplicableResources(
       TreeLogger logger, PathPrefixSet pathPrefixSet);
-  
-  /**
-   * Finds applicable resources for a list of pathPrefixSets, returning a
-   * distinct answer for each set.
-   * 
-   * @see #findApplicableResources(TreeLogger, PathPrefixSet)
-   */
-  public List<Map<AbstractResource, PathPrefix>> findApplicableResources(
-      TreeLogger logger, List<PathPrefixSet> pathPrefixSets) {
-    List<Map<AbstractResource, PathPrefix>> results = new ArrayList<
-        Map<AbstractResource, PathPrefix>>(pathPrefixSets.size());
-    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
-      results.add(findApplicableResources(logger, pathPrefixSet));
-    }
-    return results;
-  }
 
   /**
    * Gets a URL string that describes this class path entry.

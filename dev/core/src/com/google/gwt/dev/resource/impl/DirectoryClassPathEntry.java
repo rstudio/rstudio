@@ -16,13 +16,10 @@
 package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.msg.Message1String;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,8 +28,14 @@ import java.util.Map;
 public class DirectoryClassPathEntry extends ClassPathEntry {
 
   private static class Messages {
+    static final Message1String NOT_DESCENDING_INTO_DIR = new Message1String(
+        TreeLogger.SPAM, "Prefix set does not include dir: $0");
+
     static final Message1String DESCENDING_INTO_DIR = new Message1String(
         TreeLogger.SPAM, "Descending into dir: $0");
+
+    static final Message1String EXCLUDING_FILE = new Message1String(
+        TreeLogger.DEBUG, "Filter excludes file: $0");
 
     static final Message1String INCLUDING_FILE = new Message1String(
         TreeLogger.DEBUG, "Including file: $0");
@@ -55,23 +58,10 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
   }
 
   @Override
-  public List<Map<AbstractResource, PathPrefix>> findApplicableResources(
-      TreeLogger logger, List<PathPrefixSet> pathPrefixSets) {
-    List<Map<AbstractResource, PathPrefix>> results = new ArrayList<Map<AbstractResource, PathPrefix>>(
-        pathPrefixSets.size());
-    for (int i = 0, c = pathPrefixSets.size(); i < c; ++i) {
-      results.add(new IdentityHashMap<AbstractResource, PathPrefix>());
-    }
-    descendToFindResources(logger, pathPrefixSets, results, dir, "");
-    return results;
-  }
-
-  @Override
   public Map<AbstractResource, PathPrefix> findApplicableResources(
       TreeLogger logger, PathPrefixSet pathPrefixSet) {
     Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
-    descendToFindResources(logger, Lists.create(pathPrefixSet),
-        Lists.create(results), dir, "");
+    descendToFindResources(logger, pathPrefixSet, results, dir, "");
     return results;
   }
 
@@ -82,19 +72,16 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
 
   /**
    * @param logger logs progress
-   * @param pathPrefixSets the sets of path prefixes to determine what resources
-   *          are included
-   * @param results the accumulating sets of resources (each with the
+   * @param resources the accumulating set of resources (each with the
    *          corresponding pathPrefix) found
    * @param dir the file or directory to consider
    * @param dirPath the abstract path name associated with 'parent', which
    *          explicitly does not include the classpath entry in its path
    */
   private void descendToFindResources(TreeLogger logger,
-      List<PathPrefixSet> pathPrefixSets,
-      List<Map<AbstractResource, PathPrefix>> results, File dir, String dirPath) {
+      PathPrefixSet pathPrefixSet, Map<AbstractResource, PathPrefix> resources,
+      File dir, String dirPath) {
     assert (dir.isDirectory()) : dir + " is not a directory";
-    int len = pathPrefixSets.size();
 
     // Assert: this directory is included in the path prefix set.
 
@@ -103,23 +90,26 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
       String childPath = dirPath + child.getName();
       if (child.isDirectory()) {
         String childDirPath = childPath + "/";
-        for (int i = 0; i < len; ++i) {
-          if (pathPrefixSets.get(i).includesDirectory(childDirPath)) {
-            Messages.DESCENDING_INTO_DIR.log(logger, child.getPath(), null);
-            descendToFindResources(logger, pathPrefixSets, results, child,
-                childDirPath);
-            break;
-          }
+        if (pathPrefixSet.includesDirectory(childDirPath)) {
+          Messages.DESCENDING_INTO_DIR.log(logger, child.getAbsolutePath(),
+              null);
+          descendToFindResources(logger, pathPrefixSet, resources, child,
+              childDirPath);
+        } else {
+          Messages.NOT_DESCENDING_INTO_DIR.log(logger, child.getAbsolutePath(),
+              null);
         }
       } else if (child.isFile()) {
-        for (int i = 0; i < len; ++i) {
-          PathPrefix prefix = null;
-          if ((prefix = pathPrefixSets.get(i).includesResource(childPath)) != null) {
-            Messages.INCLUDING_FILE.log(logger, childPath, null);
-            FileResource r = new FileResource(this, childPath, child);
-            results.get(i).put(r, prefix);
-          }
+        PathPrefix prefix = null;
+        if ((prefix = pathPrefixSet.includesResource(childPath)) != null) {
+          Messages.INCLUDING_FILE.log(logger, childPath, null);
+          FileResource r = new FileResource(this, childPath, child);
+          resources.put(r, prefix);
+        } else {
+          Messages.EXCLUDING_FILE.log(logger, childPath, null);
         }
+      } else {
+        Messages.EXCLUDING_FILE.log(logger, childPath, null);
       }
     }
   }
