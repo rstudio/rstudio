@@ -18,7 +18,7 @@ package com.google.gwt.validation.client;
 import javax.validation.constraints.NotNull;
 
 /**
- * A simple sample class to test javax.validation
+ * A simple sample class to test javax.validation.
  */
 public class SimpleSample {
   @NotNull

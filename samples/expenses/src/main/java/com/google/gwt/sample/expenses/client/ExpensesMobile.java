@@ -103,6 +103,7 @@ public class ExpensesMobile implements EntryPoint {
 
     requestFactory.employeeRequest().findEmployee(employeeId).fire(
         new Receiver<EmployeeProxy>() {
+          @Override
           public void onSuccess(EmployeeProxy employee,
               Set<SyncResult> syncResults) {
             final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
@@ -115,6 +116,7 @@ public class ExpensesMobile implements EntryPoint {
             // Add a login widget to the page
             final LoginWidget login = shell.getLoginWidget();
             Receiver<UserInformationProxy> receiver = new Receiver<UserInformationProxy>() {
+              @Override
               public void onSuccess(UserInformationProxy userInformationRecord,
                   Set<SyncResult> syncResults) {
                 login.setUserInformation(userInformationRecord);

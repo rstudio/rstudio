@@ -15,7 +15,6 @@
  */
 package com.google.gwt.validation.client.impl;
 
-
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -87,8 +86,8 @@ public interface GwtSpecificValidator<G> {
 
   /**
    * Validates all constraints placed on the property named
-   * <code>propertyName</code> of the class <code>beanType</code> would the
-   * property value be <code>value</code>
+   * <code>propertyName</code> of the class <code>beanType</code> where the
+   * property value is <code>value</code>.
    * <p/>
    * <code>ConstraintViolation</code> objects return null for
    * {@link ConstraintViolation#getRootBean()} and

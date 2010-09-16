@@ -20,11 +20,10 @@ import java.util.Date;
 import javax.validation.constraints.Future;
 
 /**
- * Tests for {@link FutureValidatorForDate}
+ * Tests for {@link FutureValidatorForDate}.
  */
 public class FutureValidatorForDateTest extends
     ConstraintValidatorTestCase<Future, Date> {
-
 
   @SuppressWarnings("unused")
   @Future

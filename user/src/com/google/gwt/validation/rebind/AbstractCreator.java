@@ -52,7 +52,7 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
       writeClassBody(sourceWriter);
       sourceWriter.commit(logger);
     }
-    return getQaulifiedName();
+    return getQualifiedName();
   }
 
   protected abstract void compose(ClassSourceFileComposerFactory composerFactory);
@@ -65,16 +65,16 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
 
   protected abstract void writeClassBody(SourceWriter sourceWriter);
 
-  private final String getQaulifiedName() {
+  private String getQualifiedName() {
     String packageName = getPackage();
     return (packageName == "" ? "" : packageName + ".") + getSimpleName();
   }
 
-  private final String getSimpleName() {
+  private String getSimpleName() {
     return validatorType.getSimpleSourceName() + "Impl";
   }
 
-  private final SourceWriter getSourceWriter(TreeLogger logger,
+  private SourceWriter getSourceWriter(TreeLogger logger,
       GeneratorContext ctx) {
     String packageName = getPackage();
     String simpleName = getSimpleName();

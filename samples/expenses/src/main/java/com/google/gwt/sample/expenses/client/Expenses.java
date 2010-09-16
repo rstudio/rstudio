@@ -161,6 +161,7 @@ public class Expenses implements EntryPoint {
     // Add a login widget to the page
     final LoginWidget login = shell.getLoginWidget();
     Receiver<UserInformationProxy> receiver = new Receiver<UserInformationProxy>() {
+      @Override
       public void onSuccess(UserInformationProxy userInformationRecord, Set<SyncResult> syncResults) {
         login.setUserInformation(userInformationRecord);
       }       

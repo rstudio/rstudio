@@ -67,6 +67,7 @@ public class ReportDetailsView extends Composite implements ProxyDetailsView<Rep
     initWidget(BINDER.createAndBindUi(this));
   }
 
+  @Override
   public Widget asWidget() {
     return this;
   }

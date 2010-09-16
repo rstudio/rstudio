@@ -117,6 +117,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     requestObject = null;
 
     Receiver<Void> receiver = new Receiver<Void>() {
+      @Override
       public void onSuccess(Void ignore, Set<SyncResult> response) {
         // TODO(rjrjr): This can be simplified with RequestFactory.refresh()
         if (display == null) {
@@ -169,6 +170,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     } else {
       ProxyRequest<P> findRequest = getFindRequest(getRecord().getId());
       findRequest.with(getView().getPaths()).fire(new Receiver<P>() {
+        @Override
         public void onSuccess(P record, Set<SyncResult> syncResults) {
           if (AbstractProxyEditActivity.this.display != null) {
             doStart(AbstractProxyEditActivity.this.display, record);

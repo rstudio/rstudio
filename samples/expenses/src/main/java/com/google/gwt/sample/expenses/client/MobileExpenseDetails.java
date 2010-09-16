@@ -79,6 +79,7 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
     initWidget(BINDER.createAndBindUi(this));
   }
 
+  @Override
   public Widget asWidget() {
     return this;
   }
@@ -109,6 +110,7 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
   public void onRefresh(boolean clear) {
     requestFactory.expenseRequest().findExpense(expense.getId()).fire(
         new Receiver<List<ExpenseProxy>>() {
+          @Override
           public void onSuccess(List<ExpenseProxy> response, Set<SyncResult> syncResults) {
             assert response.size() == 1;
             show(response.get(0));

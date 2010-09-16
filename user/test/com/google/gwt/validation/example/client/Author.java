@@ -18,7 +18,7 @@ package com.google.gwt.validation.example.client;
 import javax.validation.constraints.Size;
 
 /**
- * From the jsr spec
+ * From the jsr spec.
  */
 public class Author {
 

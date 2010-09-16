@@ -20,11 +20,10 @@ import java.util.Date;
 import javax.validation.constraints.Pattern;
 
 /**
- * Tests for {@link PastValidatorForDate}
+ * Tests for {@link PastValidatorForDate}.
  */
 public class PatternValidatorTest extends
     ConstraintValidatorTestCase<Pattern, String> {
-
 
   @SuppressWarnings("unused")
   @Pattern(regexp = "good")

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.validation.client.impl;
 
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

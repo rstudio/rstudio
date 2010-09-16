@@ -33,7 +33,7 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
     ConstraintDescriptor<T> {
 
   /**
-   * Builder for {@link ConstraintDescriptorImpl}
+   * Builder for {@link ConstraintDescriptorImpl}.
    *
    * @param <T> the constraint annotation to describe.
    */
@@ -47,7 +47,7 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
     private boolean reportAsSingleViolation;
 
     public ConstraintDescriptorImpl<T> build() {
-      return new ConstraintDescriptorImpl<T>( //
+      return new ConstraintDescriptorImpl<T>(
           annotation, //
           groups, //
           payload, //

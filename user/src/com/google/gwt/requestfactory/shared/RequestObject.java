@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid

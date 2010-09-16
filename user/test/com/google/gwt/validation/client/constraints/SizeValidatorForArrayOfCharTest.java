@@ -20,7 +20,7 @@ import java.util.Date;
 import javax.validation.constraints.Size;
 
 /**
- * Tests for {@link SizeValidatorForArrayOfChar}
+ * Tests for {@link SizeValidatorForArrayOfChar}.
  */
 public class SizeValidatorForArrayOfCharTest extends
     ConstraintValidatorTestCase<Size, char[]> {

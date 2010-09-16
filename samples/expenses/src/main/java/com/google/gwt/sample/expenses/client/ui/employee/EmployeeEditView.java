@@ -84,6 +84,7 @@ public class EmployeeEditView extends Composite implements
     DATA_BINDER.init(this);
   }
 
+  @Override
   public EmployeeEditView asWidget() {
     return this;
   }

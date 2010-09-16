@@ -112,6 +112,7 @@ class EditorAccess {
   /**
    * For debugging use only.
    */
+  @Override
   public String toString() {
     return path + " = " + type.getParameterizedQualifiedSourceName();
   }

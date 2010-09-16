@@ -18,7 +18,7 @@ package com.google.gwt.validation.client.constraints;
 import javax.validation.constraints.Max;
 
 /**
- * Tests for {@link MinValidatorForString}
+ * Tests for {@link MinValidatorForString}.
  */
 public class MinValidatorForStringTest extends
     ConstraintValidatorTestCase<Max, String> {

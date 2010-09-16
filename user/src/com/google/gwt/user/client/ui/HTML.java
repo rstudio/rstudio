@@ -137,7 +137,6 @@ public class HTML extends Label implements HasDirectionalHtml {
     setTextOrHtml(html, true);
   }
 
-
   /**
    * Sets the label's content to the given HTML, applying the given direction.
    * See {@link #setText(String, Direction)} for details on potential effects on

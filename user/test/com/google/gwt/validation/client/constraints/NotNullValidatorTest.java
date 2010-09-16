@@ -19,7 +19,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.constraints.NotNull;
 
 /**
- * Tests for {@link NotNullValidator}
+ * Tests for {@link NotNullValidator}.
  */
 public class NotNullValidatorTest extends
     ConstraintValidatorTestCase<NotNull, Object> {

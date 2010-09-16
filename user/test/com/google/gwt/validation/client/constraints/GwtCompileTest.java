@@ -67,6 +67,4 @@ public class GwtCompileTest extends GWTTestCase {
 
     assertEquals(29, temp.size());
   }
-
-
 }

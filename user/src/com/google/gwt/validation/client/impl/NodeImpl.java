@@ -20,7 +20,7 @@ import java.io.Serializable;
 import javax.validation.Path.Node;
 
 /**
- * An immutable GWT safe implementation of {@link Node}
+ * An immutable GWT safe implementation of {@link Node}.
  */
 class NodeImpl implements Node, Serializable {
 

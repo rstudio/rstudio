@@ -20,11 +20,10 @@ import java.util.Date;
 import javax.validation.constraints.Past;
 
 /**
- * Tests for {@link PastValidatorForDate}
+ * Tests for {@link PastValidatorForDate}.
  */
 public class PastValidatorForDateTest extends
     ConstraintValidatorTestCase<Past, Date> {
-
 
   @SuppressWarnings("unused")
   @Past

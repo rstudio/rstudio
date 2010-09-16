@@ -56,7 +56,7 @@ public class RequestEvent extends GwtEvent<RequestEvent.Handler> {
 
   /**
    * Will only be non-null if this is an event of type {@link State#RECEIVED},
-   * and the RPC was successful
+   * and the RPC was successful.
    */
   private final Response response;
 

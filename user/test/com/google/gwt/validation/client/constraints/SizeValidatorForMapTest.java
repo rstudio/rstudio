@@ -22,7 +22,7 @@ import java.util.Map;
 import javax.validation.constraints.Size;
 
 /**
- * Tests for {@link SizeValidatorForMap}
+ * Tests for {@link SizeValidatorForMap}.
  */
 public class SizeValidatorForMapTest extends
     ConstraintValidatorTestCase<Size, Map<?, ?>> {

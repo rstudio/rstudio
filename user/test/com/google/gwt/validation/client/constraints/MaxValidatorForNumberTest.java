@@ -18,7 +18,7 @@ package com.google.gwt.validation.client.constraints;
 import javax.validation.constraints.Max;
 
 /**
- * Tests for {@link MaxValidatorForNumber}
+ * Tests for {@link MaxValidatorForNumber}.
  */
 public class MaxValidatorForNumberTest extends
     ConstraintValidatorTestCase<Max, Number> {

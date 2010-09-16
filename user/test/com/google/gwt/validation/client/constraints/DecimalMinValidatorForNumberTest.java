@@ -18,7 +18,7 @@ package com.google.gwt.validation.client.constraints;
 import javax.validation.constraints.DecimalMin;
 
 /**
- * Tests for {@link DecimalMinValidatorForNumber}
+ * Tests for {@link DecimalMinValidatorForNumber}.
  */
 public class DecimalMinValidatorForNumberTest extends
     ConstraintValidatorTestCase<DecimalMin, Number> {

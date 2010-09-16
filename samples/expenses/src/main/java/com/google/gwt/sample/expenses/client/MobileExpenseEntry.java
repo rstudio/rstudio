@@ -69,6 +69,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
     populateList(dateDay, 1, 31);
   }
 
+  @Override
   public Widget asWidget() {
     return this;
   }
@@ -121,6 +122,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
 
     // TODO: wait throbber
     requestObject.fire(new Receiver<Void>() {
+          @Override
           public void onSuccess(Void ignore, Set<SyncResult> response) {
             // Check for commit errors.
             String errorMessage = "";

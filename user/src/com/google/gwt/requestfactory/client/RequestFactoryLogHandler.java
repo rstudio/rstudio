@@ -34,13 +34,14 @@ import java.util.logging.Logger;
 public class RequestFactoryLogHandler extends Handler {
   
   /** 
-   * Provides a logging request
+   * Provides a logging request.
    */
   public static interface LoggingRequestProvider {
     LoggingRequest getLoggingRequest();
   }
   
   private class LoggingReceiver extends Receiver<Long> {
+    @Override
     public void onSuccess(Long response, Set<SyncResult> syncResults) {
       if (response > 0) {
         logger.finest("Remote logging successful");

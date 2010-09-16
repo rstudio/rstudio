@@ -64,6 +64,7 @@ public class EmployeeDetailsView extends Composite implements
     initWidget(BINDER.createAndBindUi(this));
   }
 
+  @Override
   public Widget asWidget() {
     return this;
   }

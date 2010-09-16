@@ -250,7 +250,7 @@ public class OwnerFieldClass {
   }
 
   /**
-   * Scans the class to find all methods annotated with @UiChild
+   * Scans the class to find all methods annotated with @UiChild.
    *
    * @param ownerType the type of the owner class
    * @throws UnableToCompleteException

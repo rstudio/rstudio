@@ -18,7 +18,7 @@ package com.google.gwt.validation.client.constraints;
 import javax.validation.constraints.DecimalMax;
 
 /**
- * Tests for {@link DecimalMaxValidatorForString}
+ * Tests for {@link DecimalMaxValidatorForString}.
  */
 public class DecimalMaxValidatorForStringTest extends
     ConstraintValidatorTestCase<DecimalMax, String> {

@@ -16,7 +16,7 @@
 package com.google.gwt.validation.example.client;
 
 /**
- * A example group for validation
+ * A example group for validation.
  */
 public interface FirstLevelCheck {
 

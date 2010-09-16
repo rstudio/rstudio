@@ -27,12 +27,12 @@ public interface HasOneWidget extends AcceptsOneWidget {
    * 
    * @return the child widget, or <code>null</code> if none is present
    */
-  public Widget getWidget();
+  Widget getWidget();
 
   /**
    * Sets this panel's widget. Any existing child widget will be removed.
    * 
    * @param w the panel's new widget, or <code>null</code> to clear the panel
    */
-  public void setWidget(Widget w);
+  void setWidget(Widget w);
 }

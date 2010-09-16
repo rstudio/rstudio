@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 import javax.validation.constraints.Digits;
 
 /**
- * Tests for {@link DigitsValidatorForNumber}
+ * Tests for {@link DigitsValidatorForNumber}.
  */
 public class DigitsValidatorForNumberTest extends
     ConstraintValidatorTestCase<Digits, Number> {

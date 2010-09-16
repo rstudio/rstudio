@@ -23,11 +23,10 @@ import java.util.List;
 import javax.validation.constraints.Size;
 
 /**
- * Tests for {@link SizeValidatorForCollection}
+ * Tests for {@link SizeValidatorForCollection}.
  */
 public class SizeValidatorForCollectionTest extends
     ConstraintValidatorTestCase<Size, Collection<?>> {
-
 
   @SuppressWarnings("unused")
   @Size(min = 2, max = 5)

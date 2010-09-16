@@ -18,7 +18,7 @@ package com.google.gwt.validation.client.constraints;
 import javax.validation.constraints.Min;
 
 /**
- * Tests for {@link MinValidatorForNumber}
+ * Tests for {@link MinValidatorForNumber}.
  */
 public class MinValidatorForNumberTest extends
     ConstraintValidatorTestCase<Min, Number> {

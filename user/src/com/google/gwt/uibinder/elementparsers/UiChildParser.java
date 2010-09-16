@@ -39,7 +39,7 @@ public class UiChildParser implements ElementParser {
   private String fieldName;
 
   /**
-   * Mapping of child tag to the number of times it has been called
+   * Mapping of child tag to the number of times it has been called.
    */
   private Map<String, Integer> numCallsToChildMethod = new HashMap<String, Integer>();
   private Map<String, Pair<JMethod, Integer>> uiChildMethods;
@@ -96,7 +96,7 @@ public class UiChildParser implements ElementParser {
   }
 
   /**
-   * Process a child element that should be added using a {@link UiChild} method
+   * Process a child element that should be added using a {@link UiChild} method.
    */
   private void handleChild(XMLElement child) throws UnableToCompleteException {
     String tag = child.getLocalName();

@@ -46,6 +46,7 @@ public class ValueBoxEditor<T> extends TakesValueEditor<T> {
    * {@link com.google.gwt.editor.client.EditorError#getUserData()
    * EditorError.getUserData()}.
    */
+  @Override
   public T getValue() {
     try {
       value = peer.getValueOrThrow();
@@ -57,6 +58,7 @@ public class ValueBoxEditor<T> extends TakesValueEditor<T> {
     return value;
   }
 
+  @Override
   public void setValue(T value) {
     peer.setValue(this.value = value);
   }

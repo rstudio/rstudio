@@ -163,11 +163,13 @@ public class IconCellDecorator<C> implements Cell<C> {
       String vert = valign == HasVerticalAlignment.ALIGN_MIDDLE ? "center"
           : valign.getVerticalAlignString();
       // Templates are having problems with url('data:image/png;base64,...')
+      // CHECKSTYLE_OFF
       return SafeHtmlUtils.fromTrustedString("<div style=\"position:absolute;"
           + direction + ":0px;top:0px;height:100%;width:" + res.getWidth()
           + "px;background:url('" + res.getURL() + "') no-repeat scroll "
           + SafeHtmlUtils.htmlEscape(vert) // for safety
           + " center transparent;\"></div>");
+      // CHECKSTYLE_ON
     }
   }
 

@@ -77,6 +77,7 @@ public class ReportEditView extends Composite implements
     DATA_BINDER.init(this);
   }
 
+  @Override
   public ReportEditView asWidget() {
     return this;
   }

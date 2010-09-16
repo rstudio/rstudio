@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 import junit.framework.TestCase;
 
-
 /**
  * Eponymous unit test.
  */

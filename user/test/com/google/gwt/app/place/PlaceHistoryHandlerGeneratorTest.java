@@ -81,6 +81,7 @@ public class PlaceHistoryHandlerGeneratorTest extends GWTTestCase {
     doTest(subject, factory);
   }
 
+  // CHECKSTYLE_OFF
   private void doTest(AbstractPlaceHistoryHandler<?> subject,
       TokenizerFactory factory) {
     String history1 = subject.getPrefixAndToken(place1).toString();
@@ -91,14 +92,20 @@ public class PlaceHistoryHandlerGeneratorTest extends GWTTestCase {
       assertEquals(TokenizerFactory.PLACE2_PREFIX + ":" + place2.content,
           history2);
     } else {
+      // CHECKSTYLE_OFF
       assertEquals("Place2:" + place2.content, history2);
+      // CHECKSTYLE_ON
     }
 
     String history3 = subject.getPrefixAndToken(place3).toString();
+    // CHECKSTYLE_OFF
     assertEquals("Place3:" + place3.content, history3);
+    // CHECKSTYLE_ON
 
     String history4 = subject.getPrefixAndToken(place4).toString();
+    // CHECKSTYLE_OFF
     assertEquals("Place4:" + place4.content, history4);
+    // CHECKSTYLE_ON
 
     if (factory != null) {
       assertEquals(factory.tokenizer,

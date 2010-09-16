@@ -52,6 +52,7 @@ public abstract class AbstractProxyListView<P extends EntityProxy> extends
     return table;
   }
 
+  @Override
   public AbstractProxyListView<P> asWidget() {
     return this;
   }
