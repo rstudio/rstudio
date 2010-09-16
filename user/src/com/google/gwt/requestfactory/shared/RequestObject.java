@@ -22,21 +22,20 @@ package com.google.gwt.requestfactory.shared;
  * </span>
  * </p>
  * Implemented by the request objects created by this factory.
+ *
  * @param <T> The return type of objects in the corresponding response.
  */
 public interface RequestObject<T> {
 
   /**
-   * Enable a RequestObject to be reused again. For example, when the edit
-   * fails on the server.
+   * @return an editable version of the given {@link EntityProxy}
    */
-  void clearUsed();
+  <P extends EntityProxy> P edit(P proxy);
 
-  <P extends EntityProxy> P edit(P record);
-
+  /**
+   * Submit this request. Results will be passed to the receiver asynchronously.
+   */
   void fire(Receiver<T> receiver);
-
-  RequestData getRequestData();
 
   /**
    * Return true if there are outstanding changes that have not been
@@ -44,8 +43,4 @@ public interface RequestObject<T> {
    * after a request using it has been fired.
    */
   boolean isChanged();
-
-  // reset the DeltaValueStore.
-  void reset();
-
 }

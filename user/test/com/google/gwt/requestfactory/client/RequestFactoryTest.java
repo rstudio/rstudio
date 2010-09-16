@@ -85,6 +85,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         foo);
     fooReq.fire(new Receiver<SimpleFooProxy>() {
 
+      @Override
       public void onSuccess(final SimpleFooProxy returned,
           Set<SyncResult> syncResults) {
         Object futureId = foo.getId();
@@ -101,6 +102,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
+          @Override
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResult) {
             assertEquals(42, (int) response.getIntId());
@@ -118,6 +120,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
         new Receiver<SimpleFooProxy>() {
+          @Override
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResult) {
             assertEquals(42, (int) response.getIntId());
@@ -133,7 +136,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   /*
    * tests that (a) any method can have a side effect that is handled correctly.
-   * (b) instance methods are handled correctly.
+   * (b) instance methods are handled correctly and (c) you don't grow horns
+   * or anything if you reuse the request object
    */
   public void testMethodWithSideEffects() {
     delayTestFinish(5000);
@@ -141,6 +145,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
 
+          @Override
           public void onSuccess(SimpleFooProxy newFoo,
               Set<SyncResult> syncResults) {
             final RequestObject<Long> fooReq = req.simpleFooRequest().countSimpleFooWithUserNameSideEffect(
@@ -148,6 +153,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             newFoo = fooReq.edit(newFoo);
             newFoo.setUserName("Ray");
             fooReq.fire(new Receiver<Long>() {
+              @Override
               public void onSuccess(Long response, Set<SyncResult> syncResults) {
                 assertEquals(new Long(1L), response);
                 // confirm that there was a sideEffect.
@@ -160,6 +166,32 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                 // sideEffect.
                 req.simpleFooRequest().findSimpleFooById(999L).fire(
                     new Receiver<SimpleFooProxy>() {
+                      @Override
+                      public void onSuccess(SimpleFooProxy finalFoo,
+                          Set<SyncResult> syncResults) {
+                        assertEquals("Ray", finalFoo.getUserName());
+                        finishTestAndReset();
+                      }
+                    });
+              }
+            });
+
+            /*
+             * Firing the request a second time just to show that we
+             * can. Note that we *do not* try to change the value,
+             * as we're unclear which response will come back first,
+             * and who should win. That's not the point. The point
+             * is that both callbacks get called.
+             */
+
+            newFoo.setUserName("Barney"); // Just to prove we can, used to fail assert
+            newFoo.setUserName("Ray"); // Change it back to diminish chance of flakes
+            fooReq.fire(new Receiver<Long>()  {
+              @Override
+              public void onSuccess(Long response, Set<SyncResult> syncResults) {
+                req.simpleFooRequest().findSimpleFooById(999L).fire(
+                    new Receiver<SimpleFooProxy>() {
+                      @Override
                       public void onSuccess(SimpleFooProxy finalFoo,
                           Set<SyncResult> syncResults) {
                         assertEquals("Ray", finalFoo.getUserName());
@@ -181,10 +213,12 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     req.simpleBarRequest().findSimpleBarById(999L).fire(
         new Receiver<SimpleBarProxy>() {
+          @Override
           public void onSuccess(final SimpleBarProxy barProxy,
               Set<SyncResult> syncResults) {
             req.simpleFooRequest().findSimpleFooById(999L).fire(
                 new Receiver<SimpleFooProxy>() {
+                  @Override
                   public void onSuccess(SimpleFooProxy fooProxy,
                       Set<SyncResult> syncResults) {
                     RequestObject<Void> updReq = req.simpleFooRequest().persist(
@@ -192,6 +226,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     fooProxy = updReq.edit(fooProxy);
                     fooProxy.setBarField(barProxy);
                     updReq.fire(new Receiver<Void>() {
+                      @Override
                       public void onSuccess(Void response,
                           Set<SyncResult> syncResults) {
                         finishTestAndReset();
@@ -218,6 +253,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final SimpleBarProxy finalNewBar = newBar;
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
+          @Override
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResults) {
             RequestObject<Void> fooReq = req.simpleFooRequest().persist(
@@ -225,9 +261,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             response = fooReq.edit(response);
             response.setBarField(finalNewBar);
             fooReq.fire(new Receiver<Void>() {
+              @Override
               public void onSuccess(Void response, Set<SyncResult> syncResults) {
                 req.simpleFooRequest().findSimpleFooById(999L).with(
                     "barField.userName").fire(new Receiver<SimpleFooProxy>() {
+                  @Override
                   public void onSuccess(SimpleFooProxy finalFooProxy,
                       Set<SyncResult> syncResults) {
                     // barReq hasn't been persisted, so old value
@@ -259,13 +297,16 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final SimpleFooProxy finalFoo = newFoo;
     req.simpleBarRequest().findSimpleBarById(999L).fire(
         new Receiver<SimpleBarProxy>() {
+          @Override
           public void onSuccess(SimpleBarProxy response,
               Set<SyncResult> syncResults) {
             finalFoo.setBarField(response);
             fooReq.fire(new Receiver<Void>() {
+              @Override
               public void onSuccess(Void response, Set<SyncResult> syncResults) {
                 req.simpleFooRequest().findSimpleFooById(999L).fire(
                     new Receiver<SimpleFooProxy>() {
+                      @Override
                       public void onSuccess(SimpleFooProxy finalFooProxy,
                           Set<SyncResult> syncResults) {
                         // newFoo hasn't been persisted, so userName is the old
@@ -301,9 +342,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     newBar.setUserName("Amit");
 
     fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
       public void onSuccess(final SimpleFooProxy persistedFoo,
           Set<SyncResult> syncResult) {
         barReq.fire(new Receiver<SimpleBarProxy>() {
+          @Override
           public void onSuccess(final SimpleBarProxy persistedBar,
               Set<SyncResult> syncResults) {
             assertEquals("Ray", persistedFoo.getUserName());
@@ -312,9 +355,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             SimpleFooProxy editablePersistedFoo = fooReq2.edit(persistedFoo);
             editablePersistedFoo.setBarField(persistedBar);
             fooReq2.fire(new Receiver<Void>() {
+              @Override
               public void onSuccess(Void response, Set<SyncResult> syncResults) {
                 req.simpleFooRequest().findSimpleFooById(999L).with(
                     "barField.userName").fire(new Receiver<SimpleFooProxy>() {
+                  @Override
                   public void onSuccess(SimpleFooProxy finalFooProxy,
                       Set<SyncResult> syncResults) {
                     assertEquals("Amit",
@@ -340,6 +385,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     rayFoo.setUserName("Ray");
     rayFoo.setFooField(rayFoo);
     persistRay.fire(new Receiver<SimpleFooProxy>() {
+      @Override
       public void onSuccess(final SimpleFooProxy persistedRay,
           Set<SyncResult> ignored) {
         finishTestAndReset();
@@ -357,6 +403,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     rayFoo.setUserName("Ray");
 
     persistRay.fire(new Receiver<SimpleFooProxy>() {
+      @Override
       public void onSuccess(final SimpleFooProxy persistedRay,
           Set<SyncResult> ignored) {
 
@@ -367,6 +414,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         amitBar.setUserName("Amit");
 
         persistAmit.fire(new Receiver<SimpleBarProxy>() {
+          @Override
           public void onSuccess(SimpleBarProxy persistedAmit,
               Set<SyncResult> ignored) {
 
@@ -376,6 +424,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             newRec.setBarField(persistedAmit);
 
             persistRelationship.fire(new Receiver<SimpleFooProxy>() {
+              @Override
               public void onSuccess(SimpleFooProxy relatedRay,
                   Set<SyncResult> ignored) {
                 assertEquals("Amit", relatedRay.getBarField().getUserName());
@@ -392,6 +441,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
+          @Override
           public void onSuccess(SimpleFooProxy response,
               Set<SyncResult> syncResult) {
             SimpleBarProxy bar = req.create(SimpleBarProxy.class);
@@ -400,6 +450,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             bar = helloReq.edit(bar);
             bar.setUserName("BAR");
             helloReq.fire(new Receiver<String>() {
+              @Override
               public void onSuccess(String response, Set<SyncResult> syncResults) {
                 assertEquals("Greetings BAR from GWT", response);
                 finishTestAndReset();
@@ -427,6 +478,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     newFoo.setUserName("GWT basic user");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
 
+      @Override
       public void onSuccess(final SimpleFooProxy returned,
           Set<SyncResult> syncResults) {
         assertEquals(futureId, foo.getId());
@@ -445,6 +497,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         editableFoo.setUserName("GWT power user");
         editRequest.fire(new Receiver<SimpleFooProxy>() {
 
+          @Override
           public void onSuccess(SimpleFooProxy returnedAfterEdit,
               Set<SyncResult> syncResults) {
             checkStableIdEquals(editableFoo, returnedAfterEdit);
@@ -466,6 +519,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     newFoo.setUserName("Amit"); // will not cause violation.
 
     fooReq.fire(new Receiver<Void>() {
+      @Override
       public void onSuccess(Void ignore, Set<SyncResult> syncResults) {
         assertEquals(1, syncResults.size());
         finishTestAndReset();
@@ -496,6 +550,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     newFoo.setUserName("GWT User");
 
     fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
       public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
         assertEquals(1, syncResults.size());
 
@@ -520,6 +575,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     newFoo.setUserName("GWT User");
 
     fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
       public void onSuccess(SimpleFooProxy returned, Set<SyncResult> syncResults) {
         assertEquals(1, syncResults.size());
 

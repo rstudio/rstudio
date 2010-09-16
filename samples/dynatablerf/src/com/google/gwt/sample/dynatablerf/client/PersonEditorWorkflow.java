@@ -120,7 +120,6 @@ public class PersonEditorWorkflow {
       @Override
       public void onViolation(Set<Violation> errors) {
         dialog.setText("Errors detected on the server");
-        request.clearUsed();
         editorDriver.setViolations(errors);
       }
     });

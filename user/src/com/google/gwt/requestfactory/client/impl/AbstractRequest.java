@@ -27,6 +27,7 @@ import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.impl.Property;
+import com.google.gwt.requestfactory.shared.impl.RequestData;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -63,10 +64,6 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
         requestFactory);
   }
 
-  public void clearUsed() {
-    deltaValueStore.clearUsed();
-  }
-
   @SuppressWarnings("unchecked")
   public <P extends EntityProxy> P edit(P record) {
     P returnRecordImpl = (P) ((ProxyImpl) record).getSchema().create(
@@ -99,6 +96,8 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public Set<String> getPropertyRefs() {
     return Collections.unmodifiableSet(propertyRefs);
   }
+
+  public abstract RequestData getRequestData();
 
   public void handleResponseText(String responseText) {
     JsonResults results = JsonResults.fromResults(responseText);
@@ -167,11 +166,6 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     requestFactory.getValueStore().putInValueStore(
         ProxyJsoImpl.create(jso, requestFactory.getSchema(schemaToken),
             requestFactory));
-  }
-
-  public void reset() {
-    ValueStoreJsonImpl valueStore = requestFactory.getValueStore();
-    deltaValueStore = new DeltaValueStoreJsonImpl(valueStore, requestFactory);
   }
 
   public R with(String... propertyRef) {

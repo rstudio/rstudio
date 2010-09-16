@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
+package com.google.gwt.requestfactory.shared.impl;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,8 +28,6 @@ import java.util.Set;
  * </p>
  * A class that encapsulates the parameters and method name to be invoked on the
  * server.
- * 
- * TODO: add appropriate unit tests.
  */
 public class RequestData {
 
@@ -45,10 +43,10 @@ public class RequestData {
   public static final String SIDE_EFFECTS_TOKEN = "sideEffects";
 
   // TODO: non-final is a hack for now.
-  private String operation;
+  private final String operation;
   private final Object[] parameters;
 
-  private Set<String> propertyRefs;
+  private final Set<String> propertyRefs;
 
   public RequestData(String operation, Object[] parameters,
       Set<String> propertyRefs) {

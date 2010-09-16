@@ -24,6 +24,7 @@ import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.user.client.Window;
@@ -74,10 +75,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     String unsavedChangesWarning = mayStop();
     if ((unsavedChangesWarning == null)
         || Window.confirm(unsavedChangesWarning)) {
-      if (requestObject != null) {
-        // silence the next mayStop() call when place changes
-        requestObject.reset();
-      }
+      requestObject = null;
       exit(false);
     }
   }
@@ -113,27 +111,26 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     }
     view.setEnabled(false);
 
-    final RequestObject<Void> toCommit = requestObject;
-    requestObject = null;
+    requestObject.fire(new Receiver<Void>() {
+      @Override
+      public void onFailure(ServerFailure error) {
+        view.setEnabled(true);
+        super.onFailure(error);
+      }
 
-    Receiver<Void> receiver = new Receiver<Void>() {
       @Override
       public void onSuccess(Void ignore, Set<SyncResult> response) {
-        // TODO(rjrjr): This can be simplified with RequestFactory.refresh()
         if (display == null) {
           return;
         }
 
-        for (SyncResult syncResult : response) {
-          EntityProxy syncRecord = syncResult.getProxy();
-          if (creating) {
-            if (!stableId.equals(syncRecord.stableId())) {
-              continue;
-            }
-            record = cast(syncRecord);
-          } else {
-            if (!syncRecord.getId().equals(record.getId())) {
-              continue;
+        if (creating) {
+          // TODO(amitmanjhi) Not needed once events are proxy id based
+          for (SyncResult syncResult : response) {
+            EntityProxy syncRecord = syncResult.getProxy();
+            if (stableId.equals(syncRecord.stableId())) {
+              record = cast(syncRecord);
+              break;
             }
           }
         }
@@ -144,17 +141,12 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
       public void onViolation(Set<Violation> errors) {
         Map<String, String> toShow = new HashMap<String, String>();
         for (Violation error : errors) {
-          if (error.getProxyId().equals(stableId)) {
-            toShow.put(error.getPath(), error.getMessage());
-          }
+          toShow.put(error.getPath(), error.getMessage());
         }
         view.showErrors(toShow);
-        requestObject = toCommit;
-        requestObject.clearUsed();
         view.setEnabled(true);
       }
-    };
-    toCommit.fire(receiver);
+    });
   }
 
   public void start(AcceptsOneWidget display, EventBus eventBus) {

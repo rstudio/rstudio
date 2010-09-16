@@ -109,7 +109,6 @@ class DeltaValueStoreJsonImpl {
     return new SyncResultImpl(jso.getSchema().create(jso), futureId);
   }
 
-  private boolean used = false;
   private final ValueStoreJsonImpl master;
 
   private final RequestFactoryJsonImpl requestFactory;
@@ -130,10 +129,6 @@ class DeltaValueStoreJsonImpl {
 
   public void addValidation() {
     throw new UnsupportedOperationException("Auto-generated method stub");
-  }
-
-  public void clearUsed() {
-    used = false;
   }
 
   public Set<SyncResult> commit(JavaScriptObject returnedJso) {
@@ -225,12 +220,11 @@ class DeltaValueStoreJsonImpl {
   }
 
   public boolean isChanged() {
-    assert !used;
     return !operations.isEmpty();
   }
 
   public <V> void set(Property<V> property, EntityProxy record, V value) {
-    checkArgumentsAndState(record, "set");
+    checkArgumentsAndState(record);
     ProxyImpl recordImpl = (ProxyImpl) record;
     EntityProxyId recordKey = recordImpl.stableId();
 
@@ -281,8 +275,6 @@ class DeltaValueStoreJsonImpl {
   }
 
   String toJson() {
-    used = true;
-
     StringBuffer jsonData = new StringBuffer("{");
     for (WriteOperation writeOperation : new WriteOperation[] {
         WriteOperation.CREATE, WriteOperation.UPDATE}) {
@@ -315,11 +307,7 @@ class DeltaValueStoreJsonImpl {
     return false;
   }
 
-  private void checkArgumentsAndState(EntityProxy record, String methodName) {
-    if (used) {
-      throw new IllegalStateException(methodName
-          + " can only be called on an un-used DeltaValueStore");
-    }
+  private void checkArgumentsAndState(EntityProxy record) {
     if (!(record instanceof ProxyImpl)) {
       throw new IllegalArgumentException(record + " + must be an instance of "
           + ProxyImpl.class);

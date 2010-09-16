@@ -15,8 +15,8 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.RequestData;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.impl.RequestData;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;

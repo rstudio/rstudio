@@ -76,7 +76,7 @@ public class SchoolCalendarService implements Filter {
     }
   }
 
-  public void init(FilterConfig config) throws ServletException {
+  public void init(FilterConfig config) {
     backingStore = (PersonSource) config.getServletContext().getAttribute(
         SchoolCalendarService.class.getName());
     if (backingStore == null) {

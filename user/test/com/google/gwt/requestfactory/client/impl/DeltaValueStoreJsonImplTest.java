@@ -32,8 +32,6 @@ import java.util.Date;
  */
 public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
-  private static final String SIMPLE_FOO_CLASS_NAME = "com.google.gwt.requestfactory.shared.SimpleFooProxy";
-
   /*
    * sub-classed it here so that the protected constructor of {@link ProxyImpl}
    * can remain as such.
@@ -44,6 +42,8 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
       super(proxy, false);
     }
   }
+
+  private static final String SIMPLE_FOO_CLASS_NAME = "com.google.gwt.requestfactory.shared.SimpleFooProxy";
 
   ValueStoreJsonImpl valueStore = null;
   RequestFactoryJsonImpl requestFactory = null;
@@ -86,22 +86,26 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertFalse(jsonObject.containsKey(WriteOperation.CREATE.getUnObfuscatedEnumName()));
   }
 
-  public void testCreateWithSet() {
+  public void testCreateUpdate() {
     EntityProxy created = requestFactory.create(SimpleFooProxy.class);
-    assertNotNull(created.getId());
-    assertNotNull(created.getVersion());
-    
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
     // DVS does not know about the created entity.
     assertFalse(deltaValueStore.isChanged());
     deltaValueStore.set(SimpleFooProxyProperties.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
-    testAndGetChangeProxy(deltaValueStore.toJson(), WriteOperation.CREATE);
+    JSONObject changeProxy = testAndGetChangeProxy(deltaValueStore.toJson(),
+        WriteOperation.CREATE);
+    assertEquals(
+        "harry",
+        changeProxy.get("userName").isString().stringValue());
   }
 
-  public void testCreateUpdate() {
+  public void testCreateWithSet() {
     EntityProxy created = requestFactory.create(SimpleFooProxy.class);
+    assertNotNull(created.getId());
+    assertNotNull(created.getVersion());
+
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
         valueStore, requestFactory);
     // DVS does not know about the created entity.
@@ -123,16 +127,6 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertTrue(deltaValueStore.isChanged());
 
     deltaValueStore.toJson();
-
-    try {
-      deltaValueStore.set(SimpleFooProxyProperties.userName, new MyProxyImpl(jso),
-          "harry");
-      fail("Modifying DeltaValueStore after calling toJson should throw a RuntimeException");
-    } catch (RuntimeException ex) {
-      // expected.
-    }
-
-    deltaValueStore.clearUsed();
     deltaValueStore.set(SimpleFooProxyProperties.userName, new MyProxyImpl(jso),
         "harry");
   }

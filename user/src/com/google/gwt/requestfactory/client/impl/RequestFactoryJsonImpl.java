@@ -119,7 +119,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         GWT.getHostPageBaseURL() + RequestFactory.URL);
     builder.setHeader("Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
     builder.setHeader("pageurl", Location.getHref());
-    builder.setRequestData(ClientRequestHelper.getRequestString(requestObject.getRequestData().getRequestMap(
+    
+    builder.setRequestData(ClientRequestHelper.getRequestString(((AbstractRequest<?, ?>) requestObject).getRequestData().getRequestMap(
         ((AbstractRequest<?, ?>) requestObject).deltaValueStore.toJson())));
     builder.setCallback(new RequestCallback() {
 
@@ -130,21 +131,23 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
       public void onResponseReceived(Request request, Response response) {
         wireLogger.finest("Response received");
-        if (200 == response.getStatusCode()) {
-          String text = response.getText();
-          ((AbstractRequest<?, ?>) requestObject).handleResponseText(text);
-        } else if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
-          wireLogger.finest("Need to log in");
-        } else if (response.getStatusCode() > 0) {
-          // During the redirection for logging in, we get a response with no
-          // status code, but it's not an error, so we only log errors with
-          // bad status codes here.
-          wireLogger.severe(SERVER_ERROR + " " + response.getStatusCode() + " "
-              + response.getText());
+        try {
+          if (200 == response.getStatusCode()) {
+            String text = response.getText();
+            ((AbstractRequest<?, ?>) requestObject).handleResponseText(text);
+          } else if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
+            wireLogger.finest("Need to log in");
+          } else if (response.getStatusCode() > 0) {
+            // During the redirection for logging in, we get a response with no
+            // status code, but it's not an error, so we only log errors with
+            // bad status codes here.
+            wireLogger.severe(SERVER_ERROR + " " + response.getStatusCode()
+                + " " + response.getText());
+          }
+        } finally {
+          postRequestEvent(State.RECEIVED, response);
         }
-        postRequestEvent(State.RECEIVED, response);
       }
-
     });
 
     try {
