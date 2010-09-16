@@ -50,7 +50,7 @@ public class Level implements Serializable {
     impl.setName(name);
     impl.setValue(value);
   }
-  
+
   public String getName() {
     return impl.getName();
   }

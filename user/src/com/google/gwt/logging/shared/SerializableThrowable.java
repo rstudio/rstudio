@@ -29,22 +29,22 @@ public class SerializableThrowable implements IsSerializable {
   private String message;
   private StackTraceElement[] stackTrace;
   
-  /**
-   * Create a new SerializableThrowable from a Throwable.
-   */
-  public SerializableThrowable(Throwable t) {
-    message = t.getMessage();
-    if (t.getCause() != null) {
-      cause = new SerializableThrowable(t.getCause());
-    }
-    stackTrace = t.getStackTrace();
-  }
-  
   public SerializableThrowable(String message, SerializableThrowable cause,
       StackTraceElement[] stackTrace) {
     this.message = message;
     this.cause = cause;
     this.stackTrace = stackTrace;
+  }
+  
+  /**
+   * Create a new SerializableThrowable from a Throwable.
+   */
+  public SerializableThrowable(Throwable t) {
+    message = t.getMessage();
+    if (t.getCause() != null && t.getCause() != t) {
+      cause = new SerializableThrowable(t.getCause());
+    }
+    stackTrace = t.getStackTrace();
   }
   
   protected SerializableThrowable() {
@@ -54,7 +54,7 @@ public class SerializableThrowable implements IsSerializable {
   public SerializableThrowable getCause() {
     return cause;
   }
-
+  
   public String getMessage() {
     return message;
   }
@@ -62,7 +62,7 @@ public class SerializableThrowable implements IsSerializable {
   public StackTraceElement[] getStackTrace() {
     return stackTrace;
   }
-  
+
   /**
    * Create a new Throwable from this SerializableThrowable.
    */
@@ -75,5 +75,13 @@ public class SerializableThrowable implements IsSerializable {
     }
     t.setStackTrace(stackTrace);
     return t;
+  }
+  
+  public void setCause(SerializableThrowable c) {
+    cause = c;
+  }
+  
+  public void setStackTrace(StackTraceElement[] st) {
+    stackTrace = st;
   }
 }

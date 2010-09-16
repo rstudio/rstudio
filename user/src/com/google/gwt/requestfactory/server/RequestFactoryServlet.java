@@ -127,5 +127,11 @@ public class RequestFactoryServlet extends HttpServlet {
     if (userInfoClass != null) {
       UserInformation.setUserInformationImplClass(userInfoClass);
     }
+    
+    String symbolMapsDirectory =
+      getServletConfig().getInitParameter("symbolMapsDirectory");
+    if (symbolMapsDirectory != null) {
+      Logging.setSymbolMapsDirectory(symbolMapsDirectory);
+    }
   }
 }

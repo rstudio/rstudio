@@ -74,6 +74,7 @@ public final class SimpleRemoteLogHandler extends Handler {
       // would lead to an infinite loop.
       return;
     }
-    service.logOnServer(new SerializableLogRecord(record), callback);
+    service.logOnServer(new SerializableLogRecord(
+        record, GWT.getPermutationStrongName()), callback);
   }
 }

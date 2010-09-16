@@ -53,9 +53,14 @@ public class RequestFactoryLogHandler extends Handler {
   private static Logger logger = 
     Logger.getLogger(RequestFactoryLogHandler.class.getName());
   
+  // A separate logger for wire activity, which does not get logged
+  // by the remote log handler, so we avoid infinite loops.
+  private static Logger wireLogger = Logger.getLogger("WireActivityLogger");
+  
   private boolean closed;
   private LoggingRequestProvider requestProvider;
   private String ignoredLoggerSubstring;
+  private String strongName;
   
   /**
    * Since records from this handler go accross the wire, it should only be
@@ -67,9 +72,10 @@ public class RequestFactoryLogHandler extends Handler {
    * infinite loop would occur.
    */
   public RequestFactoryLogHandler(LoggingRequestProvider requestProvider,
-      Level level, String ignoredLoggerSubstring) {
+      Level level, String ignoredLoggerSubstring, String strongName) {
     this.requestProvider = requestProvider;
     this.ignoredLoggerSubstring = ignoredLoggerSubstring;
+    this.strongName = strongName;
     closed = false;
     setLevel(level);
   }
@@ -92,16 +98,14 @@ public class RequestFactoryLogHandler extends Handler {
     if (record.getLoggerName().contains(ignoredLoggerSubstring)) {
       return;
     }
-    SerializableLogRecord slr = new SerializableLogRecord(record);
+    SerializableLogRecord slr =
+      new SerializableLogRecord(record, strongName);
     String json = JsonLogRecordClientUtil.serializableLogRecordAsJson(slr);
     requestProvider.getLoggingRequest().logMessage(json).fire(
         new Receiver<Boolean>() {
           @Override
           public void onSuccess(Boolean response, Set<SyncResult> syncResults) {
             if (!response) {
-              // A separate logger for wire activity, which does not get logged
-              // by the remote log handler, so we avoid infinite loops.
-              Logger wireLogger = Logger.getLogger("WireActivityLogger");
               wireLogger.severe("Remote Logging failed to parse JSON");
             }
           }

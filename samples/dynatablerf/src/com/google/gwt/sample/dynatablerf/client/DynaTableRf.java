@@ -44,7 +44,7 @@ public class DynaTableRf implements EntryPoint {
   }
 
   private static final Logger log = Logger.getLogger(DynaTableRf.class.getName());
-
+  
   @UiField(provided = true)
   SummaryWidget calendar;
 
@@ -73,11 +73,10 @@ public class DynaTableRf implements EntryPoint {
         public LoggingRequest getLoggingRequest() {
           return requests.loggingRequest();
         }
-      };
+    };
     Logger.getLogger("").addHandler(
         new RequestFactoryLogHandler(provider, Level.WARNING,
-            "WireActivityLogger"));
-
+            "WireActivityLogger", GWT.getPermutationStrongName()));
     FavoritesManager manager = new FavoritesManager(requests);
     PersonEditorWorkflow.register(eventBus, requests, manager);
 

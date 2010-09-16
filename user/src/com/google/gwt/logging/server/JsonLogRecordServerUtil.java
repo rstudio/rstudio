@@ -40,10 +40,12 @@ public class JsonLogRecordServerUtil {
       String level = slr.getString("level");
       String loggerName = slr.getString("loggerName");
       String msg = slr.getString("msg");
+      String strongName = slr.getString("strongName");
       long timestamp = Long.parseLong(slr.getString("timestamp"));
       SerializableThrowable thrown =
         serializableThrowableFromJson(slr.getString("thrown"));
-      return new SerializableLogRecord(level, loggerName, msg, thrown, timestamp);
+      return new SerializableLogRecord(level, loggerName, msg, thrown,
+          timestamp, strongName);
     } catch (JSONException e) {
     }
     return null;

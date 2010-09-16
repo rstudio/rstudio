@@ -17,6 +17,7 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.logging.server.JsonLogRecordServerUtil;
+import com.google.gwt.logging.server.StackTraceDeobfuscator;
 import com.google.gwt.logging.shared.SerializableLogRecord;
 
 import java.util.logging.LogRecord;
@@ -25,24 +26,40 @@ import java.util.logging.Logger;
 /**
  * Server side object that handles log messages sent by
  * {@link RequestFactoryLogHandler}.
+ * 
+ * TODO(unnurg): Before the end of Sept 2010, combine this class intelligently
+ * with SimpleRemoteLogHandler so they share functionality and patterns.
  */
 public class Logging {
-  private static Logger logger = Logger.getLogger(Logging.class.getName());
 
+  private static StackTraceDeobfuscator deobfuscator =
+    new StackTraceDeobfuscator("");
+  
   public static Boolean logMessage(String serializedLogRecordString) {
     SerializableLogRecord slr =
       JsonLogRecordServerUtil.serializableLogRecordFromJson(
           serializedLogRecordString);
+    slr = deobfuscator.deobfuscateLogRecord(slr);
     LogRecord lr = slr.getLogRecord();
     if (lr == null) {
       return false;
     }
+    Logger logger = Logger.getLogger(lr.getLoggerName());
     logger.log(lr);
     return true;
   }
   
+  /**
+   * This function is only for server side use which is why it's not in the
+   * LoggingRequest interface.
+   */
+  public static void setSymbolMapsDirectory(String dir) {
+    deobfuscator.setSymbolMapsDirectory(dir);
+  }
+  
   private Long id = 0L;
-  private Integer version = 0;
+  
+  private Integer version = 0;  
   
   public Long getId() {
     return this.id;
@@ -51,11 +68,11 @@ public class Logging {
   public Integer getVersion() {
     return this.version;
   }
-    
+
   public void setId(Long id) {
     this.id = id;
   }
-  
+    
   public void setVersion(Integer version) {
     this.version = version;
   }

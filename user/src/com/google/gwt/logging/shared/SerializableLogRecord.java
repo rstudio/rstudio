@@ -28,16 +28,23 @@ import java.util.logging.LogRecord;
  * the wire directly.
  */
 public class SerializableLogRecord implements IsSerializable {
+  // If you add/remove a field here, be sure to update JsonLogRecordServerUtil
+  // and JsonLogRecordClientUtil as well.
   private String level;
   private String loggerName = "";
   private String msg;
+  // TODO(unnurg): if/when we ever start passing the strong name in all headers
+  // and we're able to access request headers in the Vega logging handler
+  // remove this strongName variable from here.
+  private String strongName = "";
   private SerializableThrowable thrown = null;
   private long timestamp;
 
   /**
    * Create a new SerializableLogRecord from a LogRecord.
    */
-  public SerializableLogRecord(LogRecord lr) {
+  public SerializableLogRecord(LogRecord lr, String strongName) {
+    this.strongName = strongName;
     level = lr.getLevel().toString();
     loggerName = lr.getLoggerName();
     msg = lr.getMessage();
@@ -48,12 +55,13 @@ public class SerializableLogRecord implements IsSerializable {
   }
   
   public SerializableLogRecord(String level, String loggerName, String msg,
-      SerializableThrowable thrown, long timestamp) {
+      SerializableThrowable thrown, long timestamp, String strongName) {
     this.level = level;
     this.loggerName = loggerName;
     this.msg = msg;
     this.timestamp = timestamp;
     this.thrown = thrown;
+    this.strongName = strongName;
   }
   
   protected SerializableLogRecord() {
@@ -85,11 +93,19 @@ public class SerializableLogRecord implements IsSerializable {
     return msg;
   }
   
+  public String getStrongName() {
+    return strongName;
+  }
+  
   public SerializableThrowable getThrown() {
     return thrown;
   }
   
   public Long getTimestamp() {
     return timestamp;
+  }
+  
+  public void setThrown(SerializableThrowable t) {
+    thrown = t;
   }
 }

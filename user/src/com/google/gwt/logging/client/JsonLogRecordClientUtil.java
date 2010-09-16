@@ -49,6 +49,7 @@ public class JsonLogRecordClientUtil {
     obj.put("level", getJsonString(slr.getLevel()));
     obj.put("loggerName", getJsonString(slr.getLoggerName()));
     obj.put("msg", getJsonString(slr.getMsg()));
+    obj.put("strongName", getJsonString(slr.getStrongName()));
     if (slr.getTimestamp() != null) {
       obj.put("timestamp", new JSONString(slr.getTimestamp().toString()));
     }
