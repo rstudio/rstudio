@@ -16,7 +16,7 @@
 
 package com.google.gwt.user.rebind.rpc;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
@@ -32,8 +32,8 @@ import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
+import com.google.gwt.user.client.rpc.impl.Serializer;
 import com.google.gwt.user.client.rpc.impl.SerializerBase;
-import com.google.gwt.user.client.rpc.impl.TypeHandler;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -41,7 +41,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -103,9 +102,9 @@ public class TypeSerializerCreator {
 
   private final boolean elideTypeNames;
 
-  private final JType[] serializableTypes;
-
   private final SerializableTypeOracle serializationOracle;
+
+  private final JType[] serializableTypes;
 
   private final SourceWriter srcWriter;
 
@@ -113,18 +112,14 @@ public class TypeSerializerCreator {
 
   private final String typeSerializerClassName;
 
-  private final String typeSerializerSimpleName;
-
   private final Map<JType, String> typeStrings = new IdentityHashMap<JType, String>();
 
   public TypeSerializerCreator(TreeLogger logger,
       SerializableTypeOracle serializationOracle,
       SerializableTypeOracle deserializationOracle, GeneratorContext context,
-      String typeSerializerClassName, String typeSerializerSimpleName)
-      throws UnableToCompleteException {
+      String typeSerializerClassName) throws UnableToCompleteException {
     this.context = context;
     this.typeSerializerClassName = typeSerializerClassName;
-    this.typeSerializerSimpleName = typeSerializerSimpleName;
     this.serializationOracle = serializationOracle;
     this.deserializationOracle = deserializationOracle;
 
@@ -164,41 +159,29 @@ public class TypeSerializerCreator {
   public String realize(TreeLogger logger) {
     logger = logger.branch(TreeLogger.DEBUG,
         "Generating TypeSerializer for service interface '"
-            + typeSerializerClassName + "'", null);
+            + getTypeSerializerClassName() + "'", null);
+    String typeSerializerName = getTypeSerializerClassName();
+    if (srcWriter == null) {
+      return typeSerializerName;
+    }
 
     createFieldSerializers(logger, context);
 
-    int index = 0;
-    for (JType type : getSerializableTypes()) {
+    writeStaticFields();
 
-      String typeString;
-      if (elideTypeNames) {
-        typeString = Integer.toString(++index, Character.MAX_RADIX);
-      } else {
-        typeString = getTypeString(type);
-      }
-      typeStrings.put(type, typeString);
-    }
+    writeStaticInitializer();
 
-    if (srcWriter != null) {
-      writeStaticFields();
+    writeCreateMethods();
 
-      writeStaticInitializer();
+    writeRegisterSignatures();
 
-      writeLoadMethodsJava();
+    writeRegisterMethods();
 
-      writeLoadMethodsNative();
+    writeRaiseSerializationException();
 
-      writeLoadSignaturesJava();
+    srcWriter.commit(logger);
 
-      writeLoadSignaturesNative();
-
-      writeConstructor();
-
-      srcWriter.commit(logger);
-    }
-
-    return typeSerializerClassName;
+    return typeSerializerName;
   }
 
   /*
@@ -216,6 +199,12 @@ public class TypeSerializerCreator {
       return;
     }
 
+    JClassType customFieldSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
+        typeOracle, type);
+    if (customFieldSerializer != null) {
+      return;
+    }
+
     /*
      * Only a JClassType can reach this point in the code. JPrimitives have been
      * removed because their serialization is built in, interfaces have been
@@ -224,11 +213,8 @@ public class TypeSerializerCreator {
      */
     assert (type.isClass() != null || type.isArray() != null);
 
-    JClassType customFieldSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
-        typeOracle, type);
     FieldSerializerCreator creator = new FieldSerializerCreator(typeOracle,
-        serializationOracle, deserializationOracle, (JClassType) type,
-        customFieldSerializer);
+        serializationOracle, deserializationOracle, (JClassType) type);
     creator.realize(logger, ctx);
   }
 
@@ -244,6 +230,14 @@ public class TypeSerializerCreator {
 
       createFieldSerializer(logger, ctx, type);
     }
+  }
+
+  private String getCreateMethodName(JType type) {
+    assert (type.isArray() == null);
+
+    return "create_"
+        + SerializationUtils.getFieldSerializerName(typeOracle, type).replace(
+            '.', '_');
   }
 
   private String[] getPackageAndClassName(String fullClassName) {
@@ -262,7 +256,7 @@ public class TypeSerializerCreator {
   }
 
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
-    String name[] = getPackageAndClassName(typeSerializerClassName);
+    String name[] = getPackageAndClassName(getTypeSerializerClassName());
     String packageName = name[0];
     String className = name[1];
     PrintWriter printWriter = ctx.tryCreate(logger, packageName, className);
@@ -273,17 +267,19 @@ public class TypeSerializerCreator {
     ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
         packageName, className);
 
-    composerFactory.addImport(GWT.class.getName());
+    composerFactory.addImport(JavaScriptObject.class.getName());
     composerFactory.addImport(JsArrayString.class.getName());
+    composerFactory.addImport(Serializer.class.getName());
     composerFactory.addImport(SerializationException.class.getName());
     composerFactory.addImport(SerializationStreamReader.class.getName());
     composerFactory.addImport(SerializationStreamWriter.class.getName());
-    composerFactory.addImport(TypeHandler.class.getName());
-    composerFactory.addImport(HashMap.class.getName());
-    composerFactory.addImport(Map.class.getName());
 
     composerFactory.setSuperclass(SerializerBase.class.getName());
     return composerFactory.createSourceWriter(ctx, printWriter);
+  }
+
+  private String getTypeSerializerClassName() {
+    return typeSerializerClassName;
   }
 
   /**
@@ -297,56 +293,78 @@ public class TypeSerializerCreator {
   }
 
   /**
-   * Return <code>true</code> if the custom field serializer has an instantiate
-   * method.
+   * Return <code>true</code> if this type is concrete and has a custom field
+   * serializer that does not declare an instantiate method.
+   * 
+   * @param type
+   * @return
    */
-  private boolean hasInstantiateMethod(JClassType customSerializer, JType type) {
-    return CustomFieldSerializerValidator.getInstantiationMethod(
-        customSerializer, (JClassType) type) != null;
+  private boolean needsCreateMethod(JType type) {
+    // If this type is abstract it will not be serialized into the stream
+    //
+    if (!deserializationOracle.maybeInstantiated(type)) {
+      return false;
+    }
+
+    if (type.isArray() != null) {
+      return false;
+    }
+
+    JClassType customSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
+        typeOracle, type);
+    if (customSerializer == null) {
+      return false;
+    }
+
+    JMethod customInstantiate = customSerializer.findMethod(
+        "instantiate",
+        new JType[] {typeOracle.findType(SerializationStreamReader.class.getName())});
+    if (customInstantiate != null) {
+      return false;
+    }
+
+    return true;
   }
 
-  private void writeConstructor() {
-    srcWriter.println("public " + typeSerializerSimpleName + "() {");
-    srcWriter.indentln("super(methodMapJava, methodMapNative, signatureMapJava, signatureMapNative);");
-    srcWriter.println("}");
-    srcWriter.println();
-  }
-
-  private void writeLoadMethodsJava() {
-    srcWriter.println("private static Map<String, TypeHandler> loadMethodsJava() {");
-    srcWriter.indent();
-    srcWriter.println("Map<String, TypeHandler> result = new HashMap<String, TypeHandler>();");
-
-    List<JType> filteredTypes = new ArrayList<JType>();
+  private void writeCreateMethods() {
     JType[] types = getSerializableTypes();
-    int n = types.length;
-    for (int index = 0; index < n; ++index) {
-      JType type = types[index];
-      if (serializationOracle.maybeInstantiated(type)
-          || deserializationOracle.maybeInstantiated(type)) {
-        filteredTypes.add(type);
+    for (int typeIndex = 0; typeIndex < types.length; ++typeIndex) {
+      JType type = types[typeIndex];
+      assert (serializationOracle.isSerializable(type) || deserializationOracle.isSerializable(type));
+
+      if (!needsCreateMethod(type)) {
+        continue;
       }
-    }
 
-    for (JType type : filteredTypes) {
-      String typeString = typeStrings.get(type);
-      assert typeString != null : "Missing type signature for "
-          + type.getQualifiedSourceName();
-      srcWriter.println("result.put(\"" + typeString + "\", new "
-          + SerializationUtils.getStandardSerializerName((JClassType) type)
-          + ".Handler());");
+      /*
+       * Only classes with custom field serializers that do no declare
+       * instantiate methods get here
+       */
+      srcWriter.print("private static native ");
+      srcWriter.print(type.getQualifiedSourceName());
+      srcWriter.print(" ");
+      srcWriter.print(getCreateMethodName(type));
+      srcWriter.println("(SerializationStreamReader streamReader) throws SerializationException /*-{");
+      srcWriter.indent();
+      srcWriter.print("return @");
+      srcWriter.print(type.getQualifiedSourceName());
+      srcWriter.println("::new()();");
+      srcWriter.outdent();
+      srcWriter.println("}-*/;");
+      srcWriter.println();
     }
+  }
 
-    srcWriter.println("return result;");
-    srcWriter.outdent();
+  private void writeRaiseSerializationException() {
+    srcWriter.println("private static void raiseSerializationException(String msg) throws SerializationException {");
+    srcWriter.indentln("throw new SerializationException(msg);");
     srcWriter.println("}");
     srcWriter.println();
   }
 
-  private void writeLoadMethodsNative() {
-    srcWriter.println("private static native MethodMap loadMethodsNative() /*-{");
+  private void writeRegisterMethods() {
+    srcWriter.println("private static native void registerMethods() /*-{");
     srcWriter.indent();
-    srcWriter.println("var result = {};");
 
     List<JType> filteredTypes = new ArrayList<JType>();
     JType[] types = getSerializableTypes();
@@ -372,16 +390,23 @@ public class TypeSerializerCreator {
         srcWriter.println("(function() {");
       }
 
+      srcWriter.println("@com.google.gwt.user.client.rpc.impl.SerializerBase"
+          + "::registerMethods("
+          + "Lcom/google/gwt/user/client/rpc/impl/SerializerBase$MethodMap;"
+          + "Ljava/lang/String;" + "Lcom/google/gwt/core/client/JsArray;)(");
+
+      srcWriter.indentln("@" + typeSerializerClassName + "::methodMap,");
+
       String typeString = typeStrings.get(type);
       assert typeString != null : "Missing type signature for "
           + type.getQualifiedSourceName();
-      srcWriter.println("result[\"" + typeString + "\"] = [");
+      srcWriter.indentln("\"" + typeString + "\" , [");
 
       srcWriter.indent();
-      writeTypeMethodsNative(type);
+      writeTypeMethods(type);
       srcWriter.outdent();
 
-      srcWriter.indentln("];");
+      srcWriter.indentln("]);");
       srcWriter.println();
     }
 
@@ -389,57 +414,16 @@ public class TypeSerializerCreator {
       srcWriter.println("})();");
     }
 
-    srcWriter.println("return result;");
     srcWriter.outdent();
     srcWriter.println("}-*/;");
     srcWriter.println();
   }
 
-  private void writeLoadSignaturesJava() {
-    srcWriter.println("private static Map<Class<?>, String> loadSignaturesJava() {");
+  private void writeRegisterSignatures() {
+    srcWriter.println("private static native void registerSignatures() /*-{");
     srcWriter.indent();
-    srcWriter.println("Map<Class<?>, String> result = new HashMap<Class<?>, String>();");
 
-    for (JType type : getSerializableTypes()) {
-      String typeString = typeStrings.get(type);
-
-      if (!serializationOracle.maybeInstantiated(type)
-          && !deserializationOracle.maybeInstantiated(type)) {
-        continue;
-      }
-
-      String typeRef;
-      JClassType customSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
-          typeOracle, type);
-      if (customSerializer != null
-          && CustomFieldSerializerValidator.getConcreteTypeMethod(customSerializer) != null) {
-        typeRef = customSerializer.getQualifiedSourceName() + ".concreteType()";
-      } else if (type instanceof JClassType) {
-        typeRef = SerializationUtils.getStandardSerializerName((JClassType) type)
-            + ".concreteType()";
-      } else {
-        typeRef = type.getLeafType().getQualifiedSourceName();
-        while (type.isArray() != null) {
-          typeRef += "[]";
-          type = type.isArray().getComponentType();
-        }
-        typeRef += ".class";
-      }
-
-      srcWriter.println("result.put(" + typeRef + ", \"" + typeString + "\");");
-    }
-
-    srcWriter.println("return result;");
-    srcWriter.outdent();
-    srcWriter.println("}");
-    srcWriter.println();
-  }
-
-  private void writeLoadSignaturesNative() {
-    srcWriter.println("private static native JsArrayString loadSignaturesNative() /*-{");
-    srcWriter.indent();
-    srcWriter.println("var result = [];");
-
+    int index = 0;
     boolean shard = shardSize > 0 && getSerializableTypes().length > shardSize;
     int shardCount = 0;
 
@@ -448,7 +432,14 @@ public class TypeSerializerCreator {
     }
 
     for (JType type : getSerializableTypes()) {
-      String typeString = typeStrings.get(type);
+
+      String typeString;
+      if (elideTypeNames) {
+        typeString = Integer.toString(++index, Character.MAX_RADIX);
+      } else {
+        typeString = getTypeString(type);
+      }
+      typeStrings.put(type, typeString);
 
       if (!serializationOracle.maybeInstantiated(type)
           && !deserializationOracle.maybeInstantiated(type)) {
@@ -467,79 +458,70 @@ public class TypeSerializerCreator {
         srcWriter.println("(function() {");
       }
 
-      srcWriter.println("result[@com.google.gwt.core.client.impl.Impl::getHashCode(Ljava/lang/Object;)(@"
-          + jsniTypeRef + "::class)] = \"" + typeString + "\";");
+      srcWriter.println("@com.google.gwt.user.client.rpc.impl.SerializerBase"
+          + "::registerSignature("
+          + "Lcom/google/gwt/core/client/JsArrayString;" + "Ljava/lang/Class;"
+          + "Ljava/lang/String;)(");
+      srcWriter.indent();
+      srcWriter.println("@" + typeSerializerClassName + "::signatureMap,");
+      srcWriter.println("@" + jsniTypeRef + "::class,");
+      srcWriter.println("\"" + typeString + "\");");
+      srcWriter.outdent();
+      srcWriter.println();
     }
 
     if (shard) {
       srcWriter.println("})();");
     }
 
-    srcWriter.println("return result;");
     srcWriter.outdent();
     srcWriter.println("}-*/;");
     srcWriter.println();
   }
 
   private void writeStaticFields() {
-    srcWriter.println("private static final Map<String, TypeHandler> methodMapJava;");
-    srcWriter.println("private static final MethodMap methodMapNative;");
-    srcWriter.println("private static final Map<Class<?>, String> signatureMapJava;");
-    srcWriter.println("private static final JsArrayString signatureMapNative;");
+    srcWriter.println("private static final MethodMap methodMap = JavaScriptObject.createObject().cast();");
+    srcWriter.println("private static final JsArrayString signatureMap = JavaScriptObject.createArray().cast();");
+    srcWriter.println("protected MethodMap getMethodMap() { return methodMap; }");
+    srcWriter.println("protected JsArrayString getSignatureMap() { return signatureMap; }");
     srcWriter.println();
   }
 
   private void writeStaticInitializer() {
     srcWriter.println("static {");
-    srcWriter.indent();
-    srcWriter.println("if (GWT.isScript()) {");
-    srcWriter.indent();
-    srcWriter.println("methodMapJava = null;");
-    srcWriter.println("methodMapNative = loadMethodsNative();");
-    srcWriter.println("signatureMapJava = null;");
-    srcWriter.println("signatureMapNative = loadSignaturesNative();");
-    srcWriter.outdent();
-    srcWriter.println("} else {");
-    srcWriter.indent();
-    srcWriter.println("methodMapJava = loadMethodsJava();");
-    srcWriter.println("methodMapNative = null;");
-    srcWriter.println("signatureMapJava = loadSignaturesJava();");
-    srcWriter.println("signatureMapNative = null;");
-    srcWriter.outdent();
-    srcWriter.println("}");
-    srcWriter.outdent();
+    srcWriter.indentln("registerMethods();");
+    srcWriter.indentln("registerSignatures();");
     srcWriter.println("}");
   }
 
   /**
-   * Write an entry in the methodMapNative for one type.
+   * Write an entry in the createMethodMap method for one type.
    * 
    * @param type type to generate entry for
    */
-  private void writeTypeMethodsNative(JType type) {
+  private void writeTypeMethods(JType type) {
     srcWriter.indent();
     String serializerName = SerializationUtils.getFieldSerializerName(
-        typeOracle, type);
-    JClassType customSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
         typeOracle, type);
 
     // First the initialization method
     if (deserializationOracle.maybeInstantiated(type)) {
       srcWriter.print("@");
-      if (customSerializer != null) {
-        if (hasInstantiateMethod(customSerializer, type)) {
-          srcWriter.print(serializerName);
-        } else {
-          srcWriter.print(SerializationUtils.getStandardSerializerName((JClassType) type));
-        }
+      if (needsCreateMethod(type)) {
+        srcWriter.print(getTypeSerializerClassName());
+        srcWriter.print("::");
+        srcWriter.print(getCreateMethodName(type));
       } else {
         srcWriter.print(serializerName);
+        srcWriter.print("::instantiate");
       }
-      srcWriter.print("::instantiate");
       srcWriter.print("(L"
           + SerializationStreamReader.class.getName().replace('.', '/') + ";)");
     }
     srcWriter.println(",");
+
+    JClassType customSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
+        typeOracle, type);
 
     // Now the deserialization method
     if (deserializationOracle.isSerializable(type)) {

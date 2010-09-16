@@ -21,20 +21,16 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JConstructor;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
-import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.core.java.lang.Object_Array_CustomFieldSerializer;
-import com.google.gwt.user.client.rpc.impl.TypeHandler;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -54,14 +50,6 @@ public class FieldSerializerCreator {
   
   private static final String WEAK_MAPPING_CLASS_NAME = WeakMapping.class.getName();
 
-  private final JClassType customFieldSerializer;
-
-  private final boolean customFieldSerializerHasInstantiate;
-
-  private final String fieldSerializerName;
-
-  private final boolean isJRE;
-
   private final JClassType serializableClass;
 
   private final JField[] serializableFields;
@@ -79,9 +67,7 @@ public class FieldSerializerCreator {
    */
   public FieldSerializerCreator(TypeOracle typeOracle,
       SerializableTypeOracle typesSentFromBrowser,
-      SerializableTypeOracle typesSentToBrowser, JClassType requestedClass,
-      JClassType customFieldSerializer) {
-    this.customFieldSerializer = customFieldSerializer;
+      SerializableTypeOracle typesSentToBrowser, JClassType requestedClass) {
     assert (requestedClass != null);
     assert (requestedClass.isClass() != null || requestedClass.isArray() != null);
 
@@ -91,10 +77,6 @@ public class FieldSerializerCreator {
     serializableClass = requestedClass;
     serializableFields = SerializationUtils.getSerializableFields(typeOracle,
         requestedClass);
-    this.fieldSerializerName = SerializationUtils.getStandardSerializerName(serializableClass);
-    this.isJRE = SerializableTypeOracleBuilder.isInStandardJavaPackage(serializableClass.getQualifiedSourceName());
-    this.customFieldSerializerHasInstantiate = (customFieldSerializer != null && CustomFieldSerializerValidator.hasInstantiationMethod(
-        customFieldSerializer, serializableClass));
   }
 
   public String realize(TreeLogger logger, GeneratorContext ctx) {
@@ -105,17 +87,16 @@ public class FieldSerializerCreator {
         "Generating a field serializer for type '"
             + serializableClass.getQualifiedSourceName() + "'", null);
 
+    String fieldSerializerName = SerializationUtils.getFieldSerializerName(
+        typeOracle, serializableClass);
+
     sourceWriter = getSourceWriter(logger, ctx);
     if (sourceWriter == null) {
       return fieldSerializerName;
     }
     assert sourceWriter != null;
 
-    maybeWriteTypeHandlerClass();
-
     writeFieldAccessors();
-
-    writeConcreteTypeMethod();
 
     writeDeserializeMethod();
 
@@ -128,17 +109,6 @@ public class FieldSerializerCreator {
     return fieldSerializerName;
   }
 
-  private boolean classIsAccessible() {
-    JClassType testClass = serializableClass;
-    while (testClass != null) {
-      if (testClass.isPrivate() || (isJRE && !testClass.isPublic())) {
-        return false;
-      }
-      testClass = testClass.getEnclosingType();
-    }
-    return true;
-  }
-  
   private String createArrayInstantiationExpression(JArrayType array) {
     StringBuilder sb = new StringBuilder();
 
@@ -151,15 +121,7 @@ public class FieldSerializerCreator {
 
     return sb.toString();
   }
-
-  private boolean ctorIsAccessible() {
-    JConstructor ctor = serializableClass.findConstructor(new JType[0]);
-    if (ctor.isPrivate() || (isJRE && !ctor.isPublic())) {
-      return false;
-    }
-    return true;
-  }
-
+  
   /**
    * Returns the depth of the given class in the class hierarchy 
    * (where the depth of java.lang.Object == 0).
@@ -173,14 +135,16 @@ public class FieldSerializerCreator {
   }
 
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
-    int packageNameEnd = fieldSerializerName.lastIndexOf('.');
+    String qualifiedSerializerName = SerializationUtils.getFieldSerializerName(
+        typeOracle, serializableClass);
+    int packageNameEnd = qualifiedSerializerName.lastIndexOf('.');
     String className;
     String packageName;
     if (packageNameEnd != -1) {
-      className = fieldSerializerName.substring(packageNameEnd + 1);
-      packageName = fieldSerializerName.substring(0, packageNameEnd);
+      className = qualifiedSerializerName.substring(packageNameEnd + 1);
+      packageName = qualifiedSerializerName.substring(0, packageNameEnd);
     } else {
-      className = fieldSerializerName;
+      className = qualifiedSerializerName;
       packageName = "";
     }
 
@@ -191,27 +155,8 @@ public class FieldSerializerCreator {
 
     ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
         packageName, className);
-    composerFactory.addImport(SerializationException.class.getCanonicalName());
-    composerFactory.addImport(SerializationStreamReader.class.getCanonicalName());
-    composerFactory.addImport(SerializationStreamWriter.class.getCanonicalName());
     composerFactory.addAnnotationDeclaration("@SuppressWarnings(\"deprecation\")");
     return composerFactory.createSourceWriter(ctx, printWriter);
-  }
-
-  private String getTypeSig(JMethod deserializationMethod) {
-    JTypeParameter[] typeParameters = deserializationMethod.getTypeParameters();
-    String typeSig = "";
-    if (typeParameters.length > 0) {
-      StringBuilder sb = new StringBuilder();
-      sb.append('<');
-      for (JTypeParameter typeParameter : typeParameters) {
-        sb.append(typeParameter.getFirstBound().getQualifiedSourceName());
-        sb.append(',');
-      }
-      sb.setCharAt(sb.length() - 1, '>');
-      typeSig = sb.toString();
-    }
-    return typeSig;
   }
 
   private void maybeSuppressLongWarnings(JType fieldType) {
@@ -245,25 +190,17 @@ public class FieldSerializerCreator {
       return;
     }
 
-    if (customFieldSerializerHasInstantiate) {
-      // The custom field serializer already defined it.
-      return;
-    }
-
     JArrayType isArray = serializableClass.isArray();
     JEnumType isEnum = serializableClass.isEnum();
-    JClassType isClass = serializableClass.isClass();
+    boolean isNative = (isArray == null) && (isEnum == null);
 
-    boolean useViolator = false;
-    if (isEnum == null && isClass != null) {
-      useViolator = !classIsAccessible() || !ctorIsAccessible();
-    }
-
-    sourceWriter.print("public static" + (useViolator ? " native " : " "));
+    sourceWriter.print("public static" + (isNative ? " native " : " "));
     String qualifiedSourceName = serializableClass.getQualifiedSourceName();
     sourceWriter.print(qualifiedSourceName);
-    sourceWriter.print(" instantiate(SerializationStreamReader streamReader) throws SerializationException "
-        + (useViolator ? "/*-{" : "{"));
+    sourceWriter.print(" instantiate(");
+    sourceWriter.print(SerializationStreamReader.class.getName());
+    sourceWriter.println(" streamReader) throws "
+        + SerializationException.class.getName() + (isNative ? "/*-{" : "{"));
     sourceWriter.indent();
 
     if (isArray != null) {
@@ -276,98 +213,13 @@ public class FieldSerializerCreator {
           + qualifiedSourceName + ".values();");
       sourceWriter.println("assert (ordinal >= 0 && ordinal < values.length);");
       sourceWriter.println("return values[ordinal];");
-    } else if (useViolator) {
+    } else {
       sourceWriter.println("return @" + qualifiedSourceName + "::new()();");
-    } else {
-      sourceWriter.println("return new " + qualifiedSourceName + "();");
     }
 
     sourceWriter.outdent();
-    sourceWriter.println(useViolator ? "}-*/;" : "}");
+    sourceWriter.println(isNative ? "}-*/;" : "}");
     sourceWriter.println();
-  }
-
-  private void maybeWriteTypeHandlerClass() {
-    if (serializableClass.isEnum() == null && serializableClass.isAbstract()) {
-      /*
-       * Field serializers are shared by all of the RemoteService proxies in a
-       * compilation. Therefore, we have to generate an instantiate method even
-       * if the type is not instantiable relative to the RemoteService which
-       * caused this field serializer to be created. If the type is not
-       * instantiable relative to any of the RemoteService proxies, dead code
-       * optimizations will cause the method to be removed from the compiled
-       * output.
-       * 
-       * Enumerated types require an instantiate method even if they are
-       * abstract. You will have an abstract enum in cases where the enum type
-       * is sub-classed. Non-default instantiable classes cannot have
-       * instantiate methods.
-       */
-      return;
-    }
-    sourceWriter.println("public static class Handler implements "
-        + TypeHandler.class.getCanonicalName() + " {");
-    sourceWriter.indent();
-
-    // Deserialization method
-    sourceWriter.println("public void deserialize(SerializationStreamReader reader, Object object) throws SerializationException {");
-    if (customFieldSerializer != null) {
-      JMethod deserializationMethod = CustomFieldSerializerValidator.getDeserializationMethod(
-          customFieldSerializer, serializableClass);
-      JType castType = deserializationMethod.getParameters()[1].getType();
-      String typeSig = getTypeSig(deserializationMethod);
-      sourceWriter.indentln(customFieldSerializer.getQualifiedSourceName()
-          + "." + typeSig + "deserialize(reader, ("
-          + castType.getQualifiedSourceName() + ")object);");
-    } else {
-      sourceWriter.indentln(fieldSerializerName + ".deserialize(reader, ("
-          + serializableClass.getQualifiedSourceName() + ")object);");
-    }
-    sourceWriter.println("}");
-
-    // Instantiation method
-    sourceWriter.println("public Object instantiate(SerializationStreamReader reader) throws SerializationException {");
-    sourceWriter.indent();
-    if (serializableClass.isEnum() != null
-        || serializableClass.isDefaultInstantiable()
-        || customFieldSerializerHasInstantiate) {
-      sourceWriter.print("return ");
-      String typeSig;
-      if (customFieldSerializer != null && customFieldSerializerHasInstantiate) {
-        sourceWriter.print(customFieldSerializer.getQualifiedSourceName());
-        JMethod instantiationMethod = CustomFieldSerializerValidator.getInstantiationMethod(
-            customFieldSerializer, serializableClass);
-        typeSig = getTypeSig(instantiationMethod);
-      } else {
-        sourceWriter.print(fieldSerializerName);
-        typeSig = "";
-      }
-      sourceWriter.print("." + typeSig + "instantiate");
-      sourceWriter.println("(reader);");
-    } else {
-      sourceWriter.println("return null;");
-    }
-    sourceWriter.outdent();
-    sourceWriter.println("}");
-
-    // Serialization method
-    sourceWriter.println("public void serialize(SerializationStreamWriter writer, Object object) throws SerializationException {");
-    if (customFieldSerializer != null) {
-      JMethod serializationMethod = CustomFieldSerializerValidator.getSerializationMethod(
-          customFieldSerializer, serializableClass);
-      JType castType = serializationMethod.getParameters()[1].getType();
-      String typeSig = getTypeSig(serializationMethod);
-      sourceWriter.indentln(customFieldSerializer.getQualifiedSourceName()
-          + "." + typeSig + "serialize(writer, ("
-          + castType.getQualifiedSourceName() + ")object);");
-    } else {
-      sourceWriter.indentln(fieldSerializerName + ".serialize(writer, ("
-          + serializableClass.getQualifiedSourceName() + ")object);");
-    }
-
-    sourceWriter.println("}");
-    sourceWriter.outdent();
-    sourceWriter.println("}");
   }
 
   /**
@@ -467,9 +319,9 @@ public class FieldSerializerCreator {
     JClassType superClass = serializableClass.getSuperclass();
     if (superClass != null
         && (typesSentFromBrowser.isSerializable(superClass) || typesSentToBrowser.isSerializable(superClass))) {
-      String superFieldSerializer = SerializationUtils.getFieldSerializerName(
+      String fieldSerializerName = SerializationUtils.getFieldSerializerName(
           typeOracle, superClass);
-      sourceWriter.print(superFieldSerializer);
+      sourceWriter.print(fieldSerializerName);
       sourceWriter.println(".deserialize(streamReader, instance);");
     }
   }
@@ -511,41 +363,20 @@ public class FieldSerializerCreator {
     JClassType superClass = serializableClass.getSuperclass();
     if (superClass != null
         && (typesSentFromBrowser.isSerializable(superClass) || typesSentToBrowser.isSerializable(superClass))) {
-      String superFieldSerializer = SerializationUtils.getFieldSerializerName(
+      String fieldSerializerName = SerializationUtils.getFieldSerializerName(
           typeOracle, superClass);
-      sourceWriter.print(superFieldSerializer);
+      sourceWriter.print(fieldSerializerName);
       sourceWriter.println(".serialize(streamWriter, instance);");
     }
   }
 
-  private void writeConcreteTypeMethod() {
-    if (customFieldSerializer != null
-        && CustomFieldSerializerValidator.getConcreteTypeMethod(customFieldSerializer) != null) {
-      return;
-    }
-
-    if (classIsAccessible()) {
-      sourceWriter.println("public static Class<?> concreteType() {");
-      sourceWriter.indentln("return "
-          + serializableClass.getQualifiedSourceName() + ".class;");
-      sourceWriter.println("}");
-      sourceWriter.println();
-    } else {
-      String jsniTypeRef = TypeOracleMediator.computeBinaryClassName(serializableClass);
-      sourceWriter.println("public static native Class<?> concreteType() /*-{");
-      sourceWriter.indentln("return @" + jsniTypeRef + "::class;");
-      sourceWriter.println("}-*/;");
-      sourceWriter.println();
-    }
-  }
-
   private void writeDeserializeMethod() {
-    if (customFieldSerializer != null) {
-      return;
-    }
-    sourceWriter.print("public static void deserialize(SerializationStreamReader streamReader, ");
+    sourceWriter.print("public static void deserialize(");
+    sourceWriter.print(SerializationStreamReader.class.getName());
+    sourceWriter.print(" streamReader, ");
     sourceWriter.print(serializableClass.getQualifiedSourceName());
-    sourceWriter.println(" instance) throws SerializationException {");
+    sourceWriter.println(" instance) throws "
+        + SerializationException.class.getName() + "{");
     sourceWriter.indent();
 
     JArrayType isArray = serializableClass.isArray();
@@ -577,9 +408,6 @@ public class FieldSerializerCreator {
    * external class to access the field's value.
    */
   private void writeFieldAccessors() {
-    if (customFieldSerializer != null) {
-      return;
-    }
     for (JField serializableField : serializableFields) {
       if (!needsAccessorMethods(serializableField)) {
         continue;
@@ -651,12 +479,12 @@ public class FieldSerializerCreator {
   }
 
   private void writeSerializeMethod() {
-    if (customFieldSerializer != null) {
-      return;
-    }
-    sourceWriter.print("public static void serialize(SerializationStreamWriter streamWriter, ");
+    sourceWriter.print("public static void serialize(");
+    sourceWriter.print(SerializationStreamWriter.class.getName());
+    sourceWriter.print(" streamWriter, ");
     sourceWriter.print(serializableClass.getQualifiedSourceName());
-    sourceWriter.println(" instance) throws SerializationException {");
+    sourceWriter.println(" instance) throws "
+        + SerializationException.class.getName() + " {");
     sourceWriter.indent();
 
     JArrayType isArray = serializableClass.isArray();
