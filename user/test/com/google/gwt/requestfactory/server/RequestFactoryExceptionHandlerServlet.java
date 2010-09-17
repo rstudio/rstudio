@@ -24,7 +24,6 @@ public class RequestFactoryExceptionHandlerServlet
     extends RequestFactoryServlet {
   public RequestFactoryExceptionHandlerServlet() {
     super(new ExceptionHandler() {
-      @Override
       public ServerFailure createServerFailure(Throwable throwable) {
         return new ServerFailure(throwable.getMessage(),
             throwable.getClass().getName(), "my stack trace");
