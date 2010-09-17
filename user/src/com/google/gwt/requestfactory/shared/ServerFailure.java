@@ -20,19 +20,32 @@ package com.google.gwt.requestfactory.shared;
  */
 public class ServerFailure {
   private final String message;
+  private final String stackTraceString;
+  private final String exceptionType;
 
   /**
    * Constructs a ServerFailure with a null message.
    */
   public ServerFailure() {
-    this(null);
+    this(null, null, null);
   }
 
-  public ServerFailure(String message) {
+  public ServerFailure(String message, String exceptionType,
+      String stackTraceString) {
     this.message = message;
+    this.exceptionType = exceptionType;
+    this.stackTraceString = stackTraceString;
+  }
+
+  public String getExceptionType() {
+    return exceptionType;
   }
 
   public String getMessage() {
     return message;
+  }
+
+  public String getStackTraceString() {
+    return stackTraceString;
   }
 }

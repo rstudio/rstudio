@@ -68,4 +68,6 @@ class SimpleFooProxyProperties {
 
   static final Property<SimpleFooProxy> fooField = new Property<SimpleFooProxy>(
       "fooField", SimpleFooProxy.class);
+
+  static final Property<Integer> pleaseCrash = new Property<Integer>("pleaseCrash", Integer.class);
 }

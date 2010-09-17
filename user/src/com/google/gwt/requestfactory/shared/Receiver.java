@@ -33,7 +33,13 @@ public abstract class Receiver<V> {
    * RuntimeException with the provided error message.
    */
   public void onFailure(ServerFailure error) {
-    throw new RuntimeException(error.getMessage());
+    String exceptionType = error.getExceptionType();
+    String message = error.getMessage();
+    throw new RuntimeException(exceptionType
+        + ((exceptionType.length() != 0 && message.length() != 0) ? ": " : "")
+        + error.getMessage()
+        + ((exceptionType.length() != 0 || message.length() != 0) ? ": " : "")
+        + error.getStackTraceString());
   }
 
   /**
@@ -43,13 +49,14 @@ public abstract class Receiver<V> {
 
   /**
    * Called if an object sent to the server could not be validated. The default
-   * implementation calls {@link #onFailure()} if <code>errors</code> is not
-   * empty.
+   * implementation calls {@link #onFailure(ServerFailure)} if <code>errors
+   * </code> is not empty.
    */
   public void onViolation(Set<Violation> errors) {
     if (!errors.isEmpty()) {
       onFailure(new ServerFailure(
-          "The call failed on the server due to a ConstraintViolation"));
+          "The call failed on the server due to a ConstraintViolation",
+          "", ""));
     }
   }
 }

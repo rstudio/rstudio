@@ -59,6 +59,8 @@ public interface SimpleFooProxy extends EntityProxy {
   
   Boolean getOtherBoolField();
   
+  Integer getPleaseCrash();
+
   String getPassword();
 
   Short getShortField();
@@ -96,6 +98,8 @@ public interface SimpleFooProxy extends EntityProxy {
   void setOtherBoolField(Boolean boolField);
 
   void setPassword(String password);
+
+  void setPleaseCrash(Integer dummy);
 
   void setShortField(Short s);
 

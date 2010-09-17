@@ -32,7 +32,7 @@ public class JsonResults extends JavaScriptObject {
   protected JsonResults() {
   }
 
-  public final native String getException() /*-{
+  public final native ServerFailureRecord getException() /*-{
     return this.exception || null;
   }-*/;
 

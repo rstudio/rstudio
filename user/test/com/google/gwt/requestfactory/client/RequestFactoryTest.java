@@ -20,6 +20,7 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SyncResult;
@@ -458,6 +459,37 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             });
           }
         });
+  }
+
+  public void testServerFailure() {
+    delayTestFinish(5000);
+
+    SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
+    final RequestObject<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
+        rayFoo);
+    rayFoo = persistRay.edit(rayFoo);
+    // 42 is the crash causing magic number
+    rayFoo.setPleaseCrash(42);
+
+    persistRay.fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onFailure(ServerFailure error) {
+        assertEquals("Server Error: test message", error.getMessage());
+        assertEquals("", error.getExceptionType());
+        assertEquals("", error.getStackTraceString());
+        finishTestAndReset();
+      }
+
+      @Override
+      public void onViolation(Set<Violation> errors) {
+        fail("Failure expected but onViolation() was called");
+      }
+
+      public void onSuccess(SimpleFooProxy response,
+          Set<SyncResult> syncResult) {
+        fail("Failure expected but onSuccess() was called");
+      }
+    });
   }
 
   public void testStableId() {

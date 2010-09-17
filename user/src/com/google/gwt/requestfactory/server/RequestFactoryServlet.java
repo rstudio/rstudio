@@ -75,6 +75,20 @@ public class RequestFactoryServlet extends HttpServlet {
     return perThreadResponse.get();
   }
 
+  private final ExceptionHandler exceptionHandler;
+
+  public RequestFactoryServlet() {
+    this(new DefaultExceptionHandler());
+  }
+
+  /**
+   * Use this constructor in subclasses to provide a custom
+   * {@link ExceptionHandler}.
+   */
+  public RequestFactoryServlet(ExceptionHandler exceptionHandler) {
+    this.exceptionHandler = exceptionHandler;
+  }
+
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException {
@@ -102,6 +116,7 @@ public class RequestFactoryServlet extends HttpServlet {
           RequestProcessor<String> requestProcessor = new JsonRequestProcessor();
           requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(
               new DefaultSecurityProvider()));
+          requestProcessor.setExceptionHandler(exceptionHandler);
           response.setHeader("Content-Type",
               RequestFactory.JSON_CONTENT_TYPE_UTF8);
           writer.print(requestProcessor.decodeAndInvokeRequest(jsonRequestString));

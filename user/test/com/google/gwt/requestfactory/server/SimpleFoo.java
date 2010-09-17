@@ -125,6 +125,7 @@ public class SimpleFoo {
   private Boolean boolField;
 
   private Boolean otherBoolField;
+  private Integer pleaseCrashField;
 
   private SimpleBar barField;
   private SimpleFoo fooField;
@@ -143,6 +144,7 @@ public class SimpleFoo {
     boolField = true;
     nullField = null;
     barNullField = null;
+    pleaseCrashField = 0;
   }
 
   public Long countSimpleFooWithUserNameSideEffect() {
@@ -241,6 +243,10 @@ public class SimpleFoo {
 
   public String getPassword() {
     return password;
+  }
+
+  public Integer getPleaseCrash() {
+    return pleaseCrashField;
   }
 
   /**
@@ -358,6 +364,13 @@ public class SimpleFoo {
    */
   public void setOtherBoolField(Boolean otherBoolField) {
     this.otherBoolField = otherBoolField;
+  }
+
+  public void setPleaseCrash(Integer crashIf42) {
+    if (crashIf42 == 42) {
+      throw new UnsupportedOperationException("test message");
+    }
+    pleaseCrashField = crashIf42;
   }
 
   public void setPassword(String password) {

@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
+import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.Property;
 import com.google.gwt.requestfactory.shared.impl.RequestData;
@@ -131,6 +132,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private OperationRegistry operationRegistry;
 
+  private ExceptionHandler exceptionHandler;
+
   /*
    * <li>Request comes in. Construct the involvedKeys, dvsDataMap and
    * beforeDataMap, using DVS and parameters.
@@ -166,13 +169,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Logger.getLogger(this.getClass().getName()).finest("Outgoing response " 
           + response);
       return response;
+    } catch (InvocationTargetException e) {
+      JSONObject exceptionResponse = buildExceptionResponse(e.getCause());
+      throw new RequestProcessingException("Unexpected exception", e,
+          exceptionResponse.toString());
     } catch (Exception e) {
-      JSONObject exceptionResponse = new JSONObject();
-      try {
-        exceptionResponse.put("exception", "Server error");
-      } catch (JSONException jsonException) {
-        throw new IllegalStateException(jsonException);
-      }
+      JSONObject exceptionResponse = buildExceptionResponse(e);
       throw new RequestProcessingException("Unexpected exception", e,
           exceptionResponse.toString());
     }
@@ -759,6 +761,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return envelop;
   }
 
+  public void setExceptionHandler(ExceptionHandler exceptionHandler) {
+    this.exceptionHandler = exceptionHandler;
+  }
+
   public void setOperationRegistry(OperationRegistry operationRegistry) {
     this.operationRegistry = operationRegistry;
   }
@@ -817,6 +823,32 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
     relatedObjects.put(keyRef, getJsonObject(returnValue, propertyType, 
         propertyContext));
+  }
+
+  private JSONObject buildExceptionResponse(Throwable throwable) {
+    JSONObject exceptionResponse = new JSONObject();
+    ServerFailure failure = exceptionHandler.createServerFailure(throwable);
+    try {
+      JSONObject exceptionMessage = new JSONObject();
+
+      String message = failure.getMessage();
+      String exceptionType = failure.getExceptionType();
+      String stackTraceString = failure.getStackTraceString();
+
+      if (message != null && message.length() != 0) {
+        exceptionMessage.put("message", message);
+      }
+      if (exceptionType != null && exceptionType.length() != 0) {
+        exceptionMessage.put("type", exceptionType);
+      }
+      if (stackTraceString != null && stackTraceString.length() != 0) {
+        exceptionMessage.put("trace", stackTraceString);
+      }
+      exceptionResponse.put("exception", exceptionMessage);
+    } catch (JSONException jsonException) {
+      throw new IllegalStateException(jsonException);
+    }
+    return exceptionResponse;
   }
 
   @SuppressWarnings("unchecked")

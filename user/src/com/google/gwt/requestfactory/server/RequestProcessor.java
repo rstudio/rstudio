@@ -28,6 +28,15 @@ public interface RequestProcessor<T> {
   T decodeAndInvokeRequest(T encodedRequest) throws RequestProcessingException;
 
   /**
+   * Sets the ExceptionHandler to use to convert exceptions caused by
+   * method invocations into failure messages sent back to the client.
+   * 
+   * @param exceptionHandler an implementation, such as
+   *        {@code DefaultExceptionHandler}
+   */
+  void setExceptionHandler(ExceptionHandler exceptionHandler);
+
+  /**
    * Sets the OperationRegistry to be used for looking up invocation metadata.
    * 
    * @param registry an implementation, such as

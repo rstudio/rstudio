@@ -102,7 +102,9 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public void handleResponseText(String responseText) {
     JsonResults results = JsonResults.fromResults(responseText);
     if (results.getException() != null) {
-      receiver.onFailure(new ServerFailure(results.getException()));
+      ServerFailureRecord cause = results.getException();
+      receiver.onFailure(new ServerFailure(
+          cause.getMessage(), cause.getType(), cause.getTrace()));
       return;
     }
     processRelated(results.getRelated());
