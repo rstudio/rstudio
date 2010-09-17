@@ -382,7 +382,7 @@ public class EmbeddedTomcatServer {
     PathPrefix pathPrefix = new PathPrefix(prefix, null, true);
     pathPrefixSet.add(pathPrefix);
     resourceOracle.setPathPrefixes(pathPrefixSet);
-    resourceOracle.refresh(logger);
+    ResourceOracleImpl.refresh(logger, resourceOracle);
     Map<String, Resource> resourceMap = resourceOracle.getResourceMap();
     return resourceMap;
   }

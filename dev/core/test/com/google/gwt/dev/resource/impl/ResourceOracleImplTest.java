@@ -511,10 +511,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
         makeJavaLangPrefix());
   }
 
-  /**
-   * @param classPathEntry
-   * @param string
-   */
   private void assertJarEntry(ClassPathEntry classPathEntry, String expected) {
     assertTrue("Should be instance of ZipFileClassPathEntry",
         classPathEntry instanceof ZipFileClassPathEntry);
@@ -545,9 +541,9 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
   private ResourceOracleSnapshot refreshAndSnapshot(TreeLogger logger,
       ResourceOracleImpl oracle) {
-    oracle.refresh(logger);
+    ResourceOracleImpl.refresh(logger, oracle);
     ResourceOracleSnapshot snapshot1 = new ResourceOracleSnapshot(oracle);
-    oracle.refresh(logger);
+    ResourceOracleImpl.refresh(logger, oracle);
     ResourceOracleSnapshot snapshot2 = new ResourceOracleSnapshot(oracle);
     snapshot1.assertSameCollections(snapshot2);
     return snapshot1;
