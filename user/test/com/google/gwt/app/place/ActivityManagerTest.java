@@ -155,7 +155,7 @@ public class ActivityManagerTest extends TestCase {
     manager = new ActivityManager(map, eventBus);
     manager.setDisplay(realDisplay);
 
-    PlaceChangeRequesteEvent event = new PlaceChangeRequesteEvent(
+    PlaceChangeRequestEvent event = new PlaceChangeRequestEvent(
         place1);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
@@ -175,7 +175,7 @@ public class ActivityManagerTest extends TestCase {
     assertFalse(asyncActivity1.stopped);
     assertFalse(asyncActivity1.canceled);
 
-    event = new PlaceChangeRequesteEvent(place2);
+    event = new PlaceChangeRequestEvent(place2);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
     assertEquals(asyncActivity1.view, realDisplay.widget);
@@ -221,7 +221,7 @@ public class ActivityManagerTest extends TestCase {
     manager = new ActivityManager(map, eventBus);
     manager.setDisplay(realDisplay);
 
-    PlaceChangeRequesteEvent event = new PlaceChangeRequesteEvent(
+    PlaceChangeRequestEvent event = new PlaceChangeRequestEvent(
         place1);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
@@ -236,7 +236,7 @@ public class ActivityManagerTest extends TestCase {
     assertFalse(asyncActivity1.canceled);
     assertNotNull(asyncActivity1.display);
 
-    event = new PlaceChangeRequesteEvent(place2);
+    event = new PlaceChangeRequestEvent(place2);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
     assertNull(realDisplay.widget);
@@ -287,22 +287,22 @@ public class ActivityManagerTest extends TestCase {
 
     // Make sure we didn't nuke the ActivityManager's own handlers
     assertEquals(1, eventBus.getCount(PlaceChangeEvent.TYPE));
-    assertEquals(1, eventBus.getCount(PlaceChangeRequesteEvent.TYPE));
+    assertEquals(1, eventBus.getCount(PlaceChangeRequestEvent.TYPE));
   }
 
   public void testEventSetupAndTeardown() {
     assertEquals(0, eventBus.getCount(PlaceChangeEvent.TYPE));
-    assertEquals(0, eventBus.getCount(PlaceChangeRequesteEvent.TYPE));
+    assertEquals(0, eventBus.getCount(PlaceChangeRequestEvent.TYPE));
 
     manager.setDisplay(realDisplay);
 
     assertEquals(1, eventBus.getCount(PlaceChangeEvent.TYPE));
-    assertEquals(1, eventBus.getCount(PlaceChangeRequesteEvent.TYPE));
+    assertEquals(1, eventBus.getCount(PlaceChangeRequestEvent.TYPE));
 
     manager.setDisplay(null);
 
     assertEquals(0, eventBus.getCount(PlaceChangeEvent.TYPE));
-    assertEquals(0, eventBus.getCount(PlaceChangeRequesteEvent.TYPE));
+    assertEquals(0, eventBus.getCount(PlaceChangeRequestEvent.TYPE));
   }
 
   public void testExceptionsOnStopAndStart() {
@@ -357,7 +357,7 @@ public class ActivityManagerTest extends TestCase {
 
     activity1.stopWarning = "Stop fool!";
 
-    PlaceChangeRequesteEvent event = new PlaceChangeRequesteEvent(
+    PlaceChangeRequestEvent event = new PlaceChangeRequestEvent(
         place1);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
@@ -366,7 +366,7 @@ public class ActivityManagerTest extends TestCase {
     eventBus.fireEvent(new PlaceChangeEvent(place1));
     assertEquals(activity1.view, realDisplay.widget);
 
-    event = new PlaceChangeRequesteEvent(place2);
+    event = new PlaceChangeRequestEvent(place2);
     eventBus.fireEvent(event);
     assertEquals(activity1.stopWarning, event.getWarning());
     assertEquals(activity1.view, realDisplay.widget);
@@ -377,7 +377,7 @@ public class ActivityManagerTest extends TestCase {
   public void testSyncDispatch() {
     manager.setDisplay(realDisplay);
 
-    PlaceChangeRequesteEvent event = new PlaceChangeRequesteEvent(
+    PlaceChangeRequestEvent event = new PlaceChangeRequestEvent(
         place1);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
@@ -390,7 +390,7 @@ public class ActivityManagerTest extends TestCase {
     assertFalse(activity1.stopped);
     assertFalse(activity1.canceled);
 
-    event = new PlaceChangeRequesteEvent(place2);
+    event = new PlaceChangeRequestEvent(place2);
     eventBus.fireEvent(event);
     assertNull(event.getWarning());
     assertEquals(activity1.view, realDisplay.widget);

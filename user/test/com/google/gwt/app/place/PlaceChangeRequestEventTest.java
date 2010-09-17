@@ -20,11 +20,11 @@ import junit.framework.TestCase;
 /**
  * Eponymous test class.
  */
-public class PlaceChangeRequestedEventTest extends TestCase {
+public class PlaceChangeRequestEventTest extends TestCase {
   private static final String W1 = "foo";
 
   public void testNoClobberWarning() {
-    PlaceChangeRequesteEvent e = new PlaceChangeRequesteEvent(new Place() {
+    PlaceChangeRequestEvent e = new PlaceChangeRequestEvent(new Place() {
     });
 
     assertNull(e.getWarning());

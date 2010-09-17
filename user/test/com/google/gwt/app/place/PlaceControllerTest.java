@@ -28,11 +28,11 @@ import java.util.logging.Logger;
 public class PlaceControllerTest extends TestCase {
 
   private final class Canceler implements
-      PlaceChangeRequesteEvent.Handler {
+      PlaceChangeRequestEvent.Handler {
     Place calledWith = null;
     String warning = "Stop fool!";
 
-    public void onPlaceChangeRequest(PlaceChangeRequesteEvent event) {
+    public void onPlaceChangeRequest(PlaceChangeRequestEvent event) {
       calledWith = event.getNewPlace();
       event.setWarning(warning);
     }
@@ -67,7 +67,7 @@ public class PlaceControllerTest extends TestCase {
     eventBus.addHandler(PlaceChangeEvent.TYPE, handler);
 
     Canceler canceler = new Canceler();
-    eventBus.addHandler(PlaceChangeRequesteEvent.TYPE, canceler);
+    eventBus.addHandler(PlaceChangeRequestEvent.TYPE, canceler);
 
     MyPlace place = new MyPlace();
 
@@ -81,13 +81,13 @@ public class PlaceControllerTest extends TestCase {
     placeController.goTo(place);
     assertEquals(place, canceler.calledWith);
   }
-  
+
   public void testConfirmCancelOnWindowClose() {
     SimpleHandler handler = new SimpleHandler();
     eventBus.addHandler(PlaceChangeEvent.TYPE, handler);
 
     Canceler canceler = new Canceler();
-    eventBus.addHandler(PlaceChangeRequesteEvent.TYPE, canceler);
+    eventBus.addHandler(PlaceChangeRequestEvent.TYPE, canceler);
 
     assertNull(handler.calledWith);
     assertNull(delegate.message);
@@ -95,7 +95,7 @@ public class PlaceControllerTest extends TestCase {
     assertEquals(canceler.warning, delegate.message);
     assertNull(handler.calledWith);
   }
-  
+
   public void testSimple() {
     SimpleHandler handler = new SimpleHandler();
     eventBus.addHandler(PlaceChangeEvent.TYPE, handler);

@@ -17,7 +17,7 @@ package com.google.gwt.app;
 
 import com.google.gwt.app.place.ActivityManagerTest;
 import com.google.gwt.app.place.AbstractPlaceHistoryHandlerTest;
-import com.google.gwt.app.place.PlaceChangeRequestedEventTest;
+import com.google.gwt.app.place.PlaceChangeRequestEventTest;
 import com.google.gwt.app.place.PlaceControllerTest;
 
 import junit.framework.Test;
@@ -32,7 +32,7 @@ public class AppJreSuite {
     suite.addTestSuite(ActivityManagerTest.class);
     suite.addTestSuite(AbstractPlaceHistoryHandlerTest.class);
     suite.addTestSuite(PlaceControllerTest.class);
-    suite.addTestSuite(PlaceChangeRequestedEventTest.class);
+    suite.addTestSuite(PlaceChangeRequestEventTest.class);
     return suite;
   }
 }

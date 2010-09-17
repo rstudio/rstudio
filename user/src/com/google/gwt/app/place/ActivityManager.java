@@ -36,7 +36,7 @@ import java.util.Set;
  * asynchronously, and provides a widget to be shown when it's ready to run.
  */
 public class ActivityManager implements PlaceChangeEvent.Handler,
-    PlaceChangeRequesteEvent.Handler {
+    PlaceChangeRequestEvent.Handler {
 
   /**
    * Wraps our real display to prevent an Activity from taking it over if it is
@@ -77,10 +77,10 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
 
   /**
    * Create an ActivityManager. Next call {@link #setDisplay}.
-   * 
+   *
    * @param mapper finds the {@link Activity} for a given {@link Place}
    * @param eventBus source of {@link PlaceChangeEvent} and
-   *          {@link PlaceChangeRequesteEvent} events.
+   *          {@link PlaceChangeRequestEvent} events.
    */
   public ActivityManager(ActivityMapper mapper, EventBus eventBus) {
     this.mapper = mapper;
@@ -91,7 +91,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
   /**
    * Deactive the current activity, find the next one from our ActivityMapper,
    * and start it.
-   * 
+   *
    * @see PlaceChangeEvent.Handler#onPlaceChange(PlaceChangeEvent)
    */
   public void onPlaceChange(PlaceChangeEvent event) {
@@ -176,10 +176,10 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
 
   /**
    * Reject the place change if the current activity is not willing to stop.
-   * 
-   * @see PlaceChangeRequesteEvent.Handler#onPlaceChangeRequest(PlaceChangeRequesteEvent)
+   *
+   * @see PlaceChangeRequestEvent.Handler#onPlaceChangeRequest(PlaceChangeRequestEvent)
    */
-  public void onPlaceChangeRequest(PlaceChangeRequesteEvent event) {
+  public void onPlaceChangeRequest(PlaceChangeRequestEvent event) {
     if (!currentActivity.equals(NULL_ACTIVITY)) {
       event.setWarning(currentActivity.mayStop());
     }
@@ -192,7 +192,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
    * If you are disposing of an ActivityManager, it is important to call
    * setDisplay(null) to get it to deregister from the event bus, so that it can
    * be garbage collected.
-   * 
+   *
    * @param display
    */
   public void setDisplay(AcceptsOneWidget display) {
@@ -209,8 +209,8 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
       final HandlerRegistration placeReg = eventBus.addHandler(
           PlaceChangeEvent.TYPE, this);
       final HandlerRegistration placeRequestReg = eventBus.addHandler(
-          PlaceChangeRequesteEvent.TYPE, this);
-      
+          PlaceChangeRequestEvent.TYPE, this);
+
       this.handlerRegistration = new HandlerRegistration() {
         public void removeHandler() {
           placeReg.removeHandler();

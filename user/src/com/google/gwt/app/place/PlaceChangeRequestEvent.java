@@ -28,16 +28,16 @@ import com.google.gwt.event.shared.GwtEvent;
  * leave it. Receivers can call {@link #setWarning(String)} request that the
  * user be prompted to confirm the change.
  */
-public class PlaceChangeRequesteEvent extends
-    GwtEvent<PlaceChangeRequesteEvent.Handler> {
+public class PlaceChangeRequestEvent extends
+    GwtEvent<PlaceChangeRequestEvent.Handler> {
 
   /**
-   * Implemented by handlers of PlaceChangeRequestedEvent.
-   * 
+   * Implemented by handlers of PlaceChangeRequestEvent.
+   *
    * @param <P> the type of the requested Place
    */
   public interface Handler extends EventHandler {
-    void onPlaceChangeRequest(PlaceChangeRequesteEvent event);
+    void onPlaceChangeRequest(PlaceChangeRequestEvent event);
   }
 
   public static final Type<Handler> TYPE = new Type<Handler>();
@@ -46,7 +46,7 @@ public class PlaceChangeRequesteEvent extends
 
   private final Place newPlace;
 
-  public PlaceChangeRequesteEvent(Place newPlace) {
+  public PlaceChangeRequestEvent(Place newPlace) {
     this.newPlace = newPlace;
   }
 

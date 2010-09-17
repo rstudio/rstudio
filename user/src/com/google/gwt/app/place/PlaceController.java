@@ -45,7 +45,7 @@ public class PlaceController {
       return Window.confirm(message);
     }
   }
-  
+
   /**
    * Optional delegate in charge of Window related events. Provides nice
    * isolation for unit testing, and allows customization of confirmation
@@ -99,7 +99,7 @@ public class PlaceController {
 
   /**
    * Request a change to a new place. It is not a given that we'll actually get
-   * there. First a {@link PlaceChangeRequesteEvent} will be posted to the
+   * there. First a {@link PlaceChangeRequestEvent} will be posted to the
    * event bus. If any receivers post a warning message to that event, it will
    * be presented to the user via {@link Delegate#confirm(String)} (which is
    * typically a call to {@link Window#confirm(String)}). If she cancels, the
@@ -129,7 +129,7 @@ public class PlaceController {
   }
 
   private String maybeGoTo(Place newPlace) {
-    PlaceChangeRequesteEvent willChange = new PlaceChangeRequesteEvent(
+    PlaceChangeRequestEvent willChange = new PlaceChangeRequestEvent(
         newPlace);
     eventBus.fireEvent(willChange);
     String warning = willChange.getWarning();
