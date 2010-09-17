@@ -15,26 +15,20 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
+import com.google.gwt.requestfactory.client.DefaultRequestTransport;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
-import com.google.gwt.requestfactory.shared.RequestEvent;
-import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.RequestTransport;
+import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
-import com.google.gwt.user.client.Window.Location;
+import com.google.gwt.requestfactory.shared.impl.RequestData;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -59,8 +53,9 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       return perSchemaMap.get(datastoreId);
     }
 
-    /* returns the previous futureId, if any*/
-    Object put(Object datastoreId, ProxySchema<? extends ProxyImpl> schema, Object futureId) {
+    /* returns the previous futureId, if any */
+    Object put(Object datastoreId, ProxySchema<? extends ProxyImpl> schema,
+        Object futureId) {
       Map<Object, Object> perSchemaMap = internalMap.get(schema);
       if (perSchemaMap == null) {
         perSchemaMap = new HashMap<Object, Object>();
@@ -69,25 +64,19 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       return perSchemaMap.put(datastoreId, futureId);
     }
   }
+
   static final boolean IS_FUTURE = true;
   static final boolean NOT_FUTURE = false;
 
   private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
 
-  // A separate logger for wire activity, which does not get logged by the
-  // remote log handler, so we avoid infinite loops. All log messages that
-  // could happen every time a request is made from the server should be logged
-  // to this logger.
-  private static Logger wireLogger = Logger.getLogger("WireActivityLogger");
-
-  private static String SERVER_ERROR = "Server Error";
-  
   private final Integer initialVersion = 1;
   /*
    * Keeping these maps forever is not a desirable solution because of the
    * memory overhead but need these if want to provide stable {@EntityProxyId}.
    * 
-   * futureToDatastoreMap is currently not used, will be useful in find requests.
+   * futureToDatastoreMap is currently not used, will be useful in find
+   * requests.
    */
   final Map<Object, Object> futureToDatastoreMap = new HashMap<Object, Object>();
 
@@ -98,6 +87,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   private ValueStoreJsonImpl valueStore;
 
   private EventBus eventBus;
+
+  private RequestTransport transport;
 
   public <R extends ProxyImpl> R create(Class<R> token,
       ProxyToTypeMap recordToTypeMap) {
@@ -114,54 +105,29 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return findRequest().find(proxyId);
   }
 
-  public void fire(final RequestObject<?> requestObject) {
-    RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
-        GWT.getHostPageBaseURL() + RequestFactory.URL);
-    builder.setHeader("Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
-    builder.setHeader("pageurl", Location.getHref());
-    
-    builder.setRequestData(ClientRequestHelper.getRequestString(((AbstractRequest<?, ?>) requestObject).getRequestData().getRequestMap(
-        ((AbstractRequest<?, ?>) requestObject).deltaValueStore.toJson())));
-    builder.setCallback(new RequestCallback() {
-
-      public void onError(Request request, Throwable exception) {
-        postRequestEvent(State.RECEIVED, null);
-        wireLogger.log(Level.SEVERE, SERVER_ERROR, exception);
+  public void fire(RequestObject<?> requestObject) {
+    final AbstractRequest<?, ?> abstractRequest = (AbstractRequest<?, ?>) requestObject;
+    RequestData requestData = ((AbstractRequest<?, ?>) requestObject).getRequestData();
+    Map<String, String> requestMap = requestData.getRequestMap(abstractRequest.deltaValueStore.toJson());
+    String payload = ClientRequestHelper.getRequestString(requestMap);
+    transport.send(payload, new RequestTransport.Receiver() {
+      public void onFailure(String message) {
+        abstractRequest.receiver.onFailure(new ServerFailure(message, null,
+            null));
       }
 
-      public void onResponseReceived(Request request, Response response) {
-        wireLogger.finest("Response received");
-        try {
-          if (200 == response.getStatusCode()) {
-            String text = response.getText();
-            ((AbstractRequest<?, ?>) requestObject).handleResponseText(text);
-          } else if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
-            wireLogger.finest("Need to log in");
-          } else if (response.getStatusCode() > 0) {
-            // During the redirection for logging in, we get a response with no
-            // status code, but it's not an error, so we only log errors with
-            // bad status codes here.
-            wireLogger.severe(SERVER_ERROR + " " + response.getStatusCode()
-                + " " + response.getText());
-          }
-        } finally {
-          postRequestEvent(State.RECEIVED, response);
-        }
+      public void onSuccess(String payload) {
+        abstractRequest.handleResponseText(payload);
       }
     });
-
-    try {
-      wireLogger.finest("Sending fire request");
-      builder.send();
-      postRequestEvent(State.SENT, null);
-    } catch (RequestException e) {
-      wireLogger.log(Level.SEVERE, SERVER_ERROR + " (" + e.getMessage() + ")",
-          e);
-    }
   }
 
   public Class<? extends EntityProxy> getClass(EntityProxy proxy) {
     return ((ProxyImpl) proxy).getSchema().getProxyClass();
+  }
+
+  public RequestTransport getRequestTransport() {
+    return transport;
   }
 
   public abstract ProxySchema<?> getSchema(String token);
@@ -173,19 +139,22 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       // search for the datastore id for this futureId.
       Long datastoreId = (Long) futureToDatastoreMap.get(id);
       if (datastoreId == null) {
-        throw new IllegalArgumentException("Cannot call find on a proxyId before persisting");
+        throw new IllegalArgumentException(
+            "Cannot call find on a proxyId before persisting");
       }
       id = datastoreId;
     }
     return ProxyImpl.getWireFormatId(id, NOT_FUTURE, proxyIdImpl.schema);
   }
 
-  /**
-   * @param eventBus
-   */
   public void init(EventBus eventBus) {
+    init(eventBus, new DefaultRequestTransport(eventBus));
+  }
+
+  public void init(EventBus eventBus, RequestTransport transport) {
     this.valueStore = new ValueStoreJsonImpl();
     this.eventBus = eventBus;
+    this.transport = transport;
     logger.fine("Successfully initialized RequestFactory");
   }
 
@@ -200,7 +169,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
     return schema.getProxyClass();
   }
-  
+
   /**
    * TODO(amitmanjhi): remove this method, use getProxyId instead.
    */
@@ -229,7 +198,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return schema.create(ProxyJsoImpl.create(id, -1, schema, this));
   }
 
-  protected EntityProxyId getProxyId(String token, ProxyToTypeMap recordToTypeMap) {
+  protected EntityProxyId getProxyId(String token,
+      ProxyToTypeMap recordToTypeMap) {
     String[] bits = token.split(EntityProxyIdImpl.SEPARATOR);
     if (bits.length != 2) {
       return null;
@@ -290,9 +260,5 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     ProxyJsoImpl newRecord = ProxyJsoImpl.create(futureId, initialVersion,
         schema, this);
     return schema.create(newRecord, IS_FUTURE);
-  }
-
-  private void postRequestEvent(State received, Response response) {
-    eventBus.fireEvent(new RequestEvent(received, response));
   }
 }

@@ -86,7 +86,13 @@ public interface RequestFactory {
   String getToken(EntityProxy proxy);
 
   /**
-   * Start this request factory.
+   * Start this request factory with a
+   * {@link com.google.gwt.requestfactory.client.DefaultRequestTransport}.
    */
   void init(EventBus eventBus);
+
+  /**
+   * Start this request factory with a user-provided transport.
+   */
+  void init(EventBus eventBus, RequestTransport transport);
 }
