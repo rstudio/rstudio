@@ -35,7 +35,7 @@ import java.util.List;
  * @param <R> the type of Record
  * @param <E> the type of Editor
  */
-public abstract class AbstractRequestFactoryEditorDriver<R extends EntityProxy, E extends Editor<R>>
+public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     implements RequestFactoryEditorDriver<R, E> {
 
   private static final DelegateMap.KeyMethod PROXY_ID_KEY = new DelegateMap.KeyMethod() {
@@ -55,6 +55,10 @@ public abstract class AbstractRequestFactoryEditorDriver<R extends EntityProxy, 
   private List<String> paths = new ArrayList<String>();
   private RequestFactory requestFactory;
   private RequestObject<?> saveRequest;
+
+  public void display(R object) {
+    edit(object, null);
+  }
 
   public void edit(R object, RequestObject<?> saveRequest) {
     checkEditor();

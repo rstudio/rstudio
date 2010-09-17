@@ -17,7 +17,6 @@ package com.google.gwt.sample.dynatablerf.client.widgets;
 
 import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.ValueAwareEditor;
-import com.google.gwt.editor.client.adapters.HasTextEditor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.EventBus;
@@ -32,15 +31,14 @@ import com.google.gwt.user.client.ui.Label;
  * the displayed object.
  */
 class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
-  private final Label label = new Label();
-  final HasTextEditor nameEditor = HasTextEditor.of(label);
+  final Label nameEditor = new Label();
   private PersonProxy person;
   private HandlerRegistration subscription;
 
   public NameLabel(final EventBus eventBus) {
-    initWidget(label);
+    initWidget(nameEditor);
 
-    label.addClickHandler(new ClickHandler() {
+    nameEditor.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         eventBus.fireEvent(new EditPersonEvent(person));
       }
@@ -55,6 +53,7 @@ class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
   }
 
   public void setDelegate(EditorDelegate<PersonProxy> delegate) {
+    assert subscription == null;
     subscription = delegate.subscribe();
   }
 
@@ -63,11 +62,10 @@ class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
   }
 
   /**
-   * Unhook event notifications when not attached to the DOM.
+   * Unhook event notifications when being permanently disposed of by
+   * FavoritesWidget.
    */
-  @Override
-  protected void onUnload() {
-    super.onUnload();
+  protected void cancelSubscription() {
     if (subscription != null) {
       subscription.removeHandler();
     }

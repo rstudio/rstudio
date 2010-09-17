@@ -17,6 +17,9 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.editor.client.adapters.HasTextEditor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
@@ -64,7 +67,7 @@ import com.google.gwt.i18n.shared.WordCountDirectionEstimator;
 public class Label extends Widget implements HasDirectionalText, HasWordWrap,
     HasDirection, HasClickHandlers, HasDoubleClickHandlers, SourcesClickEvents,
     SourcesMouseEvents, HasAllMouseHandlers, HasDirectionEstimator,
-    HasAutoHorizontalAlignment {
+    HasAutoHorizontalAlignment, IsEditor<LeafValueEditor<String>> {
 
   /**
    * Creates a Label widget that wraps an existing &lt;div&gt; or &lt;span&gt;
@@ -259,6 +262,10 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
   @Deprecated
   public void addMouseWheelListener(MouseWheelListener listener) {
     ListenerWrapper.WrappedMouseWheelListener.add(this, listener);
+  }
+
+  public LeafValueEditor<String> asEditor() {
+    return HasTextEditor.of(this);
   }
 
   /**

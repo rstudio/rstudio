@@ -52,21 +52,38 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     }
 
     public void attach(R object, S subEditor) {
-      AbstractEditorDelegate<R, S> subDelegate = createComposedDelegate();
-      map.put(subEditor, subDelegate);
+      AbstractEditorDelegate<R, S> subDelegate = map.get(subEditor);
+
       @SuppressWarnings("unchecked")
       Editor<Object> temp = (Editor<Object>) subEditor;
-      initializeSubDelegate(subDelegate, path
-          + composedEditor.getPathElement(temp), object, subEditor, delegateMap);
+      String subPath = path + composedEditor.getPathElement(temp);
+
+      if (subDelegate == null) {
+        subDelegate = createComposedDelegate();
+        map.put(subEditor, subDelegate);
+        initializeSubDelegate(subDelegate, subPath, object, subEditor,
+            delegateMap);
+      } else {
+        subDelegate.path = subPath;
+        subDelegate.refresh(object);
+      }
     }
 
     public void detach(S subEditor) {
-      map.remove(subEditor).flush(errors);
+      AbstractEditorDelegate<R, S> subDelegate = map.remove(subEditor);
+      if (subDelegate != null && subDelegate.shouldFlush()) {
+        subDelegate.flush(errors);
+      }
     }
 
     public R getValue(S subEditor) {
       AbstractEditorDelegate<R, S> subDelegate = map.get(subEditor);
-      subDelegate.flush(errors);
+      if (subDelegate == null) {
+        return null;
+      }
+      if (subDelegate.shouldFlush()) {
+        subDelegate.flush(errors);
+      }
       return subDelegate.getObject();
     }
 
@@ -259,6 +276,14 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
   protected abstract void setEditor(E editor);
 
   protected abstract void setObject(T object);
+
+  /**
+   * Indicates whether or not calls to {@link #flush} are expected as part of
+   * normal operation.
+   */
+  protected boolean shouldFlush() {
+    return true;
+  }
 
   /**
    * Collect all paths being edited.

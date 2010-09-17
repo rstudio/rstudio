@@ -19,7 +19,6 @@ import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
-import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Violation;
@@ -34,8 +33,8 @@ import java.util.List;
  * @param <P> the Proxy type being edited
  * @param <E> the Editor type
  */
-public class MockRequestFactoryEditorDriver<P extends EntityProxy, E extends Editor<P>>
-    implements RequestFactoryEditorDriver<P, E> {
+public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
+    RequestFactoryEditorDriver<P, E> {
   private static final String[] EMPTY_STRING = new String[0];
 
   private EventBus eventBus;
@@ -43,6 +42,13 @@ public class MockRequestFactoryEditorDriver<P extends EntityProxy, E extends Edi
   private P proxy;
   private RequestObject<?> saveRequest;
   private RequestFactory requestFactory;
+
+  /**
+   * Records its arguments.
+   */
+  public void display(P proxy) {
+    this.proxy = proxy;
+  }
 
   /**
    * Records its arguments.

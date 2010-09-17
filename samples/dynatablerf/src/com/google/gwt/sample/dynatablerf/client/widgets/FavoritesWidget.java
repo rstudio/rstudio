@@ -16,6 +16,8 @@
 package com.google.gwt.sample.dynatablerf.client.widgets;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.editor.client.adapters.EditorSource;
+import com.google.gwt.editor.client.adapters.ListEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
@@ -34,8 +36,10 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -47,11 +51,36 @@ public class FavoritesWidget extends Composite {
   interface Binder extends UiBinder<Widget, FavoritesWidget> {
   }
 
-  interface Driver extends RequestFactoryEditorDriver<PersonProxy, NameLabel> {
+  interface Driver extends RequestFactoryEditorDriver<List<PersonProxy>, //
+      ListEditor<PersonProxy, NameLabel>> {
   }
 
   interface Style extends CssResource {
     String favorite();
+  }
+
+  /**
+   * This is used by a ListEditor.
+   */
+  private class NameLabelSource extends EditorSource<NameLabel> {
+    @Override
+    public NameLabel create(int index) {
+      NameLabel label = new NameLabel(eventBus);
+      label.setStylePrimaryName(style.favorite());
+      container.insert(label, index);
+      return label;
+    }
+
+    @Override
+    public void dispose(NameLabel subEditor) {
+      subEditor.removeFromParent();
+      subEditor.cancelSubscription();
+    }
+
+    @Override
+    public void setIndex(NameLabel editor, int index) {
+      container.insert(editor, index);
+    }
   }
 
   @UiField
@@ -59,10 +88,11 @@ public class FavoritesWidget extends Composite {
 
   @UiField
   Style style;
+
+  private final List<PersonProxy> displayed;
   private final EventBus eventBus;
   private final RequestFactory factory;
   private FavoritesManager manager;
-  private final Map<EntityProxyId, NameLabel> map = new HashMap<EntityProxyId, NameLabel>();
   private HandlerRegistration subscription;
 
   public FavoritesWidget(EventBus eventBus, RequestFactory factory,
@@ -70,7 +100,27 @@ public class FavoritesWidget extends Composite {
     this.eventBus = eventBus;
     this.factory = factory;
     this.manager = manager;
+
+    // Create the UI
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
+
+    // Create the driver which manages the data-bound widgets
+    Driver driver = GWT.<Driver> create(Driver.class);
+
+    // Use a ListEditor that uses our NameLabelSource
+    ListEditor<PersonProxy, NameLabel> editor = ListEditor.of(new NameLabelSource());
+
+    // Configure the driver
+    ListEditor<PersonProxy, NameLabel> listEditor = editor;
+    driver.initialize(eventBus, factory, listEditor);
+
+    /*
+     * Notice the backing list is essentially anonymous.
+     */
+    driver.display(new ArrayList<PersonProxy>());
+
+    // Modifying this list triggers widget creation and destruction
+    displayed = listEditor.getList();
   }
 
   @Override
@@ -103,21 +153,16 @@ public class FavoritesWidget extends Composite {
     }
 
     if (event.isFavorite()) {
-      if (!map.containsKey(person.stableId())) {
-        NameLabel label = new NameLabel(eventBus);
-        Driver driver = GWT.create(Driver.class);
-        driver.initialize(eventBus, factory, label);
-        driver.edit(person, null);
-        label.setStylePrimaryName(style.favorite());
-
-        container.add(label);
-        map.put(person.stableId(), label);
-      }
+      displayed.add(person);
     } else {
-      NameLabel toRemove = map.remove(person.stableId());
-      if (toRemove != null) {
-        container.remove(toRemove);
-      }
+      displayed.remove(person);
     }
+
+    // Sorting the list of PersonProxies will also change the UI display
+    Collections.sort(displayed, new Comparator<PersonProxy>() {
+      public int compare(PersonProxy o1, PersonProxy o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
   }
 }

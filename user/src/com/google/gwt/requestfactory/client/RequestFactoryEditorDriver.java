@@ -18,7 +18,6 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Violation;
@@ -53,7 +52,12 @@ import java.util.List;
  * @param <E> the type of Editor that will edit the Record
  * @see com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver
  */
-public interface RequestFactoryEditorDriver<P extends EntityProxy, E extends Editor<? super P>> {
+public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
+  /**
+   * Initialize the Editor and its sub-editors with data for display-only mode.
+   */
+  void display(P proxy);
+
   /**
    * Initialize the Editor and its sub-editors with data.
    */
@@ -65,6 +69,8 @@ public interface RequestFactoryEditorDriver<P extends EntityProxy, E extends Edi
    * in a depth-first manner.
    * 
    * @return the RequestObject passed into {@link #edit}
+   * @throws IllegalStateException if {@link #edit(Object, RequestObject)} has
+   *           not been called with a non-null {@link RequestObject}
    */
   <T> RequestObject<T> flush();
 

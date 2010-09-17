@@ -121,4 +121,9 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     ((RequestFactoryEditorDelegate<R, S>) subDelegate).initialize(eventBus,
         factory, path, object, subEditor, delegateMap, request);
   }
+
+  @Override
+  protected boolean shouldFlush() {
+    return request != null;
+  }
 }
