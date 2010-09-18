@@ -52,7 +52,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
   protected final RequestFactoryJsonImpl requestFactory;
   protected DeltaValueStoreJsonImpl deltaValueStore;
-  protected Receiver<T> receiver;
+  private Receiver<T> receiver;
 
   private final Set<String> propertyRefs = new HashSet<String>();
 
@@ -76,7 +76,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     this.receiver = receiver;
     requestFactory.fire(this);
   }
-
+  
   /**
    * @deprecated use {@link #with(String...)} instead.
    * @param properties
@@ -88,7 +88,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     }
     return getThis();
   }
-
+  
   /**
    * @return the properties
    */
@@ -100,9 +100,9 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
   public void handleResponseText(String responseText) {
     JsonResults results = JsonResults.fromResults(responseText);
-    if (results.getException() != null) {
-      ServerFailureRecord cause = results.getException();
-      receiver.onFailure(new ServerFailure(
+    JsonServerException cause = results.getException();
+    if (cause != null) {
+      fail(new ServerFailure(
           cause.getMessage(), cause.getType(), cause.getTrace()));
       return;
     }
@@ -149,6 +149,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
         }
       }
 
+      deltaValueStore.reuse();
       receiver.onViolation(errors);
     } else {
       deltaValueStore.commit(results.getSideEffects());
@@ -180,12 +181,21 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     return String.valueOf(jso);
   }
 
+  protected void fail(ServerFailure failure) {
+    deltaValueStore.reuse();
+    receiver.onFailure(failure);
+  }
+
   /**
    * Subclasses must override to return {@code this}, to allow builder-style
    * methods to do the same.
    */
   protected abstract R getThis();
 
+  /**
+   * Process the response and call {@link #succeed(Object) or
+   * #fail(com.google.gwt.requestfactory.shared.ServerFailure).
+   */
   protected abstract void handleResult(Object result);
 
   protected native void processRelated(JavaScriptObject related) /*-{
@@ -197,4 +207,8 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
       this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::pushToValueStore(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(schemaAndId[0], jso);
     }
   }-*/;
+
+  protected void succeed(T t) {
+    receiver.onSuccess(t);
+  }
 }

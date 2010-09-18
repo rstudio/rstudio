@@ -34,7 +34,7 @@ public abstract class AbstractBooleanRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(Boolean.valueOf(responseText));
+    succeed(Boolean.valueOf(responseText));
   }
 
   @Override

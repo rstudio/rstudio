@@ -34,7 +34,7 @@ public abstract class AbstractFloatRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(Float.valueOf(responseText));
+    succeed(Float.valueOf(responseText));
   }
 
   @Override

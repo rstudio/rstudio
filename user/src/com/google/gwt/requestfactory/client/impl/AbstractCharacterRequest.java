@@ -34,7 +34,7 @@ public abstract class AbstractCharacterRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(responseText.charAt(0));
+    succeed(responseText.charAt(0));
   }
 
   @Override

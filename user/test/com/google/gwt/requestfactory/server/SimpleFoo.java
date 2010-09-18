@@ -368,7 +368,7 @@ public class SimpleFoo {
 
   public void setPleaseCrash(Integer crashIf42) {
     if (crashIf42 == 42) {
-      throw new UnsupportedOperationException("test message");
+      throw new UnsupportedOperationException("THIS EXCEPTION IS EXPECTED BY A TEST");
     }
     pleaseCrashField = crashIf42;
   }

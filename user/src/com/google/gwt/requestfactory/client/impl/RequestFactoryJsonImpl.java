@@ -109,14 +109,15 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     final AbstractRequest<?, ?> abstractRequest = (AbstractRequest<?, ?>) requestObject;
     RequestData requestData = ((AbstractRequest<?, ?>) requestObject).getRequestData();
     Map<String, String> requestMap = requestData.getRequestMap(abstractRequest.deltaValueStore.toJson());
+
     String payload = ClientRequestHelper.getRequestString(requestMap);
-    transport.send(payload, new RequestTransport.Receiver() {
-      public void onFailure(String message) {
-        abstractRequest.receiver.onFailure(new ServerFailure(message, null,
+    transport.send(payload, new RequestTransport.TransportReceiver() {
+      public void onTransportFailure(String message) {
+        abstractRequest.fail(new ServerFailure(message, null,
             null));
       }
 
-      public void onSuccess(String payload) {
+      public void onTransportSuccess(String payload) {
         abstractRequest.handleResponseText(payload);
       }
     });

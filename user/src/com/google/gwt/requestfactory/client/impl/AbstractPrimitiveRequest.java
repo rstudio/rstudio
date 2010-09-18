@@ -24,11 +24,12 @@ package com.google.gwt.requestfactory.client.impl;
  * Abstract implementation of
  * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
  * RequestFactory.RequestObject} for requests that return non-record types.
+ * 
  * @param <T> return type
  * @param <R> type of this request object
  */
-public abstract class AbstractPrimitiveRequest<T, R extends AbstractRequest<T, R>> extends
-    AbstractRequest<T, R> {
+public abstract class AbstractPrimitiveRequest<T, R extends AbstractRequest<T, R>>
+    extends AbstractRequest<T, R> {
 
   public AbstractPrimitiveRequest(RequestFactoryJsonImpl requestFactory) {
     super(requestFactory);
@@ -39,5 +40,9 @@ public abstract class AbstractPrimitiveRequest<T, R extends AbstractRequest<T, R
     handlePrimitiveResult(asString(result));
   }
 
+  /**
+   * Process the response and call {@link #succeed(Object) or
+   * #fail(com.google.gwt.requestfactory.shared.ServerFailure).
+   */
   protected abstract void handlePrimitiveResult(String responseText);
 }

@@ -73,6 +73,6 @@ AbstractJsonListRequest<T extends EntityProxy, R extends AbstractJsonListRequest
       T proxy = (T) schema.create(jso);
       proxies.add(proxy);
     }
-    receiver.onSuccess(proxies);
+    succeed(proxies);
   }
 }

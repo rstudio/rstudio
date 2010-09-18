@@ -113,6 +113,8 @@ class DeltaValueStoreJsonImpl {
 
   private final Map<EntityProxyId, WriteOperation> operations = new HashMap<EntityProxyId, WriteOperation>();
 
+  private boolean used = false;
+
   public DeltaValueStoreJsonImpl(ValueStoreJsonImpl master,
       RequestFactoryJsonImpl requestFactory) {
     this.master = master;
@@ -146,8 +148,14 @@ class DeltaValueStoreJsonImpl {
             futureKey.schema, futureKey.id);
         requestFactory.futureToDatastoreMap.put(futureKey.id, newRecord.getId());
 
-        // TODO (amitmanjhi): get all the data from the server.
-        // make a copy of value and set the id there.
+        /*
+         * TODO (amitmanjhi): get all the data from the server. make a copy of
+         * value and set the id there.
+         * 
+         * When this happens, can the used flag go away? It's only needed now to
+         * ensure that the dvs is in the same state when the response comes back
+         * as it was when the request left.
+         */
         ProxyJsoImpl value = creates.get(futureKey);
         if (value != null) {
           copy.merge(value);
@@ -210,8 +218,16 @@ class DeltaValueStoreJsonImpl {
     return !operations.isEmpty();
   }
 
+  /**
+   * Reset the used flag. To be called only when an unsuccessful reponse has
+   * been received after a {@link #toJson()} string has been sent to the server.
+   */
+  public void reuse() {
+    used = false;
+  }
+
   public <V> void set(Property<V> property, EntityProxy record, V value) {
-    checkArgumentsAndState(record);
+    assertNotUsedAndCorrectType(record);
     ProxyImpl recordImpl = (ProxyImpl) record;
     EntityProxyId recordKey = recordImpl.stableId();
 
@@ -261,7 +277,15 @@ class DeltaValueStoreJsonImpl {
     }
   }
 
+  /**
+   * Has side effect of setting the used flag, meaning further 
+   * sets will fail until clearUsed is called. Cannot be called
+   * while used.
+   */
   String toJson() {
+    assertNotUsed();
+    
+    used = true;
     StringBuffer jsonData = new StringBuffer("{");
     for (WriteOperation writeOperation : new WriteOperation[] {
         WriteOperation.CREATE, WriteOperation.UPDATE}) {
@@ -294,7 +318,16 @@ class DeltaValueStoreJsonImpl {
     return false;
   }
 
-  private void checkArgumentsAndState(EntityProxy record) {
+  private void assertNotUsed() {
+    if (used) {
+      throw new IllegalStateException("Cannot refire request before "
+          + "response received, or after successful response");
+    }
+  }
+
+  private void assertNotUsedAndCorrectType(EntityProxy record) {
+    assertNotUsed();
+    
     if (!(record instanceof ProxyImpl)) {
       throw new IllegalArgumentException(record + " + must be an instance of "
           + ProxyImpl.class);

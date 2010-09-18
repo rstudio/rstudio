@@ -34,7 +34,7 @@ public abstract class AbstractDoubleRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(Double.valueOf(responseText));
+    succeed(Double.valueOf(responseText));
   }
 
   @Override

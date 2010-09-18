@@ -42,7 +42,7 @@ public abstract class AbstractEnumRequest<E extends Enum<E>> extends
     int ordinal = Integer.valueOf(responseText);
     for (E e : enumValues) {
       if (ordinal == e.ordinal()) {
-        receiver.onSuccess(ordinal);
+        succeed(ordinal);
       }
     }
     throw new IllegalArgumentException("Invalid enum ordinal value " + ordinal);

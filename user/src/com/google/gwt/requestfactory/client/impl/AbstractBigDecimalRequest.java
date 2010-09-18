@@ -36,7 +36,7 @@ public abstract class AbstractBigDecimalRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(new BigDecimal(responseText));
+    succeed(new BigDecimal(responseText));
   }
 
   @Override

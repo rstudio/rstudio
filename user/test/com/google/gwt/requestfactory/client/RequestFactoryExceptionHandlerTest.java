@@ -48,7 +48,7 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
     persistRay.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onFailure(ServerFailure error) {
-        assertEquals("test message", error.getMessage());
+        assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
         assertEquals("java.lang.UnsupportedOperationException",
             error.getExceptionType());
         assertFalse(error.getStackTraceString().isEmpty());

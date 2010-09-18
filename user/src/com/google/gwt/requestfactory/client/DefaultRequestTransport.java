@@ -67,7 +67,7 @@ public class DefaultRequestTransport implements RequestTransport {
     return requestUrl;
   }
 
-  public void send(String payload, Receiver receiver) {
+  public void send(String payload, TransportReceiver receiver) {
     RequestBuilder builder = createRequestBuilder();
     configureRequestBuilder(builder);
 
@@ -110,15 +110,15 @@ public class DefaultRequestTransport implements RequestTransport {
 
   /**
    * Creates a RequestCallback that maps the HTTP response onto the
-   * {@link Receiver} interface.
+   * {@link TransportReceiver} interface.
    */
-  protected RequestCallback createRequestCallback(final Receiver receiver) {
+  protected RequestCallback createRequestCallback(final TransportReceiver receiver) {
     return new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
         postRequestEvent(State.RECEIVED, null);
         wireLogger.log(Level.SEVERE, SERVER_ERROR, exception);
-        receiver.onFailure(exception.getMessage());
+        receiver.onTransportFailure(exception.getMessage());
       }
 
       public void onResponseReceived(Request request, Response response) {
@@ -126,11 +126,11 @@ public class DefaultRequestTransport implements RequestTransport {
         try {
           if (200 == response.getStatusCode()) {
             String text = response.getText();
-            receiver.onSuccess(text);
+            receiver.onTransportSuccess(text);
           } else if (Response.SC_UNAUTHORIZED == response.getStatusCode()) {
             String message = "Need to log in";
             wireLogger.finest(message);
-            receiver.onFailure(message);
+            receiver.onTransportFailure(message);
           } else if (response.getStatusCode() > 0) {
             /*
              * During the redirection for logging in, we get a response with no
@@ -140,7 +140,7 @@ public class DefaultRequestTransport implements RequestTransport {
             String message = SERVER_ERROR + " " + response.getStatusCode()
                 + " " + response.getText();
             wireLogger.severe(message);
-            receiver.onFailure(message);
+            receiver.onTransportFailure(message);
           }
         } finally {
           postRequestEvent(State.RECEIVED, response);

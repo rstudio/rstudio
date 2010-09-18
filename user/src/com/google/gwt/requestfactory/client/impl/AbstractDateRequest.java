@@ -36,7 +36,7 @@ public abstract class AbstractDateRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(new Date(Long.valueOf(responseText)));
+    succeed(new Date(Long.valueOf(responseText)));
   }
 
   @Override

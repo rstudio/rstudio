@@ -34,7 +34,7 @@ public abstract class AbstractVoidRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(null);
+    succeed(null);
   }
 
   @Override

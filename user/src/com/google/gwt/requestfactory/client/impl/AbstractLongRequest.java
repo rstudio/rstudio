@@ -34,7 +34,7 @@ public abstract class AbstractLongRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(Long.valueOf(responseText));
+    succeed(Long.valueOf(responseText));
   }
 
   @Override

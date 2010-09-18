@@ -34,7 +34,7 @@ public abstract class AbstractIntegerRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(Integer.valueOf(responseText));
+    succeed(Integer.valueOf(responseText));
   }
 
   @Override

@@ -58,6 +58,6 @@ public abstract class //
      */
     @SuppressWarnings("unchecked")
     T proxy = (T) schema.create(jso);
-    receiver.onSuccess(proxy);
+    succeed(proxy);
   }
 }

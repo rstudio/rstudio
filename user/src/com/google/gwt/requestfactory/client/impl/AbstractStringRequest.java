@@ -34,7 +34,7 @@ public abstract class AbstractStringRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(responseText);
+    succeed(responseText);
   }
 
   @Override

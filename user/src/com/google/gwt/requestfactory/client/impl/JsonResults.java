@@ -21,9 +21,9 @@ import com.google.gwt.core.client.JsArray;
 /**
  * JSO to hold result and related objects.
  */
-public class JsonResults extends JavaScriptObject {
+class JsonResults extends JavaScriptObject {
 
-  public static native JsonResults fromResults(String json) /*-{
+  static native JsonResults fromResults(String json) /*-{
     // TODO: clean this
     eval("xyz=" + json);
     return xyz;
@@ -32,23 +32,23 @@ public class JsonResults extends JavaScriptObject {
   protected JsonResults() {
   }
 
-  public final native ServerFailureRecord getException() /*-{
+  final native JsonServerException getException() /*-{
     return this.exception || null;
   }-*/;
 
-  public final native JavaScriptObject getRelated() /*-{
+  final native JavaScriptObject getRelated() /*-{
     return this.related;
   }-*/;
 
-  public final native Object getResult() /*-{
+  final native Object getResult() /*-{
     return Object(this.result);
   }-*/;
 
-  public final native JavaScriptObject getSideEffects() /*-{
+  final native JavaScriptObject getSideEffects() /*-{
     return this.sideEffects;
   }-*/;
   
-  public final native JsArray<DeltaValueStoreJsonImpl.ReturnRecord> getViolations()/*-{
+  final native JsArray<DeltaValueStoreJsonImpl.ReturnRecord> getViolations()/*-{
     return this.violations || null;
   }-*/;
 }

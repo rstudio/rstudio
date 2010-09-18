@@ -25,14 +25,14 @@ public interface RequestTransport {
   /**
    * A callback interface.
    */
-  public interface Receiver {
-    void onSuccess(String payload);
+  public interface TransportReceiver {
+    void onTransportSuccess(String payload);
 
-    void onFailure(String message);
+    void onTransportFailure(String message);
   }
 
   /**
    * Called by the RequestFactory implementation.
    */
-  void send(String payload, Receiver receiver);
+  void send(String payload, TransportReceiver receiver);
 }

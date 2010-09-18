@@ -34,7 +34,7 @@ public abstract class AbstractShortRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(Short.valueOf(responseText));
+    succeed(Short.valueOf(responseText));
   }
 
   @Override

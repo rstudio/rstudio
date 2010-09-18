@@ -34,7 +34,7 @@ public abstract class AbstractByteRequest extends
 
   @Override
   public void handlePrimitiveResult(String responseText) {
-    receiver.onSuccess(Integer.valueOf(responseText).byteValue());
+    succeed(Integer.valueOf(responseText).byteValue());
   }
 
   @Override

@@ -20,9 +20,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * Contains details of a server error.
  */
-public final class ServerFailureRecord extends JavaScriptObject {
+ final class JsonServerException extends JavaScriptObject {
 
-  protected ServerFailureRecord() {
+  protected JsonServerException() {
   }
 
   public native String getMessage() /*-{
