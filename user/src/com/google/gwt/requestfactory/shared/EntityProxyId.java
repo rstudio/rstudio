@@ -23,13 +23,4 @@ package com.google.gwt.requestfactory.shared;
  * copy of foo after being persisted have equal {@link EntityProxyId}.
  */
 public interface EntityProxyId {
-  /**
-   * Returns a stable string that remains the same across updates and creates on
-   * the client. Note that calling this method on an instance that has not been
-   * persisted throws IllegalStateException.
-   * 
-   * @return a stable string that remains the same across updates and creates on
-   *         the client.
-   */
-  String asString();
 }

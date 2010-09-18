@@ -18,9 +18,6 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
-import com.google.gwt.requestfactory.shared.SyncResult;
-
-import java.util.Set;
 
 /**
  * <p> <span style="color:red">Experimental API: This class is still under rapid
@@ -45,12 +42,7 @@ public abstract class //
   }
 
   @Override
-  public void handleResult(Object result, Set<SyncResult> syncResults) {
-    // TODO (amitmanjhi): remove this check once Receiver has the onViolations method.
-    if (result == null) {
-      receiver.onSuccess(null, syncResults);
-      return;
-    }
+  public void handleResult(Object result) {
     JavaScriptObject rawJso = (JavaScriptObject) result;
     ProxyJsoImpl jso = ProxyJsoImpl.create(rawJso, schema, requestFactory);
     
@@ -66,6 +58,6 @@ public abstract class //
      */
     @SuppressWarnings("unchecked")
     T proxy = (T) schema.create(jso);
-    receiver.onSuccess(proxy, syncResults);
+    receiver.onSuccess(proxy);
   }
 }

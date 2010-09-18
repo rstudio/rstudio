@@ -346,6 +346,7 @@ public class RequestFactoryGenerator extends Generator {
     f.addImport(interfaceType.getQualifiedSourceName());
     f.addImport(ProxyToTypeMap.class.getName());
     f.addImport(EntityProxy.class.getName());
+    f.addImport(EntityProxyId.class.getName());
     f.addImport(ProxySchema.class.getName());
     f.addImplementedInterface(interfaceType.getName());
     f.setSuperclass(RequestFactoryJsonImpl.class.getSimpleName());
@@ -404,6 +405,22 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
     sw.println();
 
+    // write getHistoryToken(proxyId)
+    sw.println("public String getHistoryToken(EntityProxyId proxyId) {");
+    sw.indent();
+    sw.println("return getHistoryToken(proxyId, new " + proxyToTypeMapName + "());");
+    sw.outdent();
+    sw.println("}");
+    sw.println();
+
+    // write getToken(Class)
+    sw.println("public String getToken(Class clazz) {");
+    sw.indent();
+    sw.println("return new " + proxyToTypeMapName + "().getClassToken(clazz);");
+    sw.outdent();
+    sw.println("}");
+    sw.println();
+
     // write getClass(String)
     sw.println("public Class<? extends " + EntityProxy.class.getName()
         + "> getClass(String token) {");
@@ -413,36 +430,11 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
     sw.println();
 
-    // write getProxy(String)
-    sw.println("public " + EntityProxy.class.getName()
-        + " getProxy(String token) {");
-    sw.indent();
-    sw.println("return getProxy(token, new " + proxyToTypeMapName + "());");
-    sw.outdent();
-    sw.println("}");
-    sw.println();
-
     // write getProxyId(String)
     sw.println("public " + EntityProxyId.class.getName()
         + " getProxyId(String token) {");
     sw.indent();
     sw.println("return getProxyId(token, new " + proxyToTypeMapName + "());");
-    sw.outdent();
-    sw.println("}");
-    sw.println();
-
-    // write getToken(Proxy)
-    sw.println("public String getToken(EntityProxy proxy) {");
-    sw.indent();
-    sw.println("return getToken(proxy, new " + proxyToTypeMapName + "());");
-    sw.outdent();
-    sw.println("}");
-    sw.println();
-
-    // write getToken(Class)
-    sw.println("public String getToken(Class clazz) {");
-    sw.indent();
-    sw.println("return new " + proxyToTypeMapName + "().getClassToken(clazz);");
     sw.outdent();
     sw.println("}");
     sw.println();

@@ -23,7 +23,6 @@ import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.UserInformationProxy;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -38,8 +37,6 @@ import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.view.client.ProvidesKey;
-
-import java.util.Set;
 
 /**
  * Entry point for the Expenses app.
@@ -125,7 +122,7 @@ public class Expenses implements EntryPoint {
   public static final ProvidesKey<ReportProxy> REPORT_RECORD_KEY_PROVIDER =
     new ProvidesKey<ReportProxy>() {
     public Object getKey(ReportProxy item) {
-      return item == null ? null : item.getId();
+      return (item == null) ? null : item.getId();
     }
   };
 
@@ -162,7 +159,7 @@ public class Expenses implements EntryPoint {
     final LoginWidget login = shell.getLoginWidget();
     Receiver<UserInformationProxy> receiver = new Receiver<UserInformationProxy>() {
       @Override
-      public void onSuccess(UserInformationProxy userInformationRecord, Set<SyncResult> syncResults) {
+      public void onSuccess(UserInformationProxy userInformationRecord) {
         login.setUserInformation(userInformationRecord);
       }       
      };

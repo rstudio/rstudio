@@ -16,7 +16,6 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.app.place.ProxyPlace.Operation;
-
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
@@ -25,7 +24,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.ServerFailure;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
@@ -59,12 +57,12 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
   private P record;
   private EntityProxyId stableId;
 
-  public AbstractProxyEditActivity(ProxyEditView<P> view, P record,
+  public AbstractProxyEditActivity(ProxyEditView<P> view, EntityProxyId proxyId,
       Class<P> proxyType, boolean creating, RequestFactory requests,
       PlaceController placeController) {
 
     this.view = view;
-    this.record = record;
+    this.stableId = proxyId;
     this.proxyType = proxyType;
     this.placeController = placeController;
     this.creating = creating;
@@ -119,20 +117,9 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
       }
 
       @Override
-      public void onSuccess(Void ignore, Set<SyncResult> response) {
+      public void onSuccess(Void ignore) {
         if (display == null) {
           return;
-        }
-
-        if (creating) {
-          // TODO(amitmanjhi) Not needed once events are proxy id based
-          for (SyncResult syncResult : response) {
-            EntityProxy syncRecord = syncResult.getProxy();
-            if (stableId.equals(syncRecord.stableId())) {
-              record = cast(syncRecord);
-              break;
-            }
-          }
         }
         exit(true);
       }
@@ -160,10 +147,11 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
       stableId = tempRecord.stableId();
       doStart(display, tempRecord);
     } else {
-      ProxyRequest<P> findRequest = getFindRequest(getRecord().getId());
+      @SuppressWarnings("unchecked")
+      ProxyRequest<P> findRequest = (ProxyRequest<P>) requests.find(stableId);
       findRequest.with(getView().getPaths()).fire(new Receiver<P>() {
         @Override
-        public void onSuccess(P record, Set<SyncResult> syncResults) {
+        public void onSuccess(P record) {
           if (AbstractProxyEditActivity.this.display != null) {
             doStart(AbstractProxyEditActivity.this.display, record);
           }
@@ -186,21 +174,11 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     if (!saved && creating) {
       display.setWidget(null);
     } else {
-      placeController.goTo(new ProxyPlace(getRecord(), Operation.DETAILS));
+      placeController.goTo(new ProxyPlace(stableId, Operation.DETAILS));
     }
   }
 
-  /**
-   * Called to fetch the details of the edited record.
-   */
-  protected abstract ProxyRequest<P> getFindRequest(Long id);
-
   protected abstract RequestObject<Void> getPersistRequest(P record);
-
-  @SuppressWarnings("unchecked")
-  private P cast(EntityProxy syncRecord) {
-    return (P) syncRecord;
-  }
 
   private void doStart(final AcceptsOneWidget display, P record) {
     requestObject = getPersistRequest(record);
@@ -211,3 +189,4 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     display.setWidget(view);
   }
 }
+

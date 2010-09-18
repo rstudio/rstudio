@@ -15,10 +15,6 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.SyncResult;
-
-import java.util.Set;
-
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -37,9 +33,8 @@ public abstract class AbstractVoidRequest extends
   }
 
   @Override
-  public void handlePrimitiveResult(String responseText,
-      Set<SyncResult> syncResults) {
-    receiver.onSuccess(null, syncResults);
+  public void handlePrimitiveResult(String responseText) {
+    receiver.onSuccess(null);
   }
 
   @Override

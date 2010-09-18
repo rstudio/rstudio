@@ -28,7 +28,7 @@ import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
-import com.google.gwt.requestfactory.shared.SyncResult;
+
 import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.Arrays;
@@ -107,8 +107,9 @@ public class EditorTest extends RequestFactoryTestBase {
 
     req.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
-          public void onSuccess(SimpleFooProxy response,
-              Set<SyncResult> syncResults) {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+
             driver.edit(response, req.simpleFooRequest().persistAndReturnSelf(
                 response).with(driver.getPaths()));
 
@@ -121,8 +122,8 @@ public class EditorTest extends RequestFactoryTestBase {
             editor.barName.setValue("ignored");
             driver.<SimpleFooProxy> flush().fire(
                 new Receiver<SimpleFooProxy>() {
-                  public void onSuccess(SimpleFooProxy response,
-                      Set<SyncResult> syncResults) {
+                  @Override
+                  public void onSuccess(SimpleFooProxy response) {
                     assertEquals("EditorFooTest", response.getUserName());
                     assertEquals("EditorBarTest",
                         response.getBarField().getUserName());
@@ -145,8 +146,8 @@ public class EditorTest extends RequestFactoryTestBase {
 
     req.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
-          public void onSuccess(SimpleFooProxy response,
-              Set<SyncResult> syncResults) {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
             // Set up driver in read-only mode
             driver.edit(response, null);
             assertNotNull(editor.delegate.subscribe());
@@ -162,8 +163,8 @@ public class EditorTest extends RequestFactoryTestBase {
             response.setUserName("updated");
 
             request.fire(new Receiver<SimpleFooProxy>() {
-              public void onSuccess(SimpleFooProxy response,
-                  Set<SyncResult> syncResults) {
+              @Override
+              public void onSuccess(SimpleFooProxy response) {
                 // EventBus notifications occur after the onSuccess()
                 Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
                   public boolean execute() {
@@ -192,8 +193,9 @@ public class EditorTest extends RequestFactoryTestBase {
 
     req.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
-          public void onSuccess(SimpleFooProxy response,
-              Set<SyncResult> syncResults) {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+
             driver.edit(response, req.simpleFooRequest().persistAndReturnSelf(
                 response).with(driver.getPaths()));
             // Set to an illegal value
@@ -202,8 +204,7 @@ public class EditorTest extends RequestFactoryTestBase {
             driver.<SimpleFooProxy> flush().fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
-                  public void onSuccess(SimpleFooProxy response,
-                      Set<SyncResult> syncResults) {
+                  public void onSuccess(SimpleFooProxy response) {
                     fail("Expected errors");
                   }
 
@@ -229,3 +230,4 @@ public class EditorTest extends RequestFactoryTestBase {
   }
 
 }
+

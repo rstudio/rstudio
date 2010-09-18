@@ -22,7 +22,6 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -41,19 +40,11 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * The employee tree located on the left of the app.
  */
 public class ExpenseTree extends Composite {
-
-  interface Template extends SafeHtmlTemplates {
-    @Template("<span class=\"{0}\">{1}</span>")
-    SafeHtml span(String classes, String userName);
-  }
-
-  private static Template template;
 
   /**
    * Custom listener for this widget.
@@ -67,6 +58,11 @@ public class ExpenseTree extends Composite {
      * @param employee the selected employee
      */
     void onSelection(String department, EmployeeProxy employee);
+  }
+
+  interface Template extends SafeHtmlTemplates {
+    @Template("<span class=\"{0}\">{1}</span>")
+    SafeHtml span(String classes, String userName);
   }
 
   /**
@@ -128,7 +124,7 @@ public class ExpenseTree extends Composite {
       requestFactory.employeeRequest().countEmployeesByDepartment(
           department).fire(new Receiver<Long>() {
         @Override
-        public void onSuccess(Long response, Set<SyncResult> syncResults) {
+        public void onSuccess(Long response) {
           updateRowCount(response.intValue(), true);
         }
       });
@@ -141,8 +137,7 @@ public class ExpenseTree extends Composite {
           department, range.getStart(), range.getLength()).with(
           getEmployeeMenuProperties()).fire(new Receiver<List<EmployeeProxy>>(){
             @Override
-            public void onSuccess(List<EmployeeProxy> response,
-                Set<SyncResult> syncResults) {
+            public void onSuccess(List<EmployeeProxy> response) {
               updateRowData(0, response);
             }});
     }
@@ -203,10 +198,12 @@ public class ExpenseTree extends Composite {
     }
   }
 
+  private static Template template;
+
   /**
    * The data provider that provides departments.
    */
-  private ListDataProvider<String> departments = new ListDataProvider<String>();
+  private final ListDataProvider<String> departments = new ListDataProvider<String>();
 
   /**
    * The last selected department.

@@ -18,7 +18,6 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -43,18 +42,6 @@ import java.util.Set;
  */
 public class MobileExpenseList extends Composite implements MobilePage {
 
-  interface Template extends SafeHtmlTemplates {
-    @Template("<div class=\"item\">{0}{1} ({2})</div>")
-    SafeHtml div(SafeHtml approvalIcon, String description, String amount);
-  }
-
-  private static Template template;
-
-  /**
-   * The auto refresh interval in milliseconds.
-   */
-  private static final int REFRESH_INTERVAL = 5000;
-
   /**
    * TODO: doc.
    */
@@ -64,6 +51,11 @@ public class MobileExpenseList extends Composite implements MobilePage {
     void onEditReport(ReportProxy report);
 
     void onExpenseSelected(ExpenseProxy expense);
+  }
+
+  interface Template extends SafeHtmlTemplates {
+    @Template("<div class=\"item\">{0}{1} ({2})</div>")
+    SafeHtml div(SafeHtml approvalIcon, String description, String amount);
   }
 
   /**
@@ -101,6 +93,13 @@ public class MobileExpenseList extends Composite implements MobilePage {
           ExpensesMobile.formatCurrency(value.getAmount())));
     }
   }
+
+  private static Template template;
+
+  /**
+   * The auto refresh interval in milliseconds.
+   */
+  private static final int REFRESH_INTERVAL = 5000;
 
   private final ExpensesRequestFactory requestFactory;
   private final CellList<ExpenseProxy> expenseList;
@@ -215,8 +214,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
     }
     lastReceiver = new Receiver<List<ExpenseProxy>>() {
       @Override
-      public void onSuccess(
-          List<ExpenseProxy> newValues, Set<SyncResult> syncResults) {
+      public void onSuccess(List<ExpenseProxy> newValues) {
         if (this == lastReceiver) {
           int size = newValues.size();
           expenseDataProvider.updateRowCount(size, true);

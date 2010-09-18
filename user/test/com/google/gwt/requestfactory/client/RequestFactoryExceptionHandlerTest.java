@@ -19,7 +19,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.Set;
@@ -61,8 +60,7 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
         fail("Failure expected but onViolation() was called");
       }
 
-      public void onSuccess(SimpleFooProxy response,
-          Set<SyncResult> syncResult) {
+      public void onSuccess(SimpleFooProxy response) {
         fail("Failure expected but onSuccess() was called");
       }
     });

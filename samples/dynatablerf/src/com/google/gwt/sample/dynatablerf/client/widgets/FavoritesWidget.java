@@ -25,7 +25,6 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.sample.dynatablerf.client.FavoritesManager;
 import com.google.gwt.sample.dynatablerf.client.events.MarkFavoriteEvent;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Displays Person objects that the user has selected as a favorite. This
@@ -133,7 +131,8 @@ public class FavoritesWidget extends Composite {
 
     for (EntityProxyId id : manager.getFavoriteIds()) {
       factory.find(id).fire(new Receiver<EntityProxy>() {
-        public void onSuccess(EntityProxy response, Set<SyncResult> syncResults) {
+        @Override
+        public void onSuccess(EntityProxy response) {
           PersonProxy person = (PersonProxy) response;
           onMarkFavorite(new MarkFavoriteEvent(person, true));
         }

@@ -26,6 +26,6 @@ import com.google.gwt.view.client.ProvidesKey;
 public class EntityProxyKeyProvider<P extends EntityProxy> implements
     ProvidesKey<P> {
   public Object getKey(P item) {
-    return item == null ? null : item.getId();
+    return item == null ? null : item.stableId();
   }
 }

@@ -36,7 +36,6 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
@@ -228,7 +227,7 @@ public class ExpenseList extends Composite implements
   @UiField(provided = true)
   CellTable<ReportProxy> table;
 
-  private List<SortableHeader> allHeaders = new ArrayList<SortableHeader>();
+  private final List<SortableHeader> allHeaders = new ArrayList<SortableHeader>();
 
   /**
    * The department being searched.
@@ -340,6 +339,12 @@ public class ExpenseList extends Composite implements
     });
   }
 
+  public void init(ExpensesRequestFactory factory, EventBus eventBus) {
+    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class, this);
+    this.requestFactory = factory;
+    requestReports(false);
+  }
+
   public void onProxyChange(EntityProxyChange<ReportProxy> event) {
     ReportProxy changed = event.getProxy();
     Long changedId = changed.getId();
@@ -377,12 +382,6 @@ public class ExpenseList extends Composite implements
 
   public void setListener(Listener listener) {
     this.listener = listener;
-  }
-
-  public void init(ExpensesRequestFactory factory, EventBus eventBus) {
-    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class, this);
-    this.requestFactory = factory;
-    requestReports(false);
   }
 
   @UiFactory
@@ -561,7 +560,7 @@ public class ExpenseList extends Composite implements
       }
       lastDataSizeReceiver = new Receiver<Long>() {
         @Override
-        public void onSuccess(Long response, Set<SyncResult> syncResults) {
+        public void onSuccess(Long response) {
           if (this == lastDataSizeReceiver) {
             int count = response.intValue();
             // Treat count == 1000 as inexact due to AppEngine limitation
@@ -576,8 +575,7 @@ public class ExpenseList extends Composite implements
     // Request reports in the current range.
     lastDataReceiver = new Receiver<List<ReportProxy>>() {
       @Override
-      public void onSuccess(List<ReportProxy> newValues,
-          Set<SyncResult> syncResults) {
+      public void onSuccess(List<ReportProxy> newValues) {
         if (this == lastDataReceiver) {
           int size = newValues.size();
           if (size < table.getPageSize()) {

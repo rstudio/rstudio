@@ -20,10 +20,10 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * <p>
@@ -67,7 +66,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   /**
    * This mapping allows us to update individual rows as records change.
    */
-  private final Map<Long, Integer> recordToRow = new HashMap<Long, Integer>();
+  private final Map<EntityProxyId, Integer> recordToRow = new HashMap<EntityProxyId, Integer>();
 
   private final RequestFactory requests;
   private final PlaceController placeController;
@@ -109,7 +108,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   }
 
   public void createClicked() {
-    placeController.goTo(new ProxyPlace(requests.create(proxyType),
+    placeController.goTo(new ProxyPlace(requests.create(proxyType).stableId(),
         Operation.CREATE));
   }
 
@@ -133,7 +132,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
 
     final Receiver<List<P>> callback = new Receiver<List<P>>() {
       @Override
-      public void onSuccess(List<P> values, Set<SyncResult> syncResults) {
+      public void onSuccess(List<P> values) {
         if (view == null) {
           // This activity is dead
           return;
@@ -141,7 +140,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
         recordToRow.clear();
         for (int i = 0, row = range.getStart(); i < values.size(); i++, row++) {
           P record = values.get(i);
-          recordToRow.put(record.getId(), row);
+          recordToRow.put(record.stableId(), row);
         }
         getView().asHasData().setRowData(range.getStart(), values);
         if (display != null) {
@@ -218,11 +217,11 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   /**
    * Called when the user chooses a record to view. This default implementation
    * sends the {@link PlaceController} to an appropriate {@link ProxyPlace}.
-   * 
+   *
    * @param record the chosen record
    */
   protected void showDetails(P record) {
-    placeController.goTo(new ProxyPlace(record, Operation.DETAILS));
+    placeController.goTo(new ProxyPlace(record.stableId(), Operation.DETAILS));
   }
 
   private void fireRangeRequest(final Range range,
@@ -233,7 +232,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   private void getLastPage() {
     fireCountRequest(new Receiver<Long>() {
       @Override
-      public void onSuccess(Long response, Set<SyncResult> syncResults) {
+      public void onSuccess(Long response) {
         HasData<P> table = getView().asHasData();
         int rows = response.intValue();
         table.setRowCount(rows, true);
@@ -252,7 +251,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   private void init() {
     fireCountRequest(new Receiver<Long>() {
       @Override
-      public void onSuccess(Long response, Set<SyncResult> syncResults) {
+      public void onSuccess(Long response) {
         getView().asHasData().setRowCount(response.intValue(), true);
         onRangeChanged(view.asHasData());
       }
@@ -261,17 +260,17 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
 
   @SuppressWarnings("unchecked")
   private void selectCoerced(Place newPlace) {
-    select((P) ((ProxyPlace) newPlace).getProxy());
+    select((P) ((ProxyPlace) newPlace).getProxyId());
   }
 
   private void update(P record) {
-    final Integer row = recordToRow.get(record.getId());
+    final Integer row = recordToRow.get(record.stableId());
     if (row == null) {
       return;
     }
     fireRangeRequest(new Range(row, 1), new Receiver<List<P>>() {
       @Override
-      public void onSuccess(List<P> response, Set<SyncResult> syncResults) {
+      public void onSuccess(List<P> response) {
         getView().asHasData().setRowData(row,
             Collections.singletonList(response.get(0)));
       }
@@ -282,7 +281,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     if (newPlace instanceof ProxyPlace) {
       ProxyPlace proxyPlace = (ProxyPlace) newPlace;
       if (proxyPlace.getOperation() != Operation.CREATE
-          && requests.getClass(proxyPlace.getProxy()).equals(proxyType)) {
+          && requests.getClass(proxyPlace.getProxyId()).equals(proxyType)) {
         selectCoerced(newPlace);
         return;
       }

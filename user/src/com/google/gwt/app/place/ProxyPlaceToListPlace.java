@@ -29,7 +29,7 @@ public class ProxyPlaceToListPlace implements FilteredActivityMapper.Filter {
 
   /**
    * Required by {@link FilteredActivityMapper.Filter}, calls
-   * {@link #getProxy()}.
+   * {@link #proxyListPlaceFor()}.
    */
   public Place filter(Place place) {
     return proxyListPlaceFor(place);
@@ -50,6 +50,6 @@ public class ProxyPlaceToListPlace implements FilteredActivityMapper.Filter {
     }
 
     ProxyPlace proxyPlace = (ProxyPlace) place;
-    return new ProxyListPlace(requests.getClass(proxyPlace.getProxy()));
+    return new ProxyListPlace(requests.getClass(proxyPlace.getProxyId()));
   }
 }

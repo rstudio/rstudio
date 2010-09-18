@@ -19,11 +19,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
-import com.google.gwt.requestfactory.shared.SyncResult;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * <p>
@@ -51,12 +49,7 @@ AbstractJsonListRequest<T extends EntityProxy, R extends AbstractJsonListRequest
   }
 
   @Override
-  public void handleResult(Object jsoResult, Set<SyncResult> syncResults) {
-    // TODO (amitmanjhi): remove this check once Receiver has the onViolations method.
-    if (jsoResult == null) {
-      receiver.onSuccess(null, syncResults);
-      return;
-    }
+  public void handleResult(Object jsoResult) {
     @SuppressWarnings("unchecked")
     JsArray<JavaScriptObject> rawJsos = (JsArray<JavaScriptObject>) jsoResult;
     
@@ -80,6 +73,6 @@ AbstractJsonListRequest<T extends EntityProxy, R extends AbstractJsonListRequest
       T proxy = (T) schema.create(jso);
       proxies.add(proxy);
     }
-    receiver.onSuccess(proxies, syncResults);
+    receiver.onSuccess(proxies);
   }
 }

@@ -18,10 +18,8 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.requestfactory.client.SyncResultImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.Property;
 
@@ -103,12 +101,6 @@ class DeltaValueStoreJsonImpl {
     }-*/;
   }
 
-  // TODO: remove this method when SyncResult is removed.
-  static SyncResultImpl makeSyncResult(ProxyJsoImpl jso,
-      Object futureId) {
-    return new SyncResultImpl(jso.getSchema().create(jso), futureId);
-  }
-
   private final ValueStoreJsonImpl master;
 
   private final RequestFactoryJsonImpl requestFactory;
@@ -131,8 +123,7 @@ class DeltaValueStoreJsonImpl {
     throw new UnsupportedOperationException("Auto-generated method stub");
   }
 
-  public Set<SyncResult> commit(JavaScriptObject returnedJso) {
-    Set<SyncResult> syncResults = new HashSet<SyncResult>();
+  public void commit(JavaScriptObject returnedJso) {
     HashSet<String> keys = new HashSet<String>();
     ReturnRecord.fillKeys(returnedJso, keys);
 
@@ -165,7 +156,6 @@ class DeltaValueStoreJsonImpl {
         ProxyJsoImpl masterRecord = master.records.get(futureKey);
         assert masterRecord == null;
         requestFactory.postChangeEvent(copy, WriteOperation.CREATE);
-        syncResults.add(makeSyncResult(copy, futureKey.id));
       }
     }
     processToRemove(toRemove, WriteOperation.CREATE);
@@ -184,7 +174,6 @@ class DeltaValueStoreJsonImpl {
             requestFactory);
         requestFactory.postChangeEvent(copy, WriteOperation.DELETE);
         master.records.remove(key);
-        syncResults.add(makeSyncResult(copy, null));
       }
     }
 
@@ -212,11 +201,9 @@ class DeltaValueStoreJsonImpl {
           copy.merge(value);
           toRemove.add(key);
         }
-        syncResults.add(makeSyncResult(copy, null));
       }
     }
     processToRemove(toRemove, WriteOperation.UPDATE);
-    return syncResults;
   }
 
   public boolean isChanged() {

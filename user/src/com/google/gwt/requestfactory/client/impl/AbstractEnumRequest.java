@@ -15,10 +15,6 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.SyncResult;
-
-import java.util.Set;
-
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -34,7 +30,7 @@ import java.util.Set;
 public abstract class AbstractEnumRequest<E extends Enum<E>> extends
     AbstractPrimitiveRequest<Integer, AbstractEnumRequest<E>> {
 
-  private E[] enumValues;
+  private final E[] enumValues;
 
   public AbstractEnumRequest(RequestFactoryJsonImpl requestFactory, E[] enumValues) {
     super(requestFactory);
@@ -42,12 +38,11 @@ public abstract class AbstractEnumRequest<E extends Enum<E>> extends
   }
 
   @Override
-  public void handlePrimitiveResult(String responseText,
-      Set<SyncResult> syncResults) {
+  public void handlePrimitiveResult(String responseText) {
     int ordinal = Integer.valueOf(responseText);
     for (E e : enumValues) {
       if (ordinal == e.ordinal()) {
-        receiver.onSuccess(ordinal, syncResults);
+        receiver.onSuccess(ordinal);
       }
     }
     throw new IllegalArgumentException("Invalid enum ordinal value " + ordinal);

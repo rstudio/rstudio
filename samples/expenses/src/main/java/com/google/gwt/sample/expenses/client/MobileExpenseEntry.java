@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
@@ -33,7 +32,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Date;
-import java.util.Set;
 
 /**
  * TODO: doc.
@@ -125,16 +123,10 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
     // TODO: wait throbber
     requestObject.fire(new Receiver<Void>() {
           @Override
-          public void onSuccess(Void ignore, Set<SyncResult> response) {
-            // Check for commit errors.
-            String errorMessage = "";
-            // FIXME: Error handling disabled...
-            if (errorMessage.length() > 0) {
-              errorText.setInnerText(errorMessage);
-            } else {
-              listener.onExpenseUpdated();
-            }
+          public void onSuccess(Void ignore) {
           }
+
+          // TODO: use onViolations to check for constraint violations.
         });
   }
 

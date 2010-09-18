@@ -24,7 +24,6 @@ import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.ServerFailure;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.impl.Property;
 import com.google.gwt.requestfactory.shared.impl.RequestData;
@@ -152,8 +151,8 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
       receiver.onViolation(errors);
     } else {
-      handleResult(results.getResult(),
-          deltaValueStore.commit(results.getSideEffects()));
+      deltaValueStore.commit(results.getSideEffects());
+      handleResult(results.getResult());
     }
   }
 
@@ -187,8 +186,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
    */
   protected abstract R getThis();
 
-  protected abstract void handleResult(Object result,
-      Set<SyncResult> syncResults);
+  protected abstract void handleResult(Object result);
 
   protected native void processRelated(JavaScriptObject related) /*-{
     for(var recordKey in related) {

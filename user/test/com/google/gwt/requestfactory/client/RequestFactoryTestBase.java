@@ -21,9 +21,6 @@ import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
-import com.google.gwt.requestfactory.shared.SyncResult;
-
-import java.util.Set;
 
 /**
  * A base class for anything that makes use of the SimpleRequestFactory.
@@ -46,7 +43,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
   protected void finishTestAndReset() {
     final boolean[] reallyDone = {false, false};
     req.simpleFooRequest().reset().fire(new Receiver<Void>() {
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
+      public void onSuccess(Void response) {
         reallyDone[0] = true;
         if (reallyDone[0] && reallyDone[1]) {
           finishTest();
@@ -54,7 +51,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
       }
     });
     req.simpleBarRequest().reset().fire(new Receiver<Void>() {
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
+      public void onSuccess(Void response) {
         reallyDone[1] = true;
         if (reallyDone[0] && reallyDone[1]) {
           finishTest();

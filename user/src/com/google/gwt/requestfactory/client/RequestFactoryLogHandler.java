@@ -20,9 +20,7 @@ import com.google.gwt.logging.client.JsonLogRecordClientUtil;
 import com.google.gwt.logging.shared.SerializableLogRecord;
 import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.SyncResult;
 
-import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -42,7 +40,7 @@ public class RequestFactoryLogHandler extends Handler {
   
   private class LoggingReceiver extends Receiver<Long> {
     @Override
-    public void onSuccess(Long response, Set<SyncResult> syncResults) {
+    public void onSuccess(Long response) {
       if (response > 0) {
         logger.finest("Remote logging successful");
       } else {
@@ -105,7 +103,7 @@ public class RequestFactoryLogHandler extends Handler {
     requestProvider.getLoggingRequest().logMessage(json).fire(
         new Receiver<Boolean>() {
           @Override
-          public void onSuccess(Boolean response, Set<SyncResult> syncResults) {
+          public void onSuccess(Boolean response) {
             if (!response) {
               wireLogger.severe("Remote Logging failed to parse JSON");
             }

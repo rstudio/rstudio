@@ -19,9 +19,7 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
-import com.google.gwt.requestfactory.shared.SyncResult;
 
-import java.util.Set;
 
 /**
  * Tests for {@link com.google.gwt.requestfactory.shared.RequestFactory}.
@@ -36,22 +34,21 @@ public class FindServiceTest extends RequestFactoryTestBase {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
   }
 
+
   public void testFetchEntity() {
     final boolean relationsAbsent = false;
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
-          public void onSuccess(SimpleFooProxy response,
-              Set<SyncResult> syncResult) {
+          public void onSuccess(SimpleFooProxy response) {
             checkReturnedProxy(response, relationsAbsent);
 
             final EntityProxyId stableId = response.stableId();
             req.find(stableId).fire(new Receiver<EntityProxy>() {
 
               @Override
-              public void onSuccess(EntityProxy returnedProxy,
-                  Set<SyncResult> syncResults) {
+              public void onSuccess(EntityProxy returnedProxy) {
                 assertEquals(stableId, returnedProxy.stableId());
                 checkReturnedProxy((SimpleFooProxy) returnedProxy,
                     relationsAbsent);
@@ -68,8 +65,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
     req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
-          public void onSuccess(SimpleFooProxy response,
-              Set<SyncResult> syncResult) {
+          public void onSuccess(SimpleFooProxy response) {
             checkReturnedProxy(response, relationsPresent);
 
             final EntityProxyId stableId = response.stableId();
@@ -77,8 +73,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
                 new Receiver<EntityProxy>() {
 
                   @Override
-                  public void onSuccess(EntityProxy returnedProxy,
-                      Set<SyncResult> syncResults) {
+                  public void onSuccess(EntityProxy returnedProxy) {
                     assertEquals(stableId, returnedProxy.stableId());
                     checkReturnedProxy((SimpleFooProxy) returnedProxy,
                         relationsPresent);
@@ -103,3 +98,4 @@ public class FindServiceTest extends RequestFactoryTestBase {
     }
   }
 }
+

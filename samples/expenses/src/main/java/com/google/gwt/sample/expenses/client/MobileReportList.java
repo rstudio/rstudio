@@ -17,7 +17,6 @@ package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
@@ -31,7 +30,6 @@ import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * TODO: doc.
@@ -143,7 +141,7 @@ public class MobileReportList extends Composite implements MobilePage {
     lastReceiver = new Receiver<List<ReportProxy>>() {
       @Override
       public void onSuccess(
-          List<ReportProxy> newValues, Set<SyncResult> syncResults) {
+          List<ReportProxy> newValues) {
         int size = newValues.size();
         reportDataProvider.updateRowCount(size, true);
         reportDataProvider.updateRowData(0, newValues);

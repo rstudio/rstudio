@@ -39,7 +39,7 @@ public class FavoritesManager {
   private final EventBus eventBus = new SimpleEventBus();
   private final Set<EntityProxyId> favoriteIds = new HashSet<EntityProxyId>();
 
-  public FavoritesManager(RequestFactory requestFactory) {
+  public FavoritesManager(final RequestFactory requestFactory) {
     String cookie = Cookies.getCookie(COOKIE_NAME);
     if (cookie != null) {
       try {
@@ -60,7 +60,7 @@ public class FavoritesManager {
       public void onWindowClosing(ClosingEvent event) {
         StringBuilder sb = new StringBuilder();
         for (EntityProxyId id : favoriteIds) {
-          sb.append(id.asString()).append(",");
+          sb.append(requestFactory.getHistoryToken(id)).append(",");
         }
         Cookies.setCookie(COOKIE_NAME, sb.toString());
       }

@@ -45,7 +45,7 @@ public abstract class Receiver<V> {
   /**
    * Called when a RequestObject has been successfully executed on the server.
    */
-  public abstract void onSuccess(V response, Set<SyncResult> syncResults);
+  public abstract void onSuccess(V response);
 
   /**
    * Called if an object sent to the server could not be validated. The default

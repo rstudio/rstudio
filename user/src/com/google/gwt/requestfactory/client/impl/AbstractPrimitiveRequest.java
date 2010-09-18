@@ -15,10 +15,6 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.SyncResult;
-
-import java.util.Set;
-
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -39,15 +35,9 @@ public abstract class AbstractPrimitiveRequest<T, R extends AbstractRequest<T, R
   }
 
   @Override
-  public void handleResult(Object result, Set<SyncResult> syncResults) {
-    // TODO (amitmanjhi): remove this check once Receiver has the onViolations method.
-    if (result == null) {
-      handlePrimitiveResult(null, syncResults);
-      return;
-    }
-    handlePrimitiveResult(asString(result), syncResults);
+  public void handleResult(Object result) {
+    handlePrimitiveResult(asString(result));
   }
 
-  protected abstract void handlePrimitiveResult(String responseText,
-      Set<SyncResult> syncResults);
+  protected abstract void handlePrimitiveResult(String responseText);
 }

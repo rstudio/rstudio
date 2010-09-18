@@ -23,7 +23,6 @@ import com.google.gwt.requestfactory.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.client.LoginWidget;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.UserInformationProxy;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
@@ -31,8 +30,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
-
-import java.util.Set;
 
 /**
  * Entry point for the mobile version of the Expenses app.
@@ -104,8 +101,7 @@ public class ExpensesMobile implements EntryPoint {
     requestFactory.employeeRequest().findEmployee(employeeId).fire(
         new Receiver<EmployeeProxy>() {
           @Override
-          public void onSuccess(EmployeeProxy employee,
-              Set<SyncResult> syncResults) {
+          public void onSuccess(EmployeeProxy employee) {
             final ExpensesMobileShell shell = new ExpensesMobileShell(eventBus,
                 requestFactory, employee);
             RootPanel.get().add(shell);
@@ -117,8 +113,7 @@ public class ExpensesMobile implements EntryPoint {
             final LoginWidget login = shell.getLoginWidget();
             Receiver<UserInformationProxy> receiver = new Receiver<UserInformationProxy>() {
               @Override
-              public void onSuccess(UserInformationProxy userInformationRecord,
-                  Set<SyncResult> syncResults) {
+              public void onSuccess(UserInformationProxy userInformationRecord) {
                 login.setUserInformation(userInformationRecord);
               }
             };

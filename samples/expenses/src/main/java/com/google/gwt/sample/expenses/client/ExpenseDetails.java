@@ -16,7 +16,6 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
-
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.DateCell;
 import com.google.gwt.cell.client.FieldUpdater;
@@ -44,7 +43,6 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -83,7 +81,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Details about the current expense report on the right side of the app,
@@ -544,8 +541,7 @@ public class ExpenseDetails extends Composite {
       expensesRequestFactory.reportRequest().findReport(
           report.getId()).fire(new Receiver<ReportProxy>() {
         @Override
-        public void onSuccess(
-            ReportProxy response, Set<SyncResult> syncResults) {
+        public void onSuccess(ReportProxy response) {
           report = response;
           setNotesEditState(false, false, response.getNotes());
         }
@@ -856,18 +852,6 @@ public class ExpenseDetails extends Composite {
   }
 
   /**
-   * Get the error message from a sync operation.
-   * 
-   * @param response the response of the operation
-   * @return the error message, or an empty string if no error.
-   */
-  private String getErrorMessageFromSync(Set<SyncResult> response) {
-    String errorMessage = "";
-    // TODO: Remove this method..
-    return errorMessage;
-  }
-
-  /**
    * Get the columns displayed in the expense table.
    */
   private String[] getExpenseColumns() {
@@ -903,8 +887,7 @@ public class ExpenseDetails extends Composite {
     refreshTimer.cancel();
     lastReceiver = new Receiver<List<ExpenseProxy>>() {
       @Override
-      public void onSuccess(List<ExpenseProxy> newValues,
-          Set<SyncResult> syncResults) {
+      public void onSuccess(List<ExpenseProxy> newValues) {
         if (this == lastReceiver) {
           List<ExpenseProxy> list = new ArrayList<ExpenseProxy>(newValues);
           if (lastComparator != null) {
@@ -964,13 +947,7 @@ public class ExpenseDetails extends Composite {
     editableReport.setNotes(pendingNotes);
     editRequest.fire(new Receiver<Void>() {
       @Override
-      public void onSuccess(Void ignore, Set<SyncResult> response) {
-        // We expect onReportChanged to be called if there are no errors.
-        String errorMessage = getErrorMessageFromSync(response);
-        if (errorMessage.length() > 0) {
-          showErrorPopup(errorMessage);
-          setNotesEditState(false, false, report.getNotes());
-        }
+      public void onSuccess(Void ignore) {
       }
     });
   }
@@ -1051,12 +1028,10 @@ public class ExpenseDetails extends Composite {
     editableRecord.setReasonDenied(reasonDenied);
     editRequest.fire(new Receiver<Void>() {
       @Override
-      public void onSuccess(Void ignore, Set<SyncResult> response) {
-        String errorMessage = getErrorMessageFromSync(response);
-        if (errorMessage.length() > 0) {
-          syncCommit(record, errorMessage.length() > 0 ? errorMessage : null);
-        }
+      public void onSuccess(Void ignore) {
       }
+
+      // TODO: use onViolations for checking constraint violations.
     });
   }
 }

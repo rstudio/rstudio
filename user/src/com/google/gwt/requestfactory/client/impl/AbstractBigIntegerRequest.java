@@ -15,11 +15,8 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.SyncResult;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Set;
 
 /**
  * <p>
@@ -39,9 +36,8 @@ public abstract class AbstractBigIntegerRequest extends
   }
 
   @Override
-  public void handlePrimitiveResult(String responseText,
-      Set<SyncResult> syncResults) {
-    receiver.onSuccess(new BigDecimal(responseText).toBigInteger(), syncResults);
+  public void handlePrimitiveResult(String responseText) {
+    receiver.onSuccess(new BigDecimal(responseText).toBigInteger());
   }
 
   @Override

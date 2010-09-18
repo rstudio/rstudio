@@ -81,7 +81,7 @@ public abstract class ProxySchema<P extends ProxyImpl> {
   private boolean isCorrectClass(EntityProxy proxy) {
     // What we really want to check is isAssignableFrom. Sigh.
     Class<? extends EntityProxy> actual = ((ProxyImpl) proxy).asJso().getRequestFactory().getClass(
-        proxy);
+        proxy.stableId());
     Class<? extends EntityProxy> expected = getProxyClass();
     boolean equals = actual.equals(expected);
     return equals;

@@ -15,10 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.requestfactory.shared.SyncResult;
-
 import java.util.Date;
-import java.util.Set;
 
 /**
  * <p>
@@ -38,9 +35,8 @@ public abstract class AbstractDateRequest extends
   }
 
   @Override
-  public void handlePrimitiveResult(String responseText,
-      Set<SyncResult> syncResults) {
-    receiver.onSuccess(new Date(Long.valueOf(responseText)), syncResults);
+  public void handlePrimitiveResult(String responseText) {
+    receiver.onSuccess(new Date(Long.valueOf(responseText)));
   }
 
   @Override

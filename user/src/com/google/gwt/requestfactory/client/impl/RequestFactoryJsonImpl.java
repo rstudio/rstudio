@@ -122,8 +122,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     });
   }
 
-  public Class<? extends EntityProxy> getClass(EntityProxy proxy) {
-    return ((ProxyImpl) proxy).getSchema().getProxyClass();
+  public Class<? extends EntityProxy> getClass(EntityProxyId proxyId) {
+    return ((EntityProxyIdImpl) proxyId).schema.getProxyClass();
   }
 
   public RequestTransport getRequestTransport() {
@@ -170,32 +170,20 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return schema.getProxyClass();
   }
 
-  /**
-   * TODO(amitmanjhi): remove this method, use getProxyId instead.
-   */
-  protected EntityProxy getProxy(String token, ProxyToTypeMap recordToTypeMap) {
-    String[] bits = token.split("-");
-    if (bits.length < 2 || bits.length > 3) {
-      return null;
+  protected String getHistoryToken(EntityProxyId proxyId, ProxyToTypeMap recordToTypeMap) {
+    EntityProxyIdImpl entityProxyId = (EntityProxyIdImpl) proxyId;
+    Class<? extends EntityProxy> proxyClass = entityProxyId.schema.getProxyClass();
+    String rtn = recordToTypeMap.getClassToken(proxyClass) + "-";
+    Object datastoreId = entityProxyId.id;
+    if (entityProxyId.isFuture) {
+      datastoreId = futureToDatastoreMap.get(entityProxyId.id);
     }
-
-    ProxySchema<? extends EntityProxy> schema = recordToTypeMap.getType(bits[0]);
-    if (schema == null) {
-      return null;
+    if (datastoreId == null) {
+      rtn += "0-FUTURE";
+    } else {
+      rtn += datastoreId;
     }
-
-    if (bits.length == 3) {
-      return createFuture(schema);
-    }
-
-    Long id = null;
-    try {
-      id = Long.valueOf(bits[1]);
-    } catch (NumberFormatException e) {
-      return null;
-    }
-
-    return schema.create(ProxyJsoImpl.create(id, -1, schema, this));
+    return rtn;
   }
 
   protected EntityProxyId getProxyId(String token,
@@ -219,20 +207,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
     Object futureId = datastoreToFutureMap.get(id, schema);
     return new EntityProxyIdImpl(id, schema, false, futureId);
-  }
-
-  /*
-   * can this method use the EntityProxyIdImpl.asString() method?
-   */
-  protected String getToken(EntityProxy record, ProxyToTypeMap recordToTypeMap) {
-    Class<? extends EntityProxy> proxyClass = ((ProxyImpl) record).getSchema().getProxyClass();
-    String rtn = recordToTypeMap.getClassToken(proxyClass) + "-";
-    if (((ProxyImpl) record).isFuture()) {
-      rtn += "0-FUTURE";
-    } else {
-      rtn += record.getId();
-    }
-    return rtn;
   }
 
   ValueStoreJsonImpl getValueStore() {

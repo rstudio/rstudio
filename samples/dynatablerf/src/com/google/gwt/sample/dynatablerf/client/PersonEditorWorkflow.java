@@ -26,7 +26,6 @@ import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
@@ -113,7 +112,7 @@ public class PersonEditorWorkflow {
     }
     request.fire(new Receiver<Void>() {
       @Override
-      public void onSuccess(Void response, Set<SyncResult> syncResults) {
+      public void onSuccess(Void response) {
         dialog.hide();
       }
 
@@ -143,7 +142,8 @@ public class PersonEditorWorkflow {
 
     // We could do more with the request, but we just fire it
     fetchRequest.fire(new Receiver<PersonProxy>() {
-      public void onSuccess(PersonProxy person, Set<SyncResult> syncResults) {
+      @Override
+      public void onSuccess(PersonProxy person) {
         // Start the edit process
         editorDriver.edit(person,
             requestFactory.personRequest().persist(person));

@@ -20,7 +20,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
@@ -42,7 +41,6 @@ import com.google.gwt.view.client.SingleSelectionModel;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A paging table with summaries of all known people.
@@ -107,7 +105,7 @@ public class SummaryWidget extends Composite {
   CellTable<PersonProxy> table;
 
   private final EventBus eventBus;
-  private int numRows;
+  private final int numRows;
   private final DynaTableRequestFactory requestFactory;
   private final SingleSelectionModel<PersonProxy> selectionModel = new SingleSelectionModel<PersonProxy>();
 
@@ -157,8 +155,8 @@ public class SummaryWidget extends Composite {
         // Record is onscreen and may differ from our data
         requestFactory.personRequest().findPerson(record.getId()).fire(
             new Receiver<PersonProxy>() {
-              public void onSuccess(PersonProxy response,
-                  Set<SyncResult> syncResults) {
+              @Override
+              public void onSuccess(PersonProxy response) {
                 // Re-check offset in case of changes while waiting for data
                 int offset = offsetOf(response);
                 if (offset != -1) {
@@ -191,8 +189,8 @@ public class SummaryWidget extends Composite {
   private void fetch(final int start) {
     requestFactory.schoolCalendarRequest().getPeople(start, numRows).fire(
         new Receiver<List<PersonProxy>>() {
-          public void onSuccess(List<PersonProxy> response,
-              Set<SyncResult> syncResults) {
+          @Override
+          public void onSuccess(List<PersonProxy> response) {
             int responses = response.size();
             table.setRowData(start, response);
             if (!table.isRowCountExact()) {

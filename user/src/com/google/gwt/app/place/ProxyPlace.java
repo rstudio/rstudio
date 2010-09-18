@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 
 /**
@@ -43,26 +43,26 @@ public class ProxyPlace extends Place {
 
     public ProxyPlace getPlace(String token) {
       String bits[] = token.split("@");
-      return new ProxyPlace(requests.getProxy(bits[0]),
+      return new ProxyPlace(requests.getProxyId(bits[0]),
           Operation.valueOf(bits[1]));
     }
 
     public String getToken(ProxyPlace place) {
-      return requests.getToken(place.getProxy()) + "@" + place.getOperation();
+      return requests.getHistoryToken(place.getProxyId()) + "@" + place.getOperation();
     }
   }
 
-  private final EntityProxy proxy;
+  private final EntityProxyId proxyId;
 
   private final Operation operation;
 
-  public ProxyPlace(EntityProxy record) {
+  public ProxyPlace(EntityProxyId record) {
     this(record, Operation.DETAILS);
   }
-  
-  public ProxyPlace(EntityProxy record, Operation operation) {
+
+  public ProxyPlace(EntityProxyId proxyId, Operation operation) {
     this.operation = operation;
-    this.proxy = record;
+    this.proxyId = proxyId;
   }
 
   @Override
@@ -80,21 +80,18 @@ public class ProxyPlace extends Place {
     if (!operation.equals(other.operation)) {
       return false;
     }
-    if (!proxy.getId().equals(other.proxy.getId())) {
-      return false;
-    }
-    if (!proxy.getClass().equals(other.proxy.getClass())) {
+    if (!proxyId.equals(other.proxyId)) {
       return false;
     }
     return true;
   }
-  
+
   public Operation getOperation() {
     return operation;
   }
 
-  public EntityProxy getProxy() {
-    return proxy;
+  public EntityProxyId getProxyId() {
+    return proxyId;
   }
 
   @Override
@@ -102,13 +99,12 @@ public class ProxyPlace extends Place {
     final int prime = 31;
     int result = 1;
     result = prime * result + operation.hashCode();
-    result = prime * result + proxy.getId().hashCode();
-    result = prime * result + proxy.getClass().hashCode();
+    result = prime * result + proxyId.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
-    return "ProxyPlace [operation=" + operation + ", proxy=" + proxy + "]";
+    return "ProxyPlace [operation=" + operation + ", proxy=" + proxyId + "]";
   }
 }

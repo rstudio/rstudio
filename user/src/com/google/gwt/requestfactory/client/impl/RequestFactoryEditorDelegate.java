@@ -26,12 +26,10 @@ import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestObject;
-import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Base class for generated EditorDelegates using a RequestFactory as the
@@ -61,7 +59,7 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
   private class SubscriptionReceiver extends Receiver<EntityProxy> {
     @Override
-    public void onSuccess(EntityProxy response, Set<SyncResult> syncResults) {
+    public void onSuccess(EntityProxy response) {
       @SuppressWarnings("unchecked")
       P cast = (P) response;
       refresh(cast);
@@ -108,7 +106,7 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
     // Can't just use getObject().getClass() because it's not the proxy type
     @SuppressWarnings("unchecked")
-    Class<EntityProxy> clazz = (Class<EntityProxy>) factory.getClass((EntityProxy) getObject());
+    Class<EntityProxy> clazz = (Class<EntityProxy>) factory.getClass(((EntityProxy) getObject()).stableId());
     HandlerRegistration toReturn = EntityProxyChange.<EntityProxy> registerForProxyType(
         eventBus, clazz, new SubscriptionHandler());
     return toReturn;
