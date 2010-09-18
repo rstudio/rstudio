@@ -24,6 +24,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import java.beans.Beans;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -37,6 +38,35 @@ public class DesignTimeUtilsTest extends TestCase {
       TreeLogger.NULL, new MockResourceOracle());
   private final DesignTimeUtils stub = DesignTimeUtilsStub.EMPTY;
   private final DesignTimeUtilsImpl impl = new DesignTimeUtilsImpl();
+
+  /**
+   * Test for {@link DesignTimeUtilsImpl#isDesignTime(String)}.
+   */
+  public void test_isDesignTime_evaluate() throws Exception {
+    // not design time
+    {
+      Beans.setDesignTime(false);
+      assertEquals(false, DesignTimeUtilsImpl.isDesignTime("no.Matter"));
+    }
+    // not this Binder
+    try {
+      Beans.setDesignTime(true);
+      System.setProperty("gwt.UiBinder.isDesignTime my.Binder", "true");
+      assertEquals(false, DesignTimeUtilsImpl.isDesignTime("other.Binder"));
+    } finally {
+      Beans.setDesignTime(false);
+      System.clearProperty("gwt.UiBinder.isDesignTime my.design.Binder");
+    }
+    // OK
+    try {
+      Beans.setDesignTime(true);
+      System.setProperty("gwt.UiBinder.isDesignTime my.Binder", "true");
+      assertEquals(true, DesignTimeUtilsImpl.isDesignTime("my.Binder"));
+    } finally {
+      Beans.setDesignTime(false);
+      System.clearProperty("gwt.UiBinder.isDesignTime my.design.Binder");
+    }
+  }
 
   /**
    * Test for {@link DesignTimeUtils#addDeclarations(IndentedWriter)}.
@@ -185,17 +215,17 @@ public class DesignTimeUtilsTest extends TestCase {
   }
 
   /**
-   * Test for {@link DesignTimeUtils#getOwnerCheck()}.
+   * Test for {@link DesignTimeUtils#isDesignTime()}.
    */
-  public void test_getOwnerCheck_default() throws Exception {
-    assertEquals("", stub.getOwnerCheck());
+  public void test_isDesignTime_default() throws Exception {
+    assertEquals(false, stub.isDesignTime());
   }
 
   /**
-   * Test for {@link DesignTimeUtils#getOwnerCheck()}.
+   * Test for {@link DesignTimeUtils#isDesignTime()}.
    */
   public void test_getOwnerCheck_designTime() throws Exception {
-    assertEquals("if (owner != null) ", impl.getOwnerCheck());
+    assertEquals(true, impl.isDesignTime());
   }
 
   /**
@@ -324,18 +354,4 @@ public class DesignTimeUtilsTest extends TestCase {
       statements.add(String.format(format, args));
     }
   };
-
-  /**
-   * Test for {@link DesignTimeUtils#shouldIgnoreNoUiFieldAttribute()}.
-   */
-  public void test_shouldIgnoreNoUiFieldAttribute_default() throws Exception {
-    assertFalse(stub.shouldIgnoreNoUiFieldAttribute());
-  }
-
-  /**
-   * Test for {@link DesignTimeUtils#shouldIgnoreNoUiFieldAttribute()}.
-   */
-  public void test_shouldIgnoreNoUiFieldAttribute_designTime() throws Exception {
-    assertTrue(impl.shouldIgnoreNoUiFieldAttribute());
-  }
 }

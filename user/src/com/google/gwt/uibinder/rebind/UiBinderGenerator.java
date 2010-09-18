@@ -32,7 +32,6 @@ import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXParseException;
 
-import java.beans.Beans;
 import java.io.PrintWriter;
 
 /**
@@ -102,7 +101,7 @@ public class UiBinderGenerator extends Generator {
     }
 
     DesignTimeUtils designTime;
-    if (Beans.isDesignTime()) {
+    if (DesignTimeUtilsImpl.isDesignTime(fqInterfaceName)) {
       designTime = new DesignTimeUtilsImpl();
     } else {
       designTime = DesignTimeUtilsStub.EMPTY;

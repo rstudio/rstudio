@@ -20,6 +20,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.beans.Beans;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +28,20 @@ import java.util.Map;
  * Design time implementation of {@link DesignTimeUtils}.
  */
 public class DesignTimeUtilsImpl implements DesignTimeUtils {
+  /**
+   * @return <code>true</code> if given "Binder" is under design now. We should
+   *         not use "design time" globally, because while one widget in under
+   *         design, it may use other widgets and we want to execute them as is,
+   *         without design time tweaks.
+   */
+  public static boolean isDesignTime(String fqInterfaceName) {
+    if (Beans.isDesignTime()) {
+      String key = "gwt.UiBinder.isDesignTime " + fqInterfaceName;
+      return System.getProperty(key) != null;
+    }
+    return false;
+  }
+
   private final Map<Element, String> elementPaths = new HashMap<Element, String>();
   private final Map<String, String> attributes = new HashMap<String, String>();
 
@@ -51,10 +66,6 @@ public class DesignTimeUtilsImpl implements DesignTimeUtils {
     return implName + "_designTime" + System.currentTimeMillis();
   }
 
-  public String getOwnerCheck() {
-    return "if (owner != null) ";
-  }
-
   public String getPath(Element element) {
     return elementPaths.get(element);
   }
@@ -68,6 +79,10 @@ public class DesignTimeUtilsImpl implements DesignTimeUtils {
     writer.addStatement(
         "if (dtObjectHandler != null) dtObjectHandler.handle(\"%s\", %s);",
         elem.getDesignTimePath(), fieldName);
+  }
+
+  public boolean isDesignTime() {
+    return true;
   }
 
   public void putAttribute(XMLElement elem, String name, String value) {
@@ -94,10 +109,6 @@ public class DesignTimeUtilsImpl implements DesignTimeUtils {
 
   public void rememberPathForElements(Document doc) {
     rememberPathForElements(doc.getDocumentElement(), "0");
-  }
-
-  public boolean shouldIgnoreNoUiFieldAttribute() {
-    return true;
   }
 
   public void writeAttributes(Statements writer) {

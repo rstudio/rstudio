@@ -31,10 +31,6 @@ public class DesignTimeUtilsStub implements DesignTimeUtils {
     return implName;
   }
 
-  public String getOwnerCheck() {
-    return "";
-  }
-
   public String getPath(Element element) {
     return null;
   }
@@ -47,6 +43,10 @@ public class DesignTimeUtilsStub implements DesignTimeUtils {
       String fieldName) {
   }
 
+  public boolean isDesignTime() {
+    return false;
+  }
+
   public void putAttribute(XMLElement elem, String name, String value) {
   }
 
@@ -54,10 +54,6 @@ public class DesignTimeUtilsStub implements DesignTimeUtils {
   }
 
   public void rememberPathForElements(Document doc) {
-  }
-
-  public boolean shouldIgnoreNoUiFieldAttribute() {
-    return false;
   }
 
   public void writeAttributes(Statements writer) {
