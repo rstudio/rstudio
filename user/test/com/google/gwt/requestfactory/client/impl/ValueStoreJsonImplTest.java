@@ -33,7 +33,7 @@ public class ValueStoreJsonImplTest extends GWTTestCase {
     ProxyJsoImpl minimalJso = ProxyJsoImplTest.getMinimalJso();
     ProxyJsoImpl populatedJso = ProxyJsoImplTest.getPopulatedJso();
     ProxyJsoImpl copyPopulatedJso = ProxyJsoImplTest.getPopulatedJso();
-    minimalJso.getRequestFactory().init(new SimpleEventBus());
+    minimalJso.getRequestFactory().initialize(new SimpleEventBus());
 
     assertNull(valueStore.putInValueStore(minimalJso));
     assertNull(valueStore.putInValueStore(populatedJso));

@@ -37,7 +37,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
   public void gwtSetUp() {
     eventBus = new SimpleEventBus();
     req = GWT.create(SimpleRequestFactory.class);
-    req.init(eventBus);
+    req.initialize(eventBus);
   }
 
   protected void finishTestAndReset() {

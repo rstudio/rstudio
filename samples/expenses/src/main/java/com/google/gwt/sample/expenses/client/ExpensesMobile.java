@@ -96,7 +96,7 @@ public class ExpensesMobile implements EntryPoint {
 
     final EventBus eventBus = new SimpleEventBus();
     final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
-    requestFactory.init(eventBus);
+    requestFactory.initialize(eventBus);
 
     requestFactory.employeeRequest().findEmployee(employeeId).fire(
         new Receiver<EmployeeProxy>() {

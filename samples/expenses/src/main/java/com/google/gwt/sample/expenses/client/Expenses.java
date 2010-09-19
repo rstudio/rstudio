@@ -141,7 +141,7 @@ public class Expenses implements EntryPoint {
     
     final EventBus eventBus = new SimpleEventBus();
     requestFactory = GWT.create(ExpensesRequestFactory.class);
-    requestFactory.init(eventBus);
+    requestFactory.initialize(eventBus);
 
     RootLayoutPanel root = RootLayoutPanel.get();
 

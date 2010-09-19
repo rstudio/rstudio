@@ -59,7 +59,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   public void gwtSetUp() {
     valueStore = new ValueStoreJsonImpl();
     requestFactory = (RequestFactoryJsonImpl) SimpleRequestFactoryInstance.factory();
-    requestFactory.init(new SimpleEventBus());
+    requestFactory.initialize(new SimpleEventBus());
 
     // add a proxy
     jso = ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),

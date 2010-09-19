@@ -103,7 +103,7 @@ public class EditorTest extends RequestFactoryTestBase {
     final SimpleFooEditor editor = new SimpleFooEditor();
 
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
-    driver.initialize(eventBus, req, editor);
+    driver.initialize(req, editor);
 
     req.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
@@ -139,7 +139,7 @@ public class EditorTest extends RequestFactoryTestBase {
     final SimpleFooEditorWithDelegate editor = new SimpleFooEditorWithDelegate();
 
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
-    driver.initialize(eventBus, req, editor);
+    driver.initialize(req, editor);
 
     assertEquals(Arrays.asList("barField.userName", "barField"),
         Arrays.asList(driver.getPaths()));
@@ -189,7 +189,7 @@ public class EditorTest extends RequestFactoryTestBase {
     final SimpleFooEditor editor = new SimpleFooEditor();
 
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
-    driver.initialize(eventBus, req, editor);
+    driver.initialize(req, editor);
 
     req.simpleFooRequest().findSimpleFooById(0L).with(driver.getPaths()).fire(
         new Receiver<SimpleFooProxy>() {
@@ -205,7 +205,8 @@ public class EditorTest extends RequestFactoryTestBase {
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy response) {
-                    fail("Expected errors");
+                    fail("Expected errors. You may be missing jars, see "
+                        + "the comment in RequestFactoryTest.ShouldNotSucceedReceiver.onSuccess");
                   }
 
                   @Override
@@ -228,6 +229,4 @@ public class EditorTest extends RequestFactoryTestBase {
           }
         });
   }
-
 }
-

@@ -65,7 +65,7 @@ public class DynaTableRf implements EntryPoint {
     });
 
     final DynaTableRequestFactory requests = GWT.create(DynaTableRequestFactory.class);
-    requests.init(eventBus);
+    requests.initialize(eventBus);
 
     // Add remote logging handler
     RequestFactoryLogHandler.LoggingRequestProvider provider =

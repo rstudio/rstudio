@@ -160,10 +160,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
   }
 
+  public void testGetEventBus() {
+    assertEquals(eventBus, req.getEventBus());
+  }
+
   /*
    * tests that (a) any method can have a side effect that is handled correctly.
-   * (b) instance methods are handled correctly and (c) you don't grow horns or
-   * anything if you reuse the request object
+   * (b) instance methods are handled correctly and (c) a request cannot
+   * be reused after a successful response is received. (Yet?)
    */
   public void testMethodWithSideEffects() {
     delayTestFinish(5000);

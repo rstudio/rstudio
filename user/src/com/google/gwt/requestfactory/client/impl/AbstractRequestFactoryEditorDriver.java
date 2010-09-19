@@ -100,6 +100,11 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
 
     traverseEditors(paths);
   }
+  
+  public void initialize(RequestFactory requestFactory,
+      E editor) {
+    initialize(requestFactory.getEventBus(), requestFactory, editor);
+  }
 
   public boolean setViolations(Iterable<Violation> violations) {
     checkDelegate();

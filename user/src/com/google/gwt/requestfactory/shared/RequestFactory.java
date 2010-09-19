@@ -34,7 +34,7 @@ public interface RequestFactory {
   <R extends EntityProxy> R create(Class<R> token);
 
   /**
-   * Provide a general purpose find request.
+   * Return a request to find a fresh instance of the referenced proxy.
    */
   ProxyRequest<EntityProxy> find(EntityProxyId proxyId);
 
@@ -53,6 +53,12 @@ public interface RequestFactory {
    * @link #getToken(Class)}).
    */
   Class<? extends EntityProxy> getClass(String token);
+
+  /**
+   * @return the eventbus this factory's events are posted on, which was set via
+   *         {@link #initialize}
+   */
+  EventBus getEventBus();
 
   /**
    * Get a {@link com.google.gwt.user.client.History} compatible token that
@@ -81,10 +87,10 @@ public interface RequestFactory {
    * Start this request factory with a
    * {@link com.google.gwt.requestfactory.client.DefaultRequestTransport}.
    */
-  void init(EventBus eventBus);
+  void initialize(EventBus eventBus);
 
   /**
    * Start this request factory with a user-provided transport.
    */
-  void init(EventBus eventBus, RequestTransport transport);
+  void initialize(EventBus eventBus, RequestTransport transport);
 }

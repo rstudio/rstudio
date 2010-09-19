@@ -90,10 +90,18 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   boolean hasErrors();
 
   /**
-   * In order to support object subscriptions, the EventBus passed into the
-   * RequestFactory should be provided.
+   * Overload of {@link #initialize(RequestFactory, Editor)} to allow
+   * a modified {@link EventBus} to be used.
+   * 
+   * @see {@link com.google.gwt.event.shared.ResettableEventBus}
    */
   void initialize(EventBus eventBus, RequestFactory requestFactory, E editor);
+  
+  /**
+   * This or {@link #initialize(EventBus, RequestFactory, Editor)} must be
+   * called before {@link #edit(Object, RequestObject)}.
+   */
+  void initialize(RequestFactory requestFactory, E editor);
 
   /**
    * Show Violations returned from an attempt to submit a request. The

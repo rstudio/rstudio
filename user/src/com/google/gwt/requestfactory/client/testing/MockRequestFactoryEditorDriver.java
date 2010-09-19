@@ -132,6 +132,10 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
     this.editor = editor;
   }
 
+  public void initialize(RequestFactory requestFactory, E editor) {
+    this.initialize(requestFactory.getEventBus(), requestFactory, editor);
+  }
+
   /**
    * A no-op method that always returns false.
    */

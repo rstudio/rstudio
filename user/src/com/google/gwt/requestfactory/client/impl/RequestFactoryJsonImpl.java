@@ -127,6 +127,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return ((EntityProxyIdImpl) proxyId).schema.getProxyClass();
   }
 
+  public EventBus getEventBus() {
+    return eventBus;
+  }
+
   public RequestTransport getRequestTransport() {
     return transport;
   }
@@ -148,11 +152,11 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return ProxyImpl.getWireFormatId(id, NOT_FUTURE, proxyIdImpl.schema);
   }
 
-  public void init(EventBus eventBus) {
-    init(eventBus, new DefaultRequestTransport(eventBus));
+  public void initialize(EventBus eventBus) {
+    initialize(eventBus, new DefaultRequestTransport(eventBus));
   }
-
-  public void init(EventBus eventBus, RequestTransport transport) {
+  
+  public void initialize(EventBus eventBus, RequestTransport transport) {
     this.valueStore = new ValueStoreJsonImpl();
     this.eventBus = eventBus;
     this.transport = transport;
