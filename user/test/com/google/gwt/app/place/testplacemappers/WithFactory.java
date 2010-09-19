@@ -13,19 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place.testplaces;
+package com.google.gwt.app.place.testplacemappers;
 
-import com.google.gwt.app.place.PlaceTokenizer;
+import com.google.gwt.app.place.PlaceHistoryMapperWithFactory;
+import com.google.gwt.app.place.WithTokenizers;
+import com.google.gwt.app.place.testplaces.Tokenizer4;
+import com.google.gwt.app.place.testplaces.TokenizerFactory;
 
 /**
  * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryMapperGenerator}.
  */
-public class Tokenizer4 implements PlaceTokenizer<Place4> {
-  public Place4 getPlace(String token) {
-    return new Place4(token);
-  }
-
-  public String getToken(Place4 place) {
-    return place.content;
-  }
+@WithTokenizers(Tokenizer4.class)
+public interface WithFactory extends
+  PlaceHistoryMapperWithFactory<TokenizerFactory> {
 }

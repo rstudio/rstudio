@@ -16,9 +16,10 @@
 package com.google.gwt.app;
 
 import com.google.gwt.app.place.ActivityManagerTest;
-import com.google.gwt.app.place.AbstractPlaceHistoryHandlerTest;
 import com.google.gwt.app.place.PlaceChangeRequestEventTest;
 import com.google.gwt.app.place.PlaceControllerTest;
+import com.google.gwt.app.place.PlaceHistoryHandlerTest;
+import com.google.gwt.app.rebind.PlaceHistoryGeneratorContextTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -30,9 +31,10 @@ public class AppJreSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("app package tests that require the JRE");
     suite.addTestSuite(ActivityManagerTest.class);
-    suite.addTestSuite(AbstractPlaceHistoryHandlerTest.class);
     suite.addTestSuite(PlaceControllerTest.class);
     suite.addTestSuite(PlaceChangeRequestEventTest.class);
+    suite.addTestSuite(PlaceHistoryGeneratorContextTest.class);
+    suite.addTestSuite(PlaceHistoryHandlerTest.class);
     return suite;
   }
 }

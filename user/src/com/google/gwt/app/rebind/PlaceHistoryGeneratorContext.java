@@ -15,11 +15,10 @@
  */
 package com.google.gwt.app.rebind;
 
-import com.google.gwt.app.place.PlaceHistoryHandlerWithFactory;
+import com.google.gwt.app.place.PlaceHistoryMapperWithFactory;
 import com.google.gwt.app.place.PlaceTokenizer;
 import com.google.gwt.app.place.Prefix;
 import com.google.gwt.app.place.WithTokenizers;
-import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -33,23 +32,20 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
+import java.util.TreeMap;
 
 class PlaceHistoryGeneratorContext {
   static PlaceHistoryGeneratorContext create(TreeLogger logger,
-      GeneratorContext generatorContext, String interfaceName)
+      TypeOracle typeOracle, String interfaceName)
       throws UnableToCompleteException {
-    TypeOracle typeOracle = generatorContext.getTypeOracle();
     JClassType stringType = requireType(typeOracle, String.class);
     JClassType placeTokenizerType = requireType(typeOracle,
         PlaceTokenizer.class);
-    JClassType placeHistoryHandlerWithFactoryType = requireType(typeOracle,
-        PlaceHistoryHandlerWithFactory.class);
+    JClassType placeHistoryMapperWithFactoryType = requireType(typeOracle,
+        PlaceHistoryMapperWithFactory.class);
 
     JClassType factoryType;
 
@@ -66,26 +62,25 @@ class PlaceHistoryGeneratorContext {
       throw new UnableToCompleteException();
     }
 
-    factoryType = findFactoryType(placeHistoryHandlerWithFactoryType,
+    factoryType = findFactoryType(placeHistoryMapperWithFactoryType,
         interfaceType);
 
     String implName = interfaceType.getName().replace(".", "_") + "Impl";
 
-    return new PlaceHistoryGeneratorContext(logger, generatorContext,
-        interfaceType, factoryType, stringType, placeTokenizerType,
-        placeHistoryHandlerWithFactoryType,
+    return new PlaceHistoryGeneratorContext(logger, typeOracle, interfaceType,
+        factoryType, stringType, placeTokenizerType,
         interfaceType.getPackage().getName(), implName);
   }
 
   private static JClassType findFactoryType(
-      JClassType placeHistoryHandlerWithFactoryType, JClassType interfaceType) {
+      JClassType placeHistoryMapperWithFactoryType, JClassType interfaceType) {
     JClassType superInterfaces[] = interfaceType.getImplementedInterfaces();
 
     for (JClassType superInterface : superInterfaces) {
       JParameterizedType parameterizedType = superInterface.isParameterized();
       if (parameterizedType != null
           && parameterizedType.getBaseType().equals(
-              placeHistoryHandlerWithFactoryType)) {
+              placeHistoryMapperWithFactoryType)) {
         return parameterizedType.getTypeArgs()[0];
       }
     }
@@ -104,10 +99,9 @@ class PlaceHistoryGeneratorContext {
   final JClassType stringType;
 
   final JClassType placeTokenizerType;
-  final JClassType placeHistoryHandlerType;
 
   final TreeLogger logger;
-  final GeneratorContext generatorContext;
+  final TypeOracle typeOracle;
   final JClassType interfaceType;
   final JClassType factoryType;
 
@@ -116,79 +110,115 @@ class PlaceHistoryGeneratorContext {
   final String packageName;
 
   /**
-   * All factory getters that can provide tokenizers, by prefix.
+   * All tokenizers, either as a {@link JMethod} for factory getters or as a
+   * {@link JClassType} for types that must be GWT.create()d, by prefix.
    */
-  private LinkedHashMap<String, JMethod> tokenizerGetters;
+  private HashMap<String, Object> tokenizers;
 
   /**
-   * All tokenizer types that must be GWT.create()d, by prefix.
+   * All place types and the prefix of their associated tokenizer, ordered from
+   * most-derived to least-derived type (and falling back to the natural
+   * ordering of their names).
    */
-  private LinkedHashMap<String, JClassType> tokenizersWithNoGetters;
+  private TreeMap<JClassType, String> placeTypes = new TreeMap<JClassType, String>(
+      new MostToLeastDerivedPlaceTypeComparator());
 
-  /**
-   * Cache of all tokenizer types, union of the entries in tokenizerGetters and
-   * tokenizersWithNoGetters.
-   */
-  private LinkedHashMap<String, JClassType> tokenizerTypes;
-
-  PlaceHistoryGeneratorContext(TreeLogger logger,
-      GeneratorContext generatorContext, JClassType interfaceType,
-      JClassType factoryType, JClassType stringType,
-      JClassType placeTokenizerType, JClassType placeHistoryHandlerType,
-      String packageName, String implName) {
+  PlaceHistoryGeneratorContext(TreeLogger logger, TypeOracle typeOracle,
+      JClassType interfaceType, JClassType factoryType, JClassType stringType,
+      JClassType placeTokenizerType, String packageName, String implName) {
     this.logger = logger;
-    this.generatorContext = generatorContext;
+    this.typeOracle = typeOracle;
     this.interfaceType = interfaceType;
     this.factoryType = factoryType;
     this.stringType = stringType;
     this.placeTokenizerType = placeTokenizerType;
-    this.placeHistoryHandlerType = placeHistoryHandlerType;
     this.packageName = packageName;
     this.implName = implName;
   }
 
-  public JClassType getPlaceType(String prefix)
+  public Set<JClassType> getPlaceTypes() throws UnableToCompleteException {
+    ensureInitialized();
+    return placeTypes.keySet();
+  }
+
+  public String getPrefix(JClassType placeType)
       throws UnableToCompleteException {
-    return getPlaceTypeForTokenizerType(getTokenizerType(prefix));
+    ensureInitialized();
+    return placeTypes.get(placeType);
   }
 
   public Set<String> getPrefixes() throws UnableToCompleteException {
-    return getTokenizerTypes().keySet();
+    ensureInitialized();
+    return tokenizers.keySet();
   }
 
   public JMethod getTokenizerGetter(String prefix)
       throws UnableToCompleteException {
-    return getTokenizerGetters().get(prefix);
+    ensureInitialized();
+    Object tokenizerGetter = tokenizers.get(prefix);
+    if (tokenizerGetter instanceof JMethod) {
+      return (JMethod) tokenizerGetter;
+    }
+    return null;
   }
 
   public JClassType getTokenizerType(String prefix)
       throws UnableToCompleteException {
-
-    JMethod getter = getTokenizerGetters().get(prefix);
-    if (getter != null) {
-      return getter.getReturnType().isClassOrInterface();
+    ensureInitialized();
+    Object tokenizerType = tokenizers.get(prefix);
+    if (tokenizerType instanceof JClassType) {
+      return (JClassType) tokenizerType;
     }
-
-    return getTokenizersWihoutGetters().get(prefix);
+    return null;
   }
 
-  public Map<String, JClassType> getTokenizerTypes()
-      throws UnableToCompleteException {
-    if (tokenizerTypes == null) {
-      tokenizerTypes = new LinkedHashMap<String, JClassType>();
-      for (Entry<String, JMethod> entry : getTokenizerGetters().entrySet()) {
-        tokenizerTypes.put(entry.getKey(),
-            entry.getValue().getReturnType().isClassOrInterface());
-      }
-      for (Entry<String, JClassType> entry : getTokenizersWihoutGetters().entrySet()) {
-        tokenizerTypes.put(entry.getKey(), entry.getValue());
-      }
+  void ensureInitialized() throws UnableToCompleteException {
+    if (tokenizers == null) {
+      assert placeTypes.isEmpty();
+      tokenizers = new HashMap<String, Object>();
+      initTokenizerGetters();
+      initTokenizersWithoutGetters();
     }
-    return tokenizerTypes;
   }
 
-  public boolean hasNonFactoryTokenizer() throws UnableToCompleteException {
-    return !getTokenizersWihoutGetters().isEmpty();
+  private void addPlaceTokenizer(Object tokenizerClassOrGetter, String prefix,
+      JClassType tokenizerType) throws UnableToCompleteException {
+    if (prefix.contains(":")) {
+      logger.log(TreeLogger.ERROR, String.format(
+          "Found place prefix \"%s\" containing separator char \":\", on %s",
+          prefix, getLogMessage(tokenizerClassOrGetter)));
+      throw new UnableToCompleteException();
+    }
+    if (tokenizers.containsKey(prefix)) {
+      logger.log(TreeLogger.ERROR, String.format(
+          "Found duplicate place prefix \"%s\" on %s, already seen on %s",
+          prefix, getLogMessage(tokenizerClassOrGetter),
+          getLogMessage(tokenizers.get(prefix))));
+      throw new UnableToCompleteException();
+    }
+    JClassType placeType = getPlaceTypeForTokenizerType(tokenizerType);
+    if (placeTypes.containsKey(placeType)) {
+      logger.log(
+          TreeLogger.ERROR,
+          String.format(
+              "Found duplicate tokenizer's place type \"%s\" on %s, already seen on %s",
+              placeType.getQualifiedSourceName(),
+              getLogMessage(tokenizerClassOrGetter),
+              getLogMessage(tokenizers.get(placeTypes.get(placeType)))));
+      throw new UnableToCompleteException();
+    }
+    tokenizers.put(prefix, tokenizerClassOrGetter);
+    placeTypes.put(placeType, prefix);
+  }
+
+  private String getLogMessage(Object methodOrClass) {
+    if (methodOrClass instanceof JMethod) {
+      JMethod method = (JMethod) methodOrClass;
+      return method.getEnclosingType().getQualifiedSourceName() + "#"
+          + method.getName() + "()";
+    }
+    JClassType classType = (JClassType) methodOrClass;
+    return classType.getQualifiedSourceName();
   }
 
   private JClassType getPlaceTypeForTokenizerType(JClassType tokenizerType)
@@ -235,29 +265,37 @@ class PlaceHistoryGeneratorContext {
     return getPlaceTypeForTokenizerType(returnType).getName();
   }
 
-  private Map<String, JMethod> getTokenizerGetters()
-      throws UnableToCompleteException {
-    if (factoryType == null) {
-      return Collections.emptyMap();
+  private Set<JClassType> getWithTokenizerEntries() {
+    WithTokenizers annotation = interfaceType.getAnnotation(WithTokenizers.class);
+    if (annotation == null) {
+      return Collections.emptySet();
     }
 
-    if (tokenizerGetters == null) {
-      tokenizerGetters = new LinkedHashMap<String, JMethod>();
-
-      /* Gets inherited methods, but not final ones */
-      JMethod[] overridableMethods = factoryType.getOverridableMethods();
-      /* So we pick up the finals here */
-      JMethod[] methods = factoryType.getMethods();
-
-      LinkedHashSet<JMethod> allMethods = new LinkedHashSet<JMethod>();
-      allMethods.addAll(Arrays.asList(overridableMethods));
-      for (JMethod method : methods) {
-        if (method.isPublic()) {
-          allMethods.add(method);
-        }
+    LinkedHashSet<JClassType> rtn = new LinkedHashSet<JClassType>();
+    for (Class<? extends PlaceTokenizer<?>> tokenizerClass : annotation.value()) {
+      JClassType tokenizerType = typeOracle.findType(tokenizerClass.getCanonicalName());
+      if (tokenizerType == null) {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Error processing @%s, cannot find type %s",
+            WithTokenizers.class.getSimpleName(),
+            tokenizerClass.getCanonicalName()));
       }
+      rtn.add(tokenizerType);
+    }
 
-      for (JMethod method : allMethods) {
+    return rtn;
+  }
+
+  private void initTokenizerGetters() throws UnableToCompleteException {
+    if (factoryType != null) {
+
+      // TODO: include non-public methods that are nevertheless accessible
+      // to the interface (package-scoped);
+      // Add a isCallable(JClassType) method to JAbstractMethod?
+      for (JMethod method : factoryType.getInheritableMethods()) {
+        if (!method.isPublic()) {
+          continue;
+        }
         if (method.getParameters().length > 0) {
           continue;
         }
@@ -272,56 +310,17 @@ class PlaceHistoryGeneratorContext {
           continue;
         }
 
-        String prefix = getPrefixForTokenizerGetter(method);
-        if (tokenizerGetters.containsKey(prefix)) {
-          logger.log(TreeLogger.ERROR, String.format(
-              "Found duplicate place prefix \"%s\" in factory type %s, "
-                  + "used by both %s and %s", prefix,
-              factoryType.getQualifiedSourceName(),
-              tokenizerGetters.get(prefix).getName(), method.getName()));
-          throw new UnableToCompleteException();
-        }
-        tokenizerGetters.put(prefix, method);
+        addPlaceTokenizer(method, getPrefixForTokenizerGetter(method),
+            method.getReturnType().isClassOrInterface());
       }
     }
-
-    return tokenizerGetters;
   }
 
-  private HashMap<String, JClassType> getTokenizersWihoutGetters()
-      throws UnableToCompleteException {
-    if (tokenizersWithNoGetters == null) {
-      tokenizersWithNoGetters = new LinkedHashMap<String, JClassType>();
-
-      for (JClassType tokenizerType : getWithTokenizerEntries()) {
-        tokenizersWithNoGetters.put(getPrefixForTokenizerType(tokenizerType),
-            tokenizerType);
-      }
+  private void initTokenizersWithoutGetters() throws UnableToCompleteException {
+    for (JClassType tokenizerType : getWithTokenizerEntries()) {
+      addPlaceTokenizer(tokenizerType,
+          getPrefixForTokenizerType(tokenizerType), tokenizerType);
     }
-
-    return tokenizersWithNoGetters;
-  }
-
-  private Set<JClassType> getWithTokenizerEntries() {
-    WithTokenizers annotation = interfaceType.getAnnotation(WithTokenizers.class);
-    if (annotation == null) {
-      return Collections.emptySet();
-    }
-
-    LinkedHashSet<JClassType> rtn = new LinkedHashSet<JClassType>();
-    for (Class<? extends PlaceTokenizer<?>> tokenizerClass : annotation.value()) {
-      JClassType tokenizerType = generatorContext.getTypeOracle().findType(
-          tokenizerClass.getCanonicalName());
-      if (tokenizerType == null) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Error processing @%s, cannot find type %s",
-            WithTokenizers.class.getSimpleName(),
-            tokenizerClass.getCanonicalName()));
-      }
-      rtn.add(tokenizerType);
-    }
-
-    return rtn;
   }
 
   private JClassType placeTypeForInterfaces(Collection<JClassType> interfaces) {

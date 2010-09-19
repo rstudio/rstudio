@@ -19,7 +19,7 @@ import com.google.gwt.app.place.PlaceTokenizer;
 import com.google.gwt.app.place.Prefix;
 
 /**
- * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryHandlerGenerator}.
+ * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryMapperGenerator}.
  */
 public class TokenizerFactory {
   public static final String PLACE2_PREFIX = "p2";

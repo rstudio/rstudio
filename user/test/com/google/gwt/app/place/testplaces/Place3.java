@@ -15,15 +15,12 @@
  */
 package com.google.gwt.app.place.testplaces;
 
-import com.google.gwt.app.place.Place;
-
 /**
- * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryHandlerGenerator}.
+ * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryMapperGenerator}.
  */
-public class Place3 extends Place {
-  public final String content;
+public class Place3 extends Place1 {
 
   public Place3(String token) {
-    this.content = token;
+    super(token);
   }
 }

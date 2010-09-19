@@ -18,7 +18,7 @@ package com.google.gwt.app.place.testplaces;
 import com.google.gwt.app.place.PlaceTokenizer;
 
 /**
- * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryHandlerGenerator}.
+ * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryMapperGenerator}.
  */
 public class Tokenizer3 implements PlaceTokenizer<Place3> {
 

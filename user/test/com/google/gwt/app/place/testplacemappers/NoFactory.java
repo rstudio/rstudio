@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place.testplacehandler;
+package com.google.gwt.app.place.testplacemappers;
 
-import com.google.gwt.app.place.PlaceHistoryHandler;
+import com.google.gwt.app.place.PlaceHistoryMapper;
 import com.google.gwt.app.place.WithTokenizers;
 import com.google.gwt.app.place.testplaces.Place1;
 import com.google.gwt.app.place.testplaces.Tokenizer2;
@@ -23,10 +23,10 @@ import com.google.gwt.app.place.testplaces.Tokenizer3;
 import com.google.gwt.app.place.testplaces.Tokenizer4;
 
 /**
- * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryHandlerGenerator}.
+ * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryMapperGenerator}.
  */
 @WithTokenizers( {
   Place1.Tokenizer.class, Tokenizer2.class, Tokenizer3.class,
   Tokenizer4.class})
-public interface NoFactory extends PlaceHistoryHandler {
+public interface NoFactory extends PlaceHistoryMapper {
 }

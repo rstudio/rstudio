@@ -15,7 +15,8 @@
  */
 package com.google.gwt.app;
 
-import com.google.gwt.app.place.PlaceHistoryHandlerGeneratorTest;
+import com.google.gwt.app.place.impl.PlaceHistoryMapperGeneratorTest;
+import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -25,8 +26,8 @@ import junit.framework.TestSuite;
  */
 public class AppSuite {
   public static Test suite() {
-    TestSuite suite = new TestSuite("app package tests that require GWT");
-    suite.addTestSuite(PlaceHistoryHandlerGeneratorTest.class);
+    TestSuite suite = new GWTTestSuite("app package tests that require GWT");
+    suite.addTestSuite(PlaceHistoryMapperGeneratorTest.class);
     return suite;
   }
 }

@@ -94,7 +94,8 @@ public class EditorModelTest extends TestCase {
 
   /**
    * Loads the actual source of a type. This should be used only for types
-   * directly tested by this test.
+   * directly tested by this test. Note that use of this class requires your
+   * source files to be on your classpath.
    */
   private static class RealJavaResource extends MockJavaResource {
     public RealJavaResource(Class<?> clazz) {

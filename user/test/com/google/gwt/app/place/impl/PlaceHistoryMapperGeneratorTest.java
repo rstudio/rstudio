@@ -13,14 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place;
+package com.google.gwt.app.place.impl;
 
-import com.google.gwt.app.place.testplacehandler.NoFactory;
-import com.google.gwt.app.place.testplacehandler.WithFactory;
+import com.google.gwt.app.place.Place;
+import com.google.gwt.app.place.PlaceHistoryMapper;
+import com.google.gwt.app.place.PlaceHistoryMapperWithFactory;
+import com.google.gwt.app.place.WithTokenizers;
+import com.google.gwt.app.place.testplacemappers.NoFactory;
+import com.google.gwt.app.place.testplacemappers.WithFactory;
 import com.google.gwt.app.place.testplaces.Place1;
 import com.google.gwt.app.place.testplaces.Place2;
 import com.google.gwt.app.place.testplaces.Place3;
 import com.google.gwt.app.place.testplaces.Place4;
+import com.google.gwt.app.place.testplaces.Place5;
 import com.google.gwt.app.place.testplaces.Tokenizer2;
 import com.google.gwt.app.place.testplaces.Tokenizer3;
 import com.google.gwt.app.place.testplaces.Tokenizer4;
@@ -29,38 +34,39 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Functional test of PlaceHistoryHandlerGenerator.
+ * Functional test of PlaceHistoryMapperGenerator.
  */
-public class PlaceHistoryHandlerGeneratorTest extends GWTTestCase {
+public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
   @WithTokenizers( {
       Place1.Tokenizer.class, Tokenizer2.class, Tokenizer3.class,
       Tokenizer4.class})
-  interface LocalNoFactory extends PlaceHistoryHandler {
+  interface LocalNoFactory extends PlaceHistoryMapper {
   };
 
   @WithTokenizers(Tokenizer4.class)
   interface LocalWithFactory extends
-      PlaceHistoryHandlerWithFactory<TokenizerFactory> {
+      PlaceHistoryMapperWithFactory<TokenizerFactory> {
   };
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.app.AppSuite";
+    return "com.google.gwt.app.App";
   }
 
   Place1 place1 = new Place1("able");
   Place2 place2 = new Place2("baker");
   Place3 place3 = new Place3("charlie");
   Place4 place4 = new Place4("delta");
+  Place5 place5 = new Place5("echo");
 
   public void testTopLevelWithoutFactory() {
-    AbstractPlaceHistoryHandler<?> subject = GWT.create(NoFactory.class);
+    AbstractPlaceHistoryMapper<?> subject = GWT.create(NoFactory.class);
 
     doTest(subject, null);
   }
 
   public void testTopLevelWithFactory() {
-    AbstractPlaceHistoryHandler<TokenizerFactory> subject = GWT.create(WithFactory.class);
+    AbstractPlaceHistoryMapper<TokenizerFactory> subject = GWT.create(WithFactory.class);
     TokenizerFactory factory = new TokenizerFactory();
     subject.setFactory(factory);
 
@@ -68,21 +74,20 @@ public class PlaceHistoryHandlerGeneratorTest extends GWTTestCase {
   }
 
   public void testNestedWithoutFactory() {
-    AbstractPlaceHistoryHandler<?> subject = GWT.create(LocalNoFactory.class);
+    AbstractPlaceHistoryMapper<?> subject = GWT.create(LocalNoFactory.class);
 
     doTest(subject, null);
   }
 
   public void testNestedWithFactory() {
-    AbstractPlaceHistoryHandler<TokenizerFactory> subject = GWT.create(LocalWithFactory.class);
+    AbstractPlaceHistoryMapper<TokenizerFactory> subject = GWT.create(LocalWithFactory.class);
     TokenizerFactory factory = new TokenizerFactory();
     subject.setFactory(factory);
 
     doTest(subject, factory);
   }
 
-  // CHECKSTYLE_OFF
-  private void doTest(AbstractPlaceHistoryHandler<?> subject,
+  private void doTest(AbstractPlaceHistoryMapper<?> subject,
       TokenizerFactory factory) {
     String history1 = subject.getPrefixAndToken(place1).toString();
     assertEquals(Place1.Tokenizer.PREFIX + ":" + place1.content, history1);
@@ -92,20 +97,18 @@ public class PlaceHistoryHandlerGeneratorTest extends GWTTestCase {
       assertEquals(TokenizerFactory.PLACE2_PREFIX + ":" + place2.content,
           history2);
     } else {
-      // CHECKSTYLE_OFF
       assertEquals("Place2:" + place2.content, history2);
-      // CHECKSTYLE_ON
     }
 
     String history3 = subject.getPrefixAndToken(place3).toString();
-    // CHECKSTYLE_OFF
     assertEquals("Place3:" + place3.content, history3);
-    // CHECKSTYLE_ON
 
     String history4 = subject.getPrefixAndToken(place4).toString();
-    // CHECKSTYLE_OFF
     assertEquals("Place4:" + place4.content, history4);
-    // CHECKSTYLE_ON
+
+    // Place 5 extends Place3 and does not have its own PlaceTokenizer
+    String history5 = subject.getPrefixAndToken(place5).toString();
+    assertEquals("Place3:" + place5.content, history5);
 
     if (factory != null) {
       assertEquals(factory.tokenizer,

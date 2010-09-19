@@ -15,27 +15,150 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.History;
+
+import java.util.logging.Logger;
 
 /**
- * Implemented by objects that monitor {@link PlaceChangeEvent}s and
- * {@link com.google.gwt.user.client.History} events and keep them in sync.
+ * Monitors {@link PlaceChangeEvent}s and {@link com.google.gwt.user.client.History} events and keep them in sync.
  */
-public interface PlaceHistoryHandler {
-  /**
-   * Sets the current place from current history token, e.g. in case of being
-   * launched from a bookmark.
-   */
-  void handleCurrentHistory();
+public class PlaceHistoryHandler {
+  private static final Logger log = Logger.getLogger(PlaceHistoryHandler.class.getName());
 
   /**
-   * Registers this {@link PlaceHistoryHandler} with the event bus, and sets its
-   * default place (where to go when there is no history token).
-   * 
-   * @return registration object to deregister and reset the default place to
-   *         {@link Place#NOWHERE}.
+   * Default implementation of {@link Historian}, based on {@link History}.
    */
-  HandlerRegistration register(PlaceController placeController, EventBus eventBus,
-      Place defaultPlace);
+  public static class DefaultHistorian implements Historian {
+    public HandlerRegistration addValueChangeHandler(
+        ValueChangeHandler<String> valueChangeHandler) {
+      return History.addValueChangeHandler(valueChangeHandler);
+    }
+
+    public String getToken() {
+      return History.getToken();
+    }
+
+    public void newItem(String token, boolean issueEvent) {
+      History.newItem(token, issueEvent);
+    }
+  }
+
+  /**
+   * Optional delegate in charge of History related events. Provides nice
+   * isolation for unit testing, and allows pre- or post-processing of tokens.
+   */
+  public interface Historian {
+    HandlerRegistration addValueChangeHandler(
+        ValueChangeHandler<String> valueChangeHandler);
+
+    String getToken();
+
+    void newItem(String token, boolean issueEvent);
+  }
+
+  private final Historian historian;
+
+  private final PlaceHistoryMapper mapper;
+
+  private PlaceController placeController;
+
+  private Place defaultPlace = Place.NOWHERE;
+
+  /**
+   * Create a new PlaceHistoryHandler with a {@link DefaultHistorian}.
+   * The DefaultHistorian is created via a call to GWT.create(), so an
+   * alternative default implementation can be provided through
+   * &lt;replace-with> rules in a gwt.xml file.
+   */
+  public PlaceHistoryHandler(PlaceHistoryMapper mapper) {
+    this(mapper, (Historian) GWT.create(DefaultHistorian.class));
+  }
+
+  /**
+   * Create a new PlaceHistoryHandler.
+   */
+  public PlaceHistoryHandler(PlaceHistoryMapper mapper, Historian historian) {
+    this.mapper = mapper;
+    this.historian = historian;
+  }
+
+  public void handleCurrentHistory() {
+    handleHistoryToken(historian.getToken());
+  }
+
+  public HandlerRegistration register(PlaceController placeController,
+      EventBus eventBus, Place defaultPlace) {
+    this.placeController = placeController;
+    this.defaultPlace = defaultPlace;
+
+    final HandlerRegistration placeReg = eventBus.addHandler(
+        PlaceChangeEvent.TYPE, new PlaceChangeEvent.Handler() {
+          public void onPlaceChange(PlaceChangeEvent event) {
+            Place newPlace = event.getNewPlace();
+            historian.newItem(tokenForPlace(newPlace), false);
+          }
+        });
+
+    final HandlerRegistration historyReg = historian.addValueChangeHandler(new ValueChangeHandler<String>() {
+      public void onValueChange(ValueChangeEvent<String> event) {
+        String token = event.getValue();
+        handleHistoryToken(token);
+      }
+    });
+
+    return new HandlerRegistration() {
+      public void removeHandler() {
+        PlaceHistoryHandler.this.defaultPlace = Place.NOWHERE;
+        PlaceHistoryHandler.this.placeController = null;
+        placeReg.removeHandler();
+        historyReg.removeHandler();
+      }
+    };
+  }
+
+  /**
+   * Visible for testing.
+   */
+  Logger log() {
+    return log;
+  }
+
+  private void handleHistoryToken(String token) {
+
+    Place newPlace = null;
+
+    if ("".equals(token)) {
+      newPlace = defaultPlace;
+    }
+
+    if (newPlace == null) {
+      newPlace = mapper.getPlace(token);
+    }
+
+    if (newPlace == null) {
+      log().warning("Unrecognized history token: " + token);
+      newPlace = defaultPlace;
+    }
+
+    placeController.goTo(newPlace);
+  }
+
+  private String tokenForPlace(Place newPlace) {
+    if (defaultPlace.equals(newPlace)) {
+      return "";
+    }
+
+    String token = mapper.getToken(newPlace);
+    if (token != null) {
+      return token;
+    }
+
+    log().warning("Place not mapped to a token: " + newPlace);
+    return "";
+  }
 }

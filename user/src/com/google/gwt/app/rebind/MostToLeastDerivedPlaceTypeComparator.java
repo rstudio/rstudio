@@ -13,15 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place;
+package com.google.gwt.app.rebind;
+
+import com.google.gwt.core.ext.typeinfo.JClassType;
+
+import java.util.Comparator;
 
 /**
- * A PlaceHistoryHandler that can get its {@link PlaceTokenizer} instances from
- * a factory.
- * 
- * @param <F> factory type
+ * Sorts types from most derived to least derived, falling back to alphabetical
+ * sorting.
  */
-public interface PlaceHistoryHandlerWithFactory<F> extends PlaceHistoryHandler {
-
-  void setFactory(F factory);
+public class MostToLeastDerivedPlaceTypeComparator implements
+    Comparator<JClassType> {
+  public int compare(JClassType o1, JClassType o2) {
+    if (o1.equals(o2)) {
+      return 0;
+    }
+    if (o1.isAssignableFrom(o2)) {
+      return 1;
+    }
+    if (o1.isAssignableTo(o2)) {
+      return -1;
+    }
+    return o1.getQualifiedSourceName().compareTo(o2.getQualifiedSourceName());
+  }
 }
