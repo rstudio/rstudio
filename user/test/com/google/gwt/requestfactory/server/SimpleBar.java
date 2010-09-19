@@ -41,11 +41,11 @@ public class SimpleBar {
     return Collections.singletonList(get());
   }
 
-  public static SimpleBar findSimpleBar(Long id) {
+  public static SimpleBar findSimpleBar(String id) {
     return findSimpleBarById(id);
   }
 
-  public static SimpleBar findSimpleBarById(Long id) {
+  public static SimpleBar findSimpleBarById(String id) {
     get().setId(id);
     return get();
   }
@@ -89,7 +89,7 @@ public class SimpleBar {
   Integer version = 1;
 
   @Id
-  private Long id = 1L;
+  private String id = "1L";
 
   private String userName;
 
@@ -98,7 +98,7 @@ public class SimpleBar {
     userName = "FOO";
   }
 
-  public Long getId() {
+  public String getId() {
     return id;
   }
 
@@ -111,7 +111,7 @@ public class SimpleBar {
   }
 
   public void persist() {
-    setId(nextId++);
+    setId(Long.toString(nextId++));
     get().setUserName(userName);
   }
 
@@ -120,7 +120,7 @@ public class SimpleBar {
     return this;
   }
 
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
   }
 

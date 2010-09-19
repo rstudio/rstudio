@@ -27,7 +27,7 @@ public interface EntityProxy {
   /**
    * @return the id of this Proxy.
    */
-  Long getId();
+  String getId();
 
   /**
    * @return the version of this Proxy.

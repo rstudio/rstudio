@@ -35,10 +35,10 @@ import com.google.gwt.requestfactory.shared.impl.Property;
  */
 public class ProxyImpl implements EntityProxy {
 
-  static final Property<Long> id = new Property<Long>("id", Long.class);
+  static final Property<String> id = new Property<String>("id", String.class);
   static final Property<Integer> version = new Property<Integer>("version", Integer.class);
 
-  protected static String getWireFormatId(Long id, boolean isFuture,
+  protected static String getWireFormatId(String id, boolean isFuture,
       ProxySchema<?> schema) {
     return id + "-" + (isFuture ? "IS" : "NO") + "-" + schema.getToken();
   }
@@ -90,7 +90,7 @@ public class ProxyImpl implements EntityProxy {
     return jso.<V> get(propertyName, propertyType);
   }
   
-  public Long getId() {
+  public String getId() {
     return jso.getId();
   }
 

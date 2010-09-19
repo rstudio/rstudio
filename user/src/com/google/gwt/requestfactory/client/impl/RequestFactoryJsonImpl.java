@@ -139,10 +139,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   public String getWireFormat(EntityProxyId proxyId) {
     EntityProxyIdImpl proxyIdImpl = (EntityProxyIdImpl) proxyId;
-    Long id = (Long) proxyIdImpl.id;
+    String id = (String) proxyIdImpl.id;
     if (proxyIdImpl.isFuture) {
       // search for the datastore id for this futureId.
-      Long datastoreId = (Long) futureToDatastoreMap.get(id);
+      String datastoreId = (String) futureToDatastoreMap.get(id);
       if (datastoreId == null) {
         throw new IllegalArgumentException(
             "Cannot call find on a proxyId before persisting");
@@ -203,13 +203,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       return null;
     }
 
-    Long id = null;
-    try {
-      id = Long.valueOf(bits[0]);
-    } catch (NumberFormatException e) {
-      return null;
-    }
-
+    String id = bits[0];
     Object futureId = datastoreToFutureMap.get(id, schema);
     return new EntityProxyIdImpl(id, schema, false, futureId);
   }
@@ -236,7 +230,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private <R extends ProxyImpl> R createFuture(ProxySchema<R> schema) {
     Long futureId = ++currentFutureId;
-    ProxyJsoImpl newRecord = ProxyJsoImpl.create(futureId, initialVersion,
+    ProxyJsoImpl newRecord = ProxyJsoImpl.create(Long.toString(futureId), initialVersion,
         schema, this);
     return schema.create(newRecord, IS_FUTURE);
   }

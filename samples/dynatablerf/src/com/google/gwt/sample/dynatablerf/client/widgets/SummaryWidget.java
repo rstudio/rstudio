@@ -201,10 +201,10 @@ public class SummaryWidget extends Composite {
   }
 
   private int offsetOf(PersonProxy person) {
-    long lookFor = person.getId();
+    String lookFor = person.getId();
     List<PersonProxy> displayedItems = table.getDisplayedItems();
     for (int offset = 0, j = displayedItems.size(); offset < j; offset++) {
-      if (lookFor == displayedItems.get(offset).getId()) {
+      if (lookFor.equals(displayedItems.get(offset).getId())) {
         return offset;
       }
     }

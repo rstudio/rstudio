@@ -57,11 +57,11 @@ public class Logging {
     deobfuscator.setSymbolMapsDirectory(dir);
   }
   
-  private Long id = 0L;
+  private String id = "";
   
   private Integer version = 0;  
   
-  public Long getId() {
+  public String getId() {
     return this.id;
   }
   
@@ -69,7 +69,7 @@ public class Logging {
     return this.version;
   }
 
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
   }
     

@@ -82,11 +82,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private static class EntityKey {
     private final boolean isFuture;
-    // TODO: update for non-long id?
-    private final long id;
+    // TODO: update for non-String id?
+    private final String id;
     private final Class<? extends EntityProxy> record;
 
-    EntityKey(long id, boolean isFuture, Class<? extends EntityProxy> record) {
+    EntityKey(String id, boolean isFuture, Class<? extends EntityProxy> record) {
       this.id = id;
       this.isFuture = isFuture;
       assert record != null;
@@ -99,14 +99,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         return false;
       }
       EntityKey other = (EntityKey) ob;
-      return (id == other.id) && (isFuture == other.isFuture)
+      return (id.equals(other.id)) && (isFuture == other.isFuture)
           && (record.equals(other.record));
     }
 
     @Override
     public int hashCode() {
-      return (int) (31 * this.record.hashCode() + (31 * this.id + (isFuture ? 1
-          : 0)));
+      return 31 * this.record.hashCode() + (31 * this.id.hashCode() 
+          + (isFuture ? 1 : 0));
     }
   }
 
@@ -277,7 +277,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
             involvedKeys.add(entityKey);
             Method findMeth = sClass.getMethod(
                 getMethodNameFromPropertyName(sClass.getSimpleName(), "find"),
-                Long.class);
+                String.class);
             return findMeth.invoke(null, entityKey.id);
           }
       }
@@ -292,7 +292,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Class<?> sClass = service.value();
       Method findMeth = sClass.getMethod(
           getMethodNameFromPropertyName(sClass.getSimpleName(), "find"),
-          Long.class);
+          String.class);
       return findMeth.invoke(null, entityKey.id);
     }
     throw new IllegalArgumentException(
@@ -337,7 +337,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Object returnValue = method.invoke(entityElement);
     if (returnValue != null && EntityProxy.class.isAssignableFrom(propertyType)) {
       Method idMethod = returnValue.getClass().getMethod("getId");
-      Long id = (Long) idMethod.invoke(returnValue);
+      String id = (String) idMethod.invoke(returnValue);
 
       String keyRef = operationRegistry.getSecurityProvider().encodeClassType(
           propertyType)
@@ -358,7 +358,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * @param key the key of the record field
    * @return the ID of the new record, or null to auto generate
    */
-  public Long generateIdForCreate(@SuppressWarnings("unused") String key) {
+  public String generateIdForCreate(@SuppressWarnings("unused") String key) {
     // ignored. id is assigned by default.
     return null;
   }
@@ -396,7 +396,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         Class<?> propertyType = propertiesInRecord.get(key);
         Class<?> dtoType = propertiesToDTO.get(key);
         if (writeOperation == WriteOperation.CREATE && ("id".equals(key))) {
-          Long id = generateIdForCreate(key);
+          String id = generateIdForCreate(key);
           if (id != null) {
             entity.getMethod(getMethodNameFromPropertyName(key, "set"),
                 propertyType).invoke(entityInstance, id);
@@ -943,7 +943,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         }
         JSONObject recordObject = recordWithSchema.getJSONObject(recordToken);
         Class<? extends EntityProxy> record = getRecordFromClassToken(recordToken);
-        EntityKey entityKey = new EntityKey(recordObject.getLong("id"),
+        EntityKey entityKey = new EntityKey(recordObject.getString("id"),
             (writeOperation == WriteOperation.CREATE), record);
         involvedKeys.add(entityKey);
         dvsDataMap.put(entityKey, new DvsData(recordObject, writeOperation));
@@ -962,8 +962,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Class<?> entityClass = getEntityFromRecordAnnotation(entityKey.record);
     // TODO: merge this lookup code with other uses.
     Object entityInstance = entityClass.getMethod(
-        "find" + entityClass.getSimpleName(), Long.class).invoke(null,
-        new Long(entityKey.id));
+        "find" + entityClass.getSimpleName(), String.class).invoke(null,
+        entityKey.id);
     if (entityInstance == null) {
       return WriteOperation.DELETE;
     }
@@ -992,7 +992,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     JSONObject returnObject = new JSONObject();
     returnObject.put("futureId", originalEntityKey.id + "");
     // violations have already been taken care of.
-    Object newId = encodePropertyValueFromDataStore(entityInstance, Long.class,
+    Object newId = encodePropertyValueFromDataStore(entityInstance, String.class,
         "id", propertyRefs);
     if (newId == null) {
       log.warning("Record with futureId " + originalEntityKey.id
@@ -1015,7 +1015,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     String parts[] = string.split("-");
     assert parts.length == 3;
 
-    Long id = Long.parseLong(parts[0]);
+    String id = parts[0];
     return new EntityKey(id, "IS".equals(parts[1]),
         getRecordFromClassToken(parts[2]));
   }
@@ -1031,8 +1031,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Class<?> entityClass = getEntityFromRecordAnnotation(entityKey.record);
     // TODO: merge this lookup code with other uses.
     Object entityInstance = entityClass.getMethod(
-        "find" + entityClass.getSimpleName(), Long.class).invoke(null,
-        new Long(entityKey.id));
+        "find" + entityClass.getSimpleName(), String.class).invoke(null,
+        entityKey.id);
     JSONObject serializedEntity = serializeEntity(entityInstance,
         entityKey.record);
     return new SerializedEntity(entityInstance, serializedEntity);
@@ -1149,7 +1149,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Object propertyValue;
       if (returnValue != null && EntityProxy.class.isAssignableFrom(p.getType())) {
         Method idMethod = returnValue.getClass().getMethod("getId");
-        Long id = (Long) idMethod.invoke(returnValue);
+        String id = (String) idMethod.invoke(returnValue);
 
         propertyValue = id + "-NO-" + operationRegistry.getSecurityProvider().encodeClassType(
                 p.getType());

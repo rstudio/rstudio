@@ -116,9 +116,9 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
       for (int i = 0; i < length; i++) {
         ReturnRecord violationRecord = violationsArray.get(i);
-        Long id = null;
+        String id = null;
         if (violationRecord.hasFutureId()) {
-          id = Long.valueOf(violationRecord.getFutureId());
+          id = violationRecord.getFutureId();
         } else {
           id = violationRecord.getId();
         }

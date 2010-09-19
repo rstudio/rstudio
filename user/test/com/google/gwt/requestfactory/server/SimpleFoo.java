@@ -46,11 +46,11 @@ public class SimpleFoo {
     return Collections.singletonList(get());
   }
 
-  public static SimpleFoo findSimpleFoo(Long id) {
+  public static SimpleFoo findSimpleFoo(String id) {
     return findSimpleFooById(id);
   }
 
-  public static SimpleFoo findSimpleFooById(Long id) {
+  public static SimpleFoo findSimpleFooById(String id) {
     get().setId(id);
     return get();
   }
@@ -97,7 +97,7 @@ public class SimpleFoo {
   }
 
   @Id
-  private Long id = 1L;
+  private String id = "1L";
 
   Integer version = 1;
 
@@ -218,7 +218,7 @@ public class SimpleFoo {
     return fooField;
   }
 
-  public Long getId() {
+  public String getId() {
     return id;
   }
 
@@ -269,7 +269,7 @@ public class SimpleFoo {
   }
 
   public void persist() {
-    setId(nextId++);
+    setId(Long.toString(nextId++) + "L");
   }
 
   public SimpleFoo persistAndReturnSelf() {
@@ -343,7 +343,7 @@ public class SimpleFoo {
     this.fooField = fooField;
   }
 
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
   }
 

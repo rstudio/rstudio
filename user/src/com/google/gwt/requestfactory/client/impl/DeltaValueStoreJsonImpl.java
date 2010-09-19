@@ -70,9 +70,9 @@ class DeltaValueStoreJsonImpl {
       return this.futureId;
     }-*/;
 
-    public final Long getId() {
+    public final String getId() {
       String parts[] = getSchemaAndId().split("-");
-      return Long.parseLong(parts[1]);
+      return parts[1];
     }
 
     public final String getSchema() {
@@ -137,11 +137,11 @@ class DeltaValueStoreJsonImpl {
       for (int i = 0; i < length; i++) {
         ReturnRecord newRecord = newRecords.get(i);
         final EntityProxyIdImpl futureKey = new EntityProxyIdImpl(
-            Long.valueOf(newRecord.getFutureId()),
+            newRecord.getFutureId(),
             requestFactory.getSchema(newRecord.getSchema()),
             RequestFactoryJsonImpl.IS_FUTURE, null);
         ProxyJsoImpl copy = ProxyJsoImpl.create(
-            Long.valueOf(newRecord.getFutureId()), 1, futureKey.schema,
+            newRecord.getFutureId(), 1, futureKey.schema,
             requestFactory);
         toRemove.add(futureKey);
         requestFactory.datastoreToFutureMap.put(newRecord.getId(),
@@ -178,7 +178,7 @@ class DeltaValueStoreJsonImpl {
         final EntityProxyIdImpl key = getPersistedProxyId(
             deletedRecord.getId(),
             requestFactory.getSchema(deletedRecord.getSchema()));
-        ProxyJsoImpl copy = ProxyJsoImpl.create((Long) key.id, 1, key.schema,
+        ProxyJsoImpl copy = ProxyJsoImpl.create((String) key.id, 1, key.schema,
             requestFactory);
         requestFactory.postChangeEvent(copy, WriteOperation.DELETE);
         master.records.remove(key);
@@ -191,10 +191,9 @@ class DeltaValueStoreJsonImpl {
       int length = updatedRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord updatedRecord = updatedRecords.get(i);
-        final EntityProxyIdImpl key = getPersistedProxyId(
-            updatedRecord.getId(),
+        final EntityProxyIdImpl key = getPersistedProxyId(updatedRecord.getId(),
             requestFactory.getSchema(updatedRecord.getSchema()));
-        ProxyJsoImpl copy = ProxyJsoImpl.create((Long) key.id, 1, key.schema,
+        ProxyJsoImpl copy = ProxyJsoImpl.create((String) key.id, 1, key.schema,
             requestFactory);
         requestFactory.postChangeEvent(copy, WriteOperation.UPDATE);
         ProxyJsoImpl masterRecord = master.records.get(key);
@@ -359,7 +358,7 @@ class DeltaValueStoreJsonImpl {
     return requestData.toString();
   }
 
-  private EntityProxyIdImpl getPersistedProxyId(Long datastoreId,
+  private EntityProxyIdImpl getPersistedProxyId(String datastoreId,
       ProxySchema<?> schema) {
     return new EntityProxyIdImpl(datastoreId, schema,
         RequestFactoryJsonImpl.NOT_FUTURE,

@@ -37,7 +37,7 @@ public class ProxyJsoImplTest extends GWTTestCase {
         "userName", "bovik", "password", "bovik", "charField", "c",
         "longField", "1234567890", "bigDecimalField",
         "12345678901234.5678901234567890", "bigIntField",
-        "123456789012345678901234567890", "created", "400", "id", "42"};
+        "123456789012345678901234567890", "created", "400", "id", "42L"};
 
     String[] literalBits = new String[]{
         "version", "1", "intId", "4", "shortField", "5", "byteField", "6",
@@ -76,11 +76,11 @@ public class ProxyJsoImplTest extends GWTTestCase {
     ALL_PROPERTIES_JSON = b.toString();
   }
 
-  private static final String ID_VERSION_JSON = "{\"id\":\"42\",\"version\":1}";
-  private static final String ID_VERSION_JSON2 = "{\"id\":\"43\",\"version\":1}";
+  private static final String ID_VERSION_JSON = "{\"id\":\"42L\",\"version\":1}";
+  private static final String ID_VERSION_JSON2 = "{\"id\":\"43L\",\"version\":1}";
 
   static ProxyJsoImpl getMinimalJso() {
-    return ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
+    return ProxyJsoImpl.create("42L", 1, SimpleRequestFactoryInstance.schema(),
         SimpleRequestFactoryInstance.impl());
   }
   
@@ -192,7 +192,7 @@ public class ProxyJsoImplTest extends GWTTestCase {
       assertFalse(jso.isDefined(property));
       assertNull(jso.get(property));
     }
-    assertEquals((Long) 42L, jso.getId());
+    assertEquals("42L", jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
     assertEquals(null, jso.get(SimpleFooProxyProperties.longField));
     assertEquals(null, jso.get(SimpleFooProxyProperties.enumField));
@@ -234,7 +234,7 @@ public class ProxyJsoImplTest extends GWTTestCase {
     assertFalse(jso.get(SimpleFooProxyProperties.boolField));
     assertTrue(jso.get(SimpleFooProxyProperties.otherBoolField));
 
-    assertEquals((Long) 42L, jso.getId());
+    assertEquals("42L", jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
 
     testSchema(jso);

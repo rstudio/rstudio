@@ -44,7 +44,7 @@ public class EntityProxyIdImplTest extends TestCase {
   }
 
   public void testEquals() {
-    EntityProxyIdImpl newKey1 = new EntityProxyIdImpl(1L, new Schema1(),
+    EntityProxyIdImpl newKey1 = new EntityProxyIdImpl("test", new Schema1(),
         RequestFactoryJsonImpl.IS_FUTURE, null);
 
     EntityProxyIdImpl anotherNewKey1 = new EntityProxyIdImpl(newKey1.id, newKey1.schema,
@@ -52,7 +52,7 @@ public class EntityProxyIdImplTest extends TestCase {
     assertTrue(newKey1.equals(anotherNewKey1));
     assertTrue(newKey1.hashCode() == anotherNewKey1.hashCode());
 
-    EntityProxyIdImpl newKey2 = new EntityProxyIdImpl((Long) newKey1.id + 1, newKey1.schema,
+    EntityProxyIdImpl newKey2 = new EntityProxyIdImpl((String) newKey1.id + 1, newKey1.schema,
         newKey1.isFuture, null);
     assertFalse(newKey1.equals(newKey2));
     assertFalse(newKey1.hashCode() == newKey2.hashCode());
@@ -69,19 +69,19 @@ public class EntityProxyIdImplTest extends TestCase {
   }
   
   public void testEqualsWithFuture() {
-    EntityProxyIdImpl newKey1 = new EntityProxyIdImpl(1L, new Schema1(),
+    EntityProxyIdImpl newKey1 = new EntityProxyIdImpl("test", new Schema1(),
         RequestFactoryJsonImpl.IS_FUTURE, null);
 
-    EntityProxyIdImpl persistedNewKey1 = new EntityProxyIdImpl(1000L,
+    EntityProxyIdImpl persistedNewKey1 = new EntityProxyIdImpl("test2",
         newKey1.schema, RequestFactoryJsonImpl.NOT_FUTURE, newKey1.id);
     assertTrue(persistedNewKey1.equals(persistedNewKey1));
     assertTrue(newKey1.equals(persistedNewKey1));
     assertTrue(persistedNewKey1.equals(newKey1));
     assertTrue(newKey1.hashCode() == persistedNewKey1.hashCode());
 
-    EntityProxyIdImpl anotherPersistedNewKey1 = new EntityProxyIdImpl(1024L,
+    EntityProxyIdImpl anotherPersistedNewKey1 = new EntityProxyIdImpl("test3",
         newKey1.schema, RequestFactoryJsonImpl.NOT_FUTURE,
-        (Long) newKey1.id + 1);
+        (String) newKey1.id + 1);
     assertTrue(anotherPersistedNewKey1.equals(anotherPersistedNewKey1));
     assertFalse(persistedNewKey1.equals(anotherPersistedNewKey1));
     assertFalse(anotherPersistedNewKey1.equals(persistedNewKey1));

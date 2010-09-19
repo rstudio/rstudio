@@ -34,7 +34,7 @@ import javax.servlet.ServletResponse;
 public class SchoolCalendarService implements Filter {
   private static final ThreadLocal<PersonSource> PERSON_SOURCE = new ThreadLocal<PersonSource>();
 
-  public static Person findPerson(Long id) {
+  public static Person findPerson(String id) {
     checkPersonSource();
     return PERSON_SOURCE.get().findPerson(id);
   }

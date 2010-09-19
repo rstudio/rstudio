@@ -29,7 +29,7 @@ public abstract class Person {
    * The RequestFactory requires a static finder method for each proxied type.
    * Soon it should allow you to customize how instances are found.
    */
-  public static Person findPerson(Long id) {
+  public static Person findPerson(String id) {
     /*
      * TODO At the moment requestFactory requires a finder method per type It
      * should get more flexible soon.
@@ -48,7 +48,7 @@ public abstract class Person {
   private String name;
 
   @NotNull
-  private Long id;
+  private String id;
 
   @NotNull
   @DecimalMin("0")
@@ -87,7 +87,7 @@ public abstract class Person {
    * semantics is not going away, but it should become possible to use types
    * other than Long, and properties other than "id".
    */
-  public Long getId() {
+  public String getId() {
     return id;
   }
 
@@ -128,7 +128,7 @@ public abstract class Person {
     this.description = description;
   }
 
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
     address.setId(id);
   }

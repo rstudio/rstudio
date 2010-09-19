@@ -38,7 +38,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
   public void testFetchEntity() {
     final boolean relationsAbsent = false;
     delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
+    req.simpleFooRequest().findSimpleFooById("999L").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
@@ -62,7 +62,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
   public void testFetchEntityWithRelation() {
     final boolean relationsPresent = true;
     delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
+    req.simpleFooRequest().findSimpleFooById("999L").with("barField").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {

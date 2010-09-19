@@ -61,7 +61,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return rawJsos.cast();
   }
 
-  public static ProxyJsoImpl create(Long id, Integer version,
+  public static ProxyJsoImpl create(String id, Integer version,
       ProxySchema<?> schema, RequestFactoryJsonImpl requestFactory) {
     ProxyJsoImpl rtn = createEmpty();
     rtn.set(ProxyImpl.id, id);
@@ -70,7 +70,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   }
 
   public static ProxyJsoImpl emptyCopy(ProxyJsoImpl jso) {
-    Long tempId = jso.get(ProxyImpl.id);
+    String tempId = jso.get(ProxyImpl.id);
     Integer tempVersion = jso.get(ProxyImpl.version);
     ProxySchema<?> schema = jso.getSchema();
 
@@ -186,7 +186,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       assert schemaAndId.length == 2;
       ProxySchema<?> schema = getRequestFactory().getSchema(schemaAndId[0]);
       return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(schema,
-          Long.valueOf(schemaAndId[1]), getRequestFactory());
+          schemaAndId[1], getRequestFactory());
     }
   }
 
@@ -194,7 +194,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return this[propertyName] || null;
   }-*/;
 
-  public final Long getId() {
+  public final String getId() {
     return this.get(ProxyImpl.id);
   }
 

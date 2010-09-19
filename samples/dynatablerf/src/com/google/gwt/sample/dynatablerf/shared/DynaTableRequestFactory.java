@@ -37,7 +37,7 @@ public interface DynaTableRequestFactory extends RequestFactory {
    */
   @Service(Address.class)
   interface AddressRequest {
-    ProxyRequest<AddressProxy> findAddress(Long id);
+    ProxyRequest<AddressProxy> findAddress(String id);
 
     @Instance
     RequestObject<Void> persist(AddressProxy person);
@@ -48,7 +48,7 @@ public interface DynaTableRequestFactory extends RequestFactory {
    */
   @Service(Person.class)
   interface PersonRequest {
-    ProxyRequest<PersonProxy> findPerson(Long id);
+    ProxyRequest<PersonProxy> findPerson(String id);
 
     @Instance
     RequestObject<Void> persist(PersonProxy person);

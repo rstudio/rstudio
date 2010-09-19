@@ -62,7 +62,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     requestFactory.initialize(new SimpleEventBus());
 
     // add a proxy
-    jso = ProxyJsoImpl.create(42L, 1, SimpleRequestFactoryInstance.schema(),
+    jso = ProxyJsoImpl.create("42L", 1, SimpleRequestFactoryInstance.schema(),
         SimpleRequestFactoryInstance.impl());
     jso.set(SimpleFooProxyProperties.userName, "bovik");
     jso.set(SimpleFooProxyProperties.password, "bovik");
@@ -141,7 +141,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   public void testSeparateIds() {
     ProxyImpl createProxy = (ProxyImpl) requestFactory.create(SimpleFooProxy.class);
     assertTrue(createProxy.isFuture());
-    Long futureId = createProxy.getId();
+    String futureId = createProxy.getId();
 
     ProxyImpl mockProxy = new ProxyImpl(ProxyJsoImpl.create(futureId, 1,
         SimpleRequestFactoryInstance.schema(),

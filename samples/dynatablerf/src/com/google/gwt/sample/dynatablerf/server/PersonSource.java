@@ -37,7 +37,7 @@ public abstract class PersonSource {
     }
 
     @Override
-    public Person findPerson(Long id) {
+    public Person findPerson(String id) {
       return people.get(id);
     }
 
@@ -66,7 +66,7 @@ public abstract class PersonSource {
     @Override
     public void persist(Person person) {
       if (person.getId() == null) {
-        person.setId(++serial);
+        person.setId(Long.toString(++serial));
       }
       person.setVersion(person.getVersion() + 1);
       Person existing = people.get(person.getId());
@@ -91,7 +91,7 @@ public abstract class PersonSource {
     }
 
     @Override
-    public Person findPerson(Long id) {
+    public Person findPerson(String id) {
       Person toReturn = people.get(id);
       if (toReturn == null) {
         toReturn = backingStore.findPerson(id);
@@ -142,11 +142,11 @@ public abstract class PersonSource {
     return new CopyOnRead(backing);
   }
 
-  final Map<Long, Person> people = new LinkedHashMap<Long, Person>();
+  final Map<String, Person> people = new LinkedHashMap<String, Person>();
 
   public abstract int countPeople();
 
-  public abstract Person findPerson(Long id);
+  public abstract Person findPerson(String id);
 
   public abstract List<Person> getPeople(int startIndex, int maxCount);
 

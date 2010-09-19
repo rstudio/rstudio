@@ -111,7 +111,7 @@ public class RequestFactoryServlet extends HttpServlet {
           response.setHeader("login", userInfo.getLoginUrl());
           response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
-          response.setHeader("userId", String.format("%d", userInfo.getId()));
+          response.setHeader("userId", String.format("%s", userInfo.getId()));
           response.setStatus(HttpServletResponse.SC_OK);
           RequestProcessor<String> requestProcessor = new JsonRequestProcessor();
           requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(

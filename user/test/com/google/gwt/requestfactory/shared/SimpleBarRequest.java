@@ -25,7 +25,7 @@ public interface SimpleBarRequest {
 
   ProxyListRequest<SimpleBarProxy> findAll();
 
-  ProxyRequest<SimpleBarProxy> findSimpleBarById(Long id);
+  ProxyRequest<SimpleBarProxy> findSimpleBarById(String id);
 
   @Instance
   RequestObject<Void> persist(SimpleBarProxy proxy);

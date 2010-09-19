@@ -128,7 +128,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   public void testFetchEntity() {
     delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
+    req.simpleFooRequest().findSimpleFooById("999L").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
@@ -145,7 +145,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   public void testFetchEntityWithRelation() {
     delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
+    req.simpleFooRequest().findSimpleFooById("999L").with("barField").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
@@ -172,7 +172,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   public void testMethodWithSideEffects() {
     delayTestFinish(5000);
 
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
+    req.simpleFooRequest().findSimpleFooById("999L").fire(
         new Receiver<SimpleFooProxy>() {
 
           @Override
@@ -190,7 +190,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
                 // confirm that the instance method did have the desired
                 // sideEffect.
-                req.simpleFooRequest().findSimpleFooById(999L).fire(
+                req.simpleFooRequest().findSimpleFooById("999L").fire(
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFoo) {
@@ -219,11 +219,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   public void testPersistExistingEntityExistingRelation() {
     delayTestFinish(5000);
 
-    req.simpleBarRequest().findSimpleBarById(999L).fire(
+    req.simpleBarRequest().findSimpleBarById("999L").fire(
         new Receiver<SimpleBarProxy>() {
           @Override
           public void onSuccess(final SimpleBarProxy barProxy) {
-            req.simpleFooRequest().findSimpleFooById(999L).fire(
+            req.simpleFooRequest().findSimpleFooById("999L").fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy fooProxy) {
@@ -257,7 +257,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     newBar.setUserName("Amit");
 
     final SimpleBarProxy finalNewBar = newBar;
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
+    req.simpleFooRequest().findSimpleFooById("999L").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
@@ -268,7 +268,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             fooReq.fire(new Receiver<Void>() {
               @Override
               public void onSuccess(Void response) {
-                req.simpleFooRequest().findSimpleFooById(999L).with(
+                req.simpleFooRequest().findSimpleFooById("999L").with(
                     "barField.userName").fire(new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy finalFooProxy) {
@@ -298,7 +298,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     newFoo.setUserName("Ray");
 
     final SimpleFooProxy finalFoo = newFoo;
-    req.simpleBarRequest().findSimpleBarById(999L).fire(
+    req.simpleBarRequest().findSimpleBarById("999L").fire(
         new Receiver<SimpleBarProxy>() {
           @Override
           public void onSuccess(SimpleBarProxy response) {
@@ -306,7 +306,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             fooReq.fire(new Receiver<Void>() {
               @Override
               public void onSuccess(Void response) {
-                req.simpleFooRequest().findSimpleFooById(999L).fire(
+                req.simpleFooRequest().findSimpleFooById("999L").fire(
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFooProxy) {
@@ -356,7 +356,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             fooReq2.fire(new Receiver<Void>() {
               @Override
               public void onSuccess(Void response) {
-                req.simpleFooRequest().findSimpleFooById(999L).with(
+                req.simpleFooRequest().findSimpleFooById("999L").with(
                     "barField.userName").fire(new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy finalFooProxy) {
@@ -432,7 +432,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   public void testProxysAsInstanceMethodParams() {
     delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
+    req.simpleFooRequest().findSimpleFooById("999L").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {

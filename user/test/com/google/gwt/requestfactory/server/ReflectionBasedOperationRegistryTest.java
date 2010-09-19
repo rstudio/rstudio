@@ -58,14 +58,14 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
 
   public void testGetOpertionScalarWithArgs() {
     RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.shared.SimpleFooRequest::findSimpleFooById");
-    assert request != null;
+    assertNotNull(request);
     assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
         request.getDomainClassName());
     assertEquals("findSimpleFooById", request.getDomainMethodName());
     assertEquals(SimpleFooProxy.class, request.getReturnType());
-    assert request.getParameterTypes().length == 1
-        && request.getParameterTypes()[0] == Long.class;
-    assertEquals(false, request.isReturnTypeList());
+    assertEquals(1, request.getParameterTypes().length);
+    assertEquals(String.class, request.getParameterTypes()[0]);
+    assertFalse(request.isReturnTypeList());
   }
 
   public void testInsecureOperations() {

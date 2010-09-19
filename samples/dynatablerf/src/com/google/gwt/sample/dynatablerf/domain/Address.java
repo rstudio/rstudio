@@ -29,7 +29,7 @@ public class Address {
    * The RequestFactory requires a static finder method for each proxied type.
    * Soon it should allow you to customize how instances are found.
    */
-  public static Address findAddress(Long id) {
+  public static Address findAddress(String id) {
     return SchoolCalendarService.findPerson(id).getAddress();
   }
 
@@ -38,7 +38,7 @@ public class Address {
   private String city;
 
   @NotNull
-  private Long id;
+  private String id;
 
   @NotNull
   @Size(min = 1)
@@ -76,7 +76,7 @@ public class Address {
     return city;
   }
 
-  public Long getId() {
+  public String getId() {
     return id;
   }
 
@@ -113,7 +113,7 @@ public class Address {
     this.city = city;
   }
 
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
   }
 

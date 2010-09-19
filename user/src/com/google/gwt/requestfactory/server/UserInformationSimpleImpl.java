@@ -21,7 +21,7 @@ package com.google.gwt.requestfactory.server;
  */
 public class UserInformationSimpleImpl extends UserInformation {
 
-  private Long id = 0L;
+  private String id = "";
 
   public UserInformationSimpleImpl(String redirectUrl) {
     super(redirectUrl);
@@ -33,7 +33,7 @@ public class UserInformationSimpleImpl extends UserInformation {
   }
 
   @Override
-  public Long getId() {
+  public String getId() {
     return this.id;
   }
 
@@ -58,7 +58,7 @@ public class UserInformationSimpleImpl extends UserInformation {
   }
 
   @Override
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
   }
 }

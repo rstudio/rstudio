@@ -34,7 +34,7 @@ class ValueStoreJsonImpl {
 
   final Map<EntityProxyIdImpl, ProxyJsoImpl> records = new HashMap<EntityProxyIdImpl, ProxyJsoImpl>();
 
-  EntityProxy getRecordBySchemaAndId(ProxySchema<?> schema, Long id,
+  EntityProxy getRecordBySchemaAndId(ProxySchema<?> schema, String id,
       RequestFactoryJsonImpl requestFactory) {
     if (id == null) {
       return null;
