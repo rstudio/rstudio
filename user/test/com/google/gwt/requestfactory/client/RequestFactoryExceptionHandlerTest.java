@@ -51,7 +51,7 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
         assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
         assertEquals("java.lang.UnsupportedOperationException",
             error.getExceptionType());
-        assertFalse(error.getStackTraceString().isEmpty());
+        assertFalse(error.getStackTraceString().length() == 0);
         finishTestAndReset();
       }
 

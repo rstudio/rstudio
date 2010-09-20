@@ -43,7 +43,7 @@ public abstract class AbstractPlaceHistoryMapper<F> implements
 
     @Override
     public String toString() {
-      return prefix.isEmpty() ? token : prefix + ":" + token;
+      return (prefix.length() == 0) ? token : prefix + ":" + token;
     }
   }
 
