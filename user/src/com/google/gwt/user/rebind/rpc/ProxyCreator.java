@@ -48,6 +48,7 @@ import com.google.gwt.user.client.rpc.impl.FailedRequest;
 import com.google.gwt.user.client.rpc.impl.FailingRequestBuilder;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
+import com.google.gwt.user.client.rpc.impl.RpcStatsContext;
 import com.google.gwt.user.linker.rpc.RpcLogArtifact;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -442,15 +443,13 @@ public class ProxyCreator {
     w.println(") {");
     w.indent();
 
-    String requestIdName = nameFactory.createName("requestId");
-    w.println("int " + requestIdName + " = getNextRequestId();");
+    String statsContextName = nameFactory.createName("statsContext");
+    generateRpcStatsContext(w, syncMethod, asyncMethod, statsContextName);
 
     String statsMethodExpr = getProxySimpleName() + "." + syncMethod.getName();
     String tossName = nameFactory.createName("toss");
-    w.println("boolean " + tossName + " = isStatsAvailable() && stats("
-        + "timeStat(\"" + statsMethodExpr + "\", " + requestIdName
-        + ", \"begin\"));");
-
+    w.println("boolean %s = %s.isStatsAvailable() && %s.stats(%s.timeStat(\"%s\", \"begin\"));",
+        tossName, statsContextName, statsContextName, statsContextName, statsMethodExpr);
     w.print(SerializationStreamWriter.class.getSimpleName());
     w.print(" ");
     String streamWriterName = nameFactory.createName("streamWriter");
@@ -490,9 +489,9 @@ public class ProxyCreator {
     w.println("String " + payloadName + " = " + streamWriterName
         + ".toString();");
 
-    w.println(tossName + " = isStatsAvailable() && stats(" + "timeStat(\""
-        + statsMethodExpr + "\", " + requestIdName
-        + ", \"requestSerialized\"));");
+    w.println(tossName + " = " + statsContextName + ".isStatsAvailable() && "
+        + statsContextName + ".stats(" + statsContextName + ".timeStat(\""
+        + statsMethodExpr + "\",  \"requestSerialized\"));");
 
     /*
      * Depending on the return type for the async method, return a
@@ -517,7 +516,7 @@ public class ProxyCreator {
     JType returnType = syncMethod.getReturnType();
     w.print("ResponseReader." + getResponseReaderFor(returnType).name());
     w.println(", \"" + getProxySimpleName() + "." + syncMethod.getName()
-        + "\", " + requestIdName + ", " + payloadName + ", " + callbackName
+        + "\", " + statsContextName + ", " + payloadName + ", " + callbackName
         + ");");
 
     w.outdent();
@@ -577,6 +576,11 @@ public class ProxyCreator {
 
       generateProxyMethod(w, serializableTypeOracle, syncMethod, asyncMethod);
     }
+  }
+
+  protected void generateRpcStatsContext(SourceWriter w, JMethod syncMethod,
+      JMethod asyncMethod, String statsContextName) {
+    w.println("RpcStatsContext " + statsContextName + " = new RpcStatsContext();");
   }
 
   protected void generateStreamWriterOverride(SourceWriter srcWriter) {
@@ -802,7 +806,8 @@ public class ProxyCreator {
         SerializationStreamWriter.class.getCanonicalName(),
         GWT.class.getCanonicalName(), ResponseReader.class.getCanonicalName(),
         SerializationException.class.getCanonicalName(),
-        Impl.class.getCanonicalName()};
+        Impl.class.getCanonicalName(),
+        RpcStatsContext.class.getCanonicalName()};
     for (String imp : imports) {
       composerFactory.addImport(imp);
     }

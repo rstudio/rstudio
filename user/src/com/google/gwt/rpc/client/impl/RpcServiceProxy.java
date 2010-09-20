@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
+import com.google.gwt.user.client.rpc.impl.RpcStatsContext;
 
 /**
  * The base type for RPC proxies.
@@ -50,9 +51,9 @@ public class RpcServiceProxy extends RemoteServiceProxy {
 
   @Override
   protected <T> RequestCallback doCreateRequestCallback(
-      ResponseReader responseReader, String methodName, int invocationCount,
+      ResponseReader responseReader, String methodName, RpcStatsContext statsContext,
       AsyncCallback<T> callback) {
-    return new RpcCallbackAdapter<T>(this, methodName, invocationCount,
+    return new RpcCallbackAdapter<T>(this, methodName, statsContext,
         callback);
   }
 

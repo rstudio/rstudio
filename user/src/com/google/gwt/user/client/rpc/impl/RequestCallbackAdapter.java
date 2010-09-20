@@ -145,7 +145,7 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   /**
    * Used for stats recording.
    */
-  private final int requestId;
+  private final RpcStatsContext statsContext;
 
   /**
    * Instance which will read the expected return type out of the
@@ -160,7 +160,7 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   private final SerializationStreamFactory streamFactory;
 
   public RequestCallbackAdapter(SerializationStreamFactory streamFactory,
-      String methodName, int requestId, AsyncCallback<T> callback,
+      String methodName, RpcStatsContext statsContext, AsyncCallback<T> callback,
       ResponseReader responseReader) {
     assert (streamFactory != null);
     assert (callback != null);
@@ -169,7 +169,7 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
     this.streamFactory = streamFactory;
     this.callback = callback;
     this.methodName = methodName;
-    this.requestId = requestId;
+    this.statsContext = statsContext;
     this.responseReader = responseReader;
   }
 
@@ -184,9 +184,9 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
     try {
       String encodedResponse = response.getText();
       int statusCode = response.getStatusCode();
-      boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(RemoteServiceProxy.bytesStat(methodName,
-          requestId, encodedResponse.length(), "responseReceived"));
+      boolean toss = statsContext.isStatsAvailable()
+          && statsContext.stats(
+              statsContext.bytesStat(methodName, encodedResponse.length(), "responseReceived"));
 
       if (statusCode != Response.SC_OK) {
         caught = new StatusCodeException(statusCode, encodedResponse);
@@ -206,9 +206,8 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
     } catch (Throwable e) {
       caught = e;
     } finally {
-      boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(RemoteServiceProxy.timeStat(
-          methodName, requestId, "responseDeserialized"));
+      boolean toss = statsContext.isStatsAvailable()
+          && statsContext.stats(statsContext.timeStat(methodName, "responseDeserialized"));
     }
 
     try {
@@ -218,9 +217,9 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
         callback.onFailure(caught);
       }
     } finally {
-      boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(RemoteServiceProxy.timeStat(
-          methodName, requestId, "end"));
+      Object returned = (caught == null) ? result : caught;
+      boolean toss = statsContext.isStatsAvailable()
+          && statsContext.stats(statsContext.timeStat(methodName, returned, "end"));
     }
   }
 }

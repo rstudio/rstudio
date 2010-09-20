@@ -24,7 +24,7 @@ import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamFactory;
 import com.google.gwt.user.client.rpc.StatusCodeException;
-import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
+import com.google.gwt.user.client.rpc.impl.RpcStatsContext;
 
 /**
  * Adapter from a {@link RequestCallback} interface to an {@link AsyncCallback}
@@ -49,19 +49,19 @@ public class RpcCallbackAdapter<T> implements RequestCallback {
   /**
    * Used for stats recording.
    */
-  private final int requestId;
+  private final RpcStatsContext statsContext;
 
   private final SerializationStreamFactory streamFactory;
 
   public RpcCallbackAdapter(SerializationStreamFactory streamFactory,
-      String methodName, int requestId, AsyncCallback<T> callback) {
+      String methodName, RpcStatsContext statsContext, AsyncCallback<T> callback) {
     assert (streamFactory != null);
     assert (callback != null);
 
     this.streamFactory = streamFactory;
     this.callback = callback;
     this.methodName = methodName;
-    this.requestId = requestId;
+    this.statsContext = statsContext;
   }
 
   public void onError(Request request, Throwable exception) {
@@ -75,9 +75,9 @@ public class RpcCallbackAdapter<T> implements RequestCallback {
     try {
       String encodedResponse = response.getText();
       int statusCode = response.getStatusCode();
-      boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(RemoteServiceProxy.bytesStat(methodName,
-              requestId, encodedResponse.length(), "responseReceived"));
+      boolean toss = statsContext.isStatsAvailable()
+          && statsContext.stats(
+              statsContext.bytesStat(methodName, encodedResponse.length(), "responseReceived"));
 
       if (statusCode != Response.SC_OK) {
         caught = new StatusCodeException(statusCode, encodedResponse);
@@ -95,9 +95,8 @@ public class RpcCallbackAdapter<T> implements RequestCallback {
     } catch (Throwable e) {
       caught = e;
     } finally {
-      boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(RemoteServiceProxy.timeStat(methodName,
-              requestId, "responseDeserialized"));
+      boolean toss = statsContext.isStatsAvailable()
+          && statsContext.stats(statsContext.timeStat(methodName, "responseDeserialized"));
     }
 
     try {
@@ -107,9 +106,8 @@ public class RpcCallbackAdapter<T> implements RequestCallback {
         callback.onFailure(caught);
       }
     } finally {
-      boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(RemoteServiceProxy.timeStat(methodName,
-              requestId, "end"));
+      boolean toss = statsContext.isStatsAvailable()
+          && statsContext.stats(statsContext.timeStat(methodName, "end"));
     }
   }
 }

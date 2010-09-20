@@ -45,47 +45,50 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   private static final String RPC_CONTENT_TYPE = "text/x-gwt-rpc; charset=utf-8";
 
   /**
-   * A global id to track any given request.
+   * @deprecated use {@link RpcStatsContext}.
    */
-  private static int requestId;
-
-  public static native JavaScriptObject bytesStat(String method, int count,
-      int bytes, String eventType) /*-{
-    var stat = @com.google.gwt.user.client.rpc.impl.RemoteServiceProxy::timeStat(Ljava/lang/String;ILjava/lang/String;)(method, count, eventType);
-    stat.bytes = bytes;
-    return stat;
-  }-*/;
+  @Deprecated
+  public static JavaScriptObject bytesStat(String method, int count,
+      int bytes, String eventType) {
+    return new RpcStatsContext(count).bytesStat(method, bytes, eventType);
+  }
 
   /**
    * Indicates if RPC statistics should be gathered.
+   *
+   * @deprecated use {@link RpcStatsContext}.
    */
-  public static native boolean isStatsAvailable() /*-{
-    return !!$stats;
-  }-*/;
+  @Deprecated
+  public static boolean isStatsAvailable() {
+    return new RpcStatsContext(0).isStatsAvailable();
+  }
 
   /**
    * Always use this as {@link #isStatsAvailable()} &amp;&amp;
    * {@link #stats(JavaScriptObject)}.
+   *
+   * @deprecated use {link RpcStatsContext}.
    */
-  public static native boolean stats(JavaScriptObject data) /*-{
-    return $stats(data);
-  }-*/;
+  @Deprecated
+  public static boolean stats(JavaScriptObject data) {
+    return new RpcStatsContext(0).stats(data);
+  }
 
-  public static native JavaScriptObject timeStat(String method, int count,
-      String eventType) /*-{
-    return {
-      moduleName: @com.google.gwt.core.client.GWT::getModuleName()(),
-      sessionId: $sessionId,
-      subSystem: 'rpc',
-      evtGroup: count,
-      method: method,
-      millis: (new Date()).getTime(),
-      type: eventType
-    };
-  }-*/;
+  /**
+   * @deprecated use {@link RpcStatsContext}.
+   */
+  @Deprecated
+  public static JavaScriptObject timeStat(String method, int count,
+      String eventType) {
+    return new RpcStatsContext(count).timeStat(method, eventType);
+  }
 
+  /**
+   * @deprected use {@link RpcStatsContext}.
+   */
+  @Deprecated
   protected static int getNextRequestId() {
-    return requestId++;
+    return RpcStatsContext.getNextRequestId();
   }
 
   /**
@@ -93,7 +96,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    */
   @Deprecated
   protected static int getRequestId() {
-    return requestId;
+    return RpcStatsContext.getLastRequestId();
   }
 
   /**
@@ -236,9 +239,9 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   }
 
   protected <T> RequestCallback doCreateRequestCallback(
-      ResponseReader responseReader, String methodName, int invocationCount,
+      ResponseReader responseReader, String methodName, RpcStatsContext statsContext,
       AsyncCallback<T> callback) {
-    return new RequestCallbackAdapter<T>(this, methodName, invocationCount,
+    return new RequestCallbackAdapter<T>(this, methodName, statsContext,
         callback, responseReader);
   }
 
@@ -256,11 +259,11 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    * @return a {@link Request} object that can be used to track the request
    */
   protected <T> Request doInvoke(ResponseReader responseReader,
-      String methodName, int invocationCount, String requestData,
+      String methodName, RpcStatsContext statsContext, String requestData,
       AsyncCallback<T> callback) {
 
     RequestBuilder rb = doPrepareRequestBuilderImpl(responseReader, methodName,
-        invocationCount, requestData, callback);
+        statsContext, requestData, callback);
 
     try {
       return rb.send();
@@ -270,10 +273,9 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
           ex);
       callback.onFailure(iex);
     } finally {
-      if (RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(RemoteServiceProxy.bytesStat(methodName,
-              invocationCount, requestData.length(), "requestSent"))) {
-      }
+      boolean toss = statsContext.isStatsAvailable() &&
+          statsContext.stats(statsContext.bytesStat(methodName, requestData.length(),
+              "requestSent"));
     }
     return null;
   }
@@ -293,11 +295,11 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    *         {@link RequestBuilder#send()} method invoked.
    */
   protected <T> RequestBuilder doPrepareRequestBuilder(
-      ResponseReader responseReader, String methodName, int invocationCount,
+      ResponseReader responseReader, String methodName, RpcStatsContext statsContext,
       String requestData, AsyncCallback<T> callback) {
 
     RequestBuilder rb = doPrepareRequestBuilderImpl(responseReader, methodName,
-        invocationCount, requestData, callback);
+        statsContext, requestData, callback);
 
     return rb;
   }
@@ -316,7 +318,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    *         {@link RequestBuilder#send()} method invoked.
    */
   private <T> RequestBuilder doPrepareRequestBuilderImpl(
-      ResponseReader responseReader, String methodName, int invocationCount,
+      ResponseReader responseReader, String methodName, RpcStatsContext statsContext,
       String requestData, AsyncCallback<T> callback) {
 
     if (getServiceEntryPoint() == null) {
@@ -324,7 +326,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     }
 
     RequestCallback responseHandler = doCreateRequestCallback(responseReader,
-        methodName, invocationCount, callback);
+        methodName, statsContext, callback);
 
     ensureRpcRequestBuilder();
 
@@ -332,7 +334,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     rpcRequestBuilder.setCallback(responseHandler);
     rpcRequestBuilder.setContentType(RPC_CONTENT_TYPE);
     rpcRequestBuilder.setRequestData(requestData);
-    rpcRequestBuilder.setRequestId(invocationCount);
+    rpcRequestBuilder.setRequestId(statsContext.getRequestId());
     return rpcRequestBuilder.finish();
   }
 
