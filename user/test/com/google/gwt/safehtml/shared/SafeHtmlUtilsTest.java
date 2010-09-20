@@ -19,10 +19,19 @@ package com.google.gwt.safehtml.shared;
  * Unit tests for SafeHtmlUtils.
  */
 public class SafeHtmlUtilsTest extends GwtSafeHtmlUtilsTest {
-  
+
   // This forces a GWTTestCase to run as a vanilla JUnit TestCase.
   @Override
   public String getModuleName() {
     return null;
+  }
+
+  @Override
+  protected void gwtSetUp() throws Exception {
+    super.gwtSetUp();
+    // Since we can't assume assertions are enabled, force
+    // SafeHtmlHostedModeUtils#maybeCheckCompleteHtml to perform its check
+    // when running in JRE.
+    SafeHtmlHostedModeUtils.setForceCheckCompleteHtml(true);
   }
 }

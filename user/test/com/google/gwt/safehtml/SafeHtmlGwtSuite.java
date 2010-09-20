@@ -18,6 +18,7 @@ package com.google.gwt.safehtml;
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.safehtml.client.SafeHtmlTemplatesTest;
 import com.google.gwt.safehtml.shared.GwtSafeHtmlBuilderTest;
+import com.google.gwt.safehtml.shared.GwtSafeHtmlHostedModeUtilsTest;
 import com.google.gwt.safehtml.shared.GwtSafeHtmlStringTest;
 import com.google.gwt.safehtml.shared.GwtSafeHtmlUtilsTest;
 
@@ -35,6 +36,7 @@ public class SafeHtmlGwtSuite {
     suite.addTestSuite(GwtSafeHtmlStringTest.class);
     suite.addTestSuite(GwtSafeHtmlBuilderTest.class);
     suite.addTestSuite(SafeHtmlTemplatesTest.class);
+    suite.addTestSuite(GwtSafeHtmlHostedModeUtilsTest.class);
 
     return suite;
   }

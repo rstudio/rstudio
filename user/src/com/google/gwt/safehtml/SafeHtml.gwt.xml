@@ -17,9 +17,10 @@
 <!-- SafeHtml - facilities for avoiding XSS attacks                        -->
 <!--                                                                       -->
 <module>
-  <inherits name='com.google.gwt.user.User'/>
+  <inherits name="com.google.gwt.regexp.RegExp"/>
   <source path="client"/>
   <source path="shared"/>
+  <super-source path="super"/>
   <generate-with class="com.google.gwt.safehtml.rebind.SafeHtmlTemplatesGenerator">
     <when-type-assignable class="com.google.gwt.safehtml.client.SafeHtmlTemplates"/>
   </generate-with>

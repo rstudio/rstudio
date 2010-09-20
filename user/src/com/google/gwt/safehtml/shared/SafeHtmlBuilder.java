@@ -24,11 +24,11 @@ package com.google.gwt.safehtml.shared;
  * <p>
  * In addition, it supports methods that allow strings with HTML markup to be
  * appended without escaping: One can append other {@link SafeHtml} objects, and
- * one can append constant strings. The method that appends constant strings (
- * {@link #appendHtmlConstant(String)}) requires a convention of use to be 
- * adhered to in order for this class to adhere to the contract required by 
+ * one can append constant strings. The method that appends constant strings
+ * ({@link #appendHtmlConstant(String)}) requires a convention of use to be
+ * adhered to in order for this class to adhere to the contract required by
  * {@link SafeHtml}: The argument expression must be fully determined and known
- * to be safe at compile time, and the value of the argument must not contain 
+ * to be safe at compile time, and the value of the argument must not contain
  * incomplete HTML tags. See {@link #appendHtmlConstant(String)} for details.
  *
  * <p>
@@ -40,7 +40,7 @@ package com.google.gwt.safehtml.shared;
  */
 public final class SafeHtmlBuilder {
 
-  private StringBuilder sb = new StringBuilder();
+  private final StringBuilder sb = new StringBuilder();
 
   /**
    * Constructs an empty SafeHtmlBuilder.
@@ -52,7 +52,7 @@ public final class SafeHtmlBuilder {
    * Boolean and numeric types converted to String are always HTML safe -- no
    * escaping necessary.
    */
-  
+
   /**
    * Appends the string representation of a boolean.
    *
@@ -155,7 +155,7 @@ public final class SafeHtmlBuilder {
 
   /**
    * Appends a string consisting of several newline-separated lines after
-   * HTML-escaping it. Newlines in the original string are converted to {@code 
+   * HTML-escaping it. Newlines in the original string are converted to {@code
    * <br>}.
    *
    * @param text the string to append
@@ -172,28 +172,42 @@ public final class SafeHtmlBuilder {
    * <p>
    * <b>Important</b>: For this class to be able to honor its contract as
    * required by {@link SafeHtml}, all uses of this method must satisfy the
-   * following requirements:
+   * following constraints:
    *
-   * <ul>
+   * <ol>
    *
-   * <li>The argument expression must be fully determined and known to be safe
-   * at compile time.
+   * <li>The argument expression must be fully determined at compile time.
    *
-   * <li>The value of the argument must not contain incomplete HTML tags. I.e.,
-   * the following is not a correct use of this method, because the {@code <a>}
-   * tag is incomplete:
+   * <li>The value of the argument must end in "inner HTML" context and not
+   * contain incomplete HTML tags. I.e., the following is not a correct use of
+   * this method, because the {@code <a>} tag is incomplete:
    *
    * <pre class="code">
    * {@code shb.appendConstantHtml("<a href='").append(url)}</pre>
    *
-   * </ul>
+   * </ol>
+   *
+   * <p>
+   * The first constraint provides a sufficient condition that the appended
+   * string (and any HTML markup contained in it) originates from a trusted
+   * source. The second constraint ensures the composability of {@link SafeHtml}
+   * values.
+   *
+   * <p>
+   * When executing client-side in hosted mode, or server side with assertions
+   * enabled, the argument is HTML-parsed and validated to satisfy the second
+   * constraint (the server-side check can also be enabled programmatically, see
+   * {@link SafeHtmlHostedModeUtils#maybeCheckCompleteHtml(String)} for
+   * details). For performance reasons, this check is not performed in prod mode
+   * on the client, and with assertions disabled on the server.
    *
    * @param html the HTML snippet to be appended
    * @return a reference to this object
+   * @throws IllegalArgumentException if not running in prod mode and {@code
+   *           html} violates the second constraint
    */
   public SafeHtmlBuilder appendHtmlConstant(String html) {
-    // TODO(xtof): (hosted-mode only) assert that html satisfies the second
-    // constraint.
+    SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(html);
     sb.append(html);
     return this;
   }

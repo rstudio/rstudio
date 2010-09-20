@@ -38,22 +38,42 @@ public final class SafeHtmlUtils {
    * the string.
    *
    * <p>
-   * <b>Important</b>: For this class to be able to honor its contract as
-   * required by {@link SafeHtml}, all uses of this method must satisfy the
-   * following requirements:
+   * <b>Important</b>: For this method to be able to honor the {@link SafeHtml}
+   * contract, all uses of this method must satisfy the following constraints:
    *
-   * <ul>
+   * <ol>
    *
-   * <li>The argument expression must be fully determined and known to be safe
-   * at compile time.
+   * <li>The argument expression must be fully determined at compile time.
    *
-   * <li>The value of the argument must not contain incomplete HTML tags.
+   * <li>The value of the argument must end in "inner HTML" context and not
+   * contain incomplete HTML tags. I.e., the following is not a correct use of
+   * this method, because the {@code <a>} tag is incomplete:
    *
-   * </ul>
+   * <pre class="code">
+   * {@code shb.appendConstantHtml("<a href='").append(url)}</pre>
+   *
+   * </ol>
+   *
+   * <p>
+   * The first constraint provides a sufficient condition that the argument (and
+   * any HTML markup contained in it) originates from a trusted source. The
+   * second constraint ensures the composability of {@link SafeHtml} values.
+   *
+   * <p>
+   * When executing client-side in hosted mode, or server side with assertions
+   * enabled, the argument is HTML-parsed and validated to satisfy the second
+   * constraint (the server-side check can also be enabled programmatically, see
+   * {@link SafeHtmlHostedModeUtils#maybeCheckCompleteHtml(String)} for
+   * details). For performance reasons, this check is not performed in prod mode
+   * on the client, and with assertions disabled on the server.
+   *
+   * @param s the string to be wrapped as a {@link SafeHtml}
+   * @return {@code s}, wrapped as a {@link SafeHtml}
+   * @throws IllegalArgumentException if not running in prod mode and {@code
+   *           html} violates the second constraint
    */
   public static SafeHtml fromSafeConstant(String s) {
-    // TODO(pdr): (hosted-mode only) assert that html satisfies the second
-    // constraint.
+    SafeHtmlHostedModeUtils.maybeCheckCompleteHtml(s);
     return new SafeHtmlString(s);
   }
 

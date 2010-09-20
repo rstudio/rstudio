@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,12 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.safehtml.shared;
+package com.google.gwt.safehtml.server;
+
+import com.google.gwt.safehtml.shared.GwtSafeHtmlHostedModeUtilsTest;
+import com.google.gwt.safehtml.shared.SafeHtmlHostedModeUtils;
 
 /**
- * Unit tests for {@link SafeHtmlBuilder}.
+ * JUnit tests for {@link SafeHtmlHostedModeUtils}.
  */
-public class SafeHtmlBuilderTest extends GwtSafeHtmlBuilderTest {
+public class SafeHtmlHostedModeUtilsTest
+    extends GwtSafeHtmlHostedModeUtilsTest {
 
   // This forces a GWTTestCase to run as a vanilla JUnit TestCase.
   @Override
@@ -32,6 +36,8 @@ public class SafeHtmlBuilderTest extends GwtSafeHtmlBuilderTest {
     // Since we can't assume assertions are enabled, force
     // SafeHtmlHostedModeUtils#maybeCheckCompleteHtml to perform its check
     // when running in JRE.
-    SafeHtmlHostedModeUtils.setForceCheckCompleteHtml(true);
+    System.setProperty(
+        SafeHtmlHostedModeUtils.FORCE_CHECK_COMPLETE_HTML, "true");
+    SafeHtmlHostedModeUtils.setForceCheckCompleteHtmlFromProperty();
   }
 }

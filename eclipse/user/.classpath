@@ -39,5 +39,7 @@
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA.jar" sourcepath="/GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-6.1.11.jar" sourcepath="/GWT_TOOLS/lib/jetty/jetty-6.1.11-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-r06/guava-r06-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-rebased.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

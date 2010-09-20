@@ -15,6 +15,7 @@
  */
 package com.google.gwt.safehtml.shared;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -79,6 +80,20 @@ public class GwtSafeHtmlUtilsTest extends GWTTestCase {
   public void testFromSafeConstant() {
     SafeHtml h = SafeHtmlUtils.fromSafeConstant(CONSTANT_HTML);
     assertEquals(CONSTANT_HTML, h.asString());
+  }
+
+  public void testFromSafeConstant_withIncompleteHtml() {
+    if (GWT.isProdMode()) {
+      // fromSafeConstant does not parse/validate its argument in prod mode.
+      // Hence we short-circuit this test in prod mode.
+      return;
+    }
+    try {
+      SafeHtml h = SafeHtmlUtils.fromSafeConstant("<a href=\"");
+      fail("Should have thrown IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
 
   public void testFromString() {

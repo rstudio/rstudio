@@ -15,6 +15,7 @@
  */
 package com.google.gwt.safehtml.shared;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -44,6 +45,29 @@ public class GwtSafeHtmlBuilderTest extends GWTTestCase {
     String expected = "Yabba dabba &amp; doo\n" + "What&#39;s up so&amp;so\n"
         + FOOBARBAZ_HTML;
     assertEquals(expected, b.toSafeHtml().asString());
+  }
+
+  public void testAppendHtmlConstant_innerHtml() {
+    SafeHtml html = new SafeHtmlBuilder()
+        .appendHtmlConstant("<div id=\"div_0\">")
+        .appendEscaped("0 < 1")
+        .appendHtmlConstant("</div>").toSafeHtml();
+    assertEquals("<div id=\"div_0\">0 &lt; 1</div>", html.asString());
+  }
+
+  public void testAppendHtmlConstant_withIncompleteHtml() {
+    if (GWT.isProdMode()) {
+      // appendHtmlConstant does not parse/validate its argument in prod mode.
+      // Hence we short-circuit this test in prod mode.
+      return;
+    }
+    SafeHtmlBuilder b = new SafeHtmlBuilder();
+    try {
+      b.appendHtmlConstant("<a href=\"");
+      fail("Should have thrown IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
 
   @Override
