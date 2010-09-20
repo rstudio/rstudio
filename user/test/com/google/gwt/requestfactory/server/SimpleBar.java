@@ -17,8 +17,10 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.Id;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -29,16 +31,16 @@ public class SimpleBar {
   /**
    * DO NOT USE THIS UGLY HACK DIRECTLY! Call {@link #get} instead.
    */
-  private static SimpleBar jreTestSingleton = new SimpleBar();
-
-  private static Long nextId = 1L;
+  private static Map<String, SimpleBar> jreTestSingleton = new HashMap<String, SimpleBar>();
+ 
+  private static long nextId = 2L;
 
   public static Long countSimpleBar() {
-    return 1L;
+      return (long) get().size();
   }
 
   public static List<SimpleBar> findAll() {
-    return Collections.singletonList(get());
+    return new ArrayList<SimpleBar>(get().values());
   }
 
   public static SimpleBar findSimpleBar(String id) {
@@ -46,11 +48,11 @@ public class SimpleBar {
   }
 
   public static SimpleBar findSimpleBarById(String id) {
-    get().setId(id);
-    return get();
+    return get().get(id);
   }
 
-  public static synchronized SimpleBar get() {
+  @SuppressWarnings("unchecked")
+  public static synchronized Map<String, SimpleBar> get() {
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
     if (req == null) {
       // May be in a JRE test case, use the the singleton
@@ -61,7 +63,7 @@ public class SimpleBar {
        * that doesn't allow any requests to be processed unless they're
        * associated with an existing session.
        */
-      SimpleBar value = (SimpleBar) req.getSession().getAttribute(
+      Map<String, SimpleBar> value = (Map<String, SimpleBar>) req.getSession().getAttribute(
           SimpleBar.class.getCanonicalName());
       if (value == null) {
         value = reset();
@@ -71,11 +73,22 @@ public class SimpleBar {
   }
 
   public static SimpleBar getSingleton() {
-    return get();
+    return findSimpleBar("1L");
   }
 
-  public static synchronized SimpleBar reset() {
-    SimpleBar instance = new SimpleBar();
+  public static synchronized Map<String, SimpleBar> reset() {
+    Map<String, SimpleBar> instance = new HashMap<String, SimpleBar>();
+    // fixtures
+    SimpleBar s1 = new SimpleBar();
+    s1.setId("1L");
+    s1.isNew = false;
+    instance.put(s1.getId(), s1);
+
+    SimpleBar s2 = new SimpleBar();
+    s2.setId("999L");
+    s2.isNew = false;
+    instance.put(s2.getId(), s2);
+
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
     if (req == null) {
       jreTestSingleton = instance;
@@ -86,12 +99,18 @@ public class SimpleBar {
     return instance;
   }
 
+  static {
+    reset();
+  }
+
   Integer version = 1;
 
   @Id
-  private String id = "1L";
+  private String id = "999L";
 
   private String userName;
+
+  private boolean isNew = true;
 
   public SimpleBar() {
     version = 1;
@@ -111,8 +130,11 @@ public class SimpleBar {
   }
 
   public void persist() {
-    setId(Long.toString(nextId++));
-    get().setUserName(userName);
+    if (isNew) {
+      setId(Long.toString(nextId++));
+      isNew = false;
+      get().put(getId(), this);
+    }
   }
 
   public SimpleBar persistAndReturnSelf() {

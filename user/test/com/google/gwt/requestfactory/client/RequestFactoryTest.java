@@ -250,38 +250,51 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   public void testPersistExistingEntityNewRelation() {
     delayTestFinish(5000);
 
-    SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
+    // Make a new bar
+    SimpleBarProxy makeABar = req.create(SimpleBarProxy.class);
+    RequestObject<SimpleBarProxy> persistRequest = req.simpleBarRequest().persistAndReturnSelf(
+        makeABar);
+    makeABar = persistRequest.edit(makeABar);
+    makeABar.setUserName("Amit");
 
-    final RequestObject<Void> barReq = req.simpleBarRequest().persist(newBar);
-    newBar = barReq.edit(newBar);
-    newBar.setUserName("Amit");
+    persistRequest.fire(new Receiver<SimpleBarProxy>() {
+      @Override
+      public void onSuccess(final SimpleBarProxy persistedBar) {
 
-    final SimpleBarProxy finalNewBar = newBar;
-    req.simpleFooRequest().findSimpleFooById("999L").fire(
-        new Receiver<SimpleFooProxy>() {
-          @Override
-          public void onSuccess(SimpleFooProxy response) {
-            RequestObject<Void> fooReq = req.simpleFooRequest().persist(
-                response);
-            response = fooReq.edit(response);
-            response.setBarField(finalNewBar);
-            fooReq.fire(new Receiver<Void>() {
+        // It was made, now find a foo to assign it to
+        req.simpleFooRequest().findSimpleFooById("999L").fire(
+            new Receiver<SimpleFooProxy>() {
               @Override
-              public void onSuccess(Void response) {
-                req.simpleFooRequest().findSimpleFooById("999L").with(
-                    "barField.userName").fire(new Receiver<SimpleFooProxy>() {
+              public void onSuccess(SimpleFooProxy response) {
+
+                // Found the foo, edit it
+                RequestObject<Void> fooReq = req.simpleFooRequest().persist(
+                    response);
+                response = fooReq.edit(response);
+                response.setBarField(persistedBar);
+                fooReq.fire(new Receiver<Void>() {
                   @Override
-                  public void onSuccess(SimpleFooProxy finalFooProxy) {
-                    // barReq hasn't been persisted, so old value
-                    assertEquals("FOO",
-                        finalFooProxy.getBarField().getUserName());
-                    finishTestAndReset();
+                  public void onSuccess(Void response) {
+
+                    // Foo was persisted, fetch it again check the goods
+                    req.simpleFooRequest().findSimpleFooById("999L").with(
+                        "barField.userName").fire(
+                        new Receiver<SimpleFooProxy>() {
+
+                          // Here it is
+                          @Override
+                          public void onSuccess(SimpleFooProxy finalFooProxy) {
+                            assertEquals("Amit",
+                                finalFooProxy.getBarField().getUserName());
+                            finishTestAndReset();
+                          }
+                        });
                   }
                 });
               }
             });
-          }
-        });
+      }
+    });
   }
 
   /*
