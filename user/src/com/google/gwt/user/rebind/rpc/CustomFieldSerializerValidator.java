@@ -35,6 +35,11 @@ public class CustomFieldSerializerValidator {
   private static final String NO_INSTANTIATE_METHOD = "Custom Field Serializer ''{0}'' does not define an instantiate method: ''public static {1} instantiate({2} reader)''; but ''{1}'' is not default instantiable";
   private static final String NO_SERIALIZE_METHOD = "Custom Field Serializer ''{0}'' does not define a serialize method: ''public static void serialize({1} writer,{2} instance)''";
   private static final String TOO_MANY_METHODS = "Custom Field Serializer ''{0}'' defines too many methods named ''{1}''; please define only one method with that name";
+  private static final String WRONG_CONCRETE_TYPE_RETURN = "Custom Field Serializer ''{0}'' returns the wrong type from ''concreteType''; return type must be ''java.lang.Class''";
+
+  public static JMethod getConcreteTypeMethod(JClassType serializer) {
+    return serializer.findMethod("concreteType", new JType[0]);
+  }
 
   public static JMethod getDeserializationMethod(JClassType serializer,
       JClassType serializee) {
@@ -154,6 +159,17 @@ public class CustomFieldSerializerValidator {
       }
     } else {
       checkTooMany("instantiate", serializer, reasons);
+    }
+
+    JMethod concreteTypeMethod = getConcreteTypeMethod(serializer);
+    if (concreteTypeMethod != null) {
+      if (!"java.lang.Class".equals(concreteTypeMethod.getReturnType().getQualifiedSourceName())) {
+        // Wrong return type.
+        reasons.add(MessageFormat.format(WRONG_CONCRETE_TYPE_RETURN,
+            serializer.getQualifiedSourceName()));
+      } else {
+        checkTooMany("concreteType", serializer, reasons);
+      }
     }
 
     return reasons;

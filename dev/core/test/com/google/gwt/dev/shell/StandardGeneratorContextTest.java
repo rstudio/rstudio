@@ -244,11 +244,7 @@ public class StandardGeneratorContextTest extends TestCase {
     testTryCreateResource_commitNotCalled();
 
     // Now call finish() again to make sure nothing blows up.
-    try {
-      genCtx.finish(mockLogger);
-    } catch (UnableToCompleteException e) {
-      fail("finish() failed; it should support safely being called any number of times");
-    }
+    genCtx.finish(mockLogger);
   }
 
   public void testTryCreateResource_normalCompletionWithoutSubDir()

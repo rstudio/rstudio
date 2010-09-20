@@ -605,7 +605,8 @@ public class ProxyCreator {
       throws UnableToCompleteException {
     TypeSerializerCreator tsc = new TypeSerializerCreator(logger,
         typesSentFromBrowser, typesSentToBrowser, context,
-        SerializationUtils.getTypeSerializerQualifiedName(serviceIntf));
+        SerializationUtils.getTypeSerializerQualifiedName(serviceIntf),
+        SerializationUtils.getTypeSerializerSimpleName(serviceIntf));
     tsc.realize(logger);
 
     typeStrings = new HashMap<JType, String>(tsc.getTypeStrings());
