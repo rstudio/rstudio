@@ -919,6 +919,14 @@ public class JsInliner {
         return;
       }
 
+      /*
+       * Don't inline huge functions into huge multi-expressions. Some JS
+       * engines will blow up.
+       */
+      if (invokedFunction.getBody().getStatements().size() > 50) {
+        return;
+      }
+
       // Don't inline blacklisted functions
       if (blacklist.contains(invokedFunction)) {
         return;
