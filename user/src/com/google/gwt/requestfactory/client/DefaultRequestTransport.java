@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.client;
 
 import static com.google.gwt.user.client.rpc.RpcRequestBuilder.STRONG_NAME_HEADER;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.http.client.Request;
@@ -37,6 +38,14 @@ import java.util.logging.Logger;
  * {@link RequestBuilder}.
  */
 public class DefaultRequestTransport implements RequestTransport {
+
+  /**
+   * The default URL for a DefaultRequestTransport is
+   * <code>{@link GWT#getHostPageBaseURL()} + {@value #URL}</code> which may be
+   * overridden by calling {@link #setRequestUrl(String)}.
+   */
+  public static final String URL = "gwtRequest";
+
   /*
    * A separate logger for wire activity, which does not get logged by the
    * remote log handler, so we avoid infinite loops. All log messages that could
@@ -45,8 +54,9 @@ public class DefaultRequestTransport implements RequestTransport {
    */
   private static Logger wireLogger = Logger.getLogger("WireActivityLogger");
   private static final String SERVER_ERROR = "Server Error";
+
   private final EventBus eventBus;
-  private String requestUrl = GWT.getHostPageBaseURL() + RequestFactory.URL;
+  private String requestUrl = GWT.getHostPageBaseURL() + URL;
 
   /**
    * Construct a DefaultRequestTransport.
@@ -112,7 +122,8 @@ public class DefaultRequestTransport implements RequestTransport {
    * Creates a RequestCallback that maps the HTTP response onto the
    * {@link TransportReceiver} interface.
    */
-  protected RequestCallback createRequestCallback(final TransportReceiver receiver) {
+  protected RequestCallback createRequestCallback(
+      final TransportReceiver receiver) {
     return new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {

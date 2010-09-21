@@ -28,9 +28,6 @@ import com.google.gwt.event.shared.EventBus;
 public interface RequestFactory {
   String JSON_CONTENT_TYPE_UTF8 = "application/json; charset=utf-8";
 
-  // TODO: this must be configurable
-  String URL = "gwtRequest";
-
   <R extends EntityProxy> R create(Class<R> token);
 
   /**

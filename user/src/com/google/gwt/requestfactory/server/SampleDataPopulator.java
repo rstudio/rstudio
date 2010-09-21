@@ -15,7 +15,7 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.client.DefaultRequestTransport;
 import com.google.gwt.requestfactory.shared.impl.RequestData;
 
 import org.apache.http.HttpEntity;
@@ -51,9 +51,9 @@ public class SampleDataPopulator {
       System.exit(-1);
     }
     try {
-      if (!args[0].endsWith(RequestFactory.URL)) {
+      if (!args[0].endsWith(DefaultRequestTransport.URL)) {
         System.err.println("Please check your URL string " + args[0]
-            + ", it should end with " + RequestFactory.URL + ", exiting");
+            + ", it should end with " + DefaultRequestTransport.URL + ", exiting");
         System.exit(-1);
       }
       SampleDataPopulator populator = new SampleDataPopulator(args[0], args[1]);
