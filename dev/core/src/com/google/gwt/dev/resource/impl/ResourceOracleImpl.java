@@ -200,8 +200,9 @@ public class ResourceOracleImpl implements ResourceOracle {
     
     List<PathPrefixSet> pathPrefixSets = new ArrayList<PathPrefixSet>();
     for (ResourceOracleImpl oracle : oracles) {
-      if (oracle.classPath != oracles[0].classPath) {
-        throw new IllegalArgumentException();
+      if (!oracle.classPath.equals(oracles[0].classPath)) {
+        throw new IllegalArgumentException(
+            "Refreshing multiple oracles with different classpaths");
       }
       resourceDataMaps.add(new LinkedHashMap<String, ResourceData>());
       pathPrefixSets.add(oracle.pathPrefixSet);
