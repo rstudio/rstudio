@@ -15,9 +15,9 @@
  */
 package com.google.gwt.sample.expenses.client.request;
 
-import com.google.gwt.requestfactory.shared.ProxyFor;
-
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.ProxyFor;
 
 import java.util.Date;
 
@@ -35,6 +35,8 @@ public interface ReportProxy extends EntityProxy {
 
   String getDepartment();
 
+  Long getId();
+  
   String getNotes();
 
   String getPurpose();
@@ -54,4 +56,6 @@ public interface ReportProxy extends EntityProxy {
   void setPurpose(String purpose);
 
   void setReporter(EmployeeProxy reporter);
+  
+  EntityProxyId<ReportProxy> stableId();
 }

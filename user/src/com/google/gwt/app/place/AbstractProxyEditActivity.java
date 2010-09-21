@@ -55,9 +55,9 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
 
   private AcceptsOneWidget display;
   private P record;
-  private EntityProxyId stableId;
+  private EntityProxyId<P> stableId;
 
-  public AbstractProxyEditActivity(ProxyEditView<P> view, EntityProxyId proxyId,
+  public AbstractProxyEditActivity(ProxyEditView<P> view, EntityProxyId<P> proxyId,
       Class<P> proxyType, boolean creating, RequestFactory requests,
       PlaceController placeController) {
 
@@ -144,11 +144,10 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
 
     if (creating) {
       P tempRecord = requests.create(proxyType);
-      stableId = tempRecord.stableId();
+      stableId = cast(tempRecord.stableId());
       doStart(display, tempRecord);
     } else {
-      @SuppressWarnings("unchecked")
-      ProxyRequest<P> findRequest = (ProxyRequest<P>) requests.find(stableId);
+      ProxyRequest<P> findRequest = requests.find(stableId);
       findRequest.with(getView().getPaths()).fire(new Receiver<P>() {
         @Override
         public void onSuccess(P record) {
@@ -179,6 +178,11 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
   }
 
   protected abstract RequestObject<Void> getPersistRequest(P record);
+
+  @SuppressWarnings("unchecked")
+  private EntityProxyId<P> cast(EntityProxyId<?> stableId) {
+    return (EntityProxyId<P>) stableId;
+  }
 
   private void doStart(final AcceptsOneWidget display, P record) {
     requestObject = getPersistRequest(record);

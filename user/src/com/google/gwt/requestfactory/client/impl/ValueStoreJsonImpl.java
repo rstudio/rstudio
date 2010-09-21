@@ -34,14 +34,14 @@ class ValueStoreJsonImpl {
 
   final Map<EntityProxyIdImpl, ProxyJsoImpl> records = new HashMap<EntityProxyIdImpl, ProxyJsoImpl>();
 
-  EntityProxy getRecordBySchemaAndId(ProxySchema<?> schema, String id,
+  EntityProxy getRecordBySchemaAndId(ProxySchema<?> schema, String encodedId,
       RequestFactoryJsonImpl requestFactory) {
-    if (id == null) {
+    if (encodedId == null) {
       return null;
     }
     // TODO: pass isFuture to this method from decoding ID string
-    EntityProxyIdImpl key = new EntityProxyIdImpl(id, schema, false,
-        requestFactory.datastoreToFutureMap.get(id, schema));
+    EntityProxyIdImpl key = new EntityProxyIdImpl(encodedId, schema, false,
+        requestFactory.datastoreToFutureMap.get(encodedId, schema));
     return schema.create(records.get(key));
   }
 
@@ -54,14 +54,15 @@ class ValueStoreJsonImpl {
    * package-protected for testing purposes.
    */
   ProxyJsoImpl putInValueStore(ProxyJsoImpl newJsoRecord) {
-    EntityProxyIdImpl recordKey = new EntityProxyIdImpl(newJsoRecord.getId(),
+    EntityProxyIdImpl recordKey = new EntityProxyIdImpl(newJsoRecord.encodedId(),
         newJsoRecord.getSchema(), RequestFactoryJsonImpl.NOT_FUTURE,
         newJsoRecord.getRequestFactory().datastoreToFutureMap.get(
-            newJsoRecord.getId(), newJsoRecord.getSchema()));
+            newJsoRecord.encodedId(), newJsoRecord.getSchema()));
 
     ProxyJsoImpl oldRecord = records.get(recordKey);
     if (oldRecord == null) {
       records.put(recordKey, newJsoRecord);
+      newJsoRecord.assertValid();
       newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord,
           WriteOperation.ACQUIRE);
       return null;

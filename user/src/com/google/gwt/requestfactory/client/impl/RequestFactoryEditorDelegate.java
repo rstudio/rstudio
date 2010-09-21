@@ -46,14 +46,20 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
     public void onProxyChange(EntityProxyChange<EntityProxy> event) {
       if (event.getWriteOperation().equals(WriteOperation.UPDATE)
-          && event.getProxy().stableId().equals(
+          && event.getProxyId().equals(
               ((EntityProxy) getObject()).stableId())) {
         List<String> paths = new ArrayList<String>();
         traverse(paths);
-        EntityProxyId id = event.getProxy().stableId();
-        factory.find(id).with(paths.toArray(new String[paths.size()])).fire(
-            new SubscriptionReceiver());
+        @SuppressWarnings("rawtypes")
+        EntityProxyId id = event.getProxyId();
+        doFind(paths, id);
       }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void doFind(List<String> paths, EntityProxyId id) {
+      factory.find(id).with(paths.toArray(new String[paths.size()])).fire(
+          new SubscriptionReceiver());
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 
 /**
@@ -33,7 +34,7 @@ import com.google.gwt.requestfactory.shared.EntityProxyId;
  * the id is the data-store id. The futureId is non-null if the entity was
  * created on this client.
  */
-final class EntityProxyIdImpl implements EntityProxyId {
+final class EntityProxyIdImpl<P extends EntityProxy> implements EntityProxyId<P> {
   static final String SEPARATOR = "---";
 
   private static int hashCode(ProxySchema<?> proxySchema, boolean hasFutureId, Object finalId) {
@@ -45,20 +46,21 @@ final class EntityProxyIdImpl implements EntityProxyId {
   }
 
   final ProxySchema<?> schema;
-  final Object id;
+  // TODO(rjrjr) These should be strings, but the future map implications are a bit daunting
+  final Object encodedId;
   final Object futureId;
 
   final boolean isFuture;
 
-  protected EntityProxyIdImpl(Object id, ProxySchema<?> schema,
+  protected EntityProxyIdImpl(Object encodedId, ProxySchema<?> schema,
       boolean isFuture, Object futureId) {
-    assert id != null;
+    assert encodedId != null;
     assert schema != null;
     if (isFuture) {
       assert futureId == null;
     }
 
-    this.id = id;
+    this.encodedId = encodedId;
     this.schema = schema;
     this.isFuture = isFuture;
     this.futureId = futureId;
@@ -68,7 +70,7 @@ final class EntityProxyIdImpl implements EntityProxyId {
     if (isFuture) {
       throw new IllegalStateException("Need to persist this proxy first");
     }
-    return id + SEPARATOR + schema.getToken();
+    return encodedId + SEPARATOR + schema.getToken();
   }
 
   @Override
@@ -82,18 +84,19 @@ final class EntityProxyIdImpl implements EntityProxyId {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    EntityProxyIdImpl other = (EntityProxyIdImpl) obj;
+    @SuppressWarnings("unchecked")
+    EntityProxyIdImpl<P> other = (EntityProxyIdImpl<P>) obj;
     if (!schema.equals(other.schema)) {
       return false;
     }
-    if (isFuture == other.isFuture && id.equals(other.id)) {
+    if (isFuture == other.isFuture && encodedId.equals(other.encodedId)) {
       return true;
     }
     // one of the isFuture is false. check its futureId
-    if (!isFuture && other.id.equals(futureId)) {
+    if (!isFuture && other.encodedId.equals(futureId)) {
       return true;
     }
-    if (!other.isFuture && id.equals(other.futureId)) {
+    if (!other.isFuture && encodedId.equals(other.futureId)) {
       return true;
     }
     return false;
@@ -106,16 +109,16 @@ final class EntityProxyIdImpl implements EntityProxyId {
   public int hashCode() {
     if (futureId == null && !isFuture) {
       // does not have a futureId.
-      return hashCode(schema, false, id); 
+      return hashCode(schema, false, encodedId); 
     }
     // has futureId
-    return hashCode(schema, true, isFuture ? id : futureId);
+    return hashCode(schema, true, isFuture ? encodedId : futureId);
   }
 
   @Override
   public String toString() {
-    return "[EntityProxyId schema: " + schema.getClass().getName() + " id: " + id
-        + " isFuture: " + (isFuture ? "true" : "false")
-        + (futureId != null ? ("futureId : " + futureId) : "") + "]";
+    return "[EntityProxyId schema: " + schema.getClass().getName() + " id: "
+        + encodedId + " isFuture: " + (isFuture ? "true" : "false")
+        + " futureId: " + futureId + "]";
   }
 }

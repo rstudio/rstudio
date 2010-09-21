@@ -19,6 +19,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.resources.client.CssResource;
@@ -147,21 +148,21 @@ public class SummaryWidget extends Composite {
 
   void onPersonChanged(EntityProxyChange<PersonProxy> event) {
     if (WriteOperation.UPDATE.equals(event.getWriteOperation())) {
-      PersonProxy record = event.getProxy();
+      EntityProxyId<PersonProxy> personId = event.getProxyId();
 
       // Is the changing record onscreen?
-      int displayOffset = offsetOf(record);
+      int displayOffset = offsetOf(personId);
       if (displayOffset != -1) {
         // Record is onscreen and may differ from our data
-        requestFactory.personRequest().findPerson(record.getId()).fire(
+        requestFactory.find(personId).fire(
             new Receiver<PersonProxy>() {
               @Override
-              public void onSuccess(PersonProxy response) {
+              public void onSuccess(PersonProxy person) {
                 // Re-check offset in case of changes while waiting for data
-                int offset = offsetOf(response);
+                int offset = offsetOf(person.stableId());
                 if (offset != -1) {
                   table.setRowData(table.getPageStart() + offset,
-                      Collections.singletonList(response));
+                      Collections.singletonList(person));
                 }
               }
             });
@@ -200,11 +201,10 @@ public class SummaryWidget extends Composite {
         });
   }
 
-  private int offsetOf(PersonProxy person) {
-    String lookFor = person.getId();
+  private int offsetOf(EntityProxyId<PersonProxy> personId) {
     List<PersonProxy> displayedItems = table.getDisplayedItems();
     for (int offset = 0, j = displayedItems.size(); offset < j; offset++) {
-      if (lookFor.equals(displayedItems.get(offset).getId())) {
+      if (personId.equals(displayedItems.get(offset).stableId())) {
         return offset;
       }
     }

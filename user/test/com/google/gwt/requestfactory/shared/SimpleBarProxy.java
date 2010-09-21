@@ -23,7 +23,11 @@ import com.google.gwt.requestfactory.server.SimpleBar;
  */
 @ProxyFor(SimpleBar.class)
 public interface SimpleBarProxy extends EntityProxy {
+  String getId();
+  
   String getUserName();
 
   void setUserName(String userName);
+
+  EntityProxyId<SimpleBarProxy> stableId();
 }
