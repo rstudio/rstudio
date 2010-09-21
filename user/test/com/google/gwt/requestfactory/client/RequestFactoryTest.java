@@ -193,7 +193,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     req.simpleBarRequest().findAll().fire(new Receiver<List<SimpleBarProxy>>() {
       @Override
       public void onSuccess(List<SimpleBarProxy> response) {
-        assertEquals("2", response.size());
+        assertEquals(2, response.size());
         for (SimpleBarProxy bar : response) {
           assertNotNull(bar.stableId());
         }
@@ -205,7 +205,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<List<SimpleFooProxy>>() {
           @Override
           public void onSuccess(List<SimpleFooProxy> response) {
-            assertEquals("1", response.size());
+            assertEquals(1, response.size());
             for (SimpleFooProxy foo : response) {
               assertNotNull(foo.stableId());
               assertEquals("GWT", foo.getBarField().getUserName());
