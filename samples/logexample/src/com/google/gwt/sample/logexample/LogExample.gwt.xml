@@ -23,6 +23,9 @@
   
   <!-- Disable the firebug handler as an example -->
   <set-property name="gwt.logging.firebugHandler" value="DISABLED" />
+  
+  <!-- Enable the simple remote handler -->
+  <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
 
   <!-- Try uncommenting some of the following to configure logging further
   <set-property name="gwt.logging.enabled" value="FALSE"/> 

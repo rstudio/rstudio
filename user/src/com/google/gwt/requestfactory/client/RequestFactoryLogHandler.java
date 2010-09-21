@@ -17,19 +17,19 @@
 package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.logging.client.JsonLogRecordClientUtil;
+import com.google.gwt.logging.client.RemoteLogHandlerBase;
 import com.google.gwt.logging.shared.SerializableLogRecord;
 import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 
-import java.util.logging.Handler;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 /**
  * A Handler that does remote logging for applications using RequestFactory.
  */
-public class RequestFactoryLogHandler extends Handler {
+public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
   
   /** 
    * Provides a logging request.
@@ -42,70 +42,45 @@ public class RequestFactoryLogHandler extends Handler {
     @Override
     public void onSuccess(Long response) {
       if (response > 0) {
-        logger.finest("Remote logging successful");
+        wireLogger.finest("Remote logging successful");
       } else {
-        logger.finest("Remote logging failed");
+        wireLogger.severe("Remote logging failed");
       }
     }
   }
   
-  private static Logger logger = 
-    Logger.getLogger(RequestFactoryLogHandler.class.getName());
-  
-  // A separate logger for wire activity, which does not get logged
-  // by the remote log handler, so we avoid infinite loops.
-  private static Logger wireLogger = Logger.getLogger("WireActivityLogger");
-  
-  private boolean closed;
   private LoggingRequestProvider requestProvider;
-  private String ignoredLoggerSubstring;
-  private String strongName;
   
   /**
    * Since records from this handler go accross the wire, it should only be
    * used for important messages, and it's Level will often be higher than the
-   * Level being used app-wide. This handler also takes a string which it will
+   * Level being used app-wide. This handler also takes string which it will
    * use to exclude the messages from some loggers. This usually includes the
    * name of the logger(s) which will be used to log acknowledgements of
    * activity going accross the wire. If we did not exclude these loggers, an
    * infinite loop would occur.
    */
   public RequestFactoryLogHandler(LoggingRequestProvider requestProvider,
-      Level level, String ignoredLoggerSubstring, String strongName) {
+      Level level, List<String> ignoredLoggerNames) {
+    super(ignoredLoggerNames);
     this.requestProvider = requestProvider;
-    this.ignoredLoggerSubstring = ignoredLoggerSubstring;
-    this.strongName = strongName;
-    closed = false;
     setLevel(level);
   }
 
   @Override
-  public void close() {
-    closed = true;
-  }
-  
-  @Override
-  public void flush() {
-    // Do nothing
-  }
-
-  @Override
   public void publish(LogRecord record) {
-    if (closed || !isLoggable(record)) {
-      return;
-    }
-    if (record.getLoggerName().contains(ignoredLoggerSubstring)) {
+    if (!isLoggable(record)) {
       return;
     }
     SerializableLogRecord slr =
-      new SerializableLogRecord(record, strongName);
+      new SerializableLogRecord(record);
     String json = JsonLogRecordClientUtil.serializableLogRecordAsJson(slr);
     requestProvider.getLoggingRequest().logMessage(json).fire(
-        new Receiver<Boolean>() {
+        new Receiver<String>() {
           @Override
-          public void onSuccess(Boolean response) {
-            if (!response) {
-              wireLogger.severe("Remote Logging failed to parse JSON");
+          public void onSuccess(String response) {
+            if (!response.isEmpty()) {
+              wireLogger.severe("Remote Logging failed on server: " + response);
             }
           }
         });

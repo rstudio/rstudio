@@ -48,7 +48,7 @@ public class StackTraceDeobfuscator {
   private static Pattern JsniRefPattern =
     Pattern.compile("@?([^:]+)::([^(]+)(\\((.*)\\))?");
   
-  private String symbolMapsDirectory = "";
+  private String symbolMapsDirectory;
   
   private Map<String, SymbolMap> symbolMaps =
     new HashMap<String, SymbolMap>();
@@ -58,15 +58,22 @@ public class StackTraceDeobfuscator {
   }
   
   public SerializableLogRecord deobfuscateLogRecord(
-      SerializableLogRecord slr) {
-    if (slr.getThrown() != null) {
-      slr.setThrown(deobfuscateThrowable(slr.getThrown(), slr.getStrongName()));
+      SerializableLogRecord slr, String strongName) {
+    if (slr.getThrown() != null && strongName != null) {
+      slr.setThrown(deobfuscateThrowable(slr.getThrown(), strongName));
     }
     return slr;
   }
   
   public void setSymbolMapsDirectory(String dir) {
-    symbolMapsDirectory = dir;
+    // Switching the directory should clear the symbolMaps variable (which 
+    // is read in lazily), but causing the symbolMaps variable to be re-read
+    // is somewhat expensive, so we only want to do this if the directory is
+    // actually different.
+    if (!dir.equals(symbolMapsDirectory)) {
+      symbolMapsDirectory = dir;
+      symbolMaps = new HashMap<String, SymbolMap>();
+    }
   }
   
   private StackTraceElement[] deobfuscateStackTrace(

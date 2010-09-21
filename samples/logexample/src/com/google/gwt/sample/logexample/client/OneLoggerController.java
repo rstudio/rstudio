@@ -66,12 +66,8 @@ public class OneLoggerController {
 
   @UiHandler("exceptionButton")
   void handleExceptionClick(ClickEvent e) {
-    try {
-      Level n = null;
-      n.getName();
-    } catch (NullPointerException ex) {
-      logger.log(Level.SEVERE, "Null Exception Hit", ex);
-    }
+      logger.log(Level.SEVERE, "Fake Null Exception Hit",
+          new NullPointerException());
   }
   
   @UiHandler("logButton")

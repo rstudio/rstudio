@@ -32,6 +32,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -76,7 +77,7 @@ public class DynaTableRf implements EntryPoint {
     };
     Logger.getLogger("").addHandler(
         new RequestFactoryLogHandler(provider, Level.WARNING,
-            "WireActivityLogger", GWT.getPermutationStrongName()));
+            new ArrayList<String>()));
     FavoritesManager manager = new FavoritesManager(requests);
     PersonEditorWorkflow.register(eventBus, requests, manager);
 

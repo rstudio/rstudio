@@ -22,35 +22,29 @@ import com.google.gwt.logging.shared.RemoteLoggingServiceAsync;
 import com.google.gwt.logging.shared.SerializableLogRecord;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import java.util.logging.Handler;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 /**
  * A very simple handler which sends messages to the server via GWT RPC to be
- * logged. Note that this logger should not be used in production. It does not
- * do any intelligent batching of RPC's, nor does it disable when the RPC
- * calls fail repeatedly.
+ * logged. Note that this logger does not do any intelligent batching of RPC's,
+ * nor does it disable when the RPC calls fail repeatedly.
  */
-public final class SimpleRemoteLogHandler extends Handler {
-  private static Logger logger =
-    Logger.getLogger(SimpleRemoteLogHandler.class.getName());
-
+public final class SimpleRemoteLogHandler extends RemoteLogHandlerBase {
   class DefaultCallback implements AsyncCallback<String> {
     public void onFailure(Throwable caught) {
-      logger.severe("Remote logging failed: " + caught.toString());
+      wireLogger.severe("Remote logging failed: " + caught.toString());
     }
     public void onSuccess(String result) {
-      if (result.length() > 0) {
-        logger.severe("Remote logging failed: " + result);
+      if (result != null) {
+        wireLogger.severe("Remote logging failed: " + result);
       } else {
-        logger.finest("Remote logging message acknowledged");
+        wireLogger.finest("Remote logging message acknowledged");
       }
     }
   }
   
-  private RemoteLoggingServiceAsync service;
   private AsyncCallback<String> callback;
+  private RemoteLoggingServiceAsync service;
 
   public SimpleRemoteLogHandler() {
     service = (RemoteLoggingServiceAsync) GWT.create(RemoteLoggingService.class);
@@ -58,23 +52,9 @@ public final class SimpleRemoteLogHandler extends Handler {
   }
   
   @Override
-  public void close() {
-    // No action needed
-  }
-
-  @Override
-  public void flush() {
-    // No action needed
-  }
-
-  @Override
   public void publish(LogRecord record) {
-    if (record.getLoggerName().equals(logger.getName())) {
-      // We don't want to propagate our own messages to the server since it
-      // would lead to an infinite loop.
-      return;
+    if (isLoggable(record)) {
+      service.logOnServer(new SerializableLogRecord(record), callback);
     }
-    service.logOnServer(new SerializableLogRecord(
-        record, GWT.getPermutationStrongName()), callback);
   }
 }

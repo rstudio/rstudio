@@ -34,56 +34,46 @@ import org.json.JSONObject;
  */
 public class JsonLogRecordServerUtil {
   public static SerializableLogRecord serializableLogRecordFromJson(
-      String jsonString) {
-    try {
-      JSONObject slr = new JSONObject(jsonString);
-      String level = slr.getString("level");
-      String loggerName = slr.getString("loggerName");
-      String msg = slr.getString("msg");
-      String strongName = slr.getString("strongName");
-      long timestamp = Long.parseLong(slr.getString("timestamp"));
-      SerializableThrowable thrown =
-        serializableThrowableFromJson(slr.getString("thrown"));
-      return new SerializableLogRecord(level, loggerName, msg, thrown,
-          timestamp, strongName);
-    } catch (JSONException e) {
-    }
-    return null;
+      String jsonString) throws JSONException {
+    JSONObject slr = new JSONObject(jsonString);
+    String level = slr.getString("level");
+    String loggerName = slr.getString("loggerName");
+    String msg = slr.getString("msg");
+    long timestamp = Long.parseLong(slr.getString("timestamp"));
+    SerializableThrowable thrown =
+      serializableThrowableFromJson(slr.getString("thrown"));
+    return new SerializableLogRecord(level, loggerName, msg, thrown,
+        timestamp);
   }
   
   private static StackTraceElement serializableStackTraceElementFromJson(
-      String jsonString) {
-    try {
-      JSONObject ste = new JSONObject(jsonString);
-      String className = ste.getString("className");
-      String fileName = ste.getString("fileName");
-      String methodName = ste.getString("methodName");
-      int lineNumber = Integer.parseInt(ste.getString("lineNumber"));
-      return new StackTraceElement(className, methodName, fileName,
-          lineNumber);
-    } catch (JSONException e) {
-    }
-    return null;
+      String jsonString) throws JSONException {
+    JSONObject ste = new JSONObject(jsonString);
+    String className = ste.getString("className");
+    String fileName = ste.getString("fileName");
+    String methodName = ste.getString("methodName");
+    int lineNumber = Integer.parseInt(ste.getString("lineNumber"));
+    return new StackTraceElement(className, methodName, fileName,
+        lineNumber);
   }
   
   private static SerializableThrowable serializableThrowableFromJson(
-      String jsonString) {
-    try {
-      JSONObject t = new JSONObject(jsonString);
-      String message = t.getString("message");
-      SerializableThrowable cause =
-        serializableThrowableFromJson(t.getString("cause"));
-      StackTraceElement[] stackTrace = null;
-      JSONArray st = t.getJSONArray("stackTrace");
-      if (st.length() > 0) {
-        stackTrace = new StackTraceElement[st.length()];
-        for (int i = 0; i < st.length(); i++) {
-          stackTrace[i] = serializableStackTraceElementFromJson(st.getString(i));
-        }
-      }
-      return new SerializableThrowable(message, cause, stackTrace);
-    } catch (JSONException e) {
+      String jsonString) throws JSONException {
+    if (jsonString.equals("{}")) {
+      return null;
     }
-    return null;
+    JSONObject t = new JSONObject(jsonString);
+    String message = t.getString("message");
+    SerializableThrowable cause =
+      serializableThrowableFromJson(t.getString("cause"));
+    StackTraceElement[] stackTrace = null;
+    JSONArray st = t.getJSONArray("stackTrace");
+    if (st.length() > 0) {
+      stackTrace = new StackTraceElement[st.length()];
+      for (int i = 0; i < st.length(); i++) {
+        stackTrace[i] = serializableStackTraceElementFromJson(st.getString(i));
+      }
+    }
+    return new SerializableThrowable(message, cause, stackTrace);
   }
 }

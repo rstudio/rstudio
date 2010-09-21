@@ -16,10 +16,12 @@
 
 package com.google.gwt.logging.server;
 
+import com.google.gwt.logging.server.RemoteLoggingServiceUtil.RemoteLoggingException;
 import com.google.gwt.logging.shared.RemoteLoggingService;
 import com.google.gwt.logging.shared.SerializableLogRecord;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -27,21 +29,52 @@ import java.util.logging.Logger;
  */
 public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements
     RemoteLoggingService {
-  private static Logger logger = Logger.getLogger("gwt.remote");
+  // No deobfuscator by default
+  private static StackTraceDeobfuscator deobfuscator = null;
 
-  public final String logOnServer(SerializableLogRecord record) {
+  private static Logger logger =
+    Logger.getLogger(RemoteServiceServlet.class.getName());
+  
+  private static String loggerNameOverride = null;
+  
+  /**
+   * Logs a Log Record which has been serialized using GWT RPC on the server.
+   * Returns either an error message, or null if logging is successful.
+   */
+  public final String logOnServer(SerializableLogRecord slr) {
+    String strongName = getPermutationStrongName();
     try {
-      logger.log(record.getLogRecord());
-    } catch (RuntimeException e) {
-      String exceptionString = e.toString();
-      String failureMessage = "Failed to log message due to " + exceptionString;
-      System.err.println(failureMessage);
-      e.printStackTrace();
-      
-      // Return the exception description so that the client code can
-      // print or log it if it wants.
-      return e.toString();
+      RemoteLoggingServiceUtil.logOnServer(
+          slr, strongName, deobfuscator, loggerNameOverride);
+    } catch (RemoteLoggingException e) {
+      logger.log(Level.SEVERE, "Remote logging failed", e);
+      return "Remote logging failed";
     }
-    return "";
+    return null;
   }
+  
+  /**
+   * By default, messages are logged to a logger that has the same name as
+   * the logger that created them on the client. If you want to log all messages
+   * from the client to a logger with another name, you can set the override
+   * using this method.
+   */
+  public void setLoggerNameOverride(String override) {
+    loggerNameOverride = override;
+  }
+  
+  /**
+   * By default, this service does not do any deobfuscation. In order to do
+   * server side deobfuscation, you must copy the symbolMaps files to a
+   * directory visible to the server and set the directory using this method.
+   * @param symbolMapsDir
+   */
+  public void setSymbolMapsDirectory(String symbolMapsDir) {
+    if (deobfuscator == null) {
+      deobfuscator = new StackTraceDeobfuscator(symbolMapsDir);
+    } else {
+      deobfuscator.setSymbolMapsDirectory(symbolMapsDir);
+    }
+  }
+  
 }

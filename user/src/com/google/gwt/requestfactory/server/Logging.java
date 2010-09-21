@@ -16,11 +16,12 @@
 
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.logging.server.JsonLogRecordServerUtil;
+import com.google.gwt.logging.server.RemoteLoggingServiceUtil;
+import com.google.gwt.logging.server.RemoteLoggingServiceUtil.RemoteLoggingException;
 import com.google.gwt.logging.server.StackTraceDeobfuscator;
-import com.google.gwt.logging.shared.SerializableLogRecord;
+import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 
-import java.util.logging.LogRecord;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -35,18 +36,24 @@ public class Logging {
   private static StackTraceDeobfuscator deobfuscator =
     new StackTraceDeobfuscator("");
   
-  public static Boolean logMessage(String serializedLogRecordString) {
-    SerializableLogRecord slr =
-      JsonLogRecordServerUtil.serializableLogRecordFromJson(
-          serializedLogRecordString);
-    slr = deobfuscator.deobfuscateLogRecord(slr);
-    LogRecord lr = slr.getLogRecord();
-    if (lr == null) {
-      return false;
+  private static Logger logger = Logger.getLogger(Logging.class.getName());
+  
+  public static String logMessage(String serializedLogRecordJson) {
+    // if the header does not exist, we pass null, which is handled gracefully
+    // by the deobfuscation code.
+    String strongName =
+      RequestFactoryServlet.getThreadLocalRequest().getHeader(
+          RpcRequestBuilder.STRONG_NAME_HEADER);
+    try {
+      RemoteLoggingServiceUtil.logOnServer(serializedLogRecordJson,
+          strongName, deobfuscator, null);
+    } catch (RemoteLoggingException e) {
+      // TODO(unnurg): Change this to use server failure reporting when it is
+      // submitted.
+      logger.log(Level.SEVERE, "Remote logging failed", e);
+      return "Remote logging failed";
     }
-    Logger logger = Logger.getLogger(lr.getLoggerName());
-    logger.log(lr);
-    return true;
+    return "";
   }
   
   /**
