@@ -40,6 +40,7 @@ public class FragmentLoaderCreator {
   public static final String ASYNC_LOADER_CLASS_PREFIX = "AsyncLoader";
   public static final String ASYNC_LOADER_PACKAGE = "com.google.gwt.lang.asyncloaders";
   public static final String BROWSER_LOADER = "AsyncFragmentLoader.BROWSER_LOADER";
+  public static final String CALLBACK_LIST_SUFFIX = "__Callback";
   public static final String LOADER_METHOD_RUN_ASYNC = "runAsync";
   public static final String RUN_ASYNC_CALLBACK = "com.google.gwt.core.client.RunAsyncCallback";
   public static final String RUN_CALLBACKS = "runCallbacks";
@@ -198,11 +199,11 @@ public class FragmentLoaderCreator {
   }
 
   private String getCallbackListQualifiedName() {
-    return ASYNC_LOADER_PACKAGE + "__Callback";
+    return ASYNC_LOADER_PACKAGE + getCallbackListSimpleName();
   }
 
   private String getCallbackListSimpleName() {
-    return getLoaderSimpleName() + "__Callback";
+    return getLoaderSimpleName() + CALLBACK_LIST_SUFFIX;
   }
 
   private String getLoaderQualifiedName() {

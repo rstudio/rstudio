@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -140,6 +140,8 @@ public class ReplaceRunAsyncs {
             loadMethod);
         methodCall.addArg(asyncCallback);
 
+        tightenCallbackType(entryNumber, asyncCallback.getType());
+
         program.addEntryMethod(getOnLoadMethod(loader), entryNumber);
 
         ctx.replaceMe(methodCall);
@@ -158,6 +160,51 @@ public class ReplaceRunAsyncs {
        */
       return method.getEnclosingType() == program.getIndexedType("GWT")
           && method.getName().equals("runAsync");
+    }
+
+    /**
+     * Tighten some types and method calls immediately, in case the optimizer is
+     * not run. Without a little bit of tightening, code splitting will be
+     * completely ineffective.
+     * 
+     * Note that {@link FragmentLoaderCreator} can't simply generate the tighter
+     * types to begin with, because when it runs, it doesn't know which runAsync
+     * call it is generating a loader for.
+     * 
+     * This method can be deleted if {@link FragmentLoaderCreator} is
+     * eliminated.
+     */
+    private void tightenCallbackType(int entryNumber, JType callbackType) {
+      JClassType loaderClass = getFragmentLoader(entryNumber);
+
+      /*
+       * Before: class AsyncLoader3 { static void runAsync(RunAsyncCallback cb)
+       * { ... } }
+       * 
+       * After: class AsyncLoader3 { static void runAsync(RunAsyncCallback$3 cb)
+       * { ... } }
+       */
+      JMethod loadMethod = getRunAsyncMethod(loaderClass);
+      loadMethod.getParams().get(0).setType(callbackType);
+
+      /*
+       * Before: class AsyncLoader3__Callback { RunAsyncCallback callback; }
+       * 
+       * After: class AsyncLoader3__Callback { RunAsyncCallback$3 callback; }
+       */
+      JClassType callbackListType = getFragmentLoaderCallbackList(entryNumber);
+      JField callbackField = getField(callbackListType, "callback");
+
+      /*
+       * The method AsyncLoaderNNN.runCallbacks has a lot of calls to onSuccess
+       * methods where the target is onSuccess in the RunAsyncCallback
+       * interface. Use MethodCallTightener to tighten those calls down to
+       * target the onSuccess method of a specific callback class.
+       */
+      callbackField.setType(callbackType);
+      JMethod runCallbacksMethod = getMethod(loaderClass,
+          FragmentLoaderCreator.RUN_CALLBACKS);
+      MethodCallTightener.exec(program, runCallbacksMethod);
     }
   }
   private class ReplaceRunAsyncResources extends JModVisitor {
@@ -229,8 +276,8 @@ public class ReplaceRunAsyncs {
 
   public static void exec(TreeLogger logger, JProgram program)
       throws UnableToCompleteException {
-    Event codeSplitterEvent =
-        SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER, "phase", "ReplaceRunAsyncs");
+    Event codeSplitterEvent = SpeedTracerLogger.start(
+        CompilerEventType.CODE_SPLITTER, "phase", "ReplaceRunAsyncs");
     TreeLogger branch = logger.branch(TreeLogger.TRACE,
         "Replacing GWT.runAsync with island loader calls");
     new ReplaceRunAsyncs(branch, program).execImpl();
@@ -246,6 +293,35 @@ public class ReplaceRunAsyncs {
     JMethodCall initializerCall = (JMethodCall) field.getDeclarationStatement().getInitializer();
     assert initializerCall.getArgs().size() == 2;
     return initializerCall;
+  }
+
+  private static JMethod getMethod(JClassType type, String name) {
+    for (JMethod method : type.getMethods()) {
+      if (method.getName().equals(name)) {
+        return method;
+      }
+    }
+    throw new InternalCompilerException("Method not found: " + type.getName()
+        + "." + name);
+  }
+
+  private static JMethod getOnLoadMethod(JClassType loaderType) {
+    assert loaderType != null;
+    assert loaderType.getMethods() != null;
+    JMethod method = getMethod(loaderType, "onLoad");
+    assert method.isStatic();
+    assert method.getParams().size() == 0;
+    return method;
+  }
+
+  private static JMethod getRunAsyncMethod(JClassType loaderType) {
+    assert loaderType != null;
+    assert loaderType.getMethods() != null;
+    JMethod method = getMethod(loaderType, "runAsync");
+    assert (method.isStatic());
+    assert (method.getParams().size() == 1);
+    assert (method.getParams().get(0).getType().getName().equals(FragmentLoaderCreator.RUN_ASYNC_CALLBACK));
+    return method;
   }
 
   /**
@@ -289,6 +365,16 @@ public class ReplaceRunAsyncs {
     }
   }
 
+  private JField getField(JClassType type, String name) {
+    for (JField field : type.getFields()) {
+      if (field.getName().equals(name)) {
+        return field;
+      }
+    }
+    throw new InternalCompilerException("Field not found: " + type.getName()
+        + "." + name);
+  }
+
   private JClassType getFragmentLoader(int fragmentNumber) {
     String fragmentLoaderClassName = FragmentLoaderCreator.ASYNC_LOADER_PACKAGE
         + "." + FragmentLoaderCreator.ASYNC_LOADER_CLASS_PREFIX
@@ -299,32 +385,13 @@ public class ReplaceRunAsyncs {
     return (JClassType) result;
   }
 
-  private JMethod getOnLoadMethod(JClassType loaderType) {
-    assert loaderType != null;
-    assert loaderType.getMethods() != null;
-    for (JMethod method : loaderType.getMethods()) {
-      if (method.getName().equals("onLoad")) {
-        assert (method.isStatic());
-        assert (method.getParams().size() == 0);
-        return method;
-      }
-    }
-    assert false;
-    return null;
-  }
-
-  private JMethod getRunAsyncMethod(JClassType loaderType) {
-    assert loaderType != null;
-    assert loaderType.getMethods() != null;
-    for (JMethod method : loaderType.getMethods()) {
-      if (method.getName().equals("runAsync")) {
-        assert (method.isStatic());
-        assert (method.getParams().size() == 1);
-        assert (method.getParams().get(0).getType().getName().equals(FragmentLoaderCreator.RUN_ASYNC_CALLBACK));
-        return method;
-      }
-    }
-    return null;
+  private JClassType getFragmentLoaderCallbackList(int fragmentNumber) {
+    String className = FragmentLoaderCreator.ASYNC_LOADER_PACKAGE + "."
+        + FragmentLoaderCreator.ASYNC_LOADER_CLASS_PREFIX + fragmentNumber
+        + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX;
+    JType result = program.getFromTypeMap(className);
+    assert (result != null);
+    return (JClassType) result;
   }
 
   private void setNumEntriesInAsyncFragmentLoader(int entryCount) {

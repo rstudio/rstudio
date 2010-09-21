@@ -52,7 +52,7 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     });
     addSnippetImport("test.SplitPoint3");
 
-    expectError("Line 12: Multiple runAsync calls are named test.SplitPoint1");
+    expectError("Line 15: Multiple runAsync calls are named test.SplitPoint1");
     expectError("One call is in test.SplitPoint1.doStuff (/mock/test/SplitPoint1.java:4)");
     expectError("One call is in test.SplitPoint3.doStuff (/mock/test/SplitPoint3.java:4)");
 
@@ -60,12 +60,12 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
   }
 
   public void testNonClassLiteral() {
-    expectError("Line 11: Only a class literal may be passed to runAsyncCode");
+    expectError("Line 14: Only a class literal may be passed to runAsyncCode");
     testSnippet("RunAsyncCode.runAsyncCode(new SplitPoint1().getClass());");
   }
 
   public void testNonExistentSplitPoint() {
-    expectError("Line 11: No runAsync call is named java.lang.String");
+    expectError("Line 14: No runAsync call is named java.lang.String");
     testSnippet("RunAsyncCode.runAsyncCode(String.class);");
   }
 
@@ -80,12 +80,32 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
         code.append("public class AsyncLoader" + sp + " {\n");
         code.append("  public static void onLoad() { }\n");
         code.append("  public static void runAsync(RunAsyncCallback cb) { }\n");
+        code.append("  public static void runCallbacks() { }\n");
         code.append("}\n");
         return code;
       }
     });
 
     addSnippetImport("com.google.gwt.lang.asyncloaders.AsyncLoader" + sp);
+
+    sourceOracle.addOrReplace(new MockJavaResource(
+        "com.google.gwt.lang.asyncloaders.AsyncLoader" + sp
+            + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX) {
+      @Override
+      protected CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package com.google.gwt.lang.asyncloaders;\n");
+        code.append("import com.google.gwt.core.client.RunAsyncCallback;");
+        code.append("public class AsyncLoader" + sp
+            + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX + "{\n");
+        code.append("  RunAsyncCallback callback;\n");
+        code.append("}\n");
+        return code;
+      }
+    });
+
+    addSnippetImport("com.google.gwt.lang.asyncloaders.AsyncLoader" + sp
+        + FragmentLoaderCreator.CALLBACK_LIST_SUFFIX);
   }
 
   private void addCommonTestCode() {

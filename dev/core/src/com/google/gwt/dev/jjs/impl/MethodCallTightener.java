@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -149,6 +150,13 @@ public class MethodCallTightener {
     return stats;
   }
 
+  /**
+   * Tighten method calls that occur within <code>node</code> and its children.
+   */
+  public static void exec(JProgram program, JNode node) {
+    new MethodCallTightener(program).execImpl(node);
+  }
+
   private final JProgram program;
 
   private MethodCallTightener(JProgram program) {
@@ -159,5 +167,10 @@ public class MethodCallTightener {
     MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
     tightener.accept(program);
     return new OptimizerStats(NAME).recordModified(tightener.getNumMods());
+  }
+
+  private void execImpl(JNode node) {
+    MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
+    tightener.accept(node);
   }
 }
