@@ -16,6 +16,7 @@
 package com.google.gwt.sample.dynatablerf.shared;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.sample.dynatablerf.domain.Address;
 
@@ -26,6 +27,8 @@ import com.google.gwt.sample.dynatablerf.domain.Address;
 public interface AddressProxy extends EntityProxy {
   String getCity();
 
+  String getId();
+  
   String getState();
 
   String getStreet();
@@ -39,4 +42,6 @@ public interface AddressProxy extends EntityProxy {
   void setStreet(String street);
 
   void setZip(Integer zip);
+
+  EntityProxyId<AddressProxy> stableId();
 }

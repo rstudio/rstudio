@@ -84,8 +84,9 @@ public class EntityProxyChange<P extends EntityProxy> extends
    * @return an unpopulated copy of the changed proxy &mdash; all properties are
    *         undefined except its id
    */
-  public P getProxy() {
-    return proxy;
+  @SuppressWarnings("unchecked")
+  public EntityProxyId<P> getProxyId() {
+    return (EntityProxyId<P>) proxy.stableId();
   }
 
   public WriteOperation getWriteOperation() {

@@ -27,7 +27,7 @@ public interface SimpleFooRequest {
 
   ProxyListRequest<SimpleFooProxy> findAll();
 
-  ProxyRequest<SimpleFooProxy> findSimpleFooById(String id);
+  ProxyRequest<SimpleFooProxy> findSimpleFooById(Long id);
 
   RequestObject<Integer> privateMethod();
 

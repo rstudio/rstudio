@@ -84,9 +84,8 @@ public class RequestProperty implements Iterable<RequestProperty> {
   }
 
   public Iterator<RequestProperty> iterator() {
-    return subProperties == null ?
-        (Iterator<RequestProperty>) Collections.EMPTY_MAP.values().iterator() :
-        subProperties.values().iterator();
+    return subProperties == null ? emptyIterator()
+        : subProperties.values().iterator();
   }
 
   public RequestProperty mergeProperty(RequestProperty property) {
@@ -103,6 +102,11 @@ public class RequestProperty implements Iterable<RequestProperty> {
       }
     }
     return foundProp;
+  }
+
+  @SuppressWarnings({"cast", "unchecked"})
+  private Iterator<RequestProperty> emptyIterator() {
+    return (Iterator<RequestProperty>) Collections.EMPTY_MAP.values().iterator();
   }
 
   private RequestProperty getOrCreate(String part) {

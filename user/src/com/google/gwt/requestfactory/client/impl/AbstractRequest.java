@@ -111,46 +111,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     // handle violations
     JsArray<DeltaValueStoreJsonImpl.ReturnRecord> violationsArray = results.getViolations();
     if (violationsArray != null) {
-      int length = violationsArray.length();
-      Set<Violation> errors = new HashSet<Violation>(length);
-
-      for (int i = 0; i < length; i++) {
-        ReturnRecord violationRecord = violationsArray.get(i);
-        String id = null;
-        if (violationRecord.hasFutureId()) {
-          id = violationRecord.getFutureId();
-        } else {
-          id = violationRecord.getId();
-        }
-        final EntityProxyIdImpl key = new EntityProxyIdImpl(id,
-            requestFactory.getSchema(violationRecord.getSchema()),
-            violationRecord.hasFutureId(), null);
-        assert violationRecord.hasViolations();
-
-        HashMap<String, String> violations = new HashMap<String, String>();
-        violationRecord.fillViolations(violations);
-
-        for (Map.Entry<String, String> entry : violations.entrySet()) {
-          final String path = entry.getKey();
-          final String message = entry.getValue();
-          errors.add(new Violation() {
-            public String getMessage() {
-              return message;
-            }
-
-            public String getPath() {
-              return path;
-            }
-
-            public EntityProxyId getProxyId() {
-              return key;
-            }
-          });
-        }
-      }
-
-      deltaValueStore.reuse();
-      receiver.onViolation(errors);
+      processViolations(violationsArray);
     } else {
       deltaValueStore.commit(results.getSideEffects());
       handleResult(results.getResult());
@@ -210,5 +171,49 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
   protected void succeed(T t) {
     receiver.onSuccess(t);
+  }
+
+  private void processViolations(
+      JsArray<DeltaValueStoreJsonImpl.ReturnRecord> violationsArray) {
+    int length = violationsArray.length();
+    Set<Violation> errors = new HashSet<Violation>(length);
+
+    for (int i = 0; i < length; i++) {
+      ReturnRecord violationRecord = violationsArray.get(i);
+      String id = null;
+      if (violationRecord.hasFutureId()) {
+        id = violationRecord.getFutureId();
+      } else {
+        id = violationRecord.getEncodedId();
+      }
+      final EntityProxyIdImpl key = new EntityProxyIdImpl(id,
+          requestFactory.getSchema(violationRecord.getSchema()),
+          violationRecord.hasFutureId(), null);
+      assert violationRecord.hasViolations();
+
+      HashMap<String, String> violations = new HashMap<String, String>();
+      violationRecord.fillViolations(violations);
+
+      for (Map.Entry<String, String> entry : violations.entrySet()) {
+        final String path = entry.getKey();
+        final String message = entry.getValue();
+        errors.add(new Violation() {
+          public String getMessage() {
+            return message;
+          }
+
+          public String getPath() {
+            return path;
+          }
+
+          public EntityProxyId getProxyId() {
+            return key;
+          }
+        });
+      }
+    }
+
+    deltaValueStore.reuse();
+    receiver.onViolation(errors);
   }
 }

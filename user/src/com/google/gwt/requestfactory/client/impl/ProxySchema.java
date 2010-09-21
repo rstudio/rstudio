@@ -47,7 +47,6 @@ public abstract class ProxySchema<P extends ProxyImpl> {
   
   {
     Set<Property<?>> set = new HashSet<Property<?>>();
-    set.add(ProxyImpl.id);
     set.add(ProxyImpl.version);
     allProperties = Collections.unmodifiableSet(set);
   }

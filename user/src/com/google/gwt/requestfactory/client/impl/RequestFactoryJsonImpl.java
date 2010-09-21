@@ -139,7 +139,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   public String getWireFormat(EntityProxyId proxyId) {
     EntityProxyIdImpl proxyIdImpl = (EntityProxyIdImpl) proxyId;
-    String id = (String) proxyIdImpl.id;
+    String id = (String) proxyIdImpl.encodedId;
     if (proxyIdImpl.isFuture) {
       // search for the datastore id for this futureId.
       String datastoreId = (String) futureToDatastoreMap.get(id);
@@ -179,9 +179,9 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     EntityProxyIdImpl entityProxyId = (EntityProxyIdImpl) proxyId;
     Class<? extends EntityProxy> proxyClass = entityProxyId.schema.getProxyClass();
     String rtn = recordToTypeMap.getClassToken(proxyClass) + "-";
-    Object datastoreId = entityProxyId.id;
+    Object datastoreId = entityProxyId.encodedId;
     if (entityProxyId.isFuture) {
-      datastoreId = futureToDatastoreMap.get(entityProxyId.id);
+      datastoreId = futureToDatastoreMap.get(entityProxyId.encodedId);
     }
     if (datastoreId == null) {
       rtn += "0-FUTURE";

@@ -98,12 +98,12 @@ public class PersonEditorWorkflow {
   }
 
   @UiHandler("cancel")
-  void onCancel(ClickEvent e) {
+  void onCancel(@SuppressWarnings("unused") ClickEvent e) {
     dialog.hide();
   }
 
   @UiHandler("save")
-  void onSave(ClickEvent e) {
+  void onSave(@SuppressWarnings("unused") ClickEvent e) {
     // MOVE TO ACTIVITY END
     final RequestObject<Void> request = editorDriver.<Void> flush();
     if (editorDriver.hasErrors()) {
@@ -125,7 +125,7 @@ public class PersonEditorWorkflow {
   }
 
   @UiHandler("favorite")
-  void onValueChanged(ValueChangeEvent<Boolean> event) {
+  void onValueChanged(@SuppressWarnings("unused") ValueChangeEvent<Boolean> event) {
     manager.setFavorite(person, favorite.getValue());
   }
 

@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
@@ -28,8 +29,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
-
-import java.util.List;
 
 /**
  * TODO: doc.
@@ -65,8 +64,8 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
         new EntityProxyChange.Handler<ExpenseProxy>() {
           public void onProxyChange(EntityProxyChange<ExpenseProxy> event) {
             if (expense != null) {
-              ExpenseProxy newRecord = event.getProxy();
-              if (newRecord.getId().equals(expense.getId())) {
+              EntityProxyId<ExpenseProxy> newRecord = event.getProxyId();
+              if (newRecord.equals(expense.getId())) {
                 onRefresh(false);
               }
             }

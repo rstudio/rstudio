@@ -28,12 +28,12 @@ import com.google.gwt.event.shared.EventBus;
 public interface RequestFactory {
   String JSON_CONTENT_TYPE_UTF8 = "application/json; charset=utf-8";
 
-  <R extends EntityProxy> R create(Class<R> token);
+  <P extends EntityProxy> P create(Class<P> proxyType);
 
   /**
    * Return a request to find a fresh instance of the referenced proxy.
    */
-  ProxyRequest<EntityProxy> find(EntityProxyId proxyId);
+  <P extends EntityProxy> ProxyRequest<P> find(EntityProxyId<P> proxyId);
 
   /**
    * Return the class object which may be used to create new instances of the
@@ -41,7 +41,7 @@ public interface RequestFactory {
    * metadata system, calls to the proxy's getClass() method will not serve this
    * purpose.
    */
-  Class<? extends EntityProxy> getClass(EntityProxyId proxyId);
+  <P extends EntityProxy> Class<P> getClass(EntityProxyId<P> proxyId);
 
   /**
    * Return the class object which may be used to create new instances of the
@@ -64,12 +64,12 @@ public interface RequestFactory {
    *
    * @return a {@link com.google.gwt.user.client.History} compatible token
    */
-  String getHistoryToken(EntityProxyId proxy);
+  String getHistoryToken(EntityProxyId<?> proxy);
 
   /**
    * Return the appropriate {@link EntityProxyId}, a stable id for the Proxy.
    */
-  EntityProxyId getProxyId(String token);
+  EntityProxyId<?> getProxyId(String token);
 
   /**
    * Get a {@link com.google.gwt.user.client.History} compatible token that
