@@ -15,9 +15,9 @@
  */
 package com.google.gwt.sample.expenses.client.request;
 
-import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
+
+import com.google.gwt.requestfactory.shared.EntityProxy;
 
 /**
  * "API Generated" DTO interface based on
@@ -31,8 +31,6 @@ public interface EmployeeProxy extends EntityProxy {
 
   String getDisplayName();
 
-  Long getId();
-  
   String getPassword();
 
   EmployeeProxy getSupervisor();
@@ -50,6 +48,4 @@ public interface EmployeeProxy extends EntityProxy {
   void setSupervisor(EmployeeProxy supervisor);
 
   void setUserName(String userName);
-  
-  EntityProxyId<EmployeeProxy> stableId();
 }

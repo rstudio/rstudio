@@ -16,7 +16,6 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 
 import java.util.Date;
@@ -30,17 +29,15 @@ import java.util.Date;
 @ProxyFor(com.google.gwt.sample.expenses.server.domain.Expense.class)
 public interface ExpenseProxy extends EntityProxy {
   Double getAmount();
-
+  
   String getApproval();
-
+  
   String getCategory();
 
   Date getCreated();
 
   String getDescription();
 
-  Long getId();
-  
   String getReasonDenied();
 
   ReportProxy getReport();
@@ -60,6 +57,4 @@ public interface ExpenseProxy extends EntityProxy {
   void setReasonDenied(String reasonDenied);
 
   void setReport(ReportProxy report);
-
-  EntityProxyId<ExpenseProxy> stableId();
 }

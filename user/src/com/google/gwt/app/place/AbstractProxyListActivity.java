@@ -177,7 +177,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     EntityProxyChange.registerForProxyType(eventBus, proxyType,
         new EntityProxyChange.Handler<P>() {
           public void onProxyChange(EntityProxyChange<P> event) {
-            update(event.getWriteOperation(), event.getProxyId());
+            update(event.getWriteOperation(), event.getProxy());
           }
         });
     eventBus.addHandler(PlaceChangeEvent.TYPE, new PlaceChangeEvent.Handler() {
@@ -190,10 +190,10 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     updateSelection(placeController.getWhere());
   }
 
-  public void update(WriteOperation writeOperation, EntityProxyId<P> proxyId) {
+  public void update(WriteOperation writeOperation, P record) {
     switch (writeOperation) {
       case UPDATE:
-        update(proxyId);
+        update(record);
         break;
 
       case DELETE:
@@ -263,8 +263,8 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     select((P) ((ProxyPlace) newPlace).getProxyId());
   }
 
-  private void update(EntityProxyId<P> proxyId) {
-    final Integer row = recordToRow.get(proxyId);
+  private void update(P record) {
+    final Integer row = recordToRow.get(record.stableId());
     if (row == null) {
       return;
     }

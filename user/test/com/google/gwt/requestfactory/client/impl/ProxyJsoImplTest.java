@@ -18,7 +18,6 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.client.SimpleRequestFactoryInstance;
-import com.google.gwt.requestfactory.shared.impl.RequestData;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -38,7 +37,7 @@ public class ProxyJsoImplTest extends GWTTestCase {
         "userName", "bovik", "password", "bovik", "charField", "c",
         "longField", "1234567890", "bigDecimalField",
         "12345678901234.5678901234567890", "bigIntField",
-        "123456789012345678901234567890", "created", "400", RequestData.ENCODED_ID_PROPERTY, "42L"};
+        "123456789012345678901234567890", "created", "400", "id", "42L"};
 
     String[] literalBits = new String[]{
         "version", "1", "intId", "4", "shortField", "5", "byteField", "6",
@@ -77,10 +76,8 @@ public class ProxyJsoImplTest extends GWTTestCase {
     ALL_PROPERTIES_JSON = b.toString();
   }
 
-  private static final String ID_VERSION_JSON = "{\""
-      + RequestData.ENCODED_ID_PROPERTY + "\":\"42L\",\"version\":1}";
-  private static final String ID_VERSION_JSON2 = "{\""
-      + RequestData.ENCODED_ID_PROPERTY + "\":\"43L\",\"version\":1}";
+  private static final String ID_VERSION_JSON = "{\"id\":\"42L\",\"version\":1}";
+  private static final String ID_VERSION_JSON2 = "{\"id\":\"43L\",\"version\":1}";
 
   static ProxyJsoImpl getMinimalJso() {
     return ProxyJsoImpl.create("42L", 1, SimpleRequestFactoryInstance.schema(),
@@ -125,7 +122,7 @@ public class ProxyJsoImplTest extends GWTTestCase {
     
     ProxyJsoImpl minimalJsoCopy = getMinimalJso();
     assertFalse(minimalJso.hasChanged(minimalJsoCopy));
-    minimalJsoCopy.set(SimpleFooProxyProperties.boolField, true);
+    minimalJsoCopy.set(SimpleFooProxyProperties.id, minimalJso.getId() + 42);
     assertTrue(minimalJso.hasChanged(minimalJsoCopy));
   }
 
@@ -187,15 +184,15 @@ public class ProxyJsoImplTest extends GWTTestCase {
   }
 
   private void testMinimalJso(ProxyJsoImpl jso) {
-    for (String property : new String[]{RequestData.ENCODED_ID_PROPERTY, "version"}) {
-      assertTrue("expect " + property + " to be defined", jso.isDefined(property));
+    for (String property : new String[]{"id", "version"}) {
+      assertTrue(jso.isDefined(property));
     }
     for (String property : new String[]{
         "created", "intId", "userName", "password"}) {
       assertFalse(jso.isDefined(property));
       assertNull(jso.get(property));
     }
-    assertEquals("42L", jso.encodedId());
+    assertEquals("42L", jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
     assertEquals(null, jso.get(SimpleFooProxyProperties.longField));
     assertEquals(null, jso.get(SimpleFooProxyProperties.enumField));
@@ -206,8 +203,8 @@ public class ProxyJsoImplTest extends GWTTestCase {
     for (String property : new String[]{
         "userName", "password", "charField", "longField", "bigDecimalField",
         "bigIntField", "intId", "shortField", "byteField", "created",
-        "doubleField", "floatField", "boolField", "otherBoolField", 
-        "version", RequestData.ENCODED_ID_PROPERTY}) {
+        "doubleField", "floatField", "boolField", "otherBoolField", "id",
+        "version"}) {
       assertTrue("Expect " + property + " to be defined",
           jso.isDefined(property));
     }
@@ -237,7 +234,7 @@ public class ProxyJsoImplTest extends GWTTestCase {
     assertFalse(jso.get(SimpleFooProxyProperties.boolField));
     assertTrue(jso.get(SimpleFooProxyProperties.otherBoolField));
 
-    assertEquals("42L", jso.encodedId());
+    assertEquals("42L", jso.getId());
     assertEquals(new Integer(1), jso.getVersion());
 
     testSchema(jso);

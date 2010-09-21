@@ -24,7 +24,6 @@ import com.google.gwt.requestfactory.client.SimpleRequestFactoryInstance;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.WriteOperation;
-import com.google.gwt.requestfactory.shared.impl.RequestData;
 
 import java.util.Date;
 
@@ -77,7 +76,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   public void testCreate() {
     EntityProxy created = requestFactory.create(SimpleFooProxy.class);
-    assertNotNull(((ProxyImpl)created).encodedId());
+    assertNotNull(created.getId());
     assertNotNull(created.getVersion());
 
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
@@ -102,7 +101,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   public void testCreateWithSet() {
     EntityProxy created = requestFactory.create(SimpleFooProxy.class);
-    assertNotNull(((ProxyImpl)created).encodedId());
+    assertNotNull(created.getId());
     assertNotNull(created.getVersion());
 
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
@@ -142,7 +141,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
   public void testSeparateIds() {
     ProxyImpl createProxy = (ProxyImpl) requestFactory.create(SimpleFooProxy.class);
     assertTrue(createProxy.isFuture());
-    String futureId = createProxy.encodedId();
+    String futureId = createProxy.getId();
 
     ProxyImpl mockProxy = new ProxyImpl(ProxyJsoImpl.create(futureId, 1,
         SimpleRequestFactoryInstance.schema(),
@@ -210,7 +209,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     assertTrue(proxyWithName.containsKey(SIMPLE_FOO_CLASS_NAME));
 
     JSONObject proxy = proxyWithName.get(SIMPLE_FOO_CLASS_NAME).isObject();
-    assertTrue(proxy.containsKey(RequestData.ENCODED_ID_PROPERTY));
+    assertTrue(proxy.containsKey("id"));
     assertTrue(proxy.containsKey("version"));
 
     return proxy;

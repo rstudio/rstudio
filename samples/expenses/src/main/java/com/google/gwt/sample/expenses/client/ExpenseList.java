@@ -35,7 +35,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -347,13 +346,14 @@ public class ExpenseList extends Composite implements
   }
 
   public void onProxyChange(EntityProxyChange<ReportProxy> event) {
-    EntityProxyId<ReportProxy> changedId = event.getProxyId();
+    ReportProxy changed = event.getProxy();
+    Long changedId = changed.getId();
     List<ReportProxy> records = table.getDisplayedItems();
     int i = 0;
     for (ReportProxy record : records) {
-      if (record != null && changedId.equals(record.stableId())) {
+      if (record != null && changedId.equals(record.getId())) {
         List<ReportProxy> changedList = new ArrayList<ReportProxy>();
-        changedList.add(record);
+        changedList.add(changed);
         reports.updateRowData(i + table.getPageStart(), changedList);
       }
       i++;

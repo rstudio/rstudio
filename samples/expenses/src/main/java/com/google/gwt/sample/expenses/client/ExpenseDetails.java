@@ -41,7 +41,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.resources.client.ImageResource;
@@ -510,26 +509,21 @@ public class ExpenseDetails extends Composite {
   }
 
   public void onExpenseRecordChanged(EntityProxyChange<ExpenseProxy> event) {
-    final EntityProxyId<ExpenseProxy> proxyId = event.getProxyId();
+    ExpenseProxy newRecord = event.getProxy();
+    Object newKey = items.getKey(newRecord);
 
     int index = 0;
-    final List<ExpenseProxy> list = items.getList();
+    List<ExpenseProxy> list = items.getList();
     for (ExpenseProxy r : list) {
-      if (items.getKey(r).equals(proxyId)) {
-        final int i = index;
-        expensesRequestFactory.find(proxyId).fire(new Receiver<ExpenseProxy>() {
-          @Override
-          public void onSuccess(ExpenseProxy newRecord) {
-            list.set(i, newRecord);
-            
-            // Update the view data if the approval has been updated.
-            ApprovalViewData avd = approvalCell.getViewData(proxyId);
-            if (avd != null
-                && avd.getPendingApproval().equals(newRecord.getApproval())) {
-              syncCommit(newRecord, null);
-            }
-          }
-        });
+      if (items.getKey(r).equals(newKey)) {
+        list.set(index, newRecord);
+
+        // Update the view data if the approval has been updated.
+        ApprovalViewData avd = approvalCell.getViewData(newKey);
+        if (avd != null
+            && avd.getPendingApproval().equals(newRecord.getApproval())) {
+          syncCommit(newRecord, null);
+        }
       }
       index++;
     }
@@ -541,8 +535,8 @@ public class ExpenseDetails extends Composite {
   }
 
   public void onReportChanged(EntityProxyChange<ReportProxy> event) {
-    EntityProxyId<ReportProxy> changed = event.getProxyId();
-    if (report != null && report.getId().equals(changed)) {
+    ReportProxy changed = event.getProxy();
+    if (report != null && report.getId().equals(changed.getId())) {
       // Request the updated report.
       expensesRequestFactory.reportRequest().findReport(
           report.getId()).fire(new Receiver<ReportProxy>() {

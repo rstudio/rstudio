@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 
 import junit.framework.TestCase;
@@ -58,28 +57,15 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
   }
 
   public void testGetOpertionScalarWithArgs() {
-    {
-      RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.shared.SimpleFooRequest::findSimpleFooById");
-      assertNotNull(request);
-      assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
-          request.getDomainClassName());
-      assertEquals("findSimpleFooById", request.getDomainMethodName());
-      assertEquals(SimpleFooProxy.class, request.getReturnType());
-      assertEquals(1, request.getParameterTypes().length);
-      assertEquals(Long.class, request.getParameterTypes()[0]);
-      assertFalse(request.isReturnTypeList());
-    }
-    {
-      RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.shared.SimpleBarRequest::findSimpleBarById");
-      assertNotNull(request);
-      assertEquals("com.google.gwt.requestfactory.server.SimpleBar",
-          request.getDomainClassName());
-      assertEquals("findSimpleBarById", request.getDomainMethodName());
-      assertEquals(SimpleBarProxy.class, request.getReturnType());
-      assertEquals(1, request.getParameterTypes().length);
-      assertEquals(String.class, request.getParameterTypes()[0]);
-      assertFalse(request.isReturnTypeList());
-    }
+    RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.shared.SimpleFooRequest::findSimpleFooById");
+    assertNotNull(request);
+    assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
+        request.getDomainClassName());
+    assertEquals("findSimpleFooById", request.getDomainMethodName());
+    assertEquals(SimpleFooProxy.class, request.getReturnType());
+    assertEquals(1, request.getParameterTypes().length);
+    assertEquals(String.class, request.getParameterTypes()[0]);
+    assertFalse(request.isReturnTypeList());
   }
 
   public void testInsecureOperations() {

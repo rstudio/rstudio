@@ -41,19 +41,6 @@ public class RequestData {
   public static final String RELATED_TOKEN = "related";
 
   public static final String SIDE_EFFECTS_TOKEN = "sideEffects";
-  
-  public static final String VIOLATIONS_TOKEN = "violations";
-  
-  /**
-   * Property on a proxy JSO that holds its encoded server side data store id.
-   */
-  public static final String ENCODED_ID_PROPERTY = "!id";
-  
-  /**
-   * Id property that server entity objects are required to define 
-   */
-  public static final String ENTITY_ID_PROPERTY = "id";
-  
 
   // TODO: non-final is a hack for now.
   private final String operation;

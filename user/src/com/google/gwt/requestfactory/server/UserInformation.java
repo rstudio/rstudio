@@ -55,7 +55,7 @@ public abstract class UserInformation {
   }
 
   public abstract String getEmail();
-  public abstract Long getId();
+  public abstract String getId();
   public abstract String getLoginUrl();
   public abstract String getLogoutUrl();
   public abstract String getName();
@@ -65,7 +65,7 @@ public abstract class UserInformation {
   }
   
   public abstract boolean isUserLoggedIn();
-  public abstract void setId(Long id);
+  public abstract void setId(String id);
   
   public void setVersion(Integer version) {
     this.version = version;

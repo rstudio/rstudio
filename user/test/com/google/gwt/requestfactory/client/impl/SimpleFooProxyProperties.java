@@ -26,8 +26,8 @@ import java.math.BigInteger;
 import java.util.Date;
 
 class SimpleFooProxyProperties {
-  static final Property<Long> id = new Property<Long>("id", "Id",
-      Long.class);
+  static final Property<String> id = new Property<String>("id", "Id",
+      String.class);
   static final Property<String> version = new Property<String>("version", "Version",
       String.class);
 

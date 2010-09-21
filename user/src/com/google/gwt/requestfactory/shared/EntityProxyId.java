@@ -21,8 +21,6 @@ package com.google.gwt.requestfactory.shared;
  * <p>
  * In particular, an {@link EntityProxy} foo that is yet to be persisted and a
  * copy of foo after being persisted have equal {@link EntityProxyId}.
- *
- * @param <P> the entity type
  */
-public interface EntityProxyId<P extends EntityProxy> {
+public interface EntityProxyId {
 }

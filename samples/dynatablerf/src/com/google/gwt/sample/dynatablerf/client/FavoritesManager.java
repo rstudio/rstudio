@@ -37,7 +37,7 @@ import java.util.Set;
 public class FavoritesManager {
   private static final String COOKIE_NAME = "Favorites";
   private final EventBus eventBus = new SimpleEventBus();
-  private final Set<EntityProxyId<PersonProxy>> favoriteIds = new HashSet<EntityProxyId<PersonProxy>>();
+  private final Set<EntityProxyId> favoriteIds = new HashSet<EntityProxyId>();
 
   public FavoritesManager(final RequestFactory requestFactory) {
     String cookie = Cookies.getCookie(COOKIE_NAME);
@@ -47,8 +47,7 @@ public class FavoritesManager {
           if (fragment.length() == 0) {
             continue;
           }
-          @SuppressWarnings("unchecked")
-          EntityProxyId<PersonProxy> id = (EntityProxyId<PersonProxy>) requestFactory.getProxyId(fragment);
+          EntityProxyId id = requestFactory.getProxyId(fragment);
           favoriteIds.add(id);
         }
       } catch (NumberFormatException e) {
@@ -60,7 +59,7 @@ public class FavoritesManager {
     Window.addWindowClosingHandler(new ClosingHandler() {
       public void onWindowClosing(ClosingEvent event) {
         StringBuilder sb = new StringBuilder();
-        for (EntityProxyId<PersonProxy> id : favoriteIds) {
+        for (EntityProxyId id : favoriteIds) {
           sb.append(requestFactory.getHistoryToken(id)).append(",");
         }
         Cookies.setCookie(COOKIE_NAME, sb.toString());
@@ -73,7 +72,7 @@ public class FavoritesManager {
     return eventBus.addHandler(MarkFavoriteEvent.TYPE, handler);
   }
 
-  public Set<EntityProxyId<PersonProxy>> getFavoriteIds() {
+  public Set<EntityProxyId> getFavoriteIds() {
     return Collections.unmodifiableSet(favoriteIds);
   }
 

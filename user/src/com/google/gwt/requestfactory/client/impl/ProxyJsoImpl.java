@@ -42,37 +42,43 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       ProxySchema<?> schema, RequestFactoryJsonImpl requestFactory) {
 
     ProxyJsoImpl rtn = rawJsoWithIdAndVersion.cast();
+    assert rtn.getId() != null;
+    assert rtn.getVersion() != null;
+
     rtn.setSchema(schema);
     rtn.setRequestFactory(requestFactory);
-    rtn.assertValid();
     return rtn;
   };
 
-  public static JsArray<ProxyJsoImpl> create(JsArray<JavaScriptObject> rawJsos,
-      ProxySchema<?> schema, RequestFactoryJsonImpl requestFactory) {
-
+  public static JsArray<ProxyJsoImpl> create(
+      JsArray<JavaScriptObject> rawJsos, ProxySchema<?> schema,
+      RequestFactoryJsonImpl requestFactory) {
+    
     for (int i = 0; i < rawJsos.length(); i++) {
       ProxyJsoImpl.create(rawJsos.get(i), schema, requestFactory);
     }
-
+    
     return rawJsos.cast();
   }
 
-  public static ProxyJsoImpl create(String encodedId, Integer version,
+  public static ProxyJsoImpl create(String id, Integer version,
       ProxySchema<?> schema, RequestFactoryJsonImpl requestFactory) {
     ProxyJsoImpl rtn = createEmpty();
-    rtn.putEncodedId(encodedId);
-    rtn.putVersion(version);
+    rtn.set(ProxyImpl.id, id);
+    rtn.set(ProxyImpl.version, version);
     return create(rtn, schema, requestFactory);
   }
 
   public static ProxyJsoImpl emptyCopy(ProxyJsoImpl jso) {
+    String tempId = jso.get(ProxyImpl.id);
+    Integer tempVersion = jso.get(ProxyImpl.version);
     ProxySchema<?> schema = jso.getSchema();
-    return create(jso.encodedId(), jso.getVersion(), schema,
-        jso.getRequestFactory());
+
+    ProxyJsoImpl copy = create(tempId, tempVersion, schema, jso.getRequestFactory());
+    return copy;
   }
 
-  /**
+  /** 
    * Create an empty JSO, unsafe to return.
    */
   private static native ProxyJsoImpl createEmpty() /*-{
@@ -82,45 +88,31 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   protected ProxyJsoImpl() {
   }
 
-  public final void assertValid() {
-    assert encodedId() != null : "encodedId required";
-    assert getRequestFactory() != null : "requestFactory required";
-    assert getVersion() != null : "version required";
-    assert getSchema() != null : "schema required";
-  }
-
   public final native void delete(String name)/*-{
     delete this[name];
-  }-*/;
-
-  public final native String encodedId() /*-{
-    return this[@com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_ID_PROPERTY];
   }-*/;
 
   public final <V> V get(Property<V> property) {
     String name = property.getName();
     Class<V> type = property.getType();
-
+    
     // javac 1.6.0_20 on mac has problems without the explicit parameterization
     return this.<V> get(name, type);
   }
-
-  public final native <T> T get(String propertyName) /*-{
-    return this[propertyName] || null;
-  }-*/;
 
   @SuppressWarnings("unchecked")
   public final <V> V get(String name, Class<?> type) {
     if (isNullOrUndefined(name)) {
       return null;
     }
-
+    
     try {
       if (Boolean.class.equals(type)) {
         return (V) Boolean.valueOf(getBoolean(name));
       }
       if (Character.class.equals(type)) {
-        return (V) Character.valueOf(String.valueOf(get(name)).charAt(0));
+        return (V) Character.valueOf(String.valueOf(get(name)).charAt(
+            0));
       }
       if (Byte.class.equals(type)) {
         return (V) Byte.valueOf((byte) getInt(name));
@@ -162,8 +154,9 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
         }
       }
     } catch (final Exception ex) {
-      throw new IllegalStateException("Property  " + name + " has invalid "
-          + " value " + get(name) + " for type " + type);
+      throw new IllegalStateException("Property  " + name
+          + " has invalid " + " value " + get(name)
+          + " for type " + type);
     }
 
     if (type.isEnum()) {
@@ -192,9 +185,17 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       String schemaAndId[] = relatedId.split("-");
       assert schemaAndId.length == 2;
       ProxySchema<?> schema = getRequestFactory().getSchema(schemaAndId[0]);
-      return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(
-          schema, schemaAndId[1], getRequestFactory());
+      return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(schema,
+          schemaAndId[1], getRequestFactory());
     }
+  }
+
+  public final native <T> T get(String propertyName) /*-{
+    return this[propertyName] || null;
+  }-*/;
+
+  public final String getId() {
+    return this.get(ProxyImpl.id);
   }
 
   public final native RequestFactoryJsonImpl getRequestFactory() /*-{
@@ -204,7 +205,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   public final native ProxySchema<?> getSchema() /*-{
     return this['__key'];
   }-*/;
-
+  
   public final Integer getVersion() {
     return this.get(ProxyImpl.version);
   }
@@ -218,7 +219,8 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
 
   public final boolean isEmpty() {
     for (Property<?> property : getSchema().allProperties()) {
-      if ((property != ProxyImpl.version) && (isDefined(property.getName()))) {
+      if ((property != ProxyImpl.id) && (property != ProxyImpl.version)
+          && (isDefined(property.getName()))) {
         return false;
       }
     }
@@ -301,7 +303,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
         + value.getClass().getName());
   }
 
-  public final EntityProxyId<?> stableId() {
+  public final EntityProxyId stableId() {
     throw new IllegalArgumentException("Can't call stableId on the jso");
   }
 
@@ -351,10 +353,6 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return false;
   }
 
-  final native void putEncodedId(String id) /*-{
-    this[@com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_ID_PROPERTY] = id;
-  }-*/;
-
   private native boolean copyPropertyIfDifferent(String name, ProxyJsoImpl from) /*-{
     if (this[name] == from[name]) {
       return false;
@@ -386,13 +384,6 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return true;
   }-*/;
 
-  /**
-   * @param version
-   */
-  private void putVersion(Integer version) {
-    set(ProxyImpl.version, version);
-  }
-
   private native void setBoolean(String name, boolean value) /*-{
     this[name] = value;
   }-*/;
@@ -409,7 +400,8 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     this[name] = null;
   }-*/;
 
-  private native void setRequestFactory(RequestFactoryJsonImpl requestFactory) /*-{
+  private native void setRequestFactory(
+      RequestFactoryJsonImpl requestFactory) /*-{
     this['__rf'] = requestFactory;
   }-*/;
 

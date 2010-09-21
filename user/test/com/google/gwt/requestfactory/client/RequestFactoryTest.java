@@ -16,7 +16,6 @@
 package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
-import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.ServerFailure;
@@ -24,7 +23,6 @@ import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,7 +39,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     private final RequestObject<T> request;
     private boolean voidReturnExpected;
 
-    FailFixAndRefire(SimpleFooProxy proxy, RequestObject<T> request) {
+    FailFixAndRefire(SimpleFooProxy proxy,
+        RequestObject<T> request) {
       this.proxy = request.edit(proxy);
       this.request = request;
     }
@@ -62,17 +61,17 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     @Override
     public void onViolation(Set<Violation> errors) {
-
+      
       // size violation expected
-
+      
       assertEquals(1, errors.size());
       Violation error = errors.iterator().next();
       assertEquals("userName", error.getPath());
       assertEquals("size must be between 3 and 30", error.getMessage());
       assertEquals(proxy.stableId(), error.getProxyId());
 
-      // Now re-used the request to fix the edit
-
+      // Now re-used the request to fix the edit 
+      
       proxy.setUserName("long enough");
       request.fire(new Receiver<T>() {
         @Override
@@ -92,7 +91,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       voidReturnExpected = true;
       doTest();
     }
-
+    
     void doTest() {
       proxy.setUserName("a"); // too short
       request.fire(this);
@@ -127,32 +126,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
-  public void xx_testDummyCreateBar() { // See note JsonRequestProcessor.getCreateReturnRecord
-    delayTestFinish(5000);
-
-    final SimpleBarProxy foo = req.create(SimpleBarProxy.class);
-    Object futureId = foo.getId();
-    assertEquals(futureId, foo.getId());
-    assertTrue(((ProxyImpl) foo).isFuture());
-    RequestObject<SimpleBarProxy> fooReq = req.simpleBarRequest().persistAndReturnSelf(
-        foo);
-    fooReq.fire(new Receiver<SimpleBarProxy>() {
-
-      @Override
-      public void onSuccess(final SimpleBarProxy returned) {
-        Object futureId = foo.getId();
-        assertEquals(futureId, foo.getId());
-        assertTrue(((ProxyImpl) foo).isFuture());
-
-        checkStableIdEquals(foo, returned);
-        finishTestAndReset();
-      }
-    });
-  }
-
   public void testFetchEntity() {
     delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
+    req.simpleFooRequest().findSimpleFooById("999L").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
@@ -169,7 +145,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   public void testFetchEntityWithRelation() {
     delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
+    req.simpleFooRequest().findSimpleFooById("999L").with("barField").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
@@ -188,41 +164,15 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     assertEquals(eventBus, req.getEventBus());
   }
 
-  public void testGetList() {
-    // String ids
-    req.simpleBarRequest().findAll().fire(new Receiver<List<SimpleBarProxy>>() {
-      @Override
-      public void onSuccess(List<SimpleBarProxy> response) {
-        assertEquals("2", response.size());
-        for (SimpleBarProxy bar : response) {
-          assertNotNull(bar.stableId());
-        }
-      }
-    });
-
-    // Long ids
-    req.simpleFooRequest().findAll().with("barField.userName").fire(
-        new Receiver<List<SimpleFooProxy>>() {
-          @Override
-          public void onSuccess(List<SimpleFooProxy> response) {
-            assertEquals("1", response.size());
-            for (SimpleFooProxy foo : response) {
-              assertNotNull(foo.stableId());
-              assertEquals("GWT", foo.getBarField().getUserName());
-            }
-          }
-        });
-  }
-
   /*
    * tests that (a) any method can have a side effect that is handled correctly.
-   * (b) instance methods are handled correctly and (c) a request cannot be
-   * reused after a successful response is received. (Yet?)
+   * (b) instance methods are handled correctly and (c) a request cannot
+   * be reused after a successful response is received. (Yet?)
    */
   public void testMethodWithSideEffects() {
     delayTestFinish(5000);
 
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
+    req.simpleFooRequest().findSimpleFooById("999L").fire(
         new Receiver<SimpleFooProxy>() {
 
           @Override
@@ -240,7 +190,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
                 // confirm that the instance method did have the desired
                 // sideEffect.
-                req.simpleFooRequest().findSimpleFooById(999L).fire(
+                req.simpleFooRequest().findSimpleFooById("999L").fire(
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFoo) {
@@ -273,7 +223,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleBarProxy>() {
           @Override
           public void onSuccess(final SimpleBarProxy barProxy) {
-            req.simpleFooRequest().findSimpleFooById(999L).fire(
+            req.simpleFooRequest().findSimpleFooById("999L").fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy fooProxy) {
@@ -312,7 +262,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       public void onSuccess(final SimpleBarProxy persistedBar) {
 
         // It was made, now find a foo to assign it to
-        req.simpleFooRequest().findSimpleFooById(999L).fire(
+        req.simpleFooRequest().findSimpleFooById("999L").fire(
             new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
@@ -327,7 +277,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                   public void onSuccess(Void response) {
 
                     // Foo was persisted, fetch it again check the goods
-                    req.simpleFooRequest().findSimpleFooById(999L).with(
+                    req.simpleFooRequest().findSimpleFooById("999L").with(
                         "barField.userName").fire(
                         new Receiver<SimpleFooProxy>() {
 
@@ -369,7 +319,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             fooReq.fire(new Receiver<Void>() {
               @Override
               public void onSuccess(Void response) {
-                req.simpleFooRequest().findSimpleFooById(999L).fire(
+                req.simpleFooRequest().findSimpleFooById("999L").fire(
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFooProxy) {
@@ -419,7 +369,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             fooReq2.fire(new Receiver<Void>() {
               @Override
               public void onSuccess(Void response) {
-                req.simpleFooRequest().findSimpleFooById(999L).with(
+                req.simpleFooRequest().findSimpleFooById("999L").with(
                     "barField.userName").fire(new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy finalFooProxy) {
@@ -495,7 +445,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   public void testProxysAsInstanceMethodParams() {
     delayTestFinish(5000);
-    req.simpleFooRequest().findSimpleFooById(999L).fire(
+    req.simpleFooRequest().findSimpleFooById("999L").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
@@ -519,8 +469,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     delayTestFinish(5000);
 
     SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
-    final RequestObject<SimpleFooProxy> persistRequest = req.simpleFooRequest().persistAndReturnSelf(
-        newFoo);
+    final RequestObject<SimpleFooProxy> persistRequest = 
+      req.simpleFooRequest().persistAndReturnSelf(newFoo);
 
     final SimpleFooProxy mutableFoo = persistRequest.edit(newFoo);
     mutableFoo.setPleaseCrash(42); // 42 is the crash causing magic number
@@ -528,8 +478,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     persistRequest.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onFailure(ServerFailure error) {
-        assertEquals("Server Error: THIS EXCEPTION IS EXPECTED BY A TEST",
-            error.getMessage());
+        assertEquals("Server Error: THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
         assertEquals("", error.getExceptionType());
         assertEquals("", error.getStackTraceString());
 
@@ -676,8 +625,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     }
   }
 
-  private void checkStableIdEquals(EntityProxy expected,
-      EntityProxy actual) {
+  private void checkStableIdEquals(SimpleFooProxy expected,
+      SimpleFooProxy actual) {
     assertNotSame(expected.stableId(), actual.stableId());
     assertEquals(expected.stableId(), actual.stableId());
     assertEquals(expected.stableId().hashCode(), actual.stableId().hashCode());

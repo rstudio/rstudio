@@ -27,8 +27,6 @@ import java.util.Date;
  */
 @ProxyFor(SimpleFoo.class)
 public interface SimpleFooProxy extends EntityProxy {
-  Long getId();
-  
   SimpleBarProxy getBarField();
   
   SimpleBarProxy getBarNullField();
@@ -106,6 +104,4 @@ public interface SimpleFooProxy extends EntityProxy {
   void setShortField(Short s);
 
   void setUserName(String userName);
-  
-  EntityProxyId<SimpleFooProxy> stableId();
 }

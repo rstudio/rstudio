@@ -21,6 +21,7 @@ import com.google.gwt.editor.client.adapters.ListEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestFactory;
@@ -128,10 +129,11 @@ public class FavoritesWidget extends Composite {
       }
     });
 
-    for (EntityProxyId<PersonProxy> id : manager.getFavoriteIds()) {
-      factory.find(id).fire(new Receiver<PersonProxy>() {
+    for (EntityProxyId id : manager.getFavoriteIds()) {
+      factory.find(id).fire(new Receiver<EntityProxy>() {
         @Override
-        public void onSuccess(PersonProxy person) {
+        public void onSuccess(EntityProxy response) {
+          PersonProxy person = (PersonProxy) response;
           onMarkFavorite(new MarkFavoriteEvent(person, true));
         }
       });

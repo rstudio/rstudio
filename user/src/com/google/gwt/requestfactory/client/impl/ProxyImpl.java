@@ -35,6 +35,7 @@ import com.google.gwt.requestfactory.shared.impl.Property;
  */
 public class ProxyImpl implements EntityProxy {
 
+  static final Property<String> id = new Property<String>("id", String.class);
   static final Property<Integer> version = new Property<Integer>("version", Integer.class);
 
   protected static String getWireFormatId(String id, boolean isFuture,
@@ -69,10 +70,6 @@ public class ProxyImpl implements EntityProxy {
     return jso;
   }
 
-  public String encodedId() {
-    return jso.encodedId();
-  }
-
   /**
    * Get this proxy's value for the given property. Behavior is undefined if
    * the proxy has no such property, or if the property has never been set. It
@@ -87,10 +84,14 @@ public class ProxyImpl implements EntityProxy {
     // javac 1.6.0_20 on mac has problems without the explicit parameterization
     return jso.<V> get(property);
   }
-  
+
   public <V> V get(String propertyName, Class<?> propertyType) {
     // javac 1.6.0_20 on mac has problems without the explicit parameterization
     return jso.<V> get(propertyName, propertyType);
+  }
+  
+  public String getId() {
+    return jso.getId();
   }
 
   public ProxySchema<?> getSchema() {
@@ -102,7 +103,7 @@ public class ProxyImpl implements EntityProxy {
   }
 
   public String getWireFormatId() {
-    return getWireFormatId(jso.encodedId(), isFuture, jso.getSchema());
+    return getWireFormatId(jso.getId(), isFuture, jso.getSchema());
   }
 
   public boolean isChanged() {
@@ -124,17 +125,15 @@ public class ProxyImpl implements EntityProxy {
     deltaValueStore.set(property, record, value);
   }
 
-  // Allow the generated subclass to return the specific type its public interface probably demands
-  @SuppressWarnings({"unchecked", "rawtypes"})
   public EntityProxyId stableId() {
     if (!isFuture) {
-      return new EntityProxyIdImpl<ProxyImpl>(
-          encodedId(),
+      return new EntityProxyIdImpl(
+          getId(),
           getSchema(),
           false,
-          jso.getRequestFactory().datastoreToFutureMap.get(encodedId(), getSchema()));
+          jso.getRequestFactory().datastoreToFutureMap.get(getId(), getSchema()));
     }
-    return new EntityProxyIdImpl(encodedId(), getSchema(), isFuture, null);
+    return new EntityProxyIdImpl(getId(), getSchema(), isFuture, null);
   }
 
   protected ValueStoreJsonImpl getValueStore() {
