@@ -49,7 +49,9 @@
    <inherits name="com.google.gwt.user.FileUpload"/>
    <inherits name="com.google.gwt.user.datepicker.DatePicker"/>
    <inherits name="com.google.gwt.user.cellview.CellView"/>
+   <inherits name="com.google.gwt.safehtml.SafeHtml" />
 
    <super-source path="translatable"/>
    <source path="client"/>
 </module>
+

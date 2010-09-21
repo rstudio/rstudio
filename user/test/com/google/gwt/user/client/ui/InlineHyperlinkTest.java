@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,12 +17,11 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.DOM;
 
 /**
- * Tests {@link HyperlinkTest}.
+ * Tests {@link InlineHyperlinkTest}.
  */
-public class HyperlinkTest extends GWTTestCase {
+public class InlineHyperlinkTest extends GWTTestCase {
 
   static final String html = "<b>hello</b><i>world</i>";
 
@@ -31,23 +30,17 @@ public class HyperlinkTest extends GWTTestCase {
     return "com.google.gwt.user.DebugTest";
   }
 
-  public void testDebugId() {
-    Hyperlink link = new Hyperlink("Click Me", "myToken");
-    link.ensureDebugId("myLink");
-    UIObjectTest.assertDebugId("myLink-wrapper", link.getElement());
-    UIObjectTest.assertDebugId("myLink", DOM.getFirstChild(link.getElement()));
-  }
-
   public void testSafeHtmlConstructor() {
     String token = "myToken";
-    Hyperlink link = new Hyperlink(SafeHtmlUtils.fromSafeConstant(html), token);
+    InlineHyperlink link = 
+      new InlineHyperlink(SafeHtmlUtils.fromSafeConstant(html), token);
     
     assertEquals(html, link.getHTML().toLowerCase());
   }
 
   public void testSetSafeHtml() {
     String token = "myToken";
-    Hyperlink link = new Hyperlink("foobar", token);
+    InlineHyperlink link = new InlineHyperlink("foobar", token);
     link.setHTML(SafeHtmlUtils.fromSafeConstant(html));
     
     assertEquals(html, link.getHTML().toLowerCase());

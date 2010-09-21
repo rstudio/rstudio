@@ -29,6 +29,7 @@ import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -273,6 +274,18 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   /**
+   * Adds a menu item to the bar containing SafeHtml, that will fire the given 
+   * command when it is selected.
+   * 
+   * @param html the item's html text
+   * @param cmd the command to be fired
+   * @return the {@link MenuItem} object created
+   */
+  public MenuItem addItem(SafeHtml html, Command cmd) {
+    return addItem(new MenuItem(html, cmd));
+  }
+
+  /**
    * Adds a menu item to the bar, that will fire the given command when it is
    * selected.
    * 
@@ -283,6 +296,18 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    */
   public MenuItem addItem(String text, boolean asHTML, Command cmd) {
     return addItem(new MenuItem(text, asHTML, cmd));
+  }
+
+  /**
+   * Adds a menu item to the bar, that will open the specified menu when it is
+   * selected.
+   * 
+   * @param html the item's html text
+   * @param popup the menu to be cascaded from it
+   * @return the {@link MenuItem} object created
+   */
+  public MenuItem addItem(SafeHtml html, MenuBar popup) {
+    return addItem(new MenuItem(html, popup));
   }
 
   /**

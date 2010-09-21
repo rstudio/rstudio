@@ -24,6 +24,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -54,6 +55,8 @@ public class CheckBoxTest extends GWTTestCase {
       received = event.getValue();
     }
   }
+
+  private static final String html = "<b>hello</b><i>world</i>";
 
   private CheckBox cb;
 
@@ -219,6 +222,19 @@ public class CheckBoxTest extends GWTTestCase {
 
     elm.setChecked(true);
     assertTrue(cb.getValue());
+  }
+
+  public void testSafeHtmlConstructor() {
+    CheckBox box = new CheckBox(SafeHtmlUtils.fromSafeConstant(html));
+    
+    assertEquals(html, box.getHTML().toLowerCase());
+  }
+
+  public void testSetSafeHtml() {
+    CheckBox box = new CheckBox("hello");
+    box.setHTML(SafeHtmlUtils.fromSafeConstant(html));
+    
+    assertEquals(html, box.getHTML().toLowerCase());
   }
 
   @SuppressWarnings("deprecation")

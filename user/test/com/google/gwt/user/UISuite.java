@@ -65,6 +65,8 @@ import com.google.gwt.user.client.ui.HorizontalPanelTest;
 import com.google.gwt.user.client.ui.HorizontalSplitPanelTest;
 import com.google.gwt.user.client.ui.HyperlinkTest;
 import com.google.gwt.user.client.ui.ImageTest;
+import com.google.gwt.user.client.ui.InlineHTMLTest;
+import com.google.gwt.user.client.ui.InlineHyperlinkTest;
 import com.google.gwt.user.client.ui.IsWidgetTest;
 import com.google.gwt.user.client.ui.LabelTest;
 import com.google.gwt.user.client.ui.LazyPanelTest;
@@ -76,6 +78,7 @@ import com.google.gwt.user.client.ui.NamedFrameTest;
 import com.google.gwt.user.client.ui.PopupTest;
 import com.google.gwt.user.client.ui.PrefixTreeTest;
 import com.google.gwt.user.client.ui.RadioButtonTest;
+import com.google.gwt.user.client.ui.ResetButtonTest;
 import com.google.gwt.user.client.ui.RichTextAreaTest;
 import com.google.gwt.user.client.ui.RootPanelTest;
 import com.google.gwt.user.client.ui.ScrollPanelTest;
@@ -85,6 +88,7 @@ import com.google.gwt.user.client.ui.SimpleRadioButtonTest;
 import com.google.gwt.user.client.ui.SplitLayoutPanelTest;
 import com.google.gwt.user.client.ui.StackLayoutPanelTest;
 import com.google.gwt.user.client.ui.StackPanelTest;
+import com.google.gwt.user.client.ui.SubmitButtonTest;
 import com.google.gwt.user.client.ui.SuggestBoxTest;
 import com.google.gwt.user.client.ui.TabBarTest;
 import com.google.gwt.user.client.ui.TabLayoutPanelTest;
@@ -121,15 +125,18 @@ public class UISuite {
     suite.addTestSuite(AnchorTest.class);
     suite.addTestSuite(AsyncProxyTest.class);
     suite.addTestSuite(ButtonTest.class);
+    suite.addTestSuite(CalendarUtilTest.class);
     suite.addTestSuite(CaptionPanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
+    suite.addTestSuite(ClassInitTest.class);
     suite.addTestSuite(ClippedImagePrototypeTest.class);
     suite.addTestSuite(CommandExecutorTest.class);
     suite.addTestSuite(CompositeTest.class);
     suite.addTestSuite(CookieTest.class);
+    suite.addTestSuite(CreateEventTest.class);
     suite.addTestSuite(CustomButtonTest.class);
-    suite.addTestSuite(CalendarUtilTest.class);
     suite.addTestSuite(DateBoxTest.class);
+    suite.addTestSuite(DateChangeEventTest.class);
     suite.addTestSuite(DatePickerTest.class);
     suite.addTestSuite(DeckPanelTest.class);
     suite.addTestSuite(DecoratedPopupTest.class);
@@ -166,6 +173,8 @@ public class UISuite {
     suite.addTestSuite(HyperlinkTest.class);
     suite.addTestSuite(ImageBundleGeneratorTest.class);
     suite.addTestSuite(ImageTest.class);
+    suite.addTestSuite(InlineHTMLTest.class);
+    suite.addTestSuite(InlineHyperlinkTest.class);
     suite.addTestSuite(IsWidgetTest.class);
     suite.addTestSuite(LabelTest.class);
     suite.addTestSuite(LayoutTest.class);
@@ -178,7 +187,9 @@ public class UISuite {
     suite.addTestSuite(PopupTest.class);
     suite.addTestSuite(PrefixTreeTest.class);
     suite.addTestSuite(RadioButtonTest.class);
+    suite.addTestSuite(ResetButtonTest.class);
     suite.addTestSuite(RichTextAreaTest.class);
+    suite.addTestSuite(RootPanelTest.class);
     suite.addTestSuite(ScrollPanelTest.class);
     suite.addTestSuite(SimpleCheckBoxTest.class);
     suite.addTestSuite(SimpleRadioButtonTest.class);
@@ -186,6 +197,7 @@ public class UISuite {
     suite.addTestSuite(SplitLayoutPanelTest.class);
     suite.addTestSuite(StackLayoutPanelTest.class);
     suite.addTestSuite(StackPanelTest.class);
+    suite.addTestSuite(SubmitButtonTest.class);
     suite.addTestSuite(SuggestBoxTest.class);
     suite.addTestSuite(TabBarTest.class);
     suite.addTestSuite(TabLayoutPanelTest.class);
@@ -202,13 +214,10 @@ public class UISuite {
     suite.addTestSuite(WidgetIteratorsTest.class);
     suite.addTestSuite(WidgetOnLoadTest.class);
     suite.addTestSuite(WidgetSubclassingTest.class);
+    suite.addTestSuite(WidgetTest.class);
     suite.addTestSuite(WindowTest.class);
     suite.addTestSuite(XMLTest.class);
-    suite.addTestSuite(ClassInitTest.class);
-    suite.addTestSuite(DateChangeEventTest.class);
-    suite.addTestSuite(CreateEventTest.class);
-    suite.addTestSuite(WidgetTest.class);
-    suite.addTestSuite(RootPanelTest.class);
     return suite;
   }
 }
+

@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.AutoHorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 
@@ -31,6 +32,9 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentC
  * {@link HTMLTest}, and other stuff remains currently untested.
  */
 public class LabelTest extends GWTTestCase {
+
+  static final String html1 = "<b>hello</b><i>world</i>:)";
+  static final String html2 = "<b>goodbye</b><i>world</i>:(";
 
   protected final String EN_TEXT = "abc";
   protected final String IW_TEXT = "\u05e0\u05e1\u05e2";
@@ -120,7 +124,20 @@ public class LabelTest extends GWTTestCase {
         HasHorizontalAlignment.ALIGN_LEFT,
         HasAutoHorizontalAlignment.ALIGN_CONTENT_START);
   }
-  
+
+  @SuppressWarnings("deprecation")
+  public void testSetSafeHtml() {
+    Label label = new Label("foo");
+    label.setHTML(SafeHtmlUtils.fromSafeConstant(html1));
+    
+    assertEquals(html1, label.getTextOrHtml(true).toLowerCase());
+    
+    label.setHTML(SafeHtmlUtils.fromSafeConstant(html2), Direction.LTR);
+    
+    assertEquals(html2, label.getTextOrHtml(true).toLowerCase());
+    assertEquals(Direction.LTR, label.getDirection());
+  }
+
   /**
    * Create a div and attach it to the {@link RootPanel}.
    *

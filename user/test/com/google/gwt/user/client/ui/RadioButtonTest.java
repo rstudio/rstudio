@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 
 /**
@@ -37,6 +38,9 @@ public class RadioButtonTest extends GWTTestCase {
       received = event.getValue();
     }
   }
+
+  private static final String html1 = "<b>hello</b><i>world</i>:)";
+  private static final String html2 = "<b>goodbye</b><i>world</i>:(";
 
   /**
    * TODO: Re-enable when we figure out how to make them work properly on IE
@@ -214,6 +218,18 @@ public class RadioButtonTest extends GWTTestCase {
     Element secondChild = firstChild.getNextSiblingElement().cast();
     assertEquals("input", firstChild.getTagName().toLowerCase());
     assertEquals("label", secondChild.getTagName().toLowerCase());
+  }
+
+  public void testSafeHtml() {
+    RadioButton radio = 
+      new RadioButton("radio", SafeHtmlUtils.fromSafeConstant(html1));
+    
+    assertEquals("radio", radio.getName());
+    assertEquals(html1, radio.getHTML().toLowerCase());
+    
+    radio.setHTML(SafeHtmlUtils.fromSafeConstant(html2));
+    
+    assertEquals(html2, radio.getHTML().toLowerCase());
   }
 
   private void doClick(Element elm) {

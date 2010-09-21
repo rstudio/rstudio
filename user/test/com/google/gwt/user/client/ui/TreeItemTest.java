@@ -16,11 +16,14 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /**
  * Tests the {@link TreeItem}.
  */
 public class TreeItemTest extends GWTTestCase {
+
+  private static final String html = "<b>hello</b><i>world</i>";
 
   @Override
   public String getModuleName() {
@@ -119,6 +122,18 @@ public class TreeItemTest extends GWTTestCase {
     } catch (IndexOutOfBoundsException e) {
       // Expected.
     }
+  }
+
+  public void testSafeHtmlConstructor() {
+    TreeItem item = new TreeItem(SafeHtmlUtils.fromSafeConstant(html));
+    
+    assertEquals(html, item.getHTML().toLowerCase());
+  }
+
+  public void testSetSafeHtml() {
+    TreeItem item = new TreeItem("foo");
+    item.setHTML(SafeHtmlUtils.fromSafeConstant(html));
+    assertEquals(html, item.getHTML().toLowerCase());
   }
 
   /**

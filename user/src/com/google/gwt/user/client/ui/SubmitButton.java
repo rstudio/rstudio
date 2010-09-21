@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * A standard push-button widget which will automatically submit its enclosing
@@ -65,7 +66,16 @@ public class SubmitButton extends Button {
 
   /**
    * Creates a button with the given HTML caption.
-   * 
+   *
+   * @param html the HTML caption
+   */
+  public SubmitButton(SafeHtml html) {
+    this(html.asString());
+  }
+
+  /**
+   * Creates a button with the given HTML caption.
+   *
    * @param html the HTML caption
    */
   public SubmitButton(String html) {
@@ -75,7 +85,17 @@ public class SubmitButton extends Button {
 
   /**
    * Creates a button with the given HTML caption and click listener.
-   * 
+   *
+   * @param html the HTML caption
+   * @param handler the click handler
+   */
+  public SubmitButton(SafeHtml html, ClickHandler handler) {
+    this(html.asString(), handler);
+  }
+
+  /**
+   * Creates a button with the given HTML caption and click listener.
+   *
    * @param html the HTML caption
    * @param handler the click handler
    */

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.safehtml.client.HasSafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 
@@ -27,12 +29,31 @@ import com.google.gwt.user.client.DOM;
  * Each menu item is assigned a unique DOM id in order to support ARIA. See
  * {@link com.google.gwt.user.client.ui.Accessibility} for more information.
  */
-public class MenuItem extends UIObject implements HasHTML {
+public class MenuItem extends UIObject implements HasHTML, HasSafeHtml {
 
   private static final String DEPENDENT_STYLENAME_SELECTED_ITEM = "selected";
 
   private Command command;
   private MenuBar parentMenu, subMenu;
+
+  /**
+   * Constructs a new menu item that fires a command when it is selected.
+   * 
+   * @param html the item's html text
+   */
+  public MenuItem(SafeHtml html) {
+    this(html.asString(), true);
+  }
+
+  /**
+   * Constructs a new menu item that fires a command when it is selected.
+   * 
+   * @param html the item's text
+   * @param cmd the command to be fired when it is selected
+   */
+  public MenuItem(SafeHtml html, Command cmd) {
+    this(html.asString(), true, cmd);
+  }
 
   /**
    * Constructs a new menu item that fires a command when it is selected.
@@ -55,6 +76,16 @@ public class MenuItem extends UIObject implements HasHTML {
   public MenuItem(String text, boolean asHTML, Command cmd) {
     this(text, asHTML);
     setCommand(cmd);
+  }
+
+  /**
+   * Constructs a new menu item that cascades to a sub-menu when it is selected.
+   * 
+   * @param html the item's text
+   * @param subMenu the sub-menu to be displayed when it is selected
+   */
+  public MenuItem(SafeHtml html, MenuBar subMenu) {
+    this(html.asString(), true, subMenu);
   }
 
   /**
@@ -142,6 +173,10 @@ public class MenuItem extends UIObject implements HasHTML {
 
   public void setHTML(String html) {
     DOM.setInnerHTML(getElement(), html);
+  }
+
+  public void setHTML(SafeHtml html) {
+    setHTML(html.asString());
   }
 
   /**

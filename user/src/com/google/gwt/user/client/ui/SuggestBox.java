@@ -97,6 +97,8 @@ import java.util.List;
  * <dd>the suggest box itself</dd>
  * </dl>
  * 
+ * TODO(pdr): Add SafeHtml support to this and implementing classes.
+ * 
  * @see SuggestOracle
  * @see MultiWordSuggestOracle
  * @see TextBoxBase
@@ -155,6 +157,9 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
 
     /**
      * Update the list of visible suggestions.
+     * 
+     * Use care when using isDisplayStringHtml; it is an easy way to expose 
+     * script-based security problems. 
      * 
      * @param suggestBox the suggest box where the suggestions originated
      * @param suggestions the suggestions to show

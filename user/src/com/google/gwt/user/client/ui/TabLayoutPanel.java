@@ -29,6 +29,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.Alignment;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -220,6 +221,17 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    * moved to the right-most index.
    *
    * @param child the widget to be added
+   * @param html the html to be shown on its tab
+   */
+  public void add(Widget child, SafeHtml html) {
+    add(child, html.asString(), true);
+  }
+
+  /**
+   * Adds a widget to the panel. If the Widget is already attached, it will be
+   * moved to the right-most index.
+   *
+   * @param child the widget to be added
    * @param text the text to be shown on its tab
    * @param asHtml <code>true</code> to treat the specified text as HTML
    */
@@ -360,6 +372,18 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    */
   public void insert(Widget child, int beforeIndex) {
     insert(child, "", beforeIndex);
+  }
+
+  /**
+   * Inserts a widget into the panel. If the Widget is already attached, it will
+   * be moved to the requested index.
+   *
+   * @param child the widget to be added
+   * @param html the html to be shown on its tab
+   * @param beforeIndex the index before which it will be inserted
+   */
+  public void insert(Widget child, SafeHtml html, int beforeIndex) {
+    insert(child, html.asString(), true, beforeIndex);
   }
 
   /**
@@ -533,6 +557,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    *
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
+   * {@link #setTabSafeHtml(int, SafeHtml)} or 
    * {@link #setTabText(int, String)} whenever possible.
    *
    * @param index the index of the tab whose HTML is to be set
@@ -541,6 +566,16 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   public void setTabHTML(int index, String html) {
     checkIndex(index);
     tabs.get(index).setWidget(new HTML(html));
+  }
+
+  /**
+   * Sets a tab's HTML contents.
+   *
+   * @param index the index of the tab whose HTML is to be set
+   * @param html the tab's new HTML contents
+   */
+  public void setTabHTML(int index, SafeHtml html) {
+    setTabHTML(index, html.asString());
   }
 
   /**

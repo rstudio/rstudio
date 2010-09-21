@@ -46,6 +46,7 @@ import com.google.gwt.i18n.shared.BidiFormatter;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.i18n.shared.WordCountDirectionEstimator;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * A widget that contains arbitrary text, <i>not</i> interpreted as HTML.
@@ -448,6 +449,29 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
   }
 
   /**
+   * Sets the label's content to the given safe html. See
+   * {@link #setText(String)} for details on potential effects on direction and
+   * alignment.
+   *
+   * @param html the widget's new safe html
+   */
+  protected void setHTML(SafeHtml html) {
+    setTextOrHtml(html.asString(), true);
+  }
+
+  /**
+   * Sets the label's content to the given safe html. See
+   * {@link #setText(String)} for details on potential effects on direction and
+   * alignment.
+   *
+   * @param html the widget's new safe html
+   * @param dir the content's direction
+   */
+  protected void setHTML(SafeHtml html, Direction dir) {
+    setTextOrHtml(html.asString(), dir, true);
+  }
+
+  /**
    * Sets the label's content to the given value (either plain text or HTML).
    * See {@link #setText(String)} for details on potential effects on direction
    * and alignment.
@@ -548,4 +572,5 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
     }
   }
 }
+
 
