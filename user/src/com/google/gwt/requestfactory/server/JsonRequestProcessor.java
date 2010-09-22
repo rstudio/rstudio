@@ -20,6 +20,7 @@ import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.Property;
 import static com.google.gwt.requestfactory.shared.impl.RequestData.*;
 
@@ -32,9 +33,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -44,7 +47,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -123,6 +125,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       return 31 * this.proxyType.hashCode()
           + (31 * this.encodedId.hashCode() + (isFuture ? 1 : 0));
     }
+
+    @Override
+    public String toString() {
+      return encodedId + "-" + (isFuture ? "IS" : "NO") + "-"
+          + proxyType.getName();
+    }
   }
 
   private static class SerializedEntity {
@@ -137,9 +145,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
   }
 
-  private static final String FAKE_ENCODED = "encoded*";
-
   public static final String RELATED = "related";
+
+  private static final String FAKE_ENCODED = "encoded*";
 
   private static final Logger log = Logger.getLogger(JsonRequestProcessor.class.getName());
 
@@ -187,12 +195,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public Collection<Property<?>> allProperties(
       Class<? extends EntityProxy> clazz) throws IllegalArgumentException {
-    Set<Property<?>> rtn = new HashSet<Property<?>>();
-    Map<String, Class<?>> propertiesFromRecord = getPropertiesFromRecordProxyType(clazz);
-    for (Entry<String, Class<?>> property : propertiesFromRecord.entrySet()) {
-      rtn.add(new Property(property.getKey(), property.getValue()));
-    }
-    return rtn;
+    return getPropertiesFromRecordProxyType(clazz).values();
   }
 
   public String decodeAndInvokeRequest(String encodedRequest)
@@ -225,6 +228,23 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Class<?> parameterType = null;
     if (genericParameterType instanceof Class<?>) {
       parameterType = (Class<?>) genericParameterType;
+    }
+    if (genericParameterType instanceof ParameterizedType) {
+      ParameterizedType pType = (ParameterizedType) genericParameterType;
+      if (pType.getRawType() instanceof Class) {
+        Class<?> rType = (Class<?>) pType.getRawType();
+        if (Collection.class.isAssignableFrom(rType)) {
+          Collection<Object> collection = createCollection(rType);
+          if (collection != null) {
+            JSONArray array = new JSONArray(parameterValue);
+            for (int i = 0; i < array.length(); i++) {
+              collection.add(decodeParameterValue(
+                  pType.getActualTypeArguments()[0], array.getString(i)));
+            }
+            return collection;
+          }
+        }
+      }
     }
     if (parameterValue == null) {
       return null;
@@ -326,7 +346,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    */
   public Object encodePropertyValue(Object value) {
     if (value == null) {
-      return null;
+      return JSONObject.NULL;
     }
     Class<?> type = value.getClass();
     if (Boolean.class == type) {
@@ -353,24 +373,41 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * is sent into the response.
    */
   public Object encodePropertyValueFromDataStore(Object entityElement,
-      Class<?> proxyPropertyType, String propertyName,
-      RequestProperty propertyContext) throws SecurityException,
-      NoSuchMethodException, IllegalAccessException, InvocationTargetException,
-      JSONException {
+      Property<?> property, String propertyName, RequestProperty propertyContext)
+      throws SecurityException, NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException, JSONException {
+
     Object returnValue = getRawPropertyValueFromDatastore(entityElement,
         propertyName, propertyContext);
+    Class<?> proxyPropertyType = property.getType();
+    Class<?> elementType = property instanceof CollectionProperty
+        ? ((CollectionProperty) property).getLeafType() : proxyPropertyType;
     String encodedEntityId = isEntityReference(returnValue, proxyPropertyType);
-    if (encodedEntityId != null) {
-      String keyRef = operationRegistry.getSecurityProvider().encodeClassType(
-          proxyPropertyType)
-          + "-" + encodedEntityId;
-      addRelatedObject(keyRef, returnValue,
-          castToRecordClass(proxyPropertyType),
-          propertyContext.getProperty(propertyName));
-      // replace value with id reference
+
+    if (returnValue == null) {
+      return JSONObject.NULL;  
+    } else if (encodedEntityId != null) {
+      String keyRef = encodeRelated(proxyPropertyType, propertyName, propertyContext, returnValue);
       return keyRef;
+    } else if (property instanceof CollectionProperty) {
+      Class<?> colType = ((CollectionProperty) property).getType();
+      Collection<Object> col = createCollection(colType);
+      if (col != null) {
+        for (Object o : ((Collection) returnValue)) {
+          String encodedValId = isEntityReference(o,
+              ((CollectionProperty) property).getLeafType());
+          if (encodedValId != null) {
+            col.add(encodeRelated(elementType, propertyName, propertyContext, o));
+          } else {
+            col.add(encodePropertyValue(o));
+          }
+        }
+        return col;
+      }
+      return null;
+    } else {
+      return encodePropertyValue(returnValue);
     }
-    return encodePropertyValue(returnValue);
   }
 
   /**
@@ -400,50 +437,60 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
     Class<?> entityType = getEntityTypeForProxyType(entityKey.proxyType);
 
-    Map<String, Class<?>> entityPropTypes = getPropertiesFromRecordProxyType(entityKey.proxyType);
-    Map<String, Class<?>> proxyPropTypes = new HashMap<String, Class<?>>(
-        entityPropTypes);
-    validateKeys(recordObject, entityPropTypes.keySet());
-    updatePropertyTypes(entityPropTypes, entityType);
+    Map<String, Property<?>> propertiesInProxy = getPropertiesFromRecordProxyType(entityKey.proxyType);
+    Map<String, Class<?>> propertiesInDomain = updatePropertyTypes(
+        propertiesInProxy, entityType);
+    validateKeys(recordObject, propertiesInDomain.keySet());
 
+    // get entityInstance
     Object entityInstance = getEntityInstance(writeOperation, entityType,
-        entityKey.decodedId(entityPropTypes.get(ENTITY_ID_PROPERTY)),
-        entityPropTypes.get(ENTITY_ID_PROPERTY));
+        entityKey.decodedId(propertiesInProxy.get(ENTITY_ID_PROPERTY).getType()), propertiesInProxy.get(
+            ENTITY_ID_PROPERTY).getType());
 
     cachedEntityLookup.put(entityKey, entityInstance);
 
     Iterator<?> keys = recordObject.keys();
     while (keys.hasNext()) {
       String key = (String) keys.next();
-      Class<?> propertyType = entityPropTypes.get(key);
-      Class<?> dtoType = proxyPropTypes.get(key);
+      Class<?> propertyType = propertiesInDomain.get(key);
+      Property<?> dtoProperty = propertiesInProxy.get(key);
       if (writeOperation == WriteOperation.CREATE
           && (ENTITY_ID_PROPERTY.equals(key))) {
         String id = generateIdForCreate(key);
         if (id != null) {
           // TODO(rjrjr) generateIdForCreate returns null. Has this ever
-          // executed?
+          // execute
           entityType.getMethod(getMethodNameFromPropertyName(key, "set"),
               propertyType).invoke(entityInstance, id);
         }
       } else {
         Object propertyValue = null;
-        if (!recordObject.isNull(key)
-            && EntityProxy.class.isAssignableFrom(dtoType)) {
-          EntityKey propKey = getEntityKey(recordObject.getString(key));
-          Object cacheValue = cachedEntityLookup.get(propKey);
-          if (cachedEntityLookup.containsKey(propKey)) {
-            propertyValue = cacheValue;
-          } else {
-            propertyValue = getPropertyValueFromRequest(recordObject, key,
-                proxyPropTypes.get(key));
+        if (recordObject.isNull(key)) {
+          // null
+        } else if (dtoProperty instanceof CollectionProperty) {
+          Class<?> cType = dtoProperty.getType();
+          Class<?> leafType = ((CollectionProperty) dtoProperty).getLeafType();
+          Collection<Object> col = createCollection(cType);
+          if (col != null) {
+            JSONArray array = recordObject.getJSONArray(key);
+            for (int i = 0; i < array.length(); i++) {
+              if (EntityProxy.class.isAssignableFrom(leafType)) {
+                propertyValue = getPropertyValueFromRequestCached(array,
+                    propertiesInProxy, i, dtoProperty);
+              } else {
+                propertyValue = decodeParameterValue(leafType,
+                    array.getString(i));
+              }
+              col.add(propertyValue);
+            }
+            propertyValue = col;
           }
         } else {
-          propertyValue = getPropertyValueFromRequest(recordObject, key,
-              proxyPropTypes.get(key));
+          propertyValue = getPropertyValueFromRequestCached(recordObject,
+              propertiesInProxy, key, dtoProperty);
         }
         entityType.getMethod(getMethodNameFromPropertyName(key, "set"),
-            propertyType).invoke(entityInstance, propertyValue);
+            propertiesInDomain.get(key)).invoke(entityInstance, propertyValue);
       }
     }
 
@@ -515,7 +562,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * @param entityKeyClass the class type of the contained value
    * @return the JSONArray
    */
-  public JSONArray getJsonArray(List<?> resultList,
+  public JSONArray getJsonArray(Collection<?> resultList,
       Class<? extends EntityProxy> entityKeyClass)
       throws IllegalArgumentException, SecurityException,
       IllegalAccessException, JSONException, NoSuchMethodException,
@@ -526,7 +573,18 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
 
     for (Object entityElement : resultList) {
-      jsonArray.put(getJsonObject(entityElement, entityKeyClass, propertyRefs));
+      if (entityElement instanceof Number || entityElement instanceof String
+          || entityElement instanceof Character
+          || entityElement instanceof Date || entityElement instanceof Boolean
+          || entityElement instanceof Enum) {
+        jsonArray.put(encodePropertyValue(entityElement));
+      } else if (entityElement instanceof List || entityElement instanceof Set) {
+        // TODO: unwrap nested type params?
+        jsonArray.put(getJsonArray((Collection<?>) entityElement,
+            entityKeyClass));
+      } else {
+        jsonArray.put(getJsonObject(entityElement, entityKeyClass, propertyRefs));
+      }
     }
     return jsonArray;
   }
@@ -537,16 +595,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     JSONObject jsonObject = new JSONObject();
 
-    jsonObject.put(ENCODED_ID_PROPERTY,
-        isEntityReference(entityElement, entityKeyClass));
+    jsonObject.put(ENCODED_ID_PROPERTY, isEntityReference(entityElement,
+        entityKeyClass));
 
     for (Property<?> p : allProperties(entityKeyClass)) {
       if (requestedProperty(p, propertyContext)) {
         String propertyName = p.getName();
-        jsonObject.put(
-            propertyName,
-            encodePropertyValueFromDataStore(entityElement, p.getType(),
-                propertyName, propertyContext));
+        jsonObject.put(propertyName, encodePropertyValueFromDataStore(
+            entityElement, p, propertyName, propertyContext));
       }
     }
     return jsonObject;
@@ -623,58 +679,90 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   /**
-   * Returns the property fields (name => type) for a proxyType.
+   * Returns the property fields (name => type) for a record.
    */
-  public Map<String, Class<?>> getPropertiesFromRecordProxyType(
-      Class<? extends EntityProxy> proxyType) throws SecurityException {
-    if (!EntityProxy.class.isAssignableFrom(proxyType)) {
+  @SuppressWarnings("unchecked")
+  public Map<String, Property<?>> getPropertiesFromRecordProxyType(
+      Class<? extends EntityProxy> record) throws SecurityException {
+    if (!EntityProxy.class.isAssignableFrom(record)) {
       return Collections.emptyMap();
     }
 
-    Map<String, Class<?>> properties = new LinkedHashMap<String, Class<?>>();
-    Method[] methods = proxyType.getMethods();
+    Map<String, Property<?>> properties = new LinkedHashMap<String, Property<?>>();
+    Method[] methods = record.getMethods();
     for (Method method : methods) {
       String methodName = method.getName();
-
-      /*
-       * TODO(rjrjr) Let's use the Introspector for real, both here and the code
-       * generator
-       */
-      Class<?> newType = null;
       String propertyName = null;
+      Property newProperty = null;
       if (methodName.startsWith("get")) {
         propertyName = Introspector.decapitalize(methodName.substring(3));
         if (propertyName.length() == 0) {
           continue;
         }
-        newType = method.getReturnType();
+        newProperty = getPropertyFromGenericType(propertyName,
+            method.getGenericReturnType());
       } else if (methodName.startsWith("set")) {
         propertyName = Introspector.decapitalize(methodName.substring(3));
         if (propertyName.length() > 0) {
-          Class<?>[] parameterTypes = method.getParameterTypes();
+          Type[] parameterTypes = method.getGenericParameterTypes();
           if (parameterTypes.length > 0) {
-            newType = parameterTypes[parameterTypes.length - 1];
+            newProperty = getPropertyFromGenericType(propertyName,
+                parameterTypes[parameterTypes.length - 1]);
           }
         }
       }
-      if (newType == null) {
-        continue; // Void return from a getter doesn't count
+      if (newProperty == null) {
+        continue;
       }
-      Class<?> existing = properties.put(propertyName, newType);
-      if (existing != null && !existing.equals(newType)) {
+      Property existing = properties.put(propertyName, newProperty);
+      if (existing != null && !existing.equals(newProperty)) {
         throw new IllegalStateException(String.format(
             "In %s, mismatched getter and setter types for property %s, "
-                + "found %s and %s", proxyType.getName(), propertyName,
-            existing.getName(), newType.getName()));
+                + "found %s and %s", record.getName(), propertyName,
+            existing.getName(), newProperty.getName()));
       }
     }
     return properties;
   }
 
+  @SuppressWarnings("unchecked")
+  public Property getPropertyFromGenericType(String propertyName, Type type) {
+    if (type instanceof ParameterizedType) {
+      ParameterizedType pType = (ParameterizedType) type;
+      Class<?> rawType = (Class<Object>) pType.getRawType();
+      Type[] typeArgs = pType.getActualTypeArguments();
+      if (Collection.class.isAssignableFrom(rawType)) {
+        if (typeArgs.length == 1) {
+          Type leafType = typeArgs[0];
+          if (leafType instanceof Class) {
+            return new CollectionProperty(propertyName, rawType,
+                (Class) leafType);
+          }
+        }
+      }
+    } else {
+      return new Property<Object>(propertyName, (Class<Object>) type);
+    }
+    return null;
+  }
+
   /**
    * Returns the property value, in the specified type, from the request object.
    * The value is put in the DataStore.
+   * 
+   * @throws InstantiationException
+   * @throws NoSuchMethodException
+   * @throws InvocationTargetException
+   * @throws IllegalAccessException
+   * @throws SecurityException
    */
+  public Object getPropertyValueFromRequest(JSONArray recordArray, int index,
+      Class<?> propertyType) throws JSONException, SecurityException,
+      IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+      InstantiationException {
+    return decodeParameterValue(propertyType, recordArray.get(index).toString());
+  }
+
   public Object getPropertyValueFromRequest(JSONObject recordObject,
       String key, Class<?> propertyType) throws JSONException,
       SecurityException, IllegalAccessException, InvocationTargetException,
@@ -766,7 +854,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
 
     JSONObject envelop = new JSONObject();
-    if (result instanceof List<?>) {
+    if (result instanceof List<?> || result instanceof Set<?>) {
       envelop.put(RESULT_TOKEN, toJsonArray(operation, result));
     } else if (result instanceof Number || result instanceof Enum<?>
         || result instanceof String || result instanceof Date
@@ -801,8 +889,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   public void validateKeys(JSONObject recordObject,
       Set<String> declaredProperties) {
     /*
-     * We don't need it by the time we're here (it's in the EntityKey),
-     * and it gums up the works. 
+     * We don't need it by the time we're here (it's in the EntityKey), and it
+     * gums up the works.
      */
     recordObject.remove(ENCODED_ID_PROPERTY);
 
@@ -814,6 +902,43 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
             + " is not permitted to be set");
       }
     }
+  }
+
+  /**
+   * Returns true iff the after and before JSONArray are different.
+   */
+  boolean hasChanged(JSONArray beforeArray, JSONArray afterArray)
+      throws JSONException {
+    if (beforeArray.length() != afterArray.length()) {
+      return true;
+    } else {
+      for (int i = 0; i < beforeArray.length(); i++) {
+        Object bVal = beforeArray.get(i);
+        Object aVal = afterArray.get(i);
+        if (aVal != null && bVal != null) {
+          if (aVal == bVal || aVal.equals(bVal)) {
+            continue;
+          }
+          if (aVal.getClass() != bVal.getClass()) {
+            return true;
+          }
+          if (aVal instanceof JSONObject) {
+            if (hasChanged((JSONObject) bVal, (JSONObject) aVal)) {
+              return true;
+            }
+          }
+          if (aVal instanceof JSONArray) {
+            if (hasChanged((JSONArray) bVal, (JSONArray) aVal)) {
+              return true;
+            }
+          }
+        }
+        if (aVal != bVal) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -842,8 +967,17 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       if (afterValue == null) {
         return true;
       }
+      // equals method on JSONArray doesn't consider contents
       if (!beforeValue.equals(afterValue)) {
-        return true;
+        if (beforeValue instanceof JSONArray && afterValue instanceof JSONArray) {
+          JSONArray beforeArray = (JSONArray) beforeValue;
+          JSONArray afterArray = (JSONArray) afterValue;
+          if (hasChanged(beforeArray, afterArray)) {
+            return true;
+          }
+        } else {
+          return true;
+        }
       }
     }
     return false;
@@ -853,9 +987,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       Class<? extends EntityProxy> propertyType, RequestProperty propertyContext)
       throws JSONException, IllegalAccessException, NoSuchMethodException,
       InvocationTargetException {
-
-    relatedObjects.put(keyRef,
-        getJsonObject(returnValue, propertyType, propertyContext));
+    if (!relatedObjects.containsKey(keyRef)) {
+      // put temporary value to prevent infinite recursion
+      relatedObjects.put(keyRef, null);
+      JSONObject jsonObject = getJsonObject(returnValue, propertyType,
+          propertyContext);
+      // put real value
+      relatedObjects.put(keyRef, jsonObject);
+    }
   }
 
   private JSONObject buildExceptionResponse(Throwable throwable) {
@@ -913,8 +1052,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
            */
           JSONObject dummyJson = new JSONObject();
           dummyJson.put(ENCODED_ID_PROPERTY, entityKey.encodedId);
-          afterDvsDataMap.put(
-              entityKey,
+          afterDvsDataMap.put(entityKey,
               getEntityDataForRecordWithSettersApplied(entityKey, dummyJson,
                   WriteOperation.CREATE));
         } else {
@@ -946,6 +1084,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       }
       beforeDataMap.put(entityKey, getSerializedEntity(entityKey));
     }
+  }
+
+  private Collection<Object> createCollection(Class<?> colType) {
+    return colType == List.class ? new ArrayList<Object>()
+        : colType == Set.class ? new HashSet<Object>() : null;
   }
 
   /**
@@ -1010,6 +1153,21 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return encodePropertyValue(id).toString();
   }
 
+  @SuppressWarnings("unchecked")
+  private String encodeRelated(Class<?> propertyType, String propertyName,
+      RequestProperty propertyContext, Object returnValue)
+      throws NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException, JSONException {
+    String encodedId = isEntityReference(returnValue, propertyType);
+
+    String keyRef = new EntityKey(encodedId, false,
+        (Class<? extends EntityProxy>) propertyType).toString();
+
+    addRelatedObject(keyRef, returnValue, castToRecordClass(propertyType),
+        propertyContext.getProperty(propertyName));
+    return keyRef;
+  }
+
   private JSONObject encodeRelatedObjectsToJson() throws JSONException {
     JSONObject array = new JSONObject();
     for (Map.Entry<String, JSONObject> entry : relatedObjects.entrySet()) {
@@ -1028,7 +1186,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     JSONObject returnObject = new JSONObject();
     returnObject.put("futureId", originalEntityKey.encodedId + "");
     // violations have already been taken care of.
-    
     Object newId = getRawPropertyValueFromDatastore(entityInstance,
         ENTITY_ID_PROPERTY, propertyRefs);
     if (newId == null) {
@@ -1039,10 +1196,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
     newId = encodeId(newId);
     returnObject.put("id", getSchemaAndId(originalEntityKey.proxyType, newId));
-    returnObject.put(
-        "version",
-        encodePropertyValueFromDataStore(entityInstance, Integer.class,
-            "version", propertyRefs));
+    returnObject.put("version", encodePropertyValueFromDataStore(
+        entityInstance, new Property<Integer>("version", Integer.class),
+        "version", propertyRefs));
     return returnObject;
   }
 
@@ -1061,9 +1217,61 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private Method getIdMethodForEntity(Class<?> entityType)
       throws NoSuchMethodException {
-    Method idMethod = entityType.getMethod(
-        getMethodNameFromPropertyName(ENTITY_ID_PROPERTY, "get"));
+    Method idMethod = entityType.getMethod(getMethodNameFromPropertyName(
+        ENTITY_ID_PROPERTY, "get"));
     return idMethod;
+  }
+
+  private Object getPropertyValueFromRequestCached(JSONObject recordObject,
+      Map<String, Property<?>> propertiesInProxy, String key,
+      Property<?> dtoProperty) throws JSONException, IllegalAccessException,
+      InvocationTargetException, NoSuchMethodException, InstantiationException {
+    Object propertyValue;
+    if (!recordObject.isNull(key)
+        && EntityProxy.class.isAssignableFrom(dtoProperty.getType())) {
+      // if the property type is a Proxy, we expect an encoded Key string
+      EntityKey propKey = getEntityKey(recordObject.getString(key));
+      // check to see if we've already decoded this object from JSON
+      Object cacheValue = cachedEntityLookup.get(propKey);
+      // containsKey is used here because an entity lookup can return null
+      if (cachedEntityLookup.containsKey(propKey)) {
+        propertyValue = cacheValue;
+      } else {
+        propertyValue = getPropertyValueFromRequest(recordObject, key,
+            propertiesInProxy.get(key).getType());
+      }
+    } else {
+      propertyValue = getPropertyValueFromRequest(recordObject, key,
+          propertiesInProxy.get(key).getType());
+    }
+    return propertyValue;
+  }
+
+  private Object getPropertyValueFromRequestCached(JSONArray recordArray,
+      Map<String, Property<?>> propertiesInProxy, int index,
+      Property<?> dtoProperty) throws JSONException, IllegalAccessException,
+      InvocationTargetException, NoSuchMethodException, InstantiationException {
+    Object propertyValue;
+    Class<?> leafType = dtoProperty instanceof CollectionProperty
+        ? ((CollectionProperty) dtoProperty).getLeafType()
+        : dtoProperty.getType();
+
+    // if the property type is a Proxy, we expect an encoded Key string
+    if (EntityProxy.class.isAssignableFrom(leafType)) {
+      // check to see if we've already decoded this object from JSON
+      EntityKey propKey = getEntityKey(recordArray.getString(index));
+      // containsKey is used here because an entity lookup can return null
+      Object cacheValue = cachedEntityLookup.get(propKey);
+      if (cachedEntityLookup.containsKey(propKey)) {
+        propertyValue = cacheValue;
+      } else {
+        propertyValue = getPropertyValueFromRequest(recordArray, index,
+            leafType);
+      }
+    } else {
+      propertyValue = getPropertyValueFromRequest(recordArray, index, leafType);
+    }
+    return propertyValue;
   }
 
   private Object getRawPropertyValueFromDatastore(Object entityElement,
@@ -1084,7 +1292,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       throws IllegalArgumentException, SecurityException,
       IllegalAccessException, InvocationTargetException, NoSuchMethodException,
       JSONException, InstantiationException {
-    
+
     Object entityInstance = getEntityInstance(entityKey);
     JSONObject serializedEntity = serializeEntity(entityInstance, entityKey);
     return new SerializedEntity(entityInstance, serializedEntity);
@@ -1095,7 +1303,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * value is a JSONArray of JSONObjects.
    */
   private JSONObject getSideEffects() throws SecurityException, JSONException,
-      IllegalAccessException, InvocationTargetException, NoSuchMethodException, IllegalArgumentException, InstantiationException {
+      IllegalAccessException, InvocationTargetException, NoSuchMethodException,
+      IllegalArgumentException, InstantiationException {
     JSONObject sideEffects = new JSONObject();
     JSONArray createArray = new JSONArray();
     JSONArray deleteArray = new JSONArray();
@@ -1116,14 +1325,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           entityData);
       if (writeOperation == WriteOperation.DELETE) {
         JSONObject deleteRecord = new JSONObject();
-        deleteRecord.put("id",
-            getSchemaAndId(entityKey.proxyType, entityKey.encodedId));
+        deleteRecord.put("id", getSchemaAndId(entityKey.proxyType,
+            entityKey.encodedId));
         deleteArray.put(deleteRecord);
       }
       if (writeOperation == WriteOperation.UPDATE) {
         JSONObject updateRecord = new JSONObject();
-        updateRecord.put("id",
-            getSchemaAndId(entityKey.proxyType, entityKey.encodedId));
+        updateRecord.put("id", getSchemaAndId(entityKey.proxyType,
+            entityKey.encodedId));
         updateArray.put(updateRecord);
       }
     }
@@ -1155,8 +1364,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           returnObject.put("futureId", entityKey.encodedId);
           returnObject.put("id", getSchemaAndId(entityKey.proxyType, null));
         } else {
-          returnObject.put("id",
-              getSchemaAndId(entityKey.proxyType, entityKey.encodedId));
+          returnObject.put("id", getSchemaAndId(entityKey.proxyType,
+              entityKey.encodedId));
         }
         violations.put(returnObject);
       }
@@ -1185,7 +1394,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    */
   private boolean requestedProperty(Property<?> p,
       RequestProperty propertyContext) {
-    if (EntityProxy.class.isAssignableFrom(p.getType())) {
+    if (propertyContext == null) {
+      return false;
+    }
+    Class<?> leafType = p.getType();
+    if (p instanceof CollectionProperty) {
+      leafType = ((CollectionProperty) p).getLeafType();
+    }
+    if (EntityProxy.class.isAssignableFrom(leafType)) {
       return propertyContext.hasProperty(p.getName());
     }
 
@@ -1214,11 +1430,28 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
       Object propertyValue;
       String encodedEntityId = isEntityReference(returnValue, p.getType());
-      if (encodedEntityId != null) {
+      if (returnValue == null) {
+          propertyValue = JSONObject.NULL;
+      } else if (encodedEntityId != null) {
         propertyValue = encodedEntityId
             + "-NO-"
             + operationRegistry.getSecurityProvider().encodeClassType(
                 p.getType());
+      } else if (p instanceof CollectionProperty) {
+        JSONArray array = new JSONArray();
+        for (Object val : ((Collection) returnValue)) {
+          String encodedIdVal = isEntityReference(val, p.getType());
+          if (encodedIdVal != null) {
+            propertyValue = encodedIdVal
+                + "-NO-"
+                + operationRegistry.getSecurityProvider().encodeClassType(
+                    p.getType());
+          } else {
+            propertyValue = encodePropertyValue(val);
+          }
+          array.put(propertyValue);
+        }
+        propertyValue = array;
       } else {
         propertyValue = encodePropertyValue(returnValue);
       }
@@ -1231,7 +1464,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private Object toJsonArray(RequestDefinition operation, Object result)
       throws IllegalAccessException, JSONException, NoSuchMethodException,
       InvocationTargetException {
-    JSONArray jsonArray = getJsonArray((List<?>) result,
+    JSONArray jsonArray = getJsonArray((Collection<?>) result,
         (Class<? extends EntityProxy>) operation.getReturnType());
     return jsonArray;
   }
@@ -1246,13 +1479,36 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Update propertiesInRecord based on the types of entity type.
    */
-  private void updatePropertyTypes(Map<String, Class<?>> propertiesInRecord,
-      Class<?> entityType) {
-    for (Field field : entityType.getDeclaredFields()) {
-      Class<?> fieldType = propertiesInRecord.get(field.getName());
-      if (fieldType != null) {
-        propertiesInRecord.put(field.getName(), field.getType());
+  private Map<String, Class<?>> updatePropertyTypes(
+      Map<String, Property<?>> propertiesInProxy, Class<?> entity) {
+    Map<String, Class<?>> toReturn = new HashMap<String, Class<?>>();
+
+    /*
+     * TODO: this logic fails if the field and getter/setter methods are
+     * differently named.
+     */
+    for (Field field : entity.getDeclaredFields()) {
+      Property<?> property = propertiesInProxy.get(field.getName());
+      if (property == null) {
+        continue;
+      }
+      Class<?> fieldType = property.getType();
+      if (property instanceof CollectionProperty) {
+        toReturn.put(field.getName(), fieldType);
+      } else if (fieldType != null) {
+        if (EntityProxy.class.isAssignableFrom(fieldType)) {
+          ProxyFor pFor = fieldType.getAnnotation(ProxyFor.class);
+          if (pFor != null) {
+            fieldType = pFor.value();
+          }
+          // TODO: remove override declared method return type with field type
+          if (!fieldType.equals(field.getType())) {
+            fieldType = field.getType();
+          }
+        }
+        toReturn.put(field.getName(), fieldType);
       }
     }
+    return toReturn;
   }
 }

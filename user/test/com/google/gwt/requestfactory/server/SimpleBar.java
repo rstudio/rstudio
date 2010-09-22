@@ -15,12 +15,14 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.requestfactory.shared.Id;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -41,6 +43,10 @@ public class SimpleBar {
 
   public static List<SimpleBar> findAll() {
     return new ArrayList<SimpleBar>(get().values());
+  }
+
+  public static Set<SimpleBar> findAsSet() {
+    return new HashSet<SimpleBar>(get().values());
   }
 
   public static SimpleBar findSimpleBar(String id) {

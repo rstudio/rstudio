@@ -26,6 +26,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -133,8 +134,19 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
           throw new IllegalArgumentException(
               "Bad or missing type arguments for "
                   + "List return type on method " + method);
+        } else if (Set.class.isAssignableFrom(rawType)
+            || RequestObject.class.isAssignableFrom(rawType)) {
+          Class<?> rType = getTypeArgument(pType);
+          if (rType != null) {
+            if (Set.class.isAssignableFrom(rType)) {
+              return getReturnTypeFromParameter(method, rType);
+            }
+            return rType;
+          }
+          throw new IllegalArgumentException(
+              "Bad or missing type arguments for "
+                  + "Set return type on method " + method);
         }
-
       } else {
         // Primitive?
         return (Class<?>) type;
@@ -146,6 +158,11 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
     private Class<?> getTypeArgument(ParameterizedType type) {
       Type[] params = type.getActualTypeArguments();
       if (params.length == 1) {
+        if (params[0] instanceof ParameterizedType) {
+          // if type is for example, RequestObject<List<T>> we return T
+          return (Class<?>) ((ParameterizedType) params[0]).getRawType();
+        }
+        // else, it might be a case like List<T> in which case we return T
         return (Class<Object>) params[0];
       }
 

@@ -18,7 +18,8 @@ package com.google.gwt.requestfactory.shared;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
-
+import java.util.List;
+import java.util.Set;
 /**
  * A simple proxy used for testing. Has an int field and date field. Add other
  * data types as their support gets built in.
@@ -64,6 +65,22 @@ public interface BaseFooProxy extends EntityProxy {
   Short getShortField();
   
   String getUserName();
+
+  List<SimpleBarProxy> getOneToManyField();
+
+  List<SimpleFooProxy> getSelfOneToManyField();
+
+  List<Integer> getNumberListField();
+
+  Set<SimpleBarProxy> getOneToManySetField();
+
+  void setOneToManyField(List<SimpleBarProxy> field);
+
+  void setOneToManySetField(Set<SimpleBarProxy> field);
+
+  void setSelfOneToManyField(List<SimpleFooProxy> field);
+
+  void setNumberListField(List<Integer> field);
   
   void setBarField(SimpleBarProxy barField);
 

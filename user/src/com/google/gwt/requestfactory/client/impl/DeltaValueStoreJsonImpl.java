@@ -20,6 +20,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.Property;
 
 import java.util.HashMap;
@@ -385,6 +386,10 @@ class DeltaValueStoreJsonImpl {
       return true;
     }
 
+    if (property instanceof CollectionProperty) {
+      return true;
+    }
+    
     masterRecord = rawMasterRecord.cast();
 
     if (!masterRecord.isDefined(property.getName())) {

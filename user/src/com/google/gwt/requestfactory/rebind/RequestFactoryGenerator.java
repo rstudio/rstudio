@@ -38,8 +38,10 @@ import com.google.gwt.requestfactory.client.impl.AbstractDoubleRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractEnumRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractFloatRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractIntegerRequest;
-import com.google.gwt.requestfactory.client.impl.AbstractJsonListRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractJsonProxyListRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonObjectRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractJsonProxySetRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractJsonValueListRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractShortRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractStringRequest;
@@ -52,6 +54,8 @@ import com.google.gwt.requestfactory.client.impl.ProxySchema;
 import com.google.gwt.requestfactory.client.impl.ProxyToTypeMap;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
+import com.google.gwt.requestfactory.shared.ProxySetRequest;
+import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.EnumProperty;
 import com.google.gwt.requestfactory.shared.impl.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
@@ -69,6 +73,7 @@ import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -88,6 +93,30 @@ import java.util.Set;
  */
 public class RequestFactoryGenerator extends Generator {
 
+  private enum CollectionType { 
+    SCALAR("ObjectRequestImpl", AbstractJsonObjectRequest.class),
+    LIST("ListRequestImpl", AbstractJsonProxyListRequest.class),
+    SET("SetRequestImpl", AbstractJsonProxySetRequest.class);
+
+    private String implName;
+
+    private Class<?> requestClass;
+
+    CollectionType(String implName,
+        Class<?> requestClass) {
+      this.implName = implName;
+      this.requestClass = requestClass;
+    }
+
+    public String getImplName() {
+      return implName;
+    }
+
+    public Class<?> getRequestClass() {
+      return requestClass;
+    }
+  }
+
   private static class EntityProperty {
     private final String name;
     private final JType type;
@@ -106,6 +135,10 @@ public class RequestFactoryGenerator extends Generator {
     }
   }
 
+  private JClassType listType;
+  private JClassType setType;
+  private JClassType entityProxyType;
+
   private final Set<JClassType> generatedProxyTypes = new HashSet<JClassType>();
 
   @Override
@@ -114,6 +147,10 @@ public class RequestFactoryGenerator extends Generator {
     // The TypeOracle knows about all types in the type system
     TypeOracle typeOracle = generatorContext.getTypeOracle();
 
+    listType = typeOracle.findType(List.class.getName());
+    setType = typeOracle.findType(Set.class.getName());
+    entityProxyType = typeOracle.findType(EntityProxy.class.getName());
+    
     // Get a reference to the type that the generator should implement
     JClassType interfaceType = typeOracle.findType(interfaceName);
 
@@ -162,10 +199,8 @@ public class RequestFactoryGenerator extends Generator {
    */
   private List<EntityProperty> computeEntityPropertiesFromProxyType(
       JClassType publicProxyType) {
-    List<EntityProperty> entityProperties = new ArrayList<RequestFactoryGenerator.EntityProperty>();
+    List<EntityProperty> entityProperties = new ArrayList<EntityProperty>();
     Set<String> propertyNames = new HashSet<String>();
-    JClassType entityProxyType = publicProxyType.getOracle().findType(
-        EntityProxy.class.getCanonicalName());
 
     for (JMethod method : publicProxyType.getOverridableMethods()) {
       if (method.getEnclosingType() == entityProxyType) {
@@ -184,19 +219,18 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     return entityProperties;
-  }
-
+  };
+  
   private void ensureProxyType(TreeLogger logger,
       GeneratorContext generatorContext, String packageName,
       JClassType publicProxyType) throws UnableToCompleteException {
     TypeOracle typeOracle = generatorContext.getTypeOracle();
 
-    JClassType entityProxyClass = typeOracle.findType(EntityProxy.class.getName());
-    if (!publicProxyType.isAssignableTo(entityProxyClass)) {
+    if (!publicProxyType.isAssignableTo(entityProxyType)) {
       return;
     }
 
-    if (publicProxyType.equals(entityProxyClass)) {
+    if (publicProxyType.equals(entityProxyType)) {
       return;
     }
     if (generatedProxyTypes.contains(publicProxyType)) {
@@ -216,11 +250,15 @@ public class RequestFactoryGenerator extends Generator {
       ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
           packageName, proxyImplTypeName);
 
-      f.addImport(AbstractJsonListRequest.class.getName());
+      f.addImport(AbstractJsonProxySetRequest.class.getName());  
+      f.addImport(AbstractJsonProxyListRequest.class.getName());
+      f.addImport(AbstractJsonValueListRequest.class.getName());      
       f.addImport(AbstractJsonObjectRequest.class.getName());
       f.addImport(RequestFactoryJsonImpl.class.getName());
       f.addImport(Property.class.getName());
       f.addImport(EnumProperty.class.getName());
+      f.addImport(CollectionProperty.class.getName());
+      
       f.addImport(EntityProxy.class.getName());
       f.addImport(ProxyImpl.class.getName());
       f.addImport(ProxyJsoImpl.class.getName());
@@ -254,6 +292,13 @@ public class RequestFactoryGenerator extends Generator {
               "private static final Property<%1$s> %2$s = new EnumProperty<%1$s>(\"%2$s\", %1$s.class, %1$s.values());",
               entityProperty.getType().getSimpleSourceName(),
               name));
+        } else if (isCollection(typeOracle, entityProperty.getType())) {
+          sw.println(String.format(
+              "private static final Property<%1$s> %2$s = new CollectionProperty<%1$s, %3$s>(\"%2$s\", %1$s.class, %3$s.class);",
+              entityProperty.getType().getSimpleSourceName(),
+              name,
+              entityProperty.getType().isParameterized().getTypeArgs()[0].getQualifiedSourceName()
+              ));
         } else {
           sw.println(String.format(
               "private static final Property<%1$s> %2$s = new Property<%1$s>(\"%2$s\", \"%3$s\", %1$s.class);",
@@ -266,8 +311,9 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println();
       String simpleImplName = publicProxyType.getSimpleSourceName() + "Impl";
-      printRequestImplClass(sw, publicProxyType, simpleImplName, true);
-      printRequestImplClass(sw, publicProxyType, simpleImplName, false);
+      printRequestImplClass(sw, publicProxyType, simpleImplName, CollectionType.LIST);
+      printRequestImplClass(sw, publicProxyType, simpleImplName, CollectionType.SET);
+      printRequestImplClass(sw, publicProxyType, simpleImplName, CollectionType.SCALAR);
 
       sw.println();
       sw.println(String.format(
@@ -282,18 +328,34 @@ public class RequestFactoryGenerator extends Generator {
       sw.outdent();
       sw.println("}");
 
-      // getter methods
+      // getter and setter methods
       for (EntityProperty entityProperty : entityProperties) {
         JClassType returnType = entityProperty.getType().isClassOrInterface();
+        String returnTypeString = returnType.getQualifiedSourceName();
+        JClassType collectionType = returnType.isClassOrInterface();
+
+        if (collectionType != null && collectionType.isParameterized() != null) {
+           returnType = collectionType.isParameterized().getTypeArgs()[0];
+           returnTypeString = collectionType.isParameterized().getParameterizedQualifiedSourceName();
+        }
+
         sw.println();
         sw.println(String.format("public %s get%s() {",
-            returnType.getQualifiedSourceName(),
+            returnTypeString,
             capitalize(entityProperty.getName())));
         sw.indent();
         sw.println(String.format("return get(%s);", entityProperty.getName()));
         sw.outdent();
         sw.println("}");
 
+        sw.println();
+        String varName = entityProperty.getName();
+        sw.println(String.format("public void set%s(%s %s) {",
+            capitalize(varName), returnTypeString, varName));
+        sw.indent();
+        sw.println(String.format("set(this.%s, this, %s);", varName, varName));
+        sw.outdent();
+        sw.println("}");
         /*
          * Because a Proxy A may relate to B which relates to C, we need to
          * ensure transitively.
@@ -301,19 +363,6 @@ public class RequestFactoryGenerator extends Generator {
         if (isProxyType(typeOracle, returnType)) {
           transitiveDeps.add(returnType);
         }
-      }
-
-      // setter methods
-      for (EntityProperty entityProperty : entityProperties) {
-        JClassType returnType = entityProperty.getType().isClassOrInterface();
-        sw.println();
-        String varName = entityProperty.getName();
-        sw.println(String.format("public void set%s(%s %s) {",
-            capitalize(varName), returnType.getQualifiedSourceName(), varName));
-        sw.indent();
-        sw.println(String.format("set(this.%s, this, %s);", varName, varName));
-        sw.outdent();
-        sw.println("}");
       }
 
       sw.outdent();
@@ -606,16 +655,36 @@ public class RequestFactoryGenerator extends Generator {
       String requestClassName = null;
 
       TypeOracle typeOracle = generatorContext.getTypeOracle();
-      String enumOrFindArgument = "";
+      String extraArgs = "";
       // TODO: refactor this into some kind of extensible map lookup
-      if (isProxyListRequest(typeOracle, requestType)) {
-        requestClassName = asInnerImplClass("ListRequestImpl", returnType);
+      // check for ProxyListRequest<T> or ProxySetRequest<T>
+      if (isProxyCollectionRequest(typeOracle, requestType)) {
+        Class<?> colType = getCollectionType(typeOracle, requestType);
+        assert colType != null;
+        requestClassName = asInnerImplClass(colType == List.class ?
+            "ListRequestImpl" : "SetRequestImpl", returnType);
       } else if (isProxyRequest(typeOracle, requestType)) {
         if (selectorInterface.isAssignableTo(typeOracle.findType(FindRequest.class.getName()))) {
-          enumOrFindArgument = ", proxyId";
+          extraArgs = ", proxyId";
           requestClassName = FindRequestObjectImpl.class.getName();
         } else {
           requestClassName = asInnerImplClass("ObjectRequestImpl", returnType);
+        }
+      } else if (isValueListRequest(typeOracle, requestType)) {
+         requestClassName = AbstractJsonValueListRequest.class.getName();
+         // generate argument list for AbstractJsonValueListRequest constructor
+         JClassType colType = requestType.isParameterized().getTypeArgs()[0];
+         extraArgs = ", " + colType.isAssignableTo(setType);
+         // extraArgs = ", isSet"  true if elementType of collection is Set
+         JClassType leafType = colType.isParameterized().getTypeArgs()[0];
+         extraArgs += ", " + leafType.getQualifiedSourceName() + ".class";
+         // extraArgs = ", isSet, collectionElementType.class"
+        if (leafType.isAssignableTo(typeOracle.findType(Enum.class.getName()))) {
+          // if contained type is Enum, pass Enum.values()
+          extraArgs += ", " + leafType.getQualifiedSourceName() + ".values()"; 
+        } else {
+          // else for all other types, pass null
+          extraArgs += ", null";
         }
       } else if (isStringRequest(typeOracle, requestType)) {
         requestClassName = AbstractStringRequest.class.getName();
@@ -643,7 +712,7 @@ public class RequestFactoryGenerator extends Generator {
         requestClassName = AbstractBigIntegerRequest.class.getName();
       } else if (isEnumRequest(typeOracle, requestType)) {
         requestClassName = AbstractEnumRequest.class.getName();
-        enumOrFindArgument = ", " + requestType.isParameterized().getTypeArgs()[0]
+        extraArgs = ", " + requestType.isParameterized().getTypeArgs()[0]
             + ".values()";
       } else if (isVoidRequest(typeOracle, requestType)) {
         requestClassName = AbstractVoidRequest.class.getName();
@@ -655,8 +724,8 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println(getMethodDeclaration(method) + " {");
       sw.indent();
-      sw.println("return new " + requestClassName + "(factory" + enumOrFindArgument
-          + ") {");
+      sw.println(
+          "return new " + requestClassName + "(factory" + extraArgs + ") {");
       sw.indent();
       String requestDataName = RequestData.class.getSimpleName();
       sw.println("public " + requestDataName + " getRequestData() {");
@@ -675,6 +744,35 @@ public class RequestFactoryGenerator extends Generator {
     sw.outdent();
     sw.println("}");
     generatorContext.commit(logger, out);
+  }
+
+  /**
+   * If requestType is ProxyListRequest or RequestObject<List<T>> return List,
+   * otherwise if requestType is ProxySetRequest or RequestObject<Set<T>> return
+   * Set, otherwise return null.
+   */
+  private Class<?> getCollectionType(TypeOracle typeOracle,
+      JClassType requestType) {
+    if (requestType.isAssignableTo(
+        typeOracle.findType(ProxyListRequest.class.getName()))) {
+      return List.class;
+    }
+    if (requestType.isAssignableTo(typeOracle.findType(
+        ProxySetRequest.class.getName()))) {
+      return Set.class;
+    }
+    JClassType retType = requestType.isParameterized().getTypeArgs()[0];
+    if (retType.isParameterized() != null) {
+      JClassType leafType = retType.isParameterized().getTypeArgs()[0];
+      if (isProxyType(typeOracle, leafType)) {
+        if (retType.isAssignableTo(listType)) {
+          return List.class;
+        } else if (retType.isAssignableTo(setType)) {
+          return Set.class;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -726,13 +824,11 @@ public class RequestFactoryGenerator extends Generator {
       if (params != null) {
         classType = params.getTypeArgs()[0];
       }
-      if (classType != null
-          && classType.isAssignableTo(typeOracle.findType(EntityProxy.class.getName()))) {
+      if (classType != null && classType.isAssignableTo(entityProxyType)) {
         sb.append("((" + classType.getQualifiedBinaryName() + "Impl" + ")");
       }
       sb.append(parameter.getName());
-      if (classType != null
-          && classType.isAssignableTo(typeOracle.findType(EntityProxy.class.getName()))) {
+      if (classType != null && classType.isAssignableTo(entityProxyType)) {
         sb.append(").getWireFormatId()");
       }
     }
@@ -762,8 +858,16 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Character.class.getName()));
   }
 
+  private boolean isCollection(TypeOracle typeOracle,
+      JType requestType) {
+    return requestType.isParameterized() != null
+            && requestType.isParameterized().isAssignableTo(
+        typeOracle.findType(Collection.class.getName()));
+  }
+
   private boolean isDateRequest(TypeOracle typeOracle, JClassType requestType) {
-    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Date.class.getName()));
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(
+        Date.class.getName()));
   }
 
   private boolean isDoubleRequest(TypeOracle typeOracle, JClassType requestType) {
@@ -786,17 +890,32 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Long.class.getName()));
   }
 
-  private boolean isProxyListRequest(TypeOracle typeOracle,
+  private boolean isProxyCollectionRequest(TypeOracle typeOracle,
       JClassType requestType) {
-    return requestType.isAssignableTo(typeOracle.findType(ProxyListRequest.class.getName()));
+    return requestType.isAssignableTo(typeOracle.findType(
+        ProxyListRequest.class.getName()))
+        || requestType.isAssignableTo(typeOracle.findType(
+        ProxySetRequest.class.getName()));
   }
-
+  
   private boolean isProxyRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isAssignableTo(typeOracle.findType(ProxyRequest.class.getName()));
   }
 
   private boolean isProxyType(TypeOracle typeOracle, JClassType requestType) {
-    return requestType.isAssignableTo(typeOracle.findType(EntityProxy.class.getName()));
+    return requestType.isAssignableTo(entityProxyType);
+  }
+
+  private boolean isRequestObjectCollectionRequest(TypeOracle typeOracle,
+      JClassType requestType) {
+    JClassType retType = requestType.isParameterized().getTypeArgs()[0];
+    if (retType.isAssignableTo(listType) || retType.isAssignableTo(setType)) {
+      if (retType.isParameterized() != null) {
+        JClassType leafType = retType.isParameterized().getTypeArgs()[0];
+        return isProxyType(typeOracle, leafType);
+      }
+    }
+    return false;
   }
 
   private boolean isShortRequest(TypeOracle typeOracle, JClassType requestType) {
@@ -805,6 +924,18 @@ public class RequestFactoryGenerator extends Generator {
 
   private boolean isStringRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(String.class.getName()));
+  }
+
+  private boolean isValueListRequest(TypeOracle typeOracle,
+      JClassType requestType) {
+    JClassType retType = requestType.isParameterized().getTypeArgs()[0];
+    if (retType.isAssignableTo(listType) || retType.isAssignableTo(setType)) {
+      if (retType.isParameterized() != null) {
+        JClassType leafType = retType.isParameterized().getTypeArgs()[0];
+        return !isProxyType(typeOracle, leafType);
+      }
+    }
+    return false;
   }
 
   private boolean isVoidRequest(TypeOracle typeOracle, JClassType requestType) {
@@ -843,11 +974,10 @@ public class RequestFactoryGenerator extends Generator {
    * Prints a ListRequestImpl or ObjectRequestImpl class.
    */
   private void printRequestImplClass(SourceWriter sw, JClassType returnType,
-      String returnImplTypeName, boolean list) {
+      String returnImplTypeName, CollectionType collection) {
 
-    String name = list ? "ListRequestImpl" : "ObjectRequestImpl";
-    Class<?> superClass = list ? AbstractJsonListRequest.class
-        : AbstractJsonObjectRequest.class;
+    String name = collection.getImplName();
+    Class<?> superClass = collection.getRequestClass();
 
     sw.println("public static abstract class " + name + " extends "
         + superClass.getSimpleName() + "<" + returnType.getName() + ", " + name

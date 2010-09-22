@@ -15,25 +15,18 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import java.util.Set;
+
 /**
- * Do nothing test interface.
+ * <p> <span style="color:red">Experimental API: This class is still under rapid
+ * development, and is very likely to be deleted. Use it at your own risk.
+ * </span> </p> Implemented by RequestObjects for service methods that return
+ * a Set of records.
+ *
+ * @param <P> The type held by the returned Set
  */
-@Service(com.google.gwt.requestfactory.server.SimpleBar.class)
-public interface SimpleBarRequest {
+public interface ProxySetRequest<P extends EntityProxy>
+    extends RequestObject<Set<P>> {
 
-  RequestObject<Long> countSimpleBar();
-
-  ProxyListRequest<SimpleBarProxy> findAll();
-
-  ProxySetRequest<SimpleBarProxy> findAsSet();
-  
-  ProxyRequest<SimpleBarProxy> findSimpleBarById(String id);
-
-  @Instance
-  RequestObject<Void> persist(SimpleBarProxy proxy);
-
-  @Instance
-  ProxyRequest<SimpleBarProxy> persistAndReturnSelf(SimpleBarProxy proxy);
-
-  RequestObject<Void> reset();
+  ProxySetRequest<P> with(String... propertyRefs);
 }

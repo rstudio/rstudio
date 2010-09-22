@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.Property;
 
 /**
@@ -69,10 +70,6 @@ public class ProxyImpl implements EntityProxy {
     return jso;
   }
 
-  public String encodedId() {
-    return jso.encodedId();
-  }
-
   /**
    * Get this proxy's value for the given property. Behavior is undefined if
    * the proxy has no such property, or if the property has never been set. It
@@ -83,8 +80,20 @@ public class ProxyImpl implements EntityProxy {
    * @param property the property to fetch
    * @return the value
    */
+  public String encodedId() {
+    return jso.encodedId();
+  }
+
+  @SuppressWarnings("unchecked")
   public <V> V get(Property<V> property) {
-    // javac 1.6.0_20 on mac has problems without the explicit parameterization
+    if (property instanceof CollectionProperty) {
+      V toReturn = (V) jso.getCollection((CollectionProperty) property);
+      if (toReturn != null) {
+        ((JsoCollection) toReturn).setDependencies(deltaValueStore, property,
+            this);
+      }
+      return toReturn;
+    }
     return jso.<V> get(property);
   }
   

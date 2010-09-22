@@ -15,6 +15,9 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * Do nothing test interface.
  */
@@ -31,6 +34,10 @@ public interface SimpleFooRequest {
 
   RequestObject<Integer> privateMethod();
 
+  RequestObject<List<Integer>> getNumberList();
+
+  RequestObject<Set<Integer>> getNumberSet();
+
   @Instance
   RequestObject<Void> persist(SimpleFooProxy proxy);
   
@@ -41,4 +48,10 @@ public interface SimpleFooRequest {
 
   @Instance
   RequestObject<String> hello(SimpleFooProxy instance, SimpleBarProxy proxy);
+
+  @Instance
+  RequestObject<Integer> sum(SimpleFooProxy instance, List<Integer> values);
+
+  @Instance
+  RequestObject<String> processList(SimpleFooProxy instance, List<SimpleFooProxy> values);
 }

@@ -31,6 +31,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Tests for {@link JsonRequestProcessor} .
@@ -106,8 +108,9 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEncodedType(Double.class, Foo.BAR);
     assertEncodedType(Boolean.class, true);
     assertEncodedType(Boolean.class, false);
-    // nulls stay null
-    assertNull(requestProcessor.encodePropertyValue(null));
+    // nulls becomes JSON Null. Needed because JSONObject stringify treats 'null'
+    // as a reason to not emit the key in the stringified object
+    assertEquals(JSONObject.NULL, requestProcessor.encodePropertyValue(null));
   }
 
   public void testEndToEnd() throws Exception {
@@ -221,6 +224,13 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEquals(newTime, fooResult.getCreated().getTime());
   }
 
+  public void testEndToEndNumberList()
+      throws ClassNotFoundException, InvocationTargetException,
+      NoSuchMethodException, JSONException, InstantiationException,
+      IllegalAccessException {
+    fetchVerifyAndGetNumberList();
+  }
+  
   private void assertEncodedType(Class<?> expected, Object value) {
     assertEquals(expected,
         requestProcessor.encodePropertyValue(value).getClass());
@@ -237,6 +247,7 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEquals(expectedValue, val);
   }
 
+  @SuppressWarnings("unchecked")
   private JSONObject fetchVerifyAndGetInitialObject() throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException,
       ClassNotFoundException, SecurityException, InstantiationException {
@@ -248,9 +259,11 @@ public class JsonRequestProcessorTest extends TestCase {
         + "findSimpleFooById\", "
         + "\""
         + RequestData.PARAM_TOKEN
-        + "0\": \"999\" }");
+        + "0\": \"999\", \"" + RequestData.PROPERTY_REF_TOKEN  + "\": "
+        + "\"oneToManyField,oneToManySetField,selfOneToManyField\""
+        + "}");
     JSONObject foo = results.getJSONObject("result");
-    assertEquals(foo.getInt("id"), 999);
+    assertEquals(foo.getLong("id"), 999L);
     assertEquals(foo.getInt("intId"), 42);
     assertEquals(foo.getString("userName"), "GWT");
     assertEquals(foo.getLong("longField"), 8L);
@@ -259,8 +272,79 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEquals(foo.getBoolean("boolField"), true);
     assertNotNull(foo.getString("!id"));
     assertTrue(foo.has("created"));
+    List<Double> numList = (List<Double>) foo.get("numberListField");
+    assertEquals(2, numList.size());
+    assertEquals(42.0, numList.get(0));
+    assertEquals(99.0, numList.get(1));
+
+    List<String> oneToMany = (List<String>) foo.get("oneToManyField");
+    assertEquals(2, oneToMany.size());
+    assertEquals("encoded*1L-NO-com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToMany.get(0));
+    assertEquals("encoded*1L-NO-com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToMany.get(1));
+
+    List<String> selfOneToMany = (List<String>) foo.get("selfOneToManyField");
+    assertEquals(1, selfOneToMany.size());
+    assertEquals("999-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy", selfOneToMany.get(0));
+
+    Set<String> oneToManySet = (Set<String>) foo.get("oneToManySetField");
+    assertEquals(1, oneToManySet.size());
+    assertEquals("encoded*1L-NO-com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToManySet.iterator().next());
     return foo;
   }
+
+   private JSONArray fetchVerifyAndGetNumberList() throws JSONException,
+      NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+      ClassNotFoundException, SecurityException, InstantiationException {
+    JSONObject results = requestProcessor.processJsonRequest("{ \""
+        + RequestData.OPERATION_TOKEN
+        + "\": \""
+        + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
+        + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
+        + "getNumberList\" }");
+    JSONArray foo = results.getJSONArray("result");
+    assertEquals(foo.length(), 3);
+    assertEquals(foo.getInt(0), 1);
+    assertEquals(foo.getInt(1), 2);
+    assertEquals(foo.getInt(2), 3);     
+    return foo;
+  }
+
+
+  public void testPrimitiveListAsParameter() throws JSONException,
+      NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+      ClassNotFoundException, SecurityException, InstantiationException {
+
+    JSONObject results = requestProcessor.processJsonRequest("{ \""
+        + RequestData.OPERATION_TOKEN
+        + "\": \""
+        + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
+        + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
+        + "sum\", "
+        + "\"" + RequestData.PARAM_TOKEN + "0\":"
+        + "\"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\","
+        + "\""
+        + RequestData.PARAM_TOKEN
+        + "1\": [1, 2, 3] }");
+    assertEquals(6, results.getInt("result"));
+  }
+
+  public void testProxyListAsParameter() throws JSONException,
+        NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+        ClassNotFoundException, SecurityException, InstantiationException {
+      SimpleFoo.reset();
+      JSONObject results = requestProcessor.processJsonRequest("{ \""
+          + RequestData.OPERATION_TOKEN
+          + "\": \""
+          + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
+          + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
+          + "processList\", "
+          + "\"" + RequestData.PARAM_TOKEN + "0\":"
+          + "\"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\","
+          + "\""
+          + RequestData.PARAM_TOKEN
+          + "1\": [\"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\", \"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\", \"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\"] }");
+      assertEquals("GWTGWTGWT", results.getString("result"));
+    }
 
   private JSONObject getResultFromServer(JSONObject foo) throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException,
@@ -275,7 +359,7 @@ public class JsonRequestProcessorTest extends TestCase {
     sync.put(RequestData.OPERATION_TOKEN,
         "com.google.gwt.requestfactory.shared.SimpleFooRequest::persist");
     sync.put(RequestData.CONTENT_TOKEN, operation.toString());
-    sync.put(RequestData.PARAM_TOKEN + "0", foo.getInt("id") + "-NO" + "-"
+    sync.put(RequestData.PARAM_TOKEN + "0", foo.getString("id") + "-NO" + "-"
         + SimpleFooProxy.class.getName());
     return requestProcessor.processJsonRequest(sync.toString());
   }

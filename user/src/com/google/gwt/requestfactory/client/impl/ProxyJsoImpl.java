@@ -19,13 +19,19 @@ import com.google.gwt.core.client.GWT;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayNumber;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.Property;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -72,11 +78,54 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
         jso.getRequestFactory());
   }
 
-  /**
+  static native Date dateForDouble(double millis) /*-{
+    return @java.util.Date::createFrom(D)(millis);
+  }-*/;
+
+  static Object encodeToJsType(Object o) {
+     if (o instanceof BigDecimal || o instanceof BigInteger || o instanceof Long
+         || o instanceof String || o instanceof Character) {
+      return o.toString();
+    } else if (o instanceof Number) {
+      return ((Number) o).doubleValue();
+    } else if (o instanceof Date) {
+      return String.valueOf(((Date) o).getTime());
+    } else if (o instanceof ProxyImpl) {
+      return ((ProxyImpl) o).getWireFormatId();
+    } else if (o instanceof Enum) {
+      return (double) ((Enum) o).ordinal();
+    }
+    return o;
+  }
+
+  static native void splice(JavaScriptObject array, int index, int deleteCount) /*-{
+     array.splice(index, deleteCount);
+   }-*/; 
+
+   static native void splice(JavaScriptObject array, int index, int deleteCount,
+       Object value) /*-{
+     array.splice(index, deleteCount, value);
+   }-*/;
+
+  static native void splice(JavaScriptObject array, int index, int deleteCount,
+       double value) /*-{
+     array.splice(index, deleteCount, value);
+   }-*/;
+
+  static native void splice(JavaScriptObject array, int index, int deleteCount,
+       boolean value) /*-{
+     array.splice(index, deleteCount, value);
+   }-*/;
+
+  /** 
    * Create an empty JSO, unsafe to return.
    */
   private static native ProxyJsoImpl createEmpty() /*-{
     return {};
+  }-*/;
+
+  private static native void pushBoolean(JavaScriptObject jso, boolean b) /*-{
+    jso.push(b);
   }-*/;
 
   protected ProxyJsoImpl() {
@@ -100,9 +149,15 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   public final <V> V get(Property<V> property) {
     String name = property.getName();
     Class<V> type = property.getType();
-
+    if (property instanceof CollectionProperty) {
+      assert type == List.class || type == Set.class;
+      JsoCollection col = (JsoCollection) getCollection(
+          (CollectionProperty) property);
+      col.setDependencies(null, property, null);
+      return (V) col;
+    }
     // javac 1.6.0_20 on mac has problems without the explicit parameterization
-    return this.<V> get(name, type);
+    return this.<V>get(name, type);
   }
 
   public final native <T> T get(String propertyName) /*-{
@@ -180,8 +235,6 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     if (String.class == type) {
       return (V) get(name);
     }
-    // at this point, we checked all the known primitive/value types we support
-    // TODO: handle embedded types, List, Set, Map
 
     // else, it must be a record type
     String relatedId = (String) get(name);
@@ -190,11 +243,26 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     } else {
       // TODO: should cache this or modify JSO field in place
       String schemaAndId[] = relatedId.split("-");
-      assert schemaAndId.length == 2;
-      ProxySchema<?> schema = getRequestFactory().getSchema(schemaAndId[0]);
-      return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(
-          schema, schemaAndId[1], getRequestFactory());
+      assert schemaAndId.length == 3;
+      ProxySchema<?> schema = getRequestFactory().getSchema(schemaAndId[2]);
+      return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(schema,
+          schemaAndId[0], getRequestFactory());
     }
+  }                                                                                                 
+
+  @SuppressWarnings("unchecked")
+  public final  <L extends Collection<V>, V> L getCollection(CollectionProperty<L, V> property) {
+    JsArrayString array = get(property.getName());
+    if (array == null) {
+      return null;
+    }
+    if (property.getType().equals(List.class)) {
+      return (L) new JsoList<V>(getRequestFactory(), array);
+    } else if (property.getType().equals(Set.class)) {
+      return (L) new JsoSet<V>(getRequestFactory(), array);
+    }
+    throw new IllegalArgumentException("Collection type " + property.getType()
+        + " for property " + property.getName() + " not supported.");
   }
 
   public final native RequestFactoryJsonImpl getRequestFactory() /*-{
@@ -209,9 +277,6 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return this.get(ProxyImpl.version);
   }
 
-  /**
-   * @param name
-   */
   public final native boolean isDefined(String name)/*-{
     return this[name] !== undefined;
   }-*/;
@@ -297,6 +362,24 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       return;
     }
 
+    if (value instanceof JsoCollection) {
+      setJso(property.getName(), ((JsoCollection) value).asJso());
+      return;
+    } else if (value instanceof Collection) {
+      JavaScriptObject jso = JavaScriptObject.createArray();
+      for (Object o : ((Collection) value)) {
+        o = encodeToJsType(o);
+        if (o instanceof String) {
+          ((JsArrayString) jso).push((String) o);
+        } else if (o instanceof Double) {
+          ((JsArrayNumber) jso).push((Double) o);
+        } else if (o instanceof Boolean) {
+          pushBoolean(jso, (Boolean) o);
+        }
+      }
+      setJso(property.getName(), jso);
+      return;
+    }
     throw new UnsupportedOperationException("Cannot set properties of type "
         + value.getClass().getName());
   }
@@ -363,10 +446,6 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return true;
   }-*/;
 
-  private native Date dateForDouble(double millis) /*-{
-    return @java.util.Date::createFrom(D)(millis);
-  }-*/;
-
   private native boolean getBoolean(String name) /*-{
     return this[name];
   }-*/;
@@ -405,6 +484,10 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     this[name] = value;
   }-*/;
 
+  private native void setJso(String name, JavaScriptObject value) /*-{
+     this[name] = value;
+   }-*/;
+
   private native void setNull(String name) /*-{
     this[name] = null;
   }-*/;
@@ -420,4 +503,5 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   private native void setString(String name, String value) /*-{
     this[name] = value;
   }-*/;
+
 }

@@ -20,9 +20,12 @@ import com.google.gwt.requestfactory.shared.SimpleEnum;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Size;
@@ -47,7 +50,7 @@ public class SimpleFooString {
     return Collections.singletonList(get());
   }
 
-  public static SimpleFooString findSimpleFooString(String id) {
+    public static SimpleFooString findSimpleFooString(String id) {
     return findSimpleFooStringById(id);
   }
 
@@ -76,6 +79,22 @@ public class SimpleFooString {
     }
   }
 
+  public static List<Integer> getNumberList() {
+    ArrayList<Integer> list = new ArrayList<Integer>();
+    list.add(1);
+    list.add(2);
+    list.add(3);
+    return list;
+  }
+
+  public static Set<Integer> getNumberSet() {
+    Set<Integer> list = new HashSet<Integer>();
+    list.add(1);
+    list.add(2);
+    list.add(3);
+    return list;
+  }
+
   public static SimpleFooString getSingleton() {
     return get();
   }
@@ -97,10 +116,10 @@ public class SimpleFooString {
     return 0;
   }
 
+  Integer version = 1;
+
   @Id
   private String id = "1x";
-
-  Integer version = 1;
 
   @Size(min = 3, max = 30)
   private String userName;
@@ -126,13 +145,19 @@ public class SimpleFooString {
   private Boolean boolField;
 
   private Boolean otherBoolField;
-  private Integer pleaseCrashField;
+  private Integer pleaseCrash;
 
   private SimpleBar barField;
   private SimpleFooString fooField;
 
   private String nullField;
   private SimpleBar barNullField;
+
+  private List<SimpleBar> oneToManyField;
+  private List<SimpleFooString> selfOneToManyField;
+  private Set<SimpleBar> oneToManySetField;
+  
+  private List<Integer> numberListField;
 
   public SimpleFooString() {
     intId = 42;
@@ -143,9 +168,19 @@ public class SimpleFooString {
     created = new Date();
     barField = SimpleBar.getSingleton();
     boolField = true;
+    oneToManyField = new ArrayList<SimpleBar>();
+    oneToManyField.add(barField);
+    oneToManyField.add(barField);
+    numberListField = new ArrayList<Integer>();
+    numberListField.add(42);
+    numberListField.add(99);
+    selfOneToManyField = new ArrayList<SimpleFooString>();
+    selfOneToManyField.add(this);
+    oneToManySetField = new HashSet<SimpleBar>();
+    oneToManySetField.add(barField);
     nullField = null;
     barNullField = null;
-    pleaseCrashField = 0;
+    pleaseCrash = 0;
   }
 
   public Long countSimpleFooWithUserNameSideEffect() {
@@ -230,6 +265,18 @@ public class SimpleFooString {
   public Long getLongField() {
     return longField;
   }
+  
+  public List<Integer> getNumberListField() {
+    return numberListField;
+  }
+
+  public List<SimpleBar> getOneToManyField() {
+    return oneToManyField;
+  }
+
+  public Set<SimpleBar> getOneToManySetField() {
+    return oneToManySetField;
+  }
 
   public String getNullField() {
     return nullField;
@@ -247,7 +294,11 @@ public class SimpleFooString {
   }
 
   public Integer getPleaseCrash() {
-    return pleaseCrashField;
+    return pleaseCrash;
+  }
+
+  public List<SimpleFooString> getSelfOneToManyField() {
+    return selfOneToManyField;
   }
 
   /**
@@ -276,6 +327,14 @@ public class SimpleFooString {
   public SimpleFooString persistAndReturnSelf() {
     persist();
     return this;
+  }
+
+  public String processList(List<SimpleFooString> values) {
+    String result = "";
+    for (SimpleFooString n : values) {
+      result += n.getUserName();
+    }
+    return result;
   }
 
   public void setBarField(SimpleBar barField) {
@@ -356,6 +415,18 @@ public class SimpleFooString {
     this.longField = longField;
   }
 
+  public void setNumberListField(List<Integer> numberListField) {
+    this.numberListField = numberListField;
+  }
+
+  public void setOneToManyField(List<SimpleBar> oneToManyField) {
+    this.oneToManyField = oneToManyField;
+  }
+
+  public void setOneToManySetField(Set<SimpleBar> oneToManySetField) {
+    this.oneToManySetField = oneToManySetField;
+  }
+
   public void setNullField(String nullField) {
     this.nullField = nullField;
   }
@@ -371,11 +442,15 @@ public class SimpleFooString {
     if (crashIf42 == 42) {
       throw new UnsupportedOperationException("THIS EXCEPTION IS EXPECTED BY A TEST");
     }
-    pleaseCrashField = crashIf42;
+    pleaseCrash = crashIf42;
   }
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public void setSelfOneToManyField(List<SimpleFooString> selfOneToManyField) {
+    this.selfOneToManyField = selfOneToManyField;
   }
 
   /**
@@ -391,5 +466,13 @@ public class SimpleFooString {
 
   public void setVersion(Integer version) {
     this.version = version;
+  }
+
+  public Integer sum(List<Integer> values) {
+    int sum = 0;
+    for (int n : values) {
+      sum += n;
+    }
+    return sum;
   }
 }
