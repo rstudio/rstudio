@@ -213,7 +213,7 @@ class JsoList<T> extends AbstractList<T> implements JsoCollection {
 
   private T get0(int i) {
     if (TypeLibrary.isProxyType(property.getLeafType())) {
-      String key[] = ((JsArrayString) array).get(i).split("-", 3);
+      String key[] = ((JsArrayString) array).get(i).split("@", 3);
       return (T) rf.getValueStore().getRecordBySchemaAndId(rf.getSchema(key[2]),
           key[0], rf);
     } else {

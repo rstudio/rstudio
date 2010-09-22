@@ -22,6 +22,8 @@ import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.Property;
+import com.google.gwt.user.server.Base64Utils;
+
 import static com.google.gwt.requestfactory.shared.impl.RequestData.*;
 
 import org.json.JSONArray;
@@ -103,7 +105,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       }
 
       if (String.class.isAssignableFrom(entityIdType)) {
-        return encodedId.substring(FAKE_ENCODED.length());
+        return base64Decode(encodedId);
       }
 
       return decodeParameterValue(entityIdType, encodedId);
@@ -128,7 +130,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
     @Override
     public String toString() {
-      return encodedId + "-" + (isFuture ? "IS" : "NO") + "-"
+      return encodedId + "@" + (isFuture ? "IS" : "NO") + "@"
           + proxyType.getName();
     }
   }
@@ -147,9 +149,25 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   public static final String RELATED = "related";
 
-  private static final String FAKE_ENCODED = "encoded*";
-
   private static final Logger log = Logger.getLogger(JsonRequestProcessor.class.getName());
+
+  // Decodes a string encoded as web-safe base64
+  public static String base64Decode(String encoded) {
+    byte[] decodedBytes;
+    try {
+      decodedBytes = Base64Utils.fromBase64(encoded);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(
+          "EntityKeyId was not Base64 encoded: " + encoded);
+    }
+    return new String(decodedBytes);
+  }
+
+  // Encodes a string with web-safe base64
+  public static String base64Encode(String decoded) {
+    byte[] decodedBytes = decoded.getBytes();
+    return Base64Utils.toBase64(decodedBytes);
+  }
 
   @SuppressWarnings("unchecked")
   public static Class<EntityProxy> getRecordFromClassToken(String recordToken) {
@@ -1148,7 +1166,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private String encodeId(Object id) throws JSONException {
     if (id instanceof String) {
-      return FAKE_ENCODED + id;
+      return base64Encode((String) id);
     }
     return encodePropertyValue(id).toString();
   }
@@ -1204,10 +1222,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Given param0, return the EntityKey. String is of the form
-   * "239-NO-com....EmployeeRecord" or "239-IS-com...EmployeeRecord".
+   * "239@NO@com....EmployeeRecord" or "239@IS@com...EmployeeRecord".
    */
   private EntityKey getEntityKey(String string) {
-    String parts[] = string.split("-");
+    String parts[] = string.split("@");
     assert parts.length == 3;
 
     String encodedId = parts[0];
@@ -1285,7 +1303,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private String getSchemaAndId(Class<? extends EntityProxy> proxyType,
       Object newId) {
-    return proxyType.getName() + "-" + newId;
+    return proxyType.getName() + "@" + newId;
   }
 
   private SerializedEntity getSerializedEntity(EntityKey entityKey)
@@ -1434,7 +1452,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           propertyValue = JSONObject.NULL;
       } else if (encodedEntityId != null) {
         propertyValue = encodedEntityId
-            + "-NO-"
+            + "@NO@"
             + operationRegistry.getSecurityProvider().encodeClassType(
                 p.getType());
       } else if (p instanceof CollectionProperty) {
@@ -1443,7 +1461,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           String encodedIdVal = isEntityReference(val, p.getType());
           if (encodedIdVal != null) {
             propertyValue = encodedIdVal
-                + "-NO-"
+                + "@NO@"
                 + operationRegistry.getSecurityProvider().encodeClassType(
                     p.getType());
           } else {

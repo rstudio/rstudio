@@ -40,7 +40,7 @@ public class ProxyImpl implements EntityProxy {
 
   protected static String getWireFormatId(String id, boolean isFuture,
       ProxySchema<?> schema) {
-    return id + "-" + (isFuture ? "IS" : "NO") + "-" + schema.getToken();
+    return id + "@" + (isFuture ? "IS" : "NO") + "@" + schema.getToken();
   }
 
   private final ProxyJsoImpl jso;

@@ -575,7 +575,7 @@ public class RequestFactoryGenerator extends Generator {
 
     sw.println("public ProxySchema<? extends ProxyImpl> getType(String token) {");
     sw.indent();
-    sw.println("String[] bits = token.split(\"-\");");
+    sw.println("String[] bits = token.split(\"@\");");
     for (JClassType publicProxyType : generatedProxyTypes) {
       String qualifiedSourceName = publicProxyType.getQualifiedSourceName();
       sw.println("if (bits[0].equals(\"" + qualifiedSourceName + "\")) {");

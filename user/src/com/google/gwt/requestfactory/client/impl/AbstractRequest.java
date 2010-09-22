@@ -163,7 +163,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     for(var recordKey in related) {
       // Workaround for __gwt_ObjectId appearing in Chrome dev mode.
       if (!related.hasOwnProperty(recordKey)) continue;
-      var schemaAndId = recordKey.split(/-/, 3);
+      var schemaAndId = recordKey.split(/@/, 3);
       var jso = related[recordKey];
       this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::pushToValueStore(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(schemaAndId[2], jso);
     }

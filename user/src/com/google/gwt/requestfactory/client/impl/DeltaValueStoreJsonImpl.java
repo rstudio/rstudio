@@ -67,7 +67,7 @@ class DeltaValueStoreJsonImpl {
     }-*/;
 
     public final String getEncodedId() {
-      String parts[] = getSchemaAndId().split("-");
+      String parts[] = getSchemaAndId().split("@");
       return parts[1];
     }
 
@@ -76,7 +76,7 @@ class DeltaValueStoreJsonImpl {
     }-*/;
 
     public final String getSchema() {
-      String parts[] = getSchemaAndId().split("-");
+      String parts[] = getSchemaAndId().split("@");
       return parts[0];
     }
 

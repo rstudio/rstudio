@@ -242,7 +242,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       return null;
     } else {
       // TODO: should cache this or modify JSO field in place
-      String schemaAndId[] = relatedId.split("-");
+      String schemaAndId[] = relatedId.split("@");
       assert schemaAndId.length == 3;
       ProxySchema<?> schema = getRequestFactory().getSchema(schemaAndId[2]);
       return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(schema,

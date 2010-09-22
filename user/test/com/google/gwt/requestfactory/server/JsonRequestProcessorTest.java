@@ -184,7 +184,7 @@ public class JsonRequestProcessorTest extends TestCase {
     foo.put("intId", 45);
     foo.put("nullField", "test");
     foo.put("barNullField", SimpleBar.getSingleton().getId() 
-        + "-IS-" + SimpleBarProxy.class.getName());
+        + "@IS@" + SimpleBarProxy.class.getName());
     foo.put("barField", JSONObject.NULL);
 
     JSONObject result = getResultFromServer(foo);
@@ -279,16 +279,16 @@ public class JsonRequestProcessorTest extends TestCase {
 
     List<String> oneToMany = (List<String>) foo.get("oneToManyField");
     assertEquals(2, oneToMany.size());
-    assertEquals("encoded*1L-NO-com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToMany.get(0));
-    assertEquals("encoded*1L-NO-com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToMany.get(1));
+    assertEquals(JsonRequestProcessor.base64Encode("1L") + "@NO@com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToMany.get(0));
+    assertEquals(JsonRequestProcessor.base64Encode("1L") + "@NO@com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToMany.get(1));
 
     List<String> selfOneToMany = (List<String>) foo.get("selfOneToManyField");
     assertEquals(1, selfOneToMany.size());
-    assertEquals("999-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy", selfOneToMany.get(0));
+    assertEquals("999@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy", selfOneToMany.get(0));
 
     Set<String> oneToManySet = (Set<String>) foo.get("oneToManySetField");
     assertEquals(1, oneToManySet.size());
-    assertEquals("encoded*1L-NO-com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToManySet.iterator().next());
+    assertEquals(JsonRequestProcessor.base64Encode("1L") + "@NO@com.google.gwt.requestfactory.shared.SimpleBarProxy", oneToManySet.iterator().next());
     return foo;
   }
 
@@ -320,7 +320,7 @@ public class JsonRequestProcessorTest extends TestCase {
         + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
         + "sum\", "
         + "\"" + RequestData.PARAM_TOKEN + "0\":"
-        + "\"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\","
+        + "\"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\","
         + "\""
         + RequestData.PARAM_TOKEN
         + "1\": [1, 2, 3] }");
@@ -338,10 +338,10 @@ public class JsonRequestProcessorTest extends TestCase {
           + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
           + "processList\", "
           + "\"" + RequestData.PARAM_TOKEN + "0\":"
-          + "\"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\","
+          + "\"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\","
           + "\""
           + RequestData.PARAM_TOKEN
-          + "1\": [\"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\", \"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\", \"1-NO-com.google.gwt.requestfactory.shared.SimpleFooProxy\"] }");
+          + "1\": [\"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\", \"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\", \"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\"] }");
       assertEquals("GWTGWTGWT", results.getString("result"));
     }
 
@@ -358,7 +358,7 @@ public class JsonRequestProcessorTest extends TestCase {
     sync.put(RequestData.OPERATION_TOKEN,
         "com.google.gwt.requestfactory.shared.SimpleFooRequest::persist");
     sync.put(RequestData.CONTENT_TOKEN, operation.toString());
-    sync.put(RequestData.PARAM_TOKEN + "0", foo.getString("id") + "-NO" + "-"
+    sync.put(RequestData.PARAM_TOKEN + "0", foo.getString("id") + "@NO" + "@"
         + SimpleFooProxy.class.getName());
     return requestProcessor.processJsonRequest(sync.toString());
   }
