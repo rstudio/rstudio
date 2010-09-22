@@ -189,7 +189,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     assertEquals(futureId, req.getProxyId(futureToken));
     assertEquals(req.getClass(futureId), req.getClass(futureToken));
 
-    RequestObject<SimpleBarProxy> fooReq = req.simpleBarRequest().persistAndReturnSelf(
+    Request<SimpleBarProxy> fooReq = req.simpleBarRequest().persistAndReturnSelf(
         foo);
     fooReq.fire(new Receiver<SimpleBarProxy>() {
       @Override
