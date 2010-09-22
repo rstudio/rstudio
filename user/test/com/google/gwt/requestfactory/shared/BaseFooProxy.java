@@ -48,8 +48,6 @@ public interface BaseFooProxy extends EntityProxy {
   
   Float getFloatField();
   
-  BaseFooProxy getFooField();
-  
   Integer getIntId();
   
   Long getLongField();
@@ -102,8 +100,6 @@ public interface BaseFooProxy extends EntityProxy {
 
   void setFloatField(Float f);
   
-  void setFooField(BaseFooProxy fooField);
-
   void setIntId(Integer intId);
 
   void setLongField(Long longField);

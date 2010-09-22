@@ -22,7 +22,11 @@ import com.google.gwt.requestfactory.server.SimpleFooString;
  */
 @ProxyFor(SimpleFooString.class)
 public interface SimpleFooStringProxy extends BaseFooProxy {
+  SimpleFooStringProxy getFooField();
+
   String getId();
-    
+
+  void setFooField(SimpleFooStringProxy fooField);
+
   EntityProxyId<SimpleFooStringProxy> stableId();
 }
