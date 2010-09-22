@@ -42,15 +42,16 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
    * Verify that events are sent to the inner cell.
    */
   public void testOnBrowserEvent() {
-    NativeEvent event = Document.get().createChangeEvent();
-    testOnBrowserEvent(
-        getExpectedInnerHtml(), event, "helloworld", "newValueFromInnerCell");
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
+        false, false, false);
+    testOnBrowserEvent(getExpectedInnerHtml(), event, "helloworld",
+        "newValueFromInnerCell");
   }
 
   public void testRenderNoImage() {
     Images images = getImages();
-    MockCell<String> innerCell = new MockCell<String>(
-        true, "newValueFromInnerCell", "click");
+    MockCell<String> innerCell = new MockCell<String>(true,
+        "newValueFromInnerCell", "click");
     IconCellDecorator<String> cell = new IconCellDecorator<String>(
         images.prettyPiccy(), innerCell) {
       @Override
@@ -65,16 +66,16 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
 
     // Compare the expected render string.
     String expected = "<div style=\"position:relative;padding-left:64px;\">";
-    expected += cell.getImageHtml(
-        images.prettyPiccy(), HasVerticalAlignment.ALIGN_MIDDLE, true).asString();
+    expected += cell.getImageHtml(images.prettyPiccy(),
+        HasVerticalAlignment.ALIGN_MIDDLE, true).asString();
     expected += "<div>helloworld</div>";
     expected += "</div>";
     assertEquals(expected, sb.toSafeHtml().asString());
   }
 
   public void testSelectableDelegate() {
-    MockCell<String> innerCell = new MockCell<String>(
-        true, "newValueFromInnerCell", "click");
+    MockCell<String> innerCell = new MockCell<String>(true,
+        "newValueFromInnerCell", "click");
     IconCellDecorator<String> iconCell = new IconCellDecorator<String>(
         getImages().prettyPiccy(), innerCell);
     assertTrue(iconCell.dependsOnSelection());
@@ -94,8 +95,8 @@ public class IconCellDecoratorTest extends CellTestBase<String> {
 
   @Override
   protected IconCellDecorator<String> createCell() {
-    MockCell<String> innerCell = new MockCell<String>(
-        false, "newValueFromInnerCell", "click");
+    MockCell<String> innerCell = new MockCell<String>(false,
+        "newValueFromInnerCell", "click");
     IconCellDecorator<String> iconCell = new IconCellDecorator<String>(
         getImages().prettyPiccy(), innerCell);
     return iconCell;

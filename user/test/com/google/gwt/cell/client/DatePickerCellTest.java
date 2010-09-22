@@ -50,7 +50,7 @@ public class DatePickerCellTest extends EditableCellTestBase<Date, Date> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"click"};
+    return new String[]{"click", "keydown"};
   }
 
   @Override

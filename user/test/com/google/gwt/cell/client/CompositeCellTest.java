@@ -86,7 +86,8 @@ public class CompositeCellTest extends CellTestBase<String> {
    * Fire an event to no cell in particular.
    */
   public void testOnBrowserEventNoCell() {
-    NativeEvent event = Document.get().createChangeEvent();
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
+        false, false, false);
     testOnBrowserEvent(getExpectedInnerHtml(), event, "test", null);
   }
 
@@ -115,8 +116,8 @@ public class CompositeCellTest extends CellTestBase<String> {
     DOM.setEventListener(parent, listener);
 
     // Fire the event on one of the inner cells.
-    NativeEvent event = Document.get().createClickEvent(
-        0, 0, 0, 0, 0, false, false, false, false);
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
+        false, false, false);
     Element.as(parent.getChild(1)).dispatchEvent(event);
     innerCell.assertLastEventValue("test-1");
 
@@ -177,8 +178,7 @@ public class CompositeCellTest extends CellTestBase<String> {
     List<HasCell<String, ?>> cells = new ArrayList<HasCell<String, ?>>();
     for (int i = 0; i < count; i++) {
       final int index = i;
-      final MockCell<String> inner = new MockCell<String>(
-          false, "fromCell" + i);
+      final MockCell<String> inner = new MockCell<String>(false, "fromCell" + i);
       cells.add(new HasCell<String, String>() {
         public Cell<String> getCell() {
           return inner;

@@ -201,6 +201,6 @@ public class EditTextCellTest extends EditableCellTestBase<String, ViewData> {
 
   @Override
   protected String getExpectedInnerHtmlViewData() {
-    return "<input type=\"text\" value=\"newValue\"></input>";
+    return "<input type=\"text\" value=\"newValue\" tabindex=\"-1\"></input>";
   }
 }

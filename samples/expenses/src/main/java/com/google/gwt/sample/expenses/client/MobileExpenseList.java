@@ -25,6 +25,7 @@ import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
@@ -142,6 +143,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
     };
 
     expenseList = new CellList<ExpenseProxy>(new ExpenseCell());
+    expenseList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
     expenseSelection = new NoSelectionModel<ExpenseProxy>();
     expenseList.setSelectionModel(expenseSelection);

@@ -31,6 +31,7 @@ import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTree;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
@@ -176,6 +177,7 @@ public class ShowcaseShell extends Composite {
     // Create the cell tree.
     mainMenu = new CellTree(treeModel, null);
     mainMenu.setAnimationEnabled(true);
+    mainMenu.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
     // Initialize the ui binder.
     initWidget(uiBinder.createAndBindUi(this));

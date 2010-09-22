@@ -19,6 +19,9 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 
 /**
  * Base class for testing {@link AbstractEditableCell}s that can be modified.
@@ -61,8 +64,9 @@ public abstract class EditableCellTestBase<T, V> extends CellTestBase<T> {
   protected abstract String getExpectedInnerHtmlViewData();
 
   /**
-   * Test {@link Cell#onBrowserEvent(Element, Object, Object, NativeEvent,
-   * ValueUpdater)} with the specified conditions.
+   * Test
+   * {@link Cell#onBrowserEvent(Element, Object, Object, NativeEvent, ValueUpdater)}
+   * with the specified conditions.
    *
    * @param startHtml the innerHTML of the cell before the test starts
    * @param event the event to fire
@@ -74,16 +78,38 @@ public abstract class EditableCellTestBase<T, V> extends CellTestBase<T> {
    * @return the parent element
    */
   protected Element testOnBrowserEvent(String startHtml, NativeEvent event,
-      T value, V viewData, T expectedValue, V expectedViewData) {
+      final T value, V viewData, T expectedValue, V expectedViewData) {
     // Setup the parent element.
-    Element parent = Document.get().createDivElement();
+    final com.google.gwt.user.client.Element parent = Document.get().createDivElement().cast();
     parent.setInnerHTML(startHtml);
+    Document.get().getBody().appendChild(parent);
+
+    // If the element has a child, use it as the event target.
+    Element child = parent.getFirstChildElement();
+    Element target = (child == null) ? parent : child;
 
     // Pass the event to the cell.
-    MockValueUpdater valueUpdater = new MockValueUpdater();
-    AbstractEditableCell<T, V> cell = createCell();
+    final MockValueUpdater valueUpdater = new MockValueUpdater();
+    final AbstractEditableCell<T, V> cell = createCell();
     cell.setViewData(DEFAULT_KEY, viewData);
-    cell.onBrowserEvent(parent, value, DEFAULT_KEY, event, valueUpdater);
+    Event.setEventListener(parent, new EventListener() {
+      public void onBrowserEvent(Event event) {
+        try {
+          DOM.setEventListener(parent, null);
+          cell.onBrowserEvent(parent, value, DEFAULT_KEY, event, valueUpdater);
+          parent.removeFromParent();
+        } catch (Exception e) {
+          // We are in an event loop, so events may not propagate out to JUnit.
+          fail("An exception occured while handling the event: "
+              + e.getMessage());
+        }
+      }
+    });
+    Event.sinkEvents(target, Event.getTypeInt(event.getType()));
+    target.dispatchEvent(event);
+    assertNull(DOM.getEventListener(parent));
+
+    // Check the expected value and view data.
     assertEquals(expectedViewData, cell.getViewData(DEFAULT_KEY));
     valueUpdater.assertLastValue(expectedValue);
 

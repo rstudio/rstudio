@@ -32,11 +32,73 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
  * Note: This class is new and its interface subject to change.
  * </p>
  */
-public class TextInputCell extends AbstractEditableCell<String, String> {
+public class TextInputCell extends
+    AbstractInputCell<String, TextInputCell.ViewData> {
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<input type=\"text\" value=\"{0}\"></input>")
+    @Template("<input type=\"text\" value=\"{0}\" tabindex=\"-1\"></input>")
     SafeHtml input(String value);
+  }
+
+  /**
+   * The ViewData for this cell.
+   */
+  public static class ViewData {
+    /**
+     * The last value that was updated.
+     */
+    private String lastValue;
+
+    /**
+     * The current value.
+     */
+    private String curValue;
+
+    public ViewData(String value) {
+      this.lastValue = value;
+      this.curValue = value;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (other == null || !(other instanceof ViewData)) {
+        return false;
+      }
+      ViewData vd = (ViewData) other;
+      return equalsOrNull(lastValue, vd.lastValue)
+          && equalsOrNull(curValue, vd.curValue);
+    }
+
+    /**
+     * @return the current value of the input element
+     */
+    public String getCurrentValue() {
+      return curValue;
+    }
+
+    /**
+     * @return the last value sent to the {@link ValueUpdater}
+     */
+    public String getLastValue() {
+      return lastValue;
+    }
+
+    @Override
+    public int hashCode() {
+      return (lastValue + "_*!@HASH_SEPERATOR@!*_" + curValue).hashCode();
+    }
+
+    protected void setCurrentValue(String curValue) {
+      this.curValue = curValue;
+    }
+
+    protected void setLastValue(String lastValue) {
+      this.lastValue = lastValue;
+    }
+
+    private boolean equalsOrNull(Object a, Object b) {
+      return (a != null) ? a.equals(b) : ((b == null) ? true : false);
+    }
   }
 
   private static Template template;
@@ -51,8 +113,8 @@ public class TextInputCell extends AbstractEditableCell<String, String> {
   }
 
   /**
-   * Constructs a TextInputCell that renders its text using the
-   * given {@link SafeHtmlRenderer}.
+   * Constructs a TextInputCell that renders its text using the given
+   * {@link SafeHtmlRenderer}.
    *
    * @param renderer a non-null SafeHtmlRenderer
    */
@@ -70,37 +132,73 @@ public class TextInputCell extends AbstractEditableCell<String, String> {
   @Override
   public void onBrowserEvent(Element parent, String value, Object key,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
+    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+
+    // Ignore events that don't target the input.
+    InputElement input = getInputElement(parent);
+    Element target = event.getEventTarget().cast();
+    if (!input.isOrHasChild(target)) {
+      return;
+    }
+
     String eventType = event.getType();
     if ("change".equals(eventType)) {
-      InputElement input = parent.getFirstChild().cast();
-      String newValue = input.getValue();
-      setViewData(key, newValue);
-      if (valueUpdater != null) {
-        valueUpdater.update(newValue);
-      }
+      finishEditing(parent, value, key, valueUpdater);
     } else if ("keyup".equals(eventType)) {
       // Record keys as they are typed.
-      InputElement input = parent.getFirstChild().cast();
-      setViewData(key, input.getValue());
+      ViewData vd = getViewData(key);
+      if (vd == null) {
+        vd = new ViewData(value);
+        setViewData(key, vd);
+      }
+      vd.setCurrentValue(input.getValue());
     }
   }
 
   @Override
   public void render(String value, Object key, SafeHtmlBuilder sb) {
     // Get the view data.
-    String viewData = getViewData(key);
-    if (viewData != null && viewData.equals(value)) {
+    ViewData viewData = getViewData(key);
+    if (viewData != null && viewData.getCurrentValue().equals(value)) {
       clearViewData(key);
       viewData = null;
     }
 
-    String s = (viewData != null) ? viewData : (value != null ? value : null);
+    String s = (viewData != null) ? viewData.getCurrentValue() : value;
     if (s != null) {
       SafeHtml html = renderer.render(s);
       // Note: template will not treat SafeHtml specially
       sb.append(template.input(html.asString()));
     } else {
-      sb.appendHtmlConstant("<input type=\"text\"></input>");
+      sb.appendHtmlConstant("<input type=\"text\" tabindex=\"-1\"></input>");
     }
+  }
+
+  @Override
+  protected void finishEditing(Element parent, String value, Object key,
+      ValueUpdater<String> valueUpdater) {
+    String newValue = getInputElement(parent).getValue();
+
+    // Get the view data.
+    ViewData vd = getViewData(key);
+    if (vd == null) {
+      vd = new ViewData(value);
+      setViewData(key, vd);
+    }
+    vd.setCurrentValue(newValue);
+
+    // Fire the value updater if the value has changed.
+    if (valueUpdater != null && !vd.getCurrentValue().equals(vd.getLastValue())) {
+      vd.setLastValue(newValue);
+      valueUpdater.update(newValue);
+    }
+
+    // Blur the element.
+    super.finishEditing(parent, newValue, key, valueUpdater);
+  }
+
+  @Override
+  protected InputElement getInputElement(Element parent) {
+    return super.getInputElement(parent).<InputElement> cast();
   }
 }

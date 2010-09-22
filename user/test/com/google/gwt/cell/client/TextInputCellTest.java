@@ -21,19 +21,25 @@ import com.google.gwt.dom.client.NativeEvent;
 /**
  * Tests for {@link TextInputCell}.
  */
-public class TextInputCellTest extends EditableCellTestBase<String, String> {
+public class TextInputCellTest extends
+    EditableCellTestBase<String, TextInputCell.ViewData> {
 
   public void testOnBrowserEventChange() {
     NativeEvent event = Document.get().createChangeEvent();
-    testOnBrowserEvent(
-        getExpectedInnerHtml(), event, "oldValue", null, "hello", "hello");
+    TextInputCell.ViewData expected = new TextInputCell.ViewData("oldValue");
+    expected.setLastValue("hello");
+    expected.setCurrentValue("hello");
+    testOnBrowserEvent(getExpectedInnerHtml(), event, "oldValue", null,
+        "hello", expected);
   }
 
   public void testOnBrowserEventKeyUp() {
-    NativeEvent event = Document.get().createKeyUpEvent(
-        false, false, false, false, 0);
-    testOnBrowserEvent(
-        getExpectedInnerHtml(), event, "oldValue", null, null, "hello");
+    NativeEvent event = Document.get().createKeyUpEvent(false, false, false,
+        false, 0);
+    TextInputCell.ViewData expected = new TextInputCell.ViewData("oldValue");
+    expected.setCurrentValue("hello");
+    testOnBrowserEvent(getExpectedInnerHtml(), event, "oldValue", null, null,
+        expected);
   }
 
   @Override
@@ -47,8 +53,8 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
   }
 
   @Override
-  protected String createCellViewData() {
-    return "newValue";
+  protected TextInputCell.ViewData createCellViewData() {
+    return new TextInputCell.ViewData("newValue");
   }
 
   @Override
@@ -58,21 +64,21 @@ public class TextInputCellTest extends EditableCellTestBase<String, String> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"change", "keyup"};
+    return new String[]{"change", "keyup", "keydown", "focus", "blur"};
   }
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<input type=\"text\" value=\"hello\"></input>";
+    return "<input type=\"text\" value=\"hello\" tabindex=\"-1\"></input>";
   }
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    return "<input type=\"text\"></input>";
+    return "<input type=\"text\" tabindex=\"-1\"></input>";
   }
 
   @Override
   protected String getExpectedInnerHtmlViewData() {
-    return "<input type=\"text\" value=\"newValue\"></input>";
+    return "<input type=\"text\" value=\"newValue\" tabindex=\"-1\"></input>";
   }
 }

@@ -63,7 +63,7 @@ public class CompositeCell<C> extends AbstractCell<C> {
   /**
    * The cells that compose this {@link Cell}.
    *
-   *  NOTE: Do not add add/insert/remove hasCells methods to the API. This cell
+   * NOTE: Do not add add/insert/remove hasCells methods to the API. This cell
    * assumes that the index of the cellParent corresponds to the index in the
    * hasCells array.
    */
@@ -127,8 +127,8 @@ public class CompositeCell<C> extends AbstractCell<C> {
       Element wrapper = container.getFirstChildElement();
       while (wrapper != null) {
         if (wrapper.isOrHasChild(target)) {
-          onBrowserEventImpl(
-              wrapper, value, key, event, valueUpdater, hasCells.get(index));
+          onBrowserEventImpl(wrapper, value, key, event, valueUpdater,
+              hasCells.get(index));
         }
 
         index++;
@@ -145,8 +145,22 @@ public class CompositeCell<C> extends AbstractCell<C> {
   }
 
   @Override
+  public boolean resetFocus(Element parent, C value, Object key) {
+    Element curChild = getContainerElement(parent).getFirstChildElement();
+    for (HasCell<C, ?> hasCell : hasCells) {
+      // The first child that takes focus wins. Only one child should ever be in
+      // edit mode, so this is safe.
+      if (resetFocusImpl(curChild, value, key, hasCell)) {
+        return true;
+      }
+      curChild = curChild.getNextSiblingElement();
+    }
+    return false;
+  }
+
+  @Override
   public void setValue(Element parent, C object, Object key) {
-    Element curChild = parent.getFirstChildElement();
+    Element curChild = getContainerElement(parent).getFirstChildElement();
     for (HasCell<C, ?> hasCell : hasCells) {
       setValueImpl(curChild, object, key, hasCell);
       curChild = curChild.getNextSiblingElement();
@@ -165,8 +179,8 @@ public class CompositeCell<C> extends AbstractCell<C> {
     return parent;
   }
 
-  protected <X> void render(
-      C value, Object key, SafeHtmlBuilder sb, HasCell<C, X> hasCell) {
+  protected <X> void render(C value, Object key, SafeHtmlBuilder sb,
+      HasCell<C, X> hasCell) {
     Cell<X> cell = hasCell.getCell();
     sb.appendHtmlConstant("<span>");
     cell.render(hasCell.getValue(value), key, sb);
@@ -189,12 +203,18 @@ public class CompositeCell<C> extends AbstractCell<C> {
       };
     }
     Cell<X> cell = hasCell.getCell();
-    cell.onBrowserEvent(
-        parent, hasCell.getValue(object), key, event, tempUpdater);
+    cell.onBrowserEvent(parent, hasCell.getValue(object), key, event,
+        tempUpdater);
   }
 
-  private <X> void setValueImpl(
-      Element cellParent, C object, Object key, HasCell<C, X> hasCell) {
+  private <X> boolean resetFocusImpl(Element cellParent, C value, Object key,
+      HasCell<C, X> hasCell) {
+    X cellValue = hasCell.getValue(value);
+    return hasCell.getCell().resetFocus(cellParent, cellValue, key);
+  }
+
+  private <X> void setValueImpl(Element cellParent, C object, Object key,
+      HasCell<C, X> hasCell) {
     hasCell.getCell().setValue(cellParent, hasCell.getValue(object), key);
   }
 }

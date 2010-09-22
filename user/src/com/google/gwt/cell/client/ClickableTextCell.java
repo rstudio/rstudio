@@ -33,18 +33,26 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 public class ClickableTextCell extends AbstractSafeHtmlCell<String> {
 
   public ClickableTextCell() {
-    super(SimpleSafeHtmlRenderer.getInstance(), "click");
+    this(SimpleSafeHtmlRenderer.getInstance());
   }
 
   public ClickableTextCell(SafeHtmlRenderer<String> renderer) {
-    super(renderer, "click");
+    super(renderer, "click", "keydown");
   }
 
   @Override
   public void onBrowserEvent(Element parent, String value, Object key,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
-    String type = event.getType();
-    if (valueUpdater != null && type.equals("click")) {
+    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+    if ("click".equals(event.getType())) {
+      onEnterKeyDown(parent, value, key, event, valueUpdater);
+    }
+  }
+
+  @Override
+  protected void onEnterKeyDown(Element parent, String value, Object key,
+      NativeEvent event, ValueUpdater<String> valueUpdater) {
+    if (valueUpdater != null) {
       valueUpdater.update(value);
     }
   }

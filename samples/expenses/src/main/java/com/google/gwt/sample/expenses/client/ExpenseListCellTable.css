@@ -24,6 +24,7 @@
 
 .cellTableCell {
   padding: 4px 9px;
+  border-width: 0;
 }
 
 .cellTableFirstColumn {

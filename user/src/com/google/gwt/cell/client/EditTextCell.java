@@ -38,11 +38,11 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
  * purposes, which is entirely wrong. It should be able to treat it as a proper
  * string (especially since that's all the user can enter).
  */
-public class EditTextCell extends AbstractEditableCell<
-    String, EditTextCell.ViewData> {
+public class EditTextCell extends
+    AbstractEditableCell<String, EditTextCell.ViewData> {
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<input type=\"text\" value=\"{0}\"></input>")
+    @Template("<input type=\"text\" value=\"{0}\" tabindex=\"-1\"></input>")
     SafeHtml input(String value);
   }
 
@@ -171,8 +171,8 @@ public class EditTextCell extends AbstractEditableCell<
     } else {
       String type = event.getType();
       int keyCode = event.getKeyCode();
-      boolean enterPressed = "keyup".equals(type) &&
-        keyCode == KeyCodes.KEY_ENTER;
+      boolean enterPressed = "keyup".equals(type)
+          && keyCode == KeyCodes.KEY_ENTER;
       if ("click".equals(type) || enterPressed) {
         // Go into edit mode.
         if (viewData == null) {
@@ -212,6 +212,15 @@ public class EditTextCell extends AbstractEditableCell<
     }
   }
 
+  @Override
+  public boolean resetFocus(Element parent, String value, Object key) {
+    if (isEditing(parent, value, key)) {
+      getInputElement(parent).focus();
+      return true;
+    }
+    return false;
+  }
+
   /**
    * Convert the cell to edit mode.
    *
@@ -221,7 +230,7 @@ public class EditTextCell extends AbstractEditableCell<
    */
   protected void edit(Element parent, String value, Object key) {
     setValue(parent, value, key);
-    InputElement input = (InputElement) parent.getFirstChild();
+    InputElement input = getInputElement(parent);
     input.focus();
     input.select();
   }
@@ -233,8 +242,23 @@ public class EditTextCell extends AbstractEditableCell<
    * @param value the current value
    */
   private void cancel(Element parent, String value) {
+    clearInput(getInputElement(parent));
     setValue(parent, value, null);
   }
+
+  /**
+   * Clear selected from the input element. Both Firefox and IE fire spurious
+   * onblur events after the input is removed from the DOM if selection is not
+   * cleared.
+   *
+   * @param input the input element
+   */
+  private native void clearInput(Element input) /*-{
+    if (input.selectionEnd)
+      input.selectionEnd = input.selectionStart;
+    else if ($doc.selection)
+      $doc.selection.clear();
+  }-*/;
 
   /**
    * Commit the current value.
@@ -243,9 +267,10 @@ public class EditTextCell extends AbstractEditableCell<
    * @param viewData the {@link ViewData} object
    * @param valueUpdater the {@link ValueUpdater}
    */
-  private void commit(
-      Element parent, ViewData viewData, ValueUpdater<String> valueUpdater) {
+  private void commit(Element parent, ViewData viewData,
+      ValueUpdater<String> valueUpdater) {
     String value = updateViewData(parent, viewData, false);
+    clearInput(getInputElement(parent));
     setValue(parent, value, viewData);
     valueUpdater.update(value);
   }
@@ -288,6 +313,13 @@ public class EditTextCell extends AbstractEditableCell<
   }
 
   /**
+   * Get the input element in edit mode.
+   */
+  private InputElement getInputElement(Element parent) {
+    return parent.getFirstChild().<InputElement> cast();
+  }
+
+  /**
    * Update the view data based on the current value.
    *
    * @param parent the parent element
@@ -295,8 +327,8 @@ public class EditTextCell extends AbstractEditableCell<
    * @param isEditing true if in edit mode
    * @return the new value
    */
-  private String updateViewData(
-      Element parent, ViewData viewData, boolean isEditing) {
+  private String updateViewData(Element parent, ViewData viewData,
+      boolean isEditing) {
     InputElement input = (InputElement) parent.getFirstChild();
     String value = input.getValue();
     viewData.setText(value);

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.client;
 
-import com.google.gwt.cell.client.AbstractEditableCell;
+import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.DateCell;
 import com.google.gwt.cell.client.FieldUpdater;
@@ -55,7 +55,6 @@ import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -108,13 +107,13 @@ public class ExpenseDetails extends Composite {
 
   interface Template extends SafeHtmlTemplates {
     @Template("<select style=\"background-color:white;border:1px solid "
-        + "#707172;width:10em;margin-right:10px;\" disabled=\"true\"><option>"
-        + "</option>{0}{1}</select>")
+        + "#707172;width:10em;margin-right:10px;\" disabled=\"true\" tabindex=\"-1\">"
+        + "<option></option>{0}{1}</select>")
     SafeHtml disabled(SafeHtml approvedOption, SafeHtml deniedOption);
 
     @Template("<select style=\"background-color:white;border:1px solid "
-        + "#707172;width:10em;margin-right:10px;\"><option></option>{0}{1}"
-        + "</select>")
+        + "#707172;width:10em;margin-right:10px;\" tabindex=\"-1\">"
+        + "<option></option>{0}{1}</select>")
     SafeHtml enabled(SafeHtml approvedOption, SafeHtml deniedOption);
   }
 
@@ -122,7 +121,7 @@ public class ExpenseDetails extends Composite {
    * The cell used for approval status.
    */
   private class ApprovalCell extends
-      AbstractEditableCell<String, ApprovalViewData> {
+      AbstractInputCell<String, ApprovalViewData> {
 
     private final String approvedText = Expenses.Approval.APPROVED.getText();
     private final String deniedText = Expenses.Approval.DENIED.getText();
@@ -137,20 +136,25 @@ public class ExpenseDetails extends Composite {
 
       // Cache the html string for the error icon.
       ImageResource errorIcon = Styles.resources().errorIcon();
-      AbstractImagePrototype errorImg = AbstractImagePrototype.create(
-          errorIcon);
+      AbstractImagePrototype errorImg = AbstractImagePrototype.create(errorIcon);
       errorIconHtml = SafeHtmlUtils.fromTrustedString(errorImg.getHTML());
 
       // Cache the html string for the pending icon.
       ImageResource pendingIcon = Styles.resources().pendingCommit();
-      AbstractImagePrototype pendingImg = AbstractImagePrototype.create(
-          pendingIcon);
+      AbstractImagePrototype pendingImg = AbstractImagePrototype.create(pendingIcon);
       pendingIconHtml = SafeHtmlUtils.fromTrustedString(pendingImg.getHTML());
+    }
+
+    @Override
+    public boolean isEditing(Element parent, String value, Object key) {
+      return super.isEditing(parent, value, key) || denialPopup.isShowing();
     }
 
     @Override
     public void onBrowserEvent(Element parent, String value, Object key,
         NativeEvent event, ValueUpdater<String> valueUpdater) {
+      super.onBrowserEvent(parent, value, key, event, valueUpdater);
+
       String type = event.getType();
       ApprovalViewData viewData = getViewData(key);
       if ("change".equals(type)) {
@@ -170,6 +174,7 @@ public class ExpenseDetails extends Composite {
         String pendingValue = select.getOptions().getItem(index).getValue();
         viewData = new ApprovalViewData(pendingValue);
         setViewData(key, viewData);
+        finishEditing(parent, pendingValue, key, valueUpdater);
 
         // Update the value updater.
         if (valueUpdater != null) {
@@ -231,8 +236,7 @@ public class ExpenseDetails extends Composite {
       if (isRejected) {
         // Add error icon if viewData does not match.
         sb.append(errorIconHtml);
-        sb.appendHtmlConstant(
-            "<a style='padding-left:3px;color:red;' href='javascript:;'>Error!</a>");
+        sb.appendHtmlConstant("<a style='padding-left:3px;color:red;' href='javascript:;'>Error!</a>");
       } else if (pendingValue != null) {
         // Add refresh icon if pending.
         sb.append(pendingIconHtml);
@@ -284,18 +288,20 @@ public class ExpenseDetails extends Composite {
    * The popup used to enter the rejection reason.
    */
   private class DenialPopup extends PopupPanel {
-    private final Button cancelButton = new Button("Cancel", new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        reasonDenied = "";
-        hide();
-      }
-    });
-    private final Button confirmButton = new Button("Confirm", new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        reasonDenied = reasonBox.getText();
-        hide();
-      }
-    });
+    private final Button cancelButton = new Button("Cancel",
+        new ClickHandler() {
+          public void onClick(ClickEvent event) {
+            reasonDenied = "";
+            hide();
+          }
+        });
+    private final Button confirmButton = new Button("Confirm",
+        new ClickHandler() {
+          public void onClick(ClickEvent event) {
+            reasonDenied = reasonBox.getText();
+            hide();
+          }
+        });
 
     private ExpenseProxy expenseRecord;
     private final TextBox reasonBox = new TextBox();
@@ -356,8 +362,7 @@ public class ExpenseDetails extends Composite {
    */
   private static final int REFRESH_INTERVAL = 5000;
 
-  private static ExpenseDetailsUiBinder uiBinder = GWT.create(
-      ExpenseDetailsUiBinder.class);
+  private static ExpenseDetailsUiBinder uiBinder = GWT.create(ExpenseDetailsUiBinder.class);
 
   @UiField
   Element approvedLabel;
@@ -387,7 +392,7 @@ public class ExpenseDetails extends Composite {
   Anchor reportsLink;
 
   @UiField(provided = true)
-  CellTable<ExpenseProxy> table = new CellTable<ExpenseProxy>(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
+  CellTable<ExpenseProxy> table;
 
   @UiField
   Element unreconciledLabel;
@@ -400,6 +405,11 @@ public class ExpenseDetails extends Composite {
    * The default {@link Comparator} used for sorting.
    */
   private Comparator<ExpenseProxy> defaultComparator;
+
+  /**
+   * The popup used when something is denied.
+   */
+  private final DenialPopup denialPopup = new DenialPopup();
 
   /**
    * The popup used to display errors to the user.
@@ -453,8 +463,10 @@ public class ExpenseDetails extends Composite {
 
   public ExpenseDetails() {
     createErrorPopup();
+    initTable();
     initWidget(uiBinder.createAndBindUi(this));
-    items = new ListDataProvider<ExpenseProxy>(Expenses.EXPENSE_RECORD_KEY_PROVIDER);
+    items = new ListDataProvider<ExpenseProxy>(
+        Expenses.EXPENSE_RECORD_KEY_PROVIDER);
     items.addDataDisplay(table);
 
     // Switch to edit notes.
@@ -521,7 +533,7 @@ public class ExpenseDetails extends Composite {
           @Override
           public void onSuccess(ExpenseProxy newRecord) {
             list.set(i, newRecord);
-            
+
             // Update the view data if the approval has been updated.
             ApprovalViewData avd = approvalCell.getViewData(proxyId);
             if (avd != null
@@ -544,14 +556,14 @@ public class ExpenseDetails extends Composite {
     EntityProxyId<ReportProxy> changed = event.getProxyId();
     if (report != null && report.getId().equals(changed)) {
       // Request the updated report.
-      expensesRequestFactory.reportRequest().findReport(
-          report.getId()).fire(new Receiver<ReportProxy>() {
-        @Override
-        public void onSuccess(ReportProxy response) {
-          report = response;
-          setNotesEditState(false, false, response.getNotes());
-        }
-      });
+      expensesRequestFactory.reportRequest().findReport(report.getId()).fire(
+          new Receiver<ReportProxy>() {
+            @Override
+            public void onSuccess(ReportProxy response) {
+              report = response;
+              setNotesEditState(false, false, response.getNotes());
+            }
+          });
     }
   }
 
@@ -562,7 +574,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Set the {@link ReportProxy} to show.
-   * 
+   *
    * @param report the {@link ReportProxy}
    * @param department the selected department
    * @param employee the selected employee
@@ -598,112 +610,9 @@ public class ExpenseDetails extends Composite {
     requestExpenses();
   }
 
-  @UiFactory
-  CellTable<ExpenseProxy> createTable() {
-    CellTable.Resources resources = GWT.create(TableResources.class);
-    CellTable<ExpenseProxy> view = new CellTable<ExpenseProxy>(100, resources);
-    Styles.Common common = Styles.common();
-    view.addColumnStyleName(0, common.spacerColumn());
-    view.addColumnStyleName(1, common.expenseDetailsDateColumn());
-    view.addColumnStyleName(3, common.expenseDetailsCategoryColumn());
-    view.addColumnStyleName(4, common.expenseDetailsAmountColumn());
-    view.addColumnStyleName(5, common.expenseDetailsApprovalColumn());
-    view.addColumnStyleName(6, common.spacerColumn());
-
-    // Spacer column.
-    view.addColumn(new SpacerColumn<ExpenseProxy>());
-
-    // Created column.
-    GetValue<ExpenseProxy, Date> createdGetter = new GetValue<ExpenseProxy, Date>() {
-      public Date getValue(ExpenseProxy object) {
-        return object.getCreated();
-      }
-    };
-    defaultComparator = createColumnComparator(createdGetter, false);
-    Comparator<ExpenseProxy> createdDesc = createColumnComparator(
-        createdGetter, true);
-    addColumn(view, "Created",
-        new DateCell(DateTimeFormat.getFormat("MMM dd yyyy")), createdGetter,
-        defaultComparator, createdDesc);
-    lastComparator = defaultComparator;
-
-    // Description column.
-    addColumn(view, "Description", new TextCell(),
-        new GetValue<ExpenseProxy, String>() {
-          public String getValue(ExpenseProxy object) {
-            return object.getDescription();
-          }
-        });
-
-    // Category column.
-    addColumn(view, "Category", new TextCell(),
-        new GetValue<ExpenseProxy, String>() {
-          public String getValue(ExpenseProxy object) {
-            return object.getCategory();
-          }
-        });
-
-    // Amount column.
-    final GetValue<ExpenseProxy, Double> amountGetter = new GetValue<ExpenseProxy, Double>() {
-      public Double getValue(ExpenseProxy object) {
-        return object.getAmount();
-      }
-    };
-    Comparator<ExpenseProxy> amountAsc = createColumnComparator(amountGetter,
-        false);
-    Comparator<ExpenseProxy> amountDesc = createColumnComparator(amountGetter,
-        true);
-    addColumn(view, "Amount", new NumberCell(NumberFormat.getCurrencyFormat()),
-        new GetValue<ExpenseProxy, Number>() {
-          public Number getValue(ExpenseProxy object) {
-            return amountGetter.getValue(object);
-          }
-        }, amountAsc, amountDesc);
-
-    // Dialog box to obtain a reason for a denial
-    final DenialPopup denialPopup = new DenialPopup();
-    denialPopup.addCloseHandler(new CloseHandler<PopupPanel>() {
-      public void onClose(CloseEvent<PopupPanel> event) {
-        String reasonDenied = denialPopup.getReasonDenied();
-        ExpenseProxy record = denialPopup.getExpenseRecord();
-        if (reasonDenied == null || reasonDenied.length() == 0) {
-          // We need to redraw the table to reset the select box.
-          syncCommit(record, null);
-        } else {
-          updateExpenseRecord(record, "Denied", reasonDenied);
-        }
-      }
-    });
-
-    // Approval column.
-    approvalCell = new ApprovalCell();
-    Column<ExpenseProxy, String> approvalColumn = addColumn(view,
-        "Approval Status", approvalCell, new GetValue<ExpenseProxy, String>() {
-          public String getValue(ExpenseProxy object) {
-            return object.getApproval();
-          }
-        });
-    approvalColumn.setFieldUpdater(new FieldUpdater<ExpenseProxy, String>() {
-      public void update(int index, final ExpenseProxy object, String value) {
-        if ("Denied".equals(value)) {
-          denialPopup.setExpenseRecord(object);
-          denialPopup.setReasonDenied(object.getReasonDenied());
-          denialPopup.popup();
-        } else {
-          updateExpenseRecord(object, value, "");
-        }
-      }
-    });
-
-    // Spacer column.
-    view.addColumn(new SpacerColumn<ExpenseProxy>());
-
-    return view;
-  }
-
   /**
    * Add a column of a {@link Comparable} type using default comparators.
-   * 
+   *
    * @param <C> the column type
    * @param table the table
    * @param text the header text
@@ -721,7 +630,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Add a column with the specified comparators.
-   * 
+   *
    * @param <C> the column type
    * @param table the table
    * @param text the header text
@@ -771,7 +680,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Create a comparator for the column.
-   * 
+   *
    * @param <C> the column type
    * @param getter the {@link GetValue} used to get the cell value
    * @param descending true if descending, false if ascending
@@ -812,8 +721,7 @@ public class ExpenseDetails extends Composite {
   private void createErrorPopup() {
     errorPopup.setGlassEnabled(true);
     errorPopup.setStyleName(Styles.common().popupPanel());
-    errorPopupMessage.addStyleName(
-        Styles.common().expenseDetailsErrorPopupMessage());
+    errorPopupMessage.addStyleName(Styles.common().expenseDetailsErrorPopupMessage());
 
     Button closeButton = new Button("Dismiss", new ClickHandler() {
       public void onClick(ClickEvent event) {
@@ -831,7 +739,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Return a formatted currency string.
-   * 
+   *
    * @param amount the amount in dollars
    * @return a formatted string
    */
@@ -861,8 +769,120 @@ public class ExpenseDetails extends Composite {
    * Get the columns displayed in the expense table.
    */
   private String[] getExpenseColumns() {
-    return new String[]{ "amount", "approval", "category", "created", 
-        "description", "reasonDenied"};
+    return new String[]{
+        "amount", "approval", "category", "created", "description",
+        "reasonDenied"};
+  }
+
+  private CellTable<ExpenseProxy> initTable() {
+    CellTable.Resources resources = GWT.create(TableResources.class);
+    table = new CellTable<ExpenseProxy>(100, resources,
+        Expenses.EXPENSE_RECORD_KEY_PROVIDER);
+    Styles.Common common = Styles.common();
+
+    table.addColumnStyleName(0, common.spacerColumn());
+    table.addColumnStyleName(1, common.expenseDetailsDateColumn());
+    table.addColumnStyleName(3, common.expenseDetailsCategoryColumn());
+    table.addColumnStyleName(4, common.expenseDetailsAmountColumn());
+    table.addColumnStyleName(5, common.expenseDetailsApprovalColumn());
+    table.addColumnStyleName(6, common.spacerColumn());
+
+    // Spacer column.
+    table.addColumn(new SpacerColumn<ExpenseProxy>());
+
+    // Created column.
+    GetValue<ExpenseProxy, Date> createdGetter = new GetValue<ExpenseProxy, Date>() {
+      public Date getValue(ExpenseProxy object) {
+        return object.getCreated();
+      }
+    };
+    defaultComparator = createColumnComparator(createdGetter, false);
+    Comparator<ExpenseProxy> createdDesc = createColumnComparator(
+        createdGetter, true);
+    addColumn(table, "Created",
+        new DateCell(DateTimeFormat.getFormat("MMM dd yyyy")), createdGetter,
+        defaultComparator, createdDesc);
+    lastComparator = defaultComparator;
+
+    // Description column.
+    addColumn(table, "Description", new TextCell(),
+        new GetValue<ExpenseProxy, String>() {
+          public String getValue(ExpenseProxy object) {
+            return object.getDescription();
+          }
+        });
+
+    // Category column.
+    addColumn(table, "Category", new TextCell(),
+        new GetValue<ExpenseProxy, String>() {
+          public String getValue(ExpenseProxy object) {
+            return object.getCategory();
+          }
+        });
+
+    // Amount column.
+    final GetValue<ExpenseProxy, Double> amountGetter = new GetValue<ExpenseProxy, Double>() {
+      public Double getValue(ExpenseProxy object) {
+        return object.getAmount();
+      }
+    };
+    Comparator<ExpenseProxy> amountAsc = createColumnComparator(amountGetter,
+        false);
+    Comparator<ExpenseProxy> amountDesc = createColumnComparator(amountGetter,
+        true);
+    addColumn(table, "Amount",
+        new NumberCell(NumberFormat.getCurrencyFormat()),
+        new GetValue<ExpenseProxy, Number>() {
+          public Number getValue(ExpenseProxy object) {
+            return amountGetter.getValue(object);
+          }
+        }, amountAsc, amountDesc);
+
+    // Dialog box to obtain a reason for a denial
+    denialPopup.addCloseHandler(new CloseHandler<PopupPanel>() {
+      public void onClose(CloseEvent<PopupPanel> event) {
+        String reasonDenied = denialPopup.getReasonDenied();
+        ExpenseProxy record = denialPopup.getExpenseRecord();
+        if (reasonDenied == null || reasonDenied.length() == 0) {
+          // Clear the view data.
+          final Object key = items.getKey(record);
+          approvalCell.clearViewData(key);
+
+          // We need to redraw the table to reset the select box.
+          syncCommit(record, null);
+        } else {
+          updateExpenseRecord(record, "Denied", reasonDenied);
+        }
+
+        // Return focus to the table.
+        table.setFocus(true);
+      }
+    });
+
+    // Approval column.
+    approvalCell = new ApprovalCell();
+    Column<ExpenseProxy, String> approvalColumn = addColumn(table,
+        "Approval Status", approvalCell, new GetValue<ExpenseProxy, String>() {
+          public String getValue(ExpenseProxy object) {
+            return object.getApproval();
+          }
+        });
+    approvalColumn.setFieldUpdater(new FieldUpdater<ExpenseProxy, String>() {
+      public void update(int index, final ExpenseProxy object, String value) {
+        if ("Denied".equals(value)) {
+          denialPopup.setExpenseRecord(object);
+          denialPopup.setReasonDenied(object.getReasonDenied());
+          denialPopup.popup();
+        } else {
+          updateExpenseRecord(object, value, "");
+        }
+      }
+    });
+
+    // Spacer column.
+    table.addColumn(new SpacerColumn<ExpenseProxy>());
+
+    return table;
   }
 
   /**
@@ -928,8 +948,8 @@ public class ExpenseDetails extends Composite {
       }
     };
 
-    expensesRequestFactory.expenseRequest().findExpensesByReport(
-        report.getId()).with(getExpenseColumns()).fire(lastReceiver);
+    expensesRequestFactory.expenseRequest().findExpensesByReport(report.getId()).with(
+        getExpenseColumns()).fire(lastReceiver);
   }
 
   /**
@@ -960,7 +980,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Set the state of the notes section.
-   * 
+   *
    * @param editable true for edit state, false for view state
    * @param pending true if changes are pending, false if not
    * @param notesText the current notes
@@ -979,7 +999,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Show the error popup.
-   * 
+   *
    * @param errorMessage the error message
    */
   private void showErrorPopup(String errorMessage) {
@@ -995,7 +1015,7 @@ public class ExpenseDetails extends Composite {
 
   /**
    * Update the state of a pending approval change.
-   * 
+   *
    * @param record the {@link ExpenseProxy} to sync
    * @param message the error message if rejected, or null if accepted
    */

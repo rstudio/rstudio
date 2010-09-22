@@ -36,14 +36,12 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
   /**
    * An html string representation of a checked input box.
    */
-  private static final SafeHtml INPUT_CHECKED =
-    SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" checked/>");
+  private static final SafeHtml INPUT_CHECKED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\" checked/>");
 
   /**
    * An html string representation of an unchecked input box.
    */
-  private static final SafeHtml INPUT_UNCHECKED =
-    SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\"/>");
+  private static final SafeHtml INPUT_UNCHECKED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\"/>");
 
   private final boolean isSelectBox;
 
@@ -60,7 +58,7 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
    * @param isSelectBox true if the cell controls the selection state
    */
   public CheckboxCell(boolean isSelectBox) {
-    super("change", "keyup");
+    super("change", "keydown");
     this.isSelectBox = isSelectBox;
   }
 
@@ -75,11 +73,18 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
   }
 
   @Override
+  public boolean isEditing(Element parent, Boolean value, Object key) {
+    // A checkbox is never in "edit mode". There is no intermediate state
+    // between checked and unchecked.
+    return false;
+  }
+
+  @Override
   public void onBrowserEvent(Element parent, Boolean value, Object key,
       NativeEvent event, ValueUpdater<Boolean> valueUpdater) {
     String type = event.getType();
 
-    boolean enterPressed = "keyup".equals(type)
+    boolean enterPressed = "keydown".equals(type)
         && event.getKeyCode() == KeyCodes.KEY_ENTER;
     if ("change".equals(type) || enterPressed) {
       InputElement input = parent.getFirstChild().cast();

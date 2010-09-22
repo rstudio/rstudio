@@ -16,6 +16,7 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
@@ -64,6 +65,15 @@ abstract class CellBasedWidgetImpl {
    */
   public SafeHtml processHtml(SafeHtml html) {
     return html;
+  }
+
+  /**
+   * Reset focus on an element.
+   *
+   * @param command the command to execute when resetting focus
+   */
+  public void resetFocus(ScheduledCommand command) {
+    command.execute();
   }
 
   /**

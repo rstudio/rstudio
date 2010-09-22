@@ -58,26 +58,26 @@ public class SelectionCellTest extends EditableCellTestBase<String, String> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"change"};
+    return new String[]{"change", "keydown", "focus", "blur"};
   }
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<select><option value=\"option 0\">option 0</option>"
+    return "<select tabindex=\"-1\"><option value=\"option 0\">option 0</option>"
         + "<option value=\"option 1\" selected=\"selected\">option 1</option>"
         + "<option value=\"option 2\">option 2</option></select>";
   }
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    return "<select><option value=\"option 0\">option 0</option>"
+    return "<select tabindex=\"-1\"><option value=\"option 0\">option 0</option>"
         + "<option value=\"option 1\">option 1</option>"
         + "<option value=\"option 2\">option 2</option></select>";
   }
 
   @Override
   protected String getExpectedInnerHtmlViewData() {
-    return "<select><option value=\"option 0\">option 0</option>"
+    return "<select tabindex=\"-1\"><option value=\"option 0\">option 0</option>"
         + "<option value=\"option 1\">option 1</option>"
         + "<option value=\"option 2\" selected=\"selected\">option 2</option></select>";
   }

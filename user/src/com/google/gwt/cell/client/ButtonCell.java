@@ -32,27 +32,36 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 public class ButtonCell extends AbstractSafeHtmlCell<String> {
 
   public ButtonCell() {
-    super(SimpleSafeHtmlRenderer.getInstance(), "mouseup");
+    this(SimpleSafeHtmlRenderer.getInstance());
   }
 
   public ButtonCell(SafeHtmlRenderer<String> renderer) {
-    super(renderer, "mouseup");
+    super(renderer, "click", "keydown");
   }
 
   @Override
   public void onBrowserEvent(Element parent, String value, Object key,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
-    if (valueUpdater != null && "mouseup".equals(event.getType())) {
-      valueUpdater.update(value);
+    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+    if ("click".equals(event.getType())) {
+      onEnterKeyDown(parent, value, key, event, valueUpdater);
     }
   }
 
   @Override
   public void render(SafeHtml data, Object key, SafeHtmlBuilder sb) {
-    sb.appendHtmlConstant("<button>");
+    sb.appendHtmlConstant("<button type=\"button\" tabindex=\"-1\">");
     if (data != null) {
       sb.append(data);
     }
     sb.appendHtmlConstant("</button>");
+  }
+
+  @Override
+  protected void onEnterKeyDown(Element parent, String value, Object key,
+      NativeEvent event, ValueUpdater<String> valueUpdater) {
+    if (valueUpdater != null) {
+      valueUpdater.update(value);
+    }
   }
 }

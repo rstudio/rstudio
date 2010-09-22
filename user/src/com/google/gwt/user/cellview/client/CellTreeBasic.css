@@ -40,13 +40,7 @@
 .cellTreeItemValue {
   padding-left: 3px;
   padding-right: 3px;
-}
-
-/*
-div:focus { outline: none; }
-*/
-.cellTreeKeyboardSelectedItem {
-  /*  background-color: #ffff00; */
+  outline: none;
 }
 
 .cellTreeOpenItem {
@@ -65,12 +59,17 @@ div:focus { outline: none; }
   
 }
 
+.cellTreeKeyboardSelectedItem {
+  background-color: #ffc;
+  outline: none;
+}
+
 @sprite .cellTreeSelectedItem {
   gwt-image: 'cellTreeSelectedBackground';
   background-color: #628cd5;
   color: white;
   height: auto;
-  overflow: auto;
+  overflow: visible;
 }
 
 .cellTreeShowMoreButton {

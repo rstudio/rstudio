@@ -52,10 +52,11 @@ public class ActionCell<C> extends AbstractCell<C> {
    * @param delegate the delegate that will handle events
    */
   public ActionCell(SafeHtml message, Delegate<C> delegate) {
-    super("click");
+    super("click", "keydown");
     this.delegate = delegate;
-    this.html = new SafeHtmlBuilder().appendHtmlConstant("<button>").append(
-        message).appendHtmlConstant("</button>").toSafeHtml();
+    this.html = new SafeHtmlBuilder().appendHtmlConstant(
+        "<button type=\"button\" tabindex=\"-1\">").append(message).appendHtmlConstant(
+        "</button>").toSafeHtml();
   }
 
   /**
@@ -72,13 +73,20 @@ public class ActionCell<C> extends AbstractCell<C> {
   @Override
   public void onBrowserEvent(Element parent, C value, Object key,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
+    super.onBrowserEvent(parent, value, key, event, valueUpdater);
     if ("click".equals(event.getType())) {
-      delegate.execute(value);
+      onEnterKeyDown(parent, value, key, event, valueUpdater);
     }
   }
 
   @Override
   public void render(C value, Object key, SafeHtmlBuilder sb) {
     sb.append(html);
+  }
+
+  @Override
+  protected void onEnterKeyDown(Element parent, C value, Object key,
+      NativeEvent event, ValueUpdater<C> valueUpdater) {
+    delegate.execute(value);
   }
 }

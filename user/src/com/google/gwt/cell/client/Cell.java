@@ -42,8 +42,9 @@ public interface Cell<C> {
   /**
    * <p>
    * Get the set of events that this cell consumes. The container that uses this
-   * cell should only pass these events to {@link #onBrowserEvent(Element,
-   * Object, Object, NativeEvent, ValueUpdater)}.
+   * cell should only pass these events to
+   * {@link #onBrowserEvent(Element, Object, Object, NativeEvent, ValueUpdater)}
+   * .
    * </p>
    * <p>
    * The returned value should not be modified, and may be an unmodifiable set.
@@ -90,11 +91,26 @@ public interface Cell<C> {
   /**
    * Render a cell as HTML into a StringBuilder, suitable for passing to
    * {@link Element#setInnerHTML} on a container element.
+   *
+   * <p>
+   * Note: If your cell contains natively focusable elements, such as buttons or
+   * input elements, be sure to set the tabIndex to -1 so that they do not steal
+   * focus away from the containing widget.
+   * </p>
+   *
    * @param value the cell value to be rendered
    * @param key the unique key associated with the row object
    * @param sb the {@link SafeHtmlBuilder} to be written to
    */
   void render(C value, Object key, SafeHtmlBuilder sb);
+
+  /**
+   * Reset focus on the Cell. This method is called if the cell has focus when
+   * it is refreshed.
+   *
+   * @return true if focus is taken, false if not
+   */
+  boolean resetFocus(Element parent, C value, Object key);
 
   /**
    * This method may be used by cell containers to set the value on a single

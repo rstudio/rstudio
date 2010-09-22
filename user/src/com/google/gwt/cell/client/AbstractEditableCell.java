@@ -16,7 +16,6 @@
 package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,9 +80,18 @@ public abstract class AbstractEditableCell<C, V> extends AbstractCell<C> {
     return (key == null) ? null : viewDataMap.get(key);
   }
 
+  /**
+   * Returns true if the cell is currently editing the data identified by the
+   * given element and key. While a cell is editing, widgets containing the cell
+   * may choose to pass keystrokes directly to the cell rather than using them
+   * for navigation purposes.
+   *
+   * @param parent the parent Element
+   * @param value the value associated with the cell
+   * @param key the unique key associated with the row object
+   */
   @Override
-  public abstract void onBrowserEvent(Element parent, C value, Object key,
-      NativeEvent event, ValueUpdater<C> valueUpdater);
+  public abstract boolean isEditing(Element parent, C value, Object key);
 
   /**
    * Associate view data with the specified key. If the key is null, the view

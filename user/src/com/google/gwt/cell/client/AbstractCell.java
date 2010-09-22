@@ -17,6 +17,7 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.Collections;
@@ -81,27 +82,63 @@ public abstract class AbstractCell<C> implements Cell<C> {
    * Returns false. Subclasses that support editing should override this method
    * to return the current editing status.
    */
-  public boolean isEditing(Element element, C value, Object key) {
+  public boolean isEditing(Element parent, C value, Object key) {
     return false;
   }
 
   /**
    * {@inheritDoc}
    *
-   * This method is a no-op in {@link AbstractCell}. If you override this method
-   * to add support for events, remember to pass the event types that the cell
-   * expects into the constructor.
+   * <p>
+   * If you override this method to add support for events, remember to pass the
+   * event types that the cell expects into the constructor.
+   * </p>
    */
   public void onBrowserEvent(Element parent, C value, Object key,
       NativeEvent event, ValueUpdater<C> valueUpdater) {
+    String eventType = event.getType();
+    // Special case the ENTER key for a unified user experience.
+    if ("keydown".equals(eventType) && event.getKeyCode() == KeyCodes.KEY_ENTER) {
+      onEnterKeyDown(parent, value, key, event, valueUpdater);
+    }
   }
 
   public abstract void render(C value, Object key, SafeHtmlBuilder sb);
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * This method is a no-op and returns false. If your cell is editable or can
+   * be focused by the user, override this method to reset focus when the
+   * containing widget is refreshed.
+   * </p>
+   */
+  public boolean resetFocus(Element parent, C value, Object key) {
+    return false;
+  }
 
   public void setValue(Element parent, C value, Object key) {
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
     render(value, key, sb);
     parent.setInnerHTML(sb.toSafeHtml().asString());
+  }
+
+  /**
+   * Called when the user triggers a <code>keydown</code> event with the ENTER
+   * key while focused on the cell. If your cell interacts with the user, you
+   * should override this method to provide a consistent user experience. Your
+   * widget must consume <code>keydown</code> events for this method to be
+   * called.
+   *
+   * @param parent the parent Element
+   * @param value the value associated with the cell
+   * @param key the unique key associated with the row object
+   * @param event the native browser event
+   * @param valueUpdater a {@link ValueUpdater}, or null if not specified
+   */
+  protected void onEnterKeyDown(Element parent, C value, Object key,
+      NativeEvent event, ValueUpdater<C> valueUpdater) {
   }
 
   /**

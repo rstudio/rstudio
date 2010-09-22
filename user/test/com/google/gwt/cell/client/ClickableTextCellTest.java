@@ -24,8 +24,8 @@ import com.google.gwt.dom.client.NativeEvent;
 public class ClickableTextCellTest extends CellTestBase<String> {
 
   public void testOnBrowserEvent() {
-    NativeEvent event = Document.get().createClickEvent(
-        0, 0, 0, 0, 0, false, false, false, false);
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
+        false, false, false);
     testOnBrowserEvent(getExpectedInnerHtml(), event, "value", "value");
   }
 
@@ -46,7 +46,7 @@ public class ClickableTextCellTest extends CellTestBase<String> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"click"};
+    return new String[]{"click", "keydown"};
   }
 
   @Override

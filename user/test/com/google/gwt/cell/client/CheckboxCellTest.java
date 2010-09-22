@@ -31,14 +31,14 @@ public class CheckboxCellTest extends EditableCellTestBase<Boolean, Boolean> {
 
   public void testOnBrowserEventChecked() {
     NativeEvent event = Document.get().createChangeEvent();
-    testOnBrowserEvent("<input type=\"checkbox\" checked/>", event, false, null,
-        Boolean.TRUE, true);
+    testOnBrowserEvent("<input type=\"checkbox\" checked/>", event, false,
+        null, Boolean.TRUE, true);
   }
 
   public void testOnBrowserEventUnchecked() {
     NativeEvent event = Document.get().createChangeEvent();
-    testOnBrowserEvent(
-        "<input type=\"checkbox\"/>", event, true, null, Boolean.FALSE, false);
+    testOnBrowserEvent("<input type=\"checkbox\"/>", event, true, null,
+        Boolean.FALSE, false);
   }
 
   @Override
@@ -63,21 +63,21 @@ public class CheckboxCellTest extends EditableCellTestBase<Boolean, Boolean> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"change", "keyup"};
+    return new String[]{"change", "keydown"};
   }
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<input type=\"checkbox\" checked/>";
+    return "<input type=\"checkbox\" tabindex=\"-1\" checked/>";
   }
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    return "<input type=\"checkbox\"/>";
+    return "<input type=\"checkbox\" tabindex=\"-1\"/>";
   }
 
   @Override
   protected String getExpectedInnerHtmlViewData() {
-    return "<input type=\"checkbox\"/>";
+    return "<input type=\"checkbox\" tabindex=\"-1\"/>";
   }
 }

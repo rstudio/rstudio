@@ -47,8 +47,8 @@ public class ActionCellTest extends CellTestBase<String> {
     MockDelegate<String> delegate = new MockDelegate<String>();
     ActionCell<String> cell = new ActionCell<String>("hello", delegate);
     Element parent = Document.get().createDivElement();
-    NativeEvent event = Document.get().createClickEvent(
-        0, 0, 0, 0, 0, false, false, false, false);
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
+        false, false, false);
     cell.onBrowserEvent(parent, "test", DEFAULT_KEY, event, null);
     delegate.assertLastObject("test");
   }
@@ -71,17 +71,16 @@ public class ActionCellTest extends CellTestBase<String> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"click"};
+    return new String[]{"click", "keydown"};
   }
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<button>clickme</button>";
+    return "<button type=\"button\" tabindex=\"-1\">clickme</button>";
   }
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    // ActionCell always renders the same message.
-    return "<button>clickme</button>";
+    return getExpectedInnerHtml();
   }
 }

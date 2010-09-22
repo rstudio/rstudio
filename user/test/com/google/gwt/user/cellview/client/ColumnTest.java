@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.cell.client.TextInputCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -30,6 +30,23 @@ import com.google.gwt.user.client.Timer;
  * Tests for {@link Column}.
  */
 public class ColumnTest extends GWTTestCase {
+
+  /**
+   * A mock cell used for testing.
+   */
+  private static class MockEditableCell extends
+      AbstractEditableCell<String, String> {
+
+    @Override
+    public boolean isEditing(Element parent, String value, Object key) {
+      return false;
+    }
+
+    @Override
+    public void render(String value, Object key, SafeHtmlBuilder sb) {
+      sb.appendEscaped(value);
+    }
+  }
 
   /**
    * A mock {@link FieldUpdater} used for testing.
@@ -80,9 +97,9 @@ public class ColumnTest extends GWTTestCase {
    */
   public void testDelayedValueUpdaer() {
     final Element theElem = Document.get().createDivElement();
-    final NativeEvent theEvent = Document.get().createClickEvent(
-        0, 0, 0, 0, 0, false, false, false, false);
-    final TextInputCell cell = new TextInputCell() {
+    final NativeEvent theEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
+        false, false, false, false);
+    final MockEditableCell cell = new MockEditableCell() {
       @Override
       public void onBrowserEvent(Element parent, String value, Object key,
           NativeEvent event, final ValueUpdater<String> valueUpdater) {
@@ -96,8 +113,7 @@ public class ColumnTest extends GWTTestCase {
       }
     };
     final Column<String, String> column = new IdentityColumn<String>(cell);
-    final MockFieldUpdater<String, String> fieldUpdater = new MockFieldUpdater<
-        String, String>() {
+    final MockFieldUpdater<String, String> fieldUpdater = new MockFieldUpdater<String, String>() {
       @Override
       public void update(int index, String object, String value) {
         assertEquals("newViewData", cell.getViewData("test"));
@@ -121,9 +137,9 @@ public class ColumnTest extends GWTTestCase {
 
   public void testOnBrowserEventWithFieldUpdater() {
     final Element theElem = Document.get().createDivElement();
-    final NativeEvent theEvent = Document.get().createClickEvent(
-        0, 0, 0, 0, 0, false, false, false, false);
-    final TextInputCell cell = new TextInputCell() {
+    final NativeEvent theEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
+        false, false, false, false);
+    final MockEditableCell cell = new MockEditableCell() {
       @Override
       public void onBrowserEvent(Element parent, String value, Object key,
           NativeEvent event, ValueUpdater<String> valueUpdater) {
@@ -137,8 +153,7 @@ public class ColumnTest extends GWTTestCase {
       }
     };
     final Column<String, String> column = new IdentityColumn<String>(cell);
-    final MockFieldUpdater<String, String> fieldUpdater = new MockFieldUpdater<
-        String, String>() {
+    final MockFieldUpdater<String, String> fieldUpdater = new MockFieldUpdater<String, String>() {
       @Override
       public void update(int index, String object, String value) {
         // The new view data should already be set.
@@ -159,9 +174,9 @@ public class ColumnTest extends GWTTestCase {
 
   public void testOnBrowserEventWithoutFieldUpdater() {
     final Element theElem = Document.get().createDivElement();
-    final NativeEvent theEvent = Document.get().createClickEvent(
-        0, 0, 0, 0, 0, false, false, false, false);
-    final TextInputCell cell = new TextInputCell() {
+    final NativeEvent theEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
+        false, false, false, false);
+    final MockEditableCell cell = new MockEditableCell() {
       @Override
       public void onBrowserEvent(Element parent, String value, Object key,
           NativeEvent event, ValueUpdater<String> valueUpdater) {

@@ -42,7 +42,8 @@ public class IconCellDecorator<C> implements Cell<C> {
 
   interface Template extends SafeHtmlTemplates {
     @Template("<div style=\"position:relative;padding-{0}:{1}px;\">{2}<div>{3}</div></div>")
-    SafeHtml outerDiv(String direction, int width, SafeHtml icon, SafeHtml cellContents);
+    SafeHtml outerDiv(String direction, int width, SafeHtml icon,
+        SafeHtml cellContents);
 
     @Template("<div style=\"position:absolute;{0}:0px;top:0px;height:100%;width:{1}px;\"></div>")
     SafeHtml imagePlaceholder(String direction, int width);
@@ -52,7 +53,8 @@ public class IconCellDecorator<C> implements Cell<C> {
 
   private final Cell<C> cell;
 
-  private final String direction = LocaleInfo.getCurrentLocale().isRTL() ? "right" : "left";
+  private final String direction = LocaleInfo.getCurrentLocale().isRTL()
+      ? "right" : "left";
 
   private final SafeHtml iconHtml;
 
@@ -117,6 +119,10 @@ public class IconCellDecorator<C> implements Cell<C> {
 
     sb.append(template.outerDiv(direction, imageWidth, isIconUsed(value)
         ? getIconHtml(value) : placeHolderHtml, cellBuilder.toSafeHtml()));
+  }
+
+  public boolean resetFocus(Element parent, C value, Object key) {
+    return cell.resetFocus(getCellParent(parent), value, key);
   }
 
   public void setValue(Element parent, C value, Object key) {

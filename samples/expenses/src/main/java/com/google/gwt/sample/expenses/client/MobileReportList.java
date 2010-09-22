@@ -22,6 +22,7 @@ import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -79,6 +80,7 @@ public class MobileReportList extends Composite implements MobilePage {
         sb.appendHtmlConstant("</div>");
       }
     });
+    reportList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
     reportSelection = new NoSelectionModel<ReportProxy>(Expenses.REPORT_RECORD_KEY_PROVIDER);
     reportSelection.addSelectionChangeHandler(

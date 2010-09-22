@@ -24,8 +24,8 @@ import com.google.gwt.dom.client.NativeEvent;
 public class ButtonCellTest extends CellTestBase<String> {
 
   public void testOnBrowserEvent() {
-    NativeEvent event = Document.get().createMouseUpEvent(
-        0, 0, 0, 0, 0, false, false, false, false, NativeEvent.BUTTON_LEFT);
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false,
+        false, false, false);
     testOnBrowserEvent(getExpectedInnerHtml(), event, "clickme", "clickme");
   }
 
@@ -46,16 +46,16 @@ public class ButtonCellTest extends CellTestBase<String> {
 
   @Override
   protected String[] getConsumedEvents() {
-    return new String[]{"mouseup"};
+    return new String[]{"click", "keydown"};
   }
 
   @Override
   protected String getExpectedInnerHtml() {
-    return "<button>clickme</button>";
+    return "<button type=\"button\" tabindex=\"-1\">clickme</button>";
   }
 
   @Override
   protected String getExpectedInnerHtmlNull() {
-    return "<button></button>";
+    return "<button type=\"button\" tabindex=\"-1\"></button>";
   }
 }

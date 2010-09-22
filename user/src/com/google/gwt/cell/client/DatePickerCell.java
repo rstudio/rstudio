@@ -17,9 +17,12 @@ package com.google.gwt.cell.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
@@ -90,7 +93,7 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
    * {@link SafeHtmlRenderer}.
    */
   public DatePickerCell(SafeHtmlRenderer<String> renderer) {
-    this(DateTimeFormat.getFullDateFormat(), renderer);
+    this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL), renderer);
   }
 
   /**
@@ -98,7 +101,7 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
    * {@link SafeHtmlRenderer}.
    */
   public DatePickerCell(DateTimeFormat format, SafeHtmlRenderer<String> renderer) {
-    super("click");
+    super("click", "keydown");
     if (format == null) {
       throw new IllegalArgumentException("format == null");
     }
@@ -120,6 +123,18 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
         }
       }
     };
+    panel.addCloseHandler(new CloseHandler<PopupPanel>() {
+      public void onClose(CloseEvent<PopupPanel> event) {
+        lastKey = null;
+        lastValue = null;
+        if (lastParent != null && !event.isAutoClosed()) {
+          // Refocus on the containing cell after the user selects a value, but
+          // not if the popup is auto closed.
+          lastParent.focus();
+        }
+        lastParent = null;
+      }
+    });
     panel.add(datePicker);
 
     // Hide the panel and call valueUpdater.update when a date is selected
@@ -137,24 +152,16 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   }
 
   @Override
-  public void onBrowserEvent(final Element parent, Date value, Object key,
-      NativeEvent event, ValueUpdater<Date> valueUpdater) {
-    if (value != null && event.getType().equals("click")) {
-      this.lastKey = key;
-      this.lastParent = parent;
-      this.lastValue = value;
-      this.valueUpdater = valueUpdater;
+  public boolean isEditing(Element parent, Date value, Object key) {
+    return lastKey != null && lastKey.equals(key);
+  }
 
-      Date viewData = getViewData(key);
-      Date date = (viewData == null) ? value : viewData;
-      datePicker.setCurrentMonth(date);
-      datePicker.setValue(date);
-      panel.setPopupPositionAndShow(new PositionCallback() {
-        public void setPosition(int offsetWidth, int offsetHeight) {
-          panel.setPopupPosition(parent.getAbsoluteLeft() + offsetX,
-              parent.getAbsoluteTop() + offsetY);
-        }
-      });
+  @Override
+  public void onBrowserEvent(Element parent, Date value, Object key,
+      NativeEvent event, ValueUpdater<Date> valueUpdater) {
+    super.onBrowserEvent(parent, value, key, event, valueUpdater);
+    if ("click".equals(event.getType())) {
+      onEnterKeyDown(parent, value, key, event, valueUpdater);
     }
   }
 
@@ -176,5 +183,25 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
     if (s != null) {
       sb.append(renderer.render(s));
     }
+  }
+
+  @Override
+  protected void onEnterKeyDown(final Element parent, Date value, Object key,
+      NativeEvent event, ValueUpdater<Date> valueUpdater) {
+    this.lastKey = key;
+    this.lastParent = parent;
+    this.lastValue = value;
+    this.valueUpdater = valueUpdater;
+
+    Date viewData = getViewData(key);
+    Date date = (viewData == null) ? value : viewData;
+    datePicker.setCurrentMonth(date);
+    datePicker.setValue(date);
+    panel.setPopupPositionAndShow(new PositionCallback() {
+      public void setPosition(int offsetWidth, int offsetHeight) {
+        panel.setPopupPosition(parent.getAbsoluteLeft() + offsetX,
+            parent.getAbsoluteTop() + offsetY);
+      }
+    });
   }
 }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -49,6 +49,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.SimplePager;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
@@ -84,7 +85,7 @@ public class ExpenseList extends Composite implements
 
     /**
      * Called when the user selects a report.
-     * 
+     *
      * @param report the selected report
      */
     void onReportSelected(ReportProxy report);
@@ -197,7 +198,7 @@ public class ExpenseList extends Composite implements
   /**
    * Utility method to get the first part of the breadcrumb based on the
    * department and employee.
-   * 
+   *
    * @param department the selected department
    * @param employee the selected employee
    * @return the breadcrumb
@@ -362,7 +363,7 @@ public class ExpenseList extends Composite implements
 
   /**
    * Set the current department and employee to filter on.
-   * 
+   *
    * @param department the department, or null if none selected
    * @param employee the employee, or null if none selected
    */
@@ -394,7 +395,7 @@ public class ExpenseList extends Composite implements
 
   /**
    * Add a sortable column to the table.
-   * 
+   *
    * @param <C> the data type for the column
    * @param text the header text
    * @param cell the cell used to render the column
@@ -457,6 +458,7 @@ public class ExpenseList extends Composite implements
   private void createTable() {
     CellTable.Resources resources = GWT.create(TableResources.class);
     table = new CellTable<ReportProxy>(20, resources);
+    table.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
     Styles.Common common = Styles.common();
     table.addColumnStyleName(0, common.spacerColumn());
     table.addColumnStyleName(1, common.expenseListPurposeColumn());
@@ -517,7 +519,7 @@ public class ExpenseList extends Composite implements
 
   /**
    * Send a request for reports in the current range.
-   * 
+   *
    * @param isPolling true if this request is caused by polling
    */
   private void requestReports(boolean isPolling) {

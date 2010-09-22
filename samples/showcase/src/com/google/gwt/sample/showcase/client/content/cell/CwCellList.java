@@ -32,6 +32,7 @@ import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.Contac
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy.KeyboardPagingPolicy;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Button;
@@ -169,25 +170,27 @@ public class CwCellList extends ContentWidget {
     // Set a key provider that provides a unique key for each contact. If key is
     // used to identify contacts when fields (such as the name and address)
     // change.
-    cellList = new CellList<ContactInfo>(contactCell, ContactDatabase.ContactInfo.KEY_PROVIDER);
+    cellList = new CellList<ContactInfo>(contactCell,
+        ContactDatabase.ContactInfo.KEY_PROVIDER);
     cellList.setPageSize(30);
+    cellList.setKeyboardPagingPolicy(KeyboardPagingPolicy.INCREASE_RANGE);
 
     // Add a selection model so we can select cells.
-    final SingleSelectionModel<ContactInfo> selectionModel = new SingleSelectionModel<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
+    final SingleSelectionModel<ContactInfo> selectionModel = new SingleSelectionModel<ContactInfo>(
+        ContactDatabase.ContactInfo.KEY_PROVIDER);
     cellList.setSelectionModel(selectionModel);
-    selectionModel.addSelectionChangeHandler(
-        new SelectionChangeEvent.Handler() {
-          public void onSelectionChange(SelectionChangeEvent event) {
-            contactForm.setContact(selectionModel.getSelectedObject());
-          }
-        });
-
-    // Add the CellList to the data provider in the database.
-    ContactDatabase.get().addDataDisplay(cellList);
+    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+      public void onSelectionChange(SelectionChangeEvent event) {
+        contactForm.setContact(selectionModel.getSelectedObject());
+      }
+    });
 
     // Create the UiBinder.
     Binder uiBinder = GWT.create(Binder.class);
     Widget widget = uiBinder.createAndBindUi(this);
+
+    // Add the CellList to the data provider in the database.
+    ContactDatabase.get().addDataDisplay(cellList);
 
     // Set the cellList as the display of the pagers. This example has two
     // pagers. pagerPanel is a scrollable pager that extends the range when the

@@ -25,16 +25,16 @@
   
 }
 
-.cellBrowserItem {
+.cellBrowserEvenItem {
   padding: 8px;
 }
 
-@sprite .cellBrowserOpenItem {
-  gwt-image: 'cellBrowserOpenBackground';
-  background-color: #7b7b7b;
-  color: white;
-  height: auto;
-  overflow: auto;
+.cellBrowserOddItem {
+  padding: 8px;
+}
+
+.cellBrowserKeyboardSelectedItem {
+  background: #ffc;
 }
 
 @sprite .cellBrowserSelectedItem {
@@ -42,5 +42,13 @@
   background-color: #628cd5;
   color: white;
   height: auto;
-  overflow: auto;
+  overflow: hidden;
+}
+
+@sprite .cellBrowserOpenItem {
+  gwt-image: 'cellBrowserOpenBackground';
+  background-color: #7b7b7b;
+  color: white;
+  height: auto;
+  overflow: hidden;
 }

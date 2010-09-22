@@ -30,8 +30,11 @@ import com.google.gwt.view.client.TreeViewModel.NodeInfo;
  * An abstract representation of a tree widget that renders items using
  * {@link com.google.gwt.cell.client.Cell}s.
  */
-public abstract class AbstractCellTree extends Composite
-    implements HasOpenHandlers<TreeNode>, HasCloseHandlers<TreeNode> {
+public abstract class AbstractCellTree extends Composite implements
+    HasOpenHandlers<TreeNode>, HasCloseHandlers<TreeNode>,
+    HasKeyboardSelectionPolicy {
+
+  private KeyboardSelectionPolicy keyboardSelectionPolicy = KeyboardSelectionPolicy.ENABLED;
 
   /**
    * The {@link TreeViewModel} that backs the tree.
@@ -56,6 +59,10 @@ public abstract class AbstractCellTree extends Composite
     return addHandler(handler, OpenEvent.getType());
   }
 
+  public KeyboardSelectionPolicy getKeyboardSelectionPolicy() {
+    return keyboardSelectionPolicy;
+  }
+
   /**
    * Get the root {@link TreeNode}.
    *
@@ -72,6 +79,13 @@ public abstract class AbstractCellTree extends Composite
     return viewModel;
   }
 
+  public void setKeyboardSelectionPolicy(KeyboardSelectionPolicy policy) {
+    if (policy == null) {
+      throw new NullPointerException("KeyboardSelectionPolicy cannot be null");
+    }
+    this.keyboardSelectionPolicy = policy;
+  }
+
   /**
    * Get the {@link NodeInfo} that will provide the information to retrieve and
    * display the children of the specified value.
@@ -81,6 +95,15 @@ public abstract class AbstractCellTree extends Composite
    */
   protected <T> NodeInfo<?> getNodeInfo(T value) {
     return viewModel.getNodeInfo(value);
+  }
+
+  /**
+   * Check if keyboard selection is disabled.
+   *
+   * @return true if disabled, false if enabled.
+   */
+  protected boolean isKeyboardSelectionDisabled() {
+    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy;
   }
 
   /**

@@ -70,22 +70,34 @@
 }
 
 .cellTableEvenRow {
-  background-color: #ffffff;
+  background: #ffffff;
 }
 
-.cellTableOddRow {
-  background-color: #eef4fb;
-}
-
-.cellTableHoveredRow {
-  background-color: #88b0f2;
-}
-
-.cellTableKeyboardSelectedRow {
+.cellTableEvenRowCell {
   
 }
 
-.cellTableKeyboardSelectedCell {
+.cellTableOddRow {
+  background: #eef4fb;
+}
+
+.cellTableOddRowCell {
+  
+}
+
+.cellTableHoveredRow {
+  background: #eee;
+}
+
+.cellTableHoveredRowCell {
+  
+}
+
+.cellTableKeyboardSelectedRow {
+  background: #ffc;
+}
+
+.cellTableKeyboardSelectedRowCell {
   
 }
 
@@ -95,6 +107,14 @@
   color: white;
   height: auto;
   overflow: auto;
+}
+
+.cellTableSelectedRowCell {
+  background: #628cd5;
+}
+
+.cellTableKeyboardSelectedCell {
+  background: #d7dde8;
 }
 
 @sprite .cellTableLoading {

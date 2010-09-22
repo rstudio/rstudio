@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,9 +18,11 @@ package com.google.gwt.user.cellview.client;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -37,13 +39,12 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionModel;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * A single column list of cells.
- * 
+ *
  * @param <T> the data type of list items
  */
 public class CellList<T> extends AbstractHasData<T> {
@@ -81,6 +82,11 @@ public class CellList<T> extends AbstractHasData<T> {
     String cellListEvenItem();
 
     /**
+     * Applied to the keyboard selected item.
+     */
+    String cellListKeyboardSelectedItem();
+
+    /**
      * Applied to odd items.
      */
     String cellListOddItem();
@@ -97,8 +103,16 @@ public class CellList<T> extends AbstractHasData<T> {
   }
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\">{2}</div>")
+    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\">{2}</div>")
     SafeHtml div(int idx, String classes, SafeHtml cellContents);
+
+    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\" tabindex=\"{2}\">{3}</div>")
+    SafeHtml divFocusable(int idx, String classes, int tabIndex,
+        SafeHtml cellContents);
+
+    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\" tabindex=\"{2}\" accesskey=\"{3}\">{4}</div>")
+    SafeHtml divFocusableWithKey(int idx, String classes, int tabIndex,
+        char accessKey, SafeHtml cellContents);
   }
 
   /**
@@ -118,6 +132,7 @@ public class CellList<T> extends AbstractHasData<T> {
   }
 
   private final Cell<T> cell;
+  private boolean cellIsEditing;
   private final Element childContainer;
 
   private SafeHtml emptyListMessage = SafeHtmlUtils.fromSafeConstant("");
@@ -129,7 +144,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Construct a new {@link CellList}.
-   * 
+   *
    * @param cell the cell used to render each item
    */
   public CellList(final Cell<T> cell) {
@@ -138,7 +153,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Construct a new {@link CellList} with the specified {@link Resources}.
-   * 
+   *
    * @param cell the cell used to render each item
    * @param resources the resources used for this widget
    */
@@ -148,7 +163,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Construct a new {@link CellList} with the specified {@link ProvidesKey key provider}.
-   * 
+   *
    * @param cell the cell used to render each item
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
    *        object should act as its own key
@@ -160,7 +175,7 @@ public class CellList<T> extends AbstractHasData<T> {
   /**
    * Construct a new {@link CellList} with the specified {@link Resources}
    * and {@link ProvidesKey key provider}.
-   * 
+   *
    * @param cell the cell used to render each item
    * @param resources the resources used for this widget
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
@@ -171,7 +186,12 @@ public class CellList<T> extends AbstractHasData<T> {
     this.cell = cell;
     this.style = resources.cellListStyle();
     this.style.ensureInjected();
-    addStyleName(this.style.cellListWidget());
+
+    String widgetStyle = this.style.cellListWidget();
+    if (widgetStyle != null) {
+      // The widget style is null when used in CellBrowser.
+      addStyleName(widgetStyle);
+    }
 
     // Create the DOM hierarchy.
     childContainer = Document.get().createDivElement();
@@ -184,18 +204,12 @@ public class CellList<T> extends AbstractHasData<T> {
     outerDiv.appendChild(emptyMessageElem);
 
     // Sink events that the cell consumes.
-    Set<String> eventsToSink = new HashSet<String>();
-    eventsToSink.add("click");
-    Set<String> consumedEvents = cell.getConsumedEvents();
-    if (consumedEvents != null) {
-      eventsToSink.addAll(consumedEvents);
-    }
-    CellBasedWidgetImpl.get().sinkEvents(this, eventsToSink);
+    CellBasedWidgetImpl.get().sinkEvents(this, cell.getConsumedEvents());
   }
 
   /**
    * Get the message that is displayed when there is no data.
-   * 
+   *
    * @return the empty message
    */
   public SafeHtml getEmptyListMessage() {
@@ -205,7 +219,7 @@ public class CellList<T> extends AbstractHasData<T> {
   /**
    * Get the {@link Element} for the specified index. If the element has not
    * been created, null is returned.
-   * 
+   *
    * @param indexOnPage the index on the page
    * @return the element, or null if it doesn't exists
    * @throws IndexOutOfBoundsException if the index is outside of the current
@@ -219,13 +233,104 @@ public class CellList<T> extends AbstractHasData<T> {
     return null;
   }
 
+  /**
+   * Set the message to display when there is no data.
+   *
+   * @param html the message to display when there are no results
+   */
+  public void setEmptyListMessage(SafeHtml html) {
+    this.emptyListMessage = html;
+    emptyMessageElem.setInnerHTML(html.asString());
+  }
+
+  /**
+   * Set the value updater to use when cells modify items.
+   *
+   * @param valueUpdater the {@link ValueUpdater}
+   */
+  public void setValueUpdater(ValueUpdater<T> valueUpdater) {
+    this.valueUpdater = valueUpdater;
+  }
+
   @Override
-  public void onBrowserEvent(Event event) {
-    CellBasedWidgetImpl.get().onBrowserEvent(this, event);
-    super.onBrowserEvent(event);
+  protected boolean dependsOnSelection() {
+    return cell.dependsOnSelection();
+  }
+
+  /**
+   * Fire an event to the cell.
+   *
+   * @param event the event that was fired
+   * @param parent the parent of the cell
+   * @param value the value of the cell
+   */
+  protected void fireEventToCell(Event event, Element parent, T value) {
+    Set<String> consumedEvents = cell.getConsumedEvents();
+    if (consumedEvents != null && consumedEvents.contains(event.getType())) {
+      Object key = getValueKey(value);
+      boolean cellWasEditing = cell.isEditing(parent, value, key);
+      cell.onBrowserEvent(parent, value, key, event, valueUpdater);
+      cellIsEditing = cell.isEditing(parent, value, key);
+      if (cellWasEditing && !cellIsEditing) {
+        CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
+          public void execute() {
+            setFocus(true);
+          }
+        });
+      }
+    }
+  }
+
+  protected Cell<T> getCell() {
+    return cell;
+  }
+
+  /**
+   * Get the parent element that wraps the cell from the list item. Override
+   * this method if you add structure to the element.
+   *
+   * @param item the row element that wraps the list item
+   * @return the parent element of the cell
+   */
+  protected Element getCellParent(Element item) {
+    return item;
+  }
+
+  @Override
+  protected Element getChildContainer() {
+    return childContainer;
+  }
+
+  @Override
+  protected Element getKeyboardSelectedElement() {
+    int rowIndex = getKeyboardSelectedRow();
+    return isRowWithinBounds(rowIndex) ? getRowElement(rowIndex) : null;
+  }
+
+  @Override
+  protected boolean isKeyboardNavigationSuppressed() {
+    return cellIsEditing;
+  }
+
+  @Override
+  protected void onBlur() {
+    // Remove the keyboard selection style.
+    Element elem = getKeyboardSelectedElement();
+    if (elem != null) {
+      elem.removeClassName(style.cellListKeyboardSelectedItem());
+    }
+  }
+
+  @Override
+  protected void onBrowserEvent2(Event event) {
+    // Get the event target.
+    EventTarget eventTarget = event.getEventTarget();
+    if (!Element.is(eventTarget)) {
+      return;
+    }
+    Element target = event.getEventTarget().cast();
 
     // Forward the event to the cell.
-    Element target = event.getEventTarget().cast();
     String idxString = "";
     while ((target != null)
         && ((idxString = target.getAttribute("__idx")).length() == 0)) {
@@ -236,74 +341,119 @@ public class CellList<T> extends AbstractHasData<T> {
       // before firing the event to the cell in case the cell operates on the
       // currently selected item.
       String eventType = event.getType();
+      boolean isMouseDown = "mousedown".equals(eventType);
       int idx = Integer.parseInt(idxString);
-      T value = getDisplayedItem(idx - getPageStart());
+      int indexOnPage = idx - getPageStart();
+      if (!isRowWithinBounds(indexOnPage)) {
+        // If the event causes us to page, then the index will be out of bounds.
+        return;
+      }
+      T value = getDisplayedItem(indexOnPage);
       SelectionModel<? super T> selectionModel = getSelectionModel();
-      if (selectionModel != null && "click".equals(eventType)
-          && !cell.handlesSelection()) {
+      if (selectionModel != null && isMouseDown && !cell.handlesSelection()) {
         selectionModel.setSelected(value, true);
       }
 
-      // Fire the event to the cell.
-      Set<String> consumedEvents = cell.getConsumedEvents();
-      if (consumedEvents != null && consumedEvents.contains(eventType)) {
-        cell.onBrowserEvent(target, value, getKey(value), event, valueUpdater);
+      // Focus on the cell.
+      if ("focus".equals(eventType) || isMouseDown) {
+        isFocused = true;
+        if (getPresenter().getKeyboardSelectedRow() != indexOnPage) {
+          getPresenter().setKeyboardSelectedRow(indexOnPage, false);
+        }
       }
+
+      // Fire the event to the cell if the list has not been refreshed.
+      fireEventToCell(event, getCellParent(target), value);
     }
   }
 
-  /**
-   * Set the message to display when there is no data.
-   * 
-   * @param html the message to display when there are no results
-   */
-  public void setEmptyListMessage(SafeHtml html) {
-    this.emptyListMessage = html;
-    emptyMessageElem.setInnerHTML(html.asString());
-  }
-
-  /**
-   * Set the value updater to use when cells modify items.
-   * 
-   * @param valueUpdater the {@link ValueUpdater}
-   */
-  public void setValueUpdater(ValueUpdater<T> valueUpdater) {
-    this.valueUpdater = valueUpdater;
+  @Override
+  protected void onFocus() {
+    // Add the keyboard selection style.
+    Element elem = getKeyboardSelectedElement();
+    if (elem != null) {
+      elem.addClassName(style.cellListKeyboardSelectedItem());
+    }
   }
 
   @Override
   protected void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
       SelectionModel<? super T> selectionModel) {
+    String keyboardSelectedItem = " " + style.cellListKeyboardSelectedItem();
+    String selectedItem = " " + style.cellListSelectedItem();
+    String evenItem = style.cellListEvenItem();
+    String oddItem = style.cellListOddItem();
+    int keyboardSelectedRow = getKeyboardSelectedRow() + getPageStart();
     int length = values.size();
     int end = start + length;
     for (int i = start; i < end; i++) {
       T value = values.get(i - start);
       boolean isSelected = selectionModel == null ? false
           : selectionModel.isSelected(value);
-      // TODO(jlabanca): Factor out __idx because rows can move.
+
       StringBuilder classesBuilder = new StringBuilder();
-      classesBuilder.append(i % 2 == 0 ? style.cellListEvenItem()
-          : style.cellListOddItem());
+      classesBuilder.append(i % 2 == 0 ? evenItem : oddItem);
       if (isSelected) {
-        classesBuilder.append(" ").append(style.cellListSelectedItem());
+        classesBuilder.append(selectedItem);
       }
 
       SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
       cell.render(value, null, cellBuilder);
 
-      sb.append(TEMPLATE.div(i, classesBuilder.toString(),
-          cellBuilder.toSafeHtml()));
+      if (i == keyboardSelectedRow) {
+        // This is the focused item.
+        if (isFocused) {
+          classesBuilder.append(keyboardSelectedItem);
+        }
+        char accessKey = getAccessKey();
+        if (accessKey != 0) {
+          sb.append(TEMPLATE.divFocusableWithKey(i, classesBuilder.toString(),
+              getTabIndex(), accessKey, cellBuilder.toSafeHtml()));
+        } else {
+          sb.append(TEMPLATE.divFocusable(i, classesBuilder.toString(),
+              getTabIndex(), cellBuilder.toSafeHtml()));
+        }
+      } else {
+        sb.append(TEMPLATE.div(i, classesBuilder.toString(),
+            cellBuilder.toSafeHtml()));
+      }
     }
   }
 
   @Override
-  boolean dependsOnSelection() {
-    return cell.dependsOnSelection();
+  protected boolean resetFocusOnCell() {
+    int row = getKeyboardSelectedRow();
+    if (isRowWithinBounds(row)) {
+      Element rowElem = getKeyboardSelectedElement();
+      Element cellParent = getCellParent(rowElem);
+      T value = getDisplayedItem(row);
+      Object key = getValueKey(value);
+      return cell.resetFocus(cellParent, value, key);
+    }
+    return false;
   }
 
   @Override
-  Element getChildContainer() {
-    return childContainer;
+  protected void setKeyboardSelected(int index, boolean selected,
+      boolean stealFocus) {
+    if (!isRowWithinBounds(index)) {
+      return;
+    }
+
+    Element elem = getRowElement(index);
+    if (!selected || isFocused || stealFocus) {
+      setStyleName(elem, style.cellListKeyboardSelectedItem(), selected);
+    }
+    setFocusable(elem, selected);
+    if (selected && stealFocus) {
+      elem.focus();
+      onFocus();
+    }
+  }
+
+  @Override
+  protected void setSelected(Element elem, boolean selected) {
+    setStyleName(elem, style.cellListSelectedItem(), selected);
   }
 
   @Override
@@ -312,26 +462,9 @@ public class CellList<T> extends AbstractHasData<T> {
     // TODO(jlabanca): Add a loading icon.
   }
 
-  @Override
-  void setSelected(Element elem, boolean selected) {
-    setStyleName(elem, style.cellListSelectedItem(), selected);
-  }
-
-  /**
-   * Get the key for a given value. Defaults to the value if new
-   * {@link ProvidesKey} is specified.
-   * 
-   * @param value the value
-   * @return the key for the value
-   */
-  private Object getKey(T value) {
-    ProvidesKey<T> keyProvider = getKeyProvider();
-    return keyProvider == null ? value : keyProvider.getKey(value);
-  }
-
   /**
    * Show or hide an element.
-   * 
+   *
    * @param element the element
    * @param show true to show, false to hide
    */

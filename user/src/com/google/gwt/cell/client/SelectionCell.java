@@ -34,11 +34,12 @@ import java.util.List;
  * Note: This class is new and its interface subject to change.
  * </p>
  */
-public class SelectionCell extends AbstractEditableCell<String, String> {
+public class SelectionCell extends AbstractInputCell<String, String> {
 
   interface Template extends SafeHtmlTemplates {
     @Template("<option value=\"{0}\">{0}</option>")
     SafeHtml deselected(String option);
+
     @Template("<option value=\"{0}\" selected=\"selected\">{0}</option>")
     SafeHtml selected(String option);
   }
@@ -69,11 +70,13 @@ public class SelectionCell extends AbstractEditableCell<String, String> {
   @Override
   public void onBrowserEvent(Element parent, String value, Object key,
       NativeEvent event, ValueUpdater<String> valueUpdater) {
+    super.onBrowserEvent(parent, value, key, event, valueUpdater);
     String type = event.getType();
     if ("change".equals(type)) {
       SelectElement select = parent.getFirstChild().cast();
       String newValue = options.get(select.getSelectedIndex());
       setViewData(key, newValue);
+      finishEditing(parent, newValue, key, valueUpdater);
       if (valueUpdater != null) {
         valueUpdater.update(newValue);
       }
@@ -90,7 +93,7 @@ public class SelectionCell extends AbstractEditableCell<String, String> {
     }
 
     int selectedIndex = getSelectedIndex(viewData == null ? value : viewData);
-    sb.appendHtmlConstant("<select>");
+    sb.appendHtmlConstant("<select tabindex=\"-1\">");
     int index = 0;
     for (String option : options) {
       if (index++ == selectedIndex) {

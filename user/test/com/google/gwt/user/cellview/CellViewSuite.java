@@ -19,6 +19,8 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.user.cellview.client.AbstractPagerTest;
 import com.google.gwt.user.cellview.client.AnimatedCellTreeTest;
 import com.google.gwt.user.cellview.client.CellBrowserTest;
+import com.google.gwt.user.cellview.client.CellListTest;
+import com.google.gwt.user.cellview.client.CellTableTest;
 import com.google.gwt.user.cellview.client.CellTreeTest;
 import com.google.gwt.user.cellview.client.ColumnTest;
 import com.google.gwt.user.cellview.client.HasDataPresenterTest;
@@ -32,12 +34,13 @@ import junit.framework.Test;
  */
 public class CellViewSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for all cellview classes");
+    GWTTestSuite suite = new GWTTestSuite("Test suite for all cellview classes");
 
     suite.addTestSuite(AbstractPagerTest.class);
     suite.addTestSuite(AnimatedCellTreeTest.class);
     suite.addTestSuite(CellBrowserTest.class);
+    suite.addTestSuite(CellListTest.class);
+    suite.addTestSuite(CellTableTest.class);
     suite.addTestSuite(CellTreeTest.class);
     suite.addTestSuite(ColumnTest.class);
     suite.addTestSuite(HasDataPresenterTest.class);

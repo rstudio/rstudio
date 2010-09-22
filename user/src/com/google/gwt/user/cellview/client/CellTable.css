@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@def selectionBorderWidth 2px;
 .cellTableWidget {
   
 }
@@ -42,15 +43,15 @@
 }
 
 .cellTableCell {
-  padding: 4px 15px;
+  padding: 2px 15px;
 }
 
 .cellTableFirstColumnFooter {
-  border-left: 0px;
+  
 }
 
 .cellTableFirstColumnHeader {
-  border-left: 0px;
+  
 }
 
 .cellTableLastColumnFooter {
@@ -62,33 +63,56 @@
 }
 
 .cellTableEvenRow {
-  background-color: #ffffff;
+  background: #ffffff;
+}
+
+.cellTableEvenRowCell {
+  border: selectionBorderWidth solid #ffffff;
 }
 
 .cellTableOddRow {
-  background-color: #f3f7fb;
+  background: #f3f7fb;
+}
+
+.cellTableOddRowCell {
+  border: selectionBorderWidth solid #f3f7fb;
 }
 
 .cellTableHoveredRow {
-  background-color: #eee;
+  background: #eee;
+}
+
+.cellTableHoveredRowCell {
+  border: selectionBorderWidth solid #eee;
+}
+
+.cellTableKeyboardSelectedRow {
+  background: #ffc;
+}
+
+.cellTableKeyboardSelectedRowCell {
+  border: selectionBorderWidth solid #ffc;
 }
 
 .cellTableSelectedRow {
-  background-color: #628cd5;
+  background: #628cd5;
   color: white;
   height: auto;
   overflow: auto;
 }
 
-.cellTableKeyboardSelectedRow {
-  
+.cellTableSelectedRowCell {
+  border: selectionBorderWidth solid #628cd5;
 }
 
+/**
+ * The keyboard selected cell is visible over selection.
+ */
 .cellTableKeyboardSelectedCell {
-  
+  border: selectionBorderWidth solid #d7dde8;
 }
 
 @sprite .cellTableLoading {
   gwt-image: 'cellTableLoading';
-  margin: 3px;
+  margin: 30px;
 }

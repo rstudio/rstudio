@@ -22,6 +22,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.HasKeyProvider;
+import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.RowCountChangeEvent;
@@ -51,7 +53,8 @@ import java.util.Set;
  *
  * @param <T> the data type of items in the list
  */
-class HasDataPresenter<T> implements HasData<T> {
+class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
+    HasKeyboardPagingPolicy {
 
   /**
    * Default iterator over DOM elements.
@@ -134,8 +137,8 @@ class HasDataPresenter<T> implements HasData<T> {
      * @param handler the handler to add
      * @param type the event type
      */
-    <H extends EventHandler> HandlerRegistration addHandler(
-        final H handler, GwtEvent.Type<H> type);
+    <H extends EventHandler> HandlerRegistration addHandler(final H handler,
+        GwtEvent.Type<H> type);
 
     /**
      * Check whether or not the cells in the view depend on the selection state.
@@ -196,9 +199,19 @@ class HasDataPresenter<T> implements HasData<T> {
     void replaceChildren(List<T> values, int start, SafeHtml html);
 
     /**
-     * Re-establish focus on an element within the view if desired.
+     * Re-establish focus on an element within the view if the view already had
+     * focus.
      */
     void resetFocus();
+
+    /**
+     * Update an element to reflect its keyboard selected state.
+     *
+     * @param index the index of the element relative to page start
+     * @param selected true if selected, false if not
+     * @param stealFocus true if the row should steal focus, false if not
+     */
+    void setKeyboardSelected(int index, boolean selected, boolean stealFocus);
 
     /**
      * Set the current loading state of the data.
@@ -216,7 +229,30 @@ class HasDataPresenter<T> implements HasData<T> {
     void setSelected(Element elem, boolean selected);
   }
 
+  /**
+   * The number of rows to jump when PAGE_UP or PAGE_DOWN is pressed and the
+   * {@link KeyboardSelectionPolicy} is
+   * {@link KeyboardSelectionPolicy.INCREMENT_PAGE}.
+   */
+  static final int PAGE_INCREMENT = 30;
+
   private final HasData<T> display;
+
+  /**
+   * The current keyboard selected row relative to page start. This value should
+   * never be negative.
+   */
+  private int keyboardSelectedRow = 0;
+
+  /**
+   * The last row value that was selected with the keyboard.
+   */
+  private T keyboardSelectedRowValue;
+
+  private KeyboardPagingPolicy keyboardPagingPolicy = KeyboardPagingPolicy.CHANGE_PAGE;
+  private KeyboardSelectionPolicy keyboardSelectionPolicy = KeyboardSelectionPolicy.ENABLED;
+
+  private final ProvidesKey<T> keyProvider;
 
   /**
    * As an optimization, keep track of the last HTML string that we rendered. If
@@ -262,10 +298,12 @@ class HasDataPresenter<T> implements HasData<T> {
    * @param view the view implementation
    * @param pageSize the default page size
    */
-  public HasDataPresenter(HasData<T> display, View<T> view, int pageSize) {
+  public HasDataPresenter(HasData<T> display, View<T> view, int pageSize,
+      ProvidesKey<T> keyProvider) {
     this.display = display;
     this.view = view;
     this.pageSize = pageSize;
+    this.keyProvider = keyProvider;
   }
 
   public HandlerRegistration addRangeChangeHandler(
@@ -307,6 +345,28 @@ class HasDataPresenter<T> implements HasData<T> {
     return Math.min(pageSize, rowCount - pageStart);
   }
 
+  public KeyboardPagingPolicy getKeyboardPagingPolicy() {
+    return keyboardPagingPolicy;
+  }
+
+  /**
+   * Get the index of the keyboard selected row relative to the page start.
+   *
+   * @return the row index, or -1 if disabled
+   */
+  public int getKeyboardSelectedRow() {
+    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? -1
+        : keyboardSelectedRow;
+  }
+
+  public KeyboardSelectionPolicy getKeyboardSelectionPolicy() {
+    return keyboardSelectionPolicy;
+  }
+
+  public ProvidesKey<T> getKeyProvider() {
+    return keyProvider;
+  }
+
   /**
    * Get the overall data size.
    *
@@ -338,8 +398,115 @@ class HasDataPresenter<T> implements HasData<T> {
     return new Range(pageStart, pageSize);
   }
 
+  /**
+   * Check if the next call to {@link #keyboardNext()} would succeed.
+   *
+   * @return true if there is another row accessible by the keyboard
+   */
+  public boolean hasKeyboardNext() {
+    if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
+      return false;
+    } else if (keyboardSelectedRow < rowData.size() - 1) {
+      return true;
+    } else if (!keyboardPagingPolicy.isLimitedToRange()
+        && (keyboardSelectedRow + pageStart < rowCount - 1 || !rowCountIsExact)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if the next call to {@link #keyboardPrevious()} would succeed.
+   *
+   * @return true if there is a previous row accessible by the keyboard
+   */
+  public boolean hasKeyboardPrev() {
+    if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
+      return false;
+    } else if (keyboardSelectedRow > 0) {
+      return true;
+    } else if (!keyboardPagingPolicy.isLimitedToRange() && pageStart > 0) {
+      return true;
+    }
+    return false;
+  }
+
   public boolean isRowCountExact() {
     return rowCountIsExact;
+  }
+
+  /**
+   * Move keyboard selection to the last row.
+   */
+  public void keyboardEnd() {
+    if (!keyboardPagingPolicy.isLimitedToRange()) {
+      setKeyboardSelectedRow(rowCount - 1, true);
+    }
+  }
+
+  /**
+   * Move keyboard selection to the absolute 0th row.
+   */
+  public void keyboardHome() {
+    if (!keyboardPagingPolicy.isLimitedToRange()) {
+      setKeyboardSelectedRow(-pageStart, true);
+    }
+  }
+
+  /**
+   * Move keyboard selection to the next row.
+   */
+  public void keyboardNext() {
+    if (hasKeyboardNext()) {
+      setKeyboardSelectedRow(keyboardSelectedRow + 1, true);
+    }
+  }
+
+  /**
+   * Move keyboard selection to the next page.
+   */
+  public void keyboardNextPage() {
+    if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
+      // 0th index of next page.
+      setKeyboardSelectedRow(pageSize, true);
+    } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
+      setKeyboardSelectedRow(keyboardSelectedRow + PAGE_INCREMENT, true);
+    }
+  }
+
+  /**
+   * Move keyboard selection to the previous row.
+   */
+  public void keyboardPrev() {
+    if (hasKeyboardPrev()) {
+      setKeyboardSelectedRow(keyboardSelectedRow - 1, true);
+    }
+  }
+
+  /**
+   * Move keyboard selection to the previous page.
+   */
+  public void keyboardPrevPage() {
+    if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
+      // 0th index of previous page.
+      setKeyboardSelectedRow(-pageSize, true);
+    } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
+      setKeyboardSelectedRow(keyboardSelectedRow - PAGE_INCREMENT, true);
+    }
+  }
+
+  /**
+   * Toggle selection of the current keyboard row in the {@link SelectionModel}.
+   */
+  public void keyboardToggleSelect() {
+    if (KeyboardSelectionPolicy.ENABLED == keyboardSelectionPolicy
+        && selectionModel != null && keyboardSelectedRow >= 0
+        && keyboardSelectedRow < rowData.size()) {
+      T value = rowData.get(keyboardSelectedRow);
+      if (value != null) {
+        selectionModel.setSelected(value, !selectionModel.isSelected(value));
+      }
+    }
   }
 
   /**
@@ -348,6 +515,109 @@ class HasDataPresenter<T> implements HasData<T> {
   public void redraw() {
     lastContents = null;
     setRowData(pageStart, rowData);
+  }
+
+  public void setKeyboardPagingPolicy(KeyboardPagingPolicy policy) {
+    if (policy == null) {
+      throw new NullPointerException("KeyboardPagingPolicy cannot be null");
+    }
+    this.keyboardPagingPolicy = policy;
+  }
+
+  /**
+   * Set the row index of the keyboard selected element.
+   *
+   * @param index the row index
+   * @param stealFocus true to steal focus
+   */
+  public void setKeyboardSelectedRow(int index, boolean stealFocus) {
+    // Early exit if disabled.
+    if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
+      return;
+    }
+    boolean isBound = KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy;
+
+    // Deselect the old index.
+    if (keyboardSelectedRow >= 0 && keyboardSelectedRow < view.getChildCount()) {
+      view.setKeyboardSelected(keyboardSelectedRow, false, false);
+      if (isBound) {
+        deselectKeyboardValue();
+      }
+    }
+
+    // Trim to within bounds.
+    int absIndex = pageStart + index;
+    if (absIndex < 0) {
+      absIndex = 0;
+    } else if (absIndex >= rowCount && rowCountIsExact) {
+      absIndex = rowCount - 1;
+    }
+    index = absIndex - pageStart;
+    if (keyboardPagingPolicy.isLimitedToRange()) {
+      index = Math.max(0, Math.min(index, pageSize - 1));
+    }
+
+    // Select the new index.
+    int newPageStart = pageStart;
+    int newPageSize = pageSize;
+    keyboardSelectedRow = 0;
+    if (index >= 0 && index < pageSize) {
+      keyboardSelectedRow = index;
+      if (isBound) {
+        selectKeyboardValue(index);
+      }
+      view.setKeyboardSelected(index, true, stealFocus);
+      return;
+    } else if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
+      // Go to previous page.
+      while (index < 0) {
+        newPageStart -= pageSize;
+        index += pageSize;
+      }
+
+      // Go to next page.
+      while (index >= pageSize) {
+        newPageStart += pageSize;
+        index -= pageSize;
+      }
+    } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
+      // Increase range at the beginning.
+      while (index < 0) {
+        newPageSize += PAGE_INCREMENT;
+        newPageStart -= PAGE_INCREMENT;
+        index += PAGE_INCREMENT;
+      }
+      if (newPageStart < 0) {
+        index += newPageStart;
+        newPageSize += newPageStart;
+        newPageStart = 0;
+      }
+
+      // Increase range at the end.
+      while (index >= newPageSize) {
+        newPageSize += PAGE_INCREMENT;
+      }
+      if (isRowCountExact()) {
+        newPageSize = Math.min(newPageSize, rowCount - newPageStart);
+        if (index >= rowCount) {
+          index = rowCount - 1;
+        }
+      }
+    }
+
+    // Update the range if it changed.
+    if (newPageStart != pageStart || newPageSize != pageSize) {
+      deselectKeyboardValue();
+      keyboardSelectedRow = index;
+      setVisibleRange(new Range(newPageStart, newPageSize), false, false);
+    }
+  }
+
+  public void setKeyboardSelectionPolicy(KeyboardSelectionPolicy policy) {
+    if (policy == null) {
+      throw new NullPointerException("KeyboardSelectionPolicy cannot be null");
+    }
+    this.keyboardSelectionPolicy = policy;
   }
 
   /**
@@ -366,6 +636,11 @@ class HasDataPresenter<T> implements HasData<T> {
     this.rowCount = count;
     this.rowCountIsExact = isExact;
     updateLoadingState();
+
+    // Update the keyboardSelectedRow.
+    if (keyboardSelectedRow >= count) {
+      keyboardSelectedRow = Math.max(0, count - 1);
+    }
 
     // Redraw the current page if it is affected by the new data size.
     if (updateCachedData()) {
@@ -402,6 +677,24 @@ class HasDataPresenter<T> implements HasData<T> {
       rowData.add(null);
     }
 
+    // If the keyboard selected row is within the data set, clear it out. If the
+    // key still exists, it will be reset below at its new index.
+    Object keyboardSelectedKey = null;
+    int keyboardSelectedAbsoluteRow = pageStart + keyboardSelectedRow;
+    boolean keyboardSelectedInRange = false;
+    boolean keyboardSelectedStillExists = false;
+    if (keyboardSelectedAbsoluteRow >= boundedStart
+        && keyboardSelectedAbsoluteRow < boundedEnd) {
+      keyboardSelectedInRange = true;
+
+      // If the value is null, then we will select whatever value is at the
+      // selected row.
+      if (keyboardSelectedRowValue != null) {
+        keyboardSelectedKey = getRowValueKey(keyboardSelectedRowValue);
+        keyboardSelectedRow = 0; // Will be set to a non-negative number later.
+      }
+    }
+
     // Insert the new values into the data array.
     for (int i = boundedStart; i < boundedEnd; i++) {
       T value = values.get(i - start);
@@ -420,6 +713,13 @@ class HasDataPresenter<T> implements HasData<T> {
           selectedRows.remove(i);
         }
       }
+
+      // Update the keyboard selected index.
+      if (keyboardSelectedKey != null && value != null
+          && keyboardSelectedKey.equals(getRowValueKey(value))) {
+        keyboardSelectedRow = i - pageStart;
+        keyboardSelectedStillExists = true;
+      }
     }
 
     // Construct a run of elements within the range of the data and the page.
@@ -427,8 +727,8 @@ class HasDataPresenter<T> implements HasData<T> {
     // boundedSize = the number of items to replace.
     boundedStart = pageStartChangedSinceRender ? pageStart : boundedStart;
     boundedStart -= cacheOffset;
-    List<T> boundedValues = rowData.subList(
-        boundedStart - pageStart, boundedEnd - pageStart);
+    List<T> boundedValues = rowData.subList(boundedStart - pageStart,
+        boundedEnd - pageStart);
     int boundedSize = boundedValues.size();
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
     view.render(sb, boundedValues, boundedStart, selectionModel);
@@ -439,25 +739,42 @@ class HasDataPresenter<T> implements HasData<T> {
     // Replace the DOM elements with the new rendered cells.
     int childCount = view.getChildCount();
     if (boundedStart == pageStart
-        && (boundedSize >= childCount || boundedSize >= getCurrentPageSize()
-            || rowData.size() < childCount)) {
+        && (boundedSize >= childCount || boundedSize >= getCurrentPageSize() || rowData.size() < childCount)) {
       // If the contents have not changed, we're done.
       SafeHtml newContents = sb.toSafeHtml();
       if (!newContents.equals(lastContents)) {
         lastContents = newContents;
         view.replaceAllChildren(boundedValues, newContents);
       }
+
+      // Allow the view to reestablish focus after being re-rendered.
+      view.resetFocus();
     } else {
       lastContents = null;
-      view.replaceChildren(
-          boundedValues, boundedStart - pageStart, sb.toSafeHtml());
-    }
+      view.replaceChildren(boundedValues, boundedStart - pageStart,
+          sb.toSafeHtml());
 
-    // Allow the view to reestablish focus after being re-rendered
-    view.resetFocus();
+      // Only reset focus if needed.
+      if (keyboardSelectedStillExists) {
+        view.resetFocus();
+      }
+    }
 
     // Reset the pageStartChanged boolean.
     pageStartChangedSinceRender = false;
+
+    // Update the keyboard selected value.
+    if (keyboardSelectedInRange && !keyboardSelectedStillExists) {
+      if (keyboardSelectedKey != null) {
+        // We had a value, but its lost.
+        deselectKeyboardValue();
+      }
+
+      // Select the selected row based off the row index.
+      if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy) {
+        selectKeyboardValue(keyboardSelectedRow);
+      }
+    }
   }
 
   /**
@@ -473,28 +790,62 @@ class HasDataPresenter<T> implements HasData<T> {
     setVisibleRange(range, false, false);
   }
 
-  public void setVisibleRangeAndClearData(
-      Range range, boolean forceRangeChangeEvent) {
+  public void setVisibleRangeAndClearData(Range range,
+      boolean forceRangeChangeEvent) {
     setVisibleRange(range, true, forceRangeChangeEvent);
   }
 
-  public void setSelectionModel(
-      final SelectionModel<? super T> selectionModel) {
+  public void setSelectionModel(final SelectionModel<? super T> selectionModel) {
     clearSelectionModel();
 
     // Set the new selection model.
     this.selectionModel = selectionModel;
     if (selectionModel != null) {
-      selectionHandler = selectionModel.addSelectionChangeHandler(
-          new SelectionChangeEvent.Handler() {
-            public void onSelectionChange(SelectionChangeEvent event) {
-              updateSelection();
-            }
-          });
+      selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+        public void onSelectionChange(SelectionChangeEvent event) {
+          updateSelection();
+        }
+      });
     }
 
     // Update the current selection state based on the new model.
     updateSelection();
+  }
+
+  /**
+   * Deselect the keyboard selected value.
+   */
+  private void deselectKeyboardValue() {
+    if (selectionModel != null && keyboardSelectedRowValue != null) {
+      T curValue = keyboardSelectedRowValue;
+      keyboardSelectedRow = 0;
+      keyboardSelectedRowValue = null;
+      selectionModel.setSelected(curValue, false);
+    }
+  }
+
+  /**
+   * Get the key for the specified row value.
+   *
+   * @param rowValue the row value
+   * @return the key
+   */
+  private Object getRowValueKey(T rowValue) {
+    return keyProvider == null ? rowValue : keyProvider.getKey(rowValue);
+  }
+
+  /**
+   * Select the value at the keyboard selected row.
+   *
+   * @param row the row index
+   */
+  private void selectKeyboardValue(int row) {
+    if (selectionModel != null && row >= 0 && row < rowData.size()) {
+      keyboardSelectedRowValue = rowData.get(row);
+      if (keyboardSelectedRowValue != null) {
+        selectionModel.setSelected(keyboardSelectedRowValue, true);
+      }
+    }
   }
 
   /**
@@ -505,10 +856,13 @@ class HasDataPresenter<T> implements HasData<T> {
    * @param clearData true to clear all data
    * @param forceRangeChangeEvent true to force a {@link RangeChangeEvent}
    */
-  private void setVisibleRange(
-      Range range, boolean clearData, boolean forceRangeChangeEvent) {
+  private void setVisibleRange(Range range, boolean clearData,
+      boolean forceRangeChangeEvent) {
     final int start = range.getStart();
     final int length = range.getLength();
+    if (length < 0) {
+      throw new IllegalArgumentException("Range length cannot be less than 1");
+    }
 
     // Update the page start.
     final boolean pageStartChanged = (pageStart != start);
@@ -578,8 +932,8 @@ class HasDataPresenter<T> implements HasData<T> {
    */
   private boolean updateCachedData() {
     boolean updated = false;
-    int expectedLastIndex = Math.max(
-        0, Math.min(pageSize, rowCount - pageStart));
+    int expectedLastIndex = Math.max(0,
+        Math.min(pageSize, rowCount - pageStart));
     int lastIndex = rowData.size() - 1;
     while (lastIndex >= expectedLastIndex) {
       rowData.remove(lastIndex);
@@ -626,8 +980,8 @@ class HasDataPresenter<T> implements HasData<T> {
       children.next();
 
       // Update the selection state.
-      boolean selected = selectionModel == null
-          ? false : selectionModel.isSelected(value);
+      boolean selected = selectionModel == null ? false
+          : selectionModel.isSelected(value);
       if (selected != selectedRows.contains(row)) {
         refreshRequired = true;
         if (selected) {

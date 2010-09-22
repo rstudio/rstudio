@@ -15,8 +15,12 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
@@ -27,7 +31,10 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.HasDataPresenter.ElementIterator;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.impl.FocusImpl;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasKeyProvider;
 import com.google.gwt.view.client.ProvidesKey;
@@ -37,15 +44,17 @@ import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * An abstract {@link Widget} that implements {@link HasData}.
  *
  * @param <T> the data type of each row
  */
-public abstract class AbstractHasData<T> extends Widget
-    implements HasData<T>, HasKeyProvider<T> {
+public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
+    HasKeyProvider<T>, Focusable, HasKeyboardPagingPolicy {
 
   /**
    * Implementation of {@link HasDataPresenter.View} used by this widget.
@@ -55,13 +64,14 @@ public abstract class AbstractHasData<T> extends Widget
   private static class View<T> implements HasDataPresenter.View<T> {
 
     private final AbstractHasData<T> hasData;
+    private boolean wasFocused;
 
     public View(AbstractHasData<T> hasData) {
       this.hasData = hasData;
     }
 
-    public <H extends EventHandler> HandlerRegistration addHandler(
-        H handler, Type<H> type) {
+    public <H extends EventHandler> HandlerRegistration addHandler(H handler,
+        Type<H> type) {
       return hasData.addHandler(handler, type);
     }
 
@@ -74,8 +84,8 @@ public abstract class AbstractHasData<T> extends Widget
     }
 
     public ElementIterator getChildIterator() {
-      return new HasDataPresenter.DefaultElementIterator(
-          this, hasData.getChildContainer().getFirstChildElement());
+      return new HasDataPresenter.DefaultElementIterator(this,
+          hasData.getChildContainer().getFirstChildElement());
     }
 
     public void onUpdateSelection() {
@@ -88,29 +98,49 @@ public abstract class AbstractHasData<T> extends Widget
     }
 
     public void replaceAllChildren(List<T> values, SafeHtml html) {
+      // Removing elements can fire a blur event, which we ignore.
+      wasFocused = hasData.isFocused;
+      hasData.isRefreshing = true;
       hasData.replaceAllChildren(values, html);
+      hasData.isRefreshing = false;
       fireValueChangeEvent();
     }
 
     public void replaceChildren(List<T> values, int start, SafeHtml html) {
+      // Removing elements can fire a blur event, which we ignore.
+      wasFocused = hasData.isFocused;
+      hasData.isRefreshing = true;
       hasData.replaceChildren(values, start, html);
+      hasData.isRefreshing = false;
       fireValueChangeEvent();
     }
 
     public void resetFocus() {
-      hasData.resetFocus();
+      if (wasFocused) {
+        CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
+          public void execute() {
+            if (!hasData.resetFocusOnCell()) {
+              Element elem = hasData.getKeyboardSelectedElement();
+              if (elem != null) {
+                elem.focus();
+              }
+            }
+          }
+        });
+      }
+    }
+
+    public void setKeyboardSelected(int index, boolean seleted,
+        boolean stealFocus) {
+      hasData.setKeyboardSelected(index, seleted, stealFocus);
     }
 
     public void setLoadingState(LoadingState state) {
+      hasData.isRefreshing = true;
       hasData.setLoadingState(state);
+      hasData.isRefreshing = false;
     }
 
-    /**
-     * Update an element to reflect its selected state.
-     *
-     * @param elem the element to update
-     * @param selected true if selected, false if not
-     */
     public void setSelected(Element elem, boolean selected) {
       hasData.setSelected(elem, selected);
     }
@@ -122,9 +152,9 @@ public abstract class AbstractHasData<T> extends Widget
       // Use an anonymous class to override ValueChangeEvents's protected
       // constructor. We can't call ValueChangeEvent.fire() because this class
       // doesn't implement HasValueChangeHandlers.
-      hasData.fireEvent(
-          new ValueChangeEvent<List<T>>(hasData.getDisplayedItems()) {
-          });
+      hasData.fireEvent(new ValueChangeEvent<List<T>>(
+          hasData.getDisplayedItems()) {
+      });
     }
   }
 
@@ -141,8 +171,8 @@ public abstract class AbstractHasData<T> extends Widget
    * @param tmpElem a temporary element
    * @return the parent element
    */
-  static Element convertToElements(
-      Widget widget, com.google.gwt.user.client.Element tmpElem, SafeHtml html) {
+  static Element convertToElements(Widget widget,
+      com.google.gwt.user.client.Element tmpElem, SafeHtml html) {
     // Attach an event listener so we can catch synchronous load events from
     // cached images.
     DOM.setEventListener(tmpElem, widget);
@@ -162,8 +192,8 @@ public abstract class AbstractHasData<T> extends Widget
    * @param childContainer the container that holds the contents
    * @param html the html to set
    */
-  static void replaceAllChildren(
-      Widget widget, Element childContainer, SafeHtml html) {
+  static void replaceAllChildren(Widget widget, Element childContainer,
+      SafeHtml html) {
     // If the widget is not attached, attach an event listener so we can catch
     // synchronous load events from cached images.
     if (!widget.isAttached()) {
@@ -225,24 +255,39 @@ public abstract class AbstractHasData<T> extends Widget
   }
 
   /**
-   * The presenter.
+   * A boolean indicating that the widget has focus.
    */
-  private final HasDataPresenter<T> presenter;
+  boolean isFocused;
+
+  private char accessKey = 0;
 
   /**
-   * If null, each T will be used as its own key.
+   * A boolean indicating that the widget is refreshing, so all events should be
+   * ignored.
    */
-  private ProvidesKey<T> providesKey;
+  private boolean isRefreshing;
+
+  private final HasDataPresenter<T> presenter;
+  private int tabIndex;
 
   /**
    * Constructs an {@link AbstractHasData} with the given page size.
    *
    * @param pageSize the page size
    */
-  public AbstractHasData(Element elem, final int pageSize, final ProvidesKey<T> keyProvider) {
+  public AbstractHasData(Element elem, final int pageSize,
+      final ProvidesKey<T> keyProvider) {
     setElement(elem);
-    this.presenter = new HasDataPresenter<T>(this, new View<T>(this), pageSize);
-    this.providesKey = keyProvider;
+    this.presenter = new HasDataPresenter<T>(this, new View<T>(this), pageSize,
+        keyProvider);
+
+    // Sink events.
+    Set<String> eventTypes = new HashSet<String>();
+    eventTypes.add("focus");
+    eventTypes.add("blur");
+    eventTypes.add("keydown");
+    eventTypes.add("mousedown"); // Used by subclasses to steal focus.
+    CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
   }
 
   public HandlerRegistration addRangeChangeHandler(
@@ -256,11 +301,20 @@ public abstract class AbstractHasData<T> extends Widget
   }
 
   /**
+   * Get the access key.
+   *
+   * @return the access key, or -1 if not set
+   */
+  public char getAccessKey() {
+    return accessKey;
+  }
+
+  /**
    * Get the row value at the specified visible index. Index 0 corresponds to
    * the first item on the page.
    *
    * @param indexOnPage the index on the page
-   * @return the row vaule
+   * @return the row value
    */
   public T getDisplayedItem(int indexOnPage) {
     checkRowBounds(indexOnPage);
@@ -274,8 +328,16 @@ public abstract class AbstractHasData<T> extends Widget
     return new ArrayList<T>(presenter.getRowData());
   }
 
+  public KeyboardPagingPolicy getKeyboardPagingPolicy() {
+    return presenter.getKeyboardPagingPolicy();
+  }
+
+  public KeyboardSelectionPolicy getKeyboardSelectionPolicy() {
+    return presenter.getKeyboardSelectionPolicy();
+  }
+
   public ProvidesKey<T> getKeyProvider() {
-    return providesKey;
+    return presenter.getKeyProvider();
   }
 
   /**
@@ -302,6 +364,10 @@ public abstract class AbstractHasData<T> extends Widget
     return presenter.getSelectionModel();
   }
 
+  public int getTabIndex() {
+    return tabIndex;
+  }
+
   public Range getVisibleRange() {
     return presenter.getVisibleRange();
   }
@@ -311,10 +377,112 @@ public abstract class AbstractHasData<T> extends Widget
   }
 
   /**
+   * Handle browser events. Subclasses should override
+   * {@link #onBrowserEvent2(Event)} if they want to extend browser event
+   * handling.
+   *
+   * @see #onBrowserEvent2(Event)
+   */
+  @Override
+  public final void onBrowserEvent(Event event) {
+    CellBasedWidgetImpl.get().onBrowserEvent(this, event);
+
+    // Ignore spurious events (such as onblur) while we refresh the table.
+    if (isRefreshing) {
+      return;
+    }
+
+    // Verify that the target is still a child of this widget. IE fires focus
+    // events even after the element has been removed from the DOM.
+    EventTarget eventTarget = event.getEventTarget();
+    if (!Element.is(eventTarget)
+        || !getElement().isOrHasChild(Element.as(eventTarget))) {
+      return;
+    }
+    super.onBrowserEvent(event);
+
+    String eventType = event.getType();
+    if ("focus".equals(eventType)) {
+      // Remember the focus state.
+      isFocused = true;
+      onFocus();
+    } else if ("blur".equals(eventType)) {
+      // Remember the blur state.
+      isFocused = false;
+      onBlur();
+    } else if ("keydown".equals(eventType) && !isKeyboardNavigationSuppressed()) {
+      // A key event indicates that we have focus.
+      isFocused = true;
+
+      // Handle keyboard navigation. Prevent default on navigation events to
+      // prevent default scrollbar behavior.
+      int keyCode = event.getKeyCode();
+      switch (keyCode) {
+        case KeyCodes.KEY_DOWN:
+          presenter.keyboardNext();
+          event.preventDefault();
+          return;
+        case KeyCodes.KEY_UP:
+          presenter.keyboardPrev();
+          event.preventDefault();
+          return;
+        case KeyCodes.KEY_PAGEDOWN:
+          presenter.keyboardNextPage();
+          event.preventDefault();
+          return;
+        case KeyCodes.KEY_PAGEUP:
+          presenter.keyboardPrevPage();
+          event.preventDefault();
+          return;
+        case KeyCodes.KEY_HOME:
+          presenter.keyboardHome();
+          event.preventDefault();
+          return;
+        case KeyCodes.KEY_END:
+          presenter.keyboardEnd();
+          event.preventDefault();
+          return;
+        case 32:
+          // Select the node on space.
+          presenter.keyboardToggleSelect();
+          event.preventDefault();
+          return;
+      }
+    }
+
+    // Let subclasses handle the event now.
+    onBrowserEvent2(event);
+  }
+
+  /**
    * Redraw the widget using the existing data.
    */
   public void redraw() {
     presenter.redraw();
+  }
+
+  public void setAccessKey(char key) {
+    this.accessKey = key;
+    setKeyboardSelected(getKeyboardSelectedRow(), true, false);
+  }
+
+  public void setFocus(boolean focused) {
+    Element elem = getKeyboardSelectedElement();
+    if (elem != null) {
+      if (focused) {
+        elem.focus();
+      } else {
+        elem.blur();
+      }
+    }
+  }
+
+  public void setKeyboardPagingPolicy(KeyboardPagingPolicy policy) {
+    presenter.setKeyboardPagingPolicy(policy);
+  }
+
+  public void setKeyboardSelectionPolicy(KeyboardSelectionPolicy policy) {
+    presenter.setKeyboardSelectionPolicy(policy);
   }
 
   /**
@@ -355,6 +523,11 @@ public abstract class AbstractHasData<T> extends Widget
     presenter.setSelectionModel(selectionModel);
   }
 
+  public void setTabIndex(int index) {
+    this.tabIndex = index;
+    setKeyboardSelected(getKeyboardSelectedRow(), true, false);
+  }
+
   public final void setVisibleRange(int start, int length) {
     setVisibleRange(new Range(start, length));
   }
@@ -363,9 +536,21 @@ public abstract class AbstractHasData<T> extends Widget
     presenter.setVisibleRange(range);
   }
 
-  public void setVisibleRangeAndClearData(
-      Range range, boolean forceRangeChangeEvent) {
+  public void setVisibleRangeAndClearData(Range range,
+      boolean forceRangeChangeEvent) {
     presenter.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
+  }
+
+  /**
+   * Check if a cell consumes the specified event type.
+   *
+   * @param cell the cell
+   * @param eventType the event type to check
+   * @return true if consumed, false if not
+   */
+  protected boolean cellConsumesEventType(Cell<?> cell, String eventType) {
+    Set<String> consumedEvents = cell.getConsumedEvents();
+    return consumedEvents != null && consumedEvents.contains(eventType);
   }
 
   /**
@@ -375,11 +560,111 @@ public abstract class AbstractHasData<T> extends Widget
    * @throws IndexOutOfBoundsException
    */
   protected void checkRowBounds(int row) {
-    int rowCount = getChildCount();
-    if ((row >= rowCount) || (row < 0)) {
-      throw new IndexOutOfBoundsException(
-          "Row index: " + row + ", Row size: " + rowCount);
+    if (!isRowWithinBounds(row)) {
+      throw new IndexOutOfBoundsException("Row index: " + row + ", Row size: "
+          + getRowCount());
     }
+  }
+
+  /**
+   * Convert the specified HTML into DOM elements and return the parent of the
+   * DOM elements.
+   *
+   * @param html the HTML to convert
+   * @return the parent element
+   */
+  protected Element convertToElements(SafeHtml html) {
+    return convertToElements(this, getTmpElem(), html);
+  }
+
+  /**
+   * Check whether or not the cells in the view depend on the selection state.
+   *
+   * @return true if cells depend on selection, false if not
+   */
+  protected abstract boolean dependsOnSelection();
+
+  /**
+   * @return the element that holds the rendered cells
+   */
+  protected abstract Element getChildContainer();
+
+  /**
+   * Get the element that has keyboard selection.
+   *
+   * @return the keyboard selected element
+   */
+  protected abstract Element getKeyboardSelectedElement();
+
+  /**
+   * Get the row index of the keyboard selected row.
+   *
+   * @return the row index
+   */
+  protected int getKeyboardSelectedRow() {
+    return presenter.getKeyboardSelectedRow();
+  }
+
+  /**
+   * Get the key for the specified value.
+   *
+   * @param value the value
+   * @return the key
+   */
+  protected Object getValueKey(T value) {
+    ProvidesKey<T> keyProvider = getKeyProvider();
+    return keyProvider == null ? value : keyProvider.getKey(value);
+  }
+
+  /**
+   * Check if keyboard navigation is being suppressed, such as when the user is
+   * editing a cell.
+   *
+   * @return true if suppressed, false if not
+   */
+  protected abstract boolean isKeyboardNavigationSuppressed();
+
+  /**
+   * Checks that the row is within the correct bounds.
+   *
+   * @param row row index to check
+   * @return true if within bounds, false if not
+   */
+  protected boolean isRowWithinBounds(int row) {
+    return row >= 0 && row < getChildCount()
+        && row < presenter.getRowData().size();
+  }
+
+  /**
+   * Called when the widget is blurred.
+   */
+  protected void onBlur() {
+  }
+
+  /**
+   * Called after {@link #onBrowserEvent(Event)} completes.
+   *
+   * @param event the event that was fired
+   */
+  protected void onBrowserEvent2(Event event) {
+  }
+
+  /**
+   * Called when the widget is focused.
+   */
+  protected void onFocus() {
+  }
+
+  @Override
+  protected void onUnload() {
+    isFocused = false;
+    super.onUnload();
+  }
+
+  /**
+   * Called when selection changes.
+   */
+  protected void onUpdateSelection() {
   }
 
   /**
@@ -392,6 +677,79 @@ public abstract class AbstractHasData<T> extends Widget
    */
   protected abstract void renderRowValues(SafeHtmlBuilder sb, List<T> values,
       int start, SelectionModel<? super T> selectionModel);
+
+  /**
+   * Replace all children with the specified html.
+   *
+   * @param values the values of the new children
+   * @param html the html to render in the child
+   */
+  protected void replaceAllChildren(List<T> values, SafeHtml html) {
+    replaceAllChildren(this, getChildContainer(), html);
+  }
+
+  /**
+   * Convert the specified HTML into DOM elements and replace the existing
+   * elements starting at the specified index. If the number of children
+   * specified exceeds the existing number of children, the remaining children
+   * should be appended.
+   *
+   * @param values the values of the new children
+   * @param start the start index to be replaced
+   * @param html the HTML to convert
+   */
+  protected void replaceChildren(List<T> values, int start, SafeHtml html) {
+    Element newChildren = convertToElements(html);
+    replaceChildren(this, getChildContainer(), newChildren, start, html);
+  }
+
+  /**
+   * Reset focus on the currently focused cell.
+   *
+   * @return true if focus is taken, false if not
+   */
+  protected abstract boolean resetFocusOnCell();
+
+  /**
+   * Make an element focusable or not.
+   *
+   * @param elem the element
+   * @param focusable true to make focusable, false to make unfocusable
+   */
+  protected void setFocusable(Element elem, boolean focusable) {
+    if (focusable) {
+      FocusImpl focusImpl = FocusImpl.getFocusImplForWidget();
+      com.google.gwt.user.client.Element rowElem = elem.cast();
+      focusImpl.setTabIndex(rowElem, getTabIndex());
+      if (accessKey != 0) {
+        focusImpl.setAccessKey(rowElem, accessKey);
+      }
+    } else {
+      // Chrome: Elements remain focusable after removing the tabIndex, so set
+      // it to -1 first.
+      elem.setTabIndex(-1);
+      elem.removeAttribute("tabIndex");
+      elem.removeAttribute("accessKey");
+    }
+  }
+
+  /**
+   * Update an element to reflect its keyboard selected state.
+   *
+   * @param index the index of the element
+   * @param selected true if selected, false if not
+   * @param stealFocus true if the row should steal focus, false if not
+   */
+  protected abstract void setKeyboardSelected(int index, boolean selected,
+      boolean stealFocus);
+
+  /**
+   * Update an element to reflect its selected state.
+   *
+   * @param elem the element to update
+   * @param selected true if selected, false if not
+   */
+  protected abstract void setSelected(Element elem, boolean selected);
 
   /**
    * Add a {@link ValueChangeHandler} that is called when the display values
@@ -407,34 +765,14 @@ public abstract class AbstractHasData<T> extends Widget
   }
 
   /**
-   * Convert the specified HTML into DOM elements and return the parent of the
-   * DOM elements.
-   *
-   * @param html the HTML to convert
-   * @return the parent element
-   */
-  // TODO(jlabanca): Which of the following methods should we expose.
-  Element convertToElements(SafeHtml html) {
-    return convertToElements(this, getTmpElem(), html);
-  }
-
-  /**
-   * Check whether or not the cells in the view depend on the selection state.
-   *
-   * @return true if cells depend on selection, false if not
-   */
-  abstract boolean dependsOnSelection();
-
-  /**
-   * @return the element that holds the rendered cells
-   */
-  abstract Element getChildContainer();
-
-  /**
    * @return the number of child elements
    */
   int getChildCount() {
     return getChildContainer().getChildCount();
+  }
+
+  HasDataPresenter<T> getPresenter() {
+    return presenter;
   }
 
   /**
@@ -467,54 +805,10 @@ public abstract class AbstractHasData<T> extends Widget
   }
 
   /**
-   * Called when selection changes.
-   */
-  void onUpdateSelection() {
-  }
-
-  /**
-   * Replace all children with the specified html.
-   *
-   * @param values the values of the new children
-   * @param html the html to render in the child
-   */
-  void replaceAllChildren(List<T> values, SafeHtml html) {
-    replaceAllChildren(this, getChildContainer(), html);
-  }
-
-  /**
-   * Convert the specified HTML into DOM elements and replace the existing
-   * elements starting at the specified index. If the number of children
-   * specified exceeds the existing number of children, the remaining children
-   * should be appended.
-   *
-   * @param values the values of the new children
-   * @param start the start index to be replaced
-   * @param html the HTML to convert
-   */
-  void replaceChildren(List<T> values, int start, SafeHtml html) {
-    Element newChildren = convertToElements(html);
-    replaceChildren(this, getChildContainer(), newChildren, start, html);
-  }
-
-  /**
-   * Re-establish focus on an element within the view if desired.
-   */
-  void resetFocus() {
-  }
-
-  /**
    * Set the current loading state of the data.
    *
    * @param state the loading state
    */
-  abstract void setLoadingState(LoadingState state);
-
-  /**
-   * Update an element to reflect its selected state.
-   *
-   * @param elem the element to update
-   * @param selected true if selected, false if not
-   */
-  abstract void setSelected(Element elem, boolean selected);
+  void setLoadingState(LoadingState state) {
+  }
 }

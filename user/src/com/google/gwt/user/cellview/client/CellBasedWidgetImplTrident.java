@@ -94,8 +94,8 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   /**
    * Dispatch an event through the normal GWT mechanism.
    */
-  private static native void dispatchEvent(
-      Event evt, Element elem, EventListener listener) /*-{
+  private static native void dispatchEvent(Event evt, Element elem,
+      EventListener listener) /*-{
     @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, listener);
   }-*/;
 
@@ -124,8 +124,8 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   }-*/;
 
   /**
-   * Used by {@link #initFocusEventSystem()} and
-   * {@link #initLoadEvents(String)}.
+   * Used by {@link #initFocusEventSystem()} and {@link #initLoadEvents(String)}
+   * to handle non bubbling events .
    *
    * @param event
    */
@@ -243,7 +243,6 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
     // Initialize the change event triggers.
     changeEventTriggers = new HashSet<String>();
     changeEventTriggers.add("mouseup");
-    changeEventTriggers.add("keyup");
     changeEventTriggers.add("mousewheel");
   }
 
@@ -286,17 +285,23 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
     // load/error listeners.
     if (loadEventsInitialized && html != null) {
       String moduleName = GWT.getModuleName();
-      String listener = "__gwt_CellBasedWidgetImplLoadListeners[\"" + moduleName
-          + "\"]();";
+      String listener = "__gwt_CellBasedWidgetImplLoadListeners[\""
+          + moduleName + "\"]();";
 
       String htmlString = html.asString();
-      htmlString = htmlString.replaceAll("(<img)([\\s/>])",
-          "<img onload='" + listener + "' onerror='" + listener + "'$2");
+      htmlString = htmlString.replaceAll("(<img)([\\s/>])", "<img onload='"
+          + listener + "' onerror='" + listener + "'$2");
 
       // We assert that the resulting string is safe
       html = SafeHtmlUtils.fromTrustedString(htmlString);
     }
     return html;
+  }
+
+  @Override
+  public void resetFocus(ScheduledCommand command) {
+    // IE will not focus an element that was created in this event loop.
+    Scheduler.get().scheduleDeferred(command);
   }
 
   @Override

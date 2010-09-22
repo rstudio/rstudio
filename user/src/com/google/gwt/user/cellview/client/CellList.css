@@ -14,7 +14,7 @@
  * the License.
  */
 .cellListWidget {
-
+  
 }
 
 .cellListEvenItem {
@@ -25,10 +25,14 @@
   cursor: pointer;
 }
 
+.cellListKeyboardSelectedItem {
+  background: #ffc;
+}
+
 @sprite .cellListSelectedItem {
   gwt-image: 'cellListSelectedBackground';
   background-color: #628cd5;
   color: white;
   height: auto;
-  overflow: auto;
+  overflow: visible;
 }
