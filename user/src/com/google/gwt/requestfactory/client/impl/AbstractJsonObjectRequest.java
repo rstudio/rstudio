@@ -20,12 +20,15 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 
 /**
- * <p> <span style="color:red">Experimental API: This class is still under rapid
+ * <p>
+ * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
- * </span> </p> Abstract implementation of {@link com.google.gwt.requestfactory.shared.RequestObject
- * RequestFactory.RequestObject} for requests that return single instances of
- * {@link EntityProxy}.
- *
+ * </span>
+ * </p>
+ * Abstract implementation of
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return single instances of {@link EntityProxy}.
+ * 
  * @param <T> the type of entities returned
  * @param <R> this request type
  */

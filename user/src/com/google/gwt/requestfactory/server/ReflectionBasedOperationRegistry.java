@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 
 import java.lang.reflect.Method;
@@ -123,7 +123,7 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
         ParameterizedType pType = (ParameterizedType) type;
         Class<?> rawType = (Class<?>) pType.getRawType();
         if (List.class.isAssignableFrom(rawType)
-            || RequestObject.class.isAssignableFrom(rawType)) {
+            || Request.class.isAssignableFrom(rawType)) {
           Class<?> rType = getTypeArgument(pType);
           if (rType != null) {
             if (List.class.isAssignableFrom(rType)) {
@@ -135,7 +135,7 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
               "Bad or missing type arguments for "
                   + "List return type on method " + method);
         } else if (Set.class.isAssignableFrom(rawType)
-            || RequestObject.class.isAssignableFrom(rawType)) {
+            || Request.class.isAssignableFrom(rawType)) {
           Class<?> rType = getTypeArgument(pType);
           if (rType != null) {
             if (Set.class.isAssignableFrom(rType)) {
@@ -200,8 +200,8 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
         Class<?> domainClass = domainClassAnnotation.value();
         Method requestMethod = findMethod(requestClass, domainMethodName);
         Method domainMethod = findMethod(domainClass, domainMethodName);
-        boolean isInstance = (requestMethod.getAnnotation(Instance.class) != null);
         if (requestMethod != null && domainMethod != null) {
+          boolean isInstance = (requestMethod.getAnnotation(Instance.class) != null);
           if (isInstance == Modifier.isStatic(domainMethod.getModifiers())) {
             throw new IllegalArgumentException("domain method " + domainMethod
                 + " and interface method " + requestMethod

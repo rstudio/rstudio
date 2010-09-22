@@ -26,7 +26,5 @@ import java.util.Set;
  * @param <P> The type held by the returned Set
  */
 public interface ProxySetRequest<P extends EntityProxy>
-    extends RequestObject<Set<P>> {
-
-  ProxySetRequest<P> with(String... propertyRefs);
+    extends Request<Set<P>> {
 }

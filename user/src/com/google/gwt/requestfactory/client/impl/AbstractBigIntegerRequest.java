@@ -25,8 +25,8 @@ import java.math.BigInteger;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
- * RequestFactory.RequestObject} for requests that return BigInteger.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return BigInteger.
  */
 public abstract class AbstractBigIntegerRequest extends
     AbstractPrimitiveRequest<BigInteger, AbstractBigIntegerRequest> {

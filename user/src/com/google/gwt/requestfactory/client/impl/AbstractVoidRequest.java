@@ -22,8 +22,8 @@ package com.google.gwt.requestfactory.client.impl;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestObject
- * RequestFactory.RequestObject} for requests that return Void.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return Void.
  */
 public abstract class AbstractVoidRequest extends
     AbstractPrimitiveRequest<Void, AbstractVoidRequest> {

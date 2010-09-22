@@ -19,7 +19,7 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 
 /**
- * Abstract implementation of {@link AbstractJsonRequestObject} for special find
+ * Abstract implementation of {@link AbstractJsonObjectRequest} for special find
  * methods that return single instances of {@link EntityProxy}.
  */
 public abstract class FindRequestObjectImpl extends

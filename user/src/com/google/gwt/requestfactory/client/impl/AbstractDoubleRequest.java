@@ -22,8 +22,8 @@ package com.google.gwt.requestfactory.client.impl;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestObject
- * RequestFactory.RequestObject} for requests that return Double.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return Double.
  */
 public abstract class AbstractDoubleRequest extends
     AbstractPrimitiveRequest<Double, AbstractDoubleRequest> {

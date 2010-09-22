@@ -77,7 +77,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   public void testCreate() {
     EntityProxy created = requestFactory.create(SimpleFooProxy.class);
-    assertNotNull(((ProxyImpl)created).encodedId());
+    assertNotNull(((ProxyImpl) created).encodedId());
     assertNotNull(created.getVersion());
 
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(
@@ -102,7 +102,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   public void testCreateWithSet() {
     EntityProxy created = requestFactory.create(SimpleFooProxy.class);
-    assertNotNull(((ProxyImpl)created).encodedId());
+    assertNotNull(((ProxyImpl) created).encodedId());
     assertNotNull(created.getVersion());
 
     DeltaValueStoreJsonImpl deltaValueStore = new DeltaValueStoreJsonImpl(

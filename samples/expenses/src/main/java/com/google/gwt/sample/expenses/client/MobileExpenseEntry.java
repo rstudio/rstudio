@@ -18,9 +18,8 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.core.client.GWT;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
@@ -55,7 +54,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
   private ExpenseProxy expense;
   private final ExpensesRequestFactory requestFactory;
   private final Listener listener;
-  private RequestObject<Void> requestObject;
+  private Request<Void> Request;
 
   public MobileExpenseEntry(Listener listener,
       ExpensesRequestFactory requestFactory) {
@@ -75,8 +74,8 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
 
   public void create(ReportProxy report) {
     expense = requestFactory.create(ExpenseProxy.class);
-    requestObject = requestFactory.expenseRequest().persist(expense);
-    ExpenseProxy editableExpense = requestObject.edit(expense);
+    Request = requestFactory.expenseRequest().persist(expense);
+    ExpenseProxy editableExpense = Request.edit(expense);
     editableExpense.setReport(report);
     displayExpense();
   }
@@ -102,8 +101,8 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
-    requestObject = requestFactory.expenseRequest().persist(expense);
-    ExpenseProxy editableExpense = requestObject.edit(expense);
+    Request = requestFactory.expenseRequest().persist(expense);
+    ExpenseProxy editableExpense = Request.edit(expense);
     editableExpense.setDescription(nameText.getText());
     editableExpense.setCategory(categoryText.getText());
 
@@ -121,7 +120,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
     editableExpense.setCreated(date);
 
     // TODO: wait throbber
-    requestObject.fire(new Receiver<Void>() {
+    Request.fire(new Receiver<Void>() {
           @Override
           public void onSuccess(Void ignore) {
           }

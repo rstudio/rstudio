@@ -25,7 +25,7 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
@@ -105,7 +105,7 @@ public class PersonEditorWorkflow {
   @UiHandler("save")
   void onSave(@SuppressWarnings("unused") ClickEvent e) {
     // MOVE TO ACTIVITY END
-    final RequestObject<Void> request = editorDriver.<Void> flush();
+    final Request<Void> request = editorDriver.<Void> flush();
     if (editorDriver.hasErrors()) {
       dialog.setText("Errors detected locally");
       return;

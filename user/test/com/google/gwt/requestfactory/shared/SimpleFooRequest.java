@@ -23,35 +23,35 @@ import java.util.Set;
  */
 @Service(com.google.gwt.requestfactory.server.SimpleFoo.class)
 public interface SimpleFooRequest {
-  RequestObject<Long> countSimpleFoo();
+  Request<Long> countSimpleFoo();
 
   @Instance
-  RequestObject<Long> countSimpleFooWithUserNameSideEffect(SimpleFooProxy proxy);
+  Request<Long> countSimpleFooWithUserNameSideEffect(SimpleFooProxy proxy);
 
   ProxyListRequest<SimpleFooProxy> findAll();
 
   ProxyRequest<SimpleFooProxy> findSimpleFooById(Long id);
 
-  RequestObject<Integer> privateMethod();
+  Request<Integer> privateMethod();
 
-  RequestObject<List<Integer>> getNumberList();
+  Request<List<Integer>> getNumberList();
 
-  RequestObject<Set<Integer>> getNumberSet();
+  Request<Set<Integer>> getNumberSet();
 
   @Instance
-  RequestObject<Void> persist(SimpleFooProxy proxy);
+  Request<Void> persist(SimpleFooProxy proxy);
   
   @Instance
   ProxyRequest<SimpleFooProxy> persistAndReturnSelf(SimpleFooProxy proxy);
 
-  RequestObject<Void> reset();
+  Request<Void> reset();
 
   @Instance
-  RequestObject<String> hello(SimpleFooProxy instance, SimpleBarProxy proxy);
+  Request<String> hello(SimpleFooProxy instance, SimpleBarProxy proxy);
 
   @Instance
-  RequestObject<Integer> sum(SimpleFooProxy instance, List<Integer> values);
+  Request<Integer> sum(SimpleFooProxy instance, List<Integer> values);
 
   @Instance
-  RequestObject<String> processList(SimpleFooProxy instance, List<SimpleFooProxy> values);
+  Request<String> processList(SimpleFooProxy instance, List<SimpleFooProxy> values);
 }

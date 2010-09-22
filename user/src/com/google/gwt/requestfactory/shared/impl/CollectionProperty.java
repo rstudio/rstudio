@@ -26,7 +26,7 @@ import java.util.Collection;
  * @param <C> the type of the Container, must be List or Set
  * @param <E> the type of the element the container contains
  */
-public class CollectionProperty<C extends Collection, E> extends Property<C> {
+public class CollectionProperty<C extends Collection<?>, E> extends Property<C> {
 
   private Class<E> leafType;
 

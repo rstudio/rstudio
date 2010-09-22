@@ -19,7 +19,7 @@ import com.google.gwt.requestfactory.shared.Instance;
 
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Employee;
 
@@ -36,12 +36,12 @@ public interface EmployeeRequest {
   /**
    * @return a request object
    */
-  RequestObject<Long> countEmployees();
+  Request<Long> countEmployees();
 
   /**
    * @return a request object
    */
-  RequestObject<Long> countEmployeesByDepartment(
+  Request<Long> countEmployeesByDepartment(
       String department);
 
   /**
@@ -70,11 +70,11 @@ public interface EmployeeRequest {
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist(EmployeeProxy record);
+  Request<Void> persist(EmployeeProxy record);
 
  /**
   * @return a request object
   */
   @Instance
-  RequestObject<Void> remove(EmployeeProxy record);
+  Request<Void> remove(EmployeeProxy record);
 }

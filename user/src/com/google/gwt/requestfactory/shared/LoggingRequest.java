@@ -31,6 +31,6 @@ public interface LoggingRequest {
    * Log a message on the server. Will return empty string if there is no error
    * or an error message if there is a problem.
    */
-  RequestObject<String> logMessage(String serializedLogRecordString);
+  Request<String> logMessage(String serializedLogRecordString);
 
 }

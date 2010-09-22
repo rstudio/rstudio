@@ -24,8 +24,8 @@ import java.util.Date;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
- * RequestFactory.RequestObject} for requests that return Date.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return Date.
  */
 public abstract class AbstractDateRequest extends
     AbstractPrimitiveRequest<Date, AbstractDateRequest> {

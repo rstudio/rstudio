@@ -21,8 +21,8 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.user.client.Window;
@@ -45,7 +45,7 @@ import java.util.Set;
 public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     implements Activity, ProxyEditView.Delegate {
 
-  private RequestObject<Void> requestObject;
+  private Request<Void> request;
 
   private final boolean creating;
   private final ProxyEditView<P> view;
@@ -73,7 +73,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     String unsavedChangesWarning = mayStop();
     if ((unsavedChangesWarning == null)
         || Window.confirm(unsavedChangesWarning)) {
-      requestObject = null;
+      request = null;
       exit(false);
     }
   }
@@ -87,7 +87,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
   }
 
   public String mayStop() {
-    if (requestObject != null && requestObject.isChanged()) {
+    if (request != null && request.isChanged()) {
       return "Are you sure you want to abandon your changes?";
     }
 
@@ -103,13 +103,13 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
   }
 
   public void saveClicked() {
-    assert requestObject != null;
-    if (!requestObject.isChanged()) {
+    assert request != null;
+    if (!request.isChanged()) {
       return;
     }
     view.setEnabled(false);
 
-    requestObject.fire(new Receiver<Void>() {
+    request.fire(new Receiver<Void>() {
       @Override
       public void onFailure(ServerFailure error) {
         view.setEnabled(true);
@@ -177,7 +177,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     }
   }
 
-  protected abstract RequestObject<Void> getPersistRequest(P record);
+  protected abstract Request<Void> getPersistRequest(P record);
 
   @SuppressWarnings("unchecked")
   private EntityProxyId<P> cast(EntityProxyId<?> stableId) {
@@ -185,8 +185,8 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
   }
 
   private void doStart(final AcceptsOneWidget display, P record) {
-    requestObject = getPersistRequest(record);
-    P editableRecord = requestObject.edit(record);
+    request = getPersistRequest(record);
+    P editableRecord = request.edit(record);
     view.setEnabled(true);
     view.setValue(editableRecord);
     view.showErrors(null);

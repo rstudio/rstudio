@@ -22,7 +22,7 @@ import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImpl.ReturnR
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.impl.Property;
@@ -41,14 +41,14 @@ import java.util.Set;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * Abstract implementation of {@link RequestObject}. Each request stores a
+ * Abstract implementation of {@link Request}. Each request stores a
  * {@link DeltaValueStoreJsonImpl}.
  * 
  * @param <T> return type
  * @param <R> type of this request object
  */
 public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
-    implements RequestObject<T> {
+    implements Request<T> {
 
   protected final RequestFactoryJsonImpl requestFactory;
   protected DeltaValueStoreJsonImpl deltaValueStore;

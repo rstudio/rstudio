@@ -70,6 +70,10 @@ public class ProxyImpl implements EntityProxy {
     return jso;
   }
 
+  public String encodedId() {
+    return jso.encodedId();
+  }
+
   /**
    * Get this proxy's value for the given property. Behavior is undefined if
    * the proxy has no such property, or if the property has never been set. It
@@ -80,10 +84,6 @@ public class ProxyImpl implements EntityProxy {
    * @param property the property to fetch
    * @return the value
    */
-  public String encodedId() {
-    return jso.encodedId();
-  }
-
   @SuppressWarnings("unchecked")
   public <V> V get(Property<V> property) {
     if (property instanceof CollectionProperty) {

@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
@@ -59,7 +59,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
   private ReportProxy report;
   private final ExpensesRequestFactory requestFactory;
   private final Listener listener;
-  private RequestObject<Void> requestObject;
+  private Request<Void> Request;
 
   public MobileReportEntry(Listener listener,
       ExpensesRequestFactory requestFactory) {
@@ -83,8 +83,8 @@ public class MobileReportEntry extends Composite implements MobilePage {
 
   public void create(EmployeeProxy reporter) {
     report = requestFactory.create(ReportProxy.class);
-    requestObject = requestFactory.reportRequest().persist(report);
-    ReportProxy editableReport = requestObject.edit(report);
+    Request = requestFactory.reportRequest().persist(report);
+    ReportProxy editableReport = Request.edit(report);
     editableReport.setReporter(reporter);
     displayReport();
   }
@@ -110,7 +110,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
-    ReportProxy editableReport = requestObject.edit(report);
+    ReportProxy editableReport = Request.edit(report);
     editableReport.setPurpose(purposeText.getText());
     editableReport.setNotes(notesText.getText());
     editableReport.setDepartment(departmentList.getValue(departmentList.getSelectedIndex()));
@@ -121,7 +121,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
     editableReport.setCreated(date);
 
     // TODO: wait throbber
-    requestObject.fire(new Receiver<Void>() {
+    Request.fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void ignore) {
       }

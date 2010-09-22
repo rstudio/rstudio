@@ -22,8 +22,8 @@ package com.google.gwt.requestfactory.client.impl;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
- * RequestFactory.RequestObject} for requests that return Enum types.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return Enum types.
  * 
  * @param <E> an enum type
  */

@@ -20,7 +20,6 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 
-
 /**
  * Tests for {@link com.google.gwt.requestfactory.shared.RequestFactory}.
  */

@@ -309,7 +309,6 @@ public class JsonRequestProcessorTest extends TestCase {
     return foo;
   }
 
-
   public void testPrimitiveListAsParameter() throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException,
       ClassNotFoundException, SecurityException, InstantiationException {

@@ -22,8 +22,8 @@ package com.google.gwt.requestfactory.client.impl;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
- * RequestFactory.RequestObject} for requests that return Boolean.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return Boolean.
  */
 public abstract class AbstractBooleanRequest extends
     AbstractPrimitiveRequest<Boolean, AbstractBooleanRequest> {

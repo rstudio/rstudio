@@ -22,8 +22,8 @@ package com.google.gwt.requestfactory.client.impl;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
- * RequestFactory.RequestObject} for requests that return String.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return String.
  */
 public abstract class AbstractStringRequest extends
     AbstractPrimitiveRequest<String, AbstractStringRequest> {

@@ -24,8 +24,8 @@ import java.math.BigDecimal;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestFactory.RequestObject
- * RequestFactory.RequestObject} for requests that return BigDecimal.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return BigDecimal.
  */
 public abstract class AbstractBigDecimalRequest extends
     AbstractPrimitiveRequest<BigDecimal, AbstractBigDecimalRequest> {

@@ -18,8 +18,8 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.List;
@@ -39,7 +39,7 @@ import java.util.List;
  * MyRFED instance = GWT.create(MyRFED.class);
  * {
  * instance.initialize(.....);
- * myRequestObject.with(instance.getPaths());
+ * myRequest.with(instance.getPaths());
  * 
  * // Fire the request, in the callback 
  * instance.edit(retrievedRecord);
@@ -61,18 +61,18 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   /**
    * Initialize the Editor and its sub-editors with data.
    */
-  void edit(P proxy, RequestObject<?> saveRequest);
+  void edit(P proxy, Request<?> saveRequest);
 
   /**
    * Ensures that the Editor passed into {@link #initialize} and its
    * sub-editors, if any, have synced their UI state by invoking flushing them
    * in a depth-first manner.
    * 
-   * @return the RequestObject passed into {@link #edit}
-   * @throws IllegalStateException if {@link #edit(Object, RequestObject)} has
-   *           not been called with a non-null {@link RequestObject}
+   * @return the Request passed into {@link #edit}
+   * @throws IllegalStateException if {@link #edit(Object, Request)} has
+   *           not been called with a non-null {@link Request}
    */
-  <T> RequestObject<T> flush();
+  <T> Request<T> flush();
 
   /**
    * Returns any unconsumed EditorErrors from the last call to {@link #flush()}.
@@ -99,7 +99,7 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   
   /**
    * This or {@link #initialize(EventBus, RequestFactory, Editor)} must be
-   * called before {@link #edit(Object, RequestObject)}.
+   * called before {@link #edit(Object, Request)}.
    */
   void initialize(RequestFactory requestFactory, E editor);
 

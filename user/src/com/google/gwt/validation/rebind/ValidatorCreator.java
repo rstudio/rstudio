@@ -46,6 +46,7 @@ public class ValidatorCreator {
   // stash the map in a ThreadLocal, since each GWT module lives in its own
   // thread in DevMode
   private static final ThreadLocal<Map<JClassType, BeanHelper>> threadLocalHelperMap = new ThreadLocal<Map<JClassType, BeanHelper>>() {
+    @Override
     protected synchronized Map<JClassType, BeanHelper> initialValue() {
       return new HashMap<JClassType, BeanHelper>();
     }

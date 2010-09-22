@@ -56,10 +56,10 @@ public class ClientRequestHelper {
   }
 
   public static String getRequestString(Map<String, String> requestData) {
-    MyJSO requestObject = MyJSO.create();
+    MyJSO request = MyJSO.create();
     for (String key : requestData.keySet()) {
-      requestObject.put(key, requestData.get(key));
+      request.put(key, requestData.get(key));
     }
-    return requestObject.toJsonString();
+    return request.toJsonString();
   }
 }

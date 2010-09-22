@@ -43,7 +43,7 @@ public abstract class Receiver<V> {
   }
 
   /**
-   * Called when a RequestObject has been successfully executed on the server.
+   * Called when a Request has been successfully executed on the server.
    */
   public abstract void onSuccess(V response);
 

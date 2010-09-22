@@ -20,8 +20,8 @@ import com.google.gwt.requestfactory.client.DefaultRequestTransport;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.RequestTransport;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
@@ -105,7 +105,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return findRequest().find(proxyId);
   }
 
-  public void fire(RequestObject<?> requestObject) {
+  public void fire(Request<?> requestObject) {
     final AbstractRequest<?, ?> abstractRequest = (AbstractRequest<?, ?>) requestObject;
     RequestData requestData = ((AbstractRequest<?, ?>) requestObject).getRequestData();
     Map<String, String> requestMap = requestData.getRequestMap(abstractRequest.deltaValueStore.toJson());

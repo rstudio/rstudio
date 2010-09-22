@@ -35,7 +35,7 @@ import java.util.Set;
  * </span>
  * </p>
  * Accumulates the local edits, made in the context of a
- * {@link com.google.gwt.requestfactory.shared.RequestObject}.
+ * {@link com.google.gwt.requestfactory.shared.Request}.
  * 
  */
 class DeltaValueStoreJsonImpl {

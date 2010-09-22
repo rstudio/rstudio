@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.Violation;
@@ -39,7 +39,7 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
     delayTestFinish(5000);
 
     SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
-    final RequestObject<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
+    final Request<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
         rayFoo);
     rayFoo = persistRay.edit(rayFoo);
     // 42 is the crash causing magic number
@@ -60,6 +60,7 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
         fail("Failure expected but onViolation() was called");
       }
 
+      @Override
       public void onSuccess(SimpleFooProxy response) {
         fail("Failure expected but onSuccess() was called");
       }

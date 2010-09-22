@@ -21,7 +21,7 @@ package com.google.gwt.requestfactory.shared;
 @Service(com.google.gwt.requestfactory.server.SimpleBar.class)
 public interface SimpleBarRequest {
 
-  RequestObject<Long> countSimpleBar();
+  Request<Long> countSimpleBar();
 
   ProxyListRequest<SimpleBarProxy> findAll();
 
@@ -30,10 +30,10 @@ public interface SimpleBarRequest {
   ProxyRequest<SimpleBarProxy> findSimpleBarById(String id);
 
   @Instance
-  RequestObject<Void> persist(SimpleBarProxy proxy);
+  Request<Void> persist(SimpleBarProxy proxy);
 
   @Instance
   ProxyRequest<SimpleBarProxy> persistAndReturnSelf(SimpleBarProxy proxy);
 
-  RequestObject<Void> reset();
+  Request<Void> reset();
 }

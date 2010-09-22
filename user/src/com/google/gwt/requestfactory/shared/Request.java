@@ -25,7 +25,7 @@ package com.google.gwt.requestfactory.shared;
  *
  * @param <T> The return type of objects in the corresponding response.
  */
-public interface RequestObject<T> {
+public interface Request<T> {
 
   /**
    * @return an editable version of the given {@link EntityProxy}
@@ -43,4 +43,6 @@ public interface RequestObject<T> {
    * after a request using it has been fired.
    */
   boolean isChanged();
+
+  Request<T> with(String... propertyRefs);
 }

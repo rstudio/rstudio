@@ -44,6 +44,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
   protected void finishTestAndReset() {
     final boolean[] reallyDone = {false, false, false};
     req.simpleFooRequest().reset().fire(new Receiver<Void>() {
+      @Override
       public void onSuccess(Void response) {
         reallyDone[0] = true;
         if (reallyDone[0] && reallyDone[1] && reallyDone[2]) {
@@ -52,6 +53,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
       }
     });
     req.simpleFooStringRequest().reset().fire(new Receiver<Void>() {
+      @Override
       public void onSuccess(Void response) {
         reallyDone[1] = true;
         if (reallyDone[0] && reallyDone[1] && reallyDone[2]) {
@@ -60,6 +62,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
       }
     });
     req.simpleBarRequest().reset().fire(new Receiver<Void>() {
+      @Override
       public void onSuccess(Void response) {
         reallyDone[2] = true;
         if (reallyDone[0] && reallyDone[1] && reallyDone[2]) {

@@ -50,10 +50,9 @@ public class RequestData {
   public static final String ENCODED_ID_PROPERTY = "!id";
   
   /**
-   * Id property that server entity objects are required to define 
+   * Id property that server entity objects are required to define.
    */
   public static final String ENTITY_ID_PROPERTY = "id";
-  
 
   // TODO: non-final is a hack for now.
   private final String operation;

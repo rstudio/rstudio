@@ -51,15 +51,19 @@ public class Property<V> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
+    if (this == o) {
       return true;
-    if (!(o instanceof Property))
+    }
+    if (!(o instanceof Property<?>)) {
       return false;
-    Property property = (Property) o;
-    if (name != null ? !name.equals(property.name) : property.name != null)
+    }
+    Property<?> property = (Property<?>) o;
+    if (name != null ? !name.equals(property.name) : property.name != null) {
       return false;
-    if (type != null ? !type.equals(property.type) : property.type != null)
+    }
+    if (type != null ? !type.equals(property.type) : property.type != null) {
       return false;
+    }
     return true;
   }
 
@@ -73,5 +77,12 @@ public class Property<V> {
 
   public Class<V> getType() {
     return type;
+  }
+
+  @Override
+  public int hashCode() {
+    int nameHash = name == null ? 0 : name.hashCode();
+    int typeHash = type == null ? 0 : type.hashCode();
+    return (nameHash * 31) ^ typeHash;
   }
 }

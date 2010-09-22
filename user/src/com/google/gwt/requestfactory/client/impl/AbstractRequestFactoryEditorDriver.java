@@ -22,8 +22,8 @@ import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.ArrayList;
@@ -54,13 +54,13 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
   private List<EditorError> errors;
   private List<String> paths = new ArrayList<String>();
   private RequestFactory requestFactory;
-  private RequestObject<?> saveRequest;
+  private Request<?> saveRequest;
 
   public void display(R object) {
     edit(object, null);
   }
 
-  public void edit(R object, RequestObject<?> saveRequest) {
+  public void edit(R object, Request<?> saveRequest) {
     checkEditor();
     this.saveRequest = saveRequest;
     delegate = createDelegate();
@@ -69,14 +69,14 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     delegateMap.put(object, delegate);
   }
 
-  public <T> RequestObject<T> flush() {
+  public <T> Request<T> flush() {
     checkDelegate();
     checkSaveRequest();
     errors = new ArrayList<EditorError>();
     delegate.flush(errors);
 
     @SuppressWarnings("unchecked")
-    RequestObject<T> toReturn = (RequestObject<T>) saveRequest;
+    Request<T> toReturn = (Request<T>) saveRequest;
     return toReturn;
   }
 
@@ -172,7 +172,7 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
   private void checkSaveRequest() {
     if (saveRequest == null) {
       throw new IllegalStateException(
-          "edit() was called with a null RequestObject");
+          "edit() was called with a null Request");
     }
   }
 }

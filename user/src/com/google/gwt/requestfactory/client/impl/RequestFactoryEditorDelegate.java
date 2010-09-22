@@ -24,8 +24,8 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.ArrayList;
@@ -74,12 +74,12 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
   protected EventBus eventBus;
   protected RequestFactory factory;
-  protected RequestObject<?> request;
+  protected Request<?> request;
 
   @Override
   public P ensureMutable(P object) {
     if (request == null) {
-      throw new IllegalStateException("No RequestObject");
+      throw new IllegalStateException("No Request");
     } else if (object instanceof EntityProxy) {
       @SuppressWarnings("unchecked")
       P toReturn = (P) request.edit(((EntityProxy) object));
@@ -92,7 +92,7 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
   public void initialize(EventBus eventBus, RequestFactory factory,
       String pathSoFar, P object, E editor, DelegateMap delegateMap,
-      RequestObject<?> editRequest) {
+      Request<?> editRequest) {
     this.eventBus = eventBus;
     this.factory = factory;
     this.request = editRequest;

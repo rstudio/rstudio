@@ -31,8 +31,9 @@ public interface EntityProxy {
   Integer getVersion();
 
   /**
-   * Subtypes should override to declare they return a stable id of their own type,
-   * to allow type safe use of the request objects returned by {@link RequestFactory#find(EntityProxyId)} 
+   * Subtypes should override to declare they return a stable id of their own
+   * type, to allow type safe use of the request objects returned by
+   * {@link RequestFactory#find(EntityProxyId)}.
    * 
    * @return {@link EntityProxyId} that is stable across changes.
    */

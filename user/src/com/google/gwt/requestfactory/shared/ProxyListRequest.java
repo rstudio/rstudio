@@ -20,13 +20,13 @@ import java.util.List;
 /**
  * <p> <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
- * </span> </p> Implemented by RequestObjects for service methods that return
+ * </span> </p> Implemented by Request objects for service methods that return
  * lists of records.
  *
  * @param <P> The type held by the returned list
  */
 public interface ProxyListRequest<P extends EntityProxy>
-    extends RequestObject<List<P>> {
+    extends Request<List<P>> {
 
   ProxyListRequest<P> with(String... propertyRefs);
 }

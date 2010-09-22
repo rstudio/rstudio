@@ -20,25 +20,25 @@ package com.google.gwt.requestfactory.shared;
  */
 @Service(com.google.gwt.requestfactory.server.SimpleFooString.class)
 public interface SimpleFooStringRequest {
-  RequestObject<Long> countSimpleFoo();
+  Request<Long> countSimpleFoo();
 
   @Instance
-  RequestObject<Long> countSimpleFooWithUserNameSideEffect(SimpleFooStringProxy proxy);
+  Request<Long> countSimpleFooWithUserNameSideEffect(SimpleFooStringProxy proxy);
 
   ProxyListRequest<SimpleFooStringProxy> findAll();
 
   ProxyRequest<SimpleFooStringProxy> findSimpleFooStringById(String id);
 
-  RequestObject<Integer> privateMethod();
+  Request<Integer> privateMethod();
 
   @Instance
-  RequestObject<Void> persist(SimpleFooStringProxy proxy);
+  Request<Void> persist(SimpleFooStringProxy proxy);
   
   @Instance
   ProxyRequest<SimpleFooStringProxy> persistAndReturnSelf(SimpleFooStringProxy proxy);
 
-  RequestObject<Void> reset();
+  Request<Void> reset();
 
   @Instance
-  RequestObject<String> hello(SimpleFooStringProxy instance, SimpleBarProxy proxy);
+  Request<String> hello(SimpleFooStringProxy instance, SimpleBarProxy proxy);
 }

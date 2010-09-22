@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -39,7 +39,7 @@ import java.util.HashSet;
 public abstract class //
     AbstractJsonValueListRequest<T> //
     extends AbstractRequest<Collection<T>, AbstractJsonValueListRequest<T>>
-    implements RequestObject<Collection<T>> {
+    implements Request<Collection<T>> {
 
   static Object decodeValueType(Class<?> valueType, String value,
       Enum[] enumValues) {

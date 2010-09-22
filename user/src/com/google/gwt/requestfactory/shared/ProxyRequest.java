@@ -27,7 +27,5 @@ package com.google.gwt.requestfactory.shared;
  * @param <P> return type
  */
 public interface ProxyRequest<P extends EntityProxy> extends
-    RequestObject<P> {
-
-  ProxyRequest<P> with(String... propertyRefs);
+    Request<P> {
 }

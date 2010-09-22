@@ -18,7 +18,7 @@ package com.google.gwt.sample.expenses.client.request;
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Report;
 
@@ -35,12 +35,12 @@ public interface ReportRequest {
   /**
    * @return a request object
    */
-  RequestObject<Long> countReports();
+  Request<Long> countReports();
 
   /**
    * @return a request object
    */
-  RequestObject<Long> countReportsBySearch(Long employeeId,
+  Request<Long> countReportsBySearch(Long employeeId,
       String department, String startsWith);
 
   /**
@@ -75,11 +75,11 @@ public interface ReportRequest {
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist(ReportProxy record);
+  Request<Void> persist(ReportProxy record);
 
   /**
    * @return a request object
    */
   @Instance
-  RequestObject<Void> remove(ReportProxy record);
+  Request<Void> remove(ReportProxy record);
 }

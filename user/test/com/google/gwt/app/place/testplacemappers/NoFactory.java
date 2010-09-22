@@ -25,7 +25,7 @@ import com.google.gwt.app.place.testplaces.Tokenizer4;
 /**
  * Used by tests of {@link com.google.gwt.app.rebind.PlaceHistoryMapperGenerator}.
  */
-@WithTokenizers( {
+@WithTokenizers({
   Place1.Tokenizer.class, Tokenizer2.class, Tokenizer3.class,
   Tokenizer4.class})
 public interface NoFactory extends PlaceHistoryMapper {

@@ -30,9 +30,8 @@ import java.util.List;
  * </span>
  * </p>
  * Abstract implementation of
- * {@link com.google.gwt.requestfactory.shared.RequestObject
- * RequestFactory.RequestObject} for requests that return lists of
- * {@link EntityProxy}.
+ * {@link com.google.gwt.requestfactory.shared.Request Request} for requests
+ * that return lists of {@link EntityProxy}.
  * 
  * @param <T> the type of entities returned
  * @param <R> this request type

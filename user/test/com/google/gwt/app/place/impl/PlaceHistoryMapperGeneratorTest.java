@@ -37,7 +37,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * Functional test of PlaceHistoryMapperGenerator.
  */
 public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
-  @WithTokenizers( {
+  @WithTokenizers({
       Place1.Tokenizer.class, Tokenizer2.class, Tokenizer3.class,
       Tokenizer4.class})
   interface LocalNoFactory extends PlaceHistoryMapper {

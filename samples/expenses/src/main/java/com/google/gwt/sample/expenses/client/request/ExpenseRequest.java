@@ -18,7 +18,7 @@ package com.google.gwt.sample.expenses.client.request;
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
-import com.google.gwt.requestfactory.shared.RequestObject;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Expense;
 
@@ -51,12 +51,12 @@ public interface ExpenseRequest {
    * @return a request object
    */
   @Instance
-  RequestObject<Void> persist(ExpenseProxy record);
+  Request<Void> persist(ExpenseProxy record);
 
  /**
   * @return a request object
   */
   @Instance
-  RequestObject<Void> remove(ExpenseProxy record);
+  Request<Void> remove(ExpenseProxy record);
 
 }

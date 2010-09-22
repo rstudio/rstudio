@@ -39,8 +39,8 @@ import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.RequestObject;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.impl.Property;
 import com.google.gwt.user.client.TakesValue;
@@ -777,7 +777,7 @@ public class EditorModelTest extends TestCase {
         new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(RequestFactory.class),
         new RealJavaResource(RequestFactoryEditorDriver.class),
-        new EmptyMockJavaResource(RequestObject.class),
+        new EmptyMockJavaResource(Request.class),
         new RealJavaResource(SimpleEditor.class),
         new RealJavaResource(TakesValue.class),
         new EmptyMockJavaResource(ValueAwareEditor.class),
