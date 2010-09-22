@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.Lists;
 
@@ -50,8 +49,7 @@ class Dependencies {
    */
   Dependencies(String myPackage, List<String> unresolvedQualified,
       List<String> unresolvedSimple, List<String> apiRefs) {
-    this.myPackage = StringInterner.get().intern(
-        (myPackage.length() == 0) ? "" : (myPackage + '.'));
+    this.myPackage = (myPackage.length() == 0) ? "" : (myPackage + '.');
     this.unresolvedQualified = unresolvedQualified;
     this.unresolvedSimple = unresolvedSimple;
     this.apiRefs = apiRefs;

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.dev.util.StringInterner;
-
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
@@ -207,8 +205,7 @@ public class JArrayType extends JClassType {
   @Override
   public String getSimpleSourceName() {
     if (lazySimpleName == null) {
-      lazySimpleName = StringInterner.get().intern(
-          getComponentType().getSimpleSourceName() + "[]");
+      lazySimpleName = getComponentType().getSimpleSourceName() + "[]";
     }
     return lazySimpleName;
   }

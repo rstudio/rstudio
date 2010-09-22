@@ -16,7 +16,6 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.StringInterner;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -83,8 +82,7 @@ public class DispatchClassInfo {
   private void addMemberIfUnique(String name, List<Member> membersForName) {
     if (membersForName.size() == 1) {
       memberById.add(membersForName.get(0));
-      memberIdByName.put(
-          StringInterner.get().intern(name), memberById.size() - 1);
+      memberIdByName.put(name, memberById.size() - 1);
     }
   }
 
@@ -184,8 +182,7 @@ public class DispatchClassInfo {
     }
     sb.append(")");
 
-    String mangledName = StringInterner.get().intern(sb.toString());
-    
+    String mangledName = sb.toString();
     return mangledName;
   }
 

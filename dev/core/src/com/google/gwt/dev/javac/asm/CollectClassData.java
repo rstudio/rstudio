@@ -21,7 +21,6 @@ import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.StringInterner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -115,8 +114,8 @@ public class CollectClassData extends EmptyVisitor {
      * @param value actual value in this enum
      */
     public AnnotationEnum(String desc, String value) {
-      this.desc = StringInterner.get().intern(desc);
-      this.value = StringInterner.get().intern(value);
+      this.desc = desc;
+      this.value = value;
     }
 
     /**

@@ -16,7 +16,6 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.js.JsKeywords;
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
 
@@ -60,7 +59,7 @@ public class JsScope implements Serializable {
     if (JsKeywords.isKeyword(ident)) {
       ident = ident + "_$";
     }
-    return StringInterner.get().intern(ident);
+    return ident;
   }
 
   private List<JsScope> children = Collections.emptyList();
@@ -73,7 +72,7 @@ public class JsScope implements Serializable {
    */
   public JsScope(JsScope parent, String description) {
     assert (parent != null);
-    this.description = StringInterner.get().intern(description);
+    this.description = description;
     this.parent = parent;
     parent.children = Lists.add(parent.children, this);
   }
@@ -82,7 +81,7 @@ public class JsScope implements Serializable {
    * Subclasses can be parentless.
    */
   protected JsScope(String description) {
-    this.description = StringInterner.get().intern(description);
+    this.description = description;
     this.parent = null;
   }
 
@@ -201,8 +200,6 @@ public class JsScope implements Serializable {
    * Creates a new name in this scope.
    */
   protected JsName doCreateName(String ident, String shortIdent) {
-    ident = StringInterner.get().intern(ident);
-    shortIdent = StringInterner.get().intern(shortIdent);
     JsName name = new JsName(this, ident, shortIdent);
     names = Maps.putOrdered(names, ident, name);
     return name;

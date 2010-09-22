@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Maps;
 
 import java.util.ArrayList;
@@ -43,11 +42,10 @@ public class PathPrefixSet {
     private PathPrefix prefix;
 
     public TrieNode(String part) {
-      this.part = StringInterner.get().intern(part);
+      this.part = part;
     }
 
     public TrieNode addChild(String part) {
-      part = StringInterner.get().intern(part);
       TrieNode newChild = new TrieNode(part);
       assert !children.containsKey(part);
       children = Maps.put(children, part, newChild);

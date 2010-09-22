@@ -15,7 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.lang.annotation.Annotation;
@@ -56,7 +55,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
   JAbstractMethod(String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {
-    this.name = StringInterner.get().intern(name);
+    this.name = name;
     annotations = new Annotations(declaredAnnotations);
 
     if (jtypeParameters != null) {
@@ -240,13 +239,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     for (int i = 0; i < n; ++i) {
       // Identity tests are ok since identity is durable within an oracle.
       if (params.get(i) == parameter) {
-        String realParameterName;
-        if (realParameterNames == null) {
-          realParameterName = StringInterner.get().intern("arg" + i);
-        } else {
-          realParameterName = StringInterner.get().intern(realParameterNames[i]); 
-        }
-        return realParameterName;
+        return realParameterNames == null ? "arg" + i : realParameterNames[i];
       }
     }
     // TODO: report error if we are asked for an unknown JParameter?

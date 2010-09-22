@@ -16,7 +16,6 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.util.StringInterner;
 
 import java.io.Serializable;
 
@@ -41,8 +40,8 @@ public class JsName implements Serializable {
    */
   JsName(JsScope enclosing, String ident, String shortIdent) {
     this.enclosing = enclosing;
-    this.ident = StringInterner.get().intern(ident);
-    this.shortIdent = StringInterner.get().intern(shortIdent);
+    this.ident = ident;
+    this.shortIdent = shortIdent;
     this.isObfuscatable = true;
   }
 

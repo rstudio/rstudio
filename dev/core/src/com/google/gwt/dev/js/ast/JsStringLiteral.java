@@ -16,7 +16,6 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.util.StringInterner;
 
 /**
  * A JavaScript string literal expression.
@@ -28,7 +27,7 @@ public final class JsStringLiteral extends JsValueLiteral {
   // These only get created by JsProgram so that they can be interned.
   JsStringLiteral(SourceInfo sourceInfo, String value) {
     super(sourceInfo);
-    this.value = StringInterner.get().intern(value);
+    this.value = value;
   }
 
   public String getValue() {

@@ -16,7 +16,6 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.util.StringInterner;
 
 /**
  * Represents a JavaScript expression that references a name.
@@ -37,7 +36,7 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
 
   public JsNameRef(SourceInfo sourceInfo, String ident) {
     super(sourceInfo);
-    this.ident = StringInterner.get().intern(ident);
+    this.ident = ident;
   }
 
   public String getIdent() {

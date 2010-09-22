@@ -17,7 +17,6 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.dev.javac.asm.CollectMethodData;
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Maps;
 
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -85,13 +84,12 @@ public class MethodArgNamesLookup {
     int n = method.arguments.length;
     String[] argNames = new String[n];
     for (int i = 0; i < n; ++i) {
-      argNames[i] = StringInterner.get().intern(
-          String.valueOf(method.arguments[i].name));
+      argNames[i] = String.valueOf(method.arguments[i].name);
     }
     StringBuilder buf = new StringBuilder();
     buf.append(enclosingType).append('.').append(method.selector);
     buf.append(method.binding.signature());
-    String key = StringInterner.get().intern(buf.toString());
+    String key = buf.toString();
     methodArgs.put(key, argNames);
   }
 }

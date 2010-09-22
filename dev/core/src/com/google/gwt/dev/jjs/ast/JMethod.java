@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.IOException;
@@ -79,7 +78,7 @@ public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
       JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal,
       boolean isPrivate) {
     super(info);
-    this.name = StringInterner.get().intern(name);
+    this.name = name;
     this.enclosingType = enclosingType;
     this.returnType = returnType;
     this.isAbstract = isAbstract;

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import com.google.gwt.dev.util.StringInterner;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
@@ -33,7 +31,7 @@ public class ZipFileResource extends AbstractResource {
   public ZipFileResource(ZipFileClassPathEntry classPathEntry, String path,
       long lastModified) {
     this.classPathEntry = classPathEntry;
-    this.path = StringInterner.get().intern(path);
+    this.path = path;
     this.lastModified = lastModified;
   }
 

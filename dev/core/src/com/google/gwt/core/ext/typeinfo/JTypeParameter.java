@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.dev.util.StringInterner;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +28,7 @@ public class JTypeParameter extends JDelegatingClassType {
   private final String typeName;
 
   public JTypeParameter(String typeName, int ordinal) {
-    this.typeName = StringInterner.get().intern(typeName);
+    this.typeName = typeName;
     this.ordinal = ordinal;
   }
 

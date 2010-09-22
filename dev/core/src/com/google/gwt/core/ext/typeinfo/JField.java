@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.dev.util.StringInterner;
-
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
@@ -52,7 +50,7 @@ public class JField implements HasAnnotations, HasMetaData {
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     assert (enclosingType != null);
     this.enclosingType = enclosingType;
-    this.name = StringInterner.get().intern(name);
+    this.name = name;
     this.enclosingType.addField(this);
     annotations = new Annotations(declaredAnnotations);
   }
