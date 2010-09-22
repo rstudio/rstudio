@@ -67,6 +67,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   static final boolean IS_FUTURE = true;
   static final boolean NOT_FUTURE = false;
+  private static final String FUTURE_TOKEN = "F";
+  private static final String HISTORY_TOKEN_SEPARATOR = "--";
+  private static final int ID_INDEX = 0;
+  private static final int SCHEMA_INDEX = 1;
 
   private static Logger logger = Logger.getLogger(RequestFactory.class.getName());
 
@@ -113,8 +117,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     String payload = ClientRequestHelper.getRequestString(requestMap);
     transport.send(payload, new RequestTransport.TransportReceiver() {
       public void onTransportFailure(String message) {
-        abstractRequest.fail(new ServerFailure(message, null,
-            null));
+        abstractRequest.fail(new ServerFailure(message, null, null));
       }
 
       public void onTransportSuccess(String payload) {
@@ -155,7 +158,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   public void initialize(EventBus eventBus) {
     initialize(eventBus, new DefaultRequestTransport(eventBus));
   }
-  
+
   public void initialize(EventBus eventBus, RequestTransport transport) {
     this.valueStore = new ValueStoreJsonImpl();
     this.eventBus = eventBus;
@@ -165,47 +168,76 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   protected abstract FindRequest findRequest();
 
+  /**
+   * This implementation cannot be changed without breaking clients.
+   */
   protected Class<? extends EntityProxy> getClass(String token,
       ProxyToTypeMap recordToTypeMap) {
-    String[] bits = token.split("-");
-    ProxySchema<? extends EntityProxy> schema = recordToTypeMap.getType(bits[0]);
+    String[] bits = token.split(HISTORY_TOKEN_SEPARATOR);
+    String schemaToken;
+    if (bits.length == 1) {
+      schemaToken = token;
+    } else if (bits.length == 2 || bits.length == 3) {
+      schemaToken = bits[SCHEMA_INDEX];
+    } else {
+      return null;
+    }
+    ProxySchema<? extends EntityProxy> schema = recordToTypeMap.getType(schemaToken);
     if (schema == null) {
       return null;
     }
     return schema.getProxyClass();
   }
 
-  protected String getHistoryToken(EntityProxyId proxyId, ProxyToTypeMap recordToTypeMap) {
-    EntityProxyIdImpl entityProxyId = (EntityProxyIdImpl) proxyId;
-    Class<? extends EntityProxy> proxyClass = entityProxyId.schema.getProxyClass();
-    String rtn = recordToTypeMap.getClassToken(proxyClass) + "-";
-    Object datastoreId = entityProxyId.encodedId;
+  /**
+   * This implementation cannot be changed without breaking clients.
+   */
+  protected String getHistoryToken(EntityProxyId<?> proxyId,
+      ProxyToTypeMap recordToTypeMap) {
+    EntityProxyIdImpl<?> entityProxyId = (EntityProxyIdImpl<?>) proxyId;
+    StringBuilder toReturn = new StringBuilder();
+    boolean isFuture = false;
+    Object tokenId = entityProxyId.encodedId;
     if (entityProxyId.isFuture) {
-      datastoreId = futureToDatastoreMap.get(entityProxyId.encodedId);
+      // See if the associated entityproxy has been persisted in the meantime
+      Object persistedId = futureToDatastoreMap.get(entityProxyId.encodedId);
+      if (persistedId == null) {
+        // Return a future token
+        isFuture = true;
+      } else {
+        // Use the persisted id instead
+        tokenId = persistedId;
+      }
     }
-    if (datastoreId == null) {
-      rtn += "0-FUTURE";
-    } else {
-      rtn += datastoreId;
+    toReturn = new StringBuilder();
+    toReturn.append(tokenId);
+    toReturn.append(HISTORY_TOKEN_SEPARATOR).append(
+        entityProxyId.schema.getToken());
+    if (isFuture) {
+      toReturn.append(HISTORY_TOKEN_SEPARATOR).append(FUTURE_TOKEN);
     }
-    return rtn;
+    return toReturn.toString();
   }
 
-  protected EntityProxyId getProxyId(String token,
+  /**
+   * This implementation cannot be changed without breaking clients.
+   */
+  protected EntityProxyId<?> getProxyId(String historyToken,
       ProxyToTypeMap recordToTypeMap) {
-    String[] bits = token.split(EntityProxyIdImpl.SEPARATOR);
-    if (bits.length != 2) {
+    String[] bits = historyToken.split(HISTORY_TOKEN_SEPARATOR);
+    if (bits.length < 2 || bits.length > 3) {
       return null;
     }
+    boolean isFuture = bits.length == 3;
 
-    ProxySchema<? extends EntityProxy> schema = recordToTypeMap.getType(bits[1]);
+    ProxySchema<? extends EntityProxy> schema = recordToTypeMap.getType(bits[SCHEMA_INDEX]);
     if (schema == null) {
       return null;
     }
 
-    String id = bits[0];
+    String id = bits[ID_INDEX];
     Object futureId = datastoreToFutureMap.get(id, schema);
-    return new EntityProxyIdImpl(id, schema, false, futureId);
+    return new EntityProxyIdImpl<EntityProxy>(id, schema, isFuture, futureId);
   }
 
   ValueStoreJsonImpl getValueStore() {
@@ -230,8 +262,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   private <R extends ProxyImpl> R createFuture(ProxySchema<R> schema) {
     Long futureId = ++currentFutureId;
-    ProxyJsoImpl newRecord = ProxyJsoImpl.create(Long.toString(futureId), initialVersion,
-        schema, this);
+    ProxyJsoImpl newRecord = ProxyJsoImpl.create(Long.toString(futureId),
+        initialVersion, schema, this);
     return schema.create(newRecord, IS_FUTURE);
   }
 }

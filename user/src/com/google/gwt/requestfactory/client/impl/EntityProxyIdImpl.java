@@ -35,7 +35,6 @@ import com.google.gwt.requestfactory.shared.EntityProxyId;
  * created on this client.
  */
 final class EntityProxyIdImpl<P extends EntityProxy> implements EntityProxyId<P> {
-  static final String SEPARATOR = "---";
 
   private static int hashCode(ProxySchema<?> proxySchema, boolean hasFutureId, Object finalId) {
     final int prime = 31;
@@ -64,13 +63,6 @@ final class EntityProxyIdImpl<P extends EntityProxy> implements EntityProxyId<P>
     this.schema = schema;
     this.isFuture = isFuture;
     this.futureId = futureId;
-  }
-
-  public String asString() {
-    if (isFuture) {
-      throw new IllegalStateException("Need to persist this proxy first");
-    }
-    return encodedId + SEPARATOR + schema.getToken();
   }
 
   @Override

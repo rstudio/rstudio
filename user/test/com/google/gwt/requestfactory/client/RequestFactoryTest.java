@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.ServerFailure;
@@ -124,6 +125,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
   }
 
+  public void testClassToken() {
+    String token = req.getToken(SimpleFooProxy.class);
+    assertEquals(SimpleFooProxy.class, req.getClass(token));
+
+    SimpleFooProxy foo = req.create(SimpleFooProxy.class);
+    assertEquals(SimpleFooProxy.class, req.getClass(foo.stableId()));
+  }
+
   public void  testDummyCreate() {
     delayTestFinish(5000);
 
@@ -165,6 +174,44 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         assertTrue(((ProxyImpl) foo).isFuture());
 
         checkStableIdEquals(foo, returned);
+        finishTestAndReset();
+      }
+    });
+  }
+
+  public void testHistoryToken() {
+    delayTestFinish(5000);
+    final SimpleBarProxy foo = req.create(SimpleBarProxy.class);
+    final EntityProxyId<SimpleBarProxy> futureId = foo.stableId();
+    final String futureToken = req.getHistoryToken(futureId);
+
+    // Check that a newly-created object's token can be found
+    assertEquals(futureId, req.getProxyId(futureToken));
+    assertEquals(req.getClass(futureId), req.getClass(futureToken));
+
+    RequestObject<SimpleBarProxy> fooReq = req.simpleBarRequest().persistAndReturnSelf(
+        foo);
+    fooReq.fire(new Receiver<SimpleBarProxy>() {
+      @Override
+      public void onSuccess(final SimpleBarProxy returned) {
+        EntityProxyId<SimpleBarProxy> persistedId = returned.stableId();
+        String persistedToken = req.getHistoryToken(returned.stableId());
+
+        // Expect variations after persist
+        assertFalse(futureToken.equals(persistedToken));
+        
+        // Make sure the token is stable after persist using the future id
+        assertEquals(persistedToken, req.getHistoryToken(futureId));
+
+        // Check that the persisted object can be found with future token
+        assertEquals(futureId, req.getProxyId(futureToken));
+        assertEquals(futureId, req.getProxyId(persistedToken));
+        assertEquals(req.getClass(futureId), req.getClass(persistedToken));
+
+        assertEquals(persistedId, req.getProxyId(futureToken));
+        assertEquals(persistedId, req.getProxyId(persistedToken));
+        assertEquals(req.getClass(persistedId), req.getClass(futureToken));
+
         finishTestAndReset();
       }
     });

@@ -47,9 +47,10 @@ public class FavoritesManager {
           if (fragment.length() == 0) {
             continue;
           }
-          @SuppressWarnings("unchecked")
-          EntityProxyId<PersonProxy> id = (EntityProxyId<PersonProxy>) requestFactory.getProxyId(fragment);
-          favoriteIds.add(id);
+          EntityProxyId<PersonProxy> id = requestFactory.getProxyId(fragment);
+          if (id != null) {
+            favoriteIds.add(id);
+          }
         }
       } catch (NumberFormatException e) {
         // Not a big deal, start up without favorites
