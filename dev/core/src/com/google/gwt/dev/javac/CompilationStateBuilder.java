@@ -22,6 +22,7 @@ import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -81,21 +82,25 @@ public class CompilationStateBuilder {
 
         MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
 
-        String packageName = Shared.getPackageName(builder.getTypeName());
+        StringInterner interner = StringInterner.get();
+        String packageName = interner.intern(
+            Shared.getPackageName(builder.getTypeName()));
         List<String> unresolvedQualified = new ArrayList<String>();
         List<String> unresolvedSimple = new ArrayList<String>();
         for (char[] simpleRef : cud.compilationResult().simpleNameReferences) {
-          unresolvedSimple.add(canonical(String.valueOf(simpleRef)));
+          unresolvedSimple.add(interner.intern(String.valueOf(simpleRef)));
         }
-        for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
-          unresolvedQualified.add(canonical(CharOperation.toString(qualifiedRef)));
+        for (char[][] qualifiedRef :
+            cud.compilationResult().qualifiedReferences) {
+          unresolvedQualified.add(
+              interner.intern(CharOperation.toString(qualifiedRef)));
         }
         for (String jsniDep : jsniDeps) {
-          unresolvedQualified.add(canonical(jsniDep));
+          unresolvedQualified.add(interner.intern(jsniDep));
         }
         ArrayList<String> apiRefs = compiler.collectApiRefs(cud);
         for (int i = 0; i < apiRefs.size(); ++i) {
-          apiRefs.set(i, canonical(apiRefs.get(i)));
+          apiRefs.set(i, interner.intern(apiRefs.get(i)));
         }
         Dependencies dependencies = new Dependencies(packageName,
             unresolvedQualified, unresolvedSimple, apiRefs);
@@ -118,15 +123,6 @@ public class CompilationStateBuilder {
         }
         newlyBuiltUnits.add(unit);
       }
-
-      private String canonical(String str) {
-        String result = internedTypeNames.get(str);
-        if (result != null) {
-          return result;
-        }
-        internedTypeNames.put(str, str);
-        return str;
-      }
     }
 
     /**
@@ -141,14 +137,6 @@ public class CompilationStateBuilder {
      */
     private final JdtCompiler compiler = new JdtCompiler(
         new UnitProcessorImpl());
-
-    /**
-     * Memory efficiency only. Stores canonical versions of dependency type
-     * names so that String instances can be shared among many units. Otherwise,
-     * we'd get many duplicate String objects since we have to build them from
-     * JDT's char arrays.
-     */
-    private final Map<String, String> internedTypeNames = new HashMap<String, String>();
 
     /**
      * Continuation state for JSNI checking.

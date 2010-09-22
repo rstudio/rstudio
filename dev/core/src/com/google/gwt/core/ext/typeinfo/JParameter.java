@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.StringInterner;
+
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
@@ -37,7 +39,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
   JParameter(JAbstractMethod enclosingMethod, JParameter srcParam) {
     this.enclosingMethod = enclosingMethod;
     this.type = srcParam.type;
-    this.name = srcParam.name;
+    this.name = StringInterner.get().intern(srcParam.name);
     this.annotations = new Annotations(srcParam.annotations);
   }
 
@@ -56,7 +58,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
       boolean argNameIsReal) {
     this.enclosingMethod = enclosingMethod;
     this.type = type;
-    this.name = name;
+    this.name = StringInterner.get().intern(name);
     this.argNameIsReal = argNameIsReal;
 
     enclosingMethod.addParameter(this);
@@ -123,7 +125,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
 
   // Only called by JAbstractMethod after real parameter names are fetched.
   void setName(String name) {
-    this.name = name;
+    this.name = StringInterner.get().intern(name);
   }
 
   // Called when parameter types are found to be parameterized

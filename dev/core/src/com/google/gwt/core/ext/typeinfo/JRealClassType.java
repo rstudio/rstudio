@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.IdentitySets;
 import com.google.gwt.dev.util.collect.Lists;
 
@@ -75,7 +76,7 @@ public class JRealClassType extends JClassType {
       String enclosingTypeName, String name, boolean isInterface) {
     this.oracle = oracle;
     this.declaringPackage = declaringPackage;
-    this.name = name;
+    this.name = StringInterner.get().intern(name);
     this.isInterface = isInterface;
     if (enclosingTypeName == null) {
       // Add myself to my package.
@@ -244,6 +245,7 @@ public class JRealClassType extends JClassType {
       } else {
         lazyQualifiedName = nestedName;
       }
+      lazyQualifiedName = StringInterner.get().intern(lazyQualifiedName);
     }
     return lazyQualifiedName;
   }

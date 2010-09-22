@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
+import com.google.gwt.dev.util.StringInterner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,12 +38,12 @@ public class CollectAnnotationData implements AnnotationVisitor {
     private final boolean visible;
 
     protected AnnotationData(String desc, boolean visible) {
-      this.desc = desc;
+      this.desc = StringInterner.get().intern(desc);
       this.visible = visible;
     }
 
     public void addValue(String name, Object value) {
-      values.put(name, value);
+      values.put(StringInterner.get().intern(name), value);
     }
 
     /**

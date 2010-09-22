@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.StringInterner;
 
 /**
  * Java method parameter definition.
@@ -28,8 +29,8 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
     assert (type != null);
     assert (enclosingMethod != null);
 
-    JParameter x = new JParameter(info, name, type, isFinal, isThis,
-        enclosingMethod);
+    JParameter x = new JParameter(info, StringInterner.get().intern(name), type,
+        isFinal, isThis, enclosingMethod);
 
     enclosingMethod.addParam(x);
     return x;
