@@ -15,14 +15,14 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.requestfactory.server.SimpleFoo;
+import com.google.gwt.requestfactory.server.SimpleFooString;
 
 /**
- * A simple extension of AbstractFooProxy with Long id.
+ * An extension of AbstractFooProxy with String id.
  */
-@ProxyFor(SimpleFoo.class)
-public interface SimpleFooProxy extends BaseFooProxy {
-  Long getId();
-  
-  EntityProxyId<SimpleFooProxy> stableId();
+@ProxyFor(SimpleFooString.class)
+public interface SimpleFooStringProxy extends BaseFooProxy {
+  String getId();
+    
+  EntityProxyId<SimpleFooStringProxy> stableId();
 }

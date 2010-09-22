@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 
@@ -41,22 +42,41 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
   }
 
   protected void finishTestAndReset() {
-    final boolean[] reallyDone = {false, false};
+    final boolean[] reallyDone = {false, false, false};
     req.simpleFooRequest().reset().fire(new Receiver<Void>() {
       public void onSuccess(Void response) {
         reallyDone[0] = true;
-        if (reallyDone[0] && reallyDone[1]) {
+        if (reallyDone[0] && reallyDone[1] && reallyDone[2]) {
+          finishTest();
+        }
+      }
+    });
+    req.simpleFooStringRequest().reset().fire(new Receiver<Void>() {
+      public void onSuccess(Void response) {
+        reallyDone[1] = true;
+        if (reallyDone[0] && reallyDone[1] && reallyDone[2]) {
           finishTest();
         }
       }
     });
     req.simpleBarRequest().reset().fire(new Receiver<Void>() {
       public void onSuccess(Void response) {
-        reallyDone[1] = true;
-        if (reallyDone[0] && reallyDone[1]) {
+        reallyDone[2] = true;
+        if (reallyDone[0] && reallyDone[1] && reallyDone[2]) {
           finishTest();
         }
       }
     });
+  }
+  
+  protected void checkStableIdEquals(EntityProxy expected,
+      EntityProxy actual) {
+    assertNotSame(expected.stableId(), actual.stableId());
+    assertEquals(expected.stableId(), actual.stableId());
+    assertEquals(expected.stableId().hashCode(), actual.stableId().hashCode());
+
+    // No assumptions about the proxy objects (being proxies and all)
+    assertNotSame(expected, actual);
+    assertFalse(expected.equals(actual));
   }
 }
