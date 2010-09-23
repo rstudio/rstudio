@@ -436,9 +436,9 @@ public class Element extends Node {
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
-  public final native int getTabIndex() /*-{
-    return this.tabIndex;
-  }-*/;
+  public final int getTabIndex() {
+    return DOMImpl.impl.getTabIndex(this);
+  }
 
   /**
    * Gets the element's full tag name, including the namespace-prefix if

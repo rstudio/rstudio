@@ -239,6 +239,13 @@ class DOMImplSafari extends DOMImplStandard {
   }
 
   @Override
+  public native int getTabIndex(Element elem) /*-{ 
+    // tabIndex is undefined for divs and other non-focusable elements prior to
+    // Safari 4.
+    return typeof elem.tabIndex != 'undefined' ? elem.tabIndex : -1;
+  }-*/;
+
+  @Override
   public native boolean isOrHasChild(Node parent, Node child) /*-{
     while (child) {
       if (parent == child) {

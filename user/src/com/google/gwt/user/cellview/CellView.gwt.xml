@@ -17,6 +17,7 @@
    <inherits name="com.google.gwt.user.User"/>
    <inherits name="com.google.gwt.cell.Cell"/>
    <inherits name="com.google.gwt.view.View"/>
+   <inherits name="com.google.gwt.user.UserAgent"/>
    <source path="client"/>
 
   <!-- Standard CellBasedWidgetImpl implementation. -->

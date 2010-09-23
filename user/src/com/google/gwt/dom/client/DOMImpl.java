@@ -260,6 +260,10 @@ abstract class DOMImpl {
     return doc.getViewportElement().getScrollTop();
   }
 
+  public native int getTabIndex(Element elem) /*-{
+    return elem.tabIndex;
+  }-*/;
+
   public native String getTagName(Element elem) /*-{
     return elem.tagName;
   }-*/;

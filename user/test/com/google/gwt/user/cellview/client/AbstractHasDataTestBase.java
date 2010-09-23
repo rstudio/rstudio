@@ -16,6 +16,9 @@
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.ListDataProvider;
 
 import java.util.ArrayList;
@@ -79,6 +82,16 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
   }
 
   public void testSetTabIndex() {
+    // Skip this test on Safari 3 because it does not support focusable divs.
+    String userAgent = Window.Navigator.getUserAgent();
+    if (userAgent.contains("Safari")) {
+      RegExp versionRegExp = RegExp.compile("Version/[0-3]", "ig");
+      MatchResult result = versionRegExp.exec(userAgent);
+      if (result.getGroupCount() > 0) {
+        return;
+      }
+    }
+
     AbstractHasData<String> display = createAbstractHasData();
     ListDataProvider<String> provider = new ListDataProvider<String>(
         createData(0, 10));
@@ -102,7 +115,7 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
   /**
    * Create an {@link AbstractHasData} to test.
    *
-   * @return the widget to tezst
+   * @return the widget to test
    */
   protected abstract AbstractHasData<String> createAbstractHasData();
 
