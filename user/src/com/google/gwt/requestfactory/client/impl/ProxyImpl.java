@@ -36,8 +36,6 @@ import com.google.gwt.requestfactory.shared.impl.Property;
  */
 public class ProxyImpl implements EntityProxy {
 
-  static final Property<Integer> version = new Property<Integer>("version", Integer.class);
-
   protected static String getWireFormatId(String id, boolean isFuture,
       ProxySchema<?> schema) {
     return id + "@" + (isFuture ? "IS" : "NO") + "@" + schema.getToken();
@@ -106,10 +104,6 @@ public class ProxyImpl implements EntityProxy {
     return jso.getSchema();
   }
 
-  public Integer getVersion() {
-    return jso.getVersion();
-  }
-
   public String getWireFormatId() {
     return getWireFormatId(jso.encodedId(), isFuture, jso.getSchema());
   }
@@ -146,10 +140,14 @@ public class ProxyImpl implements EntityProxy {
     return new EntityProxyIdImpl(encodedId(), getSchema(), isFuture, null);
   }
 
+  public Integer version() {
+    return jso.version();
+  }
+
   protected ValueStoreJsonImpl getValueStore() {
     return jso.getRequestFactory().getValueStore();
   }
-
+  
   void setDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore) {
     this.deltaValueStore = deltaValueStore;
   }

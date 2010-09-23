@@ -50,11 +50,21 @@ public class RequestData {
   public static final String ENCODED_ID_PROPERTY = "!id";
   
   /**
+   * Property on a proxy JSO that holds its server side version data.
+   */
+  public static final String ENCODED_VERSION_PROPERTY = "!version";
+  
+  /**
    * Id property that server entity objects are required to define.
    */
   public static final String ENTITY_ID_PROPERTY = "id";
 
-  // TODO: non-final is a hack for now.
+  /**
+   * Version property that server entity objects are required to define.
+   */
+  public static final Property<Integer> ENTITY_VERSION_PROPERTY = new Property<Integer>(
+      "version", Integer.class);
+
   private final String operation;
   private final Object[] parameters;
 

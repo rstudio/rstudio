@@ -25,6 +25,7 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.Property;
+import com.google.gwt.requestfactory.shared.impl.RequestData;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -74,7 +75,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
 
   public static ProxyJsoImpl emptyCopy(ProxyJsoImpl jso) {
     ProxySchema<?> schema = jso.getSchema();
-    return create(jso.encodedId(), jso.getVersion(), schema,
+    return create(jso.encodedId(), jso.version(), schema,
         jso.getRequestFactory());
   }
 
@@ -103,7 +104,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
    }-*/; 
 
    static native void splice(JavaScriptObject array, int index, int deleteCount,
-       Object value) /*-{
+       boolean value) /*-{
      array.splice(index, deleteCount, value);
    }-*/;
 
@@ -113,7 +114,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
    }-*/;
 
   static native void splice(JavaScriptObject array, int index, int deleteCount,
-       boolean value) /*-{
+       Object value) /*-{
      array.splice(index, deleteCount, value);
    }-*/;
 
@@ -134,7 +135,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   public final void assertValid() {
     assert encodedId() != null : "encodedId required";
     assert getRequestFactory() != null : "requestFactory required";
-    assert getVersion() != null : "version required";
+    assert version() != null : "version required";
     assert getSchema() != null : "schema required";
   }
 
@@ -273,17 +274,13 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return this['__key'];
   }-*/;
 
-  public final Integer getVersion() {
-    return this.get(ProxyImpl.version);
-  }
-
   public final native boolean isDefined(String name)/*-{
     return this[name] !== undefined;
   }-*/;
 
   public final boolean isEmpty() {
     for (Property<?> property : getSchema().allProperties()) {
-      if ((property != ProxyImpl.version) && (isDefined(property.getName()))) {
+      if (isDefined(property.getName())) {
         return false;
       }
     }
@@ -418,6 +415,10 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return rtn;
   }-*/;
 
+  public final Integer version() {
+    return Integer.valueOf(getInt(RequestData.ENCODED_VERSION_PROPERTY));
+  }
+
   final boolean hasChanged(ProxyJsoImpl newJso) {
     assert getSchema() == newJso.getSchema();
     for (Property<?> property : getSchema().allProperties()) {
@@ -437,6 +438,10 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   final native void putEncodedId(String id) /*-{
     this[@com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_ID_PROPERTY] = id;
   }-*/;
+
+  final void putVersion(Integer version) {
+    setInt(RequestData.ENCODED_VERSION_PROPERTY, version);
+  }
 
   private native boolean copyPropertyIfDifferent(String name, ProxyJsoImpl from) /*-{
     if (this[name] == from[name]) {
@@ -464,13 +469,6 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     }
     return true;
   }-*/;
-
-  /**
-   * @param version
-   */
-  private void putVersion(Integer version) {
-    set(ProxyImpl.version, version);
-  }
 
   private native void setBoolean(String name, boolean value) /*-{
     this[name] = value;

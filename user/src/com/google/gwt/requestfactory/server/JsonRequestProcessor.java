@@ -612,10 +612,13 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       RequestProperty propertyContext) throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     JSONObject jsonObject = new JSONObject();
+    if (entityElement == null || !EntityProxy.class.isAssignableFrom(entityKeyClass)) {
+      return jsonObject;
+    }
 
-    jsonObject.put(ENCODED_ID_PROPERTY, isEntityReference(entityElement,
-        entityKeyClass));
-
+    jsonObject.put(ENCODED_ID_PROPERTY, isEntityReference(entityElement, entityKeyClass));
+    jsonObject.put(ENCODED_VERSION_PROPERTY, encodePropertyValueFromDataStore(entityElement,
+          ENTITY_VERSION_PROPERTY, ENTITY_VERSION_PROPERTY.getName(), propertyContext));
     for (Property<?> p : allProperties(entityKeyClass)) {
       if (requestedProperty(p, propertyContext)) {
         String propertyName = p.getName();
@@ -888,7 +891,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       } else {
         returnType = (Class<? extends EntityProxy>) operation.getReturnType();
       }
-      JSONObject jsonObject = toJsonObject(returnType, result);
+      JSONObject jsonObject = getJsonObject(result, returnType, propertyRefs);
       envelop.put(RESULT_TOKEN, jsonObject);
     }
     envelop.put(SIDE_EFFECTS_TOKEN, sideEffects);
@@ -911,6 +914,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
      * gums up the works.
      */
     recordObject.remove(ENCODED_ID_PROPERTY);
+    recordObject.remove(ENCODED_VERSION_PROPERTY);
 
     Iterator<?> keys = recordObject.keys();
     while (keys.hasNext()) {
@@ -1214,9 +1218,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
     newId = encodeId(newId);
     returnObject.put("id", getSchemaAndId(originalEntityKey.proxyType, newId));
-    returnObject.put("version", encodePropertyValueFromDataStore(
-        entityInstance, new Property<Integer>("version", Integer.class),
-        "version", propertyRefs));
+    returnObject.put(ENCODED_VERSION_PROPERTY, encodePropertyValueFromDataStore(
+        entityInstance, ENTITY_VERSION_PROPERTY,
+        ENTITY_VERSION_PROPERTY.getName(), propertyRefs));
     return returnObject;
   }
 
@@ -1485,13 +1489,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     JSONArray jsonArray = getJsonArray((Collection<?>) result,
         (Class<? extends EntityProxy>) operation.getReturnType());
     return jsonArray;
-  }
-
-  private JSONObject toJsonObject(Class<? extends EntityProxy> returnType,
-      Object result) throws JSONException, NoSuchMethodException,
-      IllegalAccessException, InvocationTargetException {
-    JSONObject jsonObject = getJsonObject(result, returnType, propertyRefs);
-    return jsonObject;
   }
 
   /**

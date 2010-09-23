@@ -268,7 +268,7 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEquals(foo.getString("userName"), "GWT");
     assertEquals(foo.getLong("longField"), 8L);
     assertEquals(foo.getInt("enumField"), 0);
-    assertEquals(foo.getInt("version"), 1);
+    assertEquals(foo.getInt(RequestData.ENCODED_VERSION_PROPERTY), 1);
     assertEquals(foo.getBoolean("boolField"), true);
     assertNotNull(foo.getString("!id"));
     assertTrue(foo.has("created"));

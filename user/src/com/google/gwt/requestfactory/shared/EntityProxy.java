@@ -24,12 +24,6 @@ package com.google.gwt.requestfactory.shared;
  * A proxy for a server-side domain object.
  */
 public interface EntityProxy {
-
-  /**
-   * @return the version of this Proxy.
-   */
-  Integer getVersion();
-
   /**
    * Subtypes should override to declare they return a stable id of their own
    * type, to allow type safe use of the request objects returned by
