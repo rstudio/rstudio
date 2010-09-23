@@ -38,15 +38,15 @@ public class MethodArgNamesLookup {
   }
 
   /**
-   * Prevent further modification to this object.  Calls to
-   * {@link #store(String, AbstractMethodDeclaration)} or 
+   * Prevent further modification to this object. Calls to
+   * {@link #store(String, AbstractMethodDeclaration)} or
    * {@link #mergeFrom(MethodArgNamesLookup)} on this object will fail after
    * this method is called.
    */
   public void freeze() {
     methodArgs = Maps.normalizeUnmodifiable(methodArgs);
   }
-  
+
   /**
    * Lookup the argument names for a given method.
    * 
@@ -80,8 +80,11 @@ public class MethodArgNamesLookup {
    * @param enclosingType fully qualified binary name of the enclosing type
    * @param method JDT method
    */
-  public void store(String enclosingType,
-      AbstractMethodDeclaration method) {
+  public void store(String enclosingType, AbstractMethodDeclaration method) {
+    if (method.binding == null) {
+      // Compile problem with this method, skip
+      return;
+    }
     int n = method.arguments.length;
     String[] argNames = new String[n];
     for (int i = 0; i < n; ++i) {
