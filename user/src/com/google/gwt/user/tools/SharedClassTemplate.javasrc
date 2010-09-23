@@ -5,7 +5,7 @@ package @sharedPackage;
  * FieldVerifier validates that the name the user enters is valid.
  * </p>
  * <p>
- * This class is in the <code>shared</code> packing because we use it in both
+ * This class is in the <code>shared</code> package because we use it in both
  * the client code and on the server. On the client, we verify that the name is
  * valid before sending an RPC request so the user doesn't have to wait for a
  * network round trip to get feedback. On the server, we verify that the name is
