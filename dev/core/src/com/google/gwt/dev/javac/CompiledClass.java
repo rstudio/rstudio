@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Name.InternalName;
+import com.google.gwt.dev.util.StringInterner;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ClassFile;
@@ -64,7 +65,8 @@ public final class CompiledClass {
   CompiledClass(ClassFile classFile, CompiledClass enclosingClass) {
     this.enclosingClass = enclosingClass;
     SourceTypeBinding binding = classFile.referenceBinding;
-    this.internalName = CharOperation.charToString(binding.constantPoolName());
+    this.internalName = StringInterner.get().intern(
+        CharOperation.charToString(binding.constantPoolName()));
     byte[] bytes = classFile.getBytes();
     this.cacheToken = diskCache.writeByteArray(bytes);
     this.isLocal = isLocalType(binding);
@@ -99,7 +101,7 @@ public final class CompiledClass {
    * Returns the qualified source name, e.g. {@code java.util.Map.Entry}.
    */
   public String getSourceName() {
-    return InternalName.toSourceName(internalName);
+    return StringInterner.get().intern(InternalName.toSourceName(internalName));
   }
 
   public CompilationUnit getUnit() {
