@@ -156,6 +156,19 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     }
 
     /**
+     * Accepts information about whether there were more suggestions matching
+     * than were provided to {@link #showSuggestions}.
+     * 
+     * @param hasMoreSuggestions true if more matches were available
+     * @param numMoreSuggestions number of more matches available. If the
+     *     specific number is unknown, 0 will be passed.
+     */
+    protected void setMoreSuggestions(boolean hasMoreSuggestions, 
+        int numMoreSuggestions) {
+      // Subclasses may optionally implement.
+    }
+
+    /**
      * Update the list of visible suggestions.
      * 
      * Use care when using isDisplayStringHtml; it is an easy way to expose 
@@ -651,6 +664,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       display.showSuggestions(SuggestBox.this, response.getSuggestions(),
           oracle.isDisplayStringHTML(), isAutoSelectEnabled(),
           suggestionCallback);
+      display.setMoreSuggestions(response.hasMoreSuggestions(), 
+          response.getMoreSuggestionsCount());
     }
   };
   private final SuggestionCallback suggestionCallback = new SuggestionCallback() {
