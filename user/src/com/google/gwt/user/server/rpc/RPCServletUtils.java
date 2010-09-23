@@ -205,6 +205,50 @@ public class RPCServletUtils {
       return readContent(request, GWT_RPC_CONTENT_TYPE, CHARSET_UTF8);
   }
 
+ /**
+   * Returns the content of an {@link HttpServletRequest} by decoding it using
+   * the UTF-8 charset.
+   * 
+   * @param request the servlet request whose content we want to read
+   * @return the content of an {@link HttpServletRequest} by decoding it using
+   *         the UTF-8 charset
+   * @throws IOException if the requests input stream cannot be accessed, read
+   *           from or closed
+   * @throws ServletException if the content length of the request is not
+   *           specified of if the request's content type is not
+   *           'text/x-gwt-rpc' and 'charset=utf-8'
+   * @deprecated Use {@link readContent} instead.
+   */
+  @Deprecated
+  public static String readContentAsUtf8(HttpServletRequest request)
+      throws IOException, ServletException {
+    return readContent(request, null, null);
+  }
+
+  /**
+   * Returns the content of an {@link HttpServletRequest} by decoding it using
+   * the UTF-8 charset.
+   * 
+   * @param request the servlet request whose content we want to read
+   * @param checkHeaders Specify 'true' to check the Content-Type header to see
+   *          that it matches the expected value 'text/x-gwt-rpc' and the
+   *          content encoding is UTF-8. Disabling this check may allow some
+   *          types of cross type security attacks.
+   * @return the content of an {@link HttpServletRequest} by decoding it using
+   *         the UTF-8 charset
+   * @throws IOException if the requests input stream cannot be accessed, read
+   *           from or closed
+   * @throws ServletException if the content length of the request is not
+   *           specified of if the request's content type is not
+   *           'text/x-gwt-rpc' and 'charset=utf-8'
+   * @deprecated Use {@link readContent} instead.
+   */
+  @Deprecated
+  public static String readContentAsUtf8(HttpServletRequest request,
+      boolean checkHeaders) throws IOException, ServletException {
+    return readContent(request, GWT_RPC_CONTENT_TYPE, CHARSET_UTF8);
+  }
+
   /**
    * Sets the correct header to indicate that a response is gzipped.
    */
