@@ -19,8 +19,7 @@
   <inherits name='com.google.gwt.core.Core'/>
   <inherits name='com.google.gwt.editor.Editor'/>
   <inherits name='com.google.gwt.http.HTTP'/>
-  <inherits name='com.google.gwt.logging.Logging'/>
-  <set-property name="gwt.logging.enabled" value="FALSE"/> 
+  <inherits name='com.google.gwt.logging.LoggingDisabled'/>
 
   <source path="client"/>
   <source path="shared"/>

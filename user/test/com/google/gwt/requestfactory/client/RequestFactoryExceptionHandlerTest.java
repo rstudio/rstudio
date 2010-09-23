@@ -15,13 +15,8 @@
  */
 package com.google.gwt.requestfactory.client;
 
-import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
-import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
-import com.google.gwt.requestfactory.shared.Violation;
-
-import java.util.Set;
 
 /**
  * Tests that {@code RequestFactoryServlet} when using a custom
@@ -35,36 +30,29 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
   }
 
   @Override
-  public void testServerFailure() {
+  public void testServerFailureCheckedException() {
     delayTestFinish(5000);
-
     SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
     final Request<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
         rayFoo);
     rayFoo = persistRay.edit(rayFoo);
     // 42 is the crash causing magic number
     rayFoo.setPleaseCrash(42);
-
-    persistRay.fire(new Receiver<SimpleFooProxy>() {
-      @Override
-      public void onFailure(ServerFailure error) {
-        assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
-        assertEquals("java.lang.UnsupportedOperationException",
-            error.getExceptionType());
-        assertFalse(error.getStackTraceString().length() == 0);
-        finishTestAndReset();
-      }
-
-      @Override
-      public void onViolation(Set<Violation> errors) {
-        fail("Failure expected but onViolation() was called");
-      }
-
-      @Override
-      public void onSuccess(SimpleFooProxy response) {
-        fail("Failure expected but onSuccess() was called");
-      }
-    });
+    persistRay.fire(new FooReciever(rayFoo, persistRay,
+        "java.lang.UnsupportedOperationException"));
+  }
+  
+  @Override
+  public void testServerFailureRuntimeException() {
+    delayTestFinish(5000);
+    SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
+    final Request<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
+        rayFoo);
+    rayFoo = persistRay.edit(rayFoo);
+    // 43 is the crash causing magic number
+    rayFoo.setPleaseCrash(43);
+    persistRay.fire(new FooReciever(rayFoo, persistRay,
+        "java.lang.Exception"));
   }
 
 }

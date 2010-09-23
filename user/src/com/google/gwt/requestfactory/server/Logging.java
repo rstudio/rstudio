@@ -21,9 +21,6 @@ import com.google.gwt.logging.server.RemoteLoggingServiceUtil.RemoteLoggingExcep
 import com.google.gwt.logging.server.StackTraceDeobfuscator;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 /**
  * Server side object that handles log messages sent by
  * {@link RequestFactoryLogHandler}.
@@ -36,24 +33,15 @@ public class Logging {
   private static StackTraceDeobfuscator deobfuscator =
     new StackTraceDeobfuscator("");
   
-  private static Logger logger = Logger.getLogger(Logging.class.getName());
-  
-  public static String logMessage(String serializedLogRecordJson) {
+  public static void logMessage(String serializedLogRecordJson) throws
+  RemoteLoggingException {
     // if the header does not exist, we pass null, which is handled gracefully
     // by the deobfuscation code.
     String strongName =
       RequestFactoryServlet.getThreadLocalRequest().getHeader(
           RpcRequestBuilder.STRONG_NAME_HEADER);
-    try {
-      RemoteLoggingServiceUtil.logOnServer(serializedLogRecordJson,
-          strongName, deobfuscator, null);
-    } catch (RemoteLoggingException e) {
-      // TODO(unnurg): Change this to use server failure reporting when it is
-      // submitted.
-      logger.log(Level.SEVERE, "Remote logging failed", e);
-      return "Remote logging failed";
-    }
-    return "";
+    RemoteLoggingServiceUtil.logOnServer(serializedLogRecordJson,
+        strongName, deobfuscator, null);
   }
   
   /**

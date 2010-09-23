@@ -39,7 +39,7 @@ public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements
   
   /**
    * Logs a Log Record which has been serialized using GWT RPC on the server.
-   * Returns either an error message, or null if logging is successful.
+   * @return either an error message, or null if logging is successful.
    */
   public final String logOnServer(SerializableLogRecord slr) {
     String strongName = getPermutationStrongName();
@@ -48,7 +48,7 @@ public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements
           slr, strongName, deobfuscator, loggerNameOverride);
     } catch (RemoteLoggingException e) {
       logger.log(Level.SEVERE, "Remote logging failed", e);
-      return "Remote logging failed";
+      return "Remote logging failed, check stack trace for details.";
     }
     return null;
   }

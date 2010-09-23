@@ -1020,48 +1020,76 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
   }
 
-  public void testServerFailure() {
-    delayTestFinish(5000);
+  
+  class FooReciever extends Receiver<SimpleFooProxy> {
+    private SimpleFooProxy mutableFoo;
+    private Request<SimpleFooProxy> persistRequest;
+    private String expectedException;
+    
+    public FooReciever(SimpleFooProxy mutableFoo, 
+        Request<SimpleFooProxy> persistRequest, String exception) {
+      this.mutableFoo = mutableFoo;
+      this.persistRequest = persistRequest;
+      this.expectedException = exception;
+    }
 
-    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
-    final Request<SimpleFooProxy> persistRequest = req.simpleFooRequest().persistAndReturnSelf(
-        newFoo);
-
-    final SimpleFooProxy mutableFoo = persistRequest.edit(newFoo);
-    mutableFoo.setPleaseCrash(42); // 42 is the crash causing magic number
-
-    persistRequest.fire(new Receiver<SimpleFooProxy>() {
-      @Override
-      public void onFailure(ServerFailure error) {
+    @Override
+    public void onFailure(ServerFailure error) {
+      assertEquals(expectedException, error.getExceptionType());
+      if (expectedException.length() > 0) {
+        assertFalse(error.getStackTraceString().length() == 0);
+        assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST",
+            error.getMessage());
+      } else {
+        assertEquals("", error.getStackTraceString());
         assertEquals("Server Error: THIS EXCEPTION IS EXPECTED BY A TEST",
             error.getMessage());
-        assertEquals("", error.getExceptionType());
-        assertEquals("", error.getStackTraceString());
-
-        // Now show that we can fix the error and try again with the same
-        // request
-
-        mutableFoo.setPleaseCrash(24); // Only 42 crashes
-        persistRequest.fire(new Receiver<SimpleFooProxy>() {
-          @Override
-          public void onSuccess(SimpleFooProxy response) {
-            finishTestAndReset();
-          }
-        });
       }
 
-      @Override
-      public void onSuccess(SimpleFooProxy response) {
-        fail("Failure expected but onSuccess() was called");
-      }
+      // Now show that we can fix the error and try again with the same
+      // request
 
-      @Override
-      public void onViolation(Set<Violation> errors) {
-        fail("Failure expected but onViolation() was called");
-      }
-    });
+      mutableFoo.setPleaseCrash(24); // Only 42 and 43 crash
+      persistRequest.fire(new Receiver<SimpleFooProxy>() {
+        @Override
+        public void onSuccess(SimpleFooProxy response) {
+          finishTestAndReset();
+        }
+      });
+    }
+
+    @Override
+    public void onSuccess(SimpleFooProxy response) {
+      fail("Failure expected but onSuccess() was called");
+    }
+
+    @Override
+    public void onViolation(Set<Violation> errors) {
+      fail("Failure expected but onViolation() was called");
+    }
   }
-
+  
+  public void testServerFailureCheckedException() {
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    final Request<SimpleFooProxy> persistRequest =
+      req.simpleFooRequest().persistAndReturnSelf(newFoo);
+    final SimpleFooProxy mutableFoo = persistRequest.edit(newFoo);
+    // 43 is the crash causing magic number for a checked exception
+    mutableFoo.setPleaseCrash(43);
+    persistRequest.fire(new FooReciever(mutableFoo, persistRequest, ""));
+  }
+  
+  public void testServerFailureRuntimeException() {
+    delayTestFinish(5000);
+    SimpleFooProxy newFoo = req.create(SimpleFooProxy.class);
+    final Request<SimpleFooProxy> persistRequest = 
+      req.simpleFooRequest().persistAndReturnSelf(newFoo);
+    final SimpleFooProxy mutableFoo = persistRequest.edit(newFoo);
+    // 42 is the crash causing magic number for a runtime exception
+    mutableFoo.setPleaseCrash(42); 
+    persistRequest.fire(new FooReciever(mutableFoo, persistRequest, ""));
+  }    
+   
   public void testStableId() {
     delayTestFinish(5000);
 

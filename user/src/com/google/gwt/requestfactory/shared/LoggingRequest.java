@@ -28,9 +28,7 @@ public interface LoggingRequest {
   // TODO(unnurg): Pass a SerializableLogRecord here rather than it's
   // serialized string.
   /**
-   * Log a message on the server. Will return empty string if there is no error
-   * or an error message if there is a problem.
+   * Log a message on the server.
    */
-  Request<String> logMessage(String serializedLogRecordString);
-
+  Request<Void> logMessage(String serializedLogRecordString);
 }

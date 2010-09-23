@@ -38,17 +38,6 @@ public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
     LoggingRequest getLoggingRequest();
   }
   
-  private class LoggingReceiver extends Receiver<Long> {
-    @Override
-    public void onSuccess(Long response) {
-      if (response > 0) {
-        wireLogger.finest("Remote logging successful");
-      } else {
-        wireLogger.severe("Remote logging failed");
-      }
-    }
-  }
-  
   private LoggingRequestProvider requestProvider;
   
   /**
@@ -76,12 +65,10 @@ public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
       new SerializableLogRecord(record);
     String json = JsonLogRecordClientUtil.serializableLogRecordAsJson(slr);
     requestProvider.getLoggingRequest().logMessage(json).fire(
-        new Receiver<String>() {
+        new Receiver<Void>() {
           @Override
-          public void onSuccess(String response) {
-            if (!response.isEmpty()) {
-              wireLogger.severe("Remote Logging failed on server: " + response);
-            }
+          public void onSuccess(Void response) {
+            // Do nothing
           }
         });
   }

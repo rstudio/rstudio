@@ -437,11 +437,14 @@ public class SimpleFoo {
     this.otherBoolField = otherBoolField;
   }
 
-  public void setPleaseCrash(Integer crashIf42) {
-    if (crashIf42 == 42) {
+  public void setPleaseCrash(Integer crashIf42or43) throws Exception {
+    if (crashIf42or43 == 42) {
       throw new UnsupportedOperationException("THIS EXCEPTION IS EXPECTED BY A TEST");
     }
-    pleaseCrash = crashIf42;
+    if (crashIf42or43 == 43) {
+      throw new Exception("THIS EXCEPTION IS EXPECTED BY A TEST");
+    }
+    pleaseCrash = crashIf42or43;
   }
 
   public void setPassword(String password) {
