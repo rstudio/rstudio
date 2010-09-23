@@ -20,6 +20,7 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 
@@ -33,6 +34,29 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
 
   protected SimpleRequestFactory req;
   protected EventBus eventBus;
+
+  /**
+   *  Class for counting events.
+   */
+  protected class SimpleFooEventHandler<P extends EntityProxy>
+      implements EntityProxyChange.Handler<P> {
+    int acquireEventCount = 0;
+    int createEventCount = 0;
+    int deleteEventCount = 0;
+    int totalEventCount = 0;
+    int updateEventCount = 0;
+
+    public void onProxyChange(EntityProxyChange<P> event) {
+      totalEventCount++;
+      switch (event.getWriteOperation()) {
+        case ACQUIRE: acquireEventCount++; break;
+        case CREATE: createEventCount++; break;
+        case DELETE: deleteEventCount++; break;
+        case UPDATE: updateEventCount++; break;
+        default: break;
+      }
+    }
+  }
 
   @Override
   public void gwtSetUp() {

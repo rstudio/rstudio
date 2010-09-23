@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
@@ -136,6 +137,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   public void  testDummyCreate() {
     delayTestFinish(5000);
 
+    final SimpleFooEventHandler<SimpleFooProxy> handler = 
+      new SimpleFooEventHandler<SimpleFooProxy>();
+    EntityProxyChange.registerForProxyType(
+        req.getEventBus(), SimpleFooProxy.class, handler);
+
     final SimpleFooProxy foo = req.create(SimpleFooProxy.class);
     Object futureId = foo.getId();
     assertEquals(futureId, foo.getId());
@@ -149,6 +155,10 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         Object futureId = foo.getId();
         assertEquals(futureId, foo.getId());
         assertTrue(((ProxyImpl) foo).isFuture());
+
+        assertEquals(1, handler.acquireEventCount);
+        assertEquals(1, handler.createEventCount);
+        assertEquals(2, handler.totalEventCount);
 
         checkStableIdEquals(foo, returned);
         finishTestAndReset();
@@ -326,11 +336,19 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testMethodWithSideEffects() {
     delayTestFinish(5000);
+
+    final SimpleFooEventHandler<SimpleFooProxy> handler = 
+      new SimpleFooEventHandler<SimpleFooProxy>();
+    EntityProxyChange.registerForProxyType(
+        req.getEventBus(), SimpleFooProxy.class, handler);
+
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
 
           @Override
           public void onSuccess(SimpleFooProxy newFoo) {
+            assertEquals(1, handler.acquireEventCount);
+            assertEquals(1, handler.totalEventCount);
             final Request<Long> mutateRequest = req.simpleFooRequest().countSimpleFooWithUserNameSideEffect(
                 newFoo);
             newFoo = mutateRequest.edit(newFoo);
@@ -340,7 +358,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
               public void onSuccess(Long response) {
                 assertCannotFire(mutateRequest);
                 assertEquals(new Long(1L), response);
-                // TODO: listen to create events also
+                assertEquals(1, handler.acquireEventCount);
+                assertEquals(1, handler.updateEventCount);
+                assertEquals(2, handler.totalEventCount);
 
                 // confirm that the instance method did have the desired
                 // sideEffect.
@@ -349,6 +369,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFoo) {
                         assertEquals("Ray", finalFoo.getUserName());
+                        assertEquals(1, handler.acquireEventCount);
+                        assertEquals(2, handler.updateEventCount);
+                        assertEquals(3, handler.totalEventCount);
                         finishTestAndReset();
                       }
                     });
