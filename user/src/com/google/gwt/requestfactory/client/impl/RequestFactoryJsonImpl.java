@@ -195,7 +195,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   protected String getHistoryToken(EntityProxyId<?> proxyId,
       ProxyToTypeMap recordToTypeMap) {
     EntityProxyIdImpl<?> entityProxyId = (EntityProxyIdImpl<?>) proxyId;
-    StringBuilder toReturn = new StringBuilder();
     boolean isFuture = false;
     Object tokenId = entityProxyId.encodedId;
     if (entityProxyId.isFuture) {
@@ -209,7 +208,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
         tokenId = persistedId;
       }
     }
-    toReturn = new StringBuilder();
+    StringBuilder toReturn = new StringBuilder();
     toReturn.append(tokenId);
     toReturn.append(HISTORY_TOKEN_SEPARATOR).append(
         entityProxyId.schema.getToken());
@@ -236,7 +235,11 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     }
 
     String id = bits[ID_INDEX];
-    Object futureId = datastoreToFutureMap.get(id, schema);
+    Object futureId = null;
+    if (!isFuture) {
+      // Look in the map only if it is a datastoreId.
+      futureId = datastoreToFutureMap.get(id, schema);
+    }
     return new EntityProxyIdImpl<EntityProxy>(id, schema, isFuture, futureId);
   }
 
