@@ -48,7 +48,7 @@
     <antcall target="expenses" />
     <antcall target="hello" />
     <antcall target="json" />
-    <!-- <antcall target="logexample" /> Doesn't quite work yet -->
+    <antcall target="logexample" />
     <antcall target="mail" />
     <antcall target="showcase" />
     <antcall target="validation" />
