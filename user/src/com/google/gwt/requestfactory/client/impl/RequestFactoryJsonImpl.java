@@ -152,7 +152,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
       }
       id = datastoreId;
     }
-    return ProxyImpl.getWireFormatId(id, NOT_FUTURE, proxyIdImpl.schema);
+    return ProxyImpl.wireFormatId(id, NOT_FUTURE, proxyIdImpl.schema);
   }
 
   public void initialize(EventBus eventBus) {

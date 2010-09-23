@@ -65,9 +65,9 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
   @SuppressWarnings("unchecked")
   public <P extends EntityProxy> P edit(P record) {
-    P returnRecordImpl = (P) ((ProxyImpl) record).getSchema().create(
-        ((ProxyImpl) record).asJso(), ((ProxyImpl) record).isFuture());
-    ((ProxyImpl) returnRecordImpl).setDeltaValueStore(deltaValueStore);
+    P returnRecordImpl = (P) ((ProxyImpl) record).schema().create(
+        ((ProxyImpl) record).asJso(), ((ProxyImpl) record).unpersisted());
+    ((ProxyImpl) returnRecordImpl).putDeltaValueStore(deltaValueStore);
     return returnRecordImpl;
   }
 

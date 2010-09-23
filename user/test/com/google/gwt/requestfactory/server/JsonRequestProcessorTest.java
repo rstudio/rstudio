@@ -135,7 +135,7 @@ public class JsonRequestProcessorTest extends TestCase {
         "UPDATE");
     assertEquals(1, updateArray.length());
     assertEquals(1, updateArray.getJSONObject(0).length());
-    assertTrue(updateArray.getJSONObject(0).has("id"));
+    assertTrue(updateArray.getJSONObject(0).has(RequestData.ENCODED_ID_PROPERTY));
     assertFalse(updateArray.getJSONObject(0).has("violations"));
     assertEquals(45, (int) fooResult.getIntId());
     assertEquals("JSC", fooResult.getUserName());

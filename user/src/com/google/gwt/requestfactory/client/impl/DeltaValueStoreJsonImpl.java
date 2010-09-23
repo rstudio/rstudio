@@ -72,7 +72,7 @@ class DeltaValueStoreJsonImpl {
     }
 
     public final native String getFutureId()/*-{
-      return this.futureId;
+      return this[@com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_FUTUREID_PROPERTY];
     }-*/;
 
     public final String getSchema() {
@@ -81,19 +81,19 @@ class DeltaValueStoreJsonImpl {
     }
 
     public final native String getSchemaAndId() /*-{
-      return this.id;
+      return this[@com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_ID_PROPERTY];
     }-*/;
 
     public final native String getVersion()/*-{
-      return this.version;
+      return this[@com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_VERSION_PROPERTY];
     }-*/;
 
     public final native boolean hasFutureId()/*-{
-      return 'futureId' in this;
+      return @com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_FUTUREID_PROPERTY in this;
     }-*/;
 
     public final native boolean hasId()/*-{
-      return 'id' in this;
+      return @com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_ID_PROPERTY in this;
     }-*/;
 
     public final native boolean hasViolations()/*-{

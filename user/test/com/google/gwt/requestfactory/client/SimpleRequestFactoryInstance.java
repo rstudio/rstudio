@@ -37,7 +37,7 @@ public class SimpleRequestFactoryInstance {
   }
   
   public static ProxySchema<?> schema() {
-    return ((ProxyImpl) factory().create(SimpleFooProxy.class)).getSchema();
+    return ((ProxyImpl) factory().create(SimpleFooProxy.class)).schema();
   }
 
   public static RequestFactoryJsonImpl impl() {

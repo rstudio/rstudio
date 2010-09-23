@@ -115,7 +115,7 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
     final SimpleFooStringProxy foo = req.create(SimpleFooStringProxy.class);
     Object futureId = foo.getId();
     assertEquals(futureId, foo.getId());
-    assertTrue(((ProxyImpl) foo).isFuture());
+    assertTrue(((ProxyImpl) foo).unpersisted());
     Request<SimpleFooStringProxy> fooReq = req.simpleFooStringRequest().persistAndReturnSelf(
         foo);
     fooReq.fire(new Receiver<SimpleFooStringProxy>() {
@@ -124,7 +124,7 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
       public void onSuccess(final SimpleFooStringProxy returned) {
         Object futureId = foo.getId();
         assertEquals(futureId, foo.getId());
-        assertTrue(((ProxyImpl) foo).isFuture());
+        assertTrue(((ProxyImpl) foo).unpersisted());
 
         assertEquals(1, handler.acquireEventCount);
         assertEquals(1, handler.createEventCount);
@@ -142,7 +142,7 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
     final SimpleBarProxy foo = req.create(SimpleBarProxy.class);
     Object futureId = foo.getId();
     assertEquals(futureId, foo.getId());
-    assertTrue(((ProxyImpl) foo).isFuture());
+    assertTrue(((ProxyImpl) foo).unpersisted());
     Request<SimpleBarProxy> fooReq = req.simpleBarRequest().persistAndReturnSelf(
         foo);
     fooReq.fire(new Receiver<SimpleBarProxy>() {
@@ -151,7 +151,7 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
       public void onSuccess(final SimpleBarProxy returned) {
         Object futureId = foo.getId();
         assertEquals(futureId, foo.getId());
-        assertTrue(((ProxyImpl) foo).isFuture());
+        assertTrue(((ProxyImpl) foo).unpersisted());
 
         checkStableIdEquals(foo, returned);
         finishTestAndReset();
@@ -591,15 +591,15 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
 
     final SimpleFooStringProxy foo = req.create(SimpleFooStringProxy.class);
     final Object futureId = foo.getId();
-    assertTrue(((ProxyImpl) foo).isFuture());
+    assertTrue(((ProxyImpl) foo).unpersisted());
     Request<SimpleFooStringProxy> fooReq = req.simpleFooStringRequest().persistAndReturnSelf(
         foo);
 
     final SimpleFooStringProxy newFoo = fooReq.edit(foo);
     assertEquals(futureId, foo.getId());
-    assertTrue(((ProxyImpl) foo).isFuture());
+    assertTrue(((ProxyImpl) foo).unpersisted());
     assertEquals(futureId, newFoo.getId());
-    assertTrue(((ProxyImpl) newFoo).isFuture());
+    assertTrue(((ProxyImpl) newFoo).unpersisted());
 
     newFoo.setUserName("GWT basic user");
     fooReq.fire(new Receiver<SimpleFooStringProxy>() {
@@ -607,11 +607,11 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
       @Override
       public void onSuccess(final SimpleFooStringProxy returned) {
         assertEquals(futureId, foo.getId());
-        assertTrue(((ProxyImpl) foo).isFuture());
+        assertTrue(((ProxyImpl) foo).unpersisted());
         assertEquals(futureId, newFoo.getId());
-        assertTrue(((ProxyImpl) newFoo).isFuture());
+        assertTrue(((ProxyImpl) newFoo).unpersisted());
 
-        assertFalse(((ProxyImpl) returned).isFuture());
+        assertFalse(((ProxyImpl) returned).unpersisted());
 
         checkStableIdEquals(foo, returned);
         checkStableIdEquals(newFoo, returned);

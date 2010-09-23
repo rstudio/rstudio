@@ -141,7 +141,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
 
   public void testSeparateIds() {
     ProxyImpl createProxy = (ProxyImpl) requestFactory.create(SimpleFooProxy.class);
-    assertTrue(createProxy.isFuture());
+    assertTrue(createProxy.unpersisted());
     String futureId = createProxy.encodedId();
 
     ProxyImpl mockProxy = new ProxyImpl(ProxyJsoImpl.create(futureId, 1,

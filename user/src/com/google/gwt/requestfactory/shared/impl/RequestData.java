@@ -45,6 +45,11 @@ public class RequestData {
   public static final String VIOLATIONS_TOKEN = "violations";
   
   /**
+   * Property on a proxy JSO that holds its futureId.
+   */
+  public static final String ENCODED_FUTUREID_PROPERTY = "!futureId";
+  
+  /**
    * Property on a proxy JSO that holds its encoded server side data store id.
    */
   public static final String ENCODED_ID_PROPERTY = "!id";
@@ -53,7 +58,7 @@ public class RequestData {
    * Property on a proxy JSO that holds its server side version data.
    */
   public static final String ENCODED_VERSION_PROPERTY = "!version";
-  
+
   /**
    * Id property that server entity objects are required to define.
    */

@@ -92,7 +92,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     } else if (o instanceof Date) {
       return String.valueOf(((Date) o).getTime());
     } else if (o instanceof ProxyImpl) {
-      return ((ProxyImpl) o).getWireFormatId();
+      return ((ProxyImpl) o).wireFormatId();
     } else if (o instanceof Enum) {
       return (double) ((Enum) o).ordinal();
     }
@@ -355,7 +355,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     }
 
     if (value instanceof ProxyImpl) {
-      setString(property.getName(), ((ProxyImpl) value).getWireFormatId());
+      setString(property.getName(), ((ProxyImpl) value).wireFormatId());
       return;
     }
 

@@ -36,7 +36,7 @@ import com.google.gwt.requestfactory.shared.impl.Property;
  */
 public class ProxyImpl implements EntityProxy {
 
-  protected static String getWireFormatId(String id, boolean isFuture,
+  protected static String wireFormatId(String id, boolean isFuture,
       ProxySchema<?> schema) {
     return id + "@" + (isFuture ? "IS" : "NO") + "@" + schema.getToken();
   }
@@ -100,23 +100,15 @@ public class ProxyImpl implements EntityProxy {
     return jso.<V> get(propertyName, propertyType);
   }
 
-  public ProxySchema<?> getSchema() {
-    return jso.getSchema();
-  }
-
-  public String getWireFormatId() {
-    return getWireFormatId(jso.encodedId(), isFuture, jso.getSchema());
-  }
-
-  public boolean isChanged() {
+  public boolean hasChanged() {
     if (deltaValueStore == null) {
       return false;
     }
     return deltaValueStore.isChanged();
   }
 
-  public boolean isFuture() {
-    return isFuture;
+  public ProxySchema<?> schema() {
+    return jso.getSchema();
   }
 
   public <V> void set(Property<V> property, ProxyImpl record, V value) {
@@ -133,22 +125,30 @@ public class ProxyImpl implements EntityProxy {
     if (!isFuture) {
       return new EntityProxyIdImpl<ProxyImpl>(
           encodedId(),
-          getSchema(),
+          schema(),
           false,
-          jso.getRequestFactory().datastoreToFutureMap.get(encodedId(), getSchema()));
+          jso.getRequestFactory().datastoreToFutureMap.get(encodedId(), schema()));
     }
-    return new EntityProxyIdImpl(encodedId(), getSchema(), isFuture, null);
+    return new EntityProxyIdImpl(encodedId(), schema(), isFuture, null);
+  }
+
+  public boolean unpersisted() {
+    return isFuture;
   }
 
   public Integer version() {
     return jso.version();
   }
 
-  protected ValueStoreJsonImpl getValueStore() {
+  public String wireFormatId() {
+    return wireFormatId(jso.encodedId(), isFuture, jso.getSchema());
+  }
+
+  protected ValueStoreJsonImpl valueStore() {
     return jso.getRequestFactory().getValueStore();
   }
   
-  void setDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore) {
+  void putDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore) {
     this.deltaValueStore = deltaValueStore;
   }
 }

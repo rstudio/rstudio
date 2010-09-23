@@ -829,7 +829,7 @@ public class RequestFactoryGenerator extends Generator {
       }
       sb.append(parameter.getName());
       if (classType != null && classType.isAssignableTo(entityProxyType)) {
-        sb.append(").getWireFormatId()");
+        sb.append(").wireFormatId()");
       }
     }
     return "new Object[] {" + sb.toString() + "}";

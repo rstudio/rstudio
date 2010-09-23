@@ -1206,7 +1206,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Object entityInstance = entityData.entityInstance;
     assert entityInstance != null;
     JSONObject returnObject = new JSONObject();
-    returnObject.put("futureId", originalEntityKey.encodedId + "");
+    returnObject.put(ENCODED_FUTUREID_PROPERTY, originalEntityKey.encodedId + "");
     // violations have already been taken care of.
     Object newId = getRawPropertyValueFromDatastore(entityInstance,
         ENTITY_ID_PROPERTY, propertyRefs);
@@ -1217,7 +1217,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
 
     newId = encodeId(newId);
-    returnObject.put("id", getSchemaAndId(originalEntityKey.proxyType, newId));
+    returnObject.put(ENCODED_ID_PROPERTY, getSchemaAndId(originalEntityKey.proxyType, newId));
     returnObject.put(ENCODED_VERSION_PROPERTY, encodePropertyValueFromDataStore(
         entityInstance, ENTITY_VERSION_PROPERTY,
         ENTITY_VERSION_PROPERTY.getName(), propertyRefs));
@@ -1347,13 +1347,13 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           entityData);
       if (writeOperation == WriteOperation.DELETE) {
         JSONObject deleteRecord = new JSONObject();
-        deleteRecord.put("id", getSchemaAndId(entityKey.proxyType,
+        deleteRecord.put(ENCODED_ID_PROPERTY, getSchemaAndId(entityKey.proxyType,
             entityKey.encodedId));
         deleteArray.put(deleteRecord);
       }
       if (writeOperation == WriteOperation.UPDATE) {
         JSONObject updateRecord = new JSONObject();
-        updateRecord.put("id", getSchemaAndId(entityKey.proxyType,
+        updateRecord.put(ENCODED_ID_PROPERTY, getSchemaAndId(entityKey.proxyType,
             entityKey.encodedId));
         updateArray.put(updateRecord);
       }
@@ -1383,10 +1383,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         JSONObject returnObject = new JSONObject();
         returnObject.put(VIOLATIONS_TOKEN, entityData.violations);
         if (entityKey.isFuture) {
-          returnObject.put("futureId", entityKey.encodedId);
-          returnObject.put("id", getSchemaAndId(entityKey.proxyType, null));
+          returnObject.put(ENCODED_FUTUREID_PROPERTY, entityKey.encodedId);
+          returnObject.put(ENCODED_ID_PROPERTY, getSchemaAndId(entityKey.proxyType, null));
         } else {
-          returnObject.put("id", getSchemaAndId(entityKey.proxyType,
+          returnObject.put(ENCODED_ID_PROPERTY, getSchemaAndId(entityKey.proxyType,
               entityKey.encodedId));
         }
         violations.put(returnObject);
