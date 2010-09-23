@@ -43,6 +43,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasAnimation;
 import com.google.gwt.user.client.ui.ProvidesResize;
@@ -171,6 +172,11 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"position:relative;padding-right:{2}px;outline:none;\" tabindex=\"{3}\" accessKey=\"{4}\">{5}<div>{6}</div></div>")
     SafeHtml divFocusableWithKey(int idx, String classes, int imageWidth,
         int tabIndex, char accessKey, SafeHtml imageHtml, SafeHtml cellContents);
+
+    @Template("<div style=\"position:absolute;{0}:0px;width:{1}px;"
+        + "height:{2}px;\">{3}</div>")
+    SafeHtml imageWrapper(String direction, int width, int height,
+        SafeHtml image);
   }
 
   /**
@@ -917,21 +923,10 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
    */
   private SafeHtml getImageHtml(ImageResource res) {
     // Right-justify image if LTR, left-justify if RTL
-
-    // Note: templates can't handle the URL currently
-
-    // Note: closing the tag with /> causes tests to fail
-    // in dev mode with HTMLUnit -- the close tag is lost
-    // when calling setInnerHTML on an Element.
-    // TODO(rice) find and fix the root cause of this failure
-
-    // CHECKSTYLE_OFF
-    return SafeHtmlUtils.fromTrustedString("<div style=\"position:absolute;"
-        + (LocaleInfo.getCurrentLocale().isRTL() ? "left" : "right")
-        + ":0px;top:0px;height:100%;width:" + res.getWidth()
-        + "px;background:url('" + res.getURL()
-        + "') no-repeat scroll center center transparent;\"></div>");
-    // CHECKSTYLE_ON
+    AbstractImagePrototype proto = AbstractImagePrototype.create(res);
+    SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+    return template.imageWrapper((LocaleInfo.getCurrentLocale().isRTL()
+        ? "left" : "right"), res.getWidth(), res.getHeight(), image);
   }
 
   /**

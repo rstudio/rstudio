@@ -32,7 +32,9 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HasAnimation;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -407,11 +409,10 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
   }
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div class=\"{0}\" style=\"position:absolute;{1}:0px;top:0px;"
-        + "height:{2}px;width:{3}px;background:url('{4}') no-repeat scroll "
-        + "center center transparent;\"></div>")
-    SafeHtml image(String classes, String direction, int height, int width,
-        String url);
+    @Template("<div class=\"{0}\" style=\"position:absolute;{1}:0px;"
+        + "width:{2}px;height:{3}px;\">{4}</div>")
+    SafeHtml imageWrapper(String classes, String direction, int width,
+        int height, SafeHtml image);
   }
 
   /**
@@ -902,8 +903,11 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     } else {
       direction = "left";
     }
-    return template.image(classesBuilder.toString(), direction,
-        res.getHeight(), res.getWidth(), res.getURL());
+
+    AbstractImagePrototype proto = AbstractImagePrototype.create(res);
+    SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+    return template.imageWrapper(classesBuilder.toString(), direction,
+        res.getWidth(), res.getHeight(), image);
   }
 
   /**

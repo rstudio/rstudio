@@ -24,6 +24,7 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
@@ -45,9 +46,30 @@ public class IconCellDecorator<C> implements Cell<C> {
     SafeHtml outerDiv(String direction, int width, SafeHtml icon,
         SafeHtml cellContents);
 
-    @Template("<div style=\"position:absolute;{0}:0px;top:0px;height:100%;width:{1}px;\"></div>")
-    SafeHtml imagePlaceholder(String direction, int width);
+    /**
+     * The wrapper around the image vertically aligned to the bottom.
+     */
+    @Template("<div style=\"position:absolute;{0}:0px;bottom:0px;\">{1}</div>")
+    SafeHtml imageWrapperBottom(String direction, SafeHtml image);
+
+    /**
+     * The wrapper around the image vertically aligned to the middle.
+     */
+    @Template("<div style=\"position:absolute;{0}:0px;top:50%;"
+        + "margin-top:-{1}px;\">{2}</div>")
+    SafeHtml imageWrapperMiddle(String direction, int halfHeight, SafeHtml image);
+
+    /**
+     * The wrapper around the image vertically aligned to the top.
+     */
+    @Template("<div style=\"position:absolute;{0}:0px;top:0px;\">{1}</div>")
+    SafeHtml imageWrapperTop(String direction, SafeHtml image);
   }
+
+  /**
+   * The default spacing between the icon and the text in pixels.
+   */
+  private static final int DEFAULT_SPACING = 6;
 
   private static Template template;
 
@@ -70,7 +92,7 @@ public class IconCellDecorator<C> implements Cell<C> {
    * @param cell the cell to decorate
    */
   public IconCellDecorator(ImageResource icon, Cell<C> cell) {
-    this(icon, cell, HasVerticalAlignment.ALIGN_MIDDLE, 6);
+    this(icon, cell, HasVerticalAlignment.ALIGN_MIDDLE, DEFAULT_SPACING);
   }
 
   /**
@@ -88,7 +110,7 @@ public class IconCellDecorator<C> implements Cell<C> {
     }
     this.cell = cell;
     this.iconHtml = getImageHtml(icon, valign, false);
-    this.imageWidth = icon.getWidth() + 6;
+    this.imageWidth = icon.getWidth() + spacing;
     this.placeHolderHtml = getImageHtml(icon, valign, true);
   }
 
@@ -160,22 +182,26 @@ public class IconCellDecorator<C> implements Cell<C> {
    * @param isPlaceholder if true, do not include the background image
    * @return the rendered HTML
    */
-  // TODO(jlabanca): Move this to a Utility class.
   SafeHtml getImageHtml(ImageResource res, VerticalAlignmentConstant valign,
       boolean isPlaceholder) {
+    // Get the HTML for the image.
+    SafeHtml image;
     if (isPlaceholder) {
-      return template.imagePlaceholder(direction, res.getWidth());
+      image = SafeHtmlUtils.fromTrustedString("<div></div>");
     } else {
-      String vert = valign == HasVerticalAlignment.ALIGN_MIDDLE ? "center"
-          : valign.getVerticalAlignString();
-      // Templates are having problems with url('data:image/png;base64,...')
-      // CHECKSTYLE_OFF
-      return SafeHtmlUtils.fromTrustedString("<div style=\"position:absolute;"
-          + direction + ":0px;top:0px;height:100%;width:" + res.getWidth()
-          + "px;background:url('" + res.getURL() + "') no-repeat scroll "
-          + SafeHtmlUtils.htmlEscape(vert) // for safety
-          + " center transparent;\"></div>");
-      // CHECKSTYLE_ON
+      AbstractImagePrototype proto = AbstractImagePrototype.create(res);
+      image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+    }
+
+    // Create the wrapper based on the vertical alignment.
+    if (HasVerticalAlignment.ALIGN_TOP == valign) {
+      return template.imageWrapperTop(direction, image);
+    } else if (HasVerticalAlignment.ALIGN_BOTTOM == valign) {
+      return template.imageWrapperBottom(direction, image);
+    } else {
+      // Add one to the margin-top because it looks better in all browsers.
+      int halfHeight = 1 + (int) Math.round(res.getHeight() / 2.0);
+      return template.imageWrapperMiddle(direction, halfHeight, image);
     }
   }
 
