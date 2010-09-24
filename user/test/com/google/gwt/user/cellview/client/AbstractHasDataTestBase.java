@@ -87,7 +87,7 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     if (userAgent.contains("Safari")) {
       RegExp versionRegExp = RegExp.compile("Version/[0-3]", "ig");
       MatchResult result = versionRegExp.exec(userAgent);
-      if (result.getGroupCount() > 0) {
+      if (result != null && result.getGroupCount() > 0) {
         return;
       }
     }
