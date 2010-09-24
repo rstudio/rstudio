@@ -110,6 +110,17 @@ public class SerializabilityUtil {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Short.class);
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(String.class);
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Throwable.class);
+
+    try {
+      /*
+       * Work around for incompatible type hierarchy (and therefore signature)
+       * between JUnit3 and JUnit4. Do this via reflection so we don't force the
+       * server to depend on JUnit.
+       */
+      Class<?> clazz = Class.forName("junit.framework.AssertionFailedError");
+      TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(clazz);
+    } catch (ClassNotFoundException dontCare) {
+    }
   }
 
   /**

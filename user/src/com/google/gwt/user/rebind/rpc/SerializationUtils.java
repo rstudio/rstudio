@@ -60,6 +60,12 @@ public class SerializationUtils {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Short");
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.String");
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Throwable");
+
+    /*
+     * Work around for incompatible type hierarchy (and therefore signature)
+     * between JUnit3 and JUnit4.
+     */
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("junit.framework.AssertionFailedError");
   }
 
   /**
