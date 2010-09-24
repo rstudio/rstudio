@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -32,11 +33,12 @@ public interface SimpleFooRequest {
 
   ProxyRequest<SimpleFooProxy> findSimpleFooById(Long id);
 
-  Request<Integer> privateMethod();
-
   Request<List<Integer>> getNumberList();
 
   Request<Set<Integer>> getNumberSet();
+
+  @Instance
+  Request<String> hello(SimpleFooProxy instance, SimpleBarProxy proxy);
 
   @Instance
   Request<Void> persist(SimpleFooProxy proxy);
@@ -44,14 +46,21 @@ public interface SimpleFooRequest {
   @Instance
   ProxyRequest<SimpleFooProxy> persistAndReturnSelf(SimpleFooProxy proxy);
 
-  Request<Void> reset();
+  Request<Integer> privateMethod();
 
-  @Instance
-  Request<String> hello(SimpleFooProxy instance, SimpleBarProxy proxy);
+  Request<Boolean> processBooleanList(List<Boolean> values);
 
-  @Instance
-  Request<Integer> sum(SimpleFooProxy instance, List<Integer> values);
+  Request<Date> processDateList(List<Date> values);
+
+  Request<SimpleEnum> processEnumList(List<SimpleEnum> values);
+
+  Request<String> processString(String value);
 
   @Instance
   Request<String> processList(SimpleFooProxy instance, List<SimpleFooProxy> values);
+  
+  Request<Void> reset();
+
+  @Instance
+  Request<Integer> sum(SimpleFooProxy instance, List<Integer> values);
 }

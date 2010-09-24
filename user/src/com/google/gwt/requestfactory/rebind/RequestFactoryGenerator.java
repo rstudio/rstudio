@@ -198,7 +198,8 @@ public class RequestFactoryGenerator extends Generator {
    * contributed from EntityProxy are excluded.
    */
   private List<EntityProperty> computeEntityPropertiesFromProxyType(
-      JClassType publicProxyType) {
+      JClassType publicProxyType, TreeLogger logger)
+      throws UnableToCompleteException {
     List<EntityProperty> entityProperties = new ArrayList<EntityProperty>();
     Set<String> propertyNames = new HashSet<String>();
 
@@ -208,7 +209,7 @@ public class RequestFactoryGenerator extends Generator {
         continue;
       }
 
-      EntityProperty entityProperty = maybeComputePropertyFromMethod(method);
+      EntityProperty entityProperty = maybeComputePropertyFromMethod(method, logger);
       if (entityProperty != null) {
         String propertyName = entityProperty.getName();
         if (!propertyNames.contains(propertyName)) {
@@ -222,8 +223,8 @@ public class RequestFactoryGenerator extends Generator {
   };
   
   private void ensureProxyType(TreeLogger logger,
-      GeneratorContext generatorContext, String packageName,
-      JClassType publicProxyType) throws UnableToCompleteException {
+      GeneratorContext generatorContext, JClassType publicProxyType)
+      throws UnableToCompleteException {
     TypeOracle typeOracle = generatorContext.getTypeOracle();
 
     if (!publicProxyType.isAssignableTo(entityProxyType)) {
@@ -236,6 +237,7 @@ public class RequestFactoryGenerator extends Generator {
     if (generatedProxyTypes.contains(publicProxyType)) {
       return;
     }
+    String packageName = publicProxyType.getPackage().getName();
 
     String proxyImplTypeName = publicProxyType.getName() + "Impl";
     PrintWriter pw = generatorContext.tryCreate(logger, packageName,
@@ -272,7 +274,7 @@ public class RequestFactoryGenerator extends Generator {
       f.setSuperclass(ProxyImpl.class.getSimpleName());
       f.addImplementedInterface(publicProxyType.getName());
 
-      List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(publicProxyType);
+      List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(publicProxyType, logger);
       for (EntityProperty entityProperty : entityProperties) {
         JType type = entityProperty.getType();
         if (type.isPrimitive() == null) {
@@ -307,7 +309,7 @@ public class RequestFactoryGenerator extends Generator {
         }
       }
 
-      printSchema(typeOracle, publicProxyType, proxyImplTypeName, sw);
+      printSchema(typeOracle, publicProxyType, proxyImplTypeName, sw, logger);
 
       sw.println();
       String simpleImplName = publicProxyType.getSimpleSourceName() + "Impl";
@@ -373,8 +375,7 @@ public class RequestFactoryGenerator extends Generator {
     generatedProxyTypes.add(publicProxyType);
     // ensure generatation of transitive dependencies
     for (JClassType type : transitiveDeps) {
-      ensureProxyType(logger, generatorContext, type.getPackage().getName(),
-          type);
+      ensureProxyType(logger, generatorContext, type);
     }
   }
 
@@ -643,10 +644,17 @@ public class RequestFactoryGenerator extends Generator {
 
     // write each method.
     for (JMethod method : selectorInterface.getOverridableMethods()) {
-      JClassType returnType = method.getReturnType().isParameterized().getTypeArgs()[0];
+      JParameterizedType parameterizedType = method.getReturnType()
+          .isParameterized();
+      if (parameterizedType == null) {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Illegal return type for %s. Methods of %s must return Request<T>.",
+            method.getName(), selectorInterface.getName()));
+        throw new UnableToCompleteException();
+      }
+      JClassType returnType = parameterizedType.getTypeArgs()[0];
 
-      ensureProxyType(logger, generatorContext,
-          returnType.getPackage().getName(), returnType);
+      ensureProxyType(logger, generatorContext, returnType);
 
       String operationName = selectorInterface.getQualifiedBinaryName()
           + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR + method.getName();
@@ -658,6 +666,20 @@ public class RequestFactoryGenerator extends Generator {
       String extraArgs = "";
       // TODO: refactor this into some kind of extensible map lookup
       // check for ProxyListRequest<T> or ProxySetRequest<T>
+      if (method.getReturnType().isArray() != null) {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Illegal return type for %s. Methods of %s cannot return array.",
+            method.getName(), selectorInterface.getName()));
+        throw new UnableToCompleteException();
+      }
+      for (JParameter param : method.getParameters()) {
+        if (param.getType().isArray() != null) {
+          logger.log(TreeLogger.ERROR, String.format(
+            "Illegal param type %s for %s. Methods of %s cannot take array parameters.",
+            param.getName(), method.getName(), selectorInterface.getName()));
+          throw new UnableToCompleteException();
+        }
+      }
       if (isProxyCollectionRequest(typeOracle, requestType)) {
         Class<?> colType = getCollectionType(typeOracle, requestType);
         assert colType != null;
@@ -712,7 +734,8 @@ public class RequestFactoryGenerator extends Generator {
         requestClassName = AbstractBigIntegerRequest.class.getName();
       } else if (isEnumRequest(typeOracle, requestType)) {
         requestClassName = AbstractEnumRequest.class.getName();
-        extraArgs = ", " + requestType.isParameterized().getTypeArgs()[0]
+        JClassType enumType = requestType.isParameterized().getTypeArgs()[0];
+        extraArgs = ", " + enumType.getQualifiedSourceName()
             + ".values()";
       } else if (isVoidRequest(typeOracle, requestType)) {
         requestClassName = AbstractVoidRequest.class.getName();
@@ -820,10 +843,7 @@ public class RequestFactoryGenerator extends Generator {
         sb.append("factory.getWireFormat(" + parameter.getName() + ")");
         continue;
       }
-      JParameterizedType params = paramType.isParameterized();
-      if (params != null) {
-        classType = params.getTypeArgs()[0];
-      }
+      
       if (classType != null && classType.isAssignableTo(entityProxyType)) {
         sb.append("((" + classType.getQualifiedBinaryName() + "Impl" + ")");
       }
@@ -946,18 +966,31 @@ public class RequestFactoryGenerator extends Generator {
    * Returns an {@link EntityProperty} if the method looks like a bean property
    * accessor or <code>null</code>.
    */
-  private EntityProperty maybeComputePropertyFromMethod(JMethod method) {
+  private EntityProperty maybeComputePropertyFromMethod(JMethod method,
+      TreeLogger logger) throws UnableToCompleteException {
     String propertyName = null;
     JType propertyType = null;
     String methodName = method.getName();
     if (methodName.startsWith("get")) {
       propertyName = Introspector.decapitalize(methodName.substring(3));
       propertyType = method.getReturnType();
+      if (propertyType.isArray() != null) {
+        logger.log(TreeLogger.ERROR, "Method " + methodName
+        + " on " + method.getEnclosingType().getQualifiedSourceName()
+        + " may not return a Java array.");
+        throw new UnableToCompleteException();
+      }
     } else if (methodName.startsWith("set")) {
       propertyName = Introspector.decapitalize(methodName.substring(3));
       JParameter[] parameters = method.getParameters();
       if (parameters.length > 0) {
         propertyType = parameters[parameters.length - 1].getType();
+        if (propertyType.isArray() != null) {
+          logger.log(TreeLogger.ERROR, "Method " + methodName
+          + " on " + method.getEnclosingType().getQualifiedSourceName()
+          + " may accept a Java array as a parameter.");
+          throw new UnableToCompleteException();
+        }
       }
     }
 
@@ -1009,12 +1042,14 @@ public class RequestFactoryGenerator extends Generator {
    * @param publicProxyType
    * @param proxyImplTypeName
    * @param sw
+   * @param logger
    * @return
    * @throws UnableToCompleteException
    */
 
   private JClassType printSchema(TypeOracle typeOracle,
-      JClassType publicProxyType, String proxyImplTypeName, SourceWriter sw) {
+      JClassType publicProxyType, String proxyImplTypeName, SourceWriter sw,
+      TreeLogger logger) throws UnableToCompleteException {
     sw.println(String.format(
         "public static class MySchema extends ProxySchema<%s> {",
         proxyImplTypeName));
@@ -1034,7 +1069,8 @@ public class RequestFactoryGenerator extends Generator {
       throw new RuntimeException(e);
     }
 
-    List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(publicProxyType);
+    List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(publicProxyType,
+        logger);
     for (EntityProperty entityProperty : entityProperties) {
       sw.println(String.format("set.add(%s);", entityProperty.getName()));
     }

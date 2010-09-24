@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -92,7 +93,7 @@ public class RequestData {
     if (parameters != null) {
       for (int i = 0; i < parameters.length; i++) {
         Object value = parameters[i];
-        requestMap.put(PARAM_TOKEN + i, value.toString());
+        requestMap.put(PARAM_TOKEN + i, asJsonString(value));
       }
     }
     if (contentData != null) {
@@ -111,5 +112,45 @@ public class RequestData {
       requestMap.put(PROPERTY_REF_TOKEN, props.toString());
     }
     return requestMap;
+  }
+
+  private String asJsonString(Object value) {
+    if (value == null) {
+      return "null";
+    }
+
+    if (value instanceof Iterable) {
+      StringBuffer toReturn = new StringBuffer();
+      toReturn.append('[');
+      boolean first = true;
+      for (Object val : ((Iterable) value)) {
+        if (!first) {
+          toReturn.append(',');
+        } else {
+          first = false;
+        }
+        toReturn.append(asJsonString(val));
+      }
+      toReturn.append(']');
+      return toReturn.toString();
+    }
+
+    if (value instanceof HasWireFormatId) {
+      return "\"" + ((HasWireFormatId) value).wireFormatId() + "\"";
+    }
+
+    /* 
+     * Roughly parallels JsonRequestProcessor.encodePropertyValue.
+     * Everything is toString(), except Date and Enum which must become numbers.
+     */
+    if (value instanceof Date) {
+      return asJsonString(((Date) value).getTime());
+    }
+
+    if (value instanceof Enum) {
+      return asJsonString(((Enum) value).ordinal());
+    }
+    
+    return value.toString();
   }
 }

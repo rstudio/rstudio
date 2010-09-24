@@ -23,12 +23,15 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
+import com.google.gwt.requestfactory.shared.SimpleEnum;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -93,14 +96,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       });
     }
 
-    void doVoidTest() {
-      voidReturnExpected = true;
-      doTest();
-    }
-
     void doTest() {
       proxy.setUserName("a"); // too short
       request.fire(this);
+    }
+
+    void doVoidTest() {
+      voidReturnExpected = true;
+      doTest();
     }
   }
 
@@ -189,44 +192,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
-  public void testHistoryToken() {
-    delayTestFinish(5000);
-    final SimpleBarProxy foo = req.create(SimpleBarProxy.class);
-    final EntityProxyId<SimpleBarProxy> futureId = foo.stableId();
-    final String futureToken = req.getHistoryToken(futureId);
-
-    // Check that a newly-created object's token can be found
-    assertEquals(futureId, req.getProxyId(futureToken));
-    assertEquals(req.getClass(futureId), req.getClass(futureToken));
-
-    Request<SimpleBarProxy> fooReq = req.simpleBarRequest().persistAndReturnSelf(
-        foo);
-    fooReq.fire(new Receiver<SimpleBarProxy>() {
-      @Override
-      public void onSuccess(final SimpleBarProxy returned) {
-        EntityProxyId<SimpleBarProxy> persistedId = returned.stableId();
-        String persistedToken = req.getHistoryToken(returned.stableId());
-
-        // Expect variations after persist
-        assertFalse(futureToken.equals(persistedToken));
-        
-        // Make sure the token is stable after persist using the future id
-        assertEquals(persistedToken, req.getHistoryToken(futureId));
-
-        // Check that the persisted object can be found with future token
-        assertEquals(futureId, req.getProxyId(futureToken));
-        assertEquals(futureId, req.getProxyId(persistedToken));
-        assertEquals(req.getClass(futureId), req.getClass(persistedToken));
-
-        assertEquals(persistedId, req.getProxyId(futureToken));
-        assertEquals(persistedId, req.getProxyId(persistedToken));
-        assertEquals(req.getClass(persistedId), req.getClass(futureToken));
-
-        finishTestAndReset();
-      }
-    });
-  }
-
   public void testFetchEntity() {
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
@@ -294,6 +259,24 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     assertEquals(eventBus, req.getEventBus());
   }
 
+  public void testGetListLongId() {
+    delayTestFinish(5000);
+
+    // Long ids
+    req.simpleFooRequest().findAll().with("barField.userName").fire(
+        new Receiver<List<SimpleFooProxy>>() {
+          @Override
+          public void onSuccess(List<SimpleFooProxy> response) {
+            assertEquals(1, response.size());
+            for (SimpleFooProxy foo : response) {
+              assertNotNull(foo.stableId());
+              assertEquals("FOO", foo.getBarField().getUserName());
+            }
+            finishTestAndReset();
+          }
+        });
+  }
+
   public void testGetListStringId() {
     delayTestFinish(5000);
 
@@ -311,22 +294,42 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
-  public void testGetListLongId() {
+  public void testHistoryToken() {
     delayTestFinish(5000);
+    final SimpleBarProxy foo = req.create(SimpleBarProxy.class);
+    final EntityProxyId<SimpleBarProxy> futureId = foo.stableId();
+    final String futureToken = req.getHistoryToken(futureId);
 
-    // Long ids
-    req.simpleFooRequest().findAll().with("barField.userName").fire(
-        new Receiver<List<SimpleFooProxy>>() {
-          @Override
-          public void onSuccess(List<SimpleFooProxy> response) {
-            assertEquals(1, response.size());
-            for (SimpleFooProxy foo : response) {
-              assertNotNull(foo.stableId());
-              assertEquals("FOO", foo.getBarField().getUserName());
-            }
-            finishTestAndReset();
-          }
-        });
+    // Check that a newly-created object's token can be found
+    assertEquals(futureId, req.getProxyId(futureToken));
+    assertEquals(req.getClass(futureId), req.getClass(futureToken));
+
+    Request<SimpleBarProxy> fooReq = req.simpleBarRequest().persistAndReturnSelf(
+        foo);
+    fooReq.fire(new Receiver<SimpleBarProxy>() {
+      @Override
+      public void onSuccess(final SimpleBarProxy returned) {
+        EntityProxyId<SimpleBarProxy> persistedId = returned.stableId();
+        String persistedToken = req.getHistoryToken(returned.stableId());
+
+        // Expect variations after persist
+        assertFalse(futureToken.equals(persistedToken));
+        
+        // Make sure the token is stable after persist using the future id
+        assertEquals(persistedToken, req.getHistoryToken(futureId));
+
+        // Check that the persisted object can be found with future token
+        assertEquals(futureId, req.getProxyId(futureToken));
+        assertEquals(futureId, req.getProxyId(persistedToken));
+        assertEquals(req.getClass(futureId), req.getClass(persistedToken));
+
+        assertEquals(persistedId, req.getProxyId(futureToken));
+        assertEquals(persistedId, req.getProxyId(persistedToken));
+        assertEquals(req.getClass(persistedId), req.getClass(futureToken));
+
+        finishTestAndReset();
+      }
+    });
   }
 
   /*
@@ -859,47 +862,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   * TODO: all these tests should check the final values. It will be easy when
   * we have better persistence than the singleton pattern.
   */
-  public void testPersistValueSetAlreadyExists() {
-    delayTestFinish(5000);
-
-    req.simpleBarRequest().findSimpleBarById("1L").fire(
-        new Receiver<SimpleBarProxy>() {
-          @Override
-          public void onSuccess(final SimpleBarProxy barProxy) {
-            req.simpleFooRequest().findSimpleFooById(999L).with("oneToManySetField").fire(
-                new Receiver<SimpleFooProxy>() {
-                  @Override
-                  public void onSuccess(SimpleFooProxy fooProxy) {
-                    Request<SimpleFooProxy> updReq =
-                        req.simpleFooRequest().persistAndReturnSelf(
-                        fooProxy).with("oneToManySetField");
-                    fooProxy = updReq.edit(fooProxy);
-
-                    Set<SimpleBarProxy> setField =
-                        fooProxy.getOneToManySetField();
-                    final int listCount = setField.size();
-                    assertContains(setField, barProxy);
-                    setField.add(barProxy);
-                    updReq.fire(new Receiver<SimpleFooProxy>() {
-                      @Override
-                      public void onSuccess(SimpleFooProxy response) {
-                        assertEquals(response.getOneToManySetField().size(),
-                            listCount);
-                        assertContains(response.getOneToManySetField(),
-                            barProxy);
-                        finishTestAndReset();
-                      }
-                    });
-                  }
-                });
-          }
-        });
-  }
-
-  /*
-  * TODO: all these tests should check the final values. It will be easy when
-  * we have better persistence than the singleton pattern.
-  */
   public void testPersistValueSetAddNew() {
     delayTestFinish(5000);
     SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
@@ -926,6 +888,47 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                       public void onSuccess(SimpleFooProxy response) {
                         assertEquals(listCount + 1,
                             response.getOneToManySetField().size());
+                        assertContains(response.getOneToManySetField(),
+                            barProxy);
+                        finishTestAndReset();
+                      }
+                    });
+                  }
+                });
+          }
+        });
+  }
+
+  /*
+  * TODO: all these tests should check the final values. It will be easy when
+  * we have better persistence than the singleton pattern.
+  */
+  public void testPersistValueSetAlreadyExists() {
+    delayTestFinish(5000);
+
+    req.simpleBarRequest().findSimpleBarById("1L").fire(
+        new Receiver<SimpleBarProxy>() {
+          @Override
+          public void onSuccess(final SimpleBarProxy barProxy) {
+            req.simpleFooRequest().findSimpleFooById(999L).with("oneToManySetField").fire(
+                new Receiver<SimpleFooProxy>() {
+                  @Override
+                  public void onSuccess(SimpleFooProxy fooProxy) {
+                    Request<SimpleFooProxy> updReq =
+                        req.simpleFooRequest().persistAndReturnSelf(
+                        fooProxy).with("oneToManySetField");
+                    fooProxy = updReq.edit(fooProxy);
+
+                    Set<SimpleBarProxy> setField =
+                        fooProxy.getOneToManySetField();
+                    final int listCount = setField.size();
+                    assertContains(setField, barProxy);
+                    setField.add(barProxy);
+                    updReq.fire(new Receiver<SimpleFooProxy>() {
+                      @Override
+                      public void onSuccess(SimpleFooProxy response) {
+                        assertEquals(response.getOneToManySetField().size(),
+                            listCount);
                         assertContains(response.getOneToManySetField(),
                             barProxy);
                         finishTestAndReset();
@@ -994,6 +997,70 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  public void testPrimitiveListAsParameter() {
+    delayTestFinish(5000);
+    final Request<SimpleFooProxy> fooReq =
+        req.simpleFooRequest().findSimpleFooById(999L);
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      public void onSuccess(SimpleFooProxy response) {
+         final Request<Integer> sumReq = req.simpleFooRequest().sum(
+             response, Arrays.asList(1,2,3));
+         sumReq.fire(new Receiver<Integer>() {
+           @Override
+           public void onSuccess(Integer response) {
+             assertEquals(6, response.intValue());
+             finishTestAndReset();
+           }
+         });
+      }
+    });
+  }
+
+  public void testPrimitiveListBooleanAsParameter() {
+    delayTestFinish(5000);
+
+    Request<Boolean> procReq = req.simpleFooRequest().processBooleanList(
+        Arrays.asList(true, false));
+
+    procReq.fire(new Receiver<Boolean>() {
+      @Override
+      public void onSuccess(Boolean response) {
+        assertEquals(true, (boolean) response);
+        finishTestAndReset();
+      }
+    });
+  }
+
+  public void testPrimitiveListDateAsParameter() {
+    delayTestFinish(5000);
+
+    final Date date = new Date(90, 0, 1);
+    Request<Date> procReq = req.simpleFooRequest().processDateList(
+             Arrays.asList(date));
+    procReq.fire(new Receiver<Date>() {
+      @Override
+      public void onSuccess(Date response) {
+        assertEquals(date, response);
+        finishTestAndReset();
+      }
+    });
+  }
+
+  public void testPrimitiveListEnumAsParameter() {
+    delayTestFinish(5000);
+
+    Request<SimpleEnum> procReq = req.simpleFooRequest().processEnumList(
+        Arrays.asList(SimpleEnum.BAR));
+
+    procReq.fire(new Receiver<SimpleEnum>() {
+      @Override
+      public void onSuccess(SimpleEnum response) {
+        assertEquals(SimpleEnum.BAR, response);
+        finishTestAndReset();
+      }
+    });       
+  }
+
   public void testPrimitiveSet() {
     delayTestFinish(5000);
     final Request<Set<Integer>> fooReq = req.simpleFooRequest().getNumberSet();
@@ -1009,6 +1076,19 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  public void testPrimitiveString() {
+    delayTestFinish(5000);
+    final String testString = "test\"string\'with\nstring\u2060characters\t";
+    final Request<String> fooReq = req.simpleFooRequest().processString(testString);
+    fooReq.fire(new Receiver<String>() {
+      @Override
+      public void onSuccess(String response) {
+        assertEquals(testString, response);
+        finishTestAndReset();
+      }
+    });
+  }
+
   public void testProxyList() {
     delayTestFinish(5000);
     final Request<SimpleFooProxy> fooReq = req.simpleFooRequest().findSimpleFooById(999L).with("oneToManyField");
@@ -1017,6 +1097,25 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       public void onSuccess(SimpleFooProxy response) {
         assertEquals(2, response.getOneToManyField().size());
         finishTestAndReset();
+      }
+    });
+  }
+
+  public void testProxyListAsParameter() {
+    delayTestFinish(5000);
+    final Request<SimpleFooProxy> fooReq =
+        req.simpleFooRequest().findSimpleFooById(999L).with("selfOneToManyField");
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+      public void onSuccess(final SimpleFooProxy fooProxy) {
+         final Request<String> procReq = req.simpleFooRequest().processList(
+             fooProxy, fooProxy.getSelfOneToManyField());
+         procReq.fire(new Receiver<String>() {
+           @Override
+           public void onSuccess(String response) {
+             assertEquals(fooProxy.getUserName(), response);
+             finishTestAndReset();
+           }
+         });
       }
     });
   }

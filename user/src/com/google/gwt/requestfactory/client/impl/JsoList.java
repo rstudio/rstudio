@@ -129,7 +129,8 @@ class JsoList<T> extends AbstractList<T> implements JsoCollection {
       }
     } catch (final Exception ex) {
       throw new IllegalStateException(
-          "Index " + i + " has invalid " + " value " + get(jso, i)
+          "Index " + i + " "
+              + "has invalid " + " value " + get(jso, i)
               + " for type " + type);
     }
 

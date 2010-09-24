@@ -28,7 +28,7 @@ package com.google.gwt.requestfactory.client.impl;
  * @param <E> an enum type
  */
 public abstract class AbstractEnumRequest<E extends Enum<E>> extends
-    AbstractPrimitiveRequest<Integer, AbstractEnumRequest<E>> {
+    AbstractPrimitiveRequest<E, AbstractEnumRequest<E>> {
 
   private final E[] enumValues;
 
@@ -42,7 +42,8 @@ public abstract class AbstractEnumRequest<E extends Enum<E>> extends
     int ordinal = Integer.valueOf(responseText);
     for (E e : enumValues) {
       if (ordinal == e.ordinal()) {
-        succeed(ordinal);
+        succeed(e);
+        return;
       }
     }
     throw new IllegalArgumentException("Invalid enum ordinal value " + ordinal);

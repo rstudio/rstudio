@@ -16,9 +16,9 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
-
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
+import com.google.gwt.requestfactory.shared.impl.HasWireFormatId;
 import com.google.gwt.requestfactory.shared.impl.Property;
 
 /**
@@ -34,7 +34,7 @@ import com.google.gwt.requestfactory.shared.impl.Property;
  * is fixed it might be worth abandoning the instanceof capability, needs
  * thinking.
  */
-public class ProxyImpl implements EntityProxy {
+public class ProxyImpl implements EntityProxy, HasWireFormatId {
 
   protected static String wireFormatId(String id, boolean isFuture,
       ProxySchema<?> schema) {

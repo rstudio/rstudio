@@ -98,6 +98,22 @@ public class SimpleFoo {
     return get();
   }
 
+  public static Boolean processBooleanList(List<Boolean> values) {
+    return values.get(0);
+  }
+
+  public static Date processDateList(List<Date> values) {
+    return values.get(0);
+  }
+  
+  public static SimpleEnum processEnumList(List<SimpleEnum> values) {
+    return values.get(0);
+  }
+
+  public static String processString(String string) {
+    return string;
+  }
+
   public static synchronized SimpleFoo reset() {
     SimpleFoo instance = new SimpleFoo();
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
@@ -264,6 +280,10 @@ public class SimpleFoo {
   public Long getLongField() {
     return longField;
   }
+
+  public String getNullField() {
+    return nullField;
+  }
   
   public List<Integer> getNumberListField() {
     return numberListField;
@@ -275,10 +295,6 @@ public class SimpleFoo {
 
   public Set<SimpleBar> getOneToManySetField() {
     return oneToManySetField;
-  }
-
-  public String getNullField() {
-    return nullField;
   }
 
   /**
@@ -335,7 +351,7 @@ public class SimpleFoo {
     }
     return result;
   }
-
+  
   public void setBarField(SimpleBar barField) {
     this.barField = barField;
   }
@@ -414,6 +430,10 @@ public class SimpleFoo {
     this.longField = longField;
   }
 
+  public void setNullField(String nullField) {
+    this.nullField = nullField;
+  }
+
   public void setNumberListField(List<Integer> numberListField) {
     this.numberListField = numberListField;
   }
@@ -426,15 +446,15 @@ public class SimpleFoo {
     this.oneToManySetField = oneToManySetField;
   }
 
-  public void setNullField(String nullField) {
-    this.nullField = nullField;
-  }
-
   /**
    * @param otherBoolField the otherBoolField to set
    */
   public void setOtherBoolField(Boolean otherBoolField) {
     this.otherBoolField = otherBoolField;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
   }
 
   public void setPleaseCrash(Integer crashIf42or43) throws Exception {
@@ -445,10 +465,6 @@ public class SimpleFoo {
       throw new Exception("THIS EXCEPTION IS EXPECTED BY A TEST");
     }
     pleaseCrash = crashIf42or43;
-  }
-
-  public void setPassword(String password) {
-    this.password = password;
   }
 
   public void setSelfOneToManyField(List<SimpleFoo> selfOneToManyField) {

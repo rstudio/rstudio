@@ -880,7 +880,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     } else if (result instanceof Number || result instanceof Enum<?>
         || result instanceof String || result instanceof Date
         || result instanceof Character || result instanceof Boolean) {
-      envelop.put(RESULT_TOKEN, result);
+      envelop.put(RESULT_TOKEN, encodePropertyValue(result));
     } else {
       Class<? extends EntityProxy> returnType = null;
       if (operation.getDomainClassName().equals(FindService.class.getName())) {
