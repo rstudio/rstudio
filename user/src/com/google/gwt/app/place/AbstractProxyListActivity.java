@@ -66,7 +66,8 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   /**
    * This mapping allows us to update individual rows as records change.
    */
-  private final Map<EntityProxyId, Integer> recordToRow = new HashMap<EntityProxyId, Integer>();
+  private final Map<EntityProxyId<P>, Integer> idToRow = new HashMap<EntityProxyId<P>, Integer>();
+  private final Map<EntityProxyId<P>, P> idToProxy = new HashMap<EntityProxyId<P>, P>();
 
   private final RequestFactory requests;
   private final PlaceController placeController;
@@ -137,10 +138,14 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
           // This activity is dead
           return;
         }
-        recordToRow.clear();
+        idToRow.clear();
+        idToProxy.clear();
         for (int i = 0, row = range.getStart(); i < values.size(); i++, row++) {
-          P record = values.get(i);
-          recordToRow.put(record.stableId(), row);
+          P proxy = values.get(i);
+          @SuppressWarnings("unchecked") // Why is this cast needed?
+          EntityProxyId<P> proxyId = (EntityProxyId<P>) proxy.stableId();
+          idToRow.put(proxyId, row);
+          idToProxy.put(proxyId, proxy);
         }
         getView().asHasData().setRowData(range.getStart(), values);
         if (display != null) {
@@ -160,16 +165,26 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   }
 
   /**
-   * Select the given record, or clear the selection if called with null.
+   * Select the given record, or clear the selection if called with null or an
+   * id we don't know.
    */
-  public void select(P record) {
-    if (record == null) {
-      P selected = selectionModel.getSelectedObject();
-      if (selected != null) {
-        selectionModel.setSelected(selected, false);
-      }
-    } else {
-      selectionModel.setSelected(record, true);
+  public void select(EntityProxyId<P> proxyId) {
+    /* 
+     * The selectionModel will not flash if we put it 
+     * back to the same state it is already in, so 
+     * we can keep this code simple.
+     */
+    
+    // Clear the selection
+    P selected = selectionModel.getSelectedObject();
+    if (selected != null) {
+      selectionModel.setSelected(selected, false);
+    }
+
+    // Select the new proxy, if it's relevant
+    if (proxyId != null) {
+      P selectMe = idToProxy.get(proxyId);
+      selectionModel.setSelected(selectMe, true);
     }
   }
 
@@ -224,6 +239,11 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     placeController.goTo(new ProxyPlace(record.stableId(), Operation.DETAILS));
   }
 
+  @SuppressWarnings("unchecked")
+  private EntityProxyId<P> cast(ProxyPlace proxyPlace) {
+    return (EntityProxyId<P>) proxyPlace.getProxyId();
+  }
+
   private void fireRangeRequest(final Range range,
       final Receiver<List<P>> callback) {
     createRangeRequest(range).with(getView().getPaths()).fire(callback);
@@ -258,13 +278,8 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     });
   }
 
-  @SuppressWarnings("unchecked")
-  private void selectCoerced(Place newPlace) {
-    select((P) ((ProxyPlace) newPlace).getProxyId());
-  }
-
   private void update(EntityProxyId<P> proxyId) {
-    final Integer row = recordToRow.get(proxyId);
+    final Integer row = idToRow.get(proxyId);
     if (row == null) {
       return;
     }
@@ -281,8 +296,8 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     if (newPlace instanceof ProxyPlace) {
       ProxyPlace proxyPlace = (ProxyPlace) newPlace;
       if (proxyPlace.getOperation() != Operation.CREATE
-          && requests.getClass(proxyPlace.getProxyId()).equals(proxyType)) {
-        selectCoerced(newPlace);
+          && proxyPlace.getProxyId().getProxyClass().equals(proxyType)) {
+        select(cast(proxyPlace));
         return;
       }
     }

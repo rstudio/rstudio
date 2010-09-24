@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.editor.client.IsEditor;
-import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -43,7 +42,7 @@ import java.util.Map;
  * @param <T> the value type
  */
 public class ValueListBox<T> extends Composite implements
-    HasConstrainedValue<T>, IsEditor<LeafValueEditor<T>> {
+    HasConstrainedValue<T>, IsEditor<TakesValueEditor<T>> {
 
   private final List<T> values = new ArrayList<T>();
   private final Map<Object, Integer> valueKeyToIndex = new HashMap<Object, Integer>();
@@ -81,7 +80,7 @@ public class ValueListBox<T> extends Composite implements
   /**
    * Returns a {@link TakesValueEditor} backed by the ValueListBox.
    */
-  public LeafValueEditor<T> asEditor() {
+  public TakesValueEditor<T> asEditor() {
     return TakesValueEditor.of(this);
   }
 

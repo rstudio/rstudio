@@ -6,9 +6,6 @@
 
   <source path="place"/>
   <source path="client"/>
-  <generate-with class="com.google.gwt.app.rebind.EditorSupportGenerator">
-    <when-type-assignable class='com.google.gwt.app.client.EditorSupport'/>
-  </generate-with>
   <generate-with class="com.google.gwt.app.rebind.PlaceHistoryMapperGenerator">
     <when-type-assignable class="com.google.gwt.app.place.PlaceHistoryMapper"/>
   </generate-with>

@@ -21,7 +21,7 @@ package com.google.gwt.editor.client;
  * 
  * @param <T> the type of composite object the editor can display
  */
-public interface ValueAwareEditor<T> extends Editor<T>, HasEditorDelegate<T> {
+public interface ValueAwareEditor<T> extends HasEditorDelegate<T> {
   /**
    * Indicates that the Editor cycle is finished. This method will be called in
    * a depth-first order by the EditorDriver, so Editors do not generally need

@@ -36,11 +36,11 @@ public class ProxyListPlace extends Place {
     }
 
     public ProxyListPlace getPlace(String token) {
-      return new ProxyListPlace(requests.getClass(token));
+      return new ProxyListPlace(requests.getProxyClass(token));
     }
 
     public String getToken(ProxyListPlace place) {
-      return requests.getToken(place.getProxyClass());
+      return requests.getHistoryToken(place.getProxyClass());
     }
   }
 

@@ -43,6 +43,54 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * DO NOT USE finishTest(). Instead, call finishTestAndReset();
    */
 
+  class FooReciever extends Receiver<SimpleFooProxy> {
+    private SimpleFooProxy mutableFoo;
+    private Request<SimpleFooProxy> persistRequest;
+    private String expectedException;
+    
+    public FooReciever(SimpleFooProxy mutableFoo, 
+        Request<SimpleFooProxy> persistRequest, String exception) {
+      this.mutableFoo = mutableFoo;
+      this.persistRequest = persistRequest;
+      this.expectedException = exception;
+    }
+
+    @Override
+    public void onFailure(ServerFailure error) {
+      assertEquals(expectedException, error.getExceptionType());
+      if (expectedException.length() > 0) {
+        assertFalse(error.getStackTraceString().length() == 0);
+        assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST",
+            error.getMessage());
+      } else {
+        assertEquals("", error.getStackTraceString());
+        assertEquals("Server Error: THIS EXCEPTION IS EXPECTED BY A TEST",
+            error.getMessage());
+      }
+
+      // Now show that we can fix the error and try again with the same
+      // request
+
+      mutableFoo.setPleaseCrash(24); // Only 42 and 43 crash
+      persistRequest.fire(new Receiver<SimpleFooProxy>() {
+        @Override
+        public void onSuccess(SimpleFooProxy response) {
+          finishTestAndReset();
+        }
+      });
+    }
+
+    @Override
+    public void onSuccess(SimpleFooProxy response) {
+      fail("Failure expected but onSuccess() was called");
+    }
+
+    @Override
+    public void onViolation(Set<Violation> errors) {
+      fail("Failure expected but onViolation() was called");
+    }
+  }
+
   private class FailFixAndRefire<T> extends Receiver<T> {
 
     private final SimpleFooProxy proxy;
@@ -130,11 +178,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testClassToken() {
-    String token = req.getToken(SimpleFooProxy.class);
-    assertEquals(SimpleFooProxy.class, req.getClass(token));
+    String token = req.getHistoryToken(SimpleFooProxy.class);
+    assertEquals(SimpleFooProxy.class, req.getProxyClass(token));
 
     SimpleFooProxy foo = req.create(SimpleFooProxy.class);
-    assertEquals(SimpleFooProxy.class, req.getClass(foo.stableId()));
+    assertEquals(SimpleFooProxy.class, foo.stableId().getProxyClass());
   }
 
   public void  testDummyCreate() {
@@ -302,7 +350,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     // Check that a newly-created object's token can be found
     assertEquals(futureId, req.getProxyId(futureToken));
-    assertEquals(req.getClass(futureId), req.getClass(futureToken));
+    assertEquals(futureId.getProxyClass(), req.getProxyClass(futureToken));
 
     Request<SimpleBarProxy> fooReq = req.simpleBarRequest().persistAndReturnSelf(
         foo);
@@ -314,18 +362,18 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
         // Expect variations after persist
         assertFalse(futureToken.equals(persistedToken));
-        
+
         // Make sure the token is stable after persist using the future id
         assertEquals(persistedToken, req.getHistoryToken(futureId));
 
         // Check that the persisted object can be found with future token
         assertEquals(futureId, req.getProxyId(futureToken));
         assertEquals(futureId, req.getProxyId(persistedToken));
-        assertEquals(req.getClass(futureId), req.getClass(persistedToken));
+        assertEquals(futureId.getProxyClass(), req.getProxyClass(persistedToken));
 
         assertEquals(persistedId, req.getProxyId(futureToken));
         assertEquals(persistedId, req.getProxyId(persistedToken));
-        assertEquals(req.getClass(persistedId), req.getClass(futureToken));
+        assertEquals(persistedId.getProxyClass(), req.getProxyClass(futureToken));
 
         finishTestAndReset();
       }
@@ -423,7 +471,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           }
         });
   }
-
+  
   /*
    * Find Entity Create Entity2 Relate Entity2 to Entity Persist Entity
    */
@@ -475,7 +523,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       }
     });
   }
-  
+
   /*
    * Find Entity2 Create Entity, Persist Entity Relate Entity2 to Entity Persist
    * Entity
@@ -621,6 +669,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  /*
+   * TODO: all these tests should check the final values. It will be easy when
+   * we have better persistence than the singleton pattern.
+   */
+
   public void testPersistRelation() {
     delayTestFinish(5000);
 
@@ -663,9 +716,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   /*
-   * TODO: all these tests should check the final values. It will be easy when
-   * we have better persistence than the singleton pattern.
-   */
+  * TODO: all these tests should check the final values. It will be easy when
+  * we have better persistence than the singleton pattern.
+  */
 
   public void testPersistSelfOneToManyExistingEntityExistingRelation() {
     delayTestFinish(5000);
@@ -693,11 +746,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           }
         });
   }
-
-  /*
-  * TODO: all these tests should check the final values. It will be easy when
-  * we have better persistence than the singleton pattern.
-  */
 
   public void testPersistValueList() {
     delayTestFinish(5000);
@@ -803,7 +851,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           }
         });
   }
-
+  
   /*
   * TODO: all these tests should check the final values. It will be easy when
   * we have better persistence than the singleton pattern.
@@ -832,7 +880,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           }
         });
   }
-  
+
   /*
   * TODO: all these tests should check the final values. It will be easy when
   * we have better persistence than the singleton pattern.
@@ -1120,6 +1168,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  
   public void testProxysAsInstanceMethodParams() {
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
@@ -1140,55 +1189,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             });
           }
         });
-  }
-
-  
-  class FooReciever extends Receiver<SimpleFooProxy> {
-    private SimpleFooProxy mutableFoo;
-    private Request<SimpleFooProxy> persistRequest;
-    private String expectedException;
-    
-    public FooReciever(SimpleFooProxy mutableFoo, 
-        Request<SimpleFooProxy> persistRequest, String exception) {
-      this.mutableFoo = mutableFoo;
-      this.persistRequest = persistRequest;
-      this.expectedException = exception;
-    }
-
-    @Override
-    public void onFailure(ServerFailure error) {
-      assertEquals(expectedException, error.getExceptionType());
-      if (expectedException.length() > 0) {
-        assertFalse(error.getStackTraceString().length() == 0);
-        assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST",
-            error.getMessage());
-      } else {
-        assertEquals("", error.getStackTraceString());
-        assertEquals("Server Error: THIS EXCEPTION IS EXPECTED BY A TEST",
-            error.getMessage());
-      }
-
-      // Now show that we can fix the error and try again with the same
-      // request
-
-      mutableFoo.setPleaseCrash(24); // Only 42 and 43 crash
-      persistRequest.fire(new Receiver<SimpleFooProxy>() {
-        @Override
-        public void onSuccess(SimpleFooProxy response) {
-          finishTestAndReset();
-        }
-      });
-    }
-
-    @Override
-    public void onSuccess(SimpleFooProxy response) {
-      fail("Failure expected but onSuccess() was called");
-    }
-
-    @Override
-    public void onViolation(Set<Violation> errors) {
-      fail("Failure expected but onViolation() was called");
-    }
   }
   
   public void testServerFailureCheckedException() {

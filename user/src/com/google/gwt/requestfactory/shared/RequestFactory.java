@@ -36,22 +36,6 @@ public interface RequestFactory {
   <P extends EntityProxy> ProxyRequest<P> find(EntityProxyId<P> proxyId);
 
   /**
-   * Return the class object which may be used to create new instances of the
-   * type of the given proxy, via {@link #create}. Due to limitations of GWT's
-   * metadata system, calls to the proxy's getClass() method will not serve this
-   * purpose.
-   */
-  <P extends EntityProxy> Class<P> getClass(EntityProxyId<P> proxyId);
-
-/**
-   * Return the class object which may be used to create new instances of the
-   * type of this token, via {@link #create}. The token may represent either a
-   * proxy instance (see {@link #getHistoryToken(Proxy)}) or a proxy class (see
-   * {@link #getToken(Class)}).
-   */
-  Class<? extends EntityProxy> getClass(String token);
-
-  /**
    * Returns the eventbus this factory's events are posted on, which was set via
    * {@link #initialize}.
    */
@@ -59,13 +43,22 @@ public interface RequestFactory {
 
   /**
    * Get a {@link com.google.gwt.user.client.History} compatible token that
-   * represents the given proxy id. It can be processed by
-   * {@link #getProxyId(String)} and {@link #getClass(String)}.
+   * represents the given class. It can be processed by
+   * {@link #getProxyClass(String)}
+   * 
+   * @return a {@link com.google.gwt.user.client.History} compatible token
+   */
+  String getHistoryToken(Class<? extends EntityProxy> clazz);
+
+  /**
+   * Get a {@link com.google.gwt.user.client.History} compatible token that
+   * represents the given proxy class. It can be processed by
+   * {@link #getProxyClass(String)}.
    * <p>
    * The history token returned for an EntityProxyId associated with a
-   * newly-created (future) EntityProxy will differ from the token returned by this
-   * method after the EntityProxy has been persisted. Once an EntityProxy has
-   * been persisted, the return value for this method will always be stable,
+   * newly-created (future) EntityProxy will differ from the token returned by
+   * this method after the EntityProxy has been persisted. Once an EntityProxy
+   * has been persisted, the return value for this method will always be stable,
    * regardless of when the EntityProxyId was retrieved relative to the persist
    * operation. In other words, the "future" history token returned for an
    * as-yet-unpersisted EntityProxy is only valid for the duration of the
@@ -76,19 +69,18 @@ public interface RequestFactory {
   String getHistoryToken(EntityProxyId<?> proxy);
 
   /**
+   * Return the class object which may be used to create new instances of the
+   * type of this token, via {@link #create}. The token may represent either a
+   * proxy instance (see {@link #getHistoryToken()}) or a proxy class (see
+   * {@link #getToken()}).
+   */
+  Class<? extends EntityProxy> getProxyClass(String historyToken);
+
+  /**
    * Return the appropriate {@link EntityProxyId} using a string returned from
    * {@link #getHistoryToken(EntityProxyId)}.
    */
   <T extends EntityProxy> EntityProxyId<T> getProxyId(String historyToken);
-
-  /**
-   * Get a {@link com.google.gwt.user.client.History} compatible token that
-   * represents the given class. It can be processed by
-   * {@link #getClass(String)}
-   * 
-   * @return a {@link com.google.gwt.user.client.History} compatible token
-   */
-  String getToken(Class<? extends EntityProxy> clazz);
 
   /**
    * Start this request factory with a

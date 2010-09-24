@@ -25,11 +25,16 @@ package com.google.gwt.requestfactory.shared;
  */
 public interface EntityProxy {
   /**
+   * Returns the {@link EntityProxyId} that identifies a particular instance of
+   * the type proxied by the receiver.
+   * <p>
+   * An id returned by a proxy newly created by {@link RequestFactory#create}
+   * {@link #equals(Object)} those returned later by a proxies to the persisted
+   * object.
+   * <p>
    * Subtypes should override to declare they return a stable id of their own
    * type, to allow type safe use of the request objects returned by
    * {@link RequestFactory#find(EntityProxyId)}.
-   * 
-   * @return {@link EntityProxyId} that is stable across changes.
    */
   EntityProxyId<?> stableId();
 }

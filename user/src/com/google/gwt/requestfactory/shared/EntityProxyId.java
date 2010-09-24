@@ -25,4 +25,9 @@ package com.google.gwt.requestfactory.shared;
  * @param <P> the entity type
  */
 public interface EntityProxyId<P extends EntityProxy> {
+
+  /**
+   * Returns the class of the proxy identified.
+   */
+  Class<P> getProxyClass();
 }

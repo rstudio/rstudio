@@ -42,25 +42,25 @@ public class ProxyPlace extends Place {
     }
 
     public ProxyPlace getPlace(String token) {
-      String bits[] = token.split("@");
+      String bits[] = token.split("!");
       return new ProxyPlace(requests.getProxyId(bits[0]),
           Operation.valueOf(bits[1]));
     }
 
     public String getToken(ProxyPlace place) {
-      return requests.getHistoryToken(place.getProxyId()) + "@" + place.getOperation();
+      return requests.getHistoryToken(place.getProxyId()) + "!" + place.getOperation();
     }
   }
 
-  private final EntityProxyId proxyId;
+  private final EntityProxyId<?> proxyId;
 
   private final Operation operation;
 
-  public ProxyPlace(EntityProxyId record) {
+  public ProxyPlace(EntityProxyId<?> record) {
     this(record, Operation.DETAILS);
   }
 
-  public ProxyPlace(EntityProxyId proxyId, Operation operation) {
+  public ProxyPlace(EntityProxyId<?> proxyId, Operation operation) {
     this.operation = operation;
     this.proxyId = proxyId;
   }
@@ -90,7 +90,7 @@ public class ProxyPlace extends Place {
     return operation;
   }
 
-  public EntityProxyId getProxyId() {
+  public EntityProxyId<?> getProxyId() {
     return proxyId;
   }
 

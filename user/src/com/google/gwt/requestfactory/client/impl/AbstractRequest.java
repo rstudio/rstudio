@@ -52,7 +52,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
 
   protected final RequestFactoryJsonImpl requestFactory;
   protected DeltaValueStoreJsonImpl deltaValueStore;
-  private Receiver<T> receiver;
+  private Receiver<? super T> receiver;
 
   private final Set<String> propertyRefs = new HashSet<String>();
 
@@ -71,7 +71,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     return returnRecordImpl;
   }
 
-  public void fire(Receiver<T> receiver) {
+  public void fire(Receiver<? super T> receiver) {
     assert null != receiver : "receiver cannot be null";
     this.receiver = receiver;
     requestFactory.fire(this);

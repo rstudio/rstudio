@@ -111,8 +111,9 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     }
 
     // Can't just use getObject().getClass() because it's not the proxy type
+    EntityProxyId stableId = ((EntityProxy) getObject()).stableId();
     @SuppressWarnings("unchecked")
-    Class<EntityProxy> clazz = (Class<EntityProxy>) factory.getClass(((EntityProxy) getObject()).stableId());
+    Class<EntityProxy> clazz = (Class<EntityProxy>) stableId.getProxyClass();
     HandlerRegistration toReturn = EntityProxyChange.<EntityProxy> registerForProxyType(
         eventBus, clazz, new SubscriptionHandler());
     return toReturn;

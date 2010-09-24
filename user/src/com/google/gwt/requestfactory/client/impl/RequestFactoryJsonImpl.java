@@ -126,10 +126,6 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     });
   }
 
-  public Class<? extends EntityProxy> getClass(EntityProxyId proxyId) {
-    return ((EntityProxyIdImpl) proxyId).schema.getProxyClass();
-  }
-
   public EventBus getEventBus() {
     return eventBus;
   }

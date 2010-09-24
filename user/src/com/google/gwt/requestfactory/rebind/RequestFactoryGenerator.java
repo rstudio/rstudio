@@ -27,7 +27,6 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.requestfactory.client.impl.AbstractBigDecimalRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractBigIntegerRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractBooleanRequest;
@@ -38,8 +37,8 @@ import com.google.gwt.requestfactory.client.impl.AbstractDoubleRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractEnumRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractFloatRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractIntegerRequest;
-import com.google.gwt.requestfactory.client.impl.AbstractJsonProxyListRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonObjectRequest;
+import com.google.gwt.requestfactory.client.impl.AbstractJsonProxyListRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonProxySetRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractJsonValueListRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractLongRequest;
@@ -54,16 +53,16 @@ import com.google.gwt.requestfactory.client.impl.ProxySchema;
 import com.google.gwt.requestfactory.client.impl.ProxyToTypeMap;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
-import com.google.gwt.requestfactory.shared.ProxySetRequest;
-import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
-import com.google.gwt.requestfactory.shared.impl.EnumProperty;
-import com.google.gwt.requestfactory.shared.impl.Property;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.ProxyRequest;
+import com.google.gwt.requestfactory.shared.ProxySetRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
+import com.google.gwt.requestfactory.shared.impl.EnumProperty;
+import com.google.gwt.requestfactory.shared.impl.Property;
 import com.google.gwt.requestfactory.shared.impl.RequestData;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -391,7 +390,6 @@ public class RequestFactoryGenerator extends Generator {
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
-    f.addImport(HandlerManager.class.getName());
     f.addImport(RequestFactoryJsonImpl.class.getName());
     f.addImport(interfaceType.getQualifiedSourceName());
     f.addImport(ProxyToTypeMap.class.getName());
@@ -404,12 +402,12 @@ public class RequestFactoryGenerator extends Generator {
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
 
-    // Find the requestSelector methods
+    // Find the request builder methods
+
     // TODO allow getRequest type methods to live directly on the factory, w/o
-    // requiring a selector to get to them
-    // TODO rename variable this requestBuilders, holding off to avoid merge
-    // hell
-    Set<JMethod> requestSelectors = new LinkedHashSet<JMethod>();
+    // requiring a builder to get to them
+
+    Set<JMethod> requestBuilders = new LinkedHashSet<JMethod>();
     for (JMethod method : interfaceType.getOverridableMethods()) {
       if (method.getEnclosingType().equals(requestFactoryType)) {
         continue;
@@ -428,15 +426,16 @@ public class RequestFactoryGenerator extends Generator {
             method.getName(), interfaceType.getName()));
         throw new UnableToCompleteException();
       }
-      requestSelectors.add(method);
+      requestBuilders.add(method);
     }
+    
     /*
      * Hard-code the requestSelectors specified in RequestFactory.
      */
     JClassType t = generatorContext.getTypeOracle().findType(
         RequestFactoryJsonImpl.class.getName());
     try {
-      requestSelectors.add(t.getMethod("findRequest", new JType[0]));
+      requestBuilders.add(t.getMethod("findRequest", new JType[0]));
     } catch (NotFoundException e) {
       e.printStackTrace();
     }
@@ -455,6 +454,14 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
     sw.println();
 
+    // write getHistoryToken(Class)
+    sw.println("public String getHistoryToken(Class clazz) {");
+    sw.indent();
+    sw.println("return new " + proxyToTypeMapName + "().getClassToken(clazz);");
+    sw.outdent();
+    sw.println("}");
+    sw.println();
+    
     // write getHistoryToken(proxyId)
     sw.println("public String getHistoryToken(EntityProxyId proxyId) {");
     sw.indent();
@@ -463,17 +470,9 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
     sw.println();
 
-    // write getToken(Class)
-    sw.println("public String getToken(Class clazz) {");
-    sw.indent();
-    sw.println("return new " + proxyToTypeMapName + "().getClassToken(clazz);");
-    sw.outdent();
-    sw.println("}");
-    sw.println();
-
-    // write getClass(String)
+    // write getProxyClass(String)
     sw.println("public Class<? extends " + EntityProxy.class.getName()
-        + "> getClass(String token) {");
+        + "> getProxyClass(String token) {");
     sw.indent();
     sw.println("return getClass(token, new " + proxyToTypeMapName + "());");
     sw.outdent();
@@ -496,7 +495,7 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
 
     // write a method for each request builder and generate it
-    for (JMethod requestSelector : requestSelectors) {
+    for (JMethod requestSelector : requestBuilders) {
       String returnTypeName = requestSelector.getReturnType().getQualifiedSourceName();
       String nestedImplName = capitalize(requestSelector.getName().replace('.',
           '_'))

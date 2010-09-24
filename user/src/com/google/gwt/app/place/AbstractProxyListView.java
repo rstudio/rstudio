@@ -86,6 +86,6 @@ public abstract class AbstractProxyListView<P extends EntityProxy> extends
   protected void initWidget(Widget widget) {
     throw new UnsupportedOperationException(
         "AbstractRecordListView must be initialized via "
-            + "init(Widget CellTable<R> List<PropertyColumn<R, ?>> ) ");
+            + "init(Widget, CellTable<R>, List<PropertyColumn<R, ?>> ) ");
   }
 }

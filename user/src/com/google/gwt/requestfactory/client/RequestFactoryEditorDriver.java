@@ -59,9 +59,15 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   void display(P proxy);
 
   /**
-   * Initialize the Editor and its sub-editors with data.
+   * Initialize the Editor and its sub-editors with data. A
+   * {@link RequestObject} is required to provide context for the changes to the
+   * proxy (see {@link Request#edit()}. Note that this driver will not fire the
+   * request.
+   * 
+   * @param the proxy to be edited
+   * @param the request that will accumulate edits and is returned form {@link #flush}
    */
-  void edit(P proxy, Request<?> saveRequest);
+  void edit(P proxy, Request<?> request);
 
   /**
    * Ensures that the Editor passed into {@link #initialize} and its

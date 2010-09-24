@@ -44,14 +44,19 @@ final class EntityProxyIdImpl<P extends EntityProxy> implements EntityProxyId<P>
     return result;
   }
 
+  /*
+   * TODO(rjrjr) Why the hell aren't these behind accessors?
+   */
+  
+  final boolean isFuture;
   final ProxySchema<?> schema;
-  // TODO(rjrjr) These should be strings, but the future map implications are a bit daunting
+
+  // TODO(rjrjr) These should be strings, but the future map implications are a
+  // bit daunting
   final Object encodedId;
   final Object futureId;
 
-  final boolean isFuture;
-
-  protected EntityProxyIdImpl(Object encodedId, ProxySchema<?> schema,
+  protected EntityProxyIdImpl(Object encodedId, ProxySchema<? extends P> schema,
       boolean isFuture, Object futureId) {
     assert encodedId != null;
     assert schema != null;
@@ -94,6 +99,33 @@ final class EntityProxyIdImpl<P extends EntityProxy> implements EntityProxyId<P>
     return false;
   }
 
+  /**
+   * @return the encodedId
+   */
+  public Object getEncodedId() {
+    return encodedId;
+  }
+
+  /**
+   * @return the futureId
+   */
+  public Object getFutureId() {
+    return futureId;
+  }
+
+  @SuppressWarnings("unchecked")
+  public Class<P> getProxyClass() {
+    // Sleazey, but the generated code keeps this promise
+    return (Class<P>) schema.getProxyClass();
+  }
+
+  /**
+   * @return the schema
+   */
+  public ProxySchema<?> getSchema() {
+    return schema;
+  }
+  
   /*
    * This hashcode is complicated.
    */
@@ -105,6 +137,13 @@ final class EntityProxyIdImpl<P extends EntityProxy> implements EntityProxyId<P>
     }
     // has futureId
     return hashCode(schema, true, isFuture ? encodedId : futureId);
+  }
+
+  /**
+   * @return the isFuture
+   */
+  public boolean isFuture() {
+    return isFuture;
   }
 
   @Override

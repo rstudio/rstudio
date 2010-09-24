@@ -35,7 +35,7 @@ public interface Request<T> {
   /**
    * Submit this request. Results will be passed to the receiver asynchronously.
    */
-  void fire(Receiver<T> receiver);
+  void fire(Receiver<? super T> receiver);
 
   /**
    * Return true if there are outstanding changes that have not been

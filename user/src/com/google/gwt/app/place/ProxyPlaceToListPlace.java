@@ -15,17 +15,11 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.shared.RequestFactory;
 
 /**
  * Converts a {@link #ProxyPlace} to a {@link ProxyListPlace}.
  */
 public class ProxyPlaceToListPlace implements FilteredActivityMapper.Filter {
-  private final RequestFactory requests;
-
-  public ProxyPlaceToListPlace(RequestFactory requests) {
-    this.requests = requests;
-  }
 
   /**
    * Required by {@link FilteredActivityMapper.Filter}, calls
@@ -50,6 +44,6 @@ public class ProxyPlaceToListPlace implements FilteredActivityMapper.Filter {
     }
 
     ProxyPlace proxyPlace = (ProxyPlace) place;
-    return new ProxyListPlace(requests.getClass(proxyPlace.getProxyId()));
+    return new ProxyListPlace(proxyPlace.getProxyId().getProxyClass());
   }
 }

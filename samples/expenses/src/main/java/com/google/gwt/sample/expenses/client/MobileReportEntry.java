@@ -138,7 +138,6 @@ public class MobileReportEntry extends Composite implements MobilePage {
     displayReport();
   }
 
-  @SuppressWarnings("deprecation")
   private void displayReport() {
     errorText.setInnerText("");
     purposeText.setText(report.getPurpose());
@@ -151,11 +150,8 @@ public class MobileReportEntry extends Composite implements MobilePage {
       }
     }
 
-    // TODO(jgw): Use non-deprecated date methods for this.
     Date d = report.getCreated();
-    dateYear.setSelectedIndex(d.getYear() - 100);
-    dateMonth.setSelectedIndex(d.getMonth());
-    dateDay.setSelectedIndex(d.getDate() - 1);
+    showCreationDate(d);
   }
 
   private void populateList(ListBox list, int start, int end) {
@@ -166,5 +162,13 @@ public class MobileReportEntry extends Composite implements MobilePage {
         list.addItem("" + i);
       }
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  private void showCreationDate(Date d) {
+    // TODO(jgw): Use non-deprecated date methods for this.
+    dateYear.setSelectedIndex(d.getYear() - 100);
+    dateMonth.setSelectedIndex(d.getMonth());
+    dateDay.setSelectedIndex(d.getDate() - 1);
   }
 }

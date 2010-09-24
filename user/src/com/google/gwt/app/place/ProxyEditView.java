@@ -15,11 +15,12 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.editor.client.HasEditorErrors;
+import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.user.client.TakesValue;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.user.client.ui.IsWidget;
-
-import java.util.Map;
 
 /**
  * <p>
@@ -30,23 +31,31 @@ import java.util.Map;
  * Implemented by views that edit {@link EntityProxy}s.
  * 
  * @param <P> the type of the proxy
+ * @param <V> the type of this ProxyEditView, required to allow
+ *          {@link #createEditorDriver(EventBus, RequestFactory)} to be
+ *          correctly typed
  */
-public interface ProxyEditView<P extends EntityProxy> extends TakesValue<P>,
-    IsWidget, PropertyView<P> {
-  
+public interface ProxyEditView<P extends EntityProxy, V extends ProxyEditView<P, V>>
+    extends IsWidget, HasEditorErrors<P> {
+
+  /**
+   * @return a {@link RequestFactoryEditorDriver} initialized to run this editor
+   */
+  RequestFactoryEditorDriver<P, V> createEditorDriver(EventBus eventBus,
+      RequestFactory requestFactory);
+
   /**
    * Implemented by the owner of the view.
    */
   interface Delegate {
     void cancelClicked();
+
     void saveClicked();
   }
-  
-  boolean isChanged();
+
   void setCreating(boolean b);
+
   void setDelegate(Delegate delegate);
+
   void setEnabled(boolean b);
-  
-  // TODO needs to be Map<Property<?>, String> errors
-  void showErrors(Map<String, String> errors);
 }
