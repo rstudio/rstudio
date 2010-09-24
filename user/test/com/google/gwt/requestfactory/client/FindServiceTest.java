@@ -15,10 +15,15 @@
  */
 package com.google.gwt.requestfactory.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
+import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 
 /**
  * Tests for {@link com.google.gwt.requestfactory.shared.RequestFactory}.
@@ -28,14 +33,46 @@ public class FindServiceTest extends RequestFactoryTestBase {
    * DO NOT USE finishTest(). Instead, call finishTestAndReset();
    */
 
+  private static final int TEST_DELAY = 5000;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
   }
 
+  public void testFetchDeletedEntity() {
+    delayTestFinish(TEST_DELAY);
+    SimpleBarProxy willDelete = req.create(SimpleBarProxy.class);
+    req.simpleBarRequest().persistAndReturnSelf(willDelete).fire(
+        new Receiver<SimpleBarProxy>() {
+          @Override
+          public void onSuccess(SimpleBarProxy response) {
+            final EntityProxyId<SimpleBarProxy> id = response.stableId();
+
+            // Make the entity behave as though it's been deleted
+            Request<Void> persist = req.simpleBarRequest().persist(response);
+            persist.edit(response).setFindFails(true);
+            persist.fire(new Receiver<Void>() {
+
+              @Override
+              public void onSuccess(Void response) {
+                // Now try fetching the deleted instance
+                req.find(id).fire(new Receiver<SimpleBarProxy>() {
+                  @Override
+                  public void onSuccess(SimpleBarProxy response) {
+                    assertNull(response);
+                    finishTestAndReset();
+                  }
+                });
+              }
+            });
+          }
+        });
+  }
+
   public void testFetchEntityWithLongId() {
     final boolean relationsAbsent = false;
-    delayTestFinish(5000);
+    delayTestFinish(TEST_DELAY);
     req.simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -58,7 +95,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
 
   public void testFetchEntityWithRelation() {
     final boolean relationsPresent = true;
-    delayTestFinish(5000);
+    delayTestFinish(TEST_DELAY);
     req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -79,9 +116,9 @@ public class FindServiceTest extends RequestFactoryTestBase {
           }
         });
   }
-  
+
   public void testFetchEntityWithStringId() {
-    delayTestFinish(5000);
+    delayTestFinish(TEST_DELAY);
     req.simpleBarRequest().findSimpleBarById("999L").fire(
         new Receiver<SimpleBarProxy>() {
           @Override
@@ -100,6 +137,36 @@ public class FindServiceTest extends RequestFactoryTestBase {
         });
   }
 
+  /**
+   * Demonstrates behavior when fetching an unpersisted id. The setup is
+   * analagous to saving a future id into a cookie and then trying to fetch it
+   * later.
+   */
+  public void testFetchUnpersistedFutureId() {
+    String historyToken;
+
+    // Here's the factory from the "previous invocation" of the client
+    {
+      SimpleRequestFactory oldFactory = GWT.create(SimpleRequestFactory.class);
+      oldFactory.initialize(new SimpleEventBus());
+      EntityProxyId<SimpleBarProxy> id = oldFactory.create(SimpleBarProxy.class).stableId();
+      historyToken = oldFactory.getHistoryToken(id);
+    }
+
+    EntityProxyId<SimpleBarProxy> id = req.getProxyId(historyToken);
+    assertNotNull(id);
+    ProxyRequest<SimpleBarProxy> find = req.find(id);
+    try {
+      find.fire(new Receiver<SimpleBarProxy>() {
+        @Override
+        public void onSuccess(SimpleBarProxy response) {
+          fail("Request should never have been made");
+        }
+      });
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
   private void checkReturnedProxy(SimpleFooProxy response,
       boolean checkForRelations) {
     assertEquals(42, (int) response.getIntId());
@@ -114,4 +181,3 @@ public class FindServiceTest extends RequestFactoryTestBase {
     }
   }
 }
-

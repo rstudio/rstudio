@@ -34,14 +34,24 @@ import javax.servlet.ServletResponse;
 public class SchoolCalendarService implements Filter {
   private static final ThreadLocal<PersonSource> PERSON_SOURCE = new ThreadLocal<PersonSource>();
 
+  public static Person createPerson() {
+    checkPersonSource();
+    Person person = PersonFuzzer.generatePerson();
+    PERSON_SOURCE.get().persist(person);
+    return person;
+  }
+
   public static Person findPerson(String id) {
     checkPersonSource();
     return PERSON_SOURCE.get().findPerson(id);
   }
 
+  /**
+   * XXX Remove this once primitive lists work.
+   */
   public static List<Person> getPeople(int startIndex, int maxCount) {
-    checkPersonSource();
-    return PERSON_SOURCE.get().getPeople(startIndex, maxCount);
+    return getPeople(startIndex, maxCount, new boolean[] {
+        true, true, true, true, true, true, true});
   }
 
   public static void persist(Address address) {
@@ -59,6 +69,15 @@ public class SchoolCalendarService implements Filter {
       throw new IllegalStateException(
           "Calling service method outside of HTTP request");
     }
+  }
+
+  /**
+   * XXX private due to inability to add method overloads.
+   */
+  private static List<Person> getPeople(int startIndex, int maxCount,
+      boolean[] filter) {
+    checkPersonSource();
+    return PERSON_SOURCE.get().getPeople(startIndex, maxCount, filter);
   }
 
   private PersonSource backingStore;

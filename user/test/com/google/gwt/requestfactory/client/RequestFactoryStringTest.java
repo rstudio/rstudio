@@ -126,8 +126,9 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
         assertEquals(futureId, foo.getId());
         assertTrue(((ProxyImpl) foo).unpersisted());
 
-        assertEquals(1, handler.acquireEventCount);
+        assertEquals(0, handler.acquireEventCount);
         assertEquals(1, handler.createEventCount);
+        assertEquals(1, handler.updateEventCount);
         assertEquals(2, handler.totalEventCount);
 
         checkStableIdEquals(foo, returned);

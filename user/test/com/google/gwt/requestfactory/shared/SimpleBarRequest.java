@@ -15,6 +15,8 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import java.util.List;
+
 /**
  * Do nothing test interface.
  */
@@ -36,4 +38,6 @@ public interface SimpleBarRequest {
   ProxyRequest<SimpleBarProxy> persistAndReturnSelf(SimpleBarProxy proxy);
 
   Request<Void> reset();
+
+  ProxyRequest<SimpleBarProxy> returnFirst(List<SimpleBarProxy> proxy);
 }

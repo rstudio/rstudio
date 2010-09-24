@@ -15,8 +15,6 @@
  */
 package com.google.gwt.editor.client.adapters;
 
-import com.google.gwt.editor.client.EditorDelegate;
-import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.TakesValue;
 
@@ -25,14 +23,12 @@ import com.google.gwt.user.client.TakesValue;
  * 
  * @param <T> the type of value to be edited
  */
-public class TakesValueEditor<T> implements LeafValueEditor<T>,
-    HasEditorDelegate<T> {
+public class TakesValueEditor<T> implements LeafValueEditor<T> {
 
   public static <T> TakesValueEditor<T> of(TakesValue<T> peer) {
     return new TakesValueEditor<T>(peer);
   }
 
-  private EditorDelegate<T> delegate;
   private final TakesValue<T> peer;
 
   protected TakesValueEditor(TakesValue<T> peer) {
@@ -43,19 +39,7 @@ public class TakesValueEditor<T> implements LeafValueEditor<T>,
     return peer.getValue();
   }
 
-  public void setDelegate(EditorDelegate<T> delegate) {
-    this.delegate = delegate;
-  }
-
   public void setValue(T value) {
-    peer.setValue(delegate.ensureMutable(value));
-  }
-
-  protected EditorDelegate<T> getDelegate() {
-    return delegate;
-  }
-
-  protected TakesValue<T> getPeer() {
-    return peer;
+    peer.setValue(value);
   }
 }

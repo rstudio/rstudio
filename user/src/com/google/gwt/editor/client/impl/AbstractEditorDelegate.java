@@ -123,8 +123,6 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     super();
   }
 
-  public abstract T ensureMutable(T object);
-
   /**
    * Flushes both data and errors.
    */
@@ -143,7 +141,6 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
       if (getObject() == null) {
         return;
       }
-      setObject(ensureMutable(getObject()));
       flushSubEditors(errors);
 
       if (editorChain != null) {
@@ -178,7 +175,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
   }
 
   public void refresh(T object) {
-    setObject(object);
+    setObject(ensureMutable(object));
     if (leafValueEditor != null) {
       leafValueEditor.setValue(object);
     } else if (valueAwareEditor != null) {
@@ -202,6 +199,10 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
     throw new IllegalStateException();
   }
 
+  protected <Q> Q ensureMutable(Q object) {
+    return object;
+  }
+
   protected abstract void flushSubEditorErrors(
       List<EditorError> errorAccumulator);
 
@@ -217,7 +218,7 @@ public abstract class AbstractEditorDelegate<T, E extends Editor<T>> implements
       DelegateMap map) {
     this.path = pathSoFar;
     setEditor(editor);
-    setObject(object);
+    setObject(ensureMutable(object));
     errors = new ArrayList<EditorError>();
     simpleEditors = new HashMap<String, Editor<?>>();
 

@@ -3,21 +3,30 @@
   <ui:style src="../common.css"
     type="com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget.Style">
       .displayInline {
-        display: inline;
+      	display: inline;
       }
       
       .thirty {
-        width: 30%
+      	width: 30%
       }
     </ui:style>
   <g:DockLayoutPanel ui:field="dock" unit="EX">
     <g:north size="6">
-      <g:HTMLPanel>
-        <div class="{style.rightAlign}">
-          <cv:SimplePager ui:field="pager" stylePrimaryName="{style.displayInline}"
-            display="{table}" />
-        </div>
-      </g:HTMLPanel>
+      <g:DockLayoutPanel unit="PCT">
+        <g:east size="45">
+          <g:SimplePanel stylePrimaryName="{style.rightAlign}">
+            <cv:SimplePager ui:field="pager" stylePrimaryName="{style.displayInline}"
+              display="{table}" />
+          </g:SimplePanel>
+        </g:east>
+        <g:west size="45">
+          <g:SimplePanel>
+            <g:Button stylePrimaryName="{style.displayInline}"
+              ui:field="create">New
+              Person</g:Button>
+          </g:SimplePanel>
+        </g:west>
+      </g:DockLayoutPanel>
     </g:north>
     <g:center>
       <cv:CellTable ui:field="table" />

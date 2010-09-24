@@ -42,7 +42,8 @@ public abstract class PersonSource {
     }
 
     @Override
-    public List<Person> getPeople(int startIndex, int maxCount) {
+    public List<Person> getPeople(int startIndex, int maxCount,
+        boolean[] daysFilter) {
       int peopleCount = countPeople();
 
       int start = startIndex;
@@ -54,6 +55,7 @@ public abstract class PersonSource {
       if (start == end) {
         return Collections.emptyList();
       }
+      // This is ugly, but a real backend would have a skip mechanism
       return new ArrayList<Person>(people.values()).subList(start, end);
     }
 
@@ -104,10 +106,14 @@ public abstract class PersonSource {
     }
 
     @Override
-    public List<Person> getPeople(int startIndex, int maxCount) {
+    public List<Person> getPeople(int startIndex, int maxCount,
+        boolean[] daysFilter) {
       List<Person> toReturn = new ArrayList<Person>(maxCount);
-      for (Person person : backingStore.getPeople(startIndex, maxCount)) {
-        toReturn.add(findPerson(person.getId()));
+      for (Person person : backingStore.getPeople(startIndex, maxCount,
+          daysFilter)) {
+        Person copy = findPerson(person.getId());
+        toReturn.add(copy);
+        copy.setDaysFilter(daysFilter);
       }
       return toReturn;
     }
@@ -148,7 +154,8 @@ public abstract class PersonSource {
 
   public abstract Person findPerson(String id);
 
-  public abstract List<Person> getPeople(int startIndex, int maxCount);
+  public abstract List<Person> getPeople(int startIndex, int maxCount,
+      boolean[] daysFilter);
 
   public abstract void persist(Address address);
 

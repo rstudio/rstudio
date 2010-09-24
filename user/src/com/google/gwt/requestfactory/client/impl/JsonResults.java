@@ -51,4 +51,11 @@ class JsonResults extends JavaScriptObject {
   final native JsArray<DeltaValueStoreJsonImpl.ReturnRecord> getViolations()/*-{
     return this.violations || null;
   }-*/;
+  
+  /**
+   * Looks for an explicit <code>{result: null}</code> in the payload.
+   */
+  final native boolean isNullResult() /*-{
+    return this.result === null;
+  }-*/;
 }

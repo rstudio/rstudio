@@ -33,15 +33,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
  */
 public interface EditorDelegate<T> {
   /**
-   * If a {@link ValueAwareEditor} chooses to modify the object passed into
-   * {@link ValueAwareEditor#setValue} directly, as opposed to manipulating its
-   * sub-Editors, the Editor must only call setter methods on the object
-   * returned from this method. This allows the backing service to optimize the
-   * read-only use case.
-   */
-  T ensureMutable(T object);
-
-  /**
    * Returns the Editor's path, relative to the root object.
    */
   String getPath();

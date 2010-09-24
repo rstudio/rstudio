@@ -154,7 +154,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       assert type == List.class || type == Set.class;
       JsoCollection col = (JsoCollection) getCollection(
           (CollectionProperty) property);
-      col.setDependencies(null, property, null);
+      col.setDependencies(property, null);
       return (V) col;
     }
     // javac 1.6.0_20 on mac has problems without the explicit parameterization
@@ -246,8 +246,9 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       String schemaAndId[] = relatedId.split("@");
       assert schemaAndId.length == 3;
       ProxySchema<?> schema = getRequestFactory().getSchema(schemaAndId[2]);
-      return (V) getRequestFactory().getValueStore().getRecordBySchemaAndId(schema,
-          schemaAndId[0], getRequestFactory());
+      EntityProxy toReturn = getRequestFactory().getValueStore().getRecordBySchemaAndId(schema,
+          schemaAndId[0], schemaAndId[1].equals("IS"), getRequestFactory());
+      return (V) toReturn;
     }
   }                                                                                                 
 

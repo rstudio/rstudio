@@ -15,6 +15,8 @@
  */
 package com.google.gwt.editor.client.adapters;
 
+import com.google.gwt.editor.client.EditorDelegate;
+import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.user.client.ui.ValueBoxBase;
 
 import java.text.ParseException;
@@ -26,18 +28,24 @@ import java.text.ParseException;
  * 
  * @param <T> the type of value to be edited
  */
-public class ValueBoxEditor<T> extends TakesValueEditor<T> {
+public class ValueBoxEditor<T> extends TakesValueEditor<T> implements
+    HasEditorDelegate<T> {
 
   public static <T> ValueBoxEditor<T> of(ValueBoxBase<T> valueBox) {
     return new ValueBoxEditor<T>(valueBox);
   }
 
+  private EditorDelegate<T> delegate;
   private final ValueBoxBase<T> peer;
   private T value;
 
   protected ValueBoxEditor(ValueBoxBase<T> peer) {
     super(peer);
     this.peer = peer;
+  }
+
+  public EditorDelegate<T> getDelegate() {
+    return delegate;
   }
 
   /**
@@ -56,6 +64,10 @@ public class ValueBoxEditor<T> extends TakesValueEditor<T> {
           peer.getText(), e);
     }
     return value;
+  }
+
+  public void setDelegate(EditorDelegate<T> delegate) {
+    this.delegate = delegate;
   }
 
   @Override

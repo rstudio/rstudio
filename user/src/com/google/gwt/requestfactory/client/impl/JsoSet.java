@@ -90,10 +90,9 @@ class JsoSet<T> extends AbstractSet<T> implements JsoCollection {
     return false;
   }
 
-  public void setDependencies(DeltaValueStoreJsonImpl dvs, Property property,
-      ProxyImpl proxy) {
+  public void setDependencies(Property<?> property, ProxyImpl proxy) {
     list = new JsoList<T>(rf, array);
-    list.setDependencies(dvs, property, proxy);
+    list.setDependencies(property, proxy);
     for (T t : list) {
       set.add(key(t));
     }

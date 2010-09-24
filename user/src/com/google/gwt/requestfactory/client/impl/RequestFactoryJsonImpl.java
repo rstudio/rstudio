@@ -112,6 +112,15 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   public void fire(Request<?> requestObject) {
     final AbstractRequest<?, ?> abstractRequest = (AbstractRequest<?, ?>) requestObject;
     RequestData requestData = ((AbstractRequest<?, ?>) requestObject).getRequestData();
+
+    /*
+     * Prevent the "dummy object" case for parameters with no associated
+     * property updates.
+     */
+    for (Object proxy : requestData.getProxyParameters()) {
+      abstractRequest.deltaValueStore.retainValue(proxy);
+    }
+
     Map<String, String> requestMap = requestData.getRequestMap(abstractRequest.deltaValueStore.toJson());
 
     String payload = ClientRequestHelper.getRequestString(requestMap);
@@ -240,6 +249,10 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
   }
 
   ValueStoreJsonImpl getValueStore() {
+    if (valueStore == null) {
+      throw new IllegalStateException(
+          "must call RequestFactory.initialize() first");
+    }
     return valueStore;
   }
 
@@ -263,6 +276,9 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     Long futureId = ++currentFutureId;
     ProxyJsoImpl newRecord = ProxyJsoImpl.create(Long.toString(futureId),
         initialVersion, schema, this);
-    return schema.create(newRecord, IS_FUTURE);
+    R created = schema.create(newRecord, IS_FUTURE);
+    // Need to be able to find the future object to hook up future-to-future ref
+    getValueStore().putFutureInValueStore(newRecord);
+    return created;
   }
 }

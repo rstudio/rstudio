@@ -34,11 +34,15 @@ public class SimpleBar {
    * DO NOT USE THIS UGLY HACK DIRECTLY! Call {@link #get} instead.
    */
   private static Map<String, SimpleBar> jreTestSingleton = new HashMap<String, SimpleBar>();
- 
+
   private static long nextId = 2L;
 
+  static {
+    reset();
+  }
+
   public static Long countSimpleBar() {
-      return (long) get().size();
+    return (long) get().size();
   }
 
   public static List<SimpleBar> findAll() {
@@ -53,8 +57,12 @@ public class SimpleBar {
     return findSimpleBarById(id);
   }
 
+  /**
+   * Returns <code>null</code> if {@link #findFails} is <code>true</code>.
+   */
   public static SimpleBar findSimpleBarById(String id) {
-    return get().get(id);
+    SimpleBar toReturn = get().get(id);
+    return toReturn.findFails ? null : toReturn;
   }
 
   @SuppressWarnings("unchecked")
@@ -82,6 +90,11 @@ public class SimpleBar {
     return findSimpleBar("1L");
   }
 
+  public static SimpleBar returnFirst(List<SimpleBar> list) {
+    SimpleBar toReturn = list.get(0);
+    return toReturn;
+  }
+
   public static synchronized Map<String, SimpleBar> reset() {
     Map<String, SimpleBar> instance = new HashMap<String, SimpleBar>();
     // fixtures
@@ -105,22 +118,21 @@ public class SimpleBar {
     return instance;
   }
 
-  static {
-    reset();
-  }
-
   Integer version = 1;
 
   @Id
   private String id = "999L";
-
-  private String userName;
-
+  private boolean findFails;
   private boolean isNew = true;
+  private String userName;
 
   public SimpleBar() {
     version = 1;
     userName = "FOO";
+  }
+
+  public Boolean getFindFails() {
+    return findFails;
   }
 
   public String getId() {
@@ -146,6 +158,10 @@ public class SimpleBar {
   public SimpleBar persistAndReturnSelf() {
     persist();
     return this;
+  }
+
+  public void setFindFails(Boolean fails) {
+    this.findFails = fails;
   }
 
   public void setId(String id) {

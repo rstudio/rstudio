@@ -37,7 +37,7 @@ public class Address {
   @Size(min = 1)
   private String city;
 
-  @NotNull
+  // May be null if Address is newly-created
   private String id;
 
   @NotNull

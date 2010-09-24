@@ -16,9 +16,7 @@
 package com.google.gwt.sample.dynatablerf.server;
 
 import com.google.gwt.sample.dynatablerf.domain.Person;
-import com.google.gwt.sample.dynatablerf.domain.Professor;
 import com.google.gwt.sample.dynatablerf.domain.Schedule;
-import com.google.gwt.sample.dynatablerf.domain.Student;
 import com.google.gwt.sample.dynatablerf.domain.TimeSlot;
 
 import java.util.ArrayList;
@@ -54,6 +52,13 @@ class PersonFuzzer {
 
   private static final int STUDENTS_PER_PROF = 5;
 
+  public static Person generatePerson() {
+    Random rnd = new Random();
+    Person toReturn = generateRandomPerson(rnd);
+    AddressFuzzer.fuzz(rnd, toReturn.getAddress());
+    return toReturn;
+  }
+
   public static List<Person> generateRandomPeople() {
     List<Person> toReturn = new ArrayList<Person>(MAX_PEOPLE);
     Random rnd = new Random(3);
@@ -76,7 +81,7 @@ class PersonFuzzer {
   }
 
   private static Person generateRandomProfessor(Random rnd) {
-    Professor prof = new Professor();
+    Person prof = new Person();
 
     String firstName = pickRandomString(rnd, FIRST_NAMES);
     String lastName = pickRandomString(rnd, LAST_NAMES);
@@ -85,7 +90,7 @@ class PersonFuzzer {
     String subject = pickRandomString(rnd, SUBJECTS);
     prof.setDescription("Professor of " + subject);
 
-    generateRandomSchedule(rnd, prof.getTeachingSchedule());
+    generateRandomSchedule(rnd, prof.getClassSchedule());
 
     return prof;
   }
@@ -115,7 +120,7 @@ class PersonFuzzer {
   }
 
   private static Person generateRandomStudent(Random rnd) {
-    Student student = new Student();
+    Person student = new Person();
 
     String firstName = pickRandomString(rnd, FIRST_NAMES);
     String lastName = pickRandomString(rnd, LAST_NAMES);
@@ -133,5 +138,4 @@ class PersonFuzzer {
     int i = rnd.nextInt(a.length);
     return a[i];
   }
-
 }

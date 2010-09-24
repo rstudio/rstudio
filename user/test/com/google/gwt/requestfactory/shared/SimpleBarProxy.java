@@ -18,14 +18,18 @@ package com.google.gwt.requestfactory.shared;
 import com.google.gwt.requestfactory.server.SimpleBar;
 
 /**
- * A simple entity used for testing. Has an int field and date field. Add other data types as their
- * support gets built in.
+ * A simple entity used for testing. Has an int field and date field. Add other
+ * data types as their support gets built in.
  */
 @ProxyFor(SimpleBar.class)
 public interface SimpleBarProxy extends EntityProxy {
+  Boolean getFindFails();
+
   String getId();
-  
+
   String getUserName();
+
+  void setFindFails(Boolean fails);
 
   void setUserName(String userName);
 

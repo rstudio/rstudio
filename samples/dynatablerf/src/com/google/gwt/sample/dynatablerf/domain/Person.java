@@ -24,7 +24,15 @@ import javax.validation.constraints.Size;
 /**
  * Hold relevant data for Person.
  */
-public abstract class Person {
+public class Person {
+  /**
+   * New instances could be created on the client, but it's a better demo to
+   * send back a Person with a bunch of dummy data.
+   */
+  public static Person createPerson() {
+    return SchoolCalendarService.createPerson();
+  }
+
   /**
    * The RequestFactory requires a static finder method for each proxied type.
    * Soon it should allow you to customize how instances are found.
@@ -41,13 +49,16 @@ public abstract class Person {
   private final Address address = new Address();
 
   @NotNull
+  private Schedule classSchedule = new Schedule();
+
+  @NotNull
   private String description = "DESC";
 
   @NotNull
   @Size(min = 2, message = "Persons aren't just characters")
   private String name;
 
-  @NotNull
+  // May be null if the person is newly-created
   private String id;
 
   @NotNull
@@ -55,6 +66,9 @@ public abstract class Person {
   private Integer version = 0;
 
   private String note;
+
+  private final boolean[] daysFilters = new boolean[] {
+      true, true, true, true, true, true, true};
 
   public Person() {
   }
@@ -65,6 +79,7 @@ public abstract class Person {
 
   public void copyFrom(Person copyFrom) {
     address.copyFrom(copyFrom.address);
+    classSchedule = copyFrom.classSchedule;
     description = copyFrom.description;
     name = copyFrom.name;
     id = copyFrom.id;
@@ -74,6 +89,10 @@ public abstract class Person {
 
   public Address getAddress() {
     return address;
+  }
+
+  public Schedule getClassSchedule() {
+    return classSchedule;
   }
 
   public String getDescription() {
@@ -100,10 +119,12 @@ public abstract class Person {
   }
 
   public String getSchedule() {
-    return getSchedule(new boolean[] {true, true, true, true, true, true, true});
+    return getSchedule(daysFilters);
   }
 
-  public abstract String getSchedule(boolean[] daysFilter);
+  public String getSchedule(boolean[] daysFilter) {
+    return classSchedule.getDescription(daysFilter);
+  }
 
   /**
    * The RequestFactory requires an Integer version property for each proxied
@@ -113,7 +134,9 @@ public abstract class Person {
     return version;
   }
 
-  public abstract Person makeCopy();
+  public Person makeCopy() {
+    return new Person(this);
+  }
 
   /**
    * When this was written the RequestFactory required a persist method per
@@ -122,6 +145,16 @@ public abstract class Person {
    */
   public void persist() {
     SchoolCalendarService.persist(this);
+  }
+
+  public void setAddress(Address address) {
+    this.address.copyFrom(address);
+  }
+
+  public void setDaysFilter(boolean[] daysFilter) {
+    assert daysFilter.length == this.daysFilters.length;
+    System.arraycopy(daysFilter, 0, this.daysFilters, 0,
+        this.daysFilters.length);
   }
 
   public void setDescription(String description) {

@@ -33,13 +33,7 @@ public abstract class Receiver<V> {
    * RuntimeException with the provided error message.
    */
   public void onFailure(ServerFailure error) {
-    String exceptionType = error.getExceptionType();
-    String message = error.getMessage();
-    throw new RuntimeException(exceptionType
-        + ((exceptionType.length() != 0 && message.length() != 0) ? ": " : "")
-        + error.getMessage()
-        + ((exceptionType.length() != 0 || message.length() != 0) ? ": " : "")
-        + error.getStackTraceString());
+    throw new RuntimeException(error.getMessage());
   }
 
   /**

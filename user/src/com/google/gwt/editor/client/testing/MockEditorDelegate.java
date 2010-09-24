@@ -32,13 +32,6 @@ public class MockEditorDelegate<T> implements EditorDelegate<T> {
   private String path = "";
 
   /**
-   * Returns <code>object</code>.
-   */
-  public T ensureMutable(T object) {
-    return object;
-  }
-
-  /**
    * Returns a zero-length string or the last value passed to {@link #setPath}.
    */
   public String getPath() {

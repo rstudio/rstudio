@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.client.impl.ProxySchema;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
@@ -31,6 +32,7 @@ public class SimpleRequestFactoryInstance {
   public static SimpleRequestFactory factory() {
     if (factory == null) {
       factory = GWT.create(SimpleRequestFactory.class);
+      factory.initialize(new SimpleEventBus());
     }
 
     return factory;

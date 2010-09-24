@@ -105,13 +105,13 @@ class DeltaValueStoreJsonImpl {
 
   private final RequestFactoryJsonImpl requestFactory;
   // track C-U-D of CRUD operations
-  private final Map<EntityProxyId, ProxyJsoImpl> creates = new HashMap<EntityProxyId, ProxyJsoImpl>();
+  private final Map<EntityProxyId<?>, ProxyJsoImpl> creates = new HashMap<EntityProxyId<?>, ProxyJsoImpl>();
 
-  private final Map<EntityProxyId, ProxyJsoImpl> updates = new HashMap<EntityProxyId, ProxyJsoImpl>();
+  private final Map<EntityProxyId<?>, ProxyJsoImpl> updates = new HashMap<EntityProxyId<?>, ProxyJsoImpl>();
   // nothing for deletes because DeltaValueStore is not involved in deletes. The
   // operation alone suffices.
 
-  private final Map<EntityProxyId, WriteOperation> operations = new HashMap<EntityProxyId, WriteOperation>();
+  private final Map<EntityProxyId<?>, WriteOperation> operations = new HashMap<EntityProxyId<?>, WriteOperation>();
 
   private boolean used = false;
 
@@ -136,17 +136,17 @@ class DeltaValueStoreJsonImpl {
       int length = newRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord newRecord = newRecords.get(i);
-        final EntityProxyIdImpl<?> futureKey = new EntityProxyIdImpl<EntityProxy>(
-            newRecord.getFutureId(),
-            requestFactory.getSchema(newRecord.getSchema()),
-            RequestFactoryJsonImpl.IS_FUTURE, null);
-        ProxyJsoImpl copy = ProxyJsoImpl.create(
-            newRecord.getFutureId(), 1, futureKey.schema,
-            requestFactory);
+        ProxySchema<?> schema = requestFactory.getSchema(newRecord.getSchema());
+        EntityProxyIdImpl<?> futureKey = new EntityProxyIdImpl<EntityProxy>(
+            newRecord.getFutureId(), schema, RequestFactoryJsonImpl.IS_FUTURE,
+            null);
+        ProxyJsoImpl copy = ProxyJsoImpl.create(newRecord.getFutureId(), 1,
+            schema, requestFactory);
         toRemove.add(futureKey);
         requestFactory.datastoreToFutureMap.put(newRecord.getEncodedId(),
             futureKey.schema, futureKey.encodedId);
-        requestFactory.futureToDatastoreMap.put(futureKey.encodedId, newRecord.getEncodedId());
+        requestFactory.futureToDatastoreMap.put(futureKey.encodedId,
+            newRecord.getEncodedId());
 
         /*
          * TODO (amitmanjhi): get all the data from the server. make a copy of
@@ -161,9 +161,7 @@ class DeltaValueStoreJsonImpl {
           copy.merge(value);
           copy.putEncodedId(newRecord.getEncodedId());
         }
-        ProxyJsoImpl masterRecord = master.records.get(futureKey);
-        assert masterRecord == null;
-        requestFactory.postChangeEvent(copy, WriteOperation.CREATE);
+        assert master.records.containsKey(futureKey);
       }
     }
     processToRemove(toRemove, WriteOperation.CREATE);
@@ -175,11 +173,11 @@ class DeltaValueStoreJsonImpl {
       int length = deletedRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord deletedRecord = deletedRecords.get(i);
-        final EntityProxyIdImpl key = getPersistedProxyId(
+        EntityProxyIdImpl<?> key = getPersistedProxyId(
             deletedRecord.getEncodedId(),
             requestFactory.getSchema(deletedRecord.getSchema()));
-        ProxyJsoImpl copy = ProxyJsoImpl.create((String) key.encodedId, 1, key.schema,
-            requestFactory);
+        ProxyJsoImpl copy = ProxyJsoImpl.create((String) key.encodedId, 1,
+            key.schema, requestFactory);
         requestFactory.postChangeEvent(copy, WriteOperation.DELETE);
         master.records.remove(key);
       }
@@ -191,10 +189,11 @@ class DeltaValueStoreJsonImpl {
       int length = updatedRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord updatedRecord = updatedRecords.get(i);
-        final EntityProxyIdImpl key = getPersistedProxyId(updatedRecord.getEncodedId(),
+        EntityProxyIdImpl<?> key = getPersistedProxyId(
+            updatedRecord.getEncodedId(),
             requestFactory.getSchema(updatedRecord.getSchema()));
-        ProxyJsoImpl copy = ProxyJsoImpl.create((String) key.encodedId, 1, key.schema,
-            requestFactory);
+        ProxyJsoImpl copy = ProxyJsoImpl.create((String) key.encodedId, 1,
+            key.schema, requestFactory);
         requestFactory.postChangeEvent(copy, WriteOperation.UPDATE);
         ProxyJsoImpl masterRecord = master.records.get(key);
         ProxyJsoImpl value = updates.get(key);
@@ -213,8 +212,34 @@ class DeltaValueStoreJsonImpl {
     processToRemove(toRemove, WriteOperation.UPDATE);
   }
 
+  public <V> V get(Property<V> property, EntityProxy record) {
+    ProxyJsoImpl proxy = creates.get(record.stableId());
+    if (proxy == null) {
+      proxy = updates.get(record.stableId());
+    }
+    if (proxy == null) {
+      return null;
+    }
+    return proxy.get(property);
+  }
+
   public boolean isChanged() {
     return !operations.isEmpty();
+  }
+
+  /**
+   * Returns <code>true</code> if a call to {@link #set} was made with the given
+   * property and record.
+   */
+  public <V> boolean isPropertySet(Property<V> property, EntityProxy record) {
+    ProxyJsoImpl proxy = creates.get(record.stableId());
+    if (proxy == null) {
+      proxy = updates.get(record.stableId());
+    }
+    if (proxy == null) {
+      return false;
+    }
+    return proxy.isDefined(property.getName());
   }
 
   /**
@@ -229,6 +254,8 @@ class DeltaValueStoreJsonImpl {
     assertNotUsedAndCorrectType(record);
     ProxyImpl recordImpl = (ProxyImpl) record;
     EntityProxyId<?> recordKey = recordImpl.stableId();
+
+    retainValue(value);
 
     ProxyJsoImpl rawMasterRecord = master.records.get(recordKey);
     WriteOperation priorOperation = operations.get(recordKey);
@@ -277,13 +304,49 @@ class DeltaValueStoreJsonImpl {
   }
 
   /**
-   * Has side effect of setting the used flag, meaning further 
-   * sets will fail until clearUsed is called. Cannot be called
-   * while used.
+   * Clean-up logic to ensure that any values referenced in the payload will be
+   * transmitted to the server. Specifically, this ensures that all referenced,
+   * future ProxyImpls will be transmitted to the server, even if they have no
+   * associated property changes.
+   */
+  void retainValue(Object value) {
+    if (value instanceof Iterable<?>) {
+      // Retain values in collections
+      for (Object o : (Iterable<?>) value) {
+        retainValue(o);
+        return;
+      }
+    }
+
+    if (!(value instanceof ProxyImpl)) {
+      // Ignore anything that's not a proxy
+      return;
+    }
+
+    ProxyImpl proxy = (ProxyImpl) value;
+    if (!proxy.unpersisted()) {
+      // A persisted proxy doesn't need to be retained
+      return;
+    }
+
+    EntityProxyId<?> id = proxy.stableId();
+    if (operations.containsKey(id)) {
+      // Already retained
+      return;
+    }
+
+    // Retain
+    creates.put(id, proxy.asJso());
+    operations.put(id, WriteOperation.CREATE);
+  }
+
+  /**
+   * Has side effect of setting the used flag, meaning further sets will fail
+   * until clearUsed is called. Cannot be called while used.
    */
   String toJson() {
     assertNotUsed();
-    
+
     used = true;
     StringBuffer jsonData = new StringBuffer("{");
     for (WriteOperation writeOperation : new WriteOperation[] {
@@ -304,14 +367,19 @@ class DeltaValueStoreJsonImpl {
   /**
    * returns true if a new change record has been added.
    */
-  private <V> boolean addNewChangeRecord(EntityProxyId recordKey,
+  private <V> boolean addNewChangeRecord(EntityProxyId<?> recordKey,
       ProxyImpl recordImpl, Property<V> property, V value) {
     ProxyJsoImpl rawMasterRecord = master.records.get(recordKey);
     ProxyJsoImpl changeRecord = newChangeRecord(recordImpl);
     if (isRealChange(property, value, rawMasterRecord)) {
       changeRecord.set(property, value);
-      updates.put(recordKey, changeRecord);
-      operations.put(recordKey, WriteOperation.UPDATE);
+      if (recordImpl.unpersisted()) {
+        creates.put(recordKey, changeRecord);
+        operations.put(recordKey, WriteOperation.CREATE);
+      } else {
+        updates.put(recordKey, changeRecord);
+        operations.put(recordKey, WriteOperation.UPDATE);
+      }
       return true;
     }
     return false;
@@ -326,7 +394,7 @@ class DeltaValueStoreJsonImpl {
 
   private void assertNotUsedAndCorrectType(EntityProxy record) {
     assertNotUsed();
-    
+
     if (!(record instanceof ProxyImpl)) {
       throw new IllegalArgumentException(record + " + must be an instance of "
           + ProxyImpl.class);
@@ -335,22 +403,22 @@ class DeltaValueStoreJsonImpl {
 
   private String getJsonForOperation(WriteOperation writeOperation) {
     assert (writeOperation == WriteOperation.CREATE || writeOperation == WriteOperation.UPDATE);
-    Map<EntityProxyId, ProxyJsoImpl> recordsMap = getRecordsMap(writeOperation);
+    Map<EntityProxyId<?>, ProxyJsoImpl> recordsMap = getRecordsMap(writeOperation);
     if (recordsMap.size() == 0) {
       return "";
     }
-    StringBuffer requestData = new StringBuffer("\"" + writeOperation.getUnObfuscatedEnumName()
-        + "\":[");
+    StringBuffer requestData = new StringBuffer("\""
+        + writeOperation.getUnObfuscatedEnumName() + "\":[");
     boolean first = true;
-    for (Map.Entry<EntityProxyId, ProxyJsoImpl> entry : recordsMap.entrySet()) {
+    for (Map.Entry<EntityProxyId<?>, ProxyJsoImpl> entry : recordsMap.entrySet()) {
       ProxyJsoImpl impl = entry.getValue();
       if (first) {
         first = false;
       } else {
         requestData.append(",");
       }
-      requestData.append("{\""
-          + entry.getValue().getSchema().getToken() + "\":");
+      requestData.append("{\"" + entry.getValue().getSchema().getToken()
+          + "\":");
       requestData.append(impl.toJson());
       requestData.append("}");
     }
@@ -358,14 +426,14 @@ class DeltaValueStoreJsonImpl {
     return requestData.toString();
   }
 
-  private EntityProxyIdImpl getPersistedProxyId(String encodedId,
+  private EntityProxyIdImpl<?> getPersistedProxyId(String encodedId,
       ProxySchema<?> schema) {
-    return new EntityProxyIdImpl(encodedId, schema,
+    return new EntityProxyIdImpl<EntityProxy>(encodedId, schema,
         RequestFactoryJsonImpl.NOT_FUTURE,
         requestFactory.datastoreToFutureMap.get(encodedId, schema));
   }
 
-  private Map<EntityProxyId, ProxyJsoImpl> getRecordsMap(
+  private Map<EntityProxyId<?>, ProxyJsoImpl> getRecordsMap(
       WriteOperation writeOperation) {
     switch (writeOperation) {
       case CREATE:
@@ -386,10 +454,10 @@ class DeltaValueStoreJsonImpl {
       return true;
     }
 
-    if (property instanceof CollectionProperty) {
+    if (property instanceof CollectionProperty<?, ?>) {
       return true;
     }
-    
+
     masterRecord = rawMasterRecord.cast();
 
     if (!masterRecord.isDefined(property.getName())) {

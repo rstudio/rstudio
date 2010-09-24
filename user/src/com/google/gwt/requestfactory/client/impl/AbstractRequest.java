@@ -67,8 +67,24 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
   public <P extends EntityProxy> P edit(P record) {
     P returnRecordImpl = (P) ((ProxyImpl) record).schema().create(
         ((ProxyImpl) record).asJso(), ((ProxyImpl) record).unpersisted());
-    ((ProxyImpl) returnRecordImpl).putDeltaValueStore(deltaValueStore);
+    ((ProxyImpl) returnRecordImpl).putDeltaValueStore(deltaValueStore, this);
     return returnRecordImpl;
+  }
+
+  /**
+   * Utility method to call {@link #edit} only on immutable proxy objects. Any
+   * other type of data will be returned as-is.
+   */
+  public <Q> Q ensureMutable(Q o) {
+    if (o instanceof ProxyImpl) {
+      ProxyImpl proxy = (ProxyImpl) o;
+      if (!proxy.mutable()) {
+        @SuppressWarnings("unchecked")
+        Q editable = (Q) edit(proxy);
+        return editable;
+      }
+    }
+    return o;
   }
 
   public void fire(Receiver<? super T> receiver) {
@@ -76,7 +92,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     this.receiver = receiver;
     requestFactory.fire(this);
   }
-  
+
   /**
    * @deprecated use {@link #with(String...)} instead.
    * @param properties
@@ -88,7 +104,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     }
     return getThis();
   }
-  
+
   /**
    * @return the properties
    */
@@ -102,19 +118,23 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     JsonResults results = JsonResults.fromResults(responseText);
     JsonServerException cause = results.getException();
     if (cause != null) {
-      fail(new ServerFailure(
-          cause.getMessage(), cause.getType(), cause.getTrace()));
+      fail(new ServerFailure(cause.getMessage(), cause.getType(),
+          cause.getTrace()));
       return;
     }
-    processRelated(results.getRelated());
-
     // handle violations
     JsArray<DeltaValueStoreJsonImpl.ReturnRecord> violationsArray = results.getViolations();
     if (violationsArray != null) {
       processViolations(violationsArray);
     } else {
       deltaValueStore.commit(results.getSideEffects());
-      handleResult(results.getResult());
+      processRelated(results.getRelated());
+      if (results.isNullResult()) {
+        // Indicates the server explicitly meant to send a null value
+        succeed(null);
+      } else {
+        handleResult(results.getResult());
+      }
     }
   }
 
@@ -186,7 +206,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
       } else {
         id = violationRecord.getEncodedId();
       }
-      final EntityProxyIdImpl key = new EntityProxyIdImpl(id,
+      final EntityProxyIdImpl<?> key = new EntityProxyIdImpl<EntityProxy>(id,
           requestFactory.getSchema(violationRecord.getSchema()),
           violationRecord.hasFutureId(), null);
       assert violationRecord.hasViolations();
@@ -206,7 +226,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
             return path;
           }
 
-          public EntityProxyId getProxyId() {
+          public EntityProxyId<?> getProxyId() {
             return key;
           }
         });

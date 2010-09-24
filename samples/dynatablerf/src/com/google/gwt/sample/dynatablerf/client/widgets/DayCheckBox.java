@@ -35,7 +35,7 @@ class DayCheckBox extends Composite {
   public DayCheckBox(EventBus eventBus) {
     this.eventBus = eventBus;
     initWidget(cb);
-    cb.setEnabled(false);
+    cb.setValue(true);
     cb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
       public void onValueChange(ValueChangeEvent<Boolean> event) {
         DayCheckBox.this.eventBus.fireEvent(new FilterChangeEvent(getDay(),

@@ -105,7 +105,7 @@ public class SimpleFoo {
   public static Date processDateList(List<Date> values) {
     return values.get(0);
   }
-  
+
   public static SimpleEnum processEnumList(List<SimpleEnum> values) {
     return values.get(0);
   }
@@ -124,6 +124,18 @@ public class SimpleFoo {
           instance);
     }
     return instance;
+  }
+
+  public static List<SimpleFoo> returnNullList() {
+    return null;
+  }
+
+  public static SimpleFoo returnNullSimpleFoo() {
+    return null;
+  }
+
+  public static String returnNullString() {
+    return null;
   }
 
   @SuppressWarnings("unused")
@@ -171,7 +183,7 @@ public class SimpleFoo {
   private List<SimpleBar> oneToManyField;
   private List<SimpleFoo> selfOneToManyField;
   private Set<SimpleBar> oneToManySetField;
-  
+
   private List<Integer> numberListField;
 
   public SimpleFoo() {
@@ -284,7 +296,7 @@ public class SimpleFoo {
   public String getNullField() {
     return nullField;
   }
-  
+
   public List<Integer> getNumberListField() {
     return numberListField;
   }
@@ -351,7 +363,7 @@ public class SimpleFoo {
     }
     return result;
   }
-  
+
   public void setBarField(SimpleBar barField) {
     this.barField = barField;
   }
@@ -459,7 +471,8 @@ public class SimpleFoo {
 
   public void setPleaseCrash(Integer crashIf42or43) throws Exception {
     if (crashIf42or43 == 42) {
-      throw new UnsupportedOperationException("THIS EXCEPTION IS EXPECTED BY A TEST");
+      throw new UnsupportedOperationException(
+          "THIS EXCEPTION IS EXPECTED BY A TEST");
     }
     if (crashIf42or43 == 43) {
       throw new Exception("THIS EXCEPTION IS EXPECTED BY A TEST");

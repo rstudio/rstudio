@@ -39,11 +39,7 @@ public interface ValueAwareEditor<T> extends HasEditorDelegate<T> {
    * Called by the EditorDriver to set the object the Editor is peered with
    * <p>
    * ValueAwareEditors should preferentially use sub-editors to alter the
-   * properties of the object being edited. If this is not feasible, the value
-   * provided to this method must not be mutated directly without calling
-   * {@link EditorDelegate#ensureMutable()} to obtain a guaranteed-mutable
-   * instance.
-   * <p>
+   * properties of the object being edited.
    */
   void setValue(T value);
 }

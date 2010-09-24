@@ -15,8 +15,10 @@
  */
 package com.google.gwt.sample.dynatablerf.client.events;
 
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
  * An event to indicate a change in the filter options.
@@ -30,6 +32,11 @@ public class FilterChangeEvent extends GwtEvent<FilterChangeEvent.Handler> {
   }
 
   public static final Type<Handler> TYPE = new Type<Handler>();
+
+  public static HandlerRegistration register(EventBus eventBus, Handler handler) {
+    return eventBus.addHandler(TYPE, handler);
+  }
+
   private final int day;
   private final boolean selected;
 

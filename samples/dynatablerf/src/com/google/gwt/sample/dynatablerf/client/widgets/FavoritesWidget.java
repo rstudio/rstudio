@@ -86,7 +86,7 @@ public class FavoritesWidget extends Composite {
   @UiField
   Style style;
 
-  private final List<PersonProxy> displayed;
+  private final List<PersonProxy> displayedList;
   private final EventBus eventBus;
   private final RequestFactory factory;
   private FavoritesManager manager;
@@ -117,7 +117,7 @@ public class FavoritesWidget extends Composite {
     driver.display(new ArrayList<PersonProxy>());
 
     // Modifying this list triggers widget creation and destruction
-    displayed = listEditor.getList();
+    displayedList = listEditor.getList();
   }
 
   @Override
@@ -149,16 +149,32 @@ public class FavoritesWidget extends Composite {
       return;
     }
 
-    if (event.isFavorite()) {
-      displayed.add(person);
+    // EntityProxies should be compared by stable id
+    EntityProxyId<PersonProxy> lookFor = person.stableId();
+    PersonProxy found = null;
+    for (PersonProxy displayed : displayedList) {
+      if (displayed.stableId().equals(lookFor)) {
+        found = displayed;
+        break;
+      }
+    }
+
+    if (event.isFavorite() && found == null) {
+      displayedList.add(person);
+    } else if (!event.isFavorite() && found != null) {
+      displayedList.remove(person);
     } else {
-      displayed.remove(person);
+      // No change
+      return;
     }
 
     // Sorting the list of PersonProxies will also change the UI display
-    Collections.sort(displayed, new Comparator<PersonProxy>() {
+    Collections.sort(displayedList, new Comparator<PersonProxy>() {
       public int compare(PersonProxy o1, PersonProxy o2) {
-        return o1.getName().compareTo(o2.getName());
+        // Newly-created records may have null names
+        String name1 = o1.getName() == null ? "" : o1.getName();
+        String name2 = o2.getName() == null ? "" : o2.getName();
+        return name1.compareToIgnoreCase(name2);
       }
     });
   }

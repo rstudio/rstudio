@@ -38,6 +38,8 @@ public interface PersonProxy extends EntityProxy {
 
   String getSchedule();
 
+  void setAddress(AddressProxy address);
+
   void setDescription(String description);
 
   void setName(String name);

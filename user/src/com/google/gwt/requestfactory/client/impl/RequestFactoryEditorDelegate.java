@@ -46,17 +46,15 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
     public void onProxyChange(EntityProxyChange<EntityProxy> event) {
       if (event.getWriteOperation().equals(WriteOperation.UPDATE)
-          && event.getProxyId().equals(
-              ((EntityProxy) getObject()).stableId())) {
+          && event.getProxyId().equals(((EntityProxy) getObject()).stableId())) {
         List<String> paths = new ArrayList<String>();
         traverse(paths);
-        @SuppressWarnings("rawtypes")
-        EntityProxyId id = event.getProxyId();
+        EntityProxyId<?> id = event.getProxyId();
         doFind(paths, id);
       }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings( {"rawtypes", "unchecked"})
     private void doFind(List<String> paths, EntityProxyId id) {
       factory.find(id).with(paths.toArray(new String[paths.size()])).fire(
           new SubscriptionReceiver());
@@ -75,20 +73,6 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
   protected EventBus eventBus;
   protected RequestFactory factory;
   protected Request<?> request;
-
-  @Override
-  public P ensureMutable(P object) {
-    if (request == null) {
-      throw new IllegalStateException("No Request");
-    } else if (object instanceof EntityProxy) {
-      @SuppressWarnings("unchecked")
-      P toReturn = (P) request.edit(((EntityProxy) object));
-      return toReturn;
-    } else {
-      // Likely a value object
-      return object;
-    }
-  }
 
   public void initialize(EventBus eventBus, RequestFactory factory,
       String pathSoFar, P object, E editor, DelegateMap delegateMap,
@@ -117,6 +101,15 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     HandlerRegistration toReturn = EntityProxyChange.<EntityProxy> registerForProxyType(
         eventBus, clazz, new SubscriptionHandler());
     return toReturn;
+  }
+
+  @Override
+  protected <T> T ensureMutable(T object) {
+    if (request == null) {
+      // Read-only mode
+      return object;
+    }
+    return ((AbstractRequest<?, ?>) request).<T> ensureMutable(object);
   }
 
   @Override

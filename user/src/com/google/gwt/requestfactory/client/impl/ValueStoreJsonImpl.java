@@ -32,17 +32,30 @@ import java.util.Map;
 class ValueStoreJsonImpl {
   // package protected fields for use by DeltaValueStoreJsonImpl
 
-  final Map<EntityProxyIdImpl, ProxyJsoImpl> records = new HashMap<EntityProxyIdImpl, ProxyJsoImpl>();
+  final Map<EntityProxyIdImpl<?>, ProxyJsoImpl> records = new HashMap<EntityProxyIdImpl<?>, ProxyJsoImpl>();
 
   EntityProxy getRecordBySchemaAndId(ProxySchema<?> schema, String encodedId,
-      RequestFactoryJsonImpl requestFactory) {
+      boolean isFuture, RequestFactoryJsonImpl requestFactory) {
     if (encodedId == null) {
       return null;
     }
-    // TODO: pass isFuture to this method from decoding ID string
-    EntityProxyIdImpl key = new EntityProxyIdImpl(encodedId, schema, false,
-        requestFactory.datastoreToFutureMap.get(encodedId, schema));
-    return schema.create(records.get(key));
+
+    EntityProxyIdImpl<?> key = new EntityProxyIdImpl<EntityProxy>(encodedId,
+        schema, isFuture, requestFactory.datastoreToFutureMap.get(encodedId,
+            schema));
+    return schema.create(records.get(key), isFuture);
+  }
+
+  /**
+   * Puts a newly-created {@link ProxyJsoImpl} newJsoRecord in the valueStore
+   * following a create, and sends appropriate events. If the valuestore had a
+   * Jso that was the same or a superset of newJsoRecord, returns the valuestore
+   * jso. Otherwise, puts newJsoRecord in the valuestore and returns null.
+   * <p>
+   * package-protected for testing purposes.
+   */
+  ProxyJsoImpl putFutureInValueStore(ProxyJsoImpl newJsoRecord) {
+    return putInValueStore(newJsoRecord, RequestFactoryJsonImpl.IS_FUTURE);
   }
 
   /**
@@ -54,26 +67,7 @@ class ValueStoreJsonImpl {
    * package-protected for testing purposes.
    */
   ProxyJsoImpl putInValueStore(ProxyJsoImpl newJsoRecord) {
-    EntityProxyIdImpl recordKey = new EntityProxyIdImpl(newJsoRecord.encodedId(),
-        newJsoRecord.getSchema(), RequestFactoryJsonImpl.NOT_FUTURE,
-        newJsoRecord.getRequestFactory().datastoreToFutureMap.get(
-            newJsoRecord.encodedId(), newJsoRecord.getSchema()));
-
-    ProxyJsoImpl oldRecord = records.get(recordKey);
-    if (oldRecord == null) {
-      records.put(recordKey, newJsoRecord);
-      newJsoRecord.assertValid();
-      newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord,
-          WriteOperation.ACQUIRE);
-      return null;
-    }
-    if (oldRecord.hasChanged(newJsoRecord)) {
-      records.put(recordKey, newJsoRecord);
-      newJsoRecord.getRequestFactory().postChangeEvent(newJsoRecord,
-          WriteOperation.UPDATE);
-      return null;
-    }
-    return oldRecord;
+    return putInValueStore(newJsoRecord, RequestFactoryJsonImpl.NOT_FUTURE);
   }
 
   void setRecords(JsArray<ProxyJsoImpl> newRecords) {
@@ -83,5 +77,30 @@ class ValueStoreJsonImpl {
         newRecords.set(i, oldRecord);
       }
     }
+  }
+
+  private ProxyJsoImpl putInValueStore(ProxyJsoImpl newJsoRecord,
+      boolean isFuture) {
+    RequestFactoryJsonImpl factory = newJsoRecord.getRequestFactory();
+    EntityProxyIdImpl<?> recordKey = new EntityProxyIdImpl<EntityProxy>(
+        newJsoRecord.encodedId(), newJsoRecord.getSchema(), isFuture,
+        factory.datastoreToFutureMap.get(newJsoRecord.encodedId(),
+            newJsoRecord.getSchema()));
+
+    ProxyJsoImpl oldRecord = records.get(recordKey);
+    if (oldRecord == null) {
+      records.put(recordKey, newJsoRecord);
+      newJsoRecord.assertValid();
+      factory.postChangeEvent(newJsoRecord, isFuture ? WriteOperation.CREATE
+          : WriteOperation.ACQUIRE);
+      return null;
+    } 
+
+    if (oldRecord.hasChanged(newJsoRecord)) {
+      records.put(recordKey, newJsoRecord);
+      factory.postChangeEvent(newJsoRecord, WriteOperation.UPDATE);
+      return null;
+    }
+    return oldRecord;
   }
 }

@@ -43,9 +43,9 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
 
   private final ProxyJsoImpl jso;
   private final boolean isFuture;
-
   private DeltaValueStoreJsonImpl deltaValueStore;
-  
+  private AbstractRequest<?, ?> request;
+
   /**
    * For use by generated subclasses only. Other code should use
    * {@link ProxySchema#create(ProxyJsoImpl, boolean)}, typically:
@@ -61,7 +61,6 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
     assert jso.getSchema() != null;
     this.jso = jso;
     this.isFuture = isFuture;
-    deltaValueStore = null;
   }
 
   public ProxyJsoImpl asJso() {
@@ -73,10 +72,28 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
   }
 
   /**
-   * Get this proxy's value for the given property. Behavior is undefined if
-   * the proxy has no such property, or if the property has never been set. It
-   * is unusual to call this method directly. Rather it is expected to be called
-   * by bean-style getter methods provided by implementing classes.
+   * A ProxyImpl is equal to another ProxyImpl if they have equal EntityProxyIds
+   * and they are from the same Request object.
+   */
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ProxyImpl)) {
+      return false;
+    }
+    ProxyImpl other = (ProxyImpl) o;
+    return stableId().equals(other.stableId())
+        && (request == other.request || request != null
+            && request.equals(other.request));
+  }
+
+  /**
+   * Get this proxy's value for the given property. Behavior is undefined if the
+   * proxy has no such property, or if the property has never been set. It is
+   * unusual to call this method directly. Rather it is expected to be called by
+   * bean-style getter methods provided by implementing classes.
+   * <p>
+   * If the ProxyImpl is mutable, any EntityProxies reachable from the return
+   * value will have already been made mutable.
    * 
    * @param <V> the type of the property's value
    * @param property the property to fetch
@@ -84,17 +101,29 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
    */
   @SuppressWarnings("unchecked")
   public <V> V get(Property<V> property) {
-    if (property instanceof CollectionProperty) {
-      V toReturn = (V) jso.getCollection((CollectionProperty) property);
-      if (toReturn != null) {
-        ((JsoCollection) toReturn).setDependencies(deltaValueStore, property,
-            this);
+    // Read through to the DeltaValueStore to see if the entity has been mutated
+    V toReturn = null;
+    if (deltaValueStore != null
+        && deltaValueStore.isPropertySet(property, this)) {
+      toReturn = deltaValueStore.get(property, this);
+    } else {
+      if (property instanceof CollectionProperty) {
+        // Possibly create a new JsoCollection if one does not exist
+        toReturn = (V) jso.getCollection((CollectionProperty) property);
+      } else {
+        // Return a scalar property from the backing object
+        toReturn = jso.<V> get(property);
       }
-      return toReturn;
     }
-    return jso.<V> get(property);
+    // Ensure mutability
+    if (toReturn instanceof JsoCollection) {
+      ((JsoCollection) toReturn).setDependencies(property, this);
+    } else if (mutable()) {
+      toReturn = request.ensureMutable(toReturn);
+    }
+    return toReturn;
   }
-  
+
   public <V> V get(String propertyName, Class<?> propertyType) {
     // javac 1.6.0_20 on mac has problems without the explicit parameterization
     return jso.<V> get(propertyName, propertyType);
@@ -105,6 +134,20 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
       return false;
     }
     return deltaValueStore.isChanged();
+  }
+
+  @Override
+  public int hashCode() {
+    return stableId().hashCode() * 13
+        + (request == null ? 0 : request.hashCode()) * 5;
+  }
+
+  public boolean mutable() {
+    return deltaValueStore != null;
+  }
+
+  public AbstractRequest<?, ?> request() {
+    return request;
   }
 
   public ProxySchema<?> schema() {
@@ -119,17 +162,17 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
     deltaValueStore.set(property, record, value);
   }
 
-  // Allow the generated subclass to return the specific type its public interface probably demands
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  /**
+   * Allow the generated subclass to return the specific type its public
+   * interface probably demands.
+   */
+  @SuppressWarnings(value = {"unchecked", "rawtypes"})
   public EntityProxyId stableId() {
-    if (!isFuture) {
-      return new EntityProxyIdImpl<ProxyImpl>(
-          encodedId(),
-          schema(),
-          false,
-          jso.getRequestFactory().datastoreToFutureMap.get(encodedId(), schema()));
+    if (isFuture) {
+      return new EntityProxyIdImpl(encodedId(), schema(), isFuture, null);
     }
-    return new EntityProxyIdImpl(encodedId(), schema(), isFuture, null);
+    return new EntityProxyIdImpl<ProxyImpl>(encodedId(), schema(), false,
+        jso.getRequestFactory().datastoreToFutureMap.get(encodedId(), schema()));
   }
 
   public boolean unpersisted() {
@@ -147,8 +190,10 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
   protected ValueStoreJsonImpl valueStore() {
     return jso.getRequestFactory().getValueStore();
   }
-  
-  void putDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore) {
+
+  void putDeltaValueStore(DeltaValueStoreJsonImpl deltaValueStore,
+      AbstractRequest<?, ?> request) {
     this.deltaValueStore = deltaValueStore;
+    this.request = request;
   }
 }

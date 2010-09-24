@@ -61,6 +61,12 @@ public interface SimpleFooRequest {
   
   Request<Void> reset();
 
+  ProxyListRequest<SimpleFooProxy> returnNullList();
+
+  ProxyRequest<SimpleFooProxy> returnNullSimpleFoo();
+
+  Request<String> returnNullString();
+
   @Instance
   Request<Integer> sum(SimpleFooProxy instance, List<Integer> values);
 }

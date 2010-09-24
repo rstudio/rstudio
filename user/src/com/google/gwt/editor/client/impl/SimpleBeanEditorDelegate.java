@@ -28,11 +28,6 @@ public abstract class SimpleBeanEditorDelegate<T, E extends Editor<T>> extends
     AbstractEditorDelegate<T, E> {
 
   @Override
-  public T ensureMutable(T object) {
-    return object;
-  }
-
-  @Override
   public void initialize(String pathSoFar, T object, E editor, DelegateMap map) {
     super.initialize(pathSoFar, object, editor, map);
   }

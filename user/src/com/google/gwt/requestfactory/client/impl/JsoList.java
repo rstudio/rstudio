@@ -41,9 +41,7 @@ class JsoList<T> extends AbstractList<T> implements JsoCollection {
 
   private final JavaScriptObject array;
 
-  private DeltaValueStoreJsonImpl deltaValueStore;
-
-  private CollectionProperty property;
+  private CollectionProperty<JsoList<T>, T> property;
 
   private ProxyImpl record;
 
@@ -69,10 +67,17 @@ class JsoList<T> extends AbstractList<T> implements JsoCollection {
     return array;
   }
 
+  /**
+   * Ensures that any EntityProxy returned is mutable if the enclosing proxy
+   * is mutable.
+   */
   @Override
-  @SuppressWarnings("unchecked")
   public T get(int i) {
-    return get0(i);
+    T toReturn = get0(i);
+    if (record.mutable()) {
+      toReturn = record.request().ensureMutable(toReturn);
+    }
+    return toReturn;
   }
 
   @SuppressWarnings("unchecked")
@@ -190,10 +195,9 @@ class JsoList<T> extends AbstractList<T> implements JsoCollection {
     return old;
   }
 
-  public void setDependencies(DeltaValueStoreJsonImpl dvs, Property property,
-      ProxyImpl proxy) {
-    this.deltaValueStore = dvs;
-    this.property = (CollectionProperty) property;
+  @SuppressWarnings("unchecked")
+  public void setDependencies(Property<?> property, ProxyImpl proxy) {
+    this.property = (CollectionProperty<JsoList<T>, T>) property;
     this.record = proxy;
   }
 
@@ -203,8 +207,8 @@ class JsoList<T> extends AbstractList<T> implements JsoCollection {
   }
 
   private void dvsUpdate() {
-    if (deltaValueStore != null) {
-      deltaValueStore.set(property, record, this);
+    if (record.mutable()) {
+      record.<JsoList<T>> set(property, record, this);
     }
   }
 
@@ -212,11 +216,12 @@ class JsoList<T> extends AbstractList<T> implements JsoCollection {
         return jso[i];
     }-*/;
 
+  @SuppressWarnings("unchecked")
   private T get0(int i) {
     if (TypeLibrary.isProxyType(property.getLeafType())) {
       String key[] = ((JsArrayString) array).get(i).split("@", 3);
-      return (T) rf.getValueStore().getRecordBySchemaAndId(rf.getSchema(key[2]),
-          key[0], rf);
+      return (T) rf.getValueStore().getRecordBySchemaAndId(
+          rf.getSchema(key[2]), key[0], "IS".equals(key[1]), rf);
     } else {
       return (T) get(array, i, property.getLeafType());
     }

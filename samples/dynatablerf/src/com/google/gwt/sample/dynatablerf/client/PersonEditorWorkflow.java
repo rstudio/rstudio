@@ -59,8 +59,8 @@ public class PersonEditorWorkflow {
       final DynaTableRequestFactory requestFactory,
       final FavoritesManager manager) {
     eventBus.addHandler(EditPersonEvent.TYPE, new EditPersonEvent.Handler() {
-      public void startEdit(PersonProxy person) {
-        new PersonEditorWorkflow(requestFactory, manager, person).edit();
+      public void startEdit(PersonProxy person, Request<?> request) {
+        new PersonEditorWorkflow(requestFactory, manager, person).edit(request);
       }
     });
   }
@@ -79,7 +79,7 @@ public class PersonEditorWorkflow {
 
   private Driver editorDriver;
   private final FavoritesManager manager;
-  private final PersonProxy person;
+  private PersonProxy person;
   private final DynaTableRequestFactory requestFactory;
 
   private PersonEditorWorkflow(DynaTableRequestFactory requestFactory,
@@ -98,12 +98,12 @@ public class PersonEditorWorkflow {
   }
 
   @UiHandler("cancel")
-  void onCancel(@SuppressWarnings("unused") ClickEvent e) {
+  void onCancel(ClickEvent e) {
     dialog.hide();
   }
 
   @UiHandler("save")
-  void onSave(@SuppressWarnings("unused") ClickEvent e) {
+  void onSave(ClickEvent e) {
     // MOVE TO ACTIVITY END
     final Request<Void> request = editorDriver.<Void> flush();
     if (editorDriver.hasErrors()) {
@@ -125,18 +125,28 @@ public class PersonEditorWorkflow {
   }
 
   @UiHandler("favorite")
-  void onValueChanged(@SuppressWarnings("unused") ValueChangeEvent<Boolean> event) {
+  void onValueChanged(ValueChangeEvent<Boolean> event) {
     manager.setFavorite(person, favorite.getValue());
   }
 
-  private void edit() {
-    // The request is configured arbitrarily
-    ProxyRequest<PersonProxy> fetchRequest = requestFactory.personRequest().findPerson(
-        person.getId());
-
+  private void edit(Request<?> request) {
     editorDriver = GWT.create(Driver.class);
-    editorDriver.initialize(null, requestFactory, personEditor);
+    editorDriver.initialize(requestFactory, personEditor);
 
+    if (request == null) {
+      fetchAndEdit();
+      return;
+    }
+
+    editorDriver.edit(person, request);
+    personEditor.focus();
+    favorite.setValue(manager.isFavorite(person), false);
+    dialog.center();
+  }
+
+  private void fetchAndEdit() {
+    // The request is configured arbitrarily
+    ProxyRequest<PersonProxy> fetchRequest = requestFactory.find(person.stableId());
     // Add the paths that the EditorDelegate computes are necessary
     fetchRequest.with(editorDriver.getPaths());
 
@@ -144,15 +154,11 @@ public class PersonEditorWorkflow {
     fetchRequest.fire(new Receiver<PersonProxy>() {
       @Override
       public void onSuccess(PersonProxy person) {
+        PersonEditorWorkflow.this.person = person;
         // Start the edit process
-        editorDriver.edit(person,
-            requestFactory.personRequest().persist(person));
-        personEditor.focus();
+        Request<Void> request = requestFactory.personRequest().persist(person);
+        edit(request);
       }
     });
-
-    // Set up UI while waiting for data
-    favorite.setValue(manager.isFavorite(person), false);
-    dialog.center();
   }
 }

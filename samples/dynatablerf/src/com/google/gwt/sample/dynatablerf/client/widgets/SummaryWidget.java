@@ -17,13 +17,17 @@ package com.google.gwt.sample.dynatablerf.client.widgets;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
+import com.google.gwt.sample.dynatablerf.client.events.FilterChangeEvent;
+import com.google.gwt.sample.dynatablerf.shared.AddressProxy;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -111,6 +115,9 @@ public class SummaryWidget extends Composite {
   private final DynaTableRequestFactory requestFactory;
   private final SingleSelectionModel<PersonProxy> selectionModel = new SingleSelectionModel<PersonProxy>();
 
+  private boolean[] filter = new boolean[] {
+      true, true, true, true, true, true, true};
+
   public SummaryWidget(EventBus eventBus,
       DynaTableRequestFactory requestFactory, int numRows) {
     this.eventBus = eventBus;
@@ -139,6 +146,13 @@ public class SummaryWidget extends Composite {
           }
         });
 
+    FilterChangeEvent.register(eventBus, new FilterChangeEvent.Handler() {
+      public void onFilterChanged(FilterChangeEvent e) {
+        filter[e.getDay()] = e.isSelected();
+        fetch(0);
+      }
+    });
+
     selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
         SummaryWidget.this.refreshSelection();
@@ -146,6 +160,16 @@ public class SummaryWidget extends Composite {
     });
 
     fetch(0);
+  }
+
+  @UiHandler("create")
+  void onCreate(ClickEvent event) {
+    AddressProxy address = requestFactory.create(AddressProxy.class);
+    PersonProxy person = requestFactory.create(PersonProxy.class);
+    Request<Void> request = requestFactory.personRequest().persist(person);
+    person = request.edit(person);
+    person.setAddress(address);
+    eventBus.fireEvent(new EditPersonEvent(person, request));
   }
 
   void onPersonChanged(EntityProxyChange<PersonProxy> event) {
@@ -156,18 +180,17 @@ public class SummaryWidget extends Composite {
       int displayOffset = offsetOf(personId);
       if (displayOffset != -1) {
         // Record is onscreen and may differ from our data
-        requestFactory.find(personId).fire(
-            new Receiver<PersonProxy>() {
-              @Override
-              public void onSuccess(PersonProxy person) {
-                // Re-check offset in case of changes while waiting for data
-                int offset = offsetOf(person.stableId());
-                if (offset != -1) {
-                  table.setRowData(table.getPageStart() + offset,
-                      Collections.singletonList(person));
-                }
-              }
-            });
+        requestFactory.find(personId).fire(new Receiver<PersonProxy>() {
+          public void onSuccess(PersonProxy response) {
+            PersonProxy person = (PersonProxy) response;
+            // Re-check offset in case of changes while waiting for data
+            int offset = offsetOf(person.stableId());
+            if (offset != -1) {
+              table.setRowData(table.getPageStart() + offset,
+                  Collections.singletonList(person));
+            }
+          }
+        });
       }
     }
   }
@@ -185,11 +208,12 @@ public class SummaryWidget extends Composite {
     if (person == null) {
       return;
     }
-    SummaryWidget.this.eventBus.fireEvent(new EditPersonEvent(person));
+    eventBus.fireEvent(new EditPersonEvent(person));
     selectionModel.setSelected(person, false);
   }
 
   private void fetch(final int start) {
+    // XXX add back filter
     requestFactory.schoolCalendarRequest().getPeople(start, numRows).fire(
         new Receiver<List<PersonProxy>>() {
           @Override

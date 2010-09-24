@@ -73,14 +73,25 @@ public class RequestData {
 
   private final String operation;
   private final Object[] parameters;
-
   private final Set<String> propertyRefs;
+  // Could be EntityProxy or Collection instances
+  private final Object[] proxies;
 
-  public RequestData(String operation, Object[] parameters,
+  public RequestData(String operation, Object[] parameters, Object[] proxies,
       Set<String> propertyRefs) {
     this.operation = operation;
     this.parameters = parameters;
     this.propertyRefs = propertyRefs;
+    this.proxies = proxies;
+  }
+
+  /**
+   * Returns any EntityProxies being passed as method arguments. Prevents the
+   * "dummy object" case.
+   * @return EntityProxies or Collections
+   */
+  public Object[] getProxyParameters() {
+    return proxies;
   }
 
   /**
@@ -119,11 +130,11 @@ public class RequestData {
       return "null";
     }
 
-    if (value instanceof Iterable) {
+    if (value instanceof Iterable<?>) {
       StringBuffer toReturn = new StringBuffer();
       toReturn.append('[');
       boolean first = true;
-      for (Object val : ((Iterable) value)) {
+      for (Object val : ((Iterable<?>) value)) {
         if (!first) {
           toReturn.append(',');
         } else {
@@ -147,8 +158,8 @@ public class RequestData {
       return asJsonString(((Date) value).getTime());
     }
 
-    if (value instanceof Enum) {
-      return asJsonString(((Enum) value).ordinal());
+    if (value instanceof Enum<?>) {
+      return asJsonString(((Enum<?>) value).ordinal());
     }
     
     return value.toString();

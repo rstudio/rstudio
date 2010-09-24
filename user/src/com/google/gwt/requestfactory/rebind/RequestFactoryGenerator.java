@@ -92,17 +92,16 @@ import java.util.Set;
  */
 public class RequestFactoryGenerator extends Generator {
 
-  private enum CollectionType { 
-    SCALAR("ObjectRequestImpl", AbstractJsonObjectRequest.class),
-    LIST("ListRequestImpl", AbstractJsonProxyListRequest.class),
-    SET("SetRequestImpl", AbstractJsonProxySetRequest.class);
+  private enum CollectionType {
+    SCALAR("ObjectRequestImpl", AbstractJsonObjectRequest.class), LIST(
+        "ListRequestImpl", AbstractJsonProxyListRequest.class), SET(
+        "SetRequestImpl", AbstractJsonProxySetRequest.class);
 
     private String implName;
 
     private Class<?> requestClass;
 
-    CollectionType(String implName,
-        Class<?> requestClass) {
+    CollectionType(String implName, Class<?> requestClass) {
       this.implName = implName;
       this.requestClass = requestClass;
     }
@@ -149,7 +148,7 @@ public class RequestFactoryGenerator extends Generator {
     listType = typeOracle.findType(List.class.getName());
     setType = typeOracle.findType(Set.class.getName());
     entityProxyType = typeOracle.findType(EntityProxy.class.getName());
-    
+
     // Get a reference to the type that the generator should implement
     JClassType interfaceType = typeOracle.findType(interfaceName);
 
@@ -208,7 +207,8 @@ public class RequestFactoryGenerator extends Generator {
         continue;
       }
 
-      EntityProperty entityProperty = maybeComputePropertyFromMethod(method, logger);
+      EntityProperty entityProperty = maybeComputePropertyFromMethod(method,
+          logger);
       if (entityProperty != null) {
         String propertyName = entityProperty.getName();
         if (!propertyNames.contains(propertyName)) {
@@ -220,7 +220,7 @@ public class RequestFactoryGenerator extends Generator {
 
     return entityProperties;
   };
-  
+
   private void ensureProxyType(TreeLogger logger,
       GeneratorContext generatorContext, JClassType publicProxyType)
       throws UnableToCompleteException {
@@ -245,21 +245,21 @@ public class RequestFactoryGenerator extends Generator {
     Set<JClassType> transitiveDeps = new LinkedHashSet<JClassType>();
 
     if (pw != null) {
-      logger = logger.branch(TreeLogger.DEBUG,
-          "Generating " + publicProxyType.getName());
+      logger = logger.branch(TreeLogger.DEBUG, "Generating "
+          + publicProxyType.getName());
 
       ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
           packageName, proxyImplTypeName);
 
-      f.addImport(AbstractJsonProxySetRequest.class.getName());  
+      f.addImport(AbstractJsonProxySetRequest.class.getName());
       f.addImport(AbstractJsonProxyListRequest.class.getName());
-      f.addImport(AbstractJsonValueListRequest.class.getName());      
+      f.addImport(AbstractJsonValueListRequest.class.getName());
       f.addImport(AbstractJsonObjectRequest.class.getName());
       f.addImport(RequestFactoryJsonImpl.class.getName());
       f.addImport(Property.class.getName());
       f.addImport(EnumProperty.class.getName());
       f.addImport(CollectionProperty.class.getName());
-      
+
       f.addImport(EntityProxy.class.getName());
       f.addImport(ProxyImpl.class.getName());
       f.addImport(ProxyJsoImpl.class.getName());
@@ -273,7 +273,8 @@ public class RequestFactoryGenerator extends Generator {
       f.setSuperclass(ProxyImpl.class.getSimpleName());
       f.addImplementedInterface(publicProxyType.getName());
 
-      List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(publicProxyType, logger);
+      List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(
+          publicProxyType, logger);
       for (EntityProperty entityProperty : entityProperties) {
         JType type = entityProperty.getType();
         if (type.isPrimitive() == null) {
@@ -291,15 +292,13 @@ public class RequestFactoryGenerator extends Generator {
         if (entityProperty.getType().isEnum() != null) {
           sw.println(String.format(
               "private static final Property<%1$s> %2$s = new EnumProperty<%1$s>(\"%2$s\", %1$s.class, %1$s.values());",
-              entityProperty.getType().getSimpleSourceName(),
-              name));
+              entityProperty.getType().getSimpleSourceName(), name));
         } else if (isCollection(typeOracle, entityProperty.getType())) {
           sw.println(String.format(
               "private static final Property<%1$s> %2$s = new CollectionProperty<%1$s, %3$s>(\"%2$s\", %1$s.class, %3$s.class);",
               entityProperty.getType().getSimpleSourceName(),
               name,
-              entityProperty.getType().isParameterized().getTypeArgs()[0].getQualifiedSourceName()
-              ));
+              entityProperty.getType().isParameterized().getTypeArgs()[0].getQualifiedSourceName()));
         } else {
           sw.println(String.format(
               "private static final Property<%1$s> %2$s = new Property<%1$s>(\"%2$s\", \"%3$s\", %1$s.class);",
@@ -312,9 +311,12 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println();
       String simpleImplName = publicProxyType.getSimpleSourceName() + "Impl";
-      printRequestImplClass(sw, publicProxyType, simpleImplName, CollectionType.LIST);
-      printRequestImplClass(sw, publicProxyType, simpleImplName, CollectionType.SET);
-      printRequestImplClass(sw, publicProxyType, simpleImplName, CollectionType.SCALAR);
+      printRequestImplClass(sw, publicProxyType, simpleImplName,
+          CollectionType.LIST);
+      printRequestImplClass(sw, publicProxyType, simpleImplName,
+          CollectionType.SET);
+      printRequestImplClass(sw, publicProxyType, simpleImplName,
+          CollectionType.SCALAR);
 
       sw.println();
       sw.println(String.format(
@@ -336,13 +338,12 @@ public class RequestFactoryGenerator extends Generator {
         JClassType collectionType = returnType.isClassOrInterface();
 
         if (collectionType != null && collectionType.isParameterized() != null) {
-           returnType = collectionType.isParameterized().getTypeArgs()[0];
-           returnTypeString = collectionType.isParameterized().getParameterizedQualifiedSourceName();
+          returnType = collectionType.isParameterized().getTypeArgs()[0];
+          returnTypeString = collectionType.isParameterized().getParameterizedQualifiedSourceName();
         }
 
         sw.println();
-        sw.println(String.format("public %s get%s() {",
-            returnTypeString,
+        sw.println(String.format("public %s get%s() {", returnTypeString,
             capitalize(entityProperty.getName())));
         sw.indent();
         sw.println(String.format("return get(%s);", entityProperty.getName()));
@@ -383,10 +384,8 @@ public class RequestFactoryGenerator extends Generator {
       JClassType interfaceType, String packageName, String implName)
       throws UnableToCompleteException {
 
-    logger = logger.branch(
-        TreeLogger.DEBUG,
-        String.format("Generating implementation of %s",
-            interfaceType.getName()));
+    logger = logger.branch(TreeLogger.DEBUG, String.format(
+        "Generating implementation of %s", interfaceType.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
@@ -414,8 +413,10 @@ public class RequestFactoryGenerator extends Generator {
       }
       JType returnType = method.getReturnType();
       if (null == returnType) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Illegal return type for %s. Methods of %s must return interfaces, found void",
+        logger.log(
+            TreeLogger.ERROR,
+            String.format(
+                "Illegal return type for %s. Methods of %s must return interfaces, found void",
                 method.getName(), interfaceType.getName()));
         throw new UnableToCompleteException();
       }
@@ -428,7 +429,7 @@ public class RequestFactoryGenerator extends Generator {
       }
       requestBuilders.add(method);
     }
-    
+
     /*
      * Hard-code the requestSelectors specified in RequestFactory.
      */
@@ -461,11 +462,12 @@ public class RequestFactoryGenerator extends Generator {
     sw.outdent();
     sw.println("}");
     sw.println();
-    
+
     // write getHistoryToken(proxyId)
     sw.println("public String getHistoryToken(EntityProxyId proxyId) {");
     sw.indent();
-    sw.println("return getHistoryToken(proxyId, new " + proxyToTypeMapName + "());");
+    sw.println("return getHistoryToken(proxyId, new " + proxyToTypeMapName
+        + "());");
     sw.outdent();
     sw.println("}");
     sw.println();
@@ -537,10 +539,8 @@ public class RequestFactoryGenerator extends Generator {
   private void generateProxyToTypeMap(TreeLogger logger,
       GeneratorContext generatorContext, PrintWriter out,
       JClassType interfaceType, String packageName, String implName) {
-    logger = logger.branch(
-        TreeLogger.DEBUG,
-        String.format("Generating implementation of %s",
-            interfaceType.getName()));
+    logger = logger.branch(TreeLogger.DEBUG, String.format(
+        "Generating implementation of %s", interfaceType.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
@@ -616,10 +616,8 @@ public class RequestFactoryGenerator extends Generator {
       JMethod selectorMethod, JClassType mainType, String packageName,
       String implName) throws UnableToCompleteException {
     JClassType selectorInterface = selectorMethod.getReturnType().isInterface();
-    logger = logger.branch(
-        TreeLogger.DEBUG,
-        String.format("Generating implementation of %s",
-            selectorInterface.getName()));
+    logger = logger.branch(TreeLogger.DEBUG, String.format(
+        "Generating implementation of %s", selectorInterface.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
@@ -643,12 +641,13 @@ public class RequestFactoryGenerator extends Generator {
 
     // write each method.
     for (JMethod method : selectorInterface.getOverridableMethods()) {
-      JParameterizedType parameterizedType = method.getReturnType()
-          .isParameterized();
+      JParameterizedType parameterizedType = method.getReturnType().isParameterized();
       if (parameterizedType == null) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Illegal return type for %s. Methods of %s must return Request<T>.",
-            method.getName(), selectorInterface.getName()));
+        logger.log(
+            TreeLogger.ERROR,
+            String.format(
+                "Illegal return type for %s. Methods of %s must return Request<T>.",
+                method.getName(), selectorInterface.getName()));
         throw new UnableToCompleteException();
       }
       JClassType returnType = parameterizedType.getTypeArgs()[0];
@@ -673,17 +672,20 @@ public class RequestFactoryGenerator extends Generator {
       }
       for (JParameter param : method.getParameters()) {
         if (param.getType().isArray() != null) {
-          logger.log(TreeLogger.ERROR, String.format(
-            "Illegal param type %s for %s. Methods of %s cannot take array parameters.",
-            param.getName(), method.getName(), selectorInterface.getName()));
+          logger.log(
+              TreeLogger.ERROR,
+              String.format(
+                  "Illegal param type %s for %s. Methods of %s cannot take array parameters.",
+                  param.getName(), method.getName(),
+                  selectorInterface.getName()));
           throw new UnableToCompleteException();
         }
       }
       if (isProxyCollectionRequest(typeOracle, requestType)) {
         Class<?> colType = getCollectionType(typeOracle, requestType);
         assert colType != null;
-        requestClassName = asInnerImplClass(colType == List.class ?
-            "ListRequestImpl" : "SetRequestImpl", returnType);
+        requestClassName = asInnerImplClass(colType == List.class
+            ? "ListRequestImpl" : "SetRequestImpl", returnType);
       } else if (isProxyRequest(typeOracle, requestType)) {
         if (selectorInterface.isAssignableTo(typeOracle.findType(FindRequest.class.getName()))) {
           extraArgs = ", proxyId";
@@ -692,17 +694,17 @@ public class RequestFactoryGenerator extends Generator {
           requestClassName = asInnerImplClass("ObjectRequestImpl", returnType);
         }
       } else if (isValueListRequest(typeOracle, requestType)) {
-         requestClassName = AbstractJsonValueListRequest.class.getName();
-         // generate argument list for AbstractJsonValueListRequest constructor
-         JClassType colType = requestType.isParameterized().getTypeArgs()[0];
-         extraArgs = ", " + colType.isAssignableTo(setType);
-         // extraArgs = ", isSet"  true if elementType of collection is Set
-         JClassType leafType = colType.isParameterized().getTypeArgs()[0];
-         extraArgs += ", " + leafType.getQualifiedSourceName() + ".class";
-         // extraArgs = ", isSet, collectionElementType.class"
+        requestClassName = AbstractJsonValueListRequest.class.getName();
+        // generate argument list for AbstractJsonValueListRequest constructor
+        JClassType colType = requestType.isParameterized().getTypeArgs()[0];
+        extraArgs = ", " + colType.isAssignableTo(setType);
+        // extraArgs = ", isSet" true if elementType of collection is Set
+        JClassType leafType = colType.isParameterized().getTypeArgs()[0];
+        extraArgs += ", " + leafType.getQualifiedSourceName() + ".class";
+        // extraArgs = ", isSet, collectionElementType.class"
         if (leafType.isAssignableTo(typeOracle.findType(Enum.class.getName()))) {
           // if contained type is Enum, pass Enum.values()
-          extraArgs += ", " + leafType.getQualifiedSourceName() + ".values()"; 
+          extraArgs += ", " + leafType.getQualifiedSourceName() + ".values()";
         } else {
           // else for all other types, pass null
           extraArgs += ", null";
@@ -734,8 +736,7 @@ public class RequestFactoryGenerator extends Generator {
       } else if (isEnumRequest(typeOracle, requestType)) {
         requestClassName = AbstractEnumRequest.class.getName();
         JClassType enumType = requestType.isParameterized().getTypeArgs()[0];
-        extraArgs = ", " + enumType.getQualifiedSourceName()
-            + ".values()";
+        extraArgs = ", " + enumType.getQualifiedSourceName() + ".values()";
       } else if (isVoidRequest(typeOracle, requestType)) {
         requestClassName = AbstractVoidRequest.class.getName();
       } else {
@@ -746,15 +747,16 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println(getMethodDeclaration(method) + " {");
       sw.indent();
-      sw.println(
-          "return new " + requestClassName + "(factory" + extraArgs + ") {");
+      sw.println("return new " + requestClassName + "(factory" + extraArgs
+          + ") {");
       sw.indent();
       String requestDataName = RequestData.class.getSimpleName();
       sw.println("public " + requestDataName + " getRequestData() {");
       sw.indent();
-      sw.println("return new " + requestDataName + "(\"" + operationName
-          + "\", " + getParametersAsString(method, typeOracle) + ", "
-          + "getPropertyRefs());");
+      sw.println("return new %s(\"%s\", %s, %s, getPropertyRefs());",
+          RequestData.class.getSimpleName(), operationName,
+          getParametersAsString(method, typeOracle),
+          getEntityParameters(method));
       sw.outdent();
       sw.println("}");
       sw.outdent();
@@ -775,12 +777,10 @@ public class RequestFactoryGenerator extends Generator {
    */
   private Class<?> getCollectionType(TypeOracle typeOracle,
       JClassType requestType) {
-    if (requestType.isAssignableTo(
-        typeOracle.findType(ProxyListRequest.class.getName()))) {
+    if (requestType.isAssignableTo(typeOracle.findType(ProxyListRequest.class.getName()))) {
       return List.class;
     }
-    if (requestType.isAssignableTo(typeOracle.findType(
-        ProxySetRequest.class.getName()))) {
+    if (requestType.isAssignableTo(typeOracle.findType(ProxySetRequest.class.getName()))) {
       return Set.class;
     }
     JClassType retType = requestType.isParameterized().getTypeArgs()[0];
@@ -795,6 +795,18 @@ public class RequestFactoryGenerator extends Generator {
       }
     }
     return null;
+  }
+
+  private String getEntityParameters(JMethod method) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("new Object[] {");
+    for (JParameter param : method.getParameters()) {
+      if (mayContainEntityProxy(param.getType())) {
+        sb.append(param.getName()).append(",");
+      }
+    }
+    sb.append("}");
+    return sb.toString();
   }
 
   /**
@@ -838,11 +850,12 @@ public class RequestFactoryGenerator extends Generator {
       JClassType classType = parameter.getType().isClassOrInterface();
 
       JType paramType = parameter.getType();
-      if (paramType.getQualifiedSourceName().equals(EntityProxyId.class.getName())) {
+      if (paramType.getQualifiedSourceName().equals(
+          EntityProxyId.class.getName())) {
         sb.append("factory.getWireFormat(" + parameter.getName() + ")");
         continue;
       }
-      
+
       if (classType != null && classType.isAssignableTo(entityProxyType)) {
         sb.append("((" + classType.getQualifiedBinaryName() + "Impl" + ")");
       }
@@ -877,16 +890,14 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Character.class.getName()));
   }
 
-  private boolean isCollection(TypeOracle typeOracle,
-      JType requestType) {
+  private boolean isCollection(TypeOracle typeOracle, JType requestType) {
     return requestType.isParameterized() != null
-            && requestType.isParameterized().isAssignableTo(
-        typeOracle.findType(Collection.class.getName()));
+        && requestType.isParameterized().isAssignableTo(
+            typeOracle.findType(Collection.class.getName()));
   }
 
   private boolean isDateRequest(TypeOracle typeOracle, JClassType requestType) {
-    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(
-        Date.class.getName()));
+    return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Date.class.getName()));
   }
 
   private boolean isDoubleRequest(TypeOracle typeOracle, JClassType requestType) {
@@ -911,12 +922,10 @@ public class RequestFactoryGenerator extends Generator {
 
   private boolean isProxyCollectionRequest(TypeOracle typeOracle,
       JClassType requestType) {
-    return requestType.isAssignableTo(typeOracle.findType(
-        ProxyListRequest.class.getName()))
-        || requestType.isAssignableTo(typeOracle.findType(
-        ProxySetRequest.class.getName()));
+    return requestType.isAssignableTo(typeOracle.findType(ProxyListRequest.class.getName()))
+        || requestType.isAssignableTo(typeOracle.findType(ProxySetRequest.class.getName()));
   }
-  
+
   private boolean isProxyRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isAssignableTo(typeOracle.findType(ProxyRequest.class.getName()));
   }
@@ -974,9 +983,9 @@ public class RequestFactoryGenerator extends Generator {
       propertyName = Introspector.decapitalize(methodName.substring(3));
       propertyType = method.getReturnType();
       if (propertyType.isArray() != null) {
-        logger.log(TreeLogger.ERROR, "Method " + methodName
-        + " on " + method.getEnclosingType().getQualifiedSourceName()
-        + " may not return a Java array.");
+        logger.log(TreeLogger.ERROR, "Method " + methodName + " on "
+            + method.getEnclosingType().getQualifiedSourceName()
+            + " may not return a Java array.");
         throw new UnableToCompleteException();
       }
     } else if (methodName.startsWith("set")) {
@@ -985,9 +994,9 @@ public class RequestFactoryGenerator extends Generator {
       if (parameters.length > 0) {
         propertyType = parameters[parameters.length - 1].getType();
         if (propertyType.isArray() != null) {
-          logger.log(TreeLogger.ERROR, "Method " + methodName
-          + " on " + method.getEnclosingType().getQualifiedSourceName()
-          + " may accept a Java array as a parameter.");
+          logger.log(TreeLogger.ERROR, "Method " + methodName + " on "
+              + method.getEnclosingType().getQualifiedSourceName()
+              + " may accept a Java array as a parameter.");
           throw new UnableToCompleteException();
         }
       }
@@ -1000,6 +1009,16 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     return null;
+  }
+
+  private boolean mayContainEntityProxy(JType paramType) {
+    JClassType paramClass = paramType.isClassOrInterface();
+    if (paramClass == null) {
+      return false;
+    }
+    return entityProxyType.isAssignableFrom(paramClass)
+        || listType.isAssignableFrom(paramClass)
+        || setType.isAssignableFrom(paramClass);
   }
 
   /**
@@ -1068,8 +1087,8 @@ public class RequestFactoryGenerator extends Generator {
       throw new RuntimeException(e);
     }
 
-    List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(publicProxyType,
-        logger);
+    List<EntityProperty> entityProperties = computeEntityPropertiesFromProxyType(
+        publicProxyType, logger);
     for (EntityProperty entityProperty : entityProperties) {
       sw.println(String.format("set.add(%s);", entityProperty.getName()));
     }
