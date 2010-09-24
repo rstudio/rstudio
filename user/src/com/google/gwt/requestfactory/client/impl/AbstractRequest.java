@@ -127,7 +127,7 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     if (violationsArray != null) {
       processViolations(violationsArray);
     } else {
-      deltaValueStore.commit(results.getSideEffects());
+      deltaValueStore.processFuturesAndPostEvents(results.getSideEffects());
       processRelated(results.getRelated());
       if (results.isNullResult()) {
         // Indicates the server explicitly meant to send a null value

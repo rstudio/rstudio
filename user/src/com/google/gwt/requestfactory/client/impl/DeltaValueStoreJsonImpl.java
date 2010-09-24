@@ -125,93 +125,6 @@ class DeltaValueStoreJsonImpl {
     throw new UnsupportedOperationException("Auto-generated method stub");
   }
 
-  public void commit(JavaScriptObject returnedJso) {
-    HashSet<String> keys = new HashSet<String>();
-    ReturnRecord.fillKeys(returnedJso, keys);
-
-    Set<EntityProxyId<?>> toRemove = new HashSet<EntityProxyId<?>>();
-    if (keys.contains(WriteOperation.CREATE.getUnObfuscatedEnumName())) {
-      JsArray<ReturnRecord> newRecords = ReturnRecord.getRecords(returnedJso,
-          WriteOperation.CREATE.getUnObfuscatedEnumName());
-      int length = newRecords.length();
-      for (int i = 0; i < length; i++) {
-        ReturnRecord newRecord = newRecords.get(i);
-        ProxySchema<?> schema = requestFactory.getSchema(newRecord.getSchema());
-        EntityProxyIdImpl<?> futureKey = new EntityProxyIdImpl<EntityProxy>(
-            newRecord.getFutureId(), schema, RequestFactoryJsonImpl.IS_FUTURE,
-            null);
-        ProxyJsoImpl copy = ProxyJsoImpl.create(newRecord.getFutureId(), 1,
-            schema, requestFactory);
-        toRemove.add(futureKey);
-        requestFactory.datastoreToFutureMap.put(newRecord.getEncodedId(),
-            futureKey.schema, futureKey.encodedId);
-        requestFactory.futureToDatastoreMap.put(futureKey.encodedId,
-            newRecord.getEncodedId());
-
-        /*
-         * TODO (amitmanjhi): get all the data from the server. make a copy of
-         * value and set the id there.
-         * 
-         * When this happens, can the used flag go away? It's only needed now to
-         * ensure that the dvs is in the same state when the response comes back
-         * as it was when the request left.
-         */
-        ProxyJsoImpl value = creates.get(futureKey);
-        if (value != null) {
-          copy.merge(value);
-          copy.putEncodedId(newRecord.getEncodedId());
-        }
-        assert master.records.containsKey(futureKey);
-      }
-    }
-    processToRemove(toRemove, WriteOperation.CREATE);
-    toRemove.clear();
-
-    if (keys.contains(WriteOperation.DELETE.getUnObfuscatedEnumName())) {
-      JsArray<ReturnRecord> deletedRecords = ReturnRecord.getRecords(
-          returnedJso, WriteOperation.DELETE.getUnObfuscatedEnumName());
-      int length = deletedRecords.length();
-      for (int i = 0; i < length; i++) {
-        ReturnRecord deletedRecord = deletedRecords.get(i);
-        EntityProxyIdImpl<?> key = getPersistedProxyId(
-            deletedRecord.getEncodedId(),
-            requestFactory.getSchema(deletedRecord.getSchema()));
-        ProxyJsoImpl copy = ProxyJsoImpl.create((String) key.encodedId, 1,
-            key.schema, requestFactory);
-        requestFactory.postChangeEvent(copy, WriteOperation.DELETE);
-        master.records.remove(key);
-      }
-    }
-
-    if (keys.contains(WriteOperation.UPDATE.getUnObfuscatedEnumName())) {
-      JsArray<ReturnRecord> updatedRecords = ReturnRecord.getRecords(
-          returnedJso, WriteOperation.UPDATE.getUnObfuscatedEnumName());
-      int length = updatedRecords.length();
-      for (int i = 0; i < length; i++) {
-        ReturnRecord updatedRecord = updatedRecords.get(i);
-        EntityProxyIdImpl<?> key = getPersistedProxyId(
-            updatedRecord.getEncodedId(),
-            requestFactory.getSchema(updatedRecord.getSchema()));
-        ProxyJsoImpl copy = ProxyJsoImpl.create((String) key.encodedId, 1,
-            key.schema, requestFactory);
-        requestFactory.postChangeEvent(copy, WriteOperation.UPDATE);
-        ProxyJsoImpl masterRecord = master.records.get(key);
-        ProxyJsoImpl value = updates.get(key);
-        if (masterRecord != null && value != null) {
-          /*
-           * Currently, no support for partial updates. When the updates return
-           * all fields that have changed (the version number can be used to
-           * optimize the payload), it will fix partial updates.
-           */
-          copy.merge(masterRecord);
-          copy.merge(value);
-          toRemove.add(key);
-        }
-      }
-    }
-    processToRemove(toRemove, WriteOperation.UPDATE);
-  }
-
   public <V> V get(Property<V> property, EntityProxy record) {
     ProxyJsoImpl proxy = creates.get(record.stableId());
     if (proxy == null) {
@@ -300,6 +213,55 @@ class DeltaValueStoreJsonImpl {
           operations.remove(recordKey);
         }
         break;
+    }
+  }
+
+  void processFuturesAndPostEvents(JavaScriptObject returnedJso) {
+    HashSet<String> keys = new HashSet<String>();
+    ReturnRecord.fillKeys(returnedJso, keys);
+
+    Set<EntityProxyId<?>> toRemove = new HashSet<EntityProxyId<?>>();
+    for (WriteOperation writeOperation : WriteOperation.values()) {
+      if (!keys.contains(writeOperation.getUnObfuscatedEnumName())) {
+        continue;
+      }
+      JsArray<ReturnRecord> returnedRecords = ReturnRecord.getRecords(
+          returnedJso, writeOperation.getUnObfuscatedEnumName());
+      int length = returnedRecords.length();
+      for (int i = 0; i < length; i++) {
+        ReturnRecord returnedRecord = returnedRecords.get(i);
+        ProxySchema<?> schema = requestFactory.getSchema(returnedRecord.getSchema());
+        // IMPORTANT: The future mapping must be processed before creating the proxyId.
+        if (writeOperation == WriteOperation.CREATE) {
+          requestFactory.datastoreToFutureMap.put(
+              returnedRecord.getEncodedId(), schema,
+              returnedRecord.getFutureId());
+          requestFactory.futureToDatastoreMap.put(returnedRecord.getFutureId(),
+              returnedRecord.getEncodedId());
+        }
+        final EntityProxyIdImpl<?> proxyId = getPersistedProxyId(
+            returnedRecord.getEncodedId(), schema);
+        /*
+         * TODO(amitmanjhi): replace copy in postChangeEvent by EntityProxyId
+         * since only the id and schema of the copy are used.
+         */
+        ProxyJsoImpl copy = ProxyJsoImpl.create((String) proxyId.encodedId, 1,
+            schema, requestFactory);
+        toRemove.add(proxyId);
+        if (writeOperation == WriteOperation.CREATE) {
+          /*
+           * TODO(robertvawter): remove this assert after reverting the addition
+           * of unpersisted proxies to ValueStore.
+           */
+          assert master.records.containsKey(proxyId);
+        } else {
+          requestFactory.postChangeEvent(copy, writeOperation);
+        }
+        if (writeOperation == WriteOperation.DELETE) {
+          master.records.remove(proxyId);
+        }
+      }
+      processToRemove(toRemove, writeOperation);
     }
   }
 
