@@ -45,6 +45,10 @@ import java.util.Set;
  */
 public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
 
+  public static final String REQUEST_FACTORY_FIELD = "__rf";
+
+  public static final String SCHEMA_FIELD = "__key";
+
   public static ProxyJsoImpl create(JavaScriptObject rawJsoWithIdAndVersion,
       ProxySchema<?> schema, RequestFactoryJsonImpl requestFactory) {
 
@@ -268,11 +272,11 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   }
 
   public final native RequestFactoryJsonImpl getRequestFactory() /*-{
-    return this['__rf'];
+    return this[@com.google.gwt.requestfactory.client.impl.ProxyJsoImpl::REQUEST_FACTORY_FIELD];
   }-*/;
 
   public final native ProxySchema<?> getSchema() /*-{
-    return this['__key'];
+    return this[@com.google.gwt.requestfactory.client.impl.ProxyJsoImpl::SCHEMA_FIELD];
   }-*/;
 
   public final native boolean isDefined(String name)/*-{
@@ -392,27 +396,7 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
    * @return returned string.
    */
   public final native String toJson() /*-{
-    // Safari 4.0.5 appears not to honor the replacer argument, so we can't do this:
-
-    //    var replacer = function(key, value) {
-    //      if (key == '__key') {
-    //        return;
-    //      }
-    //      return value;
-    //    }
-    // return $wnd.JSON.stringify(this, replacer);
-
-    var key = this.__key;
-    delete this.__key;
-    var rf = this.__rf;
-    delete this.__rf;
-    var gwt = this.__gwt_ObjectId;
-    delete this.__gwt_ObjectId;
-    // TODO verify that the stringify() from json2.js works on IE
-    var rtn = $wnd.JSON.stringify(this);
-    this.__key = key;
-    this.__rf = rf;
-    this.__gwt_ObjectId = gwt;
+    var rtn = @com.google.gwt.requestfactory.client.impl.json.ClientJsonUtil::stringify(Lcom/google/gwt/core/client/JavaScriptObject;)(this);
     return rtn;
   }-*/;
 
@@ -492,11 +476,11 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
   }-*/;
 
   private native void setRequestFactory(RequestFactoryJsonImpl requestFactory) /*-{
-    this['__rf'] = requestFactory;
+    this[@com.google.gwt.requestfactory.client.impl.ProxyJsoImpl::REQUEST_FACTORY_FIELD] = requestFactory;
   }-*/;
 
   private native void setSchema(ProxySchema<?> schema) /*-{
-    this['__key'] = schema;
+    this[@com.google.gwt.requestfactory.client.impl.ProxyJsoImpl::SCHEMA_FIELD] = schema;
   }-*/;
 
   private native void setString(String name, String value) /*-{

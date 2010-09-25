@@ -24,6 +24,7 @@ import com.google.gwt.requestfactory.client.RequestFactoryTest;
 import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImplTest;
 import com.google.gwt.requestfactory.client.impl.ProxyJsoImplTest;
 import com.google.gwt.requestfactory.client.impl.ValueStoreJsonImplTest;
+import com.google.gwt.requestfactory.client.impl.json.ClientJsonUtilTest;
 
 import junit.framework.Test;
 
@@ -42,6 +43,7 @@ public class RequestFactorySuite {
     suite.addTestSuite(RequestFactoryStringTest.class);
     suite.addTestSuite(RequestFactoryExceptionHandlerTest.class);
     suite.addTestSuite(FindServiceTest.class);
+    suite.addTestSuite(ClientJsonUtilTest.class);
     return suite;
   }
 }

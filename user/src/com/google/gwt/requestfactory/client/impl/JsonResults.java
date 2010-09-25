@@ -17,17 +17,16 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.requestfactory.client.impl.json.ClientJsonUtil;
 
 /**
  * JSO to hold result and related objects.
  */
 class JsonResults extends JavaScriptObject {
 
-  static native JsonResults fromResults(String json) /*-{
-    // TODO: clean this
-    eval("xyz=" + json);
-    return xyz;
-  }-*/;
+  static JsonResults fromResults(String json) {
+    return ClientJsonUtil.parse(json).cast();
+  }
 
   protected JsonResults() {
   }
