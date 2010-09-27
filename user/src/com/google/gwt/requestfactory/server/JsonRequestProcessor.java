@@ -475,7 +475,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       String key = (String) keys.next();
       Class<?> propertyType = propertiesInDomain.get(key);
       Property<?> dtoProperty = propertiesInProxy.get(key);
-      if (writeOperation == WriteOperation.CREATE
+      if (writeOperation == WriteOperation.PERSIST
           && (ENTITY_ID_PROPERTY.equals(key))) {
         String id = generateIdForCreate(key);
         if (id != null) {
@@ -556,7 +556,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       InvocationTargetException, NoSuchMethodException,
       IllegalArgumentException, JSONException {
 
-    if (writeOperation == WriteOperation.CREATE) {
+    if (writeOperation == WriteOperation.PERSIST) {
       return entityType.getConstructor().newInstance();
     }
     // TODO: check "version" validity.
@@ -1146,7 +1146,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         Class<? extends EntityProxy> record = getRecordFromClassToken(recordToken);
         EntityKey entityKey = new EntityKey(
             recordObject.getString(ENCODED_ID_PROPERTY),
-            (writeOperation == WriteOperation.CREATE), record);
+            (writeOperation == WriteOperation.PERSIST), record);
         involvedKeys.add(entityKey);
         dvsDataMap.put(entityKey, new DvsData(recordObject, writeOperation));
       }
@@ -1366,7 +1366,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       }
     }
     if (createArray.length() > 0) {
-      sideEffects.put(WriteOperation.CREATE.name(), createArray);
+      sideEffects.put(WriteOperation.PERSIST.name(), createArray);
     }
     if (deleteArray.length() > 0) {
       sideEffects.put(WriteOperation.DELETE.name(), deleteArray);

@@ -91,8 +91,9 @@ class ValueStoreJsonImpl {
     if (oldRecord == null) {
       records.put(recordKey, newJsoRecord);
       newJsoRecord.assertValid();
-      factory.postChangeEvent(newJsoRecord, isFuture ? WriteOperation.CREATE
-          : WriteOperation.ACQUIRE);
+      if (!isFuture) {
+        factory.postChangeEvent(newJsoRecord, WriteOperation.UPDATE);
+      }
       return null;
     } 
 

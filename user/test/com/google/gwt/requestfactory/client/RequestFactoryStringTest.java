@@ -126,8 +126,13 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
         assertEquals(futureId, foo.getId());
         assertTrue(((ProxyImpl) foo).unpersisted());
 
-        assertEquals(0, handler.acquireEventCount);
-        assertEquals(1, handler.createEventCount);
+        /*
+         * Two events are fired: (i) PERSIST event fired from
+         * DeltaValueStoreJsonImpl because the proxy was persisted, and (ii)
+         * UPDATE event fired from ValueStoreJsonImpl because the new proxy was
+         * part of the return value.
+         */
+        assertEquals(1, handler.persistEventCount);
         assertEquals(1, handler.updateEventCount);
         assertEquals(2, handler.totalEventCount);
 
@@ -250,7 +255,7 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
 
           @Override
           public void onSuccess(SimpleFooStringProxy newFoo) {
-            assertEquals(1, handler.acquireEventCount);
+            assertEquals(1, handler.updateEventCount);
             assertEquals(1, handler.totalEventCount);
             final Request<Long> mutateRequest = req.simpleFooStringRequest().countSimpleFooWithUserNameSideEffect(
                 newFoo);
@@ -261,8 +266,7 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
               public void onSuccess(Long response) {
                 assertCannotFire(mutateRequest);
                 assertEquals(new Long(1L), response);
-                assertEquals(1, handler.acquireEventCount);
-                assertEquals(1, handler.updateEventCount);
+                assertEquals(2, handler.updateEventCount);
                 assertEquals(2, handler.totalEventCount);
 
                 // confirm that the instance method did have the desired
@@ -272,8 +276,7 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
                       @Override
                       public void onSuccess(SimpleFooStringProxy finalFoo) {
                         assertEquals("Ray", finalFoo.getUserName());
-                        assertEquals(1, handler.acquireEventCount);
-                        assertEquals(2, handler.updateEventCount);
+                        assertEquals(3, handler.updateEventCount);
                         assertEquals(3, handler.totalEventCount);
                         finishTestAndReset();
                       }

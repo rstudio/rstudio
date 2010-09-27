@@ -212,9 +212,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         Object futureId = foo.getId();
         assertEquals(futureId, foo.getId());
         assertTrue(((ProxyImpl) foo).unpersisted());
-
-        assertEquals(0, handler.acquireEventCount);
-        assertEquals(1, handler.createEventCount);
+        assertEquals(1, handler.persistEventCount);
         assertEquals(1, handler.updateEventCount);
         assertEquals(2, handler.totalEventCount);
 
@@ -453,7 +451,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
           @Override
           public void onSuccess(SimpleFooProxy newFoo) {
-            assertEquals(1, handler.acquireEventCount);
+            assertEquals(1, handler.updateEventCount);
             assertEquals(1, handler.totalEventCount);
             final Request<Long> mutateRequest = req.simpleFooRequest().countSimpleFooWithUserNameSideEffect(
                 newFoo);
@@ -464,8 +462,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
               public void onSuccess(Long response) {
                 assertCannotFire(mutateRequest);
                 assertEquals(new Long(1L), response);
-                assertEquals(1, handler.acquireEventCount);
-                assertEquals(1, handler.updateEventCount);
+                assertEquals(2, handler.updateEventCount);
                 assertEquals(2, handler.totalEventCount);
 
                 // confirm that the instance method did have the desired
@@ -475,8 +472,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFoo) {
                         assertEquals("Ray", finalFoo.getUserName());
-                        assertEquals(1, handler.acquireEventCount);
-                        assertEquals(2, handler.updateEventCount);
+                        assertEquals(3, handler.updateEventCount);
                         assertEquals(3, handler.totalEventCount);
                         finishTestAndReset();
                       }

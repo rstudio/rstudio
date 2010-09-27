@@ -215,7 +215,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
         init();
         break;
 
-      case CREATE:
+      case PERSIST:
         /*
          * On create, we presume the new record is at the end of the list, so
          * fetch the last page of items.

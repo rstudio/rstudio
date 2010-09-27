@@ -173,9 +173,9 @@ class DeltaValueStoreJsonImpl {
     ProxyJsoImpl rawMasterRecord = master.records.get(recordKey);
     WriteOperation priorOperation = operations.get(recordKey);
     if (rawMasterRecord == null && priorOperation == null) {
-      operations.put(recordKey, WriteOperation.CREATE);
+      operations.put(recordKey, WriteOperation.PERSIST);
       creates.put(recordKey, recordImpl.asJso());
-      priorOperation = WriteOperation.CREATE;
+      priorOperation = WriteOperation.PERSIST;
     }
     if (priorOperation == null) {
       addNewChangeRecord(recordKey, recordImpl, property, value);
@@ -184,7 +184,7 @@ class DeltaValueStoreJsonImpl {
 
     ProxyJsoImpl priorRecord = null;
     switch (priorOperation) {
-      case CREATE:
+      case PERSIST:
         // nothing to do here.
         priorRecord = creates.get(recordKey);
         assert priorRecord != null;
@@ -232,7 +232,7 @@ class DeltaValueStoreJsonImpl {
         ReturnRecord returnedRecord = returnedRecords.get(i);
         ProxySchema<?> schema = requestFactory.getSchema(returnedRecord.getSchema());
         // IMPORTANT: The future mapping must be processed before creating the proxyId.
-        if (writeOperation == WriteOperation.CREATE) {
+        if (writeOperation == WriteOperation.PERSIST) {
           requestFactory.datastoreToFutureMap.put(
               returnedRecord.getEncodedId(), schema,
               returnedRecord.getFutureId());
@@ -248,15 +248,14 @@ class DeltaValueStoreJsonImpl {
         ProxyJsoImpl copy = ProxyJsoImpl.create((String) proxyId.encodedId, 1,
             schema, requestFactory);
         toRemove.add(proxyId);
-        if (writeOperation == WriteOperation.CREATE) {
+        if (writeOperation == WriteOperation.PERSIST) {
           /*
            * TODO(robertvawter): remove this assert after reverting the addition
            * of unpersisted proxies to ValueStore.
            */
           assert master.records.containsKey(proxyId);
-        } else {
-          requestFactory.postChangeEvent(copy, writeOperation);
         }
+        requestFactory.postChangeEvent(copy, writeOperation);
         if (writeOperation == WriteOperation.DELETE) {
           master.records.remove(proxyId);
         }
@@ -299,7 +298,7 @@ class DeltaValueStoreJsonImpl {
 
     // Retain
     creates.put(id, proxy.asJso());
-    operations.put(id, WriteOperation.CREATE);
+    operations.put(id, WriteOperation.PERSIST);
   }
 
   /**
@@ -312,7 +311,7 @@ class DeltaValueStoreJsonImpl {
     used = true;
     StringBuffer jsonData = new StringBuffer("{");
     for (WriteOperation writeOperation : new WriteOperation[] {
-        WriteOperation.CREATE, WriteOperation.UPDATE}) {
+        WriteOperation.PERSIST, WriteOperation.UPDATE}) {
       String jsonDataForOperation = getJsonForOperation(writeOperation);
       if (jsonDataForOperation.equals("")) {
         continue;
@@ -337,7 +336,7 @@ class DeltaValueStoreJsonImpl {
       changeRecord.set(property, value);
       if (recordImpl.unpersisted()) {
         creates.put(recordKey, changeRecord);
-        operations.put(recordKey, WriteOperation.CREATE);
+        operations.put(recordKey, WriteOperation.PERSIST);
       } else {
         updates.put(recordKey, changeRecord);
         operations.put(recordKey, WriteOperation.UPDATE);
@@ -364,7 +363,7 @@ class DeltaValueStoreJsonImpl {
   }
 
   private String getJsonForOperation(WriteOperation writeOperation) {
-    assert (writeOperation == WriteOperation.CREATE || writeOperation == WriteOperation.UPDATE);
+    assert (writeOperation == WriteOperation.PERSIST || writeOperation == WriteOperation.UPDATE);
     Map<EntityProxyId<?>, ProxyJsoImpl> recordsMap = getRecordsMap(writeOperation);
     if (recordsMap.size() == 0) {
       return "";
@@ -398,7 +397,7 @@ class DeltaValueStoreJsonImpl {
   private Map<EntityProxyId<?>, ProxyJsoImpl> getRecordsMap(
       WriteOperation writeOperation) {
     switch (writeOperation) {
-      case CREATE:
+      case PERSIST:
         return creates;
       case UPDATE:
         return updates;
@@ -447,7 +446,7 @@ class DeltaValueStoreJsonImpl {
       WriteOperation writeOperation) {
     for (EntityProxyId<?> recordKey : toRemove) {
       operations.remove(recordKey);
-      if (writeOperation == WriteOperation.CREATE) {
+      if (writeOperation == WriteOperation.PERSIST) {
         creates.remove(recordKey);
       } else if (writeOperation == WriteOperation.UPDATE) {
         updates.remove(recordKey);

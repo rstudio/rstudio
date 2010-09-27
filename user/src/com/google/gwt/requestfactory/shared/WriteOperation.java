@@ -21,11 +21,19 @@ package com.google.gwt.requestfactory.shared;
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
  * </p>
- * The write operation enum used in {@link EntityProxyChangedEvent}.
+ * The enum used in {@link EntityProxyChange}.
+ * <ul>
+ * <li>A PERSIST event is fired after a proxy that was created on the client has
+ * been persisted on the server.
+ * <li>An UPDATE event is fired whenever a client encounters a proxy for the
+ * first time, or encounters a proxy with new fields, or encounters a proxy
+ * whose fields have been updated.
+ * <li>A DELETE event is fired after a proxy that was deleted on the client is
+ * deleted on the server as well.
+ * </ul>
  */
 public enum WriteOperation {
-  ACQUIRE("ACQUIRE"),
-  CREATE("CREATE"), 
+  PERSIST("PERSIST"), 
   UPDATE("UPDATE"), 
   DELETE("DELETE");
   
