@@ -256,12 +256,14 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
         HasData<P> table = getView().asHasData();
         int rows = response.intValue();
         table.setRowCount(rows, true);
-        int pageSize = table.getVisibleRange().getLength();
-        int remnant = rows % pageSize;
-        if (remnant == 0) {
-          table.setVisibleRange(rows - pageSize, pageSize);
-        } else {
-          table.setVisibleRange(rows - remnant, pageSize);
+        if (rows > 0) {
+          int pageSize = table.getVisibleRange().getLength();
+          int remnant = rows % pageSize;
+          if (remnant == 0) {
+            table.setVisibleRange(rows - pageSize, pageSize);
+          } else {
+            table.setVisibleRange(rows - remnant, pageSize);
+          }
         }
         onRangeChanged(table);
       }
