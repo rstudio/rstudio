@@ -74,8 +74,8 @@ public class ClientJsonUtil {
     @Override
     public void endVisit(JsArray array, JsonContext ctx) {
       if (pretty) {
-        indentLevel = indentLevel
-            .substring(0, indentLevel.length() - indent.length());
+        indentLevel = indentLevel.substring(0,
+            indentLevel.length() - indent.length());
         sb.append('\n');
         sb.append(indentLevel);
       }
@@ -85,8 +85,8 @@ public class ClientJsonUtil {
     @Override
     public void endVisit(JsonMap object, JsonContext ctx) {
       if (pretty) {
-        indentLevel = indentLevel
-            .substring(0, indentLevel.length() - indent.length());
+        indentLevel = indentLevel.substring(0,
+            indentLevel.length() - indent.length());
         sb.append('\n');
         sb.append(indentLevel);
       }
@@ -229,8 +229,8 @@ public class ClientJsonUtil {
      * we look to see that the remaining characters are only whitespace or ']' or
      * ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
      */
-    String chktext = text
-        .replaceAll("\\\\(?:[\"\\\\\\/bfnrt]|u[0-9a-fA-F]{4})", "@");
+    String chktext = text.replaceAll(
+        "\\\\(?:[\"\\\\\\/bfnrt]|u[0-9a-fA-F]{4})", "@");
     chktext = chktext.replaceAll(
         "\"[^\"\\\\\\n\\r]*\"|true|false|null|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?",
         "]");
