@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "ko".
+ * Implementation of DateTimeFormatInfo for the "ko" locale.
  */
 public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "오전",
         "오후"
     };
@@ -52,7 +52,7 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "서력기원전",
         "서력기원"
     };
@@ -60,10 +60,15 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "기원전",
         "서기"
     };
+  }
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 0;
   }
 
   @Override
@@ -143,7 +148,7 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "1월",
         "2월",
         "3월",
@@ -157,16 +162,11 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
         "11월",
         "12월"
     };
-  }
-
-  @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
   }
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "1월",
         "2월",
         "3월",
@@ -180,16 +180,11 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
         "11월",
         "12월"
     };
-  }
-
-  @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
   }
 
   @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "1월",
         "2월",
         "3월",
@@ -206,13 +201,8 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "제 1/4분기",
         "제 2/4분기",
         "제 3/4분기",
@@ -222,7 +212,7 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "1분기",
         "2분기",
         "3분기",
@@ -232,12 +222,12 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String timeFormatFull() {
-    return "a hh시 mm분 ss초 zzzz";
+    return "a h시 m분 s초 zzzz";
   }
 
   @Override
   public String timeFormatLong() {
-    return "a hh시 mm분 ss초 z";
+    return "a h시 m분 s초 z";
   }
 
   @Override
@@ -252,7 +242,7 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "일요일",
         "월요일",
         "화요일",
@@ -264,13 +254,8 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "일",
         "월",
         "화",
@@ -279,16 +264,11 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
         "금",
         "토"
     };
-  }
-
-  @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
   }
 
   @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "일",
         "월",
         "화",
@@ -297,10 +277,5 @@ public class DateTimeFormatInfoImpl_ko extends DateTimeFormatInfoImpl {
         "금",
         "토"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "pa".
+ * Implementation of DateTimeFormatInfo for the "pa" locale.
  */
 public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "ਸਵੇਰੇ",
         "ਸ਼ਾਮ"
     };
@@ -52,7 +52,7 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "ਈਸਾਪੂਰਵ",
         "ਸੰਨ"
     };
@@ -60,9 +60,9 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
-        "BCE",
-        "CE"
+    return new String[] {
+        "ਈਸਾਪੂਰਵ",
+        "ਸੰਨ"
     };
   }
 
@@ -113,7 +113,7 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "ਜਨਵਰੀ",
         "ਫ਼ਰਵਰੀ",
         "ਮਾਰਚ",
@@ -130,13 +130,8 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "ਜ",
         "ਫ",
         "ਮਾ",
@@ -153,13 +148,8 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "ਜਨਵਰੀ",
         "ਫ਼ਰਵਰੀ",
         "ਮਾਰਚ",
@@ -176,13 +166,8 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "ਪਹਿਲਾਂ ਚੌਥਾਈ",
         "ਦੂਜਾ ਚੌਥਾਈ",
         "ਤੀਜਾ ਚੌਥਾਈ",
@@ -191,8 +176,38 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String[] quartersShort() {
+    return new String[] {
+        "ਪਹਿਲਾਂ ਚੌਥਾਈ",
+        "ਦੂਜਾ ਚੌਥਾਈ",
+        "ਤੀਜਾ ਚੌਥਾਈ",
+        "ਚੌਥਾ ਚੌਥਾਈ"
+    };
+  }
+
+  @Override
+  public String timeFormatFull() {
+    return "h:mm:ss a zzzz";
+  }
+
+  @Override
+  public String timeFormatLong() {
+    return "h:mm:ss a z";
+  }
+
+  @Override
+  public String timeFormatMedium() {
+    return "h:mm:ss a";
+  }
+
+  @Override
+  public String timeFormatShort() {
+    return "h:mm a";
+  }
+
+  @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "ਐਤਵਾਰ",
         "ਸੋਮਵਾਰ",
         "ਮੰਗਲਵਾਰ",
@@ -204,13 +219,8 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "ਐ",
         "ਸੋ",
         "ਮੰ",
@@ -222,13 +232,8 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "ਐਤ.",
         "ਸੋਮ.",
         "ਮੰਗਲ.",
@@ -237,15 +242,5 @@ public class DateTimeFormatInfoImpl_pa extends DateTimeFormatInfoImpl {
         "ਸ਼ੁਕਰ.",
         "ਸ਼ਨੀ."
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
-  }
-
-  @Override
-  public int weekendStart() {
-    return 0;
   }
 }

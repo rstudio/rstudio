@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,10 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "de_BE".
+ * Implementation of DateTimeFormatInfo for the "de_BE" locale.
  */
 public class DateTimeFormatInfoImpl_de_BE extends DateTimeFormatInfoImpl_de {
 
@@ -59,7 +59,7 @@ public class DateTimeFormatInfoImpl_de_BE extends DateTimeFormatInfoImpl_de {
 
   @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "Son",
         "Mon",
         "Die",
@@ -68,10 +68,5 @@ public class DateTimeFormatInfoImpl_de_BE extends DateTimeFormatInfoImpl_de {
         "Fre",
         "Sam"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,44 +15,44 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "yo".
+ * Implementation of DateTimeFormatInfo for the "yo" locale.
  */
 public class DateTimeFormatInfoImpl_yo extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
-        "àárọ̀",
-        "ọ̀sán"
+    return new String[] {
+        "Àárọ̀",
+        "Ọ̀sán"
     };
   }
 
   @Override
   public String dateFormatFull() {
-    return "EEEE, y MMMM dd";
+    return "EEEE, d MMMM y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "y MMMM d";
+    return "d MMMM y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "y MMM d";
+    return "d MMM y";
   }
 
   @Override
   public String dateFormatShort() {
-    return "yyyy-MM-dd";
+    return "dd/MM/yyyy";
   }
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "Saju Kristi",
         "Lehin Kristi"
     };
@@ -60,15 +60,10 @@ public class DateTimeFormatInfoImpl_yo extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "SK",
         "LK"
     };
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
   }
 
   @Override
@@ -128,30 +123,25 @@ public class DateTimeFormatInfoImpl_yo extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
-        "Oṣù Ṣẹ́rẹ́",
-        "Oṣù Èrèlè",
-        "Oṣù Ẹrẹ̀nà",
-        "Oṣù Ìgbé",
-        "Oṣù Ẹ̀bibi",
-        "Oṣù Òkúdu",
-        "Oṣù Agẹmọ",
-        "Oṣù Ògún",
-        "Oṣù Owewe",
-        "Oṣù Ọ̀wàrà",
-        "Oṣù Bélú",
-        "Oṣù Ọ̀pẹ̀"
+    return new String[] {
+        "OṢù ṢẸ́rẹ́",
+        "OṢù Èrèlè",
+        "OṢù Ẹrẹ̀nà",
+        "OṢù Ìgbé",
+        "OṢù Ẹ̀bibi",
+        "OṢù Òkúdu",
+        "OṢù Agẹmọ",
+        "OṢù Ògún",
+        "OṢù Owewe",
+        "OṢù Ọ̀wàrà",
+        "OṢù Bélú",
+        "OṢù Ọ̀pẹ̀"
     };
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -168,14 +158,9 @@ public class DateTimeFormatInfoImpl_yo extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
-        "Ṣẹ́rẹ́",
+    return new String[] {
+        "Ṣẹ́rẹ̣",
         "Èrèlè",
         "Ẹrẹ̀nà",
         "Ìgbé",
@@ -191,61 +176,61 @@ public class DateTimeFormatInfoImpl_yo extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
+  public String[] quartersFull() {
+    return new String[] {
+        "Kọ́tà Kínní",
+        "Kọ́tà Kejì",
+        "Kọ́à Keta",
+        "Kọ́tà Kẹrin"
+    };
   }
 
   @Override
-  public String[] quartersFull() {
-    return new String[] { 
-        "Q1",
-        "Q2",
-        "Q3",
-        "Q4"
+  public String[] quartersShort() {
+    return new String[] {
+        "K1",
+        "K2",
+        "K3",
+        "K4"
     };
   }
 
   @Override
   public String timeFormatFull() {
-    return "HH:mm:ss zzzz";
+    return "h:mm:ss a zzzz";
   }
 
   @Override
   public String timeFormatLong() {
-    return "HH:mm:ss z";
+    return "h:mm:ss a z";
   }
 
   @Override
   public String timeFormatMedium() {
-    return "HH:mm:ss";
+    return "h:mm:ss a";
   }
 
   @Override
   public String timeFormatShort() {
-    return "HH:mm";
+    return "h:mm a";
   }
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "Ọjọ́ Àìkú",
         "Ọjọ́ Ajé",
         "Ọjọ́ Ìsẹ́gun",
         "Ọjọ́rú",
-        "Ọjọ́ Àṣẹ̀ṣẹ̀dáiyé",
+        "Ọjọ́bọ",
         "Ọjọ́ Ẹtì",
         "Ọjọ́ Àbámẹ́ta"
     };
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -257,25 +242,15 @@ public class DateTimeFormatInfoImpl_yo extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "Àìkú",
         "Ajé",
         "Ìsẹ́gun",
         "Ọjọ́rú",
-        "Àṣẹ̀ṣẹ̀dáiyé",
+        "Ọjọ́bọ",
         "Ẹtì",
         "Àbámẹ́ta"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

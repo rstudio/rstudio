@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,20 +15,20 @@
  */
 package com.google.gwt.i18n.client;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
  * Default implementation of DateTimeFormatInfo interface, using values from
  * the CLDR root locale.
  * <p>
  * Users who need to create their own DateTimeFormatInfo implementation are
- * encouraged to extend this class so their implementation won't break when
+ * encouraged to extend this class so their implementation won't break when   
  * new methods are added.
  */
 public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
 
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "AM",
         "PM"
     };
@@ -39,57 +39,57 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String dateFormatFull() {
-    return "EEEE, MMMM d, y";
+    return "EEEE, y MMMM dd";
   }
 
   public String dateFormatLong() {
-    return "MMMM d, y";
+    return "y MMMM d";
   }
 
   public String dateFormatMedium() {
-    return "MMM d, y";
+    return "y MMM d";
   }
 
   public String dateFormatShort() {
-    return "M/d/yy";
+    return "yyyy-MM-dd";
   }
 
   public String dateTime(String timePattern, String datePattern) {
-    return datePattern + " " + timePattern;
+    return dateTimeMedium(timePattern, datePattern);
   }
 
   public String dateTimeFull(String timePattern, String datePattern) {
-    return dateTime(timePattern, datePattern);
+    return new java.lang.StringBuffer().append(datePattern).append(" ").append(timePattern).toString();
   }
 
   public String dateTimeLong(String timePattern, String datePattern) {
-    return dateTime(timePattern, datePattern);
+    return new java.lang.StringBuffer().append(datePattern).append(" ").append(timePattern).toString();
   }
 
   public String dateTimeMedium(String timePattern, String datePattern) {
-    return dateTime(timePattern, datePattern);
+    return new java.lang.StringBuffer().append(datePattern).append(" ").append(timePattern).toString();
   }
 
   public String dateTimeShort(String timePattern, String datePattern) {
-    return dateTime(timePattern, datePattern);
+    return new java.lang.StringBuffer().append(datePattern).append(" ").append(timePattern).toString();
   }
 
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "Before Christ",
         "Anno Domini"
     };
   }
 
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "BC",
         "AD"
     };
   }
 
   public int firstDayOfTheWeek() {
-    return 0;
+    return 1;
   }
 
   public String formatDay() {
@@ -181,7 +181,7 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "January",
         "February",
         "March",
@@ -202,7 +202,7 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "J",
         "F",
         "M",
@@ -223,7 +223,7 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "Jan",
         "Feb",
         "Mar",
@@ -244,7 +244,7 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1st quarter",
         "2nd quarter",
         "3rd quarter",
@@ -253,7 +253,7 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "Q1",
         "Q2",
         "Q3",
@@ -266,23 +266,23 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String timeFormatFull() {
-    return "h:mm:ss a zzzz";
+    return "HH:mm:ss zzzz";
   }
 
   public String timeFormatLong() {
-    return "h:mm:ss a z";
+    return "HH:mm:ss z";
   }
 
   public String timeFormatMedium() {
-    return "h:mm:ss a";
+    return "HH:mm:ss";
   }
 
   public String timeFormatShort() {
-    return "h:mm a";
+    return "HH:mm";
   }
 
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "Sunday",
         "Monday",
         "Tuesday",
@@ -298,7 +298,7 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "S",
         "M",
         "T",
@@ -314,7 +314,7 @@ public class DefaultDateTimeFormatInfo implements DateTimeFormatInfo {
   }
 
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "Sun",
         "Mon",
         "Tue",

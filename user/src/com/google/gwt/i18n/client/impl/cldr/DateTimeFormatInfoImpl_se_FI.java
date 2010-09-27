@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,32 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "se_FI".
+ * Implementation of DateTimeFormatInfo for the "se_FI" locale.
  */
 public class DateTimeFormatInfoImpl_se_FI extends DateTimeFormatInfoImpl_se {
 
   @Override
-  public String[] erasFull() {
-    return new String[] { 
-        "BCE",
-        "maŋŋel Kristtusa"
-    };
-  }
-
-  @Override
-  public String[] erasShort() {
-    return new String[] { 
-        "BCE",
-        "m.Kr."
-    };
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "ođđajage",
         "guovva",
         "njukča",
@@ -57,13 +41,8 @@ public class DateTimeFormatInfoImpl_se_FI extends DateTimeFormatInfoImpl_se {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "aejlege",
         "måanta",
         "däjsta",
@@ -75,13 +54,8 @@ public class DateTimeFormatInfoImpl_se_FI extends DateTimeFormatInfoImpl_se {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "S",
         "M",
         "D",
@@ -90,28 +64,5 @@ public class DateTimeFormatInfoImpl_se_FI extends DateTimeFormatInfoImpl_se {
         "B",
         "L"
     };
-  }
-
-  @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
-  public String[] weekdaysShort() {
-    return new String[] { 
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
-    };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

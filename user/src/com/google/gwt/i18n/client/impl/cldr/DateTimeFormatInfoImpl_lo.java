@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "lo".
+ * Implementation of DateTimeFormatInfo for the "lo" locale.
  */
 public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "ກ່ອນທ່ຽງ",
         "ຫລັງທ່ຽງ"
     };
@@ -51,8 +51,28 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append(", ").append(timePattern).toString();
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append(", ").append(timePattern).toString();
+  }
+
+  @Override
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append(", ").append(timePattern).toString();
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append(", ").append(timePattern).toString();
+  }
+
+  @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "ປີກ່ອນຄິດສະການທີ່",
         "ຄ.ສ."
     };
@@ -60,10 +80,15 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "ປີກ່ອນຄິດສະການທີ່",
         "ຄ.ສ."
     };
+  }
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 0;
   }
 
   @Override
@@ -123,7 +148,7 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "ມັງກອນ",
         "ກຸມພາ",
         "ມີນາ",
@@ -140,13 +165,8 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -163,13 +183,8 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "ມ.ກ.",
         "ກ.ພ.",
         "ມີ.ນ.",
@@ -186,13 +201,8 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "Q1",
         "Q2",
         "Q3",
@@ -222,7 +232,7 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "ວັນອາທິດ",
         "ວັນຈັນ",
         "ວັນອັງຄານ",
@@ -234,13 +244,8 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -252,13 +257,8 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "ອາ.",
         "ຈ.",
         "ອ.",
@@ -267,10 +267,5 @@ public class DateTimeFormatInfoImpl_lo extends DateTimeFormatInfoImpl {
         "ສກ.",
         "ສ."
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

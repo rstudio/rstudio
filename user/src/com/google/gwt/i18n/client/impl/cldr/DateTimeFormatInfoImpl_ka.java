@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,34 +15,19 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "ka".
+ * Implementation of DateTimeFormatInfo for the "ka" locale.
  */
 public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "დილის",
         "საღამოს"
     };
-  }
-
-  @Override
-  public String dateFormatFull() {
-    return "EEEE, y MMMM dd";
-  }
-
-  @Override
-  public String dateFormatLong() {
-    return "y MMMM d";
-  }
-
-  @Override
-  public String dateFormatMedium() {
-    return "y MMM d";
   }
 
   @Override
@@ -52,7 +37,7 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "ჩვენს წელთაღრიცხვამდე",
         "ჩვენი წელთაღრიცხვით"
     };
@@ -60,15 +45,20 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "ჩვენს წელთაღრიცხვამდე",
         "ჩვენი წელთაღრიცხვით"
     };
   }
 
   @Override
+  public int firstDayOfTheWeek() {
+    return 0;
+  }
+
+  @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "იანვარი",
         "თებერვალი",
         "მარტი",
@@ -85,13 +75,8 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "ი",
         "თ",
         "მ",
@@ -108,13 +93,8 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "იან",
         "თებ",
         "მარ",
@@ -131,13 +111,8 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1-ლი კვარტალი",
         "მე-2 კვარტალი",
         "მე-3 კვარტალი",
@@ -147,7 +122,7 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "I კვ.",
         "II კვ.",
         "III კვ.",
@@ -156,28 +131,8 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String timeFormatFull() {
-    return "HH:mm:ss zzzz";
-  }
-
-  @Override
-  public String timeFormatLong() {
-    return "HH:mm:ss z";
-  }
-
-  @Override
-  public String timeFormatMedium() {
-    return "HH:mm:ss";
-  }
-
-  @Override
-  public String timeFormatShort() {
-    return "HH:mm";
-  }
-
-  @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "კვირა",
         "ორშაბათი",
         "სამშაბათი",
@@ -189,13 +144,8 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "კ",
         "ო",
         "ს",
@@ -207,13 +157,8 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "კვი",
         "ორშ",
         "სამ",
@@ -222,10 +167,5 @@ public class DateTimeFormatInfoImpl_ka extends DateTimeFormatInfoImpl {
         "პარ",
         "შაბ"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

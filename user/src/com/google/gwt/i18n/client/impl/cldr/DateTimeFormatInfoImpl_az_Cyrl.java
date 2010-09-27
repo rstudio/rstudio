@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,21 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "az_Cyrl".
+ * Implementation of DateTimeFormatInfo for the "az_Cyrl" locale.
  */
 public class DateTimeFormatInfoImpl_az_Cyrl extends DateTimeFormatInfoImpl_az {
 
   @Override
+  public int firstDayOfTheWeek() {
+    return 0;
+  }
+
+  @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "јанвар",
         "феврал",
         "март",
@@ -41,13 +46,8 @@ public class DateTimeFormatInfoImpl_az_Cyrl extends DateTimeFormatInfoImpl_az {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "базар",
         "базар ертәси",
         "чәршәнбә ахшамы",
@@ -56,10 +56,5 @@ public class DateTimeFormatInfoImpl_az_Cyrl extends DateTimeFormatInfoImpl_az {
         "ҹүмә",
         "шәнбә"
     };
-  }
-
-  @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
   }
 }

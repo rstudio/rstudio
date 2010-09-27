@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,10 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "es_PE".
+ * Implementation of DateTimeFormatInfo for the "es_PE" locale.
  */
 public class DateTimeFormatInfoImpl_es_PE extends DateTimeFormatInfoImpl_es {
 
@@ -29,6 +29,6 @@ public class DateTimeFormatInfoImpl_es_PE extends DateTimeFormatInfoImpl_es {
 
   @Override
   public String timeFormatFull() {
-    return "HH'H'mm''ss\" zzzz";
+    return "HH'H'mm''ss'' zzzz";
   }
 }

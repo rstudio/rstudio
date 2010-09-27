@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "sr_Latn".
+ * Implementation of DateTimeFormatInfo for the "sr_Latn" locale.
  */
 public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "pre podne",
         "popodne"
     };
@@ -32,7 +32,7 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "Pre nove ere",
         "Nove ere"
     };
@@ -40,7 +40,7 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "p. n. e.",
         "n. e"
     };
@@ -52,13 +52,8 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
   }
 
   @Override
-  public String formatYearMonthFull() {
-    return "y MMMM";
-  }
-
-  @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "januar",
         "februar",
         "mart",
@@ -75,13 +70,8 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "j",
         "f",
         "m",
@@ -98,13 +88,8 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "jan",
         "feb",
         "mar",
@@ -121,13 +106,8 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1. kvartal",
         "2. kvartal",
         "3. kvartal",
@@ -137,7 +117,7 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "Q1",
         "Q2",
         "Q3",
@@ -147,7 +127,7 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "nedelja",
         "ponedeljak",
         "utorak",
@@ -159,13 +139,8 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "n",
         "p",
         "u",
@@ -177,13 +152,8 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "ned",
         "pon",
         "uto",
@@ -192,10 +162,5 @@ public class DateTimeFormatInfoImpl_sr_Latn extends DateTimeFormatInfoImpl_sr {
         "pet",
         "sub"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

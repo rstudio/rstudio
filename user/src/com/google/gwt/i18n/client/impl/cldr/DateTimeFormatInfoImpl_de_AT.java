@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,10 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "de_AT".
+ * Implementation of DateTimeFormatInfo for the "de_AT" locale.
  */
 public class DateTimeFormatInfoImpl_de_AT extends DateTimeFormatInfoImpl_de {
 
@@ -34,7 +34,7 @@ public class DateTimeFormatInfoImpl_de_AT extends DateTimeFormatInfoImpl_de {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "Jänner",
         "Februar",
         "März",
@@ -51,13 +51,8 @@ public class DateTimeFormatInfoImpl_de_AT extends DateTimeFormatInfoImpl_de {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "Jän",
         "Feb",
         "Mär",
@@ -71,10 +66,5 @@ public class DateTimeFormatInfoImpl_de_AT extends DateTimeFormatInfoImpl_de {
         "Nov",
         "Dez"
     };
-  }
-
-  @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
   }
 }

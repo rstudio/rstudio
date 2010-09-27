@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "de".
+ * Implementation of DateTimeFormatInfo for the "de" locale.
  */
 public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "vorm.",
         "nachm."
     };
@@ -52,7 +52,7 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "v. Chr.",
         "n. Chr."
     };
@@ -60,15 +60,10 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "v. Chr.",
         "n. Chr."
     };
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
   }
 
   @Override
@@ -138,7 +133,7 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "Januar",
         "Februar",
         "März",
@@ -155,13 +150,8 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "Jan",
         "Feb",
         "Mär",
@@ -179,12 +169,25 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsShortStandalone() {
-    return monthsShort();
+    return new String[] {
+        "Jan.",
+        "Feb.",
+        "Mär",
+        "Apr.",
+        "Mai",
+        "Juni",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Okt",
+        "Nov",
+        "Dez"
+    };
   }
 
   @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1. Quartal",
         "2. Quartal",
         "3. Quartal",
@@ -193,28 +196,8 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String timeFormatFull() {
-    return "HH:mm:ss zzzz";
-  }
-
-  @Override
-  public String timeFormatLong() {
-    return "HH:mm:ss z";
-  }
-
-  @Override
-  public String timeFormatMedium() {
-    return "HH:mm:ss";
-  }
-
-  @Override
-  public String timeFormatShort() {
-    return "HH:mm";
-  }
-
-  @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "Sonntag",
         "Montag",
         "Dienstag",
@@ -226,13 +209,8 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "S",
         "M",
         "D",
@@ -244,13 +222,8 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "So.",
         "Mo.",
         "Di.",
@@ -263,6 +236,14 @@ public class DateTimeFormatInfoImpl_de extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
+    return new String[] {
+        "So",
+        "Mo",
+        "Di",
+        "Mi",
+        "Do",
+        "Fr",
+        "Sa"
+    };
   }
 }

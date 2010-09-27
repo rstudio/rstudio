@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "zh".
+ * Implementation of DateTimeFormatInfo for the "zh" locale.
  */
 public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "上午",
         "下午"
     };
@@ -51,8 +51,18 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append(timePattern).toString();
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append(timePattern).toString();
+  }
+
+  @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "公元前",
         "公元"
     };
@@ -60,7 +70,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "公元前",
         "公元"
     };
@@ -148,7 +158,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "1月",
         "2月",
         "3月",
@@ -166,7 +176,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFullStandalone() {
-    return new String[] { 
+    return new String[] {
         "一月",
         "二月",
         "三月",
@@ -184,7 +194,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "1月",
         "2月",
         "3月",
@@ -201,13 +211,8 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "1月",
         "2月",
         "3月",
@@ -225,7 +230,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsShortStandalone() {
-    return new String[] { 
+    return new String[] {
         "一月",
         "二月",
         "三月",
@@ -243,7 +248,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "第1季度",
         "第2季度",
         "第3季度",
@@ -253,7 +258,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "1季",
         "2季",
         "3季",
@@ -273,7 +278,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String timeFormatMedium() {
-    return "ahh:mm:ss";
+    return "ah:mm:ss";
   }
 
   @Override
@@ -283,7 +288,7 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "星期日",
         "星期一",
         "星期二",
@@ -295,13 +300,8 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "日",
         "一",
         "二",
@@ -313,13 +313,8 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "周日",
         "周一",
         "周二",
@@ -328,10 +323,5 @@ public class DateTimeFormatInfoImpl_zh extends DateTimeFormatInfoImpl {
         "周五",
         "周六"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

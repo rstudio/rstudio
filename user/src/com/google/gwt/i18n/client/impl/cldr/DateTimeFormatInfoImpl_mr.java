@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "mr".
+ * Implementation of DateTimeFormatInfo for the "mr" locale.
  */
 public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "am",
         "pm"
     };
@@ -52,7 +52,7 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "ईसवीसनपूर्व",
         "ईसवीसन"
     };
@@ -60,10 +60,15 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "ई.स.पू.",
         "ई.स."
     };
+  }
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 0;
   }
 
   @Override
@@ -148,7 +153,7 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "जानेवारी",
         "फेब्रुवारी",
         "मार्च",
@@ -165,13 +170,8 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "जा",
         "फे",
         "मा",
@@ -188,13 +188,8 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "जानेवारी",
         "फेब्रुवारी",
         "मार्च",
@@ -211,13 +206,8 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "प्रथम तिमाही",
         "द्वितीय तिमाही",
         "तृतीय तिमाही",
@@ -247,7 +237,7 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "रविवार",
         "सोमवार",
         "मंगळवार",
@@ -259,13 +249,8 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "र",
         "सो",
         "मं",
@@ -277,13 +262,8 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "रवि",
         "सोम",
         "मंगळ",
@@ -292,11 +272,6 @@ public class DateTimeFormatInfoImpl_mr extends DateTimeFormatInfoImpl {
         "शुक्र",
         "शनि"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 
   @Override

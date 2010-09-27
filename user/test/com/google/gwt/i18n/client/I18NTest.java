@@ -140,7 +140,7 @@ public class I18NTest extends GWTTestCase {
         m.defaultNumberFormat(1017.1));
     @SuppressWarnings("deprecation")
     Date date = new Date(107, 11, 1, 12, 1, 2);
-    assertEquals("PL: It is 12:01 PM on Saturday, December 1, 2007",
+    assertEquals("PL: It is 12:01 on Saturday, 2007 December 01",
         m.getTimeDate(date));
     assertEquals("PL: 13 widgets", m.pluralWidgetsOther(13));
     assertEquals("Too many widgets to count (150) in pig-latin",
@@ -172,7 +172,7 @@ public class I18NTest extends GWTTestCase {
         m.defaultNumberFormatAsSafeHtml(1017.1).asString());
     @SuppressWarnings("deprecation")
     Date date = new Date(107, 11, 1, 12, 1, 2);
-    assertEquals("PL: It is 12:01 PM on Saturday, December 1, 2007",
+    assertEquals("PL: It is 12:01 on Saturday, 2007 December 01",
         m.getTimeDateAsSafeHtml(date).asString());
     assertEquals("PL: 13 widgets", m.pluralWidgetsOtherAsSafeHtml(13).asString());
     assertEquals("Too many widgets to count (150) in pig-latin",

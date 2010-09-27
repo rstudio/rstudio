@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,29 +15,24 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "ku_Latn".
+ * Implementation of DateTimeFormatInfo for the "ku_Latn" locale.
  */
 public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "BN",
         "PN"
     };
   }
 
   @Override
-  public String dateFormatShort() {
-    return "yy/MM/dd";
-  }
-
-  @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "BZ",
         "PZ"
     };
@@ -45,20 +40,15 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "BZ",
         "PZ"
     };
   }
 
   @Override
-  public int firstDayOfTheWeek() {
-    return 1;
-  }
-
-  @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "çile",
         "sibat",
         "adar",
@@ -75,13 +65,8 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "ç",
         "s",
         "a",
@@ -98,13 +83,8 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "çil",
         "sib",
         "adr",
@@ -121,13 +101,8 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "Ç1",
         "Ç2",
         "Ç3",
@@ -137,7 +112,7 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "Ç1",
         "Ç2",
         "Ç3",
@@ -147,7 +122,7 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "yekşem",
         "duşem",
         "şê",
@@ -159,13 +134,8 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "y",
         "d",
         "s",
@@ -177,13 +147,8 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "yş",
         "dş",
         "sş",
@@ -192,20 +157,5 @@ public class DateTimeFormatInfoImpl_ku_Latn extends DateTimeFormatInfoImpl_ku {
         "în",
         "ş"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
-  }
-
-  @Override
-  public int weekendEnd() {
-    return 0;
-  }
-
-  @Override
-  public int weekendStart() {
-    return 6;
   }
 }

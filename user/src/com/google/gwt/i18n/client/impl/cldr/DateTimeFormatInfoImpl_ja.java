@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "ja".
+ * Implementation of DateTimeFormatInfo for the "ja" locale.
  */
 public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "午前",
         "午後"
     };
@@ -51,8 +51,18 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append(timePattern).toString();
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append(timePattern).toString();
+  }
+
+  @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "紀元前",
         "西暦"
     };
@@ -60,10 +70,15 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "紀元前",
         "西暦"
     };
+  }
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 0;
   }
 
   @Override
@@ -153,7 +168,7 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "1月",
         "2月",
         "3月",
@@ -170,13 +185,8 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -193,13 +203,8 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "1月",
         "2月",
         "3月",
@@ -216,13 +221,8 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "第1四半期",
         "第2四半期",
         "第3四半期",
@@ -237,7 +237,7 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
 
   @Override
   public String timeFormatLong() {
-    return "HH:mm:ss z";
+    return "H:mm:ss z";
   }
 
   @Override
@@ -252,7 +252,7 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "日曜日",
         "月曜日",
         "火曜日",
@@ -264,13 +264,8 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "日",
         "月",
         "火",
@@ -279,16 +274,11 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
         "金",
         "土"
     };
-  }
-
-  @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
   }
 
   @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "日",
         "月",
         "火",
@@ -297,10 +287,5 @@ public class DateTimeFormatInfoImpl_ja extends DateTimeFormatInfoImpl {
         "金",
         "土"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

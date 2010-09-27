@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "cs".
+ * Implementation of DateTimeFormatInfo for the "cs" locale.
  */
 public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "dop.",
         "odp."
     };
@@ -52,7 +52,7 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "př.Kr.",
         "po Kr."
     };
@@ -60,15 +60,10 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "př.Kr.",
         "po Kr."
     };
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
   }
 
   @Override
@@ -82,13 +77,48 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatMonthAbbrevDay() {
+    return "d. MMM";
+  }
+
+  @Override
+  public String formatMonthFullDay() {
+    return "d. MMMM";
+  }
+
+  @Override
+  public String formatMonthFullWeekdayDay() {
+    return "EEEE, d. MMMM";
+  }
+
+  @Override
+  public String formatMonthNumDay() {
+    return "d.M";
+  }
+
+  @Override
+  public String formatYearMonthAbbrev() {
+    return "MMM y";
+  }
+
+  @Override
   public String formatYearMonthAbbrevDay() {
     return "d. MMM y";
   }
 
   @Override
+  public String formatYearMonthFull() {
+    return "MMMM y";
+  }
+
+  @Override
   public String formatYearMonthFullDay() {
     return "d. MMMM y";
+  }
+
+  @Override
+  public String formatYearMonthNum() {
+    return "M.y";
   }
 
   @Override
@@ -102,8 +132,18 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
   }
 
   @Override
+  public String formatYearQuarterFull() {
+    return "QQQQ y";
+  }
+
+  @Override
+  public String formatYearQuarterShort() {
+    return "Q y";
+  }
+
+  @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "ledna",
         "února",
         "března",
@@ -121,7 +161,7 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFullStandalone() {
-    return new String[] { 
+    return new String[] {
         "leden",
         "únor",
         "březen",
@@ -139,7 +179,7 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "l",
         "ú",
         "b",
@@ -156,13 +196,8 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -180,7 +215,7 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsShortStandalone() {
-    return new String[] { 
+    return new String[] {
         "1.",
         "2.",
         "3.",
@@ -198,7 +233,7 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1. čtvrtletí",
         "2. čtvrtletí",
         "3. čtvrtletí",
@@ -208,12 +243,12 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String timeFormatFull() {
-    return "HH:mm:ss zzzz";
+    return "H:mm:ss zzzz";
   }
 
   @Override
   public String timeFormatLong() {
-    return "HH:mm:ss z";
+    return "H:mm:ss z";
   }
 
   @Override
@@ -228,7 +263,7 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "neděle",
         "pondělí",
         "úterý",
@@ -240,13 +275,8 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "N",
         "P",
         "Ú",
@@ -258,13 +288,8 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "ne",
         "po",
         "út",
@@ -273,10 +298,5 @@ public class DateTimeFormatInfoImpl_cs extends DateTimeFormatInfoImpl {
         "pá",
         "so"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

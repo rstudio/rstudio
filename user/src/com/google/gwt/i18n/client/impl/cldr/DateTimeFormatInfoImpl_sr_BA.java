@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,10 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "sr_BA".
+ * Implementation of DateTimeFormatInfo for the "sr_BA" locale.
  */
 public class DateTimeFormatInfoImpl_sr_BA extends DateTimeFormatInfoImpl_sr {
 
@@ -49,7 +49,7 @@ public class DateTimeFormatInfoImpl_sr_BA extends DateTimeFormatInfoImpl_sr {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "јануар",
         "фебруар",
         "март",
@@ -63,11 +63,6 @@ public class DateTimeFormatInfoImpl_sr_BA extends DateTimeFormatInfoImpl_sr {
         "новембар",
         "децембар"
     };
-  }
-
-  @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
   }
 
   @Override
@@ -87,7 +82,7 @@ public class DateTimeFormatInfoImpl_sr_BA extends DateTimeFormatInfoImpl_sr {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "недеља",
         "понедељак",
         "уторак",
@@ -99,13 +94,8 @@ public class DateTimeFormatInfoImpl_sr_BA extends DateTimeFormatInfoImpl_sr {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "нед",
         "пон",
         "уто",
@@ -114,10 +104,5 @@ public class DateTimeFormatInfoImpl_sr_BA extends DateTimeFormatInfoImpl_sr {
         "пет",
         "суб"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

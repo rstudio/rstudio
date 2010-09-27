@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "en_Dsrt".
+ * Implementation of DateTimeFormatInfo for the "en_Dsrt" locale.
  */
 public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "𐐈𐐣",
         "𐐑𐐣"
     };
@@ -32,7 +32,7 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "𐐒𐐲𐑁𐐬𐑉 𐐗𐑉𐐴𐑅𐐻",
         "𐐈𐑌𐐬 𐐔𐐱𐑋𐐮𐑌𐐨"
     };
@@ -40,7 +40,7 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "𐐒𐐗",
         "𐐈𐐔"
     };
@@ -53,7 +53,7 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "𐐖𐐰𐑌𐐷𐐭𐐯𐑉𐐨",
         "𐐙𐐯𐐺𐑉𐐭𐐯𐑉𐐨",
         "𐐣𐐪𐑉𐐽",
@@ -70,13 +70,8 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "𐐖",
         "𐐙",
         "𐐣",
@@ -93,13 +88,8 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "𐐖𐐰𐑌",
         "𐐙𐐯𐐺",
         "𐐣𐐪𐑉",
@@ -116,13 +106,8 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1𐑅𐐻 𐐿𐐶𐐪𐑉𐐻𐐲𐑉",
         "2𐑌𐐼 𐐿𐐶𐐪𐑉𐐻𐐲𐑉",
         "3𐑉𐐼 𐐿𐐶𐐪𐑉𐐻𐐲𐑉",
@@ -132,7 +117,7 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "𐐗1",
         "𐐗2",
         "𐐗3",
@@ -142,7 +127,7 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "𐐝𐐲𐑌𐐼𐐩",
         "𐐣𐐲𐑌𐐼𐐩",
         "𐐓𐐭𐑆𐐼𐐩",
@@ -154,13 +139,8 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "𐐝",
         "𐐣",
         "𐐓",
@@ -172,13 +152,8 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "𐐝𐐲𐑌",
         "𐐣𐐲𐑌",
         "𐐓𐐭𐑆",
@@ -187,10 +162,5 @@ public class DateTimeFormatInfoImpl_en_Dsrt extends DateTimeFormatInfoImpl_en {
         "𐐙𐑉𐐴",
         "𐐝𐐰𐐻"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

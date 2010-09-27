@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,21 +15,21 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "ru".
+ * Implementation of DateTimeFormatInfo for the "ru" locale.
  */
 public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatFull() {
-    return "EEEE, d MMMM y 'г'.";
+    return "EEEE, d MMMM y 'г'.";
   }
 
   @Override
   public String dateFormatLong() {
-    return "d MMMM y 'г'.";
+    return "d MMMM y 'г'.";
   }
 
   @Override
@@ -44,7 +44,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "до н.э.",
         "н.э."
     };
@@ -52,15 +52,10 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "до н.э.",
         "н.э."
     };
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
   }
 
   @Override
@@ -130,7 +125,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "января",
         "февраля",
         "марта",
@@ -148,7 +143,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFullStandalone() {
-    return new String[] { 
+    return new String[] {
         "Январь",
         "Февраль",
         "Март",
@@ -166,7 +161,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "Я",
         "Ф",
         "М",
@@ -183,13 +178,8 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "янв.",
         "февр.",
         "марта",
@@ -207,7 +197,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsShortStandalone() {
-    return new String[] { 
+    return new String[] {
         "янв.",
         "февр.",
         "март",
@@ -225,7 +215,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1-й квартал",
         "2-й квартал",
         "3-й квартал",
@@ -235,7 +225,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "1-й кв.",
         "2-й кв.",
         "3-й кв.",
@@ -265,7 +255,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "воскресенье",
         "понедельник",
         "вторник",
@@ -278,7 +268,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFullStandalone() {
-    return new String[] { 
+    return new String[] {
         "Воскресенье",
         "Понедельник",
         "Вторник",
@@ -291,7 +281,7 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "В",
         "П",
         "В",
@@ -303,13 +293,8 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "Вс",
         "Пн",
         "Вт",
@@ -318,10 +303,5 @@ public class DateTimeFormatInfoImpl_ru extends DateTimeFormatInfoImpl {
         "Пт",
         "Сб"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

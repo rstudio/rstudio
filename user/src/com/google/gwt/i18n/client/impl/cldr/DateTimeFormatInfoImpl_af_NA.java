@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,10 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "af_NA".
+ * Implementation of DateTimeFormatInfo for the "af_NA" locale.
  */
 public class DateTimeFormatInfoImpl_af_NA extends DateTimeFormatInfoImpl_af {
 
@@ -35,11 +35,6 @@ public class DateTimeFormatInfoImpl_af_NA extends DateTimeFormatInfoImpl_af {
   @Override
   public String dateFormatMedium() {
     return "d MMM y";
-  }
-
-  @Override
-  public String dateFormatShort() {
-    return "yyyy-MM-dd";
   }
 
   @Override

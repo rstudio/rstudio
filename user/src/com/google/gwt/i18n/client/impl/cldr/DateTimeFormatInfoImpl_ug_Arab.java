@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,15 +15,25 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "ug_Arab".
+ * Implementation of DateTimeFormatInfo for the "ug_Arab" locale.
  */
 public class DateTimeFormatInfoImpl_ug_Arab extends DateTimeFormatInfoImpl_ug {
 
   @Override
   public int firstDayOfTheWeek() {
-    return 1;
+    return 0;
+  }
+
+  @Override
+  public int weekendEnd() {
+    return 0;
+  }
+
+  @Override
+  public int weekendStart() {
+    return 6;
   }
 }

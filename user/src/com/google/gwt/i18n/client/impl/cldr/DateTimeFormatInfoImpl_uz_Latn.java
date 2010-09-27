@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,12 +15,17 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "uz_Latn".
+ * Implementation of DateTimeFormatInfo for the "uz_Latn" locale.
  */
 public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
+
+  @Override
+  public int firstDayOfTheWeek() {
+    return 0;
+  }
 
   @Override
   public String formatYearMonthNumDay() {
@@ -29,7 +34,7 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "Y",
         "F",
         "M",
@@ -46,13 +51,8 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "Yanv",
         "Fev",
         "Mar",
@@ -69,13 +69,8 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "yakshanba",
         "dushanba",
         "seshanba",
@@ -87,13 +82,8 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "Y",
         "D",
         "S",
@@ -105,13 +95,8 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "Yaksh",
         "Dush",
         "Sesh",
@@ -120,10 +105,5 @@ public class DateTimeFormatInfoImpl_uz_Latn extends DateTimeFormatInfoImpl_uz {
         "Jum",
         "Shan"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

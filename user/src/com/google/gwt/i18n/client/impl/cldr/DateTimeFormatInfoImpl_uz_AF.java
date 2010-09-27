@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,10 +15,10 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "uz_AF".
+ * Implementation of DateTimeFormatInfo for the "uz_AF" locale.
  */
 public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
 
@@ -44,7 +44,7 @@ public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "ق.م.",
         "م."
     };
@@ -52,7 +52,7 @@ public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "ق.م.",
         "م."
     };
@@ -65,7 +65,7 @@ public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "جنوری",
         "فبروری",
         "مارچ",
@@ -82,13 +82,8 @@ public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "جنو",
         "فبر",
         "مار",
@@ -102,11 +97,6 @@ public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
         "نوم",
         "دسم"
     };
-  }
-
-  @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
   }
 
   @Override
@@ -131,7 +121,7 @@ public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "یکشنبه",
         "دوشنبه",
         "سه‌شنبه",
@@ -143,13 +133,8 @@ public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "ی.",
         "د.",
         "س.",
@@ -158,11 +143,6 @@ public class DateTimeFormatInfoImpl_uz_AF extends DateTimeFormatInfoImpl_uz {
         "ج.",
         "ش."
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 
   @Override
