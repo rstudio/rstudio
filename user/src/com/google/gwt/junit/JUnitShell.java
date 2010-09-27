@@ -273,7 +273,7 @@ public class JUnitShell extends DevMode {
       registerHandler(new ArgHandlerInt() {
         @Override
         public String[] getDefaultArgs() {
-          return new String[]{getTag(), "1"};
+          return new String[]{getTag(), String.valueOf(DEFAULT_BEGIN_TIMEOUT_MINUTES)};
         }
 
         @Override
@@ -530,6 +530,7 @@ public class JUnitShell extends DevMode {
      * system classloader to dominate. This makes JUnitHostImpl live in the
      * right classloader (mine).
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected WebAppContext createWebAppContext(TreeLogger logger,
         File appRootDir) {
@@ -545,6 +546,11 @@ public class JUnitShell extends DevMode {
       };
     }
   }
+
+  /**
+   * How many minutes to wait for the browser to contact the test system.
+   */
+  private static final int DEFAULT_BEGIN_TIMEOUT_MINUTES = 1;
 
   /**
    * This is a system property that, when set, emulates command line arguments.
