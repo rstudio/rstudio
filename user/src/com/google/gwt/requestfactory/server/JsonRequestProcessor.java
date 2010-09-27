@@ -571,8 +571,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (dtoAnn != null) {
       return (Class<Object>) dtoAnn.value();
     }
-    throw new IllegalArgumentException("Record class " + record.getName()
-        + " missing DataTransferObject annotation");
+    throw new IllegalArgumentException("Proxy class " + record.getName()
+        + " missing ProxyFor annotation");
   }
 
   /**
