@@ -83,6 +83,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   /**
+   * File name for computeScriptBase.js.
+   */
+  protected static final String COMPUTE_SCRIPT_BASE_JS = "com/google/gwt/core/ext/linker/impl/computeScriptBase.js";
+
+  /**
    * The extension added to demand-loaded fragment files.
    */
   protected static final String FRAGMENT_EXTENSION = ".cache.js";
@@ -93,14 +98,14 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected static final String FRAGMENT_SUBDIR = "deferredjs";
 
   /**
-   * File name for computeScriptBase.js.
+   * File name for permutations.js.
    */
-  static final String COMPUTE_SCRIPT_BASE_JS = "com/google/gwt/core/ext/linker/impl/computeScriptBase.js";
+  protected static final String PERMUTATIONS_JS = "com/google/gwt/core/ext/linker/impl/permutations.js";
 
   /**
    * File name for processMetas.js.
    */
-  static final String PROCESS_METAS_JS = "com/google/gwt/core/ext/linker/impl/processMetas.js";
+  protected static final String PROCESS_METAS_JS = "com/google/gwt/core/ext/linker/impl/processMetas.js";
 
   /**
    * Determines whether or not the URL is relative.
@@ -308,34 +313,24 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * have been scanned using {@link #processSelectionInformation(ArtifactSet)}.
    */
   protected String generateSelectionScript(TreeLogger logger,
-      LinkerContext context, ArtifactSet artifacts)
-      throws UnableToCompleteException {
-    StringBuffer selectionScript;
-    String processMetas;
+      LinkerContext context, ArtifactSet artifacts) throws UnableToCompleteException {
+    StringBuffer selectionScript = getSelectionScriptStringBuffer(logger, context);
+    
     String computeScriptBase;
+    String processMetas;
     try {
-      selectionScript = new StringBuffer(
-          Utility.getFileFromClassPath(getSelectionScriptTemplate(logger,
-              context)));
-      processMetas = Utility.getFileFromClassPath(PROCESS_METAS_JS);
       computeScriptBase = Utility.getFileFromClassPath(COMPUTE_SCRIPT_BASE_JS);
+      processMetas = Utility.getFileFromClassPath(PROCESS_METAS_JS);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to read selection script template",
           e);
       throw new UnableToCompleteException();
     }
-
-    replaceAll(selectionScript, "__PROCESS_METAS__", processMetas);
     replaceAll(selectionScript, "__COMPUTE_SCRIPT_BASE__", computeScriptBase);
-    replaceAll(selectionScript, "__MODULE_FUNC__",
-        context.getModuleFunctionName());
-    replaceAll(selectionScript, "__MODULE_NAME__", context.getModuleName());
-    replaceAll(selectionScript, "__HOSTED_FILENAME__", getHostedFilename());
-
-    int startPos;
+    replaceAll(selectionScript, "__PROCESS_METAS__", processMetas);
 
     // Add external dependencies
-    startPos = selectionScript.indexOf("// __MODULE_STYLES_END__");
+    int startPos = selectionScript.indexOf("// __MODULE_STYLES_END__");
     if (startPos != -1) {
       for (StylesheetReference resource : artifacts.find(StylesheetReference.class)) {
         String text = generateStylesheetInjector(resource.getSrc());
@@ -352,6 +347,167 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         startPos += text.length();
       }
     }
+    
+    // This method needs to be called after all of the .js files have been
+    // swapped into the selectionScript since it will fill in __MODULE_NAME__
+    // and many of the .js files contain that template variable
+    selectionScript =
+      processSelectionScriptCommon(selectionScript, logger, context);
+
+    return selectionScript.toString();
+  }
+  
+  /**
+   * Generate a Snippet of JavaScript to inject an external stylesheet.
+   * 
+   * <pre>
+   * if (!__gwt_stylesLoaded['URL']) {
+   *   var l = $doc.createElement('link');
+   *   __gwt_styleLoaded['URL'] = l;
+   *   l.setAttribute('rel', 'stylesheet');
+   *   l.setAttribute('href', HREF_EXPR);
+   *   $doc.getElementsByTagName('head')[0].appendChild(l);
+   * }
+   * </pre>
+   */
+  protected String generateStylesheetInjector(String stylesheetUrl) {
+    String hrefExpr = "'" + stylesheetUrl + "'";
+    if (isRelativeURL(stylesheetUrl)) {
+      hrefExpr = "base + " + hrefExpr;
+    }
+
+    return "if (!__gwt_stylesLoaded['" + stylesheetUrl + "']) {\n           "
+        + "  var l = $doc.createElement('link');\n                          "
+        + "  __gwt_stylesLoaded['" + stylesheetUrl + "'] = l;\n             "
+        + "  l.setAttribute('rel', 'stylesheet');\n                         "
+        + "  l.setAttribute('href', " + hrefExpr + ");\n                    "
+        + "  $doc.getElementsByTagName('head')[0].appendChild(l);\n         "
+        + "}\n";
+  }
+  
+  protected abstract String getCompilationExtension(TreeLogger logger,
+      LinkerContext context) throws UnableToCompleteException;
+
+  protected String getHostedFilename() {
+    return "";
+  }
+
+  /**
+   * Compute the beginning of a JavaScript file that will hold the main module
+   * implementation.
+   */
+  protected abstract String getModulePrefix(TreeLogger logger,
+      LinkerContext context, String strongName)
+      throws UnableToCompleteException;
+
+  /**
+   * Compute the beginning of a JavaScript file that will hold the main module
+   * implementation. By default, calls
+   * {@link #getModulePrefix(TreeLogger, LinkerContext, String)}.
+   * 
+   * @param strongName strong name of the module being emitted
+   * @param numFragments the number of fragments for this module, including the
+   *          main fragment (fragment 0)
+   */
+  protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+      String strongName, int numFragments) throws UnableToCompleteException {
+    return getModulePrefix(logger, context, strongName);
+  }
+
+  protected abstract String getModuleSuffix(TreeLogger logger,
+      LinkerContext context) throws UnableToCompleteException;
+
+  protected StringBuffer getSelectionScriptStringBuffer(TreeLogger logger,
+      LinkerContext context) throws UnableToCompleteException {
+    StringBuffer selectionScript;
+    try {
+      selectionScript = new StringBuffer(
+          Utility.getFileFromClassPath(getSelectionScriptTemplate(logger,
+              context)));
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to read selection script template",
+          e);
+      throw new UnableToCompleteException();
+    }
+    return selectionScript;
+  }
+
+  protected abstract String getSelectionScriptTemplate(TreeLogger logger,
+      LinkerContext context) throws UnableToCompleteException;
+
+  /**
+   * Add the hosted file to the artifact set.
+   */
+  protected void maybeAddHostedModeFile(TreeLogger logger, ArtifactSet artifacts)
+      throws UnableToCompleteException {
+    String hostedFilename = getHostedFilename();
+    if ("".equals(hostedFilename)) {
+      return;
+    }
+    try {
+      URL resource = SelectionScriptLinker.class.getResource(hostedFilename);
+      if (resource == null) {
+        logger.log(TreeLogger.ERROR,
+            "Unable to find support resource: " + hostedFilename);
+        throw new UnableToCompleteException();
+      }
+
+      final URLConnection connection = resource.openConnection();
+      // TODO: extract URLArtifact class?
+      EmittedArtifact hostedFile = new EmittedArtifact(
+          SelectionScriptLinker.class, hostedFilename) {
+        @Override
+        public InputStream getContents(TreeLogger logger)
+            throws UnableToCompleteException {
+          try {
+            return connection.getInputStream();
+          } catch (IOException e) {
+            logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
+            throw new UnableToCompleteException();
+          }
+        }
+
+        @Override
+        public long getLastModified() {
+          return connection.getLastModified();
+        }
+      };
+      artifacts.add(hostedFile);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
+      throw new UnableToCompleteException();
+    }
+  }
+
+  /**
+   * Find all instances of {@link SelectionInformation} and add them to the
+   * internal map of selection information.
+   */
+  protected void processSelectionInformation(ArtifactSet artifacts) {
+    for (SelectionInformation selInfo : artifacts.find(SelectionInformation.class)) {
+      processSelectionInformation(selInfo);
+    }
+  }
+
+  protected StringBuffer processSelectionScriptCommon(StringBuffer selectionScript,
+      TreeLogger logger, LinkerContext context)
+      throws UnableToCompleteException {
+    String permutations;
+    try {
+      permutations = Utility.getFileFromClassPath(PERMUTATIONS_JS);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to read selection script template",
+          e);
+      throw new UnableToCompleteException();
+    }
+
+    replaceAll(selectionScript, "__PERMUTATIONS__", permutations);
+    replaceAll(selectionScript, "__MODULE_FUNC__",
+        context.getModuleFunctionName());
+    replaceAll(selectionScript, "__MODULE_NAME__", context.getModuleName());
+    replaceAll(selectionScript, "__HOSTED_FILENAME__", getHostedFilename());
+
+    int startPos;
 
     // Add property providers
     startPos = selectionScript.indexOf("// __PROPERTIES_END__");
@@ -435,124 +591,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       selectionScript.insert(startPos, text);
     }
 
-    return selectionScript.toString();
-  }
-  
-  /**
-   * Generate a Snippet of JavaScript to inject an external stylesheet.
-   * 
-   * <pre>
-   * if (!__gwt_stylesLoaded['URL']) {
-   *   var l = $doc.createElement('link');
-   *   __gwt_styleLoaded['URL'] = l;
-   *   l.setAttribute('rel', 'stylesheet');
-   *   l.setAttribute('href', HREF_EXPR);
-   *   $doc.getElementsByTagName('head')[0].appendChild(l);
-   * }
-   * </pre>
-   */
-  protected String generateStylesheetInjector(String stylesheetUrl) {
-    String hrefExpr = "'" + stylesheetUrl + "'";
-    if (isRelativeURL(stylesheetUrl)) {
-      hrefExpr = "base + " + hrefExpr;
-    }
-
-    return "if (!__gwt_stylesLoaded['" + stylesheetUrl + "']) {\n           "
-        + "  var l = $doc.createElement('link');\n                          "
-        + "  __gwt_stylesLoaded['" + stylesheetUrl + "'] = l;\n             "
-        + "  l.setAttribute('rel', 'stylesheet');\n                         "
-        + "  l.setAttribute('href', " + hrefExpr + ");\n                    "
-        + "  $doc.getElementsByTagName('head')[0].appendChild(l);\n         "
-        + "}\n";
-  }
-
-  protected abstract String getCompilationExtension(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException;
-
-  protected String getHostedFilename() {
-    return "";
-  }
-
-  /**
-   * Compute the beginning of a JavaScript file that will hold the main module
-   * implementation.
-   */
-  protected abstract String getModulePrefix(TreeLogger logger,
-      LinkerContext context, String strongName)
-      throws UnableToCompleteException;
-
-  /**
-   * Compute the beginning of a JavaScript file that will hold the main module
-   * implementation. By default, calls
-   * {@link #getModulePrefix(TreeLogger, LinkerContext, String)}.
-   * 
-   * @param strongName strong name of the module being emitted
-   * @param numFragments the number of fragments for this module, including the
-   *          main fragment (fragment 0)
-   */
-  protected String getModulePrefix(TreeLogger logger, LinkerContext context,
-      String strongName, int numFragments) throws UnableToCompleteException {
-    return getModulePrefix(logger, context, strongName);
-  }
-
-  protected abstract String getModuleSuffix(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException;
-
-  protected abstract String getSelectionScriptTemplate(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException;
-
-  /**
-   * Add the hosted file to the artifact set.
-   */
-  protected void maybeAddHostedModeFile(TreeLogger logger, ArtifactSet artifacts)
-      throws UnableToCompleteException {
-    String hostedFilename = getHostedFilename();
-    if ("".equals(hostedFilename)) {
-      return;
-    }
-    try {
-      URL resource = SelectionScriptLinker.class.getResource(hostedFilename);
-      if (resource == null) {
-        logger.log(TreeLogger.ERROR,
-            "Unable to find support resource: " + hostedFilename);
-        throw new UnableToCompleteException();
-      }
-
-      final URLConnection connection = resource.openConnection();
-      // TODO: extract URLArtifact class?
-      EmittedArtifact hostedFile = new EmittedArtifact(
-          SelectionScriptLinker.class, hostedFilename) {
-        @Override
-        public InputStream getContents(TreeLogger logger)
-            throws UnableToCompleteException {
-          try {
-            return connection.getInputStream();
-          } catch (IOException e) {
-            logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
-            throw new UnableToCompleteException();
-          }
-        }
-
-        @Override
-        public long getLastModified() {
-          return connection.getLastModified();
-        }
-      };
-      artifacts.add(hostedFile);
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
-      throw new UnableToCompleteException();
-    }
-  }
-
-  /**
-   * Find all instances of {@link SelectionInformation} and add them to the
-   * internal map of selection information.
-   */
-  protected void processSelectionInformation(ArtifactSet artifacts) {
-    for (SelectionInformation selInfo : artifacts.find(SelectionInformation.class)) {
-      processSelectionInformation(selInfo);
-    }
+    return selectionScript;
   }
 
   private List<Artifact<?>> emitSelectionInformation(String strongName,
@@ -579,7 +618,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
     return emitted;
   }
-
+  
   private Map<String, String> processSelectionInformation(
       SelectionInformation selInfo) {
     TreeMap<String, String> entries = selInfo.getPropMap();

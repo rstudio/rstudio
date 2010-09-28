@@ -13,24 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 function __MODULE_FUNC__() {
-  // ---------------- INTERNAL GLOBALS ----------------
 
+  /****************************************************************************
+   * Internal Global Variables
+   ***************************************************************************/
   // Cache symbols locally for good obfuscation
   var $wnd = window
   ,$doc = document
-  ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
-  ,$sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null
-
-  // Whether the document body element has finished loading
-  ,bodyDone
-  
-  // The downloaded script code, once it arrives
-  ,compiledScript
-  
-  // The iframe holding the app's code
-  ,scriptFrame
 
   // If non-empty, an alternate base url for this module
   ,base = ''
@@ -54,88 +44,47 @@ function __MODULE_FUNC__() {
   // Error functions.  Default unset in compiled mode, may be set by meta props.
   ,onLoadErrorFunc, propertyErrorFunc
 
-  ; // end of global vars
+  ;
 
-  $stats && $stats({
-    moduleName: '__MODULE_NAME__',
-    sessionId: $sessionId,
-    subSystem: 'startup',
-    evtGroup: 'bootstrap', 
-    millis:(new Date()).getTime(), 
-    type: 'begin',
-  });
+  sendStats('bootstrap', 'begin');
 
-  // ------------------ TRUE GLOBALS ------------------
+  /****************************************************************************
+   * Internal Helper Functions
+   ***************************************************************************/
 
-  // Maps to synchronize the loading of styles and scripts; resources are loaded
-  // only once, even when multiple modules depend on them.  This API must not
-  // change across GWT versions.
-  if (!$wnd.__gwt_stylesLoaded) { $wnd.__gwt_stylesLoaded = {}; }
-  if (!$wnd.__gwt_scriptsLoaded) { $wnd.__gwt_scriptsLoaded = {}; }
-
-  // --------------- INTERNAL FUNCTIONS ---------------
-
-  function isHostedMode() {
-    var result = false;
-    var query = $wnd.location.search;
-    return (query.indexOf('gwt.codesvr=') != -1);
-    isHostedMode = function() { return result; };
-    return result;
-  }
-  
-  // This function is called on two events: the body has finished
-  // loading, and the script to install is available. For hosted
-  // mode, install the hosted file as soon as the body is done.
-  // For prod mode, additionally wait until the script to install
-  // has been loaded, and then install the code.
-  function maybeCreateFrame() {
-    if (bodyDone && !scriptFrame && (isHostedMode() || compiledScript)) {
-    	// Create the script frame, making sure it's invisible, but not
-    	// "display:none", which keeps some browsers from running code in it.
-    	scriptFrame = $doc.createElement('iframe');
-        scriptFrame.src = 'javascript:""';
-        scriptFrame.id = '__MODULE_NAME__';
-        scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none; left: -1000px; top: -1000px; !important';
-        scriptFrame.tabIndex = -1;
-        document.body.appendChild(scriptFrame);
-
-        var doc = scriptFrame.contentDocument;
-        if (!doc) {
-          doc = scriptFrame.contentWindow.document;
-        }
-        // The missing content has been seen on Safari 3 and firebug will
-        // behave incorrectly on soft refresh unless we explicitly set the content
-        // of the frame. However, we don't want to do this when runAsync calls
-        // installCode, so we do it here when we create the iframe.
-        doc.open();
-        doc.write('<html><head></head><body></body></html>');
-        doc.close();
-
-        // For some reason, adding this setTimeout makes code installation
-        // more reliable.
-        setTimeout(function() {
-            if (isHostedMode()) {
-              scriptFrame.contentWindow.name = '__MODULE_FUNC__';
-              installCode(base + "__HOSTED_FILENAME__", true);
-            } else {
-              installCode(compiledScript, false);
-            }
-        })
+  // Get the name of the filename which contains the GWT code (usually something
+  // like 12BA3D5...21E.js) or devmode.js if we are in hosted mode.
+  // Also sets the softPermutationId variable if appropriate.
+  function getCompiledCodeFilename() {
+    if (isHostedMode()) {
+      return base + "__HOSTED_FILENAME__";
     }
+    var strongName;
+    try {
+      // __PERMUTATIONS_BEGIN__
+      // Permutation logic is injected here. this code populates the 
+      // answers variable.
+      // __PERMUTATIONS_END__
+      var idx = strongName.indexOf(':');
+      if (idx != -1) {
+        softPermutationId = +(strongName.substring(idx + 1));
+        strongName = strongName.substring(0, idx);
+      }
+    } catch (e) {
+      // intentionally silent on property failure
+    }
+    return base + strongName + '.cache.js';
   }
-  
-  // Install code into scriptFrame
-  //
+
+  // Write a script tag to the element returned by getInstallLocation. We then
+  // either set the content of that script tag to be the code, or set the src
+  // tag if the code is actually a URL.
   function installCode(code, isUrl) {
-    var doc = scriptFrame.contentDocument;
-    if (!doc) {
-      doc = scriptFrame.contentWindow.document;
-    }
-    var docbody = doc.getElementsByTagName('body')[0];
+    var docbody = getInstallLocation();
 
     // Inject the fetched script into the script frame.
     // The script will call onScriptInstalled.
-    var script = doc.createElement('script');
+    var script = getInstallLocationDoc().createElement('script');
     script.language='javascript';
     if (isUrl) {
       script.src = code;
@@ -149,205 +98,148 @@ function __MODULE_FUNC__() {
     docbody.removeChild(script);
   }
 
+  function isBodyLoaded() {
+    return (/loaded|complete/.test($doc.readyState));
+  }
+
+  function isHostedMode() {
+    var query = $wnd.location.search;
+    return (query.indexOf('gwt.codesvr=') != -1);
+  }
+
+  // Helper function to send statistics to the __gwtStatsEvent function if it
+  // exists.
+  function sendStats(evtGroupString, typeString) {
+    if ($wnd.__gwtStatsEvent) {
+      $wnd.__gwtStatsEvent({
+        moduleName: '__MODULE_NAME__',
+        sessionId: $wnd.__gwtStatsSessionId,
+        subSystem: 'startup',
+        evtGroup: evtGroupString,
+        millis:(new Date()).getTime(),
+        type: typeString,
+      });
+    }
+  }
+
+
+  /****************************************************************************
+   * Internal Helper functions that have been broken out into their own .js
+   * files for readability and for easy sharing between linkers.  The linker
+   * code will inject these functions in these placeholders.
+   ***************************************************************************/
+  // Provides the getInstallLocation() function
+  __INSTALL_LOCATION__
+
+  // Provides the processMetas() function, and sets the metaProps,
+  // onLoadErrorFunc and propertyErrorFunc variables
   __PROCESS_METAS__
+
+  // Provides the computeScriptBase() function, which sets the base variable
   __COMPUTE_SCRIPT_BASE__
-  
-  /**
-   * Determines whether or not a particular property value is allowed. Called by
-   * property providers.
-   *
-   * @param propName the name of the property being checked
-   * @param propValue the property value being tested
-   */
+
+  // Provides the setupWaitForBodyLoad() function
+  __WAIT_FOR_BODY_LOADED__
+
+  // Provides functions used by the generated PERMUTATIONS code. 
+  __PERMUTATIONS__
+
+
+  /****************************************************************************
+   * WRITE ME
+   ***************************************************************************/
+  // __PROPERTIES_BEGIN__
+  // Properties logic is injected here. This code populates the values and
+  // providers variables
+  // __PROPERTIES_END__
+
+  // Determines whether or not a particular property value is allowed. Called by
+  // property providers.
   function __gwt_isKnownPropertyValue(propName, propValue) {
     return propValue in values[propName];
   }
 
-  /**
-   * Returns a meta property value, if any.  Used by DefaultPropertyProvider.
-   */
+  // Returns a meta property value, if any.  Used by DefaultPropertyProvider.
   function __gwt_getMetaProperty(name) {
     var value = metaProps[name];
     return (value == null) ? null : value;
   }
 
-  // Deferred-binding mapper function.  Sets a value into the several-level-deep
-  // answers map. The keys are specified by a non-zero-length propValArray,
-  // which should be a flat array target property values. Used by the generated
-  // PERMUTATIONS code.
-  //
-  function unflattenKeylistIntoAnswers(propValArray, value) {
-    var answer = answers;
-    for (var i = 0, n = propValArray.length - 1; i < n; ++i) {
-      // lazy initialize an empty object for the current key if needed
-      answer = answer[propValArray[i]] || (answer[propValArray[i]] = []);
-    }
-    // set the final one to the value
-    answer[propValArray[n]] = value;
+
+  /****************************************************************************
+   * Exposed Functions and Variables
+   ***************************************************************************/
+  // Exposed for the convenience of the devmode.js and md5.js files
+  __MODULE_FUNC__.__sendStats = sendStats;
+
+  // Exposed for the call made to gwtOnLoad. Some are not figured out yet, so
+  // assign them later, once the values are known.
+  __MODULE_FUNC__.__moduleName = '__MODULE_NAME__';
+  __MODULE_FUNC__.__errFn;
+  __MODULE_FUNC__.__moduleBase;
+  __MODULE_FUNC__.__softPermutationId;
+
+  // Exposed for devmode.js
+  __MODULE_FUNC__.__computePropValue = computePropValue;
+
+
+  /****************************************************************************
+   * Bootstrap startup code
+   ***************************************************************************/
+
+  var startDownloadImmediately = __START_DOWNLOAD_IMMEDIATELY__;
+  if (isHostedMode()) {
+    // since hosted.js doesn't have the necessary wrappings, we always install
+    // a script tag in the iframe rather than using a giant string literal.
+    // If the devmode.js file went throught the same processing as the
+    // md5.js files, this could go away.
+    startDownloadImmediately = false;
   }
 
-  // Computes the value of a given property.  propName must be a valid property
-  // name. Used by the generated PERMUTATIONS code.
-  //
-  function computePropValue(propName) {
-    var value = providers[propName](), allowedValuesMap = values[propName];
-    if (value in allowedValuesMap) {
-      return value;
-    }
-    var allowedValuesList = [];
-    for (var k in allowedValuesMap) {
-      allowedValuesList[allowedValuesMap[k]] = k;
-    }
-    if (propertyErrorFunc) {
-      propertyErrorFunc(propName, allowedValuesList, value);
-    }
-    throw null;
-  }
+  processMetas();
+  base = computeScriptBase();
+  __MODULE_FUNC__.__errFn = onLoadErrorFunc;
+  __MODULE_FUNC__.__moduleBase = base;
 
-  // --------------- PROPERTY PROVIDERS --------------- 
+  sendStats('bootstrap', 'selectingPermutation');
+  var filename = getCompiledCodeFilename();
+  __MODULE_FUNC__.__softPermutationId = softPermutationId;
+  sendStats('bootstrap', 'end');
 
-// __PROPERTIES_BEGIN__
-// __PROPERTIES_END__
+  // For now, send this dummy statistic since some people are depending on it
+  // being present. TODO(unnurg): remove this statistic soon
+  sendStats('loadExternalRefs', 'begin');
+  sendStats('loadExternalRefs', 'end');
 
-  // --------------- EXPOSED FUNCTIONS ----------------
-
-  // Called when the initial script code has been downloaded
-  __MODULE_FUNC__.onScriptDownloaded = function(code) {
-	compiledScript = code;
-	maybeCreateFrame();
-  }
-  
-  // Called when the compiled script has been installed
-  //
-  __MODULE_FUNC__.onScriptInstalled = function(gwtOnLoadFunc) {
-    // remove the callback to prevent it being called twice
-    __MODULE_FUNC__.onScriptInstalled = null;
-    if (isHostedMode()) {
-      scriptFrame.contentWindow.__gwt_getProperty = computePropValue;
+  sendStats('moduleStartup', 'moduleRequested');
+  if (startDownloadImmediately) {
+    // Set up a script tag to start downloading immediately, as well as a
+    // callback to install the code once it is downloaded and the body is loaded.
+    __MODULE_FUNC__.onScriptDownloaded = function(code) {
+      setupWaitForBodyLoad(function() {
+        installCode(code, false);
+      });
+    };
+    if (isBodyLoaded()) {
+      // if the body is loaded, then the tag to download the script can be added
+      // in a non-destructive manner
+      var script = document.createElement('script');
+      script.src = filename;
+      $doc.getElementsByTagName('head')[0].appendChild(script);
+    } else {
+      // if the doc has not yet loaded, go ahead and do a destructive
+      // document.write since we want to immediately start the download.
+      // Note that we cannot append an element to the doc if it is still loading
+      // since this would cause problems in IE.
+      $doc.write("<script src='" + filename + "'></scr" + "ipt>");
     }
-    gwtOnLoadFunc(onLoadErrorFunc, '__MODULE_NAME__', base, softPermutationId);
-    // Record when the module EntryPoints return.
-    $stats && $stats({
-      moduleName: '__MODULE_NAME__',
-      sessionId: $sessionId,
-      subSystem: 'startup',
-      evtGroup: 'moduleStartup',
-      millis:(new Date()).getTime(),
-      type: 'end',
+  } else {
+    // Just pass along the filename so tha a script tag can be installed in the
+    // iframe to download it.  Since we will be adding the iframe to the body,
+    // we still need to wait for the body to load before going forward.
+    setupWaitForBodyLoad(function() {
+      installCode(filename, true);
     });
   }
-
-  // --------------- STRAIGHT-LINE CODE ---------------
-
-  // do it early for compile/browse rebasing
-  processMetas();
-  computeScriptBase();
-
-  // --------------- WINDOW ONLOAD HOOK ---------------
-
-  $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
-    sessionId: $sessionId,
-    subSystem:'startup', 
-    evtGroup: 'bootstrap', 
-    millis:(new Date()).getTime(), 
-    type: 'selectingPermutation'
-  });
-
-  var strongName;
-  if (!isHostedMode()) {
-    try {
-// __PERMUTATIONS_BEGIN__
-      // Permutation logic
-// __PERMUTATIONS_END__
-      var idx = strongName.indexOf(':');
-      if (idx != -1) {
-        softPermutationId = +(strongName.substring(idx + 1));
-        strongName = strongName.substring(0, idx);
-      }
-    } catch (e) {
-      // intentionally silent on property failure
-      return;
-    }
-  }
-
-  var onBodyDoneTimerId;
-  function onBodyDone() {
-    if (!bodyDone) {
-      bodyDone = true;
-// __MODULE_STYLES_BEGIN__
-     // Style resources are injected here to prevent operation aborted errors on ie
-// __MODULE_STYLES_END__
-      maybeCreateFrame();
-
-      if ($doc.removeEventListener) {
-        $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
-      }
-      if (onBodyDoneTimerId) {
-        clearInterval(onBodyDoneTimerId);
-      }
-    }
-  }
-
-  // For everyone that supports DOMContentLoaded.
-  if ($doc.addEventListener) {
-    $doc.addEventListener("DOMContentLoaded", function() {
-      onBodyDone();
-    }, false);
-  }
-
-  // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
-  var onBodyDoneTimerId = setInterval(function() {
-    if (/loaded|complete/.test($doc.readyState)) {
-      onBodyDone();
-    }
-  }, 50);
-
-  $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
-    sessionId: $sessionId,
-    subSystem:'startup', 
-    evtGroup: 'bootstrap', 
-    millis:(new Date()).getTime(), 
-    type: 'end'
-  });
-
-  $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
-    sessionId: $sessionId,
-    subSystem:'startup', 
-    evtGroup: 'loadExternalRefs', 
-    millis:(new Date()).getTime(), 
-    type: 'begin'
-  });
-
-// __MODULE_SCRIPTS_BEGIN__
-  // Script resources are injected here
-// __MODULE_SCRIPTS_END__
-  // This is a bit ugly, but serves a purpose. We need to ensure that the stats
-  // script runs before the compiled script. If they are both doc.write()n in
-  // sequence, that should be the effect. Except on IE it turns out that a
-  // script injected via doc.write() can execute immediately! Adding 'defer'
-  // attributes to both seemed to fix this, but caused startup problems for
-  // some apps. The final solution was simply to inject the compiled script
-  // from *within* the stats script, guaranteeing order at the expense of near
-  // total inscrutability :(
-  var compiledScriptWrite = '';
-  if (!isHostedMode()) {
-    compiledScriptWrite = 'document.write("<script src=\\"' + base + strongName + '.cache.js\\"></scr" + "ipt>");';
-  }
-
-  $doc.write('<scr' + 'ipt><!-' + '-\n'
-    + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:"__MODULE_NAME__", sessionId:window.__gwtStatsSessionId, subSystem:"startup",'
-    + 'evtGroup: "loadExternalRefs", millis:(new Date()).getTime(),'
-    + 'type: "end"});'
-    + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:"__MODULE_NAME__", sessionId:window.__gwtStatsSessionId, subSystem:"startup",'
-    + 'evtGroup: "moduleStartup", millis:(new Date()).getTime(),'
-    + 'type: "moduleRequested"});'
-    + compiledScriptWrite
-    + '\n-' + '-></scr' + 'ipt>');
 }
-
 __MODULE_FUNC__();

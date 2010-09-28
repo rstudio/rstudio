@@ -17,31 +17,48 @@
 /**
  * Determine our own script's URL via magic :)
  * This function produces one side-effect, it sets base to the module's
- * base url.
+ * base url. Note: although this script returns the module's base url, it
+ * also sets the global 'base' variable for backwards compatability with older
+ * linkers.
  * 
  * This is included into the selection scripts
  * wherever COMPUTE_SCRIPT_BASE appears with underlines
  * on each side.
  */
 function computeScriptBase() {
-  var thisScript
-  ,markerId = "__gwt_marker___MODULE_NAME__"
-  ,markerScript;
-
+  //First, check if the meta properties give the baseUrl
   if (metaProps['baseUrl']) {
     base = metaProps['baseUrl'];
-    return;
+    return base;
   }
 
-  $doc.write('<script id="' + markerId + '"></script>');
-  markerScript = $doc.getElementById(markerId);
+  // The baseUrl will be similar to the URL for this script's URL
+  var thisScript;
 
-  // Our script element is assumed to be the closest previous script element
-  // to the marker, so start at the marker and walk backwards until we find
-  // a script.
-  thisScript = markerScript && markerScript.previousSibling;
-  while (thisScript && thisScript.tagName != 'SCRIPT') {
-    thisScript = thisScript.previousSibling;
+  // By default, this script looks like something/moduleName.nocache.js
+  // so look for a script tag that looks like that
+  var scriptTags = $doc.getElementsByTagName('script');
+  for (var i = 0; i < scriptTags.length; ++i) {
+    if (scriptTags[i].src.indexOf('__MODULE_NAME__.nocache.js') != -1) {
+      thisScript = scriptTags[i];
+    }
+  }
+
+  // If the user renamed their script tag, we'll use a fancier method to find
+  // it. Note that this will not work in the Late Loading case due to the
+  // document.write call.
+  if (!thisScript) {
+    // Put in a marker script element which should be the first script tag after
+    // the tag we're looking for. To find it, we start at the marker and walk
+    // backwards until we find a script.
+    var markerId = "__gwt_marker___MODULE_NAME__";
+    var markerScript;
+    $doc.write('<script id="' + markerId + '"></script>');
+    markerScript = $doc.getElementById(markerId);
+    thisScript = markerScript && markerScript.previousSibling;
+    while (thisScript && thisScript.tagName != 'SCRIPT') {
+      thisScript = thisScript.previousSibling;
+    }
   }
 
   // Gets the part of a url up to and including the 'path' portion.
@@ -91,4 +108,6 @@ function computeScriptBase() {
     // remove the marker element
     markerScript.parentNode.removeChild(markerScript);
   }
+
+  return base;
 }
