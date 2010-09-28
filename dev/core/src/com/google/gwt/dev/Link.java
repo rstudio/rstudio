@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
@@ -189,6 +190,13 @@ public class Link {
       PermutationResult permResult, File jarFile,
       PrecompileOptions precompileOptions) throws UnableToCompleteException {
     try {
+      if (jarFile.exists()) {
+        boolean success = jarFile.delete();
+        if (!success) {
+          logger.log(Type.ERROR, "Linker output file " + jarFile.getName() 
+              + " already exists and can't be deleted.");
+        }
+      }
       JarOutputStream jar = new JarOutputStream(new FileOutputStream(jarFile));
 
       StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
