@@ -44,12 +44,12 @@ import java.util.Set;
 public abstract class AbstractProxyListView<P extends EntityProxy> extends
     Composite implements ProxyListView<P> {
 
-  private CellTable<P> table;
+  private HasData<P> display;
   private Set<String> paths = new HashSet<String>();
   private Delegate<P> delegate;
 
   public HasData<P> asHasData() {
-    return table;
+    return display;
   }
 
   @Override
@@ -65,14 +65,13 @@ public abstract class AbstractProxyListView<P extends EntityProxy> extends
     this.delegate = delegate;
   }
 
-  protected void init(Widget root, CellTable<P> table, Button newButton,
-      List<PropertyColumn<P, ?>> columns) {
+  protected void init(Widget root, HasData<P> display, Button newButton,
+      Set<String> columns) {
     super.initWidget(root);
-    this.table = table;
+    this.display = display;
 
-    for (PropertyColumn<P, ?> column : columns) {
-      table.addColumn(column, column.getDisplayName());
-      paths.addAll(Arrays.asList(column.getPaths()));
+    if (columns != null && columns.size() > 0) {
+      paths.addAll(columns);
     }
 
     newButton.addClickHandler(new ClickHandler() {
@@ -80,6 +79,21 @@ public abstract class AbstractProxyListView<P extends EntityProxy> extends
         delegate.createClicked();
       }
     });
+  }
+
+  /**
+   * @deprecated use {@link #init(Widget, HasData, Button, Set)} instead
+   */
+  @Deprecated
+  protected void init(Widget root, CellTable<P> table, Button newButton,
+      List<PropertyColumn<P, ?>> columns) {
+    Set<String> cols = new HashSet<String>(); 
+    for (PropertyColumn<P, ?> column : columns) {
+      table.addColumn(column, column.getDisplayName());
+      cols.addAll(Arrays.asList(column.getPaths()));
+    }
+
+    this.init(root, table, newButton, cols);
   }
 
   @Override

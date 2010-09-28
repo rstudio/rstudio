@@ -253,6 +253,10 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     fireCountRequest(new Receiver<Long>() {
       @Override
       public void onSuccess(Long response) {
+        if (view == null) {
+          // This activity is dead
+          return;
+        }
         HasData<P> table = getView().asHasData();
         int rows = response.intValue();
         table.setRowCount(rows, true);
@@ -274,6 +278,10 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     fireCountRequest(new Receiver<Long>() {
       @Override
       public void onSuccess(Long response) {
+        if (view == null) {
+          // This activity is dead
+          return;
+        }
         getView().asHasData().setRowCount(response.intValue(), true);
         onRangeChanged(view.asHasData());
       }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -43,7 +43,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
     delayTestFinish(2000);
     model.setSelected("test", true);
   }
-  
+
   public void testNoDuplicateChangeEvent() {
     SingleSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
@@ -57,7 +57,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
     model.setSelected("test", true); // Should not fire change event
     model.setSelected("test", true); // Should not fire change event
   }
-  
+
   public void testNoDuplicateChangeEvent2() {
     SingleSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
@@ -87,6 +87,19 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
     model.setSelected("test1", false);
     assertFalse(model.isSelected("test1"));
     assertFalse(model.isSelected("test0"));
+  }
+
+  public void testSetSelectedNull() {
+    SingleSelectionModel<String> model = createSelectionModel(null);
+
+    model.setSelected("test", true);
+    assertTrue(model.isSelected("test"));
+
+    // Null cannot be selected, but it deselects the current item.
+    model.setSelected(null, true);
+    assertNull(model.getSelectedObject());
+    assertFalse(model.isSelected("test"));
+    assertFalse(model.isSelected(null));
   }
 
   public void testSetSelectedWithKeyProvider() {
