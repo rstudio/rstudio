@@ -249,15 +249,21 @@ class HandlerEvaluator {
   private JMethod getAddHandlerMethodForObject(JClassType objectType,
       JClassType handlerType) throws UnableToCompleteException {
     JMethod handlerMethod = null;
-    for (JMethod method : objectType.getOverridableMethods()) {
+    JMethod alternativeHandlerMethod = null;
+    for (JMethod method : objectType.getInheritableMethods()) {
 
       // Condition 1: returns HandlerRegistration?
       if (method.getReturnType() == handlerRegistrationJClass) {
 
         // Condition 2: single parameter of the same type of handlerType?
         JParameter[] parameters = method.getParameters();
-        if ((parameters.length == 1)
-            && handlerType.equals(parameters[0].getType())) {
+        if (parameters.length != 1) {
+          continue;
+        }
+
+        JType subjectHandler = parameters[0].getType();
+
+        if (handlerType.equals(subjectHandler)) {
 
           // Condition 3: does more than one method match the condition?
           if (handlerMethod != null) {
@@ -268,9 +274,29 @@ class HandlerEvaluator {
 
           handlerMethod = method;
         }
+
+        /**
+         * Normalize the parameter and check for an alternative handler method.
+         * Might be the case where the given objectType is generic. In this
+         * situation we need to normalize the method parameter to test for
+         * equality. For instance:
+         *
+         *   handlerType => TableHandler<String>
+         *   subjectHandler => TableHandler
+         *
+         * This is done as an alternative handler method to preserve the
+         * original logic.
+         */
+        JParameterizedType ptype = handlerType.isParameterized();
+        if (ptype != null) {
+          if (subjectHandler.equals(ptype.getRawType())) {
+            alternativeHandlerMethod = method;
+          }
+        }
       }
     }
-    return handlerMethod;
+
+    return (handlerMethod != null) ? handlerMethod : alternativeHandlerMethod;
   }
 
   /**

@@ -19,6 +19,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,9 +30,10 @@ import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A simple demo showing how UiHandler works.
@@ -38,14 +41,16 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 public class HandlerDemo extends Composite {
 
   @UiTemplate("HandlerDemo.ui.xml")
-  interface MyUiBinder extends UiBinder<Panel, HandlerDemo> {
+  interface MyUiBinder extends UiBinder<Widget, HandlerDemo> {
   }
   private static final MyUiBinder binder = GWT.create(MyUiBinder.class);
 
   @UiField FormPanel panelForm;
   @UiField TextBox textBoxValueChange;
+  @UiField(provided = true) final CustomEventWidget<String> customEventWidget;
 
   public HandlerDemo() {
+    this.customEventWidget = new CustomEventWidget<String>("a simple test");
     initWidget(binder.createAndBindUi(this));
   }
 
@@ -66,7 +71,7 @@ public class HandlerDemo extends Composite {
   }
 
   @UiHandler("buttonSubmit")
-  @SuppressWarnings("unused") 
+  @SuppressWarnings("unused")
   void doClickSubmit(ClickEvent ignored) {
     panelForm.submit();
   }
@@ -81,7 +86,27 @@ public class HandlerDemo extends Composite {
     eventMessage(event);
   }
 
+  @UiHandler("tree")
+  void onTreeClose(CloseEvent<TreeItem> event) {
+    eventMessage(event);
+  }
+
+  @UiHandler("tree")
+  void onTreeOpen(OpenEvent<TreeItem> event) {
+    eventMessage(event);
+  }
+
+  @UiHandler("customEventWidget")
+  void onCustomEvent(CustomEvent<String> event) {
+    eventMessage("CustomEventWidget clicked. Event throwing '"
+        + event.getValue() + "'");
+  }
+
   private void eventMessage(GwtEvent<?> event) {
-    Window.alert(event.toDebugString());
+    eventMessage(event.toDebugString());
+  }
+
+  private void eventMessage(String message) {
+    Window.alert(message);
   }
 }
