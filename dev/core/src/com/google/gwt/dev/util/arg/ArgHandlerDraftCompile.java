@@ -22,12 +22,12 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
  */
 public class ArgHandlerDraftCompile extends ArgHandlerFlag {
 
-  private final OptionAggressivelyOptimize optimizeOption;
-  private final OptionDraftCompile draftOption;
+  private final OptionAggressivelyOptimize aggressivelyOptimizeOption;
+  private final OptionOptimize optimizeOption;
 
-  public <T extends OptionDraftCompile & OptionAggressivelyOptimize> ArgHandlerDraftCompile(T option) {
+  public <T extends OptionOptimize & OptionAggressivelyOptimize> ArgHandlerDraftCompile(T option) {
     this.optimizeOption = option;
-    this.draftOption = option;
+    this.aggressivelyOptimizeOption = option;
   }
 
   @Override
@@ -42,8 +42,8 @@ public class ArgHandlerDraftCompile extends ArgHandlerFlag {
 
   @Override
   public boolean setFlag() {
-    draftOption.setDraftCompile(true);
-    optimizeOption.setAggressivelyOptimize(false);
+    optimizeOption.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
+    aggressivelyOptimizeOption.setAggressivelyOptimize(false);
     return true;
   }
 }

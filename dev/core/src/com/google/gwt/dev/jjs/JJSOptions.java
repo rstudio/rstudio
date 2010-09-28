@@ -18,8 +18,8 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
 import com.google.gwt.dev.util.arg.OptionDisableCastChecking;
 import com.google.gwt.dev.util.arg.OptionDisableClassMetadata;
-import com.google.gwt.dev.util.arg.OptionDraftCompile;
 import com.google.gwt.dev.util.arg.OptionEnableAssertions;
+import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.OptionOptimizePrecompile;
 import com.google.gwt.dev.util.arg.OptionRunAsyncEnabled;
 import com.google.gwt.dev.util.arg.OptionScriptStyle;
@@ -30,8 +30,8 @@ import com.google.gwt.dev.util.arg.OptionStrict;
 /**
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
-public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionDisableClassMetadata, OptionDisableCastChecking, OptionDraftCompile,
+public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
+    OptionDisableClassMetadata, OptionDisableCastChecking,
     OptionEnableAssertions, OptionRunAsyncEnabled, OptionScriptStyle,
     OptionSoycEnabled, OptionSoycDetailed, OptionOptimizePrecompile,
     OptionStrict {

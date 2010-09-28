@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,14 @@
 package com.google.gwt.dev.util.arg;
 
 /**
- * An option that indicates that the majority of optimizations are skipped in
- * favor of a faster compile time.
+ * An option that can indicates to restrict optimization in favor of a 
+ * faster compile time.
  */
-public interface OptionDraftCompile {
-  boolean isDraftCompile();
+public interface OptionOptimize {
+  int OPTIMIZE_LEVEL_DRAFT = 0;
+  int OPTIMIZE_LEVEL_MAX = 9;
 
-  void setDraftCompile(boolean draft);
+  int getOptimizationLevel();
+
+  void setOptimizationLevel(int level);
 }
