@@ -33,7 +33,7 @@ public interface RequestFactory {
   /**
    * Return a request to find a fresh instance of the referenced proxy.
    */
-  <P extends EntityProxy> ProxyRequest<P> find(EntityProxyId<P> proxyId);
+  <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId);
 
   /**
    * Returns the eventbus this factory's events are posted on, which was set via

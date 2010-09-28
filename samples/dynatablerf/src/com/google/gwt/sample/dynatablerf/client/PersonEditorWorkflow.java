@@ -23,7 +23,6 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Violation;
@@ -146,7 +145,7 @@ public class PersonEditorWorkflow {
 
   private void fetchAndEdit() {
     // The request is configured arbitrarily
-    ProxyRequest<PersonProxy> fetchRequest = requestFactory.find(person.stableId());
+    Request<PersonProxy> fetchRequest = requestFactory.find(person.stableId());
     // Add the paths that the EditorDelegate computes are necessary
     fetchRequest.with(editorDriver.getPaths());
 

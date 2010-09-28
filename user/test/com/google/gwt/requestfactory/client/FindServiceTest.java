@@ -18,7 +18,6 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
@@ -155,7 +154,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
 
     EntityProxyId<SimpleBarProxy> id = req.getProxyId(historyToken);
     assertNotNull(id);
-    ProxyRequest<SimpleBarProxy> find = req.find(id);
+    Request<SimpleBarProxy> find = req.find(id);
     try {
       find.fire(new Receiver<SimpleBarProxy>() {
         @Override

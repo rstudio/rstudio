@@ -19,7 +19,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.DefaultRequestTransport;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestTransport;
@@ -105,7 +104,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return createFuture(schema);
   }
 
-  public ProxyRequest<EntityProxy> find(EntityProxyId proxyId) {
+  public Request<EntityProxy> find(EntityProxyId proxyId) {
     return findRequest().find(proxyId);
   }
 

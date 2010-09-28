@@ -17,13 +17,14 @@ package com.google.gwt.sample.dynatablerf.shared;
 
 import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.LoggingRequest;
-import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.dynatablerf.domain.Address;
 import com.google.gwt.sample.dynatablerf.domain.Person;
 import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
+
+import java.util.List;
 
 /**
  * Request factory for the DynaTable sample. Instantiate via
@@ -54,7 +55,7 @@ public interface DynaTableRequestFactory extends RequestFactory {
    */
   @Service(SchoolCalendarService.class)
   interface SchoolCalendarRequest {
-    ProxyListRequest<PersonProxy> getPeople(int startIndex, int maxCount);
+    Request<List<PersonProxy>> getPeople(int startIndex, int maxCount);
   }
 
   AddressRequest addressRequest();

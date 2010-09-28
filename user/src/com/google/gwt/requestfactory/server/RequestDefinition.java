@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.server;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 /**
@@ -34,9 +35,9 @@ public interface RequestDefinition {
   String getDomainClassName();
 
   /**
-   * Returns the name of the method to be invoked on the server.
+   * Returns the method to be invoked on the server.
    */
-  String getDomainMethodName();
+  Method getDomainMethod();
 
   /**
    * Returns the parameter types of the method to be invoked on the server.
@@ -54,12 +55,6 @@ public interface RequestDefinition {
    * Returns true if the domain method is an instance method.
    */
   boolean isInstance();
-
-  /**
-   * Returns true if the request returns Lists of {@link #getReturnType},
-   * false for single instances.
-   */
-  boolean isReturnTypeList();
 
   /**
    * Returns the name.

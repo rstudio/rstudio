@@ -20,7 +20,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
@@ -176,7 +175,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
       proxyId = getProxyId(newRecord);
       doStart(newRecord);
     } else {
-      ProxyRequest<P> findRequest = requests.find(getEntityProxyId());
+      Request<P> findRequest = requests.find(getEntityProxyId());
       findRequest.with(editorDriver.getPaths()).fire(new Receiver<P>() {
         public void onSuccess(P proxy) {
           if (display != null) {

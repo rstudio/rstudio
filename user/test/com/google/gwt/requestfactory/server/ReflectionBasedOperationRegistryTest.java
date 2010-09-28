@@ -20,6 +20,9 @@ import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 
 import junit.framework.TestCase;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * Tests for
  * {@link com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry}
@@ -40,10 +43,10 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
     assert request != null;
     assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
         request.getDomainClassName());
-    assertEquals("findAll", request.getDomainMethodName());
+    assertEquals("findAll", request.getDomainMethod().getName());
     assertEquals(SimpleFooProxy.class, request.getReturnType());
     assertEquals(0, request.getParameterTypes().length);
-    assertEquals(true, request.isReturnTypeList());
+    assertTrue(List.class.isAssignableFrom(request.getDomainMethod().getReturnType()));
   }
 
   public void testGetOperationScalarNoArgs() {
@@ -51,10 +54,10 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
     assert request != null;
     assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
         request.getDomainClassName());
-    assertEquals("countSimpleFoo", request.getDomainMethodName());
+    assertEquals("countSimpleFoo", request.getDomainMethod().getName());
     assertEquals(Long.class, request.getReturnType());
     assertEquals(0, request.getParameterTypes().length);
-    assertEquals(false, request.isReturnTypeList());
+    assertFalse(List.class.isAssignableFrom(request.getDomainMethod().getReturnType()));
   }
 
   public void testGetOpertionScalarWithArgs() {
@@ -63,23 +66,34 @@ public class ReflectionBasedOperationRegistryTest extends TestCase {
       assertNotNull(request);
       assertEquals("com.google.gwt.requestfactory.server.SimpleFoo",
           request.getDomainClassName());
-      assertEquals("findSimpleFooById", request.getDomainMethodName());
+      assertEquals("findSimpleFooById", request.getDomainMethod().getName());
       assertEquals(SimpleFooProxy.class, request.getReturnType());
       assertEquals(1, request.getParameterTypes().length);
       assertEquals(Long.class, request.getParameterTypes()[0]);
-      assertFalse(request.isReturnTypeList());
+      assertFalse(List.class.isAssignableFrom(request.getDomainMethod().getReturnType()));
     }
     {
       RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.shared.SimpleBarRequest::findSimpleBarById");
       assertNotNull(request);
       assertEquals("com.google.gwt.requestfactory.server.SimpleBar",
           request.getDomainClassName());
-      assertEquals("findSimpleBarById", request.getDomainMethodName());
+      assertEquals("findSimpleBarById", request.getDomainMethod().getName());
       assertEquals(SimpleBarProxy.class, request.getReturnType());
       assertEquals(1, request.getParameterTypes().length);
       assertEquals(String.class, request.getParameterTypes()[0]);
-      assertFalse(request.isReturnTypeList());
+      assertFalse(List.class.isAssignableFrom(request.getDomainMethod().getReturnType()));
     }
+  }
+
+  public void testGetOperationSetNoArgs() {
+    RequestDefinition request = registry.getOperation("com.google.gwt.requestfactory.shared.SimpleBarRequest::findAsSet");
+    assert request != null;
+    assertEquals("com.google.gwt.requestfactory.server.SimpleBar",
+        request.getDomainClassName());
+    assertEquals("findAsSet", request.getDomainMethod().getName());
+    assertEquals(SimpleBarProxy.class, request.getReturnType());
+    assertEquals(0, request.getParameterTypes().length);
+    assertTrue(Set.class.isAssignableFrom(request.getDomainMethod().getReturnType()));
   }
 
   public void testInsecureOperations() {

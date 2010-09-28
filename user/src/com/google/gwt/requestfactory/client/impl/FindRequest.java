@@ -19,7 +19,7 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.requestfactory.server.FindService;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 
 /**
@@ -27,5 +27,5 @@ import com.google.gwt.requestfactory.shared.Service;
  */
 @Service(FindService.class)
 public interface FindRequest {
-  ProxyRequest<EntityProxy> find(EntityProxyId proxyId);
+  Request<EntityProxy> find(EntityProxyId proxyId);
 }

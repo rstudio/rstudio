@@ -29,9 +29,9 @@ public interface SimpleFooRequest {
   @Instance
   Request<Long> countSimpleFooWithUserNameSideEffect(SimpleFooProxy proxy);
 
-  ProxyListRequest<SimpleFooProxy> findAll();
+  Request<List<SimpleFooProxy>> findAll();
 
-  ProxyRequest<SimpleFooProxy> findSimpleFooById(Long id);
+  Request<SimpleFooProxy> findSimpleFooById(Long id);
 
   Request<List<Integer>> getNumberList();
 
@@ -44,7 +44,7 @@ public interface SimpleFooRequest {
   Request<Void> persist(SimpleFooProxy proxy);
   
   @Instance
-  ProxyRequest<SimpleFooProxy> persistAndReturnSelf(SimpleFooProxy proxy);
+  Request<SimpleFooProxy> persistAndReturnSelf(SimpleFooProxy proxy);
 
   Request<Integer> privateMethod();
 
@@ -61,9 +61,9 @@ public interface SimpleFooRequest {
   
   Request<Void> reset();
 
-  ProxyListRequest<SimpleFooProxy> returnNullList();
+  Request<List<SimpleFooProxy>> returnNullList();
 
-  ProxyRequest<SimpleFooProxy> returnNullSimpleFoo();
+  Request<SimpleFooProxy> returnNullSimpleFoo();
 
   Request<String> returnNullString();
 

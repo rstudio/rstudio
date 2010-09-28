@@ -15,6 +15,8 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import java.util.List;
+
 /**
  * Do nothing test interface.
  */
@@ -25,9 +27,9 @@ public interface SimpleFooStringRequest {
   @Instance
   Request<Long> countSimpleFooWithUserNameSideEffect(SimpleFooStringProxy proxy);
 
-  ProxyListRequest<SimpleFooStringProxy> findAll();
+  Request<List<SimpleFooStringProxy>> findAll();
 
-  ProxyRequest<SimpleFooStringProxy> findSimpleFooStringById(String id);
+  Request<SimpleFooStringProxy> findSimpleFooStringById(String id);
 
   Request<Integer> privateMethod();
 
@@ -35,7 +37,7 @@ public interface SimpleFooStringRequest {
   Request<Void> persist(SimpleFooStringProxy proxy);
   
   @Instance
-  ProxyRequest<SimpleFooStringProxy> persistAndReturnSelf(SimpleFooStringProxy proxy);
+  Request<SimpleFooStringProxy> persistAndReturnSelf(SimpleFooStringProxy proxy);
 
   Request<Void> reset();
 

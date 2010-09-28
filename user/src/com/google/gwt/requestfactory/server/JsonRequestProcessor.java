@@ -830,7 +830,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     operation = getOperation(operationName);
     Class<?> domainClass = Class.forName(operation.getDomainClassName());
     Method domainMethod = domainClass.getMethod(
-        operation.getDomainMethodName(), operation.getParameterTypes());
+        operation.getDomainMethod().getName(), operation.getParameterTypes());
     if (Modifier.isStatic(domainMethod.getModifiers()) == operation.isInstance()) {
       throw new IllegalArgumentException("the " + domainMethod.getName()
           + " should " + (operation.isInstance() ? "not " : "") + "be static");
@@ -874,12 +874,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     JSONObject sideEffects = getSideEffects();
 
     if (result != null
-        && (result instanceof List<?>) != operation.isReturnTypeList()) {
-      throw new IllegalArgumentException(
-          String.format("Type mismatch, expected %s%s, but %s returns %s",
-              operation.isReturnTypeList() ? "list of " : "",
-              operation.getReturnType(), domainMethod,
-              domainMethod.getReturnType()));
+        && (result instanceof List<?>) != List.class.isAssignableFrom(operation.getDomainMethod().getReturnType())) {
+      throw new IllegalArgumentException(String.format(
+          "Type mismatch, expected %s%s, but %s returns %s",
+          List.class.isAssignableFrom(operation.getReturnType()) ? "list of "
+              : "", operation.getReturnType(), domainMethod,
+          domainMethod.getReturnType()));
     }
 
     JSONObject envelop = new JSONObject();

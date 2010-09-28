@@ -21,8 +21,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.ProxyListRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.user.cellview.client.AbstractHasData;
@@ -225,7 +225,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     }
   }
 
-  protected abstract ProxyListRequest<P> createRangeRequest(Range range);
+  protected abstract Request<List<P>> createRangeRequest(Range range);
 
   protected abstract void fireCountRequest(Receiver<Long> callback);
 
