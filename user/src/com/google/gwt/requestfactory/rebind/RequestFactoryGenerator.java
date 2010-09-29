@@ -55,9 +55,7 @@ import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.ProxyListRequest;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
-import com.google.gwt.requestfactory.shared.ProxySetRequest;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
@@ -136,6 +134,7 @@ public class RequestFactoryGenerator extends Generator {
   private JClassType listType;
   private JClassType setType;
   private JClassType entityProxyType;
+  private JClassType mainRequestType;
 
   private final Set<JClassType> generatedProxyTypes = new HashSet<JClassType>();
 
@@ -148,6 +147,7 @@ public class RequestFactoryGenerator extends Generator {
     listType = typeOracle.findType(List.class.getName());
     setType = typeOracle.findType(Set.class.getName());
     entityProxyType = typeOracle.findType(EntityProxy.class.getName());
+    mainRequestType = typeOracle.findType(Request.class.getName());
 
     // Get a reference to the type that the generator should implement
     JClassType interfaceType = typeOracle.findType(interfaceName);
@@ -183,6 +183,10 @@ public class RequestFactoryGenerator extends Generator {
   }
 
   private String asInnerImplClass(String className, JClassType outerClassName) {
+    if (outerClassName.isParameterized() != null) {
+      // outerClassName is of form List<EmployeeProxy>
+      outerClassName = outerClassName.isParameterized().getTypeArgs()[0];
+    }
     className = outerClassName.getQualifiedSourceName() + "Impl." + className;
     return className;
   }
@@ -226,11 +230,11 @@ public class RequestFactoryGenerator extends Generator {
       throws UnableToCompleteException {
     TypeOracle typeOracle = generatorContext.getTypeOracle();
 
-    if (!publicProxyType.isAssignableTo(entityProxyType)) {
-      return;
+    if (publicProxyType.isParameterized() != null) {
+      // handle publicProxyType = List<EmployeeProxy>
+      publicProxyType = publicProxyType.isParameterized().getTypeArgs()[0];
     }
-
-    if (publicProxyType.equals(entityProxyType)) {
+    if (!publicProxyType.isAssignableTo(entityProxyType)) {
       return;
     }
     if (generatedProxyTypes.contains(publicProxyType)) {
@@ -681,7 +685,7 @@ public class RequestFactoryGenerator extends Generator {
           throw new UnableToCompleteException();
         }
       }
-      if (isProxyCollectionRequest(typeOracle, requestType)) {
+      if (isRequestObjectCollectionRequest(typeOracle, requestType)) {
         Class<?> colType = getCollectionType(typeOracle, requestType);
         assert colType != null;
         requestClassName = asInnerImplClass(colType == List.class
@@ -777,12 +781,6 @@ public class RequestFactoryGenerator extends Generator {
    */
   private Class<?> getCollectionType(TypeOracle typeOracle,
       JClassType requestType) {
-    if (requestType.isAssignableTo(typeOracle.findType(ProxyListRequest.class.getName()))) {
-      return List.class;
-    }
-    if (requestType.isAssignableTo(typeOracle.findType(ProxySetRequest.class.getName()))) {
-      return Set.class;
-    }
     JClassType retType = requestType.isParameterized().getTypeArgs()[0];
     if (retType.isParameterized() != null) {
       JClassType leafType = retType.isParameterized().getTypeArgs()[0];
@@ -920,14 +918,12 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Long.class.getName()));
   }
 
-  private boolean isProxyCollectionRequest(TypeOracle typeOracle,
-      JClassType requestType) {
-    return requestType.isAssignableTo(typeOracle.findType(ProxyListRequest.class.getName()))
-        || requestType.isAssignableTo(typeOracle.findType(ProxySetRequest.class.getName()));
-  }
-
   private boolean isProxyRequest(TypeOracle typeOracle, JClassType requestType) {
-    return requestType.isAssignableTo(typeOracle.findType(ProxyRequest.class.getName()));
+    if (requestType.isParameterized() != null && requestType.isAssignableTo(mainRequestType)) {
+      JClassType leafType = requestType.isParameterized().getTypeArgs()[0];
+      return leafType.isAssignableTo(entityProxyType);
+    }
+    return false;
   }
 
   private boolean isProxyType(TypeOracle typeOracle, JClassType requestType) {

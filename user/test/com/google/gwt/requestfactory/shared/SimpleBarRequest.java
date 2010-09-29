@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.shared;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Do nothing test interface.
@@ -25,19 +26,19 @@ public interface SimpleBarRequest {
 
   Request<Long> countSimpleBar();
 
-  ProxyListRequest<SimpleBarProxy> findAll();
+  Request<List<SimpleBarProxy>> findAll();
 
-  ProxySetRequest<SimpleBarProxy> findAsSet();
+  Request<Set<SimpleBarProxy>> findAsSet();
   
-  ProxyRequest<SimpleBarProxy> findSimpleBarById(String id);
+  Request<SimpleBarProxy> findSimpleBarById(String id);
 
   @Instance
   Request<Void> persist(SimpleBarProxy proxy);
 
   @Instance
-  ProxyRequest<SimpleBarProxy> persistAndReturnSelf(SimpleBarProxy proxy);
+  Request<SimpleBarProxy> persistAndReturnSelf(SimpleBarProxy proxy);
 
   Request<Void> reset();
 
-  ProxyRequest<SimpleBarProxy> returnFirst(List<SimpleBarProxy> proxy);
+  Request<SimpleBarProxy> returnFirst(List<SimpleBarProxy> proxy);
 }

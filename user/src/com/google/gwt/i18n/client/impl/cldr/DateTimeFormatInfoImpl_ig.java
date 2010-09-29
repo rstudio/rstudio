@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "ig".
+ * Implementation of DateTimeFormatInfo for the "ig" locale.
  */
 public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "A.M.",
         "P.M."
     };
@@ -32,27 +32,27 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
 
   @Override
   public String dateFormatFull() {
-    return "EEEE, y MMMM dd";
+    return "EEEE, d MMMM y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "y MMMM d";
+    return "d MMMM y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "y MMM d";
+    return "d MMM y";
   }
 
   @Override
   public String dateFormatShort() {
-    return "yy/MM/dd";
+    return "dd/MM/yyyy";
   }
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "Tupu Kristi",
         "Afọ Kristi"
     };
@@ -60,15 +60,10 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "T.K.",
         "A.K."
     };
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
   }
 
   @Override
@@ -128,7 +123,7 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "Jenụwarị",
         "Febrụwarị",
         "Maachị",
@@ -145,13 +140,8 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -168,13 +158,8 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "Jen",
         "Feb",
         "Maa",
@@ -191,43 +176,48 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
+  public String[] quartersFull() {
+    return new String[] {
+        "Ọkara 1",
+        "Ọkara 2",
+        "Ọkara 3",
+        "Ọkara 4"
+    };
   }
 
   @Override
-  public String[] quartersFull() {
-    return new String[] { 
-        "Q1",
-        "Q2",
-        "Q3",
-        "Q4"
+  public String[] quartersShort() {
+    return new String[] {
+        "Ọ1",
+        "Ọ2",
+        "Ọ3",
+        "Ọ4"
     };
   }
 
   @Override
   public String timeFormatFull() {
-    return "HH:mm:ss zzzz";
+    return "h:mm:ss a zzzz";
   }
 
   @Override
   public String timeFormatLong() {
-    return "HH:mm:ss z";
+    return "h:mm:ss a z";
   }
 
   @Override
   public String timeFormatMedium() {
-    return "HH:mm:ss";
+    return "h:mm:ss a";
   }
 
   @Override
   public String timeFormatShort() {
-    return "HH:mm";
+    return "h:mm a";
   }
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "Mbọsị Ụka",
         "Mọnde",
         "Tiuzdee",
@@ -239,13 +229,8 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -257,13 +242,8 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "Ụka",
         "Mọn",
         "Tiu",
@@ -272,10 +252,5 @@ public class DateTimeFormatInfoImpl_ig extends DateTimeFormatInfoImpl {
         "Fraị",
         "Sat"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

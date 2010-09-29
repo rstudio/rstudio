@@ -84,7 +84,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
         valueStore, requestFactory);
     String json = deltaValueStore.toJson();
     JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(json);
-    assertFalse(jsonObject.containsKey(WriteOperation.CREATE.getUnObfuscatedEnumName()));
+    assertFalse(jsonObject.containsKey(WriteOperation.PERSIST.getUnObfuscatedEnumName()));
   }
 
   public void testCreateUpdate() {
@@ -96,7 +96,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     deltaValueStore.set(SimpleFooProxyProperties.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
     JSONObject changeProxy = testAndGetChangeProxy(deltaValueStore.toJson(),
-        WriteOperation.CREATE);
+        WriteOperation.PERSIST);
     assertEquals("harry", changeProxy.get("userName").isString().stringValue());
   }
 
@@ -112,7 +112,7 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     deltaValueStore.set(SimpleFooProxyProperties.userName, created, "harry");
     assertTrue(deltaValueStore.isChanged());
     JSONObject changeProxy = testAndGetChangeProxy(deltaValueStore.toJson(),
-        WriteOperation.CREATE);
+        WriteOperation.PERSIST);
     assertEquals(
         "harry",
         changeProxy.get(SimpleFooProxyProperties.userName.getName()).isString().stringValue());
@@ -157,11 +157,11 @@ public class DeltaValueStoreJsonImplTest extends GWTTestCase {
     String jsonString = deltaValueStore.toJson();
     JSONObject jsonObject = (JSONObject) JSONParser.parseLenient(jsonString);
     assertFalse(jsonObject.containsKey(WriteOperation.DELETE.getUnObfuscatedEnumName()));
-    assertTrue(jsonObject.containsKey(WriteOperation.CREATE.getUnObfuscatedEnumName()));
+    assertTrue(jsonObject.containsKey(WriteOperation.PERSIST.getUnObfuscatedEnumName()));
     assertTrue(jsonObject.containsKey(WriteOperation.UPDATE.getUnObfuscatedEnumName()));
 
     JSONArray createOperationArray = jsonObject.get(
-        WriteOperation.CREATE.getUnObfuscatedEnumName()).isArray();
+        WriteOperation.PERSIST.getUnObfuscatedEnumName()).isArray();
     assertEquals(1, createOperationArray.size());
     assertEquals(
         "harry",

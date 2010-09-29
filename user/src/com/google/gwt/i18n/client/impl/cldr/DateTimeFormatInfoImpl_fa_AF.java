@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "fa_AF".
+ * Implementation of DateTimeFormatInfo for the "fa_AF" locale.
  */
 public class DateTimeFormatInfoImpl_fa_AF extends DateTimeFormatInfoImpl_fa {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "جنوری",
         "فبروری",
         "مارچ",
@@ -42,7 +42,7 @@ public class DateTimeFormatInfoImpl_fa_AF extends DateTimeFormatInfoImpl_fa {
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "ج",
         "ف",
         "م",
@@ -59,13 +59,8 @@ public class DateTimeFormatInfoImpl_fa_AF extends DateTimeFormatInfoImpl_fa {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "جنو",
         "فوریهٔ",
         "مارس",

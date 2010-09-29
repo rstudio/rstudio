@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,44 +15,52 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "kam".
+ * Implementation of DateTimeFormatInfo for the "kam" locale.
  */
 public class DateTimeFormatInfoImpl_kam extends DateTimeFormatInfoImpl {
 
   @Override
+  public String[] ampms() {
+    return new String[] {
+        "Ĩyakwakya",
+        "Ĩyawĩoo"
+    };
+  }
+
+  @Override
   public String dateFormatFull() {
-    return "EEEE, y MMMM dd";
+    return "EEEE, d MMMM y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "y MMMM d";
+    return "d MMMM y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "y MMM d";
+    return "d MMM y";
   }
 
   @Override
   public String dateFormatShort() {
-    return "yy/MM/dd";
+    return "dd/MM/yyyy";
   }
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
-        "mbee wa yesu",
-        "IY"
+    return new String[] {
+        "Mbee wa Yesũ",
+        "Ĩtina wa Yesũ"
     };
   }
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "MY",
         "IY"
     };
@@ -60,7 +68,7 @@ public class DateTimeFormatInfoImpl_kam extends DateTimeFormatInfoImpl {
 
   @Override
   public int firstDayOfTheWeek() {
-    return 1;
+    return 6;
   }
 
   @Override
@@ -120,154 +128,134 @@ public class DateTimeFormatInfoImpl_kam extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
-        "Mwei wa mbee",
-        "Mwei wa keli",
-        "Mwei wa katatu",
-        "Mwei wa kanne",
-        "Mwei wa katano",
-        "Mwei wa thanthatu",
-        "Mwei wa muonza",
-        "Mwei wa nyanya",
-        "Mwei wa kenda",
-        "Mwei wa ikumi",
-        "Mwei wa ikumi na imwe",
-        "Mwei wa ikumi na ili"
+    return new String[] {
+        "Mwai wa mbee",
+        "Mwai wa kelĩ",
+        "Mwai wa katatũ",
+        "Mwai wa kana",
+        "Mwai wa katano",
+        "Mwai wa thanthatũ",
+        "Mwai wa muonza",
+        "Mwai wa nyaanya",
+        "Mwai wa kenda",
+        "Mwai wa ĩkumi",
+        "Mwai wa ĩkumi na ĩmwe",
+        "Mwai wa ĩkumi na ilĩ"
     };
-  }
-
-  @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
   }
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
+    return new String[] {
+        "M",
+        "K",
+        "K",
+        "K",
+        "K",
+        "T",
+        "M",
+        "N",
+        "K",
+        "Ĩ",
+        "Ĩ",
+        "Ĩ"
     };
-  }
-
-  @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
   }
 
   @Override
   public String[] monthsShort() {
-    return new String[] { 
-        "Mwei wa mbee",
-        "Mwei wa keli",
-        "Mwei wa katatu",
-        "Mwei wa kanne",
-        "Mwei wa katano",
-        "Mwei wa thanthatu",
-        "Mwei wa muonza",
-        "Mwei wa nyanya",
-        "Mwei wa kenda",
-        "Mwei wa ikumi",
-        "Mwei wa ikumi na imwe",
-        "Mwei wa ikumi na ili"
+    return new String[] {
+        "Mbe",
+        "Kel",
+        "Ktũ",
+        "Kan",
+        "Ktn",
+        "Tha",
+        "Moo",
+        "Nya",
+        "Knd",
+        "Ĩku",
+        "Ĩkm",
+        "Ĩkl"
     };
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
+  public String[] quartersFull() {
+    return new String[] {
+        "Lovo ya mbee",
+        "Lovo ya kelĩ",
+        "Lovo ya katatũ",
+        "Lovo ya kana"
+    };
   }
 
   @Override
-  public String[] quartersFull() {
-    return new String[] { 
-        "Q1",
-        "Q2",
-        "Q3",
-        "Q4"
+  public String[] quartersShort() {
+    return new String[] {
+        "L1",
+        "L2",
+        "L3",
+        "L4"
     };
   }
 
   @Override
   public String timeFormatFull() {
-    return "HH:mm:ss zzzz";
+    return "h:mm:ss a zzzz";
   }
 
   @Override
   public String timeFormatLong() {
-    return "HH:mm:ss z";
+    return "h:mm:ss a z";
   }
 
   @Override
   public String timeFormatMedium() {
-    return "HH:mm:ss";
+    return "h:mm:ss a";
   }
 
   @Override
   public String timeFormatShort() {
-    return "HH:mm";
+    return "h:mm a";
   }
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
-        "Jumapili",
-        "Jumatatu",
-        "Jumanne",
-        "Jumatano",
-        "Alamisi",
-        "Ijumaa",
-        "Jumamosi"
+    return new String[] {
+        "Wa kyumwa",
+        "Wa kwambĩlĩlya",
+        "Wa kelĩ",
+        "Wa katatũ",
+        "Wa kana",
+        "Wa katano",
+        "Wa thanthatũ"
     };
-  }
-
-  @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
   }
 
   @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+    return new String[] {
+        "Y",
+        "W",
+        "E",
+        "A",
+        "A",
+        "A",
+        "A"
     };
-  }
-
-  @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
   }
 
   @Override
   public String[] weekdaysShort() {
-    return new String[] { 
-        "Jpl",
-        "Jtt",
-        "Jnn",
-        "Jtn",
-        "Alh",
-        "Ijm",
-        "Jms"
+    return new String[] {
+        "Wky",
+        "Wkw",
+        "Wkl",
+        "Wtũ",
+        "Wkn",
+        "Wtn",
+        "Wth"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

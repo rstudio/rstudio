@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "fi".
+ * Implementation of DateTimeFormatInfo for the "fi" locale.
  */
 public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "ap.",
         "ip."
     };
@@ -52,7 +52,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "ennen Kristuksen syntymää",
         "jälkeen Kristuksen syntymän"
     };
@@ -60,15 +60,10 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "eKr.",
         "jKr."
     };
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
   }
 
   @Override
@@ -163,7 +158,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "tammikuuta",
         "helmikuuta",
         "maaliskuuta",
@@ -181,7 +176,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFullStandalone() {
-    return new String[] { 
+    return new String[] {
         "tammikuu",
         "helmikuu",
         "maaliskuu",
@@ -199,7 +194,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "T",
         "H",
         "M",
@@ -216,13 +211,8 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "tammikuuta",
         "helmikuuta",
         "maaliskuuta",
@@ -240,7 +230,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsShortStandalone() {
-    return new String[] { 
+    return new String[] {
         "tammi",
         "helmi",
         "maalis",
@@ -258,7 +248,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1. neljännes",
         "2. neljännes",
         "3. neljännes",
@@ -268,7 +258,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "1. nelj.",
         "2. nelj.",
         "3. nelj.",
@@ -298,7 +288,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "sunnuntaina",
         "maanantaina",
         "tiistaina",
@@ -311,7 +301,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFullStandalone() {
-    return new String[] { 
+    return new String[] {
         "sunnuntai",
         "maanantai",
         "tiistai",
@@ -324,7 +314,7 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "S",
         "M",
         "T",
@@ -336,13 +326,8 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "su",
         "ma",
         "ti",
@@ -351,10 +336,5 @@ public class DateTimeFormatInfoImpl_fi extends DateTimeFormatInfoImpl {
         "pe",
         "la"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

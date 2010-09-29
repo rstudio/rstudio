@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,44 +15,69 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "fa".
+ * Implementation of DateTimeFormatInfo for the "fa" locale.
  */
 public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "قبل از ظهر",
         "بعد از ظهر"
     };
   }
 
   @Override
+  public String dateFormat() {
+    return dateFormatLong();
+  }
+
+  @Override
   public String dateFormatFull() {
-    return "EEEE d MMMM y";
+    return "EEEE, MMMM d, y";
   }
 
   @Override
   public String dateFormatLong() {
-    return "d MMMM y";
+    return "MMMM d, y";
   }
 
   @Override
   public String dateFormatMedium() {
-    return "yyyy/M/d";
+    return "MMM d, y";
   }
 
   @Override
   public String dateFormatShort() {
-    return "yy/M/d";
+    return "M/d/yy";
+  }
+
+  @Override
+  public String dateTimeFull(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append("، ساعت ").append(timePattern).toString();
+  }
+
+  @Override
+  public String dateTimeLong(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append("، ساعت ").append(timePattern).toString();
+  }
+
+  @Override
+  public String dateTimeMedium(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append("،‏ ").append(timePattern).toString();
+  }
+
+  @Override
+  public String dateTimeShort(String timePattern, String datePattern) {
+    return new java.lang.StringBuffer().append(datePattern).append("،‏ ").append(timePattern).toString();
   }
 
   @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "قبل از میلاد",
         "میلادی"
     };
@@ -60,9 +85,9 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "ق.م.",
-        "م."
+        "ب. م."
     };
   }
 
@@ -148,15 +173,15 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "ژانویهٔ",
         "فوریهٔ",
         "مارس",
         "آوریل",
-        "مهٔ",
-        "ژوئن",
-        "ژوئیهٔ",
-        "اوت",
+        "می",
+        "جون",
+        "جولای",
+        "آگوست",
         "سپتامبر",
         "اکتبر",
         "نوامبر",
@@ -166,7 +191,7 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFullStandalone() {
-    return new String[] { 
+    return new String[] {
         "ژانویه",
         "فوریه",
         "مارس",
@@ -184,12 +209,12 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "ژ",
         "ف",
         "م",
         "آ",
-        "م",
+        "می",
         "ژ",
         "ژ",
         "ا",
@@ -201,38 +226,15 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "ژانویهٔ",
         "فوریهٔ",
         "مارس",
         "آوریل",
-        "مهٔ",
-        "ژوئن",
-        "ژوئیهٔ",
-        "اوت",
-        "سپتامبر",
-        "اکتبر",
-        "نوامبر",
-        "دسامبر"
-    };
-  }
-
-  @Override
-  public String[] monthsShortStandalone() {
-    return new String[] { 
-        "ژانویه",
-        "فوریه",
-        "مارس",
-        "آوریل",
-        "مه",
-        "ژوئن",
-        "ژوئیه",
+        "می",
+        "جون",
+        "جولای",
         "اوت",
         "سپتامبر",
         "اکتبر",
@@ -243,7 +245,7 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "سه‌ماههٔ اول",
         "سه‌ماههٔ دوم",
         "سه‌ماههٔ سوم",
@@ -253,7 +255,7 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "س‌م۱",
         "س‌م۲",
         "س‌م۳",
@@ -283,7 +285,7 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "یکشنبه",
         "دوشنبه",
         "سه‌شنبه",
@@ -295,13 +297,8 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "ی",
         "د",
         "س",
@@ -313,13 +310,8 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "یکشنبه",
         "دوشنبه",
         "سه‌شنبه",
@@ -328,11 +320,6 @@ public class DateTimeFormatInfoImpl_fa extends DateTimeFormatInfoImpl {
         "جمعه",
         "شنبه"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 
   @Override

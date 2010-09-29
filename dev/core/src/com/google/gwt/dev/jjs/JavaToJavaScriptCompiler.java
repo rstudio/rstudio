@@ -126,6 +126,7 @@ import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -273,7 +274,8 @@ public class JavaToJavaScriptCompiler {
       ResolveRebinds.exec(jprogram, permutation.getOrderedRebindAnswers());
 
       // (4) Optimize the normalized Java AST for each permutation.
-      if (options.isDraftCompile()) {
+      int optimizationLevel = options.getOptimizationLevel();
+      if (optimizationLevel == OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
         draftOptimize(jprogram);
       } else {
         optimize(options, jprogram);
@@ -311,8 +313,8 @@ public class JavaToJavaScriptCompiler {
       EvalFunctionsAtTopScope.exec(jsProgram, map);
 
       // (9) Optimize the JS AST.
-      if (!options.isDraftCompile()) {
-        optimizeJs(jsProgram);
+      if (optimizationLevel > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
+        optimizeJs(options, jsProgram);
       }
 
       /*
@@ -578,7 +580,7 @@ public class JavaToJavaScriptCompiler {
        * Don't optimizing early if this is a draft compile, or if there's only
        * one permutation.
        */
-      if (!options.isDraftCompile() && !singlePermutation) {
+      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT && !singlePermutation) {
         if (options.isOptimizePrecompile()) {
           /*
            * Go ahead and optimize early, so that each permutation will run
@@ -619,35 +621,17 @@ public class JavaToJavaScriptCompiler {
    * succeeds.
    */
   protected static void draftOptimize(JProgram jprogram) {
+    Event draftOptimizeEvent = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE);
     /*
      * Record the beginning of optimizations; this turns on certain checks that
      * guard against problematic late construction of things like class
      * literals.
      */
     jprogram.beginOptimizations();
-
-    Event draftOptimizeEvent = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE);
-
-    Event draftFinalizerEvent = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
-        "finalizer");
     Finalizer.exec(jprogram);
-    draftFinalizerEvent.end();
-
-    Event draftMakeCallsStaticEvent =
-        SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE, "phase", "makeCallsStatic");
     MakeCallsStatic.exec(jprogram);
-    draftMakeCallsStaticEvent.end();
-
-    Event draftRecomputeEvent = SpeedTracerLogger.start(
-        CompilerEventType.DRAFT_OPTIMIZE, "phase", "recomputeAfterOptimizations");
     jprogram.typeOracle.recomputeAfterOptimizations();
-    draftRecomputeEvent.end();
-
-    Event draftDeadCode = SpeedTracerLogger.start(CompilerEventType.DRAFT_OPTIMIZE, "phase",
-        "deadCodeElimination");
     DeadCodeElimination.exec(jprogram);
-    draftDeadCode.end();
-
     draftOptimizeEvent.end();
   }
 
@@ -664,8 +648,12 @@ public class JavaToJavaScriptCompiler {
 
     List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
     int counter = 0;
+    int optimizationLevel = options.getOptimizationLevel();    
     while (true) {
       counter++;
+      if (optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX && counter > optimizationLevel) {
+        break;
+      }
       if (Thread.interrupted()) {
         optimizeEvent.end();
         throw new InterruptedException();
@@ -695,7 +683,7 @@ public class JavaToJavaScriptCompiler {
     optimizeEvent.end();
   }
 
-  protected static void optimizeJs(JsProgram jsProgram) throws InterruptedException {
+  protected static void optimizeJs(JJSOptions options, JsProgram jsProgram) throws InterruptedException {
     List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
     int counter = 0;
     while (true) {
@@ -718,8 +706,9 @@ public class JavaToJavaScriptCompiler {
       allOptimizerStats.add(stats);
       
       optimizeJsEvent.end();
-      
-      if (!stats.didChange()) {
+      int optimizationLevel = options.getOptimizationLevel();
+      if ((optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX && counter > optimizationLevel) 
+          || !stats.didChange()) {
         break;
       }
     }

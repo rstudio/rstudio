@@ -34,6 +34,7 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
   // Pending selection change
   private boolean newSelected;
   private T newSelectedObject = null;
+  private boolean newSelectedPending;
 
   /**
    * Constructs a SingleSelectionModel without a key provider.
@@ -41,7 +42,7 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
   public SingleSelectionModel() {
     super(null);
   }
-  
+
   /**
    * Constructs a SingleSelectionModel with the given key provider.
    *
@@ -71,6 +72,7 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
   public void setSelected(T object, boolean selected) {
     newSelectedObject = object;
     newSelected = selected;
+    newSelectedPending = true;
     scheduleSelectionChangeEvent();
   }
 
@@ -83,11 +85,11 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
   }
 
   private void resolveChanges() {
-    if (newSelectedObject == null) {
+    if (!newSelectedPending) {
       return;
     }
 
-    Object key = getKey(newSelectedObject);
+    Object key = (newSelectedObject == null) ? null : getKey(newSelectedObject);
     boolean sameKey = curKey == null ? key == null : curKey.equals(key);
     boolean changed = false;
     if (newSelected) {
@@ -101,6 +103,7 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
     }
 
     newSelectedObject = null;
+    newSelectedPending = false;
 
     // Fire a selection change event.
     if (changed) {

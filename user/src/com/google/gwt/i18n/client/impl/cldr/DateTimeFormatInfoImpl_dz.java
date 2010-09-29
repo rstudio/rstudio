@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,16 +15,16 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "dz".
+ * Implementation of DateTimeFormatInfo for the "dz" locale.
  */
 public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
+    return new String[] {
         "སྔ་ཆ་",
         "ཕྱི་ཆ་"
     };
@@ -46,13 +46,8 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String dateFormatShort() {
-    return "yyyy-MM-dd";
-  }
-
-  @Override
   public String[] erasFull() {
-    return new String[] { 
+    return new String[] {
         "BCE",
         "CE"
     };
@@ -60,15 +55,10 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] erasShort() {
-    return new String[] { 
+    return new String[] {
         "BCE",
         "CE"
     };
-  }
-
-  @Override
-  public int firstDayOfTheWeek() {
-    return 1;
   }
 
   @Override
@@ -128,7 +118,7 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "སྤྱི་ཟླཝ་དངཔ་",
         "སྤྱི་ཟླཝ་གཉིས་པ་",
         "སྤྱི་ཟླཝ་གསུམ་པ་",
@@ -145,13 +135,8 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -168,13 +153,8 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsNarrowStandalone() {
-    return monthsNarrow();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "ཟླ་ ༡",
         "ཟླ་ ༢",
         "ཟླ་ ༣",
@@ -191,13 +171,8 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "བཞི་དཔྱ་དང་པ་",
         "བཞི་དཔྱ་གཉིས་པ་",
         "བཞི་དཔྱ་གསུམ་པ་",
@@ -207,12 +182,17 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] quartersShort() {
-    return new String[] { 
+    return new String[] {
         "བཞི་དཔྱ་༡",
         "བཞི་དཔྱ་༢",
         "བཞི་དཔྱ་༣",
         "བཞི་དཔྱ་༤"
     };
+  }
+
+  @Override
+  public String timeFormat() {
+    return timeFormatLong();
   }
 
   @Override
@@ -237,7 +217,7 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
 
   @Override
   public String[] weekdaysFull() {
-    return new String[] { 
+    return new String[] {
         "གཟའ་ཟླ་བ་",
         "གཟའ་མིག་དམར་",
         "གཟའ་ལྷག་པ་",
@@ -249,13 +229,8 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysFullStandalone() {
-    return weekdaysFull();
-  }
-
-  @Override
   public String[] weekdaysNarrow() {
-    return new String[] { 
+    return new String[] {
         "1",
         "2",
         "3",
@@ -267,13 +242,8 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
   }
 
   @Override
-  public String[] weekdaysNarrowStandalone() {
-    return weekdaysNarrow();
-  }
-
-  @Override
   public String[] weekdaysShort() {
-    return new String[] { 
+    return new String[] {
         "ཟླ་",
         "མིར་",
         "ལྷག་",
@@ -282,10 +252,5 @@ public class DateTimeFormatInfoImpl_dz extends DateTimeFormatInfoImpl {
         "སྤེན་",
         "ཉི་"
     };
-  }
-
-  @Override
-  public String[] weekdaysShortStandalone() {
-    return weekdaysShort();
   }
 }

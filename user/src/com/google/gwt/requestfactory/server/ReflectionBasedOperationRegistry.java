@@ -66,8 +66,12 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
       return domainClass.getCanonicalName();
     }
 
+    public Method getDomainMethod() {
+      return domainMethod;
+    }
+
     public String getDomainMethodName() {
-      return domainMethod.getName();
+      return getDomainMethod().getName();
     }
 
     public Class<?>[] getParameterTypes() {
@@ -91,13 +95,12 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
           if (!dtoClass.equals(domainReturnType)) {
             throw new IllegalArgumentException(
                 "Type mismatch between " + domainMethod + " return type, and "
-                    + requestReturnType + "'s DataTransferObject annotation "
+                    + requestReturnType + "'s ProxyFor annotation "
                     + dtoClass);
           }
         } else {
           throw new IllegalArgumentException(
-              "Missing DataTransferObject " + "annotation on record type "
-                  + requestReturnType);
+              "Missing ProxyFor annotation on proxy type " + requestReturnType);
         }
         return requestReturnType;
       }
@@ -107,10 +110,6 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
 
     public boolean isInstance() {
       return isInstance;
-    }
-
-    public boolean isReturnTypeList() {
-      return List.class.isAssignableFrom(domainMethod.getReturnType());
     }
 
     public String name() {
@@ -160,7 +159,7 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
       if (params.length == 1) {
         if (params[0] instanceof ParameterizedType) {
           // if type is for example, RequestObject<List<T>> we return T
-          return (Class<?>) ((ParameterizedType) params[0]).getRawType();
+          return (Class<?>) ((ParameterizedType) params[0]).getActualTypeArguments()[0];
         }
         // else, it might be a case like List<T> in which case we return T
         return (Class<Object>) params[0];

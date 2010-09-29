@@ -24,11 +24,10 @@ import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
-
 import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.Arrays;
@@ -153,7 +152,7 @@ public class EditorTest extends RequestFactoryTestBase {
             assertNotNull(editor.delegate.subscribe());
 
             // Simulate edits occurring elsewhere in the module
-            ProxyRequest<SimpleFooProxy> request = req.simpleFooRequest().persistAndReturnSelf(
+            Request<SimpleFooProxy> request = req.simpleFooRequest().persistAndReturnSelf(
                 response);
             SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
             newBar = request.edit(newBar);

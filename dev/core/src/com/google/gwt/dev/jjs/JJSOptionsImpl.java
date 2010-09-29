@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.dev.util.arg.OptionOptimize;
+
 import java.io.Serializable;
 
 /**
@@ -25,7 +27,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean aggressivelyOptimize = true;
   private boolean disableCastChecking = false;
   private boolean disableClassMetadata = false;
-  private boolean draftCompile = false;
   private boolean enableAssertions;
   private boolean optimizePrecompile = false;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
@@ -33,6 +34,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycEnabled = false;
   private boolean soycExtra = false;
   private boolean strict = false;
+  private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_MAX;
 
   public JJSOptionsImpl() {
   }
@@ -42,11 +44,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   public void copyFrom(JJSOptions other) {
-    setAggressivelyOptimize(other.isAggressivelyOptimize());
     setCastCheckingDisabled(other.isCastCheckingDisabled());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
-    setDraftCompile(other.isDraftCompile());
     setEnableAssertions(other.isEnableAssertions());
+    setAggressivelyOptimize(other.isAggressivelyOptimize());
+    setOptimizationLevel(other.getOptimizationLevel());
     setOutput(other.getOutput());
     setRunAsyncEnabled(other.isRunAsyncEnabled());
     setSoycEnabled(other.isSoycEnabled());
@@ -54,6 +56,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setStrict(other.isStrict());
   }
 
+  public int getOptimizationLevel() {
+    return optimizationLevel;
+  }
+  
   public JsOutputOption getOutput() {
     return output;
   }
@@ -71,7 +77,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   public boolean isDraftCompile() {
-    return draftCompile;
+    return optimizationLevel == OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
   }
 
   public boolean isEnableAssertions() {
@@ -110,12 +116,12 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     disableClassMetadata = disabled;
   }
 
-  public void setDraftCompile(boolean draft) {
-    this.draftCompile = draft;
-  }
-
   public void setEnableAssertions(boolean enableAssertions) {
     this.enableAssertions = enableAssertions;
+  }
+
+  public void setOptimizationLevel(int level) {
+    optimizationLevel = level;
   }
 
   public void setOptimizePrecompile(boolean optimize) {

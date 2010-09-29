@@ -6,7 +6,7 @@
  * the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,18 +15,18 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA
+// DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
 
 /**
- * Implementation of DateTimeFormatInfo for locale "pt_PT".
+ * Implementation of DateTimeFormatInfo for the "pt_PT" locale.
  */
 public class DateTimeFormatInfoImpl_pt_PT extends DateTimeFormatInfoImpl_pt {
 
   @Override
   public String[] ampms() {
-    return new String[] { 
-        "Antes do meio-dia",
-        "Depois do meio-dia"
+    return new String[] {
+        "a.m.",
+        "p.m."
     };
   }
 
@@ -57,7 +57,7 @@ public class DateTimeFormatInfoImpl_pt_PT extends DateTimeFormatInfoImpl_pt {
 
   @Override
   public String[] monthsFull() {
-    return new String[] { 
+    return new String[] {
         "Janeiro",
         "Fevereiro",
         "Março",
@@ -74,13 +74,8 @@ public class DateTimeFormatInfoImpl_pt_PT extends DateTimeFormatInfoImpl_pt {
   }
 
   @Override
-  public String[] monthsFullStandalone() {
-    return monthsFull();
-  }
-
-  @Override
   public String[] monthsShort() {
-    return new String[] { 
+    return new String[] {
         "Jan",
         "Fev",
         "Mar",
@@ -97,17 +92,25 @@ public class DateTimeFormatInfoImpl_pt_PT extends DateTimeFormatInfoImpl_pt {
   }
 
   @Override
-  public String[] monthsShortStandalone() {
-    return monthsShort();
-  }
-
-  @Override
   public String[] quartersFull() {
-    return new String[] { 
+    return new String[] {
         "1.º trimestre",
         "2.º trimestre",
         "3.º trimestre",
         "4.º trimestre"
+    };
+  }
+
+  @Override
+  public String[] weekdaysFull() {
+    return new String[] {
+        "Domingo",
+        "Segunda-feira",
+        "Terça-feira",
+        "Quarta-feira",
+        "Quinta-feira",
+        "Sexta-feira",
+        "Sábado"
     };
   }
 }

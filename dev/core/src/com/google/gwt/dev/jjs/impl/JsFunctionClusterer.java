@@ -16,13 +16,13 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.dev.util.editdistance.GeneralEditDistance;
+import com.google.gwt.dev.util.editdistance.GeneralEditDistances;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.LinkedList;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 /**
@@ -33,19 +33,33 @@ import java.util.regex.Pattern;
  */
 public class JsFunctionClusterer extends JsAbstractTextTransformer {
 
-  private static Pattern functionPattern =
-      Pattern.compile("^(function |[A-Za-z0-9_$]+=function)");
+  /**
+   * Used by isFunctionDeclaration to check a statement is a function
+   * declaration or not. This should match standard declarations,
+   * such as "function a() { ... }" and "jslink.a=function() { ... }".
+   * The latter form is typically emitted by the cross-site linker.
+   */
+  private static final Pattern functionDeclarationPattern =
+      Pattern.compile("function |[a-zA-Z][.$_a-zA-Z0-9]*=function");
 
   /**
-   * Limit edit-distance search to MAX_DIST.
+   * Functions which have an edit-distance greater than this limit are
+   * considered equally different.
    */
-  private static final int MAX_DIST = 10;
-
   private static final int MAX_DISTANCE_LIMIT = 100;
 
-  private int[] clusteredIndices;
+  /**
+   * Maximum number of functions to search for minimal edit-distance
+   * before giving up.
+   */
+  private static final int SEARCH_LIMIT = 10;
 
-  private List<Integer> functionIndices;
+  /**
+   * Tells whether a statement is a function declaration or not.
+   */
+  private static boolean isFunctionDeclaration(String code) {
+    return functionDeclarationPattern.matcher(code).lookingAt();
+  }
 
   public JsFunctionClusterer(JsAbstractTextTransformer xformer) {
     super(xformer);
@@ -57,12 +71,12 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
 
   @Override
   public void exec() {
-    functionIndices = new LinkedList<Integer>();
+    LinkedList<Integer> functionIndices = new LinkedList<Integer>();
 
     // gather up all of the indices of function decl statements
     for (int i = 0; i < statementRanges.numStatements(); i++) {
       String code = getJsForRange(i);
-      if (functionPattern.matcher(code).find()) {
+      if (isFunctionDeclaration(code)) {
         functionIndices.add(i);
       }
     }
@@ -75,29 +89,29 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     });
 
     // used to hold the new output order
-    clusteredIndices = new int[functionIndices.size()];
+    int[] clusteredIndices = new int[functionIndices.size()];
     int currentFunction = 0;
 
     // remove the first function and stick it in the output array
     clusteredIndices[currentFunction] = functionIndices.get(0);
     functionIndices.remove(0);
-
     while (!functionIndices.isEmpty()) {
-
       // get the last outputted function to match against
       String currentCode = getJsForRange(clusteredIndices[currentFunction]);
-      int bestDistance = 99999;
-      int bestIndex = 0;
-      int bestFunction = 0;
+      final GeneralEditDistance editDistance =
+        GeneralEditDistances.getLevenshteinDistance(currentCode);
 
-      Iterator<Integer> it = functionIndices.iterator();
+      int bestIndex = 0;
+      int bestFunction = functionIndices.getFirst();
+      int bestDistance = MAX_DISTANCE_LIMIT;
+
       int count = 0;
-      // search up to MAX_DIST functions for the best match
-      while (it.hasNext() && count < Math.min(MAX_DIST, functionIndices.size())) {
-        int functionIndex = it.next();
+      for (int functionIndex : functionIndices) {
+        if (count >= SEARCH_LIMIT) {
+          break;
+        }
         String testCode = getJsForRange(functionIndex);
-        int distanceLimit = Math.min(bestDistance, MAX_DISTANCE_LIMIT);
-        int dist = levdist(currentCode, testCode, distanceLimit);
+        int dist = editDistance.getDistance(testCode, bestDistance);
         if (dist < bestDistance) {
           bestDistance = dist;
           bestIndex = count;
@@ -120,71 +134,11 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     // Then output everything else that is not a function.
     for (int i = 0; i < statementRanges.numStatements(); i++) {
       String code = getJsForRange(i);
-      if (!code.startsWith("function")) {
+      if (!isFunctionDeclaration(code)) {
         addStatement(code, newJs, starts, ends);
       }
     }
     super.endStatements(newJs, starts, ends);
-  }
-
-  /**
-   * Compute the Levenshtein distance between two strings, up to a distance
-   * limit.
-   */
-  private int levdist(String str1, String str2, int limit) {
-    if (str1.length() > str2.length()) {
-      return levdist(str2, str1, limit);
-    }
-    if (str1.length() == 0) {
-      return str2.length();
-    }
-    if (Math.abs(str1.length() - str2.length()) >= limit) {
-      return limit;
-    }
-
-    int str1len = str1.length();
-    int str2len = str2.length();
-
-    int lastRow[] = new int[str2len + 1];
-    int nextRow[] = new int[str2len + 1];
-
-    for (int j = 0; j <= Math.min(str2len, limit + 1); j++) {
-      lastRow[j] = j;
-    }
-
-    for (int i = 1; i <= str1len; i++) {
-      nextRow[0] = i;
-
-      if (i >= limit) {
-        nextRow[i - limit] = limit;
-      }
-      if (i >= limit + 1) {
-        nextRow[i - limit - 1] = limit;
-      }
-      if (i + limit <= str2len) {
-        nextRow[i + limit] = limit;
-      }
-      if (i + limit + 1 <= str2len) {
-        nextRow[i + limit + 1] = limit;
-      }
-
-      char c1 = str1.charAt(i - 1);
-
-      int j = Math.max(1, (i - limit + 1));
-      int jmax = Math.min(str2len, (i + limit - 1));
-
-      while (j <= jmax) {
-        char c2 = str2.charAt(j - 1);
-        int costSwap = c1 == c2 ? 0 : 1;
-        nextRow[j] =
-            Math.min(Math.min(lastRow[j] + 1, nextRow[j - 1] + 1), lastRow[j - 1] + costSwap);
-        j = j + 1;
-      }
-      int tmpRow[] = nextRow;
-      nextRow = lastRow;
-      lastRow = tmpRow;
-    }
-    return lastRow[Math.min(str2len, limit)];
   }
 
   private int stmtSize(int index1) {

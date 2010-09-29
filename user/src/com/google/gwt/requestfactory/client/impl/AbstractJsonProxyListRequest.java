@@ -16,7 +16,7 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.ProxyListRequest;
+import com.google.gwt.requestfactory.shared.Request;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public abstract class //
     AbstractJsonProxyListRequest<T extends EntityProxy,
     R extends AbstractJsonProxyListRequest<T, R>>
     extends AbstractJsonProxyCollectionRequest<List<T>, T, R>
-    implements ProxyListRequest<T> {
+    implements Request<List<T>> {
   protected final ProxySchema<?> schema;
 
   public AbstractJsonProxyListRequest(ProxySchema<? extends T> schema,

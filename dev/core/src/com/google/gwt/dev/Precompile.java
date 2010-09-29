@@ -40,8 +40,8 @@ import com.google.gwt.dev.jjs.JavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.CheckForUpdates;
-import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
+import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.util.CollapsedPropertyKey;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Util;
@@ -57,6 +57,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerDumpSignatures;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
+import com.google.gwt.dev.util.arg.ArgHandlerOptimize;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
@@ -119,6 +120,7 @@ public class Precompile {
       registerHandler(new ArgHandlerDisableUpdateCheck(options));
       registerHandler(new ArgHandlerDumpSignatures());
       registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
+      registerHandler(new ArgHandlerOptimize(options));
       registerHandler(new ArgHandlerCompileReport(options));
       registerHandler(new ArgHandlerSoyc(options));
       registerHandler(new ArgHandlerSoycDetailed(options));
@@ -165,6 +167,10 @@ public class Precompile {
 
     public int getMaxPermsPerPrecompile() {
       return maxPermsPerPrecompile;
+    }
+
+    public int getOptimizationLevel() {
+      return jjsOptions.getOptimizationLevel();
     }
 
     public JsOutputOption getOutput() {
@@ -239,10 +245,6 @@ public class Precompile {
       disableUpdateCheck = disabled;
     }
 
-    public void setDraftCompile(boolean draft) {
-      jjsOptions.setDraftCompile(draft);
-    }
-
     public void setEnableAssertions(boolean enableAssertions) {
       jjsOptions.setEnableAssertions(enableAssertions);
     }
@@ -257,6 +259,10 @@ public class Precompile {
 
     public void setMaxPermsPerPrecompile(int maxPermsPerPrecompile) {
       this.maxPermsPerPrecompile = maxPermsPerPrecompile;
+    }
+
+    public void setOptimizationLevel(int level) {
+      jjsOptions.setOptimizationLevel(level);
     }
 
     public void setOptimizePrecompile(boolean optimize) {

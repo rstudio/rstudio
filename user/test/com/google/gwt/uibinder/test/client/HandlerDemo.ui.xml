@@ -1,6 +1,7 @@
 <ui:UiBinder
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
-  xmlns:gwt='urn:import:com.google.gwt.user.client.ui'>
+  xmlns:gwt='urn:import:com.google.gwt.user.client.ui'
+  xmlns:test="urn:import:com.google.gwt.uibinder.test.client">
 
   <gwt:FlowPanel>
     <gwt:Button ui:field="buttonClick" text="ClickEvent test for Button"/>
@@ -14,6 +15,13 @@
 
     <gwt:Label text="ValueChangeEvent test" />
     <gwt:TextBox ui:field="textBoxValueChange"/>
+
+    <gwt:Tree ui:field="tree" />
+
+    <test:CustomEventWidget ui:field="customEventWidget">
+      Click to test UiBinder custom events.
+    </test:CustomEventWidget>
+
   </gwt:FlowPanel>
 
 </ui:UiBinder>

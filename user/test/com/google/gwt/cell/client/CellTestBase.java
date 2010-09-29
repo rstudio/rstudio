@@ -108,7 +108,7 @@ public abstract class CellTestBase<T> extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.cell.Cell";
+    return "com.google.gwt.cell.CellTest";
   }
 
   public void testDependsOnSelection() {

@@ -40,8 +40,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
    */
   protected class SimpleFooEventHandler<P extends EntityProxy>
       implements EntityProxyChange.Handler<P> {
-    int acquireEventCount = 0;
-    int createEventCount = 0;
+    int persistEventCount = 0;
     int deleteEventCount = 0;
     int totalEventCount = 0;
     int updateEventCount = 0;
@@ -49,8 +48,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
     public void onProxyChange(EntityProxyChange<P> event) {
       totalEventCount++;
       switch (event.getWriteOperation()) {
-        case ACQUIRE: acquireEventCount++; break;
-        case CREATE: createEventCount++; break;
+        case PERSIST: persistEventCount++; break;
         case DELETE: deleteEventCount++; break;
         case UPDATE: updateEventCount++; break;
         default: break;
