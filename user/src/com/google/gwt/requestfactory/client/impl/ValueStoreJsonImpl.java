@@ -95,7 +95,7 @@ class ValueStoreJsonImpl {
         factory.postChangeEvent(newJsoRecord, WriteOperation.UPDATE);
       }
       return null;
-    } 
+    }
 
     if (oldRecord.hasChanged(newJsoRecord)) {
       records.put(recordKey, newJsoRecord);

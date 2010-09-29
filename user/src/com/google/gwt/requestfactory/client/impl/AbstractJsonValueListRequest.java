@@ -18,7 +18,6 @@ package com.google.gwt.requestfactory.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.requestfactory.shared.Request;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -38,11 +37,10 @@ import java.util.HashSet;
  */
 public abstract class //
     AbstractJsonValueListRequest<T> //
-    extends AbstractRequest<Collection<T>, AbstractJsonValueListRequest<T>>
-    implements Request<Collection<T>> {
+    extends AbstractRequest<Collection<T>, AbstractJsonValueListRequest<T>> {
 
   static Object decodeValueType(Class<?> valueType, String value,
-      Enum[] enumValues) {
+      Enum<?>[] enumValues) {
     try {
       if (Boolean.class == valueType) {
         return Boolean.valueOf(value);
@@ -109,10 +107,10 @@ public abstract class //
 
   private Class<?> leafType;
 
-  private Enum[] enumValues;
+  private Enum<?>[] enumValues;
 
   public AbstractJsonValueListRequest(RequestFactoryJsonImpl requestService,
-      boolean isSet, Class<?> leafType, Enum[] enumValues) {
+      boolean isSet, Class<?> leafType, Enum<?>[] enumValues) {
     super(requestService);
     this.isSet = isSet;
     this.leafType = leafType;
@@ -133,7 +131,7 @@ public abstract class //
   }
 
   @Override
-  protected AbstractJsonValueListRequest getThis() {
+  protected AbstractJsonValueListRequest<T> getThis() {
     return this;
   }
 

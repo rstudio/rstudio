@@ -578,6 +578,11 @@ public class ProxyCreator {
     }
   }
 
+  /**
+   * @param syncMethod
+   * @param asyncMethod
+   * @param statsContextName
+   */
   protected void generateRpcStatsContext(SourceWriter w, JMethod syncMethod,
       JMethod asyncMethod, String statsContextName) {
     w.println("RpcStatsContext " + statsContextName + " = new RpcStatsContext();");

@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.requestfactory.client.impl.AbstractBigDecimalRequest;
@@ -240,6 +241,11 @@ public class RequestFactoryGenerator extends Generator {
     if (generatedProxyTypes.contains(publicProxyType)) {
       return;
     }
+    // Hack
+    if ("P".equals(publicProxyType.getName())) {
+      return;
+    }
+
     String packageName = publicProxyType.getPackage().getName();
 
     String proxyImplTypeName = publicProxyType.getName() + "Impl";
@@ -366,7 +372,7 @@ public class RequestFactoryGenerator extends Generator {
          * Because a Proxy A may relate to B which relates to C, we need to
          * ensure transitively.
          */
-        if (isProxyType(typeOracle, returnType)) {
+        if (isProxyType(returnType)) {
           transitiveDeps.add(returnType);
         }
       }
@@ -564,6 +570,7 @@ public class RequestFactoryGenerator extends Generator {
     sw.indent();
     for (JClassType publicProxyType : generatedProxyTypes) {
       String qualifiedSourceName = publicProxyType.getQualifiedSourceName();
+      qualifiedSourceName = removeTypeParameter(qualifiedSourceName);
       sw.println("if (proxyClass == " + qualifiedSourceName + ".class) {");
       sw.indent();
       sw.println("return (ProxySchema<R>) " + qualifiedSourceName
@@ -582,6 +589,7 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("String[] bits = token.split(\"@\");");
     for (JClassType publicProxyType : generatedProxyTypes) {
       String qualifiedSourceName = publicProxyType.getQualifiedSourceName();
+      qualifiedSourceName = removeTypeParameter(qualifiedSourceName);
       sw.println("if (bits[0].equals(\"" + qualifiedSourceName + "\")) {");
       sw.indent();
       sw.println("return " + qualifiedSourceName + "Impl.SCHEMA;");
@@ -596,6 +604,7 @@ public class RequestFactoryGenerator extends Generator {
     sw.indent();
     for (JClassType publicProxyType : generatedProxyTypes) {
       String qualifiedSourceName = publicProxyType.getQualifiedSourceName();
+      qualifiedSourceName = removeTypeParameter(qualifiedSourceName);
       sw.println("if (proxyClass == " + qualifiedSourceName + ".class) {");
       sw.indent();
       sw.println("return \"" + qualifiedSourceName + "\";");
@@ -697,7 +706,7 @@ public class RequestFactoryGenerator extends Generator {
         } else {
           requestClassName = asInnerImplClass("ObjectRequestImpl", returnType);
         }
-      } else if (isValueListRequest(typeOracle, requestType)) {
+      } else if (isValueListRequest(requestType)) {
         requestClassName = AbstractJsonValueListRequest.class.getName();
         // generate argument list for AbstractJsonValueListRequest constructor
         JClassType colType = requestType.isParameterized().getTypeArgs()[0];
@@ -759,7 +768,7 @@ public class RequestFactoryGenerator extends Generator {
       sw.indent();
       sw.println("return new %s(\"%s\", %s, %s, getPropertyRefs());",
           RequestData.class.getSimpleName(), operationName,
-          getParametersAsString(method, typeOracle),
+          getParametersAsString(method),
           getEntityParameters(method));
       sw.outdent();
       sw.println("}");
@@ -784,7 +793,7 @@ public class RequestFactoryGenerator extends Generator {
     JClassType retType = requestType.isParameterized().getTypeArgs()[0];
     if (retType.isParameterized() != null) {
       JClassType leafType = retType.isParameterized().getTypeArgs()[0];
-      if (isProxyType(typeOracle, leafType)) {
+      if (isProxyType(leafType)) {
         if (retType.isAssignableTo(listType)) {
           return List.class;
         } else if (retType.isAssignableTo(setType)) {
@@ -814,6 +823,20 @@ public class RequestFactoryGenerator extends Generator {
    */
   private String getMethodDeclaration(JMethod method) {
     StringBuilder sb = new StringBuilder("public ");
+    JTypeParameter[] typeParams = method.getTypeParameters();
+    if (typeParams.length > 0) {
+      sb.append("<");
+      boolean needComma = false;
+      for (JTypeParameter typeParam : typeParams) {
+        if (needComma) {
+          sb.append(", ");
+        } else {
+          needComma = true;
+        }
+        sb.append(typeParam.getQualifiedSourceName());
+      }
+      sb.append("> ");
+    }
     sb.append(method.getReturnType().getParameterizedQualifiedSourceName());
     sb.append(" ");
     sb.append(method.getName());
@@ -839,7 +862,7 @@ public class RequestFactoryGenerator extends Generator {
    * Returns the string representation of the parameters to be passed to the
    * server side method.
    */
-  private String getParametersAsString(JMethod method, TypeOracle typeOracle) {
+  private String getParametersAsString(JMethod method) {
     StringBuilder sb = new StringBuilder();
     for (JParameter parameter : method.getParameters()) {
       if (sb.length() > 0) {
@@ -926,7 +949,7 @@ public class RequestFactoryGenerator extends Generator {
     return false;
   }
 
-  private boolean isProxyType(TypeOracle typeOracle, JClassType requestType) {
+  private boolean isProxyType(JClassType requestType) {
     return requestType.isAssignableTo(entityProxyType);
   }
 
@@ -934,12 +957,12 @@ public class RequestFactoryGenerator extends Generator {
       JClassType requestType) {
     JClassType retType = requestType.isParameterized().getTypeArgs()[0];
     if (retType.isAssignableTo(listType) || retType.isAssignableTo(setType)) {
-      if (retType.isParameterized() != null) {
+       if (retType.isParameterized() != null) {
         JClassType leafType = retType.isParameterized().getTypeArgs()[0];
-        return isProxyType(typeOracle, leafType);
+        return isProxyType(leafType);
       }
-    }
-    return false;
+     }
+     return false;
   }
 
   private boolean isShortRequest(TypeOracle typeOracle, JClassType requestType) {
@@ -950,13 +973,12 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(String.class.getName()));
   }
 
-  private boolean isValueListRequest(TypeOracle typeOracle,
-      JClassType requestType) {
+  private boolean isValueListRequest(JClassType requestType) {
     JClassType retType = requestType.isParameterized().getTypeArgs()[0];
     if (retType.isAssignableTo(listType) || retType.isAssignableTo(setType)) {
       if (retType.isParameterized() != null) {
         JClassType leafType = retType.isParameterized().getTypeArgs()[0];
-        return !isProxyType(typeOracle, leafType);
+        return !isProxyType(leafType);
       }
     }
     return false;
@@ -1128,5 +1150,13 @@ public class RequestFactoryGenerator extends Generator {
     sw.outdent();
     sw.println("}");
     return propertyType;
+  }
+
+  private String removeTypeParameter(String qualifiedSourceName) {
+    int index = qualifiedSourceName.indexOf(" extends ");
+    if (index != -1) {
+      qualifiedSourceName = qualifiedSourceName.substring(index + 9);
+    }
+    return qualifiedSourceName;
   }
 }

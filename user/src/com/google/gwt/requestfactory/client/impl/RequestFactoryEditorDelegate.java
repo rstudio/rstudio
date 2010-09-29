@@ -54,7 +54,7 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
       }
     }
 
-    @SuppressWarnings( {"rawtypes", "unchecked"})
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private void doFind(List<String> paths, EntityProxyId id) {
       factory.find(id).with(paths.toArray(new String[paths.size()])).fire(
           new SubscriptionReceiver());
@@ -95,7 +95,7 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
     }
 
     // Can't just use getObject().getClass() because it's not the proxy type
-    EntityProxyId stableId = ((EntityProxy) getObject()).stableId();
+    EntityProxyId<?> stableId = ((EntityProxy) getObject()).stableId();
     @SuppressWarnings("unchecked")
     Class<EntityProxy> clazz = (Class<EntityProxy>) stableId.getProxyClass();
     HandlerRegistration toReturn = EntityProxyChange.<EntityProxy> registerForProxyType(

@@ -47,10 +47,10 @@ public class LoginWidget extends Composite {
   }
   
   @UiHandler("logoutLink")
+  @SuppressWarnings("unused") 
   void handleClick(ClickEvent e) {
     if (logoutUrl != "") {
       Location.replace(logoutUrl);
     }
   }
-  
 }

@@ -44,12 +44,16 @@ class JsonVisitor {
 
   /**
    * Called after every element of array has been visited.
+   *
+   * @param array
+   * @param ctx
    */
-  public void endVisit(JsArray array, JsonContext ctx) {
+  public void endVisit(JsArray<?> array, JsonContext ctx) {
   }
 
   /**
    * Called after every field of an object has been visited.
+   *
    * @param object
    * @param ctx
    */
@@ -58,18 +62,27 @@ class JsonVisitor {
 
   /**
    * Called for JS numbers present in a JSON object.
+   *
+   * @param number
+   * @param ctx
    */
   public void visit(double number, JsonContext ctx) {
   }
 
   /**
    * Called for JS strings present in a JSON object.
+   *
+   * @param string
+   * @param ctx
    */
   public void visit(String string, JsonContext ctx) {
   }
 
   /**
    * Called for JS boolean present in a JSON object.
+   *
+   * @param bool
+   * @param ctx
    */
   public void visit(boolean bool, JsonContext ctx) {
   }
@@ -81,7 +94,7 @@ class JsonVisitor {
    * @param ctx a context to replace or delete the array
    * @return true if the array elements should be visited
    */
-  public boolean visit(JsArray array, JsonContext ctx) {
+  public boolean visit(JsArray<?> array, JsonContext ctx) {
     return true;
   }
 
@@ -118,6 +131,8 @@ class JsonVisitor {
 
   /**
    * Called for nulls present in a JSON object.
+   *
+   * @param ctx
    */
   public void visitNull(JsonContext ctx) {
   }

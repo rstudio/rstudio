@@ -17,7 +17,6 @@ package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.Request;
 
 /**
  * <p>
@@ -34,11 +33,11 @@ import com.google.gwt.requestfactory.shared.Request;
  */
 public abstract class //
     AbstractJsonObjectRequest<T extends EntityProxy, R extends AbstractJsonObjectRequest<T, R>> //
-    extends AbstractRequest<T, R> implements Request<T> {
+    extends AbstractRequest<T, R> {
 
   protected final ProxySchema<?> schema;
 
-  public AbstractJsonObjectRequest(ProxySchema<? extends T> schema,
+  public AbstractJsonObjectRequest(ProxySchema<?> schema,
       RequestFactoryJsonImpl requestService) {
     super(requestService);
     this.schema = schema;

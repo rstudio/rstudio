@@ -26,7 +26,7 @@ public interface JsoCollection {
   /**
    * Inject dependencies needed by jso collections to commit mutations to
    * {@link DeltaValueStoreJsonImpl}.
-   * 
+   *
    * @param property the Property corresponding to the contained type
    * @param proxy the Proxy on which this collection resides
    */

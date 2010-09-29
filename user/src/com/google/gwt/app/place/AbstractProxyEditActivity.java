@@ -177,6 +177,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     } else {
       Request<P> findRequest = requests.find(getEntityProxyId());
       findRequest.with(editorDriver.getPaths()).fire(new Receiver<P>() {
+        @Override
         public void onSuccess(P proxy) {
           if (display != null) {
             doStart(proxy);

@@ -163,6 +163,7 @@ public class SummaryWidget extends Composite {
   }
 
   @UiHandler("create")
+  @SuppressWarnings("unused")
   void onCreate(ClickEvent event) {
     AddressProxy address = requestFactory.create(AddressProxy.class);
     PersonProxy person = requestFactory.create(PersonProxy.class);
@@ -181,8 +182,8 @@ public class SummaryWidget extends Composite {
       if (displayOffset != -1) {
         // Record is onscreen and may differ from our data
         requestFactory.find(personId).fire(new Receiver<PersonProxy>() {
-          public void onSuccess(PersonProxy response) {
-            PersonProxy person = (PersonProxy) response;
+          @Override
+          public void onSuccess(PersonProxy person) {
             // Re-check offset in case of changes while waiting for data
             int offset = offsetOf(person.stableId());
             if (offset != -1) {

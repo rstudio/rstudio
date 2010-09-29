@@ -450,7 +450,7 @@ public class EditorModel {
    * <code>{ ".getFoo().getBar()", "getBaz", "setBaz" }</code>.
    */
   private void findBeanPropertyMethods(String path, JClassType propertyType,
-      EditorData.Builder builder) throws UnableToCompleteException {
+      EditorData.Builder builder) {
     StringBuilder interstitialGetters = new StringBuilder();
     StringBuilder interstitialGuard = new StringBuilder("true");
     String[] parts = path.split(Pattern.quote("."));

@@ -28,5 +28,5 @@ public interface Violation {
 
   String getPath();
 
-  EntityProxyId getProxyId();
+  EntityProxyId<?> getProxyId();
 }

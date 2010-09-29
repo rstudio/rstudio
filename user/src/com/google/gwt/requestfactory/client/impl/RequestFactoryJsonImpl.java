@@ -104,7 +104,7 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
     return createFuture(schema);
   }
 
-  public Request<EntityProxy> find(EntityProxyId proxyId) {
+  public <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId) {
     return findRequest().find(proxyId);
   }
 
@@ -144,8 +144,8 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   public abstract ProxySchema<?> getSchema(String token);
 
-  public String getWireFormat(EntityProxyId proxyId) {
-    EntityProxyIdImpl proxyIdImpl = (EntityProxyIdImpl) proxyId;
+  public String getWireFormat(EntityProxyId<?> proxyId) {
+    EntityProxyIdImpl<?> proxyIdImpl = (EntityProxyIdImpl<?>) proxyId;
     String id = (String) proxyIdImpl.encodedId;
     if (proxyIdImpl.isFuture) {
       // search for the datastore id for this futureId.
@@ -195,6 +195,9 @@ public abstract class RequestFactoryJsonImpl implements RequestFactory {
 
   /**
    * This implementation cannot be changed without breaking clients.
+   *
+   * @param proxyId
+   * @param recordToTypeMap
    */
   protected String getHistoryToken(EntityProxyId<?> proxyId,
       ProxyToTypeMap recordToTypeMap) {

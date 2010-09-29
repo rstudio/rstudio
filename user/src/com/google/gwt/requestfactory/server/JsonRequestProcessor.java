@@ -249,8 +249,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
     if (genericParameterType instanceof ParameterizedType) {
       ParameterizedType pType = (ParameterizedType) genericParameterType;
-      if (pType.getRawType() instanceof Class) {
+      if (pType.getRawType() instanceof Class<?>) {
         Class<?> rType = (Class<?>) pType.getRawType();
+        // Ensure parameterType is initialized
+        parameterType = rType;
         if (Collection.class.isAssignableFrom(rType)) {
           Collection<Object> collection = createCollection(rType);
           if (collection != null) {
@@ -396,10 +398,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       InvocationTargetException, JSONException {
 
     Object returnValue = getRawPropertyValueFromDatastore(entityElement,
-        propertyName, propertyContext);
+        propertyName);
     Class<?> proxyPropertyType = property.getType();
-    Class<?> elementType = property instanceof CollectionProperty
-        ? ((CollectionProperty) property).getLeafType() : proxyPropertyType;
+    Class<?> elementType = property instanceof CollectionProperty<?,?>
+        ? ((CollectionProperty<?,?>) property).getLeafType() : proxyPropertyType;
     String encodedEntityId = isEntityReference(returnValue, proxyPropertyType);
 
     if (returnValue == null) {
@@ -408,13 +410,13 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       String keyRef = encodeRelated(proxyPropertyType, propertyName,
           propertyContext, returnValue);
       return keyRef;
-    } else if (property instanceof CollectionProperty) {
-      Class<?> colType = ((CollectionProperty) property).getType();
+    } else if (property instanceof CollectionProperty<?,?>) {
+      Class<?> colType = ((CollectionProperty<?,?>) property).getType();
       Collection<Object> col = createCollection(colType);
       if (col != null) {
-        for (Object o : ((Collection) returnValue)) {
+        for (Object o : ((Collection<?>) returnValue)) {
           String encodedValId = isEntityReference(o,
-              ((CollectionProperty) property).getLeafType());
+              ((CollectionProperty<?,?>) property).getLeafType());
           if (encodedValId != null) {
             col.add(encodeRelated(elementType, propertyName, propertyContext, o));
           } else {
@@ -488,16 +490,16 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         Object propertyValue = null;
         if (recordObject.isNull(key)) {
           // null
-        } else if (dtoProperty instanceof CollectionProperty) {
+        } else if (dtoProperty instanceof CollectionProperty<?,?>) {
           Class<?> cType = dtoProperty.getType();
-          Class<?> leafType = ((CollectionProperty) dtoProperty).getLeafType();
+          Class<?> leafType = ((CollectionProperty<?,?>) dtoProperty).getLeafType();
           Collection<Object> col = createCollection(cType);
           if (col != null) {
             JSONArray array = recordObject.getJSONArray(key);
             for (int i = 0; i < array.length(); i++) {
               if (EntityProxy.class.isAssignableFrom(leafType)) {
                 propertyValue = getPropertyValueFromRequestCached(array,
-                    propertiesInProxy, i, dtoProperty);
+                    i, dtoProperty);
               } else {
                 propertyValue = decodeParameterValue(leafType,
                     array.getString(i));
@@ -597,9 +599,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       if (entityElement instanceof Number || entityElement instanceof String
           || entityElement instanceof Character
           || entityElement instanceof Date || entityElement instanceof Boolean
-          || entityElement instanceof Enum) {
+          || entityElement instanceof Enum<?>) {
         jsonArray.put(encodePropertyValue(entityElement));
-      } else if (entityElement instanceof List || entityElement instanceof Set) {
+      } else if (entityElement instanceof List<?> || entityElement instanceof Set<?>) {
         // TODO: unwrap nested type params?
         jsonArray.put(getJsonArray((Collection<?>) entityElement,
             entityKeyClass));
@@ -1172,7 +1174,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return null;
   }
 
-  private String encodeId(Object id) throws JSONException {
+  private String encodeId(Object id) {
     if (id instanceof String) {
       return base64Encode((String) id);
     }
@@ -1214,7 +1216,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         + "");
     // violations have already been taken care of.
     Object newId = getRawPropertyValueFromDatastore(entityInstance,
-        ENTITY_ID_PROPERTY, propertyRefs);
+        ENTITY_ID_PROPERTY);
     if (newId == null) {
       log.warning("Record with futureId " + originalEntityKey.encodedId
           + " not persisted");
@@ -1277,12 +1279,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   private Object getPropertyValueFromRequestCached(JSONArray recordArray,
-      Map<String, Property<?>> propertiesInProxy, int index,
-      Property<?> dtoProperty) throws JSONException, IllegalAccessException,
+      int index, Property<?> dtoProperty) throws JSONException, IllegalAccessException,
       InvocationTargetException, NoSuchMethodException, InstantiationException {
     Object propertyValue;
-    Class<?> leafType = dtoProperty instanceof CollectionProperty
-        ? ((CollectionProperty) dtoProperty).getLeafType()
+    Class<?> leafType = dtoProperty instanceof CollectionProperty<?,?>
+        ? ((CollectionProperty<?,?>) dtoProperty).getLeafType()
         : dtoProperty.getType();
 
     // if the property type is a Proxy, we expect an encoded Key string
@@ -1304,7 +1305,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   private Object getRawPropertyValueFromDatastore(Object entityElement,
-      String propertyName, RequestProperty propertyContext)
+      String propertyName)
       throws SecurityException, NoSuchMethodException, IllegalAccessException,
       InvocationTargetException {
     String methodName = getMethodNameFromPropertyName(propertyName, "get");
@@ -1406,7 +1407,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private String isEntityReference(Object entity, Class<?> proxyPropertyType)
       throws SecurityException, NoSuchMethodException,
       IllegalArgumentException, IllegalAccessException,
-      InvocationTargetException, JSONException {
+      InvocationTargetException {
     if (entity != null && EntityProxy.class.isAssignableFrom(proxyPropertyType)) {
       Method idMethod = getIdMethodForEntity(entity.getClass());
       return encodeId(idMethod.invoke(entity));
@@ -1428,8 +1429,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       return false;
     }
     Class<?> leafType = p.getType();
-    if (p instanceof CollectionProperty) {
-      leafType = ((CollectionProperty) p).getLeafType();
+    if (p instanceof CollectionProperty<?,?>) {
+      leafType = ((CollectionProperty<?,?>) p).getLeafType();
     }
     if (EntityProxy.class.isAssignableFrom(leafType)) {
       return propertyContext.hasProperty(p.getName());
@@ -1467,9 +1468,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
             + "@NO@"
             + operationRegistry.getSecurityProvider().encodeClassType(
                 p.getType());
-      } else if (p instanceof CollectionProperty) {
+      } else if (p instanceof CollectionProperty<?,?>) {
         JSONArray array = new JSONArray();
-        for (Object val : ((Collection) returnValue)) {
+        for (Object val : ((Collection<?>) returnValue)) {
           String encodedIdVal = isEntityReference(val, p.getType());
           if (encodedIdVal != null) {
             propertyValue = encodedIdVal
@@ -1516,7 +1517,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         continue;
       }
       Class<?> fieldType = property.getType();
-      if (property instanceof CollectionProperty) {
+      if (property instanceof CollectionProperty<?,?>) {
         toReturn.put(field.getName(), fieldType);
       } else if (fieldType != null) {
         if (EntityProxy.class.isAssignableFrom(fieldType)) {

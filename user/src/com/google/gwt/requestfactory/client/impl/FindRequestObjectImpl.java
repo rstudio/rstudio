@@ -21,22 +21,24 @@ import com.google.gwt.requestfactory.shared.EntityProxyId;
 /**
  * Abstract implementation of {@link AbstractJsonObjectRequest} for special find
  * methods that return single instances of {@link EntityProxy}.
+ *
+ * @param <P>
  */
-public abstract class FindRequestObjectImpl extends
-    AbstractJsonObjectRequest<EntityProxy, FindRequestObjectImpl> {
+public abstract class FindRequestObjectImpl<P extends EntityProxy> extends
+    AbstractJsonObjectRequest<EntityProxy, FindRequestObjectImpl<P>> {
 
-  public FindRequestObjectImpl(RequestFactoryJsonImpl factory, EntityProxyId proxyId) {
-    super(((EntityProxyIdImpl) proxyId).schema, factory);
+  public FindRequestObjectImpl(RequestFactoryJsonImpl factory, EntityProxyId<P> proxyId) {
+    super(((EntityProxyIdImpl<P>) proxyId).schema, factory);
   }
 
   // This declaration works around a javac generics bug
   @Override
-  public FindRequestObjectImpl with(String... propertyRef) {
+  public FindRequestObjectImpl<P> with(String... propertyRef) {
     return super.with(propertyRef);
   }
 
   @Override
-  protected FindRequestObjectImpl getThis() {
+  protected FindRequestObjectImpl<P> getThis() {
     return this;
   }
 }

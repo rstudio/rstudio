@@ -87,6 +87,7 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
     doTest(subject, factory);
   }
 
+  // CHECKSTYLE_OFF
   private void doTest(AbstractPlaceHistoryMapper<?> subject,
       TokenizerFactory factory) {
     String history1 = subject.getPrefixAndToken(place1).toString();
@@ -128,4 +129,5 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
     assertNull(subject.getPrefixAndToken(place));
     assertNull(subject.getTokenizer("snot"));
   }
+  // CHECKSTYLE_ON
 }

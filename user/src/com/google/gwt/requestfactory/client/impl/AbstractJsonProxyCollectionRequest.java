@@ -43,12 +43,13 @@ public abstract class //
     extends AbstractRequest<C, R>  {
   protected final ProxySchema<?> schema;
 
-  public AbstractJsonProxyCollectionRequest(ProxySchema<? extends T> schema,
+  public AbstractJsonProxyCollectionRequest(ProxySchema<?> schema,
       RequestFactoryJsonImpl requestService) {
     super(requestService);
     this.schema = schema;
   }
 
+  @Override
   public void handleResult(Object jsoResult) {
     @SuppressWarnings("unchecked")
     JsArray<JavaScriptObject> rawJsos = (JsArray<JavaScriptObject>) jsoResult;

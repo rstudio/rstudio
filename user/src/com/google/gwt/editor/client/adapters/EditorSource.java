@@ -53,12 +53,17 @@ public abstract class EditorSource<E extends Editor<?>> {
   /**
    * Called when an Editor no longer requires a sub-Editor. The default
    * implementation is a no-op.
+   *
+   * @param subEditor
    */
   public void dispose(E subEditor) {
   }
 
   /**
    * Re-order a sub-Editor. The default implementation is a no-op.
+   *
+   * @param editor
+   * @param index
    */
   public void setIndex(E editor, int index) {
   }

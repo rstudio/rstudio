@@ -72,7 +72,7 @@ public class ClientJsonUtil {
     }
 
     @Override
-    public void endVisit(JsArray array, JsonContext ctx) {
+    public void endVisit(JsArray<?> array, JsonContext ctx) {
       if (pretty) {
         indentLevel = indentLevel.substring(0,
             indentLevel.length() - indent.length());
@@ -109,7 +109,7 @@ public class ClientJsonUtil {
     }
 
     @Override
-    public boolean visit(JsArray array, JsonContext ctx) {
+    public boolean visit(JsArray<?> array, JsonContext ctx) {
       checkCycle(array);
       sb.append("[");
       if (pretty) {

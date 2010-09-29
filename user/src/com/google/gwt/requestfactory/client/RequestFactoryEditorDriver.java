@@ -64,8 +64,8 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
    * proxy (see {@link Request#edit()}. Note that this driver will not fire the
    * request.
    * 
-   * @param the proxy to be edited
-   * @param the request that will accumulate edits and is returned form {@link #flush}
+   * @param proxy the proxy to be edited
+   * @param request the request that will accumulate edits and is returned form {@link #flush}
    */
   void edit(P proxy, Request<?> request);
 

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.app.place;
 
-
 /**
  * Converts a {@link #ProxyPlace} to a {@link ProxyListPlace}.
  */

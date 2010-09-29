@@ -97,8 +97,8 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
       return String.valueOf(((Date) o).getTime());
     } else if (o instanceof ProxyImpl) {
       return ((ProxyImpl) o).wireFormatId();
-    } else if (o instanceof Enum) {
-      return (double) ((Enum) o).ordinal();
+    } else if (o instanceof Enum<?>) {
+      return (double) ((Enum<?>) o).ordinal();
     }
     return o;
   }
@@ -151,13 +151,14 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     return this[@com.google.gwt.requestfactory.shared.impl.RequestData::ENCODED_ID_PROPERTY];
   }-*/;
 
-  public final <V> V get(Property<V> property) {
+  @SuppressWarnings("unchecked")
+  public final <L extends Collection<V>, V> V get(Property<V> property) {
     String name = property.getName();
     Class<V> type = property.getType();
-    if (property instanceof CollectionProperty) {
+    if (property instanceof CollectionProperty<?,?>) {
       assert type == List.class || type == Set.class;
       JsoCollection col = (JsoCollection) getCollection(
-          (CollectionProperty) property);
+          (CollectionProperty<L, V>) property);
       col.setDependencies(property, null);
       return (V) col;
     }
@@ -367,9 +368,9 @@ public class ProxyJsoImpl extends JavaScriptObject implements EntityProxy {
     if (value instanceof JsoCollection) {
       setJso(property.getName(), ((JsoCollection) value).asJso());
       return;
-    } else if (value instanceof Collection) {
+    } else if (value instanceof Collection<?>) {
       JavaScriptObject jso = JavaScriptObject.createArray();
-      for (Object o : ((Collection) value)) {
+      for (Object o : ((Collection<?>) value)) {
         o = encodeToJsType(o);
         if (o instanceof String) {
           ((JsArrayString) jso).push((String) o);

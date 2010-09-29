@@ -21,6 +21,8 @@ import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.HasWireFormatId;
 import com.google.gwt.requestfactory.shared.impl.Property;
 
+import java.util.Collection;
+
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
@@ -100,7 +102,7 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
    * @return the value
    */
   @SuppressWarnings("unchecked")
-  public <V> V get(Property<V> property) {
+  public <L extends Collection<V>, V> V get(Property<V> property) {
     // Read through to the DeltaValueStore to see if the entity has been mutated
     V toReturn = null;
     if (deltaValueStore != null
@@ -112,7 +114,7 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
         toReturn = (V) jso.getCollection((CollectionProperty) property);
       } else {
         // Return a scalar property from the backing object
-        toReturn = jso.<V> get(property);
+        toReturn = jso.<L, V> get(property);
       }
     }
     // Ensure mutability

@@ -31,6 +31,18 @@ import javax.validation.ConstraintViolation;
 public abstract class AbstractGwtSpecificValidator<G> implements
     GwtSpecificValidator<G> {
 
+  /**
+   * @param <A>
+   * @param <T>
+   * @param <V>
+   * @param context
+   * @param violations
+   * @param object
+   * @param value
+   * @param validator
+   * @param constraintDescriptor
+   * @param groups
+   */
   protected <A extends Annotation, T, V> void validate(
       GwtValidationContext<T> context, Set<ConstraintViolation<T>> violations,
       G object, V value, ConstraintValidator<A, V> validator,

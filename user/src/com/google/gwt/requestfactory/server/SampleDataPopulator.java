@@ -19,7 +19,6 @@ import com.google.gwt.requestfactory.client.DefaultRequestTransport;
 import com.google.gwt.requestfactory.shared.impl.RequestData;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -80,7 +79,7 @@ public class SampleDataPopulator {
     this.filePathName = filePathName;
   }
 
-  public void populate() throws JSONException, HttpException, IOException {
+  public void populate() throws JSONException, IOException {
     JSONObject jsonObject = readAsJsonObject(readFileAsString(filePathName));
     postJsonFile(jsonObject);
   }

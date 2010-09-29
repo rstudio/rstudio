@@ -1110,6 +1110,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final Request<SimpleFooProxy> fooReq = req.simpleFooRequest().findSimpleFooById(
         999L);
     fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
       public void onSuccess(SimpleFooProxy response) {
         final Request<Integer> sumReq = req.simpleFooRequest().sum(response,
             Arrays.asList(1, 2, 3));
@@ -1216,6 +1217,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final Request<SimpleFooProxy> fooReq = req.simpleFooRequest().findSimpleFooById(
         999L).with("selfOneToManyField");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
+      @Override
       public void onSuccess(final SimpleFooProxy fooProxy) {
         final Request<String> procReq = req.simpleFooRequest().processList(
             fooProxy, fooProxy.getSelfOneToManyField());

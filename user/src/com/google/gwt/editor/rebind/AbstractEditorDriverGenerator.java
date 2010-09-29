@@ -325,6 +325,14 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
   protected abstract String mutableObjectExpression(EditorData data,
       String sourceObjectExpression);
 
+  /**
+   * @param logger
+   * @param context
+   * @param model
+   * @param sw
+   *
+   * @throws UnableToCompleteException
+   */
   protected void writeAdditionalContent(TreeLogger logger,
       GeneratorContext context, EditorModel model, SourceWriter sw)
       throws UnableToCompleteException {

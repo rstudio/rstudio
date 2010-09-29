@@ -81,6 +81,11 @@ public class RpcStatsContext {
     };
   }-*/;
 
+  /**
+   * @param method
+   * @param result
+   * @param eventType
+   */
   public JavaScriptObject timeStat(String method, Object result, String eventType) {
     return timeStat(method, eventType);
   }
