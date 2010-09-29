@@ -16,11 +16,11 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
-import com.google.gwt.requestfactory.shared.ProxyListRequest;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Expense;
+
+import java.util.List;
 
 /**
  * "API Generated" request selector interface implemented by objects that give
@@ -35,17 +35,17 @@ public interface ExpenseRequest {
   /**
    * @return a request object
    */
-  ProxyListRequest<ExpenseProxy> findAllExpenses();
+  Request<List<ExpenseProxy>> findAllExpenses();
 
   /**
    * @return a request object
    */
-  ProxyRequest<ExpenseProxy> findExpense(Long id);
+  Request<ExpenseProxy> findExpense(Long id);
 
   /**
    * @return a request object
    */
-  ProxyListRequest<ExpenseProxy> findExpensesByReport(Long id);
+  Request<List<ExpenseProxy>> findExpensesByReport(Long id);
 
   /**
    * @return a request object

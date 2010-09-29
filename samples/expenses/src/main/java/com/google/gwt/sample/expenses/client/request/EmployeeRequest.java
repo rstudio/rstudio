@@ -16,12 +16,11 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
-
-import com.google.gwt.requestfactory.shared.ProxyListRequest;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Employee;
+
+import java.util.List;
 
 /**
  * "API Generated" request selector interface implemented by objects that give
@@ -47,23 +46,23 @@ public interface EmployeeRequest {
   /**
    * @return a request object
    */
-  ProxyListRequest<EmployeeProxy> findAllEmployees();
+  Request<List<EmployeeProxy>> findAllEmployees();
 
   /**
    * @return a request object
    */
-  ProxyRequest<EmployeeProxy> findEmployee(Long id);
+  Request<EmployeeProxy> findEmployee(Long id);
 
   /**
    * @return a request object
    */
-  ProxyListRequest<EmployeeProxy> findEmployeeEntries(int firstResult,
+  Request<List<EmployeeProxy>> findEmployeeEntries(int firstResult,
       int maxResults);
 
   /**
    * @return a request object
    */
-  ProxyListRequest<EmployeeProxy> findEmployeeEntriesByDepartment(
+  Request<List<EmployeeProxy>> findEmployeeEntriesByDepartment(
       String department, int firstResult, int maxResults);
 
   /**

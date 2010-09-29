@@ -16,11 +16,11 @@
 package com.google.gwt.sample.expenses.client.request;
 
 import com.google.gwt.requestfactory.shared.Instance;
-import com.google.gwt.requestfactory.shared.ProxyListRequest;
-import com.google.gwt.requestfactory.shared.ProxyRequest;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.expenses.server.domain.Report;
+
+import java.util.List;
 
 /**
  * "API Generated" request selector interface implemented by objects that give
@@ -46,30 +46,30 @@ public interface ReportRequest {
   /**
    * @return a request object
    */
-  ProxyListRequest<ReportProxy> findAllReports();
+  Request<List<ReportProxy>> findAllReports();
 
   /**
    * @return a request object
    */
-  ProxyRequest<ReportProxy> findReport(Long id);
+  Request<ReportProxy> findReport(Long id);
 
   /**
    * @return a request object
    */
-  ProxyListRequest<ReportProxy> findReportEntries(int firstResult,
+  Request<List<ReportProxy>> findReportEntries(int firstResult,
       int maxResults);
 
   /**
    * @return a request object
    */
-  ProxyListRequest<ReportProxy> findReportEntriesBySearch(Long employeeId,
+  Request<List<ReportProxy>> findReportEntriesBySearch(Long employeeId,
       String department, String startsWith, String orderBy, int firstResult,
       int maxResults);
 
   /**
    * @return a request object
    */
-  ProxyListRequest<ReportProxy> findReportsByEmployee(Long employeeId);
+  Request<List<ReportProxy>> findReportsByEmployee(Long employeeId);
 
   /**
    * @return a request object
