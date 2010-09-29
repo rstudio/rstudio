@@ -257,6 +257,13 @@ public class CellList<T> extends AbstractHasData<T> {
     return cell.dependsOnSelection();
   }
 
+  protected void doSelection(Event event, T value, int indexOnPage) {
+    SelectionModel<? super T> selectionModel = getSelectionModel();
+    if (selectionModel != null) {
+      selectionModel.setSelected(value, true);
+    }
+  }
+
   /**
    * Fire an event to the cell.
    *
@@ -349,9 +356,8 @@ public class CellList<T> extends AbstractHasData<T> {
         return;
       }
       T value = getDisplayedItem(indexOnPage);
-      SelectionModel<? super T> selectionModel = getSelectionModel();
-      if (selectionModel != null && isMouseDown && !cell.handlesSelection()) {
-        selectionModel.setSelected(value, true);
+      if (isMouseDown && !cell.handlesSelection()) {
+        doSelection(event, value, indexOnPage);
       }
 
       // Focus on the cell.
