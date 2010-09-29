@@ -63,87 +63,88 @@ public class LayoutTest extends GWTTestCase {
     return "com.google.gwt.layout.LayoutTest";
   }
 
+  // All testAnimationTransitions_* tests are disabled because they are flaky
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_LTWH_LTRB_PX_CM() {
+  public void notestAnimationTransitions_LTWH_LTRB_PX_CM() {
     testAnimationTransitions_LTWH_LTRB(PX, CM);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_LTWH_LTRB_PX_EM() {
+  public void notestAnimationTransitions_LTWH_LTRB_PX_EM() {
     testAnimationTransitions_LTWH_LTRB(PX, EM);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_LTWH_LTRB_PX_EX() {
+  public void notestAnimationTransitions_LTWH_LTRB_PX_EX() {
     testAnimationTransitions_LTWH_LTRB(PX, EX);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_LTWH_LTRB_PX_PCT() {
+  public void notestAnimationTransitions_LTWH_LTRB_PX_PCT() {
     testAnimationTransitions_LTWH_LTRB(PX, PCT);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_LTWH_RBWH_PX_CM() {
+  public void notestAnimationTransitions_LTWH_RBWH_PX_CM() {
     testAnimationTransitions_LTWH_RBWH(PX, CM);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_LTWH_RBWH_PX_EM() {
+  public void notestAnimationTransitions_LTWH_RBWH_PX_EM() {
     testAnimationTransitions_LTWH_RBWH(PX, EM);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_LTWH_RBWH_PX_EX() {
+  public void notestAnimationTransitions_LTWH_RBWH_PX_EX() {
     testAnimationTransitions_LTWH_RBWH(PX, EX);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_LTWH_RBWH_PX_PCT() {
+  public void notestAnimationTransitions_LTWH_RBWH_PX_PCT() {
     testAnimationTransitions_LTWH_RBWH(PX, PCT);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_RBWH_LTRB_PX_CM() {
+  public void notestAnimationTransitions_RBWH_LTRB_PX_CM() {
     testAnimationTransitions_RBWH_LTRB(PX, CM);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_RBWH_LTRB_PX_EM() {
+  public void notestAnimationTransitions_RBWH_LTRB_PX_EM() {
     testAnimationTransitions_RBWH_LTRB(PX, EM);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_RBWH_LTRB_PX_EX() {
+  public void notestAnimationTransitions_RBWH_LTRB_PX_EX() {
     testAnimationTransitions_RBWH_LTRB(PX, EX);
   }
 
   /**
    * Tests animation constraint- and unit-transitions.
    */
-  public void testAnimationTransitions_RBWH_LTRB_PX_PCT() {
+  public void notestAnimationTransitions_RBWH_LTRB_PX_PCT() {
     testAnimationTransitions_RBWH_LTRB(PX, PCT);
   }
 
