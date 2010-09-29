@@ -33,7 +33,6 @@ public class CustomEventWidget<T> extends HTML {
   public CustomEventWidget(final T value) {
     this.value = value;
     addClickHandler(new ClickHandler() {
-      @Override
       public void onClick(ClickEvent event) {
         fireEvent(new CustomEvent<T>(value));
       }
