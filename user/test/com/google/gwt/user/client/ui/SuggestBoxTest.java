@@ -138,10 +138,10 @@ public class SuggestBoxTest extends WidgetTestBase {
     box.showSuggestionList();
     assertTrue(display.isSuggestionListShowing());
     assertEquals(1, display.getSuggestionCount());
-    assertEquals("<strong>he</strong>'ll <strong>help</strong> me wont <strong>he</strong>",
-        display.getSuggestion(0).getDisplayString().toLowerCase());
+    assertEquals("<strong>He</strong>&#39;ll <strong>help</strong> me wont <strong>he</strong>",
+        display.getSuggestion(0).getDisplayString());
   }
-  
+
   public void testMultipleWordMatchesShow() {
     MultiWordSuggestOracle oracle = new MultiWordSuggestOracle(",! ");
     oracle.add("Hark, Shark and Herald");
@@ -156,14 +156,14 @@ public class SuggestBoxTest extends WidgetTestBase {
     box.showSuggestionList();
     assertTrue(display.isSuggestionListShowing());
     assertEquals(3, display.getSuggestionCount());
-    assertEquals("<strong>hark</strong>, shark and <strong>herald</strong>", 
-        display.getSuggestion(0).getDisplayString().toLowerCase());
-    assertEquals("<strong>hark</strong>! the <strong>herald</strong> angels sing",
-        display.getSuggestion(1).getDisplayString().toLowerCase());
-    assertEquals("<strong>herald</strong>ings and <strong>hark</strong>ings",
-        display.getSuggestion(2).getDisplayString().toLowerCase());
+    assertEquals("<strong>Hark</strong>, Shark and <strong>Herald</strong>", 
+        display.getSuggestion(0).getDisplayString());
+    assertEquals("<strong>Hark</strong>! The <strong>Herald</strong> Angels Sing",
+        display.getSuggestion(1).getDisplayString());
+    assertEquals("<strong>Herald</strong>ings and <strong>Hark</strong>ings",
+        display.getSuggestion(2).getDisplayString());
   }
-  
+
   @SuppressWarnings("deprecation")
   public void testShowAndHide() {
     SuggestBox box = createSuggestBox();

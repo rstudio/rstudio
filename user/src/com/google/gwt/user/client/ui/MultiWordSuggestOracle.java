@@ -15,7 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
@@ -119,10 +119,6 @@ public class MultiWordSuggestOracle extends SuggestOracle {
       }
       return comparison;
     }
-    
-    public int length() {
-      return endIndex - startIndex;
-    }
   }
   
   private static final char WHITESPACE_CHAR = ' ';
@@ -132,8 +128,6 @@ public class MultiWordSuggestOracle extends SuggestOracle {
    * Regular expression used to collapse all whitespace in a query string.
    */
   private static final String NORMALIZE_TO_SINGLE_WHITE_SPACE = "\\s+";
-
-  private static HTML convertMe = GWT.isClient() ? new HTML() : null;
 
   /**
    * Associates substrings with words.
@@ -309,12 +303,6 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     return new MultiWordSuggestion(replacementString, displayString);
   }
 
-  String escapeText(String escapeMe) {
-    convertMe.setText(escapeMe);
-    String escaped = convertMe.getHTML();
-    return escaped;
-  }
-
   /**
    * Returns real suggestions with the given query in <code>strong</code> html
    * font.
@@ -335,7 +323,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
       String formattedSuggestion = toRealSuggestions.get(candidate);
 
       // Create strong search string.
-      StringBuffer accum = new StringBuffer();
+      SafeHtmlBuilder accum = new SafeHtmlBuilder();
       
       String[] searchWords = query.split(WHITESPACE_STRING);
       while (true) {
@@ -345,12 +333,14 @@ public class MultiWordSuggestOracle extends SuggestOracle {
         }
         if (wordBounds.startIndex == 0 || 
             WHITESPACE_CHAR == candidate.charAt(wordBounds.startIndex - 1)) {
-          String part1 = escapeText(formattedSuggestion.substring(cursor, wordBounds.startIndex));
-          String part2 = escapeText(formattedSuggestion.substring(wordBounds.startIndex,
-              wordBounds.endIndex));
+          String part1 = formattedSuggestion.substring(cursor, wordBounds.startIndex);
+          String part2 = formattedSuggestion.substring(wordBounds.startIndex,
+              wordBounds.endIndex);
           cursor = wordBounds.endIndex;
-          accum.append(part1).append("<strong>").append(part2).append(
-              "</strong>");
+          accum.appendEscaped(part1);
+          accum.appendHtmlConstant("<strong>");
+          accum.appendEscaped(part2);
+          accum.appendHtmlConstant("</strong>");
         }
         index = wordBounds.endIndex;
       }
@@ -360,10 +350,9 @@ public class MultiWordSuggestOracle extends SuggestOracle {
         continue;
       }
       
-      String end = escapeText(formattedSuggestion.substring(cursor));
-      accum.append(end);
+      accum.appendEscaped(formattedSuggestion.substring(cursor));
       MultiWordSuggestion suggestion = createSuggestion(formattedSuggestion,
-          accum.toString());
+          accum.toSafeHtml().asString());
       suggestions.add(suggestion);
     }
     return suggestions;
