@@ -45,6 +45,15 @@ public class SimpleFoo {
     return 1L;
   }
 
+  public static SimpleFoo echo(SimpleFoo simpleFoo) {
+    return simpleFoo;
+  }
+
+  public static SimpleFoo echoComplex(SimpleFoo simpleFoo, SimpleBar simpleBar) {
+    simpleFoo.setBarField(simpleBar);
+    return simpleFoo;
+  }
+
   public static List<SimpleFoo> findAll() {
     return Collections.singletonList(get());
   }

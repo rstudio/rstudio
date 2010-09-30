@@ -269,6 +269,46 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  public void disabled_testEchoSimpleFutures() {
+    // tests if futureIds can be echoed back.
+    delayTestFinish(5000);
+    final SimpleFooEventHandler<SimpleFooProxy> handler = new SimpleFooEventHandler<SimpleFooProxy>();
+    EntityProxyChange.registerForProxyType(req.getEventBus(),
+        SimpleFooProxy.class, handler);
+    final SimpleFooProxy simpleFoo = req.create(SimpleFooProxy.class);
+    req.simpleFooRequest().echo(simpleFoo).fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            assertEquals(0, handler.totalEventCount);
+            checkStableIdEquals(simpleFoo, response);
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void disabled_testEchoComplexFutures() {
+    // relate futures on the server. Check if the relationship is still present on the client.
+    delayTestFinish(5000);
+    final SimpleFooEventHandler<SimpleFooProxy> handler = new SimpleFooEventHandler<SimpleFooProxy>();
+    EntityProxyChange.registerForProxyType(req.getEventBus(),
+        SimpleFooProxy.class, handler);
+    final SimpleFooProxy simpleFoo = req.create(SimpleFooProxy.class);
+    final SimpleBarProxy simpleBar = req.create(SimpleBarProxy.class);
+    req.simpleFooRequest().echoComplex(simpleFoo, simpleBar).fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            assertEquals(0, handler.totalEventCount);
+            checkStableIdEquals(simpleFoo, response);
+            SimpleBarProxy responseBar = response.getBarField();
+            assertNotNull(responseBar);
+            checkStableIdEquals(simpleBar, responseBar);
+            finishTestAndReset();
+          }
+        });
+  }
+
   public void testFetchEntity() {
     delayTestFinish(5000);
     req.simpleFooRequest().findSimpleFooById(999L).fire(

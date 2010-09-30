@@ -29,6 +29,10 @@ public interface SimpleFooRequest {
   @Instance
   Request<Long> countSimpleFooWithUserNameSideEffect(SimpleFooProxy proxy);
 
+  Request<SimpleFooProxy> echo(SimpleFooProxy proxy);
+
+  Request<SimpleFooProxy> echoComplex(SimpleFooProxy fooProxy, SimpleBarProxy barProxy);
+
   Request<List<SimpleFooProxy>> findAll();
 
   Request<SimpleFooProxy> findSimpleFooById(Long id);
