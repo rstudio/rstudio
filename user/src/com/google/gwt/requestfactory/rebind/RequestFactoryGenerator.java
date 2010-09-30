@@ -343,6 +343,9 @@ public class RequestFactoryGenerator extends Generator {
         || publicProxyType.equals(entityProxyType)) {
       return;
     }
+    if (publicProxyType.isTypeParameter() != null) {
+      return;
+    }
     if (generatedProxyTypes.contains(publicProxyType)) {
       return;
     }
@@ -352,11 +355,6 @@ public class RequestFactoryGenerator extends Generator {
     } catch (DiagnosticException e) {
       logger.log(TreeLogger.ERROR, e.getMessage());
       throw new UnableToCompleteException();
-    }
-
-    // Hack
-    if ("P".equals(publicProxyType.getName())) {
-      return;
     }
 
     String packageName = publicProxyType.getPackage().getName();
