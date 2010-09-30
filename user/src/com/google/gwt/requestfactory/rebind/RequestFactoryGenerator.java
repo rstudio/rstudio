@@ -221,12 +221,14 @@ public class RequestFactoryGenerator extends Generator {
     return packageName + "." + implName;
   }
 
-  private String asInnerImplClass(String className, JClassType outerClassName) {
-    if (outerClassName.isParameterized() != null) {
-      // outerClassName is of form List<EmployeeProxy>
-      outerClassName = outerClassName.isParameterized().getTypeArgs()[0];
+  private String asInnerImplClass(String className, JClassType outerClass) {
+    if (outerClass.isParameterized() != null) {
+      // outerClass is of form List<EmployeeProxy>
+      outerClass = outerClass.isParameterized().getTypeArgs()[0];
     }
-    className = outerClassName.getQualifiedSourceName() + "Impl." + className;
+    // outerClass is of the form <P extends EmployeeProxy>
+    outerClass = decodeToBaseType(outerClass);
+    className = outerClass.getQualifiedSourceName() + "Impl." + className;
     return className;
   }
 
@@ -338,12 +340,12 @@ public class RequestFactoryGenerator extends Generator {
       // handle publicProxyType = List<EmployeeProxy>
       publicProxyType = publicProxyType.isParameterized().getTypeArgs()[0];
     }
+    // deal with stuff like Request<T extends FooProxy>
+    publicProxyType = decodeToBaseType(publicProxyType);
+
     // don't generate proxies for the EntityProxy impl itself
     if (!publicProxyType.isAssignableTo(entityProxyType)
         || publicProxyType.equals(entityProxyType)) {
-      return;
-    }
-    if (publicProxyType.isTypeParameter() != null) {
       return;
     }
     if (generatedProxyTypes.contains(publicProxyType)) {
@@ -933,8 +935,12 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println(getMethodDeclaration(method) + " {");
       sw.indent();
-      sw.println("return new " + requestClassName + "(factory" + extraArgs
-          + ") {");
+      /*
+       * ugly cast to get around generics, if method signature is like
+       * com.google.gwt.requestfactory.shared.TestFooPolymorphicRequest::echo
+       */
+      sw.println("return (" + method.getReturnType().getQualifiedBinaryName()
+          + ") new " + requestClassName + "(factory" + extraArgs + ") {");
       sw.indent();
       String requestDataName = RequestData.class.getSimpleName();
       sw.println("public " + requestDataName + " getRequestData() {");
@@ -1051,7 +1057,8 @@ public class RequestFactoryGenerator extends Generator {
       }
 
       if (classType != null && classType.isAssignableTo(entityProxyType)) {
-        sb.append("((" + classType.getQualifiedBinaryName() + "Impl" + ")");
+        // classType is of the form <P extends EmployeeProxy>
+        sb.append("((" + decodeToBaseType(classType).getQualifiedBinaryName() + "Impl" + ")");
       }
       sb.append(parameter.getName());
       if (classType != null && classType.isAssignableTo(entityProxyType)) {
@@ -1370,8 +1377,6 @@ public class RequestFactoryGenerator extends Generator {
   @SuppressWarnings("unchecked")
   private void validateProxyType(JClassType entityProxyType,
       TypeOracle typeOracle) throws DiagnosticException {
-    // deal with stuff like Request<T extends FooProxy>
-    entityProxyType = decodeToBaseType(entityProxyType);
     // skip validating base interface
     if (this.entityProxyType.equals(entityProxyType)) {
       return;
