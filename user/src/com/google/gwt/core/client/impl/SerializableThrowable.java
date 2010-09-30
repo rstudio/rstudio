@@ -14,27 +14,21 @@
  * the License.
  */
 
-package com.google.gwt.logging.shared;
+package com.google.gwt.core.client.impl;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
+import java.io.Serializable;
 
 /**
- * A representation of a Throwable which can be used by GWT RPC. Although
- * Throwables are serializable, we don't want to use them directly in the
- * SerializableLogRecord since including a class with so many possible
- * subclasses will cause the client side JS to be very big.
+ * The emulated Throwable class does not serialize Throwables recursively and
+ * does not serialize the stack trace.  This class is an alternative, and
+ * can be used by writing a custom serializer for the class which contains a
+ * Throwable. See {@link LogRecord_CustomFieldSerializer} as an example.
+ *
  */
-public class SerializableThrowable implements IsSerializable {
+public class SerializableThrowable implements Serializable {
   private SerializableThrowable cause = null;
-  private String message;
-  private StackTraceElement[] stackTrace;
-  
-  public SerializableThrowable(String message, SerializableThrowable cause,
-      StackTraceElement[] stackTrace) {
-    this.message = message;
-    this.cause = cause;
-    this.stackTrace = stackTrace;
-  }
+  private String message = null;
+  private StackTraceElement[] stackTrace = null;
   
   /**
    * Create a new SerializableThrowable from a Throwable.
@@ -79,6 +73,10 @@ public class SerializableThrowable implements IsSerializable {
   
   public void setCause(SerializableThrowable c) {
     cause = c;
+  }
+  
+  public void setMessage(String msg) {
+    message = msg;
   }
   
   public void setStackTrace(StackTraceElement[] st) {

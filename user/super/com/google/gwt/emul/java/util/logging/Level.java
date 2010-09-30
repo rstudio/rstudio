@@ -43,12 +43,16 @@ public class Level implements Serializable {
     return staticImpl.parse(name);
   } 
   
-  private LevelImpl impl;
+  private transient LevelImpl impl;
 
   protected Level(String name, int value) {
     impl = GWT.create(LevelImplNull.class);
     impl.setName(name);
     impl.setValue(value);
+  }
+  
+  protected Level() {
+    // For serialization
   }
 
   public String getName() {

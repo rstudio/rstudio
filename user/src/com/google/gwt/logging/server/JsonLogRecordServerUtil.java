@@ -16,64 +16,71 @@
 
 package com.google.gwt.logging.server;
 
-import com.google.gwt.logging.shared.SerializableLogRecord;
-import com.google.gwt.logging.shared.SerializableThrowable;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+
 
 /**
  * A set of functions to convert standard JSON strings into
- * SerializableLogRecords. The corresponding functions to create the JSON
+ * LogRecords. The corresponding functions to create the JSON
  * strings are in JsonLogRecordClientUtil.java. This class should only be used
  * in server side code since it imports org.json classes.
  * TODO(unnurg) once there is a unified JSON GWT library, combine this with
  * JsonLogRecordClientUtil.
  */
 public class JsonLogRecordServerUtil {
-  public static SerializableLogRecord serializableLogRecordFromJson(
-      String jsonString) throws JSONException {
-    JSONObject slr = new JSONObject(jsonString);
-    String level = slr.getString("level");
-    String loggerName = slr.getString("loggerName");
-    String msg = slr.getString("msg");
-    long timestamp = Long.parseLong(slr.getString("timestamp"));
-    SerializableThrowable thrown =
-      serializableThrowableFromJson(slr.getString("thrown"));
-    return new SerializableLogRecord(level, loggerName, msg, thrown,
-        timestamp);
+  private static Logger logger =
+    Logger.getLogger(JsonLogRecordServerUtil.class.getName());
+  public static LogRecord logRecordFromJson(String jsonString)
+  throws JSONException {
+    JSONObject lro = new JSONObject(jsonString);
+    String level = lro.getString("level");
+    String loggerName = lro.getString("loggerName");
+    String msg = lro.getString("msg");
+    long timestamp = Long.parseLong(lro.getString("timestamp"));
+    Throwable thrown =
+      throwableFromJson(lro.getString("thrown"));
+    LogRecord lr = new LogRecord(Level.parse(level), msg);
+    lr.setLoggerName(loggerName);
+    lr.setThrown(thrown);
+    lr.setMillis(timestamp);
+    return lr;
   }
   
-  private static StackTraceElement serializableStackTraceElementFromJson(
+  private static StackTraceElement stackTraceElementFromJson(
       String jsonString) throws JSONException {
     JSONObject ste = new JSONObject(jsonString);
     String className = ste.getString("className");
     String fileName = ste.getString("fileName");
     String methodName = ste.getString("methodName");
     int lineNumber = Integer.parseInt(ste.getString("lineNumber"));
-    return new StackTraceElement(className, methodName, fileName,
-        lineNumber);
+    return new StackTraceElement(className, methodName, fileName, lineNumber);
   }
   
-  private static SerializableThrowable serializableThrowableFromJson(
-      String jsonString) throws JSONException {
+  private static Throwable throwableFromJson(String jsonString)
+  throws JSONException {
     if (jsonString.equals("{}")) {
       return null;
     }
     JSONObject t = new JSONObject(jsonString);
     String message = t.getString("message");
-    SerializableThrowable cause =
-      serializableThrowableFromJson(t.getString("cause"));
+    Throwable cause =
+      throwableFromJson(t.getString("cause"));
     StackTraceElement[] stackTrace = null;
     JSONArray st = t.getJSONArray("stackTrace");
     if (st.length() > 0) {
       stackTrace = new StackTraceElement[st.length()];
       for (int i = 0; i < st.length(); i++) {
-        stackTrace[i] = serializableStackTraceElementFromJson(st.getString(i));
+        stackTrace[i] = stackTraceElementFromJson(st.getString(i));
       }
     }
-    return new SerializableThrowable(message, cause, stackTrace);
+    Throwable thrown = new Throwable(message, cause);
+    thrown.setStackTrace(stackTrace);
+    return thrown;
   }
 }

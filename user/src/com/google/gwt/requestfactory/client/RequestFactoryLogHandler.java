@@ -18,7 +18,6 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.logging.client.JsonLogRecordClientUtil;
 import com.google.gwt.logging.client.RemoteLogHandlerBase;
-import com.google.gwt.logging.shared.SerializableLogRecord;
 import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 
@@ -61,9 +60,7 @@ public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
     if (!isLoggable(record)) {
       return;
     }
-    SerializableLogRecord slr =
-      new SerializableLogRecord(record);
-    String json = JsonLogRecordClientUtil.serializableLogRecordAsJson(slr);
+    String json = JsonLogRecordClientUtil.logRecordAsJson(record);
     requestProvider.getLoggingRequest().logMessage(json).fire(
         new Receiver<Void>() {
           @Override

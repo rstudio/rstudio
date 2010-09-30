@@ -18,9 +18,11 @@ package com.google.gwt.logging.shared;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import java.util.logging.LogRecord;
+
 /**
  * The async counterpart of <code>RemoteLoggingService</code>.
  */
 public interface RemoteLoggingServiceAsync {
-  void logOnServer(SerializableLogRecord record, AsyncCallback<String> callback);
+  void logOnServer(LogRecord record, AsyncCallback<String> callback);
 }

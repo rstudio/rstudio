@@ -24,23 +24,20 @@ import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 /**
  * Server side object that handles log messages sent by
  * {@link RequestFactoryLogHandler}.
- * 
- * TODO(unnurg): Before the end of Sept 2010, combine this class intelligently
- * with SimpleRemoteLogHandler so they share functionality and patterns.
  */
 public class Logging {
 
   private static StackTraceDeobfuscator deobfuscator =
     new StackTraceDeobfuscator("");
   
-  public static void logMessage(String serializedLogRecordJson) throws
+  public static void logMessage(String logRecordJson) throws
   RemoteLoggingException {
     // if the header does not exist, we pass null, which is handled gracefully
     // by the deobfuscation code.
     String strongName =
       RequestFactoryServlet.getThreadLocalRequest().getHeader(
           RpcRequestBuilder.STRONG_NAME_HEADER);
-    RemoteLoggingServiceUtil.logOnServer(serializedLogRecordJson,
+    RemoteLoggingServiceUtil.logOnServer(logRecordJson,
         strongName, deobfuscator, null);
   }
   

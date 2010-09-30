@@ -16,14 +16,12 @@
 
 package com.google.gwt.logging.server;
 
-import com.google.gwt.logging.shared.SerializableLogRecord;
-import com.google.gwt.logging.shared.SerializableThrowable;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.LogRecord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,12 +55,11 @@ public class StackTraceDeobfuscator {
     this.symbolMapsDirectory = symbolMapsDirectory;
   }
   
-  public SerializableLogRecord deobfuscateLogRecord(
-      SerializableLogRecord slr, String strongName) {
-    if (slr.getThrown() != null && strongName != null) {
-      slr.setThrown(deobfuscateThrowable(slr.getThrown(), strongName));
+  public LogRecord deobfuscateLogRecord(LogRecord lr, String strongName) {
+    if (lr.getThrown() != null && strongName != null) {
+      lr.setThrown(deobfuscateThrowable(lr.getThrown(), strongName));
     }
-    return slr;
+    return lr;
   }
   
   public void setSymbolMapsDirectory(String dir) {
@@ -85,13 +82,12 @@ public class StackTraceDeobfuscator {
     return newSt;
   }
   
-  private SerializableThrowable deobfuscateThrowable(
-      SerializableThrowable t, String strongName) {
+  private Throwable deobfuscateThrowable(Throwable t, String strongName) {
     if (t.getStackTrace() != null) {
       t.setStackTrace(deobfuscateStackTrace(t.getStackTrace(), strongName));
     }
     if (t.getCause() != null) {
-      t.setCause(deobfuscateThrowable(t.getCause(), strongName));
+      t.initCause(deobfuscateThrowable(t.getCause(), strongName));
     }
     return t;
   }

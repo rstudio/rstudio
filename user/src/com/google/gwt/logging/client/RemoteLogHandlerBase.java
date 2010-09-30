@@ -57,7 +57,11 @@ public abstract class RemoteLogHandlerBase extends Handler {
   
   @Override
   public boolean isLoggable(LogRecord record) {
-    return (!closed &&
-        !excludedLoggerNames.equals(record.getLoggerName()));
+    // The number of excludedLoggerNames is expected to be small (2-3 at most)
+    // but in theory, clients could put lots of names in the list.
+    // TODO(unnurg): consider implementing this search with a map rather than
+    // a list, depending on the JS size implications of including a map.
+    return (!closed && super.isLoggable(record) &&
+        !excludedLoggerNames.contains(record.getLoggerName()));
   }
 }

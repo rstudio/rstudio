@@ -18,10 +18,10 @@ package com.google.gwt.logging.server;
 
 import com.google.gwt.logging.server.RemoteLoggingServiceUtil.RemoteLoggingException;
 import com.google.gwt.logging.shared.RemoteLoggingService;
-import com.google.gwt.logging.shared.SerializableLogRecord;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
@@ -41,11 +41,11 @@ public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements
    * Logs a Log Record which has been serialized using GWT RPC on the server.
    * @return either an error message, or null if logging is successful.
    */
-  public final String logOnServer(SerializableLogRecord slr) {
+  public final String logOnServer(LogRecord lr) {
     String strongName = getPermutationStrongName();
     try {
       RemoteLoggingServiceUtil.logOnServer(
-          slr, strongName, deobfuscator, loggerNameOverride);
+          lr, strongName, deobfuscator, loggerNameOverride);
     } catch (RemoteLoggingException e) {
       logger.log(Level.SEVERE, "Remote logging failed", e);
       return "Remote logging failed, check stack trace for details.";
@@ -76,5 +76,4 @@ public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements
       deobfuscator.setSymbolMapsDirectory(symbolMapsDir);
     }
   }
-  
 }

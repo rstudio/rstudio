@@ -19,9 +19,9 @@ package com.google.gwt.logging.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.logging.shared.RemoteLoggingService;
 import com.google.gwt.logging.shared.RemoteLoggingServiceAsync;
-import com.google.gwt.logging.shared.SerializableLogRecord;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
@@ -32,7 +32,7 @@ import java.util.logging.LogRecord;
 public final class SimpleRemoteLogHandler extends RemoteLogHandlerBase {
   class DefaultCallback implements AsyncCallback<String> {
     public void onFailure(Throwable caught) {
-      wireLogger.severe("Remote logging failed: " + caught.toString());
+      wireLogger.log(Level.SEVERE, "Remote logging failed: ", caught);
     }
     public void onSuccess(String result) {
       if (result != null) {
@@ -54,7 +54,7 @@ public final class SimpleRemoteLogHandler extends RemoteLogHandlerBase {
   @Override
   public void publish(LogRecord record) {
     if (isLoggable(record)) {
-      service.logOnServer(new SerializableLogRecord(record), callback);
+      service.logOnServer(record, callback);
     }
   }
 }

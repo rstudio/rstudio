@@ -19,8 +19,8 @@ package com.google.gwt.logging.client;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
-import com.google.gwt.logging.shared.SerializableLogRecord;
-import com.google.gwt.logging.shared.SerializableThrowable;
+
+import java.util.logging.LogRecord;
 
 /**
  * A set of functions to convert SerializableLogRecords into JSON strings.
@@ -32,8 +32,8 @@ import com.google.gwt.logging.shared.SerializableThrowable;
  */
 public class JsonLogRecordClientUtil {
 
-  public static String serializableLogRecordAsJson(SerializableLogRecord slr) {
-    return serializableLogRecordAsJsonObject(slr).toString();
+  public static String logRecordAsJson(LogRecord lr) {
+    return logRecordAsJsonObject(lr).toString();
   }
   
   private static JSONString getJsonString(String s) {
@@ -43,20 +43,17 @@ public class JsonLogRecordClientUtil {
     return new JSONString(s);
   }
 
-  private static JSONObject serializableLogRecordAsJsonObject(
-      SerializableLogRecord slr) {
+  private static JSONObject logRecordAsJsonObject(LogRecord lr) {
     JSONObject obj = new JSONObject();
-    obj.put("level", getJsonString(slr.getLevel()));
-    obj.put("loggerName", getJsonString(slr.getLoggerName()));
-    obj.put("msg", getJsonString(slr.getMsg()));
-    if (slr.getTimestamp() != null) {
-      obj.put("timestamp", new JSONString(slr.getTimestamp().toString()));
-    }
-    obj.put("thrown", serializableThrowableAsJsonObject(slr.getThrown()));
+    obj.put("level", getJsonString(lr.getLevel().toString()));
+    obj.put("loggerName", getJsonString(lr.getLoggerName()));
+    obj.put("msg", getJsonString(lr.getMessage()));
+    obj.put("timestamp", new JSONString("" + lr.getMillis()));
+    obj.put("thrown", throwableAsJsonObject(lr.getThrown()));
     return obj;
   }
   
-  private static JSONObject serializableStackTraceElementAsJsonObject(
+  private static JSONObject stackTraceElementAsJsonObject(
       StackTraceElement e) {
     JSONObject obj = new JSONObject();
     if (e != null) {
@@ -68,17 +65,16 @@ public class JsonLogRecordClientUtil {
     return obj;
   }
   
-  private static JSONObject serializableThrowableAsJsonObject(
-      SerializableThrowable t) {
+  private static JSONObject throwableAsJsonObject(Throwable t) {
     JSONObject obj = new JSONObject();
     if (t != null) {
       obj.put("message", getJsonString(t.getMessage()));
-      obj.put("cause", serializableThrowableAsJsonObject(t.getCause()));
+      obj.put("cause", throwableAsJsonObject(t.getCause()));
       StackTraceElement[] stackTrace = t.getStackTrace();
       if (stackTrace != null && stackTrace.length > 0) {
         JSONArray arr = new JSONArray();
         for (int i = 0; i < stackTrace.length; i++) {
-          arr.set(i, serializableStackTraceElementAsJsonObject(stackTrace[i]));
+          arr.set(i, stackTraceElementAsJsonObject(stackTrace[i]));
         }
         obj.put("stackTrace", arr);
       }

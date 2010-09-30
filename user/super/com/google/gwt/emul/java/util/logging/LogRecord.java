@@ -16,6 +16,8 @@
 
 package java.util.logging;
 
+import com.google.gwt.core.client.impl.SerializableThrowable;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -29,12 +31,15 @@ public class LogRecord implements Serializable {
   private String loggerName = "";
   private String msg;
   private Throwable thrown = null;
-  private Date timestamp;
+  private long millis;
+  
+  // DUMMY - Used to trigger serialization
+  private SerializableThrowable dummy = null;
   
   public LogRecord(Level level, String msg) {
     this.level = level;
     this.msg = msg;
-    timestamp = new Date();
+    millis = new Date().getTime();
   }
   
   protected LogRecord() {
@@ -54,7 +59,7 @@ public class LogRecord implements Serializable {
   }
   
   public long getMillis() {
-    return timestamp.getTime();
+    return millis;
   }
   
   public Throwable getThrown() {
@@ -73,8 +78,8 @@ public class LogRecord implements Serializable {
     msg = newMessage;
   }
   
-  public void setMillis(long millis) {
-    timestamp.setTime(millis);
+  public void setMillis(long newMillis) {
+    millis = newMillis;
   }
 
   public void setThrown(Throwable newThrown) {

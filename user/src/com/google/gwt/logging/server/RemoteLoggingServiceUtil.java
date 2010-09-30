@@ -16,8 +16,6 @@
 
 package com.google.gwt.logging.server;
 
-import com.google.gwt.logging.shared.SerializableLogRecord;
-
 import org.json.JSONException;
 
 import java.util.logging.LogRecord;
@@ -42,7 +40,7 @@ public class RemoteLoggingServiceUtil {
 
   /**
    * Logs a message on the server
-   * @param slr LogRecord to be logged
+   * @param lr LogRecord to be logged
    * @param strongName Permutation name (used for deobfuscation and may be null,
    *        which will only cause deobfuscation to fail)
    * @param deobfuscator used for deobfuscation. May be null, which will only
@@ -53,19 +51,11 @@ public class RemoteLoggingServiceUtil {
    * 
    * @return Empty string when successful, or an error string in case of failure.
    */
-  public static void logOnServer(SerializableLogRecord slr, String strongName,
+  public static void logOnServer(LogRecord lr, String strongName,
       StackTraceDeobfuscator deobfuscator, String loggerNameOverride) throws 
       RemoteLoggingException {
     if (deobfuscator != null) {
-      slr = deobfuscator.deobfuscateLogRecord(slr, strongName);
-    }
-    LogRecord lr = slr.getLogRecord();
-    if (lr == null) {
-      // If he SerializableLogRecord is corrupt somehow and conversion fails
-      // TODO(unnurg): Set the cause here correctly if we don't remove
-      // SerializableLogRecord before 2.1 release.
-      throw new RemoteLoggingException(
-          "Failed to convert SerializableLogRecord to LogRecord");
+      lr = deobfuscator.deobfuscateLogRecord(lr, strongName);
     }
     String loggerName = loggerNameOverride == null ? lr.getLoggerName() :
       loggerNameOverride;
@@ -76,11 +66,11 @@ public class RemoteLoggingServiceUtil {
   public static void logOnServer(String serializedLogRecordJson,
       String strongName, StackTraceDeobfuscator deobfuscator,
       String loggerNameOverride) throws RemoteLoggingException {
-    SerializableLogRecord slr;
+    LogRecord lr;
     try {
-      slr = JsonLogRecordServerUtil.serializableLogRecordFromJson(
+      lr = JsonLogRecordServerUtil.logRecordFromJson(
           serializedLogRecordJson);
-      logOnServer(slr, strongName, deobfuscator, loggerNameOverride);
+      logOnServer(lr, strongName, deobfuscator, loggerNameOverride);
     } catch (JSONException e) {
       throw new RemoteLoggingException("Failed to deserialize JSON", e);
     }
