@@ -454,6 +454,7 @@ public class CellTable<T> extends AbstractHasData<T> {
    * Indicates whether or not a redraw is scheduled.
    */
   private boolean redrawScheduled;
+  private RowStyles<T> rowStyles;
   private final Style style;
   private final TableElement table;
   private final TableSectionElement tbody;
@@ -757,6 +758,14 @@ public class CellTable<T> extends AbstractHasData<T> {
     ensureTableColElement(index).removeClassName(styleName);
   }
 
+  /**
+   * Sets the object used to determine how a row is styled; the change will take
+   * effect the next time that the table is rendered.
+   */
+  public void setRowStyles(RowStyles<T> rowStyles) {
+    this.rowStyles = rowStyles;
+  }
+
   @Override
   protected Element convertToElements(SafeHtml html) {
     return TABLE_IMPL.convertToSectionElement(CellTable.this, "tbody", html);
@@ -965,6 +974,14 @@ public class CellTable<T> extends AbstractHasData<T> {
       }
       if (isKeyboardSelected) {
         trClasses += keyboardRowStyle;
+      }
+
+      if (rowStyles != null) {
+        String extraRowStyles = rowStyles.getStyleNames(value, i);
+        if (extraRowStyles != null) {
+          trClasses += " ";
+          trClasses += extraRowStyles;
+        }
       }
 
       SafeHtmlBuilder trBuilder = new SafeHtmlBuilder();
