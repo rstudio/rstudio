@@ -372,7 +372,6 @@ public class MethodInliner {
       // Replace all params in the target expression with the actual arguments.
       ParameterReplacer replacer = new ParameterReplacer(x);
       replacer.accept(targetExpr);
-      madeChanges(replacer.getNumMods());
 
       multi.exprs.add(targetExpr);
       replaceWithMulti(ctx, multi);
