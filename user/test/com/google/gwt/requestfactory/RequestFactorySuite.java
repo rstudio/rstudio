@@ -19,7 +19,6 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.requestfactory.client.EditorTest;
 import com.google.gwt.requestfactory.client.FindServiceTest;
 import com.google.gwt.requestfactory.client.RequestFactoryExceptionHandlerTest;
-import com.google.gwt.requestfactory.client.RequestFactoryPolymorphicTest;
 import com.google.gwt.requestfactory.client.RequestFactoryStringTest;
 import com.google.gwt.requestfactory.client.RequestFactoryTest;
 import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImplTest;
@@ -41,7 +40,6 @@ public class RequestFactorySuite {
     suite.addTestSuite(ValueStoreJsonImplTest.class);
     suite.addTestSuite(DeltaValueStoreJsonImplTest.class);
     suite.addTestSuite(RequestFactoryTest.class);
-    suite.addTestSuite(RequestFactoryPolymorphicTest.class);
     suite.addTestSuite(RequestFactoryStringTest.class);
     suite.addTestSuite(RequestFactoryExceptionHandlerTest.class);
     suite.addTestSuite(FindServiceTest.class);
