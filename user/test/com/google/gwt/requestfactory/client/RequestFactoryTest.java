@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -113,7 +113,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     public void onSuccess(T response) {
       /*
        * Make sure your class path includes:
-       * 
+       *
        * tools/lib/apache/log4j/log4j-1.2.16.jar
        * tools/lib/hibernate/validator/hibernate-validator-4.1.0.Final.jar
        * tools/lib/slf4j/slf4j-api/slf4j-api-1.6.1.jar
@@ -182,6 +182,38 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.requestfactory.RequestFactorySuite";
+  }
+
+  /**
+   * Test that we can commit child objects.
+   *
+   * TODO: Causes a ConcurrentModificationException
+   */
+  public void disabledTestCascadingCommit() {
+    delayTestFinish(5000);
+    final SimpleFooProxy foo = req.create(SimpleFooProxy.class);
+    final SimpleBarProxy bar0 = req.create(SimpleBarProxy.class);
+    final SimpleBarProxy bar1 = req.create(SimpleBarProxy.class);
+    List<SimpleBarProxy> bars = new ArrayList<SimpleBarProxy>();
+    bars.add(bar0);
+    bars.add(bar1);
+
+    final SimpleFooEventHandler<SimpleBarProxy> handler = new SimpleFooEventHandler<SimpleBarProxy>();
+    EntityProxyChange.registerForProxyType(req.getEventBus(),
+        SimpleBarProxy.class, handler);
+
+    Request<SimpleFooProxy> request = req.simpleFooRequest().persistCascadingAndReturnSelf(foo);
+    SimpleFooProxy editFoo = request.edit(foo);
+    editFoo.setOneToManyField(bars);
+    request.fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy response) {
+        assertFalse(((ProxyImpl) response).unpersisted());
+        assertEquals(2, handler.persistEventCount); // two bars persisted.
+        assertEquals(2, handler.totalEventCount);
+        finishTestAndReset();
+      }
+    });
   }
 
   public void testClassToken() {
@@ -383,7 +415,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<List<SimpleFooProxy>>() {
           @Override
           public void onSuccess(List<SimpleFooProxy> response) {
-            assertEquals(1, response.size());
+            assertEquals(2, response.size());
             for (SimpleFooProxy foo : response) {
               assertNotNull(foo.stableId());
               assertEquals("FOO", foo.getBarField().getUserName());
@@ -451,6 +483,125 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   /**
+   * Test that a null value can be sent in a request.
+   */
+  public void testNullListRequest() {
+    delayTestFinish(5000);
+    final Request<Void> fooReq = req.simpleFooRequest().receiveNullList(null);
+    fooReq.fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void v) {
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * Test that a null value can be sent in a request.
+   */
+  public void disabledTestNullSimpleFooRequest() {
+    delayTestFinish(5000);
+    final Request<Void> fooReq = req.simpleFooRequest().receiveNullSimpleFoo(null);
+    fooReq.fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void v) {
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * Test that a null value can be sent to an instance method.
+   */
+  public void testNullStringInstanceRequest() {
+    delayTestFinish(5000);
+
+    // Get a valid proxy entity.
+    req.simpleFooRequest().findSimpleFooById(999L).fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy response) {
+        final Request<Void> fooReq = req.simpleFooRequest().receiveNull(response, null);
+        fooReq.fire(new Receiver<Void>() {
+          @Override
+          public void onSuccess(Void v) {
+            finishTestAndReset();
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Test that a null value can be sent in a request.
+   */
+  public void testNullStringRequest() {
+    delayTestFinish(5000);
+    final Request<Void> fooReq = req.simpleFooRequest().receiveNullString(null);
+    fooReq.fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void v) {
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * Test that a null value can be sent within a list of entities.
+   */
+  public void testNullValueInEntityListRequest() {
+    delayTestFinish(5000);
+
+    // Get a valid proxy entity.
+    req.simpleFooRequest().findSimpleFooById(999L).fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy response) {
+        List<SimpleFooProxy> list = new ArrayList<SimpleFooProxy>();
+        list.add(response); // non-null
+        list.add(null); // null
+        final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInEntityList(list);
+        fooReq.fire(new Receiver<Void>() {
+          @Override
+          public void onSuccess(Void v) {
+            finishTestAndReset();
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Test that a null value can be sent within a list of objects.
+   */
+  public void testNullValueInIntegerListRequest() {
+    delayTestFinish(5000);
+    List<Integer> list = Arrays.asList(new Integer[]{1, 2, null});
+    final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInIntegerList(
+        list);
+    fooReq.fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void v) {
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * Test that a null value can be sent within a list of strings.
+   */
+  public void testNullValueInStringListRequest() {
+    delayTestFinish(5000);
+    List<String> list = Arrays.asList(new String[]{"nonnull", "null", null});
+    final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInStringList(
+        list);
+    fooReq.fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void v) {
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
    * Ensures that a service method can respond with a null value.
    */
   public void testNullListResult() {
@@ -501,7 +652,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
               @Override
               public void onSuccess(Long response) {
                 assertCannotFire(mutateRequest);
-                assertEquals(new Long(1L), response);
+                assertEquals(new Long(2L), response);
                 assertEquals(2, handler.updateEventCount);
                 assertEquals(2, handler.totalEventCount);
 
@@ -529,6 +680,63 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             }
           }
         });
+  }
+
+  /**
+   * Test that removing a parent entity and implicitly removing the child sends
+   * an event to the client that the child was removed.
+   * 
+   * TODO(rjrjr): Should cascading deletes be detected?  
+   */
+  public void disableTestMethodWithSideEffectDeleteChild() {
+    delayTestFinish(5000);
+
+    // Persist bar.
+    final SimpleBarProxy bar = req.create(SimpleBarProxy.class);
+    req.simpleBarRequest().persistAndReturnSelf(bar).fire(new Receiver<SimpleBarProxy>() {
+      @Override
+      public void onSuccess(SimpleBarProxy persistentBar) {
+        // Persist foo with bar as a child.
+        SimpleFooProxy foo = req.create(SimpleFooProxy.class);
+        final Request<SimpleFooProxy> persistRequest =
+            req.simpleFooRequest().persistAndReturnSelf(foo);
+        foo = persistRequest.edit(foo);
+        foo.setUserName("John");
+        foo.setBarField(bar);
+        persistRequest.fire(new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy persistentFoo) {
+            // Handle changes to SimpleFooProxy.
+            final SimpleFooEventHandler<SimpleFooProxy> fooHandler =
+                new SimpleFooEventHandler<SimpleFooProxy>();
+            EntityProxyChange.registerForProxyType(
+                req.getEventBus(), SimpleFooProxy.class, fooHandler);
+
+            // Handle changes to SimpleBarProxy.
+            final SimpleFooEventHandler<SimpleBarProxy> barHandler =
+                new SimpleFooEventHandler<SimpleBarProxy>();
+            EntityProxyChange.registerForProxyType(
+                req.getEventBus(), SimpleBarProxy.class, barHandler);
+
+            // Delete bar.
+            final Request<Void> deleteRequest = req.simpleFooRequest().deleteBar(persistentFoo);
+            SimpleFooProxy editable = deleteRequest.edit(persistentFoo);
+            editable.setBarField(bar);
+            deleteRequest.fire(new Receiver<Void>() {
+              @Override
+              public void onSuccess(Void response) {
+                assertEquals(1, fooHandler.updateEventCount); // set bar to null
+                assertEquals(1, fooHandler.totalEventCount);
+
+                assertEquals(1, barHandler.deleteEventCount); // deleted bar
+                assertEquals(1, barHandler.totalEventCount);
+                finishTestAndReset();
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
   /*
@@ -709,7 +917,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             fooReq2.fire(new Receiver<Void>() {
               @Override
               public void onSuccess(Void response) {
-                req.simpleFooRequest().findSimpleFooById(999L).with(
+                req.simpleFooRequest().findSimpleFooById(persistedFoo.getId()).with(
                     "barField.userName").fire(new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy finalFooProxy) {

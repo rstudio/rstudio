@@ -127,7 +127,7 @@ public class RequestData {
 
   private String asJsonString(Object value) {
     if (value == null) {
-      return "null";
+      return null;
     }
 
     if (value instanceof Iterable<?>) {
@@ -140,14 +140,18 @@ public class RequestData {
         } else {
           first = false;
         }
-        toReturn.append(asJsonString(val));
+        if (val == null) {
+          toReturn.append("null");
+        } else {
+          toReturn.append("\"" + asJsonString(val) + "\"");
+        }
       }
       toReturn.append(']');
       return toReturn.toString();
     }
 
     if (value instanceof HasWireFormatId) {
-      return "\"" + ((HasWireFormatId) value).wireFormatId() + "\"";
+      return ((HasWireFormatId) value).wireFormatId();
     }
 
     /* 

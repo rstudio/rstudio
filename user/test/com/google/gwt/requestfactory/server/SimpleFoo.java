@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,10 +21,11 @@ import com.google.gwt.requestfactory.shared.SimpleEnum;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,12 +38,12 @@ public class SimpleFoo {
   /**
    * DO NOT USE THIS UGLY HACK DIRECTLY! Call {@link #get} instead.
    */
-  private static SimpleFoo jreTestSingleton = new SimpleFoo();
+  private static Map<Long, SimpleFoo> jreTestSingleton = new HashMap<Long, SimpleFoo>();
 
   private static Long nextId = 1L;
 
   public static Long countSimpleFoo() {
-    return 1L;
+    return (long) get().size();
   }
 
   public static SimpleFoo echo(SimpleFoo simpleFoo) {
@@ -55,7 +56,7 @@ public class SimpleFoo {
   }
 
   public static List<SimpleFoo> findAll() {
-    return Collections.singletonList(get());
+    return new ArrayList<SimpleFoo>(get().values());
   }
 
   public static SimpleFoo findSimpleFoo(Long id) {
@@ -63,11 +64,11 @@ public class SimpleFoo {
   }
 
   public static SimpleFoo findSimpleFooById(Long id) {
-    get().setId(id);
-    return get();
+    return get().get(id);
   }
 
-  public static synchronized SimpleFoo get() {
+  @SuppressWarnings("unchecked")
+  public static synchronized Map<Long, SimpleFoo> get() {
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
     if (req == null) {
       // May be in a JRE test case, use the singleton
@@ -78,7 +79,7 @@ public class SimpleFoo {
        * that doesn't allow any requests to be processed unless they're
        * associated with an existing session.
        */
-      SimpleFoo value = (SimpleFoo) req.getSession().getAttribute(
+      Map<Long, SimpleFoo> value = (Map<Long, SimpleFoo>) req.getSession().getAttribute(
           SimpleFoo.class.getCanonicalName());
       if (value == null) {
         value = reset();
@@ -103,10 +104,6 @@ public class SimpleFoo {
     return list;
   }
 
-  public static SimpleFoo getSingleton() {
-    return get();
-  }
-
   public static Boolean processBooleanList(List<Boolean> values) {
     return values.get(0);
   }
@@ -123,8 +120,79 @@ public class SimpleFoo {
     return string;
   }
 
-  public static synchronized SimpleFoo reset() {
-    SimpleFoo instance = new SimpleFoo();
+  public static void receiveNullList(List<SimpleFoo> value) {
+    if (value != null) {
+      throw new IllegalArgumentException(
+          "Expected value to be null. Actual value: \"" + value + "\"");
+    }
+  }
+
+  public static void receiveNullSimpleFoo(SimpleFoo value) {
+    if (value != null) {
+      throw new IllegalArgumentException(
+          "Expected value to be null. Actual value: \"" + value + "\"");
+    }
+  }
+
+  public static void receiveNullString(String value) {
+    if (value != null) {
+      throw new IllegalArgumentException(
+          "Expected value to be null. Actual value: \"" + value + "\"");
+    }
+  }
+
+  public static void receiveNullValueInEntityList(List<SimpleFoo> list) {
+    if (list == null) {
+      throw new IllegalArgumentException("Expected list to be non null.");
+    } else if (list.size() != 2) {
+      throw new IllegalArgumentException("Expected list to contain two items.");
+    } else if (list.get(0) == null) {
+      throw new IllegalArgumentException("Expected list.get(0) to return non null.");
+    } else if (list.get(1) != null) {
+      throw new IllegalArgumentException(
+          "Expected list.get(1) to return null. Actual: " + list.get(1));
+    }
+  }
+
+  public static void receiveNullValueInIntegerList(List<Integer> list) {
+    if (list == null) {
+      throw new IllegalArgumentException("Expected list to be non null.");
+    } else if (list.size() != 3) {
+      throw new IllegalArgumentException("Expected list to contain three items.");
+    } else if (list.get(0) == null || list.get(1) == null) {
+      throw new IllegalArgumentException("Expected list.get(0)/get(1) to return non null.");
+    } else if (list.get(2) != null) {
+      throw new IllegalArgumentException(
+          "Expected list.get(2) to return null. Actual: \"" + list.get(2) + "\"");
+    }
+  }
+
+  public static void receiveNullValueInStringList(List<String> list) {
+    if (list == null) {
+      throw new IllegalArgumentException("Expected list to be non null.");
+    } else if (list.size() != 3) {
+      throw new IllegalArgumentException("Expected list to contain three items.");
+    } else if (list.get(0) == null || list.get(1) == null) {
+      throw new IllegalArgumentException("Expected list.get(0)/get(1) to return non null.");
+    } else if (list.get(2) != null) {
+      throw new IllegalArgumentException(
+          "Expected list.get(2) to return null. Actual: \"" + list.get(2) + "\"");
+    }
+  }
+
+  public static synchronized Map<Long, SimpleFoo> reset() {
+    Map<Long, SimpleFoo> instance = new HashMap<Long, SimpleFoo>();
+    // fixtures
+    SimpleFoo s1 = new SimpleFoo();
+    s1.setId(1L);
+    s1.isNew = false;
+    instance.put(s1.getId(), s1);
+
+    SimpleFoo s2 = new SimpleFoo();
+    s2.setId(999L);
+    s2.isNew = false;
+    instance.put(s2.getId(), s2);
+
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
     if (req == null) {
       jreTestSingleton = instance;
@@ -156,6 +224,7 @@ public class SimpleFoo {
 
   @Id
   private Long id = 1L;
+  private boolean isNew = true;
 
   @Size(min = 3, max = 30)
   private String userName;
@@ -220,8 +289,15 @@ public class SimpleFoo {
   }
 
   public Long countSimpleFooWithUserNameSideEffect() {
-    get().setUserName(userName);
-    return 1L;
+    findSimpleFoo(1L).setUserName(userName);
+    return countSimpleFoo();
+  }
+
+  public void deleteBar() {
+    if (barField != null) {
+      barField.delete();
+    }
+    barField = null;
   }
 
   public SimpleBar getBarField() {
@@ -357,11 +433,20 @@ public class SimpleFoo {
   }
 
   public void persist() {
-    setId(nextId++);
+    if (isNew) {
+      setId(nextId++);
+      isNew = false;
+      get().put(getId(), this);
+    }
   }
 
   public SimpleFoo persistAndReturnSelf() {
     persist();
+    return this;
+  }
+
+  public SimpleFoo persistCascadingAndReturnSelf() {
+    persistCascadingAndReturnSelfImpl(new HashSet<SimpleFoo>());
     return this;
   }
 
@@ -371,6 +456,13 @@ public class SimpleFoo {
       result += n.getUserName();
     }
     return result;
+  }
+
+  public void receiveNull(String value) {
+    if (value != null) {
+      throw new IllegalArgumentException(
+          "Expected value to be null. Actual value: \"" + value + "\"");
+    }
   }
 
   public void setBarField(SimpleBar barField) {
@@ -514,5 +606,56 @@ public class SimpleFoo {
       sum += n;
     }
     return sum;
+  }
+
+  /**
+   * Persist this entity and all child entities. This method can handle loops.
+   * 
+   * @param processed the entities that have been processed
+   */
+  private void persistCascadingAndReturnSelfImpl(Set<SimpleFoo> processed) {
+    if (processed.contains(this)) {
+      return;
+    }
+
+    // Persist this entity.
+    processed.add(this);
+    persist();
+
+    // Persist SimpleBar children.
+    // We don't need to keep track of the processed SimpleBars because persist()
+    // is a no-op if the SimpleBar has already been persisted.
+    if (barField != null) {
+      barField.persist();
+    }
+    if (barNullField != null) {
+      barNullField.persist();
+    }
+    if (oneToManySetField != null) {
+      for (SimpleBar child : oneToManySetField) {
+        if (child != null) {
+          child.persist();
+        }
+      }
+    }
+    if (oneToManyField != null) {
+      for (SimpleBar child : oneToManyField) {
+        if (child != null) {
+          child.persist();
+        }
+      }
+    }
+
+    // Persist SimpleFoo children.
+    if (fooField != null) {
+      fooField.persistCascadingAndReturnSelfImpl(processed);
+    }
+    if (selfOneToManyField != null) {
+      for (SimpleFoo child : selfOneToManyField) {
+        if (child != null) {
+          child.persistCascadingAndReturnSelfImpl(processed);
+        }
+      }
+    }
   }
 }

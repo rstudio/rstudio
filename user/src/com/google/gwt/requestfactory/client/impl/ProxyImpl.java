@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -96,7 +96,7 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
    * <p>
    * If the ProxyImpl is mutable, any EntityProxies reachable from the return
    * value will have already been made mutable.
-   * 
+   *
    * @param <V> the type of the property's value
    * @param property the property to fetch
    * @return the value
@@ -129,13 +129,6 @@ public class ProxyImpl implements EntityProxy, HasWireFormatId {
   public <V> V get(String propertyName, Class<?> propertyType) {
     // javac 1.6.0_20 on mac has problems without the explicit parameterization
     return jso.<V> get(propertyName, propertyType);
-  }
-
-  public boolean hasChanged() {
-    if (deltaValueStore == null) {
-      return false;
-    }
-    return deltaValueStore.isChanged();
   }
 
   @Override

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,6 +29,9 @@ public interface SimpleFooRequest {
   @Instance
   Request<Long> countSimpleFooWithUserNameSideEffect(SimpleFooProxy proxy);
 
+  @Instance
+  Request<Void> deleteBar(SimpleFooProxy proxy);
+
   Request<SimpleFooProxy> echo(SimpleFooProxy proxy);
 
   Request<SimpleFooProxy> echoComplex(SimpleFooProxy fooProxy, SimpleBarProxy barProxy);
@@ -46,9 +49,12 @@ public interface SimpleFooRequest {
 
   @Instance
   Request<Void> persist(SimpleFooProxy proxy);
-  
+
   @Instance
   Request<SimpleFooProxy> persistAndReturnSelf(SimpleFooProxy proxy);
+
+  @Instance
+  Request<SimpleFooProxy> persistCascadingAndReturnSelf(SimpleFooProxy proxy);
 
   Request<Boolean> processBooleanList(List<Boolean> values);
 
@@ -60,7 +66,22 @@ public interface SimpleFooRequest {
 
   @Instance
   Request<String> processList(SimpleFooProxy instance, List<SimpleFooProxy> values);
-  
+
+  @Instance
+  Request<Void> receiveNull(SimpleFooProxy instance, String value);
+
+  Request<Void> receiveNullList(List<SimpleFooProxy> value);
+
+  Request<Void> receiveNullSimpleFoo(SimpleFooProxy value);
+
+  Request<Void> receiveNullString(String value);
+
+  Request<Void> receiveNullValueInEntityList(List<SimpleFooProxy> value);
+
+  Request<Void> receiveNullValueInIntegerList(List<Integer> value);
+
+  Request<Void> receiveNullValueInStringList(List<String> value);
+
   Request<Void> reset();
 
   Request<List<SimpleFooProxy>> returnNullList();

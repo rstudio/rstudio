@@ -130,7 +130,7 @@ public class JsonRequestProcessorTest extends TestCase {
     JSONObject result = getResultFromServer(foo);
 
     // check modified fields and no violations
-    SimpleFoo fooResult = SimpleFoo.getSingleton();
+    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
     JSONArray updateArray = result.getJSONObject("sideEffects").getJSONArray(
         "UPDATE");
     assertEquals(1, updateArray.length());
@@ -152,7 +152,7 @@ public class JsonRequestProcessorTest extends TestCase {
     JSONObject foo = fetchVerifyAndGetInitialObject();
 
     // change the value on the server behind the back
-    SimpleFoo fooResult = SimpleFoo.getSingleton();
+    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
     fooResult.setUserName("JSC");
     fooResult.setIntId(45);
 
@@ -163,7 +163,7 @@ public class JsonRequestProcessorTest extends TestCase {
 
     // check modified fields and no violations
     assertFalse(result.getJSONObject("sideEffects").has("UPDATE"));
-    fooResult = SimpleFoo.getSingleton();
+    fooResult = SimpleFoo.findSimpleFooById(999L);
     assertEquals(45, (int) fooResult.getIntId());
     assertEquals("JSC", fooResult.getUserName());
   }
@@ -174,7 +174,7 @@ public class JsonRequestProcessorTest extends TestCase {
     JSONObject foo = fetchVerifyAndGetInitialObject();
 
     // change some fields but don't change other fields.
-    SimpleFoo fooResult = SimpleFoo.getSingleton();
+    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
     fooResult.setUserName("JSC");
     fooResult.setIntId(45);
     fooResult.setNullField(null);
@@ -191,7 +191,7 @@ public class JsonRequestProcessorTest extends TestCase {
 
     // check modified fields and no violations
     assertTrue(result.getJSONObject("sideEffects").has("UPDATE"));
-    fooResult = SimpleFoo.getSingleton();
+    fooResult = SimpleFoo.findSimpleFooById(999L);
     assertEquals(45, (int) fooResult.getIntId());
     assertNull(fooResult.getUserName());
     assertEquals("test", fooResult.getNullField());
@@ -205,7 +205,7 @@ public class JsonRequestProcessorTest extends TestCase {
     JSONObject foo = fetchVerifyAndGetInitialObject();
 
     // change some fields but don't change other fields.
-    SimpleFoo fooResult = SimpleFoo.getSingleton();
+    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
     fooResult.setUserName("JSC");
     fooResult.setIntId(45);
     foo.put("userName", "JSC");
@@ -218,7 +218,7 @@ public class JsonRequestProcessorTest extends TestCase {
 
     // check modified fields and no violations
     assertTrue(result.getJSONObject("sideEffects").has("UPDATE"));
-    fooResult = SimpleFoo.getSingleton();
+    fooResult = SimpleFoo.findSimpleFooById(999L);
     assertEquals(45, (int) fooResult.getIntId());
     assertEquals("JSC", fooResult.getUserName());
     assertEquals(newTime, fooResult.getCreated().getTime());

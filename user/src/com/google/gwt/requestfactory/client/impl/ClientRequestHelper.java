@@ -43,7 +43,7 @@ public class ClientRequestHelper {
       // TODO(jgw): Find a better way to do this. Occasionally a js-wrapped
       // string ends up in 'value', which breaks the json2.js implementation
       // of JSON.stringify().
-      this[key] = String(value);
+      this[key] = (value == null) ? null : String(value);
     }-*/;
 
     private native String toJsonString()/*-{

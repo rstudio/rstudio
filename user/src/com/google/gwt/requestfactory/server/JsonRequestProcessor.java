@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -196,11 +196,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /*
    * <li>Request comes in. Construct the involvedKeys, dvsDataMap and
    * beforeDataMap, using DVS and parameters.
-   * 
+   *
    * <li>Apply the DVS and construct the afterDvsDataMqp.
-   * 
+   *
    * <li>Invoke the method noted in the operation.
-   * 
+   *
    * <li>Find the changes that need to be sent back.
    */
   private final Map<EntityKey, Object> cachedEntityLookup = new HashMap<EntityKey, Object>();
@@ -243,6 +243,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       String parameterValue) throws SecurityException, JSONException,
       IllegalAccessException, InvocationTargetException, NoSuchMethodException,
       InstantiationException {
+    if (parameterValue == null) {
+      return null;
+    }
     Class<?> parameterType = null;
     if (genericParameterType instanceof Class<?>) {
       parameterType = (Class<?>) genericParameterType;
@@ -258,16 +261,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           if (collection != null) {
             JSONArray array = new JSONArray(parameterValue);
             for (int i = 0; i < array.length(); i++) {
+              String value = array.isNull(i) ? null : array.getString(i);
               collection.add(decodeParameterValue(
-                  pType.getActualTypeArguments()[0], array.getString(i)));
+                  pType.getActualTypeArguments()[0], value));
             }
             return collection;
           }
         }
       }
-    }
-    if (parameterValue == null) {
-      return null;
     }
     if (String.class == parameterType) {
       return parameterValue;
@@ -328,7 +329,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       /*
        * TODO: 1. Don't resolve in this step, just get EntityKey. May need to
        * use DVS.
-       * 
+       *
        * 2. Merge the following and the object resolution code in getEntityKey.
        * 3. Update the involvedKeys set.
        */
@@ -342,6 +343,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
               entityKey, dvsData.jsonObject, dvsData.writeOperation);
           return entityData.entityInstance;
         } else {
+          // TODO(rjrjr): This results in a ConcurrentModificationException.
+          // involvedKeys loops in constructAfterDvsDataMapAfterCallingSetters.
           involvedKeys.add(entityKey);
           return getEntityInstance(entityKey);
         }
@@ -354,6 +357,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         throw new IllegalArgumentException("Unknown service, unable to decode "
             + parameterValue);
       }
+      // TODO(rjrjr): This results in a ConcurrentModificationException.
+      // involvedKeys loops in constructAfterDvsDataMapAfterCallingSetters.
       involvedKeys.add(entityKey);
       return getEntityInstance(entityKey);
     }
@@ -434,7 +439,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Generate an ID for a new record. The default behavior is to return null and
    * let the data store generate the ID automatically.
-   * 
+   *
    * @param key the key of the record field
    * @return the ID of the new record, or null to auto generate
    */
@@ -579,7 +584,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Converts the returnValue of a 'get' method to a JSONArray.
-   * 
+   *
    * @param resultList object returned by a 'get' method, must be of type
    *          List<?>
    * @param entityKeyClass the class type of the contained value
@@ -641,7 +646,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Returns methodName corresponding to the propertyName that can be invoked on
    * an entity.
-   * 
+   *
    * Example: "userName" returns prefix + "UserName". "version" returns prefix +
    * "Version"
    */
@@ -702,7 +707,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     while (keys.hasNext()) {
       String key = keys.next().toString();
       if (key.startsWith(PARAM_TOKEN)) {
-        parameterMap.put(key, jsonObject.getString(key));
+        String value = jsonObject.isNull(key) ? null : jsonObject.getString(key);
+        parameterMap.put(key, value);
       }
     }
     return parameterMap;
@@ -779,7 +785,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Returns the property value, in the specified type, from the request object.
    * The value is put in the DataStore.
-   * 
+   *
    * @throws InstantiationException
    * @throws NoSuchMethodException
    * @throws InvocationTargetException
@@ -1026,7 +1032,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       relatedObjects.put(keyRef, null);
       Object jsonObject = getJsonObject(returnValue, propertyType,
           propertyContext);
-      if (jsonObject != JSONObject.NULL) { 
+      if (jsonObject != JSONObject.NULL) {
         // put real value
         relatedObjects.put(keyRef, (JSONObject) jsonObject);
       }
@@ -1097,7 +1103,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Constructs the beforeDataMap.
-   * 
+   *
    * <p>
    * Algorithm: go through the involvedKeys, and find the entityData
    * corresponding to each.
@@ -1418,7 +1424,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * returns true if the property has been requested. TODO: use the properties
    * that should be coming with the request.
-   * 
+   *
    * @param p the field of entity ref
    * @param propertyContext the root of the current dotted property reference
    * @return has the property value been requested
