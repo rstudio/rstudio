@@ -56,18 +56,24 @@ import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistry;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.Instance;
+import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
 import com.google.gwt.requestfactory.shared.impl.EnumProperty;
 import com.google.gwt.requestfactory.shared.impl.Property;
 import com.google.gwt.requestfactory.shared.impl.RequestData;
+import com.google.gwt.requestfactory.shared.impl.TypeLibrary;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.beans.Introspector;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -114,6 +120,12 @@ public class RequestFactoryGenerator extends Generator {
     }
   }
 
+  private static class DiagnosticException extends Exception {
+    DiagnosticException(String s) {
+      super(s);
+    }
+  }
+
   private static class EntityProperty {
     private final String name;
     private final JType type;
@@ -132,9 +144,13 @@ public class RequestFactoryGenerator extends Generator {
     }
   }
 
+  private JClassType findRequestType;
+
   private JClassType listType;
   private JClassType setType;
   private JClassType entityProxyType;
+  private Set<JType> allowedTypes = new HashSet<JType>();
+  private Set<JType> allowedRequestParamTypes = new HashSet<JType>();
   private JClassType mainRequestType;
 
   private final Set<JClassType> generatedProxyTypes = new HashSet<JClassType>();
@@ -148,6 +164,28 @@ public class RequestFactoryGenerator extends Generator {
     listType = typeOracle.findType(List.class.getName());
     setType = typeOracle.findType(Set.class.getName());
     entityProxyType = typeOracle.findType(EntityProxy.class.getName());
+    findRequestType = typeOracle.findType(FindRequest.class.getName());
+    for (Class<?> type : TypeLibrary.VALUE_TYPES) {
+      allowedTypes.add(typeOracle.findType(type.getName()));
+    }
+
+    allowedTypes.add(JPrimitiveType.VOID);
+    allowedTypes.add(typeOracle.findType("java.lang.Void"));
+    allowedTypes.add(listType.getErasedType());
+    allowedTypes.add(setType.getErasedType());
+    allowedTypes.add(entityProxyType.getErasedType());
+    allowedTypes.add(typeOracle.findType(EntityProxyId.class.getName()).getErasedType());
+
+    allowedRequestParamTypes.addAll(allowedTypes);
+    allowedRequestParamTypes.add(JPrimitiveType.INT);
+    allowedRequestParamTypes.add(JPrimitiveType.BYTE);
+    allowedRequestParamTypes.add(JPrimitiveType.DOUBLE);
+    allowedRequestParamTypes.add(JPrimitiveType.FLOAT);
+    allowedRequestParamTypes.add(JPrimitiveType.LONG);
+    allowedRequestParamTypes.add(JPrimitiveType.SHORT);
+    allowedRequestParamTypes.add(JPrimitiveType.INT);
+    allowedRequestParamTypes.add(JPrimitiveType.CHAR);
+
     mainRequestType = typeOracle.findType(Request.class.getName());
 
     // Get a reference to the type that the generator should implement
@@ -224,6 +262,71 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     return entityProperties;
+  }
+
+  private JClassType decodeToBaseType(JType type) {
+    if (type.isTypeParameter() != null) {
+      return type.isTypeParameter().getBaseType();
+    }
+    return type.isClassOrInterface();
+  }
+
+  private void diagnosticIf(boolean cond, String fmt, Object... args)
+      throws DiagnosticException {
+    if (cond) {
+      throw new DiagnosticException(String.format(fmt, args));
+    }
+  }
+
+  private void diagnosticIfBannedType(JType origType, String entityName,
+      String methodName) throws DiagnosticException {
+    diagnosticIfBannedType(allowedTypes, origType, entityName, methodName);
+  }
+
+  /*
+  * No primitives other than void, no arrays, no concrete collections,
+  * no maps, no unknown value types.
+  */
+  private void diagnosticIfBannedType(Set<JType> allowed, JType origType,
+      String entityName, String methodName) throws DiagnosticException {
+    diagnosticIf(origType.isArray() != null,
+        "Method %s.%s: signature not permitted to use array type",
+        entityName, methodName);
+    JClassType cType = decodeToBaseType(origType);
+    if (cType == null) {
+      return;
+    }
+
+    diagnosticIf(isSubtype(setType, cType) || isSubtype(listType, cType),
+        "Method %s.%s: signature must use Set or List, not subtypes",
+        entityName, methodName);
+    // not an allowed value type, not a proxy, and not an enum
+    diagnosticIf(!allowed.contains(cType.getErasedType())
+        && !entityProxyType.isAssignableFrom(cType)
+        && origType.isEnum() == null,
+        "Method %s.%s: signature uses unsupported type %s",
+        entityName, methodName, origType.getQualifiedBinaryName());
+
+    if (isSupportedCollectionType(cType)) {
+      diagnosticIf(origType.isParameterized() == null,
+          "Method %s.%s: collections must have type parameters specified",
+          entityName, methodName);
+      JClassType typeArg = origType.isParameterized().getTypeArgs()[0];
+      if (isSupportedCollectionType(typeArg)) {
+        diagnosticIf(true, "Method %s.%s: signature cannot use collection"
+            + " which contain other collection", entityName, methodName);
+      }
+      // check for value types and arrays
+      diagnosticIfBannedType(typeArg, entityName, methodName);
+    }
+  }
+
+  /*
+   * Primitives permitted for request params.
+   */
+  private void diagnosticIfBannedTypeRequestParam(JType origType, String entityName, String name)
+      throws DiagnosticException {
+    diagnosticIfBannedType(allowedRequestParamTypes, origType, entityName, name);
   };
 
   private void ensureProxyType(TreeLogger logger,
@@ -235,12 +338,22 @@ public class RequestFactoryGenerator extends Generator {
       // handle publicProxyType = List<EmployeeProxy>
       publicProxyType = publicProxyType.isParameterized().getTypeArgs()[0];
     }
-    if (!publicProxyType.isAssignableTo(entityProxyType)) {
+    // don't generate proxies for the EntityProxy impl itself
+    if (!publicProxyType.isAssignableTo(entityProxyType)
+        || publicProxyType.equals(entityProxyType)) {
       return;
     }
     if (generatedProxyTypes.contains(publicProxyType)) {
       return;
     }
+
+    try {
+      validateProxyType(publicProxyType, typeOracle);
+    } catch (DiagnosticException e) {
+      logger.log(TreeLogger.ERROR, e.getMessage());
+      throw new UnableToCompleteException();
+    }
+
     // Hack
     if ("P".equals(publicProxyType.getName())) {
       return;
@@ -370,9 +483,10 @@ public class RequestFactoryGenerator extends Generator {
         sw.println("}");
         /*
          * Because a Proxy A may relate to B which relates to C, we need to
-         * ensure transitively.
+         * ensure transitively. But skip EnityProxy itself.
          */
-        if (isProxyType(returnType)) {
+        if (!returnType.equals(entityProxyType)
+            && isProxyType(returnType)) {
           transitiveDeps.add(returnType);
         }
       }
@@ -387,6 +501,27 @@ public class RequestFactoryGenerator extends Generator {
     for (JClassType type : transitiveDeps) {
       ensureProxyType(logger, generatorContext, type);
     }
+  }
+
+  private List<JMethod> findMethods(JClassType domainType, String name) {
+    List<JMethod> toReturn = new ArrayList<JMethod>();
+    for (JMethod meth : domainType.getOverridableMethods()) {
+      if (meth.getName().equals(name) && meth.isPublic()) {
+        toReturn.add(meth);
+      }
+    }
+    return toReturn;
+  }
+
+  private List<Method> findMethods(Class<?> domainType, String name) {
+    List<Method> toReturn = new ArrayList<Method>();
+    for (Method meth : domainType.getDeclaredMethods()) {
+      if (meth.getName().equals(name)
+          && (meth.getModifiers() & Modifier.PUBLIC) != 0) {    
+        toReturn.add(meth);
+      }
+    }
+    return toReturn;
   }
 
   private void generateOnce(JClassType requestFactoryType, TreeLogger logger,
@@ -412,12 +547,12 @@ public class RequestFactoryGenerator extends Generator {
     sw.println();
 
     // Find the request builder methods
-
     // TODO allow getRequest type methods to live directly on the factory, w/o
     // requiring a builder to get to them
 
     Set<JMethod> requestBuilders = new LinkedHashSet<JMethod>();
     for (JMethod method : interfaceType.getOverridableMethods()) {
+      // skip validating methods in EntityProxy supertype
       if (method.getEnclosingType().equals(requestFactoryType)) {
         continue;
       }
@@ -527,8 +662,13 @@ public class RequestFactoryGenerator extends Generator {
       PrintWriter pw = generatorContext.tryCreate(logger, nestedImplPackage,
           nestedImplName);
       if (pw != null) {
-        generateRequestSelectorImplementation(logger, generatorContext, pw,
-            requestSelector, interfaceType, nestedImplPackage, nestedImplName);
+        try {
+          generateRequestSelectorImplementation(logger, generatorContext, pw,
+              requestSelector, interfaceType, nestedImplPackage, nestedImplName);
+        } catch (DiagnosticException e) {
+          logger.log(TreeLogger.ERROR, e.getMessage());
+          throw new UnableToCompleteException();
+        }
       }
     }
 
@@ -627,7 +767,7 @@ public class RequestFactoryGenerator extends Generator {
   private void generateRequestSelectorImplementation(TreeLogger logger,
       GeneratorContext generatorContext, PrintWriter out,
       JMethod selectorMethod, JClassType mainType, String packageName,
-      String implName) throws UnableToCompleteException {
+      String implName) throws UnableToCompleteException, DiagnosticException {
     JClassType selectorInterface = selectorMethod.getReturnType().isInterface();
     logger = logger.branch(TreeLogger.DEBUG, String.format(
         "Generating implementation of %s", selectorInterface.getName()));
@@ -654,6 +794,9 @@ public class RequestFactoryGenerator extends Generator {
 
     // write each method.
     for (JMethod method : selectorInterface.getOverridableMethods()) {
+      if (method.getEnclosingType().equals(entityProxyType)) {
+        continue;
+      }
       JParameterizedType parameterizedType = method.getReturnType().isParameterized();
       if (parameterizedType == null) {
         logger.log(
@@ -663,7 +806,11 @@ public class RequestFactoryGenerator extends Generator {
                 method.getName(), selectorInterface.getName()));
         throw new UnableToCompleteException();
       }
+
       JClassType returnType = parameterizedType.getTypeArgs()[0];
+      // check if for Request<T>, we support type T
+      diagnosticIfBannedType(returnType, selectorInterface.getName(),
+          method.getName());
 
       ensureProxyType(logger, generatorContext, returnType);
 
@@ -675,25 +822,53 @@ public class RequestFactoryGenerator extends Generator {
 
       TypeOracle typeOracle = generatorContext.getTypeOracle();
       String extraArgs = "";
-      // TODO: refactor this into some kind of extensible map lookup
-      // check for ProxyListRequest<T> or ProxySetRequest<T>
-      if (method.getReturnType().isArray() != null) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Illegal return type for %s. Methods of %s cannot return array.",
-            method.getName(), selectorInterface.getName()));
-        throw new UnableToCompleteException();
-      }
+
       for (JParameter param : method.getParameters()) {
-        if (param.getType().isArray() != null) {
-          logger.log(
-              TreeLogger.ERROR,
-              String.format(
-                  "Illegal param type %s for %s. Methods of %s cannot take array parameters.",
-                  param.getName(), method.getName(),
-                  selectorInterface.getName()));
-          throw new UnableToCompleteException();
-        }
+        diagnosticIfBannedTypeRequestParam(param.getType(), selectorInterface.getName(),
+            method.getName());
       }
+
+      Instance instanceAnn = method.getAnnotation(Instance.class);
+      JParameter[] params = method.getParameters();
+
+      // assert first arg must be entity if it's an @Instance
+      diagnosticIf(instanceAnn != null && (params.length == 0
+          || !entityProxyType.isAssignableFrom(
+          params[0].getType().isClassOrInterface())),
+           "Message %s.s: @Instance method, but first parameter not an EntityProxy",
+           selectorInterface.getName(), method.getName());
+
+      // instance method verification
+      if (instanceAnn != null) {
+        // assert domain method must be non-static for @Instance
+        Class<?> domainType = params[0].getType().isClassOrInterface().getAnnotation(ProxyFor.class).value();
+
+        List<Method> domainMethods = findMethods(domainType, method.getName());
+        diagnosticIf(domainMethods.size() == 0,
+            "Instance Method %s.%s not found on type %s",
+            selectorInterface.getName(), method.getName(), domainType.getName());
+        diagnosticIf(domainMethods.size() > 1,
+            "Instance Method %s.%s is overloaded, unsupported feature",
+            selectorInterface.getName(), method.getName());
+        diagnosticIf((domainMethods.get(0).getModifiers() & Modifier.STATIC) != 0,
+            "Instance Method %s.%s is declared static on %s",
+            selectorInterface.getName(),  method.getName(), domainType.getName());
+      } else {
+        // static method verification
+        Service ann = selectorInterface.getAnnotation(Service.class);
+        Class<?> domainType = ann.value();
+        List<Method> domainMethods = findMethods(domainType, method.getName());
+        diagnosticIf(domainMethods.size() == 0,
+            "Static Method %s.%s not found on type %s",
+            selectorInterface.getName(), method.getName(), domainType.getName());
+        diagnosticIf(domainMethods.size() > 1,
+            "Static Method %s.%s is overloaded, unsupported feature",
+            selectorInterface.getName(), method.getName());
+        diagnosticIf((domainMethods.get(0).getModifiers() & Modifier.STATIC) == 0,
+            "Static Method %s.%s is not declared static on %s",
+            selectorInterface.getName(),  method.getName(), domainType.getName());
+      }
+          
       if (isRequestObjectCollectionRequest(typeOracle, requestType)) {
         Class<?> colType = getCollectionType(typeOracle, requestType);
         assert colType != null;
@@ -973,6 +1148,16 @@ public class RequestFactoryGenerator extends Generator {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(String.class.getName()));
   }
 
+  private boolean isSubtype(JClassType baseType, JClassType type) {
+    return baseType.isAssignableFrom(type.isClassOrInterface())
+        && !matchesErasedType(baseType, type);
+  }
+
+  private boolean isSupportedCollectionType(JClassType cType) {
+    return setType.isAssignableFrom(cType) 
+        || listType.isAssignableFrom(cType);
+  }
+
   private boolean isValueListRequest(JClassType requestType) {
     JClassType retType = requestType.isParameterized().getTypeArgs()[0];
     if (retType.isAssignableTo(listType) || retType.isAssignableTo(setType)) {
@@ -986,6 +1171,10 @@ public class RequestFactoryGenerator extends Generator {
 
   private boolean isVoidRequest(TypeOracle typeOracle, JClassType requestType) {
     return requestType.isParameterized().getTypeArgs()[0].isAssignableTo(typeOracle.findType(Void.class.getName()));
+  }
+
+  private boolean matchesErasedType(JClassType type1, JClassType type2) {
+    return type1.getErasedType().equals(type2.getErasedType());
   }
 
   /**
@@ -1027,6 +1216,23 @@ public class RequestFactoryGenerator extends Generator {
     }
 
     return null;
+  }
+
+  private String maybeDecodeProxyTypeNameFor(JType proxyParam, TypeOracle typeOracle)
+      throws DiagnosticException {
+    JClassType cType = decodeToBaseType(proxyParam);
+
+    if (cType != null && entityProxyType.isAssignableFrom(cType)) {
+      ProxyFor pFor = proxyParam.isClassOrInterface().getAnnotation(
+          ProxyFor.class);
+      diagnosticIf(pFor == null,
+          "Missing @ProxyFor annotation on type %s",
+          proxyParam.getQualifiedBinaryName());
+      if (pFor != null) {
+        return pFor.value().getName();
+      }
+    }
+    return proxyParam.getQualifiedBinaryName();
   }
 
   private boolean mayContainEntityProxy(JType paramType) {
@@ -1158,5 +1364,79 @@ public class RequestFactoryGenerator extends Generator {
       qualifiedSourceName = qualifiedSourceName.substring(index + 9);
     }
     return qualifiedSourceName;
+  }
+
+  /**
+   * Enforce design rules for EntityProxy, report diagnostics.
+   */
+  @SuppressWarnings("unchecked")
+  private void validateProxyType(JClassType entityProxyType,
+      TypeOracle typeOracle) throws DiagnosticException {
+    // deal with stuff like Request<T extends FooProxy>
+    entityProxyType = decodeToBaseType(entityProxyType);
+    // skip validating base interface
+    if (this.entityProxyType.equals(entityProxyType)) {
+      return;
+    }
+
+    // 1. EntityProxy must have @ProxyFor annotation
+    ProxyFor proxyFor = entityProxyType.getAnnotation(ProxyFor.class);
+    String entityName = entityProxyType.getName();
+    diagnosticIf(proxyFor == null,
+        "Proxy %s is missing @ProxyFor annotation", entityName);
+
+    // 2. find domain object
+    Class<?> domainType =  proxyFor.value();
+    String domainName = domainType.getName();
+
+    // assert domain class has getId() method
+    diagnosticIf(findMethods(domainType, "getId").size() == 0,
+          "Domain classes %s missing getId() method for proxy %s",
+          domainName, entityName);
+
+    for (JMethod method : entityProxyType.getOverridableMethods()) {
+      // skip non-bean methods
+      if (!method.getName().startsWith("get")
+          && !method.getName().startsWith("set")) {
+        continue;
+      }
+      // 2. Method must exist on domain object
+      List<Method> domainMethods = findMethods(domainType, method.getName());
+      diagnosticIf(domainMethods.size() == 0,
+          "Method %s on %s does not exist, but present in proxy %s",
+          method.getName(), domainName, entityName);
+      diagnosticIf(domainMethods.size() > 1,
+          "Method %s on %s is overridden, this is currently unsupported",
+          method.getName(), domainName);
+
+      Method domainMethod = domainMethods.get(0);
+      // 3. type signature must agree starting with return type
+      diagnosticIf(!maybeDecodeProxyTypeNameFor(method.getReturnType(),
+          typeOracle).equals(domainMethod.getReturnType().getName()),
+          "Return type of %s.%s doesn't match that of %s.%s",
+          entityName, method.getName(), domainMethod.getName());
+
+      JType proxyReturnType = method.getReturnType();
+     
+      // can't be non-void primitive, array, or unsupported collection type
+      diagnosticIfBannedType(proxyReturnType, entityName, method.getName());
+
+      JParameter[] proxyParams = method.getParameters();
+      Class<?>[] domainParams = domainMethod.getParameterTypes();
+
+      // # params and param types must agree
+      diagnosticIf(proxyParams.length != domainParams.length,
+          "Parameters do not match between %s.s% and %s.%s",
+          entityName, method.getName(), domainName, domainMethod.getName());
+      for (int i = 0; i < proxyParams.length; i++) {
+        diagnosticIf(!maybeDecodeProxyTypeNameFor(proxyParams[i].getType(),
+            typeOracle).equals(
+            domainParams[i].getName()),
+         "Parameters do not match between %s.s% and %s.%s",
+          entityName, method.getName(), domainName, domainMethod.getName());
+        diagnosticIfBannedType(proxyParams[i].getType(), method.getName(),
+            entityName);
+      }
+    }
   }
 }

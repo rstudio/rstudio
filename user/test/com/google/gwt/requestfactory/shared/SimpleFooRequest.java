@@ -46,8 +46,6 @@ public interface SimpleFooRequest {
   @Instance
   Request<SimpleFooProxy> persistAndReturnSelf(SimpleFooProxy proxy);
 
-  Request<Integer> privateMethod();
-
   Request<Boolean> processBooleanList(List<Boolean> values);
 
   Request<Date> processDateList(List<Date> values);

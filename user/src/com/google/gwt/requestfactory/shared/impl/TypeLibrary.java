@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class TypeLibrary {
 
-  static final Collection<Class<?>> VALUE_TYPES;
+  public static final Collection<Class<?>> VALUE_TYPES;
 
   static {
     HashSet<Class<?>> valueTypes = new HashSet<Class<?>>();

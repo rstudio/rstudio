@@ -31,8 +31,6 @@ public interface SimpleFooStringRequest {
 
   Request<SimpleFooStringProxy> findSimpleFooStringById(String id);
 
-  Request<Integer> privateMethod();
-
   @Instance
   Request<Void> persist(SimpleFooStringProxy proxy);
   
