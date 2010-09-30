@@ -119,10 +119,10 @@ public class Person {
   }
 
   public String getSchedule() {
-    return getSchedule(daysFilters);
+    return getScheduleWithFilter(daysFilters);
   }
 
-  public String getSchedule(boolean[] daysFilter) {
+  public String getScheduleWithFilter(boolean[] daysFilter) {
     return classSchedule.getDescription(daysFilter);
   }
 
