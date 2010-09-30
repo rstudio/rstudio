@@ -127,6 +127,43 @@ public class SuggestBoxTest extends WidgetTestBase {
     box.showSuggestionList();
   }
 
+  public void testLargerMatchShows() {
+    MultiWordSuggestOracle oracle = new MultiWordSuggestOracle(" ");
+    oracle.add("He'll help me wont he");
+
+    TestSuggestionDisplay display = new TestSuggestionDisplay();
+    SuggestBox box = new SuggestBox(oracle, new TextBox(), display);
+    RootPanel.get().add(box);
+    box.setText("He help");
+    box.showSuggestionList();
+    assertTrue(display.isSuggestionListShowing());
+    assertEquals(1, display.getSuggestionCount());
+    assertEquals("<strong>he</strong>'ll <strong>help</strong> me wont <strong>he</strong>",
+        display.getSuggestion(0).getDisplayString().toLowerCase());
+  }
+  
+  public void testMultipleWordMatchesShow() {
+    MultiWordSuggestOracle oracle = new MultiWordSuggestOracle(",! ");
+    oracle.add("Hark, Shark and Herald");
+    oracle.add("Hark! The Herald Angels Sing");
+    oracle.add("Heraldings and Harkings");
+    oracle.add("Send my regards to Herald");
+
+    TestSuggestionDisplay display = new TestSuggestionDisplay();
+    SuggestBox box = new SuggestBox(oracle, new TextBox(), display);
+    RootPanel.get().add(box);
+    box.setText("Herald! Hark");
+    box.showSuggestionList();
+    assertTrue(display.isSuggestionListShowing());
+    assertEquals(3, display.getSuggestionCount());
+    assertEquals("<strong>hark</strong>, shark and <strong>herald</strong>", 
+        display.getSuggestion(0).getDisplayString().toLowerCase());
+    assertEquals("<strong>hark</strong>! the <strong>herald</strong> angels sing",
+        display.getSuggestion(1).getDisplayString().toLowerCase());
+    assertEquals("<strong>herald</strong>ings and <strong>hark</strong>ings",
+        display.getSuggestion(2).getDisplayString().toLowerCase());
+  }
+  
   @SuppressWarnings("deprecation")
   public void testShowAndHide() {
     SuggestBox box = createSuggestBox();

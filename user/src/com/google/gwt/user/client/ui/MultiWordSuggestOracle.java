@@ -96,6 +96,35 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     }
   }
 
+  /**
+   * A class reresenting the bounds of a word within a string. 
+   * 
+   * The bounds are represented by a {@code startIndex} (inclusive) and
+   * an {@code endIndex} (exclusive).
+   */
+  private static class WordBounds implements Comparable<WordBounds> {
+  
+    final int startIndex;
+    final int endIndex;
+    
+    public WordBounds(int startIndex, int length) {
+      this.startIndex = startIndex;
+      this.endIndex = startIndex + length;
+    }
+    
+    public int compareTo(WordBounds that) {
+      int comparison = this.startIndex - that.startIndex;
+      if (comparison == 0) {
+        comparison = that.endIndex - this.endIndex;
+      }
+      return comparison;
+    }
+    
+    public int length() {
+      return endIndex - startIndex;
+    }
+  }
+  
   private static final char WHITESPACE_CHAR = ' ';
   private static final String WHITESPACE_STRING = " ";
 
@@ -300,37 +329,37 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
     for (int i = 0; i < candidates.size(); i++) {
       String candidate = candidates.get(i);
-      int index = 0;
       int cursor = 0;
+      int index = 0;
       // Use real suggestion for assembly.
       String formattedSuggestion = toRealSuggestions.get(candidate);
 
       // Create strong search string.
       StringBuffer accum = new StringBuffer();
-
+      
+      String[] searchWords = query.split(WHITESPACE_STRING);
       while (true) {
-        index = candidate.indexOf(query, index);
-        if (index == -1) {
+        WordBounds wordBounds = findNextWord(candidate, searchWords, index);
+        if (wordBounds == null) {
           break;
         }
-        int endIndex = index + query.length();
-        if (index == 0 || (WHITESPACE_CHAR == candidate.charAt(index - 1))) {
-          String part1 = escapeText(formattedSuggestion.substring(cursor, index));
-          String part2 = escapeText(formattedSuggestion.substring(index,
-              endIndex));
-          cursor = endIndex;
+        if (wordBounds.startIndex == 0 || 
+            WHITESPACE_CHAR == candidate.charAt(wordBounds.startIndex - 1)) {
+          String part1 = escapeText(formattedSuggestion.substring(cursor, wordBounds.startIndex));
+          String part2 = escapeText(formattedSuggestion.substring(wordBounds.startIndex,
+              wordBounds.endIndex));
+          cursor = wordBounds.endIndex;
           accum.append(part1).append("<strong>").append(part2).append(
               "</strong>");
         }
-        index = endIndex;
+        index = wordBounds.endIndex;
       }
-
+      
       // Check to make sure the search was found in the string.
       if (cursor == 0) {
         continue;
       }
-
-      // Finish creating the formatted string.
+      
       String end = escapeText(formattedSuggestion.substring(cursor));
       accum.append(end);
       MultiWordSuggestion suggestion = createSuggestion(formattedSuggestion,
@@ -405,7 +434,26 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     }
     return candidateSet;
   }
-
+  
+  /**
+   * @return a {@link WordBounds} representing the first word in 
+   *     {@code searchWords} that is found in candidate starting at 
+   *     {@code indexToStartAt} or {@code null} if no words could be found.
+   */
+  private WordBounds findNextWord(String candidate, String[] searchWords, int indexToStartAt) {
+    WordBounds firstWord = null;
+    for (String word : searchWords) {
+      int index = candidate.indexOf(word, indexToStartAt);
+      if (index != -1) {
+        WordBounds newWord = new WordBounds(index, word.length());
+        if (firstWord == null || newWord.compareTo(firstWord) < 0) {
+          firstWord = newWord;
+        }
+      }
+    }
+    return firstWord;
+  }
+  
   /**
    * Normalize the search key by making it lower case, removing multiple spaces,
    * apply whitespace masks, and make it lower case.
