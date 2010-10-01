@@ -873,7 +873,7 @@ public class RequestFactoryGenerator extends Generator {
         requestClassName = asInnerImplClass(colType == List.class
             ? "ListRequestImpl" : "SetRequestImpl", returnType);
       } else if (isProxyRequest(typeOracle, requestType)) {
-        if (selectorInterface.isAssignableTo(typeOracle.findType(FindRequest.class.getName()))) {
+        if (selectorInterface.isAssignableTo(findRequestType)) {
           extraArgs = ", proxyId";
           requestClassName = FindRequestObjectImpl.class.getName();
         } else {

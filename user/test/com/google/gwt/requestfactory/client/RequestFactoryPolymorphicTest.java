@@ -32,7 +32,11 @@ public class RequestFactoryPolymorphicTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.requestfactory.RequestFactorySuite";
+    /*
+     * A single test suite can't have 2 RequestFactory because the compiler runs
+     * just once across a suite.
+     */
+    return "com.google.gwt.requestfactory.RequestFactoryPolymorphicSuite";
   }
   
   public void testGenerator() {
