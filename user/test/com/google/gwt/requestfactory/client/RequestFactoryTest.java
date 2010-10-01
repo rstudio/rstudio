@@ -499,7 +499,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   /**
    * Test that a null value can be sent in a request.
    */
-  public void disabledTestNullSimpleFooRequest() {
+  public void testNullSimpleFooRequest() {
     delayTestFinish(5000);
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullSimpleFoo(null);
     fooReq.fire(new Receiver<Void>() {

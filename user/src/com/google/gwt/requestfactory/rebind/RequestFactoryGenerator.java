@@ -1041,22 +1041,25 @@ public class RequestFactoryGenerator extends Generator {
       if (sb.length() > 0) {
         sb.append(", ");
       }
-      JClassType classType = parameter.getType().isClassOrInterface();
-
       JType paramType = parameter.getType();
+      JClassType classType = paramType.isClassOrInterface();
+      String paramName = parameter.getName();
+
       if (paramType.getQualifiedSourceName().equals(
           EntityProxyId.class.getName())) {
-        sb.append("factory.getWireFormat(" + parameter.getName() + ")");
+        sb.append("factory.getWireFormat(" + paramName + ")");
         continue;
       }
 
       if (classType != null && classType.isAssignableTo(entityProxyType)) {
+        sb.append(paramName + " == null ? null : ");
         sb.append("((" + classType.getQualifiedBinaryName() + "Impl" + ")");
-      }
-      sb.append(parameter.getName());
-      if (classType != null && classType.isAssignableTo(entityProxyType)) {
+        sb.append(paramName);
         sb.append(").wireFormatId()");
+        continue;
       }
+
+      sb.append(paramName);
     }
     return "new Object[] {" + sb.toString() + "}";
   }
