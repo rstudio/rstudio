@@ -25,6 +25,12 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConst
  * cell's size may be set independently. Each child widget can take up a subset
  * of its cell and can be aligned within it.
  * 
+ * <p>
+ * Note: This class is not related to the
+ * {@link com.google.gwt.cell.client.Cell} based data presentation widgets such
+ * as {@link com.google.gwt.user.cellview.client.CellList} and
+ * {@link com.google.gwt.user.cellview.client.CellTable}.
+ * 
  * <h3>Use in UiBinder Templates</h3>
  * <P>
  * When working with CellPanel subclasses in 
