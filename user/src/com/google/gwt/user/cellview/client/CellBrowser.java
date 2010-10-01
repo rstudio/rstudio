@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -63,7 +63,7 @@ import java.util.List;
 /**
  * A "browsable" view of a tree in which only a single node per level may be
  * open at one time.
- *
+ * 
  * <p>
  * This widget will <em>only</em> work in standards mode, which requires that
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
@@ -180,11 +180,11 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   }
 
   /**
-   * A custom version of cell list used by the browser.
-   *
+   * A custom version of cell list used by the browser. Visible for testing.
+   * 
    * @param <T> the data type of list items
    */
-  private class BrowserCellList<T> extends CellList<T> {
+  class BrowserCellList<T> extends CellList<T> {
 
     /**
      * The level of this list view.
@@ -192,14 +192,19 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     private final int level;
 
     /**
-     * The key of the currently open item.
+     * The key of the currently focused item.
      */
-    private Object openKey;
+    private Object focusedKey;
 
     /**
-     * The value of the currently open item.
+     * The value of the currently focused item.
      */
-    private T openValue;
+    private T focusedValue;
+
+    /**
+     * Indicates whether or not the focused value is open.
+     */
+    private boolean isFocusedOpen;
 
     public BrowserCellList(final Cell<T> cell, int level,
         ProvidesKey<T> keyProvider) {
@@ -240,18 +245,6 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     }
 
     @Override
-    protected void onFocus() {
-      super.onFocus();
-
-      // Open the selected row.
-      int selectedRow = getKeyboardSelectedRow();
-      if (isRowWithinBounds(selectedRow)) {
-        T value = getDisplayedItem(selectedRow);
-        setChildState(this, value, true, true, true);
-      }
-    }
-
-    @Override
     protected void renderRowValues(SafeHtmlBuilder sb, List<T> values,
         int start, SelectionModel<? super T> selectionModel) {
       Cell<T> cell = getCell();
@@ -261,8 +254,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       String openItem = " " + style.cellBrowserOpenItem();
       String evenItem = style.cellBrowserEvenItem();
       String oddItem = style.cellBrowserOddItem();
-      int keyboardSelectedRow = Math.max(0, getKeyboardSelectedRow()
-          + getPageStart());
+      int keyboardSelectedRow = getKeyboardSelectedRow() + getPageStart();
       int length = values.size();
       int end = start + length;
       for (int i = start; i < end; i++) {
@@ -270,7 +262,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
         Object key = getValueKey(value);
         boolean isSelected = selectionModel == null ? false
             : selectionModel.isSelected(value);
-        boolean isOpen = (openKey == null) ? false : openKey.equals(key);
+        boolean isOpen = (focusedKey == null || !isFocusedOpen) ? false
+            : focusedKey.equals(key);
         StringBuilder classesBuilder = new StringBuilder();
         classesBuilder.append(i % 2 == 0 ? evenItem : oddItem);
         if (isOpen) {
@@ -314,6 +307,15 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       }
     }
 
+    @Override
+    void doKeyboardSelection(Event event, T value, int indexOnPage) {
+      super.doKeyboardSelection(event, value, indexOnPage);
+
+      // Open the selected row. If keyboard selection updates the selection
+      // model, this is a no-op.
+      setChildState(this, value, true, true, true);
+    }
+
     /**
      * Navigate to a deeper node.
      */
@@ -349,6 +351,166 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
         TreeNodeImpl<?> treeNode = treeNodes.get(level - 1);
         treeNode.display.setFocus(true);
       }
+    }
+  }
+
+  /**
+   * A node in the tree.
+   * 
+   * @param <C> the data type of the children of the node
+   */
+  class TreeNodeImpl<C> implements TreeNode {
+    private final BrowserCellList<C> display;
+    private NodeInfo<C> nodeInfo;
+    private final Object value;
+    private final HandlerRegistration valueChangeHandler;
+    private final Widget widget;
+
+    /**
+     * Construct a new {@link TreeNodeImpl}.
+     * 
+     * @param nodeInfo the nodeInfo for the children nodes
+     * @param value the value of the node
+     * @param display the display associated with the node
+     * @param widget the widget that wraps the display
+     */
+    public TreeNodeImpl(final NodeInfo<C> nodeInfo, Object value,
+        final BrowserCellList<C> display, Widget widget) {
+      this.display = display;
+      this.nodeInfo = nodeInfo;
+      this.value = value;
+      this.widget = widget;
+
+      // Trim to the current level if the open node disappears.
+      valueChangeHandler = display.addValueChangeHandler(new ValueChangeHandler<List<C>>() {
+        public void onValueChange(ValueChangeEvent<List<C>> event) {
+          Object focusedKey = display.focusedKey;
+          if (focusedKey != null) {
+            boolean stillExists = false;
+            List<C> displayValues = event.getValue();
+            for (C displayValue : displayValues) {
+              if (focusedKey.equals(display.getValueKey(displayValue))) {
+                stillExists = true;
+                break;
+              }
+            }
+            if (!stillExists) {
+              trimToLevel(display.level);
+            }
+          }
+        }
+      });
+    }
+
+    public int getChildCount() {
+      assertNotDestroyed();
+      return display.getChildCount();
+    }
+
+    public C getChildValue(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return display.getDisplayedItem(index);
+    }
+
+    public int getIndex() {
+      assertNotDestroyed();
+      TreeNodeImpl<?> parent = getParent();
+      return (parent == null) ? 0 : parent.getOpenIndex();
+    }
+
+    public TreeNodeImpl<?> getParent() {
+      assertNotDestroyed();
+      return (display.level == 0) ? null : treeNodes.get(display.level - 1);
+    }
+
+    public Object getValue() {
+      return value;
+    }
+
+    public boolean isChildLeaf(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return isLeaf(getChildValue(index));
+    }
+
+    public boolean isChildOpen(int index) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return (display.focusedKey == null || !display.isFocusedOpen)
+          ? false
+          : display.focusedKey.equals(display.getValueKey(getChildValue(index)));
+    }
+
+    public boolean isDestroyed() {
+      return nodeInfo == null;
+    }
+
+    public TreeNode setChildOpen(int index, boolean open) {
+      return setChildOpen(index, open, true);
+    }
+
+    public TreeNode setChildOpen(int index, boolean open, boolean fireEvents) {
+      assertNotDestroyed();
+      checkChildBounds(index);
+      return setChildState(display, getChildValue(index), open, fireEvents,
+          true);
+    }
+
+    /**
+     * @return the key of the value that is focused in this node's display.
+     */
+    Object getFocusedKey() {
+      return display.focusedKey;
+    }
+
+    /**
+     * @return true if the focused value is open, false if not
+     */
+    boolean isFocusedOpen() {
+      return display.isFocusedOpen;
+    }
+
+    /**
+     * Assert that the node has not been destroyed.
+     */
+    private void assertNotDestroyed() {
+      if (isDestroyed()) {
+        throw new IllegalStateException("TreeNode no longer exists.");
+      }
+    }
+
+    /**
+     * Check the child bounds.
+     * 
+     * @param index the index of the child
+     * @throws IndexOutOfBoundsException if the child is not in range
+     */
+    private void checkChildBounds(int index) {
+      if ((index < 0) || (index >= getChildCount())) {
+        throw new IndexOutOfBoundsException();
+      }
+    }
+
+    /**
+     * Unregister the list view and remove it from the widget.
+     */
+    private void destroy() {
+      valueChangeHandler.removeHandler();
+      display.setSelectionModel(null);
+      nodeInfo.unsetDataDisplay();
+      getSplitLayoutPanel().remove(widget);
+      nodeInfo = null;
+    }
+
+    /**
+     * Get the index of the open item.
+     * 
+     * @return the index of the open item, or -1 if not found
+     */
+    private int getOpenIndex() {
+      return display.isFocusedOpen ? display.indexOf(display.focusedValue)
+          : null;
     }
   }
 
@@ -465,151 +627,6 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     }
   }
 
-  /**
-   * A node in the tree.
-   *
-   * @param <C> the data type of the children of the node
-   */
-  private class TreeNodeImpl<C> implements TreeNode {
-    private final BrowserCellList<C> display;
-    private NodeInfo<C> nodeInfo;
-    private final Object value;
-    private final HandlerRegistration valueChangeHandler;
-    private final Widget widget;
-
-    /**
-     * Construct a new {@link TreeNodeImpl}.
-     *
-     * @param nodeInfo the nodeInfo for the children nodes
-     * @param value the value of the node
-     * @param display the display associated with the node
-     * @param cell the {@link Cell} used to render the data
-     * @param widget the widget that wraps the display
-     */
-    public TreeNodeImpl(final NodeInfo<C> nodeInfo, Object value,
-        final BrowserCellList<C> display, Widget widget) {
-      this.display = display;
-      this.nodeInfo = nodeInfo;
-      this.value = value;
-      this.widget = widget;
-
-      // Trim to the current level if the open node disappears.
-      valueChangeHandler = display.addValueChangeHandler(new ValueChangeHandler<List<C>>() {
-        public void onValueChange(ValueChangeEvent<List<C>> event) {
-          Object openKey = display.openKey;
-          if (openKey != null) {
-            boolean stillExists = false;
-            List<C> displayValues = event.getValue();
-            for (C displayValue : displayValues) {
-              if (openKey.equals(display.getValueKey(displayValue))) {
-                stillExists = true;
-                break;
-              }
-            }
-            if (!stillExists) {
-              trimToLevel(display.level);
-            }
-          }
-        }
-      });
-    }
-
-    public int getChildCount() {
-      assertNotDestroyed();
-      return display.getChildCount();
-    }
-
-    public C getChildValue(int index) {
-      assertNotDestroyed();
-      checkChildBounds(index);
-      return display.getDisplayedItem(index);
-    }
-
-    public int getIndex() {
-      assertNotDestroyed();
-      TreeNodeImpl<?> parent = getParent();
-      return (parent == null) ? 0 : parent.getOpenIndex();
-    }
-
-    public TreeNodeImpl<?> getParent() {
-      assertNotDestroyed();
-      return (display.level == 0) ? null : treeNodes.get(display.level - 1);
-    }
-
-    public Object getValue() {
-      return value;
-    }
-
-    public boolean isChildLeaf(int index) {
-      assertNotDestroyed();
-      checkChildBounds(index);
-      return isLeaf(getChildValue(index));
-    }
-
-    public boolean isChildOpen(int index) {
-      assertNotDestroyed();
-      checkChildBounds(index);
-      return (display.openKey == null) ? false
-          : display.openKey.equals(display.getValueKey(getChildValue(index)));
-    }
-
-    public boolean isDestroyed() {
-      return nodeInfo == null;
-    }
-
-    public TreeNode setChildOpen(int index, boolean open) {
-      return setChildOpen(index, open, true);
-    }
-
-    public TreeNode setChildOpen(int index, boolean open, boolean fireEvents) {
-      assertNotDestroyed();
-      checkChildBounds(index);
-      return setChildState(display, getChildValue(index), open, fireEvents,
-          true);
-    }
-
-    /**
-     * Assert that the node has not been destroyed.
-     */
-    private void assertNotDestroyed() {
-      if (isDestroyed()) {
-        throw new IllegalStateException("TreeNode no longer exists.");
-      }
-    }
-
-    /**
-     * Check the child bounds.
-     *
-     * @param index the index of the child
-     * @throws IndexOutOfBoundsException if the child is not in range
-     */
-    private void checkChildBounds(int index) {
-      if ((index < 0) || (index >= getChildCount())) {
-        throw new IndexOutOfBoundsException();
-      }
-    }
-
-    /**
-     * Unregister the list view and remove it from the widget.
-     */
-    private void destroy() {
-      valueChangeHandler.removeHandler();
-      display.setSelectionModel(null);
-      nodeInfo.unsetDataDisplay();
-      getSplitLayoutPanel().remove(widget);
-      nodeInfo = null;
-    }
-
-    /**
-     * Get the index of the open item.
-     *
-     * @return the index of the open item, or -1 if not found
-     */
-    private int getOpenIndex() {
-      return display.indexOf(display.openValue);
-    }
-  }
-
   private static Resources DEFAULT_RESOURCES;
 
   /**
@@ -625,6 +642,11 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     }
     return DEFAULT_RESOURCES;
   }
+
+  /**
+   * The visible {@link TreeNodeImpl}s. Visible for testing.
+   */
+  final List<TreeNodeImpl<?>> treeNodes = new ArrayList<TreeNodeImpl<?>>();
 
   /**
    * The animation used for scrolling.
@@ -677,13 +699,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   private final Style style;
 
   /**
-   * The visible {@link TreeNodeImpl}s.
-   */
-  private final List<TreeNodeImpl<?>> treeNodes = new ArrayList<TreeNodeImpl<?>>();
-
-  /**
    * Construct a new {@link CellBrowser}.
-   *
+   * 
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
@@ -694,7 +711,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Construct a new {@link CellBrowser} with the specified {@link Resources}.
-   *
+   * 
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
@@ -745,7 +762,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the default width of new columns.
-   *
+   * 
    * @return the default width in pixels
    */
   public int getDefaultColumnWidth() {
@@ -754,7 +771,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the minimum width of columns.
-   *
+   * 
    * @return the minimum width in pixels
    */
   public int getMinimumColumnWidth() {
@@ -791,7 +808,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the default width of new columns.
-   *
+   * 
    * @param width the default width in pixels
    */
   public void setDefaultColumnWidth(int width) {
@@ -808,7 +825,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the minimum width of columns.
-   *
+   * 
    * @param minWidth the minimum width in pixels
    */
   public void setMinimumColumnWidth(int minWidth) {
@@ -816,12 +833,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   }
 
   /**
-   *
-   *
-   *
-   *
    * Create a pager to control the list view.
-   *
+   * 
    * @param <C> the item type in the list view
    * @param display the list view to add paging too
    * @return the pager
@@ -850,7 +863,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   /**
    * Create a new {@link TreeNodeImpl} and append it to the end of the
    * LayoutPanel.
-   *
+   * 
    * @param <C> the data type of the children
    * @param nodeInfo the info about the node
    * @param value the value of the open node
@@ -901,7 +914,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   /**
    * Create a {@link HasData} that will display items. The {@link HasData} must
    * extend {@link Widget}.
-   *
+   * 
    * @param <C> the item type in the list view
    * @param nodeInfo the node info with child data
    * @param level the level of the list
@@ -917,7 +930,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the HTML representation of an image.
-   *
+   * 
    * @param res the {@link ImageResource} to render as HTML
    * @return the rendered HTML
    */
@@ -931,7 +944,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the {@link SplitLayoutPanel} used to lay out the views.
-   *
+   * 
    * @return the {@link SplitLayoutPanel}
    */
   private SplitLayoutPanel getSplitLayoutPanel() {
@@ -940,8 +953,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the open state of a tree node.
-   *
-   * @param cell the Cell that changed state.
+   * 
+   * @param cellList the CellList that changed state.
    * @param value the value to open
    * @param open true to open, false to close
    * @param fireEvents true to fireEvents
@@ -950,11 +963,6 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   private <C> TreeNode setChildState(BrowserCellList<C> cellList, C value,
       boolean open, boolean fireEvents, boolean redraw) {
 
-    // Early exit if the node is a leaf.
-    if (isLeaf(value)) {
-      return null;
-    }
-
     // Get the key of the value to open.
     Object newKey = cellList.getValueKey(value);
 
@@ -962,56 +970,63 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       if (newKey == null) {
         // Early exit if opening but the specified node has no key.
         return null;
-      } else if (newKey.equals(cellList.openKey)) {
+      } else if (newKey.equals(cellList.focusedKey)) {
         // Early exit if opening but the specified node is already open.
-        return treeNodes.get(cellList.level + 1);
+        return cellList.isFocusedOpen ? treeNodes.get(cellList.level + 1)
+            : null;
       }
 
       // Close the currently open node.
-      if (cellList.openKey != null) {
-        setChildState(cellList, cellList.openValue, false, fireEvents, false);
-      }
-
-      // Get the child node info.
-      NodeInfo<?> childNodeInfo = getNodeInfo(value);
-      if (childNodeInfo == null) {
-        return null;
+      if (cellList.focusedKey != null) {
+        setChildState(cellList, cellList.focusedValue, false, fireEvents, false);
       }
 
       // Update the cell so it renders the styles correctly.
-      cellList.openValue = value;
-      cellList.openKey = cellList.getValueKey(value);
+      cellList.focusedValue = value;
+      cellList.focusedKey = cellList.getValueKey(value);
 
       // Add the child node.
-      appendTreeNode(childNodeInfo, value);
+      NodeInfo<?> childNodeInfo = isLeaf(value) ? null : getNodeInfo(value);
+      if (childNodeInfo != null) {
+        cellList.isFocusedOpen = true;
+        appendTreeNode(childNodeInfo, value);
+      } else {
+        cellList.isFocusedOpen = false;
+      }
 
       // Refresh the display to update the styles for this node.
       if (redraw) {
         treeNodes.get(cellList.level).display.redraw();
       }
 
-      if (fireEvents) {
-        OpenEvent.fire(this, treeNodes.get(cellList.level + 1));
+      if (cellList.isFocusedOpen) {
+        TreeNodeImpl<?> node = treeNodes.get(cellList.level + 1);
+        if (fireEvents) {
+          OpenEvent.fire(this, node);
+        }
+        return node.isDestroyed() ? null : node;
       }
-      return treeNodes.get(cellList.level + 1);
+      return null;
     } else {
       // Early exit if closing and the specified node or all nodes are closed.
-      if (cellList.openKey == null || !cellList.openKey.equals(newKey)) {
+      if (cellList.focusedKey == null || !cellList.focusedKey.equals(newKey)) {
         return null;
       }
 
       // Close the node.
-      TreeNode closedNode = treeNodes.get(cellList.level + 1);
+      TreeNode closedNode = cellList.isFocusedOpen
+          ? treeNodes.get(cellList.level + 1) : null;
       trimToLevel(cellList.level);
-      cellList.openKey = null;
-      cellList.openValue = null;
+      cellList.focusedKey = null;
+      cellList.focusedValue = null;
+      cellList.isFocusedOpen = false;
 
       // Refresh the display to update the styles for this node.
       if (redraw) {
         treeNodes.get(cellList.level).display.redraw();
       }
 
-      if (fireEvents) {
+      if (fireEvents && closedNode != null) {
         CloseEvent.fire(this, closedNode);
       }
     }
@@ -1021,7 +1036,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Reduce the number of {@link HasData}s down to the specified level.
-   *
+   * 
    * @param level the level to trim to
    */
   private void trimToLevel(int level) {

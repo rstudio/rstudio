@@ -257,7 +257,15 @@ public class CellList<T> extends AbstractHasData<T> {
     return cell.dependsOnSelection();
   }
 
+  /**
+   * Called when a user action triggers selection.
+   * 
+   * @param event the event that triggered selection
+   * @param value the value that was selected
+   * @param indexOnPage the index of the value on the page
+   */
   protected void doSelection(Event event, T value, int indexOnPage) {
+    // TODO(jlabanca): Defer to a user provided SelectionManager.
     SelectionModel<? super T> selectionModel = getSelectionModel();
     if (selectionModel != null) {
       selectionModel.setSelected(value, true);
@@ -363,9 +371,7 @@ public class CellList<T> extends AbstractHasData<T> {
       // Focus on the cell.
       if ("focus".equals(eventType) || isMouseDown) {
         isFocused = true;
-        if (getPresenter().getKeyboardSelectedRow() != indexOnPage) {
-          getPresenter().setKeyboardSelectedRow(indexOnPage, false);
-        }
+        doKeyboardSelection(event, value, indexOnPage);
       }
 
       // Fire the event to the cell if the list has not been refreshed.
@@ -460,6 +466,19 @@ public class CellList<T> extends AbstractHasData<T> {
   @Override
   protected void setSelected(Element elem, boolean selected) {
     setStyleName(elem, style.cellListSelectedItem(), selected);
+  }
+
+  /**
+   * Called when the user selects a cell with the mouse or tab key.
+   * 
+   * @param event the event
+   * @param value the value that is selected
+   * @param indexOnPage the index on the page
+   */
+  void doKeyboardSelection(Event event, T value, int indexOnPage) {
+    if (getPresenter().getKeyboardSelectedRow() != indexOnPage) {
+      getPresenter().setKeyboardSelectedRow(indexOnPage, false);
+    }
   }
 
   @Override
