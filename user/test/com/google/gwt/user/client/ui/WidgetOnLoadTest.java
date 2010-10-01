@@ -111,11 +111,12 @@ public class WidgetOnLoadTest extends GWTTestCase {
       int delegateAttachOrder;
       int delegateDetachOrder;
 
-      public void onAttach(AttachEvent event) {
-        delegateAttachOrder = ++orderIndex;
-      }
-      public void onDetach(AttachEvent event) {
-        delegateDetachOrder = ++orderIndex;
+      public void onAttachOrDetach(AttachEvent event) {
+        if (event.isAttached()) {
+          delegateAttachOrder = ++orderIndex;
+        } else {
+          delegateDetachOrder = ++orderIndex;
+        }
       }
     }
 

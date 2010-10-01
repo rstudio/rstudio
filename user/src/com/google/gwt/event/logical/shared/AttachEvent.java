@@ -29,8 +29,7 @@ public class AttachEvent extends GwtEvent<AttachEvent.Handler> {
    * Implemented by objects that handle {@link AttachEvent}.
    */
   public interface Handler extends EventHandler {
-    void onAttach(AttachEvent event);
-    void onDetach(AttachEvent event);
+    void onAttachOrDetach(AttachEvent event);
   }
 
   /**
@@ -98,10 +97,6 @@ public class AttachEvent extends GwtEvent<AttachEvent.Handler> {
 
   @Override
   protected void dispatch(AttachEvent.Handler handler) {
-    if (attached) {
-      handler.onAttach(this);
-    } else {
-      handler.onDetach(this);
-    }
+    handler.onAttachOrDetach(this);
   }
 }
