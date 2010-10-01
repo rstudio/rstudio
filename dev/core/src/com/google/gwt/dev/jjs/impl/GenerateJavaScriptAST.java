@@ -376,8 +376,10 @@ public class GenerateJavaScriptAST {
         polymorphicJsFunctions.add(jsFunction);
       }
       methodBodyMap.put(x.getBody(), jsFunction);
-      jsFunction.getSourceInfo().addCorrelation(
-          program.getCorrelator().by(globalName));
+      if (globalName != null) {
+        jsFunction.getSourceInfo().addCorrelation(
+            program.getCorrelator().by(globalName));
+      }
       push(jsFunction.getScope());
 
       if (program.getIndexedMethods().contains(x)) {
