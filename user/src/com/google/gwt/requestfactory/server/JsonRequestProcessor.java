@@ -342,8 +342,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
               entityKey, dvsData.jsonObject, dvsData.writeOperation);
           return entityData.entityInstance;
         } else {
-          // TODO(rjrjr): This results in a ConcurrentModificationException.
-          // involvedKeys loops in constructAfterDvsDataMapAfterCallingSetters.
           involvedKeys.add(entityKey);
           return getEntityInstance(entityKey);
         }
@@ -356,8 +354,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         throw new IllegalArgumentException("Unknown service, unable to decode "
             + parameterValue);
       }
-      // TODO(rjrjr): This results in a ConcurrentModificationException.
-      // involvedKeys loops in constructAfterDvsDataMapAfterCallingSetters.
       involvedKeys.add(entityKey);
       return getEntityInstance(entityKey);
     }
@@ -1078,31 +1074,47 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private void constructAfterDvsDataMapAfterCallingSetters()
       throws SecurityException, JSONException, IllegalAccessException,
       InvocationTargetException, NoSuchMethodException, InstantiationException {
+    /*
+     * EntityKeys can be added to involvedKeys if a setter sets an EntityType
+     * that was null before calling the setter, so we need to loop in a way that
+     * will protected against ConcurrentModificationExceptions.
+     */
     afterDvsDataMap = new HashMap<EntityKey, EntityData>();
-    for (EntityKey entityKey : involvedKeys) {
-      // use the beforeDataMap and dvsDataMap
-      DvsData dvsData = dvsDataMap.get(entityKey);
-      if (dvsData != null) {
-        EntityData entityData = getEntityDataForRecordWithSettersApplied(
-            entityKey, dvsData.jsonObject, dvsData.writeOperation);
-        if (entityKey.isFuture) {
-          // TODO: assert that the id is null for entityData.entityInstance
-        }
-        afterDvsDataMap.put(entityKey, entityData);
-      } else if (entityKey.isFuture) {
-        // The client-side DVS failed to include a CREATE operation.
-        throw new RuntimeException("Future object with no dvsData");
-      } else {
-        /*
-         * Involved, but not in the deltaValueStore -- param ref to an unedited,
-         * existing object.
-         */
-        SerializedEntity serializedEntity = beforeDataMap.get(entityKey);
-        if (serializedEntity.entityInstance != null) {
-          afterDvsDataMap.put(entityKey, new EntityData(
-              serializedEntity.entityInstance, null));
+    Set<EntityKey> done = new HashSet<EntityKey>(); 
+    Set<EntityKey> queue = new HashSet<EntityKey>(involvedKeys);
+    while (!queue.isEmpty()) {
+      for (EntityKey entityKey : queue) {
+        // use the beforeDataMap and dvsDataMap
+        DvsData dvsData = dvsDataMap.get(entityKey);
+        if (dvsData != null) {
+          EntityData entityData = getEntityDataForRecordWithSettersApplied(
+              entityKey, dvsData.jsonObject, dvsData.writeOperation);
+          if (entityKey.isFuture) {
+            // TODO: assert that the id is null for entityData.entityInstance
+          }
+          afterDvsDataMap.put(entityKey, entityData);
+        } else if (entityKey.isFuture) {
+          // The client-side DVS failed to include a CREATE operation.
+          throw new RuntimeException("Future object with no dvsData");
+        } else {
+          /*
+           * Involved, but not in the deltaValueStore -- param ref to an
+           * unedited, existing object.
+           */
+          SerializedEntity serializedEntity = beforeDataMap.get(entityKey);
+          Object entityInstance = (serializedEntity == null) ?
+              getEntityInstance(entityKey) : serializedEntity.entityInstance;
+          if (entityInstance != null) {
+            afterDvsDataMap.put(entityKey, new EntityData(entityInstance,
+                null));
+          }
         }
       }
+
+      // Reset the queue.
+      done.addAll(queue);
+      queue.addAll(involvedKeys);
+      queue.removeAll(done);
     }
   }
 
@@ -1178,7 +1190,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     if (entityInstance == null) {
       return WriteOperation.DELETE;
     }
-    if (hasChanged(beforeDataMap.get(entityKey).serializedEntity,
+    SerializedEntity beforeEntity = beforeDataMap.get(entityKey);
+    if (beforeEntity != null && hasChanged(beforeEntity.serializedEntity,
         serializeEntity(entityInstance, entityKey))) {
       return WriteOperation.UPDATE;
     }

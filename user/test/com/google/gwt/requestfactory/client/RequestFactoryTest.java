@@ -190,10 +190,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   /**
    * Test that we can commit child objects.
-   * 
-   * TODO: Causes a ConcurrentModificationException
+
    */
-  public void disabledTestCascadingCommit() {
+  public void testCascadingCommit() {
     delayTestFinish(5000);
     SimpleFooRequest context = req.simpleFooRequest();
     final SimpleFooProxy foo = context.create(SimpleFooProxy.class);

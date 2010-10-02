@@ -183,8 +183,9 @@ public class JsonRequestProcessorTest extends TestCase {
     foo.put("userName", JSONObject.NULL);
     foo.put("intId", 45);
     foo.put("nullField", "test");
-    foo.put("barNullField", SimpleBar.getSingleton().getId() 
-        + "@IS@" + SimpleBarProxy.class.getName());
+    foo.put("barNullField",
+        JsonRequestProcessor.base64Encode(SimpleBar.getSingleton().getId())
+            + "@NO@" + SimpleBarProxy.class.getName());
     foo.put("barField", JSONObject.NULL);
 
     JSONObject result = getResultFromServer(foo);
