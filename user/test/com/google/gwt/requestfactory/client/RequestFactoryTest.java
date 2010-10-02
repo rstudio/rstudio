@@ -808,32 +808,54 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
   }
 
-  /*
-   * TODO: all these tests should check the final values. It will be easy when
-   * we have better persistence than the singleton pattern.
-   */
   public void testPersistExistingEntityExistingRelation() {
     delayTestFinish(5000);
 
+    // Retrieve a Bar
     simpleBarRequest().findSimpleBarById("999L").fire(
         new Receiver<SimpleBarProxy>() {
           @Override
           public void onSuccess(final SimpleBarProxy barProxy) {
+            // Retrieve a Foo
             simpleFooRequest().findSimpleFooById(999L).fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy fooProxy) {
                     SimpleFooRequest context = simpleFooRequest();
-                    Request<Void> updReq = context.persist().using(fooProxy);
                     fooProxy = context.edit(fooProxy);
+                    // Make the Foo point to the Bar
                     fooProxy.setBarField(barProxy);
-                    updReq.fire(new Receiver<Void>() {
-                      @Override
-                      public void onSuccess(Void response) {
+                    fooProxy.setUserName("Hello");
+                    fooProxy.setByteField((byte) 55);
+                    context.persistAndReturnSelf().using(fooProxy).fire(
+                        new Receiver<SimpleFooProxy>() {
+                          @Override
+                          public void onSuccess(SimpleFooProxy received) {
+                            // Check that Foo points to Bar
+                            assertNotNull(received.getBarField());
+                            assertEquals(barProxy.stableId(),
+                                received.getBarField().stableId());
+                            assertEquals("Hello", received.getUserName());
+                            assertTrue(55 == received.getByteField());
 
-                        finishTestAndReset();
-                      }
-                    });
+                            // Unset the association
+                            SimpleFooRequest context = simpleFooRequest();
+                            received = context.edit(received);
+                            received.setBarField(null);
+                            received.setUserName(null);
+                            received.setByteField(null);
+                            context.persistAndReturnSelf().using(received).fire(
+                                new Receiver<SimpleFooProxy>() {
+                                  @Override
+                                  public void onSuccess(SimpleFooProxy response) {
+                                    assertNull(response.getBarField());
+                                    assertNull(response.getUserName());
+                                    assertNull(response.getByteField());
+                                    finishTestAndReset();
+                                  }
+                                });
+                          }
+                        });
                   }
                 });
           }
