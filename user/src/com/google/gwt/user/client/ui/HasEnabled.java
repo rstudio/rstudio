@@ -22,6 +22,11 @@ package com.google.gwt.user.client.ui;
 public interface HasEnabled {
 
   /**
+   * @return true if the widget is enabled, false if not
+   */
+  boolean isEnabled();
+
+  /**
    * Sets whether this widget is enabled.
    * 
    * @param enabled <code>true</code> to enable the widget, <code>false</code>
