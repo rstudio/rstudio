@@ -51,8 +51,10 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
+import com.google.gwt.sample.expenses.client.request.ExpenseRequest;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
+import com.google.gwt.sample.expenses.client.request.ReportRequest;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -967,11 +969,10 @@ public class ExpenseDetails extends Composite {
     setNotesEditState(false, true, pendingNotes);
 
     // Submit the delta.
-    Request<Void> editRequest = expensesRequestFactory.reportRequest().persist(
-        report);
+    ReportRequest editRequest = expensesRequestFactory.reportRequest();
     ReportProxy editableReport = editRequest.edit(report);
     editableReport.setNotes(pendingNotes);
-    editRequest.fire(new Receiver<Void>() {
+    editRequest.persist().using(editableReport).fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void ignore) {
       }
@@ -1047,12 +1048,11 @@ public class ExpenseDetails extends Composite {
     }
 
     // Create a delta and sync with the value store.
-    Request<Void> editRequest = expensesRequestFactory.expenseRequest().persist(
-        record);
+    ExpenseRequest editRequest = expensesRequestFactory.expenseRequest();
     ExpenseProxy editableRecord = editRequest.edit(record);
     editableRecord.setApproval(approval);
     editableRecord.setReasonDenied(reasonDenied);
-    editRequest.fire(new Receiver<Void>() {
+    editRequest.persist().using(editableRecord).fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void ignore) {
       }

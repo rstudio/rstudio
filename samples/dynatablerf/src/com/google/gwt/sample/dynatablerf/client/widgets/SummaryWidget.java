@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,7 +22,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
@@ -30,13 +29,14 @@ import com.google.gwt.sample.dynatablerf.client.events.FilterChangeEvent;
 import com.google.gwt.sample.dynatablerf.shared.AddressProxy;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
+import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.PersonRequest;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.cellview.client.SimplePager;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -165,12 +165,12 @@ public class SummaryWidget extends Composite {
   @UiHandler("create")
   @SuppressWarnings("unused")
   void onCreate(ClickEvent event) {
-    AddressProxy address = requestFactory.create(AddressProxy.class);
-    PersonProxy person = requestFactory.create(PersonProxy.class);
-    Request<Void> request = requestFactory.personRequest().persist(person);
-    person = request.edit(person);
+    PersonRequest context = requestFactory.personRequest();
+    AddressProxy address = context.create(AddressProxy.class);
+    PersonProxy person = context.edit(context.create(PersonProxy.class));
     person.setAddress(address);
-    eventBus.fireEvent(new EditPersonEvent(person, request));
+    context.persist().using(person);
+    eventBus.fireEvent(new EditPersonEvent(person, context));
   }
 
   void onPersonChanged(EntityProxyChange<PersonProxy> event) {

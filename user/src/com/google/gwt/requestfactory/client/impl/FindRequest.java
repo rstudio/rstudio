@@ -27,5 +27,8 @@ import com.google.gwt.requestfactory.shared.Service;
  */
 @Service(FindService.class)
 public interface FindRequest {
-  <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId);
+  /**
+   * Use the implicit lookup in passing EntityProxy types to service methods.
+   */
+  Request<EntityProxy> find(EntityProxyId proxy);
 }

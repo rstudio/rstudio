@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.TestRequestFactory;
 
@@ -32,18 +31,15 @@ public class RequestFactoryPolymorphicTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    /*
-     * A single test suite can't have 2 RequestFactory because the compiler runs
-     * just once across a suite.
-     */
-    return "com.google.gwt.requestfactory.RequestFactoryPolymorphicSuite";
+    return "com.google.gwt.requestfactory.RequestFactorySuite";
   }
-  
+
   public void testGenerator() {
-    RequestFactory rf = GWT.create(TestRequestFactory.class);
+    TestRequestFactory rf = GWT.create(TestRequestFactory.class);
     EventBus eventBus = new SimpleEventBus();
     rf.initialize(eventBus);
-    SimpleFooProxy simpleFoo = rf.create(SimpleFooProxy.class);
+    SimpleFooProxy simpleFoo = rf.testFooPolymorphicRequest().create(
+        SimpleFooProxy.class);
     assertNull(simpleFoo.getUserName());
   }
 }

@@ -15,9 +15,10 @@
  */
 package com.google.gwt.sample.dynatablerf.shared;
 
-import com.google.gwt.requestfactory.shared.Instance;
+import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.LoggingRequest;
 import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.sample.dynatablerf.domain.Address;
@@ -36,25 +37,23 @@ public interface DynaTableRequestFactory extends RequestFactory {
    * Source of request objects for the Address class.
    */
   @Service(Address.class)
-  interface AddressRequest {
-    @Instance
-    Request<Void> persist(AddressProxy person);
+  interface AddressRequest extends RequestContext {
+    InstanceRequest<AddressProxy, Void> persist();
   }
 
   /**
    * Source of request objects for the Person class.
    */
   @Service(Person.class)
-  interface PersonRequest {
-    @Instance
-    Request<Void> persist(PersonProxy person);
+  interface PersonRequest extends RequestContext {
+    InstanceRequest<PersonProxy, Void> persist();
   }
 
   /**
    * Source of request objects for the SchoolCalendarService.
    */
   @Service(SchoolCalendarService.class)
-  interface SchoolCalendarRequest {
+  interface SchoolCalendarRequest extends RequestContext {
     Request<List<PersonProxy>> getPeople(int startIndex, int maxCount);
   }
 

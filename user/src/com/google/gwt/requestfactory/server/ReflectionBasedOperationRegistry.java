@@ -15,9 +15,9 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.ProxyFor;
-import com.google.gwt.requestfactory.shared.Instance;
 import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.InstanceRequest;
+import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
 
@@ -78,8 +78,19 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
       return domainMethod.getParameterTypes();
     }
 
+    /**
+     * Treat instance invocations as though they were static implementations.
+     */
     public Type[] getRequestParameterTypes() {
-      return requestMethod.getGenericParameterTypes();
+      Type[] toReturn = requestMethod.getGenericParameterTypes();
+      if (isInstance()) {
+        // Instance method, add a "this" parameter at the beginning
+        Type[] newReturn = new Type[toReturn.length + 1];
+        newReturn[0] = domainMethod.getDeclaringClass();
+        System.arraycopy(toReturn, 0, newReturn, 1, toReturn.length);
+        toReturn = newReturn;
+      }
+      return toReturn;
     }
 
     public Class<?> getReturnType() {
@@ -122,7 +133,8 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
         ParameterizedType pType = (ParameterizedType) type;
         Class<?> rawType = (Class<?>) pType.getRawType();
         if (List.class.isAssignableFrom(rawType)
-            || Request.class.isAssignableFrom(rawType)) {
+            || Request.class.isAssignableFrom(rawType)
+            || InstanceRequest.class.isAssignableFrom(rawType)) {
           Class<?> rType = getTypeArgument(pType);
           if (rType != null) {
             if (List.class.isAssignableFrom(rType)) {
@@ -134,7 +146,8 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
               "Bad or missing type arguments for "
                   + "List return type on method " + method);
         } else if (Set.class.isAssignableFrom(rawType)
-            || Request.class.isAssignableFrom(rawType)) {
+            || Request.class.isAssignableFrom(rawType)
+            || InstanceRequest.class.isAssignableFrom(rawType)) {
           Class<?> rType = getTypeArgument(pType);
           if (rType != null) {
             if (Set.class.isAssignableFrom(rType)) {
@@ -156,16 +169,21 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
     @SuppressWarnings("unchecked")
     private Class<?> getTypeArgument(ParameterizedType type) {
       Type[] params = type.getActualTypeArguments();
+      Type toExamine;
       if (params.length == 1) {
-        if (params[0] instanceof ParameterizedType) {
-          // if type is for example, RequestObject<List<T>> we return T
-          return (Class<?>) ((ParameterizedType) params[0]).getActualTypeArguments()[0];
-        }
-        // else, it might be a case like List<T> in which case we return T
-        return (Class<Object>) params[0];
+        toExamine = params[0];
+      } else if (InstanceRequest.class.equals(type.getRawType())) {
+        toExamine = params[1];
+      } else {
+        return null;
       }
-
-      return null;
+      
+      if (toExamine instanceof ParameterizedType) {
+        // if type is for example, RequestObject<List<T>> we return T
+        return getTypeArgument((ParameterizedType) toExamine);
+      }
+      // else, it might be a case like List<T> in which case we return T
+      return (Class<Object>) toExamine;
     }
   }
 
@@ -200,7 +218,7 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
         Method requestMethod = findMethod(requestClass, domainMethodName);
         Method domainMethod = findMethod(domainClass, domainMethodName);
         if (requestMethod != null && domainMethod != null) {
-          boolean isInstance = (requestMethod.getAnnotation(Instance.class) != null);
+          boolean isInstance = InstanceRequest.class.isAssignableFrom(requestMethod.getReturnType());
           if (isInstance == Modifier.isStatic(domainMethod.getModifiers())) {
             throw new IllegalArgumentException("domain method " + domainMethod
                 + " and interface method " + requestMethod

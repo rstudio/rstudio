@@ -22,7 +22,7 @@ import com.google.gwt.editor.client.impl.DelegateMap;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Violation;
 
@@ -54,13 +54,13 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
   private List<EditorError> errors;
   private List<String> paths = new ArrayList<String>();
   private RequestFactory requestFactory;
-  private Request<?> saveRequest;
+  private RequestContext saveRequest;
 
   public void display(R object) {
     edit(object, null);
   }
 
-  public void edit(R object, Request<?> saveRequest) {
+  public void edit(R object, RequestContext saveRequest) {
     checkEditor();
     this.saveRequest = saveRequest;
     delegate = createDelegate();
@@ -69,15 +69,13 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     delegateMap.put(object, delegate);
   }
 
-  public <T> Request<T> flush() {
+  public RequestContext flush() {
     checkDelegate();
     checkSaveRequest();
     errors = new ArrayList<EditorError>();
     delegate.flush(errors);
 
-    @SuppressWarnings("unchecked")
-    Request<T> toReturn = (Request<T>) saveRequest;
-    return toReturn;
+    return saveRequest;
   }
 
   public List<EditorError> getErrors() {

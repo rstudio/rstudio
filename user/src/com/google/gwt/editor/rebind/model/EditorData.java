@@ -25,10 +25,6 @@ import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Describes how an Editor is related to bean properties. This type contains
@@ -66,7 +62,7 @@ public class EditorData {
       JClassType hasEditorErrorsType = oracle.findType(HasEditorErrors.class.getName());
       data.isDelegateRequired = hasDelegateType.isAssignableFrom(data.editorType)
           || hasEditorErrorsType.isAssignableFrom(data.editorType)
-          || isBeanEditor(oracle, data.editedType);
+          || !ModelUtils.isValueType(oracle, data.editedType);
 
       JClassType valueAwareType = oracle.findType(ValueAwareEditor.class.getName());
       data.isValueAware = valueAwareType.isAssignableFrom(data.editorType);
@@ -127,22 +123,6 @@ public class EditorData {
       data.setterName = value;
       return this;
     }
-  }
-
-  private static final Set<String> VALUE_TYPES = Collections.unmodifiableSet(new HashSet<String>(
-      Arrays.asList(Boolean.class.getName(), Character.class.getName(),
-          Enum.class.getName(), Number.class.getName(), String.class.getName(),
-          Void.class.getName())));
-
-  static boolean isBeanEditor(TypeOracle oracle, JClassType editedType) {
-    for (String valueType : VALUE_TYPES) {
-      JClassType type = oracle.findType(valueType);
-      // null check to accommodate limited mock CompilationStates
-      if (type != null && type.isAssignableFrom(editedType)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private String beanOwnerExpression = "";

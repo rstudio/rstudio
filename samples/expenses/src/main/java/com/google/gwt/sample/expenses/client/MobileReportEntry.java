@@ -16,13 +16,12 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.GWT;
-
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
 import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.request.ReportProxy;
+import com.google.gwt.sample.expenses.client.request.ReportRequest;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -59,7 +58,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
   private ReportProxy report;
   private final ExpensesRequestFactory requestFactory;
   private final Listener listener;
-  private Request<Void> Request;
+  private ReportRequest request;
 
   public MobileReportEntry(Listener listener,
       ExpensesRequestFactory requestFactory) {
@@ -82,10 +81,10 @@ public class MobileReportEntry extends Composite implements MobilePage {
   }
 
   public void create(EmployeeProxy reporter) {
-    report = requestFactory.create(ReportProxy.class);
-    Request = requestFactory.reportRequest().persist(report);
-    ReportProxy editableReport = Request.edit(report);
-    editableReport.setReporter(reporter);
+    request = requestFactory.reportRequest();
+    report = request.create(ReportProxy.class);
+    request.persist().using(report);
+    report.setReporter(reporter);
     displayReport();
   }
 
@@ -110,7 +109,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
 
   @SuppressWarnings("deprecation")
   public void onCustom() {
-    ReportProxy editableReport = Request.edit(report);
+    ReportProxy editableReport = request.edit(report);
     editableReport.setPurpose(purposeText.getText());
     editableReport.setNotes(notesText.getText());
     editableReport.setDepartment(departmentList.getValue(departmentList.getSelectedIndex()));
@@ -121,7 +120,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
     editableReport.setCreated(date);
 
     // TODO: wait throbber
-    Request.fire(new Receiver<Void>() {
+    request.fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void ignore) {
       }

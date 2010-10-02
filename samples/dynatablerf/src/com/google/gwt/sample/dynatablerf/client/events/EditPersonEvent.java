@@ -17,7 +17,7 @@ package com.google.gwt.sample.dynatablerf.client.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 
 /**
@@ -32,17 +32,17 @@ public class EditPersonEvent extends GwtEvent<EditPersonEvent.Handler> {
    * Handles {@link EditPersonEvent}.
    */
   public interface Handler extends EventHandler {
-    void startEdit(PersonProxy person, Request<?> request);
+    void startEdit(PersonProxy person, RequestContext requestContext);
   }
 
   private final PersonProxy person;
-  private final Request<?> request;
+  private final RequestContext request;
 
   public EditPersonEvent(PersonProxy person) {
     this(person, null);
   }
 
-  public EditPersonEvent(PersonProxy person, Request<?> request) {
+  public EditPersonEvent(PersonProxy person, RequestContext request) {
     this.person = person;
     this.request = request;
   }

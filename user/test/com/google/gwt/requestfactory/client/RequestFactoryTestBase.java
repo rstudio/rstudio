@@ -36,10 +36,10 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
   protected EventBus eventBus;
 
   /**
-   *  Class for counting events.
+   * Class for counting events.
    */
-  protected class SimpleFooEventHandler<P extends EntityProxy>
-      implements EntityProxyChange.Handler<P> {
+  protected class SimpleFooEventHandler<P extends EntityProxy> implements
+      EntityProxyChange.Handler<P> {
     int persistEventCount = 0;
     int deleteEventCount = 0;
     int totalEventCount = 0;
@@ -48,10 +48,17 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
     public void onProxyChange(EntityProxyChange<P> event) {
       totalEventCount++;
       switch (event.getWriteOperation()) {
-        case PERSIST: persistEventCount++; break;
-        case DELETE: deleteEventCount++; break;
-        case UPDATE: updateEventCount++; break;
-        default: break;
+        case PERSIST:
+          persistEventCount++;
+          break;
+        case DELETE:
+          deleteEventCount++;
+          break;
+        case UPDATE:
+          updateEventCount++;
+          break;
+        default:
+          break;
       }
     }
   }
@@ -93,16 +100,14 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
       }
     });
   }
-  
-  protected void checkStableIdEquals(EntityProxy expected,
-      EntityProxy actual) {
-    assertNotSame(expected.stableId(), actual.stableId());
+
+  protected void checkStableIdEquals(EntityProxy expected, EntityProxy actual) {
     assertEquals(expected.stableId(), actual.stableId());
     assertEquals(expected.stableId().hashCode(), actual.stableId().hashCode());
+    assertSame(expected.stableId(), actual.stableId());
 
     // No assumptions about the proxy objects (being proxies and all)
     assertNotSame(expected, actual);
-    // TODO: uncomment after ProxyImpl equality is rehashed out
-    //    assertFalse(expected.equals(actual));
+    assertFalse(expected.equals(actual));
   }
 }

@@ -24,7 +24,7 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
@@ -54,7 +54,7 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
       }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings(value = {"rawtypes", "unchecked"})
     private void doFind(List<String> paths, EntityProxyId id) {
       factory.find(id).with(paths.toArray(new String[paths.size()])).fire(
           new SubscriptionReceiver());
@@ -72,11 +72,11 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
   protected EventBus eventBus;
   protected RequestFactory factory;
-  protected Request<?> request;
+  protected RequestContext request;
 
   public void initialize(EventBus eventBus, RequestFactory factory,
       String pathSoFar, P object, E editor, DelegateMap delegateMap,
-      Request<?> editRequest) {
+      RequestContext editRequest) {
     this.eventBus = eventBus;
     this.factory = factory;
     this.request = editRequest;
@@ -109,7 +109,12 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
       // Read-only mode
       return object;
     }
-    return ((AbstractRequest<?, ?>) request).<T> ensureMutable(object);
+    if (object instanceof EntityProxy) {
+      @SuppressWarnings("unchecked")
+      T toReturn = (T) request.edit((EntityProxy) object);
+      return toReturn;
+    }
+    return object;
   }
 
   @Override

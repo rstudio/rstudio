@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,18 +23,19 @@ import java.util.Set;
  * Do nothing test interface.
  */
 @Service(com.google.gwt.requestfactory.server.SimpleFoo.class)
-public interface SimpleFooRequest {
+public interface SimpleFooRequest extends RequestContext {
+  Request<Integer> add(Integer a, int b);
+
   Request<Long> countSimpleFoo();
 
-  @Instance
-  Request<Long> countSimpleFooWithUserNameSideEffect(SimpleFooProxy proxy);
+  InstanceRequest<SimpleFooProxy, Long> countSimpleFooWithUserNameSideEffect();
 
-  @Instance
-  Request<Void> deleteBar(SimpleFooProxy proxy);
+  InstanceRequest<SimpleFooProxy, Void> deleteBar();
 
   Request<SimpleFooProxy> echo(SimpleFooProxy proxy);
 
-  Request<SimpleFooProxy> echoComplex(SimpleFooProxy fooProxy, SimpleBarProxy barProxy);
+  Request<SimpleFooProxy> echoComplex(SimpleFooProxy fooProxy,
+      SimpleBarProxy barProxy);
 
   Request<List<SimpleFooProxy>> findAll();
 
@@ -44,17 +45,13 @@ public interface SimpleFooRequest {
 
   Request<Set<Integer>> getNumberSet();
 
-  @Instance
-  Request<String> hello(SimpleFooProxy instance, SimpleBarProxy proxy);
+  InstanceRequest<SimpleFooProxy, String> hello(SimpleBarProxy proxy);
 
-  @Instance
-  Request<Void> persist(SimpleFooProxy proxy);
+  InstanceRequest<SimpleFooProxy, Void> persist();
 
-  @Instance
-  Request<SimpleFooProxy> persistAndReturnSelf(SimpleFooProxy proxy);
+  InstanceRequest<SimpleFooProxy, SimpleFooProxy> persistAndReturnSelf();
 
-  @Instance
-  Request<SimpleFooProxy> persistCascadingAndReturnSelf(SimpleFooProxy proxy);
+  InstanceRequest<SimpleFooProxy, SimpleFooProxy> persistCascadingAndReturnSelf();
 
   Request<Boolean> processBooleanList(List<Boolean> values);
 
@@ -64,11 +61,10 @@ public interface SimpleFooRequest {
 
   Request<String> processString(String value);
 
-  @Instance
-  Request<String> processList(SimpleFooProxy instance, List<SimpleFooProxy> values);
+  InstanceRequest<SimpleFooProxy, String> processList(
+      List<SimpleFooProxy> values);
 
-  @Instance
-  Request<Void> receiveNull(SimpleFooProxy instance, String value);
+  InstanceRequest<SimpleFooProxy, Void> receiveNull(String value);
 
   Request<Void> receiveNullList(List<SimpleFooProxy> value);
 
@@ -90,6 +86,5 @@ public interface SimpleFooRequest {
 
   Request<String> returnNullString();
 
-  @Instance
-  Request<Integer> sum(SimpleFooProxy instance, List<Integer> values);
+  InstanceRequest<SimpleFooProxy, Integer> sum(List<Integer> values);
 }

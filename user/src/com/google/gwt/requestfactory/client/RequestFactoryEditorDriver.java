@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.client;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Violation;
 
@@ -61,24 +61,25 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   /**
    * Initialize the Editor and its sub-editors with data. A
    * {@link RequestObject} is required to provide context for the changes to the
-   * proxy (see {@link Request#edit()}. Note that this driver will not fire the
-   * request.
+   * proxy (see {@link RequestContext#edit()}. Note that this driver will not
+   * fire the request.
    * 
    * @param proxy the proxy to be edited
-   * @param request the request that will accumulate edits and is returned form {@link #flush}
+   * @param request the request context that will accumulate edits and is
+   *          returned form {@link #flush}
    */
-  void edit(P proxy, Request<?> request);
+  void edit(P proxy, RequestContext request);
 
   /**
    * Ensures that the Editor passed into {@link #initialize} and its
    * sub-editors, if any, have synced their UI state by invoking flushing them
    * in a depth-first manner.
    * 
-   * @return the Request passed into {@link #edit}
-   * @throws IllegalStateException if {@link #edit(Object, Request)} has
-   *           not been called with a non-null {@link Request}
+   * @return the RequestContext passed into {@link #edit}
+   * @throws IllegalStateException if {@link #edit(Object, RequestContext)} has
+   *           not been called with a non-null {@link RequestContext}
    */
-  <T> Request<T> flush();
+  RequestContext flush();
 
   /**
    * Returns any unconsumed EditorErrors from the last call to {@link #flush()}.
@@ -96,16 +97,16 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   boolean hasErrors();
 
   /**
-   * Overload of {@link #initialize(RequestFactory, Editor)} to allow
-   * a modified {@link EventBus} to be used.
+   * Overload of {@link #initialize(RequestFactory, Editor)} to allow a modified
+   * {@link EventBus} to be used.
    * 
    * @see {@link com.google.gwt.event.shared.ResettableEventBus}
    */
   void initialize(EventBus eventBus, RequestFactory requestFactory, E editor);
-  
+
   /**
    * This or {@link #initialize(EventBus, RequestFactory, Editor)} must be
-   * called before {@link #edit(Object, Request)}.
+   * called before {@link #edit(Object, RequestContext)}.
    */
   void initialize(RequestFactory requestFactory, E editor);
 

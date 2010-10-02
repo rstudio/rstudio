@@ -19,7 +19,7 @@ import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleEnum;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.WriteOperation;
-import com.google.gwt.requestfactory.shared.impl.RequestData;
+import com.google.gwt.requestfactory.shared.impl.Constants;
 
 import junit.framework.TestCase;
 
@@ -135,7 +135,7 @@ public class JsonRequestProcessorTest extends TestCase {
         "UPDATE");
     assertEquals(1, updateArray.length());
     assertEquals(1, updateArray.getJSONObject(0).length());
-    assertTrue(updateArray.getJSONObject(0).has(RequestData.ENCODED_ID_PROPERTY));
+    assertTrue(updateArray.getJSONObject(0).has(Constants.ENCODED_ID_PROPERTY));
     assertFalse(updateArray.getJSONObject(0).has("violations"));
     assertEquals(45, (int) fooResult.getIntId());
     assertEquals("JSC", fooResult.getUserName());
@@ -252,14 +252,14 @@ public class JsonRequestProcessorTest extends TestCase {
       NoSuchMethodException, IllegalAccessException, InvocationTargetException,
       ClassNotFoundException, SecurityException, InstantiationException {
     JSONObject results = requestProcessor.processJsonRequest("{ \""
-        + RequestData.OPERATION_TOKEN
+        + Constants.OPERATION_TOKEN
         + "\": \""
         + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
         + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
         + "findSimpleFooById\", "
         + "\""
-        + RequestData.PARAM_TOKEN
-        + "0\": \"999\", \"" + RequestData.PROPERTY_REF_TOKEN  + "\": "
+        + Constants.PARAM_TOKEN
+        + "0\": \"999\", \"" + Constants.PROPERTY_REF_TOKEN  + "\": "
         + "\"oneToManyField,oneToManySetField,selfOneToManyField\""
         + "}");
     JSONObject foo = results.getJSONObject("result");
@@ -268,7 +268,7 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEquals(foo.getString("userName"), "GWT");
     assertEquals(foo.getLong("longField"), 8L);
     assertEquals(foo.getInt("enumField"), 0);
-    assertEquals(foo.getInt(RequestData.ENCODED_VERSION_PROPERTY), 1);
+    assertEquals(foo.getInt(Constants.ENCODED_VERSION_PROPERTY), 1);
     assertEquals(foo.getBoolean("boolField"), true);
     assertNotNull(foo.getString("!id"));
     assertTrue(foo.has("created"));
@@ -296,7 +296,7 @@ public class JsonRequestProcessorTest extends TestCase {
       NoSuchMethodException, IllegalAccessException, InvocationTargetException,
       ClassNotFoundException, SecurityException, InstantiationException {
     JSONObject results = requestProcessor.processJsonRequest("{ \""
-        + RequestData.OPERATION_TOKEN
+        + Constants.OPERATION_TOKEN
         + "\": \""
         + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
         + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
@@ -314,15 +314,15 @@ public class JsonRequestProcessorTest extends TestCase {
       ClassNotFoundException, SecurityException, InstantiationException {
 
     JSONObject results = requestProcessor.processJsonRequest("{ \""
-        + RequestData.OPERATION_TOKEN
+        + Constants.OPERATION_TOKEN
         + "\": \""
         + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
         + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
         + "sum\", "
-        + "\"" + RequestData.PARAM_TOKEN + "0\":"
+        + "\"" + Constants.PARAM_TOKEN + "0\":"
         + "\"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\","
         + "\""
-        + RequestData.PARAM_TOKEN
+        + Constants.PARAM_TOKEN
         + "1\": [1, 2, 3] }");
     assertEquals(6, results.getInt("result"));
   }
@@ -332,15 +332,15 @@ public class JsonRequestProcessorTest extends TestCase {
         ClassNotFoundException, SecurityException, InstantiationException {
       SimpleFoo.reset();
       JSONObject results = requestProcessor.processJsonRequest("{ \""
-          + RequestData.OPERATION_TOKEN
+          + Constants.OPERATION_TOKEN
           + "\": \""
           + com.google.gwt.requestfactory.shared.SimpleFooRequest.class.getName()
           + ReflectionBasedOperationRegistry.SCOPE_SEPARATOR
           + "processList\", "
-          + "\"" + RequestData.PARAM_TOKEN + "0\":"
+          + "\"" + Constants.PARAM_TOKEN + "0\":"
           + "\"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\","
           + "\""
-          + RequestData.PARAM_TOKEN
+          + Constants.PARAM_TOKEN
           + "1\": [\"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\", \"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\", \"1@NO@com.google.gwt.requestfactory.shared.SimpleFooProxy\"] }");
       assertEquals("GWTGWTGWT", results.getString("result"));
     }
@@ -355,10 +355,10 @@ public class JsonRequestProcessorTest extends TestCase {
     JSONObject operation = new JSONObject();
     operation.put(WriteOperation.UPDATE.toString(), arr);
     JSONObject sync = new JSONObject();
-    sync.put(RequestData.OPERATION_TOKEN,
+    sync.put(Constants.OPERATION_TOKEN,
         "com.google.gwt.requestfactory.shared.SimpleFooRequest::persist");
-    sync.put(RequestData.CONTENT_TOKEN, operation.toString());
-    sync.put(RequestData.PARAM_TOKEN + "0", foo.getString("id") + "@NO" + "@"
+    sync.put(Constants.CONTENT_TOKEN, operation.toString());
+    sync.put(Constants.PARAM_TOKEN + "0", foo.getString("id") + "@NO" + "@"
         + SimpleFooProxy.class.getName());
     return requestProcessor.processJsonRequest(sync.toString());
   }

@@ -78,7 +78,7 @@ public class EditorModel {
       throws UnableToCompleteException {
     JClassType editorIntf = editorType.getOracle().findType(
         Editor.class.getName());
-    JClassType parameterization[] = findParameterizationOf(editorIntf,
+    JClassType parameterization[] = ModelUtils.findParameterizationOf(editorIntf,
         editorType);
     if (parameterization != null) {
       return parameterization[0];
@@ -97,7 +97,7 @@ public class EditorModel {
       JClassType editorType) throws UnableToCompleteException {
     JClassType editorIntf = editorType.getOracle().findType(
         IsEditor.class.getName());
-    JClassType[] parameterization = findParameterizationOf(editorIntf,
+    JClassType[] parameterization = ModelUtils.findParameterizationOf(editorIntf,
         editorType);
     if (parameterization != null) {
       return parameterization[0];
@@ -153,24 +153,6 @@ public class EditorModel {
   static String unexpectedInputTypeMessage(JType driverType, JType intf) {
     return String.format("Unexpected input type: %s is not assignable from %s",
         driverType.getQualifiedSourceName(), intf.getQualifiedSourceName());
-  }
-
-  private static JClassType[] findParameterizationOf(JClassType intfType,
-      JClassType subType) {
-    assert intfType.isAssignableFrom(subType) : subType.getParameterizedQualifiedSourceName()
-        + " is not assignable to "
-        + subType.getParameterizedQualifiedSourceName();
-
-    for (JClassType supertype : subType.getFlattenedSupertypeHierarchy()) {
-      JParameterizedType parameterized = supertype.isParameterized();
-      if (parameterized != null) {
-        // Found the desired supertype
-        if (intfType.equals(parameterized.getBaseType())) {
-          return parameterized.getTypeArgs();
-        }
-      }
-    }
-    return null;
   }
 
   private final JGenericType compositeEditorIntf;
@@ -240,7 +222,7 @@ public class EditorModel {
       die(tooManyInterfacesMessage(intf));
     }
 
-    JClassType[] parameters = findParameterizationOf(driverType, intf);
+    JClassType[] parameters = ModelUtils.findParameterizationOf(driverType, intf);
     assert parameters.length == 2 : "Unexpected number of type parameters";
     proxyType = parameters[0];
     editorType = parameters[1];

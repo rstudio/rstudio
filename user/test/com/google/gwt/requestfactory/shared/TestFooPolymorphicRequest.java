@@ -16,9 +16,10 @@
 package com.google.gwt.requestfactory.shared;
 
 /**
- * Just to test the {@link com.google.gwt.requestfactory.rebind.RequestFactoryGenerator} code.
+ * Just to test the
+ * {@link com.google.gwt.requestfactory.rebind.RequestFactoryGenerator} code.
  */
 @Service(com.google.gwt.requestfactory.server.SimpleFoo.class)
-public interface TestFooPolymorphicRequest {
+public interface TestFooPolymorphicRequest extends RequestContext {
   <P extends SimpleFooProxy> Request<P> echo(P proxy);
 }

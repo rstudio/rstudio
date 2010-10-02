@@ -15,23 +15,28 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.requestfactory.client.impl.DeltaValueStoreJsonImpl.ReturnRecord;
+import com.google.gwt.requestfactory.client.impl.messages.JsonResults;
+import com.google.gwt.requestfactory.client.impl.messages.JsonServerException;
+import com.google.gwt.requestfactory.client.impl.messages.RelatedObjects;
+import com.google.gwt.requestfactory.client.impl.messages.RequestData;
+import com.google.gwt.requestfactory.client.impl.messages.ReturnRecord;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.Violation;
-import com.google.gwt.requestfactory.shared.impl.Property;
-import com.google.gwt.requestfactory.shared.impl.RequestData;
+import com.google.gwt.requestfactory.shared.WriteOperation;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,64 +50,29 @@ import java.util.Set;
  * {@link DeltaValueStoreJsonImpl}.
  * 
  * @param <T> return type
- * @param <R> type of this request object
  */
-public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
-    implements Request<T> {
-
-  protected final RequestFactoryJsonImpl requestFactory;
-  protected DeltaValueStoreJsonImpl deltaValueStore;
-  private Receiver<? super T> receiver;
-
-  private final Set<String> propertyRefs = new HashSet<String>();
-
-  public AbstractRequest(RequestFactoryJsonImpl requestFactory) {
-    this.requestFactory = requestFactory;
-    ValueStoreJsonImpl valueStore = requestFactory.getValueStore();
-    this.deltaValueStore = new DeltaValueStoreJsonImpl(valueStore,
-        requestFactory);
-  }
-
-  @SuppressWarnings("unchecked")
-  public <P extends EntityProxy> P edit(P record) {
-    P returnRecordImpl = (P) ((ProxyImpl) record).schema().create(
-        ((ProxyImpl) record).asJso(), ((ProxyImpl) record).unpersisted());
-    ((ProxyImpl) returnRecordImpl).putDeltaValueStore(deltaValueStore, this);
-    return returnRecordImpl;
-  }
+public abstract class AbstractRequest<T> implements Request<T>,
+    InstanceRequest<EntityProxy, T> {
 
   /**
-   * Utility method to call {@link #edit} only on immutable proxy objects. Any
-   * other type of data will be returned as-is.
+   * Used by generated subtypes.
    */
-  public <Q> Q ensureMutable(Q o) {
-    if (o instanceof ProxyImpl) {
-      ProxyImpl proxy = (ProxyImpl) o;
-      if (!proxy.mutable()) {
-        @SuppressWarnings("unchecked")
-        Q editable = (Q) edit(proxy);
-        return editable;
-      }
-    }
-    return o;
+  protected final Set<String> propertyRefs = new HashSet<String>();
+  protected final AbstractRequestContext requestContext;
+  private Receiver<? super T> receiver;
+  private RequestData requestData;
+
+  protected AbstractRequest(AbstractRequestContext requestContext) {
+    this.requestContext = requestContext;
+  }
+
+  public void fire() {
+    requestContext.fire();
   }
 
   public void fire(Receiver<? super T> receiver) {
-    assert null != receiver : "receiver cannot be null";
-    this.receiver = receiver;
-    requestFactory.fire(this);
-  }
-
-  /**
-   * @deprecated use {@link #with(String...)} instead.
-   * @param properties
-   */
-  @Deprecated
-  public R forProperties(Collection<Property<?>> properties) {
-    for (Property<?> p : properties) {
-      with(p.getName());
-    }
-    return getThis();
+    to(receiver);
+    fire();
   }
 
   /**
@@ -112,7 +82,12 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     return Collections.unmodifiableSet(propertyRefs);
   }
 
-  public abstract RequestData getRequestData();
+  public RequestData getRequestData() {
+    if (requestData == null) {
+      requestData = makeRequestData();
+    }
+    return requestData;
+  }
 
   public void handleResponseText(String responseText) {
     JsonResults results = JsonResults.fromResults(responseText);
@@ -123,11 +98,11 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
       return;
     }
     // handle violations
-    JsArray<DeltaValueStoreJsonImpl.ReturnRecord> violationsArray = results.getViolations();
+    JsArray<ReturnRecord> violationsArray = results.getViolations();
     if (violationsArray != null) {
       processViolations(violationsArray);
     } else {
-      deltaValueStore.processFuturesAndPostEvents(results.getSideEffects());
+      requestContext.processSideEffects(results.getSideEffects());
       processRelated(results.getRelated());
       if (results.isNullResult()) {
         // Indicates the server explicitly meant to send a null value
@@ -138,40 +113,80 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
     }
   }
 
-  public boolean isChanged() {
-    return deltaValueStore.isChanged();
-  }
-
-  /*
-   * used from the JSNI method processRelated.
-   */
-  public void pushToValueStore(String schemaToken, JavaScriptObject jso) {
-    requestFactory.getValueStore().putInValueStore(
-        ProxyJsoImpl.create(jso, requestFactory.getSchema(schemaToken),
-            requestFactory));
-  }
-
-  public R with(String... propertyRef) {
-    for (String ref : propertyRef) {
-      propertyRefs.add(ref);
-    }
-    return getThis();
-  }
-
-  protected String asString(Object jso) {
-    return String.valueOf(jso);
-  }
-
-  protected void fail(ServerFailure failure) {
-    deltaValueStore.reuse();
-    receiver.onFailure(failure);
+  public RequestContext to(Receiver<? super T> receiver) {
+    this.receiver = receiver;
+    return requestContext;
   }
 
   /**
-   * Subclasses must override to return {@code this}, to allow builder-style
-   * methods to do the same.
+   * This method comes from the {@link InstanceRequest} interface. Instance
+   * methods place the instance in the first parameter slot.
    */
-  protected abstract R getThis();
+  public Request<T> using(EntityProxy instanceObject) {
+    getRequestData().getParameters()[0] = instanceObject;
+    /*
+     * Instance methods enqueue themselves when their using() method is called.
+     * This ensures that the instance parameter will have been set when
+     * AbstractRequestContext.retainArg() is called.
+     */
+    requestContext.addInvocation(this);
+    return this;
+  }
+
+  public Request<T> with(String... propertyRefs) {
+    this.propertyRefs.addAll(Arrays.asList(propertyRefs));
+    return this;
+  }
+
+  /**
+   * This method is called by generated subclasses to process the main return
+   * property of the JSON payload. The return record isn't just a reference to a
+   * persist or update side-effect, so it has to be processed separately.
+   */
+  protected <Q extends EntityProxy> Q decodeReturnObject(Class<Q> clazz,
+      Object obj) {
+    ReturnRecord jso = (ReturnRecord) obj;
+    SimpleEntityProxyId<Q> id = requestContext.getRequestFactory().getId(clazz,
+        jso.getSimpleId());
+    Q proxy = requestContext.processReturnRecord(id, (ReturnRecord) obj,
+        WriteOperation.UPDATE);
+    return proxy;
+  }
+
+  protected <Q extends EntityProxy> void decodeReturnObjectList(
+      Class<Q> elementType, Object obj, Collection<Q> accumulator) {
+    @SuppressWarnings("unchecked")
+    JsArray<ReturnRecord> array = (JsArray<ReturnRecord>) obj;
+    for (int i = 0, j = array.length(); i < j; i++) {
+      ReturnRecord record = array.get(i);
+      if (record == null) {
+        accumulator.add(null);
+        continue;
+      }
+
+      // Decode the individual object
+      Q decoded = decodeReturnObject(elementType, record);
+
+      // Really want Class.isInstance()
+      assert elementType.equals(decoded.stableId().getProxyClass());
+      accumulator.add(decoded);
+    }
+  }
+
+  protected <Q> void decodeReturnValueList(Class<Q> elementType, Object obj,
+      Collection<Q> accumulator) {
+    @SuppressWarnings("unchecked")
+    List<Q> temp = (List<Q>) EntityCodex.decode(List.class, elementType,
+        requestContext, obj);
+    accumulator.addAll(temp);
+  }
+
+  protected void fail(ServerFailure failure) {
+    requestContext.reuse();
+    if (receiver != null) {
+      receiver.onFailure(failure);
+    }
+  }
 
   /**
    * Process the response and call {@link #succeed(Object) or
@@ -179,39 +194,39 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
    */
   protected abstract void handleResult(Object result);
 
-  protected native void processRelated(JavaScriptObject related) /*-{
-    for(var recordKey in related) {
-      // Workaround for __gwt_ObjectId appearing in Chrome dev mode.
-      if (!related.hasOwnProperty(recordKey)) continue;
-      var schemaAndId = recordKey.split(/@/, 3);
-      var jso = related[recordKey];
-      this.@com.google.gwt.requestfactory.client.impl.AbstractRequest::pushToValueStore(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(schemaAndId[2], jso);
-    }
-  }-*/;
-
-  protected void succeed(T t) {
-    receiver.onSuccess(t);
+  protected boolean hasReceiver() {
+    return receiver != null;
   }
 
-  private void processViolations(
-      JsArray<DeltaValueStoreJsonImpl.ReturnRecord> violationsArray) {
+  protected abstract RequestData makeRequestData();
+
+  protected void processRelated(RelatedObjects related) {
+    for (String token : related.getHistoryTokens()) {
+      SimpleEntityProxyId<EntityProxy> id = requestContext.getRequestFactory().getProxyId(
+          token);
+      requestContext.processReturnRecord(id, related.getReturnRecord(token));
+    }
+  }
+
+  protected void succeed(T t) {
+    // The user may not have called to()
+    if (receiver != null) {
+      receiver.onSuccess(t);
+    }
+  }
+
+  private void processViolations(JsArray<ReturnRecord> violationsArray) {
     int length = violationsArray.length();
     Set<Violation> errors = new HashSet<Violation>(length);
 
     for (int i = 0; i < length; i++) {
       ReturnRecord violationRecord = violationsArray.get(i);
-      String id = null;
-      if (violationRecord.hasFutureId()) {
-        id = violationRecord.getFutureId();
-      } else {
-        id = violationRecord.getEncodedId();
-      }
-      final EntityProxyIdImpl<?> key = new EntityProxyIdImpl<EntityProxy>(id,
-          requestFactory.getSchema(violationRecord.getSchema()),
-          violationRecord.hasFutureId(), null);
-      assert violationRecord.hasViolations();
+      final EntityProxyId<?> key = requestContext.getRequestFactory().getId(
+          violationRecord.getSchema(), violationRecord.getEncodedId(),
+          violationRecord.getFutureId());
 
       HashMap<String, String> violations = new HashMap<String, String>();
+      assert violationRecord.hasViolations();
       violationRecord.fillViolations(violations);
 
       for (Map.Entry<String, String> entry : violations.entrySet()) {
@@ -233,7 +248,10 @@ public abstract class AbstractRequest<T, R extends AbstractRequest<T, R>>
       }
     }
 
-    deltaValueStore.reuse();
-    receiver.onViolation(errors);
+    requestContext.reuse();
+    requestContext.addErrors(errors);
+    if (receiver != null) {
+      receiver.onViolation(errors);
+    }
   }
 }

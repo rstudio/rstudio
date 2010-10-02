@@ -26,5 +26,4 @@ import com.google.gwt.requestfactory.server.UserInformation;
 public interface UserInformationRequest {
 
   Request<UserInformationProxy> getCurrentUserInformation(String redirectUrl);
- 
 }

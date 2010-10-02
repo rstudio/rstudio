@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -41,6 +41,10 @@ public class SimpleFoo {
   private static Map<Long, SimpleFoo> jreTestSingleton = new HashMap<Long, SimpleFoo>();
 
   private static Long nextId = 1L;
+
+  public static Integer add(Integer a, int b) {
+    return a + b;
+  }
 
   public static Long countSimpleFoo() {
     return (long) get().size();
@@ -147,7 +151,8 @@ public class SimpleFoo {
     } else if (list.size() != 2) {
       throw new IllegalArgumentException("Expected list to contain two items.");
     } else if (list.get(0) == null) {
-      throw new IllegalArgumentException("Expected list.get(0) to return non null.");
+      throw new IllegalArgumentException(
+          "Expected list.get(0) to return non null.");
     } else if (list.get(1) != null) {
       throw new IllegalArgumentException(
           "Expected list.get(1) to return null. Actual: " + list.get(1));
@@ -158,12 +163,15 @@ public class SimpleFoo {
     if (list == null) {
       throw new IllegalArgumentException("Expected list to be non null.");
     } else if (list.size() != 3) {
-      throw new IllegalArgumentException("Expected list to contain three items.");
+      throw new IllegalArgumentException(
+          "Expected list to contain three items.");
     } else if (list.get(0) == null || list.get(1) == null) {
-      throw new IllegalArgumentException("Expected list.get(0)/get(1) to return non null.");
+      throw new IllegalArgumentException(
+          "Expected list.get(0)/get(1) to return non null.");
     } else if (list.get(2) != null) {
       throw new IllegalArgumentException(
-          "Expected list.get(2) to return null. Actual: \"" + list.get(2) + "\"");
+          "Expected list.get(2) to return null. Actual: \"" + list.get(2)
+              + "\"");
     }
   }
 
@@ -171,12 +179,15 @@ public class SimpleFoo {
     if (list == null) {
       throw new IllegalArgumentException("Expected list to be non null.");
     } else if (list.size() != 3) {
-      throw new IllegalArgumentException("Expected list to contain three items.");
+      throw new IllegalArgumentException(
+          "Expected list to contain three items.");
     } else if (list.get(0) == null || list.get(1) == null) {
-      throw new IllegalArgumentException("Expected list.get(0)/get(1) to return non null.");
+      throw new IllegalArgumentException(
+          "Expected list.get(0)/get(1) to return non null.");
     } else if (list.get(2) != null) {
       throw new IllegalArgumentException(
-          "Expected list.get(2) to return null. Actual: \"" + list.get(2) + "\"");
+          "Expected list.get(2) to return null. Actual: \"" + list.get(2)
+              + "\"");
     }
   }
 

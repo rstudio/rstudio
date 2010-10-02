@@ -23,7 +23,7 @@ import com.google.gwt.requestfactory.server.Logging;
  * client access to the methods of {@link Logging}.
  */
 @Service(Logging.class)
-public interface LoggingRequest {
+public interface LoggingRequest extends RequestContext {
 
   // TODO(unnurg): Pass a SerializableLogRecord here rather than it's
   // serialized string.

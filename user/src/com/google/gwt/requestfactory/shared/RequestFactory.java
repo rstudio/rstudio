@@ -28,8 +28,6 @@ import com.google.gwt.event.shared.EventBus;
 public interface RequestFactory {
   String JSON_CONTENT_TYPE_UTF8 = "application/json; charset=utf-8";
 
-  <P extends EntityProxy> P create(Class<P> proxyType);
-
   /**
    * Return a request to find a fresh instance of the referenced proxy.
    */

@@ -19,7 +19,7 @@ import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
-import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Violation;
 
@@ -40,7 +40,7 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
   private EventBus eventBus;
   private E editor;
   private P proxy;
-  private Request<?> saveRequest;
+  private RequestContext saveRequest;
   private RequestFactory requestFactory;
 
   /**
@@ -53,7 +53,7 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
   /**
    * Records its arguments.
    */
-  public void edit(P proxy, Request<?> saveRequest) {
+  public void edit(P proxy, RequestContext saveRequest) {
     this.proxy = proxy;
     this.saveRequest = saveRequest;
   }
@@ -62,8 +62,8 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
    * Returns <code>null</code> or the last value recorded.
    */
   @SuppressWarnings("unchecked")
-  public <T> Request<T> flush() {
-    return (Request<T>) saveRequest;
+  public RequestContext flush() {
+    return saveRequest;
   }
 
   /**
@@ -111,7 +111,7 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
   /**
    * Returns <code>null</code> or the last value recorded.
    */
-  public Request<?> getSaveRequest() {
+  public RequestContext getSaveRequest() {
     return saveRequest;
   }
 

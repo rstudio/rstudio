@@ -14,6 +14,9 @@
 <!-- Editor framework support -->
 <module>
   <inherits name="com.google.gwt.core.Core" />
+  <generate-with class="com.google.gwt.editor.rebind.AutoBeanFactoryGenerator">
+    <when-type-assignable class="com.google.gwt.editor.client.AutoBeanFactory" />
+  </generate-with>
   <generate-with class="com.google.gwt.editor.rebind.SimpleBeanEditorDriverGenerator">
     <when-type-assignable class="com.google.gwt.editor.client.SimpleBeanEditorDriver" />
   </generate-with>

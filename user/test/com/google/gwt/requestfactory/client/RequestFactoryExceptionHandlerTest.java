@@ -17,6 +17,7 @@ package com.google.gwt.requestfactory.client;
 
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
+import com.google.gwt.requestfactory.shared.SimpleFooRequest;
 
 /**
  * Tests that {@code RequestFactoryServlet} when using a custom
@@ -32,27 +33,28 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
   @Override
   public void testServerFailureCheckedException() {
     delayTestFinish(5000);
-    SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
-    final Request<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
+    SimpleFooRequest context = req.simpleFooRequest();
+    SimpleFooProxy rayFoo = context.create(SimpleFooProxy.class);
+    final Request<SimpleFooProxy> persistRay = context.persistAndReturnSelf().using(
         rayFoo);
-    rayFoo = persistRay.edit(rayFoo);
+    rayFoo = context.edit(rayFoo);
     // 42 is the crash causing magic number
     rayFoo.setPleaseCrash(42);
     persistRay.fire(new FooReciever(rayFoo, persistRay,
         "java.lang.UnsupportedOperationException"));
   }
-  
+
   @Override
   public void testServerFailureRuntimeException() {
     delayTestFinish(5000);
-    SimpleFooProxy rayFoo = req.create(SimpleFooProxy.class);
-    final Request<SimpleFooProxy> persistRay = req.simpleFooRequest().persistAndReturnSelf(
+    SimpleFooRequest context = req.simpleFooRequest();
+    SimpleFooProxy rayFoo = context.create(SimpleFooProxy.class);
+    final Request<SimpleFooProxy> persistRay = context.persistAndReturnSelf().using(
         rayFoo);
-    rayFoo = persistRay.edit(rayFoo);
+    rayFoo = context.edit(rayFoo);
     // 43 is the crash causing magic number
     rayFoo.setPleaseCrash(43);
-    persistRay.fire(new FooReciever(rayFoo, persistRay,
-        "java.lang.Exception"));
+    persistRay.fire(new FooReciever(rayFoo, persistRay, "java.lang.Exception"));
   }
 
 }

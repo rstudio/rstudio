@@ -22,7 +22,7 @@ import java.util.Set;
  * Do nothing test interface.
  */
 @Service(com.google.gwt.requestfactory.server.SimpleBar.class)
-public interface SimpleBarRequest {
+public interface SimpleBarRequest extends RequestContext {
 
   Request<Long> countSimpleBar();
 
@@ -32,11 +32,9 @@ public interface SimpleBarRequest {
   
   Request<SimpleBarProxy> findSimpleBarById(String id);
 
-  @Instance
-  Request<Void> persist(SimpleBarProxy proxy);
+  InstanceRequest<SimpleBarProxy, Void> persist();
 
-  @Instance
-  Request<SimpleBarProxy> persistAndReturnSelf(SimpleBarProxy proxy);
+  InstanceRequest<SimpleBarProxy, SimpleBarProxy> persistAndReturnSelf();
 
   Request<Void> reset();
 

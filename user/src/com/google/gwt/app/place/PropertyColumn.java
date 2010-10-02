@@ -15,9 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.requestfactory.client.impl.ProxyImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.text.shared.PassthroughRenderer;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.cellview.client.TextColumn;
 
@@ -34,32 +32,20 @@ import com.google.gwt.user.cellview.client.TextColumn;
  * @param <R> the type of record in this table
  * @param <T> value type of the property
  */
-public class PropertyColumn<R extends EntityProxy, T> extends TextColumn<R> {
-  public static <R extends EntityProxy> PropertyColumn<R, String> getStringPropertyColumn(
-      String property, String displayName) {
-    return new PropertyColumn<R, String>(property, displayName,
-        String.class, PassthroughRenderer.instance());
-  }
-
-  private final Class<T> clazz;
+public abstract class PropertyColumn<R extends EntityProxy, T> extends
+    TextColumn<R> {
   private String displayName;
-  private final Renderer<T> renderer;
-  private final String property;
   private final String[] paths;
 
-  public PropertyColumn(String property, String displayName, Class<T> clazz, ProxyRenderer<T> renderer) {
+  public PropertyColumn(String property, String displayName, Class<T> clazz,
+      ProxyRenderer<T> renderer) {
     this.displayName = displayName;
-    this.property = property;
-    this.clazz = clazz;
-    this.renderer = renderer;
     this.paths = pathinate(property, renderer);
   }
 
-  public PropertyColumn(String property, String displayName, Class<T> clazz, Renderer<T> renderer) {
+  public PropertyColumn(String property, String displayName, Class<T> clazz,
+      Renderer<T> renderer) {
     this.displayName = displayName;
-    this.property = property;
-    this.clazz = clazz;
-    this.renderer = renderer;
     this.paths = new String[] {property};
   }
 
@@ -69,12 +55,6 @@ public class PropertyColumn<R extends EntityProxy, T> extends TextColumn<R> {
 
   public String[] getPaths() {
     return paths;
-  }
-
-  @Override
-  public String getValue(R object) {
-    ProxyImpl proxyImpl = (ProxyImpl) object;
-    return renderer.render(proxyImpl.<T>get(property, clazz));
   }
 
   private String[] pathinate(String property, ProxyRenderer<T> renderer) {

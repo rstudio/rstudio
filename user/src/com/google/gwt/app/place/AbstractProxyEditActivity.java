@@ -22,6 +22,7 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.Violation;
@@ -44,11 +45,10 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     implements Activity, ProxyEditView.Delegate {
 
   private final boolean creating;
-  private final RequestFactory requests;
   private final PlaceController placeController;
   private RequestFactoryEditorDriver<P, ?> editorDriver;
   private final ProxyEditView<P, ?> view;
-
+  private final RequestFactory requests;
   private AcceptsOneWidget display;
   private EntityProxyId<P> proxyId;
   private Class<P> proxyClass;
@@ -117,13 +117,13 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
 
   public void saveClicked() {
     assert editorDriver != null;
-    Request<Object> request = editorDriver.flush();
+    RequestContext request = editorDriver.flush();
     if (!request.isChanged()) {
       return;
     }
 
     setWaiting(true);
-    request.fire(new Receiver<Object>() {
+    request.fire(new Receiver<Void>() {
       // Do nothing if display is null, we were stopped in midflight
 
       @Override
@@ -135,7 +135,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
       }
 
       @Override
-      public void onSuccess(Object ignore) {
+      public void onSuccess(Void ignore) {
         if (display != null) {
           // We want no warnings from mayStop, so:
           
@@ -170,17 +170,18 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
      */
     setWaiting(true);
 
+    final RequestContext context = getPersistRequestContext();
     if (isCreating()) {
-      P newRecord = requests.create(proxyClass);
+      P newRecord = context.create(proxyClass);
       proxyId = getProxyId(newRecord);
-      doStart(newRecord);
+      doStart(context, newRecord);
     } else {
       Request<P> findRequest = requests.find(getEntityProxyId());
       findRequest.with(editorDriver.getPaths()).fire(new Receiver<P>() {
         @Override
         public void onSuccess(P proxy) {
           if (display != null) {
-            doStart(proxy);
+            doStart(context, proxy);
           }
         }
       });
@@ -205,12 +206,11 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     }
   }
 
-  protected abstract Request<?> getPersistRequest(P proxy);
+  protected abstract RequestContext getPersistRequestContext();
 
-  private void doStart(P proxy) {
+  private void doStart(RequestContext request, P proxy) {
     setWaiting(false);
 
-    Request<?> request = getPersistRequest(proxy);
     editorDriver.edit(proxy, request);
 
     display.setWidget(view);

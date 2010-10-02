@@ -22,27 +22,29 @@ package com.google.gwt.requestfactory.shared;
  * </span>
  * </p>
  * Implemented by the request objects created by this factory.
- *
+ * 
  * @param <T> The return type of objects in the corresponding response.
  */
 public interface Request<T> {
 
   /**
-   * @return an editable version of the given {@link EntityProxy}
+   * Submit this request. Failures will be reported through the global uncaught
+   * exception handler, if any.
    */
-  <P extends EntityProxy> P edit(P proxy);
+  void fire();
 
   /**
-   * Submit this request. Results will be passed to the receiver asynchronously.
+   * Convenience method equivalent to calling <code>to(...).fire()</code>.
    */
   void fire(Receiver<? super T> receiver);
 
   /**
-   * Return true if there are outstanding changes that have not been
-   * communicated to the server yet. Note that it is illegal to call this method
-   * after a request using it has been fired.
+   * Specify the object that will receive the result of the method invocation.
    */
-  boolean isChanged();
+  RequestContext to(Receiver<? super T> receiver);
 
+  /**
+   * Request additional reference properties to fetch with the return value.
+   */
   Request<T> with(String... propertyRefs);
 }

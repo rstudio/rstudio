@@ -21,24 +21,20 @@ import java.util.List;
  * Do nothing test interface.
  */
 @Service(com.google.gwt.requestfactory.server.SimpleFooString.class)
-public interface SimpleFooStringRequest {
+public interface SimpleFooStringRequest extends RequestContext {
   Request<Long> countSimpleFoo();
 
-  @Instance
-  Request<Long> countSimpleFooWithUserNameSideEffect(SimpleFooStringProxy proxy);
+  InstanceRequest<SimpleFooStringProxy, Long> countSimpleFooWithUserNameSideEffect();
 
   Request<List<SimpleFooStringProxy>> findAll();
 
   Request<SimpleFooStringProxy> findSimpleFooStringById(String id);
 
-  @Instance
-  Request<Void> persist(SimpleFooStringProxy proxy);
-  
-  @Instance
-  Request<SimpleFooStringProxy> persistAndReturnSelf(SimpleFooStringProxy proxy);
+  InstanceRequest<SimpleFooStringProxy, Void> persist();
+
+  InstanceRequest<SimpleFooStringProxy, SimpleFooStringProxy> persistAndReturnSelf();
 
   Request<Void> reset();
 
-  @Instance
-  Request<String> hello(SimpleFooStringProxy instance, SimpleBarProxy proxy);
+  InstanceRequest<SimpleFooStringProxy, String> hello(SimpleBarProxy proxy);
 }

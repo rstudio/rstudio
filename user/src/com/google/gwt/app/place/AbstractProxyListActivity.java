@@ -109,8 +109,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   }
 
   public void createClicked() {
-    placeController.goTo(new ProxyPlace(requests.create(proxyType).stableId(),
-        Operation.CREATE));
+    placeController.goTo(new ProxyPlace(null, Operation.CREATE));
   }
 
   public ProxyListView<P> getView() {
@@ -142,7 +141,8 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
         idToProxy.clear();
         for (int i = 0, row = range.getStart(); i < values.size(); i++, row++) {
           P proxy = values.get(i);
-          @SuppressWarnings("unchecked") // Why is this cast needed?
+          @SuppressWarnings("unchecked")
+          // Why is this cast needed?
           EntityProxyId<P> proxyId = (EntityProxyId<P>) proxy.stableId();
           idToRow.put(proxyId, row);
           idToProxy.put(proxyId, proxy);
@@ -169,12 +169,11 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
    * id we don't know.
    */
   public void select(EntityProxyId<P> proxyId) {
-    /* 
-     * The selectionModel will not flash if we put it 
-     * back to the same state it is already in, so 
-     * we can keep this code simple.
+    /*
+     * The selectionModel will not flash if we put it back to the same state it
+     * is already in, so we can keep this code simple.
      */
-    
+
     // Clear the selection
     P selected = selectionModel.getSelectedObject();
     if (selected != null) {
@@ -232,7 +231,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   /**
    * Called when the user chooses a record to view. This default implementation
    * sends the {@link PlaceController} to an appropriate {@link ProxyPlace}.
-   *
+   * 
    * @param record the chosen record
    */
   protected void showDetails(P record) {

@@ -25,11 +25,13 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
+import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
+import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.PersonRequest;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -58,8 +60,8 @@ public class PersonEditorWorkflow {
       final DynaTableRequestFactory requestFactory,
       final FavoritesManager manager) {
     eventBus.addHandler(EditPersonEvent.TYPE, new EditPersonEvent.Handler() {
-      public void startEdit(PersonProxy person, Request<?> request) {
-        new PersonEditorWorkflow(requestFactory, manager, person).edit(request);
+      public void startEdit(PersonProxy person, RequestContext requestContext) {
+        new PersonEditorWorkflow(requestFactory, manager, person).edit(requestContext);
       }
     });
   }
@@ -106,12 +108,12 @@ public class PersonEditorWorkflow {
   @SuppressWarnings("unused")
   void onSave(ClickEvent e) {
     // MOVE TO ACTIVITY END
-    final Request<Void> request = editorDriver.<Void> flush();
+    RequestContext context = editorDriver.flush();
     if (editorDriver.hasErrors()) {
       dialog.setText("Errors detected locally");
       return;
     }
-    request.fire(new Receiver<Void>() {
+    context.fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void response) {
         dialog.hide();
@@ -131,16 +133,16 @@ public class PersonEditorWorkflow {
     manager.setFavorite(person, favorite.getValue());
   }
 
-  private void edit(Request<?> request) {
+  private void edit(RequestContext requestContext) {
     editorDriver = GWT.create(Driver.class);
     editorDriver.initialize(requestFactory, personEditor);
 
-    if (request == null) {
+    if (requestContext == null) {
       fetchAndEdit();
       return;
     }
 
-    editorDriver.edit(person, request);
+    editorDriver.edit(person, requestContext);
     personEditor.focus();
     favorite.setValue(manager.isFavorite(person), false);
     dialog.center();
@@ -158,8 +160,9 @@ public class PersonEditorWorkflow {
       public void onSuccess(PersonProxy person) {
         PersonEditorWorkflow.this.person = person;
         // Start the edit process
-        Request<Void> request = requestFactory.personRequest().persist(person);
-        edit(request);
+        PersonRequest context = requestFactory.personRequest();
+        context.persist().using(person);
+        edit(context);
       }
     });
   }

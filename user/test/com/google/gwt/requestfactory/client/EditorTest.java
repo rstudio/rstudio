@@ -28,6 +28,7 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.SimpleBarProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
+import com.google.gwt.requestfactory.shared.SimpleFooRequest;
 import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.Arrays;
@@ -109,9 +110,18 @@ public class EditorTest extends RequestFactoryTestBase {
           @Override
           public void onSuccess(SimpleFooProxy response) {
 
-            driver.edit(response, req.simpleFooRequest().persistAndReturnSelf(
-                response).with(driver.getPaths()));
-
+            SimpleFooRequest context = req.simpleFooRequest();
+            driver.edit(response, context);
+            context.persistAndReturnSelf().using(response).with(
+                driver.getPaths()).to(new Receiver<SimpleFooProxy>() {
+              @Override
+              public void onSuccess(SimpleFooProxy response) {
+                assertEquals("EditorFooTest", response.getUserName());
+                assertEquals("EditorBarTest",
+                    response.getBarField().getUserName());
+                finishTestAndReset();
+              }
+            });
             assertEquals("GWT", editor.userName.getValue());
             assertEquals("FOO", editor.barEditor().userName.getValue());
             assertEquals("FOO", editor.barName.getValue());
@@ -119,16 +129,7 @@ public class EditorTest extends RequestFactoryTestBase {
             // When there are duplicate paths, last declared editor wins
             editor.barEditor().userName.setValue("EditorBarTest");
             editor.barName.setValue("ignored");
-            driver.<SimpleFooProxy> flush().fire(
-                new Receiver<SimpleFooProxy>() {
-                  @Override
-                  public void onSuccess(SimpleFooProxy response) {
-                    assertEquals("EditorFooTest", response.getUserName());
-                    assertEquals("EditorBarTest",
-                        response.getBarField().getUserName());
-                    finishTestAndReset();
-                  }
-                });
+            driver.flush().fire();
           }
         });
   }
@@ -152,21 +153,24 @@ public class EditorTest extends RequestFactoryTestBase {
             assertNotNull(editor.delegate.subscribe());
 
             // Simulate edits occurring elsewhere in the module
-            Request<SimpleFooProxy> request = req.simpleFooRequest().persistAndReturnSelf(
+            SimpleFooRequest context = req.simpleFooRequest();
+            Request<SimpleFooProxy> request = context.persistAndReturnSelf().using(
                 response);
-            SimpleBarProxy newBar = req.create(SimpleBarProxy.class);
-            newBar = request.edit(newBar);
+            SimpleBarProxy newBar = context.create(SimpleBarProxy.class);
+            newBar = context.edit(newBar);
             newBar.setUserName("newBar");
-            response = request.edit(response);
+            response = context.edit(response);
             response.setBarField(newBar);
             response.setUserName("updated");
 
             request.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                System.out.println("B");
                 // EventBus notifications occur after the onSuccess()
                 Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
                   public boolean execute() {
+                    System.out.println("fo");
                     if ("updated".equals(editor.userName.getValue())) {
                       assertEquals("updated", editor.userName.getValue());
                       assertEquals("newBar",
@@ -195,36 +199,37 @@ public class EditorTest extends RequestFactoryTestBase {
           @Override
           public void onSuccess(SimpleFooProxy response) {
 
-            driver.edit(response, req.simpleFooRequest().persistAndReturnSelf(
-                response).with(driver.getPaths()));
+            SimpleFooRequest context = req.simpleFooRequest();
+            driver.edit(response, context);
+            context.persistAndReturnSelf().using(response).with(
+                driver.getPaths()).to(new Receiver<SimpleFooProxy>() {
+              @Override
+              public void onSuccess(SimpleFooProxy response) {
+                fail("Expected errors. You may be missing jars, see "
+                    + "the comment in RequestFactoryTest.ShouldNotSucceedReceiver.onSuccess");
+              }
+
+              @Override
+              public void onViolation(Set<Violation> errors) {
+                assertEquals(1, errors.size());
+                Violation v = errors.iterator().next();
+
+                driver.setViolations(errors);
+                assertEquals(1, editor.errors.size());
+                EditorError error = editor.errors.get(0);
+                assertEquals("userName", error.getAbsolutePath());
+                assertSame(editor.userName, error.getEditor());
+                assertTrue(error.getMessage().length() > 0);
+                assertEquals("userName", error.getPath());
+                assertSame(v, error.getUserData());
+                assertNull(error.getValue());
+                finishTestAndReset();
+              }
+            });
             // Set to an illegal value
             editor.userName.setValue("");
 
-            driver.<SimpleFooProxy> flush().fire(
-                new Receiver<SimpleFooProxy>() {
-                  @Override
-                  public void onSuccess(SimpleFooProxy response) {
-                    fail("Expected errors. You may be missing jars, see "
-                        + "the comment in RequestFactoryTest.ShouldNotSucceedReceiver.onSuccess");
-                  }
-
-                  @Override
-                  public void onViolation(Set<Violation> errors) {
-                    assertEquals(1, errors.size());
-                    Violation v = errors.iterator().next();
-
-                    driver.setViolations(errors);
-                    assertEquals(1, editor.errors.size());
-                    EditorError error = editor.errors.get(0);
-                    assertEquals("userName", error.getAbsolutePath());
-                    assertSame(editor.userName, error.getEditor());
-                    assertTrue(error.getMessage().length() > 0);
-                    assertEquals("userName", error.getPath());
-                    assertSame(v, error.getUserData());
-                    assertNull(error.getValue());
-                    finishTestAndReset();
-                  }
-                });
+            driver.flush().fire();
           }
         });
   }
