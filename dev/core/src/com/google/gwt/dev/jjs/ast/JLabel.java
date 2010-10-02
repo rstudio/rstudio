@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.StringInterner;
 
 /**
  * Should we have a JLabelRef also?
@@ -26,7 +27,7 @@ public class JLabel extends JNode implements HasName {
 
   public JLabel(SourceInfo info, String name) {
     super(info);
-    this.name = name;
+    this.name = StringInterner.get().intern(name);
   }
 
   public String getName() {

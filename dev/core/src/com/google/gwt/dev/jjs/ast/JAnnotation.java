@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.lang.annotation.Annotation;
@@ -44,7 +45,7 @@ public class JAnnotation extends JNode implements JAnnotationArgument {
     public Property(SourceInfo sourceInfo, String name,
         List<JAnnotationArgument> values) {
       super(sourceInfo);
-      this.name = name;
+      this.name = StringInterner.get().intern(name);
       this.values = Lists.normalize(values);
     }
 

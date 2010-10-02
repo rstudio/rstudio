@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.StringInterner;
 
 /**
  * Base class for any types entity.
@@ -27,7 +28,7 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
 
   public JType(SourceInfo info, String name, JLiteral defaultValue) {
     super(info);
-    this.name = name;
+    this.name = StringInterner.get().intern(name);
     this.defaultValue = defaultValue;
   }
 

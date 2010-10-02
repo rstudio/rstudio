@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
   JVariable(SourceInfo info, String name, JType type, boolean isFinal) {
     super(info);
     assert type != null;
-    this.name = name;
+    this.name = StringInterner.get().intern(name);
     this.type = type;
     this.isFinal = isFinal;
   }

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.HashMap;
 
 import java.util.Map;
@@ -63,9 +64,9 @@ public class JPrimitiveType extends JType {
   private JPrimitiveType(String name, String signatureName,
       String wrapperTypeName, JLiteral defaultValue) {
     super(SourceOrigin.UNKNOWN, name, defaultValue);
-    this.signatureName = signatureName;
-    this.wrapperTypeName = wrapperTypeName;
-    Singletons.map.put(name, this);
+    this.signatureName = StringInterner.get().intern(signatureName);
+    this.wrapperTypeName = StringInterner.get().intern(wrapperTypeName);
+    Singletons.map.put(this.name, this);
   }
 
   /**
