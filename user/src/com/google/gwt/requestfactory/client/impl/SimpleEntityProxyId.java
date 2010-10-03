@@ -76,6 +76,9 @@ public class SimpleEntityProxyId<P extends EntityProxy> implements
   }
 
   public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
     if (!(o instanceof SimpleEntityProxyId<?>)) {
       return false;
     }
@@ -83,8 +86,19 @@ public class SimpleEntityProxyId<P extends EntityProxy> implements
     if (!proxyClass.equals(other.proxyClass)) {
       return false;
     }
-    return (clientId != NEVER_EPHEMERAL && clientId == other.clientId)
-        || serverId.equals(other.serverId);
+
+    if (clientId != NEVER_EPHEMERAL && clientId == other.clientId) {
+      /*
+       * Unexpected: It should be the case that locally-created ids are never
+       * aliased and will be caught by the first if statement.
+       */
+      return true;
+    }
+
+    if (serverId != null && serverId.equals(other.serverId)) {
+      return true;
+    }
+    return false;
   }
 
   public int getClientId() {
