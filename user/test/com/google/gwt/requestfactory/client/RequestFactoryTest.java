@@ -190,7 +190,6 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   /**
    * Test that we can commit child objects.
-
    */
   public void testCascadingCommit() {
     delayTestFinish(5000);
@@ -237,6 +236,40 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     // Undo the change
     foo.setCharField(null);
     assertFalse(context.isChanged());
+  }
+
+  public void testChangedEdit() {
+    delayTestFinish(5000);
+    simpleFooRequest().findSimpleFooById(1L).fire(
+        new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy foo) {
+            SimpleFooRequest context = simpleFooRequest();
+
+            // edit() doesn't cause a change
+            foo = context.edit(foo);
+            assertFalse(context.isChanged());
+
+            final String newName = "something else;";
+            String oldName = foo.getUserName();
+            assertFalse("Don't accidentally set the same name",
+                newName.equals(oldName));
+
+            // gets don't cause a change
+            assertFalse(context.isChanged());
+
+            // Change
+            foo.setUserName(newName);
+            assertTrue(context.isChanged());
+
+            // Undo the change
+            foo.setUserName(oldName);
+            assertFalse(context.isChanged());
+
+            finishTestAndReset();
+          }
+        });
   }
 
   public void testClassToken() {
