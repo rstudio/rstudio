@@ -43,6 +43,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.NamedFrame;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.StackPanel;
@@ -167,6 +168,7 @@ public class WidgetBasedUi extends Composite {
   @UiField Widget myAbsolutePanelItemA;
   @UiField Widget myAbsolutePanelItemB;
   @UiField Widget myAbsolutePanelItemC;
+  @UiField NamedFrame myNamedFrame;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();

@@ -638,6 +638,8 @@
     </gwt:at>
   </gwt:AbsolutePanel>
 
+  <gwt:NamedFrame ui:field='myNamedFrame' name='myName'/>
+
    </gwt:HTMLPanel>
   </gwt:Dock>
 </gwt:DockPanel>

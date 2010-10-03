@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.NamedFrame;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -461,6 +462,11 @@ public class UiBinderTest extends GWTTestCase {
     // assertEquals("Widget has left", 10, p.getWidgetLeft(w));
     // assertEquals("Widget has top", 20, p.getWidgetTop(w));
     // }
+  }
+  
+  public void testNamedFrame() {
+    NamedFrame p = widgetUi.myNamedFrame;
+    assertNotNull("NamedFrame exists", p);
   }
 
   public void testStringAttributeIgnoresStaticSetter() {

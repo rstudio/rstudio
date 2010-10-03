@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.IFrameElement;
+import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -92,6 +93,7 @@ public class NamedFrame extends Frame {
    *          
    * @throws IllegalArgumentException if the supplied name is not allowed 
    */
+  @UiConstructor
   public NamedFrame(String name) {
     // Setting a src prevents mixed-content warnings.
     // http://weblogs.asp.net/bleroy/archive/2005/08/09/how-to-put-a-div-over-a-select-in-ie.aspx
