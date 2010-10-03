@@ -221,6 +221,24 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  public void testChanged() {
+    // Nothing has happened
+    SimpleFooRequest context = simpleFooRequest();
+    assertFalse(context.isChanged());
+
+    // Creates don't cause a change
+    SimpleFooProxy foo = context.create(SimpleFooProxy.class);
+    assertFalse(context.isChanged());
+
+    // Change
+    foo.setCharField('c');
+    assertTrue(context.isChanged());
+
+    // Undo the change
+    foo.setCharField(null);
+    assertFalse(context.isChanged());
+  }
+
   public void testClassToken() {
     String token = req.getHistoryToken(SimpleFooProxy.class);
     assertEquals(SimpleFooProxy.class, req.getProxyClass(token));

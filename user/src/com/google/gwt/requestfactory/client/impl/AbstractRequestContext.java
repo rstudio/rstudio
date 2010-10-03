@@ -142,13 +142,18 @@ public class AbstractRequestContext implements RequestContext {
     /*
      * NB: Don't use the presence of ephemeral objects for this test.
      * 
-     * Diffing the objects until one is found to be different. It's not
-     * just a simple flag-check because of the possibility of "unmaking" a
-     * change, per the JavaDoc.
+     * Diffing the objects until one is found to be different. It's not just a
+     * simple flag-check because of the possibility of "unmaking" a change, per
+     * the JavaDoc.
      */
     for (EntityProxy edited : seenProxies.values()) {
       AutoBean<EntityProxy> bean = AutoBeanUtils.getAutoBean(edited);
-      AutoBean<EntityProxy> previous = AutoBeanUtils.getAutoBean((EntityProxy) bean.getTag(PARENT_OBJECT));
+      AutoBean<?> previous = AutoBeanUtils.getAutoBean((EntityProxy) bean.getTag(PARENT_OBJECT));
+      if (previous == null) {
+        // Compare to empty object
+        previous = getRequestFactory().getAutoBeanFactory().create(
+            edited.stableId().getProxyClass());
+      }
       if (!AutoBeanUtils.diff(previous, bean).isEmpty()) {
         return true;
       }
