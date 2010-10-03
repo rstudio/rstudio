@@ -1,0 +1,10 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'
+  xmlns:e='urn:import:com.google.gwt.editor.client.ui'>
+  <ui:style src="../common.css" />
+  <g:FlowPanel>
+    <dt:NameLabel ui:field="nameLabel" stylePrimaryName="{style.editField}" />
+    <g:Button ui:field="choose">Choose Randomly</g:Button>
+    <g:Button ui:field="clear">Clear</g:Button>
+  </g:FlowPanel>
+</ui:UiBinder>

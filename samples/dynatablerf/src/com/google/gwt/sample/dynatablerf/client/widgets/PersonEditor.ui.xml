@@ -33,5 +33,7 @@
     </div>
     Address:
     <dt:AddressEditor ui:field="address" stylePrimaryName="{style.editField}" />
+    Mentor:
+    <dt:MentorSelector ui:field="mentor" stylePrimaryName="{style.editField}" />
   </g:HTMLPanel>
 </ui:UiBinder>

@@ -20,6 +20,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.editor.client.Editor;
 import com.google.gwt.editor.client.ui.ValueBoxEditorDecorator;
+import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -40,6 +41,9 @@ public class PersonEditor extends Composite implements Editor<PersonProxy> {
   @UiField
   ValueBoxEditorDecorator<String> description;
 
+  @UiField(provided = true)
+  MentorSelector mentor;
+
   @UiField
   ValueBoxEditorDecorator<String> name;
 
@@ -49,7 +53,8 @@ public class PersonEditor extends Composite implements Editor<PersonProxy> {
   @UiField
   Focusable nameBox;
 
-  public PersonEditor() {
+  public PersonEditor(DynaTableRequestFactory factory) {
+    mentor = new MentorSelector(factory);
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
   }
 

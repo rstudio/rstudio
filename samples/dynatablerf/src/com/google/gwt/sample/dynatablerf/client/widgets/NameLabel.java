@@ -35,14 +35,20 @@ class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
   private PersonProxy person;
   private HandlerRegistration subscription;
 
+  public NameLabel() {
+    this(null);
+  }
+
   public NameLabel(final EventBus eventBus) {
     initWidget(nameEditor);
 
-    nameEditor.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        eventBus.fireEvent(new EditPersonEvent(person));
-      }
-    });
+    if (eventBus != null) {
+      nameEditor.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          eventBus.fireEvent(new EditPersonEvent(person));
+        }
+      });
+    }
   }
 
   public void flush() {

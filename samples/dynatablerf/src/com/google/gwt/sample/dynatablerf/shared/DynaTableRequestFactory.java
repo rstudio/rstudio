@@ -55,6 +55,7 @@ public interface DynaTableRequestFactory extends RequestFactory {
   @Service(SchoolCalendarService.class)
   interface SchoolCalendarRequest extends RequestContext {
     Request<List<PersonProxy>> getPeople(int startIndex, int maxCount);
+    Request<PersonProxy> getRandomPerson();
   }
 
   AddressRequest addressRequest();

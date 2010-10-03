@@ -75,7 +75,7 @@ public class PersonEditorWorkflow {
   @UiField
   CheckBox favorite;
 
-  @UiField
+  @UiField(provided = true)
   PersonEditor personEditor;
 
   private Driver editorDriver;
@@ -88,6 +88,7 @@ public class PersonEditorWorkflow {
     this.requestFactory = requestFactory;
     this.manager = manager;
     this.person = person;
+    personEditor = new PersonEditor(requestFactory);
     Binder.BINDER.createAndBindUi(this);
     contents.addDomHandler(new KeyUpHandler() {
       public void onKeyUp(KeyUpEvent event) {
@@ -99,13 +100,11 @@ public class PersonEditorWorkflow {
   }
 
   @UiHandler("cancel")
-  @SuppressWarnings("unused")
   void onCancel(ClickEvent e) {
     dialog.hide();
   }
 
   @UiHandler("save")
-  @SuppressWarnings("unused")
   void onSave(ClickEvent e) {
     // MOVE TO ACTIVITY END
     RequestContext context = editorDriver.flush();
@@ -128,7 +127,6 @@ public class PersonEditorWorkflow {
   }
 
   @UiHandler("favorite")
-  @SuppressWarnings("unused")
   void onValueChanged(ValueChangeEvent<Boolean> event) {
     manager.setFavorite(person, favorite.getValue());
   }

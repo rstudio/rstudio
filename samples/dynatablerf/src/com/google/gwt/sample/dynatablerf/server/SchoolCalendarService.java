@@ -20,6 +20,7 @@ import com.google.gwt.sample.dynatablerf.domain.Person;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -32,6 +33,9 @@ import javax.servlet.ServletResponse;
  * The server side service class.
  */
 public class SchoolCalendarService implements Filter {
+  private static final boolean[] ALL_DAYS = new boolean[] {
+      true, true, true, true, true, true, true};
+
   private static final ThreadLocal<PersonSource> PERSON_SOURCE = new ThreadLocal<PersonSource>();
 
   public static Person createPerson() {
@@ -46,12 +50,14 @@ public class SchoolCalendarService implements Filter {
     return PERSON_SOURCE.get().findPerson(id);
   }
 
-  /**
-   * XXX Remove this once primitive lists work.
-   */
   public static List<Person> getPeople(int startIndex, int maxCount) {
-    return getPeople(startIndex, maxCount, new boolean[] {
-        true, true, true, true, true, true, true});
+    return getPeople(startIndex, maxCount, ALL_DAYS);
+  }
+
+  public static Person getRandomPerson() {
+    PersonSource source = PERSON_SOURCE.get();
+    return source.getPeople(new Random().nextInt(source.countPeople()), 1,
+        ALL_DAYS).get(0);
   }
 
   public static void persist(Address address) {

@@ -163,7 +163,6 @@ public class SummaryWidget extends Composite {
   }
 
   @UiHandler("create")
-  @SuppressWarnings("unused")
   void onCreate(ClickEvent event) {
     PersonRequest context = requestFactory.personRequest();
     AddressProxy address = context.create(AddressProxy.class);

@@ -78,8 +78,8 @@ public class EditorModel {
       throws UnableToCompleteException {
     JClassType editorIntf = editorType.getOracle().findType(
         Editor.class.getName());
-    JClassType parameterization[] = ModelUtils.findParameterizationOf(editorIntf,
-        editorType);
+    JClassType parameterization[] = ModelUtils.findParameterizationOf(
+        editorIntf, editorType);
     if (parameterization != null) {
       return parameterization[0];
     }
@@ -97,8 +97,8 @@ public class EditorModel {
       JClassType editorType) throws UnableToCompleteException {
     JClassType editorIntf = editorType.getOracle().findType(
         IsEditor.class.getName());
-    JClassType[] parameterization = ModelUtils.findParameterizationOf(editorIntf,
-        editorType);
+    JClassType[] parameterization = ModelUtils.findParameterizationOf(
+        editorIntf, editorType);
     if (parameterization != null) {
       return parameterization[0];
     }
@@ -222,7 +222,8 @@ public class EditorModel {
       die(tooManyInterfacesMessage(intf));
     }
 
-    JClassType[] parameters = ModelUtils.findParameterizationOf(driverType, intf);
+    JClassType[] parameters = ModelUtils.findParameterizationOf(driverType,
+        intf);
     assert parameters.length == 2 : "Unexpected number of type parameters";
     proxyType = parameters[0];
     editorType = parameters[1];
@@ -287,14 +288,14 @@ public class EditorModel {
     flatData.addAll(data);
     allData.addAll(data);
     for (EditorData d : data) {
-      if (!d.isLeafValueEditor()) {
-        descendIntoSubEditor(allData, d);
-      }
+      descendIntoSubEditor(allData, d);
     }
   }
 
   /**
    * Create the EditorData objects for the {@link #editorData} type.
+   * Essentially, the point of this method is to calculate the paths of all
+   * Editor types referenced by {@link #editorType}.
    */
   private EditorData[] calculateEditorData() throws UnableToCompleteException {
     List<EditorData> flatData = new ArrayList<EditorData>();
@@ -340,6 +341,16 @@ public class EditorModel {
           editorSoFar).build();
       List<EditorData> accumulator = new ArrayList<EditorData>();
       descendIntoSubEditor(accumulator, subEditor);
+
+      /*
+       * It's necessary to generate a sub-Model here so that any Editor types
+       * reachable only through the composite type will be added to the types
+       * map. The path data isn't actually useful, since we rely on
+       * CompositeEditor.getPathElement() at runtime.
+       */
+      EditorModel subModel = new EditorModel(this, subEditor.getEditorType(),
+          subEditor, subEditor.getEditedType());
+      poisoned |= subModel.poisoned;
     }
 
     if (!typeData.containsKey(editorType)) {

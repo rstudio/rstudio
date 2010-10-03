@@ -54,6 +54,8 @@ public class Person {
   @NotNull
   private String description = "DESC";
 
+  private Person mentor;
+
   @NotNull
   @Size(min = 2, message = "Persons aren't just characters")
   private String name;
@@ -82,6 +84,7 @@ public class Person {
     classSchedule = copyFrom.classSchedule;
     description = copyFrom.description;
     name = copyFrom.name;
+    mentor = copyFrom.mentor;
     id = copyFrom.id;
     version = copyFrom.version;
     note = copyFrom.note;
@@ -108,6 +111,10 @@ public class Person {
    */
   public String getId() {
     return id;
+  }
+
+  public Person getMentor() {
+    return mentor;
   }
 
   public String getName() {
@@ -164,6 +171,10 @@ public class Person {
   public void setId(String id) {
     this.id = id;
     address.setId(id);
+  }
+
+  public void setMentor(Person mentor) {
+    this.mentor = mentor;
   }
 
   public void setName(String name) {

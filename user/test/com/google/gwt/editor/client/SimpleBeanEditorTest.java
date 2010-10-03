@@ -18,6 +18,7 @@ package com.google.gwt.editor.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.adapters.EditorSource;
 import com.google.gwt.editor.client.adapters.ListEditor;
+import com.google.gwt.editor.client.adapters.OptionalFieldEditor;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -102,6 +103,19 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   interface PersonEditorWithLeafAddressEditorDriver extends
       SimpleBeanEditorDriver<Person, PersonEditorWithLeafAddressEditor> {
+  }
+
+  interface PersonEditorWithOptionalAddressDriver extends
+      SimpleBeanEditorDriver<Person, PersonEditorWithOptionalAddressEditor> {
+  }
+
+  class PersonEditorWithOptionalAddressEditor implements Editor<Person> {
+    OptionalFieldEditor<Address, AddressEditor> address;
+    SimpleEditor<String> name = SimpleEditor.of(UNINITIALIZED);
+
+    public PersonEditorWithOptionalAddressEditor(AddressEditor delegate) {
+      address = OptionalFieldEditor.of(delegate);
+    }
   }
 
   class PersonEditorWithValueAwareAddressEditor implements Editor<Person> {
@@ -418,6 +432,30 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     // Flush
     driver.flush();
     assertEquals("edited", person.addresses.get(1).getCity());
+  }
+
+  public void testOptionalField() {
+    PersonEditorWithOptionalAddressDriver driver = GWT.create(PersonEditorWithOptionalAddressDriver.class);
+    person.address = null;
+
+    AddressEditor delegate = new AddressEditor();
+    PersonEditorWithOptionalAddressEditor editor = new PersonEditorWithOptionalAddressEditor(
+        delegate);
+    driver.initialize(editor);
+
+    // Make sure we don't blow up with the null field
+    driver.edit(person);
+    editor.address.setValue(personAddress);
+    assertEquals("City", delegate.city.getValue());
+    delegate.city.setValue("Hello");
+    driver.flush();
+    assertNotNull(person.address);
+    assertSame(personAddress, person.address);
+    assertEquals("Hello", personAddress.city);
+
+    editor.address.setValue(null);
+    driver.flush();
+    assertNull(person.address);
   }
 
   public void testValueAwareEditorInDeclaredSlot() {

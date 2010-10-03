@@ -25,12 +25,14 @@ import com.google.gwt.sample.dynatablerf.domain.Person;
  */
 @ProxyFor(Person.class)
 public interface PersonProxy extends EntityProxy {
-  
+
   AddressProxy getAddress();
 
   String getDescription();
-  
+
   String getId();
+
+  PersonProxy getMentor();
 
   String getName();
 
@@ -42,9 +44,11 @@ public interface PersonProxy extends EntityProxy {
 
   void setDescription(String description);
 
+  void setMentor(PersonProxy mentor);
+
   void setName(String name);
 
   void setNote(String note);
-  
+
   EntityProxyId<PersonProxy> stableId();
 }
