@@ -122,6 +122,10 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
     return false;
   }
 
+  public void initialize(E editor) {
+    initialize(null, editor);
+  }
+
   /**
    * Records its arguments.
    */

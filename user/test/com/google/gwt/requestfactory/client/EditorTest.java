@@ -106,32 +106,46 @@ public class EditorTest extends RequestFactoryTestBase {
     driver.initialize(req, editor);
 
     req.simpleFooRequest().findSimpleFooById(1L).with(driver.getPaths()).fire(
-        new Receiver<SimpleFooProxy>() {
+    new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy response) {
+    
+        SimpleFooRequest context = req.simpleFooRequest();
+        driver.edit(response, context);
+        context.persistAndReturnSelf().using(response).with(
+            driver.getPaths()).to(new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
-
-            SimpleFooRequest context = req.simpleFooRequest();
-            driver.edit(response, context);
-            context.persistAndReturnSelf().using(response).with(
-                driver.getPaths()).to(new Receiver<SimpleFooProxy>() {
-              @Override
-              public void onSuccess(SimpleFooProxy response) {
-                assertEquals("EditorFooTest", response.getUserName());
-                assertEquals("EditorBarTest",
-                    response.getBarField().getUserName());
-                finishTestAndReset();
-              }
-            });
-            assertEquals("GWT", editor.userName.getValue());
-            assertEquals("FOO", editor.barEditor().userName.getValue());
-            assertEquals("FOO", editor.barName.getValue());
-            editor.userName.setValue("EditorFooTest");
-            // When there are duplicate paths, last declared editor wins
-            editor.barEditor().userName.setValue("EditorBarTest");
-            editor.barName.setValue("ignored");
-            driver.flush().fire();
+            assertEquals("EditorFooTest", response.getUserName());
+            assertEquals("EditorBarTest",
+                response.getBarField().getUserName());
+            finishTestAndReset();
           }
         });
+        assertEquals("GWT", editor.userName.getValue());
+        assertEquals("FOO", editor.barEditor().userName.getValue());
+        assertEquals("FOO", editor.barName.getValue());
+        editor.userName.setValue("EditorFooTest");
+        // When there are duplicate paths, last declared editor wins
+        editor.barEditor().userName.setValue("EditorBarTest");
+        editor.barName.setValue("ignored");
+        driver.flush().fire();
+      }
+    });
+  }
+
+  public void testNoSubscription() {
+    final SimpleFooEditorWithDelegate editor = new SimpleFooEditorWithDelegate();
+
+    final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
+    driver.initialize(req, editor);
+    
+    /*
+     * Confirm that it's always safe to call subscribe. The editor's delegate
+     * isn't set until edit is called, so edit nothing. 
+     */
+    driver.edit(null, null);
+    assertNull(editor.delegate.subscribe());
   }
 
   public void testSubscription() {
@@ -186,7 +200,7 @@ public class EditorTest extends RequestFactoryTestBase {
           }
         });
   }
-
+  
   public void testViolations() {
     delayTestFinish(TEST_TIMEOUT);
     final SimpleFooEditor editor = new SimpleFooEditor();

@@ -16,10 +16,8 @@
 package com.google.gwt.app.place;
 
 import com.google.gwt.editor.client.HasEditorErrors;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.user.client.ui.IsWidget;
 
 /**
@@ -32,17 +30,16 @@ import com.google.gwt.user.client.ui.IsWidget;
  * 
  * @param <P> the type of the proxy
  * @param <V> the type of this ProxyEditView, required to allow
- *          {@link #createEditorDriver(EventBus, RequestFactory)} to be
- *          correctly typed
+ *          {@link #createEditorDriver()} to be correctly typed
  */
 public interface ProxyEditView<P extends EntityProxy, V extends ProxyEditView<P, V>>
     extends IsWidget, HasEditorErrors<P> {
 
   /**
-   * @return a {@link RequestFactoryEditorDriver} initialized to run this editor
+   * @return a new {@link RequestFactoryEditorDriver} initialized to run this
+   *         editor
    */
-  RequestFactoryEditorDriver<P, V> createEditorDriver(EventBus eventBus,
-      RequestFactory requestFactory);
+  RequestFactoryEditorDriver<P, V> createEditorDriver();
 
   /**
    * Implemented by the owner of the view.
@@ -52,8 +49,6 @@ public interface ProxyEditView<P extends EntityProxy, V extends ProxyEditView<P,
 
     void saveClicked();
   }
-
-  void setCreating(boolean b);
 
   void setDelegate(Delegate delegate);
 

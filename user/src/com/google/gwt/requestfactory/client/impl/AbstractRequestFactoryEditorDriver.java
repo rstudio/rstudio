@@ -90,13 +90,15 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     return !errors.isEmpty();
   }
 
+  public void initialize(E editor) {
+    doInitialize(null, null, editor);
+  }
+
   public void initialize(EventBus eventBus, RequestFactory requestFactory,
       E editor) {
-    this.eventBus = eventBus;
-    this.requestFactory = requestFactory;
-    this.editor = editor;
-
-    traverseEditors(paths);
+    assert eventBus != null : "eventBus must not be null";
+    assert requestFactory != null : "requestFactory must not be null";
+    doInitialize(eventBus, requestFactory, editor);
   }
 
   public void initialize(RequestFactory requestFactory, E editor) {
@@ -170,5 +172,14 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     if (saveRequest == null) {
       throw new IllegalStateException("edit() was called with a null Request");
     }
+  }
+
+  private void doInitialize(EventBus eventBus, RequestFactory requestFactory,
+      E editor) {
+    this.eventBus = eventBus;
+    this.requestFactory = requestFactory;
+    this.editor = editor;
+
+    traverseEditors(paths);
   }
 }

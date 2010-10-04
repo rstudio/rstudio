@@ -85,6 +85,14 @@ public abstract class RequestFactoryEditorDelegate<P, E extends Editor<P>>
 
   @Override
   public HandlerRegistration subscribe() {
+    if (factory == null) {
+      /*
+       * They called the no-subscriptions version of
+       * RequestFactoryEditorDriver#initialize
+       */
+      return null;
+    }
+    
     if (!(getObject() instanceof EntityProxy)) {
       /*
        * This is kind of weird. The user is asking for notifications on a

@@ -21,9 +21,7 @@ import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
-import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.user.client.Window;
@@ -41,40 +39,18 @@ import java.util.Set;
  * 
  * @param <P> the type of Proxy being edited
  */
-public abstract class AbstractProxyEditActivity<P extends EntityProxy>
-    implements Activity, ProxyEditView.Delegate {
+public abstract class AbstractProxyEditActivity<P extends EntityProxy> implements Activity,
+    ProxyEditView.Delegate {
 
-  private final boolean creating;
-  private final PlaceController placeController;
-  private RequestFactoryEditorDriver<P, ?> editorDriver;
   private final ProxyEditView<P, ?> view;
-  private final RequestFactory requests;
-  private AcceptsOneWidget display;
-  private EntityProxyId<P> proxyId;
-  private Class<P> proxyClass;
-  private boolean waiting = false;
+  private final PlaceController placeController;
 
-  /**
-   * Create an activity to edit or create proxy. Must provide either a proxyId
-   * (to be edited) or a proxyClass (to create a new proxy). If proxyId is
-   * provided, proxyClass will be ignored.
-   */
-  protected AbstractProxyEditActivity(EntityProxyId<P> proxyId,
-      Class<P> proxyClass, RequestFactory requests,
-      PlaceController placeController, ProxyEditView<P, ?> view) {
+  private RequestFactoryEditorDriver<P, ?> editorDriver;
+  private boolean waiting;
 
-    if (proxyId == null && proxyClass == null) {
-      throw new IllegalArgumentException(
-          "Must provide either proxyId or proxyClass");
-    }
-
-    this.creating = proxyId == null;
-    this.proxyClass = proxyClass;
-    this.proxyId = proxyId;
-    this.placeController = placeController;
-    this.requests = requests;
+  public AbstractProxyEditActivity(ProxyEditView<P, ?> view, PlaceController placeController) {
     this.view = view;
-    editorDriver = view.createEditorDriver(null, requests);
+    this.placeController = placeController;
   }
 
   public void cancelClicked() {
@@ -84,18 +60,6 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
       editorDriver = null;
       exit(false);
     }
-  }
-
-  public EntityProxyId<P> getEntityProxyId() {
-    return proxyId;
-  }
-
-  public ProxyEditView<P, ?> getView() {
-    return view;
-  }
-
-  public boolean isCreating() {
-    return creating;
   }
 
   public String mayStop() {
@@ -112,23 +76,19 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
   }
 
   public void onStop() {
-    this.display = null;
+    editorDriver = null;
   }
 
   public void saveClicked() {
-    assert editorDriver != null;
-    RequestContext request = editorDriver.flush();
-    if (!request.isChanged()) {
-      return;
-    }
-
     setWaiting(true);
-    request.fire(new Receiver<Void>() {
-      // Do nothing if display is null, we were stopped in midflight
-
+    editorDriver.flush().fire(new Receiver<Void>() {
+      /*
+       * Callbacks do nothing if editorDriver is null, we were stopped in
+       * midflight
+       */
       @Override
       public void onFailure(ServerFailure error) {
-        if (display != null) {
+        if (editorDriver != null) {
           setWaiting(false);
           super.onFailure(error);
         }
@@ -136,13 +96,13 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
 
       @Override
       public void onSuccess(Void ignore) {
-        if (display != null) {
+        if (editorDriver != null) {
           // We want no warnings from mayStop, so:
-          
-          // Defeats isChanged check
+
+          // Defeat isChanged check
           editorDriver = null;
-          
-          // Defeats call-in-flight check
+
+          // Defeat call-in-flight check
           setWaiting(false);
 
           exit(true);
@@ -151,7 +111,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
 
       @Override
       public void onViolation(Set<Violation> errors) {
-        if (display != null) {
+        if (editorDriver != null) {
           setWaiting(false);
           editorDriver.setViolations(errors);
         }
@@ -159,71 +119,43 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy>
     });
   }
 
-  public void start(AcceptsOneWidget startDisplay, EventBus eventBus) {
-
-    this.display = startDisplay;
-
+  public void start(AcceptsOneWidget display, EventBus eventBus) {
+    editorDriver = view.createEditorDriver();
     view.setDelegate(this);
-    view.setCreating(isCreating());
-    /*
-     * Lock ourselves until we actually have a proxy to edit
-     */
-    setWaiting(true);
-
-    final RequestContext context = getPersistRequestContext();
-    if (isCreating()) {
-      P newRecord = context.create(proxyClass);
-      proxyId = getProxyId(newRecord);
-      doStart(context, newRecord);
-    } else {
-      Request<P> findRequest = requests.find(getEntityProxyId());
-      findRequest.with(editorDriver.getPaths()).fire(new Receiver<P>() {
-        @Override
-        public void onSuccess(P proxy) {
-          if (display != null) {
-            doStart(context, proxy);
-          }
-        }
-      });
-    }
+    editorDriver.edit(getProxy(), createSaveRequest(getProxy()));
+    display.setWidget(view);
   }
+
+  /**
+   * Called once to create the appropriate request to save
+   * changes.
+   * 
+   * @return the request context to fire when the save button is clicked
+   */
+  protected abstract RequestContext createSaveRequest(P proxy);
 
   /**
    * Called when the user cancels or has successfully saved. This default
    * implementation tells the {@link PlaceController} to show the details of the
-   * edited record, or clears the display if a creation was canceled.
-   * <p>
-   * Call {@link getId()} for the id of the proxy that has been edited or
-   * created.
+   * edited record.
    * 
-   * @param saved true if changes were comitted
+   * @param saved true if changes were comitted, false if user canceled
    */
-  protected void exit(boolean saved) {
-    if (!saved && isCreating()) {
-      display.setWidget(null);
-    } else {
-      placeController.goTo(new ProxyPlace(proxyId, Operation.DETAILS));
-    }
+  protected void exit(@SuppressWarnings("unused") boolean saved) {
+    placeController.goTo(new ProxyPlace(getProxyId(), Operation.DETAILS));
   }
 
-  protected abstract RequestContext getPersistRequestContext();
-
-  private void doStart(RequestContext request, P proxy) {
-    setWaiting(false);
-
-    editorDriver.edit(proxy, request);
-
-    display.setWidget(view);
-  }
+  /**
+   * Get the proxy to be edited. Must be mutable, typically via a call to
+   * {@link RequestContext#edit(EntityProxy)}, or
+   * {@link RequestContext#create(Class)}.
+   */
+  protected abstract P getProxy();
 
   @SuppressWarnings("unchecked")
-  private EntityProxyId<P> getProxyId(P newRecord) {
-    /*
-     * We could make this cast go away if EntityProxy were typed to itself,
-     * EntityProxy<P extends EntityProxy<P>>, but the ripples this causes
-     * throughout the API are very, very unpleasant.
-     */
-    return (EntityProxyId<P>) newRecord.stableId();
+  // id type always matches proxy type
+  protected EntityProxyId<P> getProxyId() {
+    return (EntityProxyId<P>) getProxy().stableId();
   }
 
   /**

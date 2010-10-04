@@ -18,26 +18,16 @@ package com.google.gwt.app.place;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasData;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * <p>
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
  * </span>
- * </p>
- * Abstract implementation of ProxyListView. Subclasses must call {@link #init}
- * with the root widget, its {@link CellTable}, and a list of
- * {@link PropertyColumn}.
  * 
  * @param <P> the type of the proxy
  */
@@ -45,7 +35,6 @@ public abstract class AbstractProxyListView<P extends EntityProxy> extends
     Composite implements ProxyListView<P> {
 
   private HasData<P> display;
-  private Set<String> paths = new HashSet<String>();
   private Delegate<P> delegate;
 
   public HasData<P> asHasData() {
@@ -57,22 +46,13 @@ public abstract class AbstractProxyListView<P extends EntityProxy> extends
     return this;
   }
 
-  public String[] getPaths() {
-    return paths.toArray(new String[paths.size()]);
-  }
-
   public void setDelegate(final Delegate<P> delegate) {
     this.delegate = delegate;
   }
 
-  protected void init(Widget root, HasData<P> display, Button newButton,
-      Set<String> columns) {
+  protected void init(Widget root, HasData<P> display, Button newButton) {
     super.initWidget(root);
     this.display = display;
-
-    if (columns != null && columns.size() > 0) {
-      paths.addAll(columns);
-    }
 
     newButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
@@ -81,25 +61,9 @@ public abstract class AbstractProxyListView<P extends EntityProxy> extends
     });
   }
 
-  /**
-   * @deprecated use {@link #init(Widget, HasData, Button, Set)} instead
-   */
-  @Deprecated
-  protected void init(Widget root, CellTable<P> table, Button newButton,
-      List<PropertyColumn<P, ?>> columns) {
-    Set<String> cols = new HashSet<String>(); 
-    for (PropertyColumn<P, ?> column : columns) {
-      table.addColumn(column, column.getDisplayName());
-      cols.addAll(Arrays.asList(column.getPaths()));
-    }
-
-    this.init(root, table, newButton, cols);
-  }
-
-  @Override
   protected void initWidget(Widget widget) {
     throw new UnsupportedOperationException(
         "AbstractRecordListView must be initialized via "
-            + "init(Widget, CellTable<R>, List<PropertyColumn<R, ?>> ) ");
+            + "init(Widget, HasData<P>, Button) ");
   }
 }

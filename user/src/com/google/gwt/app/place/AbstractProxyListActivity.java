@@ -23,7 +23,6 @@ import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.Request;
-import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
@@ -69,21 +68,19 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   private final Map<EntityProxyId<P>, Integer> idToRow = new HashMap<EntityProxyId<P>, Integer>();
   private final Map<EntityProxyId<P>, P> idToProxy = new HashMap<EntityProxyId<P>, P>();
 
-  private final RequestFactory requests;
   private final PlaceController placeController;
   private final SingleSelectionModel<P> selectionModel;
-  private final Class<P> proxyType;
+  private final Class<P> proxyClass;
 
   private HandlerRegistration rangeChangeHandler;
   private ProxyListView<P> view;
   private AcceptsOneWidget display;
 
-  public AbstractProxyListActivity(RequestFactory requests,
-      PlaceController placeController, ProxyListView<P> view, Class<P> proxyType) {
+  public AbstractProxyListActivity(PlaceController placeController,
+      ProxyListView<P> view, Class<P> proxyType) {
     this.view = view;
-    this.requests = requests;
     this.placeController = placeController;
-    this.proxyType = proxyType;
+    this.proxyClass = proxyType;
     view.setDelegate(this);
 
     final HasData<P> hasData = view.asHasData();
@@ -109,7 +106,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   }
 
   public void createClicked() {
-    placeController.goTo(new ProxyPlace(null, Operation.CREATE));
+    placeController.goTo(new ProxyPlace(proxyClass));
   }
 
   public ProxyListView<P> getView() {
@@ -188,7 +185,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
   }
 
   public void start(AcceptsOneWidget display, EventBus eventBus) {
-    EntityProxyChange.registerForProxyType(eventBus, proxyType,
+    EntityProxyChange.registerForProxyType(eventBus, proxyClass,
         new EntityProxyChange.Handler<P>() {
           public void onProxyChange(EntityProxyChange<P> event) {
             update(event.getWriteOperation(), event.getProxyId());
@@ -305,7 +302,7 @@ public abstract class AbstractProxyListActivity<P extends EntityProxy>
     if (newPlace instanceof ProxyPlace) {
       ProxyPlace proxyPlace = (ProxyPlace) newPlace;
       if (proxyPlace.getOperation() != Operation.CREATE
-          && proxyPlace.getProxyId().getProxyClass().equals(proxyType)) {
+          && proxyPlace.getProxyClass().equals(proxyClass)) {
         select(cast(proxyPlace));
         return;
       }

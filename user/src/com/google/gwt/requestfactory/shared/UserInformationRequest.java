@@ -23,7 +23,7 @@ import com.google.gwt.requestfactory.server.UserInformation;
  * client access to the methods of {@link UserInformation}.
  */
 @Service(UserInformation.class)
-public interface UserInformationRequest {
+public interface UserInformationRequest extends RequestContext {
 
   Request<UserInformationProxy> getCurrentUserInformation(String redirectUrl);
 }

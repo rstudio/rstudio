@@ -15,6 +15,7 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 
@@ -35,6 +36,10 @@ public class ProxyPlace extends Place {
    */
   @Prefix("r")
   public static class Tokenizer implements PlaceTokenizer<ProxyPlace> {
+    /**
+     * 
+     */
+    private static final String SEPARATOR = "!";
     private final RequestFactory requests;
 
     public Tokenizer(RequestFactory requests) {
@@ -42,19 +47,33 @@ public class ProxyPlace extends Place {
     }
 
     public ProxyPlace getPlace(String token) {
-      String bits[] = token.split("!");
-      return new ProxyPlace(requests.getProxyId(bits[0]),
-          Operation.valueOf(bits[1]));
+      String bits[] = token.split(SEPARATOR);
+      Operation operation = Operation.valueOf(bits[1]);
+      if (Operation.CREATE == operation) {
+        return new ProxyPlace(requests.getProxyClass(bits[0]));
+      }
+      return new ProxyPlace(requests.getProxyId(bits[0]), operation);
     }
 
     public String getToken(ProxyPlace place) {
-      return requests.getHistoryToken(place.getProxyId()) + "!" + place.getOperation();
+      if (Operation.CREATE == place.getOperation()) {
+        return requests.getHistoryToken(place.getProxyClass()) + SEPARATOR
+            + place.getOperation();
+      }
+      return requests.getHistoryToken(place.getProxyId()) + SEPARATOR
+          + place.getOperation();
     }
   }
 
   private final EntityProxyId<?> proxyId;
-
+  private final Class<? extends EntityProxy> proxyClass;
   private final Operation operation;
+
+  public ProxyPlace(Class<? extends EntityProxy> proxyClass) {
+    this.operation = Operation.CREATE;
+    this.proxyId = null;
+    this.proxyClass = proxyClass;
+  }
 
   public ProxyPlace(EntityProxyId<?> record) {
     this(record, Operation.DETAILS);
@@ -63,6 +82,8 @@ public class ProxyPlace extends Place {
   public ProxyPlace(EntityProxyId<?> proxyId, Operation operation) {
     this.operation = operation;
     this.proxyId = proxyId;
+    this.proxyClass = null;
+    assert Operation.CREATE != operation;
   }
 
   @Override
@@ -77,10 +98,21 @@ public class ProxyPlace extends Place {
       return false;
     }
     ProxyPlace other = (ProxyPlace) obj;
-    if (!operation.equals(other.operation)) {
+    if (operation != other.operation) {
       return false;
     }
-    if (!proxyId.equals(other.proxyId)) {
+    if (proxyClass == null) {
+      if (other.proxyClass != null) {
+        return false;
+      }
+    } else if (!proxyClass.equals(other.proxyClass)) {
+      return false;
+    }
+    if (proxyId == null) {
+      if (other.proxyId != null) {
+        return false;
+      }
+    } else if (!proxyId.equals(other.proxyId)) {
       return false;
     }
     return true;
@@ -90,6 +122,13 @@ public class ProxyPlace extends Place {
     return operation;
   }
 
+  public Class<? extends EntityProxy> getProxyClass() {
+    return proxyId != null ? proxyId.getProxyClass() : proxyClass;
+  }
+
+  /**
+   * @return the proxyId, or null if the operation is {@link Operation#CREATE}
+   */
   public EntityProxyId<?> getProxyId() {
     return proxyId;
   }
@@ -98,13 +137,16 @@ public class ProxyPlace extends Place {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + operation.hashCode();
-    result = prime * result + proxyId.hashCode();
+    result = prime * result + ((operation == null) ? 0 : operation.hashCode());
+    result = prime * result
+        + ((proxyClass == null) ? 0 : proxyClass.hashCode());
+    result = prime * result + ((proxyId == null) ? 0 : proxyId.hashCode());
     return result;
   }
 
   @Override
   public String toString() {
-    return "ProxyPlace [operation=" + operation + ", proxy=" + proxyId + "]";
+    return "ProxyPlace [operation=" + operation + ", proxy=" + proxyId
+        + ", proxyClass=" + proxyClass + "]";
   }
 }

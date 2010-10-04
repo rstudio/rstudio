@@ -34,7 +34,7 @@ import com.google.gwt.view.client.HasData;
  * 
  * @param <P> the type of the records to display
  */
-public interface ProxyListView<P extends EntityProxy> extends IsWidget, PropertyView<P> {
+public interface ProxyListView<P extends EntityProxy> extends IsWidget {
   /**
    * Implemented by the owner of a RecordTableView.
    * 
@@ -45,6 +45,8 @@ public interface ProxyListView<P extends EntityProxy> extends IsWidget, Property
   }
 
   HasData<P> asHasData();
+  
+  String[] getPaths();
   
   /**
    * Sets the delegate.

@@ -42,6 +42,8 @@ import java.util.Set;
  * Tests for {@link com.google.gwt.requestfactory.shared.RequestFactory}.
  */
 public class RequestFactoryTest extends RequestFactoryTestBase {
+  private static final int DELAY_TEST_FINISH = 5000;
+
   /*
    * DO NOT USE finishTest(). Instead, call finishTestAndReset();
    */
@@ -192,7 +194,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Test that we can commit child objects.
    */
   public void testCascadingCommit() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest context = req.simpleFooRequest();
     final SimpleFooProxy foo = context.create(SimpleFooProxy.class);
     final SimpleBarProxy bar0 = context.create(SimpleBarProxy.class);
@@ -220,10 +222,13 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
-  public void testChanged() {
-    // Nothing has happened
+  public void testChangedNothing() {
     SimpleFooRequest context = simpleFooRequest();
     assertFalse(context.isChanged());
+  }
+
+  public void testChangedCreate() {
+    SimpleFooRequest context = simpleFooRequest();
 
     // Creates don't cause a change
     SimpleFooProxy foo = context.create(SimpleFooProxy.class);
@@ -239,7 +244,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testChangedEdit() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(1L).fire(
         new Receiver<SimpleFooProxy>() {
 
@@ -281,7 +286,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testDummyCreate() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     final SimpleFooEventHandler<SimpleFooProxy> handler = new SimpleFooEventHandler<SimpleFooProxy>();
     EntityProxyChange.registerForProxyType(req.getEventBus(),
@@ -310,7 +315,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testDummyCreateBar() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleBarRequest context = simpleBarRequest();
     final SimpleBarProxy foo = context.create(SimpleBarProxy.class);
@@ -333,7 +338,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testDummyCreateList() {
-    delayTestFinish(500000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleBarRequest context = simpleBarRequest();
     final SimpleBarProxy bar = context.create(SimpleBarProxy.class);
@@ -358,7 +363,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   public void disabled_testEchoSimpleFutures() {
     // tests if futureIds can be echoed back.
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final SimpleFooEventHandler<SimpleFooProxy> handler = new SimpleFooEventHandler<SimpleFooProxy>();
     EntityProxyChange.registerForProxyType(req.getEventBus(),
         SimpleFooProxy.class, handler);
@@ -377,7 +382,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   public void disabled_testEchoComplexFutures() {
     // relate futures on the server. Check if the relationship is still present
     // on the client.
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final SimpleFooEventHandler<SimpleFooProxy> handler = new SimpleFooEventHandler<SimpleFooProxy>();
     EntityProxyChange.registerForProxyType(req.getEventBus(),
         SimpleFooProxy.class, handler);
@@ -426,7 +431,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     } catch (IllegalArgumentException expected) {
     }
 
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     contextA.findSimpleFooById(999L).fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
@@ -438,7 +443,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testFetchEntity() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -455,7 +460,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testFetchEntityWithRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -472,7 +477,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testFetchList() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findAll().fire(new Receiver<List<SimpleFooProxy>>() {
       @Override
       public void onSuccess(List<SimpleFooProxy> responseList) {
@@ -488,7 +493,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testFetchSet() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleBarRequest().findAsSet().fire(new Receiver<Set<SimpleBarProxy>>() {
       @Override
       public void onSuccess(Set<SimpleBarProxy> response) {
@@ -503,7 +508,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testGetListLongId() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     // Long ids
     simpleFooRequest().findAll().with("barField.userName").fire(
@@ -521,7 +526,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testGetListStringId() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     // String ids
     simpleBarRequest().findAll().fire(new Receiver<List<SimpleBarProxy>>() {
@@ -538,7 +543,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testHistoryToken() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     SimpleBarRequest context = simpleBarRequest();
     final SimpleBarProxy foo = context.create(SimpleBarProxy.class);
     final EntityProxyId<SimpleBarProxy> futureId = foo.stableId();
@@ -581,7 +586,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Test that a null value can be sent in a request.
    */
   public void testNullListRequest() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullList(null);
     fooReq.fire(new Receiver<Void>() {
       @Override
@@ -595,7 +600,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Test that a null value can be sent in a request.
    */
   public void testNullSimpleFooRequest() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullSimpleFoo(
         null);
     fooReq.fire(new Receiver<Void>() {
@@ -610,7 +615,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Test that a null value can be sent to an instance method.
    */
   public void testNullStringInstanceRequest() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     // Get a valid proxy entity.
     req.simpleFooRequest().findSimpleFooById(999L).fire(
@@ -633,7 +638,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Test that a null value can be sent in a request.
    */
   public void testNullStringRequest() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullString(null);
     fooReq.fire(new Receiver<Void>() {
       @Override
@@ -647,7 +652,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Test that a null value can be sent within a list of entities.
    */
   public void testNullValueInEntityListRequest() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     // Get a valid proxy entity.
     req.simpleFooRequest().findSimpleFooById(999L).fire(
@@ -673,7 +678,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Test that a null value can be sent within a list of objects.
    */
   public void testNullValueInIntegerListRequest() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     List<Integer> list = Arrays.asList(new Integer[] {1, 2, null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInIntegerList(
         list);
@@ -689,7 +694,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Test that a null value can be sent within a list of strings.
    */
   public void testNullValueInStringListRequest() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     List<String> list = Arrays.asList(new String[] {"nonnull", "null", null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInStringList(
         list);
@@ -705,7 +710,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Ensures that a service method can respond with a null value.
    */
   public void testNullListResult() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().returnNullList().fire(new NullReceiver());
   }
 
@@ -728,7 +733,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Ensures that a service method can respond with a null value.
    */
   public void testNullEntityProxyResult() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().returnNullSimpleFoo().fire(new NullReceiver());
   }
 
@@ -736,7 +741,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Ensures that a service method can respond with a null value.
    */
   public void testNullStringResult() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().returnNullString().fire(new NullReceiver());
   }
 
@@ -746,7 +751,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * reused after a successful response is received. (Yet?)
    */
   public void testMethodWithSideEffects() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     final SimpleFooEventHandler<SimpleFooProxy> handler = new SimpleFooEventHandler<SimpleFooProxy>();
     EntityProxyChange.registerForProxyType(req.getEventBus(),
@@ -805,7 +810,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * TODO(rjrjr): Should cascading deletes be detected?
    */
   public void disableTestMethodWithSideEffectDeleteChild() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     // Persist bar.
     SimpleBarRequest context = req.simpleBarRequest();
@@ -859,8 +864,47 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
   }
 
+  public void testPersistAllValueTypes() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    SimpleFooRequest r = simpleFooRequest();
+    SimpleFooProxy f = r.create(SimpleFooProxy.class);
+
+    f.setUserName("user name");
+    f.setByteField((byte)100);
+    f.setShortField((short)12345);
+    f.setFloatField(1234.56f);
+    f.setDoubleField(1.2345);
+    f.setLongField(1234L);
+    f.setBoolField(false);
+    f.setOtherBoolField(true);
+    f.setCreated(new Date(397387389L));
+
+    r.persistAndReturnSelf().using(f).fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy f) {
+        assertEquals("user name", f.getUserName());
+        assertEquals(Byte.valueOf((byte)100), f.getByteField());
+        assertEquals(Short.valueOf((short)12345), f.getShortField());
+        assertEquals(Float.valueOf(1234.56f), f.getFloatField());
+        assertEquals(Double.valueOf(1.2345), f.getDoubleField());
+        assertEquals(Long.valueOf(1234L), f.getLongField());
+        assertFalse(f.getBoolField());
+        assertTrue(f.getOtherBoolField());
+        assertEquals(new Date(397387389L), f.getCreated());
+
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /*
+   * TODO: all these tests should check the final values. It will be easy when
+   * we have better persistence than the singleton pattern.
+   */
+
   public void testPersistExistingEntityExistingRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     // Retrieve a Bar
     simpleBarRequest().findSimpleBarById("999L").fire(
@@ -917,7 +961,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Find Entity Create Entity2 Relate Entity2 to Entity Persist Entity
    */
   public void testPersistExistingEntityNewRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     // Make a new bar
     SimpleBarRequest context = simpleBarRequest();
     SimpleBarProxy makeABar = context.create(SimpleBarProxy.class);
@@ -971,7 +1015,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Entity
    */
   public void testPersistNewEntityExistingRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy newFoo = context.edit(context.create(SimpleFooProxy.class));
@@ -1008,7 +1052,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * Ensure that a relationship can be set up between two newly-created objects.
    */
   public void testPersistFutureToFuture() {
-    delayTestFinish(500000);
+    delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy newFoo = context.create(SimpleFooProxy.class);
     final SimpleBarProxy newBar = context.create(SimpleBarProxy.class);
@@ -1033,7 +1077,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * to Entity Persist
    */
   public void testPersistNewEntityNewRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy newFoo = context.create(SimpleFooProxy.class);
 
@@ -1085,7 +1129,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistOneToManyExistingEntityExistingRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     simpleBarRequest().findSimpleBarById("999L").fire(
         new Receiver<SimpleBarProxy>() {
@@ -1119,7 +1163,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPersistRecursiveRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy rayFoo = context.create(SimpleFooProxy.class);
@@ -1142,7 +1186,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
 
   public void testPersistRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy rayFoo = context.create(SimpleFooProxy.class);
@@ -1190,7 +1234,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
 
   public void testPersistSelfOneToManyExistingEntityExistingRelation() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     simpleFooRequest().findSimpleFooById(999L).with("selfOneToManyField").fire(
         new Receiver<SimpleFooProxy>() {
@@ -1217,7 +1261,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPersistValueList() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -1243,7 +1287,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistValueListNull() {
-    delayTestFinish(500000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -1271,7 +1315,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistValueListRemove() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -1297,7 +1341,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistValueListReplace() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -1330,7 +1374,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistValueListReverse() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -1360,7 +1404,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistValueListSetIndex() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -1386,7 +1430,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistValueSetAddNew() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     SimpleBarRequest context = simpleBarRequest();
     SimpleBarProxy newBar = context.create(SimpleBarProxy.class);
 
@@ -1427,7 +1471,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistValueSetAlreadyExists() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     simpleBarRequest().findSimpleBarById("1L").fire(
         new Receiver<SimpleBarProxy>() {
@@ -1467,7 +1511,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * we have better persistence than the singleton pattern.
    */
   public void testPersistValueSetRemove() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     simpleBarRequest().findSimpleBarById("1L").fire(
         new Receiver<SimpleBarProxy>() {
@@ -1504,7 +1548,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPrimitiveList() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final Request<List<Integer>> fooReq = simpleFooRequest().getNumberList();
     fooReq.fire(new Receiver<List<Integer>>() {
       @Override
@@ -1519,7 +1563,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPrimitiveListAsParameter() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final Request<SimpleFooProxy> fooReq = simpleFooRequest().findSimpleFooById(
         999L);
     fooReq.fire(new Receiver<SimpleFooProxy>() {
@@ -1539,7 +1583,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPrimitiveListBooleanAsParameter() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     Request<Boolean> procReq = simpleFooRequest().processBooleanList(
         Arrays.asList(true, false));
@@ -1554,7 +1598,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPrimitiveListDateAsParameter() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     @SuppressWarnings("deprecation")
     final Date date = new Date(90, 0, 1);
@@ -1570,7 +1614,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPrimitiveListEnumAsParameter() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     Request<SimpleEnum> procReq = simpleFooRequest().processEnumList(
         Arrays.asList(SimpleEnum.BAR));
@@ -1585,7 +1629,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPrimitiveParameter() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().add(3, 5).fire(new Receiver<Integer>() {
       @Override
       public void onSuccess(Integer response) {
@@ -1596,7 +1640,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPrimitiveSet() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final Request<Set<Integer>> fooReq = simpleFooRequest().getNumberSet();
     fooReq.fire(new Receiver<Set<Integer>>() {
       @Override
@@ -1611,7 +1655,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testPrimitiveString() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final String testString = "test\"string\'with\nstring\u2060characters\t";
     final Request<String> fooReq = simpleFooRequest().processString(testString);
     fooReq.fire(new Receiver<String>() {
@@ -1624,7 +1668,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testProxyList() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final Request<SimpleFooProxy> fooReq = simpleFooRequest().findSimpleFooById(
         999L).with("oneToManyField");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
@@ -1637,7 +1681,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testProxyListAsParameter() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     final Request<SimpleFooProxy> fooReq = simpleFooRequest().findSimpleFooById(
         999L).with("selfOneToManyField");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
@@ -1657,7 +1701,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testProxysAsInstanceMethodParams() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     simpleFooRequest().findSimpleFooById(999L).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
@@ -1690,7 +1734,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testServerFailureRuntimeException() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy newFoo = context.create(SimpleFooProxy.class);
     final Request<SimpleFooProxy> persistRequest = context.persistAndReturnSelf().using(
@@ -1778,7 +1822,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testStableId() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleFooRequest context = simpleFooRequest();
     final SimpleFooProxy foo = context.create(SimpleFooProxy.class);
@@ -1826,7 +1870,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testViolationAbsent() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy newFoo = context.create(SimpleFooProxy.class);
@@ -1844,7 +1888,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testViolationsOnCreate() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy newFoo = context.create(SimpleFooProxy.class);
@@ -1854,7 +1898,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testViolationsOnCreateVoidReturn() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy newFoo = context.create(SimpleFooProxy.class);
@@ -1863,7 +1907,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testViolationsOnEdit() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     fooCreationRequest().fire(new Receiver<SimpleFooProxy>() {
       @Override
@@ -1877,7 +1921,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testViolationsOnEditVoidReturn() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     fooCreationRequest().fire(new Receiver<SimpleFooProxy>() {
       @Override
