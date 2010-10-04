@@ -27,18 +27,20 @@ import com.google.gwt.user.client.ui.AcceptsOneWidget;
  */
 public abstract class CreateAndEditProxy<P extends EntityProxy> extends AbstractProxyEditActivity<P> {
 
-  private AcceptsOneWidget display;
   private final P proxy;
+  private final PlaceController placeController;
+  private Class<P> proxyClass;
 
   public CreateAndEditProxy(Class<P> proxyClass, RequestContext request,
       ProxyEditView<P, ?> view, PlaceController placeController) {
     super(view, placeController);
     this.proxy = request.create(proxyClass);
+    this.placeController = placeController;
+    this.proxyClass = proxyClass;
   }
 
   @Override
   public void start(AcceptsOneWidget display, EventBus eventBus) {
-    this.display = display;
     super.start(display, eventBus);
   }
 
@@ -51,10 +53,10 @@ public abstract class CreateAndEditProxy<P extends EntityProxy> extends Abstract
   @Override
   protected void exit(boolean saved) {
     if (!saved) {
-      display.setWidget(null);
+      placeController.goTo(new ProxyListPlace(proxyClass));
+    } else {
+      super.exit(saved);
     }
-
-    super.exit(saved);
   }
 
   @Override

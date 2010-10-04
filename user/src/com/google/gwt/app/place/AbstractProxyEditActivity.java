@@ -63,8 +63,7 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
   }
 
   public String mayStop() {
-    if (isWaiting()
-        || (editorDriver != null && editorDriver.flush().isChanged())) {
+    if (isWaiting() || changed()) {
       return "Are you sure you want to abandon your changes?";
     }
 
@@ -80,6 +79,10 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
   }
 
   public void saveClicked() {
+    if (!changed()) {
+      return;
+    }
+    
     setWaiting(true);
     editorDriver.flush().fire(new Receiver<Void>() {
       /*
@@ -156,6 +159,10 @@ public abstract class AbstractProxyEditActivity<P extends EntityProxy> implement
   // id type always matches proxy type
   protected EntityProxyId<P> getProxyId() {
     return (EntityProxyId<P>) getProxy().stableId();
+  }
+
+  private boolean changed() {
+    return editorDriver != null && editorDriver.flush().isChanged();
   }
 
   /**
