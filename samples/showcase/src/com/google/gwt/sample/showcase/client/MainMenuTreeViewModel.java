@@ -70,8 +70,10 @@ import com.google.gwt.view.client.TreeViewModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The {@link TreeViewModel} used by the main menu.
@@ -246,6 +248,21 @@ public class MainMenuTreeViewModel implements TreeViewModel {
 
   public boolean isLeaf(Object value) {
     return value != null && !(value instanceof Category);
+  }
+
+  /**
+   * Get the set of all {@link ContentWidget}s used in the model.
+   * 
+   * @return the {@link ContentWidget}s
+   */
+  Set<ContentWidget> getAllContentWidgets() {
+    Set<ContentWidget> widgets = new HashSet<ContentWidget>();
+    for (Category category : categories.getList()) {
+      for (ContentWidget example : category.examples.getList()) {
+        widgets.add(example);
+      }
+    }
+    return widgets;
   }
 
   /**

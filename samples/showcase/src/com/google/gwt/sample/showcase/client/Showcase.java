@@ -26,17 +26,22 @@ import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.sample.showcase.client.MainMenuTreeViewModel.Category;
 import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.cellview.client.TreeNode;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -99,6 +104,7 @@ public class Showcase implements EntryPoint {
     final SingleSelectionModel<ContentWidget> selectionModel = new SingleSelectionModel<ContentWidget>();
     final MainMenuTreeViewModel treeModel = new MainMenuTreeViewModel(
         constants, selectionModel);
+    Set<ContentWidget> contentWidgets = treeModel.getAllContentWidgets();
     shell = new ShowcaseShell(treeModel);
     RootLayoutPanel.get().add(shell);
 
@@ -176,8 +182,30 @@ public class Showcase implements EntryPoint {
       ContentWidget content = (ContentWidget) category.getChildValue(0);
       selectionModel.setSelected(content, true);
     }
+
+    // Generate a site map.
+    createSiteMap(contentWidgets);
   }
 
+  /**
+   * Create a hidden site map for crawlability.
+   * 
+   * @param contentWidgets the {@link ContentWidget}s used in Showcase
+   */
+  private void createSiteMap(Set<ContentWidget> contentWidgets) {
+    SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    for (ContentWidget cw : contentWidgets) {
+      String token = getContentWidgetToken(cw);
+      sb.append(SafeHtmlUtils.fromTrustedString("<a href=\"#" + token + "\">"
+          + token + "</a>"));
+    }
+
+    // Add the site map to the page.
+    HTML siteMap = new HTML(sb.toSafeHtml());
+    siteMap.setVisible(false);
+    RootPanel.get().add(siteMap, 0, 0);
+  }
+  
   /**
    * Set the content to the {@link ContentWidget}.
    *

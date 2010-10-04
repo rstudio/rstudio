@@ -255,7 +255,15 @@ public class ShowcaseShell extends Composite {
     tabStyle.setVisible(content.hasStyle());
     tabSource.setVisible(true);
 
-    // Show the list of raw source files if there are any.
+    /*
+     * Show the list of raw source files if there are any. We need to add at
+     * least one option to the list for crawlability. If we do not, HtmlUnit
+     * innerHtml will close the select tag in the open tag (ie, use a forward
+     * slash instead of a separate close tag) which most browsers parse
+     * incorrectly.
+     */
+    tabSourceList.clear();
+    tabSourceList.addItem("Example");
     List<String> rawFilenames = content.getRawSourceFilenames();
     if (rawFilenames.size() > 0) {
       String text = tabSource.getText();
@@ -263,8 +271,6 @@ public class ShowcaseShell extends Composite {
         tabSource.setText(text + ":");
       }
       tabSourceList.setVisible(true);
-      tabSourceList.clear();
-      tabSourceList.addItem("Example");
       for (String filename : rawFilenames) {
         tabSourceList.addItem(filename);
       }
