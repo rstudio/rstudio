@@ -361,6 +361,50 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     });
   }
 
+  public void testFindFindEdit() {
+    delayTestFinish(5000);
+
+    final SimpleFooEventHandler<SimpleFooProxy> handler = new SimpleFooEventHandler<SimpleFooProxy>();
+    EntityProxyChange.registerForProxyType(req.getEventBus(),
+        SimpleFooProxy.class, handler);
+
+    req.simpleFooRequest().findSimpleFooById(999L).fire(
+        new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy newFoo) {
+            assertEquals(1, handler.updateEventCount);
+            assertEquals(1, handler.totalEventCount);
+
+            req.simpleFooRequest().findSimpleFooById(999L).fire(
+                new Receiver<SimpleFooProxy>() {
+
+                  @Override
+                  public void onSuccess(SimpleFooProxy newFoo) {
+                    // no events are fired second time.
+                    assertEquals(1, handler.updateEventCount);
+                    assertEquals(1, handler.totalEventCount);
+                    SimpleFooRequest context = req.simpleFooRequest();
+                    final Request<Void> mutateRequest = context.persist().using(
+                        newFoo);
+                    newFoo = context.edit(newFoo);
+                    newFoo.setUserName("Ray");
+                    mutateRequest.fire(new Receiver<Void>() {
+                      @Override
+                      public void onSuccess(Void response) {
+                        // events fired on updates.
+                        assertEquals(2, handler.updateEventCount);
+                        assertEquals(2, handler.totalEventCount);
+
+                        finishTestAndReset();
+                      }
+                    });
+                  }
+                });
+          }
+        });
+  }
+
   public void disabled_testEchoSimpleFutures() {
     // tests if futureIds can be echoed back.
     delayTestFinish(DELAY_TEST_FINISH);
@@ -784,8 +828,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFoo) {
                         assertEquals("Ray", finalFoo.getUserName());
-                        assertEquals(3, handler.updateEventCount);
-                        assertEquals(3, handler.totalEventCount);
+                        assertEquals(2, handler.updateEventCount);
+                        assertEquals(2, handler.totalEventCount);
                         finishTestAndReset();
                       }
                     });

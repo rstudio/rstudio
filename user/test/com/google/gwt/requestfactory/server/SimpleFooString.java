@@ -185,6 +185,7 @@ public class SimpleFooString {
 
   public Long countSimpleFooWithUserNameSideEffect() {
     get().setUserName(userName);
+    version++;
     return 1L;
   }
 
@@ -322,6 +323,7 @@ public class SimpleFooString {
 
   public void persist() {
     setId(nextId++ + "x");
+    version++;
   }
 
   public SimpleFooString persistAndReturnSelf() {

@@ -164,6 +164,50 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
     });
   }
 
+  public void testFindFindEdit() {
+    delayTestFinish(5000);
+
+    final SimpleFooEventHandler<SimpleFooStringProxy> handler = new SimpleFooEventHandler<SimpleFooStringProxy>();
+    EntityProxyChange.registerForProxyType(req.getEventBus(),
+        SimpleFooStringProxy.class, handler);
+
+    req.simpleFooStringRequest().findSimpleFooStringById("999x").fire(
+        new Receiver<SimpleFooStringProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooStringProxy newFoo) {
+            assertEquals(1, handler.updateEventCount);
+            assertEquals(1, handler.totalEventCount);
+
+            req.simpleFooStringRequest().findSimpleFooStringById("999x").fire(
+                new Receiver<SimpleFooStringProxy>() {
+
+                  @Override
+                  public void onSuccess(SimpleFooStringProxy newFoo) {
+                    // no events are fired second time.
+                    assertEquals(1, handler.updateEventCount);
+                    assertEquals(1, handler.totalEventCount);
+                    SimpleFooStringRequest context = req.simpleFooStringRequest();
+                    final Request<Void> mutateRequest = context.persist().using(
+                        newFoo);
+                    newFoo = context.edit(newFoo);
+                    newFoo.setUserName("Ray");
+                    mutateRequest.fire(new Receiver<Void>() {
+                      @Override
+                      public void onSuccess(Void response) {
+                        // events fired on updates.
+                        assertEquals(2, handler.updateEventCount);
+                        assertEquals(2, handler.totalEventCount);
+
+                        finishTestAndReset();
+                      }
+                    });
+                  }
+                });
+          }
+        });
+  }
+
   public void testFetchEntity() {
     delayTestFinish(5000);
     req.simpleFooStringRequest().findSimpleFooStringById("999x").fire(
@@ -275,8 +319,8 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
                       @Override
                       public void onSuccess(SimpleFooStringProxy finalFoo) {
                         assertEquals("Ray", finalFoo.getUserName());
-                        assertEquals(3, handler.updateEventCount);
-                        assertEquals(3, handler.totalEventCount);
+                        assertEquals(2, handler.updateEventCount);
+                        assertEquals(2, handler.totalEventCount);
                         finishTestAndReset();
                       }
                     });

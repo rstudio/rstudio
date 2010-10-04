@@ -301,6 +301,7 @@ public class SimpleFoo {
 
   public Long countSimpleFooWithUserNameSideEffect() {
     findSimpleFoo(1L).setUserName(userName);
+    version++;
     return countSimpleFoo();
   }
 
@@ -449,6 +450,7 @@ public class SimpleFoo {
       isNew = false;
       get().put(getId(), this);
     }
+    version++;
   }
 
   public SimpleFoo persistAndReturnSelf() {

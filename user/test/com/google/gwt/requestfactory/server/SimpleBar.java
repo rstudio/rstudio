@@ -157,6 +157,7 @@ public class SimpleBar {
       isNew = false;
       get().put(getId(), this);
     }
+    version++;
   }
 
   public SimpleBar persistAndReturnSelf() {
