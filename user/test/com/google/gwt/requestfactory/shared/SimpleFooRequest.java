@@ -37,6 +37,8 @@ public interface SimpleFooRequest extends RequestContext {
   Request<SimpleFooProxy> echoComplex(SimpleFooProxy fooProxy,
       SimpleBarProxy barProxy);
 
+  Request<SimpleFooProxy> fetchDoubleReference();
+
   Request<List<SimpleFooProxy>> findAll();
 
   Request<SimpleFooProxy> findSimpleFooById(Long id);
@@ -44,6 +46,10 @@ public interface SimpleFooRequest extends RequestContext {
   Request<List<Integer>> getNumberList();
 
   Request<Set<Integer>> getNumberSet();
+
+  Request<SimpleFooProxy> getSimpleFooWithSubPropertyCollection();
+
+  Request<SimpleFooProxy> getTripletReference();
 
   InstanceRequest<SimpleFooProxy, String> hello(SimpleBarProxy proxy);
 
@@ -59,10 +65,10 @@ public interface SimpleFooRequest extends RequestContext {
 
   Request<SimpleEnum> processEnumList(List<SimpleEnum> values);
 
-  Request<String> processString(String value);
-
   InstanceRequest<SimpleFooProxy, String> processList(
       List<SimpleFooProxy> values);
+
+  Request<String> processString(String value);
 
   InstanceRequest<SimpleFooProxy, Void> receiveNull(String value);
 

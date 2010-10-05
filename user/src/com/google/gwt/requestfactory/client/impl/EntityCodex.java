@@ -79,7 +79,8 @@ public class EntityCodex {
     if (requestContext.getRequestFactory().getTypeToken(type) != null) {
       EntityProxyId<?> id = requestContext.getRequestFactory().getProxyId(
           (String) jso);
-      return requestContext.getSeenEntityProxy((SimpleEntityProxyId<?>) id);
+      return requestContext.getProxyForReturnPayloadGraph(
+          (SimpleEntityProxyId<?>) id).as();
     }
 
     // Fall back to values
