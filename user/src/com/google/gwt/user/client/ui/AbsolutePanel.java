@@ -227,19 +227,56 @@ public class AbsolutePanel extends ComplexPanel implements
     }
   }
 
-  private void verifyPositionNotStatic(Widget w) {
-    if (!GWT.isProdMode()) {
-      if (w.getElement().getOffsetParent() != getElement()) {
-        String className = getClass().getName();
-        GWT.log("Warning: " + className + " descendants will be incorrectly "
-            + "positioned, i.e. not relative to their parent element, when "
-            + "'position:static', which is the CSS default, is in effect. One "
-            + "possible fix is to call "
-            + "'panel.getElement().getStyle().setPosition(Position.RELATIVE)'.",
-            // Stack trace provides context for the developer
-            new IllegalStateException(className
-                + " is missing CSS 'position:{relative,absolute,fixed}'"));
-      }
+  /**
+   * Verify that the given widget is not statically positioned on the page, i.e.
+   * relative to the document window, unless the widget is in fact directly
+   * attached to the document BODY. Note that the current use of this method is
+   * not comprehensive, since we can only verify the offsetParent if both parent
+   * (AbsolutePanel) and child widget are both visible and attached to the DOM
+   * when this test is executed.
+   *
+   * @param child the widget whose position and placement should be tested
+   */
+  private void verifyPositionNotStatic(Widget child) {
+    // Only verify widget position in Development Mode
+    if (GWT.isProdMode()) {
+      return;
     }
+
+    // Non-visible or detached elements have no offsetParent
+    if (child.getElement().getOffsetParent() == null) {
+      return;
+    }
+    
+    // Check if offsetParent == parent
+    if (child.getElement().getOffsetParent() == getElement()) {
+      return;
+    }
+
+    /*
+     * When this AbsolutePanel is the document BODY, e.g. RootPanel.get(), then
+     * no explicit position:relative is needed as children are already
+     * positioned relative to their parent. For simplicity we test against
+     * parent, not offsetParent, since in IE6+IE7 (but not IE8+) standards mode,
+     * the offsetParent, for elements whose parent is the document BODY, is the
+     * HTML element, not the BODY element.
+     */
+    if ("body".equals(getElement().getNodeName().toLowerCase())) {
+      return;
+    }
+
+    /*
+     * Warn the developer, but allow the execution to continue in case legacy
+     * apps depend on broken CSS.
+     */
+    String className = getClass().getName();
+    GWT.log("Warning: " + className + " descendants will be incorrectly "
+        + "positioned, i.e. not relative to their parent element, when "
+        + "'position:static', which is the CSS default, is in effect. One "
+        + "possible fix is to call "
+        + "'panel.getElement().getStyle().setPosition(Position.RELATIVE)'.",
+        // Stack trace provides context for the developer
+        new IllegalStateException(className
+            + " is missing CSS 'position:{relative,absolute,fixed}'"));
   }
 }
