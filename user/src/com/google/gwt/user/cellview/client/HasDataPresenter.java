@@ -269,7 +269,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   private boolean pageStartChangedSinceRender;
 
-  private int rowCount = Integer.MIN_VALUE;
+  private int rowCount = 0;
 
   private boolean rowCountIsExact;
 
@@ -950,7 +950,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   private void updateLoadingState() {
     int cacheSize = rowData.size();
     int curPageSize = isRowCountExact() ? getCurrentPageSize() : pageSize;
-    if (rowCount == 0) {
+    if (rowCount == 0 && rowCountIsExact) {
       view.setLoadingState(LoadingState.EMPTY);
     } else if (cacheSize >= curPageSize) {
       view.setLoadingState(LoadingState.LOADED);

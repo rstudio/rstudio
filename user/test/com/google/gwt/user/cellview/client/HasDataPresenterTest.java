@@ -351,6 +351,18 @@ public class HasDataPresenterTest extends TestCase {
     view.assertSelectedRows();
   }
 
+  public void testDefaults() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 10, null);
+
+    assertEquals(0, presenter.getRowCount());
+    assertFalse(presenter.isRowCountExact());
+    assertEquals(0, presenter.getCurrentPageSize());
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
+  }
+
   public void testGetCurrentPageSize() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
@@ -884,10 +896,17 @@ public class HasDataPresenterTest extends TestCase {
     assertTrue(presenter.isRowCountExact());
     view.assertLoadingState(LoadingState.LOADING);
 
-    // Set size to 0.
+    // Set size to 0, but not exact. The state is loading until we know there is
+    // no data.
     presenter.setRowCount(0, false);
     assertEquals(0, presenter.getRowCount());
     assertFalse(presenter.isRowCountExact());
+    view.assertLoadingState(LoadingState.LOADING);
+
+    // Set size to 0 and exact. Now we know the list is empty.
+    presenter.setRowCount(0, true);
+    assertEquals(0, presenter.getRowCount());
+    assertTrue(presenter.isRowCountExact());
     view.assertLoadingState(LoadingState.EMPTY);
   }
 
