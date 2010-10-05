@@ -100,7 +100,7 @@
           <include name="htmlunit/htmlunit-r5940/htmlunit-r5940.jar" />
           <include name="htmlunit/htmlunit-r5940/htmlunit-core-js-r5940.jar" />
           <include name="nekohtml/nekohtml-1.9.13.jar" />
-          <include name="streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-rebased.jar" />
+          <include name="streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
           <include name="xalan/xalan-2.7.1.jar" />
           <include name="xerces/xerces-2_9_1/serializer.jar" />
           <include name="xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
@@ -124,7 +124,7 @@
           <zipfileset src="${gwt.tools.lib}/jetty/jetty-6.1.11.jar" />
           <zipfileset src="${gwt.tools.lib}/icu4j/icu4j-4_4_1.jar" />
           <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
-          <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-rebased.jar" />
+          <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/ant-launcher-1.6.5.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/catalina-1.0.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/catalina-optional-1.0.jar" />
