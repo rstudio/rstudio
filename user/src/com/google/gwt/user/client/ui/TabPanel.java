@@ -67,8 +67,8 @@ import java.util.Iterator;
  * @see TabLayoutPanel
  */
 
-@SuppressWarnings("deprecation")
-//Cannot do anything about tab panel implementing TabListener until next release.
+// Cannot do anything about tab panel implementing TabListener until next
+// release
 @Deprecated
 public class TabPanel extends Composite implements TabListener,
     SourcesTabEvents, HasWidgets, HasAnimation, IndexedPanel.ForIsWidget,

@@ -36,8 +36,8 @@ import java.util.Map;
  * Implementation of {@link HasConstrainedValue} based on a
  * {@link com.google.gwt.dom.client.SelectElement}.
  * <p>
- * A {@link Renderer<T>} is used to get user presentable strings to display in
- * the select element.
+ * A {@link Renderer Renderer<T>} is used to get user-presentable strings to
+ * display in the select element.
  * 
  * @param <T> the value type
  */

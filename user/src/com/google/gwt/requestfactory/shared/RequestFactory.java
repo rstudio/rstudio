@@ -68,9 +68,9 @@ public interface RequestFactory {
 
   /**
    * Return the class object which may be used to create new instances of the
-   * type of this token, via {@link #create}. The token may represent either a
-   * proxy instance (see {@link #getHistoryToken()}) or a proxy class (see
-   * {@link #getToken()}).
+   * type of this token, via {@link RequestContext#create}. The token may
+   * represent either a proxy instance (see {@link #getHistoryToken}) or a proxy
+   * class (see {@link #getProxyClass}).
    */
   Class<? extends EntityProxy> getProxyClass(String historyToken);
 

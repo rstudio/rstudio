@@ -361,7 +361,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
             // Try to initialize EntryPoint, else throw up glass panel
             try {
               Class<?> clazz = loadClassFromSourceName(entryPointTypeName);
-              onModuleLoad = null;
               try {
                 onModuleLoad = clazz.getMethod("onModuleLoad");
                 if (!Modifier.isStatic(onModuleLoad.getModifiers())) {

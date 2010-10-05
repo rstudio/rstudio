@@ -209,7 +209,7 @@ public class ModifiedBerghelRoachEditDistance implements GeneralEditDistance {
   private int[] lastRight = EMPTY_INT_ARRAY;
 
   /**
-   * The "pattern" string against which others are compared
+   * The "pattern" string against which others are compared.
    */
   private final char[] pattern;
 
@@ -319,7 +319,6 @@ public class ModifiedBerghelRoachEditDistance implements GeneralEditDistance {
             lastRight[offDiagonal],
             immediateRight);
       }
-
 
       /*
        * Lower-numbered diagonals

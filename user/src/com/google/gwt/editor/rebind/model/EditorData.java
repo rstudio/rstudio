@@ -25,7 +25,6 @@ import com.google.gwt.editor.client.HasEditorErrors;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.ValueAwareEditor;
 
-
 /**
  * Describes how an Editor is related to bean properties. This type contains
  * answers to questions asked by the generator code.

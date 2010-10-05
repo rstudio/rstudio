@@ -24,7 +24,7 @@ import com.google.gwt.uibinder.rebind.XMLElement;
  * This parser is not tied to a particular class of element, but rather is run
  * as the first parser in any parser stack. It looks for attribute values that
  * are set as calls to the template's generated Messages interface, by calling
- * {@link com.google.gwt.uibinder.rebind.messages.MessagesWriter.MessagesWriter#consumeAndStoreMessageAttributesFor
+ * {@link com.google.gwt.uibinder.rebind.messages.MessagesWriter#consumeAndStoreMessageAttributesFor(XMLElement)
  * MessagesWriter.consumeAndStoreMessageAttributesFor}
  */
 public class AttributeMessageParser implements ElementParser {

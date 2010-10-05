@@ -25,7 +25,7 @@ public interface JsonValue {
   /**
    * JSON placeholder for null.
    */
-  final JsonValue NULL = new JsonValue() {
+  JsonValue NULL = new JsonValue() {
 
     public JsonArray asArray() {
       return null;

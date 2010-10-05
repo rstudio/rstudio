@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.util.editdistance;
 
-
 /**
  * A bitmap array generator for the positions that a given character
  * appears within a pattern.  The array of bitmaps is indexed by a

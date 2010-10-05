@@ -61,7 +61,9 @@ public class DefaultRequestTransport implements RequestTransport {
   /**
    * Construct a DefaultRequestTransport.
    * 
-   * @param eventBus the same EventBus passed into {@link RequestFactory#init}.
+   * @param eventBus the same EventBus passed into
+   *          {@link RequestFactory#initialize(EventBus)
+   *          RequestFactory.initialize}.
    */
   public DefaultRequestTransport(EventBus eventBus) {
     if (eventBus == null) {
@@ -120,7 +122,8 @@ public class DefaultRequestTransport implements RequestTransport {
 
   /**
    * Creates a RequestCallback that maps the HTTP response onto the
-   * {@link TransportReceiver} interface.
+   * {@link com.google.gwt.requestfactory.shared.RequestTransport.TransportReceiver
+   * TransportReceiver} interface.
    */
   protected RequestCallback createRequestCallback(
       final TransportReceiver receiver) {

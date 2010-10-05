@@ -248,6 +248,7 @@ public class GenerateJavaAST {
         this.childClass = childClass;
       }
 
+      @Override
       public boolean equals(Object obj) {
         if (obj instanceof MethodKey) {
           MethodKey otherKey = (MethodKey) obj;

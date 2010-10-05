@@ -42,7 +42,7 @@ public class DataResourceDoNotEmbedTest extends GWTTestCase {
   }
 
   /**
-   * RFC 2397 data URL scheme
+   * RFC 2397 data URL scheme.
    */
   private static final String DATA_URL_SCHEME = "data:";
 

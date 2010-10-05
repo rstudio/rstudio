@@ -40,7 +40,7 @@ import java.lang.annotation.Target;
  * <p>
  * For example, <code>
  * 
- * @UiChild MyWidget#addCustomChild(Widget w) </code> and
+ * &#064;UiChild MyWidget#addCustomChild(Widget w) </code> and
  * 
  *          <pre>
  *          <p:MyWidget>

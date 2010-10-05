@@ -161,12 +161,13 @@ public class HTML extends Label
 
   /**
    * Sets the label's content to the given HTML, applying the given direction.
-   * See {@link #setText(String, Direction)} for details on potential effects on
-   * alignment.
-   *
+   * See
+   * {@link #setText(String, com.google.gwt.i18n.client.HasDirection.Direction)
+   * setText(String, Direction)} for details on potential effects on alignment.
+   * 
    * @param html the new widget's HTML content
    * @param dir the content's direction. Note: {@code Direction.DEFAULT} means
-   *        direction should be inherited from the widget's parent element.
+   *          direction should be inherited from the widget's parent element.
    */
   public void setHTML(String html, Direction dir) {
     setTextOrHtml(html, dir, true);
@@ -175,13 +176,15 @@ public class HTML extends Label
   /**
    * Sets this object's contents via known-safe HTML.
    * 
-   * @see com.google.gwt.safehtml.client.HasSafeHtml#setSafeHtml
+   * @see com.google.gwt.safehtml.client.HasSafeHtml#setHTML(SafeHtml)
    * @param html the html to set.
    */
+  @Override
   public void setHTML(SafeHtml html) {
     setHTML(html.asString());
   }
 
+  @Override
   public void setHTML(SafeHtml html, Direction dir) {
     setHTML(html.asString(), dir);
   }

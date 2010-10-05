@@ -163,6 +163,10 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T> {
 
   /**
    * No-op. Used as a debugger hook point for generated code.
+   * 
+   * @param method the method name
+   * @param returned the returned object
+   * @param parameters the parameter list
    */
   protected void call(String method, Object returned, Object... parameters) {
   }
@@ -185,6 +189,9 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T> {
 
   /**
    * No-op. Used as a debugger hook point for generated code.
+   * 
+   * @param method the method name
+   * @param toReturn the value to return
    */
   protected <V> V get(String method, V toReturn) {
     return toReturn;
@@ -205,6 +212,9 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T> {
 
   /**
    * No-op. Used as a debugger hook point for generated code.
+   * 
+   * @param method the method name
+   * @param value the Object value to be set
    */
   protected void set(String method, Object value) {
   }

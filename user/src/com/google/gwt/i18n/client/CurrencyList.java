@@ -106,7 +106,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
 
   /**
    * Map of currency codes to localized currency names. This is kept separate
-   * from {@link #dataMap} above so that the names can be completely removed by
+   * from {@link #dataMapJava} above so that the names can be completely removed by
    * the compiler if they are not used.
    */
   protected HashMap<String, String> namesMapJava;

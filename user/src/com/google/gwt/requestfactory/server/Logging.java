@@ -23,13 +23,13 @@ import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 
 /**
  * Server side object that handles log messages sent by
- * {@link RequestFactoryLogHandler}.
+ * {@link com.google.gwt.requestfactory.client.RequestFactoryLogHandler}.
  */
 public class Logging {
 
   private static StackTraceDeobfuscator deobfuscator =
     new StackTraceDeobfuscator("");
-  
+
   public static void logMessage(String logRecordJson) throws
   RemoteLoggingException {
     // if the header does not exist, we pass null, which is handled gracefully
@@ -40,7 +40,7 @@ public class Logging {
     RemoteLoggingServiceUtil.logOnServer(logRecordJson,
         strongName, deobfuscator, null);
   }
-  
+
   /**
    * This function is only for server side use which is why it's not in the
    * LoggingRequest interface.
@@ -48,15 +48,15 @@ public class Logging {
   public static void setSymbolMapsDirectory(String dir) {
     deobfuscator.setSymbolMapsDirectory(dir);
   }
-  
+
   private String id = "";
-  
-  private Integer version = 0;  
-  
+
+  private Integer version = 0;
+
   public String getId() {
     return this.id;
   }
-  
+
   public Integer getVersion() {
     return this.version;
   }
@@ -64,9 +64,8 @@ public class Logging {
   public void setId(String id) {
     this.id = id;
   }
-    
+
   public void setVersion(Integer version) {
     this.version = version;
   }
 }
-

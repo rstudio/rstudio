@@ -36,16 +36,17 @@ import java.util.List;
  * instance.initialize(.....);
  * myRequest.with(instance.getPaths());
  * 
- * // Fire the request, in the callback 
+ * // Fire the request, in the callback
  * instance.edit(retrievedRecord);
  * // Control when the request is sent
  * instance.flush().fire(new Receiver {...});
  * }
  * </pre>
+ *
+ * <p> See {@code com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver}
  * 
  * @param <P> the type of Proxy being edited
  * @param <E> the type of Editor that will edit the Record
- * @see com.google.gwt.requestfactory.client.testing.MockRequestFactoryEditorDriver
  */
 public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   /**
@@ -57,7 +58,7 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   /**
    * Start driving the Editor and its sub-editors with data. A
    * {@link RequestContext} is required to provide context for the changes to
-   * the proxy (see {@link RequestContext#edit()}. Note that this driver will
+   * the proxy (see {@link RequestContext#edit}. Note that this driver will
    * not fire the request.
    * 
    * @param proxy the proxy to be edited
@@ -97,7 +98,7 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
    * {@link EventBus} to be monitored for subscription services.
    * 
    * @see com.google.gwt.editor.client.EditorDelegate#subscribe
-   * @see {@link com.google.gwt.event.shared.ResettableEventBus}
+   * @see com.google.gwt.event.shared.ResettableEventBus
    */
   void initialize(EventBus eventBus, RequestFactory requestFactory, E editor);
 

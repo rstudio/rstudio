@@ -209,7 +209,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private Map<EntityKey, EntityData> afterDvsDataMap = new HashMap<EntityKey, EntityData>();
 
-  @SuppressWarnings(value = {"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   public Collection<Property<?>> allProperties(
       Class<? extends EntityProxy> clazz) throws IllegalArgumentException {
     return getPropertiesFromRecordProxyType(clazz).values();
@@ -439,7 +439,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * @param key the key of the record field
    * @return the ID of the new record, or null to auto generate
    */
-  public String generateIdForCreate(@SuppressWarnings("unused") String key) {
+  public String generateIdForCreate(String key) {
     // TODO(rjrjr) is there any point to this method if a service layer
     // is coming?
     return null;
@@ -447,7 +447,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Find the entity in the server data store, apply its setters, capture any
-   * violations, and return an {@link EntityData} encapsulating the results.
+   * violations, and return a
+   * {@link com.google.gwt.requestfactory.server.JsonRequestProcessor.EntityData
+   * EntityData} encapsulating the results.
    * <p>
    * If a <i>set</i> method has side-effects, we will not notice.
    */

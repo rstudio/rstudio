@@ -88,7 +88,7 @@ public class OptimizerStats {
   }
 
   /**
-   * Return a human readable string representing the values of all statistics
+   * Return a human-readable string representing the values of all statistics.
    */
   public String prettyPrint() {
     StringBuilder builder = new StringBuilder();

@@ -21,7 +21,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /**
  * A simple {@link SafeHtmlRenderer} implementation that calls
- * {@link SafeHtmlUtils#fromString(String)) to escape its arguments.
+ * {@link SafeHtmlUtils#fromString(String)} to escape its arguments.
  */
 public class SimpleSafeHtmlRenderer implements SafeHtmlRenderer<String> {
 

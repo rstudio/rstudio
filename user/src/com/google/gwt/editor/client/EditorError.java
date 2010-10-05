@@ -18,7 +18,7 @@ package com.google.gwt.editor.client;
 /**
  * Allows invalid Editor state to be propagated through an Editor hierarchy.
  * Instances of EditorError are typically created as a side effect of calling
- * {@link EditorDelegate#recordError()}.
+ * {@link EditorDelegate#recordError}.
  * 
  * @see com.google.gwt.editor.client.testing.MockEditorError
  */
@@ -47,7 +47,7 @@ public interface EditorError {
   String getPath();
 
   /**
-   * Returns the object passed into {@link EditorDelegate#recordError()}.
+   * Returns the object passed into {@link EditorDelegate#recordError}.
    */
   Object getUserData();
 

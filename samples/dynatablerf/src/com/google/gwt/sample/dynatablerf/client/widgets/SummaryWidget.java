@@ -162,8 +162,8 @@ public class SummaryWidget extends Composite {
     fetch(0);
   }
 
-  @UiHandler("create")
-  void onCreate(ClickEvent event) {
+  @UiHandler("create") 
+  void onCreate(@SuppressWarnings("unused") ClickEvent event) {
     PersonRequest context = requestFactory.personRequest();
     AddressProxy address = context.create(AddressProxy.class);
     PersonProxy person = context.edit(context.create(PersonProxy.class));

@@ -23,7 +23,7 @@ import javax.validation.constraints.DecimalMax;
 /**
  * Abstract {@link DecimalMax} constraint validator implementation for a
  * <code>T</code>.
- *
+ * 
  * @param <T> the type of object to validate
  */
 public abstract class AbstractDecimalMaxValidator<T> implements

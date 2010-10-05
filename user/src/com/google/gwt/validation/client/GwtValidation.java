@@ -23,7 +23,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a {@link javax.validation.Validator} explicitly listing the classes
+ * Annotates a {@code javax.validation.Validator} explicitly listing the classes
  * that can be validated in GWT.
  * <p>
  * Define the Validator you want explicitly listing the class you want to
@@ -51,13 +51,13 @@ public @interface GwtValidation {
 
   /**
    * The list of Classes which can be validated by the annotated
-   * {@link GwtValidator}.
+   * {@code Validator}.
    */
   Class<?>[] value();
 
   /**
    * The list of Groups which can be processed by the annotated
-   * {@link GwtValidator}, empty means all groups.
+   * {@code Validator}, empty means all groups.
    */
   Class<?>[] groups() default {};
 }

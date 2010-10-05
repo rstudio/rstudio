@@ -638,22 +638,28 @@ public abstract class AbstractCompiler {
     }
   }
 
-  @SuppressWarnings("unused")
-  // overrider may use unused parameter
+  /**
+   * @param logger a {@link TreeLogger}
+   * @param cud a {@link CompilationUnitDeclaration}
+   */
   protected String[] doFindAdditionalTypesUsingArtificialRescues(
       TreeLogger logger, CompilationUnitDeclaration cud) {
     return Empty.STRINGS;
   }
 
-  @SuppressWarnings("unused")
-  // overrider may use unused parameter
+  /**
+   * @param logger a {@link TreeLogger}
+   * @param cud a {@link CompilationUnitDeclaration}
+   */
   protected String[] doFindAdditionalTypesUsingJsni(TreeLogger logger,
       CompilationUnitDeclaration cud) {
     return Empty.STRINGS;
   }
 
-  @SuppressWarnings("unused")
-  // overrider may use unused parameter
+  /**
+   * @param logger a {@link TreeLogger}
+   * @param cud a {@link CompilationUnitDeclaration}
+   */
   protected String[] doFindAdditionalTypesUsingRebinds(TreeLogger logger,
       CompilationUnitDeclaration cud) {
     return Empty.STRINGS;

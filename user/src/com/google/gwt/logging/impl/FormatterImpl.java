@@ -22,7 +22,7 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 /**
- * Base class for Formatters - provides common functionality
+ * Base class for Formatters - provides common functionality.
  */
 public abstract class FormatterImpl extends Formatter {
 

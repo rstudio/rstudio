@@ -25,7 +25,8 @@ import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
  * Custom parsing of Image widgets. Sets ImageResource via constructor, because
- * {@link Image#setResource} clobbers most setter values.
+ * {@link com.google.gwt.user.client.ui.Image#setResource Image.setResource}
+ * clobbers most setter values.
  */
 public class ImageParser implements ElementParser {
 

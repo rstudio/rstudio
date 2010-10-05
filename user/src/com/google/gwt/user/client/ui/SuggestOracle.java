@@ -182,7 +182,7 @@ public abstract class SuggestOracle {
 
     /**
      * Gets whether or not the suggestion list was truncated due to the
-     * {@Request#getLimit}.
+     * {@link Request#getLimit}.
      */
     public boolean hasMoreSuggestions() {
       return this.moreSuggestions;
@@ -190,7 +190,7 @@ public abstract class SuggestOracle {
 
     /**
      * Sets whether or not the suggestion list was truncated due to the
-     * {@Request#getLimit}.
+     * {@link Request#getLimit}.
      */
     public void setMoreSuggestions(boolean moreSuggestions) {
       this.moreSuggestions = moreSuggestions;
@@ -198,12 +198,12 @@ public abstract class SuggestOracle {
 
     /**
      * Sets whether or not the suggestion list was truncated due to the
-     * {@Request#getLimit}, by providing an exact count of remaining 
+     * {@link Request#getLimit}, by providing an exact count of remaining 
      * suggestions.
      * 
      * @param count number of truncated suggestions. Pass 0 to indicate there
-     *        are no other suggestions, which is equivlent to 
-     *        {@link #setMoreSuggestions(false)}.
+     *        are no other suggestions, which is equivalent to 
+     *        {@link #setMoreSuggestions(boolean) setMoreSuggestions(false)}.
      */
     public void setMoreSuggestionsCount(int count) {
       this.numMoreSuggestions = count;

@@ -494,7 +494,7 @@ public class TypeOracle {
   }
 
   /**
-   * @Deprecated This method will always return 0 because a TypeOracle never
+   * @deprecated This method will always return 0 because a TypeOracle never
    *             gets reloaded anymore. Callers should not rely on this value to
    *             manage static state.
    */

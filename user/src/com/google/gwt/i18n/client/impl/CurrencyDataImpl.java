@@ -92,30 +92,37 @@ public final class CurrencyDataImpl extends DefaultCurrencyData {
     this.portableCurrencySymbol = portableCurrencySymbol;
   }
 
+  @Override
   public int getDefaultFractionDigits() {
     return getDefaultFractionDigits(flagsAndPrecision);
   }
 
+  @Override
   public String getPortableCurrencySymbol() {
     return portableCurrencySymbol;
   }
 
+  @Override
   public boolean isDeprecated() {
     return isDeprecated(flagsAndPrecision);
   }
 
+  @Override
   public boolean isSpaceForced() {
     return isSpaceForced(flagsAndPrecision);
   }
 
+  @Override
   public boolean isSpacingFixed() {
     return isSpacingFixed(flagsAndPrecision);
   }
 
+  @Override
   public boolean isSymbolPositionFixed() {
     return isSymbolPositionFixed(flagsAndPrecision);
   }
 
+  @Override
   public boolean isSymbolPrefix() {
     return isSymbolPrefix(flagsAndPrecision);
   }

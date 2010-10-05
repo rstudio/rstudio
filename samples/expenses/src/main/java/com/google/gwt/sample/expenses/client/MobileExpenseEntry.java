@@ -52,6 +52,7 @@ public class MobileExpenseEntry extends Composite implements MobilePage {
 
   private ExpenseProxy expense;
   private final ExpensesRequestFactory requestFactory;
+  @SuppressWarnings("unused")
   private final Listener listener;
   private ExpenseRequest request;
 

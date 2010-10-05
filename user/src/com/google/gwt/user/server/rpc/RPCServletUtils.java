@@ -217,7 +217,7 @@ public class RPCServletUtils {
    * @throws ServletException if the content length of the request is not
    *           specified of if the request's content type is not
    *           'text/x-gwt-rpc' and 'charset=utf-8'
-   * @deprecated Use {@link readContent} instead.
+   * @deprecated Use {@link #readContent} instead.
    */
   @Deprecated
   public static String readContentAsUtf8(HttpServletRequest request)
@@ -241,7 +241,7 @@ public class RPCServletUtils {
    * @throws ServletException if the content length of the request is not
    *           specified of if the request's content type is not
    *           'text/x-gwt-rpc' and 'charset=utf-8'
-   * @deprecated Use {@link readContent} instead.
+   * @deprecated Use {@link #readContent} instead.
    */
   @Deprecated
   public static String readContentAsUtf8(HttpServletRequest request,

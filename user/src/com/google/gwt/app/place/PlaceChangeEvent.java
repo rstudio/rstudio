@@ -30,8 +30,6 @@ public class PlaceChangeEvent extends GwtEvent<PlaceChangeEvent.Handler> {
 
   /**
    * Implemented by handlers of PlaceChangeEvent.
-   * 
-   * @param <P> the type of the new Place
    */
   public interface Handler extends EventHandler {
     void onPlaceChange(PlaceChangeEvent event);

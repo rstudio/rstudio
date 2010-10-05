@@ -75,6 +75,7 @@ public class SimpleEntityProxyId<P extends EntityProxy> implements
     hashCode = clientId;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -113,6 +114,7 @@ public class SimpleEntityProxyId<P extends EntityProxy> implements
     return serverId;
   }
 
+  @Override
   public int hashCode() {
     return hashCode;
   }

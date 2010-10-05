@@ -33,8 +33,6 @@ public class PlaceChangeRequestEvent extends
 
   /**
    * Implemented by handlers of PlaceChangeRequestEvent.
-   *
-   * @param <P> the type of the requested Place
    */
   public interface Handler extends EventHandler {
     void onPlaceChangeRequest(PlaceChangeRequestEvent event);

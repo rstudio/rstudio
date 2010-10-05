@@ -44,8 +44,7 @@ public interface RequestContext {
   void fire();
 
   /**
-   * For receiving errors or validation failures only. Request return values are
-   * received via {@link Request#receive}.
+   * For receiving errors or validation failures only.
    * 
    * @throws IllegalArgumentException if <code>receiver</code> is
    *           <code>null</code>

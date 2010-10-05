@@ -41,7 +41,6 @@ public class RPCServletUtilsTest extends TestCase {
     final String mockContent;
     final String mockContentType;
 
-
     public MockReqContentType(String contentType) {
       this(contentType, "abcdefg");
     }

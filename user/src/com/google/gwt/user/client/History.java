@@ -79,7 +79,6 @@ public class History {
    * @param listener the listener to be added
    * @deprecated use {@link History#addValueChangeHandler(ValueChangeHandler)} instead
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   public static void addHistoryListener(HistoryListener listener) {
     if (impl != null) {
@@ -194,7 +193,6 @@ public class History {
    * 
    * @param listener the listener to be removed
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   public static void removeHistoryListener(HistoryListener listener) {
     if (impl != null) {

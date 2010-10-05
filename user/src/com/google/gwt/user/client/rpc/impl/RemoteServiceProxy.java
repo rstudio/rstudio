@@ -273,9 +273,10 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
           ex);
       callback.onFailure(iex);
     } finally {
-      boolean toss = statsContext.isStatsAvailable() &&
-          statsContext.stats(statsContext.bytesStat(methodName, requestData.length(),
-              "requestSent"));
+      if (statsContext.isStatsAvailable()) {
+        statsContext.stats(statsContext.bytesStat(methodName,
+            requestData.length(), "requestSent"));
+      }
     }
     return null;
   }

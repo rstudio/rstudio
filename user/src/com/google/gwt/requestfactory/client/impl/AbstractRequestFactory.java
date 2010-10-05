@@ -110,6 +110,7 @@ public abstract class AbstractRequestFactory implements RequestFactory {
         requestContext.addInvocation(this);
       }
 
+      @Override
       protected void handleResult(Object result) {
         succeed(decodeReturnObject(proxyId.getProxyClass(), result));
       }

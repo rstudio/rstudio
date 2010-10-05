@@ -128,12 +128,12 @@ public class Layout {
    * system will be over- or under-contrained. For this reason, the following
    * methods are provided for setting these values:
    * <ul>
-   * <li>{@link #setLeftRight(double, Unit, double, Unit)}</li>
-   * <li>{@link #setLeftWidth(double, Unit, double, Unit)}</li>
-   * <li>{@link #setRightWidth(double, Unit, double, Unit)}</li>
-   * <li>{@link #setTopBottom(double, Unit, double, Unit)}</li>
-   * <li>{@link #setTopHeight(double, Unit, double, Unit)}</li>
-   * <li>{@link #setBottomHeight(double, Unit, double, Unit)}</li>
+   * <li>{@link Layout.Layer#setLeftRight}</li>
+   * <li>{@link Layout.Layer#setLeftWidth}</li>
+   * <li>{@link Layout.Layer#setRightWidth}</li>
+   * <li>{@link Layout.Layer#setTopBottom}</li>
+   * <li>{@link Layout.Layer#setTopHeight}</li>
+   * <li>{@link Layout.Layer#setBottomHeight}</li>
    * </ul>
    * </p>
    * 

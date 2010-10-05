@@ -21,7 +21,8 @@ import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 
 /**
- * Extends {@link AbstractProxyEditActivity} to first create an instance to edit
+ * Extends {@link AbstractProxyEditActivity} to first create an instance to
+ * edit.
  * 
  * @param <P> the type of proxy to create and edit
  */

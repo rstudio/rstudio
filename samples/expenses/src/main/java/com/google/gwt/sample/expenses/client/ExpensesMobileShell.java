@@ -76,26 +76,22 @@ public class ExpensesMobileShell extends Composite {
   }
   
   @UiHandler("addButton")
-  @SuppressWarnings("unused")
-  void onAdd(ClickEvent evt) {
+  void onAdd(@SuppressWarnings("unused") ClickEvent evt) {
     topPage().onAdd();
   }
 
   @UiHandler("backButton")
-  @SuppressWarnings("unused")
-  void onBack(ClickEvent evt) {
+  void onBack(@SuppressWarnings("unused") ClickEvent evt) {
     popPage();
   }
 
   @UiHandler("customButton")
-  @SuppressWarnings("unused")
-  void onCustom(ClickEvent evt) {
+  void onCustom(@SuppressWarnings("unused") ClickEvent evt) {
     topPage().onCustom();
   }
 
   @UiHandler("refreshButton")
-  @SuppressWarnings("unused")
-  void onRefresh(ClickEvent evt) {
+  void onRefresh(@SuppressWarnings("unused") ClickEvent evt) {
     topPage().onRefresh(true);
   }
 

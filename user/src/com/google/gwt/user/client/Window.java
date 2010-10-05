@@ -27,7 +27,6 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.impl.WindowImpl;
@@ -479,7 +478,7 @@ public class Window {
   }
 
   private static class WindowHandlers extends HandlerManager implements
-      HasCloseHandlers<Window>, HasResizeHandlers, HasHandlers {
+      HasCloseHandlers<Window>, HasResizeHandlers {
 
     public WindowHandlers() {
       super(null);

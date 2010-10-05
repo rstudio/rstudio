@@ -31,5 +31,5 @@ public interface RowStyles<T> {
    * @return the extra styles of the given row in a space-separated list, or
    * {@code null} if there are no extra styles for this row.
    */
-  public String getStyleNames(T row, int rowIndex);
+  String getStyleNames(T row, int rowIndex);
 }

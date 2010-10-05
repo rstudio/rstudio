@@ -19,7 +19,7 @@ import javax.validation.ConstraintValidatorContext;
 
 /**
  * {@link javax.validation.constraints.Size} constraint validator implementation
- * for a array of {@link char}s.
+ * for a array of {@code char}s.
  */
 public class SizeValidatorForArrayOfChar extends AbstractSizeValidator<char[]> {
 

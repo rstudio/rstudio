@@ -27,7 +27,7 @@ import java.util.ListIterator;
 
 /**
  * Represents a sprited image. This is basically a normal CssRule, except for
- * one well-known property {@value CssSprite#IMAGE_PROPERTY_NAME}, which
+ * one well-known property {@value IMAGE_PROPERTY_NAME}, which
  * specifies the name of an ImageResource accessor.
  */
 public class CssSprite extends CssRule {
@@ -37,7 +37,7 @@ public class CssSprite extends CssRule {
   /**
    * A facade for the underlying CssProperty list maintained by CssRule. We
    * override the add and set methods to intercept the
-   * {@value CssSprite#IMAGE_PROPERTY_NAME} property.
+   * {@value IMAGE_PROPERTY_NAME} property.
    */
   private class SpritePropertyList implements List<CssProperty> {
     private final List<CssProperty> source;

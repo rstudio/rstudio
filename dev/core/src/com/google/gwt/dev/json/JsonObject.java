@@ -75,7 +75,7 @@ public class JsonObject implements JsonValue, Iterable<Pair<String, JsonValue>> 
     int c = tokenizer.nextNonWhitespace();
     if (c != '{') {
       throw new JsonException("Payload does not begin with '{'.  Got " + c + "("
-          + Character.valueOf((char)c) + ")");
+          + Character.valueOf((char) c) + ")");
     }
 
     while (true) {

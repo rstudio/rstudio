@@ -47,13 +47,13 @@ public abstract class CharIndex {
    */
   public static class FullHash extends CharIndex {
     /**
-     * Mutable holder for a character
+     * Mutable holder for a character.
      */
     static class Char {
       char c;
       @Override
       public boolean equals(Object x) {
-        return (x != null) && (((Char)x).c == this.c);
+        return (x != null) && (((Char) x).c == this.c);
       }
       @Override
       public int hashCode() {
@@ -68,12 +68,12 @@ public abstract class CharIndex {
     static final int NULL_ELEMENT = 0;
     protected int lastUsed = NULL_ELEMENT;
     /**
-     * Mapping from pattern characters to their integer index values
+     * Mapping from pattern characters to their integer index values.
      */
     final java.util.HashMap<Char,Integer> map;
 
     /**
-     * Constructs a full hash-based mapping
+     * Constructs a full hash-based mapping.
      */
     FullHash(CharSequence s) {
       /* Choose a hash size larger at least twice the string length */
@@ -148,20 +148,19 @@ public abstract class CharIndex {
    */
   public static class Masked extends CharIndex {
     /**
-     * Hash table size
+     * Hash table size.
      */
     static final int SIZE = 0x100;
 
     /**
-     * Mask used for hashing
+     * Mask used for hashing.
      */
     static final int MASK = (SIZE - 1);
 
     /**
-     * Where we may invalid characters: beyond the hash table
+     * Where we may invalid characters: beyond the hash table.
      */
     static final int NULL_ELEMENT = SIZE;
-
 
     /**
      * Generates an instance of this implementation if possible.
@@ -177,7 +176,7 @@ public abstract class CharIndex {
       char [] contains = new char[SIZE];
 
       /* Ensure that for all x, hash(contains[x]) != x initially. */
-      contains[0] = (char)1;
+      contains[0] = (char) 1;
 
       /* Hash characters, recording values seen, rejecting collisions */
       for (int i = 0; i < s.length(); i++) {
@@ -200,7 +199,7 @@ public abstract class CharIndex {
     final char[] contains;
 
     /**
-     * Constructor based on hash table built by generate()
+     * Constructor based on hash table built by generate().
      */
     private Masked(char [] contains) {
       this.contains = contains;
@@ -215,7 +214,9 @@ public abstract class CharIndex {
     @Override
     public int[] map(CharSequence s, int[] mapped) {
       int len = s.length();
-      if (mapped.length < len) mapped = new int[len];
+      if (mapped.length < len) {
+        mapped = new int[len];
+      }
       for (int i = 0; i < len; i++) {
         char c = s.charAt(i);
         int index = c & MASK;
@@ -238,20 +239,19 @@ public abstract class CharIndex {
    */
   public static class Straight extends CharIndex {
     /**
-     * The largest character we will map (directly)
+     * The largest character we will map (directly).
      */
     static final int MAX = 0x80;
 
     /** 
-     * A mask used to find characters that fall outside
+     * A mask used to find characters that fall outside.
      */
     static final int MASK = ~(MAX - 1);
 
     /**
-     * A map result we never generate for valid characters
+     * A map result we never generate for valid characters.
      */
     static final int NULL_ELEMENT = MAX;
-
 
     /**
      * Generates an instance of this implementation if possible.
@@ -271,7 +271,7 @@ public abstract class CharIndex {
     }
 
     /**
-     * Simple private constructor, no state required
+     * Simple private constructor, no state required.
      */
     private Straight() { }
 
@@ -283,7 +283,9 @@ public abstract class CharIndex {
     @Override
     public int[] map(CharSequence s, int[] mapped) {
       int len = s.length();
-      if (mapped.length < len) mapped = new int[len];
+      if (mapped.length < len) {
+        mapped = new int[len];
+      }
       for (int i = 0; i < len; i++) {
         char c = s.charAt(i);
         mapped[i] = ((c & MASK) == 0) ? c : NULL_ELEMENT;

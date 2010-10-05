@@ -19,10 +19,11 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 /**
  * The native XMLHttpRequest object. Most applications should use the higher-
- * level {@link RequestBuilder} class unless they need specific functionality
- * provided by the XMLHttpRequest object.
+ * level {@link com.google.gwt.http.client.RequestBuilder} class unless they
+ * need specific functionality provided by the XMLHttpRequest object.
  * 
- * @see http://www.w3.org/TR/XMLHttpRequest/
+ * See <a href="http://www.w3.org/TR/XMLHttpRequest/"
+ * >http://www.w3.org/TR/XMLHttpRequest/</a>/
  */
 public class XMLHttpRequest extends JavaScriptObject {
 
@@ -100,8 +101,9 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Aborts the current request.
-   * 
-   * @see http://www.w3.org/TR/XMLHttpRequest/#abort
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#abort"
+   * >http://www.w3.org/TR/XMLHttpRequest/#abort</a>.
    */
   public final native void abort() /*-{
     this.abort();
@@ -109,9 +111,11 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Clears the {@link ReadyStateChangeHandler}.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange"
+   * >http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange</a>.
    * 
    * @see #clearOnReadyStateChange()
-   * @see http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange
    */
   public final native void clearOnReadyStateChange() /*-{
     var self = this;
@@ -124,9 +128,11 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Gets all the HTTP response headers, as a single string.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#getallresponseheaders"
+   * >http://www.w3.org/TR/XMLHttpRequest/#getallresponseheaders</a>.
    * 
    * @return the response headers.
-   * @see http://www.w3.org/TR/XMLHttpRequest/#getallresponseheaders
    */
   public final native String getAllResponseHeaders() /*-{
     return this.getAllResponseHeaders();
@@ -134,9 +140,11 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Get's the current ready-state.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#readystate"
+   * >http://www.w3.org/TR/XMLHttpRequest/#readystate</a>.
    * 
    * @return the ready-state constant
-   * @see http://www.w3.org/TR/XMLHttpRequest/#readystate
    */
   public final native int getReadyState() /*-{
     return this.readyState;
@@ -144,10 +152,12 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Gets an HTTP response header.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#getresponseheader"
+   * >http://www.w3.org/TR/XMLHttpRequest/#getresponseheader</a>.
    * 
    * @param header the response header to be retrieved
    * @return the header value
-   * @see http://www.w3.org/TR/XMLHttpRequest/#getresponseheader
    */
   public final native String getResponseHeader(String header) /*-{
     return this.getResponseHeader(header);
@@ -155,9 +165,11 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Gets the response text.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#responsetext"
+   * >http://www.w3.org/TR/XMLHttpRequest/#responsetext</a>.
    * 
    * @return the response text
-   * @see http://www.w3.org/TR/XMLHttpRequest/#responsetext
    */
   public final native String getResponseText() /*-{
     return this.responseText;
@@ -165,9 +177,11 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Gets the status code.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#status"
+   * >http://www.w3.org/TR/XMLHttpRequest/#status</a>.
    * 
    * @return the status code
-   * @see http://www.w3.org/TR/XMLHttpRequest/#status
    */
   public final native int getStatus() /*-{
     return this.status;
@@ -175,9 +189,11 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Gets the status text.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#statustext"
+   * >http://www.w3.org/TR/XMLHttpRequest/#statustext</a>.
    * 
    * @return the status text
-   * @see http://www.w3.org/TR/XMLHttpRequest/#statustext
    */
   public final native String getStatusText() /*-{
     return this.statusText;
@@ -185,10 +201,12 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Opens an asynchronous connection.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#open"
+   * >http://www.w3.org/TR/XMLHttpRequest/#open</a>.
    * 
    * @param httpMethod the HTTP method to use
    * @param url the URL to be opened
-   * @see http://www.w3.org/TR/XMLHttpRequest/#open
    */
   public final native void open(String httpMethod, String url) /*-{
     this.open(httpMethod, url, true);
@@ -196,11 +214,13 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Opens an asynchronous connection.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#open"
+   * >http://www.w3.org/TR/XMLHttpRequest/#open</a>.
    * 
    * @param httpMethod the HTTP method to use
    * @param url the URL to be opened
    * @param user user to use in the URL
-   * @see http://www.w3.org/TR/XMLHttpRequest/#open
    */
   public final native void open(String httpMethod, String url, String user) /*-{
     this.open(httpMethod, url, true, user);
@@ -208,12 +228,14 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Opens an asynchronous connection.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#open"
+   * >http://www.w3.org/TR/XMLHttpRequest/#open</a>.
    * 
    * @param httpMethod the HTTP method to use
    * @param url the URL to be opened
    * @param user user to use in the URL
    * @param password password to use in the URL
-   * @see http://www.w3.org/TR/XMLHttpRequest/#open
    */
   public final native void open(String httpMethod, String url, String user,
       String password) /*-{
@@ -231,9 +253,11 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Initiates a request with data.  If there is no data, specify null.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#send"
+   * >http://www.w3.org/TR/XMLHttpRequest/#send</a>.
    * 
    * @param requestData the data to be sent with the request
-   * @see http://www.w3.org/TR/XMLHttpRequest/#send
    */
   public final native void send(String requestData) /*-{
     this.send(requestData);
@@ -242,6 +266,9 @@ public class XMLHttpRequest extends JavaScriptObject {
   /**
    * Sets the {@link ReadyStateChangeHandler} to be notified when the object's
    * ready-state changes.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange"
+   * >http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange</a>.
    * 
    * <p>
    * Note: Applications <em>must</em> call {@link #clearOnReadyStateChange()}
@@ -251,7 +278,6 @@ public class XMLHttpRequest extends JavaScriptObject {
    * 
    * @param handler the handler to be called when the ready state changes
    * @see #clearOnReadyStateChange()
-   * @see http://www.w3.org/TR/XMLHttpRequest/#onreadystatechange
    */
   public final native void setOnReadyStateChange(ReadyStateChangeHandler handler) /*-{
     // The 'this' context is always supposed to point to the xhr object in the
@@ -264,10 +290,12 @@ public class XMLHttpRequest extends JavaScriptObject {
 
   /**
    * Sets a request header.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#setrequestheader"
+   * >http://www.w3.org/TR/XMLHttpRequest/#setrequestheader</a>.
    * 
    * @param header the header to be set
    * @param value the header's value
-   * @see http://www.w3.org/TR/XMLHttpRequest/#setrequestheader
    */
   public final native void setRequestHeader(String header, String value) /*-{
     this.setRequestHeader(header, value);

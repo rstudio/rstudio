@@ -51,7 +51,8 @@ public interface AutoBean<T> {
   <Q> Q getTag(String tagName);
 
   /**
-   * Returns <code>true</code> if {@link #freeze()} has been called.
+   * Returns the value most recently passed to {@link #setFrozen}, or false
+   * if it has never been called.
    */
   boolean isFrozen();
 

@@ -21,7 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A Mock implementation of {@link CompositeEditor.EditorChain}.
+ * A Mock implementation of
+ * {@link com.google.gwt.editor.client.CompositeEditor.EditorChain
+ * CompositeEditor.EditorChain}.
  * 
  * @param <C> the type being edited
  */

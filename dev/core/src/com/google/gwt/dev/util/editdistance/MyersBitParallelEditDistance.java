@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.util.editdistance;
 
-
 /**
  * Computes Levenshtein string-edit distance using the
  * algorithm of Eugene Myers (see "A fast bit-vector algorithm for
@@ -136,7 +135,7 @@ public abstract class MyersBitParallelEditDistance
    */
 
   /**
-   * A trivial implementation for the zero-length string
+   * A trivial implementation for the zero-length string.
    */
   static class Empty extends MyersBitParallelEditDistance {
     Empty(CharSequence s) {
@@ -166,12 +165,12 @@ public abstract class MyersBitParallelEditDistance
     int count;
     
     /**
-     * Where the last-row bit lives -- only in the last array slot, though
+     * Where the last-row bit lives -- only in the last array slot, though.
      */
     final int lastBitPosition;
 
     /**
-     * Bitmaps for pattern string: [pattern_index][column_index]
+     * Bitmaps for pattern string: [pattern_index][column_index].
      */
     final int[][] positions;
 
@@ -180,17 +179,17 @@ public abstract class MyersBitParallelEditDistance
     int[] verticalPositivesReusable;
 
     /**
-     * A mask with those bits set
+     * A mask with those bits set.
      */
     final int wordMask = (-1 >>> 1);
 
     /**
-     * How many bits we use per word
+     * How many bits we use per word.
      */
     final int wordSize = Integer.SIZE - 1;
 
     /**
-     * Constructs a multi-word engine
+     * Constructs a multi-word engine.
      */
     Multi(CharSequence s) {
       super(s);
@@ -223,7 +222,9 @@ public abstract class MyersBitParallelEditDistance
 
       /* We can only miss the distance-- below this many times: */
       int maxMisses = k + len - m;
-      if (maxMisses < 0) maxMisses = Integer.MAX_VALUE;
+      if (maxMisses < 0) {
+        maxMisses = Integer.MAX_VALUE;
+      }
 
       outer:
       for (int j = 0; j < len; j++) {
@@ -311,7 +312,7 @@ public abstract class MyersBitParallelEditDistance
       /* Precompute bitmaps for this pattern */
       map = PatternBitmap.map(s, idx, new int/*WORD*/[idx.size()]);
       /* Compute the bit that represents a change in the last row */
-      lastBitPosition = (((int/*WORD*/)1) << (m - 1));
+      lastBitPosition = (((int/*WORD*/) 1) << (m - 1));
     }
 
     @Override
@@ -319,8 +320,9 @@ public abstract class MyersBitParallelEditDistance
       int len = s.length();
 
       /* Quick check based on length */
-      if (((len - m) > k) || ((m - len) > k))
+      if (((len - m) > k) || ((m - len) > k)) {
         return k + 1;
+      }
 
       /* Map characters to their integer positions in the bitmap array */
       indices = idx.map(s, indices);
@@ -332,7 +334,9 @@ public abstract class MyersBitParallelEditDistance
 
       /* We can only miss the "distance--" below this many times: */
       int maxMisses = k + len - m;
-      if (maxMisses < 0) maxMisses = Integer.MAX_VALUE;
+      if (maxMisses < 0) {
+        maxMisses = Integer.MAX_VALUE;
+      }
 
       for (int j = 0; j < len; j++) {
         /* Where is diagonal zero: matches, or prior VN; plus recursion */
@@ -376,13 +380,12 @@ public abstract class MyersBitParallelEditDistance
     final long/*WORD*/ lastBitPosition;
     final long/*WORD*/[] map;
 
-    @SuppressWarnings("cast")
     TYPElong/*WORD*/(CharSequence s) {
       super(s);
       /* Precompute bitmaps for this pattern */
       map = PatternBitmap.map(s, idx, new long/*WORD*/[idx.size()]);
       /* Compute the bit that represents a change in the last row */
-      lastBitPosition = (((long/*WORD*/)1) << (m - 1));
+      lastBitPosition = (((long/*WORD*/) 1) << (m - 1));
     }
 
     @Override
@@ -390,8 +393,9 @@ public abstract class MyersBitParallelEditDistance
       int len = s.length();
 
       /* Quick check based on length */
-      if (((len - m) > k) || ((m - len) > k))
+      if (((len - m) > k) || ((m - len) > k)) {
         return k + 1;
+      }
 
       /* Map characters to their integer positions in the bitmap array */
       indices = idx.map(s, indices);
@@ -403,7 +407,9 @@ public abstract class MyersBitParallelEditDistance
 
       /* We can only miss the "distance--" below this many times: */
       int maxMisses = k + len - m;
-      if (maxMisses < 0) maxMisses = Integer.MAX_VALUE;
+      if (maxMisses < 0) {
+        maxMisses = Integer.MAX_VALUE;
+      }
 
       for (int j = 0; j < len; j++) {
         /* Where is diagonal zero: matches, or prior VN; plus recursion */
@@ -453,7 +459,7 @@ public abstract class MyersBitParallelEditDistance
   }
 
   /**
-   * Tests a computation manually
+   * Tests a computation manually.
    */
   public static void main(String[] args) {
     MyersBitParallelEditDistance b = getInstance(args[0]);
@@ -462,22 +468,22 @@ public abstract class MyersBitParallelEditDistance
   }
 
   /**
-   * Index mapping for pattern string
+   * Index mapping for pattern string.
    */
   final CharIndex idx;
 
   /**
-   * Reusable array of indices for target strings
+   * Reusable array of indices for target strings.
    */
   int[] indices = new int[0];
 
   /**
-   * Length of pattern
+   * Length of pattern.
    */
   final int m;
 
   /**
-   * Constructs a distance calculator for a given string
+   * Constructs a distance calculator for a given string.
    */
   protected MyersBitParallelEditDistance(CharSequence s) {
     m = s.length();
@@ -486,7 +492,7 @@ public abstract class MyersBitParallelEditDistance
 
   public GeneralEditDistance duplicate() {
     try {
-      return (MyersBitParallelEditDistance)clone();
+      return (MyersBitParallelEditDistance) clone();
     } catch (CloneNotSupportedException x) { /*IMPOSSIBLE */
       throw new IllegalStateException("Cloneable object would not clone");
     }
@@ -494,7 +500,7 @@ public abstract class MyersBitParallelEditDistance
 
   /**
    * Computes distance from the pattern to a given string, bounded by
-   * a limiting distance @see(GeneralEditDistance.getDistance(CharSequence,int))
+   * a limiting distance @see(GeneralEditDistance.getDistance(CharSequence,int)).
    */
   public abstract int getDistance(CharSequence s, int k);
 
@@ -503,13 +509,13 @@ public abstract class MyersBitParallelEditDistance
     Object obj = super.clone();
 
     /* Re-initialize any non-thread-safe parts */
-    ((MyersBitParallelEditDistance)obj).perThreadInit();
+    ((MyersBitParallelEditDistance) obj).perThreadInit();
 
     return obj;
   }
 
   /**
-   * Initializes items that cannot be shared among threads
+   * Initializes items that cannot be shared among threads.
    */
   protected void perThreadInit() {
     indices = new int[0];

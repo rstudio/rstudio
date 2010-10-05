@@ -24,7 +24,8 @@ import java.util.regex.Pattern;
 /**
  * Deals with field references, e.g. the bits in braces here: <code>&lt;div
  * class="{style.enabled} fancy {style.impressive}" /></code>, by converting
- * them to java expressions (with the help of a {@link #Delegate}).
+ * them to java expressions (with the help of a
+ * {@link FieldReferenceConverter.Delegate}).
  * <p>
  * A field reference is one or more segments separated by dots. The first
  * segment is considered to be a reference to a ui field, and succeeding
@@ -44,7 +45,8 @@ import java.util.regex.Pattern;
  */
 public class FieldReferenceConverter {
   /**
-   * May be thrown by the {@link #Delegate} for badly formatted input.
+   * May be thrown by the {@link FieldReferenceConverter.Delegate} for badly
+   * formatted input.
    */
   @SuppressWarnings("serial")
   public static class IllegalFieldReferenceException extends RuntimeException {

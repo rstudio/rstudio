@@ -57,6 +57,7 @@ public class MobileReportEntry extends Composite implements MobilePage {
 
   private ReportProxy report;
   private final ExpensesRequestFactory requestFactory;
+  @SuppressWarnings("unused")
   private final Listener listener;
   private ReportRequest request;
 

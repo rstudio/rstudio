@@ -32,7 +32,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Parses any children of widgets that use the {@link UiChild} annotation.
+ * Parses any children of widgets that use the
+ * {@link com.google.gwt.uibinder.client.UiChild UIChild} annotation.
  */
 public class UiChildParser implements ElementParser {
 

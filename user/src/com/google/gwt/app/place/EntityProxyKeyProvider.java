@@ -19,7 +19,7 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.view.client.ProvidesKey;
 
 /**
- * A {@link Record}-aware key provider.
+ * An {@link EntityProxy}-aware key provider.
  * 
  * @param <P> the proxy type
  */

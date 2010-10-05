@@ -416,7 +416,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    *
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
-   * {@link #setHeaderSafeHtml(int, SafeHtml)} or 
+   * {@link #setHeaderHTML(int, SafeHtml)} or 
    * {@link #setHeaderText(int, String)} whenever possible.
    *
    * @param index the index of the header whose HTML is to be set

@@ -252,7 +252,7 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
-   * Tests SafeHtml constructor
+   * Tests SafeHtml constructor.
    */
   public void testSafeHtml() {
     TestTemplates templates = GWT.create(TestTemplates.class);

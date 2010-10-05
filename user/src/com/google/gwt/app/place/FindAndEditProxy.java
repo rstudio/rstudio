@@ -23,7 +23,8 @@ import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 
 /**
- * Extends {@link AbstractProxyEditActivity} to work from a {@link EntityProxyId}
+ * Extends {@link AbstractProxyEditActivity} to work from a
+ * {@link EntityProxyId}.
  * 
  * @param <P> the type of proxy to find and edit
  */

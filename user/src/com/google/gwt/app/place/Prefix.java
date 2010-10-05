@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
  * Indicates the prefix to use when the token written by
  * {@link PlaceTokenizer#getToken(Place)} is written to
  * {@link com.google.gwt.user.client.History#newItem}.
- * {@link com.google.gwt.app.rebind.PlaceHistoryMapperGenerator} looks
+ * {@code com.google.gwt.app.rebind.PlaceHistoryMapperGenerator} looks
  * for this annotation on the factory methods that return a tokenizer, and on
  * the tokenizer types themselves.
  */

@@ -84,7 +84,6 @@ public class SampleDataPopulator {
     postJsonFile(jsonObject);
   }
 
-  @SuppressWarnings("deprecation")
   private void postJsonFile(JSONObject contentData) throws IOException,
       JSONException {
     HttpPost post = new HttpPost(url);

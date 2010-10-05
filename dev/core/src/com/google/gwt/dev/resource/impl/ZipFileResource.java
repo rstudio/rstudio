@@ -49,7 +49,9 @@ public class ZipFileResource extends AbstractResource {
 
   @Override
   public String getLocation() {
+    // CHECKSTYLE_OFF
     return "jar:" + classPathEntry.getLocation() + "!/" + path;
+    // CHECKSTYLE_ON
   }
 
   @Override

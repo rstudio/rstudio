@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * <p>Example usage:
  * <pre>
  *   public interface MyTemplate extends SafeHtmlTemplates {
- *     @Template("<span class=\"{3}\">{0}: <a href=\"{1}\">{2}</a></span>")
+ *     &#064;Template("<span class=\"{3}\">{0}: <a href=\"{1}\">{2}</a></span>")
  *     SafeHtml messageWithLink(SafeHtml message, String url, String linkText,
  *       String style);
  *   }

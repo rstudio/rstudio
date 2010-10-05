@@ -28,7 +28,7 @@ public class DateTimeFormatRenderer extends AbstractRenderer<Date> {
   private final TimeZone timeZone;
 
   /**
-   * Create an instance using {@link PredefinedFormat#DATE_SHORT}
+   * Create an instance using {@link PredefinedFormat#DATE_SHORT}.
    */
   public DateTimeFormatRenderer() {
     this(DateTimeFormat.getFormat(PredefinedFormat.DATE_SHORT));

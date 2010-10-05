@@ -24,7 +24,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.layout.client.Layout.Layer;
 
 /**
- * This implementation is used on IE8. Unlike {@link LayoutImpl}, it converts
+ * This implementation is used on IE8. Unlike {@code LayoutImpl}, it converts
  * all values to pixels before setting them. This is necessary because this
  * browser incorrectly calculates the relative sizes and positions of CSS
  * properties specified in certain units (e.g., when the value of an 'em' is

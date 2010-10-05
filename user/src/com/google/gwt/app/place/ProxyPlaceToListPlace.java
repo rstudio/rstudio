@@ -16,13 +16,13 @@
 package com.google.gwt.app.place;
 
 /**
- * Converts a {@link #ProxyPlace} to a {@link ProxyListPlace}.
+ * Converts a {@link ProxyPlace} to a {@link ProxyListPlace}.
  */
 public class ProxyPlaceToListPlace implements FilteredActivityMapper.Filter {
 
   /**
-   * Required by {@link FilteredActivityMapper.Filter}, calls
-   * {@link #proxyListPlaceFor()}.
+   * Required by {@link com.google.gwt.app.place.FilteredActivityMapper.Filter}, calls
+   * {@link #proxyListPlaceFor}.
    */
   public Place filter(Place place) {
     return proxyListPlaceFor(place);

@@ -24,7 +24,6 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-
 /**
  * A set of functions to convert standard JSON strings into
  * LogRecords. The corresponding functions to create the JSON
@@ -51,7 +50,7 @@ public class JsonLogRecordServerUtil {
     lr.setMillis(timestamp);
     return lr;
   }
-  
+
   private static StackTraceElement stackTraceElementFromJson(
       String jsonString) throws JSONException {
     JSONObject ste = new JSONObject(jsonString);
@@ -61,7 +60,7 @@ public class JsonLogRecordServerUtil {
     int lineNumber = Integer.parseInt(ste.getString("lineNumber"));
     return new StackTraceElement(className, methodName, fileName, lineNumber);
   }
-  
+
   private static Throwable throwableFromJson(String jsonString)
   throws JSONException {
     if (jsonString.equals("{}")) {

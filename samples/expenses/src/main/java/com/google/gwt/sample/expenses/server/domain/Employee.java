@@ -141,6 +141,7 @@ public class Employee {
   private Integer version;
 
   @Transient
+  @SuppressWarnings("unused")
   private Employee supervisor;
 
   public String getDepartment() {

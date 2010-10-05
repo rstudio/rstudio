@@ -69,11 +69,10 @@ public class AttachEvent extends GwtEvent<AttachEvent.Handler> {
   /**
    * Construct a new {@link AttachEvent}.
    *
-   * @param width the new width
-   * @param height the new height
+   * @param attached true if the source has been attached 
    */
-  protected AttachEvent(boolean loaded) {
-    this.attached = loaded;
+  protected AttachEvent(boolean attached) {
+    this.attached = attached;
   }
 
   @Override

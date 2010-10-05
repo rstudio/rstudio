@@ -50,7 +50,6 @@ public class HandlerManager implements HasHandlers {
    * @param source the event source
    * @param fireInReverseOrder true to fire handlers in reverse order
    */
-  @SuppressWarnings("deprecation")
   public HandlerManager(Object source, boolean fireInReverseOrder) {
     eventBus = new SimpleEventBus(fireInReverseOrder);
     this.source = source;
@@ -115,7 +114,6 @@ public class HandlerManager implements HasHandlers {
    * @param type the handler's event type
    * @return the given handler
    */
-  @SuppressWarnings("deprecation")
   public <H extends EventHandler> H getHandler(GwtEvent.Type<H> type, int index) {
     return eventBus.getHandler(type, index);
   }
@@ -126,7 +124,6 @@ public class HandlerManager implements HasHandlers {
    * @param type the event type
    * @return the number of registered handlers
    */
-  @SuppressWarnings("deprecation")
   public int getHandlerCount(Type<?> type) {
     return eventBus.getHandlerCount(type);
   }
@@ -137,7 +134,6 @@ public class HandlerManager implements HasHandlers {
    * @param e the event type
    * @return whether the given event type is handled
    */
-  @SuppressWarnings("deprecation")
   public boolean isEventHandled(Type<?> e) {
     return eventBus.isEventHandled(e);
   }

@@ -757,6 +757,7 @@ public abstract class CustomButton extends ButtonBase {
     }
   }
 
+  @Override
   public void setHTML(SafeHtml html) {
     setHTML(html.asString());
   }

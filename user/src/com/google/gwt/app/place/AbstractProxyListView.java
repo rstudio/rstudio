@@ -61,6 +61,7 @@ public abstract class AbstractProxyListView<P extends EntityProxy> extends
     });
   }
 
+  @Override
   protected void initWidget(Widget widget) {
     throw new UnsupportedOperationException(
         "AbstractRecordListView must be initialized via "

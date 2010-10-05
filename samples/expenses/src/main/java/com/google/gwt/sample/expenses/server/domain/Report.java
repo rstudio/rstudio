@@ -338,9 +338,11 @@ public class Report {
   }
 
   @Transient
+  @SuppressWarnings("unused")
   private Employee approvedSupervisor;
 
   @Transient
+  @SuppressWarnings("unused")
   private Employee reporter;
 
   // @JoinColumn

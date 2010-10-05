@@ -23,9 +23,10 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import java.util.logging.Level;
 
 /**
- * Custom serializer for Level class
+ * Custom serializer for Level class.
  */
 public class Level_CustomFieldSerializer {
+  @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader reader,
       Level instance) throws SerializationException {
     // Nothing needed

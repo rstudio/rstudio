@@ -402,11 +402,12 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
   /**
    * Sets the label's content to the given text.
    * <p>
-   * Doesn't change the widget's direction or horizontal alignment if
-   * {@code directionEstimator} is null. Otherwise, the widget's direction is
-   * set using the estimator, and its alignment may therefore change as
-   * described in {@link #setText(String, Direction)}.
-   *
+   * Doesn't change the widget's direction or horizontal alignment if {@code
+   * directionEstimator} is null. Otherwise, the widget's direction is set using
+   * the estimator, and its alignment may therefore change as described in
+   * {@link #setText(String, com.google.gwt.i18n.client.HasDirection.Direction)
+   * setText(String, Direction)}.
+   * 
    * @param text the widget's new text
    */
   public void setText(String text) {
@@ -500,15 +501,15 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
 
   /**
    * Sets the label's content to the given value (either plain text or HTML),
-   * applying the given direction.
-   * See {@link #setText(String, Direction)} for details on potential effects on
-   * alignment.
+   * applying the given direction. See
+   * {@link #setText(String, com.google.gwt.i18n.client.HasDirection.Direction)
+   * setText(String, Direction)} for details on potential effects on alignment.
    * <p>
    * Implementation details:
    * <ul>
-   * <li> If the widget's element is a &lt;div&gt;, sets its dir attribute
+   * <li>If the widget's element is a &lt;div&gt;, sets its dir attribute
    * according to the given direction.
-   * <li> Otherwise (i.e. the widget's element is a &lt;span&gt;), the direction
+   * <li>Otherwise (i.e. the widget's element is a &lt;span&gt;), the direction
    * is set using a nested &lt;span dir=...&gt; element which holds the content
    * of the widget. This nested span may be followed by a zero-width Unicode
    * direction character (LRM or RLM). This manipulation is necessary to prevent
@@ -516,7 +517,7 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
    * of its context. See {@link com.google.gwt.i18n.shared.BidiFormatter} for
    * more details.
    * </ul>
-   *
+   * 
    * @param content the widget's new content
    * @param dir the content's direction
    * @param isHtml whether the content is HTML
@@ -572,5 +573,3 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
     }
   }
 }
-
-

@@ -66,7 +66,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   protected byte[] generatePrimaryFragment(TreeLogger logger,
       LinkerContext context, CompilationResult result, String[] js) {
     TextOutput script = new DefaultTextOutput(context.isOutputCompact());
-    script.print(getModulePrefix(context, result.getStrongName(), js.length > 1));
+    script.print(getModulePrefix(context, result.getStrongName()));
     script.print(js[0]);
     script.print(getModuleSuffix(logger, context));
     StringBuffer out = new StringBuffer();
@@ -194,8 +194,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     return "com/google/gwt/core/linker/CrossSiteIframeTemplate.js";
   }
 
-  private String getModulePrefix(LinkerContext context, String strongName,
-      boolean supportRunAsync) {
+  private String getModulePrefix(LinkerContext context, String strongName) {
     TextOutput out = new DefaultTextOutput(context.isOutputCompact());
     out.print("var __gwtModuleFunction = $wnd." + context.getModuleFunctionName() + ";");
     out.newlineOpt();

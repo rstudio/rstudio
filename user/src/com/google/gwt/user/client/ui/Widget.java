@@ -22,8 +22,8 @@ import com.google.gwt.event.logical.shared.AttachEvent.Handler;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -378,7 +378,8 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
   /**
    * This method is called immediately after a widget becomes attached to the
    * browser's document. This default implementation notifies the widgets
-   * {@link AttachEvent.Handler}s.
+   * {@link com.google.gwt.event.logical.shared.AttachEvent.Handler
+   * AttachEvent.Handler}s.
    */
   protected void onLoad() {
     AttachEvent.fire(this, true);
@@ -386,8 +387,9 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * This method is called immediately before a widget will be detached from the
-   * browser's document. This default implementation notifies the widgets
-   * {@link AttachEvent.Handler}s.
+   * browser's document. This default implementation notifies the widget's
+   * {@link com.google.gwt.event.logical.shared.AttachEvent.Handler
+   * AttachEvent.Handler}s.
    */
   protected void onUnload() {
     AttachEvent.fire(this, false);

@@ -110,6 +110,7 @@ public class Expense {
   private String reasonDenied;
 
   @Transient
+  @SuppressWarnings("unused")
   private Report report;
 
   // @JoinColumn

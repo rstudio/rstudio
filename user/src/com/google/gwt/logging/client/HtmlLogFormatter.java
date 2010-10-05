@@ -18,7 +18,6 @@ package com.google.gwt.logging.client;
 
 import com.google.gwt.logging.impl.FormatterImpl;
 
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
@@ -51,7 +50,6 @@ public class HtmlLogFormatter extends FormatterImpl {
   }
   
   protected String getHtmlPrefix(LogRecord event) {
-    Date date = new Date(event.getMillis());
     StringBuilder prefix = new StringBuilder();
     prefix.append("<span style='color:");
     prefix.append(getColor(event.getLevel().intValue()));
@@ -60,6 +58,9 @@ public class HtmlLogFormatter extends FormatterImpl {
     return prefix.toString();
   }
   
+  /**
+   * @param event
+   */
   protected String getHtmlSuffix(LogRecord event) {
     return "</code></span>";
   }

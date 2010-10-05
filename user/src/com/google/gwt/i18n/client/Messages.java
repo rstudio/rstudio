@@ -206,7 +206,6 @@ public interface Messages extends LocalizableResource {
     String value();
   }
 
-
   /**
    * Ignored except on parameters also tagged with {@link PluralCount}, and
    * provides an offset to be subtracted from the value before a plural rule

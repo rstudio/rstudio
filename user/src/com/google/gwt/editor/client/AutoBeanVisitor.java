@@ -48,17 +48,43 @@ public class AutoBeanVisitor {
     void set(Object value);
   }
 
+  /**
+   * TODO: document.
+   * 
+   * @param bean
+   * @param ctx a Context
+   */
   public void endVisit(AutoBean<?> bean, Context ctx) {
   }
 
+  /**
+   * TODO: document.
+   * 
+   * @param propertyName
+   * @param value
+   * @param ctx a PropertyContext
+   */
   public void endVisitReferenceProperty(String propertyName, AutoBean<?> value,
       PropertyContext ctx) {
   }
 
+  /**
+   * TODO: document.
+   * 
+   * @param propertyName
+   * @param value
+   * @param ctx a PropertyContext
+   */
   public void endVisitValueProperty(String propertyName, Object value,
       PropertyContext ctx) {
   }
 
+  /**
+   * TODO: document.
+   * 
+   * @param bean
+   * @param ctx a Context
+   */
   public boolean visit(AutoBean<?> bean, Context ctx) {
     return true;
   }
@@ -66,12 +92,23 @@ public class AutoBeanVisitor {
   /**
    * Called every time, but {@link #visit(AutoBean, Context)} will be called for
    * the value only the first time it is encountered.
+   * 
+   * @param propertyName
+   * @param value
+   * @param ctx a PropertyContext
    */
   public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
       PropertyContext ctx) {
     return true;
   }
 
+  /**
+   * TODO: document.
+   * 
+   * @param propertyName
+   * @param value
+   * @param ctx a PropertyContext
+   */
   public boolean visitValueProperty(String propertyName, Object value,
       PropertyContext ctx) {
     return true;

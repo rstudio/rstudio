@@ -153,7 +153,11 @@ public abstract class TypeRefVisitor extends SafeASTVisitor {
     return true;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @param referencedType
+   * @param unitOfReferrer
+   * @param expression
+   */
   protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
       CompilationUnitDeclaration unitOfReferrer, Expression expression) {
   }

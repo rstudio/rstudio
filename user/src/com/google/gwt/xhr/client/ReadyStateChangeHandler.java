@@ -16,13 +16,13 @@
 package com.google.gwt.xhr.client;
 
 /**
- * A ready-state callback for an {@Link XMLHttpRequest} object.
+ * A ready-state callback for an {@link XMLHttpRequest} object.
  */
 public interface ReadyStateChangeHandler {
 
   /**
    * This is called whenever the state of the XMLHttpRequest changes. See
-   * {@link XMLHttpRequest#setOnReadyStateHandler}.
+   * {@link XMLHttpRequest#setOnReadyStateChange}.
    * 
    * @param xhr the object whose state has changed.
    */

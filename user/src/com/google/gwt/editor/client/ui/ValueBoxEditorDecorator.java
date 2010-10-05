@@ -103,7 +103,7 @@ public class ValueBoxEditorDecorator<T> extends Composite implements
   /**
    * The default implementation will display, but not consume, received errors
    * whose {@link EditorError#getEditor() getEditor()} method returns the Editor
-   * passed into {@link #setEditor()}.
+   * passed into {@link #setEditor}.
    */
   public void showErrors(List<EditorError> errors) {
     StringBuilder sb = new StringBuilder();

@@ -388,6 +388,7 @@ public class Precompile {
       setDaemon(true);
     }
 
+    @Override
     public void run() {
       SpeedTracerLogger.Event createGraphicsEvent = SpeedTracerLogger.start(
           CompilerEventType.GRAPHICS_INIT, "java.awt.headless",

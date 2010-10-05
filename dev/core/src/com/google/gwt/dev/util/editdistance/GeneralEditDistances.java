@@ -58,22 +58,22 @@ public class GeneralEditDistances {
    */
   private static class Levenshtein implements GeneralEditDistance {
     /**
-     * Long+bounded implementation class: distance-only Berghel-Roach
+     * Long+bounded implementation class: distance-only Berghel-Roach.
      */
     private ModifiedBerghelRoachEditDistance berghel;
 
     /**
-     * Short/unbounded implementation class: Myers bit-parallel
+     * Short/unbounded implementation class: Myers bit-parallel.
      */
     private MyersBitParallelEditDistance myers;
 
     /**
-     * Saved pattern, for specialized comparisons
+     * Saved pattern, for specialized comparisons.
      */    
     private final CharSequence pattern;
 
     /**
-     * Length of saved pattern
+     * Length of saved pattern.
      */
     private final int patternLength;
 

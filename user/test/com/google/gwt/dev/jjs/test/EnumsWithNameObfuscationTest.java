@@ -78,8 +78,7 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
     } catch (IllegalArgumentException expected) {
     }
   }
-  
-  
+
   @Override
   public void testCompareTo() {
     

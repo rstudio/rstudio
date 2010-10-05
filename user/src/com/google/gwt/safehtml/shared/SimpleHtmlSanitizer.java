@@ -29,7 +29,7 @@ import java.util.Set;
  * in a whitelist (including {@code <b>, <em>, <i>}, etc; for the exact list
  * consult the source), as well as numeric HTML entities and HTML entity
  * references. Any HTML metacharacters that do not appear as part of markup in
- * this subset will be HTML-esacped.
+ * this subset will be HTML-escaped.
  */
 public final class SimpleHtmlSanitizer implements HtmlSanitizer {
 

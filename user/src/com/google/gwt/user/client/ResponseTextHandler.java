@@ -15,9 +15,10 @@
  */
 package com.google.gwt.user.client;
 
+// TODO - is this class still used anywhere?
+
 /**
- * Implement this interface to receive HTTP completion events.  This event is
- * fired by {@link com.google.gwt.user.client.HTTPRequest}.
+ * Implement this interface to receive HTTP completion events.
  */
 public interface ResponseTextHandler {
 
