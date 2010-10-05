@@ -16,7 +16,6 @@
 package com.google.gwt.requestfactory.client.impl.messages;
 
 import com.google.gwt.core.client.JsonUtils;
-import com.google.gwt.requestfactory.client.impl.ClientRequestHelper;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 
 import java.util.EnumMap;
@@ -33,6 +32,10 @@ public class RequestContentData {
    */
   public static String flattenKeysToExpressions(
       Map<String, String> keysToExpressions) {
+    if (keysToExpressions.isEmpty()) {
+      return "{}";
+    }
+
     StringBuilder flattenedProperties = new StringBuilder();
     for (Map.Entry<String, String> entry : keysToExpressions.entrySet()) {
       flattenedProperties.append(",").append(
@@ -89,7 +92,7 @@ public class RequestContentData {
     Map<String, String> toReturn = new LinkedHashMap<String, String>();
     addToReturn(toReturn, WriteOperation.PERSIST);
     addToReturn(toReturn, WriteOperation.UPDATE);
-    return ClientRequestHelper.getRequestString(toReturn);
+    return flattenKeysToExpressions(toReturn);
   }
 
   /**
