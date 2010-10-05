@@ -69,10 +69,15 @@ public class ClientOracleLinker extends AbstractLinker {
         }
 
         for (SymbolData symbolData : result.getSymbolMap()) {
+          
+          String castableTypeMapString =
+              (symbolData.getCastableTypeMap() == null) ? null :
+                symbolData.getCastableTypeMap().toJs();
+       
           builder.add(symbolData.getSymbolName(), symbolData.getJsniIdent(),
               symbolData.getClassName(), symbolData.getMemberName(),
               symbolData.getQueryId(), 
-              new CastableTypeDataImpl(symbolData.getCastableTypeMap()));
+              new CastableTypeDataImpl(castableTypeMapString));
         }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();

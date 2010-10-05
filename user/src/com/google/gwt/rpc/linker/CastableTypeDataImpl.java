@@ -16,7 +16,6 @@
 
 package com.google.gwt.rpc.linker;
 
-import com.google.gwt.core.ext.linker.CastableTypeMap;
 import com.google.gwt.rpc.server.CastableTypeData;
 
 /**
@@ -24,14 +23,14 @@ import com.google.gwt.rpc.server.CastableTypeData;
  */
 public class CastableTypeDataImpl implements CastableTypeData {
   
-  private final CastableTypeMap castableTypeMap;
+  private final String castableTypeMapJs;
   
-  public CastableTypeDataImpl(CastableTypeMap castableTypeMap) {
-    this.castableTypeMap = castableTypeMap;
+  public CastableTypeDataImpl(String castableTypeMapJs) {
+    this.castableTypeMapJs = castableTypeMapJs;
   }
 
   public String toJs() {
-    return castableTypeMap.toJs();
+    return castableTypeMapJs;
   }
 
 }
