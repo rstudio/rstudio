@@ -28,7 +28,15 @@ import java.util.Set;
  * A default implementation of the {@link Cell} interface.
  *
  * <p>
- * Note: This class is new and its interface subject to change.
+ * <h3>Examples</h3>
+ * <dl>
+ * <dt>Read only cell</dt>
+ * <dd>{@example com.google.gwt.examples.cell.CellExample}</dd>
+ * <dt>Interactive cell</dt> 
+ * <dd>{@example com.google.gwt.examples.cell.InteractionCellExample}</dd>
+ * <dt>Editable cell</dt> 
+ * <dd>{@example com.google.gwt.examples.cell.EditableCellExample}</dd>
+ * </dl> 
  * </p>
  *
  * @param <C> the type that this Cell represents

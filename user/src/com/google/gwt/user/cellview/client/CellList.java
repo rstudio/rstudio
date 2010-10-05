@@ -45,6 +45,19 @@ import java.util.Set;
 /**
  * A single column list of cells.
  *
+ * <p>
+ * <h3>Examples</h3>
+ * <p>
+ * {@example com.google.gwt.examples.cellview.CellListExample}
+ * </p>
+ * <p>
+ * {@example com.google.gwt.examples.cellview.CellListValueUpdaterExample}
+ * </p>
+ * <p>
+ * {@example com.google.gwt.examples.view.KeyProviderExample}
+ * </p>
+ * </p>
+ *
  * @param <T> the data type of list items
  */
 public class CellList<T> extends AbstractHasData<T> {

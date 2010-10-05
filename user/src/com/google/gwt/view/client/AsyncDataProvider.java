@@ -22,7 +22,8 @@ import java.util.List;
  * modified.
  *
  * <p>
- * Note: This class is new and its interface subject to change.
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.view.AsyncDataProviderExample}
  * </p>
  *
  * @param <T> the data type of records in the list

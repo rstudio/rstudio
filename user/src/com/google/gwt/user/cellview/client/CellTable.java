@@ -53,6 +53,19 @@ import java.util.Set;
 /**
  * A list view that supports paging and columns.
  *
+ * <p>
+ * <h3>Examples</h3>
+ * <p>
+ * {@example com.google.gwt.examples.cellview.CellTableExample}
+ * </p>
+ * <p>
+ * {@example com.google.gwt.examples.cellview.CellTableFieldUpdaterExample}
+ * </p>
+ * <p>
+ * {@example com.google.gwt.examples.view.KeyProviderExample}
+ * </p>
+ * </p>
+ *
  * @param <T> the data type of each row
  */
 public class CellTable<T> extends AbstractHasData<T> {

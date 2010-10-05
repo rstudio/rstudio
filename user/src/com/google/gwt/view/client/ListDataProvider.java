@@ -30,7 +30,8 @@ import java.util.NoSuchElementException;
  * in-memory list.
  *
  * <p>
- * Note: This class is new and its interface subject to change.
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.view.ListDataProviderExample}
  * </p>
  *
  * @param <T> the data type of the list

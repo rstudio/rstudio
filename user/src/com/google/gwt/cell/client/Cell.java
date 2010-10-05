@@ -25,7 +25,8 @@ import java.util.Set;
  * A light weight representation of a renderable object.
  *
  * <p>
- * Note: This class is new and its interface subject to change.
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.cell.CellExample}
  * </p>
  *
  * @param <C> the type that this Cell represents

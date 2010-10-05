@@ -52,6 +52,15 @@ import java.util.Set;
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
+ *
+ * <p>
+ * <h3>Examples</h3>
+ * <dl>
+ * <dt>Trivial example</dt>
+ * <dd>{@example com.google.gwt.examples.cellview.CellTreeExample}</dd>
+ * <dt>Complex example</dt> 
+ * <dd>{@example com.google.gwt.examples.cellview.CellTreeExample2}</dd>
+ * </dl>
  */
 public class CellTree extends AbstractCellTree implements HasAnimation,
     Focusable {

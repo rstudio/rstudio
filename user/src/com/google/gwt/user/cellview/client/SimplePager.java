@@ -34,6 +34,11 @@ import com.google.gwt.view.client.Range;
 /**
  * A pager for controlling a {@link HasRows} that only supports simple page
  * navigation.
+ *
+ * <p>
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.cellview.SimplePagerExample}
+ * </p>
  */
 public class SimplePager extends AbstractPager {
 

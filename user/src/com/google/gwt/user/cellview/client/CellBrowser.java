@@ -69,6 +69,15 @@ import java.util.List;
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
+ *
+ * <p>
+ * <h3>Example</h3>
+ * <dl>
+ * <dt>Trivial example</dt>
+ * <dd>{@example com.google.gwt.examples.cellview.CellBrowserExample}</dd>
+ * <dt>Complex example</dt> 
+ * <dd>{@example com.google.gwt.examples.cellview.CellBrowserExample2}</dd>
+ * </dl>
  */
 public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     RequiresResize, HasAnimation {

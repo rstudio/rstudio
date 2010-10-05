@@ -26,7 +26,8 @@ import java.util.Set;
  * cells that need to save view data state for specific values.
  *
  * <p>
- * Note: This class is new and its interface subject to change.
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.cell.EditableCellExample}
  * </p>
  *
  * @param <C> the type that this Cell represents
