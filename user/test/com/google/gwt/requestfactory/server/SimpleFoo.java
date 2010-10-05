@@ -320,6 +320,13 @@ public class SimpleFoo {
 
   private List<Integer> numberListField;
 
+  /*
+   * isChanged is just a quick-and-dirty way to get version-ing for now.
+   * Currently, only set by setUserName and setIntId. TODO for later: Use a
+   * cleaner solution to figure out when to increment version numbers.
+   */
+  boolean isChanged;
+
   public SimpleFoo() {
     intId = 42;
     version = 1;
@@ -342,6 +349,7 @@ public class SimpleFoo {
     nullField = null;
     barNullField = null;
     pleaseCrash = 0;
+    isChanged = false;
   }
 
   public Long countSimpleFooWithUserNameSideEffect() {
@@ -495,7 +503,10 @@ public class SimpleFoo {
       isNew = false;
       get().put(getId(), this);
     }
-    version++;
+    if (isChanged) {
+      version++;
+      isChanged = false;
+    }
   }
 
   public SimpleFoo persistAndReturnSelf() {
@@ -594,7 +605,10 @@ public class SimpleFoo {
   }
 
   public void setIntId(Integer id) {
-    this.intId = id;
+    if (!this.intId.equals(id)) {
+      this.intId = id;
+      isChanged = true;
+    }
   }
 
   public void setLongField(Long longField) {
@@ -651,7 +665,10 @@ public class SimpleFoo {
   }
 
   public void setUserName(String userName) {
-    this.userName = userName;
+    if (!this.userName.equals(userName)) {
+      this.userName = userName;
+      isChanged = true;
+    }
   }
 
   public void setVersion(Integer version) {

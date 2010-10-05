@@ -111,6 +111,7 @@ public class JsonRequestProcessorTest extends TestCase {
     // nulls becomes JSON Null. Needed because JSONObject stringify treats 'null'
     // as a reason to not emit the key in the stringified object
     assertEquals(JSONObject.NULL, requestProcessor.encodePropertyValue(null));
+    assertEquals(new Double(1.0), requestProcessor.encodePropertyValue(new Integer(1)));
   }
 
   public void testEndToEnd() throws Exception {
@@ -147,26 +148,102 @@ public class JsonRequestProcessorTest extends TestCase {
     assertEquals(false, (boolean) fooResult.getBoolField());
   }
 
+  private String createNoChangeRequestAndGetServerVersion(JSONObject foo) throws Exception {
+    // change the value on the server behind the back
+    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
+    fooResult.setUserName("JSC");
+    fooResult.setIntId(45);
+    String savedVersion = requestProcessor.encodePropertyValue(fooResult.getVersion() + 1).toString();
+    fooResult.setVersion(fooResult.getVersion() + 1);
+    fooResult.isChanged = false;
+
+    // modify fields and sync -- there should be no change on the server.
+    foo.put("intId", 45);
+    foo.put("userName", "JSC");
+    return savedVersion;
+  }
+
   public void testEndToEndSmartDiff_NoChange() throws Exception {
     com.google.gwt.requestfactory.server.SimpleFoo.reset();
     // fetch object
     JSONObject foo = fetchVerifyAndGetInitialObject();
 
-    // change the value on the server behind the back
-    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
-    fooResult.setUserName("JSC");
-    fooResult.setIntId(45);
+    String savedVersion = createNoChangeRequestAndGetServerVersion(foo);
+    JSONObject result = getResultFromServer(foo);
 
-    // modify fields and sync -- there should be no change on the server.
-    foo.put("intId", 45);
-    foo.put("userName", "JSC");
+    // check modified fields and no violations
+    assertTrue(result.getJSONObject("sideEffects").has("UPDATE"));
+    JSONArray updateArray = result.getJSONObject("sideEffects").getJSONArray(
+        "UPDATE");
+    // verify that the version number is unchanged.
+    assertEquals(1, updateArray.length());
+    assertEquals(2, updateArray.getJSONObject(0).length());
+    assertTrue(updateArray.getJSONObject(0).has(Constants.ENCODED_ID_PROPERTY));
+    assertTrue(updateArray.getJSONObject(0).has(
+        Constants.ENCODED_VERSION_PROPERTY));
+    assertEquals(savedVersion,
+        updateArray.getJSONObject(0).getString(
+            Constants.ENCODED_VERSION_PROPERTY));
+    // verify that the server values are unchanged.
+    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
+    assertEquals(45, (int) fooResult.getIntId());
+    assertEquals("JSC", fooResult.getUserName());
+    assertEquals(savedVersion,
+        requestProcessor.encodePropertyValue(fooResult.getVersion()).toString());
+  }
+
+  /*
+   * This test differs from testEndToEndSmartDiff_NoChange in that the version
+   * numbers are not sent. As a result, the server does not send an UPDATE
+   * sideEffect in its response.
+   */
+  public void testEndToEndSmartDiff_NoChange_NoVersion() throws Exception {
+    com.google.gwt.requestfactory.server.SimpleFoo.reset();
+    // fetch object
+    JSONObject foo = fetchVerifyAndGetInitialObject();
+
+    String savedVersion = createNoChangeRequestAndGetServerVersion(foo);
+    // remove version number from the request.
+    foo.remove(Constants.ENCODED_VERSION_PROPERTY);
     JSONObject result = getResultFromServer(foo);
 
     // check modified fields and no violations
     assertFalse(result.getJSONObject("sideEffects").has("UPDATE"));
-    fooResult = SimpleFoo.findSimpleFooById(999L);
+
+    // verify that the server values are unchanged.
+    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
     assertEquals(45, (int) fooResult.getIntId());
     assertEquals("JSC", fooResult.getUserName());
+    assertEquals(savedVersion,
+        requestProcessor.encodePropertyValue(fooResult.getVersion()).toString());
+  }
+
+  /*
+   * This test differs from testEndToEndSmartDiff_NoChange in that the property
+   * that is changed here does not cause a version increment. As a result, no
+   * UPDATE is sent back.
+   */
+  public void testEndToEndSmartDiff_NoVersionChange() throws Exception {
+    com.google.gwt.requestfactory.server.SimpleFoo.reset();
+    // fetch object
+    JSONObject foo = fetchVerifyAndGetInitialObject();
+    // change the value on the server behind the back
+    SimpleFoo fooResult = SimpleFoo.findSimpleFooById(999L);
+    fooResult.setLongField(45L);
+    String savedVersion = requestProcessor.encodePropertyValue(fooResult.getVersion()).toString();
+    
+    // modify fields and sync -- there should be no change on the server.
+    foo.put("longField", 45L);
+    JSONObject result = getResultFromServer(foo);
+
+    // check modified fields and no violations
+    assertFalse(result.getJSONObject("sideEffects").has("UPDATE"));
+
+    // verify that the server values are unchanged.
+    fooResult = SimpleFoo.findSimpleFooById(999L);
+    assertEquals(45L, (long) fooResult.getLongField());
+    assertEquals(savedVersion,
+        requestProcessor.encodePropertyValue(fooResult.getVersion()).toString());
   }
 
   public void testEndToEndSmartDiff_SomeChangeWithNull() throws Exception {
