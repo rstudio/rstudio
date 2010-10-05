@@ -16,7 +16,6 @@
 package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.streamhtmlparser.HtmlParser;
 import com.google.gwt.thirdparty.streamhtmlparser.HtmlParserFactory;
@@ -110,7 +109,12 @@ public class SafeHtmlHostedModeUtils {
     forceCheckCompleteHtml = check;
   }
 
-  @VisibleForTesting
+  // The following annotation causes javadoc to crash on Mac OS X 10.5.8,
+  // using java 1.5.0_24.
+  //
+  // See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6442982
+  //
+  // @VisibleForTesting
   public static void setForceCheckCompleteHtmlFromProperty() {
     forceCheckCompleteHtml =
         System.getProperty(FORCE_CHECK_COMPLETE_HTML) != null;

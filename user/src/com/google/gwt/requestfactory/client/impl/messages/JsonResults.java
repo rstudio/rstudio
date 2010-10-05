@@ -25,7 +25,10 @@ import com.google.gwt.core.client.JsonUtils;
 public class JsonResults extends JavaScriptObject {
 
   public static JsonResults fromResults(String json) {
-    return JsonUtils.safeEval(json).cast();
+    // Avoid a compiler bug that occurs when this is all on one line.
+    // Bug found in Mac OS X 10.5.8 using javac 1.5.0_24.
+    JavaScriptObject results = JsonUtils.safeEval(json);
+    return results.cast();
   }
 
   protected JsonResults() {
