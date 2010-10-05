@@ -198,7 +198,7 @@ public abstract class ContentWidget extends LazyPanel
       String className = this.getClass().getName();
       className = className.substring(className.lastIndexOf(".") + 1);
       sendSourceRequest(
-          rc, ShowcaseConstants.DST_SOURCE_RAW + "/" + filename + ".html");
+          rc, ShowcaseConstants.DST_SOURCE_RAW + filename + ".html");
     }
   }
 
@@ -264,7 +264,7 @@ public abstract class ContentWidget extends LazyPanel
       String className = this.getClass().getName();
       className = className.substring(className.lastIndexOf(".") + 1);
       sendSourceRequest(
-          rc, ShowcaseConstants.DST_SOURCE_EXAMPLE + "/" + className + ".html");
+          rc, ShowcaseConstants.DST_SOURCE_EXAMPLE + className + ".html");
     }
   }
 
