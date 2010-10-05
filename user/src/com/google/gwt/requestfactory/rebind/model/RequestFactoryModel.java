@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.rebind.model.ModelUtils;
@@ -32,6 +33,8 @@ import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,6 +55,10 @@ public class RequestFactoryModel {
             + " to %s or %s", method.getReturnType(), method.getName(),
         requestInterface.getSimpleSourceName(),
         instanceRequestInterface.getSimpleSourceName());
+  }
+
+  static String poisonedMessage() {
+    return "Unable to create RequestFactoryModel model due to previous errors";
   }
 
   private final TreeLogger logger;
@@ -118,10 +125,10 @@ public class RequestFactoryModel {
     }
 
     if (poisoned) {
-      die("Unable to complete due to previous errors");
+      die(poisonedMessage());
     }
   }
-
+  
   public Collection<EntityProxyModel> getAllProxyModels() {
     return Collections.unmodifiableCollection(peers.values());
   }
@@ -150,14 +157,15 @@ public class RequestFactoryModel {
    * Examine a RequestContext subtype to populate a ContextMethod.
    */
   private void buildContextMethod(ContextMethod.Builder contextBuilder,
-      JClassType contextType) {
+      JClassType contextType) throws UnableToCompleteException {
     Service serviceAnnotation = contextType.getAnnotation(Service.class);
     if (serviceAnnotation == null) {
       poison("RequestContext subtype %s is missing a @%s annotation",
           contextType.getQualifiedSourceName(), Service.class.getSimpleName());
       return;
     }
-    contextBuilder.setServiceClass(serviceAnnotation.value());
+      Class<?> serviceClass = serviceAnnotation.value();
+      contextBuilder.setServiceClass(serviceClass);
 
     List<RequestMethod> requestMethods = new ArrayList<RequestMethod>();
     for (JMethod method : contextType.getInheritableMethods()) {
@@ -169,7 +177,7 @@ public class RequestFactoryModel {
       RequestMethod.Builder methodBuilder = new RequestMethod.Builder();
       methodBuilder.setDeclarationMethod(method);
 
-      if (!validateContextMethodAndSetDataType(methodBuilder, method)) {
+      if (!validateContextMethodAndSetDataType(methodBuilder, method, serviceClass)) {
         continue;
       }
 
@@ -184,7 +192,22 @@ public class RequestFactoryModel {
     throw new UnableToCompleteException();
   }
 
-  private EntityProxyModel getEntityProxyType(JClassType entityProxyType) {
+  /**
+   * Return a list of public methods that match the given methodName.
+   */
+  private List<Method> findMethods(Class<?> domainType, String methodName) {
+    List<Method> toReturn = new ArrayList<Method>();
+    for (Method method : domainType.getMethods()) {
+      if (methodName.equals(method.getName())
+          && (method.getModifiers() & Modifier.PUBLIC) != 0) {
+        toReturn.add(method);
+      }
+    }
+    return toReturn;
+  }
+
+  private EntityProxyModel getEntityProxyType(JClassType entityProxyType)
+      throws UnableToCompleteException {
     EntityProxyModel toReturn = peers.get(entityProxyType);
     if (toReturn == null) {
       EntityProxyModel.Builder inProgress = peerBuilders.get(entityProxyType);
@@ -204,8 +227,12 @@ public class RequestFactoryModel {
         poison("The %s type does not have a @%s annotation",
             entityProxyType.getQualifiedSourceName(),
             ProxyFor.class.getSimpleName());
+        // early exit, because further processing causes NPEs in numerous spots
+        die(poisonedMessage());
       } else {
-        builder.setProxyFor(proxyFor.value());
+        Class<?> domainType = proxyFor.value();
+        builder.setProxyFor(domainType);
+        validateDomainType(domainType);
       }
 
       // Look at the methods declared on the EntityProxy
@@ -237,7 +264,10 @@ public class RequestFactoryModel {
           continue;
         }
         validateTransportableType(methodBuilder, transportedType, false);
-        requestMethods.add(methodBuilder.build());
+        RequestMethod requestMethod = methodBuilder.build();
+        if (validateDomainBeanMethod(requestMethod, builder)) {
+          requestMethods.add(requestMethod);
+        }
       }
       builder.setRequestMethods(requestMethods);
 
@@ -246,6 +276,20 @@ public class RequestFactoryModel {
       peerBuilders.remove(entityProxyType);
     }
     return toReturn;
+  }
+
+  private boolean isStatic(Method domainMethod) {
+    return (domainMethod.getModifiers() & Modifier.STATIC) != 0;
+  }
+
+  private String methodLocation(Method domainMethod) {
+    return domainMethod.getDeclaringClass().getName() + "."
+        + domainMethod.getName();
+  }
+
+  private String methodLocation(JMethod proxyMethod) {
+    return proxyMethod.getEnclosingType().getName() + "."
+        + proxyMethod.getName();
   }
 
   private void poison(String message, Object... args) {
@@ -257,7 +301,8 @@ public class RequestFactoryModel {
    * Examine a RequestContext method to see if it returns a transportable type.
    */
   private boolean validateContextMethodAndSetDataType(
-      RequestMethod.Builder methodBuilder, JMethod method) {
+          RequestMethod.Builder methodBuilder, JMethod method, Class<?> serviceClass)
+      throws UnableToCompleteException {
     JClassType requestReturnType = method.getReturnType().isInterface();
     JClassType invocationReturnType;
     if (requestReturnType == null) {
@@ -267,14 +312,44 @@ public class RequestFactoryModel {
       return false;
     }
 
+    /*
+     * TODO: bad assumption
+     * Implicit assumption is that the Service and ProxyFor
+     * classes are the same. This is because an instance method should
+     * technically be looked up on the class that is the instance parameter,
+     * and not on the serviceClass, which consists of static service methods.
+     * Can't be fixed until it is fixed in JsonRequestProcessor.
+     */
+    Method domainMethod = validateExistsAndNotOverriden(method, serviceClass,
+        false);
+    if (domainMethod == null) {
+      return false;
+    }
+
+
     if (instanceRequestInterface.isAssignableFrom(requestReturnType)) {
+      if (isStatic(domainMethod)) {
+        poison("Method %s.%s is an instance method, "
+            + "while the corresponding method on %s is static",
+            method.getEnclosingType().getName(),
+            method.getName(),
+            serviceClass.getName());
+        return false;
+      }
       // Instance method invocation
       JClassType[] params = ModelUtils.findParameterizationOf(
           instanceRequestInterface, requestReturnType);
       methodBuilder.setInstanceType(getEntityProxyType(params[0]));
       invocationReturnType = params[1];
-
     } else if (requestInterface.isAssignableFrom(requestReturnType)) {
+      if (!isStatic(domainMethod)) {
+        poison("Method %s.%s is a static method, "
+            + "while the corresponding method on %s is not",
+            method.getEnclosingType().getName(),
+            method.getName(),
+            serviceClass.getName());
+        return false;
+      }
       // Static method invocation
       JClassType[] params = ModelUtils.findParameterizationOf(requestInterface,
           requestReturnType);
@@ -289,21 +364,168 @@ public class RequestFactoryModel {
 
     // Validate the parameters
     boolean paramsOk = true;
-    for (JParameter param : method.getParameters()) {
+    JParameter[] params = method.getParameters();
+    Class<?>[] domainParams = domainMethod.getParameterTypes();
+    if (params.length != domainParams.length) {
+      poison("Method %s.%s parameters do not match same method on %s",
+          method.getEnclosingType().getName(),
+          method.getName(),
+          serviceClass.getName());
+    }
+    for (int i = 0; i < params.length; ++i) {
+      JParameter param = params[i];
+      Class<?> domainParam = domainParams[i];
       paramsOk = validateTransportableType(new RequestMethod.Builder(),
           param.getType(), false)
+          && paramsOk;
+      paramsOk = validateProxyAndDomainTypeEquals(param.getType(), domainParam, i,
+          methodLocation(method), methodLocation(domainMethod))
           && paramsOk;
     }
 
     return validateTransportableType(methodBuilder, invocationReturnType, true)
+        && validateProxyAndDomainTypeEquals(invocationReturnType,
+        domainMethod.getReturnType(), -1, methodLocation(method),
+        methodLocation(domainMethod))
         && paramsOk;
+  }
+
+  /**
+   * Examine a domain method to see if it matches the proxy method.
+   */
+  private boolean validateDomainBeanMethod(RequestMethod requestMethod,
+      EntityProxyModel.Builder entityBuilder) throws UnableToCompleteException {
+    JMethod proxyMethod = requestMethod.getDeclarationMethod();
+    // check if method exists on domain object
+    Class<?> domainType = entityBuilder.peek().getProxyFor();
+    Method domainMethod = validateExistsAndNotOverriden(proxyMethod, domainType,
+        true);
+    if (domainMethod == null) {
+      return false;
+    }
+
+    boolean isGetter = proxyMethod.getName().startsWith("get");
+    if (isGetter) {
+      // compare return type of domain to proxy return type
+      String returnTypeName = domainMethod.getReturnType().getName();
+      // isEntityType() returns true for collections, but we want the Collection
+      String propertyTypeName =
+          requestMethod.isCollectionType() || requestMethod.isValueType() ?
+              requestMethod.getDataType().getQualifiedBinaryName() :
+              requestMethod.getEntityType().getProxyFor().getName();
+      if (!returnTypeName.equals(propertyTypeName)) {
+                  poison("Method %s.%s return type %s does not match return type %s "
+              + " of method %s.%s", domainType.getName(),
+              domainMethod.getName(), returnTypeName,
+              propertyTypeName,
+              proxyMethod.getEnclosingType().getName(), proxyMethod.getName());
+        return false;
+      }
+    }
+    JParameter[] proxyParams = proxyMethod.getParameters();
+    Class<?>[] domainParams = domainMethod.getParameterTypes();
+    if (proxyParams.length != domainParams.length) {
+       poison("Method %s.%s parameter mismatch with %s.%s",
+           proxyMethod.getEnclosingType().getName(),
+           proxyMethod.getName(),
+           domainType.getName(),
+           domainMethod.getName());
+      return false;
+    }
+    for (int i = 0; i < proxyParams.length; i++) {
+      JType proxyParam = proxyParams[i].getType();
+      Class<?> domainParam = domainParams[i];
+      if (!validateProxyAndDomainTypeEquals(proxyParam, domainParam, i,
+          methodLocation(proxyMethod), methodLocation(domainMethod))) {
+        poison("Parameter %d of %s.%s doesn't match method %s.%s",
+            i, proxyMethod.getEnclosingType().getName(),
+            proxyMethod.getName(),
+            domainType.getName(),
+            domainMethod.getName());
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Examine a domain type and see if it includes a getId() method.
+   */
+  private boolean validateDomainType(Class<?> domainType) {
+    try {
+        domainType.getMethod("getId");
+    } catch (NoSuchMethodException e) {
+        poison("The class %s is missing method getId()", domainType.getName());
+        return false;
+    }
+    try {
+        domainType.getMethod("getVersion");
+    } catch (NoSuchMethodException e) {
+        poison("The class %s is missing method getVersion()", domainType.getName());
+        return false;
+    }
+    return true;
+  }
+
+  private Method validateExistsAndNotOverriden(JMethod clientMethod,
+      Class<?> serverType, boolean isGetterOrSetter) {
+    List<Method> domainMethods = findMethods(serverType, clientMethod.getName());
+    if (domainMethods.size() == 0) {
+      poison("Method %s.%s has no corresponding public method on %s",
+          clientMethod.getEnclosingType().getQualifiedBinaryName(),
+          clientMethod.getName(), serverType.getName());
+      return null;
+    }
+    if (domainMethods.size() > 1) {
+      poison("Method %s.%s is overloaded on %s",
+          clientMethod.getEnclosingType().getQualifiedBinaryName(),
+          clientMethod.getName(), serverType.getName());
+      return null;
+    }
+    Method domainMethod = domainMethods.get(0);
+    if (isGetterOrSetter && isStatic(domainMethod)) {
+      poison("Method %s.%s is declared static", serverType.getName(),
+          domainMethod.getName());
+      return null;
+    }
+    return domainMethod;
+  }
+
+  /**
+   * Compare type from Proxy and Domain.
+   */
+  private boolean validateProxyAndDomainTypeEquals(JType proxyType,
+      Class<?> domainType, int paramNumber, String clientMethod,
+      String serverMethod) throws UnableToCompleteException {
+    boolean matchOk = false;
+    if (ModelUtils.isValueType(oracle, proxyType)
+        || collectionInterface.isAssignableFrom(proxyType.isClassOrInterface())) {
+      // allow int to match int or Integer
+      matchOk = proxyType.getQualifiedSourceName().equals(
+          ModelUtils.maybeAutobox(domainType).getName())
+        || proxyType.getQualifiedSourceName().equals(domainType.getName());
+    } else {
+      matchOk =  getEntityProxyType(
+          proxyType.isClassOrInterface()).getProxyFor().equals(domainType);
+    }
+    if (!matchOk) {
+      if (paramNumber < 0) {
+        poison("Return type of method %s does not match method %s", clientMethod,
+            serverMethod);
+      } else {
+         poison("Parameter %d of method %s does not match method %s",
+          paramNumber, clientMethod, serverMethod);
+      }
+    }
+    return matchOk;
   }
 
   /**
    * Examines a type to see if it can be transported.
    */
   private boolean validateTransportableType(
-      RequestMethod.Builder methodBuilder, JType type, boolean requireObject) {
+      RequestMethod.Builder methodBuilder, JType type, boolean requireObject)
+      throws UnableToCompleteException {
     JClassType transportedClass = type.isClassOrInterface();
     if (transportedClass == null) {
       if (requireObject) {
@@ -324,9 +546,14 @@ public class RequestFactoryModel {
       methodBuilder.setEntityType(getEntityProxyType(transportedClass));
     } else if (collectionInterface.isAssignableFrom(transportedClass)) {
       // Only allow certain collections for now
-      if (listInterface.equals(transportedClass.isParameterized().getBaseType())) {
+      JParameterizedType parameterized = transportedClass.isParameterized();
+      if (parameterized == null) {
+        poison("Requests that return collections of List or Set must be parameterized");
+        return false;
+      }
+      if (listInterface.equals(parameterized.getBaseType())) {
         methodBuilder.setCollectionType(CollectionType.LIST);
-      } else if (setInterface.equals(transportedClass.isParameterized().getBaseType())) {
+      } else if (setInterface.equals(parameterized.getBaseType())) {
         methodBuilder.setCollectionType(CollectionType.SET);
       } else {
         poison("Requests that return collections may be declared with"

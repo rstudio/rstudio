@@ -97,7 +97,7 @@ public class SimpleFoo {
       Map<Long, SimpleFoo> value = (Map<Long, SimpleFoo>) req.getSession().getAttribute(
           SimpleFoo.class.getCanonicalName());
       if (value == null) {
-        value = reset();
+        value = resetImpl();
       }
       return value;
     }
@@ -232,7 +232,11 @@ public class SimpleFoo {
     }
   }
 
-  public static synchronized Map<Long, SimpleFoo> reset() {
+  public static void reset() {
+    resetImpl();
+  }
+
+  public static synchronized Map<Long, SimpleFoo> resetImpl() {
     Map<Long, SimpleFoo> instance = new HashMap<Long, SimpleFoo>();
     // fixtures
     SimpleFoo s1 = new SimpleFoo();

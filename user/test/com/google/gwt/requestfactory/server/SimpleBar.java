@@ -80,7 +80,7 @@ public class SimpleBar {
       Map<String, SimpleBar> value = (Map<String, SimpleBar>) req.getSession().getAttribute(
           SimpleBar.class.getCanonicalName());
       if (value == null) {
-        value = reset();
+        value = resetImpl();
       }
       return value;
     }
@@ -95,7 +95,11 @@ public class SimpleBar {
     return toReturn;
   }
 
-  public static synchronized Map<String, SimpleBar> reset() {
+  public static void reset() {
+    resetImpl();
+  }
+
+  public static synchronized Map<String, SimpleBar> resetImpl() {
     Map<String, SimpleBar> instance = new HashMap<String, SimpleBar>();
     // fixtures
     SimpleBar s1 = new SimpleBar();
