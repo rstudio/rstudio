@@ -15,26 +15,18 @@
  */
 package com.google.gwt.sample.validation.shared;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
 /**
- * A sample bean to show validation on.
+ * This is always valid.
  */
-@NoOp
-public class Person implements IsSerializable {
+public class NoOpValidator implements ConstraintValidator<NoOp, Object> {
 
-  @NotNull
-  @Size(min = 4)
-  private String name;
-
-  public String getName() {
-    return name;
+  public void initialize(NoOp constraintAnnotation) {
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public boolean isValid(Object value, ConstraintValidatorContext context) {
+    return true;
   }
 }

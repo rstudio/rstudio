@@ -17,13 +17,17 @@ package com.google.gwt.validation.example.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.validation.example.client.ExampleGwtValidator.ClientGroup;
+import com.google.gwt.validation.example.client.ExampleGwtValidator.ServerGroup;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * Tests for {@link Author}.
@@ -39,6 +43,49 @@ public class AuthorTest extends GWTTestCase {
     return "com.google.gwt.validation.example.ValidationExample";
   }
 
+  // TODO(nchalko) handle more than one validator
+
+  // @GwtValidation(value = Author.class, groups =
+  // {ExampleGwtValidator.ClientGroup.class})
+  // public interface NotDefaultValidator extends Validator {
+  // }
+
+  // public void testNotDefaultValidtor_EmptyNotDefualt() throws Exception {
+  // NotDefaultValidator other = GWT.create(NotDefaultValidator.class);
+  // Set<ConstraintViolation<Author>> violations = other.validate(author);
+  // assertContentsAnyOrder("valid author", violations);
+  // }
+
+  public void testGroup_empty() throws Exception {
+    initValidAuthor();
+    Set<ConstraintViolation<Author>> violations = validator.validate(author);
+    assertContentsAnyOrder("valid author", violations);
+  }
+
+  public void testGroup_default() throws Exception {
+    initValidAuthor();
+    Set<ConstraintViolation<Author>> violations = validator.validate(author,
+        Default.class);
+    assertContentsAnyOrder("valid author", violations);
+  }
+
+  public void testGroup_clientGroup() throws Exception {
+    initValidAuthor();
+    Set<ConstraintViolation<Author>> violations = validator.validate(author,
+        ClientGroup.class);
+    assertContentsAnyOrder("valid author", violations);
+  }
+
+  public void testGroup_serverGroup() throws Exception {
+    initValidAuthor();
+    try {
+      validator.validate(author, ServerGroup.class);
+      fail("Expected a " + IllegalArgumentException.class);
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
   public void testValidate_string() {
     try {
       validator.validate("some string");
@@ -48,11 +95,24 @@ public class AuthorTest extends GWTTestCase {
   }
 
   public void testValidate_valid() {
+    initValidAuthor();
+    Set<ConstraintViolation<Author>> violations = validator.validate(author);
+    assertContentsAnyOrder("valid author", violations);
+  }
+
+  public void testValidate_companySize31() {
+    initValidAuthor();
+    author.setCompany("1234567890123456789012345678901");
+    Set<ConstraintViolation<Author>> violations = validator.validate(author);
+    assertContentsAnyOrder("company size 31", toMessage(violations),
+        "{javax.validation.constraints.Size.message}"
+        );
+  }
+
+  protected void initValidAuthor() {
     author.setFirstName("John");
     author.setLastName("Smith");
     author.setCompany("Google");
-    Set<ConstraintViolation<Author>> violations = validator.validate(author);
-    assertContentsAnyOrder("valid author", violations);
   }
 
   public void testValidateProperty_object() {
@@ -67,8 +127,7 @@ public class AuthorTest extends GWTTestCase {
     try {
       validator.validateValue(String.class, "notValid", "value");
       fail("Expected a " + IllegalArgumentException.class);
-    } catch (IllegalArgumentException e) {
-      // expected
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -82,11 +141,19 @@ public class AuthorTest extends GWTTestCase {
     author = new Author();
     validator = createValidator();
   }
+  
+  private <T> List<String> toMessage(Set<ConstraintViolation<T>> violations) {
+    List<String> messages = new ArrayList<String>();
+    for (ConstraintViolation<T> violation : violations) {
+      messages.add(violation.getMessage());
+    }
+    return messages;
+  }
 
   private <T> void assertContentsAnyOrder(String message,
       Iterable<T> actual, T... expected) {
 
-    List<T> expectedList = Arrays.asList(expected);
+    List<T> expectedList = new ArrayList<T>(Arrays.asList(expected));
     message += "Expected to find " + expectedList + " but found " + actual;
     for (T a : actual) {
       if (expectedList.contains(a)) {

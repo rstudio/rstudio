@@ -23,8 +23,10 @@ import javax.validation.constraints.Size;
 public class Author {
 
   private String firstName;
+
   @NotEmpty(message = "lastname must not be null")
   private String lastName;
+
   @Size(max = 30)
   private String company;
 

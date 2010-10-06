@@ -17,6 +17,7 @@ package com.google.gwt.validation.rebind;
 
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.user.rebind.AbstractSourceCreator;
@@ -46,13 +47,19 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
     this.validatorType = validatorType;
   }
 
-  public final String create() {
+  public final String create() throws UnableToCompleteException {
     SourceWriter sourceWriter = getSourceWriter(logger, context);
     if (sourceWriter != null) {
       writeClassBody(sourceWriter);
       sourceWriter.commit(logger);
     }
     return getQualifiedName();
+  }
+
+  protected void addImports(ClassSourceFileComposerFactory composerFactory, Class<?>... imports) {
+    for (Class<?> imp : imports) {
+      composerFactory.addImport(imp.getCanonicalName());
+    }
   }
 
   protected abstract void compose(ClassSourceFileComposerFactory composerFactory);
@@ -63,7 +70,8 @@ public abstract class AbstractCreator extends AbstractSourceCreator {
     return packageName;
   }
 
-  protected abstract void writeClassBody(SourceWriter sourceWriter);
+  protected abstract void writeClassBody(SourceWriter sourceWriter)
+      throws UnableToCompleteException;
 
   private String getQualifiedName() {
     String packageName = getPackage();

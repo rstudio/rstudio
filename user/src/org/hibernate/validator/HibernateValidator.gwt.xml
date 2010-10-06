@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+<!-- 
+Import this module to use Hibernate Validator during the compilation of validation classes for 
+gwt clients.
+ -->
+  <inherits name='com.google.gwt.validation.Validation' />
+  <source path="constraints">
+    <exclude name="impl/scriptassert/" />
+    <exclude name="super/" />
+  </source>
+  <source path="engine">
+    <include name="NodeImpl.java"/>
+  </source>
+  <super-source path="super" />
+</module>

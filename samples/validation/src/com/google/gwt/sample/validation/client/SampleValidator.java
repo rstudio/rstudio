@@ -19,11 +19,25 @@ import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.validation.client.GwtValidation;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * Validator marker for the Valiation Sample project. Only the classes listed in
  * the {@link GwtValidation} annotation can be validated.
  */
-@GwtValidation(Person.class)
+@GwtValidation(value = Person.class,
+ groups = {
+    Default.class, SampleValidator.ClientGroup.class})
 public interface SampleValidator extends Validator {
+  /**
+   * Client Validation Group
+   */
+  public interface ClientGroup {
+  }
+
+  /**
+   * Server Validation Group
+   */
+  public interface ServerGroup {
+  }
 }

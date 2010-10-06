@@ -24,12 +24,17 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
 
+import javax.validation.Validation;
+import javax.validation.Validator;
+
 /**
  * Generates a {@link com.google.gwt.validation.client.GwtSpecificValidator}.
  * <p>
  * This class is thread safe.
  */
 public class GwtSpecificValidatorGenerator extends Generator {
+
+  private final Validator serverSideValidor = Validation.buildDefaultValidatorFactory().getValidator();
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
@@ -59,7 +64,7 @@ public class GwtSpecificValidatorGenerator extends Generator {
     }
 
     AbstractCreator creator = new GwtSpecificValidatorCreator(validatorType,
-        beanType, beanHelper, logger, context);
+        beanType, beanHelper, logger, context, serverSideValidor);
     return creator.create();
   }
 

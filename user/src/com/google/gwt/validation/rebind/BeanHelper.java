@@ -17,17 +17,33 @@ package com.google.gwt.validation.rebind;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 
+import javax.validation.metadata.BeanDescriptor;
+
 /**
  * A simple struct for the various values associated with a Bean that can be
  * validated.
  */
 final class BeanHelper {
 
+  private final BeanDescriptor beanDescriptor;
   private final JClassType jClass;
 
-  public BeanHelper(JClassType jClass) {
+  public BeanHelper(JClassType jClass,
+      BeanDescriptor beanDescriptor) {
     super();
+    this.beanDescriptor = beanDescriptor;
     this.jClass = jClass;
+  }
+
+  public BeanDescriptor getBeanDescriptor() {
+    return beanDescriptor;
+  }
+
+  /*
+   * The server side validator needs an actual class.
+   */
+  public Class<?> getClazz() throws ClassNotFoundException {
+    return Class.forName(jClass.getQualifiedSourceName());
   }
 
   public String getDescriptorName() {

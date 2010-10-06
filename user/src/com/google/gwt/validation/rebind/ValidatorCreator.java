@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -29,19 +28,20 @@ import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
 import com.google.gwt.validation.client.impl.GwtValidationContext;
 
-import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
 import javax.validation.metadata.BeanDescriptor;
 
 /**
  * Class that creates the validator for the given input class.
  */
-public class ValidatorCreator {
+public class ValidatorCreator extends AbstractCreator {
 
   // stash the map in a ThreadLocal, since each GWT module lives in its own
   // thread in DevMode
@@ -61,68 +61,53 @@ public class ValidatorCreator {
   }
 
   private final Map<JClassType, BeanHelper> beansToValidate = new HashMap<JClassType, BeanHelper>();
-  private final GeneratorContext context;
-  private final TreeLogger logger;
-  private final JClassType validatorType;
+  private final GwtValidation gwtValidation;
+  private final Validator serverSideValidor = Validation.buildDefaultValidatorFactory().getValidator();
 
-  public ValidatorCreator(JClassType validatorType,
-      GwtValidation gwtValidation, TreeLogger logger,
+  public ValidatorCreator(JClassType validatorType, //
+      GwtValidation gwtValidation, //
+      TreeLogger logger, //
       GeneratorContext context) {
-    this.validatorType = validatorType;
-    this.logger = logger;
-    this.context = context;
+    super(context, logger, validatorType);
+    this.gwtValidation = gwtValidation;
     TypeOracle oracle = context.getTypeOracle();
 
     for (Class<?> clazz : gwtValidation.value()) {
       JClassType jClass = oracle.findType(clazz.getCanonicalName());
-      BeanHelper helper = new BeanHelper(jClass);
+      BeanHelper helper = new BeanHelper(jClass,
+          serverSideValidor.getConstraintsForClass(clazz));
       beansToValidate.put(jClass, helper);
     }
     threadLocalHelperMap.get().putAll(beansToValidate);
   }
 
-  public String create() {
-    SourceWriter sourceWriter = getSourceWriter(logger, context);
-    if (sourceWriter != null) {
+  @Override
+  protected void compose(ClassSourceFileComposerFactory composerFactory) {
+   addImports(composerFactory, 
+       GWT.class,
+       GwtBeanDescriptor.class,
+       GwtSpecificValidator.class,
+       GwtValidationContext.class,
+       Set.class,
+       ConstraintViolation.class,
+       BeanDescriptor.class);
+    composerFactory.setSuperclass(AbstractGwtValidator.class.getCanonicalName());
+    composerFactory.addImplementedInterface(this.validatorType.getQualifiedSourceName());
+  }
+
+  @Override
+  protected void writeClassBody(SourceWriter sourceWriter) {
       writeTypeSupport(sourceWriter);
+      sourceWriter.println();
+      writeConstructor(sourceWriter);
+      sourceWriter.println();
       writeValidate(sourceWriter);
+      sourceWriter.println();
       writeValidateProperty(sourceWriter);
+      sourceWriter.println();
       writeValidateValue(sourceWriter);
+      sourceWriter.println();
       writeGetConstraintsForClass(sourceWriter);
-
-      sourceWriter.commit(logger);
-    }
-    return getQaulifiedName();
-  }
-
-  protected void writeContext(SourceWriter sourceWriter, BeanHelper bean,
-      String objectName) {
-    sourceWriter.print(GwtValidationContext.class.getCanonicalName()
-        + "<T> context = new " + GwtValidationContext.class.getCanonicalName()
-        + "<T>(" + objectName + ",");
-    sourceWriter.println(bean.getValidatorInstanceName()
-        + ".getConstraints());");
-  }
-
-  protected void writeGetConstraintsForClass(SourceWriter sourceWriter) {
-    sourceWriter.println("public BeanDescriptor getConstraintsForClass(Class<?> clazz) {");
-    sourceWriter.indent();
-    sourceWriter.println("return null;");
-    sourceWriter.outdent();
-    sourceWriter.println("}");
-    sourceWriter.println();
-  }
-
-  protected void writeIfEqulsBeanType(SourceWriter sourceWriter, BeanHelper bean) {
-    sourceWriter.println("if (object.getClass().equals("
-        + bean.getTypeCanonicalName() + ".class)) {");
-  }
-
-  protected void writeThrowIllegalArgumnet(SourceWriter sourceWriter) {
-    sourceWriter.print("throw new IllegalArgumentException(\""
-        + this.validatorType.getName() + " can only validate ");
-    sourceWriter.print(beansToValidate.toString());
-    sourceWriter.println("\");");
   }
 
   protected void writeTypeSupport(SourceWriter sw) {
@@ -142,47 +127,129 @@ public class ValidatorCreator {
 
       sw.print("private final " + bean.getValidatorName() + " ");
       sw.print(bean.getValidatorInstanceName());
-      sw.print(" = GWT.create(" + bean.getValidatorName() + ".class);");
-      sw.println();
+      sw.println(" = GWT.create(" + bean.getValidatorName() + ".class);");
     }
   }
 
-  protected void writeValidate(SourceWriter sw) {
+  private String getQaulifiedName() {
+    return validatorType.getQualifiedSourceName() + "Impl";
+  }
+
+  private String getSimpleName() {
+    return validatorType.getSimpleSourceName() + "Impl";
+  }
+
+  private void writeConstructor(SourceWriter sw) {
+    // public MyValidator() {
+    sw.println("public " + getSimpleName() + "() {");
+    sw.indent();
+
+    // super( <<groups>>);
+    sw.print("super(");
+    boolean first = true;
+    for (Class<?> group : gwtValidation.groups()) {
+      if (!first) {
+        sw.print(", ");
+      } else {
+        first = false;
+      }
+      sw.print(group.getCanonicalName() + ".class");
+    }
+    sw.println(");");
+
+    sw.outdent();
+    sw.println("}");
+  }
+
+  private void writeContext(SourceWriter sw, BeanHelper bean, String objectName) {
+    // GwtValidationContext<T> context =
+    // new GwtValidationContext<T>(object,myBeanValidator.getConstraints());
+    sw.print(GwtValidationContext.class.getSimpleName());
+    sw.print("<T> context =");
+    sw.print("    new " + GwtValidationContext.class.getSimpleName());
+    sw.print("<T>(" + objectName + ", ");
+    sw.print(bean.getValidatorInstanceName());
+    sw.print(".getConstraints()");
+    sw.println(");");
+  }
+
+  private void writeGetConstraintsForClass(SourceWriter sourceWriter) {
+    sourceWriter.println("public BeanDescriptor getConstraintsForClass(Class<?> clazz) {");
+    sourceWriter.indent();
+    sourceWriter.println("return null;");
+    sourceWriter.outdent();
+    sourceWriter.println("}");
+  }
+
+  private void writeIfEqulsBeanType(SourceWriter sourceWriter, BeanHelper bean) {
+    sourceWriter.println("if (object.getClass().equals("
+        + bean.getTypeCanonicalName() + ".class)) {");
+  }
+
+  private void writeThrowIllegalArgumnet(SourceWriter sourceWriter) {
+    sourceWriter.print("throw new IllegalArgumentException(\""
+        + this.validatorType.getName() + " can only validate ");
+    sourceWriter.print(beansToValidate.toString());
+    sourceWriter.println("\");");
+  }
+
+  private void writeValidate(SourceWriter sw) {
+    // public <T> Set<ConstraintViolation<T>> validate(T object, Class<?>...
+    // groups) {
     sw.println("public <T> Set<ConstraintViolation<T>> validate(T object, Class<?>... groups) {");
     sw.indent();
+
+    sw.println("checkNotNull(object, \"object\");");
+    sw.println("checkNotNull(groups, \"groups\");");
+    sw.println("checkGroups(groups);");
+
     for (BeanHelper bean : beansToValidate.values()) {
       writeValidate(sw, bean);
     }
+
     writeThrowIllegalArgumnet(sw);
-    sw.outdent(); // class
+
+    sw.outdent();
     sw.println("}");
-    sw.println();
   }
 
-  protected void writeValidate(SourceWriter sw, BeanHelper bean) {
+  private void writeValidate(SourceWriter sw, BeanHelper bean) {
     writeIfEqulsBeanType(sw, bean);
     sw.indent();
+
     writeContext(sw, bean, "object");
-    sw.print("return " + bean.getValidatorInstanceName()
-        + ".validate(context, (" + bean.getTypeCanonicalName() + ") object, ");
+
+    // return personValidator.validate(context, (<<MyBean>>) object, groups);
+    sw.print("return ");
+    sw.print(bean.getValidatorInstanceName() + ".validate(");
+    sw.print("context, ");
+    sw.print("(" + bean.getTypeCanonicalName() + ") object, ");
     sw.println("groups);");
-    sw.outdent(); // if
+
+    sw.outdent();
     sw.println("}");
   }
 
-  protected void writeValidateProperty(SourceWriter sw) {
+  private void writeValidateProperty(SourceWriter sw) {
     sw.println("public <T> Set<ConstraintViolation<T>> validateProperty(T object,String propertyName, Class<?>... groups) {");
     sw.indent();
+
+    sw.println("checkNotNull(object, \"object\");");
+    sw.println("checkNotNull(propertyName, \"propertyName\");");
+    sw.println("checkNotNull(groups, \"groups\");");
+    sw.println("checkGroups(groups);");
+
     for (BeanHelper bean : beansToValidate.values()) {
       writeValidateProperty(sw, bean);
     }
+
     writeThrowIllegalArgumnet(sw);
+
     sw.outdent();
     sw.println("}");
-    sw.println();
   }
 
-  protected void writeValidateProperty(SourceWriter sw, BeanHelper bean) {
+  private void writeValidateProperty(SourceWriter sw, BeanHelper bean) {
     writeIfEqulsBeanType(sw, bean);
     sw.indent();
     writeContext(sw, bean, "object");
@@ -194,19 +261,26 @@ public class ValidatorCreator {
     sw.println("}");
   }
 
-  protected void writeValidateValue(SourceWriter sw) {
+  private void writeValidateValue(SourceWriter sw) {
     sw.println("public <T> Set<ConstraintViolation<T>> validateValue(Class<T> beanType, String propertyName, Object value, Class<?>... groups) {");
     sw.indent();
+
+    sw.println("checkNotNull(beanType, \"beanType\");");
+    sw.println("checkNotNull(propertyName, \"propertyName\");");
+    sw.println("checkNotNull(groups, \"groups\");");
+    sw.println("checkGroups(groups);");
+
     for (BeanHelper bean : beansToValidate.values()) {
       writeValidateValue(sw, bean);
     }
+
     writeThrowIllegalArgumnet(sw);
+
     sw.outdent();
     sw.println("}");
-    sw.println();
   }
 
-  protected void writeValidateValue(SourceWriter sw, BeanHelper bean) {
+  private void writeValidateValue(SourceWriter sw, BeanHelper bean) {
     sw.println("if (beanType.getClass().equals(" + bean.getTypeCanonicalName()
         + ".class)) {");
     sw.indent();
@@ -216,44 +290,5 @@ public class ValidatorCreator {
         + ">)beanType, propertyName, value, groups);");
     sw.outdent(); // if
     sw.println("}");
-  }
-
-  private String getQaulifiedName() {
-    return validatorType.getQualifiedSourceName() + "Impl";
-  }
-
-  private String getSimpleName() {
-    return validatorType.getSimpleSourceName() + "Impl";
-  }
-
-  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
-    JPackage serviceIntfPkg = validatorType.getPackage();
-    String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
-    String simpleName = getSimpleName();
-    PrintWriter printWriter = ctx.tryCreate(logger, packageName, simpleName);
-    if (printWriter == null) {
-      return null;
-    }
-
-    ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
-        packageName, simpleName);
-
-    String[] imports = new String[]{
-        GWT.class.getCanonicalName(),
-        GwtBeanDescriptor.class.getCanonicalName(),
-        GwtSpecificValidator.class.getCanonicalName(),
-        GwtValidationContext.class.getCanonicalName(),
-        Set.class.getCanonicalName(),
-        ConstraintViolation.class.getCanonicalName(),
-        BeanDescriptor.class.getCanonicalName()};
-    for (String imp : imports) {
-      composerFactory.addImport(imp);
-    }
-
-    composerFactory.setSuperclass(AbstractGwtValidator.class.getCanonicalName());
-    SourceWriter sourceWriter = composerFactory.createSourceWriter(ctx,
-        printWriter);
-
-    return sourceWriter;
   }
 }

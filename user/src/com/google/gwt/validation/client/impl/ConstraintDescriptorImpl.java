@@ -15,7 +15,10 @@
  */
 package com.google.gwt.validation.client.impl;
 
+
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +50,7 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
     private boolean reportAsSingleViolation;
 
     public ConstraintDescriptorImpl<T> build() {
-      return new ConstraintDescriptorImpl<T>(
+      return new ConstraintDescriptorImpl<T>(//
           annotation, //
           groups, //
           payload, //
@@ -79,13 +82,34 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements
       return this;
     }
 
+    /**
+     * @param classes
+     * @return
+     */
+    public Builder<T> setConstraintValidatorClasses(
+        Class<? extends ConstraintValidator<T, ?>>[] constraintValidatorClasses) {
+      List<Class<? extends ConstraintValidator<T, ?>>> list = Arrays.asList(constraintValidatorClasses);
+      setConstraintValidatorClasses(list);
+      return this;
+    }
+
     public Builder<T> setGroups(Set<Class<?>> groups) {
       this.groups = groups;
       return this;
     }
 
+    public Builder<T> setGroups(Class<?>[] classes) {
+      setGroups(new HashSet<Class<?>>(Arrays.asList(classes)));
+      return this;
+    }
+
     public Builder<T> setPayload(Set<Class<? extends Payload>> payload) {
       this.payload = payload;
+      return this;
+    }
+
+    public Builder<T> setPayload(Class<? extends Payload>[] classes) {
+      setPayload(new HashSet<Class<? extends Payload>>(Arrays.asList(classes)));
       return this;
     }
 

@@ -16,14 +16,29 @@
 package com.google.gwt.validation.example.client;
 
 import com.google.gwt.validation.client.GwtValidation;
+import com.google.gwt.validation.example.client.ExampleGwtValidator.ClientGroup;
 
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * Example top level class to create a {@link Validator}.
  *
  * GWT.create instances of this class
  */
-@GwtValidation(Author.class)
+@GwtValidation(
+    value = {Author.class}, 
+    groups = {Default.class, ClientGroup.class})
 public interface ExampleGwtValidator extends Validator {
+  /**
+   * The Client Validation Group
+   */
+  public interface ClientGroup {
+  }
+
+  /**
+   * The Server Validation Group
+   */
+  public interface ServerGroup {
+  }
 }

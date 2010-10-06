@@ -16,6 +16,9 @@
 package com.google.gwt.validation.client.impl;
 
 import java.lang.annotation.Annotation;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintValidator;
@@ -32,6 +35,31 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     GwtSpecificValidator<G> {
 
   /**
+   * Builds attributes one at a time.
+   * <p>
+   * Used to create a attribute map for annotations.
+   */
+  public static final class AttributeBuilder {
+   private final HashMap<String, Object> tempMap = new HashMap<String, Object>();
+
+    private AttributeBuilder() {
+    }
+
+    public Map<String, Object> build() {
+      return Collections.unmodifiableMap(tempMap);
+    }
+
+    public AttributeBuilder put(String key, Object value) {
+      tempMap.put(key, value);
+      return this;
+    }
+  }
+
+  public static AttributeBuilder attributeBuilder() {
+    return new AttributeBuilder();
+  }
+
+  /**
    * @param <A>
    * @param <T>
    * @param <V>
@@ -45,7 +73,7 @@ public abstract class AbstractGwtSpecificValidator<G> implements
    */
   protected <A extends Annotation, T, V> void validate(
       GwtValidationContext<T> context, Set<ConstraintViolation<T>> violations,
-      G object, V value, ConstraintValidator<A, V> validator,
+      G object, V value, ConstraintValidator<A, ? super V> validator,
       ConstraintDescriptorImpl<A> constraintDescriptor, Class<?>[] groups) {
     validator.initialize(constraintDescriptor.getAnnotation());
     ConstraintValidatorContextImpl<A, V> constraintValidatorContext =

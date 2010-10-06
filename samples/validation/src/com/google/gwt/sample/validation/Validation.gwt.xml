@@ -16,7 +16,7 @@
   <inherits name='com.google.gwt.rpc.RPC'/>
   <inherits name='com.google.gwt.user.User'/>
   <inherits name='com.google.gwt.user.theme.standard.Standard'/>
-  <inherits name='com.google.gwt.validation.Validation'/>
+  <inherits name='org.hibernate.validator.HibernateValidator'/>
 
   <entry-point class='com.google.gwt.sample.validation.client.Validation'/>
 
