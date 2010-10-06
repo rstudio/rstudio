@@ -9,7 +9,7 @@
   
   <servlet-mapping>
     <servlet-name>myServlet</servlet-name>
-    <url-pattern>/logexample/log</url-pattern>
+    <url-pattern>logexample/my_service</url-pattern>
   </servlet-mapping>
 
   <servlet>
