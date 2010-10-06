@@ -23,6 +23,8 @@ import com.google.gwt.editor.client.EditorDelegate;
 import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.editor.client.HasEditorDelegate;
 import com.google.gwt.editor.client.HasEditorErrors;
+import com.google.gwt.editor.client.adapters.EditorSource;
+import com.google.gwt.editor.client.adapters.ListEditor;
 import com.google.gwt.editor.client.adapters.SimpleEditor;
 import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.client.RequestFactoryTestBase;
@@ -55,6 +57,10 @@ public class EditorTest extends RequestFactoryTestBase {
       RequestFactoryEditorDriver<SimpleFooProxy, SimpleFooEditor> {
   }
 
+  static class SimpleFooBarOnlyEditor implements Editor<SimpleFooProxy> {
+    SimpleBarEditor barField = new SimpleBarEditor();
+  }
+
   static class SimpleFooEditor implements HasEditorErrors<SimpleFooProxy> {
     /**
      * Test field-based access.
@@ -66,6 +72,13 @@ public class EditorTest extends RequestFactoryTestBase {
      */
     @Path("barField.userName")
     final SimpleEditor<String> barName = SimpleEditor.of();
+
+    final ListEditor<SimpleFooProxy, SimpleFooBarOnlyEditor> selfOneToManyField = ListEditor.of(new EditorSource<SimpleFooBarOnlyEditor>() {
+      @Override
+      public SimpleFooBarOnlyEditor create(int index) {
+        return new SimpleFooBarOnlyEditor();
+      }
+    });
 
     private final SimpleBarEditor barEditor = new SimpleBarEditor();
 
@@ -108,32 +121,32 @@ public class EditorTest extends RequestFactoryTestBase {
     driver.initialize(req, editor);
 
     req.simpleFooRequest().findSimpleFooById(1L).with(driver.getPaths()).fire(
-    new Receiver<SimpleFooProxy>() {
-      @Override
-      public void onSuccess(SimpleFooProxy response) {
-    
-        SimpleFooRequest context = req.simpleFooRequest();
-        driver.edit(response, context);
-        context.persistAndReturnSelf().using(response).with(
-            driver.getPaths()).to(new Receiver<SimpleFooProxy>() {
+        new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
-            assertEquals("EditorFooTest", response.getUserName());
-            assertEquals("EditorBarTest",
-                response.getBarField().getUserName());
-            finishTestAndReset();
+
+            SimpleFooRequest context = req.simpleFooRequest();
+            driver.edit(response, context);
+            context.persistAndReturnSelf().using(response).with(
+                driver.getPaths()).to(new Receiver<SimpleFooProxy>() {
+              @Override
+              public void onSuccess(SimpleFooProxy response) {
+                assertEquals("EditorFooTest", response.getUserName());
+                assertEquals("EditorBarTest",
+                    response.getBarField().getUserName());
+                finishTestAndReset();
+              }
+            });
+            assertEquals("GWT", editor.userName.getValue());
+            assertEquals("FOO", editor.barEditor().userName.getValue());
+            assertEquals("FOO", editor.barName.getValue());
+            editor.userName.setValue("EditorFooTest");
+            // When there are duplicate paths, last declared editor wins
+            editor.barEditor().userName.setValue("EditorBarTest");
+            editor.barName.setValue("ignored");
+            driver.flush().fire();
           }
         });
-        assertEquals("GWT", editor.userName.getValue());
-        assertEquals("FOO", editor.barEditor().userName.getValue());
-        assertEquals("FOO", editor.barName.getValue());
-        editor.userName.setValue("EditorFooTest");
-        // When there are duplicate paths, last declared editor wins
-        editor.barEditor().userName.setValue("EditorBarTest");
-        editor.barName.setValue("ignored");
-        driver.flush().fire();
-      }
-    });
   }
 
   public void testNoSubscription() {
@@ -141,10 +154,10 @@ public class EditorTest extends RequestFactoryTestBase {
 
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
     driver.initialize(req, editor);
-    
+
     /*
      * Confirm that it's always safe to call subscribe. The editor's delegate
-     * isn't set until edit is called, so edit nothing. 
+     * isn't set until edit is called, so edit nothing.
      */
     driver.edit(null, null);
     assertNull(editor.delegate.subscribe());
@@ -157,10 +170,11 @@ public class EditorTest extends RequestFactoryTestBase {
     final SimpleFooDriver driver = GWT.create(SimpleFooDriver.class);
     driver.initialize(req, editor);
 
-    assertEquals(Arrays.asList("barField.userName", "barField"),
-        Arrays.asList(driver.getPaths()));
+    String[] paths = driver.getPaths();
+    assertEquals(Arrays.asList("barField.userName", "selfOneToManyField", 
+        "selfOneToManyField.barField", "barField"), Arrays.asList(paths));
 
-    req.simpleFooRequest().findSimpleFooById(1L).with(driver.getPaths()).fire(
+    req.simpleFooRequest().findSimpleFooById(1L).with(paths).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
@@ -202,7 +216,7 @@ public class EditorTest extends RequestFactoryTestBase {
           }
         });
   }
-  
+
   public void testViolations() {
     delayTestFinish(TEST_TIMEOUT);
     final SimpleFooEditor editor = new SimpleFooEditor();

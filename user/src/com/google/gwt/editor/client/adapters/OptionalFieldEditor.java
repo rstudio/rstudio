@@ -63,6 +63,10 @@ public class OptionalFieldEditor<T, E extends Editor<T>> implements
     this.subEditor = subEditor;
   }
 
+  public E createEditorForTraversal() {
+    return subEditor;
+  }
+
   public void flush() {
     currentValue = chain.getValue(subEditor);
   }

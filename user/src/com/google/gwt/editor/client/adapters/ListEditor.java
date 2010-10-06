@@ -52,6 +52,12 @@ public class ListEditor<T, E extends Editor<T>> implements
     this.editorSource = source;
   }
 
+  public E createEditorForTraversal() {
+    E toReturn = editorSource.create(0);
+    editorSource.dispose(toReturn);
+    return toReturn;
+  }
+
   public void flush() {
     list.flush();
   }

@@ -60,7 +60,7 @@ public class EditorModel {
         if (compositeEditorIntf.equals(parameterized.getBaseType())) {
           JClassType[] typeArgs = parameterized.getTypeArgs();
           assert typeArgs.length == 3;
-          return new JClassType[] {typeArgs[1], typeArgs[2]};
+          return new JClassType[]{typeArgs[1], typeArgs[2]};
         }
       }
     }
@@ -83,8 +83,8 @@ public class EditorModel {
     if (parameterization != null) {
       return parameterization[0];
     }
-    logger.log(TreeLogger.ERROR, noEditorParameterizationMessage(editorIntf,
-        editorType));
+    logger.log(TreeLogger.ERROR,
+        noEditorParameterizationMessage(editorIntf, editorType));
     throw new UnableToCompleteException();
   }
 
@@ -102,8 +102,8 @@ public class EditorModel {
     if (parameterization != null) {
       return parameterization[0];
     }
-    logger.log(TreeLogger.ERROR, noEditorParameterizationMessage(editorIntf,
-        editorType));
+    logger.log(TreeLogger.ERROR,
+        noEditorParameterizationMessage(editorIntf, editorType));
     throw new UnableToCompleteException();
   }
 
@@ -326,6 +326,10 @@ public class EditorModel {
               && isEditorIntf.isAssignableFrom(editorType)) {
             // Ignore IsEditor.asEditor()
             continue;
+          } else if (access.getPath().equals("createEditorForTraversal")
+              && compositeEditorIntf.isAssignableFrom(editorType)) {
+            // Ignore CompositeEditor.createEditorForTraversal();
+            continue;
           }
           List<EditorData> data = createEditorData(access);
           accumulateEditorData(data, flatData, toReturn);
@@ -376,8 +380,8 @@ public class EditorModel {
 
     // Are we looking at a view that implements IsEditor?
     if (access.isEditor()) {
-      EditorAccess subAccess = EditorAccess.via(access, calculateIsEditedType(
-          subLogger, access.getEditorType()));
+      EditorAccess subAccess = EditorAccess.via(access,
+          calculateIsEditedType(subLogger, access.getEditorType()));
       toReturn = createEditorData(subAccess);
 
       // If an object only implements IsEditor, return now

@@ -82,6 +82,12 @@ public interface CompositeEditor<T, C, E extends Editor<C>> extends
   }
 
   /**
+   * Returns an canonical sub-editor instance that will be used by the driver
+   * for computing all edited paths.
+   */
+  E createEditorForTraversal();
+
+  /**
    * Used to implement {@link EditorDelegate#getPath()}.
    */
   String getPathElement(E subEditor);

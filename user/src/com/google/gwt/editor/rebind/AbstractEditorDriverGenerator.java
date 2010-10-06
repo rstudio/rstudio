@@ -194,8 +194,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
       for (EditorData d : data) {
         String mutableObjectExpression;
         if (d.getBeanOwnerExpression().length() > 0) {
-          mutableObjectExpression = mutableObjectExpression(d, String.format(
-              "(getObject()%s)", d.getBeanOwnerExpression()));
+          mutableObjectExpression = mutableObjectExpression(d,
+              String.format("(getObject()%s)", d.getBeanOwnerExpression()));
         } else {
           mutableObjectExpression = "getObject()";
         }
@@ -294,7 +294,8 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
           editor.getQualifiedSourceName(), List.class.getName());
       sw.indent();
       for (EditorData d : data) {
-        if (d.isDelegateRequired() || d.isDeclaredPathNested()) {
+        if (d.isDelegateRequired() || d.isDeclaredPathNested()
+            || d.isCompositeEditor()) {
           // if (editor.subEditor != null) {
           sw.println("if (editor.%s != null) {", d.getSimpleExpression());
           sw.indent();
@@ -307,6 +308,15 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
             // fooDelegate.traverseEditor(editor.subEditor, localPath, paths);
             sw.println("%s.traverseEditor(editor.%s, localPath, paths);",
                 getEditorDelegate(d), d.getSimpleExpression());
+          }
+          if (d.isCompositeEditor()) {
+            /*
+             * composedDelegate.traverseEditor(editor.subEditor.
+             * createEditorForTraversal(), localPath, paths);
+             */
+            sw.println(
+                "%s.traverseEditor(editor.%s.createEditorForTraversal(), localPath, paths);",
+                getEditorDelegate(d.getComposedData()), d.getSimpleExpression());
           }
           sw.outdent();
           sw.println("}");
@@ -330,7 +340,7 @@ public abstract class AbstractEditorDriverGenerator extends Generator {
    * @param context
    * @param model
    * @param sw
-   *
+   * 
    * @throws UnableToCompleteException
    */
   protected void writeAdditionalContent(TreeLogger logger,
