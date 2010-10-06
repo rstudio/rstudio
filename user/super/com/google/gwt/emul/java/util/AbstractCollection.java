@@ -142,7 +142,8 @@ public abstract class AbstractCollection<E> implements Collection<E> {
       } else {
         comma = ", ";
       }
-      sb.append(String.valueOf(iter.next()));
+      E value = iter.next();
+      sb.append(value == this ? "(this Collection)" : String.valueOf(value));
     }
     sb.append("]");
     return sb.toString();
