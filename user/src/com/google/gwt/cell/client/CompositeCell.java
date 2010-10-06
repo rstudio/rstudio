@@ -37,10 +37,6 @@ import java.util.Set;
  * Div), the component cells will stack vertically.
  * </p>
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <C> the type that this Cell represents
  */
 public class CompositeCell<C> extends AbstractCell<C> {
@@ -179,6 +175,22 @@ public class CompositeCell<C> extends AbstractCell<C> {
     return parent;
   }
 
+  /**
+   * Render the composite cell as HTML into a {@link SafeHtmlBuilder}, suitable
+   * for passing to {@link Element#setInnerHTML} on a container element.
+   * 
+   * <p>
+   * Note: If your cell contains natively focusable elements, such as buttons or
+   * input elements, be sure to set the tabIndex to -1 so that they do not steal
+   * focus away from the containing widget.
+   * </p>
+   * 
+   * @param value the cell value to be rendered
+   * @param key the unique key associated with the row object
+   * @param sb the {@link SafeHtmlBuilder} to be written to
+   * @param hasCell a {@link HasCell} instance containing the cells to be
+   *          rendered within this cell
+   */
   protected <X> void render(C value, Object key, SafeHtmlBuilder sb,
       HasCell<C, X> hasCell) {
     Cell<X> cell = hasCell.getCell();

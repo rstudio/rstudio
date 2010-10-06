@@ -308,6 +308,9 @@ public class CellList<T> extends AbstractHasData<T> {
     }
   }
 
+  /**
+   * Return the cell used to render each item.
+   */
   protected Cell<T> getCell() {
     return cell;
   }

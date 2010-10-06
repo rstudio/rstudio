@@ -25,11 +25,17 @@ public class SafeHtmlHeader extends Header<SafeHtml> {
 
   private SafeHtml text;
 
+  /**
+   * Construct a Header with a given {@link SafeHtml} text value.
+   */
   public SafeHtmlHeader(SafeHtml text) {
     super(new SafeHtmlCell());
     this.text = text;
   }
 
+  /**
+   * Return the {@link SafeHtml} text value.
+   */
   @Override
   public SafeHtml getValue() {
     return text;

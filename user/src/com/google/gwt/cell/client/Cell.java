@@ -90,15 +90,15 @@ public interface Cell<C> {
       ValueUpdater<C> valueUpdater);
 
   /**
-   * Render a cell as HTML into a StringBuilder, suitable for passing to
-   * {@link Element#setInnerHTML} on a container element.
-   *
+   * Render a cell as HTML into a {@link SafeHtmlBuilder}, suitable for passing
+   * to {@link Element#setInnerHTML} on a container element.
+   * 
    * <p>
    * Note: If your cell contains natively focusable elements, such as buttons or
    * input elements, be sure to set the tabIndex to -1 so that they do not steal
    * focus away from the containing widget.
    * </p>
-   *
+   * 
    * @param value the cell value to be rendered
    * @param key the unique key associated with the row object
    * @param sb the {@link SafeHtmlBuilder} to be written to

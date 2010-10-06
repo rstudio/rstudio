@@ -26,10 +26,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 /**
  * A {@link Cell} used to render a checkbox. The value of the checkbox may be
  * toggled using the ENTER key as well as via mouse click.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
 

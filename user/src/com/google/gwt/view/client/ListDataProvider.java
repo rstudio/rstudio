@@ -145,7 +145,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
     private final ListWrapper delegate;
 
     /**
-     * Set to true if the pending flush has been cancelled.
+     * Set to true if the pending flush has been canceled.
      */
     private boolean flushCancelled;
 
@@ -441,12 +441,12 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
   }
 
   /**
-   * Creates a list model that wraps the given collection. Changes to the
+   * Creates a list model that wraps the given list. Changes to the
    * wrapped list must be made via this model in order to be correctly applied
    * to displays.
    */
-  public ListDataProvider(List<T> wrappee) {
-    this(wrappee, null);
+  public ListDataProvider(List<T> listToWrap) {
+    this(listToWrap, null);
   }
 
   /**
@@ -460,16 +460,16 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
   }
 
   /**
-   * Creates a list model that wraps the given collection. Changes to the
+   * Creates a list model that wraps the given list. Changes to the
    * wrapped list must be made via this model in order to be correctly applied
    * to displays.
    *
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
    *        object should act as its own key
    */
-  public ListDataProvider(List<T> wrappee, ProvidesKey<T> keyProvider) {
+  public ListDataProvider(List<T> listToWrap, ProvidesKey<T> keyProvider) {
     super(keyProvider);
-    listWrapper = new ListWrapper(wrappee);
+    listWrapper = new ListWrapper(listToWrap);
   }
 
   /**
@@ -502,12 +502,12 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
   }
 
   /**
-   * Replaces this model's list.
+   * Replace this model's list.
    *
-   * @param wrappee the model's new list
+   * @param listToWrap the model's new list
    */
-  public void setList(List<T> wrappee) {
-    listWrapper = new ListWrapper(wrappee);
+  public void setList(List<T> listToWrap) {
+    listWrapper = new ListWrapper(listToWrap);
     listWrapper.minModified = 0;
     listWrapper.maxModified = listWrapper.size();
     listWrapper.modified = true;

@@ -25,10 +25,6 @@ import java.util.Date;
 
 /**
  * A {@link Cell} used to render {@link Date}s.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public class DateCell extends AbstractCell<Date> {
 

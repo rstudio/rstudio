@@ -22,10 +22,6 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
  * A {@link Cell} used to render text.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public class TextCell extends AbstractSafeHtmlCell<String> {
 

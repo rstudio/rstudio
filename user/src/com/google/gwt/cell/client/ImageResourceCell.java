@@ -22,7 +22,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 /**
- * A {@link AbstractCell} used to render an {@link ImageResource}.
+ * An {@link AbstractCell} used to render an {@link ImageResource}.
  *
  * <p>
  * This class assumes that the URL returned from ImageResource is safe from
@@ -32,6 +32,12 @@ import com.google.gwt.user.client.ui.AbstractImagePrototype;
  * URL before returning it from {@link ImageResource#getURL()}.
  */
 public class ImageResourceCell extends AbstractCell<ImageResource> {
+  
+  /**
+   * Construct a new ImageResourceCell.
+   */
+  public ImageResourceCell() {
+  }
 
   @Override
   public void render(ImageResource value, Object key, SafeHtmlBuilder sb) {

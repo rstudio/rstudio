@@ -30,7 +30,7 @@ public class SelectionChangeEvent extends
   public static interface Handler extends EventHandler {
 
     /**
-     * Called when {@link SelectionChangeEvent} is fired.
+     * Called when a {@link SelectionChangeEvent} is fired.
      *
      * @param event the {@link SelectionChangeEvent} that was fired
      */

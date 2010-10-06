@@ -95,17 +95,23 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     private static final int DEFAULT_ANIMATION_DURATION = 450;
 
     /**
-     * The duration of the animation.
+     * The duration of the animation in milliseconds.
      */
     private int duration = DEFAULT_ANIMATION_DURATION;
 
     NodeAnimation() {
     }
 
+    /**
+     * Return the duration of the animation in milliseconds.
+     */
     public int getDuration() {
       return duration;
     }
 
+    /**
+     * Set the duration of the animation in milliseconds.
+     */
     public void setDuration(int duration) {
       this.duration = duration;
     }
@@ -401,7 +407,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     String cellTreeTopItemImageValue();
 
     /**
-     * Applies to the widget.
+     * Applied to the widget.
      */
     String cellTreeWidget();
   }
@@ -785,14 +791,14 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
   }
 
   /**
-   * @return the node that has keyboard selection.
+   * Return the node that has keyboard selection.
    */
   CellTreeNodeView<?> getKeyboardSelectedNode() {
     return keyboardSelectedNode;
   }
 
   /**
-   * @return the HTML to render the loading image.
+   * Return the HTML to render the loading image.
    */
   SafeHtml getLoadingImageHtml() {
     return loadingImageHtml;
@@ -809,7 +815,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
   }
 
   /**
-   * @return the Style used by the tree
+   * Return the Style used by the tree.
    */
   Style getStyle() {
     return style;

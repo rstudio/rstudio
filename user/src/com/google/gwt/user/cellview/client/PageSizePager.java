@@ -42,6 +42,11 @@ public class PageSizePager extends AbstractPager {
   private final Anchor showMoreButton = new Anchor("Show More");
   private final Anchor showLessButton = new Anchor("Show Less");
 
+  /**
+   * Construct a PageSizePager with a given increment.
+   * 
+   * @param increment the amount by which to increase the page size
+   */
   @UiConstructor
   public PageSizePager(final int increment) {
     this.increment = increment;

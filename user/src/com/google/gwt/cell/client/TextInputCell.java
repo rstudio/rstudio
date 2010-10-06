@@ -26,11 +26,7 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
- * A {@link AbstractCell} used to render a text input.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
+ * An {@link AbstractCell} used to render a text input.
  */
 public class TextInputCell extends
     AbstractInputCell<String, TextInputCell.ViewData> {
@@ -41,7 +37,7 @@ public class TextInputCell extends
   }
 
   /**
-   * The ViewData for this cell.
+   * The {@code ViewData} for this cell.
    */
   public static class ViewData {
     /**
@@ -54,14 +50,21 @@ public class TextInputCell extends
      */
     private String curValue;
 
+    /**
+     * Construct a ViewData instance containing a given value.
+     */
     public ViewData(String value) {
       this.lastValue = value;
       this.curValue = value;
     }
 
+    /**
+     * Return true if the last and current values of this ViewData object
+     * are equal to those of the other object.
+     */
     @Override
     public boolean equals(Object other) {
-      if (other == null || !(other instanceof ViewData)) {
+      if (!(other instanceof ViewData)) {
         return false;
       }
       ViewData vd = (ViewData) other;
@@ -70,28 +73,41 @@ public class TextInputCell extends
     }
 
     /**
-     * @return the current value of the input element
+     * Return the current value of the input element.
      */
     public String getCurrentValue() {
       return curValue;
     }
 
     /**
-     * @return the last value sent to the {@link ValueUpdater}
+     * Return the last value sent to the {@link ValueUpdater}.
      */
     public String getLastValue() {
       return lastValue;
     }
 
+    /**
+     * Return a hash code based on the last and current values.
+     */
     @Override
     public int hashCode() {
-      return (lastValue + "_*!@HASH_SEPERATOR@!*_" + curValue).hashCode();
+      return (lastValue + "_*!@HASH_SEPARATOR@!*_" + curValue).hashCode();
     }
 
+    /**
+     * Set the current value.
+     * 
+     * @param curValue the current value
+     */
     protected void setCurrentValue(String curValue) {
       this.curValue = curValue;
     }
 
+    /**
+     * Set the last value.
+     * 
+     * @param lastValue the last value
+     */
     protected void setLastValue(String lastValue) {
       this.lastValue = lastValue;
     }

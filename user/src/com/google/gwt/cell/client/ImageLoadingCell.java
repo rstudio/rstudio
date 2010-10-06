@@ -31,7 +31,7 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 /**
- * A {@link AbstractCell} used to render an image. A loading indicator is used
+ * An {@link AbstractCell} used to render an image. A loading indicator is used
  * until the image is fully loaded. The String value is the url of the image.
  */
 public class ImageLoadingCell extends AbstractCell<String> {

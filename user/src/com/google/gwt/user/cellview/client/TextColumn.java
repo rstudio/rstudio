@@ -25,6 +25,9 @@ import com.google.gwt.cell.client.TextCell;
  */
 public abstract class TextColumn<T> extends Column<T, String> {
 
+  /**
+   * Construct a new TextColumn.
+   */
   public TextColumn() {
     super(new TextCell());
   }

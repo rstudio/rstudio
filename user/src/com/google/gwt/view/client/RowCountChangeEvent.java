@@ -34,7 +34,7 @@ public class RowCountChangeEvent extends GwtEvent<RowCountChangeEvent.Handler> {
   public static interface Handler extends EventHandler {
 
     /**
-     * Called when {@link RowCountChangeEvent} is fired.
+     * Called when a {@link RowCountChangeEvent} is fired.
      *
      * @param event the {@link RowCountChangeEvent} that was fired
      */

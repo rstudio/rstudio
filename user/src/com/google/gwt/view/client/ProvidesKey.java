@@ -23,16 +23,13 @@ package com.google.gwt.view.client;
  * </p>
  * <p>
  * The key must implement a coherent set of {@link Object#equals(Object)} and
- * {@link Object#hashCode()} methods such that if objects A and B are to be
- * treated as identical, then A.equals(B), B.equals(A), and A.hashCode() ==
- * B.hashCode().  If A and B are to be treated as unequal, then it must
- * be the case that A.equals(B) == false and B.equals(A) == false.
+ * {@link Object#hashCode()} methods such that if objects {@code A} and {@code
+ * B} are to be treated as identical, then {@code A.equals(B)}, {@code
+ * B.equals(A)}, and {@code A.hashCode() == B.hashCode()}. If {@code A} and
+ * {@code B} are to be treated as unequal, then it must be the case that {@code
+ * A.equals(B) == false} and {@code B.equals(A) == false}.
  * </p>
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
+ * 
  * @param <T> the data type of records in the list
  */
 public interface ProvidesKey<T> {

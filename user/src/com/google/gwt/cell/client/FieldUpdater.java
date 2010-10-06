@@ -18,10 +18,6 @@ package com.google.gwt.cell.client;
 /**
  * A {@link FieldUpdater} may be added to a Column to update a particular field
  * of a data item.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  * 
  * @param <T> the data type that will be modified
  * @param <C> the data type of the modified field

@@ -22,7 +22,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
  * <p>
- * A {@link AbstractCell} used to render an image. The String value is the url
+ * An {@link AbstractCell} used to render an image. The String value is the url
  * of the image.
  * </p>
  * <p>
@@ -41,6 +41,9 @@ public class ImageCell extends AbstractCell<String> {
 
   private static Template template;
 
+  /**
+   * Construct a new ImageCell.
+   */
   public ImageCell() {
     if (template == null) {
       template = GWT.create(Template.class);

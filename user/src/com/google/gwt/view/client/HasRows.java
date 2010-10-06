@@ -20,10 +20,6 @@ import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * Describes an object that displays a range of rows.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public interface HasRows extends HasHandlers {
 

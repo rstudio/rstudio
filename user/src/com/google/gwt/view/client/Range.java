@@ -19,10 +19,6 @@ import java.io.Serializable;
 
 /**
  * The range of interest for a single handler.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public class Range implements Serializable {
 
@@ -46,9 +42,13 @@ public class Range implements Serializable {
   Range() {
   }
 
+  /**
+   * Return true if this ranges's start end length are equal to those of
+   * the given object.
+   */
   @Override
   public boolean equals(Object o) {
-    if (o == null || !(o instanceof Range)) {
+    if (!(o instanceof Range)) {
       return false;
     }
     Range r = (Range) o;
@@ -73,11 +73,17 @@ public class Range implements Serializable {
     return start;
   }
 
+  /**
+   * Return a hash code based on this range's start and length.
+   */
   @Override
   public int hashCode() {
     return (length * 31) ^ start;
   }
 
+  /**
+   * Returns a String representation for debugging.
+   */
   @Override
   public String toString() {
     return "Range(" + start + "," + length + ")";

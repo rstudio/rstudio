@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A list view that supports paging and columns.
+ * A tabular view that supports paging and columns.
  *
  * <p>
  * <h3>Examples</h3>
@@ -110,6 +110,9 @@ public class CellTable<T> extends AbstractHasData<T> {
     @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
     ImageResource cellTableSelectedBackground();
 
+    /**
+     * The styles used in this widget.
+     */
     @Source(Style.DEFAULT_CSS)
     Style cellTableStyle();
   }
@@ -444,7 +447,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   private int keyboardSelectedColumn = 0;
 
   /**
-   * Indicates whether or not the scheduled redraw has been cancelled.
+   * Indicates whether or not the scheduled redraw has been canceled.
    */
   private boolean redrawCancelled;
 
@@ -674,11 +677,17 @@ public class CellTable<T> extends AbstractHasData<T> {
     ensureTableColElement(index).addClassName(styleName);
   }
 
+  /**
+   * Return the height of the table body.
+   */
   public int getBodyHeight() {
     int height = getClientHeight(tbody);
     return height;
   }
 
+  /**
+   * Return the height of the table header.
+   */
   public int getHeaderHeight() {
     int height = getClientHeight(thead);
     return height;
@@ -699,10 +708,16 @@ public class CellTable<T> extends AbstractHasData<T> {
     return rows.getLength() > row ? rows.getItem(row) : null;
   }
 
+  /**
+   * Redraw the table's footers.
+   */
   public void redrawFooters() {
     createHeaders(true);
   }
 
+  /**
+   * Redraw the table's headers.
+   */
   public void redrawHeaders() {
     createHeaders(false);
   }

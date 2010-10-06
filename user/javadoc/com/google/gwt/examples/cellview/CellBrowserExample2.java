@@ -61,7 +61,7 @@ public class CellBrowserExample2 implements EntryPoint {
     }
 
     /**
-     * @return the list of songs in the playlist
+     * Return the list of songs in the playlist.
      */
     public List<String> getSongs() {
       return songs;
@@ -94,7 +94,7 @@ public class CellBrowserExample2 implements EntryPoint {
     }
 
     /**
-     * @return the rockin' playlist for this composter
+     * Return the rockin' playlist for this composer.
      */
     public List<Playlist> getPlaylists() {
       return playlists;

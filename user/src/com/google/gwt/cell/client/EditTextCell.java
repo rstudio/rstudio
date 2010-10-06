@@ -30,10 +30,6 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 /**
  * An editable text cell. Click to edit, escape to cancel, return to commit.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * Important TODO: This cell still treats its value as HTML for rendering
  * purposes, which is entirely wrong. It should be able to treat it as a proper
  * string (especially since that's all the user can enter).
@@ -140,10 +136,18 @@ public class EditTextCell extends
 
   private final SafeHtmlRenderer<String> renderer;
 
+  /**
+   * Construct a new EditTextCell that will use a
+   * {@link SimpleSafeHtmlRenderer}.
+   */
   public EditTextCell() {
     this(SimpleSafeHtmlRenderer.getInstance());
   }
 
+  /**
+   * Construct a new EditTextCell that will use a given {@link SafeHtmlRenderer}
+   * .
+   */
   public EditTextCell(SafeHtmlRenderer<String> renderer) {
     super("click", "keyup", "keydown", "blur");
     if (template == null) {

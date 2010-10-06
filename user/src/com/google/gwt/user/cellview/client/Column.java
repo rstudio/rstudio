@@ -28,32 +28,56 @@ import com.google.gwt.view.client.ProvidesKey;
  * A representation of a column in a table. The column may maintain view data
  * for each cell on demand. New view data, if needed, is created by the cell's
  * onBrowserEvent method, stored in the Column, and passed to future calls to
- * Cell's {@link Cell#onBrowserEvent} and @link{Cell#render} methods.
+ * Cell's {@link Cell#onBrowserEvent} and {@link Cell#render} methods.
  *
  * @param <T> the row type
  * @param <C> the column type
  */
 public abstract class Column<T, C> implements HasCell<T, C> {
 
+  /**
+   * The {@link Cell} responsible for rendering items in the column.
+   */
   protected final Cell<C> cell;
 
+  /**
+   * The {@link FieldUpdater} used for updating values in the column.
+   */
   protected FieldUpdater<T, C> fieldUpdater;
 
+  /**
+   * Construct a new Column with a given {@link Cell}.
+   */
   public Column(Cell<C> cell) {
     this.cell = cell;
   }
 
+  /**
+   * Return the {@link Cell} responsible for rendering items in the column.
+   */
   public Cell<C> getCell() {
     return cell;
   }
 
+  /**
+   * Return the {@link FieldUpdater} used for updating values in the column.
+   */
   public FieldUpdater<T, C> getFieldUpdater() {
     return fieldUpdater;
   }
 
+  /**
+   * Return the column value from within the underlying data object.
+   */
   public abstract C getValue(T object);
 
   /**
+   * Handle a browser event that took place within the column.
+   *
+   * @param elem the parent Element
+   * @param index the current row index of the object
+   * @param object the base object to be updated
+   * @param event the native browser event
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
    *          object should act as its own key.
    */
@@ -71,6 +95,7 @@ public abstract class Column<T, C> implements HasCell<T, C> {
 
   /**
    * Render the object into the cell.
+   * 
    * @param object the object to render
    * @param keyProvider the {@link ProvidesKey} for the object
    * @param sb the buffer to render into
@@ -80,6 +105,10 @@ public abstract class Column<T, C> implements HasCell<T, C> {
     cell.render(getValue(object), key, sb);
   }
 
+
+  /**
+   * Set the {@link FieldUpdater} used for updating values in the column.
+   */
   public void setFieldUpdater(FieldUpdater<T, C> fieldUpdater) {
     this.fieldUpdater = fieldUpdater;
   }

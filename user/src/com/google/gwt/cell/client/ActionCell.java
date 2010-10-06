@@ -25,10 +25,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
  * A cell that renders a button and takes a delegate to perform actions on
  * mouseUp.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <C> the type that this Cell represents
  */
 public class ActionCell<C> extends AbstractCell<C> {
@@ -39,6 +35,9 @@ public class ActionCell<C> extends AbstractCell<C> {
    * @param <T> the type that this delegate acts on
    */
   public static interface Delegate<T> {
+    /**
+     * Perform the desired action on the given object.
+     */
     void execute(T object);
   }
 

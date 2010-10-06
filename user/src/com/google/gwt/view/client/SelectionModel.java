@@ -25,17 +25,13 @@ import com.google.gwt.event.shared.HasHandlers;
 /**
  * A model for selection within a list.
  * 
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- * 
  * @param <T> the data type of records in the list
  */
 public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
 
   /**
-   * A default implementation of SelectionModel that provides listener addition
-   * and removal.
+   * A default implementation of {@link SelectionModel} that provides listener
+   * addition and removal.
    * 
    * @param <T> the data type of records in the list
    */
@@ -44,7 +40,7 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
     private final HandlerManager handlerManager = new HandlerManager(this);
 
     /**
-     * Set to true if the next scheduled event should be cancelled.
+     * Set to true if the next scheduled event should be canceled.
      */
     private boolean isEventCancelled;
 
@@ -56,6 +52,8 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
     private final ProvidesKey<T> keyProvider;
     
     /**
+     * Construct an AbstractSelectionModel with a given key provider.
+     * 
      * @param keyProvider an instance of ProvidesKey<T>, or null if the record
      *        object should act as its own key
      */
@@ -83,6 +81,9 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
       return keyProvider;
     }
 
+    /**
+     * Fire a {@link SelectionChangeEvent}.  Multiple firings may be coalesced.
+     */
     protected void fireSelectionChangeEvent() {
       if (isEventScheduled()) {
         setEventCancelled(true);
@@ -90,10 +91,16 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
       SelectionChangeEvent.fire(AbstractSelectionModel.this);
     }
 
+    /**
+     * Return true if the next scheduled event should be canceled.
+     */
     protected boolean isEventCancelled() {
       return isEventCancelled;
     }
 
+    /**
+     * Return true if an event is scheduled to be fired.
+     */
     protected boolean isEventScheduled() {
       return isEventScheduled;
     }
@@ -119,10 +126,16 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
       }
     }
 
+    /**
+     * Set whether the next scheduled event should be canceled.
+     */
     protected void setEventCancelled(boolean isEventCancelled) {
       this.isEventCancelled = isEventCancelled;
     }
 
+    /**
+     * Set whether an event is scheduled to be fired.
+     */
     protected void setEventScheduled(boolean isEventScheduled) {
       this.isEventScheduled = isEventScheduled;
     }

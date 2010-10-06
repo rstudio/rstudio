@@ -245,7 +245,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   }
 
   /**
-   * @return the temporary element used to create elements
+   * Return the temporary element used to create elements.
    */
   private static com.google.gwt.user.client.Element getTmpElem() {
     if (tmpElem == null) {
@@ -341,7 +341,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   }
 
   /**
-   * @return the range size
+   * Return the range size.
    * @see #getVisibleRange()
    */
   public final int getPageSize() {
@@ -349,7 +349,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   }
 
   /**
-   * @return the range start
+   * Return the range start.
    * @see #getVisibleRange()
    */
   public final int getPageStart() {
@@ -554,7 +554,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   }
 
   /**
-   * Checks that the row is within the correct bounds.
+   * Check that the row is within the correct bounds.
    *
    * @param row row index to check
    * @throws IndexOutOfBoundsException
@@ -585,7 +585,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   protected abstract boolean dependsOnSelection();
 
   /**
-   * @return the element that holds the rendered cells
+   * Return the element that holds the rendered cells.
    */
   protected abstract Element getChildContainer();
 
@@ -765,7 +765,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   }
 
   /**
-   * @return the number of child elements
+   * Return the number of child elements.
    */
   int getChildCount() {
     return getChildContainer().getChildCount();

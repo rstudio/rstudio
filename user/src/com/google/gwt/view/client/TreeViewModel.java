@@ -20,10 +20,6 @@ import com.google.gwt.cell.client.ValueUpdater;
 
 /**
  * A model of a tree.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public interface TreeViewModel {
 
@@ -146,9 +142,9 @@ public interface TreeViewModel {
 
   /**
    * Get the {@link NodeInfo} that will provide the {@link ProvidesKey},
-   * {@link Cell}, and {@link HasData}s to retrieve and display the children of
-   * the specified value.
-   *
+   * {@link Cell}, and {@link HasData} instances to retrieve and display the
+   * children of the specified value.
+   * 
    * @param value the value in the parent node
    * @return the {@link NodeInfo}
    */

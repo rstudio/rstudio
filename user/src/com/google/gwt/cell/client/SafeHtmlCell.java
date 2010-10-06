@@ -20,12 +20,14 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
  * A {@link Cell} used to render safe HTML markup.
- * 
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public class SafeHtmlCell extends AbstractCell<SafeHtml> {
+  
+  /**
+   * Construct a new SafeHtmlCell.
+   */
+  public SafeHtmlCell() {
+  }
 
   @Override
   public void render(SafeHtml value, Object key, SafeHtmlBuilder sb) {

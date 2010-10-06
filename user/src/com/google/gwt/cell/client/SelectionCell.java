@@ -29,10 +29,6 @@ import java.util.List;
 
 /**
  * A {@link Cell} used to render a drop-down list.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public class SelectionCell extends AbstractInputCell<String, String> {
 

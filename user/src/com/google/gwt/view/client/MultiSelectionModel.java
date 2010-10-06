@@ -25,10 +25,6 @@ import java.util.Set;
 /**
  * A simple selection model that allows multiple objects to be selected.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <T> the record data type
  */
 public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {

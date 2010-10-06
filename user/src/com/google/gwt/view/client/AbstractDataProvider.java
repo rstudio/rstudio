@@ -27,10 +27,6 @@ import java.util.Set;
 /**
  * A base implementation of a data source for {@link HasData} implementations.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <T> the data type of records in the list
  */
 public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
@@ -58,10 +54,16 @@ public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
   private Map<HasData<T>, HandlerRegistration> rangeChangeHandlers =
       new HashMap<HasData<T>, HandlerRegistration>();
   
+  /**
+   * Construct an AbstractDataProvider without a key provider.
+   */
   protected AbstractDataProvider() {
     this.keyProvider = null;
   }
   
+  /**
+   * Construct an AbstractDataProvider with a given key provider.
+   */
   protected AbstractDataProvider(ProvidesKey<T> keyProvider) {
     this.keyProvider = keyProvider;
   }
@@ -144,6 +146,11 @@ public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
     return ranges;
   }
 
+  /**
+   * Remove the given data display.
+   * 
+   * @throws IllegalStateException if the display is not present
+   */
   public void removeDataDisplay(HasData<T> display) {
     if (!displays.contains(display)) {
       throw new IllegalStateException("HasData not present");

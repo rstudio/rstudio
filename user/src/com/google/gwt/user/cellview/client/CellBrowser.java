@@ -467,14 +467,14 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     }
 
     /**
-     * @return the key of the value that is focused in this node's display.
+     * Return the key of the value that is focused in this node's display.
      */
     Object getFocusedKey() {
       return display.focusedKey;
     }
 
     /**
-     * @return true if the focused value is open, false if not
+     * Return true if the focused value is open, false if not.
      */
     boolean isFocusedOpen() {
       return display.isFocusedOpen;

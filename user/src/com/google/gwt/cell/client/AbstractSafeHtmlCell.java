@@ -25,16 +25,19 @@ import java.util.Set;
  * A superclass for {@link Cell}s that render or escape a String argument as
  * HTML.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <C> the type that this Cell represents
  */
 public abstract class AbstractSafeHtmlCell<C> extends AbstractCell<C> {
 
   private final SafeHtmlRenderer<C> renderer;
 
+  /**
+   * Construct an AbstractSafeHtmlCell using a given {@link SafeHtmlRenderer}
+   * that will consume a given set of events.
+   * 
+   * @param renderer a SafeHtmlRenderer
+   * @param consumedEvents a varargs list of event names
+   */
   public AbstractSafeHtmlCell(SafeHtmlRenderer<C> renderer,
       String... consumedEvents) {
     super(consumedEvents);
@@ -44,6 +47,13 @@ public abstract class AbstractSafeHtmlCell<C> extends AbstractCell<C> {
     this.renderer = renderer;
   }
 
+  /**
+   * Construct an AbstractSafeHtmlCell using a given {@link SafeHtmlRenderer}
+   * that will consume a given set of events.
+   * 
+   * @param renderer a SafeHtmlRenderer
+   * @param consumedEvents a Set of event names
+   */
   public AbstractSafeHtmlCell(SafeHtmlRenderer<C> renderer,
       Set<String> consumedEvents) {
     super(consumedEvents);
@@ -53,6 +63,9 @@ public abstract class AbstractSafeHtmlCell<C> extends AbstractCell<C> {
     this.renderer = renderer;
   }
 
+  /**
+   * Return the {@link SafeHtmlRenderer} used by this cell.
+   */
   public SafeHtmlRenderer<C> getRenderer() {
     return renderer;
   }
@@ -66,5 +79,13 @@ public abstract class AbstractSafeHtmlCell<C> extends AbstractCell<C> {
     }
   }
 
+  /**
+   * Render the cell contents after they have been converted to {@link SafeHtml}
+   * form.
+   * 
+   * @param data a {@link SafeHtml} string
+   * @param key the unique key associated with the row object
+   * @param sb the {@link SafeHtmlBuilder} to be written to
+   */
   protected abstract void render(SafeHtml data, Object key, SafeHtmlBuilder sb);
 }

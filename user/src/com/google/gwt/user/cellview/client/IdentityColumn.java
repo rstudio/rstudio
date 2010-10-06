@@ -26,12 +26,15 @@ import com.google.gwt.cell.client.Cell;
 public class IdentityColumn<T> extends Column<T, T> {
 
   /**
-   * @param cell
+   * Construct a new IdentityColumn with a given {@link Cell}.
    */
   public IdentityColumn(Cell<T> cell) {
     super(cell);
   }
 
+  /**
+   * Return the passed-in object.
+   */
   @Override
   public T getValue(T object) {
     return object;

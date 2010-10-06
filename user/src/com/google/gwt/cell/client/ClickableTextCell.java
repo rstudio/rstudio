@@ -25,17 +25,21 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 /**
  * A {@link Cell} used to render text. Clicking on the cell causes its
  * {@link ValueUpdater} to be called.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public class ClickableTextCell extends AbstractSafeHtmlCell<String> {
 
+  /**
+   * Construct a new ClickableTextCell that will use a
+   * {@link SimpleSafeHtmlRenderer}.
+   */
   public ClickableTextCell() {
     this(SimpleSafeHtmlRenderer.getInstance());
   }
 
+  /**
+   * Construct a new ClickableTextCell that will use a given
+   * {@link SafeHtmlRenderer}.
+   */
   public ClickableTextCell(SafeHtmlRenderer<String> renderer) {
     super(renderer, "click", "keydown");
   }

@@ -16,11 +16,8 @@
 package com.google.gwt.cell.client;
 
 /**
- * A {@link ValueUpdater} may be added to a Cell to provide updated data.
- * 
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
+ * A {@link ValueUpdater} may be added to a {@link Cell} to provide updated
+ * data.
  * 
  * @param <C> the data type of the cell
  */

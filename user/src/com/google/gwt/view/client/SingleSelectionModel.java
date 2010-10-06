@@ -20,10 +20,6 @@ import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 /**
  * A simple selection model that allows only one object to be selected a a time.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <T> the record data type
  */
 public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {

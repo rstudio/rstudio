@@ -20,10 +20,6 @@ package com.google.gwt.cell.client;
  * of type T, provide a {@link Cell} to render that value, and provide a
  * {@link FieldUpdater} to perform notification of updates to the cell.
  * 
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- * 
  * @param <T> the underlying data type
  * @param <C> the cell data type
  */

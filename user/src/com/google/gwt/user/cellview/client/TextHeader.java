@@ -18,17 +18,23 @@ package com.google.gwt.user.cellview.client;
 import com.google.gwt.cell.client.TextCell;
 
 /**
- * A Header containing String data rendered by a TextCell.
+ * A Header containing String data rendered by a {@link TextCell}.
  */
 public class TextHeader extends Header<String> {
 
   private String text;
 
+  /**
+   * Construct a new TextColumn.
+   */
   public TextHeader(String text) {
     super(new TextCell());
     this.text = text;
   }
 
+  /**
+   * Return the header text.
+   */
   @Override
   public String getValue() {
     return text;

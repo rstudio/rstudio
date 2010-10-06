@@ -25,14 +25,9 @@ import java.util.Map;
  * according to a subclass-defined rule, plus a list of positive or negative
  * exceptions.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <T> the data type of records in the list
  */
-public abstract class DefaultSelectionModel<T> extends AbstractSelectionModel<
-    T> {
+public abstract class DefaultSelectionModel<T> extends AbstractSelectionModel<T> {
 
   private final Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
 
@@ -99,7 +94,6 @@ public abstract class DefaultSelectionModel<T> extends AbstractSelectionModel<
     scheduleSelectionChangeEvent();
   }
 
-  // Coalesce selection changes since the last event firing
   @Override
   protected void fireSelectionChangeEvent() {
     if (isEventScheduled()) {

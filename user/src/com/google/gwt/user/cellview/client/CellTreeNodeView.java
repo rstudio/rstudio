@@ -644,7 +644,7 @@ class CellTreeNodeView<T> extends UIObject {
   }
 
   /**
-   * @return the temporary element used to create elements
+   * Return the temporary element used to create elements.
    */
   private static com.google.gwt.user.client.Element getTmpElem() {
     if (tmpElem == null) {

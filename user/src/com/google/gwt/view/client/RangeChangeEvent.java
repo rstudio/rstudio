@@ -34,7 +34,7 @@ public class RangeChangeEvent extends GwtEvent<RangeChangeEvent.Handler> {
   public static interface Handler extends EventHandler {
 
     /**
-     * Called when {@link RangeChangeEvent} is fired.
+     * Called when a {@link RangeChangeEvent} is fired.
      *
      * @param event the {@link RangeChangeEvent} that was fired
      */

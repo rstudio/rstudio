@@ -22,10 +22,6 @@ import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
  * events. Use this model if you want to know when a user selects an item, but
  * do not want the view to update based on the selection.
  * 
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- * 
  * @param <T> the record data type
  */
 public class NoSelectionModel<T> extends AbstractSelectionModel<T> {

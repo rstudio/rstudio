@@ -20,10 +20,6 @@ import java.util.List;
 /**
  * A view that can display a range of data.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <T> the data type of each row
  */
 public interface HasData<T> extends HasRows {

@@ -392,7 +392,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   }
 
   /**
-   * @return the range of data being displayed
+   * Return the range of data being displayed.
    */
   public Range getVisibleRange() {
     return new Range(pageStart, pageSize);

@@ -33,10 +33,6 @@ import java.util.Set;
 /**
  * A {@link Cell} decorator that adds an icon to another {@link Cell}.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <C> the type that this Cell represents
  */
 public class IconCellDecorator<C> implements Cell<C> {

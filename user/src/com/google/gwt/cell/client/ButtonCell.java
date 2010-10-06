@@ -24,17 +24,19 @@ import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
 
 /**
  * A {@link Cell} used to render a button.
- *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
  */
 public class ButtonCell extends AbstractSafeHtmlCell<String> {
 
+  /**
+   * Construct a new ButtonCell that will use a {@link SimpleSafeHtmlRenderer}.
+   */
   public ButtonCell() {
     this(SimpleSafeHtmlRenderer.getInstance());
   }
 
+  /**
+   * Construct a new ButtonCell that will use a given {@link SafeHtmlRenderer}.
+   */
   public ButtonCell(SafeHtmlRenderer<String> renderer) {
     super(renderer, "click", "keydown");
   }

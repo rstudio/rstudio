@@ -19,18 +19,14 @@ package com.google.gwt.view.client;
  * Interface for classes that have a {@link ProvidesKey}. Must be implemented by
  * {@link com.google.gwt.cell.client.Cell} containers.
  *
- * <p>
- * Note: This class is new and its interface subject to change.
- * </p>
- *
  * @param <T> the data type
  */
 public interface HasKeyProvider<T> {
 
   /**
-   * Get the key provider.
+   * Return the key provider.
    *
-   * @return the {@link ProvidesKey}
+   * @return the {@link ProvidesKey} instance
    */
   ProvidesKey<T> getKeyProvider();
 }

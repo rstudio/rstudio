@@ -24,7 +24,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 /**
  * A table column header or footer.
  *
- * @param <H> the {#link Cell} type
+ * @param <H> the {@link Cell} type
  */
 public abstract class Header<H> {
 
@@ -32,25 +32,48 @@ public abstract class Header<H> {
 
   private ValueUpdater<H> updater;
 
+  /**
+   * Construct a Header with a given {@link Cell}.
+   */
   public Header(Cell<H> cell) {
     this.cell = cell;
   }
 
+  /**
+   * Return the {@link Cell} responsible for rendering items in the header.
+   */
   public Cell<H> getCell() {
     return cell;
   }
 
+  /**
+   * Return the header value.
+   */
   public abstract H getValue();
 
+  /**
+   * Handle a browser event that took place within the header.
+   *
+   * @param elem the parent Element
+   * @param event the native browser event
+   */
   public void onBrowserEvent(Element elem, NativeEvent event) {
     H value = getValue();
     cell.onBrowserEvent(elem, value, getKey(), event, updater);
   }
 
+  /**
+   * Render the header.
+   * 
+   * @param sb a {@link SafeHtmlBuilder} to render into
+   */
   public void render(SafeHtmlBuilder sb) {
     cell.render(getValue(), getKey(), sb);
   }
 
+  /**
+   * Set the {@link ValueUpdater}.
+   */
   public void setUpdater(ValueUpdater<H> updater) {
     this.updater = updater;
   }
