@@ -74,9 +74,9 @@ import java.util.List;
  * <h3>Example</h3>
  * <dl>
  * <dt>Trivial example</dt>
- * <dd>{@example com.google.gwt.examples.cellview.CellBrowserExample}</dd>
- * <dt>Complex example</dt> 
- * <dd>{@example com.google.gwt.examples.cellview.CellBrowserExample2}</dd>
+ * <dd>TODO example com.google.gwt.examples.cellview.CellBrowserExample</dd>
+ * <dt>Complex example</dt>
+ * <dd>TODO example com.google.gwt.examples.cellview.CellBrowserExample2</dd>
  * </dl>
  */
 public class CellBrowser extends AbstractCellTree implements ProvidesResize,
@@ -190,7 +190,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * A custom version of cell list used by the browser. Visible for testing.
-   * 
+   *
    * @param <T> the data type of list items
    */
   class BrowserCellList<T> extends CellList<T> {
@@ -365,7 +365,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * A node in the tree.
-   * 
+   *
    * @param <C> the data type of the children of the node
    */
   class TreeNodeImpl<C> implements TreeNode {
@@ -377,7 +377,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     /**
      * Construct a new {@link TreeNodeImpl}.
-     * 
+     *
      * @param nodeInfo the nodeInfo for the children nodes
      * @param value the value of the node
      * @param display the display associated with the node
@@ -491,7 +491,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     /**
      * Check the child bounds.
-     * 
+     *
      * @param index the index of the child
      * @throws IndexOutOfBoundsException if the child is not in range
      */
@@ -514,7 +514,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     /**
      * Get the index of the open item.
-     * 
+     *
      * @return the index of the open item, or -1 if not found
      */
     private int getOpenIndex() {
@@ -709,7 +709,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Construct a new {@link CellBrowser}.
-   * 
+   *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
@@ -720,7 +720,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Construct a new {@link CellBrowser} with the specified {@link Resources}.
-   * 
+   *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
@@ -771,7 +771,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the default width of new columns.
-   * 
+   *
    * @return the default width in pixels
    */
   public int getDefaultColumnWidth() {
@@ -780,7 +780,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the minimum width of columns.
-   * 
+   *
    * @return the minimum width in pixels
    */
   public int getMinimumColumnWidth() {
@@ -817,7 +817,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the default width of new columns.
-   * 
+   *
    * @param width the default width in pixels
    */
   public void setDefaultColumnWidth(int width) {
@@ -834,7 +834,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the minimum width of columns.
-   * 
+   *
    * @param minWidth the minimum width in pixels
    */
   public void setMinimumColumnWidth(int minWidth) {
@@ -843,7 +843,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Create a pager to control the list view.
-   * 
+   *
    * @param <C> the item type in the list view
    * @param display the list view to add paging too
    * @return the pager
@@ -872,7 +872,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   /**
    * Create a new {@link TreeNodeImpl} and append it to the end of the
    * LayoutPanel.
-   * 
+   *
    * @param <C> the data type of the children
    * @param nodeInfo the info about the node
    * @param value the value of the open node
@@ -923,7 +923,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   /**
    * Create a {@link HasData} that will display items. The {@link HasData} must
    * extend {@link Widget}.
-   * 
+   *
    * @param <C> the item type in the list view
    * @param nodeInfo the node info with child data
    * @param level the level of the list
@@ -939,7 +939,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the HTML representation of an image.
-   * 
+   *
    * @param res the {@link ImageResource} to render as HTML
    * @return the rendered HTML
    */
@@ -953,7 +953,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Get the {@link SplitLayoutPanel} used to lay out the views.
-   * 
+   *
    * @return the {@link SplitLayoutPanel}
    */
   private SplitLayoutPanel getSplitLayoutPanel() {
@@ -962,7 +962,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the open state of a tree node.
-   * 
+   *
    * @param cellList the CellList that changed state.
    * @param value the value to open
    * @param open true to open, false to close
@@ -1045,7 +1045,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Reduce the number of {@link HasData}s down to the specified level.
-   * 
+   *
    * @param level the level to trim to
    */
   private void trimToLevel(int level) {

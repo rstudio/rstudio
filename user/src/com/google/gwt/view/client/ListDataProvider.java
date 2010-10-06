@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
  *
  * <p>
  * <h3>Example</h3>
- * {@example com.google.gwt.examples.view.ListDataProviderExample}
+ * TODO example com.google.gwt.examples.view.ListDataProviderExample
  * </p>
  *
  * @param <T> the data type of the list

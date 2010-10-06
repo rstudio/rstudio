@@ -26,7 +26,7 @@ import java.util.Set;
  *
  * <p>
  * <h3>Example</h3>
- * {@example com.google.gwt.examples.cell.CellExample}
+ * TODO example com.google.gwt.examples.cell.CellExample
  * </p>
  *
  * @param <C> the type that this Cell represents

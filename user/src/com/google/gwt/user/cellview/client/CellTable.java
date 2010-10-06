@@ -56,13 +56,13 @@ import java.util.Set;
  * <p>
  * <h3>Examples</h3>
  * <p>
- * {@example com.google.gwt.examples.cellview.CellTableExample}
+ * TODO example com.google.gwt.examples.cellview.CellTableExample
  * </p>
  * <p>
- * {@example com.google.gwt.examples.cellview.CellTableFieldUpdaterExample}
+ * TODO example com.google.gwt.examples.cellview.CellTableFieldUpdaterExample
  * </p>
  * <p>
- * {@example com.google.gwt.examples.view.KeyProviderExample}
+ * TODO example com.google.gwt.examples.view.KeyProviderExample
  * </p>
  * </p>
  *

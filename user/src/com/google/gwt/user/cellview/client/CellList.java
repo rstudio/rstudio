@@ -48,13 +48,13 @@ import java.util.Set;
  * <p>
  * <h3>Examples</h3>
  * <p>
- * {@example com.google.gwt.examples.cellview.CellListExample}
+ * TODO example com.google.gwt.examples.cellview.CellListExample
  * </p>
  * <p>
- * {@example com.google.gwt.examples.cellview.CellListValueUpdaterExample}
+ * TODO example com.google.gwt.examples.cellview.CellListValueUpdaterExample
  * </p>
  * <p>
- * {@example com.google.gwt.examples.view.KeyProviderExample}
+ * TODO example com.google.gwt.examples.view.KeyProviderExample
  * </p>
  * </p>
  *
@@ -272,7 +272,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Called when a user action triggers selection.
-   * 
+   *
    * @param event the event that triggered selection
    * @param value the value that was selected
    * @param indexOnPage the index of the value on the page
@@ -483,7 +483,7 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Called when the user selects a cell with the mouse or tab key.
-   * 
+   *
    * @param event the event
    * @param value the value that is selected
    * @param indexOnPage the index on the page
