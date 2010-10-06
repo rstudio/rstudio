@@ -23,6 +23,7 @@
 
   <source path="client"/>
   <source path="shared"/>
+  <source path="ui/client"/>
   <generate-with
     class="com.google.gwt.requestfactory.rebind.RequestFactoryEditorDriverGenerator">
     <when-type-assignable

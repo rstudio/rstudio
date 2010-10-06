@@ -17,7 +17,7 @@ package com.google.gwt.sample.dynatablerf.client.widgets;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.editor.client.Editor;
-import com.google.gwt.editor.client.ui.ValueBoxEditorDecorator;
+import com.google.gwt.editor.ui.client.ValueBoxEditorDecorator;
 import com.google.gwt.sample.dynatablerf.shared.AddressProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

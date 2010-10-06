@@ -2,7 +2,7 @@
 <ui:UiBinder
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:m='urn:import:com.google.gwt.mobile.client'
-  xmlns:r='urn:import:com.google.gwt.requestfactory.client'
+  xmlns:r='urn:import:com.google.gwt.requestfactory.ui.client'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
   <ui:style field='mobile' src='mobile.css'/>

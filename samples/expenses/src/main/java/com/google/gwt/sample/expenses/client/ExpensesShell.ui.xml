@@ -3,7 +3,7 @@
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:m='urn:import:com.google.gwt.mobile.client'
-  xmlns:r='urn:import:com.google.gwt.requestfactory.client'
+  xmlns:r='urn:import:com.google.gwt.requestfactory.ui.client'
   xmlns:e='urn:import:com.google.gwt.sample.expenses.client'>
 
   <ui:with field='styles' type='com.google.gwt.sample.expenses.client.style.Styles' />

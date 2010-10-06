@@ -18,7 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.editor.client.IsEditor;
-import com.google.gwt.editor.client.adapters.ValueBoxEditor;
+import com.google.gwt.editor.ui.client.adapters.ValueBoxEditor;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
@@ -34,48 +34,57 @@ import com.google.gwt.text.shared.Parser;
 import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.TextBoxBase.TextAlignConstant;
 import com.google.gwt.user.client.ui.impl.TextBoxImpl;
 
 import java.text.ParseException;
 
 /**
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * <p>
  * Abstract base class for all text entry widgets.
  * 
  * <h3>Use in UiBinder Templates</h3>
- * 
- * <p>
- * The names of the static members of {@link TextBoxBase}, as well as simple
- * alignment names (<code>left</code>, <code>center</code>, <code>right</code>,
- * <code>justify</code>), can be used as values for a <code>textAlignment</code>
- * attribute.
- * <p>
- * For example,
- * 
- * <pre>
- * &lt;g:TextBox textAlignment='ALIGN_RIGHT'/&gt;
- * &lt;g:TextBox textAlignment='right'/&gt;
- * </pre>
  * 
  * @param <T> the value type
  */
 @SuppressWarnings("deprecation")
 public class ValueBoxBase<T> extends FocusWidget implements
-    SourcesChangeEvents, HasChangeHandlers, HasName, HasDirectionEstimator,
+    HasChangeHandlers, HasName, HasDirectionEstimator,
     HasValue<T>, AutoDirectionHandler.Target, IsEditor<ValueBoxEditor<T>> {
 
-  private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
+  /**
+   * Alignment values for {@link ValueBoxBase#setAlignment}.
+   */
+  public enum TextAlignment {
+    CENTER {
+      String getTextAlignString() {
+        return "center";
+      }
+    },
+    JUSTIFY {
+      String getTextAlignString() {
+        return "justify";
+      }
+    },
+    LEFT {
+      String getTextAlignString() {
+        return "left";
+      }
+    },
+    RIGHT {
+      String getTextAlignString() {
+        return "right";
+      }
 
+    };
+    abstract String getTextAlignString();
+  }
+
+  private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
   private final AutoDirectionHandler autoDirHandler;
 
   private final Parser<T> parser;
   private final Renderer<T> renderer;
-
   private Event currentEvent;
+
   private boolean valueChangeHandlerInitialized;
 
   /**
@@ -94,14 +103,6 @@ public class ValueBoxBase<T> extends FocusWidget implements
 
   public HandlerRegistration addChangeHandler(ChangeHandler handler) {
     return addDomHandler(handler, ChangeEvent.getType());
-  }
-
-  /**
-   * @deprecated Use {@link #addChangeHandler} instead
-   */
-  @Deprecated
-  public void addChangeListener(ChangeListener listener) {
-    addChangeHandler(new ListenerWrapper.WrappedChangeListener(listener));
   }
 
   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<T> handler) {
@@ -267,6 +268,10 @@ public class ValueBoxBase<T> extends FocusWidget implements
     }
   }
 
+  public void setAlignment(TextAlignment align) {
+    DOM.setStyleAttribute(getElement(), "textAlign", align.getTextAlignString());
+  }
+
   /**
    * Sets the cursor position.
    * 
@@ -358,7 +363,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
     }
     impl.setSelectionRange(getElement(), pos, length);
   }
-
+  
   /**
    * Sets this object's text. Note that some browsers will manipulate the text
    * before adding it to the widget. For example, most browsers will strip all
@@ -371,18 +376,6 @@ public class ValueBoxBase<T> extends FocusWidget implements
   public void setText(String text) {
     DOM.setElementProperty(getElement(), "value", text != null ? text : "");
     autoDirHandler.refreshDirection();
-  }
-
-  /**
-   * Sets the alignment of the text in the text box.
-   * 
-   * @param align the text alignment (as specified by
-   *          {@link TextBoxBase#ALIGN_CENTER},
-   *          {@link TextBoxBase#ALIGN_JUSTIFY}, {@link TextBoxBase#ALIGN_LEFT},
-   *          and {@link TextBoxBase#ALIGN_RIGHT})
-   */
-  public void setTextAlignment(TextAlignConstant align) {
-    DOM.setStyleAttribute(getElement(), "textAlign", align.getTextAlignString());
   }
 
   public void setValue(T value) {

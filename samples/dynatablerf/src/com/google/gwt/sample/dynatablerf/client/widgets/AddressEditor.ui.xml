@@ -1,5 +1,6 @@
-<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:a='urn:import:com.google.gwt.app.client' xmlns:e='urn:import:com.google.gwt.editor.client.ui'>
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' 
+    xmlns:g='urn:import:com.google.gwt.user.client.ui'
+    xmlns:e='urn:import:com.google.gwt.editor.ui.client'>
   <ui:style src="../common.css">
     
   </ui:style>
@@ -33,7 +34,7 @@
       <e:ValueBoxEditorDecorator ui:field="zip"
         stylePrimaryName="{style.editField}">
         <e:valuebox>
-          <a:IntegerBox stylePrimaryName="{style.editField}" />
+          <g:IntegerBox stylePrimaryName="{style.editField}" />
         </e:valuebox>
       </e:ValueBoxEditorDecorator>
       <br />

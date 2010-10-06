@@ -61,7 +61,6 @@ public class MockRequestFactoryEditorDriver<P, E extends Editor<P>> implements
   /**
    * Returns <code>null</code> or the last value recorded.
    */
-  @SuppressWarnings("unchecked")
   public RequestContext flush() {
     return saveRequest;
   }

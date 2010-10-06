@@ -41,8 +41,8 @@ public interface ReportRequest extends RequestContext {
   /**
    * @return a request object
    */
-  Request<Long> countReportsBySearch(Long employeeId,
-      String department, String startsWith);
+  Request<Long> countReportsBySearch(Long employeeId, String department,
+      String startsWith);
 
   /**
    * @return a request object

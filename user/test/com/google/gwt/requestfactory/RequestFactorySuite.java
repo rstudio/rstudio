@@ -16,11 +16,11 @@
 package com.google.gwt.requestfactory;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.requestfactory.client.EditorTest;
 import com.google.gwt.requestfactory.client.FindServiceTest;
 import com.google.gwt.requestfactory.client.RequestFactoryExceptionHandlerTest;
 import com.google.gwt.requestfactory.client.RequestFactoryStringTest;
 import com.google.gwt.requestfactory.client.RequestFactoryTest;
+import com.google.gwt.requestfactory.client.ui.EditorTest;
 
 import junit.framework.Test;
 

@@ -1,6 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'
-  xmlns:e='urn:import:com.google.gwt.editor.client.ui'>
+  xmlns:e='urn:import:com.google.gwt.editor.ui.client'>
   <ui:style src="../common.css">
     
   </ui:style>

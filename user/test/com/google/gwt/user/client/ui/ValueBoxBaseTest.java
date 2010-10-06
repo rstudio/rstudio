@@ -18,8 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.text.shared.PassthroughRenderer;
 import com.google.gwt.text.shared.Renderer;
+import com.google.gwt.text.shared.testing.PassthroughRenderer;
 
 import java.text.ParseException;
 
@@ -35,7 +35,7 @@ public class ValueBoxBaseTest extends GWTTestCase {
     MockParser parser = new MockParser();
     
     ValueBoxBase<String> valueBoxBase = 
-      new ValueBoxBase<String>(elm, renderer, parser);
+      new ValueBoxBase<String>(elm, renderer, parser) {};
     
     parser.throwException = true;
     valueBoxBase.setText("");
@@ -57,7 +57,7 @@ public class ValueBoxBaseTest extends GWTTestCase {
     MockParser parser = new MockParser();
     
     ValueBoxBase<String> valueBoxBase = 
-      new ValueBoxBase<String>(elm, renderer, parser);
+      new ValueBoxBase<String>(elm, renderer, parser) {};
     
     parser.throwException = true;
     valueBoxBase.setText("simple string");
@@ -79,7 +79,7 @@ public class ValueBoxBaseTest extends GWTTestCase {
     MockParser parser = new MockParser();
     
     ValueBoxBase<String> valueBoxBase = 
-      new ValueBoxBase<String>(elm, renderer, parser);
+      new ValueBoxBase<String>(elm, renderer, parser) {};
     
     String text = "  two space padding test  ";
     valueBoxBase.setText(text);

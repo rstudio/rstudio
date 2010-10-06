@@ -14,6 +14,10 @@
 <!-- Editor framework support -->
 <module>
   <inherits name="com.google.gwt.core.Core" />
+  
+  <source path="client"/>
+  <source path="ui/client"/>
+  
   <generate-with class="com.google.gwt.editor.rebind.AutoBeanFactoryGenerator">
     <when-type-assignable class="com.google.gwt.editor.client.AutoBeanFactory" />
   </generate-with>
