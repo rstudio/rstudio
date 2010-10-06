@@ -92,7 +92,7 @@
           <arg value="-sourcepath" />
           <arg pathref="USER_SOURCE_PATH" />
           <arg value="-examplepackages" />
-          <arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client;com.google.gwt.examples.rpc.server;com.google.gwt.examples.benchmarks" />
+          <arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client;com.google.gwt.examples.rpc.server;com.google.gwt.examples.benchmarks;com.google.gwt.examples.cell;com.google.gwt.examples.cellview;com.google.gwt.examples.view" />
           <arg value="-packages" />
           <arg value="${USER_PKGS};${USER_CLASSES}" />
         </java>

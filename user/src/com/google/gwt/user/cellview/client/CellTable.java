@@ -55,15 +55,14 @@ import java.util.Set;
  *
  * <p>
  * <h3>Examples</h3>
- * <p>
- * TODO example com.google.gwt.examples.cellview.CellTableExample
- * </p>
- * <p>
- * TODO example com.google.gwt.examples.cellview.CellTableFieldUpdaterExample
- * </p>
- * <p>
- * TODO example com.google.gwt.examples.view.KeyProviderExample
- * </p>
+ * <dl>
+ * <dt>Trivial example</dt>
+ * <dd>{@example com.google.gwt.examples.cellview.CellTableExample}</dd>
+ * <dt>FieldUpdater example</dt>
+ * <dd>{@example com.google.gwt.examples.cellview.CellTableFieldUpdaterExample}</dd>
+ * <dt>Key provider example</dt>
+ * <dd>{@example com.google.gwt.examples.view.KeyProviderExample}</dd>
+ * </dl>
  * </p>
  *
  * @param <T> the data type of each row

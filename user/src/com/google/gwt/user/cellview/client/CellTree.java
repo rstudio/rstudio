@@ -57,9 +57,9 @@ import java.util.Set;
  * <h3>Examples</h3>
  * <dl>
  * <dt>Trivial example</dt>
- * <dd>TODO example com.google.gwt.examples.cellview.CellTreeExample</dd>
+ * <dd>{@example com.google.gwt.examples.cellview.CellTreeExample}</dd>
  * <dt>Complex example</dt>
- * <dd>TODO example com.google.gwt.examples.cellview.CellTreeExample2</dd>
+ * <dd>{@example com.google.gwt.examples.cellview.CellTreeExample2}</dd>
  * </dl>
  */
 public class CellTree extends AbstractCellTree implements HasAnimation,

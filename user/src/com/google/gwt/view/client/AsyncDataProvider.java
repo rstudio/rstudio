@@ -23,7 +23,7 @@ import java.util.List;
  *
  * <p>
  * <h3>Example</h3>
- * TODO example com.google.gwt.examples.view.AsyncDataProviderExample
+ * {@example com.google.gwt.examples.view.AsyncDataProviderExample}
  * </p>
  *
  * @param <T> the data type of records in the list

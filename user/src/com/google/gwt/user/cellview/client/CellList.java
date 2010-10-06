@@ -47,15 +47,14 @@ import java.util.Set;
  *
  * <p>
  * <h3>Examples</h3>
- * <p>
- * TODO example com.google.gwt.examples.cellview.CellListExample
- * </p>
- * <p>
- * TODO example com.google.gwt.examples.cellview.CellListValueUpdaterExample
- * </p>
- * <p>
- * TODO example com.google.gwt.examples.view.KeyProviderExample
- * </p>
+ * <dl>
+ * <dt>Trivial example</dt>
+ * <dd>{@example com.google.gwt.examples.cellview.CellListExample}</dd>
+ * <dt>ValueUpdater example</dt>
+ * <dd>{@example com.google.gwt.examples.cellview.CellListValueUpdaterExample}</dd>
+ * <dt>Key provider example</dt>
+ * <dd>{@example com.google.gwt.examples.view.KeyProviderExample}</dd>
+ * </dl>
  * </p>
  *
  * @param <T> the data type of list items

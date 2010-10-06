@@ -74,9 +74,9 @@ import java.util.List;
  * <h3>Example</h3>
  * <dl>
  * <dt>Trivial example</dt>
- * <dd>TODO example com.google.gwt.examples.cellview.CellBrowserExample</dd>
+ * <dd>{@example com.google.gwt.examples.cellview.CellBrowserExample}</dd>
  * <dt>Complex example</dt>
- * <dd>TODO example com.google.gwt.examples.cellview.CellBrowserExample2</dd>
+ * <dd>{@example com.google.gwt.examples.cellview.CellBrowserExample2}</dd>
  * </dl>
  */
 public class CellBrowser extends AbstractCellTree implements ProvidesResize,

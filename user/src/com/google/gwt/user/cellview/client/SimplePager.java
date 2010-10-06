@@ -37,7 +37,7 @@ import com.google.gwt.view.client.Range;
  *
  * <p>
  * <h3>Example</h3>
- * TODO example com.google.gwt.examples.cellview.SimplePagerExample
+ * {@example com.google.gwt.examples.cellview.SimplePagerExample}
  * </p>
  */
 public class SimplePager extends AbstractPager {

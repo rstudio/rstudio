@@ -31,11 +31,11 @@ import java.util.Set;
  * <h3>Examples</h3>
  * <dl>
  * <dt>Read only cell</dt>
- * <dd>TODO example com.google.gwt.examples.cell.CellExample</dd>
+ * <dd>{@example com.google.gwt.examples.cell.CellExample}</dd>
  * <dt>Interactive cell</dt>
- * <dd>TODO example com.google.gwt.examples.cell.InteractionCellExample</dd>
+ * <dd>{@example com.google.gwt.examples.cell.InteractionCellExample}</dd>
  * <dt>Editable cell</dt>
- * <dd>TODO example com.google.gwt.examples.cell.EditableCellExample</dd>
+ * <dd>{@example com.google.gwt.examples.cell.EditableCellExample}</dd>
  * </dl>
  * </p>
  *
