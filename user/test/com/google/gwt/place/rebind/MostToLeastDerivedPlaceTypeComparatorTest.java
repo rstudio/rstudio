@@ -23,7 +23,6 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.place.rebind.MostToLeastDerivedPlaceTypeComparator;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceTokenizer;
 import com.google.gwt.place.shared.Prefix;

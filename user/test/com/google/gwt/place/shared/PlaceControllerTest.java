@@ -17,7 +17,6 @@ package com.google.gwt.place.shared;
 
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.place.shared.PlaceChangeEvent.Handler;
 
 import junit.framework.TestCase;
 

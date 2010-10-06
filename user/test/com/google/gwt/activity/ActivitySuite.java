@@ -16,10 +16,6 @@
 package com.google.gwt.activity;
 
 import com.google.gwt.activity.shared.ActivityManagerTest;
-import com.google.gwt.place.rebind.PlaceHistoryGeneratorContextTest;
-import com.google.gwt.place.shared.PlaceChangeRequestEventTest;
-import com.google.gwt.place.shared.PlaceControllerTest;
-import com.google.gwt.place.shared.PlaceHistoryHandlerTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;

@@ -35,7 +35,8 @@ public class ValueBoxBaseTest extends GWTTestCase {
     MockParser parser = new MockParser();
     
     ValueBoxBase<String> valueBoxBase = 
-      new ValueBoxBase<String>(elm, renderer, parser) {};
+      new ValueBoxBase<String>(elm, renderer, parser) {
+    };
     
     parser.throwException = true;
     valueBoxBase.setText("");
@@ -57,7 +58,8 @@ public class ValueBoxBaseTest extends GWTTestCase {
     MockParser parser = new MockParser();
     
     ValueBoxBase<String> valueBoxBase = 
-      new ValueBoxBase<String>(elm, renderer, parser) {};
+      new ValueBoxBase<String>(elm, renderer, parser) {
+    };
     
     parser.throwException = true;
     valueBoxBase.setText("simple string");
@@ -79,7 +81,8 @@ public class ValueBoxBaseTest extends GWTTestCase {
     MockParser parser = new MockParser();
     
     ValueBoxBase<String> valueBoxBase = 
-      new ValueBoxBase<String>(elm, renderer, parser) {};
+      new ValueBoxBase<String>(elm, renderer, parser) {
+    };
     
     String text = "  two space padding test  ";
     valueBoxBase.setText(text);

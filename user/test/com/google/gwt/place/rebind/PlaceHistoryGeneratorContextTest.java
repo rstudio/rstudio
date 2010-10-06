@@ -27,7 +27,6 @@ import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.place.rebind.PlaceHistoryGeneratorContext;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceHistoryMapper;
 import com.google.gwt.place.shared.PlaceHistoryMapperWithFactory;

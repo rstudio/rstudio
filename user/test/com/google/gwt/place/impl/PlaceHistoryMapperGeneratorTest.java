@@ -17,7 +17,6 @@ package com.google.gwt.place.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.place.impl.AbstractPlaceHistoryMapper;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceHistoryMapper;
 import com.google.gwt.place.shared.PlaceHistoryMapperWithFactory;

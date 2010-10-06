@@ -16,7 +16,6 @@
 package com.google.gwt.place.shared;
 
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.place.shared.PlaceController.Delegate;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
 
