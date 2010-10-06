@@ -9,9 +9,6 @@
   <!-- Platform shouldn't matter here, just picking one -->
   <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
-  <!-- This file controls the contents of the javadoc -->
-  <property file="packages.properties" />
-
   <!--
     *** Note that if the USER_SOURCE_PATH paths are updated,
     the fileset dependencies in the outofdate tags in the
@@ -42,6 +39,7 @@
     <path refid="USER_SOURCE_PATH" />
   </path>
 
+  <!-- Rebuild the javadoc if a source file is newer than the index-->
   <target name="javadoc">
     <outofdate>
       <sourcefiles>
@@ -71,33 +69,49 @@
       </targetfiles>
       <sequential>
         <echo>Building javadoc</echo>
-        <java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
-          <jvmarg value="-Xmx1024m" />
-          <arg value="-quiet" />
-          <arg value="-notimestamp" />
-          <arg value="-source" />
-          <arg value="1.5" />
-          <arg value="-windowtitle" />
-          <arg value="Google Web Toolkit Javadoc" />
-          <arg value="-doctitle" />
-          <arg value="Google Web Toolkit API Reference" />
-          <arg value="-header" />
-          <arg value="GWT ${gwt.version}" />
-          <arg value="-encoding"/>
-          <arg value="UTF-8"/>
-          <arg value="-d" />
-          <arg value="${project.build}/javadoc" />
-          <arg value="-classpath" />
-          <arg pathref="USER_CLASS_PATH" />
-          <arg value="-sourcepath" />
-          <arg pathref="USER_SOURCE_PATH" />
-          <arg value="-examplepackages" />
-          <arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client;com.google.gwt.examples.rpc.server;com.google.gwt.examples.benchmarks;com.google.gwt.examples.cell;com.google.gwt.examples.cellview;com.google.gwt.examples.view" />
-          <arg value="-packages" />
-          <arg value="${USER_PKGS};${USER_CLASSES}" />
-        </java>
+        <antcall target="makeJavadoc" />
       </sequential>
     </outofdate>
+  </target>
+
+  <!-- Really rebuild the javadoc -->
+  <target name="makeJavadoc">	
+    <exec executable="chmod">
+      <arg value="+x" />
+      <arg value="${gwt.root}/doc/find-packages.sh" />
+    </exec>
+    <exec executable="${gwt.root}/doc/find-packages.sh" />
+    <property file="packages.properties" />
+    <java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
+      <jvmarg value="-Xmx1024m" />
+      <arg value="-quiet" />
+      <arg value="-notimestamp" />
+      <arg value="-source" />
+      <arg value="1.5" />
+      <arg value="-windowtitle" />
+      <arg value="Google Web Toolkit Javadoc" />
+      <arg value="-doctitle" />
+      <arg value="Google Web Toolkit API Reference" />
+      <arg value="-header" />
+      <arg value="GWT ${gwt.version}" />
+      <arg value="-encoding"/>
+      <arg value="UTF-8"/>
+      <arg value="-d" />
+      <arg value="${project.build}/javadoc" />
+      <arg value="-linkoffline" />
+      <arg value="http://download.oracle.com/javaee/6/api/" />
+      <arg value="validation-package-list" />
+      <arg value="-link" />
+      <arg value="http://www.json.org/javadoc" />
+      <arg value="-classpath" />
+      <arg pathref="USER_CLASS_PATH" />
+      <arg value="-sourcepath" />
+      <arg pathref="USER_SOURCE_PATH" />
+      <arg value="-examplepackages" />
+      <arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client;com.google.gwt.examples.rpc.server;com.google.gwt.examples.benchmarks;com.google.gwt.examples.cell;com.google.gwt.examples.cellview;com.google.gwt.examples.view" />
+      <arg value="-packages" />
+      <arg value="${USER_PKGS};${USER_CLASSES}" />
+    </java>
   </target>
 
   <target name="emul-ezt">
@@ -112,6 +126,12 @@
       </targetfiles>
       <sequential>
         <echo>Building JRE emulation EZT</echo>
+        <exec executable="chmod">
+          <arg value="+x" />
+          <arg value="${gwt.root}/doc/find-packages.sh" />
+        </exec>
+        <exec executable="${gwt.root}/doc/find-packages.sh" />
+        <property file="packages.properties" />
         <java classpathref="DOC_PATH" classname="com.google.doctool.JreDocTool" fork="yes" failonerror="true">
           <arg value="-out" />
           <arg value="${project.build}/emul-ezt/fragment.html" />
