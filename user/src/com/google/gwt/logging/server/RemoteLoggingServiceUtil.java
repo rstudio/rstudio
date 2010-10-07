@@ -16,8 +16,6 @@
 
 package com.google.gwt.logging.server;
 
-import org.json.JSONException;
-
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
@@ -71,7 +69,9 @@ public class RemoteLoggingServiceUtil {
       lr = JsonLogRecordServerUtil.logRecordFromJson(
           serializedLogRecordJson);
       logOnServer(lr, strongName, deobfuscator, loggerNameOverride);
-    } catch (JSONException e) {
+    } catch (Exception e) {
+      // We don't want to import the JsonException, which will require the json
+      // jar when this class loads, so we just catch all exceptions here
       throw new RemoteLoggingException("Failed to deserialize JSON", e);
     }
   }
