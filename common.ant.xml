@@ -96,7 +96,16 @@
     <isset property="build.host.iswindows" />
   </condition>
   <fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
+  
+  <!-- JVM -->
+  <condition property="build.jvm.is15">
+     <equals arg1="${ant.java.version}" arg2="1.5"/>
+  </condition>  
 
+  <condition property="build.jvm.is16">
+     <equals arg1="${ant.java.version}" arg2="1.6"/>
+  </condition> 
+  
   <!-- JUnit support -->
   <property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${gwt.version}/gwt-dev.jar" />
   <property name="gwt.junit.port" value="8888" />
