@@ -28,6 +28,11 @@
     <pathelement location="${gwt.tools.lib}/appengine/datanucleus-appengine-1.0.7.final.jar"/>
   </path>
 
+  <!-- The libraries required by the server that will be copied into WEB-INF/lib. -->
+  <fileset id="sample.server.libs" dir="${gwt.tools.lib}">
+    <include name="" />
+  </fileset>
+
   <target name="source" description="Copy source to the output folder">
     <mkdir dir="${sample.build}/src" />
     <copy todir="${sample.build}/src">
@@ -55,6 +60,13 @@
         <copy tofile="${sample.build}/build.xml" file="user-build.xml"/>
       </then>
     </if>
+  </target>
+
+  <target name="serverlibs" description="Copy server libs to the output folder">
+    <mkdir dir="${sample.build}/war/WEB-INF/lib" />
+    <copy todir="${sample.build}/war/WEB-INF/lib/" flatten="true">
+      <fileset refid="sample.server.libs" />
+    </copy>
   </target>
 
   <target name="compile" description="Compile all java files">
@@ -138,7 +150,7 @@
     <webAppCreator platform="mac" />
   </target>
 
-  <target name="build" depends="source, compile, gwtc, scripts" description="Build and package this project" />
+  <target name="build" depends="source, serverlibs, compile, gwtc, scripts" description="Build and package this project" />
 
   <target name="checkstyle" description="Static analysis of source">
     <gwt.checkstyle outputdirectory="${sample.build}">

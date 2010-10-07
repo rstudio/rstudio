@@ -21,6 +21,9 @@
         <exclude name="com/google/gwt/junit/server/**" />
         <exclude name="com/google/gwt/benchmarks/*" />
       </fileset>
+      <!-- The following two jars satisfy RequestFactory dependencies. -->
+      <zipfileset src="${gwt.tools.redist}/json/r2_20080312/json-1.5.jar" />
+      <zipfileset src="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
     </gwt.jar>
   </target>
 
