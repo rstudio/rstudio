@@ -17,6 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.SwingUI.TabPanelCollection;
+import com.google.gwt.dev.shell.WrapLayout;
 import com.google.gwt.dev.util.BrowserInfo;
 
 import java.awt.BorderLayout;
@@ -315,7 +316,7 @@ public class ModuleTabPanel extends JPanel {
     super(new BorderLayout());
     this.tabPanelCollection = tabPanelCollection;
     topPanel = new JPanel();
-    sessionDropdownPanel = new JPanel();
+    sessionDropdownPanel = new JPanel(new WrapLayout());
     sessionDropdownPanel.add(new JLabel("Session: "));
     sessionDropdown = new JComboBox();
     sessionDropdown.addActionListener(new ActionListener() {
@@ -330,7 +331,7 @@ public class ModuleTabPanel extends JPanel {
     sessionDropdownPanel.setEnabled(false);
     sessionDropdownPanel.setVisible(false);
     topPanel.add(sessionDropdownPanel);
-    moduleDropdownPanel = new JPanel();
+    moduleDropdownPanel = new JPanel(new WrapLayout());
     moduleDropdownPanel.add(new JLabel("Module: "));
     moduleDropdown = new JComboBox();
     moduleDropdown.addActionListener(new ActionListener() {
@@ -349,9 +350,8 @@ public class ModuleTabPanel extends JPanel {
     moduleDropdownPanel.setVisible(false);
     topPanel.add(moduleDropdownPanel);
     add(topPanel, BorderLayout.NORTH);
-    deckPanel = new JPanel();
     cardLayout = new CardLayout();
-    deckPanel.setLayout(cardLayout);
+    deckPanel = new JPanel(cardLayout);
     add(deckPanel);
     
     // Construct the tab title and tooltip

@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.dev.shell.CloseButton;
 import com.google.gwt.dev.shell.CloseButton.Callback;
+import com.google.gwt.dev.shell.WrapLayout;
 import com.google.gwt.dev.shell.log.SwingTreeLogger.LogEvent;
 import com.google.gwt.dev.util.BrowserLauncher;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
@@ -298,9 +299,8 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     levelFilter = maxLevel;
     // TODO(jat): how to make the topPanel properly layout items
     // when the window is resized
-    topPanel = new JPanel();
-    topPanel.setLayout(new BorderLayout());
-    JPanel logButtons = new JPanel();
+    topPanel = new JPanel(new BorderLayout());
+    JPanel logButtons = new JPanel(new WrapLayout());
     JButton expandButton = new JButton("Expand All");
     expandButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

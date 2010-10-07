@@ -163,6 +163,7 @@ public class ShellMainWindow extends JPanel {
   private JButton defaultBrowserButton;
   private JButton copyToClipboardButton;
   private JLabel loadingMessage;
+  private JPanel launchPanel;
 
   /**
    * Create the main window with the top-level logger and launch controls.
@@ -174,7 +175,7 @@ public class ShellMainWindow extends JPanel {
    */
   public ShellMainWindow(TreeLogger.Type maxLevel, File logFile) {
     super(new BorderLayout());
-    JPanel launchPanel = new JPanel();
+    launchPanel = new JPanel(new WrapLayout());
     launchPanel.setBorder(BorderFactory.createTitledBorder(
         "Launch GWT Module"));
     launchPanel.add(new JLabel("Startup URL:"));
@@ -241,6 +242,8 @@ public class ShellMainWindow extends JPanel {
     defaultBrowserButton.setEnabled(true);
     copyToClipboardButton.setVisible(true);
     copyToClipboardButton.setEnabled(true);
+    launchPanel.revalidate();
+    launchPanel.repaint();
   }
 
   /**

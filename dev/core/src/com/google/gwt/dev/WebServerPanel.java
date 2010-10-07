@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.shell.WrapLayout;
 import com.google.gwt.dev.shell.log.SwingLoggerPanel;
 
 import java.awt.BorderLayout;
@@ -52,7 +53,7 @@ public class WebServerPanel extends JPanel {
     super(new BorderLayout());
     logWindow = new SwingLoggerPanel(maxLevel, logFile);
     if (restartServerAction != null) {
-      JPanel panel = new JPanel();
+      JPanel panel = new JPanel(new WrapLayout());
       JButton restartButton = new JButton("Restart Server");
       restartButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
