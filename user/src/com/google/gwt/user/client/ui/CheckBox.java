@@ -71,7 +71,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
   /**
    * Creates a check box with the specified text label.
-   *
+   * 
    * @param label the check box's label
    */
   public CheckBox(SafeHtml label) {
@@ -80,7 +80,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
   /**
    * Creates a check box with the specified text label.
-   *
+   * 
    * @param label the check box's label
    */
   public CheckBox(String label) {
@@ -170,14 +170,14 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
   }
 
   /**
-   * Determines whether this check box is currently checked. 
+   * Determines whether this check box is currently checked.
    * <p>
    * Note that this <em>is not</em> return the value property of the checkbox
    * input element wrapped by this widget. For access to that property, see
    * {@link #getFormValue()}
    * 
    * @return <code>true</code> if the check box is checked, false otherwise.
-   * Will not return null
+   *         Will not return null
    */
   public Boolean getValue() {
     if (isAttached()) {
@@ -200,7 +200,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
   @Deprecated
   public boolean isChecked() {
     // Funny comparison b/c getValue could in theory return null
-    return getValue() == true; 
+    return getValue() == true;
   }
 
   @Override
@@ -285,31 +285,29 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
   }
 
   /**
-   * Checks or unchecks the text box.
+   * Checks or unchecks the check box.
    * <p>
    * Note that this <em>does not</em> set the value property of the checkbox
    * input element wrapped by this widget. For access to that property, see
    * {@link #setFormValue(String)}
    * 
-   * @param value true to check, false to uncheck; must not be null
-   * @throws IllegalArgumentException if value is null
+   * @param value true to check, false to uncheck; null value implies false
    */
   public void setValue(Boolean value) {
     setValue(value, false);
   }
 
   /**
-   * Checks or unchecks the text box, firing {@link ValueChangeEvent} if
+   * Checks or unchecks the check box, firing {@link ValueChangeEvent} if
    * appropriate.
    * <p>
    * Note that this <em>does not</em> set the value property of the checkbox
    * input element wrapped by this widget. For access to that property, see
    * {@link #setFormValue(String)}
-   *
+   * 
    * @param value true to check, false to uncheck; null value implies false
    * @param fireEvents If true, and value has changed, fire a
    *          {@link ValueChangeEvent}
-   * @throws IllegalArgumentException if value is null
    */
   public void setValue(Boolean value, boolean fireEvents) {
     if (value == null) {
@@ -337,8 +335,8 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
   @Override
   public void sinkEvents(int eventBitsToAdd) {
     if (isOrWasAttached()) {
-      Event.sinkEvents(inputElem, 
-          eventBitsToAdd | Event.getEventsSunk(inputElem));
+      Event.sinkEvents(inputElem, eventBitsToAdd
+          | Event.getEventsSunk(inputElem));
     } else {
       super.sinkEvents(eventBitsToAdd);
     }
@@ -395,10 +393,9 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
   }
 
   /**
-   * Replace the current input element with a new one. Preserves
-   * all state except for the name property, for nasty reasons
-   * related to radio button grouping. (See implementation of 
-   * {@link RadioButton#setName}.)
+   * Replace the current input element with a new one. Preserves all state
+   * except for the name property, for nasty reasons related to radio button
+   * grouping. (See implementation of {@link RadioButton#setName}.)
    * 
    * @param elem the new input element
    */
@@ -411,7 +408,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     String formValue = getFormValue();
     String uid = inputElem.getId();
     String accessKey = inputElem.getAccessKey();
-    int sunkEvents = Event.getEventsSunk(inputElem);   
+    int sunkEvents = Event.getEventsSunk(inputElem);
 
     // Clear out the old input element
     setEventListener(asOld(inputElem), null);

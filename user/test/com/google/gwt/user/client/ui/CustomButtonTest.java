@@ -19,6 +19,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
@@ -37,6 +39,14 @@ import java.util.Map.Entry;
  * released.
  */
 public class CustomButtonTest extends GWTTestCase {
+
+  private static class Handler implements ValueChangeHandler<Boolean> {
+    Boolean received = null;
+    
+    public void onValueChange(ValueChangeEvent<Boolean> event) {
+      received = event.getValue();
+    }
+  }
 
   private static final String html = "<b>hello</b><i>world</i>";
 
@@ -159,14 +169,16 @@ public class CustomButtonTest extends GWTTestCase {
   }
 
   public void testSyntheticClick() {
-    PushButton b = new PushButton();
+    ToggleButton b = new ToggleButton();
     final ArrayList<String> events = new ArrayList<String>();
+    Handler h = new Handler();
 
     b.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         events.add(event.getNativeEvent().getType());
       }
     });
+    b.addValueChangeHandler(h);
 
     RootPanel.get().add(b);
 
@@ -183,6 +195,7 @@ public class CustomButtonTest extends GWTTestCase {
             false, Event.BUTTON_LEFT));
     assertEquals("Expecting one click event", 1, events.size());
     assertEquals("Expecting one click event", "click", events.get(0));
+    assertNotNull("Expecting a value change event", h.received);
   }
   
   public void testTransitions() {
@@ -218,5 +231,29 @@ public class CustomButtonTest extends GWTTestCase {
     assertTrue(b.isHovering());
     assertFalse(b.isDown());
     assertFalse(b.isEnabled());
+  }
+
+  public void testToogleButtonHasValue() {
+    ToggleButton tb = new ToggleButton();
+    Handler h = new Handler();
+    tb.addValueChangeHandler(h);
+    tb.setDown(false);
+    assertNull(h.received);
+    tb.setDown(true);
+    assertNull(h.received);
+
+    tb.setValue(false);
+    assertNull(h.received);
+    tb.setValue(true);
+    assertNull(h.received);
+
+    tb.setValue(true, true);
+    assertNull(h.received);
+
+    tb.setValue(false, true);
+    assertFalse(h.received);
+
+    tb.setValue(true, true);
+    assertTrue(h.received);
   }
 }

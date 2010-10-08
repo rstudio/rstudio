@@ -17,6 +17,9 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
  * A <code>ToggleButton</code> is a stylish stateful button which allows the
@@ -26,15 +29,18 @@ import com.google.gwt.event.dom.client.ClickHandler;
  * <img class='gallery' src='doc-files/ToggleButton.png'/>
  * </p>
  * 
- * <h3>CSS Style Rules</h3> <ul class="css"> <li>
+ * <h3>CSS Style Rules</h3>
+ * <ul class="css">
+ * <li>
  * .gwt-ToggleButton-up/down/up-hovering/down-hovering/up-disabled/down-disabled
- * {.html-face}</li> </ul>
+ * {.html-face}</li>
+ * </ul>
  * 
  * <p>
  * <h3>Example</h3> {@example com.google.gwt.examples.ToggleButtonExample}
  * </p>
  */
-public class ToggleButton extends CustomButton {
+public class ToggleButton extends CustomButton implements HasValue<Boolean> {
   private static String STYLENAME_DEFAULT = "gwt-ToggleButton";
 
   {
@@ -63,12 +69,10 @@ public class ToggleButton extends CustomButton {
    * construct the default face of the button.
    * 
    * @param upImage image for the default (up) face of the button
-   * @param listener the click listener
-   * @deprecated Use {@link #ToggleButton(Image, ClickHandler)} instead
+   * @param handler the click handler
    */
-  @Deprecated
-  public ToggleButton(Image upImage, ClickListener listener) {
-    super(upImage, listener);
+  public ToggleButton(Image upImage, ClickHandler handler) {
+    super(upImage, handler);
   }
 
   /**
@@ -76,10 +80,12 @@ public class ToggleButton extends CustomButton {
    * construct the default face of the button.
    * 
    * @param upImage image for the default (up) face of the button
-   * @param handler the click handler
+   * @param listener the click listener
+   * @deprecated Use {@link #ToggleButton(Image, ClickHandler)} instead
    */
-  public ToggleButton(Image upImage, ClickHandler handler) {
-    super(upImage, handler);
+  @Deprecated
+  public ToggleButton(Image upImage, ClickListener listener) {
+    super(upImage, listener);
   }
 
   /**
@@ -97,12 +103,10 @@ public class ToggleButton extends CustomButton {
    * 
    * @param upImage image for the default(up) face of the button
    * @param downImage image for the down face of the button
-   * @param listener clickListener
-   * @deprecated Use {@link #ToggleButton(Image, Image, ClickHandler)} instead
+   * @param handler the click handler
    */
-  @Deprecated
-  public ToggleButton(Image upImage, Image downImage, ClickListener listener) {
-    super(upImage, downImage, listener);
+  public ToggleButton(Image upImage, Image downImage, ClickHandler handler) {
+    super(upImage, downImage, handler);
   }
 
   /**
@@ -110,10 +114,12 @@ public class ToggleButton extends CustomButton {
    * 
    * @param upImage image for the default(up) face of the button
    * @param downImage image for the down face of the button
-   * @param handler the click handler
+   * @param listener clickListener
+   * @deprecated Use {@link #ToggleButton(Image, Image, ClickHandler)} instead
    */
-  public ToggleButton(Image upImage, Image downImage, ClickHandler handler) {
-    super(upImage, downImage, handler);
+  @Deprecated
+  public ToggleButton(Image upImage, Image downImage, ClickListener listener) {
+    super(upImage, downImage, listener);
   }
 
   /**
@@ -131,12 +137,10 @@ public class ToggleButton extends CustomButton {
    * construct the default face of the button.
    * 
    * @param upText the text for the default (up) face of the button
-   * @param listener the click listener
-   * @deprecated Use {@link #ToggleButton(String, ClickHandler)} instead
+   * @param handler the click handler
    */
-  @Deprecated
-  public ToggleButton(String upText, ClickListener listener) {
-    super(upText, listener);
+  public ToggleButton(String upText, ClickHandler handler) {
+    super(upText, handler);
   }
 
   /**
@@ -144,10 +148,12 @@ public class ToggleButton extends CustomButton {
    * construct the default face of the button.
    * 
    * @param upText the text for the default (up) face of the button
-   * @param handler the click handler
+   * @param listener the click listener
+   * @deprecated Use {@link #ToggleButton(String, ClickHandler)} instead
    */
-  public ToggleButton(String upText, ClickHandler handler) {
-    super(upText, handler);
+  @Deprecated
+  public ToggleButton(String upText, ClickListener listener) {
+    super(upText, listener);
   }
 
   /**
@@ -160,21 +166,82 @@ public class ToggleButton extends CustomButton {
     super(upText, downText);
   }
 
+  /**
+   * Constructor for <code>ToggleButton</code>.
+   * 
+   * @param upText the text for the default (up) face of the button
+   * @param downText the text for down face of the button
+   * @param handler the click handler
+   */
+  public ToggleButton(String upText, String downText, ClickHandler handler) {
+    super(upText, downText, handler);
+  }
+
+  public HandlerRegistration addValueChangeHandler(
+      ValueChangeHandler<Boolean> handler) {
+    return addHandler(handler, ValueChangeEvent.getType());
+  }
+
+  /**
+   * Determines whether this button is currently down.
+   * 
+   * @return <code>true</code> if the button is pressed, false otherwise. Will
+   *         not return null
+   */
+  public Boolean getValue() {
+    return isDown();
+  }
+
   @Override
   public boolean isDown() {
     // Changes access to public.
     return super.isDown();
   }
 
+  /**
+   * {@inheritDoc} Does not fire {@link ValueChangeEvent}. (If you want the
+   * event to fire, use {@link #setValue(Boolean, boolean)})
+   */
   @Override
   public void setDown(boolean down) {
     // Changes access to public.
     super.setDown(down);
   }
 
+  /**
+   * Sets whether this button is down.
+   * 
+   * @param value true to press the button, false otherwise; null value implies
+   *          false
+   */
+  public void setValue(Boolean value) {
+    setValue(value, false);
+  }
+
+  /**
+   * Sets whether this button is down, firing {@link ValueChangeEvent} if
+   * appropriate.
+   * 
+   * @param value true to press the button, false otherwise; null value implies
+   *          false
+   * @param fireEvents If true, and value has changed, fire a
+   *          {@link ValueChangeEvent}
+   */
+  public void setValue(Boolean value, boolean fireEvents) {
+    if (value == null) {
+      value = Boolean.FALSE;
+    }
+    boolean oldValue = isDown();
+    setDown(value);
+    if (fireEvents) {
+      ValueChangeEvent.fireIfNotEqual(this, oldValue, value);
+    }
+  }
+
   @Override
   protected void onClick() {
     toggleDown();
     super.onClick();
+    ValueChangeEvent.fire(this, isDown());
   }
 }
