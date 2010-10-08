@@ -456,16 +456,12 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     SimpleBarRequest context = simpleBarRequest();
     final SimpleBarProxy foo = context.create(SimpleBarProxy.class);
-    Object futureId = foo.getId();
-    assertEquals(futureId, foo.getId());
     assertTrue(((SimpleEntityProxyId<?>) foo.stableId()).isEphemeral());
     Request<SimpleBarProxy> fooReq = context.persistAndReturnSelf().using(foo);
     fooReq.fire(new Receiver<SimpleBarProxy>() {
 
       @Override
       public void onSuccess(final SimpleBarProxy returned) {
-        Object futureId = foo.getId();
-        assertEquals(futureId, foo.getId());
         assertFalse(((SimpleEntityProxyId<?>) foo.stableId()).isEphemeral());
 
         checkStableIdEquals(foo, returned);
@@ -479,16 +475,12 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     SimpleBarRequest context = simpleBarRequest();
     final SimpleBarProxy bar = context.create(SimpleBarProxy.class);
-    Object futureId = bar.getId();
-    assertEquals(futureId, bar.getId());
     assertTrue(((SimpleEntityProxyId<?>) bar.stableId()).isEphemeral());
     Request<SimpleBarProxy> fooReq = context.returnFirst(Collections.singletonList(bar));
     fooReq.fire(new Receiver<SimpleBarProxy>() {
 
       @Override
       public void onSuccess(final SimpleBarProxy returned) {
-        Object futureId = bar.getId();
-        assertEquals(futureId, bar.getId());
         assertFalse(((SimpleEntityProxyId<?>) bar.stableId()).isEphemeral());
         assertFalse(((SimpleEntityProxyId<?>) returned.stableId()).isEphemeral());
 

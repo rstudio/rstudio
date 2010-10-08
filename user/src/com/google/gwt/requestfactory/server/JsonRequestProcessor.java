@@ -442,19 +442,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   }
 
   /**
-   * Generate an ID for a new record. The default behavior is to return null and
-   * let the data store generate the ID automatically.
-   * 
-   * @param key the key of the record field
-   * @return the ID of the new record, or null to auto generate
-   */
-  public String generateIdForCreate(String key) {
-    // TODO(rjrjr) is there any point to this method if a service layer
-    // is coming?
-    return null;
-  }
-
-  /**
    * Find the entity in the server data store, apply its setters, capture any
    * violations, and return a
    * {@link com.google.gwt.requestfactory.server.JsonRequestProcessor.EntityData
@@ -476,28 +463,19 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     validateKeys(recordObject, propertiesInDomain.keySet());
 
     // get entityInstance
-    Object entityInstance = getEntityInstance(
-        writeOperation,
-        entityType,
-        entityKey.decodedId(propertiesInProxy.get(Constants.ENTITY_ID_PROPERTY).getType()),
-        propertiesInProxy.get(Constants.ENTITY_ID_PROPERTY).getType());
-
+    Class<?> idType = getIdMethodForEntity(entityType).getReturnType();
+    Object entityInstance = getEntityInstance(writeOperation, entityType,
+        entityKey.decodedId(idType), idType);
     cachedEntityLookup.put(entityKey, entityInstance);
 
     Iterator<?> keys = recordObject.keys();
     while (keys.hasNext()) {
       String key = (String) keys.next();
-      Class<?> propertyType = propertiesInDomain.get(key);
       Property<?> dtoProperty = propertiesInProxy.get(key);
       if (writeOperation == WriteOperation.PERSIST
           && (Constants.ENTITY_ID_PROPERTY.equals(key))) {
-        String id = generateIdForCreate(key);
-        if (id != null) {
-          // TODO(rjrjr) generateIdForCreate returns null. Has this ever
-          // execute
-          entityType.getMethod(getMethodNameFromPropertyName(key, "set"),
-              propertyType).invoke(entityInstance, id);
-        }
+        // Don't allow the client to attempt to set the id
+        continue;
       } else {
         Object propertyValue = null;
         if (recordObject.isNull(key)) {
@@ -641,8 +619,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     for (Property<?> p : allProperties(entityKeyClass)) {
       if (requestedProperty(p, propertyContext)) {
         String propertyName = p.getName();
-        jsonObject.put(propertyName, encodePropertyValueFromDataStore(
-            entityElement, p, propertyName, propertyContext));
+        jsonObject.put(
+            propertyName,
+            encodePropertyValueFromDataStore(entityElement, p, propertyName,
+                propertyContext));
       }
     }
     return jsonObject;
@@ -1087,7 +1067,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
      * will protected against ConcurrentModificationExceptions.
      */
     afterDvsDataMap = new HashMap<EntityKey, EntityData>();
-    Set<EntityKey> done = new HashSet<EntityKey>(); 
+    Set<EntityKey> done = new HashSet<EntityKey>();
     Set<EntityKey> queue = new HashSet<EntityKey>(involvedKeys);
     while (!queue.isEmpty()) {
       for (EntityKey entityKey : queue) {
@@ -1109,11 +1089,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
            * unedited, existing object.
            */
           SerializedEntity serializedEntity = beforeDataMap.get(entityKey);
-          Object entityInstance = (serializedEntity == null) ?
-              getEntityInstance(entityKey) : serializedEntity.entityInstance;
+          Object entityInstance = (serializedEntity == null)
+              ? getEntityInstance(entityKey) : serializedEntity.entityInstance;
           if (entityInstance != null) {
-            afterDvsDataMap.put(entityKey, new EntityData(entityInstance,
-                null));
+            afterDvsDataMap.put(entityKey, new EntityData(entityInstance, null));
           }
         }
       }
@@ -1267,7 +1246,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       IllegalAccessException, InvocationTargetException {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put(Constants.ENCODED_ID_PROPERTY, encodedId);
-    jsonObject.put(Constants.ENCODED_VERSION_PROPERTY,
+    jsonObject.put(
+        Constants.ENCODED_VERSION_PROPERTY,
         encodePropertyValueFromDataStore(entityElement,
             Constants.ENTITY_VERSION_PROPERTY,
             Constants.ENTITY_VERSION_PROPERTY.getName(), propertyContext));
@@ -1431,11 +1411,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         if (entityKey.isFuture) {
           returnObject.put(Constants.ENCODED_FUTUREID_PROPERTY,
               entityKey.encodedId);
-          returnObject.put(Constants.ENCODED_ID_PROPERTY, getSchemaAndId(
-              entityKey.proxyType, null));
+          returnObject.put(Constants.ENCODED_ID_PROPERTY,
+              getSchemaAndId(entityKey.proxyType, null));
         } else {
-          returnObject.put(Constants.ENCODED_ID_PROPERTY, getSchemaAndId(
-              entityKey.proxyType, entityKey.encodedId));
+          returnObject.put(Constants.ENCODED_ID_PROPERTY,
+              getSchemaAndId(entityKey.proxyType, entityKey.encodedId));
         }
         violations.put(returnObject);
       }
@@ -1448,8 +1428,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       SecurityException, IllegalAccessException, InvocationTargetException,
       NoSuchMethodException, JSONException, InstantiationException {
     SerializedEntity beforeEntity = beforeDataMap.get(entityKey);
-    if (beforeEntity != null && hasChanged(beforeEntity.serializedEntity,
-        serializeEntity(entityInstanceAfterOperation, entityKey))) {
+    if (beforeEntity != null
+        && hasChanged(beforeEntity.serializedEntity,
+            serializeEntity(entityInstanceAfterOperation, entityKey))) {
       return true;
     }
     return false;

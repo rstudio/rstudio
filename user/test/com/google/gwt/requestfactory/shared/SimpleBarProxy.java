@@ -25,7 +25,10 @@ import com.google.gwt.requestfactory.server.SimpleBar;
 public interface SimpleBarProxy extends EntityProxy {
   Boolean getFindFails();
 
-  String getId();
+  /*
+   * NB: The lack of a getId() here is intentional, to ensure that the system
+   * does not assume that the id property is available to the client.
+   */
 
   String getUserName();
 

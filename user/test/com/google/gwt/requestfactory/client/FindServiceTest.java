@@ -133,7 +133,6 @@ public class FindServiceTest extends RequestFactoryTestBase {
               @Override
               public void onSuccess(SimpleBarProxy returnedProxy) {
                 assertEquals(stableId, returnedProxy.stableId());
-                assertEquals("999L", returnedProxy.getId());
                 finishTestAndReset();
               }
             });

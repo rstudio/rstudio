@@ -30,8 +30,6 @@ public interface PersonProxy extends EntityProxy {
 
   String getDescription();
 
-  String getId();
-
   PersonProxy getMentor();
 
   String getName();

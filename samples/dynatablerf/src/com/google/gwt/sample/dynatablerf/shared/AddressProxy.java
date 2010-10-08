@@ -27,8 +27,6 @@ import com.google.gwt.sample.dynatablerf.domain.Address;
 public interface AddressProxy extends EntityProxy {
   String getCity();
 
-  String getId();
-  
   String getState();
 
   String getStreet();

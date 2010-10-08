@@ -148,16 +148,11 @@ public class RequestFactoryStringTest extends RequestFactoryTestBase {
 
     SimpleBarRequest context = req.simpleBarRequest();
     final SimpleBarProxy foo = context.create(SimpleBarProxy.class);
-    Object futureId = foo.getId();
-    assertEquals(futureId, foo.getId());
     Request<SimpleBarProxy> fooReq = context.persistAndReturnSelf().using(foo);
     fooReq.fire(new Receiver<SimpleBarProxy>() {
 
       @Override
       public void onSuccess(final SimpleBarProxy returned) {
-        Object futureId = foo.getId();
-        assertEquals(futureId, foo.getId());
-
         checkStableIdEquals(foo, returned);
         finishTestAndReset();
       }
