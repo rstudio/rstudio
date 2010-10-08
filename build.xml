@@ -160,6 +160,7 @@
 
   <target name="clean" description="[action] Cleans the entire GWT build">
     <delete dir="${gwt.build}" />
+    <delete file="${gwt.root}/doc/packages.properties" />
   </target>
 
   <target name ="presubmit" description="[action] Deprecated for test, which now does checkstyle and apicheck"
