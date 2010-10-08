@@ -263,6 +263,9 @@ a, a:visited, a:hover {
 .gwt-MenuBar .gwt-MenuItem-selected {
   background: #cdcdcd;
 }
+.gwt-MenuBar .gwt-MenuItem-disabled {
+  color: #cdcdcd;
+}
 .gwt-MenuBar-horizontal {
   background: #ebebeb url(images/hborder.png) repeat-x 0px -2003px;
   border: 1px solid #BBBBBB;

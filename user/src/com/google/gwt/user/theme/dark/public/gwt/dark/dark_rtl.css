@@ -247,6 +247,9 @@ a, a:visited, a:hover {
   background: #666;
   color: #0cf;
 }
+.gwt-MenuBar .gwt-MenuItem-disabled {
+  color: #ccc;
+}
 .gwt-MenuBar-horizontal {
   background: #222222;
   border: 1px solid #777;

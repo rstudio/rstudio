@@ -203,6 +203,26 @@ public class MenuBarTest extends WidgetTestBase {
     });
   }
 
+  public void testDisabledItem() {
+    MenuBar bar = new MenuBar(true);
+    MenuItem item1 = new MenuItem("item1", BLANK_COMMAND);
+    MenuItem item2 = new MenuItem("item2", BLANK_COMMAND);
+    MenuItem item3 = new MenuItem("item3", BLANK_COMMAND);
+    bar.addItem(item1);
+    bar.addItem(item2);
+    bar.addItem(item3);
+    RootPanel.get().add(bar);
+
+    item2.setEnabled(false);
+
+    bar.moveSelectionDown();
+    assertEquals(item1, bar.getSelectedItem());
+    bar.moveSelectionDown();
+    assertEquals(item3, bar.getSelectedItem());
+    bar.moveSelectionUp();
+    assertEquals(item1, bar.getSelectedItem());
+  }
+
   public void testEscapeKey() {
     // Create a menu bar with children.
     MenuBar l0 = new MenuBar();

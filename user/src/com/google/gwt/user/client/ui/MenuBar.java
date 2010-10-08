@@ -147,6 +147,7 @@ import java.util.List;
 @SuppressWarnings("deprecation")
 public class MenuBar extends Widget implements PopupListener, HasAnimation,
     HasCloseHandlers<PopupPanel> {
+
   /**
    * An {@link ImageBundle} that provides images for {@link MenuBar}.
    *
@@ -872,6 +873,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * otherwise.
    */
   void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
+    // Should not perform any action if the item is disabled
+    if (!item.isEnabled()) {
+      return;
+    }
+
     // Ensure that the item is selected.
     selectItem(item);
 
@@ -936,6 +942,10 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
           && (shownChildMenu == selectedItem.getSubMenu())) {
         return;
       }
+    }
+
+    if (!item.isEnabled()) {
+      return;
     }
 
     // Style the item selected when the mouse enters.
@@ -1281,14 +1291,16 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    */
   private boolean selectFirstItemIfNoneSelected() {
     if (selectedItem == null) {
-      if (items.size() > 0) {
-        MenuItem nextItem = items.get(0);
-        selectItem(nextItem);
+      for (MenuItem nextItem : items) {
+        if (nextItem.isEnabled()) {
+          selectItem(nextItem);
+          break;
+        }
       }
       return true;
     }
     return false;
-  }
+ }
 
   private void selectNextItem() {
     if (selectedItem == null) {
@@ -1303,10 +1315,22 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     MenuItem itemToBeSelected;
 
-    if (index < items.size() - 1) {
-      itemToBeSelected = items.get(index + 1);
-    } else { // we're at the end, loop around to the start
-      itemToBeSelected = items.get(0);
+    int firstIndex = index;
+    while (true) {
+      index = index + 1;
+      if (index == items.size()) {
+        // we're at the end, loop around to the start
+        index = 0;
+      }
+      if (index == firstIndex) {
+        itemToBeSelected = items.get(firstIndex);
+        break;
+      } else {
+        itemToBeSelected = items.get(index);
+        if (itemToBeSelected.isEnabled()) {
+          break;
+        }
+      }
     }
 
     selectItem(itemToBeSelected);
@@ -1327,11 +1351,23 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     assert (index != -1);
 
     MenuItem itemToBeSelected;
-    if (index > 0) {
-      itemToBeSelected = items.get(index - 1);
 
-    } else { // we're at the start, loop around to the end
-      itemToBeSelected = items.get(items.size() - 1);
+    int firstIndex = index;
+    while (true) {
+      index = index - 1;
+      if (index < 0) {
+        // we're at the start, loop around to the end
+        index = items.size() - 1;
+      }
+      if (index == firstIndex) {
+        itemToBeSelected = items.get(firstIndex);
+        break;
+      } else {
+        itemToBeSelected = items.get(index);
+        if (itemToBeSelected.isEnabled()) {
+          break;
+        }
+      }
     }
 
     selectItem(itemToBeSelected);

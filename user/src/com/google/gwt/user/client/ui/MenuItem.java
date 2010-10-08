@@ -29,12 +29,14 @@ import com.google.gwt.user.client.DOM;
  * Each menu item is assigned a unique DOM id in order to support ARIA. See
  * {@link com.google.gwt.user.client.ui.Accessibility} for more information.
  */
-public class MenuItem extends UIObject implements HasHTML, HasSafeHtml {
+public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHtml {
 
   private static final String DEPENDENT_STYLENAME_SELECTED_ITEM = "selected";
+  private static final String DEPENDENT_STYLENAME_DISABLED_ITEM = "disabled";
 
   private Command command;
   private MenuBar parentMenu, subMenu;
+  private boolean enabled = true;
 
   /**
    * Constructs a new menu item that fires a command when it is selected.
@@ -56,14 +58,13 @@ public class MenuItem extends UIObject implements HasHTML, HasSafeHtml {
   }
 
   /**
-   * Constructs a new menu item that fires a command when it is selected.
+   * Constructs a new menu item that cascades to a sub-menu when it is selected.
    * 
-   * @param text the item's text
-   * @param cmd the command to be fired when it is selected
+   * @param html the item's text
+   * @param subMenu the sub-menu to be displayed when it is selected
    */
-  public MenuItem(String text, Command cmd) {
-    this(text, false);
-    setCommand(cmd);
+  public MenuItem(SafeHtml html, MenuBar subMenu) {
+    this(html.asString(), true, subMenu);
   }
 
   /**
@@ -81,11 +82,24 @@ public class MenuItem extends UIObject implements HasHTML, HasSafeHtml {
   /**
    * Constructs a new menu item that cascades to a sub-menu when it is selected.
    * 
-   * @param html the item's text
+   * @param text the item's text
+   * @param asHTML <code>true</code> to treat the specified text as html
    * @param subMenu the sub-menu to be displayed when it is selected
    */
-  public MenuItem(SafeHtml html, MenuBar subMenu) {
-    this(html.asString(), true, subMenu);
+  public MenuItem(String text, boolean asHTML, MenuBar subMenu) {
+    this(text, asHTML);
+    setSubMenu(subMenu);
+  }
+
+  /**
+   * Constructs a new menu item that fires a command when it is selected.
+   * 
+   * @param text the item's text
+   * @param cmd the command to be fired when it is selected
+   */
+  public MenuItem(String text, Command cmd) {
+    this(text, false);
+    setCommand(cmd);
   }
 
   /**
@@ -96,18 +110,6 @@ public class MenuItem extends UIObject implements HasHTML, HasSafeHtml {
    */
   public MenuItem(String text, MenuBar subMenu) {
     this(text, false);
-    setSubMenu(subMenu);
-  }
-
-  /**
-   * Constructs a new menu item that cascades to a sub-menu when it is selected.
-   * 
-   * @param text the item's text
-   * @param asHTML <code>true</code> to treat the specified text as html
-   * @param subMenu the sub-menu to be displayed when it is selected
-   */
-  public MenuItem(String text, boolean asHTML, MenuBar subMenu) {
-    this(text, asHTML);
     setSubMenu(subMenu);
   }
 
@@ -162,6 +164,10 @@ public class MenuItem extends UIObject implements HasHTML, HasSafeHtml {
     return DOM.getInnerText(getElement());
   }
 
+  public boolean isEnabled() {
+    return enabled;
+  }
+
   /**
    * Sets the command associated with this item.
    * 
@@ -171,12 +177,22 @@ public class MenuItem extends UIObject implements HasHTML, HasSafeHtml {
     command = cmd;
   }
 
-  public void setHTML(String html) {
-    DOM.setInnerHTML(getElement(), html);
+  @Override
+  public void setEnabled(boolean enabled) {
+    if (enabled) {
+      removeStyleDependentName(DEPENDENT_STYLENAME_DISABLED_ITEM);
+    } else {
+      addStyleDependentName(DEPENDENT_STYLENAME_DISABLED_ITEM);
+    }
+    this.enabled = enabled;
   }
 
   public void setHTML(SafeHtml html) {
     setHTML(html.asString());
+  }
+
+  public void setHTML(String html) {
+    DOM.setInnerHTML(getElement(), html);
   }
 
   /**
