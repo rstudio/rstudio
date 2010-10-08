@@ -166,7 +166,7 @@ public class MessagesWriter {
   }
 
   /**
-   * @return the expression that will instantiate the Messages interface
+   * Returns the expression that will instantiate the Messages interface.
    */
   public String getDeclaration() {
     return String.format(
@@ -179,8 +179,8 @@ public class MessagesWriter {
   }
 
   /**
-   * @return The namespace prefix (not including :) declared by the template for
-   *         message elements and attributes
+   * Returns the namespace prefix (not including :) declared by the template for
+   * message elements and attributes.
    */
   public String getMessagesPrefix() {
     return messagesPrefix;
@@ -196,7 +196,7 @@ public class MessagesWriter {
   }
 
   /**
-   * @return true iff any messages have been declared
+   * Returns true iff any messages have been declared.
    */
   public boolean hasMessages() {
     return !messages.isEmpty();
@@ -222,8 +222,8 @@ public class MessagesWriter {
   }
 
   /**
-   * @return The set of AttributeMessages that were found in elem and stored by
-   *         a previous call to {@link #consumeAndStoreMessageAttributesFor}
+   * Returns the set of AttributeMessages that were found in elem and stored by a
+   * previous call to {@link #consumeAndStoreMessageAttributesFor}.
    */
   public Collection<AttributeMessage> retrieveMessageAttributesFor(
       XMLElement elem) {

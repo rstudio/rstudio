@@ -307,7 +307,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
-   * @return the widget at the given index.
+   * Returns the widget at the given index.
    */
   public Widget getWidget(int index) {
     checkIndex(index);
@@ -315,7 +315,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
-   * @return the number of tabs and widgets
+   * Returns the number of tabs and widgets.
    */
   public int getWidgetCount() {
     return children.size();
@@ -329,7 +329,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
-   * @return the index of the given child, or -1 if it is not a child
+   * Returns the index of the given child, or -1 if it is not a child.
    */
   public int getWidgetIndex(Widget child) {
     return children.indexOf(child);
@@ -557,7 +557,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
    *
    * Use care when setting an object's HTML; it is an easy way to expose
    * script-based security problems. Consider using
-   * {@link #setTabHTML(int, SafeHtml)} or 
+   * {@link #setTabHTML(int, SafeHtml)} or
    * {@link #setTabText(int, String)} whenever possible.
    *
    * @param index the index of the tab whose HTML is to be set

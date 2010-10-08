@@ -17,7 +17,6 @@ package com.google.gwt.text.shared.testing;
 
 import com.google.gwt.text.shared.Parser;
 
-
 /**
  * <span style="color:red">Experimental API: This class is still under rapid
  * development, and is very likely to be deleted. Use it at your own risk.
@@ -28,9 +27,9 @@ import com.google.gwt.text.shared.Parser;
 public class PassthroughParser implements Parser<String> {
 
   private static PassthroughParser INSTANCE;
-  
+
   /**
-   * @return the instance of the no-op renderer
+   * Returns the instance of the no-op renderer.
    */
   public static Parser<String> instance() {
     if (INSTANCE == null) {
@@ -38,7 +37,7 @@ public class PassthroughParser implements Parser<String> {
     }
     return INSTANCE;
   }
-  
+
   protected PassthroughParser() {
   }
 

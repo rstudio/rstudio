@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 
 /**
  * A HTML context-aware parser for a simple HTML template language.
- * 
+ *
  * <p>This parser parses templates consisting of well-formed XML or XHTML
  * markup, with template parameters of the form {@code "{n}"}. For example, a
  * template might look like,
@@ -78,7 +78,7 @@ import java.util.regex.Pattern;
  * <p>The implementation is subject to the following limitations:
  * <ul>
  *   <li>The input template must be well-formed XML/XHTML. If it is not,
- *       a {@link UnableToCompleteException} is thrown and details regarding
+ *       an {@link UnableToCompleteException} is thrown and details regarding
  *       the source of the parse failure are logged to this parser's logger.
  *   <li>Template parameters can only appear within inner text and within
  *       attributes. In particular, parameters cannot appear within a HTML
@@ -145,11 +145,11 @@ final class HtmlTemplateParser {
     /*
      * Throw errors on various irrelevant SAX events that we don't want to
      * handle, and which should not occur in templates.
-     * 
+     *
      * It may be reasonable to just silently ignore these events, but failing
      * explicitly seems more helpful to developers.
      */
-    
+
     @Override
     public void notationDecl(String name, String publicId, String systemId)
         throws SAXException {
@@ -220,11 +220,11 @@ final class HtmlTemplateParser {
 
     /**
      * Returns exception for unsupported event in SafeHtmlTemplates.
-     * 
+     *
      * <p>
      * Returns an exception indicating that the event in question is not
      * supported in SafeHtmlTemplates.
-     * 
+     *
      * @param what unsupported SAX event that should not occur in templates
      * @return exception stating that the event is not allowed
      */
@@ -300,14 +300,14 @@ final class HtmlTemplateParser {
     } catch (SAXParseException e) {
       String logMessage = "Parse Error during template parsing, at line "
           + e.getLineNumber() + ", column " + e.getColumnNumber();
-      // Attempt to extract (some) of the input to provide a more useful 
+      // Attempt to extract (some) of the input to provide a more useful
       // error message.
       try {
         input.reset();
         char[] buf = new char[200];
         int len = input.read(buf);
         if (len > 0) {
-          logMessage += " of input " + new String(buf, 0, len); 
+          logMessage += " of input " + new String(buf, 0, len);
         }
       } catch (IOException e1) {
         // We tried, but resetting/reading from the input stream failed. Sorry.

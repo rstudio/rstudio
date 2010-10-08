@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -93,25 +93,25 @@ public abstract class AbstractResource {
    * Definition of a single entry for a resource.
    */
   public interface ResourceEntry {
-    
+
     /**
      * Retrieve a particular form for this entry.
-     * 
+     *
      * @param form form to retrieve (null for the default)
      * @return null if the requested form is not present
      */
     String getForm(String form);
-    
+
     /**
-     * @return list of forms associated with this entry.
-     * 
+     * Returns a list of forms associated with this entry.
+     *
      * The default form (also the only form for anything other than messages
      * with plural support) is always available and not present in this list.
      */
     Collection<String> getForms();
-    
+
     /**
-     * @return key for this entry (must not be null).
+     * Returns key for this entry (must not be null).
      */
     String getKey();
   }
@@ -125,7 +125,7 @@ public abstract class AbstractResource {
     private List<AbstractResource> list = new ArrayList<AbstractResource>();
 
     private Map<String, PluralForm[]> pluralForms = new HashMap<String, PluralForm[]>();
-    
+
     private Set<AbstractResource> set = new HashSet<AbstractResource>();
 
     @Override
@@ -148,7 +148,7 @@ public abstract class AbstractResource {
 
     /**
      * Add all keys known by this ResourceList to the specified set.
-     * 
+     *
      * @param s set to add keys to
      */
     public void addToKeySet(Set<String> s) {
@@ -193,7 +193,7 @@ public abstract class AbstractResource {
           best = matchLocale;
         }
       }
-      return best; 
+      return best;
     }
 
     @Override
@@ -202,8 +202,8 @@ public abstract class AbstractResource {
     }
 
     /**
-     * Return the first AnnotationsResource containing a specified key.
-     * 
+     * Returns the first AnnotationsResource containing a specified key.
+     *
      * @param logger
      * @param key
      * @return first AnnotationsResource containing key, or null if none
@@ -236,8 +236,8 @@ public abstract class AbstractResource {
     }
 
     /**
-     * Return the list of extensions available for a given key.
-     * 
+     * Returns the list of extensions available for a given key.
+     *
      * @param key
      * @return collection of extensions for the given key
      */
@@ -250,7 +250,7 @@ public abstract class AbstractResource {
     }
 
     /**
-     * Return the list of plural forms for a given key.
+     * Returns the list of plural forms for a given key.
      *
      * @param key
      * @return array of plural forms.
@@ -260,8 +260,8 @@ public abstract class AbstractResource {
     }
 
     /**
-     * Return a translation for a key, or throw an exception.
-     * 
+     * Returns a translation for a key, or throw an exception.
+     *
      * @param key
      * @return translated string for key
      * @throws MissingResourceException
@@ -276,8 +276,8 @@ public abstract class AbstractResource {
     }
 
     /**
-     * Return a translation for a key/extension, or throw an exception.
-     * 
+     * Returns a translation for a key/extension, or throw an exception.
+     *
      * @param key
      * @param ext key extension, null if none
      * @return translated string for key
@@ -293,8 +293,8 @@ public abstract class AbstractResource {
     }
 
     /**
-     * Return a translation for a key, or null if not found.
-     * 
+     * Returns a translation for a key, or null if not found.
+     *
      * @param key
      * @return translated string for key
      */
@@ -309,8 +309,8 @@ public abstract class AbstractResource {
     }
 
     /**
-     * Return a translation for a key/extension, or null if not found.
-     * 
+     * Returns a translation for a key/extension, or null if not found.
+     *
      * @param key
      * @param extension key extension, null if none
      * @return translated string for key
@@ -336,7 +336,7 @@ public abstract class AbstractResource {
     }
 
     /**
-     * @return set of keys present across all resources
+     * Returns set of keys present across all resources.
      */
     public Set<String> keySet() {
       Set<String> keySet = new HashSet<String>();
@@ -360,7 +360,7 @@ public abstract class AbstractResource {
 
     /**
      * Set the plural forms associated with a given message.
-     * 
+     *
      * @param key
      * @param forms
      */
@@ -384,7 +384,7 @@ public abstract class AbstractResource {
     private final String key;
     private final Map<String, String> values = new HashMap<String, String>();
     private final Set<String> forms = new HashSet<String>();
- 
+
     public MultipleFormEntry(String key) {
       this.key = key;
     }
@@ -395,7 +395,7 @@ public abstract class AbstractResource {
         forms.add(form);
       }
     }
- 
+
     public String getForm(String form) {
       return values.get(form);
     }
@@ -416,7 +416,7 @@ public abstract class AbstractResource {
 
     private final String key;
     private final String value;
-  
+
     public SimpleEntry(String key, String value) {
       this.key = key;
       this.value = value;
@@ -474,9 +474,9 @@ public abstract class AbstractResource {
   public AbstractResource(GwtLocale matchLocale) {
     this.matchLocale = matchLocale;
   }
-  
+
   /**
-   * Return an entry in this resource.
+   * Returns an entry in this resource.
    *
    * @param key
    * @return ResourceEntry instance
@@ -495,7 +495,7 @@ public abstract class AbstractResource {
 
   /**
    * Get a string and fail if not present.
-   * 
+   *
    * @param key
    * @return the requested string
    */
@@ -505,7 +505,7 @@ public abstract class AbstractResource {
 
   /**
    * Get a string (with optional extension) and fail if not present.
-   * 
+   *
    * @param key
    * @param extension
    * @return the requested string
@@ -522,7 +522,7 @@ public abstract class AbstractResource {
 
   /**
    * Get a key.
-   * 
+   *
    * @param key key to lookup
    * @return the string for the given key or null if not found
    * @see java.util.ResourceBundle#getString(java.lang.String)
@@ -533,7 +533,7 @@ public abstract class AbstractResource {
 
   /**
    * Get a key with an extension. Identical to getString() if extension is null.
-   * 
+   *
    * @param key to lookup
    * @param extension extension of the key, nullable
    * @return string or null
@@ -542,7 +542,7 @@ public abstract class AbstractResource {
 
   /**
    * Keys associated with this resource.
-   * 
+   *
    * @return keys
    */
   public Set<String> keySet() {
@@ -554,7 +554,7 @@ public abstract class AbstractResource {
   }
 
   /**
-   * @return true if this resource has any keys
+   * Returns true if this resource has any keys.
    */
   public boolean notEmpty() {
     return !keySet.isEmpty();
@@ -567,7 +567,7 @@ public abstract class AbstractResource {
 
   /**
    * A multi-line representation of this object.
-   * 
+   *
    * @return verbose string
    */
   public String toVerboseString() {

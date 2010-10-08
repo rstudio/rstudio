@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,12 +22,12 @@ public interface SerializedInstanceReference {
   String SERIALIZED_REFERENCE_SEPARATOR = "/";
 
   /**
-   * @return name of the type
+   * Returns the name of the type.
    */
   String getName();
 
   /**
-   * @return signature of the instance reference
+   * Returns the signature of the instance reference.
    */
   String getSignature();
 }

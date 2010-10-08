@@ -15,7 +15,6 @@
  */
 package com.google.gwt.text.client;
 
-
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.text.shared.Parser;
 
@@ -27,9 +26,9 @@ import java.text.ParseException;
 public class LongParser implements Parser<Long> {
 
   private static LongParser INSTANCE;
-  
+
   /**
-   * @return the instance of the no-op renderer
+   * Returns the instance of the no-op renderer.
    */
   public static Parser<Long> instance() {
     if (INSTANCE == null) {
@@ -37,7 +36,7 @@ public class LongParser implements Parser<Long> {
     }
     return INSTANCE;
   }
-  
+
   protected LongParser() {
   }
 
@@ -48,7 +47,7 @@ public class LongParser implements Parser<Long> {
 
     try {
       return (long) NumberFormat.getDecimalFormat().parse(object.toString());
-    } catch (NumberFormatException e) { 
+    } catch (NumberFormatException e) {
       throw new ParseException(e.getMessage(), 0);
     }
   }

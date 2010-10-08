@@ -45,7 +45,7 @@ public class SafeHtmlHostedModeUtils {
    * <p>
    * This method parses the provided string as HTML and determines the HTML
    * context at the end of the string. If the context is not "inner HTML text",
-   * a {@link IllegalArgumentException} or {@link AssertionError} is thrown.
+   * an {@link IllegalArgumentException} or {@link AssertionError} is thrown.
    *
    * <p>
    * For example, this check will pass for the following strings:

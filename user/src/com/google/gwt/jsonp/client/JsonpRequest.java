@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
  * A JSONP request that is waiting for a response. The request can be canceled.
- * 
+ *
  * @param <T> the type of the response object.
  */
 public class JsonpRequest<T> {
@@ -42,22 +42,22 @@ public class JsonpRequest<T> {
    */
   private static final String CALLBACKS_NAME = "__gwt_jsonp__";
   private static final JavaScriptObject CALLBACKS = getOrCreateCallbacksObject();
-  
+
   /**
-   * @return the next ID to use, incrementing the global counter.
+   * Returns the next ID to use, incrementing the global counter.
    */
   private static native int getAndIncrementCallbackCounter() /*-{
     var name = @com.google.gwt.jsonp.client.JsonpRequest::CALLBACKS_NAME;
     var ctr = @com.google.gwt.jsonp.client.JsonpRequest::CALLBACKS_COUNTER_NAME;
     return $wnd[name][ctr]++;
   }-*/;
-  
+
   private static Node getHeadElement() {
     return Document.get().getElementsByTagName("head").getItem(0);
   }
-  
+
   /**
-   * @return a global object to store callbacks of pending requests, creating
+   * Returns a global object to store callbacks of pending requests, creating
    * it if it doesn't exist.
    */
   private static native JavaScriptObject getOrCreateCallbacksObject() /*-{
@@ -98,7 +98,7 @@ public class JsonpRequest<T> {
 
   /**
    * Create a new JSONP request.
-   * 
+   *
    * @param callback The callback instance to notify when the response comes
    *          back
    * @param timeout Time in ms after which a {@link TimeoutException} will be
@@ -147,7 +147,7 @@ public class JsonpRequest<T> {
 
   /**
    * Sends a request using the JSONP mechanism.
-   * 
+   *
    * @param baseUri To be sent to the server.
    */
   void send(final String baseUri) {
@@ -155,7 +155,7 @@ public class JsonpRequest<T> {
     StringBuffer uri = new StringBuffer(baseUri);
     uri.append(baseUri.contains("?") ? "&" : "?");
     String prefix = CALLBACKS_NAME + "." + callbackId;
-    
+
     uri.append(callbackParam).append("=").append(prefix).append(
         ".onSuccess");
     if (failureCallbackParam != null) {
@@ -209,7 +209,7 @@ public class JsonpRequest<T> {
    * Registers the callback methods that will be called when the JSONP response
    * comes back. 2 callbacks are created, one to return the value, and one to
    * notify a failure.
-   * 
+   *
    * @param callbacks the global JS object which stores callbacks
    */
   private native void registerCallbacks(JavaScriptObject callbacks) /*-{

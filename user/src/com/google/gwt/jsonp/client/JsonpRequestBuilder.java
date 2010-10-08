@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -106,23 +106,23 @@ public class JsonpRequestBuilder {
   private String failureCallbackParam = null;
 
   /**
-   * @return the name of the callback url parameter to send to the server. The default value is
-   *     "callback".
+   * Returns the name of the callback url parameter to send to the server. The
+   * default value is "callback".
    */
   public String getCallbackParam() {
     return callbackParam;
   }
 
   /**
-   * @return the name of the failure callback url parameter to send to the server. The default is
-   *     null.
+   * Returns the name of the failure callback url parameter to send to the
+   * server. The default is null.
    */
   public String getFailureCallbackParam() {
     return failureCallbackParam;
   }
 
   /**
-   * @return the expected timeout (ms) for this request.
+   * Returns the expected timeout (ms) for this request.
    */
   public int getTimeout() {
     return timeout;

@@ -89,7 +89,7 @@ public class ValuePicker<T> extends Composite
   }
 
   /**
-   * @return this view
+   * Returns this view.
    */
   @Override
   public ValuePicker<T> asWidget() {

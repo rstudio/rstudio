@@ -5,13 +5,13 @@ import com.google.gwt.i18n.client.Constants;
 
 public interface NumberFormatConstantsAnnot extends Constants {
   /**
-   * @return the localized decimal separator
+   * Returns the localized decimal separator.
    */
   @DefaultStringValue(".")
   String decimalSeparator();
 
   /**
-   * @return the localized thousands separator
+   * Returns the localized thousands separator.
    */
   @DefaultStringValue(",")
   String thousandsSeparator();

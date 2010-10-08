@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,7 +21,7 @@ import com.google.gwt.text.shared.testing.PassthroughRenderer;
 
 /**
  * Abstract base class for most text entry widgets.
- * 
+ *
  * <p>
  * The names of the static members of {@link TextBoxBase}, as well as simple
  * alignment names (<code>left</code>, <code>center</code>, <code>right</code>,
@@ -29,7 +29,7 @@ import com.google.gwt.text.shared.testing.PassthroughRenderer;
  * attribute.
  * <p>
  * For example,
- * 
+ *
  * <pre>
  * &lt;g:TextBox textAlignment='ALIGN_RIGHT'/&gt;
  * &lt;g:TextBox textAlignment='right'/&gt;
@@ -39,8 +39,8 @@ public class TextBoxBase extends ValueBoxBase<String> implements
     SourcesChangeEvents {
 
   /**
-   * Legacy wrapper for {@link TextAlignment}, soon to be deprecated.
-   * @deprecated use {@link #setAlignment(TextAlignment)}
+   * Legacy wrapper for {@link ValueBoxBase.TextAlignment}, soon to be deprecated.
+   * @deprecated use {@link #setAlignment(ValueBoxBase.TextAlignment)}
    */
   @Deprecated
   public static class TextAlignConstant {
@@ -82,7 +82,7 @@ public class TextBoxBase extends ValueBoxBase<String> implements
   /**
    * Creates a text box that wraps the given browser element handle. This is
    * only used by subclasses.
-   * 
+   *
    * @param elem the browser element to wrap
    */
   protected TextBoxBase(Element elem) {
@@ -108,7 +108,7 @@ public class TextBoxBase extends ValueBoxBase<String> implements
 
   /**
    * Legacy wrapper for {@link #setAlignment(TextAlignment)}.
-   * 
+   *
    * @deprecated use {@link #setAlignment(TextAlignment)}
    */
   @Deprecated

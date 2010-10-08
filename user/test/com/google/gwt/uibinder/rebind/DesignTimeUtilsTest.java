@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -327,7 +327,7 @@ public class DesignTimeUtilsTest extends TestCase {
   }
 
   /**
-   * @return the only child {@link Element} with given tag name.
+   * Returns the only child {@link Element} with given tag name.
    */
   private static Element getChildElement(Element parent, String name) {
     NodeList elements = parent.getElementsByTagName(name);
@@ -336,7 +336,7 @@ public class DesignTimeUtilsTest extends TestCase {
   }
 
   /**
-   * @return the {@link XMLElement} wrapper for given {@link Element}.
+   * Returns the {@link XMLElement} wrapper for given {@link Element}.
    */
   private static XMLElement createXMLElement(Element elem,
       DesignTimeUtils designTime) {

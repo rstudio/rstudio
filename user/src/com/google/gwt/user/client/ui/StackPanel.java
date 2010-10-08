@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,12 +23,12 @@ import com.google.gwt.user.client.Event;
 /**
  * A panel that stacks its children vertically, displaying only one at a time,
  * with a header for each child which the user can click to display.
- * 
+ *
  * <p>
  * This widget will <em>only</em> work in quirks mode. If your application is in
  * Standards Mode, use {@link StackLayoutPanel} instead.
  * </p>
- * 
+ *
  * <p>
  * <img class='gallery' src='doc-files/StackPanel.png'/>
  * </p>
@@ -44,7 +44,7 @@ import com.google.gwt.user.client.Event;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.StackPanelExample}
  * </p>
- * 
+ *
  * @see StackLayoutPanel
  */
 public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget {
@@ -79,7 +79,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
 
   /**
    * Adds a new child with the given widget and header.
-   * 
+   *
    * @param w the widget to be added
    * @param stackText the header text associated with this widget
    */
@@ -113,7 +113,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
 
   /**
    * Gets the currently selected child index.
-   * 
+   *
    * @return selected child
    */
   public int getSelectedIndex() {
@@ -198,7 +198,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
 
   /**
    * Sets the text associated with a child by its index.
-   * 
+   *
    * @param index the index of the child whose text is to be set
    * @param text the text to be associated with it
    */
@@ -239,14 +239,14 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
 
   /**
    * Shows the widget at the specified child index.
-   * 
+   *
    * @param index the index of the child to be shown
    */
   public void showStack(int index) {
     if ((index >= getWidgetCount()) || (index < 0) || (index == visibleStack)) {
       return;
     }
- 
+
     if (visibleStack >= 0) {
       setStackVisible(visibleStack, false);
     }
@@ -262,7 +262,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
    * <li>-text-wrapper# = The element around the header at the specified index.</li>
    * <li>-content# = The element around the body at the specified index.</li>
    * </ul>
-   * 
+   *
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override
@@ -281,7 +281,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
   }
 
   /**
-   * @return a header element
+   * Returns a header element.
    */
   Element createHeaderElem() {
     return DOM.createDiv();
@@ -290,7 +290,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
   /**
    * Get the element that holds the header text given the header element created
    * by #createHeaderElement.
-   * 
+   *
    * @param headerElem the header element
    * @return the element around the header text
    */

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -46,9 +46,9 @@ import java.util.Date;
 
 /**
  * A text box that shows a {@link DatePicker} when the user focuses on it.
- * 
+ *
  * <h3>CSS Style Rules</h3>
- * 
+ *
  * <dl>
  * <dt>.gwt-DateBox</dt>
  * <dd>default style name</dd>
@@ -59,7 +59,7 @@ import java.util.Date;
  * {@link DateBox.DefaultFormat} when the text does not represent a date that
  * can be parsed</dd>
  * </dl>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.DateBoxExample}
@@ -97,7 +97,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
     /**
      * Creates a new default format instance.
-     * 
+     *
      * @param dateTimeFormat the {@link DateTimeFormat} to use with this
      *          {@link Format}.
      */
@@ -115,7 +115,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
     /**
      * Gets the date time format.
-     * 
+     *
      * @return the date time format
      */
     public DateTimeFormat getDateTimeFormat() {
@@ -156,7 +156,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
     /**
      * Formats the provided date. Note, a null date is a possible input.
-     * 
+     *
      * @param dateBox the date box you are formatting
      * @param date the date to format
      * @return the formatted date as a string
@@ -165,7 +165,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
     /**
      * Parses the provided string as a date.
-     * 
+     *
      * @param dateBox the date box
      * @param text the string representing a date
      * @param reportError should the formatter indicate a parse error to the
@@ -177,7 +177,7 @@ public class DateBox extends Composite implements HasValue<Date>,
     /**
      * If the format did any modifications to the date box's styling, reset them
      * now.
-     * 
+     *
      * @param abandon true when the current format is being replaced by another
      * @param dateBox the date box
      */
@@ -261,7 +261,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
   /**
    * Create a new date box.
-   * 
+   *
    * @param date the default date.
    * @param picker the picker to drop down from the date box
    * @param format to use to parse and format dates
@@ -303,9 +303,9 @@ public class DateBox extends Composite implements HasValue<Date>,
 
   /**
    * Gets the current cursor position in the date box.
-   * 
+   *
    * @return the cursor position
-   * 
+   *
    */
   public int getCursorPos() {
     return box.getCursorPos();
@@ -313,7 +313,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
   /**
    * Gets the date picker.
-   * 
+   *
    * @return the date picker
    */
   public DatePicker getDatePicker() {
@@ -323,7 +323,7 @@ public class DateBox extends Composite implements HasValue<Date>,
   /**
    * Gets the format instance used to control formatting and parsing of this
    * {@link DateBox}.
-   * 
+   *
    * @return the format
    */
   public Format getFormat() {
@@ -332,7 +332,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
   /**
    * Gets the date box's position in the tab index.
-   * 
+   *
    * @return the date box's tab index
    */
   public int getTabIndex() {
@@ -341,7 +341,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
   /**
    * Get text box.
-   * 
+   *
    * @return the text box used to enter the formatted date
    */
   public TextBox getTextBox() {
@@ -351,7 +351,7 @@ public class DateBox extends Composite implements HasValue<Date>,
   /**
    * Get the date displayed, or null if the text box is empty, or cannot be
    * interpreted.
-   * 
+   *
    * @return the current date value
    */
   public Date getValue() {
@@ -366,7 +366,7 @@ public class DateBox extends Composite implements HasValue<Date>,
   }
 
   /**
-   * @return true if date picker is currently showing, false if not
+   * Returns true if date picker is currently showing, false if not.
    */
   public boolean isDatePickerShowing() {
     return popup.isShowing();
@@ -375,7 +375,7 @@ public class DateBox extends Composite implements HasValue<Date>,
   /**
    * Sets the date box's 'access key'. This key is used (in conjunction with a
    * browser-specific modifier key) to automatically focus the widget.
-   * 
+   *
    * @param key the date box's access key
    */
   public void setAccessKey(char key) {
@@ -384,7 +384,7 @@ public class DateBox extends Composite implements HasValue<Date>,
 
   /**
    * Sets whether the date box is enabled.
-   * 
+   *
    * @param enabled is the box enabled
    */
   public void setEnabled(boolean enabled) {
@@ -394,7 +394,7 @@ public class DateBox extends Composite implements HasValue<Date>,
   /**
    * Explicitly focus/unfocus this widget. Only one widget can have focus at a
    * time, and the widget that does will receive all keyboard events.
-   * 
+   *
    * @param focused whether this widget should take focus or release it
    */
   public void setFocus(boolean focused) {
@@ -405,7 +405,7 @@ public class DateBox extends Composite implements HasValue<Date>,
    * Sets the format used to control formatting and parsing of dates in this
    * {@link DateBox}. If this {@link DateBox} is not empty, the contents of date
    * box will be replaced with current contents in the new format.
-   * 
+   *
    * @param format the new date format
    */
   public void setFormat(Format format) {
@@ -429,7 +429,7 @@ public class DateBox extends Composite implements HasValue<Date>,
    * the same tab index, each such widget will receive focus in an arbitrary
    * order. Setting the tab index to <code>-1</code> will cause this widget to
    * be removed from the tab order.
-   * 
+   *
    * @param index the date box's tab index
    */
   public void setTabIndex(int index) {

@@ -26,23 +26,21 @@ import javax.validation.ConstraintValidatorContext;
  * <p>
  * Extend this class and implement it as GWT super class. Use validation groups
  * to keep this constraint from being validated on the client.
- * 
+ *
  * <p>
  * In a super source directory override your validator like this:
- * 
+ *
  * <pre>
- * public class MyValidator extends 
+ * public class MyValidator extends
  *     NotGwtCompatibleValidator &lt;MyConstraint, MyType&gt;{
  * }
  * </pre>
- * 
+ *
  * @param <A> the constraint to validate
  * @param <T> the type to validate
  */
 public abstract class NotGwtCompatibleValidator<A extends Annotation, T>
-    implements
-    ConstraintValidator<A, T> {
-
+    implements ConstraintValidator<A, T> {
 
   public final void initialize(A constraintAnnotation) {
   }

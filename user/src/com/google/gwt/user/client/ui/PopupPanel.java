@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -50,7 +50,7 @@ import java.util.List;
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
  * client area (and any previously-created popups).
- * 
+ *
  * <p>
  * A PopupPanel should not generally be added to other panels; rather, it should
  * be shown and hidden using the {@link #show()} and {@link #hide()} methods.
@@ -64,7 +64,7 @@ import java.util.List;
  * <p>
  * <img class='gallery' src='doc-files/PopupPanel.png'/>
  * </p>
- * 
+ *
  * <p>
  * The PopupPanel can be optionally displayed with a "glass" element behind it,
  * which is commonly used to gray out the widgets behind it. It can be enabled
@@ -72,7 +72,7 @@ import java.util.List;
  * "gwt-PopupPanelGlass", which can be changed using
  * {@link #setGlassStyleName(String)}.
  * </p>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.PopupPanelExample}
@@ -102,7 +102,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
      * before the PopupPanel is shown. The offsetWidth and offsetHeight values
      * of the PopupPanel are made available to allow for positioning based on
      * its size.
-     * 
+     *
      * @param offsetWidth the offsetWidth of the PopupPanel
      * @param offsetHeight the offsetHeight of the PopupPanel
      * @see PopupPanel#setPopupPositionAndShow(PositionCallback)
@@ -112,7 +112,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * The type of animation to use when opening the popup.
-   * 
+   *
    * <ul>
    * <li>CENTER - Expand from the center of the popup</li>
    * <li>ONE_WAY_CORNER - Expand from the top left corner, do not animate hiding
@@ -163,7 +163,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
     /**
      * Create a new {@link ResizeAnimation}.
-     * 
+     *
      * @param panel the panel to affect
      */
     public ResizeAnimation(PopupPanel panel) {
@@ -174,7 +174,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
      * Open or close the content. This method always called immediately after
      * the PopupPanel showing state has changed, so we base the animation on the
      * current state.
-     * 
+     *
      * @param showing true if the popup is showing, false if not
      */
     public void setState(boolean showing, boolean isUnloading) {
@@ -299,7 +299,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
 
     /**
-     * @return a rect string
+     * Returns a rect string.
      */
     private String getRectString(int top, int right, int bottom, int left) {
       return "rect(" + top + "px, " + right + "px, " + bottom + "px, " + left
@@ -457,7 +457,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Creates an empty popup panel, specifying its "auto-hide" property.
-   * 
+   *
    * @param autoHide <code>true</code> if the popup should be automatically
    *          hidden when the user clicks outside of it or the history token
    *          changes.
@@ -471,7 +471,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Creates an empty popup panel, specifying its "auto-hide" and "modal"
    * properties.
-   * 
+   *
    * @param autoHide <code>true</code> if the popup should be automatically
    *          hidden when the user clicks outside of it or the history token
    *          changes.
@@ -486,7 +486,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Mouse events that occur within an autoHide partner will not hide a panel
    * set to autoHide.
-   * 
+   *
    * @param partner the auto hide partner to add
    */
   public void addAutoHidePartner(Element partner) {
@@ -545,7 +545,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Gets the style name to be used on the glass element. By default, this is
    * "gwt-PopupPanelGlass".
-   * 
+   *
    * @return the glass element's style name
    */
   public String getGlassStyleName() {
@@ -556,7 +556,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Gets the panel's offset height in pixels. Calls to
    * {@link #setHeight(String)} before the panel's child widget is set will not
    * influence the offset height.
-   * 
+   *
    * @return the object's offset height
    */
   @Override
@@ -567,7 +567,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Gets the panel's offset width in pixels. Calls to {@link #setWidth(String)}
    * before the panel's child widget is set will not influence the offset width.
-   * 
+   *
    * @return the object's offset width
    */
   @Override
@@ -577,7 +577,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Gets the popup's left position relative to the browser's client area.
-   * 
+   *
    * @return the popup's left position
    */
   public int getPopupLeft() {
@@ -586,7 +586,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Gets the popup's top position relative to the browser's client area.
-   * 
+   *
    * @return the popup's top position
    */
   public int getPopupTop() {
@@ -609,7 +609,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Hides the popup and detaches it from the page. This has no effect if it is
    * not currently showing.
-   * 
+   *
    * @param autoClosed the value that will be passed to
    *          {@link CloseHandler#onClose(CloseEvent)} when the popup is closed
    */
@@ -628,7 +628,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Returns <code>true</code> if the popup should be automatically hidden when
    * the user clicks outside of it.
-   * 
+   *
    * @return true if autoHide is enabled, false if disabled
    */
   public boolean isAutoHideEnabled() {
@@ -639,7 +639,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Returns <code>true</code> if the popup should be automatically hidden when
    * the history token changes, such as when the user presses the browser's back
    * button.
-   * 
+   *
    * @return true if enabled, false if disabled
    */
   public boolean isAutoHideOnHistoryEventsEnabled() {
@@ -649,7 +649,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Returns <code>true</code> if a glass element will be displayed under the
    * {@link PopupPanel}.
-   * 
+   *
    * @return true if enabled
    */
   public boolean isGlassEnabled() {
@@ -659,7 +659,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Returns <code>true</code> if keyboard or mouse events that do not target
    * the PopupPanel or its children should be ignored.
-   * 
+   *
    * @return true if popup is modal, false if not
    */
   public boolean isModal() {
@@ -669,7 +669,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Returns <code>true</code> if the popup should preview all native events,
    * even if the event has already been consumed by another popup.
-   * 
+   *
    * @return true if previewAllNativeEvents is enabled, false if disabled
    */
   public boolean isPreviewingAllNativeEvents() {
@@ -678,7 +678,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Determines whether or not this popup is showing.
-   * 
+   *
    * @return <code>true</code> if the popup is showing
    * @see #show()
    * @see #hide()
@@ -692,7 +692,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * the <code>visibility</code> style attribute, which is set in the
    * {@link #setVisible(boolean)} method. If you want to know if the popup is
    * attached to the page, use {@link #isShowing()} instead.
-   * 
+   *
    * @return <code>true</code> if the object is visible
    * @see #setVisible(boolean)
    */
@@ -712,7 +712,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
    * to a widget contained by the Popup.
-   * 
+   *
    * @param key the key code of the depressed key
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
@@ -727,7 +727,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
    * to a widget contained by the Popup.
-   * 
+   *
    * @param key the unicode character pressed
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
@@ -742,7 +742,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
    * to a widget contained by the Popup.
-   * 
+   *
    * @param key the key code of the released key
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
@@ -756,7 +756,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Remove an autoHide partner.
-   * 
+   *
    * @param partner the auto hide partner to remove
    */
   public void removeAutoHidePartner(Element partner) {
@@ -782,7 +782,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Enable or disable the autoHide feature. When enabled, the popup will be
    * automatically hidden when the user clicks outside of it.
-   * 
+   *
    * @param autoHide true to enable autoHide, false to disable
    */
   public void setAutoHideEnabled(boolean autoHide) {
@@ -793,7 +793,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Enable or disable autoHide on history change events. When enabled, the
    * popup will be automatically hidden when the history token changes, such as
    * when the user presses the browser's back button. Disabled by default.
-   * 
+   *
    * @param enabled true to enable, false to disable
    */
   public void setAutoHideOnHistoryEventsEnabled(boolean enabled) {
@@ -804,7 +804,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * When enabled, the background will be blocked with a semi-transparent pane
    * the next time it is shown. If the PopupPanel is already visible, the glass
    * will not be displayed until it is hidden and shown again.
-   * 
+   *
    * @param enabled true to enable, false to disable
    */
   public void setGlassEnabled(boolean enabled) {
@@ -822,7 +822,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Sets the style name to be used on the glass element. By default, this is
    * "gwt-PopupPanelGlass".
-   * 
+   *
    * @param glassStyleName the glass element's style name
    */
   public void setGlassStyleName(String glassStyleName) {
@@ -836,14 +836,14 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Sets the height of the panel's child widget. If the panel's child widget
    * has not been set, the height passed in will be cached and used to set the
    * height immediately after the child widget is set.
-   * 
+   *
    * <p>
    * Note that subclasses may have a different behavior. A subclass may decide
    * not to change the height of the child widget. It may instead decide to
    * change the height of an internal panel widget, which contains the child
    * widget.
    * </p>
-   * 
+   *
    * @param height the object's new height, in CSS units (e.g. "10px", "1em")
    */
   @Override
@@ -859,7 +859,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * When the popup is modal, keyboard or mouse events that do not target the
    * PopupPanel or its children will be ignored.
-   * 
+   *
    * @param modal true to make the popup modal
    */
   public void setModal(boolean modal) {
@@ -869,7 +869,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Sets the popup's position relative to the browser's client area. The
    * popup's position may be set before calling {@link #show()}.
-   * 
+   *
    * @param left the left position, in pixels
    * @param top the top position, in pixels
    */
@@ -897,7 +897,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * offsetWidth and offsetHeight of the popup, which are normally not available
    * until the popup is showing. By positioning the popup before it is shown,
    * the the popup will not jump from its original position to the new position.
-   * 
+   *
    * @param callback the callback to set the position of the popup
    * @see PositionCallback#setPosition(int offsetWidth, int offsetHeight)
    */
@@ -919,7 +919,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * feature is disabled, the popup will only autoHide if it was the last popup
    * opened.
    * </p>
-   * 
+   *
    * @param previewAllNativeEvents true to enable, false to disable
    */
   public void setPreviewingAllNativeEvents(boolean previewAllNativeEvents) {
@@ -940,7 +940,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Sets whether this object is visible. This method just sets the
    * <code>visibility</code> style attribute. You need to call {@link #show()}
    * to actually attached/detach the {@link PopupPanel} to the page.
-   * 
+   *
    * @param visible <code>true</code> to show the object, <code>false</code> to
    *          hide it
    * @see #show()
@@ -974,14 +974,14 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Sets the width of the panel's child widget. If the panel's child widget has
    * not been set, the width passed in will be cached and used to set the width
    * immediately after the child widget is set.
-   * 
+   *
    * <p>
    * Note that subclasses may have a different behavior. A subclass may decide
    * not to change the width of the child widget. It may instead decide to
    * change the width of an internal panel widget, which contains the child
    * widget.
    * </p>
-   * 
+   *
    * @param width the object's new width, in CSS units (e.g. "10px", "1em")
    */
   @Override
@@ -1017,7 +1017,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * bottom and right edges of the window, the popup may be displayed directly
    * above the target, and/or its right edge may be aligned with the right edge
    * of the target.
-   * 
+   *
    * @param target the target to show the popup below
    */
   public final void showRelativeTo(final UIObject target) {
@@ -1037,7 +1037,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Get the glass element used by this {@link PopupPanel}. The element is not
    * created until it is enabled via {@link #setGlassEnabled(boolean)}.
-   * 
+   *
    * @return the glass element, or null if not created
    */
   protected Element getGlassElement() {
@@ -1099,7 +1099,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Sets the animation used to animate this popup. Used by gwt-incubator to
    * allow DropDownPanel to override the default popup animation. Not protected
    * because the exact API may change in gwt 1.6.
-   * 
+   *
    * @param animation the animation to use for this popup
    */
   void setAnimation(ResizeAnimation animation) {
@@ -1108,7 +1108,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Enable or disable animation of the {@link PopupPanel}.
-   * 
+   *
    * @param type the type of animation to use
    */
   void setAnimationType(AnimationType type) {
@@ -1117,7 +1117,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Remove focus from an Element.
-   * 
+   *
    * @param elt The Element on which <code>blur()</code> will be invoked
    */
   private native void blur(Element elt) /*-{
@@ -1129,7 +1129,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Does the event target one of the partner elements?
-   * 
+   *
    * @param event the native event
    * @return true if the event targets a partner
    */
@@ -1151,7 +1151,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Does the event target this popup?
-   * 
+   *
    * @param event the native event
    * @return true if the event targets the popup
    */
@@ -1168,7 +1168,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * that goes inside of the outer element, so all methods in PopupImpl are
    * relative to the first child of the outer element, not the outer element
    * itself.
-   * 
+   *
    * @return the Element that {@link PopupImpl} creates and expects
    */
   private com.google.gwt.user.client.Element getPopupImplElement() {
@@ -1178,7 +1178,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Positions the popup, called after the offset width and height of the popup
    * are known.
-   * 
+   *
    * @param relativeObject the ui object to position relative to
    * @param offsetWidth the drop down's offset width
    * @param offsetHeight the drop down's offset height
@@ -1307,7 +1307,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Preview the {@link NativePreviewEvent}.
-   * 
+   *
    * @param event the {@link NativePreviewEvent}
    */
   private void previewNativeEvent(NativePreviewEvent event) {

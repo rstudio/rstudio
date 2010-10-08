@@ -53,21 +53,21 @@ public abstract class Column<T, C> implements HasCell<T, C> {
   }
 
   /**
-   * Return the {@link Cell} responsible for rendering items in the column.
+   * Returns the {@link Cell} responsible for rendering items in the column.
    */
   public Cell<C> getCell() {
     return cell;
   }
 
   /**
-   * Return the {@link FieldUpdater} used for updating values in the column.
+   * Returns the {@link FieldUpdater} used for updating values in the column.
    */
   public FieldUpdater<T, C> getFieldUpdater() {
     return fieldUpdater;
   }
 
   /**
-   * Return the column value from within the underlying data object.
+   * Returns the column value from within the underlying data object.
    */
   public abstract C getValue(T object);
 
@@ -95,7 +95,7 @@ public abstract class Column<T, C> implements HasCell<T, C> {
 
   /**
    * Render the object into the cell.
-   * 
+   *
    * @param object the object to render
    * @param keyProvider the {@link ProvidesKey} for the object
    * @param sb the buffer to render into
@@ -104,7 +104,6 @@ public abstract class Column<T, C> implements HasCell<T, C> {
     Object key = getKey(object, keyProvider);
     cell.render(getValue(object), key, sb);
   }
-
 
   /**
    * Set the {@link FieldUpdater} used for updating values in the column.

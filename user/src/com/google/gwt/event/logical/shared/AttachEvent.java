@@ -38,7 +38,8 @@ public class AttachEvent extends GwtEvent<AttachEvent.Handler> {
   static Type<AttachEvent.Handler> TYPE;
 
   /**
-   * Fires a {@link AttachEvent} on all registered handlers in the handler source.
+   * Fires an {@link AttachEvent} on all registered handlers in the handler
+   * source.
    *
    * @param <S> The handler source type
    * @param source the source of the handlers
@@ -69,7 +70,7 @@ public class AttachEvent extends GwtEvent<AttachEvent.Handler> {
   /**
    * Construct a new {@link AttachEvent}.
    *
-   * @param attached true if the source has been attached 
+   * @param attached true if the source has been attached
    */
   protected AttachEvent(boolean attached) {
     this.attached = attached;
@@ -81,8 +82,8 @@ public class AttachEvent extends GwtEvent<AttachEvent.Handler> {
   }
 
   /**
-   * @return true if this event announces that the source has been attached,
-   * false if it has been detached
+   * Returns true if this event announces that the source has been attached,
+   * false if it has been detached.
    */
   public boolean isAttached() {
     return attached;

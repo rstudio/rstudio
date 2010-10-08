@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Label;
 public class FooLabel extends Composite {
   int rawInt;
   Integer objectInteger;
-  
+
   boolean rawBoolean;
   Boolean objectBoolean;
 
@@ -53,7 +53,7 @@ public class FooLabel extends Composite {
   }
 
   /**
-   * @return the text
+   * Returns the text.
    */
   public String getText() {
     return getLabel().getText();

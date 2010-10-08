@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,7 +22,7 @@ import java.io.Serializable;
  * performance on lookups, inserts, and deletes while maintaining linear
  * in-order traversal time. Null keys and values are fully supported if the
  * comparator supports them (the default comparator does not).
- * 
+ *
  * @param <K> key type
  * @param <V> value type
  */
@@ -33,7 +33,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
    * September 2007 at:
    * http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx
    * written by Julienne Walker.
-   * 
+   *
    * This version does not require a parent pointer kept in each node.
    */
 
@@ -53,7 +53,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
     /**
      * Create an iterator which may return only a restricted range.
-     * 
+     *
      * @param fromKey the first key to return in the iterator.
      * @param toKey the upper bound of keys to return.
      */
@@ -159,7 +159,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
   /**
    * Tree node.
-   * 
+   *
    * @param <K> key type
    * @param <V> value type
    */
@@ -175,7 +175,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
     /**
      * Create a red node.
-     * 
+     *
      * @param key
      * @param value
      */
@@ -185,7 +185,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
     /**
      * Create a node of the specified color.
-     * 
+     *
      * @param key
      * @param value
      * @param isRed true if this should be a red node, false for black
@@ -247,7 +247,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
    * removed node as well as to pass in a value which must match (used for
    * entrySet().remove(entry)), and the matchValue flag is used to request this
    * behavior.
-   * 
+   *
    * @param <V> value type
    */
   private static class State<V> {
@@ -526,14 +526,14 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     };
 
     /**
-     * @return true if this submap type uses a from-key.
+     * Returns true if this submap type uses a from-key.
      */
     public boolean fromKeyValid() {
       return false;
     }
 
     /**
-     * @return true if this submap type uses a to-key.
+     * Returns true if this submap type uses a to-key.
      */
     public boolean toKeyValid() {
       return false;
@@ -565,9 +565,9 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
   /**
    * Throw a NoSuchElementException if the specified node is null.
-   * 
+   *
    * Used to clean up error checking at use sites.
-   * 
+   *
    * @param node node to check
    * @param <NK> key type
    * @param <NV> value type
@@ -708,9 +708,9 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   }
 
   /**
-   * Return the first node which compares equal to or greater than the given
+   * Returns the first node which compares equal to or greater than the given
    * key.
-   * 
+   *
    * @param key the key to search for
    * @return the next node, or null if there is none
    */
@@ -732,8 +732,8 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   }
 
   /**
-   * Return the last node which is strictly less than the given key.
-   * 
+   * Returns the last node which is strictly less than the given key.
+   *
    * @param key the key to search for
    * @return the previous node, or null if there is none
    */
@@ -755,13 +755,13 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   /**
    * Used for testing. Validate that the tree meets all red-black correctness
    * requirements. These include:
-   * 
+   *
    * <pre>
    *  - root is black
    *  - no children of a red node may be red
    *  - the black height of every path through the three to a leaf is exactly the same
    * </pre>
-   * 
+   *
    * @throws RuntimeException if any correctness errors are detected.
    */
   void assertCorrectness() {
@@ -770,7 +770,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
   /**
    * Internal helper function for public {@link #assertCorrectness()}.
-   * 
+   *
    * @param tree the subtree to validate.
    * @param isRed true if the parent of this node is red.
    * @return the black height of this subtree.
@@ -805,7 +805,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
   /**
    * Finds an entry given a key and returns the node.
-   * 
+   *
    * @param key the search key
    * @return the node matching the key or null
    */
@@ -826,7 +826,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   }
 
   /**
-   * @return the left-most node of the tree, or null if empty
+   * Returns the left-most node of the tree, or null if empty.
    */
   private Node<K, V> getFirstNode() {
     if (root == null) {
@@ -840,7 +840,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   }
 
   /**
-   * @return the right-most node of the tree, or null if empty
+   * Returns the right-most node of the tree, or null if empty.
    */
   private Node<K, V> getLastNode() {
     if (root == null) {
@@ -855,10 +855,10 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
   /**
    * Insert a node into a subtree, collecting state about the insertion.
-   * 
+   *
    * If the same key already exists, the value of the node is overwritten with
    * the value from the new node instead.
-   * 
+   *
    * @param tree subtree to insert into
    * @param newNode new node to insert
    * @param state result of the insertion: state.found true if the key already
@@ -885,7 +885,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
           tree.child[LEFT].isRed = false;
           tree.child[RIGHT].isRed = false;
         } else {
-          // 
+          //
           if (isRed(tree.child[childNum].child[childNum])) {
             tree = rotateSingle(tree, otherChild(childNum));
           } else if (isRed(tree.child[childNum].child[otherChild(childNum)])) {
@@ -898,7 +898,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   }
 
   /**
-   * Return true if <code>node</code> is red. Note that null pointers are
+   * Returns true if <code>node</code> is red. Note that null pointers are
    * considered black.
    */
   private boolean isRed(Node<K, V> node) {
@@ -907,7 +907,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
   /**
    * Remove a key from the tree, returning whether it was found and its value.
-   * 
+   *
    * @param key key to remove
    * @param state return state, not null
    * @return true if the value was found
@@ -971,7 +971,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
        * put the "node" values in "found" (the node with key K) and cut "node"
        * out. However, we do not want to corrupt "found" -- issue 3423. So
        * create a new node "newNode" to replace the "found" node.
-       * 
+       *
        * TODO: (jat's suggestion) Consider using rebalance to move the deleted
        * node to a leaf to avoid the extra traversal in replaceNode.
        */
@@ -1022,14 +1022,14 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
    * Perform a double rotation, first rotating the child which will become the
    * root in the opposite direction, then rotating the root in the specified
    * direction.
-   * 
+   *
    * <pre>
    *           A                                               F
    *         B   C    becomes (with rotateDirection=0)       A   C
    *        D E F G                                         B E   G
    *                                                       D
    * </pre>
-   * 
+   *
    * @param tree root of the subtree to rotate
    * @param rotateDirection the direction to rotate: 0=left, 1=right
    * @return the new root of the rotated subtree
@@ -1044,13 +1044,13 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
   /**
    * Perform a single rotation, pushing the root of the subtree to the specified
    * direction.
-   * 
+   *
    * <pre>
    *      A                                              B
    *    B   C     becomes (with rotateDirection=1)     D   A
    *   D E                                              E   C
    * </pre>
-   * 
+   *
    * @param tree the root of the subtree to rotate
    * @param rotateDirection the direction to rotate: 0=left rotation, 1=right
    * @return the new root of the rotated subtree

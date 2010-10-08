@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -58,7 +58,7 @@ public class LocaleUtils {
   /**
    * Create a new LocaleUtils instance for the given PropertyOracle.  Returned
    * instances will be immutable and can be shared across threads.
-   * 
+   *
    * @param logger
    * @param propertyOracle
    * @return LocaleUtils instance
@@ -91,7 +91,7 @@ public class LocaleUtils {
 
   /**
    * Get a shared GwtLocale factory so instances are cached between all uses.
-   * 
+   *
    * @return singleton GwtLocaleFactory instance.
    */
   public static GwtLocaleFactory getLocaleFactory() {
@@ -174,7 +174,7 @@ public class LocaleUtils {
 
   /**
    * Returns the set of all compile-time locales.
-   * 
+   *
    * @return unmodifiable set of all compile-time locales
    */
   public Set<GwtLocale> getAllCompileLocales() {
@@ -184,7 +184,7 @@ public class LocaleUtils {
   /**
    * Returns the set of all available locales, whether compile-time locales or
    * runtime locales.
-   * 
+   *
    * @return unmodifiable set of all locales
    */
   public Set<GwtLocale> getAllLocales() {
@@ -192,7 +192,7 @@ public class LocaleUtils {
   }
 
   /**
-   * @return the static compile-time locale for this permutation.
+   * Returns the static compile-time locale for this permutation.
    */
   public GwtLocale getCompileLocale() {
     return compileLocale;
@@ -201,7 +201,7 @@ public class LocaleUtils {
   /**
    * Returns a list of locales which are children of the current compile-time
    * locale.
-   * 
+   *
    * @return unmodifiable list of matching locales
    */
   public Set<GwtLocale> getRuntimeLocales() {

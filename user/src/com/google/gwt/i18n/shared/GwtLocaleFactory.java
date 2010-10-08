@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,9 +22,9 @@ public interface GwtLocaleFactory {
 
   /**
    * Construct a GWT locale from its component parts.
-   * 
+   *
    * Null or empty strings are accepted for parts not present.
-   * 
+   *
    * @param language
    * @param script
    * @param region
@@ -41,16 +41,16 @@ public interface GwtLocaleFactory {
    * also private-use tags are only supported for the entire tag).
    * Only minimal validation of BCP47 tags is performed, and will continue
    * with what it is able to parse if unexpected input is encountered.
-   * 
+   *
    * A null or empty string is treated as the default locale.
-   * 
+   *
    * @param localeName
    * @return a locale instance, always the same one for a given localeName
    */
   GwtLocale fromString(String localeName);
-  
+
   /**
-   * @return an instance of the default locale.
+   * Returns an instance of the default locale.
    */
   GwtLocale getDefault();
 }

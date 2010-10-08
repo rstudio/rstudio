@@ -45,7 +45,7 @@ class LocalTestNode implements Comparable {
     }
 
     /**
-     * @return the unique key associated with the current node
+     * Returns the unique key associated with the current node.
      */
     Comparable getKey() {
         return key;
@@ -59,7 +59,7 @@ class LocalTestNode implements Comparable {
     }
 
     /**
-     * @return the unique value associated with the current node
+     * Returns the unique value associated with the current node.
      */
     Comparable getValue() {
         return value;
@@ -97,7 +97,7 @@ class LocalTestNode implements Comparable {
             return false;
         }
 
-         
+
         if(!(getClass().getName().equals(o.getClass().getName()))){
             return false;
         }

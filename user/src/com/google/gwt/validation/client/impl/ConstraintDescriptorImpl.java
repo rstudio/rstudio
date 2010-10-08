@@ -15,7 +15,6 @@
  */
 package com.google.gwt.validation.client.impl;
 
-
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.HashSet;

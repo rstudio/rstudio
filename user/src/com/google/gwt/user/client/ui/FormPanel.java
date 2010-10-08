@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
 
 /**
  * A panel that wraps its contents in an HTML &lt;FORM&gt; element.
- * 
+ *
  * <p>
  * This panel can be used to achieve interoperability with servers that accept
  * traditional HTML form encoding. The following widgets (those that implement
@@ -52,7 +52,7 @@ import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
  * <i>only</i> useful when used within a FormPanel, because the browser will
  * only upload files using form submission.
  * </p>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.FormPanelExample}
@@ -73,7 +73,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     /**
      * Handler hook.
-     * 
+     *
      * @return the handler hook
      */
     static Type<SubmitCompleteHandler> getType() {
@@ -87,7 +87,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     /**
      * Create a submit complete event.
-     * 
+     *
      * @param resultsHtml the results from submitting the form
      */
     protected SubmitCompleteEvent(String resultsHtml) {
@@ -101,7 +101,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     /**
      * Gets the result text of the form submission.
-     * 
+     *
      * @return the result html, or <code>null</code> if there was an error
      *         reading it
      * @tip The result html can be <code>null</code> as a result of submitting a
@@ -123,7 +123,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   public interface SubmitCompleteHandler extends EventHandler {
     /**
      * Fired when a form has been submitted successfully.
-     * 
+     *
      * @param event the event
      */
     void onSubmitComplete(FormPanel.SubmitCompleteEvent event);
@@ -140,7 +140,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     /**
      * Handler hook.
-     * 
+     *
      * @return the handler hook
      */
     static Type<SubmitHandler> getType() {
@@ -167,7 +167,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     /**
      * Gets whether this form submit will be canceled.
-     * 
+     *
      * @return <code>true</code> if the form submit will be canceled
      */
     public boolean isCanceled() {
@@ -182,7 +182,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     /**
      * This method is used for legacy support and should be removed when
      * {@link FormHandler} is removed.
-     * 
+     *
      * @deprecated Use {@link FormPanel.SubmitEvent#cancel()} instead
      */
     @Deprecated
@@ -197,13 +197,13 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   public interface SubmitHandler extends EventHandler {
     /**
      *Fired when the form is submitted.
-     * 
+     *
      * <p>
      * The FormPanel must <em>not</em> be detached (i.e. removed from its parent
      * or otherwise disconnected from a {@link RootPanel}) until the submission
      * is complete. Otherwise, notification of submission will fail.
      * </p>
-     * 
+     *
      * @param event the event
      */
     void onSubmit(FormPanel.SubmitEvent event);
@@ -240,16 +240,16 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * Creates a FormPanel that wraps an existing &lt;form&gt; element.
-   * 
+   *
    * This element must already be attached to the document. If the element is
    * removed from the document, you must call
    * {@link RootPanel#detachNow(Widget)}.
-   * 
+   *
    * <p>
    * The specified form element's target attribute will not be set, and the
    * {@link FormSubmitCompleteEvent} will not be fired.
    * </p>
-   * 
+   *
    * @param element the element to be wrapped
    */
   public static FormPanel wrap(Element element) {
@@ -267,18 +267,18 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * Creates a FormPanel that wraps an existing &lt;form&gt; element.
-   * 
+   *
    * This element must already be attached to the document. If the element is
    * removed from the document, you must call
    * {@link RootPanel#detachNow(Widget)}.
-   * 
+   *
    * <p>
    * If the createIFrame parameter is set to <code>true</code>, then the wrapped
    * form's target attribute will be set to a hidden iframe. If not, the form's
    * target will be left alone, and the FormSubmitComplete event will not be
    * fired.
    * </p>
-   * 
+   *
    * @param element the element to be wrapped
    * @param createIFrame <code>true</code> to create an &lt;iframe&gt; element
    *          that will be targeted by this form
@@ -303,7 +303,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * Creates a new FormPanel. When created using this constructor, it will be
    * submitted to a hidden &lt;iframe&gt; element, and the results of the
    * submission made available via {@link SubmitCompleteHandler}.
-   * 
+   *
    * <p>
    * The back-end server is expected to respond with a content-type of
    * 'text/html', meaning that the text returned will be treated as HTML. If any
@@ -312,7 +312,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * {@link SubmitCompleteHandler#onSubmitComplete(com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent)
    * onSubmitComplete} event may not fire at all.
    * </p>
-   * 
+   *
    * @tip The initial implementation of FormPanel specified that the server
    *      respond with a content-type of 'text/plain'. This has been
    *      intentionally changed to specify 'text/html' because 'text/plain'
@@ -326,12 +326,12 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * Creates a FormPanel that targets a {@link NamedFrame}. The target frame is
    * not physically attached to the form, and must therefore still be added to a
    * panel elsewhere.
-   * 
+   *
    * <p>
    * When the FormPanel targets an external frame in this way, it will not fire
    * the FormSubmitComplete event.
    * </p>
-   * 
+   *
    * @param frameTarget the {@link NamedFrame} to be targetted
    */
   public FormPanel(NamedFrame frameTarget) {
@@ -342,12 +342,12 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * Creates a new FormPanel. When created using this constructor, it will be
    * submitted either by replacing the current page, or to the named
    * &lt;iframe&gt;.
-   * 
+   *
    * <p>
    * When the FormPanel targets an external frame in this way, it will not fire
    * the FormSubmitComplete event.
    * </p>
-   * 
+   *
    * @param target the name of the &lt;iframe&gt; to receive the results of the
    *          submission, or <code>null</code> to specify that the current page
    *          be replaced
@@ -360,12 +360,12 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * This constructor may be used by subclasses to explicitly use an existing
    * element. This element must be a &lt;form&gt; element.
-   * 
+   *
    * <p>
    * The specified form element's target attribute will not be set, and the
    * {@link FormSubmitCompleteEvent} will not be fired.
    * </p>
-   * 
+   *
    * @param element the element to be used
    */
   protected FormPanel(Element element) {
@@ -375,14 +375,14 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * This constructor may be used by subclasses to explicitly use an existing
    * element. This element must be a &lt;form&gt; element.
-   * 
+   *
    * <p>
    * If the createIFrame parameter is set to <code>true</code>, then the wrapped
    * form's target attribute will be set to a hidden iframe. If not, the form's
    * target will be left alone, and the FormSubmitComplete event will not be
    * fired.
    * </p>
-   * 
+   *
    * @param element the element to be used
    * @param createIFrame <code>true</code> to create an &lt;iframe&gt; element
    *          that will be targeted by this form
@@ -414,7 +414,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * Adds a {@link SubmitCompleteEvent} handler.
-   * 
+   *
    * @param handler the handler
    * @return the handler registration used to remove the handler
    */
@@ -425,7 +425,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * Adds a {@link SubmitEvent} handler.
-   * 
+   *
    * @param handler the handler
    * @return the handler registration used to remove the handler
    */
@@ -436,7 +436,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * Gets the 'action' associated with this form. This is the URL to which it
    * will be submitted.
-   * 
+   *
    * @return the form's action
    */
   public String getAction() {
@@ -446,7 +446,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * Gets the encoding used for submitting this form. This should be either
    * {@link #ENCODING_MULTIPART} or {@link #ENCODING_URLENCODED}.
-   * 
+   *
    * @return the form's encoding
    */
   public String getEncoding() {
@@ -456,7 +456,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * Gets the HTTP method used for submitting this form. This should be either
    * {@link #METHOD_GET} or {@link #METHOD_POST}.
-   * 
+   *
    * @return the form's method
    */
   public String getMethod() {
@@ -467,7 +467,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * Gets the form's 'target'. This is the name of the {@link NamedFrame} that
    * will receive the results of submission, or <code>null</code> if none has
    * been specified.
-   * 
+   *
    * @return the form's target.
    */
   public String getTarget() {
@@ -476,7 +476,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * Fired when a form is submitted.
-   * 
+   *
    * @return true if the form is submitted, false if canceled
    */
   public boolean onFormSubmit() {
@@ -506,7 +506,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * Sets the 'action' associated with this form. This is the URL to which it
    * will be submitted.
-   * 
+   *
    * @param url the form's action
    */
   public void setAction(String url) {
@@ -516,7 +516,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * Sets the encoding used for submitting this form. This should be either
    * {@link #ENCODING_MULTIPART} or {@link #ENCODING_URLENCODED}.
-   * 
+   *
    * @param encodingType the form's encoding
    */
   public void setEncoding(String encodingType) {
@@ -526,7 +526,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * Sets the HTTP method used for submitting this form. This should be either
    * {@link #METHOD_GET} or {@link #METHOD_POST}.
-   * 
+   *
    * @param method the form's method
    */
   public void setMethod(String method) {
@@ -535,7 +535,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * Submits the form.
-   * 
+   *
    * <p>
    * The FormPanel must <em>not</em> be detached (i.e. removed from its parent
    * or otherwise disconnected from a {@link RootPanel}) until the submission is
@@ -602,7 +602,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * Fire a {@link FormPanel.SubmitEvent}.
-   * 
+   *
    * @return true to continue, false if canceled
    */
   private boolean fireSubmitEvent() {
@@ -616,7 +616,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   }
 
   /**
-   * @return true if the form is submitted, false if canceled
+   * Returns true if the form is submitted, false if canceled.
    */
   private boolean onFormSubmitImpl() {
     return fireSubmitEvent();

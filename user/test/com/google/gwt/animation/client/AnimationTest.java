@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -33,7 +33,7 @@ public class AnimationTest extends GWTTestCase {
    * A default implementation of {@link Animation} used for testing.
    */
   private static class DefaultAnimation extends Animation {
-    protected boolean cancelled = false;
+    protected boolean canceled = false;
     protected boolean completed = false;
     protected boolean started = false;
     protected double curProgress = -1.0;
@@ -42,7 +42,7 @@ public class AnimationTest extends GWTTestCase {
      * Assert the value of canceled.
      */
     public void assertCancelled(boolean expected) {
-      assertEquals(expected, cancelled);
+      assertEquals(expected, canceled);
     }
 
     /**
@@ -74,7 +74,7 @@ public class AnimationTest extends GWTTestCase {
     }
 
     public void reset() {
-      cancelled = false;
+      canceled = false;
       completed = false;
       started = false;
       curProgress = -1.0;
@@ -88,7 +88,7 @@ public class AnimationTest extends GWTTestCase {
     @Override
     protected void onCancel() {
       super.onCancel();
-      cancelled = true;
+      canceled = true;
     }
 
     @Override
@@ -116,7 +116,7 @@ public class AnimationTest extends GWTTestCase {
 
     @Override
     protected void onCancel() {
-      cancelled = true;
+      canceled = true;
     }
 
     @Override

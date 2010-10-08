@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -77,7 +77,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
     /**
      * Constructor for <code>MultiWordSuggestion</code>.
-     * 
+     *
      * @param replacementString the string to enter into the SuggestBox's text
      *          box if the suggestion is chosen
      * @param displayString the display string
@@ -97,21 +97,21 @@ public class MultiWordSuggestOracle extends SuggestOracle {
   }
 
   /**
-   * A class reresenting the bounds of a word within a string. 
-   * 
+   * A class reresenting the bounds of a word within a string.
+   *
    * The bounds are represented by a {@code startIndex} (inclusive) and
    * an {@code endIndex} (exclusive).
    */
   private static class WordBounds implements Comparable<WordBounds> {
-  
+
     final int startIndex;
     final int endIndex;
-    
+
     public WordBounds(int startIndex, int length) {
       this.startIndex = startIndex;
       this.endIndex = startIndex + length;
     }
-    
+
     public int compareTo(WordBounds that) {
       int comparison = this.startIndex - that.startIndex;
       if (comparison == 0) {
@@ -120,7 +120,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
       return comparison;
     }
   }
-  
+
   private static final char WHITESPACE_CHAR = ' ';
   private static final String WHITESPACE_STRING = " ";
 
@@ -155,7 +155,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
   /**
    * Constructor for <code>MultiWordSuggestOracle</code>. This uses a space as
    * the whitespace character.
-   * 
+   *
    * @see #MultiWordSuggestOracle(String)
    */
   public MultiWordSuggestOracle() {
@@ -172,7 +172,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
    * matching. For example, the query "bar" would match "bar", but not "foo
    * bar".
    * </p>
-   * 
+   *
    * @param whitespaceChars the characters to treat as word separators
    */
   public MultiWordSuggestOracle(String whitespaceChars) {
@@ -184,7 +184,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * Adds a suggestion to the oracle. Each suggestion must be plain text.
-   * 
+   *
    * @param suggestion the suggestion
    */
   public void add(String suggestion) {
@@ -208,7 +208,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * Adds all suggestions specified. Each suggestion must be plain text.
-   * 
+   *
    * @param collection the collection
    */
   public final void addAll(Collection<String> collection) {
@@ -255,7 +255,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     }
 
     // Convert candidates to suggestions.
-    List<MultiWordSuggestion> suggestions = 
+    List<MultiWordSuggestion> suggestions =
         convertToFormattedSuggestions(query, candidates);
 
     Response response = new Response(suggestions);
@@ -266,7 +266,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * Sets the default suggestion collection.
-   * 
+   *
    * @param suggestionList the default list of suggestions
    */
   public void setDefaultSuggestions(Collection<Suggestion> suggestionList) {
@@ -275,9 +275,9 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * A convenience method to set default suggestions using plain text strings.
-   * 
+   *
    * Note to use this method each default suggestion must be plain text.
-   * 
+   *
    * @param suggestionList the default list of suggestions
    */
   public final void setDefaultSuggestionsFromText(
@@ -291,11 +291,11 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * Creates the suggestion based on the given replacement and display strings.
-   * 
+   *
    * @param replacementString the string to enter into the SuggestBox's text box
    *          if the suggestion is chosen
    * @param displayString the display string
-   * 
+   *
    * @return the suggestion created
    */
   protected MultiWordSuggestion createSuggestion(String replacementString,
@@ -306,7 +306,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
   /**
    * Returns real suggestions with the given query in <code>strong</code> html
    * font.
-   * 
+   *
    * @param query query string
    * @param candidates candidates
    * @return real suggestions
@@ -324,14 +324,14 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
       // Create strong search string.
       SafeHtmlBuilder accum = new SafeHtmlBuilder();
-      
+
       String[] searchWords = query.split(WHITESPACE_STRING);
       while (true) {
         WordBounds wordBounds = findNextWord(candidate, searchWords, index);
         if (wordBounds == null) {
           break;
         }
-        if (wordBounds.startIndex == 0 || 
+        if (wordBounds.startIndex == 0 ||
             WHITESPACE_CHAR == candidate.charAt(wordBounds.startIndex - 1)) {
           String part1 = formattedSuggestion.substring(cursor, wordBounds.startIndex);
           String part2 = formattedSuggestion.substring(wordBounds.startIndex,
@@ -344,12 +344,12 @@ public class MultiWordSuggestOracle extends SuggestOracle {
         }
         index = wordBounds.endIndex;
       }
-      
+
       // Check to make sure the search was found in the string.
       if (cursor == 0) {
         continue;
       }
-      
+
       accum.appendEscaped(formattedSuggestion.substring(cursor));
       MultiWordSuggestion suggestion = createSuggestion(formattedSuggestion,
           accum.toSafeHtml().asString());
@@ -404,7 +404,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * Creates a set of potential candidates that match the given query.
-   * 
+   *
    * @param query query string
    * @return possible candidates
    */
@@ -423,11 +423,11 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     }
     return candidateSet;
   }
-  
+
   /**
-   * @return a {@link WordBounds} representing the first word in 
-   *     {@code searchWords} that is found in candidate starting at 
-   *     {@code indexToStartAt} or {@code null} if no words could be found.
+   * Returns a {@link WordBounds} representing the first word in {@code
+   * searchWords} that is found in candidate starting at {@code indexToStartAt}
+   * or {@code null} if no words could be found.
    */
   private WordBounds findNextWord(String candidate, String[] searchWords, int indexToStartAt) {
     WordBounds firstWord = null;
@@ -442,7 +442,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     }
     return firstWord;
   }
-  
+
   /**
    * Normalize the search key by making it lower case, removing multiple spaces,
    * apply whitespace masks, and make it lower case.

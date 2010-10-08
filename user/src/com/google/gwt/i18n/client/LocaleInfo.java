@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,7 +38,7 @@ public class LocaleInfo {
       (CldrImpl) GWT.create(CldrImpl.class));
 
   /**
-   * @return an array of available locale names
+   * Returns an array of available locale names.
    */
   public static final String[] getAvailableLocaleNames() {
     /*
@@ -46,7 +46,7 @@ public class LocaleInfo {
      * is static.  Ideally, the set of available locales would be generated
      * by a different GWT.create but that would slow the compilation process
      * unnecessarily.
-     * 
+     *
      * This is static, and accesses infoImpl this way, with an eye towards
      * when we implement static LocaleInfo getLocale(String localeName) as
      * you might want to get the list of available locales in order to create
@@ -54,9 +54,9 @@ public class LocaleInfo {
      */
     return instance.infoImpl.getAvailableLocaleNames();
   }
-  
+
   /**
-   * @return a LocaleInfo instance for the current locale
+   * Returns a LocaleInfo instance for the current locale.
    */
   public static final LocaleInfo getCurrentLocale() {
     /*
@@ -69,14 +69,14 @@ public class LocaleInfo {
   }
 
   /**
-   * Return the display name of the requested locale in its native locale, if
+   * Returns the display name of the requested locale in its native locale, if
    * possible. If no native localization is available, the English name will
    * be returned, or as a last resort just the locale name will be returned.  If
    * the locale name is unknown (including an user overrides) or is not a valid
    * locale property value, null is returned.
-   * 
+   *
    * If the I18N module has not been imported, this will always return null.
-   * 
+   *
    * @param localeName the name of the locale to lookup.
    * @return the name of the locale in its native locale
    */
@@ -88,7 +88,7 @@ public class LocaleInfo {
   }
 
   /**
-   * @return true if any locale supported by this build of the app is RTL.
+   * Returns true if any locale supported by this build of the app is RTL.
    */
   public static boolean hasAnyRTL() {
     return instance.infoImpl.hasAnyRTL();
@@ -101,7 +101,7 @@ public class LocaleInfo {
   private DateTimeConstants dateTimeConstants;
 
   private DateTimeFormatInfo dateTimeFormatInfo;
-  
+
   private NumberConstants numberConstants;
 
   /**
@@ -115,7 +115,7 @@ public class LocaleInfo {
 
   /**
    * Create a LocaleInfo instance, passing in the implementation classes.
-   * 
+   *
    * @param impl LocaleInfoImpl instance to use
    * @param cldr CldrImpl instance to use
    */
@@ -125,7 +125,7 @@ public class LocaleInfo {
   }
 
   /**
-   * @return a DateTimeConstants instance for this locale.
+   * Returns a DateTimeConstants instance for this locale.
    */
   public final DateTimeConstants getDateTimeConstants() {
     ensureDateTimeConstants();
@@ -133,7 +133,7 @@ public class LocaleInfo {
   }
 
   /**
-   * @return a DateTimeConstants instance for this locale.
+   * Returns a DateTimeConstants instance for this locale.
    */
   public final DateTimeFormatInfo getDateTimeFormatInfo() {
     ensureDateTimeFormatInfo();
@@ -141,14 +141,14 @@ public class LocaleInfo {
   }
 
   /**
-   * @return the name of this locale, such as "default, "en_US", etc
+   * Returns the name of this locale, such as "default, "en_US", etc.
    */
   public final String getLocaleName() {
     return infoImpl.getLocaleName();
   }
 
   /**
-   * @return a NumberConstants instance for this locale.
+   * Returns a NumberConstants instance for this locale.
    */
   public final NumberConstants getNumberConstants() {
     ensureNumberConstants();
@@ -156,7 +156,7 @@ public class LocaleInfo {
   }
 
   /**
-   * @return true if this locale is right-to-left instead of left-to-right
+   * Returns true if this locale is right-to-left instead of left-to-right.
    */
   public final boolean isRTL() {
     return cldrImpl.isRTL();
@@ -174,7 +174,7 @@ public class LocaleInfo {
       dateTimeFormatInfo = infoImpl.getDateTimeFormatInfo();
     }
   }
-  
+
   private void ensureNumberConstants() {
     if (numberConstants == null) {
       numberConstants = infoImpl.getNumberConstants();

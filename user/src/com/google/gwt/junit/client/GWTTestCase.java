@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,7 +35,7 @@ import java.util.Set;
  * hook the run method and stash the TestResult object for later communication
  * between the test runner and the unit test shell that drives the test case
  * inside a hosted browser.
- * 
+ *
  * <p>
  * There are two versions of this class. This version is the binary version that
  * derives from JUnit's {@link TestCase} and handles all the work of starting up
@@ -72,7 +72,7 @@ public abstract class GWTTestCase extends TestCase {
     private String moduleName;
     private String syntheticModuleName;
     private Strategy strategy;
-    
+
     /**
      * The ordered tests in this synthetic module.
      */
@@ -80,7 +80,7 @@ public abstract class GWTTestCase extends TestCase {
 
     /**
      * Construct a new {@link TestModuleInfo}.
-     * 
+     *
      * @param moduleName the module name
      * @param syntheticModuleName the synthetic module name
      * @param strategy the test {@link Strategy}
@@ -105,7 +105,7 @@ public abstract class GWTTestCase extends TestCase {
     }
 
     /**
-     * @return the tests that are part of this module
+     * Returns the tests that are part of this module.
      */
     public Set<TestInfo> getTests() {
       return tests;
@@ -126,7 +126,7 @@ public abstract class GWTTestCase extends TestCase {
 
   /**
    * Get the names of all test modules.
-   * 
+   *
    * @return all test module names
    */
   public static String[] getAllTestModuleNames() {
@@ -137,7 +137,7 @@ public abstract class GWTTestCase extends TestCase {
 
   /**
    * Get the number of modules.
-   * 
+   *
    * @return the module count.
    */
   public static int getModuleCount() {
@@ -145,10 +145,10 @@ public abstract class GWTTestCase extends TestCase {
       return ALL_GWT_TESTS.size();
     }
   }
-  
+
   /**
    * Get the set of all {@link TestInfo} for the specified module.
-   * 
+   *
    * @param syntheticModuleName the synthetic module name
    * @return all tests for the module
    */
@@ -196,7 +196,7 @@ public abstract class GWTTestCase extends TestCase {
    * checkpoint messages will be appended to the getException description. This
    * can be useful in web mode for determining how far test execution progressed
    * before a failure occurs.
-   * 
+   *
    * @param msg the checkpoint message to add
    * @deprecated This method will be removed when web mode supports stack
    *             traces. It can be useful for debugging web mode failures, but
@@ -213,7 +213,7 @@ public abstract class GWTTestCase extends TestCase {
    * escape to the browser. This will break the normal JUnit reporting
    * functionality, but can be useful in web mode with a JavaScript debugger to
    * pin down where exceptions are originating.
-   * 
+   *
    * @return <code>true</code> for normal JUnit behavior, or
    *         <code>false</code> to disable normal JUnit getException reporting
    */
@@ -223,7 +223,7 @@ public abstract class GWTTestCase extends TestCase {
 
   /**
    * Clears the accumulated list of checkpoint messages.
-   * 
+   *
    * @see #addCheckpoint(String)
    * @deprecated This method will be removed if and when web mode supports stack
    *             traces. It can be useful for debugging web mode failures, but
@@ -236,7 +236,7 @@ public abstract class GWTTestCase extends TestCase {
 
   /**
    * Returns the current set of checkpoint messages.
-   * 
+   *
    * @return a non-<code>null</code> array of checkpoint messages
    * @see #addCheckpoint(String)
    * @deprecated This method will be removed if and when web mode supports stack
@@ -253,7 +253,7 @@ public abstract class GWTTestCase extends TestCase {
    * Specifies a module to use when running this test case. Subclasses must
    * return the name of a module that will cause the source for that subclass to
    * be included.
-   * 
+   *
    * @return the fully qualified name of a module, or <code>null</code> to run
    *         as a pure Java (non-GWT) test case (same effect as passing
    *         <code>true</code> to {@link #setForcePureJava})
@@ -264,7 +264,7 @@ public abstract class GWTTestCase extends TestCase {
 
   /**
    * Get the {@link Strategy} to use when compiling and running this test.
-   *  
+   *
    * @return the test {@link Strategy}
    */
   public Strategy getStrategy() {
@@ -277,7 +277,7 @@ public abstract class GWTTestCase extends TestCase {
   /**
    * Get the synthetic module name, which includes the synthetic extension
    * defined by the {@link Strategy}.
-   * 
+   *
    * @return the synthetic module name, or <code>null</code> if this test case
    *         is run in pure Java mode (non-GWT)
    *
@@ -360,7 +360,7 @@ public abstract class GWTTestCase extends TestCase {
    * normally, this test will not immediately succeed. Instead, a <i>delay
    * period</i> begins. During the delay period, the test system will wait for
    * one of three things to happen:
-   * 
+   *
    * <ol>
    * <li> If {@link #finishTest()} is called before the delay period expires,
    * the test will succeed.</li>
@@ -369,20 +369,20 @@ public abstract class GWTTestCase extends TestCase {
    * <li> If the delay period expires and neither of the above has happened, the
    * test will error with a {@link TimeoutException}. </li>
    * </ol>
-   * 
+   *
    * <p>
    * This method is typically used to test event driven functionality.
    * </p>
-   * 
+   *
    * <p>
    * <b>Example:</b>
    * {@example com.google.gwt.examples.AsyncJUnitExample#testTimer()}
    * </p>
-   * 
+   *
    * @param timeoutMillis how long to wait before the current test will time out
    * @tip Subsequent calls to this method reset the timeout.
    * @see #finishTest()
-   * 
+   *
    * @throws UnsupportedOperationException if {@link #supportsAsync()} is false
    */
   protected final void delayTestFinish(int timeoutMillis) {
@@ -394,21 +394,21 @@ public abstract class GWTTestCase extends TestCase {
    * {@link #delayTestFinish(int)}, call this method during the delay period to
    * cause this test to succeed. This method is typically called from an event
    * handler some time after the test method returns control to the caller.
-   * 
+   *
    * <p>
    * Calling this method before the test method completes, will undo the effect
    * of having called <code>delayTestFinish()</code>. The test will revert to
    * normal, non-asynchronous mode.
    * </p>
-   * 
+   *
    * <p>
    * <b>Example:</b>
    * {@example com.google.gwt.examples.AsyncJUnitExample#testTimer()}
    * </p>
-   * 
+   *
    * @throws IllegalStateException if this test is not in asynchronous mode
    * @throws UnsupportedOperationException if {@link #supportsAsync()} is false
-   * 
+   *
    * @see #delayTestFinish(int)
    */
   protected final void finishTest() {

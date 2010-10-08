@@ -266,21 +266,21 @@ public class MessageFormatParser {
         throws UnableToCompleteException;
 
     /**
-     * @return the string as this chunk would be represented in a MessageFormat
-     *         template, with any required quoting such that reparsing this
-     *         value would produce an equivalent (note, not identical) parse.
+     * Returns the string as this chunk would be represented in a MessageFormat
+     * template, with any required quoting such that reparsing this value would
+     * produce an equivalent (note, not identical) parse.
      *
-     *          Note that the default implementation may not be sufficient for
-     *         all subclasses.
+     * Note that the default implementation may not be sufficient for all
+     * subclasses.
      */
     public String getAsMessageFormatString() {
       return getStringValue(true);
     }
 
     /**
-     * @return the string as this chunk would be represented in a MessageFormat
-     *         template, with any quoting removed. Note that this is distinct
-     *         from toString in that the latter is intend for human consumption.
+     * Returns the string as this chunk would be represented in a MessageFormat
+     * template, with any quoting removed. Note that this is distinct from
+     * toString in that the latter is intend for human consumption.
      */
     public String getString() {
       return getStringValue(false);

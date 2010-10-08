@@ -111,7 +111,7 @@ public class ProblemReport {
    * @param extraLines additional continuation lines for the message, usually
    *    for additional explanations.
    */
-  public Problem add(JClassType type, String message, Priority priority, 
+  public Problem add(JClassType type, String message, Priority priority,
       String... extraLines) {
     String contextString = "";
     if (contextType != null) {
@@ -186,7 +186,7 @@ public class ProblemReport {
   /**
    * Sets the context type currently being analyzed.  Problems found will
    * include reference to this context, until reset with another call to this
-   * method.  Context may be cancelled with a {@code null} value here.
+   * method.  Context may be canceled with a {@code null} value here.
    *
    * @param newContext the type under analysis
    */

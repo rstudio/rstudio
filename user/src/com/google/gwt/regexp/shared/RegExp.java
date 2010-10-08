@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  * implementation, not the pure Java implementation, which rejects them.
  */
 public class RegExp {
-  
+
   // In JS syntax, a \ in the replacement string has no special meaning.
   // In Java syntax, a \ in the replacement string escapes the next character,
   // so we have to translate \ to \\ before passing it to Java.
@@ -78,7 +78,7 @@ public class RegExp {
 
   /**
    * Creates a regular expression object from a pattern with no flags.
-   * 
+   *
    * @param pattern the Javascript regular expression pattern to compile
    * @return a new regular expression
    * @throws RuntimeException if the pattern is invalid
@@ -86,10 +86,10 @@ public class RegExp {
   public static RegExp compile(String pattern) {
     return compile(pattern, "");
   }
-  
+
   /**
    * Creates a regular expression object from a pattern using the given flags.
-   * 
+   *
    * @param pattern the Javascript regular expression pattern to compile
    * @param flags the flags string, containing at most one occurrence of {@code
    *        'g'} ({@link #getGlobal()}), {@code 'i'} ({@link #getIgnoreCase()}),
@@ -125,11 +125,11 @@ public class RegExp {
 
     return new RegExp(pattern, javaPattern, globalFlag);
   }
-  
+
   /**
    * Parses a flags string as a set of characters. Does not reject unknown
    * flags.
-   * 
+   *
    * @param flags the flag string to parse
    * @return a set of flags
    * @throws IllegalArgumentException if a flag is duplicated
@@ -145,7 +145,7 @@ public class RegExp {
     }
     return flagsSet;
   }
-  
+
   private final boolean globalFlag;
 
   private int lastIndex;
@@ -164,7 +164,7 @@ public class RegExp {
   /**
    * Applies the regular expression to the given string. This call affects the
    * value returned by {@link #getLastIndex()} if the global flag is set.
-   * 
+   *
    * @param input the string to apply the regular expression to
    * @return a match result if the string matches, else {@code null}
    */
@@ -209,26 +209,26 @@ public class RegExp {
   }
 
   /**
-   * @return Whether the regular expression captures all occurrences of the
-   *         pattern.
+   * Returns whether the regular expression captures all occurrences of the
+   * pattern.
    */
   public boolean getGlobal() {
     return globalFlag;
   }
 
   /**
-   * @return Whether the regular expression ignores case.
+   * Returns whether the regular expression ignores case.
    */
   public boolean getIgnoreCase() {
     return (pattern.flags() & Pattern.CASE_INSENSITIVE) != 0;
   }
 
   /**
-   * @return The zero-based position at which to start the next match. The
-   *         return value is not defined if the global flag is not set. After a
-   *         call to {@link #exec} or {@link #test}, this method returns the
-   *         next position following the most recent match.
-   * 
+   * Returns the zero-based position at which to start the next match. The
+   * return value is not defined if the global flag is not set. After a call
+   * to {@link #exec(String)} or {@link #test(String)}, this method returns
+   * the next position following the most recent match.
+   *
    * @see #getGlobal()
    */
   public int getLastIndex() {
@@ -236,15 +236,15 @@ public class RegExp {
   }
 
   /**
-   * @return Whether '$' and '^' match line returns ('\n' and '\r') in addition
-   *         to the beginning or end of the string.
+   * Returns whether '$' and '^' match line returns ('\n' and '\r') in addition
+   * to the beginning or end of the string.
    */
   public boolean getMultiline() {
     return (pattern.flags() & Pattern.MULTILINE) != 0;
   }
 
   /**
-   * @return The pattern string of the regular expression.
+   * Returns the pattern string of the regular expression.
    */
   public String getSource() {
     return source;
@@ -265,7 +265,7 @@ public class RegExp {
    * </ul>
    * Note: $` and $' are *not* supported in the pure Java implementation, and
    * throw an exception.
-   * 
+   *
    * @param input the string in which the regular expression is to be searched.
    * @param replacement the replacement string.
    * @return the input string with the regular expression replaced by the
@@ -309,7 +309,7 @@ public class RegExp {
    * regular expression is completely empty, splits the input string into its
    * constituent characters. If the regular expression is not empty but matches
    * an empty string, the results are not well defined.
-   * 
+   *
    * @param input the string to be split.
    * @return the strings split off, any of which may be empty.
    */
@@ -322,11 +322,11 @@ public class RegExp {
    * regular expression is completely empty, splits the input string into its
    * constituent characters. If the regular expression is not empty but matches
    * an empty string, the results are not well defined.
-   * 
-   * Note: There are some browser inconsistencies with this implementation, as 
+   *
+   * Note: There are some browser inconsistencies with this implementation, as
    * it is delegated to the browser, and no browser follows the spec completely.
    * A major difference is that IE will exclude empty strings in the result.
-   * 
+   *
    * @param input the string to be split.
    * @param limit the the maximum number of strings to split off and return,
    *        ignoring the rest of the input string. If negative, there is no
@@ -365,7 +365,7 @@ public class RegExp {
    * Determines if the regular expression matches the given string. This call
    * affects the value returned by {@link #getLastIndex()} if the global flag is
    * set. Equivalent to: {@code exec(input) != null}
-   * 
+   *
    * @param input the string to apply the regular expression to
    * @return whether the regular expression matches the given string.
    */

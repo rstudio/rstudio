@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,7 +22,7 @@ import java.math.BigInteger;
 
 /**
  * Formats and parses numbers using locale-sensitive patterns.
- * 
+ *
  * This class provides comprehensive and flexible support for a wide variety of
  * localized formats, including
  * <ul>
@@ -40,7 +40,7 @@ import java.math.BigInteger;
  * possible to parse and format numbers in any locale, including support for
  * Western, Arabic, and Indic digits</li>
  * </ul>
- * 
+ *
  * <h3>Patterns</h3>
  * <p>
  * Formatting and parsing are based on customizable patterns that can include a
@@ -51,7 +51,7 @@ import java.math.BigInteger;
  * hand, stand for other characters, strings, or classes of characters. For
  * example, the '<code>#</code>' character is replaced by a localized digit.
  * </p>
- * 
+ *
  * <p>
  * Often the replacement character is the same as the pattern character. In the
  * U.S. locale, for example, the '<code>,</code>' grouping character is
@@ -62,7 +62,7 @@ import java.math.BigInteger;
  * presence. For example, if the percent character is seen, then the value is
  * multiplied by 100 before being displayed.
  * </p>
- * 
+ *
  * <p>
  * The characters listed below are used in patterns. Localized symbols use the
  * corresponding characters taken from corresponding locale symbol collection,
@@ -72,7 +72,7 @@ import java.math.BigInteger;
  * meaning) the character must be quoted. There are some exceptions to this
  * which are noted below.
  * </p>
- * 
+ *
  * <table>
  * <tr>
  * <th>Symbol</th>
@@ -80,42 +80,42 @@ import java.math.BigInteger;
  * <th>Localized?</th>
  * <th>Meaning</th>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>0</code></td>
  * <td>Number</td>
  * <td>Yes</td>
  * <td>Digit</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>#</code></td>
  * <td>Number</td>
  * <td>Yes</td>
  * <td>Digit, zero shows as absent</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>.</code></td>
  * <td>Number</td>
  * <td>Yes</td>
  * <td>Decimal separator or monetary decimal separator</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>-</code></td>
  * <td>Number</td>
  * <td>Yes</td>
  * <td>Minus sign</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>,</code></td>
  * <td>Number</td>
  * <td>Yes</td>
  * <td>Grouping separator</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>E</code></td>
  * <td>Number</td>
@@ -123,28 +123,28 @@ import java.math.BigInteger;
  * <td>Separates mantissa and exponent in scientific notation; need not be
  * quoted in prefix or suffix</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>;</code></td>
  * <td>Subpattern boundary</td>
  * <td>Yes</td>
  * <td>Separates positive and negative subpatterns</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>%</code></td>
  * <td>Prefix or suffix</td>
  * <td>Yes</td>
  * <td>Multiply by 100 and show as percentage</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><nobr><code>\u2030</code> (\u005Cu2030)</nobr></td>
  * <td>Prefix or suffix</td>
  * <td>Yes</td>
  * <td>Multiply by 1000 and show as per mille</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><nobr><code>\u00A4</code> (\u005Cu00A4)</nobr></td>
  * <td>Prefix or suffix</td>
@@ -153,7 +153,7 @@ import java.math.BigInteger;
  * international currency symbol; if present in a pattern, the monetary decimal
  * separator is used instead of the decimal separator</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td><code>'</code></td>
  * <td>Prefix or suffix</td>
@@ -163,9 +163,9 @@ import java.math.BigInteger;
  * to create a single quote itself, use two in succession, such as
  * <code>"# o''clock"</code></td>
  * </tr>
- * 
+ *
  * </table>
- * 
+ *
  * <p>
  * A <code>NumberFormat</code> pattern contains a postive and negative
  * subpattern separated by a semicolon, such as
@@ -179,7 +179,7 @@ import java.math.BigInteger;
  * subpattern. That means that <code>"#,##0.0#;(#)"</code> has precisely the
  * same result as <code>"#,##0.0#;(#,##0.0#)"</code>.
  * </p>
- * 
+ *
  * <p>
  * The prefixes, suffixes, and various symbols used for infinity, digits,
  * thousands separators, decimal separators, etc. may be set to arbitrary
@@ -188,7 +188,7 @@ import java.math.BigInteger;
  * unreliable. For example, the decimal separator and thousands separator should
  * be distinct characters, or parsing will be impossible.
  * </p>
- * 
+ *
  * <p>
  * The grouping separator is a character that separates clusters of integer
  * digits to make large numbers more legible. It commonly used for thousands,
@@ -196,12 +196,12 @@ import java.math.BigInteger;
  * number of digits between the grouping separators, such as 3 for "100,000,000"
  * or 4 for "1 0000 0000".
  * </p>
- * 
+ *
  * <h3>Pattern Grammar (BNF)</h3>
  * <p>
  * The pattern itself uses the following grammar:
  * </p>
- * 
+ *
  * <table>
  * <tr>
  * <td>pattern</td>
@@ -263,46 +263,46 @@ import java.math.BigInteger;
  * <td>'<code>\u005Cu0000</code>'..'<code>\u005CuFFFD</code>' - quote</td>
  * </tr>
  * </table>
- * 
+ *
  * <p>
  * Notation:
  * </p>
- * 
+ *
  * <table>
  * <tr>
  * <td>X*</td>
  * <td style="white-space: nowrap">0 or more instances of X</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>X?</td>
  * <td style="white-space: nowrap">0 or 1 instances of X</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>X|Y</td>
  * <td style="white-space: nowrap">either X or Y</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>C..D</td>
  * <td style="white-space: nowrap">any character from C up to D, inclusive</td>
  * </tr>
- * 
+ *
  * <tr>
  * <td>S-T</td>
  * <td style="white-space: nowrap">characters in S, except those in T</td>
  * </tr>
  * </table>
- * 
+ *
  * <p>
  * The first subpattern is for positive numbers. The second (optional)
  * subpattern is for negative numbers.
  * </p>
- * 
+ *
  *  <h3>Example</h3> {@example com.google.gwt.examples.NumberFormatExample}
  *
- * 
+ *
  */
 public class NumberFormat {
 
@@ -345,8 +345,8 @@ public class NumberFormat {
   private static final char QUOTE = '\'';
 
   /**
-   * @return true if all new NumberFormat instances will use latin digits
-   *     and related characters rather than the localized ones. 
+   * Returns true if all new NumberFormat instances will use latin digits and
+   * related characters rather than the localized ones.
    */
   public static boolean forcedLatinDigits() {
     return defaultNumberConstants != localizedNumberConstants;
@@ -354,7 +354,7 @@ public class NumberFormat {
 
   /**
    * Provides the standard currency format for the default locale.
-   * 
+   *
    * @return a <code>NumberFormat</code> capable of producing and consuming
    *         currency format for the default locale
    */
@@ -369,7 +369,7 @@ public class NumberFormat {
   /**
    * Provides the standard currency format for the default locale using a
    * specified currency.
-   * 
+   *
    * @param currencyData currency data to use
    * @return a <code>NumberFormat</code> capable of producing and consuming
    *         currency format for the default locale
@@ -382,8 +382,8 @@ public class NumberFormat {
   /**
    * Provides the standard currency format for the default locale using a
    * specified currency.
-   * 
-   * @param currencyCode valid currency code, as defined in 
+   *
+   * @param currencyCode valid currency code, as defined in
    *     com.google.gwt.i18n.client.constants.CurrencyCodeMapConstants.properties
    * @return a <code>NumberFormat</code> capable of producing and consuming
    *         currency format for the default locale
@@ -397,7 +397,7 @@ public class NumberFormat {
 
   /**
    * Provides the standard decimal format for the default locale.
-   * 
+   *
    * @return a <code>NumberFormat</code> capable of producing and consuming
    *         decimal format for the default locale
    */
@@ -413,7 +413,7 @@ public class NumberFormat {
   /**
    * Gets a <code>NumberFormat</code> instance for the default locale using
    * the specified pattern and the default currencyCode.
-   * 
+   *
    * @param pattern pattern for this formatter
    * @return a NumberFormat instance
    * @throws IllegalArgumentException if the specified pattern is invalid
@@ -425,7 +425,7 @@ public class NumberFormat {
   /**
    * Gets a custom <code>NumberFormat</code> instance for the default locale
    * using the specified pattern and currency code.
-   * 
+   *
    * @param pattern pattern for this formatter
    * @param currencyData currency data
    * @return a NumberFormat instance
@@ -439,7 +439,7 @@ public class NumberFormat {
   /**
    * Gets a custom <code>NumberFormat</code> instance for the default locale
    * using the specified pattern and currency code.
-   * 
+   *
    * @param pattern pattern for this formatter
    * @param currencyCode international currency code
    * @return a NumberFormat instance
@@ -452,7 +452,7 @@ public class NumberFormat {
 
   /**
    * Provides the standard percent format for the default locale.
-   * 
+   *
    * @return a <code>NumberFormat</code> capable of producing and consuming
    *         percent format for the default locale
    */
@@ -467,7 +467,7 @@ public class NumberFormat {
 
   /**
    * Provides the standard scientific format for the default locale.
-   * 
+   *
    * @return a <code>NumberFormat</code> capable of producing and consuming
    *         scientific format for the default locale
    */
@@ -483,7 +483,7 @@ public class NumberFormat {
   /**
    * Specify whether all new NumberFormat instances will use latin digits
    * and related characters rather than the localized ones.
-   *  
+   *
    * @param useLatinDigits true if latin digits/etc should be used, false if
    *    localized digits/etc should be used.
    */
@@ -508,7 +508,7 @@ public class NumberFormat {
 
   /**
    * Create a delocalized NumberConstants instance from a localized one.
-   * 
+   *
    * @param orig localized NumberConstants instance
    * @return NumberConstants instance using latin digits/etc
    */
@@ -589,13 +589,13 @@ public class NumberFormat {
 
       public String zeroDigit() {
         return "0";
-      }      
+      }
     };
   }
 
   /**
    * Remap a localized separator to an equivalent latin one.
-   * 
+   *
    * @param separator
    * @return delocalized separator character
    */
@@ -615,7 +615,7 @@ public class NumberFormat {
    * (which is the number of places to the right of the end of the string the
    * decimal point should be moved -- i.e., 3.5 would be added to the buffer
    * as "35" and a returned scale of -1).
-   * 
+   *
    * @param buf
    * @param val
    * @return scale to apply to the result
@@ -653,7 +653,7 @@ public class NumberFormat {
 
   /**
    * Lookup a currency code.
-   * 
+   *
    * @param currencyCode ISO4217 currency code
    * @return a CurrencyData instance
    * @throws IllegalArgumentException if the currency code is unknown
@@ -671,7 +671,7 @@ public class NumberFormat {
   /**
    * Convert a double to a string with {@code digits} precision.  The resulting
    * string may still be in exponential notation.
-   * 
+   *
    * @param d double value
    * @param digits number of digits of precision to include
    * @return non-localized string representation of {@code d}
@@ -750,7 +750,7 @@ public class NumberFormat {
 
   /**
    * Constructs a format object based on the specified settings.
-   * 
+   *
    * @param numberConstants the locale-specific number constants to use for this
    *          format -- **NOTE** subclasses passing their own instance here
    *          should pay attention to {@link #forcedLatinDigits()} and remap
@@ -781,7 +781,7 @@ public class NumberFormat {
   /**
    * Constructs a format object for the default locale based on the specified
    * settings.
-   * 
+   *
    * @param pattern pattern that specify how number should be formatted
    * @param cdata currency data that should be used
    * @param userSuppliedPattern true if the pattern was supplied by the user
@@ -792,7 +792,7 @@ public class NumberFormat {
 
   /**
    * This method formats a double to produce a string.
-   * 
+   *
    * @param number The double to format
    * @return the formatted number string
    */
@@ -834,7 +834,7 @@ public class NumberFormat {
    * <p>
    * Any {@link Number} which is not a {@link BigDecimal}, {@link BigInteger},
    * or {@link Long} instance is formatted as a {@code double} value.
-   * 
+   *
    * @param number The Number instance to format
    * @return the formatted number string
    */
@@ -879,7 +879,7 @@ public class NumberFormat {
    * Parses text to produce a numeric value. A {@link NumberFormatException} is
    * thrown if either the text is empty or if the parse does not consume all
    * characters of the text.
-   * 
+   *
    * @param text the string being parsed
    * @return a double value representing the parsed number
    * @throws NumberFormatException if the entire text could not be converted
@@ -896,7 +896,7 @@ public class NumberFormat {
 
   /**
    * Parses text to produce a numeric value.
-   * 
+   *
    * <p>
    * The method attempts to parse text starting at the index given by pos. If
    * parsing succeeds, then the index of <code>pos</code> is updated to the
@@ -906,7 +906,7 @@ public class NumberFormat {
    * for the next call to this method. If an error occurs, then the index of
    * <code>pos</code> is not changed.
    * </p>
-   * 
+   *
    * @param text the string to be parsed
    * @param inOutPos position to pass in and get back
    * @return a double value representing the parsed number
@@ -918,8 +918,8 @@ public class NumberFormat {
 
     boolean gotPositivePrefix = text.startsWith(positivePrefix, inOutPos[0]);
     boolean gotNegativePrefix = text.startsWith(negativePrefix, inOutPos[0]);
-    boolean gotPositiveSuffix = text.endsWith(positiveSuffix); 
-    boolean gotNegativeSuffix = text.endsWith(negativeSuffix); 
+    boolean gotPositiveSuffix = text.endsWith(positiveSuffix);
+    boolean gotNegativeSuffix = text.endsWith(negativeSuffix);
     boolean gotPositive = gotPositivePrefix && gotPositiveSuffix;
     boolean gotNegative = gotNegativePrefix && gotNegativeSuffix;
 
@@ -998,7 +998,7 @@ public class NumberFormat {
    * <li>.0001
    * <br>{@code isNegative=false, digits="1" ("0001" would be ok), scale=-4}
    * </ul>
-   *  
+   *
    * @param isNegative true if the value to be formatted is negative
    * @param digits a StringBuilder containing just the significant digits in
    *     the value to be formatted, the formatted result will be left here
@@ -1056,7 +1056,7 @@ public class NumberFormat {
    * Parses text to produce a numeric value. A {@link NumberFormatException} is
    * thrown if either the text is empty or if the parse does not consume all
    * characters of the text.
-   * 
+   *
    * param text the string to be parsed
    * return a parsed number value, which may be a Double, BigInteger, or
    *     BigDecimal
@@ -1070,7 +1070,7 @@ public class NumberFormat {
 
   /**
    * Parses text to produce a numeric value.
-   * 
+   *
    * <p>
    * The method attempts to parse text starting at the index given by pos. If
    * parsing succeeds, then the index of <code>pos</code> is updated to the
@@ -1080,7 +1080,7 @@ public class NumberFormat {
    * for the next call to this method. If an error occurs, then the index of
    * <code>pos</code> is not changed.
    * </p>
-   * 
+   *
    * param text the string to be parsed
    * pparam inOutPos position to pass in and get back
    * return a parsed number value, which may be a Double, BigInteger, or
@@ -1096,7 +1096,7 @@ public class NumberFormat {
 
   /**
    * Format a possibly scaled long value.
-   * 
+   *
    * @param value value to format
    * @param scale the number of places to the right the decimal point should
    *     be moved in the digit string -- negative means the value contains
@@ -1116,50 +1116,50 @@ public class NumberFormat {
   }
 
   /**
-   * @return the number of digits between grouping separators in the integer
-   *         portion of a number.
+   * Returns the number of digits between grouping separators in the integer
+   * portion of a number.
    */
   protected int getGroupingSize() {
     return groupingSize;
   }
 
   /**
-   * @return the prefix to use for negative values.
+   * Returns the prefix to use for negative values.
    */
   protected String getNegativePrefix() {
     return negativePrefix;
   }
 
   /**
-   * @return the suffix to use for negative values.
+   * Returns the suffix to use for negative values.
    */
   protected String getNegativeSuffix() {
     return negativeSuffix;
   }
 
   /**
-   * @return the NumberConstants instance for this formatter.
+   * Returns the NumberConstants instance for this formatter.
    */
   protected NumberConstants getNumberConstants() {
     return numberConstants;
   }
 
   /**
-   * @return the prefix to use for positive values.
+   * Returns the prefix to use for positive values.
    */
   protected String getPositivePrefix() {
     return positivePrefix;
   }
 
   /**
-   * @return the suffix to use for positive values.
+   * Returns the suffix to use for positive values.
    */
   protected String getPositiveSuffix() {
     return positiveSuffix;
   }
 
   /**
-   * @return true if the decimal separator should always be shown.
+   * Returns true if the decimal separator should always be shown.
    */
   protected boolean isDecimalSeparatorAlwaysShown() {
     return decimalSeparatorAlwaysShown;
@@ -1167,7 +1167,7 @@ public class NumberFormat {
 
   /**
    * Add exponent suffix.
-   * 
+   *
    * @param digits
    */
   private void addExponent(StringBuilder digits) {
@@ -1203,7 +1203,7 @@ public class NumberFormat {
   /**
    * Adjust the fraction digits, adding trailing zeroes if necessary or removing
    * excess trailing zeroes.
-   * 
+   *
    * @param digits
    */
   private void adjustFractionDigits(StringBuilder digits) {
@@ -1235,7 +1235,7 @@ public class NumberFormat {
   /**
    * Compute the exponent to use and adjust decimal position if we are using
    * exponential notation.
-   * 
+   *
    * @param digits
    */
   private void computeExponent(StringBuilder digits) {
@@ -1277,7 +1277,7 @@ public class NumberFormat {
   /**
    * This method return the digit that represented by current character, it
    * could be either '0' to '9', or a locale specific digit.
-   * 
+   *
    * @param ch character that represents a digit
    * @return the digit value
    */
@@ -1292,7 +1292,7 @@ public class NumberFormat {
 
   /**
    * Insert grouping separators if needed.
-   * 
+   *
    * @param digits
    * @param groupingSeparator
    * @param g
@@ -1310,7 +1310,7 @@ public class NumberFormat {
 
   /**
    * Replace locale-independent digits with locale-specific ones.
-   *  
+   *
    * @param digits StringBuilder containing formatted number
    * @param zero locale-specific zero character -- the rest of the digits must
    *     be consecutive
@@ -1328,12 +1328,12 @@ public class NumberFormat {
 
   /**
    * This method parses affix part of pattern.
-   * 
+   *
    * @param pattern pattern string that need to be parsed
    * @param start start position to parse
    * @param affix store the parsed result
    * @param inNegativePattern true if we are parsing the negative pattern and
-   *     therefore only care about the prefix and suffix 
+   *     therefore only care about the prefix and suffix
    * @return how many characters parsed
    */
   private int parseAffix(String pattern, int start, StringBuffer affix,
@@ -1409,7 +1409,7 @@ public class NumberFormat {
   /**
    * This function parses a "localized" text into a <code>double</code>. It
    * needs to handle locale specific decimal, grouping, exponent and digit.
-   * 
+   *
    * @param text the text that need to be parsed
    * @param pos in/out parsing position. in case of failure, this shouldn't be
    *          changed
@@ -1489,7 +1489,7 @@ public class NumberFormat {
 
   /**
    * Method parses provided pattern, result is stored in member variables.
-   * 
+   *
    * @param pattern
    */
   private void parsePattern(String pattern) {
@@ -1518,7 +1518,7 @@ public class NumberFormat {
 
   /**
    * This method parses the trunk part of a pattern.
-   * 
+   *
    * @param pattern pattern string that need to be parsed
    * @param start where parse started
    * @param ignorePattern true if we are only parsing this for length
@@ -1656,7 +1656,7 @@ public class NumberFormat {
 
   /**
    * Remove excess leading zeros or add some if we don't have enough.
-   * 
+   *
    * @param digits
    */
   private void processLeadingZeros(StringBuilder digits) {
@@ -1699,7 +1699,7 @@ public class NumberFormat {
 
   /**
    * Propagate a carry from incrementing the {@code i+1}'th digit.
-   * 
+   *
    * @param digits
    * @param i digit to start incrementing
    */
@@ -1725,11 +1725,11 @@ public class NumberFormat {
 
   /**
    * Round the value at the requested place, propagating any carry backward.
-   * 
+   *
    * @param digits
    */
   private void roundValue(StringBuilder digits) {
-    // TODO(jat): other rounding modes?    
+    // TODO(jat): other rounding modes?
     if (digitsLength > decimalPosition + maximumFractionDigits
         && digits.charAt(decimalPosition + maximumFractionDigits) >= '5') {
       int i = decimalPosition + maximumFractionDigits - 1;

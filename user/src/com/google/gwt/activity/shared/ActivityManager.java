@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -79,7 +79,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
 
   /**
    * Create an ActivityManager. Next call {@link #setDisplay}.
-   * 
+   *
    * @param mapper finds the {@link Activity} for a given
    *          {@link com.google.gwt.place.shared.Place}
    * @param eventBus source of {@link PlaceChangeEvent} and
@@ -92,10 +92,10 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
   }
 
   /**
-   * Deactive the current activity, find the next one from our ActivityMapper,
+   * Deactivate the current activity, find the next one from our ActivityMapper,
    * and start it.
    *
-   * @see PlaceChangeEvent.Handler#onPlaceChange(PlaceChangeEvent)
+   * @see com.google.gwt.place.shared.PlaceChangeEvent.Handler#onPlaceChange(PlaceChangeEvent)
    */
   public void onPlaceChange(PlaceChangeEvent event) {
     Activity nextActivity = mapper.getActivity(event.getNewPlace());
@@ -180,7 +180,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
   /**
    * Reject the place change if the current activity is not willing to stop.
    *
-   * @see PlaceChangeRequestEvent.Handler#onPlaceChangeRequest(PlaceChangeRequestEvent)
+   * @see com.google.gwt.place.shared.PlaceChangeRequestEvent.Handler#onPlaceChangeRequest(PlaceChangeRequestEvent)
    */
   public void onPlaceChangeRequest(PlaceChangeRequestEvent event) {
     if (!currentActivity.equals(NULL_ACTIVITY)) {

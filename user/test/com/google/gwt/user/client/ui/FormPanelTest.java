@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,16 +29,16 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 
 /**
  * Tests the FormPanel.
- * 
+ *
  * @see com.google.gwt.user.server.ui.FormPanelTestServlet
  */
 public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
-  
+
   /**
    * The maximum amount of time to wait for a test to finish.
    */
   private static final int TEST_DELAY = 15000;
-  
+
   public static boolean clicked = false;
 
   @Override
@@ -61,7 +61,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     });
     form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
       public void onSubmitComplete(SubmitCompleteEvent event) {
-        fail("Form was cancelled and should not have been submitted");
+        fail("Form was canceled and should not have been submitted");
       }
     });
 

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -73,15 +73,15 @@ public class ImplicitCssResource {
   }
 
   /**
-   * @return the name of the CssResource interface
+   * Returns the name of the CssResource interface.
    */
   public String getClassName() {
     return className;
   }
 
   /**
-   * @return the set of CSS classnames in the underlying .css files
-   * 
+   * Returns the set of CSS classnames in the underlying .css files.
+   *
    * @throws UnableToCompleteException if the user has called for a .css file we
    *           can't find.
    */
@@ -107,29 +107,29 @@ public class ImplicitCssResource {
   }
 
   /**
-   * @return the public interface that this CssResource implements
+   * Returns the public interface that this CssResource implements.
    */
   public JClassType getExtendedInterface() {
     return extendedInterface;
   }
 
   /**
-   * @return the set of CssResource types whose scopes are imported
+   * Returns the set of CssResource types whose scopes are imported.
    */
   public Set<JClassType> getImports() {
     return imports;
   }
 
   /**
-   * @return the name of this resource. This is both its method name in the
-   *         owning {@link ImplicitClientBundle} and its ui:field name
+   * Returns the name of this resource. This is both its method name in the
+   * owning {@link ImplicitClientBundle} and its ui:field name.
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @return css class names with dashed-names normalized like so: dashedNames
+   * Returns css class names with dashed-names normalized like so: dashedNames.
    */
   public Set<String> getNormalizedCssClassNames()
       throws UnableToCompleteException {
@@ -144,15 +144,15 @@ public class ImplicitCssResource {
   }
 
   /**
-   * @return the package in which the generated CssResource interface should
-   *         reside
+   * Returns the package in which the generated CssResource interface should
+   * reside.
    */
   public String getPackageName() {
     return packageName;
   }
 
   /**
-   * @return name of the generated type
+   * Returns the name of the generated type.
    */
   public String getQualifiedSourceName() {
     if (packageName.length() == 0) {
@@ -163,7 +163,7 @@ public class ImplicitCssResource {
   }
 
   /**
-   * @return the name of the .css file(s), separate by white space
+   * Returns the name of the .css file(s), separate by white space.
    */
   public Collection<String> getSource() {
     if (body.length() == 0) {

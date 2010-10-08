@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,19 +29,19 @@ public interface DesignTimeUtils {
   void addDeclarations(IndentedWriter w);
 
   /**
-   * @return the name of "Impl", unique each time if it is design time.
+   * Returns the name of "Impl", unique each time if it is design time.
    */
   String getImplName(String implName);
 
   /**
-   * @return the path of given {@link Element}.
+   * Returns the path of given {@link Element}.
    */
   String getPath(Element element);
 
   /**
-   * @return the design time content of <code>*.ui.xml</code> template to parse,
-   *         or <code>null</code> if not design time, or this template is not
-   *         under design.
+   * Returns the design time content of <code>*.ui.xml</code> template to parse,
+   * or <code>null</code> if not design time, or this template is not under
+   * design.
    */
   String getTemplateContent(String path);
 
@@ -51,9 +51,9 @@ public interface DesignTimeUtils {
   void handleUIObject(Statements writer, XMLElement elem, String fieldName);
 
   /**
-   * @return <code>true</code> if this template is under design now, so some of
-   *         UiBinder features should be disables. This includes assigning
-   *         values into "@UiField", processing "@UiHandler".
+   * Returns <code>true</code> if this template is under design now, so some of
+   * UiBinder features should be disables. This includes assigning values into
+   * "@UiField", processing "@UiHandler".
    */
   boolean isDesignTime();
 

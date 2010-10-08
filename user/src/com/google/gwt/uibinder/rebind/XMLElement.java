@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -56,7 +56,7 @@ public class XMLElement {
   public interface Interpreter<T> {
     /**
      * Given an XMLElement, return its filtered value.
-     * 
+     *
      * @throws UnableToCompleteException on error
      */
     T interpretElement(XMLElement elem) throws UnableToCompleteException;
@@ -185,7 +185,7 @@ public class XMLElement {
 
   /**
    * Ensure that the receiver has no attributes left.
-   * 
+   *
    * @throws UnableToCompleteException if it does
    */
   public void assertNoAttributes() throws UnableToCompleteException {
@@ -206,7 +206,7 @@ public class XMLElement {
 
   /**
    * Require that the receiver's body is empty of text and has no child nodes.
-   * 
+   *
    * @throws UnableToCompleteException if it isn't
    */
   public void assertNoBody() throws UnableToCompleteException {
@@ -222,7 +222,7 @@ public class XMLElement {
 
   /**
    * Require that the receiver's body is empty of text.
-   * 
+   *
    * @throws UnableToCompleteException if it isn't
    */
   public void assertNoText() throws UnableToCompleteException {
@@ -237,7 +237,7 @@ public class XMLElement {
   /**
    * Consumes the given attribute as a literal or field reference. The type
    * parameter is required to determine how the value is parsed and validated.
-   * 
+   *
    * @param name the attribute's full name (including prefix)
    * @param type the type this attribute is expected to provide
    * @return the attribute's value as a Java expression, or null if it is not
@@ -252,7 +252,7 @@ public class XMLElement {
   /**
    * Consumes the given attribute as a literal or field reference. The type
    * parameter is required to determine how the value is parsed and validated.
-   * 
+   *
    * @param name the attribute's full name (including prefix)
    * @param defaultValue the value to @return if the attribute was unset
    * @param type the type this attribute is expected to provide
@@ -302,10 +302,10 @@ public class XMLElement {
   /**
    * Convenience method for parsing the named attribute as a boolean value or
    * reference.
-   * 
+   *
    * @return an expression that will evaluate to a boolean value in the
    *         generated code, or null if there is no such attribute
-   * 
+   *
    * @throws UnableToCompleteException on unparseable value
    */
   public String consumeBooleanAttribute(String name)
@@ -316,11 +316,11 @@ public class XMLElement {
   /**
    * Convenience method for parsing the named attribute as a boolean value or
    * reference.
-   * 
+   *
    * @param defaultValue value to return if attribute was not set
    * @return an expression that will evaluate to a boolean value in the
    *         generated code, or defaultValue if there is no such attribute
-   * 
+   *
    * @throws UnableToCompleteException on unparseable value
    */
   public String consumeBooleanAttribute(String name, boolean defaultValue)
@@ -333,10 +333,10 @@ public class XMLElement {
    * Consumes the named attribute as a boolean expression. This will not accept
    * {field.reference} expressions. Useful for values that must be resolved at
    * compile time, such as generated annotation values.
-   * 
+   *
    * @return {@link Boolean#TRUE}, {@link Boolean#FALSE}, or null if no such
    *         attribute
-   * 
+   *
    * @throws UnableToCompleteException on unparseable value
    */
   public Boolean consumeBooleanConstantAttribute(String name)
@@ -354,7 +354,7 @@ public class XMLElement {
 
   /**
    * Consumes and returns all child elements.
-   * 
+   *
    * @throws UnableToCompleteException if extra text nodes are found
    */
   public Iterable<XMLElement> consumeChildElements()
@@ -368,7 +368,7 @@ public class XMLElement {
    * Consumes and returns all child elements selected by the interpreter. Note
    * that text nodes are not elements, and so are not presented for
    * interpretation, and are not consumed.
-   * 
+   *
    * @param interpreter Should return true for any child that should be consumed
    *          and returned by the consumeChildElements call
    * @throws UnableToCompleteException
@@ -399,7 +399,7 @@ public class XMLElement {
   /**
    * Convenience method for parsing the named attribute as an ImageResource
    * value or reference.
-   * 
+   *
    * @return an expression that will evaluate to an ImageResource value in the
    *         generated code, or null if there is no such attribute
    * @throws UnableToCompleteException on unparseable value
@@ -423,7 +423,7 @@ public class XMLElement {
    * for an HTML value, or
    * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.TextInterpreter}
    * for text.
-   * 
+   *
    * @param interpreter Called for each element, expected to return a string
    *          replacement for it, or null if it should be left as is
    */
@@ -468,7 +468,7 @@ public class XMLElement {
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
    * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.TextInterpreter}
-   * 
+   *
    * @throws UnableToCompleteException If any elements present are not consumed
    *           by the interpreter
    */
@@ -497,11 +497,11 @@ public class XMLElement {
 
   /**
    * Convenience method for parsing the named attribute as a CSS length value.
-   * 
+   *
    * @return a (double, Unit) pair literal, an expression that will evaluate to
    *         such a pair in the generated code, or null if there is no such
    *         attribute
-   * 
+   *
    * @throws UnableToCompleteException on unparseable value
    */
   public String consumeLengthAttribute(String name)
@@ -527,7 +527,7 @@ public class XMLElement {
    * Consumes the named attribute and parses it to an unparsed, unescaped array
    * of Strings. The strings in the attribute may be comma or space separated
    * (or a mix of both).
-   * 
+   *
    * @return array of String, empty if the attribute was not set.
    */
   public String[] consumeRawArrayAttribute(String name) {
@@ -542,7 +542,7 @@ public class XMLElement {
   /**
    * Consumes the given attribute and returns its trimmed value, or null if it
    * was unset. The returned string is not escaped.
-   * 
+   *
    * @param name the attribute's full name (including prefix)
    * @return the attribute's value, or ""
    */
@@ -558,7 +558,7 @@ public class XMLElement {
   /**
    * Consumes the given attribute and returns its trimmed value, or the given
    * default value if it was unset. The returned string is not escaped.
-   * 
+   *
    * @param name the attribute's full name (including prefix)
    * @param defaultValue the value to return if the attribute was unset
    * @return the attribute's value, or defaultValue
@@ -575,7 +575,7 @@ public class XMLElement {
    * Consumes the given required attribute as a literal or field reference. The
    * types parameters are required to determine how the value is parsed and
    * validated.
-   * 
+   *
    * @param name the attribute's full name (including prefix)
    * @param types the type(s) this attribute is expected to provide
    * @return the attribute's value as a Java expression
@@ -609,10 +609,10 @@ public class XMLElement {
   /**
    * Convenience method for parsing the named required attribute as a double
    * value or reference.
-   * 
+   *
    * @return a double literal, an expression that will evaluate to a double
    *         value in the generated code
-   * 
+   *
    * @throws UnableToCompleteException on unparseable value, or if the attribute
    *           is empty or unspecified
    */
@@ -624,10 +624,10 @@ public class XMLElement {
   /**
    * Convenience method for parsing the named required attribute as a integer
    * value or reference.
-   * 
+   *
    * @return a integer literal, an expression that will evaluate to a integer
    *         value in the generated code
-   * 
+   *
    * @throws UnableToCompleteException on unparseable value, or if the attribute
    *           is empty or unspecified
    */
@@ -651,7 +651,7 @@ public class XMLElement {
   /**
    * Consumes a single child element, ignoring any text nodes and throwing an
    * exception if no child is found, or more than one child element is found.
-   * 
+   *
    * @throws UnableToCompleteException on no children, or too many
    */
   public XMLElement consumeSingleChildElement()
@@ -678,7 +678,7 @@ public class XMLElement {
    * Consumes the named attribute and parses it to an array of String
    * expressions. The strings in the attribute may be comma or space separated
    * (or a mix of both).
-   * 
+   *
    * @return array of String expressions, empty if the attribute was not set.
    * @throws UnableToCompleteException on unparseable value
    */
@@ -702,7 +702,7 @@ public class XMLElement {
   /**
    * Convenience method for parsing the named attribute as a String value or
    * reference.
-   * 
+   *
    * @return an expression that will evaluate to a String value in the generated
    *         code, or null if there is no such attribute
    * @throws UnableToCompleteException on unparseable value
@@ -715,7 +715,7 @@ public class XMLElement {
   /**
    * Convenience method for parsing the named attribute as a String value or
    * reference.
-   * 
+   *
    * @return an expression that will evaluate to a String value in the generated
    *         code, or the given defaultValue if there is no such attribute
    * @throws UnableToCompleteException on unparseable value
@@ -731,7 +731,7 @@ public class XMLElement {
    * <p>
    * You probably want to use
    * {@link #consumeInnerTextEscapedAsHtmlStringLiteral} instead.
-   * 
+   *
    * @return the text
    * @throws UnableToCompleteException if it held anything other than text nodes
    */
@@ -759,7 +759,7 @@ public class XMLElement {
 
   /**
    * Get the attribute with the given name.
-   * 
+   *
    * @return the attribute, or null if there is none of that name
    */
   public XMLAttribute getAttribute(String name) {
@@ -771,7 +771,7 @@ public class XMLElement {
   }
 
   /**
-   * @return The number of attributes this element has
+   * Returns the number of attributes this element has.
    */
   public int getAttributeCount() {
     return elem.getAttributes().getLength();
@@ -785,8 +785,8 @@ public class XMLElement {
   }
 
   /**
-   * @return the design time path of this element, in form of indexes from root,
-   *         such as "0/0/1/0".
+   * Returns the design time path of this element, in form of indexes from root,
+   * such as "0/0/1/0".
    */
   public String getDesignTimePath() {
     return designTime.getPath(elem);
@@ -816,8 +816,8 @@ public class XMLElement {
   }
 
   /**
-   * @return the parent element, or null if parent is null or a node type other
-   *         than Element
+   * Returns the parent element, or null if parent is null or a node type other
+   * than Element.
    */
   public XMLElement getParent() {
     Node parent = elem.getParentNode();

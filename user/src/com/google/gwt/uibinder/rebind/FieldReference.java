@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -68,7 +68,7 @@ public class FieldReference {
   }
 
   /**
-   * @return A failure message if the types don't mesh, or null on success
+   * Returns a failure message if the types don't mesh, or null on success.
    */
   private void ensureAssignable(JType leftHandType, JType rightHandType,
       MonitoredLogger logger) {
@@ -144,7 +144,7 @@ public class FieldReference {
      * Integer i = (int) 1.0 is okay
      * int i = (int) Double.valueOf(1.0) is not
      */
-    if (isNumber(leftHandType) && isNumber(rightHandType) 
+    if (isNumber(leftHandType) && isNumber(rightHandType)
         && (rightHandType.isPrimitive() != null)) {
       return true; // They will be cast into submission
     }

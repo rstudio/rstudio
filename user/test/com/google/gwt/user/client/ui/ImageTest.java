@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -61,7 +61,7 @@ public class ImageTest extends GWTTestCase {
     }
 
     /**
-     * @return true if the test has finished
+     * Returns true if the test has finished.
      */
     public boolean isFinished() {
       return finished;
@@ -85,7 +85,7 @@ public class ImageTest extends GWTTestCase {
     }
 
     /**
-     * @return true if the test has finished
+     * Returns true if the test has finished.
      */
     public boolean isFinished() {
       return finished;
@@ -100,7 +100,7 @@ public class ImageTest extends GWTTestCase {
    * Helper method that allows us to 'peek' at the private <code>state</code>
    * field in the Image object, and call the <code>state.getStateName()</code>
    * method.
-   * 
+   *
    * @param image The image instance
    * @return "unclipped" if image is in the unclipped state, or "clipped" if the
    *         image is in the clipped state

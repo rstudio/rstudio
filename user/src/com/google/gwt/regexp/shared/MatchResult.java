@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,7 +35,7 @@ public class MatchResult {
 
   /**
    * Retrieves the matched string or the given matched group.
-   * 
+   *
    * @param index the index of the group to return, 0 to return the whole
    *        matched string; must be between 0 and {@code getGroupCount() - 1}
    *        included
@@ -49,22 +49,22 @@ public class MatchResult {
   }
 
   /**
-   * @return The number of groups, including the matched string hence greater or
-   *         equal than 1.
+   * Returns the number of groups, including the matched string hence greater or
+   * equal than 1.
    */
   public int getGroupCount() {
     return groups.size();
   }
 
   /**
-   * @return The zero-based index of the match in the input string.
+   * Returns the zero-based index of the match in the input string.
    */
   public int getIndex() {
     return index;
   }
 
   /**
-   * @return The original input string.
+   * Returns the original input string.
    */
   public String getInput() {
     return input;

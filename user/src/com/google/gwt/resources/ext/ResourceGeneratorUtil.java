@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -107,7 +107,7 @@ public final class ResourceGeneratorUtil {
   /**
    * These are type names from previous APIs or from APIs with similar
    * functionality that might be confusing.
-   * 
+   *
    * @see #checkForDeprecatedAnnotations
    */
   private static final String[] DEPRECATED_ANNOTATION_NAMES = {
@@ -149,7 +149,7 @@ public final class ResourceGeneratorUtil {
    * method is intended to be called by Generators that create ClientBundle
    * instances and need to pass source data to the ClientBundle system that is
    * not accessible through the classpath.
-   * 
+   *
    * @param resourceName the path at which the contents of <code>file</code>
    *          should be made available
    * @param file the File whose contents are to be provided to the ClientBundle
@@ -164,9 +164,9 @@ public final class ResourceGeneratorUtil {
   }
 
   /**
-   * Return the base filename of a resource. The behavior is similar to the unix
+   * Returns the base filename of a resource. The behavior is similar to the unix
    * command <code>basename</code>.
-   * 
+   *
    * @param resource the URL of the resource
    * @return the final name segment of the resource
    */
@@ -187,7 +187,7 @@ public final class ResourceGeneratorUtil {
    * Loading through a ClassLoader with this method is much slower than the
    * other <code>findResources</code> methods which make use of the compiler's
    * ResourceOracle.
-   * 
+   *
    * @param logger a TreeLogger that will be used to report errors or warnings
    * @param context the ResourceContext in which the ResourceGenerator is
    *          operating
@@ -227,8 +227,8 @@ public final class ResourceGeneratorUtil {
    * <p>
    * If the method's return type declares the {@link DefaultExtensions}
    * annotation, the value of this annotation will be used to find matching
-   * resource names if the method lacks an {@link Source} annotation.
-   * 
+   * resource names if the method lacks a {@link Source} annotation.
+   *
    * @param logger a TreeLogger that will be used to report errors or warnings
    * @param context the ResourceContext in which the ResourceGenerator is
    *          operating
@@ -267,7 +267,7 @@ public final class ResourceGeneratorUtil {
    * will fall back to using the current thread's context ClassLoader. If it is
    * necessary to alter the way in which resources are located, use the overload
    * that accepts a ClassLoader.
-   * 
+   *
    * @param logger a TreeLogger that will be used to report errors or warnings
    * @param context the ResourceContext in which the ResourceGenerator is
    *          operating
@@ -299,13 +299,13 @@ public final class ResourceGeneratorUtil {
   /**
    * Finds a method by following a dotted path interpreted as a series of no-arg
    * method invocations from an instance of a given root type.
-   * 
+   *
    * @param rootType the type from which the search begins
    * @param pathElements a sequence of no-arg method names
    * @param expectedReturnType the expected return type of the method to locate,
    *          or <code>null</code> if no constraint on the return type is
    *          necessary
-   * 
+   *
    * @return the requested JMethod
    * @throws NotFoundException if the requested method could not be found
    */
@@ -483,7 +483,7 @@ public final class ResourceGeneratorUtil {
 
   /**
    * Converts a package relative path into an absolute path.
-   * 
+   *
    * @param pkg the package
    * @param path a path relative to the package
    * @return an absolute path
@@ -494,7 +494,7 @@ public final class ResourceGeneratorUtil {
 
   /**
    * This performs the locale lookup function for a given resource name.
-   * 
+   *
    * @param locator the Locator to use to load the resources
    * @param resourceName the string name of the desired resource
    * @param locale the locale of the current rebind permutation

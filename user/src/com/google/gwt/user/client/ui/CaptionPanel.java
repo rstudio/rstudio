@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -144,7 +144,7 @@ public class CaptionPanel extends Composite implements HasWidgets {
 
   /**
    * Constructs a CaptionPanel having the specified caption.
-   * 
+   *
    * @param caption the caption to display
    * @param asHTML if <code>true</code>, the <code>caption</code> param is
    *            interpreted as HTML; otherwise, <code>caption</code> is
@@ -174,9 +174,8 @@ public class CaptionPanel extends Composite implements HasWidgets {
   }
 
   /**
-   * @return the caption as HTML; note that if the caption was previously set
-   *         using {@link #setCaptionText(String)}, the return value is
-   *         undefined
+   * Returns the caption as HTML; note that if the caption was previously set
+   * using {@link #setCaptionText(String)}, the return value is undefined.
    */
   public String getCaptionHTML() {
     String html = legend.getInnerHTML();
@@ -185,9 +184,8 @@ public class CaptionPanel extends Composite implements HasWidgets {
   }
 
   /**
-   * @return the caption as text; note that if the caption was previously set
-   *         using {@link #setCaptionHTML(String)}, the return value is
-   *         undefined
+   * Returns the caption as text; note that if the caption was previously set
+   * using {@link #setCaptionHTML(String)}, the return value is undefined.
    */
   public String getCaptionText() {
     String text = legend.getInnerText();
@@ -197,7 +195,7 @@ public class CaptionPanel extends Composite implements HasWidgets {
 
   /**
    * Accesses the content widget, if present.
-   * 
+   *
    * @return the content widget specified previously in
    *         {@link #setContentWidget(Widget)}
    */
@@ -215,7 +213,7 @@ public class CaptionPanel extends Composite implements HasWidgets {
   /**
    * Removes the specified widget, although in practice the specified widget
    * must be the content widget.
-   * 
+   *
    * @param w the widget to remove; note that anything other than the Widget
    *            returned by {@link #getContentWidget()} will have no effect
    */
@@ -226,7 +224,7 @@ public class CaptionPanel extends Composite implements HasWidgets {
   /**
    * Sets the caption for the panel using an HTML fragment. Pass in empty string
    * to remove the caption completely, leaving just the unadorned panel.
-   * 
+   *
    * @param html HTML for the new caption; must not be <code>null</code>
    */
   public void setCaptionHTML(String html) {
@@ -257,7 +255,7 @@ public class CaptionPanel extends Composite implements HasWidgets {
 
   /**
    * Sets or replaces the content widget within the CaptionPanel.
-   * 
+   *
    * @param w the content widget to be set
    */
   public void setContentWidget(Widget w) {

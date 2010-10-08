@@ -43,7 +43,7 @@ public class BidiPolicy {
   private static BidiPolicyImpl impl = GWT.create(BidiPolicyImpl.class);
 
   /**
-   * @return true if bidi is enabled, false if disabled.
+   * Returns true if bidi is enabled, false if disabled.
    */
   public static boolean isBidiEnabled() {
     return impl.isBidiEnabled();

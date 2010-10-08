@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -58,7 +58,7 @@ import com.google.gwt.i18n.client.LocaleInfo;
  * Thus, in a single call, the formatter will escape the input string as
  * specified, determine its direction, and wrap it as necessary. It is then up
  * to the caller to insert the return value in the output.
- * 
+ *
  */
 public class BidiFormatter {
 
@@ -76,22 +76,22 @@ public class BidiFormatter {
      * Unicode "Left-To-Right Embedding" (LRE) character.
      */
     public static final char LRE = '\u202A';
-    
+
     /**
      * Unicode "Left-To-Right Mark" (LRM) character.
-     */ 
+     */
     public static final char LRM = '\u200E';
-    
+
     /**
      * String representation of LRM.
      */
     public static final String LRM_STRING = Character.toString(LRM);
-    
+
     /**
      * Unicode "Pop Directional Formatting" (PDF) character.
-     */ 
+     */
     public static final char PDF = '\u202C';
-    
+
     /**
      * "right" string constant.
      */
@@ -99,9 +99,9 @@ public class BidiFormatter {
 
     /**
      * Unicode "Right-To-Left Embedding" (RLE) character.
-     */ 
+     */
     public static final char RLE = '\u202B';
-    
+
     /**
      * Unicode "Right-To-Left Mark" (RLM) character.
      */
@@ -114,7 +114,7 @@ public class BidiFormatter {
 
     // Not instantiable.
     private Format() {
-    } 
+    }
   }
 
   /**
@@ -135,7 +135,7 @@ public class BidiFormatter {
   /**
    * Factory for creating an instance of BidiFormatter given the context
    * direction and the desired span wrapping behavior (see below).
-   * 
+   *
    * @param rtlContext Whether the context direction is RTL. See an example of
    *          a simple use case at {@link #getInstance(boolean)}
    * @param alwaysSpan Whether {@link #spanWrap} (and its variations) should
@@ -154,7 +154,7 @@ public class BidiFormatter {
    * direction. The default behavior of {@link #spanWrap} and its variations is
    * set to avoid span wrapping unless it's necessary ('dir' attribute needs to
    * be set).
-   * 
+   *
    * @param contextDir The context direction. See an example of a simple use
    *          case at {@link #getInstance(boolean)}. Note: Direction.DEFAULT
    *          indicates unknown context direction. Try not to use it, since it
@@ -168,7 +168,7 @@ public class BidiFormatter {
   /**
    * Factory for creating an instance of BidiFormatter given the context
    * direction and the desired span wrapping behavior (see below).
-   * 
+   *
    * @param contextDir The context direction. See an example of a simple use
    *          case at {@link #getInstance(boolean)}. Note: Direction.DEFAULT
    *          indicates unknown context direction. Try not to use it, since it
@@ -183,7 +183,7 @@ public class BidiFormatter {
       boolean alwaysSpan) {
     return new BidiFormatter(contextDir, alwaysSpan);
   }
-  
+
   /**
    * Factory for creating an instance of BidiFormatter whose context direction
    * matches the current locale's direction. The default behavior of {@link
@@ -192,7 +192,7 @@ public class BidiFormatter {
    */
   public static BidiFormatter getInstanceForCurrentLocale() {
     return getInstanceForCurrentLocale(false);
-  }  
+  }
 
   /**
    * Factory for creating an instance of BidiFormatter whose context direction
@@ -206,8 +206,8 @@ public class BidiFormatter {
    */
   public static BidiFormatter getInstanceForCurrentLocale(boolean alwaysSpan) {
     return getInstance(LocaleInfo.getCurrentLocale().isRTL(), alwaysSpan);
-  }  
-  
+  }
+
   private boolean alwaysSpan;
   private Direction contextDir;
 
@@ -226,7 +226,7 @@ public class BidiFormatter {
   /**
    * Like {@link #dirAttr(String, boolean)}, but assumes {@code isHtml} is
    * false.
-   * 
+   *
    * @param str String whose direction is to be estimated
    * @return "dir=rtl" for RTL text in non-RTL context; "dir=ltr" for LTR text
    *         in non-LTR context; else, the empty string.
@@ -239,7 +239,7 @@ public class BidiFormatter {
    * Returns "dir=ltr" or "dir=rtl", depending on {@code str}'s estimated
    * direction, if it is not the same as the context direction. Otherwise,
    * returns the empty string.
-   * 
+   *
    * @param str String whose direction is to be estimated
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @return "dir=rtl" for RTL text in non-RTL context; "dir=ltr" for LTR text
@@ -260,7 +260,7 @@ public class BidiFormatter {
   /**
    * Like {@link #estimateDirection(String, boolean)}, but assumes {@code
    * isHtml} is false.
-   * 
+   *
    * @param str String whose direction is to be estimated
    * @return {@code str}'s estimated overall direction
    */
@@ -272,7 +272,7 @@ public class BidiFormatter {
    * Estimates the direction of a string using the best known general-purpose
    * method, i.e. using relative word counts. Direction.DEFAULT return value
    * indicates completely neutral input.
-   * 
+   *
    * @param str String whose direction is to be estimated
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @return {@code str}'s estimated overall direction
@@ -282,23 +282,22 @@ public class BidiFormatter {
   }
 
   /**
-   * @return Whether the span structure added by the formatter should be stable,
-   *         i.e. spans added even when the direction does not need to be
-   *         declared
+   * Returns whether the span structure added by the formatter should be stable,
+   * i.e., spans added even when the direction does not need to be declared.
    */
   public boolean getAlwaysSpan() {
     return alwaysSpan;
   }
 
   /**
-   * @return The context direction
+   * Returns the context direction.
    */
   public Direction getContextDir() {
     return contextDir;
   }
 
   /**
-   * @return Whether the context direction is RTL
+   * Returns whether the context direction is RTL.
    */
   public boolean isRtlContext() {
     return contextDir == Direction.RTL;
@@ -307,7 +306,7 @@ public class BidiFormatter {
   /**
    * Returns "dir=ltr" or "dir=rtl", depending on the given direction, if it is
    * not the same as the context direction. Otherwise, returns the empty string.
-   * 
+   *
    * @param dir Given direction
    * @return "dir=rtl" for RTL text in non-RTL context; "dir=ltr" for LTR text
    *         in non-LTR context; else, the empty string.
@@ -333,7 +332,7 @@ public class BidiFormatter {
   /**
    * Like {@link #markAfter(String, boolean)}, but assumes {@code isHtml} is
    * false.
-   * 
+   *
    * @param str String after which the mark may need to appear
    * @return LRM for RTL text in LTR context; RLM for LTR text in RTL context;
    *         else, the empty string.
@@ -346,7 +345,7 @@ public class BidiFormatter {
    * Returns a Unicode BiDi mark matching the context direction (LRM or RLM) if
    * either the direction or the exit direction of {@code str} is opposite to
    * the context direction. Otherwise returns the empty string.
-   * 
+   *
    * @param str String after which the mark may need to appear
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @return LRM for RTL text in LTR context; RLM for LTR text in RTL context;
@@ -361,7 +360,7 @@ public class BidiFormatter {
   /**
    * Like {@link #spanWrap(String, boolean, boolean)}, but assumes {@code
    * isHtml} is false and {@code dirReset} is true.
-   * 
+   *
    * @param str The input string
    * @return Input string after applying the above processing.
    */
@@ -372,7 +371,7 @@ public class BidiFormatter {
   /**
    * Like {@link #spanWrap(String, boolean, boolean)}, but assumes {@code
    * dirReset} is true.
-   * 
+   *
    * @param str The input string
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @return Input string after applying the above processing.
@@ -398,7 +397,7 @@ public class BidiFormatter {
    * mark matching the context direction is appended (LRM or RLM).
    * <p>
    * If !{@code isHtml}, HTML-escapes {@code str} regardless of wrapping.
-   * 
+   *
    * @param str The input string
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @param dirReset Whether to append a trailing unicode bidi mark matching the
@@ -414,7 +413,7 @@ public class BidiFormatter {
   /**
    * Like {@link #spanWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code isHtml} is false and {@code dirReset} is true.
-   * 
+   *
    * @param dir {@code str}'s direction
    * @param str The input string
    * @return Input string after applying the above processing.
@@ -426,7 +425,7 @@ public class BidiFormatter {
   /**
    * Like {@link #spanWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code dirReset} is true.
-   * 
+   *
    * @param dir {@code str}'s direction
    * @param str The input string
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
@@ -453,7 +452,7 @@ public class BidiFormatter {
    * mark matching the context direction is appended (LRM or RLM).
    * <p>
    * If !{@code isHtml}, HTML-escapes {@code str} regardless of wrapping.
-   * 
+   *
    * @param dir {@code str}'s direction
    * @param str The input string
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
@@ -497,7 +496,7 @@ public class BidiFormatter {
   /**
    * Like {@link #unicodeWrap(String, boolean, boolean)}, but assumes {@code
    * isHtml} is false and {@code dirReset} is true.
-   * 
+   *
    * @param str The input string
    * @return Input string after applying the above processing.
    */
@@ -508,7 +507,7 @@ public class BidiFormatter {
   /**
    * Like {@link #unicodeWrap(String, boolean, boolean)}, but assumes {@code
    * dirReset} is true.
-   * 
+   *
    * @param str The input string
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @return Input string after applying the above processing.
@@ -534,7 +533,7 @@ public class BidiFormatter {
    * BiDi mark matching the context direction is appended (LRM or RLM).
    * <p>
    * Does *not* do HTML-escaping regardless of the value of {@code isHtml}.
-   * 
+   *
    * @param str The input string
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @param dirReset Whether to append a trailing unicode bidi mark matching the
@@ -550,7 +549,7 @@ public class BidiFormatter {
   /**
    * Like {@link #unicodeWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code isHtml} is false and {@code dirReset} is true.
-   * 
+   *
    * @param dir {@code str}'s direction
    * @param str The input string
    * @return Input string after applying the above processing.
@@ -562,7 +561,7 @@ public class BidiFormatter {
   /**
    * Like {@link #unicodeWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code dirReset} is true.
-   * 
+   *
    * @param dir {@code str}'s direction
    * @param str The input string
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
@@ -590,7 +589,7 @@ public class BidiFormatter {
    * BiDi mark matching the context direction is appended (LRM or RLM).
    * <p>
    * Does *not* do HTML-escaping regardless of the value of {@code isHtml}.
-   * 
+   *
    * @param dir {@code str}'s direction
    * @param str The input string
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
@@ -619,7 +618,7 @@ public class BidiFormatter {
    * {@code dirReset}, and if the overall direction or the exit direction of
    * {@code str} are opposite to the context direction. Otherwise returns the
    * empty string.
-   * 
+   *
    * @param str The input string
    * @param dir {@code str}'s overall direction
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
@@ -648,4 +647,3 @@ public class BidiFormatter {
     return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>");
   }
 }
-

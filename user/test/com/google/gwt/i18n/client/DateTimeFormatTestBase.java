@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -36,19 +36,19 @@ public abstract class DateTimeFormatTestBase extends GWTTestCase {
   public interface MyFormats extends CustomDateTimeFormat {
 
     /**
-     * @return a pattern for abbreviated year, month, and date.
+     * Returns a pattern for abbreviated year, month, and date.
      */
     @Pattern("yMMMd")
     DateTimeFormat yearMonthDayAbbrev();
 
     /**
-     * @return a pattern for full year, month, and date.
+     * Returns a pattern for full year, month, and date.
      */
     @Pattern("yyyyMMMMd")
     DateTimeFormat yearMonthDayFull();
 
     /**
-     * @return a pattern for full year, month, and date.
+     * Returns a pattern for full year, month, and date.
      */
     @Pattern("MMMM d, yyyy")
     DateTimeFormat yearMonthDayFull2();

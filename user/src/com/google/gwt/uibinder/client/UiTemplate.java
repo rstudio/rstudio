@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 public @interface UiTemplate {
 
   /**
-   * @return The template name
+   * Returns the template name.
    */
   String value();
 }

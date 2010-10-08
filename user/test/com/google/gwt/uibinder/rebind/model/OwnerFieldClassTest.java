@@ -343,7 +343,7 @@ public class OwnerFieldClassTest extends TestCase {
   }
 
   /**
-   * Class with a {@link UiChild}-annotated methods.
+   * Class with {@link UiChild}-annotated methods.
    */
   @SuppressWarnings("unused")
   // We know these methods are unused
@@ -430,7 +430,7 @@ public class OwnerFieldClassTest extends TestCase {
 
   /**
    * Asserts that the given method has the proper name and parameters.
-   * 
+   *
    * @param method the actual method
    * @param methodName the expected method name
    * @param parameterTypes the expected parameter types

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -374,14 +374,14 @@ public class SimpleFoo {
   }
 
   /**
-   * @return the bigDecimalField
+   * Returns the bigDecimalField.
    */
   public BigDecimal getBigDecimalField() {
     return bigDecimalField;
   }
 
   /**
-   * @return the bigIntegerField
+   * Returns the bigIntegerField.
    */
   public BigInteger getBigIntField() {
     return bigIntField;
@@ -392,14 +392,14 @@ public class SimpleFoo {
   }
 
   /**
-   * @return the byteField
+   * Returns the byteField.
    */
   public Byte getByteField() {
     return byteField;
   }
 
   /**
-   * @return the charField
+   * Returns the charField.
    */
   public Character getCharField() {
     return charField;
@@ -410,7 +410,7 @@ public class SimpleFoo {
   }
 
   /**
-   * @return the doubleField
+   * Returns the doubleField.
    */
   public Double getDoubleField() {
     return doubleField;
@@ -421,7 +421,7 @@ public class SimpleFoo {
   }
 
   /**
-   * @return the floatField
+   * Returns the floatField.
    */
   public Float getFloatField() {
     return floatField;
@@ -460,7 +460,7 @@ public class SimpleFoo {
   }
 
   /**
-   * @return the otherBoolField
+   * Returns the otherBoolField.
    */
   public Boolean getOtherBoolField() {
     return otherBoolField;
@@ -479,7 +479,7 @@ public class SimpleFoo {
   }
 
   /**
-   * @return the shortField
+   * Returns the shortField.
    */
   public Short getShortField() {
     return shortField;
@@ -685,7 +685,7 @@ public class SimpleFoo {
 
   /**
    * Persist this entity and all child entities. This method can handle loops.
-   * 
+   *
    * @param processed the entities that have been processed
    */
   private void persistCascadingAndReturnSelfImpl(Set<SimpleFoo> processed) {

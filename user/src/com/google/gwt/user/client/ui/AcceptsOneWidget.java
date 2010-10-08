@@ -16,7 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 /**
- * Implemented by displays that can be given accept a {@link IsWidget}
+ * Implemented by displays that can be given accept an {@link IsWidget}
  * to show.
  */
 public interface AcceptsOneWidget {

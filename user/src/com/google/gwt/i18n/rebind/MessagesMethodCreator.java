@@ -337,21 +337,21 @@ class MessagesMethodCreator extends AbstractMethodCreator {
   private interface Parameters {
 
     /**
-     * @return the count of parameters.
+     * Returns the count of parameters.
      */
     int getCount();
 
     /**
-     * Return the given parameter.
-     * 
+     * Returns the given parameter.
+     *
      * @param i index of the parameter to return, 0 .. getCount() - 1
      * @return parameter or null if i is out of range
      */
     JParameter getParameter(int i);
 
     /**
-     * Return the given parameter.
-     * 
+     * Returns the given parameter.
+     *
      * @param name the name of the parameter to return
      * @return parameter or null if the named parameter doesn't exist
      */
@@ -359,7 +359,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
 
     /**
      * Find the index of a parameter by name.
-     * 
+     *
      * @param name
      * @return index of requested parameter or -1 if not found
      */
@@ -967,7 +967,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
 
   /**
    * Generate code for one list pattern.
-   * 
+   *
    * @param logger logger to use for error/warning messages
    * @param locale locale we are generating code for
    * @param listArg the {n,list,...} argument in the original format pattern
@@ -1026,7 +1026,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
 
   /**
    * Generates code to format a list in a format pattern.
-   * 
+   *
    * @param logger logger to use for error/warning messages
    * @param locale locale we are generating code for
    * @param generated a StringBuffer holding the generated code

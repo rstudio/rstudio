@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -58,7 +58,7 @@ public class FieldReferenceConverter {
    */
   interface Delegate {
     /**
-     * @return the type any parsed field references are expected to return
+     * Returns the type any parsed field references are expected to return.
      */
     JType getType();
 
@@ -111,9 +111,9 @@ public class FieldReferenceConverter {
 
   private static final Pattern BRACES = Pattern.compile("[{]([^}]*)[}]");
   private static final Pattern LEGAL_FIRST_CHAR = Pattern.compile("^[$_a-zA-Z].*");
-  
+
   /**
-   * @return true if the given string holds one or more field references
+   * Returns true if the given string holds one or more field references.
    */
   public static boolean hasFieldReferences(String string) {
     Telltale telltale = new Telltale();

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,15 +21,15 @@
  * licenses this file to You under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * INCLUDES MODIFICATIONS BY RICHARD ZSCHECH AS WELL AS GOOGLE.
  */
 package java.math;
@@ -38,7 +38,7 @@ package java.math;
  * Static library that provides all operations related with division and modular
  * arithmetic to {@link BigInteger}. Some methods are provided in both mutable
  * and immutable way. There are several variants provided listed below:
- * 
+ *
  * <ul type="circle"> <li><b>Division</b> <ul type="circle"> <li>
  * {@link BigInteger} division and remainder by {@link BigInteger}.</li> <li>
  * {@link BigInteger} division and remainder by {@code int}.</li> <li><i>gcd</i>
@@ -54,7 +54,7 @@ class Division {
    * remainder. Implements the Knuth's division algorithm. See D. Knuth, The Art
    * of Computer Programming, vol. 2. Steps D1-D8 correspond the steps in the
    * algorithm description.
-   * 
+   *
    * @param quot the quotient
    * @param quotLength the quotient's length
    * @param a the dividend
@@ -173,7 +173,7 @@ class Division {
   /**
    * Computes the quotient and the remainder after a division by an {@code int}
    * number.
-   * 
+   *
    * @return an array of the form {@code [quotient, remainder]}.
    */
   static BigInteger[] divideAndRemainderByInteger(BigInteger val, int divisor,
@@ -212,7 +212,7 @@ class Division {
   /**
    * Divides an array by an integer value. Implements the Knuth's division
    * algorithm. See D. Knuth, The Art of Computer Programming, vol. 2.
-   * 
+   *
    * @param dest the quotient
    * @param src the dividend
    * @param srcLength the length of the dividend
@@ -265,7 +265,7 @@ class Division {
   /**
    * Divides an unsigned long a by an unsigned int b. It is supposed that the
    * most significant bit of b is set to 1, i.e. b < 0
-   * 
+   *
    * @param a the dividend
    * @param b the divisor
    * @return the long value containing the unsigned integer remainder in the
@@ -313,7 +313,7 @@ class Division {
    * square and multiply algorithm and the Montgomery Reduction C. K. Koc -
    * Montgomery Reduction with Even Modulus</i>. The square and multiply
    * algorithm and the Montgomery Reduction.
-   * 
+   *
    * @ar.org.fitc.ref "C. K. Koc - Montgomery Reduction with Even Modulus"
    * @see BigInteger#modPow(BigInteger, BigInteger)
    */
@@ -343,7 +343,7 @@ class Division {
 
   /**
    * Performs the final reduction of the Montgomery algorithm.
-   * 
+   *
    * @see #monPro(BigInteger, BigInteger, BigInteger, long)
    * @see #monSquare(BigInteger, BigInteger, long)
    */
@@ -378,7 +378,7 @@ class Division {
   /**
    * @param m a positive modulus Return the greatest common divisor of op1 and
    *          op2,
-   * 
+   *
    * @param op1 must be greater than zero
    * @param op2 must be greater than zero
    * @see BigInteger#gcd(BigInteger)
@@ -443,7 +443,7 @@ class Division {
   /**
    * Performs the same as {@link #gcdBinary(BigInteger, BigInteger)}, but with
    * numbers of 63 bits, represented in positives values of {@code long} type.
-   * 
+   *
    * @param op1 a positive number
    * @param op2 a positive number
    * @see #gcdBinary(BigInteger, BigInteger)
@@ -475,7 +475,7 @@ class Division {
 
   /**
    * Performs {@code x = x mod (2<sup>n</sup>)}.
-   * 
+   *
    * @param x a positive number, it will store the result.
    * @param n a positive exponent of {@code 2}.
    */
@@ -494,10 +494,10 @@ class Division {
   }
 
   /**
-   * 
+   *
    * Based on "New Algorithm for Classical Modular Inverse" Róbert Lórencz. LNCS
    * 2523 (2002)
-   * 
+   *
    * @return a^(-1) mod m
    */
   static BigInteger modInverseLorencz(BigInteger a, BigInteger modulo) {
@@ -714,7 +714,7 @@ class Division {
   /**
    * Implements the Montgomery Product of two integers represented by {@code
    * int} arrays. The arrays are supposed in <i>little endian</i> notation.
-   * 
+   *
    * @param a The first factor of the product.
    * @param b The second factor of the product.
    * @param modulus The modulus of the operations. Z<sub>modulus</sub>.
@@ -737,7 +737,7 @@ class Division {
   /**
    * Multiplies an array by int and subtracts it from a subarray of another
    * array.
-   * 
+   *
    * @param a the array to subtract from
    * @param start the start element of the subarray of a
    * @param b the array to be multiplied and subtracted
@@ -765,7 +765,7 @@ class Division {
   /**
    * Performs modular exponentiation using the Montgomery Reduction. It requires
    * that all parameters be positive and the modulus be odd. >
-   * 
+   *
    * @see BigInteger#modPow(BigInteger, BigInteger)
    * @see #monPro(BigInteger, BigInteger, BigInteger, int)
    * @see #slidingWindow(BigInteger, BigInteger, BigInteger, BigInteger, int)
@@ -795,7 +795,7 @@ class Division {
 
   /**
    * It requires that all parameters be positive.
-   * 
+   *
    * @return {@code base<sup>exponent</sup> mod (2<sup>j</sup>)}.
    * @see BigInteger#modPow(BigInteger, BigInteger)
    */
@@ -830,7 +830,7 @@ class Division {
   /**
    * Divides a <code>BigInteger</code> by a signed <code>int</code> and returns
    * the remainder.
-   * 
+   *
    * @param dividend the BigInteger to be divided. Must be non-negative.
    * @param divisor a signed int
    * @return divide % divisor
@@ -842,7 +842,7 @@ class Division {
   /**
    * Divides an array by an integer value. Implements the Knuth's division
    * algorithm. See D. Knuth, The Art of Computer Programming, vol. 2.
-   * 
+   *
    * @param src the dividend
    * @param srcLength the length of the dividend
    * @param divisor the divisor
@@ -864,11 +864,11 @@ class Division {
   /*
    * Implements the Montgomery modular exponentiation based in <i>The sliding
    * windows algorithm and the MongomeryReduction</i>.
-   * 
+   *
    * @ar.org.fitc.ref
    * "A. Menezes,P. van Oorschot, S. Vanstone - Handbook of Applied Cryptography"
    * ;
-   * 
+   *
    * @see #oddModPow(BigInteger, BigInteger, BigInteger)
    */
   static BigInteger slidingWindow(BigInteger x2, BigInteger a2,
@@ -946,7 +946,7 @@ class Division {
   /**
    * Calculate how many iteration of Lorencz's algorithm would perform the same
    * operation.
-   * 
+   *
    * @param bi
    * @param n
    * @return
@@ -967,7 +967,7 @@ class Division {
   }
 
   /**
-   * @return bi == abs(2^exp)
+   * Returns {@code bi == abs(2^exp)}.
    */
   private static boolean isPowerOfTwo(BigInteger bi, int exp) {
     boolean result = false;
