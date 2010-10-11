@@ -21,8 +21,10 @@
 #include "ReturnMessage.h"
 #include "ServerMethods.h"
 #include "AllowedConnections.h"
+#ifdef _WINDOWS
 #include "Preferences.h"
 #include "AllowDialog.h"
+#endif
 
 #include "mozincludes.h"
 #include "scoped_ptr/scoped_ptr.h"
@@ -272,15 +274,24 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
       << ")" << Debug::flush;
   const std::string urlStr = convertToString(url);
 
+#ifdef _WINDOWS
+  // TODO: platform-independent preferences storage
   Preferences::loadAccessList();
+#endif
   bool allowed = false;
   if (!AllowedConnections::matchesRule(urlStr, &allowed)) {
+#ifdef _WINDOWS
+    // TODO: platform-independent allow-connection dialog
     bool remember = false;
     allowed = AllowDialog::askUserToAllow(&remember);
     if (remember) {
       std::string host = AllowedConnections::getHostFromUrl(urlStr);
       Preferences::addNewRule(host, !allowed);
     }
+#elif 0
+    // WARNING: BIG SECURITY HOLE IF ENABLED!
+    allowed = true;
+#endif
   }
   if (!allowed) {
     BOOLEAN_TO_NPVARIANT(false, *result);
@@ -674,4 +685,3 @@ void ScriptableInstance::sendFreeValues(HostChannel& channel) {
     }
   }
 }
-

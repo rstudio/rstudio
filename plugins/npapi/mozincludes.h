@@ -33,7 +33,7 @@ inline uint32 GetNPStringUTF8Length(const NPString &npstr) {
   STRINGN_TO_NPVARIANT(GetNPStringUTF8Characters(npstr), \
                        GetNPStringUTF8Length(npstr), var)
 
-#ifdef LINUX
+#ifdef linux
 #define OSCALL /**/
 #define WINAPI /**/
 #define DLLEXP /**/

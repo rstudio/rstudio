@@ -17,9 +17,11 @@
 #include "Plugin.h"
 #include "ScriptableInstance.h"
 #include "scoped_ptr/scoped_ptr.h"
-#include "AllowDialog.h"
 
 #ifdef _WINDOWS
+// TODO: add platform-independent permission dialog
+#include "AllowDialog.h"
+
 #include <windows.h>
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ulReasonForCall, LPVOID lpReserved) {
@@ -90,7 +92,7 @@ extern "C" {
 
 #ifdef __APPLE_CC__
   int main(NPNetscapeFuncs* browserFuncs, NPPluginFuncs* pluginFuncs, NPP_ShutdownUPP* shutdownUPP) {
-    printf("main (gwt-hosted-mode/c++)\n");
+    printf("main (gwt-dev-plugin/c++)\n");
     if (shutdownUPP == NULL) {
       return NPERR_INVALID_FUNCTABLE_ERROR;
     }

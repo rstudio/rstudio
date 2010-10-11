@@ -19,10 +19,10 @@
 // Portability wrapper for hash maps, since they aren't part of the standard C++ library
 
 #ifdef __GNUC__
-#if 0
+#ifdef CXX_TR1
 // future support
 #include <unordered_map>
-#define hash_map unordered_map
+#define hash_map std::tr1::unordered_map
 
 namespace HashFunctions = std;
 #else

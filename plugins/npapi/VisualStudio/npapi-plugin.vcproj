@@ -387,7 +387,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\npn_bindings.cc"
+				RelativePath="..\npn_bindings.cpp"
 				>
 			</File>
 			<File

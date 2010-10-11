@@ -244,6 +244,12 @@ public:
     value.doubleValue = val;
   }
 
+  void setDouble(const double* val) {
+    clearOldValue();
+    type = DOUBLE;
+    value.doubleValue = *val;
+  }
+
   void setFloat(float val) {
     clearOldValue();
     type = FLOAT;

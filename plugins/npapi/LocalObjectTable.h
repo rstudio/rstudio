@@ -53,7 +53,7 @@ public:
   }
 
   void set(int id, NPObject* obj) {
-    Debug::log(Debug::Info) << "LocalObjectTable::set(id=" << id << ",obj=" << (void*)obj
+    Debug::log(Debug::Spam) << "LocalObjectTable::set(id=" << id << ",obj=" << (void*)obj
         << ")" << Debug::flush;
     objects[id] = obj;
     // keep track that we hold a reference in the table
@@ -61,7 +61,7 @@ public:
   }
 
   void free(int id) {
-    Debug::log(Debug::Info) << "LocalObjectTable::free(id=" << id << ")" << Debug::flush;
+    Debug::log(Debug::Spam) << "LocalObjectTable::free(id=" << id << ")" << Debug::flush;
     ObjectMap::iterator it = objects.find(id);
     if (it == objects.end()) {
       Debug::log(Debug::Error) << "Freeing freed object slot " << id << Debug::flush;
