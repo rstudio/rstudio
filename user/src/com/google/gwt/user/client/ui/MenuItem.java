@@ -177,7 +177,6 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
     command = cmd;
   }
 
-  @Override
   public void setEnabled(boolean enabled) {
     if (enabled) {
       removeStyleDependentName(DEPENDENT_STYLENAME_DISABLED_ITEM);
