@@ -115,7 +115,7 @@ public class CellList<T> extends AbstractHasData<T> {
   }
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\">{2}</div>")
+    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\" >{2}</div>")
     SafeHtml div(int idx, String classes, SafeHtml cellContents);
 
     @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\" style=\"outline:none;\" tabindex=\"{2}\">{3}</div>")
