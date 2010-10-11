@@ -1762,6 +1762,10 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       @Override
       public void onSuccess(SimpleFooProxy response) {
         assertEquals(2, response.getOneToManyField().size());
+        
+        // Check lists of proxies returned from a mutable object are mutable
+        response = simpleFooRequest().edit(response);
+        response.getOneToManyField().get(0).setUserName("canMutate");
         finishTestAndReset();
       }
     });

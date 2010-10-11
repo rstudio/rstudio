@@ -49,8 +49,7 @@ public class EntityProxyCategory {
     return stableId(bean).hashCode();
   }
 
-  public static AbstractRequestContext requestContext(
-      AutoBean<? extends EntityProxy> bean) {
+  public static AbstractRequestContext requestContext(AutoBean<?> bean) {
     return (AbstractRequestContext) bean.getTag(REQUEST_CONTEXT);
   }
 
@@ -70,13 +69,11 @@ public class EntityProxyCategory {
    * EntityProxy, that its return values are mutable.
    */
   // CHECKSTYLE_OFF
-  public static <T> T __intercept(AutoBean<? extends EntityProxy> bean,
-      T returnValue) {
+  public static <T> T __intercept(AutoBean<?> bean, T returnValue) {
     // CHECKSTYLE_ON
-    if (!(returnValue instanceof EntityProxy)) {
-      return returnValue;
-    }
+
     AbstractRequestContext context = requestContext(bean);
+
     /*
      * The context will be null if the bean is immutable. If the context is
      * locked, don't try to edit.
@@ -85,8 +82,26 @@ public class EntityProxyCategory {
       return returnValue;
     }
 
-    @SuppressWarnings("unchecked")
-    T toReturn = (T) context.edit((EntityProxy) returnValue);
-    return toReturn;
+    /*
+     * EntityProxies need to be recorded specially by the RequestContext, so
+     * delegate to the edit() method for wiring up the context.
+     */
+    if (returnValue instanceof EntityProxy) {
+      @SuppressWarnings("unchecked")
+      T toReturn = (T) context.edit((EntityProxy) returnValue);
+      return toReturn;
+    }
+
+    /*
+     * We're returning some object that's not an EntityProxy, most likely a
+     * Collection type. At the very least, propagate the current RequestContext
+     * so that editable chains can be constructed.
+     */
+    AutoBean<T> otherBean = AutoBeanUtils.getAutoBean(returnValue);
+    if (otherBean != null) {
+      otherBean.setTag(EntityProxyCategory.REQUEST_CONTEXT,
+          bean.getTag(EntityProxyCategory.REQUEST_CONTEXT));
+    }
+    return returnValue;
   }
 }
