@@ -944,7 +944,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       }
     }
 
-    if (!item.isEnabled()) {
+    if (item != null && !item.isEnabled()) {
       return;
     }
 
