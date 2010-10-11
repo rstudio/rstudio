@@ -18,6 +18,7 @@ package com.google.gwt.i18n.shared;
 
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /**
  * Utility class for formatting text for display in a potentially
@@ -466,7 +467,7 @@ public class BidiFormatter {
     boolean dirCondition = dir != Direction.DEFAULT && dir != contextDir;
     String origStr = str;
     if (!isHtml) {
-      str = htmlEscape(str);
+      str = SafeHtmlUtils.htmlEscape(str);
     }
 
     StringBuilder result = new StringBuilder();
@@ -640,10 +641,5 @@ public class BidiFormatter {
     } else {
       return "";
     }
-  }
-
-  private String htmlEscape(String str) {
-    // TODO(tomerigo): use a proper escaper class once such exists.
-    return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>");
   }
 }
