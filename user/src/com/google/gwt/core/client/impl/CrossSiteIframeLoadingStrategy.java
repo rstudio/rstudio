@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,6 +16,7 @@
 
 package com.google.gwt.core.client.impl;
 
+import com.google.gwt.core.client.CodeDownloadException;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler;
@@ -24,7 +25,7 @@ import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy;
 /**
  * Load runAsync code using a script tag. Intended for use with the
  * {@link com.google.gwt.core.linker.CrossSiteIframeLinker}.
- * 
+ *
  * <p>
  * The linker wraps its selection script code with a function refered to by
  * <code>__gwtModuleFunction</code>. On that function is a property
@@ -52,15 +53,15 @@ public class CrossSiteIframeLoadingStrategy implements LoadingStrategy {
     public native int get(int x) /*-{
       return this[x] ? this[x] : 0;
     }-*/;
-    
+
     public native void put(int x, int y) /*-{
       this[x] = y;
     }-*/;
   }
 
-  @SuppressWarnings("unused")
-  private static RuntimeException LoadTerminated = new RuntimeException(
-      "Code download terminated");
+  private static final RuntimeException LoadTerminated =
+      new CodeDownloadException("Code download terminated",
+                                CodeDownloadException.Reason.TERMINATED);
 
   /**
    * Clear callbacks on script objects. This is important on IE 6 and 7 to
