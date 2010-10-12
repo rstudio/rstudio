@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -80,15 +80,13 @@ import java.util.Set;
  * Attempts to remove dead code.
  */
 public class DeadCodeElimination {
-  public static final String NAME = DeadCodeElimination.class.getSimpleName();
-
   /**
    * Eliminates dead or unreachable code when possible, and makes local
    * simplifications like changing "<code>x || true</code>" to "<code>x</code>".
-   *
+   * 
    * TODO: leverage ignoring expression output more to remove intermediary
    * operations in favor of pure side effects.
-   *
+   * 
    * TODO(spoon): move more simplifications into methods like
    * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast}, so
    * that more simplifications can be made on a single pass through a tree.
@@ -101,7 +99,7 @@ public class DeadCodeElimination {
      * children whose result does not matter to this set during the parent's
      * <code>visit()</code> method. It should then remove those children during
      * its own <code>endVisit()</code>.
-     *
+     * 
      * TODO: there's a latent bug here: some immutable nodes (such as literals)
      * can be multiply referenced in the AST. In theory, one reference to that
      * node could be put into this set while another reference actually contains
@@ -714,7 +712,7 @@ public class DeadCodeElimination {
 
     /**
      * Evaluate <code>lhs == rhs</code>.
-     *
+     * 
      * @param lhs Any literal other than null.
      * @param rhs Any literal other than null.
      * @return Whether <code>lhs == rhs</code> will evaluate to
@@ -738,7 +736,7 @@ public class DeadCodeElimination {
 
     /**
      * Static evaluation of a unary operation on a literal.
-     *
+     * 
      * @return Whether a change was made
      */
     private boolean evalOpOnLiteral(JUnaryOperator op, JValueLiteral exp,
@@ -787,7 +785,7 @@ public class DeadCodeElimination {
 
     /**
      * Static evaluation of a binary operation on two literals.
-     *
+     * 
      * @return Whether a change was made
      */
     private boolean evalOpOnLiterals(JBinaryOperator op, JValueLiteral lhs,
@@ -1292,11 +1290,11 @@ public class DeadCodeElimination {
 
     /**
      * Simplify short circuit AND expressions.
-     *
+     * 
      * <pre>
      * if (true && isWhatever()) -> if (isWhatever())
      * if (false && isWhatever()) -> if (false)
-     *
+     * 
      * if (isWhatever() && true) -> if (isWhatever())
      * if (isWhatever() && false) -> if (false), unless side effects
      * </pre>
@@ -1322,11 +1320,11 @@ public class DeadCodeElimination {
 
     /**
      * Simplify short circuit OR expressions.
-     *
+     * 
      * <pre>
      * if (true || isWhatever()) -> if (true)
      * if (false || isWhatever()) -> if (isWhatever())
-     *
+     * 
      * if (isWhatever() || false) -> if (isWhatever())
      * if (isWhatever() || true) -> if (true), unless side effects
      * </pre>
@@ -1459,10 +1457,10 @@ public class DeadCodeElimination {
 
     /**
      * Simplify the expression <code>-exp</code>.
-     *
+     * 
      * @param original An expression equivalent to <code>-exp</code>.
      * @param exp The expression to negate.
-     *
+     * 
      * @return A simplified expression equivalent to <code>- exp</code>.
      */
     private JExpression simplifyNegate(JExpression original, JExpression exp) {
@@ -1505,7 +1503,7 @@ public class DeadCodeElimination {
 
     /**
      * Simplify XOR expressions.
-     *
+     * 
      * <pre>
      * true ^ x     -> !x
      * false ^ x    ->  x
@@ -1673,20 +1671,20 @@ public class DeadCodeElimination {
         /*
          * If there are only two statements, we know it's a case statement and
          * something with an effect.
-         *
+         * 
          * TODO: make this more sophisticated; what we should really care about
          * is how many case statements it contains, not how many statements:
-         *
+         * 
          * switch(i) { default: a(); b(); c(); }
-         *
+         * 
          * becomes { a(); b(); c(); }
-         *
+         * 
          * switch(i) { case 1: a(); b(); c(); }
-         *
+         * 
          * becomes if (i == 1) { a(); b(); c(); }
-         *
+         * 
          * switch(i) { case 1: a(); b(); break; default: c(); d(); }
-         *
+         * 
          * becomes if (i == 1) { a(); b(); } else { c(); d(); }
          */
         JCaseStatement caseStatement = (JCaseStatement) body.getStatements().get(
@@ -1757,7 +1755,7 @@ public class DeadCodeElimination {
   /**
    * Examines code to find out whether it contains any break or continue
    * statements.
-   *
+   * 
    * TODO: We could be more sophisticated with this. A nested while loop with an
    * unlabeled break should not cause this visitor to return false. Nor should a
    * labeled break break to another context.
@@ -1779,6 +1777,8 @@ public class DeadCodeElimination {
       return hasBreakContinueStatements;
     }
   }
+
+  public static final String NAME = DeadCodeElimination.class.getSimpleName();
 
   public static OptimizerStats exec(JProgram program) {
     return new DeadCodeElimination(program).execImpl(program);
@@ -1810,11 +1810,11 @@ public class DeadCodeElimination {
 
   private OptimizerStats execImpl(JNode node) {
     OptimizerStats stats = new OptimizerStats(NAME);
-    Event optimizeEvent =
-      SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
+        "optimizer", NAME);
 
     // TODO(zundel): see if this loop can be removed and all work done in one
-    //   pass of the optimizer to improve performance.
+    // pass of the optimizer to improve performance.
     while (true) {
       DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor();
       deadCodeVisitor.accept(node);
@@ -1823,7 +1823,7 @@ public class DeadCodeElimination {
         break;
       }
     }
-    
+
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }

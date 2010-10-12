@@ -264,12 +264,13 @@ public class JModVisitor extends JVisitor {
       throw new InternalCompilerException("Cannot replace with null");
     }
     if (newNode == origNode) {
-      throw new InternalCompilerException("The replacement is the same as the original");
+      throw new InternalCompilerException(
+          "The replacement is the same as the original");
     }
   }
 
   private int numVisitorChanges = 0;
-  
+
   @Override
   public JNode accept(JNode node) {
     return accept(node, false);
@@ -370,10 +371,10 @@ public class JModVisitor extends JVisitor {
   protected void madeChanges() {
     numVisitorChanges++;
   }
-  
+
   /**
-   * Call this method to indicate that a visitor has made multiple changes
-   * to the tree.  Used to determine when the optimization pass can exit.
+   * Call this method to indicate that a visitor has made multiple changes to
+   * the tree. Used to determine when the optimization pass can exit.
    */
   protected void madeChanges(int numMods) {
     numVisitorChanges += numMods;
