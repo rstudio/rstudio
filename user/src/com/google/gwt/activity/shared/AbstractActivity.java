@@ -16,11 +16,6 @@
 package com.google.gwt.activity.shared;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Simple Activity implementation that is always willing to stop,
  * and does nothing onStop and onCancel.
  */

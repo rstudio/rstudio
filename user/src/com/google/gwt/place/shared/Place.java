@@ -16,11 +16,6 @@
 package com.google.gwt.place.shared;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Represents a bookmarkable location in an app. Implementations are expected to
  * provide correct {@link Object#equals(Object)} and {@link Object#hashCode()}
  * methods.

@@ -20,10 +20,6 @@ import com.google.gwt.text.client.IntegerParser;
 import com.google.gwt.text.client.IntegerRenderer;
 
 /**
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * <p>
  * A ValueBox that uses {@link IntegerParser} and {@link IntegerRenderer}.
  */
 public class IntegerBox extends ValueBox<Integer> {

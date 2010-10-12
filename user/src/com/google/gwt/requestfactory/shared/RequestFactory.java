@@ -18,11 +18,6 @@ package com.google.gwt.requestfactory.shared;
 import com.google.gwt.event.shared.EventBus;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Marker interface for the RequestFactory code generator.
  */
 public interface RequestFactory {

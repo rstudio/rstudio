@@ -18,11 +18,6 @@ package com.google.gwt.activity.shared;
 import com.google.gwt.place.shared.Place;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Finds the activity to run for a given {@link Place}, used to configure
  * an {@link ActivityManager}.
  */

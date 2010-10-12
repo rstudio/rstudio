@@ -19,10 +19,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 /**
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * <p>
  * An object that can render other objects of a particular type into safe HTML
  * form. Allows decoupling that is useful for a dependency-injection
  * architecture.

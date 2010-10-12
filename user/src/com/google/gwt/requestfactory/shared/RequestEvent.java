@@ -22,11 +22,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.Response;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * An event posted whenever an RPC request is sent or its response is received.
  */
 public class RequestEvent extends GwtEvent<RequestEvent.Handler> {

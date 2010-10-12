@@ -19,11 +19,6 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Event thrown when the user may go to a new place in the app, or tries to
  * leave it. Receivers can call {@link #setWarning(String)} request that the
  * user be prompted to confirm the change.

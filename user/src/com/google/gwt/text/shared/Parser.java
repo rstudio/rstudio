@@ -18,10 +18,6 @@ package com.google.gwt.text.shared;
 import java.text.ParseException;
 
 /**
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * <p>
  * An object that can parse text and return a value.
  *
  * @param <T> the type to parse

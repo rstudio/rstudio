@@ -18,10 +18,6 @@ package com.google.gwt.text.shared.testing;
 import com.google.gwt.text.shared.Parser;
 
 /**
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * <p>
  * A no-op String parser.
  */
 public class PassthroughParser implements Parser<String> {

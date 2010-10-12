@@ -20,10 +20,6 @@ import com.google.gwt.text.client.DoubleParser;
 import com.google.gwt.text.client.DoubleRenderer;
 
 /**
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * <p>
  * A ValueBox that uses {@link DoubleParser} and {@link DoubleRenderer}.
  */
 public class DoubleBox extends ValueBox<Double> {

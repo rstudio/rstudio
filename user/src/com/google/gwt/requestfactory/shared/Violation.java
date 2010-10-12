@@ -16,12 +16,8 @@
 package com.google.gwt.requestfactory.shared;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
- * A lightweight representation of a ConstraintViolation.
+ * A lightweight representation of a
+ * {@link javax.validation.ConstraintViolation}.
  */
 public interface Violation {
   String getMessage();

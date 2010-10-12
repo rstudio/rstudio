@@ -29,11 +29,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Handles GWT RequestFactory JSON requests. Does user authentication on every
  * request, returning SC_UNAUTHORIZED if authentication fails, as well as a
  * header named "login" which contains the URL the user should be sent in to

@@ -25,11 +25,6 @@ import com.google.gwt.user.client.Window.ClosingHandler;
 import java.util.logging.Logger;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * In charge of the user's location in the app.
  */
 public class PlaceController {

@@ -18,11 +18,6 @@ package com.google.gwt.editor.client;
 import java.util.List;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be changed. Use it at your own risk.
- * </span>
- * </p>
  * Automates editing of simple bean-like objects. The {@link EditorDelegate}
  * provided from this driver has a no-op implementation of
  * {@link EditorDelegate#subscribe()}.

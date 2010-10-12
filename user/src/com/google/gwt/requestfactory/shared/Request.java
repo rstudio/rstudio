@@ -16,11 +16,6 @@
 package com.google.gwt.requestfactory.shared;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Implemented by the request objects created by this factory.
  * 
  * @param <T> The return type of objects in the corresponding response.

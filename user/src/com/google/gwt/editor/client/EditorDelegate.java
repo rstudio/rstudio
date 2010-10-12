@@ -18,11 +18,6 @@ package com.google.gwt.editor.client;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be changed. Use it at your own risk.
- * </span>
- * </p>
  * Binds an individual Editor to the backing service. Every Editor has a peer
  * EditorDelegate. If an Editor implements the {@link ValueAwareEditor}
  * interface, the EditorDriver will make the delegate available through the

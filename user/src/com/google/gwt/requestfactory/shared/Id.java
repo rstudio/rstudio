@@ -16,11 +16,6 @@
 package com.google.gwt.requestfactory.shared;
 
 /**
- * <p>
- * <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span>
- * </p>
  * Marks the id property of an entity.
  */
 public @interface Id {
