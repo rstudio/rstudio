@@ -47,6 +47,9 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   private static String loadComputeScriptBase() throws IOException {
     StringBuffer code = new StringBuffer();
     code.append("var base = \"\", $doc=document;\n");
+    code.append("__gwt_getMetaProperty = function(name) { "
+                 + "var value = metaProps[name];"
+                 + "return (value == null) ? null : value; }");
     code.append(Utility.getFileFromClassPath(SelectionScriptLinker.COMPUTE_SCRIPT_BASE_JS));
     code.append("computeScriptBase();\n");
     return code.toString().replaceAll("__MODULE_NAME__", TEST_MODULE_NAME);

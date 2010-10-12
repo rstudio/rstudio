@@ -16,20 +16,17 @@
 var frameDoc;
 
 function getInstallLocationDoc() {
-  if (!frameDoc) {
-    setupInstallLocation();
-  }
+  setupInstallLocation();
   return frameDoc;
 }
   
 function getInstallLocation() {
-  if (!frameDoc) {
-    setupInstallLocation();
-  }
+  setupInstallLocation();
   return frameDoc.getElementsByTagName('body')[0];
 }
 
 function setupInstallLocation() {
+  if (frameDoc) { return; }
   // Create the script frame, making sure it's invisible, but not
   // "display:none", which keeps some browsers from running code in it.
   var scriptFrame = $doc.createElement('iframe');
@@ -56,9 +53,6 @@ function setupInstallLocation() {
   var script = frameDoc.createElement('script');
   script.language='javascript';
   var temp = "var $wnd = window.parent;";
-  if (isHostedMode) {
-    temp += "var __gwtModuleFunction = $wnd.__MODULE_FUNC__;";
-  }
   script.text = temp;
   frameDocbody.appendChild(script);
 }

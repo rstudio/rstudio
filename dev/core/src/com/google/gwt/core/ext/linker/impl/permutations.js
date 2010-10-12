@@ -14,11 +14,18 @@
  * the License.
  */
 
+function getCompiledCodeFilename() {
+
+  // A multi-tier lookup map that uses actual property values to quickly find
+  // the strong name of the cache.js file to load.
+  var answers = [];
+
+  var softPermutationId;
+
   // Deferred-binding mapper function.  Sets a value into the several-level-deep
   // answers map. The keys are specified by a non-zero-length propValArray,
   // which should be a flat array target property values. Used by the generated
   // PERMUTATIONS code.
-  //
   function unflattenKeylistIntoAnswers(propValArray, value) {
     var answer = answers;
     for (var i = 0, n = propValArray.length - 1; i < n; ++i) {
@@ -29,20 +36,28 @@
     answer[propValArray[n]] = value;
   }
 
-  // Computes the value of a given property.  propName must be a valid property
-  // name. Used by the generated PERMUTATIONS code.
-  //
-  function computePropValue(propName) {
-    var value = providers[propName](), allowedValuesMap = values[propName];
-    if (value in allowedValuesMap) {
-      return value;
-    }
-    var allowedValuesList = [];
-    for (var k in allowedValuesMap) {
-      allowedValuesList[allowedValuesMap[k]] = k;
-    }
-    if (propertyErrorFunc) {
-      propertyErrorFunc(propName, allowedValuesList, value);
-    }
-    throw null;
+  // Provides the computePropvalue() function and sets the 
+  // __gwt_isKnownPropertyValue and MODULE_FUNC__.__computePropValue variables 
+  __PROPERTIES__
+  
+  sendStats('bootstrap', 'selectingPermutation');
+  if (isHostedMode()) {
+    return __MODULE_FUNC__.__moduleBase + "__HOSTED_FILENAME__"; 
   }
+  var strongName;
+  try {
+    // __PERMUTATIONS_BEGIN__
+    // Permutation logic is injected here. this code populates the 
+    // answers variable.
+    // __PERMUTATIONS_END__
+    var idx = strongName.indexOf(':');
+    if (idx != -1) {
+      softPermutationId = +(strongName.substring(idx + 1));
+      strongName = strongName.substring(0, idx);
+    }
+  } catch (e) {
+    // intentionally silent on property failure
+  }
+  __MODULE_FUNC__.__softPermutationId = softPermutationId;
+  return __MODULE_FUNC__.__moduleBase + strongName + '.cache.js';
+}

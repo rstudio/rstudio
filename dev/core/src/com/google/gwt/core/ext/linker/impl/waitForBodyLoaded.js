@@ -1,3 +1,8 @@
+// Check whether the body is loaded.
+function isBodyLoaded() {
+  return (/loaded|complete/.test($doc.readyState));
+}
+
 // Setup code which waits for the body to be loaded and then calls the
 // callback function
 function setupWaitForBodyLoad(callback) {

@@ -25,10 +25,16 @@
  * wherever COMPUTE_SCRIPT_BASE appears with underlines
  * on each side.
  */
+
 function computeScriptBase() {
-  //First, check if the meta properties give the baseUrl
-  if (metaProps['baseUrl']) {
-    base = metaProps['baseUrl'];
+  // First, check if the meta properties give the baseUrl
+  var metaVal = __gwt_getMetaProperty('baseUrl');
+  // Note: the base variable should not be defined in this function because in
+  // the older templates (like IFrameTemplate.js), base is defined outside this
+  // function, and they rely on the fact that calling computeScriptBase will set
+  // that base variable rather than using the return value.
+  if (metaVal != null) {
+    base = metaVal;
     return base;
   }
 

@@ -50,7 +50,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
       ArtifactSet artifacts, boolean onePermutation)
       throws UnableToCompleteException {
     if (onePermutation) {
-      processSelectionInformation(artifacts);
+      permutationsUtil.setupPermutationsMap(artifacts);
       ArtifactSet toReturn = new ArtifactSet(artifacts);
       toReturn.add(emitSelectionScript(logger, context, artifacts));
       return toReturn;

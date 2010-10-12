@@ -4,33 +4,10 @@
 var $entry;
 var $hostedHtmlVersion="2.1";
 
-// We assume that the following variables have been set in the same scope as
-// this code is executing in:
-// $wnd - the main window which the GWT code is affecting. in iframe based linkers
-//        $wnd = window.parent; Usually, in others, $wnd = window;
-// __gwtModuleFunction - the bootstrap function, which exports needed variables.
-//        usually this is set to something like $wnd.hello
-
-// Pull some variables from the bootstrapping code. If this file got the prefix
-// and suffix that the regular md5.js files did, then we wouldn't need this,
-// although we would need to give this file a gwtOnLoad() entry point.  If we
-// did this, we also would not need the __gwtModuleFunction and $moduleName
-// variables to be set.
-var $sendStats = __gwtModuleFunction.__sendStats;
-var $doc = $wnd.document
-var $errFn = __gwtModuleFunction.__errFn;
-var $moduleName = __gwtModuleFunction.__moduleName;
-var $moduleBase = __gwtModuleFunction.__moduleBase;
-var __gwt_getProperty = __gwtModuleFunction.__computePropValue;
-
-// Even though we call the $sendStats function in the code written in this
-// file, some of the compilation code still needs the $stats and $sessionId
-// variables to be available.
-var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;
-var $sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null;
-
-$sendStats("moduleStartup", "moduleEvalStart");
-
+var $errFn;
+var $moduleName;
+var $moduleBase;
+var __gwt_getProperty;
 
 /******************************************************************************
  * WRITE ME - what does this invokes stuff do??? Probably related to invoking
@@ -340,18 +317,24 @@ function tryConnectingToPlugin(sessionId, url) {
   var pluginFinders = [findPluginXPCOM, findPluginObject, findPluginEmbed];
   var codeServer = getCodeServer();
   var plugin;
-    for (var i = 0; i < pluginFinders.length; ++i) {
-      try {
-        plugin = pluginFinders[i]();
-        if (plugin != null && plugin.init(window)) {
-          if (!plugin.connect(url, sessionId, codeServer, $moduleName,
-            $hostedHtmlVersion)) {
-            pluginConnectionError(codeServer);
-            return null;
-          }
-          return plugin;
+  for (var i = 0; i < pluginFinders.length; ++i) {
+    try {
+      plugin = pluginFinders[i]();
+      if (plugin != null) {
+        if (!plugin.init(window)) {
+          pluginConnectionError(codeServer);
+          return null;
         }
-      } catch (e) {
+        if (!plugin.connect(url, sessionId, codeServer, $moduleName,
+          $hostedHtmlVersion)) {
+          pluginConnectionError(codeServer);
+          return null;
+        }
+        return plugin;
+      }
+    } catch (e) {
+      pluginConnectionError(codeServer);
+      return null;
     }
   }
   return null;
@@ -361,27 +344,29 @@ function tryConnectingToPlugin(sessionId, url) {
 /******************************************************************************
  * DevMode startup code
  *****************************************************************************/
-window.onunload = function() { };
+function gwtOnLoad(errFn, moduleName, moduleBase, softPermutationId, computePropValue) {
+  $errFn = errFn;
+  $moduleName = moduleName;
+  $moduleBase = moduleBase;
+  __gwt_getProperty = computePropValue;
+  
+  window.onunload = function() { };
+  doBrowserSpecificFixes();
 
-$sendStats("moduleStartup", "moduleEvalEnd");
-doBrowserSpecificFixes();
+  if (!findPluginXPCOM()) {
+    embedPlugin();
+  }
 
-if (!findPluginXPCOM()) {
-  embedPlugin();
+  var topWin = window.top;
+  if (!topWin.__gwt_SessionID) {
+    topWin.__gwt_SessionID = generateSessionId();
+  }
+
+  var plugin = tryConnectingToPlugin(topWin.__gwt_SessionID, topWin.location.href);
+  if (plugin == null) {
+    loadIframe("http://gwt.google.com/missing-plugin/");
+  } else {
+    window.onUnload = disconnectPlugin();
+  }
 }
-
-var topWin = window.top;
-if (!topWin.__gwt_SessionID) {
-  topWin.__gwt_SessionID = generateSessionId();
-}
-
-var plugin = tryConnectingToPlugin(topWin.__gwt_SessionID, topWin.location.href);
-if (plugin == null) {
-  loadIframe("http://gwt.google.com/missing-plugin/");
-} else {
-  window.onUnload = disconnectPlugin();
-}
-
-// It looks like we never send the "moduleStartup", "end" stat in dev mode.
-// Is that on purpose, or should we send it here?
 

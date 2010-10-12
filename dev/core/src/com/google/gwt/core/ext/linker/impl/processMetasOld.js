@@ -22,10 +22,6 @@
  * on each side.
  */
 function processMetas() {
-  var metaProps = {}
-  var propertyErrorFunc;
-  var onLoadErrorFunc;
-
   var metas = document.getElementsByTagName('meta');
   for (var i = 0, n = metas.length; i < n; ++i) {
     var meta = metas[i]
@@ -74,12 +70,4 @@ function processMetas() {
       }
     }
   }
-
-  // Set some of the variables in the main script
-  __gwt_getMetaProperty = function(name) {
-    var value = metaProps[name];
-    return (value == null) ? null : value;
-  }
-  __propertyErrorFunction = propertyErrorFunc;
-  __MODULE_FUNC__.__errFn = onLoadErrorFunc;
 }
