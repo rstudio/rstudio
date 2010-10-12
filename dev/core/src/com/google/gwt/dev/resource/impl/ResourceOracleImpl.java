@@ -173,12 +173,15 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   /**
    * Rescans the associated paths to recompute the available resources.
-   *
+   * 
+   * TODO(conroy,scottb): This synchronization could be improved upon to allow
+   * disjoint sets of oracles to be refreshed simultaneously.
+   * 
    * @param logger status and error details are written here
    * @param first At least one ResourceOracleImpl must be passed to refresh
    * @param rest Callers may optionally pass several oracles
    */
-  public static void refresh(
+  public static synchronized void refresh(
       TreeLogger logger, ResourceOracleImpl first, ResourceOracleImpl... rest) {
     int len = 1 + rest.length;
     ResourceOracleImpl[] oracles = new ResourceOracleImpl[1 + rest.length];
