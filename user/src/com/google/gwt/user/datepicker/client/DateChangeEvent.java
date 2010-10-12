@@ -32,7 +32,6 @@ class DateChangeEvent extends ValueChangeEvent<Date> {
    * Use this call rather than making the decision to short circuit yourself for
    * safe handling of null.
    * 
-   * @param <I> the old value type
    * @param <S> The event source
    * @param source the source of the handlers
    * @param oldValue the oldValue, may be null

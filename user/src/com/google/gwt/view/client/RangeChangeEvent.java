@@ -48,7 +48,7 @@ public class RangeChangeEvent extends GwtEvent<RangeChangeEvent.Handler> {
    * @param source the source of the handlers
    * @param range the new range
    */
-  public static <I> void fire(HasRows source, Range range) {
+  public static void fire(HasRows source, Range range) {
     if (TYPE != null) {
       RangeChangeEvent event = new RangeChangeEvent(range);
       source.fireEvent(event);

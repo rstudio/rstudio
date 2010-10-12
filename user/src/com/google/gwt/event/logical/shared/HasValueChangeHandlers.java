@@ -22,14 +22,14 @@ import com.google.gwt.event.shared.HasHandlers;
  * A widget that implements this interface is a public source of
  * {@link ValueChangeEvent} events.
  * 
- * @param <I> the value about to be changed
+ * @param <T> the value about to be changed
  */
-public interface HasValueChangeHandlers<I> extends HasHandlers {
+public interface HasValueChangeHandlers<T> extends HasHandlers {
   /**
    * Adds a {@link ValueChangeEvent} handler.
    * 
    * @param handler the handler
    * @return the registration for the event
    */
-  HandlerRegistration addValueChangeHandler(ValueChangeHandler<I> handler);
+  HandlerRegistration addValueChangeHandler(ValueChangeHandler<T> handler);
 }

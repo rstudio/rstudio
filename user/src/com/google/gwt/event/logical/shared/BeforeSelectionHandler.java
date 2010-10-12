@@ -20,14 +20,14 @@ import com.google.gwt.event.shared.EventHandler;
 /**
  * Handler interface for {@link BeforeSelectionEvent} events.
  * 
- * @param <I> the type about to be selected
+ * @param <T> the type about to be selected
  */
-public interface BeforeSelectionHandler<I> extends EventHandler {
+public interface BeforeSelectionHandler<T> extends EventHandler {
 
   /**
    * Called when {@link BeforeSelectionEvent} is fired.
    * 
    * @param event the {@link BeforeSelectionEvent} that was fired
    */
-  void onBeforeSelection(BeforeSelectionEvent<I> event);
+  void onBeforeSelection(BeforeSelectionEvent<T> event);
 }

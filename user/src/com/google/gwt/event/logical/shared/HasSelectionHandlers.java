@@ -22,14 +22,14 @@ import com.google.gwt.event.shared.HasHandlers;
  * A widget that implements this interface is a public source of
  * {@link SelectionEvent} events.
  * 
- * @param <I> the type being selected
+ * @param <T> the type being selected
  */
-public interface HasSelectionHandlers<I> extends HasHandlers {
+public interface HasSelectionHandlers<T> extends HasHandlers {
   /**
    * Adds a {@link SelectionEvent} handler.
    * 
    * @param handler the handler
    * @return the registration for the event
    */
-  HandlerRegistration addSelectionHandler(SelectionHandler<I> handler);
+  HandlerRegistration addSelectionHandler(SelectionHandler<T> handler);
 }

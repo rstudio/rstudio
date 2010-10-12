@@ -20,14 +20,14 @@ import com.google.gwt.event.shared.EventHandler;
 /**
  * Handler interface for {@link ValueChangeEvent} events.
  * 
- * @param <I> the value about to be changed
+ * @param <T> the value about to be changed
  */
-public interface ValueChangeHandler<I> extends EventHandler {
+public interface ValueChangeHandler<T> extends EventHandler {
 
   /**
    * Called when {@link ValueChangeEvent} is fired.
    * 
    * @param event the {@link ValueChangeEvent} that was fired
    */
-  void onValueChange(ValueChangeEvent<I> event);
+  void onValueChange(ValueChangeEvent<T> event);
 }

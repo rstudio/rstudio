@@ -48,7 +48,7 @@ public class RowCountChangeEvent extends GwtEvent<RowCountChangeEvent.Handler> {
    * @param source the source of the handlers
    * @param rowCount the new rowCount
    */
-  public static <I> void fire(HasRows source, int rowCount, boolean isExact) {
+  public static void fire(HasRows source, int rowCount, boolean isExact) {
     if (TYPE != null) {
       RowCountChangeEvent event = new RowCountChangeEvent(rowCount, isExact);
       source.fireEvent(event);

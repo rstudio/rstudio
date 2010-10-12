@@ -20,9 +20,9 @@ import com.google.gwt.event.shared.GwtEvent;
 /**
  * Represents a selection event.
  * 
- * @param <I> the type being selected
+ * @param <T> the type being selected
  */
-public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
+public class SelectionEvent<T> extends GwtEvent<SelectionHandler<T>> {
 
   /**
    * Handler type.
@@ -33,13 +33,13 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
    * Fires a selection event on all registered handlers in the handler
    * manager.If no such handlers exist, this method will do nothing.
    * 
-   * @param <I> the selected item type
+   * @param <T> the selected item type
    * @param source the source of the handlers
    * @param selectedItem the selected item
    */
-  public static <I> void fire(HasSelectionHandlers<I> source, I selectedItem) {
+  public static <T> void fire(HasSelectionHandlers<T> source, T selectedItem) {
     if (TYPE != null) {
-      SelectionEvent<I> event = new SelectionEvent<I>(selectedItem);
+      SelectionEvent<T> event = new SelectionEvent<T>(selectedItem);
       source.fireEvent(event);
     }
   }
@@ -56,14 +56,14 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
     return TYPE;
   }
 
-  private final I selectedItem;
+  private final T selectedItem;
 
   /**
    * Creates a new selection event.
    * 
    * @param selectedItem selected item
    */
-  protected SelectionEvent(I selectedItem) {
+  protected SelectionEvent(T selectedItem) {
     this.selectedItem = selectedItem;
   }
 
@@ -71,7 +71,7 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
   // field itself does not, so we have to do an unsafe cast here.
   @SuppressWarnings("unchecked")
   @Override
-  public final Type<SelectionHandler<I>> getAssociatedType() {
+  public final Type<SelectionHandler<T>> getAssociatedType() {
     return (Type) TYPE;
   }
 
@@ -80,12 +80,12 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
    * 
    * @return the selected item
    */
-  public I getSelectedItem() {
+  public T getSelectedItem() {
     return selectedItem;
   }
 
   @Override
-  protected void dispatch(SelectionHandler<I> handler) {
+  protected void dispatch(SelectionHandler<T> handler) {
     handler.onSelection(this);
   }
 }

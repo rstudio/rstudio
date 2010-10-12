@@ -259,8 +259,8 @@ public class TabBar extends Composite implements SourcesTabEvents,
   }
 
   /**
-   * @deprecated Use {@link #addBeforeSelectionHandler} and {#link
-   *             #addSelectionHandler} instead
+   * @deprecated Use {@link #addBeforeSelectionHandler(BeforeSelectionHandler)} 
+   * and {@link #addSelectionHandler(SelectionHandler)} instead
    */
   @Deprecated
   public void addTabListener(TabListener listener) {

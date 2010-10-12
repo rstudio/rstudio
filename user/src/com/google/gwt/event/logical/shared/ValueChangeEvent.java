@@ -20,9 +20,9 @@ import com.google.gwt.event.shared.GwtEvent;
 /**
  * Represents a value change event.
  * 
- * @param <I> the value about to be changed
+ * @param <T> the value about to be changed
  */
-public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
+public class ValueChangeEvent<T> extends GwtEvent<ValueChangeHandler<T>> {
 
   /**
    * Handler type.
@@ -37,9 +37,9 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    * @param source the source of the handlers
    * @param value the value
    */
-  public static <I> void fire(HasValueChangeHandlers<I> source, I value) {
+  public static <T> void fire(HasValueChangeHandlers<T> source, T value) {
     if (TYPE != null) {
-      ValueChangeEvent<I> event = new ValueChangeEvent<I>(value);
+      ValueChangeEvent<T> event = new ValueChangeEvent<T>(value);
       source.fireEvent(event);
     }
   }
@@ -49,15 +49,15 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    * Use this call rather than making the decision to short circuit yourself for
    * safe handling of null.
    * 
-   * @param <I> the old value type
+   * @param <T> the old value type
    * @param source the source of the handlers
    * @param oldValue the oldValue, may be null
    * @param newValue the newValue, may be null
    */
-  public static <I> void fireIfNotEqual(HasValueChangeHandlers<I> source,
-      I oldValue, I newValue) {
+  public static <T> void fireIfNotEqual(HasValueChangeHandlers<T> source,
+      T oldValue, T newValue) {
     if (shouldFire(source, oldValue, newValue)) {
-      ValueChangeEvent<I> event = new ValueChangeEvent<I>(newValue);
+      ValueChangeEvent<T> event = new ValueChangeEvent<T>(newValue);
       source.fireEvent(event);
     }
   }
@@ -78,26 +78,26 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    * Convenience method to allow subtypes to know when they should fire a value
    * change event in a null-safe manner.
    * 
-   * @param <I> value type
+   * @param <T> value type
    * @param source the source
    * @param oldValue the old value
    * @param newValue the new value
    * @return whether the event should be fired
    */
-  protected static <I> boolean shouldFire(HasValueChangeHandlers<I> source,
-      I oldValue, I newValue) {
+  protected static <T> boolean shouldFire(HasValueChangeHandlers<T> source,
+      T oldValue, T newValue) {
     return TYPE != null && oldValue != newValue
         && (oldValue == null || !oldValue.equals(newValue));
   }
 
-  private final I value;
+  private final T value;
 
   /**
    * Creates a value change event.
    * 
    * @param value the value
    */
-  protected ValueChangeEvent(I value) {
+  protected ValueChangeEvent(T value) {
     this.value = value;
   }
 
@@ -105,7 +105,7 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
   // field itself does not, so we have to do an unsafe cast here.
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
-  public final Type<ValueChangeHandler<I>> getAssociatedType() {
+  public final Type<ValueChangeHandler<T>> getAssociatedType() {
     return (Type) TYPE;
   }
 
@@ -114,7 +114,7 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    * 
    * @return the value
    */
-  public I getValue() {
+  public T getValue() {
     return value;
   }
  
@@ -124,7 +124,7 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
   }
 
   @Override
-  protected void dispatch(ValueChangeHandler<I> handler) {
+  protected void dispatch(ValueChangeHandler<T> handler) {
     handler.onValueChange(this);
   }
 }

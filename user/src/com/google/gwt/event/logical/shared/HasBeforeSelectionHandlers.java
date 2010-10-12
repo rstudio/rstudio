@@ -22,9 +22,9 @@ import com.google.gwt.event.shared.HasHandlers;
  * A widget that implements this interface is a public source of
  * {@link BeforeSelectionEvent} events.
  * 
- * @param <I> the type about to be selected
+ * @param <T> the type about to be selected
  */
-public interface HasBeforeSelectionHandlers<I> extends HasHandlers {
+public interface HasBeforeSelectionHandlers<T> extends HasHandlers {
   /**
    * Adds a {@link BeforeSelectionEvent} handler.
    * 
@@ -32,5 +32,5 @@ public interface HasBeforeSelectionHandlers<I> extends HasHandlers {
    * @return the registration for the event
    */
   HandlerRegistration addBeforeSelectionHandler(
-      BeforeSelectionHandler<I> handler);
+      BeforeSelectionHandler<T> handler);
 }

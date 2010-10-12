@@ -20,10 +20,10 @@ import com.google.gwt.event.shared.GwtEvent;
 /**
  * Represents a before selection event.
  * 
- * @param <I> the type about to be selected
+ * @param <T> the type about to be selected
  */
-public class BeforeSelectionEvent<I> extends
-    GwtEvent<BeforeSelectionHandler<I>> {
+public class BeforeSelectionEvent<T> extends
+    GwtEvent<BeforeSelectionHandler<T>> {
 
   /**
    * Handler type.
@@ -34,17 +34,17 @@ public class BeforeSelectionEvent<I> extends
    * Fires a before selection event on all registered handlers in the handler
    * manager. If no such handlers exist, this method will do nothing.
    * 
-   * @param <I> the item type
+   * @param <T> the item type
    * @param source the source of the handlers
    * @param item the item
    * @return the event so that the caller can check if it was canceled, or null
    *         if no handlers of this event type have been registered
    */
-  public static <I> BeforeSelectionEvent<I> fire(
-      HasBeforeSelectionHandlers<I> source, I item) {
+  public static <T> BeforeSelectionEvent<T> fire(
+      HasBeforeSelectionHandlers<T> source, T item) {
     // If no handlers exist, then type can be null.
     if (TYPE != null) {
-      BeforeSelectionEvent<I> event = new BeforeSelectionEvent<I>();
+      BeforeSelectionEvent<T> event = new BeforeSelectionEvent<T>();
       event.setItem(item);
       source.fireEvent(event);
       return event;
@@ -64,7 +64,7 @@ public class BeforeSelectionEvent<I> extends
     return TYPE;
   }
 
-  private I item;
+  private T item;
 
   private boolean canceled;
 
@@ -87,7 +87,7 @@ public class BeforeSelectionEvent<I> extends
   // field itself does not, so we have to do an unsafe cast here.
   @SuppressWarnings("unchecked")
   @Override
-  public final Type<BeforeSelectionHandler<I>> getAssociatedType() {
+  public final Type<BeforeSelectionHandler<T>> getAssociatedType() {
     return (Type) TYPE;
   }
 
@@ -96,7 +96,7 @@ public class BeforeSelectionEvent<I> extends
    * 
    * @return the item
    */
-  public I getItem() {
+  public T getItem() {
     return item;
   }
 
@@ -110,7 +110,7 @@ public class BeforeSelectionEvent<I> extends
   }
 
   @Override
-  protected void dispatch(BeforeSelectionHandler<I> handler) {
+  protected void dispatch(BeforeSelectionHandler<T> handler) {
     handler.onBeforeSelection(this);
   }
 
@@ -119,7 +119,7 @@ public class BeforeSelectionEvent<I> extends
    * 
    * @param item the item
    */
-  protected final void setItem(I item) {
+  protected final void setItem(T item) {
     this.item = item;
   }
 }
