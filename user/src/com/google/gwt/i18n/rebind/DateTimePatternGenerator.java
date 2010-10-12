@@ -23,7 +23,7 @@ import com.ibm.icu.util.ULocale;
  * Helper class to create a localized date/time pattern based on a pattern
  * skeleton.
  */
-class DateTimePatternGenerator {
+public class DateTimePatternGenerator {
   // TODO(jat): Currently uses ICU4J's DateTimePatternGenerator, but should
   // probably be rewritten to avoid that dependency.
 

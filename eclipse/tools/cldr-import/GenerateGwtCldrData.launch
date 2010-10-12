@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<stringAttribute key="bad_container_name" value="/cldr-import/G"/>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/cldr-import/core/src/com/google/gwt/tools/cldr/GenerateGwtCldrData.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.tools.cldr.GenerateGwtCldrData"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--sourcedir ${resource_loc:cldr-data/common}/main&#10;--outdir ${resource_loc:gwt-user/core}/.."/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="cldr-import"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1024m"/>
+</launchConfiguration>

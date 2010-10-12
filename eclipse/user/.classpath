@@ -19,7 +19,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-logging-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-io-1.4.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.5.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/icu4j-4_4_1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.13.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar" sourcepath="/GWT_TOOLS/lib/selenium/selenium-java-client-driver-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1.jar"/>
@@ -46,5 +45,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-r06/guava-r06-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/4.4.2/icu4j.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

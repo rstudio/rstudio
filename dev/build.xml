@@ -59,7 +59,7 @@
           <include name="eclipse/jdt-3.4.2.jar" />
           <include name="guava/guava-r06/guava-r06-rebased.jar" />
           <include name="jetty/jetty-6.1.11.jar" />
-          <include name="icu4j/icu4j-4_4_1.jar" />
+          <include name="icu4j/4.4.2/icu4j.jar" />
           <include name="protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
           <include name="tomcat/ant-launcher-1.6.5.jar" />
           <include name="tomcat/catalina-1.0.jar" />
@@ -122,7 +122,7 @@
           <zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.4.2.jar" />
           <zipfileset src="${gwt.tools.lib}/guava/guava-r06/guava-r06-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jetty/jetty-6.1.11.jar" />
-          <zipfileset src="${gwt.tools.lib}/icu4j/icu4j-4_4_1.jar" />
+          <zipfileset src="${gwt.tools.lib}/icu4j/4.4.2/icu4j.jar" />
           <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
           <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/ant-launcher-1.6.5.jar" />

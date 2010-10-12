@@ -1,0 +1,138 @@
+<project name="cldr-import" default="build" basedir=".">
+
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="tools/cldr-import" />
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
+  <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
+  <property.ensure name="gwt.servlet.jar" location="${gwt.build.lib}/gwt-servlet.jar" />
+
+  <property name="ICU" location="${gwt.tools}/lib/icu4j/4.4.2" />
+  <property name="CLDR_TOOLS" location="${gwt.tools}/lib/cldr/1.8.1" />
+
+  <property.ensure name="ICU_CORE_PATH" location="${ICU}/icu4j.jar" />
+
+  <condition property="cldr.root.check" value="${env.CLDR_ROOT}"
+      else="${gwt.root}/../CLDR">
+    <isset property="env.CLDR_ROOT" />
+  </condition>
+  <property name="cldr.root" location="${cldr.root.check}" />
+
+  <condition property="tmpdir" value="${env.CLDR_TEMP}"
+      else="/tmp/cldr-import">
+    <isset property="env.CLDR_TEMP" />
+  </condition>
+
+  <path id="project.class.path">
+    <pathelement location="${gwt.user.jar}"/>
+    <pathelement location="${gwt.dev.jar}"/>
+    <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
+    <pathelement location="${ICU}/icu4j.jar"/>
+    <pathelement location="${ICU}/utilities.jar"/>
+  </path>
+
+  <target name="compile" description="Compile java source">
+    <mkdir dir="${javac.out}" />
+    <javac srcdir="src" destdir="${javac.out}"
+        debug="${javac.debug}" debuglevel="${javac.debuglevel}"
+        source="${javac.source}" target="${javac.target}"
+        nowarn="${javac.nowarn}" encoding="${javac.encoding}">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <copy todir="${javac.out}">
+      <fileset dir="src" excludes="**/*.java"/>
+    </copy>
+  </target>
+
+  <target name="compile.tests" description="Compile java source">
+    <mkdir dir="${javac.junit.out}" />
+    <javac srcdir="test" destdir="${javac.junit.out}"
+        debug="${javac.debug}" debuglevel="${javac.debuglevel}"
+        source="${javac.source}" target="${javac.target}"
+        nowarn="${javac.nowarn}" encoding="${javac.encoding}">
+      <classpath>
+        <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.user.jar}" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${javac.out}"/>
+        <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
+        <pathelement location="${ICU}/icu4j.jar"/>
+        <pathelement location="${ICU}/utilities.jar"/>
+      </classpath>
+    </javac>
+    <copy todir="${javac.junit.out}">
+      <fileset dir="src" excludes="**/*.java"/>
+    </copy>
+  </target>
+
+  <target name="build" depends="compile" description="Build this project" />
+
+  <target name="clean" description="Cleans this project">
+    <delete dir="${javac.out}" failonerror="false" />
+    <delete dir="${javac.junit.out}" failonerror="false" />
+  </target>
+
+  <target name="checkstyle" description="Static analysis of source">
+    <gwt.checkstyle>
+      <fileset dir="src"/>
+    </gwt.checkstyle>
+  </target>
+
+  <target name="test" depends="build, compile.tests" description="Run tests">
+    <mkdir dir="${junit.out}/tools-cldr-import" />
+    <fileset id="tests" dir="${javac.junit.out}"
+        includes="**/*Test.class" />
+    <gwt.junit test.name="test"
+        test.args=""
+        test.jvmargs="-ea"
+        test.out="${junit.out}/tools-cldr-import"
+        test.cases="tests">
+      <extraclasspaths>
+        <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.user.jar}" />
+        <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
+        <pathelement location="${ICU}/icu4j.jar"/>
+        <pathelement location="${ICU}/utilities.jar"/>
+      </extraclasspaths>
+    </gwt.junit>
+  </target>
+
+  <target name="cldrdata" description="Verifies CLDR data is present">
+    <property.ensure name="cldr.data" location="${cldr.root}/common/main"
+      message="common/main missing under ${cldr.root} (set using CLDR_ROOT)" />
+  </target>
+
+  <target name="gen.temp" depends="build, cldrdata"
+    description="Generate GWT classes/property files in a temporary directory">
+    <mkdir dir="${tmpdir}"/>
+    <java classname="com.google.gwt.tools.cldr.GenerateGwtCldrData"
+      fork="true" maxmemory="2048m" failonerror="true">
+      <arg line="--sourcedir ${cldr.data} --outdir ${tmpdir}"/>
+      <classpath>
+        <pathelement location="${javac.out}"/>
+        <pathelement location="${gwt.user.jar}"/>
+        <pathelement location="${gwt.dev.jar}"/>
+        <pathelement location="${ICU}/icu4j.jar"/>
+        <pathelement location="${ICU}/utilities.jar"/>
+        <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
+      </classpath>
+    </java>
+  </target>
+
+  <target name="gen" depends="build, cldrdata"
+      description="Generate GWT classes/property files">
+    <java classname="com.google.gwt.tools.cldr.GenerateGwtCldrData"
+      fork="true" maxmemory="2048m" failonerror="true">
+      <arg line="--sourcedir ${cldr.data} --outdir ${gwt.root}"/>
+      <classpath>
+        <pathelement location="${javac.out}"/>
+        <pathelement location="${gwt.user.jar}"/>
+        <pathelement location="${gwt.dev.jar}"/>
+        <pathelement location="${ICU}/icu4j.jar"/>
+        <pathelement location="${ICU}/utilities.jar"/>
+        <pathelement location="${CLDR_TOOLS}/cldr.jar"/>
+      </classpath>
+    </java>
+  </target>
+</project>

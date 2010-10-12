@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="org/unicode/cldr/web/|org/unicode/cldr/tool/templates/" kind="src" path="java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.7.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/4.4.2/icu4j.jar"/ sourcepath="/GWT_TOOLS/lib/icu4j/4.4.2/icu4jsrc.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/4.4.2/utilities.jar" sourcepath="/GWT_TOOLS/lib/icu4j/4.4.2/icu4jsrc.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -5,20 +5,27 @@
 
         <!-- "build" is the default when subprojects are directly targeted -->
         <property name="target" value="build" />
-      
-        <target name="benchmark-viewer" depends="" description="Run benchmark-viewer">
+
+        <target name="benchmark-viewer" depends=""
+          description="Run benchmark-viewer">
                 <gwt.ant dir="benchmark-viewer" />
         </target>
 
-        <target name="api-checker" depends="" description="Compile api-checker">
+        <target name="api-checker" depends=""
+          description="Compile api-checker">
                 <gwt.ant dir="api-checker" />
         </target>
 
         <target name="soyc-vis" depends="" description="Compile SOYC dashboard">
                 <gwt.ant dir="soyc-vis" />
         </target>
-     
-  <target name="-do" depends="benchmark-viewer,api-checker,soyc-vis" description="Run all subfolders" /> 
+
+        <target name="cldr-import" depends="" description="Compile CLDR import">
+                <gwt.ant dir="cldr-import" />
+        </target>
+
+  <target name="-do" depends="benchmark-viewer,api-checker,soyc-vis,cldr-import"
+    description="Run all subfolders that don't have additional dependencies" />
 
   <target name="build" description="Build each subfolder">
     <antcall target="-do">
@@ -26,7 +33,8 @@
     </antcall>
   </target>
 
-  <target name="checkstyle" description="Static analysis of source for each subfolder">
+  <target name="checkstyle"
+    description="Static analysis of source for each subfolder">
     <antcall target="-do">
       <param name="target" value="checkstyle" />
     </antcall>

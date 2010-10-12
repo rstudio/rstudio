@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>cldr-import</name>
+	<comment>CLDR import tools</comment>
+	<projects>
+		<project>cldr-data</project>
+		<project>cldr-tools</project>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>com.atlassw.tools.eclipse.checkstyle.CheckstyleBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>core</name>
+			<type>2</type>
+			<locationURI>GWT_ROOT/tools/cldr-import</locationURI>
+		</link>
+		<link>
+			<name>generated</name>
+			<type>2</type>
+			<location>/tmp/cldr-gen/user/src</location>
+		</link>
+	</linkedResources>
+</projectDescription>
