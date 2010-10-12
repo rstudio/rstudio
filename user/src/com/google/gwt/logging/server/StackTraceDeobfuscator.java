@@ -82,12 +82,15 @@ public class StackTraceDeobfuscator {
     return newSt;
   }
   
-  private Throwable deobfuscateThrowable(Throwable t, String strongName) {
-    if (t.getStackTrace() != null) {
-      t.setStackTrace(deobfuscateStackTrace(t.getStackTrace(), strongName));
+  private Throwable deobfuscateThrowable(Throwable old, String strongName) {
+    Throwable t = new Throwable(old.getMessage());
+    if (old.getStackTrace() != null) {
+      t.setStackTrace(deobfuscateStackTrace(old.getStackTrace(), strongName));
+    } else {
+      t.setStackTrace(new StackTraceElement[0]);
     }
-    if (t.getCause() != null) {
-      t.initCause(deobfuscateThrowable(t.getCause(), strongName));
+    if (old.getCause() != null) {
+      t.initCause(deobfuscateThrowable(old.getCause(), strongName));
     }
     return t;
   }
