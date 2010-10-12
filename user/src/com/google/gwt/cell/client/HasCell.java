@@ -27,6 +27,8 @@ public interface HasCell<T, C> {
 
   /**
    * Returns the {@link Cell} of type C.
+   * 
+   * @return a Cell
    */
   Cell<C> getCell();
 

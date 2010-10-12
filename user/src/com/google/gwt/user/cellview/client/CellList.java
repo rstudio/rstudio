@@ -223,6 +223,7 @@ public class CellList<T> extends AbstractHasData<T> {
    * Get the message that is displayed when there is no data.
    *
    * @return the empty message
+   * @see #setEmptyListMessage(SafeHtml)
    */
   public SafeHtml getEmptyListMessage() {
     return emptyListMessage;
@@ -249,6 +250,7 @@ public class CellList<T> extends AbstractHasData<T> {
    * Set the message to display when there is no data.
    *
    * @param html the message to display when there are no results
+   * @see #getEmptyListMessage()
    */
   public void setEmptyListMessage(SafeHtml html) {
     this.emptyListMessage = html;

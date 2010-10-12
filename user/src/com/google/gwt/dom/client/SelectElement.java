@@ -139,9 +139,9 @@ public class SelectElement extends Element {
    }-*/;
 
   /**
-   * The current form control value (i.e. the value of the currently selected
-   * option), if multiple options are selected this is the value of the first
-   * selected option.
+   * The current form control value (i.e., the value of the currently
+   * selected option), if multiple options are selected this is the value of the
+   * first selected option.
    */
   public final native String getValue() /*-{
      return this.value;
@@ -238,9 +238,9 @@ public class SelectElement extends Element {
    }-*/;
 
   /**
-   * The current form control value (i.e. the value of the currently selected
-   * option), if multiple options are selected this is the value of the first
-   * selected option.
+   * The current form control value (i.e., the value of the currently
+   * selected option), if multiple options are selected this is the value of the
+   * first selected option.
    */
   public final native void setValue(String value) /*-{
      this.value = value;

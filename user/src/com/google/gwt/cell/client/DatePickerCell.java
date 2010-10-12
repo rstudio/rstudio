@@ -37,16 +37,16 @@ import java.util.Date;
 /**
  * A {@link Cell} used to render and edit {@link Date}s. When a cell is selected
  * by clicking on it, a {@link DatePicker} is popped up. When a date is selected
- * using the {@code DatePicker}, the new date is passed to the
+ * using the {@link DatePicker}, the new date is passed to the
  * {@link ValueUpdater#update update} method of the {@link ValueUpdater} that
  * was passed to {@link #onBrowserEvent} for the click event. Note that this
- * means that the call to {@code ValueUpdater.update} will occur after {@code
- * onBrowserEvent} has returned. Pressing the 'escape' key dismisses the {@code
- * DatePicker} popup without calling {@code ValueUpdater.update}.
+ * means that the call to {@link ValueUpdater#update} will occur after {@link
+ * #onBrowserEvent} has returned. Pressing the 'escape' key dismisses the {@link
+ * DatePicker} popup without calling {@link ValueUpdater#update}.
  * 
  * <p>
- * Each {@code DatePickerCell} has a unique {@code DatePicker} popup associated
- * with it; thus, if a single {@code DatePickerCell} is used as the cell for a
+ * Each {@link DatePickerCell} has a unique {@link DatePicker} popup associated
+ * with it; thus, if a single {@link DatePickerCell} is used as the cell for a
  * column in a table, only one entry in that column will be editable at a given
  * time.
  * </p>

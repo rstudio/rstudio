@@ -63,6 +63,9 @@ public abstract class DefaultSelectionModel<T> extends AbstractSelectionModel<T>
   /**
    * Returns true if the given object should be selected by default. Subclasses
    * implement this method in order to define the default selection behavior.
+   * 
+   * @param object an object of this {@link SelectionModel}'s type
+   * @return true if the object should be selected by default
    */
   public abstract boolean isDefaultSelected(T object);
 

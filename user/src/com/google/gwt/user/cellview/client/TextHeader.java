@@ -25,7 +25,9 @@ public class TextHeader extends Header<String> {
   private String text;
 
   /**
-   * Construct a new TextColumn.
+   * Construct a new TextHeader.
+   *
+   * @param text the header text as a String
    */
   public TextHeader(String text) {
     super(new TextCell());

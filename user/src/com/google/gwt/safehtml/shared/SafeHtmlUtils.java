@@ -25,6 +25,9 @@ public final class SafeHtmlUtils {
   private static final String HTML_ENTITY_REGEX =
       "[a-z]+|#[0-9]+|#x[0-9a-fA-F]+";
 
+  /**
+   * An empty String.
+   */
   public static final SafeHtml EMPTY_SAFE_HTML = new SafeHtmlString("");
 
   private static final RegExp AMP_RE = RegExp.compile("&", "g");
@@ -34,8 +37,8 @@ public final class SafeHtmlUtils {
   private static final RegExp QUOT_RE = RegExp.compile("\"", "g");
 
   /**
-   * Returns a SafeHtml constructed from a safe string, i.e. without escaping
-   * the string.
+   * Returns a SafeHtml constructed from a safe string, i.e., without
+   * escaping the string.
    *
    * <p>
    * <b>Important</b>: For this method to be able to honor the {@link SafeHtml}
@@ -47,10 +50,10 @@ public final class SafeHtmlUtils {
    *
    * <li>The value of the argument must end in "inner HTML" context and not
    * contain incomplete HTML tags. I.e., the following is not a correct use of
-   * this method, because the {@code <a>} tag is incomplete:
+   * this method, because the {@code &lt;a&gt;} tag is incomplete:
    *
    * <pre class="code">
-   * {@code shb.appendConstantHtml("<a href='").append(url)}</pre>
+   * {@code shb.appendConstantHtml("&lt;a href='").append(url)}</pre>
    *
    * </ol>
    *
@@ -78,16 +81,22 @@ public final class SafeHtmlUtils {
   }
 
   /**
-   * Returns a SafeHtml containing the escaped string.
+   * Returns a {@link SafeHtml} containing the escaped string.
+   *
+   * @param s the input String
+   * @return a SafeHtml instance
    */
   public static SafeHtml fromString(String s) {
     return new SafeHtmlString(htmlEscape(s));
   }
 
   /**
-   * Returns a SafeHtml constructed from a trusted string, i.e. without escaping
-   * the string. No checks are performed. The calling code should be carefully
-   * reviewed to ensure the argument meets the SafeHtml contract.
+   * Returns a {@link SafeHtml} constructed from a trusted string, i.e., without
+   * escaping the string. No checks are performed. The calling code should be
+   * carefully reviewed to ensure the argument meets the SafeHtml contract.
+   *
+   * @param s the input String
+   * @return a SafeHtml instance
    */
   public static SafeHtml fromTrustedString(String s) {
     return new SafeHtmlString(s);
@@ -96,7 +105,7 @@ public final class SafeHtmlUtils {
   /**
    * HTML-escapes a string.
    *
-   *  Note: The following variants of this function were profiled on FF36,
+   * Note: The following variants of this function were profiled on FF36,
    * Chrome6, IE8:
    * #1) for each case, check indexOf, then use s.replace(regex, string)
    * #2) for each case, check indexOf, then use s.replaceAll()

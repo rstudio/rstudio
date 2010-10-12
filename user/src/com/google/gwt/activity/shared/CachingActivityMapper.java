@@ -28,6 +28,11 @@ public class CachingActivityMapper implements ActivityMapper {
   private Place lastPlace;
   private Activity lastActivity;
 
+  /**
+   * Constructs a CachingActivityMapper object.
+   *
+   * @param wrapped an ActivityMapper object
+   */
   public CachingActivityMapper(ActivityMapper wrapped) {
     this.wrapped = wrapped;
   }

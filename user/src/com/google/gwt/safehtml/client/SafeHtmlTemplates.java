@@ -28,11 +28,13 @@ import java.lang.annotation.Target;
  * <p>Example usage:
  * <pre>
  *   public interface MyTemplate extends SafeHtmlTemplates {
- *     &#064;Template("<span class=\"{3}\">{0}: <a href=\"{1}\">{2}</a></span>")
+ *     &#064;Template("&lt;span class=\"{3}\"&gt;{0}: &lt;a href=\"{1}\"&gt;{2}&lt;/a&gt;&lt;/span&gt;")
  *     SafeHtml messageWithLink(SafeHtml message, String url, String linkText,
  *       String style);
  *   }
+ *
  *   private static final MyTemplate TEMPLATE = GWT.create(MyTemplate.class);
+ *
  *   public void useTemplate(...) {
  *     SafeHtml message;
  *     String url;
@@ -44,12 +46,12 @@ import java.lang.annotation.Target;
  *   }
  * </pre>
  * 
- * Instantiating a SafeHtmlTemplates interface with GWT.create() returns an
- * instance of an implementation that is generated at compile time. The code
- * generator parses the value of each template method's @Template annotation as 
- * a (X)HTML template, with template variables denoted by curly-brace 
- * placeholders that refer by index to the corresponding template method 
- * parameter.
+ * Instantiating a SafeHtmlTemplates interface with {@code GWT.create()} returns
+ * an instance of an implementation that is generated at compile time. The code
+ * generator parses the value of each template method's {@code @Template}
+ * annotation as a (X)HTML template, with template variables denoted by
+ * curly-brace placeholders that refer by index to the corresponding template
+ * method parameter.
  */
 public interface SafeHtmlTemplates {
 

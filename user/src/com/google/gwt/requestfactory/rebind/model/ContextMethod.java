@@ -69,7 +69,7 @@ public class ContextMethod {
   }
 
   /**
-   * The qualified source name of the RequestContext sub-interface (i.e. the
+   * The qualified source name of the RequestContext sub-interface (i.e., the
    * return type of the method declaration).
    */
   public String getImplementedInterfaceQualifiedSourceName() {

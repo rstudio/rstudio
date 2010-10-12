@@ -444,6 +444,8 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
    * Creates a list model that wraps the given list. Changes to the
    * wrapped list must be made via this model in order to be correctly applied
    * to displays.
+   * 
+   * @param listToWrap the List to be wrapped
    */
   public ListDataProvider(List<T> listToWrap) {
     this(listToWrap, null);
@@ -463,7 +465,8 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
    * Creates a list model that wraps the given list. Changes to the
    * wrapped list must be made via this model in order to be correctly applied
    * to displays.
-   *
+   * 
+   * @param listToWrap the List to be wrapped
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
    *        object should act as its own key
    */
@@ -489,6 +492,8 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
    * in the model.
    *
    * @return the list
+   *
+   * @see #setList(List)
    */
   public List<T> getList() {
     return listWrapper;
@@ -505,6 +510,8 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
    * Replace this model's list.
    *
    * @param listToWrap the model's new list
+   *
+   * @see #getList()
    */
   public void setList(List<T> listToWrap) {
     listWrapper = new ListWrapper(listToWrap);

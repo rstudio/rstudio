@@ -46,6 +46,7 @@ public abstract class AbstractPager extends Composite {
    * Get the {@link HasRows} being paged.
    *
    * @return the {@link HasRows}
+   * @see #setDisplay(HasRows)
    */
   public HasRows getDisplay() {
     return display;
@@ -55,6 +56,7 @@ public abstract class AbstractPager extends Composite {
    * Get the page size.
    *
    * @return the page size, or -1 if the display is not set
+   * @see #setPageSize(int)
    */
   public int getPageSize() {
     return display == null ? -1 : display.getVisibleRange().getLength();
@@ -64,6 +66,7 @@ public abstract class AbstractPager extends Composite {
    * Get the page start index.
    *
    * @return the page start index, or -1 if the display is not set
+   * @see #setPageStart(int)
    */
   public int getPageStart() {
     return display == null ? -1 : display.getVisibleRange().getStart();
@@ -74,6 +77,7 @@ public abstract class AbstractPager extends Composite {
    * true.
    *
    * @return true if the range is limited to the data size
+   * @see #setRangeLimited(boolean)
    */
   public boolean isRangeLimited() {
     return isRangeLimited;
@@ -85,6 +89,7 @@ public abstract class AbstractPager extends Composite {
    * visible on the page.
    *
    * @param isRangeLimited true to limit the range, false not to
+   * @see #isRangeLimited()
    */
   public void setRangeLimited(boolean isRangeLimited) {
     this.isRangeLimited = isRangeLimited;
@@ -94,6 +99,7 @@ public abstract class AbstractPager extends Composite {
    * Set the {@link HasRows} to be paged.
    *
    * @param display the {@link HasRows}
+   * @see #getDisplay()
    */
   public void setDisplay(HasRows display) {
     // Remove the old handlers.
@@ -150,6 +156,7 @@ public abstract class AbstractPager extends Composite {
    * </p>
    *
    * @return the page index, or -1 if the display is not set
+   * @see #setPage(int)
    */
   protected int getPage() {
     if (display == null) {
@@ -177,6 +184,8 @@ public abstract class AbstractPager extends Composite {
    * Returns true if there is enough data such that a call to
    * {@link #nextPage()} will succeed in moving the starting point of the table
    * forward.
+   *
+   * @return true if there is a next page
    */
   protected boolean hasNextPage() {
     if (display == null) {
@@ -191,6 +200,9 @@ public abstract class AbstractPager extends Composite {
   /**
    * Returns true if there is enough data to display a given number of
    * additional pages.
+   *
+   * @param pages the number of pages to query
+   * @return true if there are {@code pages} next pages
    */
   protected boolean hasNextPages(int pages) {
     if (display == null) {
@@ -203,6 +215,9 @@ public abstract class AbstractPager extends Composite {
   /**
    * Returns true if there is enough data such that the specified page is within
    * range.
+   *
+   * @param index the page index
+   * @return true if the specified page is in range
    */
   protected boolean hasPage(int index) {
     return display == null ? false : getPageSize() * index
@@ -213,6 +228,8 @@ public abstract class AbstractPager extends Composite {
    * Returns true if there is enough data such that a call to
    * {@link #previousPage()} will succeed in moving the starting point of the
    * table backward.
+   *
+   * @return true if there is a previous page
    */
   protected boolean hasPreviousPage() {
     return display == null ? false : getPageStart() > 0
@@ -222,6 +239,9 @@ public abstract class AbstractPager extends Composite {
   /**
    * Returns true if there is enough data to display a given number of previous
    * pages.
+   *
+   * @param pages the number of previous pages to query
+   * @return true if there are {@code pages} previous pages
    */
   protected boolean hasPreviousPages(int pages) {
     if (display == null) {
@@ -277,6 +297,7 @@ public abstract class AbstractPager extends Composite {
    * Go to a specific page.
    *
    * @param index the page index
+   * @see #getPage()
    */
   protected void setPage(int index) {
     if (display != null
@@ -293,6 +314,7 @@ public abstract class AbstractPager extends Composite {
    * Set the page size of the display.
    *
    * @param pageSize the new page size
+   * @see #getPageSize()
    */
   protected void setPageSize(int pageSize) {
     if (display != null) {
@@ -310,6 +332,7 @@ public abstract class AbstractPager extends Composite {
    * Set the page start index.
    *
    * @param index the index
+   * @see #getPageStart()
    */
   protected void setPageStart(int index) {
     if (display != null) {

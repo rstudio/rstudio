@@ -27,5 +27,10 @@ import com.google.gwt.place.shared.Place;
  * an {@link ActivityManager}.
  */
 public interface ActivityMapper {
+  /**
+   * Returns the activity to run for the given {@link Place}.
+   *
+   * @param place a Place object
+   */
   Activity getActivity(Place place);
 }

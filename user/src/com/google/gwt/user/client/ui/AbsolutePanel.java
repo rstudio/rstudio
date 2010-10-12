@@ -228,8 +228,8 @@ public class AbsolutePanel extends ComplexPanel implements
   }
 
   /**
-   * Verify that the given widget is not statically positioned on the page, i.e.
-   * relative to the document window, unless the widget is in fact directly
+   * Verify that the given widget is not statically positioned on the page
+   * (relative to the document window), unless the widget is in fact directly
    * attached to the document BODY. Note that the current use of this method is
    * not comprehensive, since we can only verify the offsetParent if both parent
    * (AbsolutePanel) and child widget are both visible and attached to the DOM

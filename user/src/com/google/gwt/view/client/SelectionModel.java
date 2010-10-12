@@ -75,7 +75,10 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
     }
 
     /**
-     * Returns a ProvidesKey instance that simply returns the input data item.
+     * Returns a {@link ProvidesKey} instance that simply returns the input data
+     * item.
+     *
+     * @return the key provider, which may be null
      */
     public ProvidesKey<T> getKeyProvider() {
       return keyProvider;
@@ -93,6 +96,8 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
 
     /**
      * Return true if the next scheduled event should be canceled.
+     *
+     * @return true if the event is canceled
      */
     protected boolean isEventCancelled() {
       return isEventCancelled;
@@ -100,6 +105,8 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
 
     /**
      * Return true if an event is scheduled to be fired.
+     *
+     * @return true if the event is scheduled
      */
     protected boolean isEventScheduled() {
       return isEventScheduled;
@@ -128,6 +135,8 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
 
     /**
      * Set whether the next scheduled event should be canceled.
+     * 
+     * @param isEventCancelled if true, cancel the event
      */
     protected void setEventCancelled(boolean isEventCancelled) {
       this.isEventCancelled = isEventCancelled;
@@ -135,6 +144,8 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
 
     /**
      * Set whether an event is scheduled to be fired.
+     * 
+     * @param isEventScheduled if true, schedule the event
      */
     protected void setEventScheduled(boolean isEventScheduled) {
       this.isEventScheduled = isEventScheduled;

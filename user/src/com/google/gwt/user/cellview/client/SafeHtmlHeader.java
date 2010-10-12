@@ -27,6 +27,8 @@ public class SafeHtmlHeader extends Header<SafeHtml> {
 
   /**
    * Construct a Header with a given {@link SafeHtml} text value.
+   *
+   * @param text the header text, as safe HTML
    */
   public SafeHtmlHeader(SafeHtml text) {
     super(new SafeHtmlCell());

@@ -51,6 +51,8 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
 
   /**
    * Gets the currently-selected object.
+   *
+   * @return the selected object
    */
   public T getSelectedObject() {
     resolveChanges();

@@ -227,8 +227,8 @@ class BitLevel {
   }
 
   /**
-   * Abstractly shifts left an array of integers in little endian (i.e. shift it
-   * right). Total shift distance in bits is intCount * 32 + count
+   * Abstractly shifts left an array of integers in little endian (i.e.,
+   * shift it right). Total shift distance in bits is intCount * 32 + count
    * 
    * @param result the destination array
    * @param source the source array

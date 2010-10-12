@@ -196,7 +196,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
    * setDisplay(null) to get it to deregister from the event bus, so that it can
    * be garbage collected.
    *
-   * @param display
+   * @param display an instance of AcceptsOneWidget
    */
   public void setDisplay(AcceptsOneWidget display) {
     boolean wasActive = (null != this.display);

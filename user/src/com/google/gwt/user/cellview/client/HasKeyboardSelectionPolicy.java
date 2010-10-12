@@ -44,11 +44,17 @@ public interface HasKeyboardSelectionPolicy {
 
   /**
    * Get the {@link KeyboardSelectionPolicy}.
+   *
+   * @return the selection policy
+   * @see #setKeyboardSelectionPolicy(KeyboardSelectionPolicy)
    */
   KeyboardSelectionPolicy getKeyboardSelectionPolicy();
 
   /**
    * Set the {@link KeyboardSelectionPolicy}.
+   *
+   * @param policy the selection policy
+   * @see #getKeyboardSelectionPolicy()
    */
   void setKeyboardSelectionPolicy(KeyboardSelectionPolicy policy);
 }

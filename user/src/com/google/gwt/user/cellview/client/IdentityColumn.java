@@ -27,6 +27,8 @@ public class IdentityColumn<T> extends Column<T, T> {
 
   /**
    * Construct a new IdentityColumn with a given {@link Cell}.
+   * 
+   * @param cell the {@link Cell} responsible for rendering items in the column
    */
   public IdentityColumn(Cell<T> cell) {
     super(cell);
@@ -34,6 +36,8 @@ public class IdentityColumn<T> extends Column<T, T> {
 
   /**
    * Return the passed-in object.
+   *
+   * @param object the object to return
    */
   @Override
   public T getValue(T object) {

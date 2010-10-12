@@ -273,7 +273,9 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   /**
    * Constructs an {@link AbstractHasData} with the given page size.
    *
+   * @param elem the parent {@link Element}
    * @param pageSize the page size
+   * @param keyProvider the key provider, or null
    */
   public AbstractHasData(Element elem, final int pageSize,
       final ProvidesKey<T> keyProvider) {
@@ -304,6 +306,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    * Get the access key.
    *
    * @return the access key, or -1 if not set
+   * @see #setAccessKey(char)
    */
   public char getAccessKey() {
     return accessKey;
@@ -322,7 +325,9 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   }
 
   /**
-   * Get the row values that the widget is currently displaying.
+   * Return the row values that the widget is currently displaying.
+   * 
+   * @return a List of displayed items
    */
   public List<T> getDisplayedItems() {
     return new ArrayList<T>(presenter.getRowData());
@@ -342,7 +347,11 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
   /**
    * Return the range size.
+   * 
+   * @return the size of the range as an int
+   *
    * @see #getVisibleRange()
+   * @see #setPageSize(int)
    */
   public final int getPageSize() {
     return getVisibleRange().getLength();
@@ -350,7 +359,11 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
   /**
    * Return the range start.
+   *
+   * @return the start of the range as an int
+   *
    * @see #getVisibleRange()
+   * @see #setPageStart(int)
    */
   public final int getPageStart() {
     return getVisibleRange().getStart();
@@ -461,6 +474,11 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     presenter.redraw();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @see #getAccessKey()
+   */
   public void setAccessKey(char key) {
     this.accessKey = key;
     setKeyboardSelected(getKeyboardSelectedRow(), true, false);
@@ -490,6 +508,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    *
    * @param pageSize the page size
    * @see #setVisibleRange(Range)
+   * @see #getPageSize()
    */
   public final void setPageSize(int pageSize) {
     setVisibleRange(getPageStart(), pageSize);
@@ -502,6 +521,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    * @param pageStart the index of the row that should appear at the start of
    *          the page
    * @see #setVisibleRange(Range)
+   * @see #getPageStart()
    */
   public final void setPageStart(int pageStart) {
     setVisibleRange(pageStart, getPageSize());
@@ -586,6 +606,8 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
   /**
    * Return the element that holds the rendered cells.
+   * 
+   * @return the container {@link Element}
    */
   protected abstract Element getChildContainer();
 

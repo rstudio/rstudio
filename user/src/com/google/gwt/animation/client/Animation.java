@@ -198,10 +198,12 @@ public abstract class Animation {
   /**
    * Called when the animation should be updated.
    * 
-   * The value of progress is between 0.0 and 1.0 inclusively (unless you
+   * The value of progress is between 0.0 and 1.0 (inclusive) (unless you
    * override the {@link #interpolate(double)} method to provide a wider range
    * of values). You can override {@link #onStart()} and {@link #onComplete()}
    * to perform setup and tear down procedures.
+   * 
+   * @param progress a double, normally between 0.0 and 1.0 (inclusive)
    */
   protected abstract void onUpdate(double progress);
 

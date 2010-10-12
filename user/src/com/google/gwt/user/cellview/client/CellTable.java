@@ -581,6 +581,8 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Adds a column to the table.
+   *
+   * @param col the column to be added
    */
   public void addColumn(Column<T, ?> col) {
     addColumn(col, (Header<?>) null, (Header<?>) null);
@@ -588,6 +590,9 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Adds a column to the table with an associated header.
+   *
+   * @param col the column to be added
+   * @param header the associated {@link Header}
    */
   public void addColumn(Column<T, ?> col, Header<?> header) {
     addColumn(col, header, null);
@@ -595,6 +600,10 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Adds a column to the table with an associated header and footer.
+   *
+   * @param col the column to be added
+   * @param header the associated {@link Header}
+   * @param footer the associated footer (as a {@link Header} object)
    */
   public void addColumn(Column<T, ?> col, Header<?> header, Header<?> footer) {
     headers.add(header);
@@ -637,13 +646,19 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Adds a column to the table with an associated String header.
+   *
+   * @param col the column to be added
+   * @param headerString the associated header text, as a String
    */
   public void addColumn(Column<T, ?> col, String headerString) {
     addColumn(col, new TextHeader(headerString), null);
   }
 
   /**
-   * Adds a column to the table with an associated SafeHtml header.
+   * Adds a column to the table with an associated {@link SafeHtml} header.
+   * 
+   * @param col the column to be added
+   * @param headerHtml the associated header text, as safe HTML
    */
   public void addColumn(Column<T, ?> col, SafeHtml headerHtml) {
     addColumn(col, new SafeHtmlHeader(headerHtml), null);
@@ -651,6 +666,10 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Adds a column to the table with an associated String header and footer.
+   *
+   * @param col the column to be added
+   * @param headerString the associated header text, as a String
+   * @param footerString the associated footer text, as a String
    */
   public void addColumn(Column<T, ?> col, String headerString,
       String footerString) {
@@ -658,14 +677,19 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Adds a column to the table with an associated SafeHtml header and footer.
+   * Adds a column to the table with an associated {@link SafeHtml} header and
+   * footer.
+   * 
+   * @param col the column to be added
+   * @param headerHtml the associated header text, as safe HTML
+   * @param footerHtml the associated footer text, as safe HTML
    */
   public void addColumn(Column<T, ?> col, SafeHtml headerHtml,
       SafeHtml footerHtml) {
     addColumn(col, new SafeHtmlHeader(headerHtml), new SafeHtmlHeader(
         footerHtml));
   }
-
+  
   /**
    * Add a style name to the {@link TableColElement} at the specified index,
    * creating it if necessary.
@@ -679,6 +703,8 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Return the height of the table body.
+   *
+   * @return an int representing the body height
    */
   public int getBodyHeight() {
     int height = getClientHeight(tbody);
@@ -687,6 +713,8 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Return the height of the table header.
+   *
+   * @return an int representing the header height
    */
   public int getHeaderHeight() {
     int height = getClientHeight(thead);
@@ -788,6 +816,8 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Sets the object used to determine how a row is styled; the change will take
    * effect the next time that the table is rendered.
+   *
+   * @param rowStyles a {@link RowStyles} object
    */
   public void setRowStyles(RowStyles<T> rowStyles) {
     this.rowStyles = rowStyles;

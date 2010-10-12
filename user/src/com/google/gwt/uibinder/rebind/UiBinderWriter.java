@@ -947,7 +947,7 @@ public class UiBinderWriter implements Statements {
   }
 
   /**
-   * Parses a package uri (i.e. package://com.google...).
+   * Parses a package uri (e.g., package://com.google...).
    *
    * @throws UnableToCompleteException on bad package name
    */

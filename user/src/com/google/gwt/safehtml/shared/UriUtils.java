@@ -89,7 +89,8 @@ public final class UriUtils {
    * of a URI-valued HTML attribute according to {@link #isSafeUri}, or the URI
    * "{@code #}" otherwise.
    * 
-   * @param uri the URI to sanitize.
+   * @param uri the URI to sanitize
+   * @return a sanitized String
    */
   public static String sanitizeUri(String uri) {
     if (isSafeUri(uri)) {

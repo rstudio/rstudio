@@ -773,6 +773,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
    * Get the default width of new columns.
    *
    * @return the default width in pixels
+   * @see #setDefaultColumnWidth(int)
    */
   public int getDefaultColumnWidth() {
     return defaultWidth;
@@ -782,6 +783,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
    * Get the minimum width of columns.
    *
    * @return the minimum width in pixels
+   * @see #setMinimumColumnWidth(int)
    */
   public int getMinimumColumnWidth() {
     return minWidth;
@@ -819,6 +821,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
    * Set the default width of new columns.
    *
    * @param width the default width in pixels
+   * @see #getDefaultColumnWidth()
    */
   public void setDefaultColumnWidth(int width) {
     this.defaultWidth = width;
@@ -836,6 +839,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
    * Set the minimum width of columns.
    *
    * @param minWidth the minimum width in pixels
+   * @see #getMinimumColumnWidth()
    */
   public void setMinimumColumnWidth(int minWidth) {
     this.minWidth = minWidth;

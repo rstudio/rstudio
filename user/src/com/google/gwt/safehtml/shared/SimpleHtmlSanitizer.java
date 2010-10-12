@@ -15,8 +15,6 @@
  */
 package com.google.gwt.safehtml.shared;
 
-import com.google.gwt.regexp.shared.RegExp;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,11 +23,20 @@ import java.util.Set;
  * A simple and relatively inexpensive HTML sanitizer.
  *
  * <p>
- * This sanitizer accepts the subset of HTML consisting of attribute-free tags
- * in a whitelist (including {@code <b>, <em>, <i>}, etc; for the exact list
- * consult the source), as well as numeric HTML entities and HTML entity
- * references. Any HTML metacharacters that do not appear as part of markup in
- * this subset will be HTML-escaped.
+ * This sanitizer accepts the subset of HTML consisting of the following
+ * attribute-free tags:
+ *
+ * <ul>
+ * <li>{@code &lt;b&gt;}, {@code &lt;em&gt;}, {@code &lt;i&gt;}</li>
+ * <li>{@code &lt;h1&gt;}, {@code &lt;h2&gt;}, {@code &lt;h3&gt;},
+ *     {@code &lt;h4&gt;}, {@code &lt;h5&gt;}, {@code &lt;h6&gt;}</li>
+ * <li>{@code &lt;ul&gt;}, {@code &lt;ol&gt;}. {@code &lt;li&gt;}</li>
+ * <li>{@code &lt;hr&gt;}</li>
+ * </ul>
+ *
+ * as well as numeric HTML entities and HTML entity references. Any HTML
+ * metacharacters that do not appear as part of markup in this subset will be
+ * HTML-escaped.
  */
 public final class SimpleHtmlSanitizer implements HtmlSanitizer {
 
@@ -38,9 +45,12 @@ public final class SimpleHtmlSanitizer implements HtmlSanitizer {
   private static final Set<String> TAG_WHITELIST = new HashSet<String>(
       Arrays.asList("b", "em", "i", "h1", "h2", "h3", "h4", "h5", "h6", "hr",
           "ul", "ol", "li"));
-  
-  private static final RegExp LT_RE = RegExp.compile("<", "g");
 
+  /**
+   * Return a singleton SimpleHtmlSanitizer instance.
+   *
+   * @return the instance
+   */
   public static SimpleHtmlSanitizer getInstance() {
     return INSTANCE;
   }
@@ -53,6 +63,9 @@ public final class SimpleHtmlSanitizer implements HtmlSanitizer {
    * the string is guaranteed to be safe to use (with respect to XSS
    * vulnerabilities) in HTML contexts, and is returned as an instance of the
    * {@link SafeHtml} type.
+   *
+   * @param html the input String
+   * @return a sanitized SafeHtml instance
    */
   public static SafeHtml sanitizeHtml(String html) {
     if (html == null) {
@@ -83,7 +96,7 @@ public final class SimpleHtmlSanitizer implements HtmlSanitizer {
       if (firstSegment) {
         /*
          *  the first segment is never part of a valid tag; note that if the
-         *  input string starts with a tag, we will get an empty segment at the 
+         *  input string starts with a tag, we will get an empty segment at the
          *  beginning.
          */
         firstSegment = false;
@@ -137,8 +150,8 @@ public final class SimpleHtmlSanitizer implements HtmlSanitizer {
    * construction of SafeHtml objects that are not stable in the sense that for
    * a {@code SafeHtml s} it may not be true that {@code s.asString()} equals
    * {@code SimpleHtmlSanitizer.sanitizeHtml(s.asString()).asString()}. While
-   * this is not currently an issue, it might become one and result in 
-   * unexpected behavior if this class were to become serializable and enforce 
+   * this is not currently an issue, it might become one and result in
+   * unexpected behavior if this class were to become serializable and enforce
    * its class invariant upon deserialization.
    */
 

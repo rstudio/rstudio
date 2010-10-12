@@ -30,6 +30,7 @@ public interface TreeNode {
   /**
    * Get the value associated with a child node.
    *
+   * @param index the child index
    * @return the value
    */
   Object getChildValue(int index);

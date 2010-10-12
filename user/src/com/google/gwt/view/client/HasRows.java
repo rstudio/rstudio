@@ -44,6 +44,8 @@ public interface HasRows extends HasHandlers {
    * Get the total count of all rows.
    *
    * @return the total row count
+   *
+   * @see #setRowCount(int)
    */
   int getRowCount();
 
@@ -51,6 +53,9 @@ public interface HasRows extends HasHandlers {
    * Get the range of visible rows.
    *
    * @return the visible range
+   * 
+   * @see #setVisibleRange(Range)
+   * @see #setVisibleRange(int, int)
    */
   Range getVisibleRange();
 
@@ -66,6 +71,8 @@ public interface HasRows extends HasHandlers {
    * {@link #setRowCount(int, boolean)}.
    *
    * @param count the exact total count
+   *
+   * @see #getRowCount()
    */
   void setRowCount(int count);
 
@@ -75,6 +82,7 @@ public interface HasRows extends HasHandlers {
    *
    * @param count the total count
    * @param isExact true if the count is exact, false if an estimate
+   * @see #getRowCount()
    */
   void setRowCount(int count, boolean isExact);
 
@@ -84,6 +92,8 @@ public interface HasRows extends HasHandlers {
    *
    * @param start the start index
    * @param length the length
+   *
+   * @see #getVisibleRange()
    */
   // TODO(jlabanca): Should we include setPageStart/Size as shortcut methods?
   void setVisibleRange(int start, int length);
@@ -92,6 +102,8 @@ public interface HasRows extends HasHandlers {
    * Set the visible range or rows.
    *
    * @param range the visible range
+   *
+   * @see #getVisibleRange()
    */
   void setVisibleRange(Range range);
 }

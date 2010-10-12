@@ -54,11 +54,17 @@ public interface HasKeyboardPagingPolicy extends HasKeyboardSelectionPolicy {
 
   /**
    * Get the {@link KeyboardPagingPolicy}.
+   *
+   * @return the paging policy
+   * @see #setKeyboardPagingPolicy(KeyboardPagingPolicy)
    */
   KeyboardPagingPolicy getKeyboardPagingPolicy();
 
   /**
    * Set the {@link KeyboardPagingPolicy}.
+   *
+   * @param policy the paging policy
+   * @see #getKeyboardPagingPolicy()
    */
   void setKeyboardPagingPolicy(KeyboardPagingPolicy policy);
 }

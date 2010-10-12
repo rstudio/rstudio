@@ -52,6 +52,7 @@ public interface TreeViewModel {
      *          child values
      * @param cell the {@link Cell} used to render the child values update when
      *          the selection changes
+     * @param selectionModel the {@link SelectionModel} used for selection
      * @param valueUpdater the {@link ValueUpdater}
      */
     public DefaultNodeInfo(AbstractDataProvider<T> dataProvider,

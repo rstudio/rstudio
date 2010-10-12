@@ -27,6 +27,11 @@ public class OnlyToBeUsedInGeneratedCodeStringBlessedAsSafeHtml
     implements SafeHtml {
   private String html;
 
+  /**
+   * Constructs an instance from a given HTML String.
+   *
+   * @param html an HTML String that is assumed to be safe
+   */
   public OnlyToBeUsedInGeneratedCodeStringBlessedAsSafeHtml(String html) {
     if (html == null) {
       throw new NullPointerException("html is null");

@@ -63,6 +63,8 @@ public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
   
   /**
    * Construct an AbstractDataProvider with a given key provider.
+   * 
+   * @param keyProvider a {@link ProvidesKey} object
    */
   protected AbstractDataProvider(ProvidesKey<T> keyProvider) {
     this.keyProvider = keyProvider;
@@ -148,6 +150,8 @@ public abstract class AbstractDataProvider<T> implements ProvidesKey<T> {
 
   /**
    * Remove the given data display.
+   * 
+   * @param display a {@link HasData} instance
    * 
    * @throws IllegalStateException if the display is not present
    */

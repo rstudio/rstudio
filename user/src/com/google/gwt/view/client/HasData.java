@@ -28,6 +28,8 @@ public interface HasData<T> extends HasRows {
    * Get the {@link SelectionModel} used by this {@link HasData}.
    *
    * @return the {@link SelectionModel}
+   *
+   * @see #setSelectionModel(SelectionModel)
    */
   SelectionModel<? super T> getSelectionModel();
 
@@ -43,6 +45,8 @@ public interface HasData<T> extends HasRows {
    * Set the {@link SelectionModel} used by this {@link HasData}.
    *
    * @param selectionModel the {@link SelectionModel}
+   *
+   * @see #getSelectionModel()
    */
   void setSelectionModel(SelectionModel<? super T> selectionModel);
 

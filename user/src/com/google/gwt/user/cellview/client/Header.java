@@ -34,6 +34,8 @@ public abstract class Header<H> {
 
   /**
    * Construct a Header with a given {@link Cell}.
+   * 
+   * @param cell the {@link Cell} responsible for rendering items in the header
    */
   public Header(Cell<H> cell) {
     this.cell = cell;
@@ -41,6 +43,8 @@ public abstract class Header<H> {
 
   /**
    * Return the {@link Cell} responsible for rendering items in the header.
+   *
+   * @return the header Cell
    */
   public Cell<H> getCell() {
     return cell;
@@ -48,6 +52,8 @@ public abstract class Header<H> {
 
   /**
    * Return the header value.
+   *
+   * @return the header value
    */
   public abstract H getValue();
 
@@ -73,6 +79,8 @@ public abstract class Header<H> {
 
   /**
    * Set the {@link ValueUpdater}.
+   * 
+   * @param updater the value updater to use
    */
   public void setUpdater(ValueUpdater<H> updater) {
     this.updater = updater;
