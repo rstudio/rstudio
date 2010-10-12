@@ -924,7 +924,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInIntegerListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<Integer> list = Arrays.asList(new Integer[]{1, 2, null});
+    List<Integer> list = Arrays.asList(new Integer[] {1, 2, null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInIntegerList(
         list);
     fooReq.fire(new Receiver<Void>() {
@@ -940,7 +940,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInStringListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<String> list = Arrays.asList(new String[]{"nonnull", "null", null});
+    List<String> list = Arrays.asList(new String[] {"nonnull", "null", null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInStringList(
         list);
     fooReq.fire(new Receiver<Void>() {
@@ -1762,7 +1762,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       @Override
       public void onSuccess(SimpleFooProxy response) {
         assertEquals(2, response.getOneToManyField().size());
-        
+
         // Check lists of proxies returned from a mutable object are mutable
         response = simpleFooRequest().edit(response);
         response.getOneToManyField().get(0).setUserName("canMutate");
@@ -1958,6 +1958,64 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
       }
     });
+  }
+
+  /**
+   * This is analagous to FindServiceTest.testFetchDeletedEntity() only we're
+   * trying to invoke a method on the deleted entity using a stale EntityProxy
+   * reference on the client.
+   */
+  public void testUseOfDeletedEntity() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    SimpleBarRequest context = simpleBarRequest();
+    SimpleBarProxy willDelete = context.create(SimpleBarProxy.class);
+    willDelete.setUserName("A");
+
+    // Persist the newly-created object
+    context.persistAndReturnSelf().using(willDelete).fire(
+        new Receiver<SimpleBarProxy>() {
+          @Override
+          public void onSuccess(SimpleBarProxy response) {
+            assertEquals("A", response.getUserName());
+            // Mark the object as deleted
+            SimpleBarRequest context = simpleBarRequest();
+            response = context.edit(response);
+            response.setFindFails(true);
+            response.setUserName("B");
+            context.persistAndReturnSelf().using(response).fire(
+                new Receiver<SimpleBarProxy>() {
+
+                  @Override
+                  public void onSuccess(SimpleBarProxy response) {
+                    // The last-known state should be returned
+                    assertNotNull(response);
+                    assertEquals("B", response.getUserName());
+
+                    SimpleBarRequest context = simpleBarRequest();
+                    // Ensure attempts to mutate deleted objects don't blow up
+                    response = context.edit(response);
+                    response.setUserName("C");
+
+                    // Attempting to use the now-deleted object should fail
+                    context.persistAndReturnSelf().using(response).fire(
+                        new Receiver<SimpleBarProxy>() {
+                          @Override
+                          public void onFailure(ServerFailure error) {
+                            assertTrue(error.getMessage().contains(
+                                "The requested entity is not available on"
+                                    + " the server"));
+                            finishTestAndReset();
+                          }
+
+                          @Override
+                          public void onSuccess(SimpleBarProxy response) {
+                            fail();
+                          }
+                        });
+                  }
+                });
+          }
+        });
   }
 
   public void testViolationAbsent() {

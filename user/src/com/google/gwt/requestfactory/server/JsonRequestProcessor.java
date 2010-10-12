@@ -237,6 +237,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       JSONObject exceptionResponse = buildExceptionResponse(e.getCause());
       throw new RequestProcessingException("Unexpected exception", e,
           exceptionResponse.toString());
+    } catch (DeadEntityException e) {
+      // This is a normal, if exceptional, condition
+      return buildExceptionResponse(e).toString();
     } catch (Exception e) {
       JSONObject exceptionResponse = buildExceptionResponse(e);
       throw new RequestProcessingException("Unexpected exception", e,
@@ -466,6 +469,10 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Class<?> idType = getIdMethodForEntity(entityType).getReturnType();
     Object entityInstance = getEntityInstance(writeOperation, entityType,
         entityKey.decodedId(idType), idType);
+    if (entityInstance == null) {
+      throw new DeadEntityException(
+          "The requested entity is not available on the server");
+    }
     cachedEntityLookup.put(entityKey, entityInstance);
 
     Iterator<?> keys = recordObject.keys();
