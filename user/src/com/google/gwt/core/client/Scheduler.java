@@ -21,6 +21,8 @@ import com.google.gwt.core.client.impl.SchedulerImpl;
  * This class provides low-level task scheduling primitives. Any exceptions
  * thrown by the command objects executed by the scheduler will be passed to the
  * {@link GWT.UncaughtExceptionHandler} if one is installed.
+ * 
+ * @see com.google.gwt.core.client.testing.StubScheduler
  */
 public abstract class Scheduler {
 

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+
 /**
  * An <code>IncrementalCommand</code> is a command that is broken into one or
  * more substeps, each substep brings the whole command nearer to completion.
@@ -22,8 +24,13 @@ package com.google.gwt.user.client;
  * <code>false</code>.
  * 
  * {@example com.google.gwt.examples.IncrementalCommandExample}
+ * 
+ * @deprecated Replaced by {@link RepeatingCommand} and
+ *             {@link com.google.gwt.core.client.Scheduler#scheduleIncremental
+ *             Scheduler.scheduleIncremental()}
  */
-public interface IncrementalCommand {
+@Deprecated
+public interface IncrementalCommand extends RepeatingCommand {
   /**
    * Causes the <code>IncrementalCommand</code> to execute its encapsulated
    * behavior.

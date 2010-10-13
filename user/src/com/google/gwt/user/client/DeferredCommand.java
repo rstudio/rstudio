@@ -20,7 +20,13 @@ package com.google.gwt.user.client;
  * handlers have completed, using the {@link #addCommand(Command)} or
  * {@link #addCommand(IncrementalCommand)} methods. This is useful when you need
  * to execute code outside of the context of the current stack.
+ * 
+ * @deprecated Replaced by
+ *             {@link com.google.gwt.core.client.Scheduler#scheduleDeferred
+ *             Scheduler.scheduleDeferred()} because the static nature of this
+ *             API prevents effective mocking for JRE-only tests.
  */
+@Deprecated
 public class DeferredCommand {
   private static final CommandExecutor commandExecutor = new CommandExecutor();
 
@@ -80,6 +86,9 @@ public class DeferredCommand {
    * {@link DeferredCommand}s or pauses that are added after this pause will
    * wait for an additional cycle through the system event loop before
    * executing.
+   * 
+   * @deprecated with no replacement because the presence of this method causes
+   *             arbitrary scheduling decisions
    */
   public static void addPause() {
     commandExecutor.submit((Command) null);
