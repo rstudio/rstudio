@@ -52,7 +52,25 @@ import java.util.Set;
 
 /**
  * A tabular view that supports paging and columns.
- *
+ * 
+ * <p>
+ * <h3>Columns</h3>
+ * The {@link Column} class defines the {@link Cell} used to render a column.
+ * Implement {@link Column#getValue(Object)} to retrieve the field value from
+ * the row object that will be rendered in the {@link Cell}.
+ * </p>
+ * 
+ * <p>
+ * <h3>Headers and Footers</h3>
+ * A {@link Header} can be placed at the top (header) or bottom (footer) of the
+ * {@link CellTable}. You can specify a header as text using
+ * {@link #addColumn(Column, String)}, or you can create a custom {@link Header}
+ * that can change with the value of the cells, such as a column total. The
+ * {@link Header} will be rendered every time the row data changes or the table
+ * is redrawn. If you pass the same header instance (==) into adjacent columns,
+ * the header will span the columns.
+ * </p>
+ * 
  * <p>
  * <h3>Examples</h3>
  * <dl>
@@ -269,8 +287,8 @@ public class CellTable<T> extends AbstractHasData<T> {
     @Template("<table><tfoot>{0}</tfoot></table>")
     SafeHtml tfoot(SafeHtml rowHtml);
 
-    @Template("<th class=\"{0}\">{1}</th>")
-    SafeHtml th(String classes, SafeHtml contents);
+    @Template("<th colspan=\"{0}\" class=\"{1}\">{2}</th>")
+    SafeHtml th(int colspan, String classes, SafeHtml contents);
 
     @Template("<table><thead>{0}</thead></table>")
     SafeHtml thead(SafeHtml rowHtml);
@@ -431,11 +449,6 @@ public class CellTable<T> extends AbstractHasData<T> {
   private boolean handlesSelection;
 
   private final List<Header<?>> headers = new ArrayList<Header<?>>();
-
-  /**
-   * Set to true when the footer is stale.
-   */
-  private boolean headersStale;
 
   private TableRowElement hoveringRow;
 
@@ -640,7 +653,6 @@ public class CellTable<T> extends AbstractHasData<T> {
     }
     CellBasedWidgetImpl.get().sinkEvents(this, consumedEvents);
 
-    headersStale = true;
     scheduleRedraw();
   }
 
@@ -778,7 +790,6 @@ public class CellTable<T> extends AbstractHasData<T> {
     headers.remove(index);
     footers.remove(index);
     updateDependsOnSelection();
-    headersStale = true;
 
     // Find an interactive column. Stick with 0 if no column is interactive.
     if (index <= keyboardSelectedColumn) {
@@ -1149,7 +1160,7 @@ public class CellTable<T> extends AbstractHasData<T> {
 
   /**
    * Render the header or footer.
-   *
+   * 
    * @param isFooter true if this is the footer table, false if the header table
    */
   private void createHeaders(boolean isFooter) {
@@ -1162,30 +1173,52 @@ public class CellTable<T> extends AbstractHasData<T> {
     SafeHtmlBuilder sb = new SafeHtmlBuilder();
     sb.appendHtmlConstant("<tr>");
     int columnCount = columns.size();
-    int curColumn = 0;
-    for (Header<?> header : theHeaders) {
+    if (columnCount > 0) {
+      // Setup the first column.
+      Header<?> prevHeader = theHeaders.get(0);
+      int prevColspan = 1;
       StringBuilder classesBuilder = new StringBuilder(className);
-      if (curColumn == 0) {
-        classesBuilder.append(" ");
-        classesBuilder.append(isFooter ? style.cellTableFirstColumnFooter()
-            : style.cellTableFirstColumnHeader());
-      }
-      // The first and last columns could be the same column.
-      if (curColumn == columnCount - 1) {
-        classesBuilder.append(" ");
-        classesBuilder.append(isFooter ? style.cellTableLastColumnFooter()
-            : style.cellTableLastColumnHeader());
+      classesBuilder.append(" ");
+      classesBuilder.append(isFooter ? style.cellTableFirstColumnFooter()
+          : style.cellTableFirstColumnHeader());
+
+      // Loop through all column headers.
+      for (int curColumn = 1; curColumn < columnCount; curColumn++) {
+        Header<?> header = theHeaders.get(curColumn);
+
+        if (header != prevHeader) {
+          // The header has changed, so append the previous one.
+          SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
+          if (prevHeader != null) {
+            hasHeader = true;
+            prevHeader.render(headerBuilder);
+          }
+          sb.append(template.th(prevColspan, classesBuilder.toString(),
+              headerBuilder.toSafeHtml()));
+
+          // Reset the previous header.
+          prevHeader = header;
+          prevColspan = 1;
+          classesBuilder = new StringBuilder(className);
+        } else {
+          // Increment the colspan if the headers == each other.
+          prevColspan++;
+        }
       }
 
+      // Append the last header.
       SafeHtmlBuilder headerBuilder = new SafeHtmlBuilder();
-      if (header != null) {
+      if (prevHeader != null) {
         hasHeader = true;
-        header.render(headerBuilder);
+        prevHeader.render(headerBuilder);
       }
 
-      sb.append(template.th(classesBuilder.toString(),
+      // The first and last columns could be the same column.
+      classesBuilder.append(" ");
+      classesBuilder.append(isFooter ? style.cellTableLastColumnFooter()
+          : style.cellTableLastColumnHeader());
+      sb.append(template.th(prevColspan, classesBuilder.toString(),
           headerBuilder.toSafeHtml()));
-      curColumn++;
     }
     sb.appendHtmlConstant("</tr>");
 
@@ -1197,11 +1230,8 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   private void createHeadersAndFooters() {
-    if (headersStale) {
-      headersStale = false;
-      createHeaders(false);
-      createHeaders(true);
-    }
+    createHeaders(false);
+    createHeaders(true);
   }
 
   private void deselectKeyboardRow(int row) {
