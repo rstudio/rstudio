@@ -9,6 +9,10 @@
       .thirty {
       	width: 30%
       }
+      
+      .table {
+      	width: 100%;
+      }
     </ui:style>
   <g:DockLayoutPanel ui:field="dock" unit="EX">
     <g:north size="6">
@@ -29,7 +33,7 @@
       </g:DockLayoutPanel>
     </g:north>
     <g:center>
-      <cv:CellTable ui:field="table" />
+      <cv:CellTable ui:field="table" stylePrimaryName="{style.table}" />
     </g:center>
   </g:DockLayoutPanel>
 </ui:UiBinder>
