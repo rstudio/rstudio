@@ -112,8 +112,7 @@ public class RequestFactoryServlet extends HttpServlet {
           requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(
               new DefaultSecurityProvider()));
           requestProcessor.setExceptionHandler(exceptionHandler);
-          response.setHeader("Content-Type",
-              RequestFactory.JSON_CONTENT_TYPE_UTF8);
+          response.setContentType(RequestFactory.JSON_CONTENT_TYPE_UTF8);
           writer.print(requestProcessor.decodeAndInvokeRequest(jsonRequestString));
           writer.flush();
         }
