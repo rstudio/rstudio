@@ -46,9 +46,10 @@ public class HostedHtmlVersion {
           "Invalid version number \"" + version
               + "\" passed to external.gwtOnLoad(), expected \""
               + EXPECTED_GWT_ONLOAD_VERSION
-              + "\"; your hosted mode bootstrap file may be out of date; "
+              + "\"; your development mode bootstrap file may be out of date; "
               + "if you are using -noserver try recompiling and redeploying "
-              + "your app");
+              + "your app; if you just switched to a different version of "
+              + "GWT, try clearing your browser cache");
       return false;
     }
     return true;
