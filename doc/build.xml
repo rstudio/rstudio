@@ -23,13 +23,14 @@
   </path>
 
   <path id="USER_CLASS_PATH">
-    <pathelement location="${gwt.user.jar}" />
     <pathelement location="${gwt.dev.jar}" />
-    <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+    <pathelement location="${gwt.user.jar}" />
     <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
+    <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
     <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
-    <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
+    <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />  
     <pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
+    <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
   </path>
 
   <path id="DOC_PATH">
@@ -75,13 +76,16 @@
   </target>
 
   <!-- Really rebuild the javadoc -->
-  <target name="makeJavadoc">	
-    <exec executable="${gwt.root}/doc/find-packages.sh" />
-    <property file="packages.properties" />
+  <target name="makeJavadoc">
+    <java classpathref="DOC_PATH" classname="com.google.doctool.custom.FindPackages" fork="yes" failonerror="true">
+      <arg value="${gwt.root}" />
+    </java>
+    <property file="${gwt.root}/build/out/packages.properties" />
     <java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
       <jvmarg value="-Xmx1024m" />
       <arg value="-quiet" />
       <arg value="-notimestamp" />
+      <arg value="-use" />
       <arg value="-source" />
       <arg value="1.5" />
       <arg value="-windowtitle" />
@@ -97,8 +101,9 @@
       <arg value="-linkoffline" />
       <arg value="http://download.oracle.com/javaee/6/api/" />
       <arg value="validation-package-list" />
-      <arg value="-link" />
+      <arg value="-linkoffline" />
       <arg value="http://www.json.org/javadoc" />
+      <arg value="json-package-list" />
       <arg value="-classpath" />
       <arg pathref="USER_CLASS_PATH" />
       <arg value="-sourcepath" />
@@ -122,8 +127,10 @@
       </targetfiles>
       <sequential>
         <echo>Building JRE emulation EZT</echo>
-        <exec executable="${gwt.root}/doc/find-packages.sh" />
-        <property file="packages.properties" />
+        <java classpathref="DOC_PATH" classname="com.google.doctool.custom.FindPackages" fork="yes" failonerror="true">
+          <arg value="${gwt.root}" />
+        </java>
+        <property file="${gwt.root}/build/out/packages.properties" />
         <java classpathref="DOC_PATH" classname="com.google.doctool.JreDocTool" fork="yes" failonerror="true">
           <arg value="-out" />
           <arg value="${project.build}/emul-ezt/fragment.html" />

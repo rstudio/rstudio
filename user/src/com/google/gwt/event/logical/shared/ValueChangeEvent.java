@@ -33,7 +33,7 @@ public class ValueChangeEvent<T> extends GwtEvent<ValueChangeHandler<T>> {
    * Fires a value change event on all registered handlers in the handler
    * manager. If no such handlers exist, this method will do nothing.
    * 
-   * @param <I> the old value type
+   * @param <T> the old value type
    * @param source the source of the handlers
    * @param value the value
    */
