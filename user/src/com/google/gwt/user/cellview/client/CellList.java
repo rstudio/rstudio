@@ -380,6 +380,9 @@ public class CellList<T> extends AbstractHasData<T> {
         // If the event causes us to page, then the index will be out of bounds.
         return;
       }
+
+      // Get the cell parent before doing selection in case the list is redrawn.
+      Element cellParent = getCellParent(target);
       T value = getDisplayedItem(indexOnPage);
       if (isMouseDown && !cell.handlesSelection()) {
         doSelection(event, value, indexOnPage);
@@ -392,7 +395,7 @@ public class CellList<T> extends AbstractHasData<T> {
       }
 
       // Fire the event to the cell if the list has not been refreshed.
-      fireEventToCell(event, getCellParent(target), value);
+      fireEventToCell(event, cellParent, value);
     }
   }
 

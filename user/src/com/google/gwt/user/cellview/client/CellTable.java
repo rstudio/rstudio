@@ -935,7 +935,8 @@ public class CellTable<T> extends AbstractHasData<T> {
       boolean isMouseDown = "mousedown".equals(eventType);
       int row = tr.getSectionRowIndex();
       if ("mouseover".equals(eventType)) {
-        if (hoveringRow != null) {
+        // Unstyle the old row if it is still part of the table.
+        if (hoveringRow != null && tbody.isOrHasChild(hoveringRow)) {
           setRowStyleName(hoveringRow, style.cellTableHoveredRow(),
               style.cellTableHoveredRowCell(), false);
         }

@@ -101,14 +101,16 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     /**
      * The background used for open items.
      */
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
+    // Use RepeatStyle.BOTH to ensure that we do not bundle the image.
+    @ImageOptions(repeatStyle = RepeatStyle.Both, flipRtl = true)
     ImageResource cellBrowserOpenBackground();
 
     /**
      * The background used for selected items.
      */
+    // Use RepeatStyle.BOTH to ensure that we do not bundle the image.
     @Source("cellTreeSelectedBackground.png")
-    @ImageOptions(repeatStyle = RepeatStyle.Horizontal, flipRtl = true)
+    @ImageOptions(repeatStyle = RepeatStyle.Both, flipRtl = true)
     ImageResource cellBrowserSelectedBackground();
 
     /**

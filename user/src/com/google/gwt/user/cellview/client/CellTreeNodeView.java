@@ -974,6 +974,9 @@ class CellTreeNodeView<T> extends UIObject {
     }
 
     // Forward the event to the cell.
+    if (!cellParent.isOrHasChild(Element.as(event.getEventTarget()))) {
+      return;
+    }
     Set<String> consumedEvents = parentCell.getConsumedEvents();
     if (consumedEvents != null && consumedEvents.contains(eventType)) {
       boolean cellWasEditing = parentCell.isEditing(cellParent, value, key);
@@ -1004,6 +1007,17 @@ class CellTreeNodeView<T> extends UIObject {
    */
   protected Element getImageElement() {
     return getImageElement(getElement());
+  }
+
+  /**
+   * Returns the element that selection styles are applied to. The element
+   * includes the open/close image and the rendered value and spans the width of
+   * the tree.
+   * 
+   * @return the selection element
+   */
+  protected Element getSelectionElement() {
+    return getSelectionElement(getElement());
   }
 
   /**
@@ -1039,7 +1053,7 @@ class CellTreeNodeView<T> extends UIObject {
       animationFrame = Document.get().createDivElement();
       animationFrame.getStyle().setPosition(Position.RELATIVE);
       animationFrame.getStyle().setOverflow(Overflow.HIDDEN);
-      animationFrame.setId("animFrame");
+      animationFrame.getStyle().setDisplay(Display.NONE);
       getElement().appendChild(animationFrame);
     }
     return animationFrame;

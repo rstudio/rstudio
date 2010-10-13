@@ -40,6 +40,7 @@
 @sprite .cellBrowserSelectedItem {
   gwt-image: 'cellBrowserSelectedBackground';
   background-color: #628cd5;
+  background-repeat: repeat-x;
   color: white;
   height: auto;
   overflow: hidden;
@@ -48,6 +49,7 @@
 @sprite .cellBrowserOpenItem {
   gwt-image: 'cellBrowserOpenBackground';
   background-color: #7b7b7b;
+  background-repeat: repeat-x;
   color: white;
   height: auto;
   overflow: hidden;
