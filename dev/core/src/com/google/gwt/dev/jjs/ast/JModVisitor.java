@@ -29,7 +29,7 @@ public class JModVisitor extends JVisitor {
    * Context for traversing a mutable list.
    */
   @SuppressWarnings("unchecked")
-  private class ListContext<T extends JNode> extends VisitorContext {
+  private class ListContext<T extends JNode> implements Context {
     int index;
     final List<T> list;
     boolean removed;
@@ -50,13 +50,13 @@ public class JModVisitor extends JVisitor {
     public void insertAfter(JNode node) {
       checkRemoved();
       list.add(index + 1, (T) node);
-      numMods++;
+      ++numVisitorChanges;
     }
 
     public void insertBefore(JNode node) {
       checkRemoved();
       list.add(index++, (T) node);
-      numMods++;
+      ++numVisitorChanges;
     }
 
     public boolean isLvalue() {
@@ -67,7 +67,7 @@ public class JModVisitor extends JVisitor {
       checkState();
       list.remove(index--);
       removed = true;
-      numMods++;
+      ++numVisitorChanges;
     }
 
     public void replaceMe(JNode node) {
@@ -75,7 +75,7 @@ public class JModVisitor extends JVisitor {
       checkReplacement(list.get(index), node);
       list.set(index, (T) node);
       replaced = true;
-      numMods++;
+      ++numVisitorChanges;
     }
 
     /**
@@ -87,7 +87,6 @@ public class JModVisitor extends JVisitor {
           removed = replaced = false;
           list.get(index).traverse(JModVisitor.this, this);
         }
-        JModVisitor.this.numVisitorChanges += numMods;
         return list;
       } catch (Throwable e) {
         throw translateException(list.get(index), e);
@@ -112,7 +111,7 @@ public class JModVisitor extends JVisitor {
    * Context for traversing an immutable list.
    */
   @SuppressWarnings("unchecked")
-  private class ListContextImmutable<T extends JNode> extends VisitorContext {
+  private class ListContextImmutable<T extends JNode> implements Context {
     int index;
     List<T> list;
     boolean removed;
@@ -133,13 +132,13 @@ public class JModVisitor extends JVisitor {
     public void insertAfter(JNode node) {
       checkRemoved();
       list = Lists.add(list, index + 1, (T) node);
-      numMods++;
+      ++numVisitorChanges;
     }
 
     public void insertBefore(JNode node) {
       checkRemoved();
       list = Lists.add(list, index++, (T) node);
-      numMods++;
+      ++numVisitorChanges;
     }
 
     public boolean isLvalue() {
@@ -150,7 +149,7 @@ public class JModVisitor extends JVisitor {
       checkState();
       list = Lists.remove(list, index--);
       removed = true;
-      numMods++;
+      ++numVisitorChanges;
     }
 
     public void replaceMe(JNode node) {
@@ -158,7 +157,7 @@ public class JModVisitor extends JVisitor {
       checkReplacement(list.get(index), node);
       list = Lists.set(list, index, (T) node);
       replaced = true;
-      numMods++;
+      ++numVisitorChanges;
     }
 
     /**
@@ -170,7 +169,6 @@ public class JModVisitor extends JVisitor {
           removed = replaced = false;
           list.get(index).traverse(JModVisitor.this, this);
         }
-        numVisitorChanges += numMods;
         return list;
       } catch (Throwable e) {
         throw translateException(list.get(index), e);
@@ -202,7 +200,7 @@ public class JModVisitor extends JVisitor {
     }
   }
 
-  private static class NodeContext extends VisitorContext {
+  private class NodeContext implements Context {
     boolean canRemove;
     JNode node;
     boolean replaced;
@@ -237,7 +235,7 @@ public class JModVisitor extends JVisitor {
       }
 
       this.node = null;
-      numMods++;
+      ++numVisitorChanges;
     }
 
     public void replaceMe(JNode node) {
@@ -247,15 +245,7 @@ public class JModVisitor extends JVisitor {
       checkReplacement(this.node, node);
       this.node = node;
       replaced = true;
-      numMods++;
-    }
-  }
-
-  private abstract static class VisitorContext implements Context {
-    int numMods = 0;
-
-    public int getNumMods() {
-      return numMods;
+      ++numVisitorChanges;
     }
   }
 
@@ -282,7 +272,6 @@ public class JModVisitor extends JVisitor {
     try {
       ctx.node = node;
       traverse(node, ctx);
-      numVisitorChanges += ctx.getNumMods();
       return ctx.node;
     } catch (Throwable e) {
       throw translateException(node, e);
@@ -302,7 +291,6 @@ public class JModVisitor extends JVisitor {
           ctx.replaced = false;
         }
       }
-      numVisitorChanges += ctx.getNumMods();
     } catch (Throwable e) {
       throw translateException(ctx.node, e);
     }
@@ -321,7 +309,6 @@ public class JModVisitor extends JVisitor {
           ctx.replaced = false;
         }
       }
-      numVisitorChanges += ctx.getNumMods();
       return list;
     } catch (Throwable e) {
       throw translateException(ctx.node, e);
@@ -334,7 +321,6 @@ public class JModVisitor extends JVisitor {
     try {
       ctx.node = expr;
       traverse(expr, ctx);
-      numVisitorChanges += ctx.getNumMods();
       return (JExpression) ctx.node;
     } catch (Throwable e) {
       throw translateException(expr, e);
@@ -369,15 +355,7 @@ public class JModVisitor extends JVisitor {
    * Used to determine when the optimization pass can exit.
    */
   protected void madeChanges() {
-    numVisitorChanges++;
-  }
-
-  /**
-   * Call this method to indicate that a visitor has made multiple changes to
-   * the tree. Used to determine when the optimization pass can exit.
-   */
-  protected void madeChanges(int numMods) {
-    numVisitorChanges += numMods;
+    ++numVisitorChanges;
   }
 
   protected void traverse(JNode node, Context context) {

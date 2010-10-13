@@ -77,17 +77,28 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Attempts to remove dead code.
+ * Removes certain kinds of dead code, and simplifies certain expressions. This
+ * pass focuses on intraprocedural optimizations, that is, optimizations that
+ * can be performed inside of a single method body (and usually a single
+ * expression) rather than global transformations. Global optimizations done in
+ * other passes will feed into this, however.
  */
 public class DeadCodeElimination {
   /**
    * Eliminates dead or unreachable code when possible, and makes local
    * simplifications like changing "<code>x || true</code>" to "<code>x</code>".
    * 
+   * This visitor should perform all of its optimizations in a single pass.
+   * Except in rare cases, running this pass multiple times should produce no
+   * changes after the first pass. The only currently known exception to this
+   * rule is in {@link #endVisit(JNewInstance, Context)}, where the target
+   * constructor may be non-empty at the beginning of DCE and become empty
+   * during the run, which potentially unlocks optimizations at call sites.
+   * 
    * TODO: leverage ignoring expression output more to remove intermediary
    * operations in favor of pure side effects.
    * 
-   * TODO(spoon): move more simplifications into methods like
+   * TODO: move more simplifications into methods like
    * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast}, so
    * that more simplifications can be made on a single pass through a tree.
    */
@@ -131,10 +142,10 @@ public class DeadCodeElimination {
       }
       switch (op) {
         case AND:
-          shortCircuitAnd(lhs, rhs, ctx);
+          maybeReplaceMe(x, simplifier.shortCircuitAnd(x, null, lhs, rhs), ctx);
           break;
         case OR:
-          shortCircuitOr(lhs, rhs, ctx);
+          maybeReplaceMe(x, simplifier.shortCircuitOr(x, null, lhs, rhs), ctx);
           break;
         case BIT_XOR:
           simplifyXor(lhs, rhs, ctx);
@@ -251,20 +262,14 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      JExpression updated = simplifier.cast(x, x.getSourceInfo(),
-          x.getCastType(), x.getExpr());
-      if (updated != x) {
-        ctx.replaceMe(updated);
-      }
+      maybeReplaceMe(x, simplifier.cast(x, x.getSourceInfo(), x.getCastType(),
+          x.getExpr()), ctx);
     }
 
     @Override
     public void endVisit(JConditional x, Context ctx) {
-      JExpression updated = simplifier.conditional(x, x.getSourceInfo(),
-          x.getType(), x.getIfTest(), x.getThenExpr(), x.getElseExpr());
-      if (updated != x) {
-        ctx.replaceMe(updated);
-      }
+      maybeReplaceMe(x, simplifier.conditional(x, x.getSourceInfo(),
+          x.getType(), x.getIfTest(), x.getThenExpr(), x.getElseExpr()), ctx);
     }
 
     @Override
@@ -286,8 +291,7 @@ public class DeadCodeElimination {
         if (!booleanLiteral.getValue()) {
           if (Simplifier.isEmpty(x.getBody())) {
             ctx.removeMe();
-          } else {
-            // Unless it contains break/continue statements
+          } else { // Unless it contains break/continue statements
             FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
             visitor.accept(x.getBody());
             if (!visitor.hasBreakContinueStatements()) {
@@ -335,7 +339,7 @@ public class DeadCodeElimination {
         multi.exprs.add(literal);
       }
 
-      ctx.replaceMe(accept(multi));
+      ctx.replaceMe(this.accept(multi));
     }
 
     /**
@@ -351,7 +355,7 @@ public class DeadCodeElimination {
         if (!booleanLiteral.getValue()) {
           JBlock block = new JBlock(x.getSourceInfo());
           block.addStmts(x.getInitializers());
-          ctx.replaceMe(block);
+          replaceMe(block, ctx);
         }
       }
     }
@@ -361,11 +365,8 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JIfStatement x, Context ctx) {
-      JStatement updated = simplifier.ifStatement(x, x.getSourceInfo(),
-          x.getIfExpr(), x.getThenStmt(), x.getElseStmt(), currentMethod);
-      if (updated != x) {
-        ctx.replaceMe(updated);
-      }
+      maybeReplaceMe(x, simplifier.ifStatement(x, x.getSourceInfo(),
+          x.getIfExpr(), x.getThenStmt(), x.getElseStmt(), currentMethod), ctx);
     }
 
     @Override
@@ -425,10 +426,16 @@ public class DeadCodeElimination {
     @Override
     public void endVisit(JMultiExpression x, Context ctx) {
       List<JExpression> exprs = x.exprs;
-      if (exprs.size() > 1) {
-        // Remove the non-final children we previously added.
-        List<JExpression> nonFinalChildren = exprs.subList(0, exprs.size() - 1);
-        ignoringExpressionOutput.removeAll(nonFinalChildren);
+      if (exprs.size() > 0) {
+        if (ignoringExpressionOutput.contains(x)) {
+          // Remove all my children we previously added.
+          ignoringExpressionOutput.removeAll(exprs);
+        } else {
+          // Remove the non-final children we previously added.
+          List<JExpression> nonFinalChildren = exprs.subList(0,
+              exprs.size() - 1);
+          ignoringExpressionOutput.removeAll(nonFinalChildren);
+        }
       }
 
       for (int i = 0; i < numRemovableExpressions(x); ++i) {
@@ -451,25 +458,31 @@ public class DeadCodeElimination {
       }
 
       if (x.exprs.size() == 1) {
-        ctx.replaceMe(x.exprs.get(0));
+        maybeReplaceMe(x, x.exprs.get(0), ctx);
       }
     }
 
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
       super.endVisit(x, ctx);
-      if (!ignoringExpressionOutput.contains(x) || !x.getTarget().isEmpty()) {
-        return;
+      /*
+       * If the result of a new operation is ignored, we can remove it, provided
+       * / it has no side effects.
+       */
+      if (ignoringExpressionOutput.contains(x)) {
+        if (!x.getTarget().isEmpty()) {
+          return;
+        }
+        JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
+        multi.exprs.addAll(x.getArgs());
+        if (x.hasClinit()) {
+          multi.exprs.add(createClinitCall(x.getSourceInfo(),
+              x.getTarget().getEnclosingType()));
+        }
+        ignoringExpressionOutput.add(multi);
+        ctx.replaceMe(this.accept(multi));
+        ignoringExpressionOutput.remove(multi);
       }
-      // Replace the new operation with a multi.
-      JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
-      multi.exprs.addAll(x.getArgs());
-      if (x.hasClinit()) {
-        multi.exprs.add(createClinitCall(x.getSourceInfo(),
-            x.getTarget().getEnclosingType()));
-      }
-
-      ctx.replaceMe(accept(multi));
     }
 
     @Override
@@ -510,16 +523,10 @@ public class DeadCodeElimination {
         }
       }
       if (x.getOp() == JUnaryOperator.NOT) {
-        JExpression updated = simplifier.not(x, x.getSourceInfo(), x.getArg());
-        if (updated != x) {
-          ctx.replaceMe(updated);
-        }
+        maybeReplaceMe(x, simplifier.not(x, x.getSourceInfo(), x.getArg()), ctx);
         return;
       } else if (x.getOp() == JUnaryOperator.NEG) {
-        JExpression updated = simplifyNegate(x, x.getArg());
-        if (updated != x) {
-          ctx.replaceMe(updated);
-        }
+        maybeReplaceMe(x, simplifyNegate(x, x.getArg()), ctx);
       }
     }
 
@@ -573,13 +580,13 @@ public class DeadCodeElimination {
           removeMe(x, ctx);
         } else {
           // replace the try statement with just the contents of the finally
-          ctx.replaceMe(x.getFinallyBlock());
+          replaceMe(x.getFinallyBlock(), ctx);
         }
       } else if (noCatch && noFinally) {
         // 3) Hoist up try statements with no catches and an empty finally.
         // If there's no catch or finally, there's no point in this even being
         // a try statement, replace myself with the try block
-        ctx.replaceMe(x.getTryBlock());
+        replaceMe(x.getTryBlock(), ctx);
       }
     }
 
@@ -648,8 +655,15 @@ public class DeadCodeElimination {
     public boolean visit(JMultiExpression x, Context ctx) {
       List<JExpression> exprs = x.exprs;
       if (exprs.size() > 0) {
-        List<JExpression> nonFinalChildren = exprs.subList(0, exprs.size() - 1);
-        ignoringExpressionOutput.addAll(nonFinalChildren);
+        if (ignoringExpressionOutput.contains(x)) {
+          // None of my children matter.
+          ignoringExpressionOutput.addAll(exprs);
+        } else {
+          // Only my final child matters.
+          List<JExpression> nonFinalChildren = exprs.subList(0,
+              exprs.size() - 1);
+          ignoringExpressionOutput.addAll(nonFinalChildren);
+        }
       }
       return true;
     }
@@ -1211,6 +1225,21 @@ public class DeadCodeElimination {
       return typeClassMap.get(type);
     }
 
+    /**
+     * Replace me only if the the updated expression is different.
+     */
+    private void maybeReplaceMe(JExpression x, JExpression updated, Context ctx) {
+      if (updated != x) {
+        ctx.replaceMe(updated);
+      }
+    }
+
+    private void maybeReplaceMe(JStatement x, JStatement updated, Context ctx) {
+      if (updated != x) {
+        replaceMe(updated, ctx);
+      }
+    }
+
     private int numRemovableExpressions(JMultiExpression x) {
       if (ignoringExpressionOutput.contains(x)) {
         // The result doesn't matter: all expressions can be removed.
@@ -1279,6 +1308,10 @@ public class DeadCodeElimination {
       }
     }
 
+    /**
+     * Call this instead of directly calling <code>ctx.removeMe()</code> for
+     * Statements.
+     */
     private void removeMe(JStatement stmt, Context ctx) {
       if (ctx.canRemove()) {
         ctx.removeMe();
@@ -1289,62 +1322,16 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Simplify short circuit AND expressions.
      * 
-     * <pre>
-     * if (true && isWhatever()) -> if (isWhatever())
-     * if (false && isWhatever()) -> if (false)
-     * 
-     * if (isWhatever() && true) -> if (isWhatever())
-     * if (isWhatever() && false) -> if (false), unless side effects
-     * </pre>
+     * Call this instead of directly calling <code>ctx.replaceMe()</code> for
+     * Statements.
      */
-    private void shortCircuitAnd(JExpression lhs, JExpression rhs, Context ctx) {
-      if (lhs instanceof JBooleanLiteral) {
-        JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
-        if (booleanLiteral.getValue()) {
-          ctx.replaceMe(rhs);
-        } else {
-          ctx.replaceMe(lhs);
-        }
-
-      } else if (rhs instanceof JBooleanLiteral) {
-        JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
-        if (booleanLiteral.getValue()) {
-          ctx.replaceMe(lhs);
-        } else if (!lhs.hasSideEffects()) {
-          ctx.replaceMe(rhs);
-        }
-      }
-    }
-
-    /**
-     * Simplify short circuit OR expressions.
-     * 
-     * <pre>
-     * if (true || isWhatever()) -> if (true)
-     * if (false || isWhatever()) -> if (isWhatever())
-     * 
-     * if (isWhatever() || false) -> if (isWhatever())
-     * if (isWhatever() || true) -> if (true), unless side effects
-     * </pre>
-     */
-    private void shortCircuitOr(JExpression lhs, JExpression rhs, Context ctx) {
-      if (lhs instanceof JBooleanLiteral) {
-        JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
-        if (booleanLiteral.getValue()) {
-          ctx.replaceMe(lhs);
-        } else {
-          ctx.replaceMe(rhs);
-        }
-
-      } else if (rhs instanceof JBooleanLiteral) {
-        JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
-        if (!booleanLiteral.getValue()) {
-          ctx.replaceMe(lhs);
-        } else if (!lhs.hasSideEffects()) {
-          ctx.replaceMe(rhs);
-        }
+    private void replaceMe(JStatement stmt, Context ctx) {
+      stmt = this.accept(stmt, ctx.canRemove());
+      if (stmt == null) {
+        ctx.removeMe();
+      } else {
+        ctx.replaceMe(stmt);
       }
     }
 
@@ -1666,7 +1653,7 @@ public class DeadCodeElimination {
       JBlock body = x.getBody();
       if (body.getStatements().size() == 0) {
         // Empty switch; just run the switch condition.
-        ctx.replaceMe(x.getExpr().makeStatement());
+        replaceMe(x.getExpr().makeStatement(), ctx);
       } else if (body.getStatements().size() == 2) {
         /*
          * If there are only two statements, we know it's a case statement and
@@ -1707,13 +1694,13 @@ public class DeadCodeElimination {
           block.addStmt(statement);
           JIfStatement ifStatement = new JIfStatement(x.getSourceInfo(),
               compareOperation, block, null);
-          ctx.replaceMe(ifStatement);
+          replaceMe(ifStatement, ctx);
         } else {
           // All we have is a default case; convert to a JBlock.
           JBlock block = new JBlock(x.getSourceInfo());
           block.addStmt(x.getExpr().makeStatement());
           block.addStmt(statement);
-          ctx.replaceMe(block);
+          replaceMe(block, ctx);
         }
       }
     }
@@ -1813,17 +1800,9 @@ public class DeadCodeElimination {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
         "optimizer", NAME);
 
-    // TODO(zundel): see if this loop can be removed and all work done in one
-    // pass of the optimizer to improve performance.
-    while (true) {
-      DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor();
-      deadCodeVisitor.accept(node);
-      stats.recordModified(deadCodeVisitor.getNumMods());
-      if (!deadCodeVisitor.didChange()) {
-        break;
-      }
-    }
-
+    DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor();
+    deadCodeVisitor.accept(node);
+    stats.recordModified(deadCodeVisitor.getNumMods());
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }

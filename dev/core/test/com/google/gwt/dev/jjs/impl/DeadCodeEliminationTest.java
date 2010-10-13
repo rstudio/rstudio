@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
@@ -23,6 +22,11 @@ import com.google.gwt.dev.jjs.ast.JProgram;
  * Tests {@link DeadCodeElimination}.
  */
 public class DeadCodeEliminationTest extends OptimizerTestBase {
+  /*
+   * TODO: this class needs more tests, and more sophisticated cases. Especially
+   * to ensure we converge in a single pass.
+   */
+
   @Override
   public void setUp() throws Exception {
     addSnippetClassDecl("static volatile boolean b;");
@@ -92,7 +96,7 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     optimize("void", "if (b) {i = 1;}").intoString(
         "EntryPoint.b && (EntryPoint.i = 1);");
   }
-  
+
   public void testDoOptimization() throws Exception {
     optimize("void", "do {} while (b);").intoString(
         "do {", 
@@ -121,6 +125,11 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
-    return DeadCodeElimination.exec(program, method).didChange();
+    OptimizerStats result = DeadCodeElimination.exec(program, method);
+    if (result.didChange()) {
+      // Make sure we converge in one pass.
+      assertFalse(DeadCodeElimination.exec(program, method).didChange());
+    }
+    return result.didChange();
   }
 }
