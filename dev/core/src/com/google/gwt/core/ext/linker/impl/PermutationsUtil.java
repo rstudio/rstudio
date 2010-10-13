@@ -66,7 +66,8 @@ public class PermutationsUtil {
    * compilation. A single compilation can have multiple property settings if
    * the compiles for those settings yielded the exact same compiled output.
    */
-  protected SortedMap<PermutationId, List<Map<String, String>>> propMapsByPermutation = null;
+  protected SortedMap<PermutationId, List<Map<String, String>>> propMapsByPermutation =
+      new TreeMap<PermutationId, List<Map<String, String>>>();
 
   /**
    * Uses the internal map to insert JS to select a permutation into the
