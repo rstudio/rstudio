@@ -189,11 +189,7 @@ public class ActivityManagerTest extends TestCase {
     assertNull(asyncActivity2.display);
 
     eventBus.fireEvent(new PlaceChangeEvent(place2));
-    /*
-     * TODO until caching is in place, relying on stopped activities to be good
-     * citizens to reduce flicker. This makes me very nervous.
-     */
-    // assertNull(realDisplay.widget);
+    assertNull(realDisplay.widget);
     assertFalse(asyncActivity1.canceled);
     assertTrue(asyncActivity1.stopped);
     assertFalse(asyncActivity2.stopped);
@@ -353,6 +349,60 @@ public class ActivityManagerTest extends TestCase {
     assertTrue(activity1.stopped);
     assertNotNull(activity2.display);
     assertEquals(0, eventBus.getCount(Event.TYPE));
+  }
+  
+  /**
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=5375
+   */
+  public void testNullDisplayOnPlaceChange() {
+    manager.setDisplay(realDisplay);
+    
+    // Start an activity
+    manager.onPlaceChange(new PlaceChangeEvent(place1));
+    
+    /*
+     * Now we're going to place2. During PlaceChangeEvent dispatch, 
+     * someone kills the manager's display.
+     */
+    manager.setDisplay(null);
+    
+    // Now the place change event reaches the manager
+    manager.onPlaceChange(new PlaceChangeEvent(place2));
+    
+    assertNull(activity2.display);
+    assertTrue(activity1.stopped);
+  }
+  
+  public void testNullDisplayBeforeAsyncStart() {
+    final AsyncActivity asyncActivity1 = new AsyncActivity(new MyView());
+    final AsyncActivity asyncActivity2 = new AsyncActivity(new MyView());
+
+    ActivityMapper map = new ActivityMapper() {
+      public Activity getActivity(Place place) {
+        if (place.equals(place1)) {
+          return asyncActivity1;
+        }
+        if (place.equals(place2)) {
+          return asyncActivity2;
+        }
+
+        return null;
+      }
+    };
+
+    manager = new ActivityManager(map, eventBus);
+    manager.setDisplay(realDisplay);
+    
+    // Start an activity
+    manager.onPlaceChange(new PlaceChangeEvent(place1));
+
+    // Kill the manager
+    manager.setDisplay(null);
+    
+    // The activity is ready to play
+    asyncActivity1.finish();
+    
+    // Ta da, no NPE
   }
 
   public void testRejected() {

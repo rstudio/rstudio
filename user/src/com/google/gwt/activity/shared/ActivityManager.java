@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -49,7 +49,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     public void setWidget(IsWidget view) {
       if (this.activity == ActivityManager.this.currentActivity) {
         startingNext = false;
-        display.setWidget(view);
+        showWidget(view);
       }
     }
   }
@@ -74,7 +74,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
 
   /**
    * Create an ActivityManager. Next call {@link #setDisplay}.
-   *
+   * 
    * @param mapper finds the {@link Activity} for a given
    *          {@link com.google.gwt.place.shared.Place}
    * @param eventBus source of {@link PlaceChangeEvent} and
@@ -89,11 +89,17 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
   /**
    * Deactivate the current activity, find the next one from our ActivityMapper,
    * and start it.
-   *
+   * <p>
+   * The current activity's widget will be hidden immediately, which can cause
+   * flicker if the next activity provides its widget asynchronously. That can
+   * be minimized by decent caching. Perenially slow activities might mitigate
+   * this by providing a widget immediately, with some kind of "loading"
+   * treatment.
+   * 
    * @see com.google.gwt.place.shared.PlaceChangeEvent.Handler#onPlaceChange(PlaceChangeEvent)
    */
   public void onPlaceChange(PlaceChangeEvent event) {
-    Activity nextActivity = mapper.getActivity(event.getNewPlace());
+    Activity nextActivity = getNextActivity(event);
 
     Throwable caughtOnStop = null;
     Throwable caughtOnStart = null;
@@ -113,11 +119,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
       currentActivity = NULL_ACTIVITY;
       startingNext = false;
     } else if (!currentActivity.equals(NULL_ACTIVITY)) {
-      /*
-       * TODO until caching is in place, relying on stopped activities to be
-       * good citizens to reduce flicker. This makes me very nervous.
-       */
-      // display.showActivityWidget(null);
+      showWidget(null);
 
       /*
        * Kill off the activity's handlers, so it doesn't have to worry about
@@ -141,7 +143,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     currentActivity = nextActivity;
 
     if (currentActivity.equals(NULL_ACTIVITY)) {
-      display.setWidget(null);
+      showWidget(null);
       return;
     }
 
@@ -150,7 +152,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     /*
      * Now start the thing. Wrap the actual display with a per-call instance
      * that protects the display from canceled or stopped activities, and which
-     * maintain our startingNext state.
+     * maintains our startingNext state.
      */
     try {
       currentActivity.start(new ProtectedDisplay(currentActivity),
@@ -174,7 +176,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
 
   /**
    * Reject the place change if the current activity is not willing to stop.
-   *
+   * 
    * @see com.google.gwt.place.shared.PlaceChangeRequestEvent.Handler#onPlaceChangeRequest(PlaceChangeRequestEvent)
    */
   public void onPlaceChangeRequest(PlaceChangeRequestEvent event) {
@@ -190,7 +192,7 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
    * If you are disposing of an ActivityManager, it is important to call
    * setDisplay(null) to get it to deregister from the event bus, so that it can
    * be garbage collected.
-   *
+   * 
    * @param display an instance of AcceptsOneWidget
    */
   public void setDisplay(AcceptsOneWidget display) {
@@ -199,6 +201,24 @@ public class ActivityManager implements PlaceChangeEvent.Handler,
     this.display = display;
     if (wasActive != willBeActive) {
       updateHandlers(willBeActive);
+    }
+  }
+
+  private Activity getNextActivity(PlaceChangeEvent event) {
+    if (display == null) {
+      /*
+       * Display may have been nulled during PlaceChangeEvent dispatch. Don't
+       * bother the mapper, just return a null to ensure we shut down the
+       * current activity
+       */
+      return null;
+    }
+    return mapper.getActivity(event.getNewPlace());
+  }
+
+  private void showWidget(IsWidget view) {
+    if (display != null) {
+      display.setWidget(view);
     }
   }
 
