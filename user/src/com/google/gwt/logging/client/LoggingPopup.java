@@ -138,7 +138,7 @@ public class LoggingPopup extends PopupPanel {
     super(false, false);
     VerticalPanel mainPanel = new VerticalPanel();
     mainPanel.setBorderWidth(1);
-    mainPanel.getElement().setAttribute("style", "background-color:white");
+    mainPanel.getElement().getStyle().setBackgroundColor("white");
     
     final HTML titleBar = new HTML("<center><b>Logging</b></center>");
     mainPanel.add(titleBar);
@@ -184,12 +184,12 @@ public class LoggingPopup extends PopupPanel {
   @Override
   public void add(Widget w) {
     logArea.add(w);
+    scrollPanel.setScrollPosition(scrollPanel.getElement().getScrollHeight());
   }
   
   @Override
   public void setWidget(Widget w) {
     logArea.clear();
-    logArea.add(w);
+    add(w);
   }
-
 }
