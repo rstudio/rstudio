@@ -337,6 +337,7 @@ public final class WebAppCreator {
     File srcDir = Utility.getDirectory(outDir, srcFolder, true);
     File warDir = Utility.getDirectory(outDir, warFolder, true);
     File webInfDir = Utility.getDirectory(warDir, "WEB-INF", true);
+    File libDir = Utility.getDirectory(webInfDir, "lib", true);
     File moduleDir = Utility.getDirectory(srcDir, modulePackageName.replace(
         '.', '/'), true);
     File clientDir = Utility.getDirectory(moduleDir, "client", true);
@@ -367,6 +368,19 @@ public final class WebAppCreator {
     replacements.put("@srcFolder", srcFolder);
     replacements.put("@testFolder", testFolder);
     replacements.put("@warFolder", warFolder);
+
+    // Collect the list of server libs to include on the eclipse classpath.
+    StringBuilder serverLibs = new StringBuilder();
+    if (libDir.exists()) {
+      for (File file : libDir.listFiles()) {
+        if (file.getName().toLowerCase().endsWith(".jar")) {
+          serverLibs.append("   <classpathentry kind=\"lib\" path=\"war/WEB-INF/lib/");
+          serverLibs.append(file.getName());
+          serverLibs.append("\"/>\n");
+        }
+      }
+    }
+    replacements.put("@serverClasspathLibs", serverLibs.toString());
 
     String antEclipseRule = "";
     if (noEclipse) {
