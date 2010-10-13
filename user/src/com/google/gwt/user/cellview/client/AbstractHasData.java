@@ -535,7 +535,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     presenter.setRowCount(size, isExact);
   }
 
-  public void setRowData(int start, List<T> values) {
+  public void setRowData(int start, List<? extends T> values) {
     presenter.setRowData(start, values);
   }
 

@@ -492,7 +492,7 @@ class CellTreeNodeView<T> extends UIObject {
       presenter.setRowCount(size, isExact);
     }
 
-    public void setRowData(int start, List<C> values) {
+    public void setRowData(int start, List<? extends C> values) {
       presenter.setRowData(start, values);
     }
 

@@ -81,7 +81,7 @@ public class MockHasData<T> implements HasData<T> {
 
   private final HandlerManager handlerManager = new HandlerManager(this);
   private Range lastRange;
-  private List<T> lastRowData;
+  private List<? extends T> lastRowData;
 
   private int pageStart;
   private int pageSize = DEFAULT_PAGE_SIZE;
@@ -117,7 +117,7 @@ public class MockHasData<T> implements HasData<T> {
    *
    * @return the last data set
    */
-  public List<T> getLastRowData() {
+  public List<? extends T> getLastRowData() {
     return lastRowData;
   }
 
@@ -146,7 +146,7 @@ public class MockHasData<T> implements HasData<T> {
     return rowCountExact;
   }
 
-  public void setRowData(int start, List<T> values) {
+  public void setRowData(int start, List<? extends T> values) {
     lastRange = new Range(start, values.size());
     lastRowData = values;
   }

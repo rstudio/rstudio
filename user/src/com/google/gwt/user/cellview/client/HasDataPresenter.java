@@ -651,7 +651,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     RowCountChangeEvent.fire(display, count, rowCountIsExact);
   }
 
-  public void setRowData(int start, List<T> values) {
+  public void setRowData(int start, List<? extends T> values) {
     int valuesLength = values.size();
     int valuesEnd = start + valuesLength;
 
