@@ -24,7 +24,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.shared.EventHandler;
@@ -1051,7 +1050,6 @@ class CellTreeNodeView<T> extends UIObject {
   Element ensureAnimationFrame() {
     if (animationFrame == null) {
       animationFrame = Document.get().createDivElement();
-      animationFrame.getStyle().setPosition(Position.RELATIVE);
       animationFrame.getStyle().setOverflow(Overflow.HIDDEN);
       animationFrame.getStyle().setDisplay(Display.NONE);
       getElement().appendChild(animationFrame);

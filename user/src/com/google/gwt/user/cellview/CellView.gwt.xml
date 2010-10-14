@@ -55,4 +55,12 @@
       <when-property-is name="user.agent" value="ie8"/>
     </any>
   </replace-with>
+
+  <!-- IE6-specific CellTree implementation. -->
+  <replace-with class="com.google.gwt.user.cellview.client.CellTree.ImplIE6">
+    <when-type-is class="com.google.gwt.user.cellview.client.CellTree.Impl"/>
+    <any>
+      <when-property-is name="user.agent" value="ie6"/>
+    </any>
+  </replace-with>
 </module>

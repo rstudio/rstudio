@@ -21,6 +21,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -226,6 +227,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     protected void onStart() {
       if (opening) {
         animFrame.getStyle().setHeight(1.0, Unit.PX);
+        animFrame.getStyle().setPosition(Position.RELATIVE);
         animFrame.getStyle().clearDisplay();
         height = contentContainer.getScrollHeight();
       } else {
@@ -242,6 +244,10 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
         double curHeight = (1.0 - progress) * height;
         animFrame.getStyle().setHeight(curHeight, Unit.PX);
       }
+
+      // Remind IE6 that we want the overflow to be hidden.
+      animFrame.getStyle().setOverflow(Overflow.HIDDEN);
+      animFrame.getStyle().setPosition(Position.RELATIVE);
     }
 
     /**
@@ -288,6 +294,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
         childContainer.setInnerHTML("");
       }
       animFrame.getStyle().clearHeight();
+      animFrame.getStyle().clearPosition();
       this.contentContainer = null;
       this.childContainer = null;
       this.animFrame = null;
@@ -437,6 +444,48 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
         + "width:{2}px;height:{3}px;\">{4}</div>")
     SafeHtml imageWrapper(String classes, String direction, int width,
         int height, SafeHtml image);
+
+    @Template("<div class=\"{0}\" style=\"position:absolute;{1}:-{2}px;"
+        + "width:{2}px;height:{3}px;\">{4}</div>")
+    SafeHtml imageWrapperIE6(String classes, String direction, int width,
+        int height, SafeHtml image);
+  }
+
+  /**
+   * Implementation of {@link CellTree}.
+   */
+  private static class Impl {
+    /**
+     * Create an image wrapper.
+     */
+    public SafeHtml imageWrapper(String classes, String direction, int width,
+        int height, SafeHtml image) {
+      return template.imageWrapper(classes, direction, width, height, image);
+    }
+  }
+
+  /**
+   * Implementation of {@link CellTable} used by IE6.
+   */
+  @SuppressWarnings("unused")
+  private static class ImplIE6 extends Impl {
+    @Override
+    public SafeHtml imageWrapper(String classes, String direction, int width,
+        int height, SafeHtml image) {
+      /*
+       * In IE6, left/right positions are relative to the inside of the padding
+       * instead of the outside of the padding. The bug does not happen on IE7,
+       * which maps to the IE6 user agent, so we need a runtime check for IE6.
+       */
+      if (isIe6()) {
+        return template.imageWrapperIE6(classes, direction, width, height, image);
+      }
+      return super.imageWrapper(classes, direction, width, height, image);
+    }
+
+    private native boolean isIe6() /*-{
+      return @com.google.gwt.dom.client.DOMImplIE6::isIE6()();
+    }-*/;
   }
 
   /**
@@ -446,6 +495,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
   private static Resources DEFAULT_RESOURCES;
 
+  private static Impl TREE_IMPL;
   private static Template template;
 
   private static Resources getDefaultResources() {
@@ -564,6 +614,9 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     super(viewModel);
     if (template == null) {
       template = GWT.create(Template.class);
+    }
+    if (TREE_IMPL == null) {
+      TREE_IMPL = GWT.create(Impl.class);
     }
     this.style = resources.cellTreeStyle();
     this.style.ensureInjected();
@@ -959,7 +1012,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
     AbstractImagePrototype proto = AbstractImagePrototype.create(res);
     SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
-    return template.imageWrapper(classesBuilder.toString(), direction,
+    return TREE_IMPL.imageWrapper(classesBuilder.toString(), direction,
         res.getWidth(), res.getHeight(), image);
   }
 
