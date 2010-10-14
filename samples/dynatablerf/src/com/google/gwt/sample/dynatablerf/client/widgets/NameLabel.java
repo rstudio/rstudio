@@ -31,6 +31,10 @@ import com.google.gwt.user.client.ui.Label;
  * the displayed object.
  */
 class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
+  /**
+   * Many of the GWT UI widgets that implement TakesValue also implement
+   * IsEditor and are directly usable as sub-Editors.
+   */
   final Label nameEditor = new Label();
   private PersonProxy person;
   private HandlerRegistration subscription;
@@ -59,7 +63,9 @@ class NameLabel extends Composite implements ValueAwareEditor<PersonProxy> {
   }
 
   public void setDelegate(EditorDelegate<PersonProxy> delegate) {
-    assert subscription == null;
+    if (subscription != null) {
+      subscription.removeHandler();
+    }
     subscription = delegate.subscribe();
   }
 

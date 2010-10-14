@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.dynatablerf.server;
 
+import static com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.SchoolCalendarRequest.ALL_DAYS;
+
 import com.google.gwt.sample.dynatablerf.domain.Address;
 import com.google.gwt.sample.dynatablerf.domain.Person;
 
@@ -33,8 +35,6 @@ import javax.servlet.ServletResponse;
  * The server side service class.
  */
 public class SchoolCalendarService implements Filter {
-  private static final boolean[] ALL_DAYS = new boolean[] {
-      true, true, true, true, true, true, true};
 
   private static final ThreadLocal<PersonSource> PERSON_SOURCE = new ThreadLocal<PersonSource>();
 
@@ -50,8 +50,10 @@ public class SchoolCalendarService implements Filter {
     return PERSON_SOURCE.get().findPerson(id);
   }
 
-  public static List<Person> getPeople(int startIndex, int maxCount) {
-    return getPeople(startIndex, maxCount, ALL_DAYS);
+  public static List<Person> getPeople(int startIndex, int maxCount,
+      List<Boolean> filter) {
+    checkPersonSource();
+    return PERSON_SOURCE.get().getPeople(startIndex, maxCount, filter);
   }
 
   public static Person getRandomPerson() {
@@ -75,15 +77,6 @@ public class SchoolCalendarService implements Filter {
       throw new IllegalStateException(
           "Calling service method outside of HTTP request");
     }
-  }
-
-  /**
-   * XXX private due to inability to add method overloads.
-   */
-  private static List<Person> getPeople(int startIndex, int maxCount,
-      boolean[] filter) {
-    checkPersonSource();
-    return PERSON_SOURCE.get().getPeople(startIndex, maxCount, filter);
   }
 
   private PersonSource backingStore;

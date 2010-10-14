@@ -49,6 +49,11 @@ class AddressFuzzer {
     a.setStreet(r.nextInt(4096) + " "
         + STREET_NAMES[r.nextInt(STREET_NAMES.length)]);
     a.setState(STATE_NAMES[r.nextInt(STATE_NAMES.length)]);
-    a.setZip(10000 + r.nextInt(89999));
+    StringBuilder zip = new StringBuilder();
+    zip.append(String.format("%05d", r.nextInt(99999)));
+    if (r.nextBoolean()) {
+      zip.append(String.format("-%04d", r.nextInt(9999)));
+    }
+    a.setZip(zip.toString());
   }
 }

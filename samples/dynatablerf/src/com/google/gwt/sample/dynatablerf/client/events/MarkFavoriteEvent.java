@@ -17,6 +17,7 @@ package com.google.gwt.sample.dynatablerf.client.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 
 /**
@@ -32,11 +33,11 @@ public class MarkFavoriteEvent extends GwtEvent<MarkFavoriteEvent.Handler> {
 
   public static final Type<Handler> TYPE = new Type<Handler>();
 
-  private final PersonProxy person;
+  private final EntityProxyId<PersonProxy> id;
   private final boolean isFavorite;
 
-  public MarkFavoriteEvent(PersonProxy person, boolean isFavorite) {
-    this.person = person;
+  public MarkFavoriteEvent(EntityProxyId<PersonProxy> id, boolean isFavorite) {
+    this.id = id;
     this.isFavorite = isFavorite;
   }
 
@@ -45,8 +46,8 @@ public class MarkFavoriteEvent extends GwtEvent<MarkFavoriteEvent.Handler> {
     return TYPE;
   }
 
-  public PersonProxy getPerson() {
-    return person;
+  public EntityProxyId<PersonProxy> getId() {
+    return id;
   }
 
   public boolean isFavorite() {

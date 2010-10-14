@@ -82,14 +82,13 @@ public class FavoritesManager {
     return favoriteIds.contains(person.stableId());
   }
 
-  public void setFavorite(PersonProxy person, boolean isFavorite) {
+  public void setFavorite(EntityProxyId<PersonProxy> id, boolean isFavorite) {
     if (isFavorite) {
-      favoriteIds.add(person.stableId());
+      favoriteIds.add(id);
     } else {
-      favoriteIds.remove(person.stableId());
+      favoriteIds.remove(id);
     }
 
-    eventBus.fireEventFromSource(new MarkFavoriteEvent(person, isFavorite),
-        this);
+    eventBus.fireEventFromSource(new MarkFavoriteEvent(id, isFavorite), this);
   }
 }

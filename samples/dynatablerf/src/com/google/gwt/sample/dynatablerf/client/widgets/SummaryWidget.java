@@ -15,8 +15,12 @@
  */
 package com.google.gwt.sample.dynatablerf.client.widgets;
 
+import static com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.SchoolCalendarRequest.ALL_DAYS;
+
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
@@ -28,15 +32,15 @@ import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.events.FilterChangeEvent;
 import com.google.gwt.sample.dynatablerf.shared.AddressProxy;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
-import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.PersonRequest;
+import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -45,6 +49,7 @@ import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -111,12 +116,12 @@ public class SummaryWidget extends Composite {
   CellTable<PersonProxy> table;
 
   private final EventBus eventBus;
+  private List<Boolean> filter = new ArrayList<Boolean>(ALL_DAYS);
+  private int lastFetch;
   private final int numRows;
+  private boolean pending;
   private final DynaTableRequestFactory requestFactory;
   private final SingleSelectionModel<PersonProxy> selectionModel = new SingleSelectionModel<PersonProxy>();
-
-  private boolean[] filter = new boolean[] {
-      true, true, true, true, true, true, true};
 
   public SummaryWidget(EventBus eventBus,
       DynaTableRequestFactory requestFactory, int numRows) {
@@ -148,8 +153,16 @@ public class SummaryWidget extends Composite {
 
     FilterChangeEvent.register(eventBus, new FilterChangeEvent.Handler() {
       public void onFilterChanged(FilterChangeEvent e) {
-        filter[e.getDay()] = e.isSelected();
-        fetch(0);
+        filter.set(e.getDay(), e.isSelected());
+        if (!pending) {
+          pending = true;
+          Scheduler.get().scheduleFinally(new ScheduledCommand() {
+            public void execute() {
+              pending = false;
+              fetch(0);
+            }
+          });
+        }
       }
     });
 
@@ -162,8 +175,8 @@ public class SummaryWidget extends Composite {
     fetch(0);
   }
 
-  @UiHandler("create") 
-  void onCreate(@SuppressWarnings("unused") ClickEvent event) {
+  @UiHandler("create")
+  void onCreate(ClickEvent event) {
     PersonRequest context = requestFactory.personRequest();
     AddressProxy address = context.create(AddressProxy.class);
     PersonProxy person = context.edit(context.create(PersonProxy.class));
@@ -173,6 +186,12 @@ public class SummaryWidget extends Composite {
   }
 
   void onPersonChanged(EntityProxyChange<PersonProxy> event) {
+    if (WriteOperation.PERSIST.equals(event.getWriteOperation())) {
+      // Re-fetch if we're already displaying the last page
+      if (table.isRowCountExact()) {
+        fetch(lastFetch + 1);
+      }
+    }
     if (WriteOperation.UPDATE.equals(event.getWriteOperation())) {
       EntityProxyId<PersonProxy> personId = event.getProxyId();
 
@@ -213,14 +232,15 @@ public class SummaryWidget extends Composite {
   }
 
   private void fetch(final int start) {
-    // XXX add back filter
-    requestFactory.schoolCalendarRequest().getPeople(start, numRows).fire(
+    lastFetch = start;
+    requestFactory.schoolCalendarRequest().getPeople(start, numRows, filter).fire(
         new Receiver<List<PersonProxy>>() {
           @Override
           public void onSuccess(List<PersonProxy> response) {
             int responses = response.size();
             table.setRowData(start, response);
-            if (!table.isRowCountExact()) {
+            pager.setPageStart(start);
+            if (start == 0 || !table.isRowCountExact()) {
               table.setRowCount(start + responses, responses < numRows);
             }
           }

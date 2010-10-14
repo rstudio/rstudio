@@ -42,6 +42,14 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     }
   }
 
+  class AddressEditorPartOne implements Editor<Address> {
+    SimpleEditor<String> city = SimpleEditor.of(UNINITIALIZED);
+  }
+
+  class AddressEditorPartTwo implements Editor<Address> {
+    SimpleEditor<String> street = SimpleEditor.of(UNINITIALIZED);
+  }
+
   class AddressEditorView implements IsEditor<LeafAddressEditor> {
     LeafAddressEditor addressEditor = new LeafAddressEditor();
 
@@ -103,6 +111,18 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
   interface PersonEditorWithLeafAddressEditorDriver extends
       SimpleBeanEditorDriver<Person, PersonEditorWithLeafAddressEditor> {
+  }
+
+  class PersonEditorWithMultipleBindings implements Editor<Person> {
+    @Editor.Path("address")
+    AddressEditorPartOne one = new AddressEditorPartOne();
+
+    @Editor.Path("address")
+    AddressEditorPartTwo two = new AddressEditorPartTwo();
+  }
+
+  interface PersonEditorWithMultipleBindingsDriver extends
+      SimpleBeanEditorDriver<Person, PersonEditorWithMultipleBindings> {
   }
 
   interface PersonEditorWithOptionalAddressDriver extends
@@ -361,10 +381,10 @@ public class SimpleBeanEditorTest extends GWTTestCase {
 
     List<SimpleEditor<String>> editors = editor.getEditors();
     assertEquals(rawData.size(), editors.size());
-    assertEquals(rawData, Arrays.asList(editors.get(0).getValue(), editors.get(
-        1).getValue(), editors.get(2).getValue()));
-    assertEquals(editors, new ArrayList<SimpleEditor<String>>(
-        positionMap.values()));
+    assertEquals(rawData, Arrays.asList(editors.get(0).getValue(),
+        editors.get(1).getValue(), editors.get(2).getValue()));
+    assertEquals(editors,
+        new ArrayList<SimpleEditor<String>>(positionMap.values()));
 
     List<String> mutableList = editor.getList();
     assertEquals(rawData, mutableList);
@@ -383,8 +403,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     mutableList.add("quux");
     assertEquals(4, editors.size());
     assertEquals("quux", editors.get(3).getValue());
-    assertEquals(editors, new ArrayList<SimpleEditor<String>>(
-        positionMap.values()));
+    assertEquals(editors,
+        new ArrayList<SimpleEditor<String>>(positionMap.values()));
 
     // Delete an element
     SimpleEditor<String> expectedDisposed = editors.get(0);
@@ -392,8 +412,8 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     assertSame(expectedDisposed, disposed[0]);
     assertEquals(3, editors.size());
     assertEquals("quux", editors.get(2).getValue());
-    assertEquals(editors, new ArrayList<SimpleEditor<String>>(
-        positionMap.values()));
+    assertEquals(editors,
+        new ArrayList<SimpleEditor<String>>(positionMap.values()));
   }
 
   /**
@@ -432,6 +452,23 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     // Flush
     driver.flush();
     assertEquals("edited", person.addresses.get(1).getCity());
+  }
+
+  public void testMultipleBinding() {
+    PersonEditorWithMultipleBindingsDriver driver = GWT.create(PersonEditorWithMultipleBindingsDriver.class);
+    PersonEditorWithMultipleBindings editor = new PersonEditorWithMultipleBindings();
+
+    driver.initialize(editor);
+    driver.edit(person);
+    assertEquals("City", editor.one.city.getValue());
+    assertEquals("Street", editor.two.street.getValue());
+
+    editor.one.city.setValue("Foo");
+    editor.two.street.setValue("Bar");
+    driver.flush();
+
+    assertEquals("Foo", person.getAddress().getCity());
+    assertEquals("Bar", person.getAddress().getStreet());
   }
 
   public void testOptionalField() {

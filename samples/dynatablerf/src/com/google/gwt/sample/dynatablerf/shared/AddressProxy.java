@@ -31,7 +31,7 @@ public interface AddressProxy extends EntityProxy {
 
   String getStreet();
 
-  Integer getZip();
+  String getZip();
 
   void setCity(String city);
 
@@ -39,7 +39,7 @@ public interface AddressProxy extends EntityProxy {
 
   void setStreet(String street);
 
-  void setZip(Integer zip);
+  void setZip(String zip);
 
   EntityProxyId<AddressProxy> stableId();
 }

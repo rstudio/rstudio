@@ -1,0 +1,39 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <ui:style>
+    .dialog {
+    	background: white;
+    	border: thin solid black;
+    	margin: 2px;
+    	overflow: hidden;
+    	padding: 5px;
+    	-moz-border-radius: 5px;
+    	-webkit-border-radius: 5px;
+    }
+    
+    .glass {
+    	filter: literal('alpha(opacity = 75)');
+    	opacity: 0.75;
+    	background-color: #000000;
+    }
+    
+    .message {
+    	height: 400px;
+    	width: 400px;
+    }
+  </ui:style>
+  <g:DialogBox ui:field="errorDialog" glassEnabled="true"
+    stylePrimaryName="{style.dialog}" glassStyleName="{style.glass}">
+    <g:caption>
+      <b>An unexpected application error has occurred</b>
+      <br />
+      You may wish to reload the application
+    </g:caption>
+    <g:HTMLPanel>
+      <g:TextArea ui:field="errorMessage" readOnly="true"
+        stylePrimaryName="{style.message}"></g:TextArea>
+      <br />
+      <g:Button ui:field="dismiss">Continue</g:Button>
+      <g:Button ui:field="reload">Reload</g:Button>
+    </g:HTMLPanel>
+  </g:DialogBox>
+</ui:UiBinder>

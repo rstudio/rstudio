@@ -25,6 +25,8 @@ import com.google.gwt.sample.dynatablerf.domain.Address;
 import com.google.gwt.sample.dynatablerf.domain.Person;
 import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,7 +56,14 @@ public interface DynaTableRequestFactory extends RequestFactory {
    */
   @Service(SchoolCalendarService.class)
   interface SchoolCalendarRequest extends RequestContext {
-    Request<List<PersonProxy>> getPeople(int startIndex, int maxCount);
+    List<Boolean> ALL_DAYS = Collections.unmodifiableList(Arrays.asList(true,
+        true, true, true, true, true, true));
+    List<Boolean> NO_DAYS = Collections.unmodifiableList(Arrays.asList(false,
+        false, false, false, false, false, false));
+
+    Request<List<PersonProxy>> getPeople(int startIndex, int maxCount,
+        List<Boolean> dayFilter);
+
     Request<PersonProxy> getRandomPerson();
   }
 

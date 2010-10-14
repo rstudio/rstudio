@@ -1,4 +1,5 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' 
+    xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'
     xmlns:g='urn:import:com.google.gwt.user.client.ui'
     xmlns:e='urn:import:com.google.gwt.editor.ui.client'>
   <ui:style src="../common.css">
@@ -34,7 +35,7 @@
       <e:ValueBoxEditorDecorator ui:field="zip"
         stylePrimaryName="{style.editField}">
         <e:valuebox>
-          <g:IntegerBox stylePrimaryName="{style.editField}" />
+          <dt:ZipPlusFourBox stylePrimaryName="{style.editField}" />
         </e:valuebox>
       </e:ValueBoxEditorDecorator>
       <br />

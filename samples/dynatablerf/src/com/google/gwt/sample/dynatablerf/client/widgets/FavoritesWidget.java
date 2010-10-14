@@ -48,6 +48,10 @@ public class FavoritesWidget extends Composite {
   interface Binder extends UiBinder<Widget, FavoritesWidget> {
   }
 
+  /**
+   * A driver that accepts a List of PersonProxy objects, controlled by a
+   * ListEditor of PersonProxy instances, displayed using NameLabels.
+   */
   interface Driver extends RequestFactoryEditorDriver<List<PersonProxy>, //
       ListEditor<PersonProxy, NameLabel>> {
   }
@@ -57,7 +61,7 @@ public class FavoritesWidget extends Composite {
   }
 
   /**
-   * This is used by a ListEditor.
+   * This is used by the ListEditor to control the state of the UI.
    */
   private class NameLabelSource extends EditorSource<NameLabel> {
     @Override
@@ -86,10 +90,14 @@ public class FavoritesWidget extends Composite {
   @UiField
   Style style;
 
+  /**
+   * This list is a facade provided by the ListEditor. Structural modifications
+   * to this list (e.g. add(), set(), remove()) will trigger UI update events.
+   */
   private final List<PersonProxy> displayedList;
   private final EventBus eventBus;
   private final RequestFactory factory;
-  private FavoritesManager manager;
+  private final FavoritesManager manager;
   private HandlerRegistration subscription;
 
   public FavoritesWidget(EventBus eventBus, RequestFactory factory,
@@ -111,9 +119,7 @@ public class FavoritesWidget extends Composite {
     ListEditor<PersonProxy, NameLabel> listEditor = editor;
     driver.initialize(eventBus, factory, listEditor);
 
-    /*
-     * Notice the backing list is essentially anonymous.
-     */
+    // Notice the backing list is essentially anonymous.
     driver.display(new ArrayList<PersonProxy>());
 
     // Modifying this list triggers widget creation and destruction
@@ -122,19 +128,16 @@ public class FavoritesWidget extends Composite {
 
   @Override
   protected void onLoad() {
+    // Subscribe to notifications from the FavoritesManager
     subscription = manager.addMarkFavoriteHandler(new MarkFavoriteEvent.Handler() {
       public void onMarkFavorite(MarkFavoriteEvent event) {
         FavoritesWidget.this.onMarkFavorite(event);
       }
     });
 
+    // Initialize the UI with the existing list of favorites
     for (EntityProxyId<PersonProxy> id : manager.getFavoriteIds()) {
-      factory.find(id).fire(new Receiver<PersonProxy>() {
-        @Override
-        public void onSuccess(PersonProxy person) {
-          onMarkFavorite(new MarkFavoriteEvent(person, true));
-        }
-      });
+      onMarkFavorite(new MarkFavoriteEvent(id, true));
     }
   }
 
@@ -143,31 +146,36 @@ public class FavoritesWidget extends Composite {
     subscription.removeHandler();
   }
 
-  void onMarkFavorite(MarkFavoriteEvent event) {
-    PersonProxy person = event.getPerson();
-    if (person == null) {
+  private void onMarkFavorite(MarkFavoriteEvent event) {
+    EntityProxyId<PersonProxy> id = event.getId();
+    if (id == null) {
       return;
     }
 
     // EntityProxies should be compared by stable id
-    EntityProxyId<PersonProxy> lookFor = person.stableId();
     PersonProxy found = null;
     for (PersonProxy displayed : displayedList) {
-      if (displayed.stableId().equals(lookFor)) {
+      if (displayed.stableId().equals(id)) {
         found = displayed;
         break;
       }
     }
 
     if (event.isFavorite() && found == null) {
-      displayedList.add(person);
+      factory.find(id).to(new Receiver<PersonProxy>() {
+        @Override
+        public void onSuccess(PersonProxy response) {
+          displayedList.add(response);
+          sortDisplayedList();
+        }
+      }).fire();
     } else if (!event.isFavorite() && found != null) {
-      displayedList.remove(person);
-    } else {
-      // No change
-      return;
+      displayedList.remove(found);
+      sortDisplayedList();
     }
+  }
 
+  private void sortDisplayedList() {
     // Sorting the list of PersonProxies will also change the UI display
     Collections.sort(displayedList, new Comparator<PersonProxy>() {
       public int compare(PersonProxy o1, PersonProxy o2) {

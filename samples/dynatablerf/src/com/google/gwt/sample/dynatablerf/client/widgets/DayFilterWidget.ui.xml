@@ -1,5 +1,5 @@
-<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
-  xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'>
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui' xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'>
   <ui:style>
     .all {
     	float: left;
@@ -14,23 +14,22 @@
     }
   </ui:style>
   <g:FlowPanel>
-    <dt:DayCheckBox ui:field="sunday" caption="Sunday" day="0"
-      styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="monday" caption="Monday" day="0"
-      styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="tuesday" caption="Tuesday" day="0"
-      styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="wednesday" caption="Wednesday" day="0"
-      styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="thursday" caption="Thursday" day="0"
-      styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="friday" caption="Friday" day="0"
-      styleName="{style.cb}" />
-    <dt:DayCheckBox ui:field="saturday" caption="Saturday" day="0"
-      styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="sunday" caption="Sunday"
+      day="0" styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="monday" caption="Monday"
+      day="1" styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="tuesday" caption="Tuesday"
+      day="2" styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="wednesday" caption="Wednesday"
+      day="3" styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="thursday" caption="Thursday"
+      day="4" styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="friday" caption="Friday"
+      day="5" styleName="{style.cb}" />
+    <dt:DayCheckBox ui:field="saturday" caption="Saturday"
+      day="6" styleName="{style.cb}" />
 
-    <g:Button ui:field="all" enabled="false" styleName="{style.all}">All</g:Button>
-    <g:Button ui:field="none" enabled="false" styleName="{style.none}">None</g:Button>
-    <g:Label>Not implemented yet</g:Label>
+    <g:Button ui:field="all" styleName="{style.all}">All</g:Button>
+    <g:Button ui:field="none" styleName="{style.none}">None</g:Button>
   </g:FlowPanel>
 </ui:UiBinder>

@@ -32,10 +32,10 @@ public class Schedule {
     timeSlots.add(timeSlot);
   }
 
-  public String getDescription(boolean[] daysFilter) {
+  public String getDescription(List<Boolean> daysFilter) {
     String s = null;
     for (TimeSlot timeSlot : timeSlots) {
-      if (daysFilter[timeSlot.getDayOfWeek()]) {
+      if (daysFilter.get(timeSlot.getDayOfWeek())) {
         if (s == null) {
           s = timeSlot.getDescription();
         } else {

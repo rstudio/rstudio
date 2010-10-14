@@ -38,7 +38,7 @@ public class AddressEditor extends Composite implements Editor<AddressProxy> {
   @UiField
   ValueBoxEditorDecorator<String> state;
   @UiField
-  ValueBoxEditorDecorator<Integer> zip;
+  ValueBoxEditorDecorator<String> zip;
 
   public AddressEditor() {
     initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));

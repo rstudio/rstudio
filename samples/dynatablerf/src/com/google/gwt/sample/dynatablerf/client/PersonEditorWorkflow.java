@@ -30,8 +30,8 @@ import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.sample.dynatablerf.client.events.EditPersonEvent;
 import com.google.gwt.sample.dynatablerf.client.widgets.PersonEditor;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory;
-import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.PersonRequest;
+import com.google.gwt.sample.dynatablerf.shared.PersonProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -99,38 +99,60 @@ public class PersonEditorWorkflow {
     }, KeyUpEvent.getType());
   }
 
+  /**
+   * Called by the cancel button when it is clicked. This method will just tear
+   * down the UI and clear the state of the workflow.
+   */
   @UiHandler("cancel")
-  void onCancel(@SuppressWarnings("unused") ClickEvent event) {
+  void onCancel(ClickEvent event) {
     dialog.hide();
   }
 
+  /**
+   * Called by the edit dialog's save button. This method will flush the
+   * contents of the UI into the PersonProxy that is being edited, check for
+   * errors, and send the request to the server.
+   */
   @UiHandler("save")
-  void onSave(@SuppressWarnings("unused") ClickEvent event) {
-    // MOVE TO ACTIVITY END
+  void onSave(ClickEvent event) {
+    // Flush the contents of the UI
     RequestContext context = editorDriver.flush();
+
+    // Check for errors
     if (editorDriver.hasErrors()) {
       dialog.setText("Errors detected locally");
       return;
     }
+
+    // Send the request
     context.fire(new Receiver<Void>() {
       @Override
       public void onSuccess(Void response) {
+        // If everything went as planned, just dismiss the dialog box
         dialog.hide();
       }
 
       @Override
       public void onViolation(Set<Violation> errors) {
+        // Otherwise, show ConstraintViolations in the UI
         dialog.setText("Errors detected on the server");
         editorDriver.setViolations(errors);
       }
     });
   }
 
+  /**
+   * Called by the favorite checkbox when its value has been toggled.
+   */
   @UiHandler("favorite")
-  void onValueChanged(@SuppressWarnings("unused") ValueChangeEvent<Boolean> event) {
-    manager.setFavorite(person, favorite.getValue());
+  void onValueChanged(ValueChangeEvent<Boolean> event) {
+    manager.setFavorite(person.stableId(), favorite.getValue());
   }
 
+  /**
+   * Construct and display the UI that will be used to edit the current
+   * PersonProxy, using the given RequestContext to accumulate the edits.
+   */
   private void edit(RequestContext requestContext) {
     editorDriver = GWT.create(Driver.class);
     editorDriver.initialize(requestFactory, personEditor);
@@ -149,19 +171,23 @@ public class PersonEditorWorkflow {
   private void fetchAndEdit() {
     // The request is configured arbitrarily
     Request<PersonProxy> fetchRequest = requestFactory.find(person.stableId());
-    // Add the paths that the EditorDelegate computes are necessary
+
+    // Add the paths that the EditorDrives computes
     fetchRequest.with(editorDriver.getPaths());
 
     // We could do more with the request, but we just fire it
-    fetchRequest.fire(new Receiver<PersonProxy>() {
+    fetchRequest.to(new Receiver<PersonProxy>() {
       @Override
       public void onSuccess(PersonProxy person) {
         PersonEditorWorkflow.this.person = person;
         // Start the edit process
         PersonRequest context = requestFactory.personRequest();
-        context.persist().using(person);
+        // Display the UI
         edit(context);
+        // Configure the method invocation to be sent in the context
+        context.persist().using(person);
+        // The context will be fire()'ed from the onSave() method
       }
-    });
+    }).fire();
   }
 }

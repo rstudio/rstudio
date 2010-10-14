@@ -19,6 +19,7 @@ import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
 
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 /**
@@ -53,8 +54,8 @@ public class Address {
   private Integer version = 0;
 
   @NotNull
-  @DecimalMin("10000")
-  private Integer zip;
+  @Pattern(regexp = "\\d{5}(-\\d{4})?")
+  private String zip;
 
   public Address() {
   }
@@ -92,7 +93,7 @@ public class Address {
     return version;
   }
 
-  public Integer getZip() {
+  public String getZip() {
     return zip;
   }
 
@@ -129,7 +130,7 @@ public class Address {
     this.version = version;
   }
 
-  public void setZip(Integer zip) {
+  public void setZip(String zip) {
     this.zip = zip;
   }
 }

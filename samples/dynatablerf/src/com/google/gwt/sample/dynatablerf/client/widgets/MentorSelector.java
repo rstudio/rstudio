@@ -74,7 +74,7 @@ public class MentorSelector extends Composite implements
   }
 
   @UiHandler("choose")
-  void onChoose(@SuppressWarnings("unused") ClickEvent event) {
+  void onChoose(ClickEvent event) {
     setEnabled(false);
     factory.schoolCalendarRequest().getRandomPerson().to(
         new Receiver<PersonProxy>() {
@@ -87,7 +87,7 @@ public class MentorSelector extends Composite implements
   }
 
   @UiHandler("clear")
-  void onClear(@SuppressWarnings("unused") ClickEvent event) {
+  void onClear(ClickEvent event) {
     setValue(null);
   }
 
