@@ -25,7 +25,9 @@ import com.google.gwt.editor.client.LeafValueEditor;
  */
 public class SimpleEditor<T> implements LeafValueEditor<T> {
   /**
-   * Returns a new ValueEditor that holds a <code>null</code> value.
+   * Returns a new ValueEditor that holds a {@code null} value.
+   *
+   * @return a SimpleEditor instance holding a {@code null} value
    */
   public static <T> SimpleEditor<T> of() {
     return new SimpleEditor<T>(null);
@@ -33,6 +35,9 @@ public class SimpleEditor<T> implements LeafValueEditor<T> {
 
   /**
    * Returns a new ValueEditor that holds the given value.
+   *
+   * @param value a data object of type T
+   * @return a SimpleEditor instance holding the given value
    */
   public static <T> SimpleEditor<T> of(T value) {
     return new SimpleEditor<T>(value);
@@ -40,6 +45,11 @@ public class SimpleEditor<T> implements LeafValueEditor<T> {
 
   private T value;
 
+  /**
+   * Constructs a new SimpleEditor that holds the given value.
+   *
+   * @param value a data object of type T
+   */
   protected SimpleEditor(T value) {
     this.value = value;
   }

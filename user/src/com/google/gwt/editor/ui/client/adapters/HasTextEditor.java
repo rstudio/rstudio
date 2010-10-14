@@ -22,12 +22,25 @@ import com.google.gwt.user.client.ui.HasText;
  * Adapts the HasText interface to the Editor framework.
  */
 public class HasTextEditor implements LeafValueEditor<String> {
+  /**
+   * Returns a new ValueEditor that that modifies the given {@link HasText} peer
+   * instance.
+   * 
+   * @param peer a {@link HasText} instance
+   * @return a HasTextEditor instance
+   */
   public static HasTextEditor of(HasText peer) {
     return new HasTextEditor(peer);
   }
 
   private HasText peer;
 
+  /**
+   * Constructs a new HasTextEditor that that modifies the given {@link HasText}
+   * peer instance.
+   * 
+   * @param peer a {@link HasText} instance
+   */
   protected HasTextEditor(HasText peer) {
     this.peer = peer;
   }

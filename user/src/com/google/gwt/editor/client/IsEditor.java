@@ -50,6 +50,8 @@ package com.google.gwt.editor.client;
 public interface IsEditor<E extends Editor<?>> {
   /**
    * Returns the Editor encapsulated by the view object.
+   * 
+   * @return an {@link Editor} of type E
    */
   E asEditor();
 }

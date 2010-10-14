@@ -35,6 +35,10 @@ public final class AutoBeanUtils {
    * although the diff produced is likely meaningless.
    * <p>
    * This will work for both simple and wrapper AutoBeans.
+   *
+   * @param a an {@link AutoBean}
+   * @param b an {@link AutoBean}
+   * @return a {@link Map} of differing properties
    */
   public static Map<String, Object> diff(AutoBean<?> a, AutoBean<?> b) {
     // Fast check for comparing an object to itself
@@ -93,6 +97,9 @@ public final class AutoBeanUtils {
    * Returns a map that is a copy of the properties contained in an AutoBean.
    * The returned map is mutable, but editing it will not have any effect on the
    * bean that produced it.
+   *
+   * @param bean an {@link AutoBean}
+   * @return a {@link Map} of the bean's properties
    */
   public static Map<String, Object> getAllProperties(AutoBean<?> bean) {
     final Map<String, Object> toReturn = new LinkedHashMap<String, Object>();
@@ -118,8 +125,11 @@ public final class AutoBeanUtils {
 
   /**
    * Return the single AutoBean wrapper that is observing the delegate object or
-   * <code>null</code> if the parameter is <code>null</code> or not wrapped by
+   * {@code null} if the parameter is {@code null}or not wrapped by
    * an AutoBean.
+   * 
+   * @param delegate a delegate object, or {@code null}
+   * @return the {@link AutoBean} wrapper for the delegate, or {@code null}
    */
   @SuppressWarnings("unchecked")
   public static <T, U extends T> AutoBean<T> getAutoBean(U delegate) {

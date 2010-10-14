@@ -32,6 +32,8 @@ public interface ValueAwareEditor<T> extends HasEditorDelegate<T> {
   /**
    * Notifies the Editor that one or more value properties have changed. Not all
    * backing services support property-based notifications.
+   * 
+   * @param paths a list of String paths
    */
   void onPropertyChange(String... paths);
 
@@ -40,6 +42,8 @@ public interface ValueAwareEditor<T> extends HasEditorDelegate<T> {
    * <p>
    * ValueAwareEditors should preferentially use sub-editors to alter the
    * properties of the object being edited.
+   * 
+   * @param value a value of type T
    */
   void setValue(T value);
 }

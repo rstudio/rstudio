@@ -32,6 +32,14 @@ import java.text.ParseException;
 public class ValueBoxEditor<T> extends TakesValueEditor<T> implements
     HasEditorDelegate<T> {
 
+  /**
+   * Returns a new TakesValueEditor that adapts a {@link ValueBoxBase}
+   * instance.
+   *
+   * @param valueBox a {@link ValueBoxBase} instance to adapt
+   * @return a ValueBoxEditor instance of the same type as the
+   *   adapted {@link ValueBoxBase} instance
+   */
   public static <T> ValueBoxEditor<T> of(ValueBoxBase<T> valueBox) {
     return new ValueBoxEditor<T>(valueBox);
   }
@@ -40,11 +48,23 @@ public class ValueBoxEditor<T> extends TakesValueEditor<T> implements
   private final ValueBoxBase<T> peer;
   private T value;
 
+  /**
+   * Constructs a new ValueBoxEditor that adapts a {@link ValueBoxBase} peer
+   * instance.
+   *
+   * @param peer a {@link ValueBoxBase} instance of type T
+   */
   protected ValueBoxEditor(ValueBoxBase<T> peer) {
     super(peer);
     this.peer = peer;
   }
 
+  /**
+   * Returns the {@link EditorDelegate} for this instance.
+   *
+   * @return an {@link EditorDelegate}, or {@code null}
+   * @see #setDelegate(EditorDelegate)
+   */
   public EditorDelegate<T> getDelegate() {
     return delegate;
   }
@@ -54,6 +74,9 @@ public class ValueBoxEditor<T> extends TakesValueEditor<T> implements
    * is thrown, it will be available through
    * {@link com.google.gwt.editor.client.EditorError#getUserData()
    * EditorError.getUserData()}.
+   *
+   * @return a value of type T
+   * @see #setValue(Object)
    */
   @Override
   public T getValue() {
@@ -67,6 +90,13 @@ public class ValueBoxEditor<T> extends TakesValueEditor<T> implements
     return value;
   }
 
+  /**
+   * Sets the {@link EditorDelegate} for this instance. This method is only
+   * called by the driver.
+   * 
+   * @param delegate an {@link EditorDelegate}, or {@code null}
+   * @see #getDelegate()
+   */
   public void setDelegate(EditorDelegate<T> delegate) {
     this.delegate = delegate;
   }

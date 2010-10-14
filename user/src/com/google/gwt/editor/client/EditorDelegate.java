@@ -29,6 +29,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public interface EditorDelegate<T> {
   /**
    * Returns the Editor's path, relative to the root object.
+   *
+   * @return the path as a String
    */
   String getPath();
 

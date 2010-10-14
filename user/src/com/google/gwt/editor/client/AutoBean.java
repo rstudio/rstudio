@@ -23,12 +23,16 @@ package com.google.gwt.editor.client;
 public interface AutoBean<T> {
   /**
    * Accept an AutoBeanVisitor.
+   *
+   * @param visitor an {@link AutoBeanVisitor}
    */
   void accept(AutoBeanVisitor visitor);
 
   /**
    * Returns a proxy implementation of the <code>T</code> interface which will
    * delegate to the underlying wrapped object, if any.
+   *
+   * @return a proxy that delegates to the wrapped object
    */
   T as();
 
@@ -40,6 +44,7 @@ public interface AutoBean<T> {
    * of the value of <code>deep</code>.
    * 
    * @param deep indicates if all referenced AutoBeans should be cloned
+   * @return a copy of this {@link AutoBean}
    * @throws IllegalStateException if the AutoBean is a wrapper type
    */
   AutoBean<T> clone(boolean deep);
@@ -47,36 +52,52 @@ public interface AutoBean<T> {
   /**
    * Retrieve a tag value that was previously provided to
    * {@link #setTag(String, Object)}.
+   * 
+   * @param tagName the tag name
+   * @return the tag value
+   * @see #setTag(String, Object)
    */
   <Q> Q getTag(String tagName);
 
   /**
-   * Returns the value most recently passed to {@link #setFrozen}, or false
-   * if it has never been called.
+   * Returns the value most recently passed to {@link #setFrozen}, or {@code
+   * false} if it has never been called.
+   * 
+   * @return {@code true} if this instance is frozen
    */
   boolean isFrozen();
 
   /**
-   * Returns <code>true</code> if the AutoBean was provided with an external
+   * Returns {@code true} if the AutoBean was provided with an external
    * object.
+   *
+   * @return {@code true} if this instance is a wrapper
    */
   boolean isWrapper();
 
   /**
    * Disallows any method calls other than getters. All setter and call
    * operations will throw an {@link UnsupportedOperationException}.
+   * 
+   * @param frozen if {@code true}, freeze this instance
    */
   void setFrozen(boolean frozen);
 
   /**
    * A tag is an arbitrary piece of external metadata to be associated with the
    * wrapped value.
+   *
+   * @param tagName the tag name
+   * @param value the wrapped value
+   * @see #getTag(String)
    */
   void setTag(String tagName, Object value);
 
   /**
    * If the AutoBean wraps an object, return the underlying object.
-   * 
+   * The AutoBean will no longer function once unwrapped.
+   *
+   * @return the previously-wrapped object
    * @throws IllegalStateException if the AutoBean is not a wrapper
    */
   T unwrap();

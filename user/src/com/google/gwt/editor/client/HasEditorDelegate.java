@@ -25,6 +25,8 @@ public interface HasEditorDelegate<T> extends Editor<T> {
   /**
    * Called by the EditorDriver to provide access to the EditorDelegate the
    * Editor is peered with.
+   *
+   * @param delegate an {@link EditorDelegate} of type T
    */
   void setDelegate(EditorDelegate<T> delegate);
 

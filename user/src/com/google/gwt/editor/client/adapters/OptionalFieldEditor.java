@@ -59,10 +59,22 @@ public class OptionalFieldEditor<T, E extends Editor<T>> implements
   private T currentValue;
   private final E subEditor;
 
+  /**
+   * Construct an OptionalFieldEditor backed by the given sub-Editor.
+   *
+   * @param subEditor the sub-Editor that will be attached to the Editor
+   *          hierarchy
+   */
   protected OptionalFieldEditor(E subEditor) {
     this.subEditor = subEditor;
   }
 
+  /**
+   * Returns the sub-Editor that the OptionalFieldEditor was constructed
+   * with.
+   *
+   * @return an {@link Editor} of type E
+   */
   public E createEditorForTraversal() {
     return subEditor;
   }

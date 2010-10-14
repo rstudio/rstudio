@@ -59,11 +59,15 @@ public interface SimpleBeanEditorDriver<T, E extends Editor<? super T>> {
 
   /**
    * Returns any unconsumed EditorErrors from the last call to {@link #flush()}.
+   * 
+   * @return a List of {@link EditorError} instances
    */
   List<EditorError> getErrors();
 
   /**
    * Indicates if the last call to {@link #flush()} resulted in any errors.
+   * 
+   * @return {@code true} if errors are present
    */
   boolean hasErrors();
 

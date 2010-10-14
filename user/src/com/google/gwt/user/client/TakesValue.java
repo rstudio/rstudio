@@ -23,11 +23,17 @@ package com.google.gwt.user.client;
 public interface TakesValue<V> {
   /**
    * Sets the value.
+   *
+   * @param value a value object of type V
+   * @see #getValue()
    */
   void setValue(V value);
 
   /**
    * Returns the current value.
+   * 
+   * @return the value as an object of type V
+   * @see #setValue
    */
   V getValue();
 }

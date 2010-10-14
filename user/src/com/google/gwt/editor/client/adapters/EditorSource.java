@@ -32,6 +32,7 @@ public abstract class EditorSource<E extends Editor<?>> {
    * Create a new Editor.
    * 
    * @param index the position at which the new Editor should be displayed
+   * @return an {@link Editor} of type E
    */
   public abstract E create(int index);
 
@@ -41,6 +42,7 @@ public abstract class EditorSource<E extends Editor<?>> {
    * 
    * @param count the number of Editors desired
    * @param index the position at which the new Editors should be displayed
+   * @return a List of {@link Editor}s of type E
    */
   public List<E> create(int count, int index) {
     List<E> toReturn = new ArrayList<E>(count);
@@ -54,7 +56,7 @@ public abstract class EditorSource<E extends Editor<?>> {
    * Called when an Editor no longer requires a sub-Editor. The default
    * implementation is a no-op.
    *
-   * @param subEditor
+   * @param subEditor an {@link Editor} of type E
    */
   public void dispose(E subEditor) {
   }
@@ -62,8 +64,8 @@ public abstract class EditorSource<E extends Editor<?>> {
   /**
    * Re-order a sub-Editor. The default implementation is a no-op.
    *
-   * @param editor
-   * @param index
+   * @param editor an {@link Editor} of type E
+   * @param index the index of the Editor
    */
   public void setIndex(E editor, int index) {
   }

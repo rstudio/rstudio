@@ -93,12 +93,24 @@ public interface AutoBeanFactory {
   /**
    * Allows dynamic creation of AutoBean instances based on declared
    * parameterizations.
+   * 
+   * @param <T> the parameterization of the created {@link AutoBean}
+   * @param clazz the Class of type T of the new instance
+   * @return an {@link AutoBean} of type T or {@code null} if the interface type
+   *         is unknown to the factory
    */
   <T> AutoBean<T> create(Class<T> clazz);
 
   /**
    * Allows dynamic creation of wrapped AutoBean instances based on declared
    * parameterizations.
+   * 
+   * @param <T> the parameterization of the created {@link AutoBean}
+   * @param <U> the delegate's type, a subtype of T
+   * @param clazz the Class of type T of the new instance
+   * @param delegate a delegate that extends type T
+   * @return an {@link AutoBean} of type T or {@code null} if the interface type
+   *         is unknown to the factory
    */
   <T, U extends T> AutoBean<T> create(Class<T> clazz, U delegate);
 }

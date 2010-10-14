@@ -31,37 +31,49 @@ public class AutoBeanVisitor {
   public interface PropertyContext {
     /**
      * Indicates if the {@link #set} method will succeed.
+     *
+     * @return {@code true} if the property can be set
      */
     boolean canSet();
 
     /**
      * If the reference property is a collection, returns the collection's
      * element type.
+     * 
+     * @return a Class object representing the element type or {@code null} if
+     *         the property is not a collection type
      */
     Class<?> getElementType();
 
     /**
      * Returns the expected type of the property.
+     *
+     * @return a Class object representing the property type
      */
     Class<?> getType();
 
+    /**
+     * Sets a property value.
+     *
+     * @param value the new value
+     */
     void set(Object value);
   }
 
   /**
-   * TODO: document.
+   * Called after visiting an {@link AutoBean}.
    * 
-   * @param bean
+   * @param bean an {@link AutoBean}
    * @param ctx a Context
    */
   public void endVisit(AutoBean<?> bean, Context ctx) {
   }
 
   /**
-   * TODO: document.
+   * Called after visiting a reference property.
    * 
-   * @param propertyName
-   * @param value
+   * @param propertyName the property name, as a String
+   * @param value the property value
    * @param ctx a PropertyContext
    */
   public void endVisitReferenceProperty(String propertyName, AutoBean<?> value,
@@ -69,10 +81,10 @@ public class AutoBeanVisitor {
   }
 
   /**
-   * TODO: document.
+   * Called after visiting a value property.
    * 
-   * @param propertyName
-   * @param value
+   * @param propertyName the property name, as a String
+   * @param value the property value
    * @param ctx a PropertyContext
    */
   public void endVisitValueProperty(String propertyName, Object value,
@@ -80,9 +92,9 @@ public class AutoBeanVisitor {
   }
 
   /**
-   * TODO: document.
+   * Called when visiting an {@link AutoBean}.
    * 
-   * @param bean
+   * @param bean an {@link AutoBean}
    * @param ctx a Context
    */
   public boolean visit(AutoBean<?> bean, Context ctx) {
@@ -93,8 +105,8 @@ public class AutoBeanVisitor {
    * Called every time, but {@link #visit(AutoBean, Context)} will be called for
    * the value only the first time it is encountered.
    * 
-   * @param propertyName
-   * @param value
+   * @param propertyName the property name, as a String
+   * @param value the property value
    * @param ctx a PropertyContext
    */
   public boolean visitReferenceProperty(String propertyName, AutoBean<?> value,
@@ -105,8 +117,8 @@ public class AutoBeanVisitor {
   /**
    * TODO: document.
    * 
-   * @param propertyName
-   * @param value
+   * @param propertyName the property name, as a String
+   * @param value the property value
    * @param ctx a PropertyContext
    */
   public boolean visitValueProperty(String propertyName, Object value,

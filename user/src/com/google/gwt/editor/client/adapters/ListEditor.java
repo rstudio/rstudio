@@ -48,10 +48,20 @@ public class ListEditor<T, E extends Editor<T>> implements
   private EditorSource<E> editorSource;
   private ListEditorWrapper<T, E> list;
 
+  /**
+   * Create a ListEditor backed by an EditorSource.
+   * 
+   * @param source the EditorSource which will create sub-Editors
+   */
   protected ListEditor(EditorSource<E> source) {
     this.editorSource = source;
   }
 
+  /**
+   * Creates a temporary sub-Editor to use for traversal.
+   * 
+   * @return an {@link Editor} of type E
+   */
   public E createEditorForTraversal() {
     E toReturn = editorSource.create(0);
     editorSource.dispose(toReturn);
@@ -65,6 +75,8 @@ public class ListEditor<T, E extends Editor<T>> implements
   /**
    * Returns an unmodifiable, live view of the Editors managed by the
    * ListEditor.
+   * 
+   * @return a List of {@link Editor Editors} of type E
    */
   public List<E> getEditors() {
     if (list == null) {
@@ -85,6 +97,8 @@ public class ListEditor<T, E extends Editor<T>> implements
    * listEditor.getList().set(1, new Foo());
    * listEditor.getEditors().get(1).getFooFieldEditor().setValue(....);
    * </pre>
+   * 
+   * @return a live view of the ListEditor's backing data
    */
   public List<T> getList() {
     return list;
@@ -104,6 +118,11 @@ public class ListEditor<T, E extends Editor<T>> implements
     this.chain = chain;
   }
 
+  /**
+   * Sets the ListEditor's backing data.
+   * 
+   * @param value a List of data objects of type T
+   */
   public void setValue(List<T> value) {
     if (list != null) {
       // Having entire value reset, so dump the wrapper gracefully

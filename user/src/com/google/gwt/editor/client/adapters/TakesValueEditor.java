@@ -24,13 +24,25 @@ import com.google.gwt.user.client.TakesValue;
  * @param <T> the type of value to be edited
  */
 public class TakesValueEditor<T> implements LeafValueEditor<T> {
-
+  /**
+   * Returns a new ValueEditor that modifies the given {@link TakesValue} peer
+   * instance.
+   * 
+   * @param peer a {@link TakesValue} instance
+   * @return a TakesValueEditor instance of the same type as its peer
+   */
   public static <T> TakesValueEditor<T> of(TakesValue<T> peer) {
     return new TakesValueEditor<T>(peer);
   }
 
   private final TakesValue<T> peer;
 
+  /**
+   * Returns a new ValueEditor that modifies the given {@link TakesValue} peer
+   * instance.
+   * 
+   * @param peer a {@link TakesValue} instance
+   */
   protected TakesValueEditor(TakesValue<T> peer) {
     this.peer = peer;
   }

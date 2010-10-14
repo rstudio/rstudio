@@ -26,16 +26,22 @@ public interface EditorError {
   /**
    * Returns the absolute path location of the error, relative to the object
    * that was passed into the EditorDriver.
+   * 
+   * @return the absolute path as a String
    */
   String getAbsolutePath();
 
   /**
    * Returns the Editor that holds the invalid value.
+   * 
+   * @return the Editor instance
    */
   Editor<?> getEditor();
 
   /**
    * Returns a message associated with the error.
+   * 
+   * @return the error message as a String
    */
   String getMessage();
 
@@ -43,28 +49,40 @@ public interface EditorError {
    * Returns the path of the error relative to the Editor receiving the error.
    * If the error concerns the Editor that is receiving the error, this method
    * will return an empty string.
+   * 
+   * @return the error path as a String
    */
   String getPath();
 
   /**
    * Returns the object passed into {@link EditorDelegate#recordError}.
+   * 
+   * @return the user data Object
    */
   Object getUserData();
 
   /**
    * Returns the value that triggered the error.
+   * 
+   * @return the error value Object
    */
   Object getValue();
 
   /**
    * Indicates whether or not the EditorError will be propagated to the
    * enclosing Editor.
+   * 
+   * @return {@code true} if the error will not be propagated
+   * @see #setConsumed(boolean)
    */
   boolean isConsumed();
 
   /**
    * Indicates whether or not the EditorError will be propagated to the
    * enclosing Editor.
+   * 
+   * @param consumed {@code true} if the error will not be propagated
+   * @see #isConsumed()
    */
   void setConsumed(boolean consumed);
 }

@@ -44,7 +44,7 @@ import java.util.List;
  * For example:
  * <pre>
  * &#64;UiField
- * ValueBoxEditorDecorator<String> name;
+ * ValueBoxEditorDecorator&lt;String&gt; name;
  * </pre>
  * <pre>
  * &lt;e:ValueBoxEditorDecorator ui:field='name'>
@@ -70,11 +70,21 @@ public class ValueBoxEditorDecorator<T> extends Composite implements
 
   private ValueBoxEditor<T> editor;
 
+  /**
+   * Constructs a ValueBoxEditorDecorator.
+   */
   @UiConstructor
   public ValueBoxEditorDecorator() {
     initWidget(Binder.BINDER.createAndBindUi(this));
   }
 
+  /**
+   * Constructs a ValueBoxEditorDecorator using a {@link ValueBoxBase}
+   * widget and a {@link ValueBoxEditor} editor.
+   * 
+   * @param widget the widget
+   * @param editor the editor
+   */
   public ValueBoxEditorDecorator(ValueBoxBase<T> widget,
       ValueBoxEditor<T> editor) {
     this();
@@ -82,10 +92,22 @@ public class ValueBoxEditorDecorator<T> extends Composite implements
     this.editor = editor;
   }
 
+  /**
+   * Returns the associated {@link ValueBoxEditor}.
+   * 
+   * @return a {@link ValueBoxEditor} instance
+   * @see #setEditor(ValueBoxEditor)
+   */
   public ValueBoxEditor<T> asEditor() {
     return editor;
   }
 
+  /**
+   * Sets the associated {@link ValueBoxEditor}.
+   * 
+   * @param editor a {@link ValueBoxEditor} instance
+   * @see #asEditor()
+   */
   public void setEditor(ValueBoxEditor<T> editor) {
     this.editor = editor;
   }
@@ -93,6 +115,8 @@ public class ValueBoxEditorDecorator<T> extends Composite implements
   /**
    * Set the widget that the EditorPanel will display. This method will
    * automatically call {@link #setEditor}.
+   * 
+   * @param widget a {@link ValueBoxBase} widget
    */
   @UiChild(limit = 1, tagname = "valuebox")
   public void setValueBox(ValueBoxBase<T> widget) {
@@ -104,6 +128,8 @@ public class ValueBoxEditorDecorator<T> extends Composite implements
    * The default implementation will display, but not consume, received errors
    * whose {@link EditorError#getEditor() getEditor()} method returns the Editor
    * passed into {@link #setEditor}.
+   * 
+   * @param errors a List of {@link EditorError} instances
    */
   public void showErrors(List<EditorError> errors) {
     StringBuilder sb = new StringBuilder();
