@@ -137,10 +137,16 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
     // Hide the panel and call valueUpdater.update when a date is selected
     datePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
+        // Remember the values before hiding the popup.
+        Element cellParent = lastParent;
+        Date oldValue = lastValue;
+        Object key = lastKey;
         panel.hide();
+
+        // Update the cell and value updater.
         Date date = event.getValue();
-        setViewData(lastKey, date);
-        setValue(lastParent, lastValue, lastKey);
+        setViewData(key, date);
+        setValue(cellParent, oldValue, key);
         if (valueUpdater != null) {
           valueUpdater.update(date);
         }
