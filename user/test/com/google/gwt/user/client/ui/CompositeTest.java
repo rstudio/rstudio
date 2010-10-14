@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -29,6 +30,8 @@ import com.google.gwt.user.client.Event;
  * Tests for {@link Composite}.
  */
 public class CompositeTest extends GWTTestCase {
+
+  static int orderIndex;
 
   @Override
   public String getModuleName() {
@@ -132,4 +135,43 @@ public class CompositeTest extends GWTTestCase {
    */
   public void testNothing() {
   }
+
+  public void testAttachAndDetachOrder() {
+    class TestAttachHandler implements AttachEvent.Handler {
+      int delegateAttachOrder;
+      int delegateDetachOrder;
+
+      public void onAttachOrDetach(AttachEvent event) {
+        if (event.isAttached()) {
+          delegateAttachOrder = ++orderIndex;
+        } else {
+          delegateDetachOrder = ++orderIndex;
+        }
+      }
+    }
+
+    class TestComposite extends Composite {
+      TextBox tb = new TextBox();
+
+      public TestComposite() {
+        initWidget(tb);
+      }
+    }
+
+    TestComposite c = new TestComposite();
+    TestAttachHandler ca = new TestAttachHandler();
+    TestAttachHandler wa = new TestAttachHandler();
+
+    c.addAttachHandler(ca);
+    c.tb.addAttachHandler(wa);
+
+    RootPanel.get().add(c);
+    RootPanel.get().remove(c);
+
+    assertTrue(ca.delegateAttachOrder > 0);
+    assertTrue(ca.delegateDetachOrder > 0);
+    assertTrue(ca.delegateAttachOrder > wa.delegateAttachOrder);
+    assertTrue(ca.delegateDetachOrder < wa.delegateDetachOrder);
+  }
+
 }

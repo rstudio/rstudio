@@ -108,50 +108,68 @@ public class WidgetOnLoadTest extends GWTTestCase {
 
   public void testOnLoadAndUnloadOrder() {
     class TestAttachHandler implements AttachEvent.Handler {
-      int delegateAttachOrder;
-      int delegateDetachOrder;
+      int handleAttachOrder;
+      int handleDetachOrder;
 
       public void onAttachOrDetach(AttachEvent event) {
         if (event.isAttached()) {
-          delegateAttachOrder = ++orderIndex;
+          handleAttachOrder = ++orderIndex;
         } else {
-          delegateDetachOrder = ++orderIndex;
+          handleDetachOrder = ++orderIndex;
         }
       }
     }
 
     TestPanel tp = new TestPanel();
+    TestAttachHandler tpa = new TestAttachHandler();
+    tp.addAttachHandler(tpa);
+
     TestWidget tw = new TestWidget();
-    TestAttachHandler ta = new TestAttachHandler();
-    tw.addAttachHandler(ta);
+    TestAttachHandler twa = new TestAttachHandler();
+    tw.addAttachHandler(twa);
 
     tp.add(tw);
     RootPanel.get().add(tp);
     RootPanel.get().remove(tp);
 
-    // Trivial tests. Ensure that each panel/widget's onAttach/onDetach are
-    // called before their associated onLoad/onUnload.
+    /*
+     * Ensure that each panel/widget's onAttach/onDetach are called before their
+     * associated onLoad/onUnload, and before attach events are fired
+     */
     assertTrue(tp.onAttachOrder < tp.onLoadOrder);
     assertTrue(tp.onDetachOrder < tp.onUnloadOrder);
     assertTrue(tw.onAttachOrder < tw.onLoadOrder);
-    assertTrue(tw.onLoadOrder < ta.delegateAttachOrder);
+    assertTrue(tw.onLoadOrder < twa.handleAttachOrder);
+    assertTrue(tp.onLoadOrder < tpa.handleAttachOrder);
     assertTrue(tw.onDetachOrder < tw.onUnloadOrder);
-    assertTrue(tw.onUnloadOrder < ta.delegateDetachOrder);
+    assertTrue(tw.onUnloadOrder < twa.handleDetachOrder);
+    assertTrue(tp.onUnloadOrder < tpa.handleDetachOrder);
 
-    // Also trivial. Ensure that the panel's onAttach/onDetach is called before
-    // its child's onAttach/onDetach.
+    /*
+     * Ensure that the panel's onAttach/onDetach is called before its child's
+     * onAttach/onDetach.
+     */
     assertTrue(tp.onAttachOrder < tw.onAttachOrder);
+    assertTrue(tp.onDetachOrder < tw.onDetachOrder);
 
-    // Ensure that the panel's onLoad is only called after its widgets are
-    // attached/loaded.
+    /*
+     * Ensure that the panel's onLoad is only called after its widgets are
+     * attached/loaded, and likewise for the attach event listeners
+     */
     assertTrue(tp.onLoadOrder > tw.onLoadOrder);
+    assertTrue(tpa.handleAttachOrder > twa.handleAttachOrder);
 
-    // Ensure that the panel's onUnload is called before its widgets are
-    // detached/unloaded.
+    /*
+     * Ensure that the panel's onUnload is called before its widgets are
+     * detached/unloaded.
+     */
     assertTrue(tp.onUnloadOrder < tw.onUnloadOrder);
+    assertTrue(tpa.handleDetachOrder < twa.handleDetachOrder);
 
-    // Make sure each widget/panel's elements are actually still attached to the
-    // DOM during onLoad/onUnload.
+    /*
+     * Make sure each widget/panel's elements are actually still attached to the
+     * DOM during onLoad/onUnload.
+     */
     assertTrue(tp.domAttachedOnLoad);
     assertTrue(tp.domAttachedOnUnload);
     assertTrue(tw.domAttachedOnLoad);

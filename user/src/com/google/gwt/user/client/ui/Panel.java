@@ -176,26 +176,6 @@ public abstract class Panel extends Widget implements HasWidgets.ForIsWidget {
   }
 
   /**
-   * A Panel's onLoad method will be called after all of its children are
-   * attached.
-   * 
-   * @see Widget#onLoad()
-   */
-  @Override
-  protected void onLoad() {
-  }
-
-  /**
-   * A Panel's onUnload method will be called before its children become
-   * detached themselves.
-   * 
-   * @see Widget#onLoad()
-   */
-  @Override
-  protected void onUnload() {
-  }
-
-  /**
    * <p>
    * This method must be called as part of the remove method of any Panel. It
    * ensures that the Widget's parent is cleared. This method should be called

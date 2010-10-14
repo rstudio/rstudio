@@ -290,7 +290,7 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
    * <p>
    * This method is called when a widget is attached to the browser's document.
    * To receive notification after a Widget has been added to the document,
-   * override the {@link #onLoad} method.
+   * override the {@link #onLoad} method or use {@link #addAttachHandler}.
    * </p>
    * <p>
    * It is strongly recommended that you override {@link #onLoad()} or
@@ -328,13 +328,14 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
     // the attached flag is set. This allows widgets to be notified when they
     // are fully attached, and panels when all of their children are attached.
     onLoad();
+    AttachEvent.fire(this, true);
   }
 
   /**
    * <p>
    * This method is called when a widget is detached from the browser's
    * document. To receive notification before a Widget is removed from the
-   * document, override the {@link #onUnload} method.
+   * document, override the {@link #onUnload} method or use {@link #addAttachHandler}.
    * </p>
    * <p>
    * It is strongly recommended that you override {@link #onUnload()} or
@@ -363,6 +364,7 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
       // onUnload() gets called *before* everything else (the opposite of
       // onLoad()).
       onUnload();
+      AttachEvent.fire(this, false);
     } finally {
       // Put this in a finally, just in case onUnload throws an exception.
       try {
@@ -377,22 +379,16 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
 
   /**
    * This method is called immediately after a widget becomes attached to the
-   * browser's document. This default implementation notifies the widgets
-   * {@link com.google.gwt.event.logical.shared.AttachEvent.Handler
-   * AttachEvent.Handler}s.
+   * browser's document.
    */
   protected void onLoad() {
-    AttachEvent.fire(this, true);
   }
 
   /**
    * This method is called immediately before a widget will be detached from the
-   * browser's document. This default implementation notifies the widget's
-   * {@link com.google.gwt.event.logical.shared.AttachEvent.Handler
-   * AttachEvent.Handler}s.
+   * browser's document.
    */
   protected void onUnload() {
-    AttachEvent.fire(this, false);
   }
 
   /**

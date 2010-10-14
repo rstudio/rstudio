@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
@@ -109,12 +110,14 @@ public abstract class Composite extends Widget {
 
     // Call onLoad() directly, because we're not calling super.onAttach().
     onLoad();
+    AttachEvent.fire(this, true);
   }
 
   @Override
   protected void onDetach() {
     try {
       onUnload();
+      AttachEvent.fire(this, false);
     } finally {
       // We don't want an exception in user code to keep us from calling the
       // super implementation (or event listeners won't get cleaned up and
