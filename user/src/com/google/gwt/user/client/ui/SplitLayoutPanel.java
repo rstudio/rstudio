@@ -15,10 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -56,7 +57,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   class HSplitter extends Splitter {
     public HSplitter(Widget target, boolean reverse) {
       super(target, reverse);
-      getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
+      getElement().getStyle().setPropertyPx("width", splitterSize);
       setStyleName("gwt-SplitLayoutPanel-HDragger");
     }
 
@@ -86,7 +87,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
     private int offset;
     private boolean mouseDown;
-    private Command layoutCommand;
+    private ScheduledCommand layoutCommand;
 
     private final boolean reverse;
     private int minSize;
@@ -170,7 +171,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
             forceLayout();
           }
         };
-        DeferredCommand.addCommand(layoutCommand);
+        Scheduler.get().scheduleDeferred(layoutCommand);
       }
     }
   }
@@ -178,7 +179,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   class VSplitter extends Splitter {
     public VSplitter(Widget target, boolean reverse) {
       super(target, reverse);
-      getElement().getStyle().setPropertyPx("height", SPLITTER_SIZE);
+      getElement().getStyle().setPropertyPx("height", splitterSize);
       setStyleName("gwt-SplitLayoutPanel-VDragger");
     }
 
@@ -203,11 +204,37 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     }
   }
 
-  private static final int SPLITTER_SIZE = 8;
+  private static final int DEFAULT_SPLITTER_SIZE = 8;
 
+  private final int splitterSize; 
+
+  /**
+   * Construct a new {@link SplitLayoutPanel} with the default splitter size of
+   * 8px.
+   */
   public SplitLayoutPanel() {
+    this(DEFAULT_SPLITTER_SIZE);
+  }
+
+  /**
+   * Construct a new {@link SplitLayoutPanel} with the specified splitter size
+   * in pixels.
+   * 
+   * @param splitterSize the size of the splitter in pixels
+   */
+  public SplitLayoutPanel(int splitterSize) {
     super(Unit.PX);
+    this.splitterSize = splitterSize;
     setStyleName("gwt-SplitLayoutPanel");
+  }
+
+  /**
+   * Return the size of the splitter in pixels.
+   * 
+   * @return the splitter size
+   */
+  public int getSplitterSize() {
+    return splitterSize;
   }
 
   @Override
@@ -291,6 +318,6 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         assert false : "Unexpected direction";
     }
 
-    super.insert(splitter, layout.direction, SPLITTER_SIZE, before);
+    super.insert(splitter, layout.direction, splitterSize, before);
   }
 }

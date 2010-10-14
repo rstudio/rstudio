@@ -89,6 +89,16 @@ public class SplitLayoutPanelTest extends DockLayoutPanelTest {
     assertEquals(l4, children.get(8));
   }
 
+  public void testSplitterSize() {
+    SplitLayoutPanel p = new SplitLayoutPanel(5);
+    assertEquals(5, p.getSplitterSize());
+    WidgetCollection children = p.getChildren();
+
+    p.addWest(new Label("foo"), 64);
+    assertEquals("5px",
+        children.get(1).getElement().getStyle().getWidth().toLowerCase());
+  }
+
   public void testRemoveInsert() {
     SplitLayoutPanel p = new SplitLayoutPanel();
     WidgetCollection children = p.getChildren();
