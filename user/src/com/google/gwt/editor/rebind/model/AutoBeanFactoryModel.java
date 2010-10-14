@@ -17,7 +17,6 @@ package com.google.gwt.editor.rebind.model;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -46,28 +45,6 @@ import java.util.Set;
  */
 public class AutoBeanFactoryModel {
   private static final JType[] EMPTY_JTYPE = new JType[0];
-
-  @SuppressWarnings("unchecked")
-  public static <T extends JType> T ensureBaseType(T maybeParameterized) {
-    if (maybeParameterized.isArray() != null) {
-      JArrayType array = maybeParameterized.isArray();
-      return (T) array.getOracle().getArrayType(
-          ensureBaseType(array.getComponentType()));
-    }
-    if (maybeParameterized.isTypeParameter() != null) {
-      return (T) maybeParameterized.isTypeParameter().getBaseType();
-    }
-    if (maybeParameterized.isParameterized() != null) {
-      return (T) maybeParameterized.isParameterized().getBaseType();
-    }
-    if (maybeParameterized.isRawType() != null) {
-      return (T) maybeParameterized.isRawType().getBaseType();
-    }
-    if (maybeParameterized.isWildcard() != null) {
-      return (T) maybeParameterized.isWildcard().getBaseType();
-    }
-    return maybeParameterized;
-  }
 
   private final JGenericType autoBeanInterface;
   private final JClassType autoBeanFactoryInterface;
@@ -212,7 +189,7 @@ public class AutoBeanFactoryModel {
   }
 
   public AutoBeanType getPeer(JClassType beanType) {
-    beanType = ensureBaseType(beanType);
+    beanType = ModelUtils.ensureBaseType(beanType);
     return peers.get(beanType);
   }
 
@@ -377,7 +354,7 @@ public class AutoBeanFactoryModel {
   }
 
   private AutoBeanType getAutoBeanType(JClassType beanType) {
-    beanType = ensureBaseType(beanType);
+    beanType = ModelUtils.ensureBaseType(beanType);
     AutoBeanType toReturn = peers.get(beanType);
     if (toReturn == null) {
       AutoBeanType.Builder builder = new AutoBeanType.Builder();
@@ -413,7 +390,7 @@ public class AutoBeanFactoryModel {
 
     // Check using base types to account for erasure semantics
     JParameterizedType expectedFirst = oracle.getParameterizedType(
-        autoBeanInterface, new JClassType[] {ensureBaseType(beanType)});
+        autoBeanInterface, new JClassType[] {ModelUtils.ensureBaseType(beanType)});
     return expectedFirst.isAssignableTo(paramAsClass);
   }
 

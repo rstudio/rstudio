@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -164,8 +164,8 @@ public class RequestFactoryModel {
           contextType.getQualifiedSourceName(), Service.class.getSimpleName());
       return;
     }
-      Class<?> serviceClass = serviceAnnotation.value();
-      contextBuilder.setServiceClass(serviceClass);
+    Class<?> serviceClass = serviceAnnotation.value();
+    contextBuilder.setServiceClass(serviceClass);
 
     List<RequestMethod> requestMethods = new ArrayList<RequestMethod>();
     for (JMethod method : contextType.getInheritableMethods()) {
@@ -177,7 +177,8 @@ public class RequestFactoryModel {
       RequestMethod.Builder methodBuilder = new RequestMethod.Builder();
       methodBuilder.setDeclarationMethod(method);
 
-      if (!validateContextMethodAndSetDataType(methodBuilder, method, serviceClass)) {
+      if (!validateContextMethodAndSetDataType(methodBuilder, method,
+          serviceClass)) {
         continue;
       }
 
@@ -208,6 +209,7 @@ public class RequestFactoryModel {
 
   private EntityProxyModel getEntityProxyType(JClassType entityProxyType)
       throws UnableToCompleteException {
+    entityProxyType = ModelUtils.ensureBaseType(entityProxyType);
     EntityProxyModel toReturn = peers.get(entityProxyType);
     if (toReturn == null) {
       EntityProxyModel.Builder inProgress = peerBuilders.get(entityProxyType);
@@ -219,7 +221,7 @@ public class RequestFactoryModel {
       EntityProxyModel.Builder builder = new EntityProxyModel.Builder();
       peerBuilders.put(entityProxyType, builder);
 
-      builder.setQualifiedSourceName(entityProxyType.getQualifiedSourceName());
+      builder.setQualifiedSourceName(ModelUtils.getQualifiedBaseName(entityProxyType));
 
       // Get the server domain object type
       ProxyFor proxyFor = entityProxyType.getAnnotation(ProxyFor.class);
@@ -301,7 +303,7 @@ public class RequestFactoryModel {
    * Examine a RequestContext method to see if it returns a transportable type.
    */
   private boolean validateContextMethodAndSetDataType(
-          RequestMethod.Builder methodBuilder, JMethod method, Class<?> serviceClass)
+      RequestMethod.Builder methodBuilder, JMethod method, Class<?> serviceClass)
       throws UnableToCompleteException {
     JClassType requestReturnType = method.getReturnType().isInterface();
     JClassType invocationReturnType;
@@ -313,12 +315,11 @@ public class RequestFactoryModel {
     }
 
     /*
-     * TODO: bad assumption
-     * Implicit assumption is that the Service and ProxyFor
+     * TODO: bad assumption Implicit assumption is that the Service and ProxyFor
      * classes are the same. This is because an instance method should
-     * technically be looked up on the class that is the instance parameter,
-     * and not on the serviceClass, which consists of static service methods.
-     * Can't be fixed until it is fixed in JsonRequestProcessor.
+     * technically be looked up on the class that is the instance parameter, and
+     * not on the serviceClass, which consists of static service methods. Can't
+     * be fixed until it is fixed in JsonRequestProcessor.
      */
     Method domainMethod = validateExistsAndNotOverriden(method, serviceClass,
         false);
@@ -330,8 +331,7 @@ public class RequestFactoryModel {
       if (isStatic(domainMethod)) {
         poison("Method %s.%s is an instance method, "
             + "while the corresponding method on %s is static",
-            method.getEnclosingType().getName(),
-            method.getName(),
+            method.getEnclosingType().getName(), method.getName(),
             serviceClass.getName());
         return false;
       }
@@ -344,8 +344,7 @@ public class RequestFactoryModel {
       if (!isStatic(domainMethod)) {
         poison("Method %s.%s is a static method, "
             + "while the corresponding method on %s is not",
-            method.getEnclosingType().getName(),
-            method.getName(),
+            method.getEnclosingType().getName(), method.getName(),
             serviceClass.getName());
         return false;
       }
@@ -367,8 +366,7 @@ public class RequestFactoryModel {
     Class<?>[] domainParams = domainMethod.getParameterTypes();
     if (params.length != domainParams.length) {
       poison("Method %s.%s parameters do not match same method on %s",
-          method.getEnclosingType().getName(),
-          method.getName(),
+          method.getEnclosingType().getName(), method.getName(),
           serviceClass.getName());
     }
     for (int i = 0; i < params.length; ++i) {
@@ -377,16 +375,14 @@ public class RequestFactoryModel {
       paramsOk = validateTransportableType(new RequestMethod.Builder(),
           param.getType(), false)
           && paramsOk;
-      paramsOk = validateProxyAndDomainTypeEquals(param.getType(), domainParam, i,
-          methodLocation(method), methodLocation(domainMethod))
-          && paramsOk;
+      paramsOk = validateProxyAndDomainTypeEquals(param.getType(), domainParam,
+          i, methodLocation(method), methodLocation(domainMethod)) && paramsOk;
     }
 
     return validateTransportableType(methodBuilder, invocationReturnType, true)
         && validateProxyAndDomainTypeEquals(invocationReturnType,
-        domainMethod.getReturnType(), -1, methodLocation(method),
-        methodLocation(domainMethod))
-        && paramsOk;
+            domainMethod.getReturnType(), -1, methodLocation(method),
+            methodLocation(domainMethod)) && paramsOk;
   }
 
   /**
@@ -397,8 +393,8 @@ public class RequestFactoryModel {
     JMethod proxyMethod = requestMethod.getDeclarationMethod();
     // check if method exists on domain object
     Class<?> domainType = entityBuilder.peek().getProxyFor();
-    Method domainMethod = validateExistsAndNotOverriden(proxyMethod, domainType,
-        true);
+    Method domainMethod = validateExistsAndNotOverriden(proxyMethod,
+        domainType, true);
     if (domainMethod == null) {
       return false;
     }
@@ -408,27 +404,24 @@ public class RequestFactoryModel {
       // compare return type of domain to proxy return type
       String returnTypeName = domainMethod.getReturnType().getName();
       // isEntityType() returns true for collections, but we want the Collection
-      String propertyTypeName =
-          requestMethod.isCollectionType() || requestMethod.isValueType() ?
-              requestMethod.getDataType().getQualifiedBinaryName() :
-              requestMethod.getEntityType().getProxyFor().getName();
+      String propertyTypeName = requestMethod.isCollectionType()
+          || requestMethod.isValueType()
+          ? requestMethod.getDataType().getQualifiedBinaryName()
+          : requestMethod.getEntityType().getProxyFor().getName();
       if (!returnTypeName.equals(propertyTypeName)) {
-                  poison("Method %s.%s return type %s does not match return type %s "
-              + " of method %s.%s", domainType.getName(),
-              domainMethod.getName(), returnTypeName,
-              propertyTypeName,
-              proxyMethod.getEnclosingType().getName(), proxyMethod.getName());
+        poison("Method %s.%s return type %s does not match return type %s "
+            + " of method %s.%s", domainType.getName(), domainMethod.getName(),
+            returnTypeName, propertyTypeName,
+            proxyMethod.getEnclosingType().getName(), proxyMethod.getName());
         return false;
       }
     }
     JParameter[] proxyParams = proxyMethod.getParameters();
     Class<?>[] domainParams = domainMethod.getParameterTypes();
     if (proxyParams.length != domainParams.length) {
-       poison("Method %s.%s parameter mismatch with %s.%s",
-           proxyMethod.getEnclosingType().getName(),
-           proxyMethod.getName(),
-           domainType.getName(),
-           domainMethod.getName());
+      poison("Method %s.%s parameter mismatch with %s.%s",
+          proxyMethod.getEnclosingType().getName(), proxyMethod.getName(),
+          domainType.getName(), domainMethod.getName());
       return false;
     }
     for (int i = 0; i < proxyParams.length; i++) {
@@ -436,11 +429,9 @@ public class RequestFactoryModel {
       Class<?> domainParam = domainParams[i];
       if (!validateProxyAndDomainTypeEquals(proxyParam, domainParam, i,
           methodLocation(proxyMethod), methodLocation(domainMethod))) {
-        poison("Parameter %d of %s.%s doesn't match method %s.%s",
-            i, proxyMethod.getEnclosingType().getName(),
-            proxyMethod.getName(),
-            domainType.getName(),
-            domainMethod.getName());
+        poison("Parameter %d of %s.%s doesn't match method %s.%s", i,
+            proxyMethod.getEnclosingType().getName(), proxyMethod.getName(),
+            domainType.getName(), domainMethod.getName());
         return false;
       }
     }
@@ -452,16 +443,17 @@ public class RequestFactoryModel {
    */
   private boolean validateDomainType(Class<?> domainType) {
     try {
-        domainType.getMethod("getId");
+      domainType.getMethod("getId");
     } catch (NoSuchMethodException e) {
-        poison("The class %s is missing method getId()", domainType.getName());
-        return false;
+      poison("The class %s is missing method getId()", domainType.getName());
+      return false;
     }
     try {
-        domainType.getMethod("getVersion");
+      domainType.getMethod("getVersion");
     } catch (NoSuchMethodException e) {
-        poison("The class %s is missing method getVersion()", domainType.getName());
-        return false;
+      poison("The class %s is missing method getVersion()",
+          domainType.getName());
+      return false;
     }
     return true;
   }
@@ -502,18 +494,18 @@ public class RequestFactoryModel {
       // allow int to match int or Integer
       matchOk = proxyType.getQualifiedSourceName().equals(
           ModelUtils.maybeAutobox(domainType).getName())
-        || proxyType.getQualifiedSourceName().equals(domainType.getName());
+          || proxyType.getQualifiedSourceName().equals(domainType.getName());
     } else {
-      matchOk =  getEntityProxyType(
-          proxyType.isClassOrInterface()).getProxyFor().equals(domainType);
+      matchOk = getEntityProxyType(proxyType.isClassOrInterface()).getProxyFor().equals(
+          domainType);
     }
     if (!matchOk) {
       if (paramNumber < 0) {
-        poison("Return type of method %s does not match method %s", clientMethod,
-            serverMethod);
+        poison("Return type of method %s does not match method %s",
+            clientMethod, serverMethod);
       } else {
-         poison("Parameter %d of method %s does not match method %s",
-          paramNumber, clientMethod, serverMethod);
+        poison("Parameter %d of method %s does not match method %s",
+            paramNumber, clientMethod, serverMethod);
       }
     }
     return matchOk;

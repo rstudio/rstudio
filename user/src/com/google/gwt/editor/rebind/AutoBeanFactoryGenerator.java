@@ -31,13 +31,14 @@ import com.google.gwt.editor.client.AutoBeanUtils;
 import com.google.gwt.editor.client.AutoBeanVisitor;
 import com.google.gwt.editor.client.AutoBeanVisitor.PropertyContext;
 import com.google.gwt.editor.client.impl.AbstractAutoBean;
-import com.google.gwt.editor.client.impl.AbstractAutoBeanFactory;
 import com.google.gwt.editor.client.impl.AbstractAutoBean.OneShotContext;
+import com.google.gwt.editor.client.impl.AbstractAutoBeanFactory;
 import com.google.gwt.editor.rebind.model.AutoBeanFactoryMethod;
 import com.google.gwt.editor.rebind.model.AutoBeanFactoryModel;
 import com.google.gwt.editor.rebind.model.AutoBeanMethod;
-import com.google.gwt.editor.rebind.model.AutoBeanType;
 import com.google.gwt.editor.rebind.model.AutoBeanMethod.Action;
+import com.google.gwt.editor.rebind.model.AutoBeanType;
+import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -91,8 +92,8 @@ public class AutoBeanFactoryGenerator extends Generator {
     StringBuilder parameters = new StringBuilder();
     for (JParameter param : jmethod.getParameters()) {
       parameters.append(",").append(
-          AutoBeanFactoryModel.ensureBaseType(param.getType()).getQualifiedSourceName()).append(
-          " ").append(param.getName());
+          ModelUtils.getQualifiedBaseName(param.getType())).append(" ").append(
+          param.getName());
     }
     if (parameters.length() > 0) {
       parameters = parameters.deleteCharAt(0);
@@ -102,13 +103,12 @@ public class AutoBeanFactoryGenerator extends Generator {
     if (jmethod.getThrows().length > 0) {
       for (JType thrown : jmethod.getThrows()) {
         throwsDeclaration.append(". ").append(
-            AutoBeanFactoryModel.ensureBaseType(thrown).getQualifiedSourceName());
+            ModelUtils.getQualifiedBaseName(thrown));
       }
       throwsDeclaration.deleteCharAt(0);
       throwsDeclaration.insert(0, "throws ");
     }
-    String returnName = AutoBeanFactoryModel.ensureBaseType(
-        jmethod.getReturnType()).getQualifiedSourceName();
+    String returnName = ModelUtils.getQualifiedBaseName(jmethod.getReturnType());
     assert !returnName.contains("extends");
     return String.format("%s %s(%s) %s", returnName, jmethod.getName(),
         parameters, throwsDeclaration);
@@ -225,9 +225,8 @@ public class AutoBeanFactoryGenerator extends Generator {
             sw.println("}");
           } else {
             // return (ReturnType) values.get(\"foo\");
-            sw.println(
-                "return (%s) values.get(\"%s\");",
-                AutoBeanFactoryModel.ensureBaseType(jmethod.getReturnType()).getQualifiedSourceName(),
+            sw.println("return (%s) values.get(\"%s\");",
+                ModelUtils.getQualifiedBaseName(jmethod.getReturnType()),
                 method.getPropertyName());
           }
         }
@@ -411,7 +410,7 @@ public class AutoBeanFactoryGenerator extends Generator {
           // Foo toReturn=FooAutoBean.this.get("getFoo", getWrapped().getFoo());
           sw.println(
               "%s toReturn = %3$s.this.get(\"%2$s\", getWrapped().%2$s());",
-              AutoBeanFactoryModel.ensureBaseType(jmethod.getReturnType()).getQualifiedSourceName(),
+              ModelUtils.getQualifiedBaseName(jmethod.getReturnType()),
               methodName, type.getSimpleSourceName());
 
           // Non-value types might need to be wrapped
@@ -442,7 +441,7 @@ public class AutoBeanFactoryGenerator extends Generator {
             // Type toReturn = getWrapped().doFoo(params);
             sw.println(
                 "%s toReturn = %s.this.getWrapped().%s(%s);",
-                AutoBeanFactoryModel.ensureBaseType(jmethod.getReturnType()).getQualifiedSourceName(),
+                ModelUtils.ensureBaseType(jmethod.getReturnType()).getQualifiedSourceName(),
                 type.getSimpleSourceName(), methodName, arguments);
             // Non-value types might need to be wrapped
             writeReturnWrapper(sw, type, method);

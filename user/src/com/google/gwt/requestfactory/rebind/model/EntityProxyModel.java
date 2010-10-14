@@ -49,6 +49,7 @@ public class EntityProxyModel {
     }
 
     public void setQualifiedSourceName(String name) {
+      assert !name.contains(" ");
       toReturn.qualifiedSourceName = name;
     }
 

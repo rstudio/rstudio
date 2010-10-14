@@ -23,11 +23,13 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.editor.client.AutoBean;
 import com.google.gwt.editor.client.AutoBeanFactory;
 import com.google.gwt.editor.client.AutoBeanFactory.Category;
 import com.google.gwt.editor.client.AutoBeanFactory.NoWrap;
+import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.requestfactory.client.impl.AbstractRequest;
 import com.google.gwt.requestfactory.client.impl.AbstractRequestContext;
 import com.google.gwt.requestfactory.client.impl.AbstractRequestFactory;
@@ -158,10 +160,16 @@ public class RequestFactoryGenerator extends Generator {
         StringBuilder parameterArray = new StringBuilder();
         // final Foo foo, final Bar bar, final Baz baz
         StringBuilder parameterDeclaration = new StringBuilder();
+        // <P extends Blah>
+        StringBuilder typeParameterDeclaration = new StringBuilder();
 
         if (request.isInstance()) {
           // Leave a spot for the using() method to fill in later
           parameterArray.append(",null");
+        }
+        for (JTypeParameter param : jmethod.getTypeParameters()) {
+          typeParameterDeclaration.append(",").append(
+              param.getQualifiedSourceName());
         }
         for (JParameter param : jmethod.getParameters()) {
           parameterArray.append(",").append(param.getName());
@@ -175,15 +183,17 @@ public class RequestFactoryGenerator extends Generator {
         if (parameterDeclaration.length() > 0) {
           parameterDeclaration.deleteCharAt(0);
         }
+        if (typeParameterDeclaration.length() > 0) {
+          typeParameterDeclaration.deleteCharAt(0).insert(0, "<").append(">");
+        }
 
         // public Request<Foo> doFoo(final Foo foo) {
-        sw.println("public %s %s(%s) {",
+        sw.println("public %s %s %s(%s) {", typeParameterDeclaration,
             jmethod.getReturnType().getParameterizedQualifiedSourceName(),
             jmethod.getName(), parameterDeclaration);
         sw.indent();
-        // Have to cover the old Request sub-interfaces
-        // TODO: ProxyListRequest et al. be removed?
-        // class X extends AbstractRequest<Return> implements ReturnType {
+        // The implements clause covers InstanceRequest
+        // class X extends AbstractRequest<Return> implements Request<Return> {
         sw.println("class X extends %s<%s> implements %s {",
             AbstractRequest.class.getCanonicalName(),
             request.getDataType().getParameterizedQualifiedSourceName(),
@@ -221,16 +231,19 @@ public class RequestFactoryGenerator extends Generator {
           // decodeReturnObjectList(FooEntityProxy.class,obj, (List)decoded);
           String decodeMethod = request.isValueType() ? "decodeReturnValueList"
               : "decodeReturnObjectList";
-          sw.println("%s(%s.class, obj, (%s)decoded);", decodeMethod,
-              request.getCollectionElementType().getQualifiedSourceName(),
+          sw.println(
+              "%s(%s.class, obj, (%s)decoded);",
+              decodeMethod,
+              ModelUtils.getQualifiedBaseName(request.getCollectionElementType()),
               collectionType.getCanonicalName());
         } else if (request.isValueType()) {
           // decoded = ValueCodex.cFString(Integer.class, String.valueOf(obj));
           sw.println(
               "decoded = %s.convertFromString(%s.class, String.valueOf(obj));",
               ValueCodex.class.getCanonicalName(),
-              request.getDataType().getQualifiedSourceName());
+              ModelUtils.getQualifiedBaseName(request.getDataType()));
         } else if (request.isEntityType()) {
+          // Implicitly erased
           sw.println("decoded = decodeReturnObject(%s.class, obj);",
               request.getEntityType().getQualifiedSourceName());
         } else {
