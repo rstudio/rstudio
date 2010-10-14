@@ -25,9 +25,9 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.RequestEvent;
+import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestTransport;
-import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.user.client.Window.Location;
 
 import java.util.logging.Level;
@@ -36,6 +36,18 @@ import java.util.logging.Logger;
 /**
  * An implementation of {@link RequestTransport} that uses a
  * {@link RequestBuilder}.
+ * <p>
+ * This implementation will send {@link RequestEvent} objects to the
+ * {@link EventBus} passed into the constructor to provide indication of
+ * transport-level activity. When an HTTP request is sent, an event with a
+ * {@link State#SENT} state and a {@code null} {@link Request} will be posted.
+ * When an HTTP transport completes successfully, an event will be posted with
+ * state {@link State#RECEIVED} and the {@link Request} object provided to the
+ * internal {@link RequestCallback#onResponseReceived()}. If an HTTP transport
+ * fails (e.g. due to network malfunction), an event with state
+ * {@link State#RECEIVED} and a {@code null} {@link Request} will be sent. The
+ * success or failure of the HTTP transport is wholly independent from whether
+ * or not the application payload was successfully executed by the server.
  */
 public class DefaultRequestTransport implements RequestTransport {
 

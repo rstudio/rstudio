@@ -19,6 +19,33 @@ import com.google.gwt.event.shared.EventBus;
 
 /**
  * Marker interface for the RequestFactory code generator.
+ * <p>
+ * A RequestFactory implementation will post {@link EntityProxyChange} events to
+ * the {@link EventBus} passed into the {@link #initialize} method. The events
+ * will have the following {@link WriteOperation} associated with them in the
+ * following circumstances:
+ * <ul>
+ * <li>{@link WriteOperation#PERSIST} when an {@link EntityProxy}
+ * {@link RequestContext#create(Class) created} on the client is successfully
+ * persisted in the server's backing store.</li>
+ * <li>{@link WriteOperation#UPDATE} when changes due to an {@link EntityProxy}
+ * being {@link RequestContext#edit(EntityProxy) edited} on the client are
+ * successfully persisted in the server's backing store.</li>
+ * <li>{@link WriteOperation#UPDATE} when a previously-unseen
+ * {@link EntityProxy} is reachable from the return value for a
+ * successfully-executed {@link Request}.</li>
+ * <li>{@link WriteOperation#UPDATE} when any property of an {@link EntityProxy}
+ * reachable from a {@link Request Request's} arguments is seen to have changed
+ * after executing the service method on the server.</li>
+ * <li>{@link WriteOperation#DELETE} when an {@link EntityProxy} reachable from
+ * a {@link Request Request's} arguments becomes irretrievable after executing
+ * the service method on the server.</li>
+ * </ul>
+ * <p>
+ * Other types of events may be posted to the {@link EventBus} by other services
+ * used by the RequestFactory.
+ * 
+ * @see {@link com.google.gwt.requestfactory.client.DefaultRequestTransport}
  */
 public interface RequestFactory {
   String JSON_CONTENT_TYPE_UTF8 = "application/json; charset=utf-8";
