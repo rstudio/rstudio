@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 /**
  * A tag interface that facilitates compile-time binding of HTML templates to
  * generate SafeHtml strings.
- * 
+ *
  * <p>Example usage:
  * <pre>
  *   public interface MyTemplate extends SafeHtmlTemplates {
@@ -45,13 +45,24 @@ import java.lang.annotation.Target;
  *       TEMPLATE.messageWithLink(message, url, linkText, style);
  *   }
  * </pre>
- * 
- * Instantiating a SafeHtmlTemplates interface with {@code GWT.create()} returns
- * an instance of an implementation that is generated at compile time. The code
- * generator parses the value of each template method's {@code @Template}
- * annotation as a (X)HTML template, with template variables denoted by
- * curly-brace placeholders that refer by index to the corresponding template
- * method parameter.
+ *
+ * <p>
+ * Instantiating a {@code SafeHtmlTemplates} interface with {@code GWT.create()}
+ * returns an instance of an implementation that is generated at compile time.
+ * The code generator parses the value of each template method's
+ * {@code &#064;Template} annotation as a (X)HTML template, with template
+ * variables denoted by curly-brace placeholders that refer by index to the
+ * corresponding template method parameter.
+ *
+ * <p>
+ * <b>Note:</b> The current implementation of the code generator cannot
+ * guarantee the {@code SafeHtml} contract for templates with template variables
+ * in a CSS or JavaScript context (that is, within a {@code style} attribute or
+ * tag; or within {@code &lt;script&gt;} tags or {@code onClick}, {@code
+ * onError}, etc. attributes). Developers are advised to avoid such templates,
+ * or to review the uses of corresponding template methods very carefully to
+ * ensure that values passed into the CSS or JavaScript context cannot result in
+ * unintended script execution.
  */
 public interface SafeHtmlTemplates {
 
