@@ -41,12 +41,10 @@ public interface Cell<C> {
   boolean dependsOnSelection();
 
   /**
-   * <p>
    * Get the set of events that this cell consumes. The container that uses this
    * cell should only pass these events to
-   * {@link #onBrowserEvent(Element, Object, Object, NativeEvent, ValueUpdater)}
-   * .
-   * </p>
+   * {@link #onBrowserEvent(Element, Object, Object, NativeEvent, ValueUpdater)}.
+   *
    * <p>
    * The returned value should not be modified, and may be an unmodifiable set.
    * Changes to the return value may not be reflected in the cell.
@@ -73,6 +71,7 @@ public interface Cell<C> {
    * @param parent the parent Element
    * @param value the value associated with the cell
    * @param key the unique key associated with the row object
+   * @return true if the cell is in edit mode
    */
   boolean isEditing(Element parent, C value, Object key);
 
@@ -108,6 +107,10 @@ public interface Cell<C> {
   /**
    * Reset focus on the Cell. This method is called if the cell has focus when
    * it is refreshed.
+   *
+   * @param parent the parent Element
+   * @param value the value associated with the cell
+   * @param key the unique key associated with the row object
    *
    * @return true if focus is taken, false if not
    */

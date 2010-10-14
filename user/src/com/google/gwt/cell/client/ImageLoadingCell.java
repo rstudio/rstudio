@@ -108,15 +108,30 @@ public class ImageLoadingCell extends AbstractCell<String> {
       }
     }
 
+    /**
+     * Returns the renderer for a broken image.
+     *
+     * @return a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
+     */
     public SafeHtmlRenderer<String> getErrorRenderer() {
       // Show the broken image on error.
       return getImageRenderer();
     }
 
+    /**
+     * Returns the renderer for an image.
+     *
+     * @return a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
+     */
     public SafeHtmlRenderer<String> getImageRenderer() {
       return IMAGE_RENDERER;
     }
 
+    /**
+     * Returns the renderer for a loading image.
+     *
+     * @return a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
+     */
     public SafeHtmlRenderer<String> getLoadingRenderer() {
       return LOADING_RENDERER;
     }
@@ -150,7 +165,8 @@ public class ImageLoadingCell extends AbstractCell<String> {
   /**
    * Construct an {@link ImageResourceCell} using the specified
    * {@link SafeHtmlRenderer SafeHtmlRenderers}.
-   *
+   * 
+   * @param renderers an instance of {@link ImageLoadingCell.Renderers Renderers}
    */
   public ImageLoadingCell(Renderers renderers) {
     super("load", "error");

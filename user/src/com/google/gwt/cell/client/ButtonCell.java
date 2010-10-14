@@ -36,6 +36,8 @@ public class ButtonCell extends AbstractSafeHtmlCell<String> {
 
   /**
    * Construct a new ButtonCell that will use a given {@link SafeHtmlRenderer}.
+   * 
+   * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
    */
   public ButtonCell(SafeHtmlRenderer<String> renderer) {
     super(renderer, "click", "keydown");

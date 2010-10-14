@@ -65,6 +65,8 @@ public abstract class AbstractSafeHtmlCell<C> extends AbstractCell<C> {
 
   /**
    * Return the {@link SafeHtmlRenderer} used by this cell.
+   *
+   * @return a {@link SafeHtmlRenderer} instance
    */
   public SafeHtmlRenderer<C> getRenderer() {
     return renderer;

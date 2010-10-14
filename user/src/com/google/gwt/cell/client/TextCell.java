@@ -36,6 +36,8 @@ public class TextCell extends AbstractSafeHtmlCell<String> {
   /**
    * Constructs a TextCell that uses the provided {@link SafeHtmlRenderer} to
    * render its text.
+   * 
+   * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
    */
   public TextCell(SafeHtmlRenderer<String> renderer) {
     super(renderer);

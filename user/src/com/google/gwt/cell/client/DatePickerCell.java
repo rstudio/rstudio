@@ -79,6 +79,8 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   /**
    * Constructs a new DatePickerCell that uses the given date/time format and a
    * {@link SimpleSafeHtmlRenderer}.
+   *
+   * @param format a {@link DateTimeFormat} instance
    */
   public DatePickerCell(DateTimeFormat format) {
     this(format, SimpleSafeHtmlRenderer.getInstance());
@@ -88,6 +90,8 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
    * Constructs a new DatePickerCell that uses the date/time format given by
    * {@link DateTimeFormat#getFullDateFormat} and the given
    * {@link SafeHtmlRenderer}.
+   * 
+   * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
    */
   public DatePickerCell(SafeHtmlRenderer<String> renderer) {
     this(DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL), renderer);
@@ -96,6 +100,9 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
   /**
    * Constructs a new DatePickerCell that uses the given date/time format and
    * {@link SafeHtmlRenderer}.
+   *
+   * @param format a {@link DateTimeFormat} instance
+   * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
    */
   public DatePickerCell(DateTimeFormat format, SafeHtmlRenderer<String> renderer) {
     super("click", "keydown");

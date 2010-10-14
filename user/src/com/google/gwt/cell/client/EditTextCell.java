@@ -145,8 +145,9 @@ public class EditTextCell extends
   }
 
   /**
-   * Construct a new EditTextCell that will use a given {@link SafeHtmlRenderer}
-   * .
+   * Construct a new EditTextCell that will use a given {@link SafeHtmlRenderer}.
+   * 
+   * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
    */
   public EditTextCell(SafeHtmlRenderer<String> renderer) {
     super("click", "keyup", "keydown", "blur");

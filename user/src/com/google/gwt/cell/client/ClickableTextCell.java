@@ -39,6 +39,8 @@ public class ClickableTextCell extends AbstractSafeHtmlCell<String> {
   /**
    * Construct a new ClickableTextCell that will use a given
    * {@link SafeHtmlRenderer}.
+   * 
+   * @param renderer a {@link SafeHtmlRenderer SafeHtmlRenderer<String>} instance
    */
   public ClickableTextCell(SafeHtmlRenderer<String> renderer) {
     super(renderer, "click", "keydown");

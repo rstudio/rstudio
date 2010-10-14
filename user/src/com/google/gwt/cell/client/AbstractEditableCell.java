@@ -76,6 +76,7 @@ public abstract class AbstractEditableCell<C, V> extends AbstractCell<C> {
    *
    * @param key the key identifying the row object
    * @return the view data, or null if none has been set
+   * @see #setViewData(Object, Object)V
    */
   public V getViewData(Object key) {
     return (key == null) ? null : viewDataMap.get(key);
@@ -90,6 +91,7 @@ public abstract class AbstractEditableCell<C, V> extends AbstractCell<C> {
    * @param parent the parent Element
    * @param value the value associated with the cell
    * @param key the unique key associated with the row object
+   * @return true if the cell is in edit mode
    */
   @Override
   public abstract boolean isEditing(Element parent, C value, Object key);
@@ -100,6 +102,7 @@ public abstract class AbstractEditableCell<C, V> extends AbstractCell<C> {
    *
    * @param key the key of the view data
    * @param viewData the view data to associate
+   * @see #getViewData(Object)
    */
   public void setViewData(Object key, V viewData) {
     if (key == null) {

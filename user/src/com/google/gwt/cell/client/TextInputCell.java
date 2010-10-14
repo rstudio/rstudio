@@ -52,6 +52,8 @@ public class TextInputCell extends
 
     /**
      * Construct a ViewData instance containing a given value.
+     *
+     * @param value a String value
      */
     public ViewData(String value) {
       this.lastValue = value;
@@ -74,6 +76,9 @@ public class TextInputCell extends
 
     /**
      * Return the current value of the input element.
+     * 
+     * @return the current value String
+     * @see #setCurrentValue(String)
      */
     public String getCurrentValue() {
       return curValue;
@@ -81,6 +86,9 @@ public class TextInputCell extends
 
     /**
      * Return the last value sent to the {@link ValueUpdater}.
+     * 
+     * @return the last value String
+     * @see #setLastValue(String)
      */
     public String getLastValue() {
       return lastValue;
@@ -98,6 +106,7 @@ public class TextInputCell extends
      * Set the current value.
      * 
      * @param curValue the current value
+     * @see #getCurrentValue()
      */
     protected void setCurrentValue(String curValue) {
       this.curValue = curValue;
@@ -107,6 +116,7 @@ public class TextInputCell extends
      * Set the last value.
      * 
      * @param lastValue the last value
+     * @see #getLastValue()
      */
     protected void setLastValue(String lastValue) {
       this.lastValue = lastValue;

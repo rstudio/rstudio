@@ -37,6 +37,8 @@ public class ActionCell<C> extends AbstractCell<C> {
   public static interface Delegate<T> {
     /**
      * Perform the desired action on the given object.
+     *
+     * @param object the object to be acted upon
      */
     void execute(T object);
   }
