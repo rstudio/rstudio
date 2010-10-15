@@ -24,8 +24,12 @@ package com.google.gwt.requestfactory.shared;
  * @param <T> the type eventually returned by the method invocation
  */
 public interface InstanceRequest<P extends EntityProxy, T> {
+
   /**
    * Provide the instance on which the request will be invoked.
+   *
+   * @param instanceObject an {@link EntityProxy} instance of type P
+   * @return an instance of {@link Request}&lt;T&gt;
    */
   Request<T> using(P instanceObject);
 }

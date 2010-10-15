@@ -182,19 +182,30 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
     }
   }
 
+  /**
+   * The separator used to delimit scopes.
+   */
   public static final String SCOPE_SEPARATOR = "::";
 
   private RequestSecurityProvider securityProvider;
 
+  /**
+   * Constructs a {@link ReflectionBasedOperationRegistry} instance
+   * with a given {@link RequestSecurityProvider}.
+   *
+   * @param securityProvider a {@link RequestSecurityProvider} instance.
+   */
   public ReflectionBasedOperationRegistry(
       RequestSecurityProvider securityProvider) {
     this.securityProvider = securityProvider;
   }
 
   /**
-
    * Turns an operation in the form of package.requestClass::method into a
    * RequestDefinition via reflection.
+   * 
+   * @param operationName the operation name as a String
+   * @return a {@link RequestDefinition} instance
    */
   public RequestDefinition getOperation(String operationName) {
     String decodedOperationName = securityProvider.mapOperation(operationName);

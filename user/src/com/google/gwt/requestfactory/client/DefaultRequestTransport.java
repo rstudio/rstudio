@@ -25,9 +25,9 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.RequestEvent;
-import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestTransport;
+import com.google.gwt.requestfactory.shared.RequestEvent.State;
 import com.google.gwt.user.client.Window.Location;
 
 import java.util.logging.Level;
@@ -36,18 +36,6 @@ import java.util.logging.Logger;
 /**
  * An implementation of {@link RequestTransport} that uses a
  * {@link RequestBuilder}.
- * <p>
- * This implementation will send {@link RequestEvent} objects to the
- * {@link EventBus} passed into the constructor to provide indication of
- * transport-level activity. When an HTTP request is sent, an event with a
- * {@link State#SENT} state and a {@code null} {@link Request} will be posted.
- * When an HTTP transport completes successfully, an event will be posted with
- * state {@link State#RECEIVED} and the {@link Request} object provided to the
- * internal {@link RequestCallback#onResponseReceived()}. If an HTTP transport
- * fails (e.g. due to network malfunction), an event with state
- * {@link State#RECEIVED} and a {@code null} {@link Request} will be sent. The
- * success or failure of the HTTP transport is wholly independent from whether
- * or not the application payload was successfully executed by the server.
  */
 public class DefaultRequestTransport implements RequestTransport {
 
@@ -86,6 +74,9 @@ public class DefaultRequestTransport implements RequestTransport {
 
   /**
    * Returns the current URL used by this transport.
+   *
+   * @return the URL as a String
+   * @see #setRequestUrl(String)
    */
   public String getRequestUrl() {
     return requestUrl;
@@ -110,6 +101,9 @@ public class DefaultRequestTransport implements RequestTransport {
 
   /**
    * Override the default URL used by this transport.
+   * 
+   * @param url a String URL
+   * @see #getRequestUrl()
    */
   public void setRequestUrl(String url) {
     this.requestUrl = url;
@@ -117,6 +111,8 @@ public class DefaultRequestTransport implements RequestTransport {
 
   /**
    * Override to change the headers sent in the HTTP request.
+   *
+   * @param builder a {@link RequestBuilder} instance
    */
   protected void configureRequestBuilder(RequestBuilder builder) {
     builder.setHeader("Content-Type", RequestFactory.JSON_CONTENT_TYPE_UTF8);
@@ -125,8 +121,10 @@ public class DefaultRequestTransport implements RequestTransport {
   }
 
   /**
-   * Constructs a RequestBuilder using the {@link RequestBuilder#POST} method
-   * sent to the URL returned from {@link #getRequestUrl()}.
+   * Constructs a {@link RequestBuilder} using the {@link RequestBuilder#POST}
+   * method sent to the URL returned from {@link #getRequestUrl()}.
+   * 
+   * @return a {@link RequestBuilder} instance
    */
   protected RequestBuilder createRequestBuilder() {
     return new RequestBuilder(RequestBuilder.POST, getRequestUrl());
@@ -136,6 +134,9 @@ public class DefaultRequestTransport implements RequestTransport {
    * Creates a RequestCallback that maps the HTTP response onto the
    * {@link com.google.gwt.requestfactory.shared.RequestTransport.TransportReceiver
    * TransportReceiver} interface.
+   *
+   * @param receiver a {@link TransportReceiver}
+   * @return a {@link RequestCallback} instance
    */
   protected RequestCallback createRequestCallback(
       final TransportReceiver receiver) {

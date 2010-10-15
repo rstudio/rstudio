@@ -24,6 +24,10 @@ package com.google.gwt.requestfactory.server;
 public interface RequestProcessor<T> {
   /**
    * Decodes request, invokes methods, and re-encoded resulting return values.
+   *
+   * @param encodedRequest an encoded request of type T
+   * @return a decoded instance of type T
+   * @throws RequestProcessingException if an error occurs
    */
   T decodeAndInvokeRequest(T encodedRequest) throws RequestProcessingException;
 

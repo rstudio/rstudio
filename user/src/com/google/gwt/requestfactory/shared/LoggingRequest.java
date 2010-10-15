@@ -29,6 +29,9 @@ public interface LoggingRequest extends RequestContext {
   // serialized string.
   /**
    * Log a message on the server.
+   *
+   * @param serializedLogRecordString a String
+   * @return a Void {@link Request}
    */
   Request<Void> logMessage(String serializedLogRecordString);
 }

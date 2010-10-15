@@ -27,6 +27,9 @@ public class RequestProperty implements Iterable<RequestProperty> {
 
   /**
    * Merge two property chains.
+   * 
+   * @param properties a list of {@link RequestProperty} instances
+   * @return a new {@link RequestProperty} instance
    */
   public static RequestProperty coalesce(RequestProperty... properties) {
     assert properties.length > 0;
@@ -43,6 +46,12 @@ public class RequestProperty implements Iterable<RequestProperty> {
     return root;
   }
 
+  /**
+   * Parse selectors to obtain a {@link RequestProperty}.
+   *
+   * @param selectors a String of selectors separated by commas
+   * @return a new {@link RequestProperty} instance
+   */
   public static RequestProperty parse(String selectors) {
     String parts[] = selectors.split("\\s*,\\s*");
     RequestProperty props[] = new RequestProperty[parts.length];
@@ -61,6 +70,12 @@ public class RequestProperty implements Iterable<RequestProperty> {
     this.propertyName = propertyName;
   }
 
+  /**
+   * Add a property reference to this {@link RequestProperty}.
+   *
+   * @param propertyRef a {@link RequestProperty} instance
+   * @return this instance
+   */
   public RequestProperty add(RequestProperty propertyRef) {
     if (subProperties == null) {
       subProperties = new HashMap<String, RequestProperty>();
@@ -69,23 +84,54 @@ public class RequestProperty implements Iterable<RequestProperty> {
     return this;
   }
 
+  /**
+   * Returns the value of a property defined as a sub-property of
+   * this instance.
+   *
+   * @param propName the property name as a String
+   * @return a {@link RequestProperty} instance or null
+   */
   public RequestProperty getProperty(String propName) {
     return subProperties == null ? null : subProperties.get(propName);
   }
 
+  /**
+   * Returns the top-level property name associated with this instance.
+   *
+   * @return the property name as a String
+   */
   public String getPropertyName() {
     return propertyName;
   }
 
+  /**
+   * Returns whether a given property is defined as a sub-property of this
+   * instance.
+   * 
+   * @param name the property name as a String
+   * @return {@code} true if the property exists
+   */
   public boolean hasProperty(String name) {
     return subProperties == null ? false : subProperties.containsKey(name);
   }
 
+  /**
+   * Returns an iterator over the properties of this instance.
+   *
+   * @return an Iterator over {@link RequestProperty} instances
+   */
   public Iterator<RequestProperty> iterator() {
     return subProperties == null ? emptyIterator()
         : subProperties.values().iterator();
   }
 
+  /**
+   * Merge a given property into this instance.
+   * 
+   * @param property a {@link RequestProperty} instance
+   * @return the {@link RequestProperty} from this instance corresponding to the
+   *         name of the given property, or {@code null}.
+   */
   public RequestProperty mergeProperty(RequestProperty property) {
     RequestProperty foundProp = getProperty(property.getPropertyName());
     if (foundProp == null && !"".equals(property.getPropertyName())) {

@@ -30,15 +30,28 @@ public class PlaceChangeRequestEvent extends
    * Implemented by handlers of PlaceChangeRequestEvent.
    */
   public interface Handler extends EventHandler {
+    /**
+     * Called when a {@link PlaceChangeRequestEvent} is fired.
+     *
+     * @param event the {@link PlaceChangeRequestEvent}
+     */
     void onPlaceChangeRequest(PlaceChangeRequestEvent event);
   }
 
+  /**
+   * A singleton instance of Type&lt;Handler&gt;.
+   */
   public static final Type<Handler> TYPE = new Type<Handler>();
 
   private String warning;
 
   private final Place newPlace;
 
+  /**
+   * Constructs a PlaceChangeRequestEvent for the given {@link Place}.
+   *
+   * @param newPlace a {@link Place} instance
+   */
   public PlaceChangeRequestEvent(Place newPlace) {
     this.newPlace = newPlace;
   }
@@ -50,6 +63,8 @@ public class PlaceChangeRequestEvent extends
 
   /**
    * Returns the place we may navigate to, or null on window close.
+   *
+   * @return a {@link Place} instance
    */
   public Place getNewPlace() {
     return newPlace;
@@ -58,6 +73,9 @@ public class PlaceChangeRequestEvent extends
   /**
    * Returns the warning message to show the user before allowing the place
    * change, or null if none has been set.
+   *
+   * @return the warning message as a String
+   * @see #setWarning(String)
    */
   public String getWarning() {
     return warning;
@@ -73,6 +91,9 @@ public class PlaceChangeRequestEvent extends
    * <p>
    * Only the first non-null call to setWarning has any effect. That is, once
    * the warning message has been set it cannot be cleared.
+   *
+   * @param warning the warning message as a String
+   * @see #getWarning()
    */
   public void setWarning(String warning) {
     if (this.warning == null) {

@@ -28,6 +28,8 @@ public interface EntityProxyId<P extends EntityProxy> {
 
   /**
    * Returns the class of the proxy identified.
+   *
+   * @return a Class object of type P
    */
   Class<P> getProxyClass();
 }

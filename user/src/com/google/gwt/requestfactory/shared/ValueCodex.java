@@ -166,6 +166,9 @@ public class ValueCodex {
 
   /**
    * Returns true if ValueCodex can operate on values of the given type.
+   *
+   * @param clazz a Class object
+   * @return {@code true} if the given object type can be decoded
    */
   public static boolean canDecode(Class<?> clazz) {
     return typesByClass.containsKey(clazz);

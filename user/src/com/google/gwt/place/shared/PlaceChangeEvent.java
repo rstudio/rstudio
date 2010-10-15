@@ -27,13 +27,26 @@ public class PlaceChangeEvent extends GwtEvent<PlaceChangeEvent.Handler> {
    * Implemented by handlers of PlaceChangeEvent.
    */
   public interface Handler extends EventHandler {
+    /**
+     * Called when a {@link PlaceChangeEvent} is fired.
+     *
+     * @param event the {@link PlaceChangeEvent}
+     */
     void onPlaceChange(PlaceChangeEvent event);
   }
 
+  /**
+   * A singleton instance of Type&lt;Handler&gt;.
+   */
   public static final Type<Handler> TYPE = new Type<Handler>();
 
   private final Place newPlace;
 
+  /**
+   * Constructs a PlaceChangeEvent for the given {@link Place}.
+   *
+   * @param newPlace a {@link Place} instance
+   */
   public PlaceChangeEvent(Place newPlace) {
     this.newPlace = newPlace;
   }
@@ -43,6 +56,11 @@ public class PlaceChangeEvent extends GwtEvent<PlaceChangeEvent.Handler> {
     return TYPE;
   }
 
+  /**
+   * Return the new {@link Place}.
+   *
+   * @return a {@link Place} instance
+   */
   public Place getNewPlace() {
     return newPlace;
   }

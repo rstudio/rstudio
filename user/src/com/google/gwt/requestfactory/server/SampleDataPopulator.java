@@ -38,6 +38,11 @@ import java.io.UnsupportedEncodingException;
  */
 public class SampleDataPopulator {
 
+  /**
+   * Run the sample data populator.
+   *
+   * @param args command-line arguments
+   */
   public static void main(String args[]) {
     // TODO: cleanup argument processing and error reporting.
     if (args.length < 2) {
@@ -74,6 +79,12 @@ public class SampleDataPopulator {
     this.filePathName = filePathName;
   }
 
+  /**
+   * Populate the datastore and port the resulting JSON file.
+   *
+   * @throws JSONException if the input contains bad JSON
+   * @throws IOException if an error occurs during file I/O
+   */
   public void populate() throws JSONException, IOException {
     JSONObject jsonObject = readAsJsonObject(readFileAsString(filePathName));
     postJsonFile(jsonObject);

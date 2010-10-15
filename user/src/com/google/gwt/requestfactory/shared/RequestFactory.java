@@ -19,45 +19,26 @@ import com.google.gwt.event.shared.EventBus;
 
 /**
  * Marker interface for the RequestFactory code generator.
- * <p>
- * A RequestFactory implementation will post {@link EntityProxyChange} events to
- * the {@link EventBus} passed into the {@link #initialize} method. The events
- * will have the following {@link WriteOperation} associated with them in the
- * following circumstances:
- * <ul>
- * <li>{@link WriteOperation#PERSIST} when an {@link EntityProxy}
- * {@link RequestContext#create(Class) created} on the client is successfully
- * persisted in the server's backing store.</li>
- * <li>{@link WriteOperation#UPDATE} when changes due to an {@link EntityProxy}
- * being {@link RequestContext#edit(EntityProxy) edited} on the client are
- * successfully persisted in the server's backing store.</li>
- * <li>{@link WriteOperation#UPDATE} when a previously-unseen
- * {@link EntityProxy} is reachable from the return value for a
- * successfully-executed {@link Request}.</li>
- * <li>{@link WriteOperation#UPDATE} when any property of an {@link EntityProxy}
- * reachable from a {@link Request Request's} arguments is seen to have changed
- * after executing the service method on the server.</li>
- * <li>{@link WriteOperation#DELETE} when an {@link EntityProxy} reachable from
- * a {@link Request Request's} arguments becomes irretrievable after executing
- * the service method on the server.</li>
- * </ul>
- * <p>
- * Other types of events may be posted to the {@link EventBus} by other services
- * used by the RequestFactory.
- * 
- * @see {@link com.google.gwt.requestfactory.client.DefaultRequestTransport}
  */
 public interface RequestFactory {
+  /**
+   * The JSON content type String.
+   */
   String JSON_CONTENT_TYPE_UTF8 = "application/json; charset=utf-8";
 
   /**
    * Return a request to find a fresh instance of the referenced proxy.
+   *
+   * @param proxyId an {@link EntityProxyId} instance of type P
+   * @return a {@link Request} object
    */
   <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId);
 
   /**
-   * Returns the eventbus this factory's events are posted on, which was set via
+   * Returns the event bus this factory's events are posted on, which was set via
    * {@link #initialize}.
+   *
+   * @return the {@link EventBus} associated with this instance
    */
   EventBus getEventBus();
 
@@ -66,6 +47,7 @@ public interface RequestFactory {
    * represents the given class. It can be processed by
    * {@link #getProxyClass(String)}
    * 
+   * @param clazz a Class object for an {@link EntityProxy} subclass
    * @return a {@link com.google.gwt.user.client.History} compatible token
    */
   String getHistoryToken(Class<? extends EntityProxy> clazz);
@@ -84,6 +66,7 @@ public interface RequestFactory {
    * as-yet-unpersisted EntityProxy is only valid for the duration of the
    * RequestFactory's lifespan.
    * 
+   * @param proxy an {@link EntityProxyId} instance
    * @return a {@link com.google.gwt.user.client.History} compatible token
    */
   String getHistoryToken(EntityProxyId<?> proxy);
@@ -93,23 +76,34 @@ public interface RequestFactory {
    * type of this token, via {@link RequestContext#create}. The token may
    * represent either a proxy instance (see {@link #getHistoryToken}) or a proxy
    * class (see {@link #getProxyClass}).
+   *
+   * @param historyToken a String token
+   * @return a Class object for an {@link EntityProxy} subclass
    */
   Class<? extends EntityProxy> getProxyClass(String historyToken);
 
   /**
    * Return the appropriate {@link EntityProxyId} using a string returned from
    * {@link #getHistoryToken(EntityProxyId)}.
+   *
+   * @param historyToken a String token
+   * @return an {@link EntityProxyId}
    */
   <T extends EntityProxy> EntityProxyId<T> getProxyId(String historyToken);
 
   /**
    * Start this request factory with a
    * {@link com.google.gwt.requestfactory.client.DefaultRequestTransport}.
+   *
+   * @param eventBus an {@link EventBus}
    */
   void initialize(EventBus eventBus);
 
   /**
    * Start this request factory with a user-provided transport.
+   *
+   * @param eventBus an {@link EventBus}
+   * @param transport a {@link RequestTransport} instance
    */
   void initialize(EventBus eventBus, RequestTransport transport);
 }

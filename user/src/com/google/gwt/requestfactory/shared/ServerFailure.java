@@ -30,6 +30,13 @@ public class ServerFailure {
     this(null, null, null);
   }
 
+  /**
+   * Constructs a ServerFailure object.
+   *
+   * @param message a String containing the failure message
+   * @param exceptionType a String containing the exception type
+   * @param stackTraceString a String containing the stack trace
+   */
   public ServerFailure(String message, String exceptionType,
       String stackTraceString) {
     this.message = message;
@@ -37,14 +44,29 @@ public class ServerFailure {
     this.stackTraceString = stackTraceString;
   }
 
+  /**
+   * Returns the exception type.
+   *
+   * @return the exception type as a String
+   */
   public String getExceptionType() {
     return exceptionType;
   }
 
+  /**
+   * Returns the failure message.
+   *
+   * @return the message as a String
+   */
   public String getMessage() {
     return message;
   }
 
+  /**
+   * Returns the failure stack trace.
+   *
+   * @return the stack trace as a String
+   */
   public String getStackTraceString() {
     return stackTraceString;
   }

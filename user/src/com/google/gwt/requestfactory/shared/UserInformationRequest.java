@@ -25,5 +25,11 @@ import com.google.gwt.requestfactory.server.UserInformation;
 @Service(UserInformation.class)
 public interface UserInformationRequest extends RequestContext {
 
+  /**
+   * Returns the current user information given a redirect URL.
+   *
+   * @param redirectUrl the redirect UR as a String
+   * @return an instance of {@link Request}&lt;{@link UserInformationProxy}&gt;
+   */
   Request<UserInformationProxy> getCurrentUserInformation(String redirectUrl);
 }

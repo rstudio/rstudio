@@ -26,6 +26,8 @@ public abstract class Receiver<V> {
   /**
    * Receives general failure notifications. The default implementation throws a
    * RuntimeException with the provided error message.
+   * 
+   * @param error a {@link ServerFailure} instance
    */
   public void onFailure(ServerFailure error) {
     throw new RuntimeException(error.getMessage());
@@ -33,6 +35,8 @@ public abstract class Receiver<V> {
 
   /**
    * Called when a Request has been successfully executed on the server.
+   *
+   * @param response a response of type V
    */
   public abstract void onSuccess(V response);
 
@@ -40,6 +44,8 @@ public abstract class Receiver<V> {
    * Called if an object sent to the server could not be validated. The default
    * implementation calls {@link #onFailure(ServerFailure)} if <code>errors
    * </code> is not empty.
+   *
+   * @param errors a Set of {@link Violation} instances
    */
   public void onViolation(Set<Violation> errors) {
     if (!errors.isEmpty()) {

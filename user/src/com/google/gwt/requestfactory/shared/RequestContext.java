@@ -23,6 +23,9 @@ public interface RequestContext {
    * Returns a new mutable proxy that this request can carry to the server,
    * perhaps to be persisted. If a persist does happen, a CREATE event will be
    * posted including the EntityProxyId of this proxy.
+   *
+   * @param clazz a Class object of type T
+   * @return an {@link EntityProxy} instance of type T
    */
   <T extends EntityProxy> T create(Class<T> clazz);
 
@@ -30,6 +33,9 @@ public interface RequestContext {
    * Returns a mutable version of the proxy, whose mutations will accumulate in
    * this context. Proxies reached via getters on this mutable proxy will also
    * be mutable.
+   * 
+   * @param object an instance of type T
+   * @return an {@link EntityProxy} instance of type T
    */
   <T extends EntityProxy> T edit(T object);
 
@@ -45,7 +51,8 @@ public interface RequestContext {
 
   /**
    * For receiving errors or validation failures only.
-   * 
+   *
+   * @param receiver a {@link Receiver} instance
    * @throws IllegalArgumentException if <code>receiver</code> is
    *           <code>null</code>
    */
@@ -64,6 +71,8 @@ public interface RequestContext {
    * bar.setName(name);
    * assertFalse(context.isChanged());
    * </pre>
+   * 
+   * @return {@code true} if any changes have been made
    */
   boolean isChanged();
 }

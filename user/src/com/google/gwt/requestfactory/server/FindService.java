@@ -20,8 +20,11 @@ package com.google.gwt.requestfactory.server;
  */
 public class FindService {
 
-  /*
+  /**
    * For now, a simple implementation of find will work.
+   *
+   * @param entityInstance an entity instance
+   * @return the passed-in entity instance
    */
   public static <T> T find(T entityInstance) {
     return entityInstance;

@@ -24,9 +24,13 @@ public class RequestProcessingException extends Exception {
   private final Object response;
 
   /**
+   * Constructs a new {@link RequestProcessingException} with a given message,
+   * Throwable cause, and response Object.
+   *
    * @param message a message to display
-   * @param t the cause
-   * @param response a response, may be cast to T by a {@link RequestProcessor}<T>
+   * @param t the Throwable cause
+   * @param response a response Object, may be cast to T by a
+   *     {@link RequestProcessor}&lt;T&gt;
    */
   public RequestProcessingException(String message, Throwable t, Object response) {
     super(message, t);

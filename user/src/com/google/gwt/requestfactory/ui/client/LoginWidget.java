@@ -41,6 +41,11 @@ public class LoginWidget extends Composite {
     initWidget(BINDER.createAndBindUi(this));
   }
   
+  /**
+   * Sets the user information using a {@link UserInformationProxy}.
+   *
+   * @param info a {@link UserInformationProxy} instance
+   */
   public void setUserInformation(UserInformationProxy info) {
     name.setInnerText(info.getName());
     logoutUrl = info.getLogoutUrl();

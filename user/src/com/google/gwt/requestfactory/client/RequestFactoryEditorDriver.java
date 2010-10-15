@@ -52,6 +52,8 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   /**
    * Start driving the Editor and its sub-editors with data for display-only
    * mode.
+   *
+   * @param proxy a Proxy of type P
    */
   void display(P proxy);
 
@@ -79,23 +81,34 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   RequestContext flush();
 
   /**
-   * Returns any unconsumed EditorErrors from the last call to {@link #flush()}.
+   * Returns any unconsumed {@link EditorError EditorErrors} from the last call
+   * to {@link #flush()}.
+   *
+   * @return a List of {@link EditorError} instances
    */
   List<EditorError> getErrors();
 
   /**
-   * Returns a new array.
+   * Returns a new array containing the request paths.
+   *
+   * @return an array of Strings
    */
   String[] getPaths();
 
   /**
    * Indicates if the last call to {@link #flush()} resulted in any errors.
+   *
+   * @return {@code} true if errors are present
    */
   boolean hasErrors();
 
   /**
    * Overload of {@link #initialize(RequestFactory, Editor)} to allow a modified
    * {@link EventBus} to be monitored for subscription services.
+   *
+   * @param eventBus the {@link EventBus}
+   * @param requestFactory a {@link RequestFactory} instance
+   * @param editor an {@link Editor} of type E
    * 
    * @see com.google.gwt.editor.client.EditorDelegate#subscribe
    * @see com.google.gwt.event.shared.ResettableEventBus
@@ -105,6 +118,9 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
   /**
    * Initializes a driver with the editor it will run, and a RequestFactory to
    * use for subscription services.
+   *
+   * @param requestFactory a {@link RequestFactory} instance
+   * @param editor an {@link Editor} of type E
    * 
    * @see com.google.gwt.editor.client.EditorDelegate#subscribe
    */
@@ -114,6 +130,8 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
    * Initializes a driver that will not be able to support subscriptions. Calls
    * to {@link com.google.gwt.editor.client.EditorDelegate#subscribe()} will do
    * nothing.
+   *
+   * @param editor an {@link Editor} of type E
    */
   void initialize(E editor);
 
@@ -122,6 +140,8 @@ public interface RequestFactoryEditorDriver<P, E extends Editor<? super P>> {
    * violations will be converted into {@link EditorError} objects whose
    * {@link EditorError#getUserData() getUserData()} method can be used to
    * access the original Violation object.
+   *
+   * @param errors a Iterable over {@link Violation} instances
    * 
    * @return <code>true</code> if there were any unconsumed EditorErrors which
    *         can be retrieved from {@link #getErrors()}

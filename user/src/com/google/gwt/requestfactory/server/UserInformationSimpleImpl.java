@@ -23,6 +23,11 @@ public class UserInformationSimpleImpl extends UserInformation {
 
   private Long id = 0L;
 
+  /**
+   * Constructs an UserInformationSimpleImpl object.
+   *
+   * @param redirectUrl the redirect URL as a String
+   */
   public UserInformationSimpleImpl(String redirectUrl) {
     super(redirectUrl);
   }

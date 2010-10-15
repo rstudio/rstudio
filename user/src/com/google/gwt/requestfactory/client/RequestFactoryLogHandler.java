@@ -34,6 +34,11 @@ public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
    * Provides a logging request.
    */
   public static interface LoggingRequestProvider {
+    /**
+     * Returns the logging request.
+     *
+     * @return a {@link LoggingRequest} instance
+     */
     LoggingRequest getLoggingRequest();
   }
   
@@ -47,6 +52,10 @@ public class RequestFactoryLogHandler extends RemoteLogHandlerBase {
    * name of the logger(s) which will be used to log acknowledgements of
    * activity going accross the wire. If we did not exclude these loggers, an
    * infinite loop would occur.
+   * 
+   * @param requestProvider a {@link LoggingRequestProvider} instance
+   * @param level a logging {@link Level}
+   * @param ignoredLoggerNames a List of Strings
    */
   public RequestFactoryLogHandler(LoggingRequestProvider requestProvider,
       Level level, List<String> ignoredLoggerNames) {

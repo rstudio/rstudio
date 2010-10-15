@@ -28,12 +28,19 @@ public abstract class ProxyRenderer<R> extends
 
   private final String[] paths;
 
-  public ProxyRenderer(String[] strings) {
-    this.paths = strings;
+  /**
+   * Constructs a {@link ProxyRenderer} with a given set of paths.
+   *
+   * @param paths an Array of Strings
+   */
+  public ProxyRenderer(String[] paths) {
+    this.paths = paths;
   }
 
   /**
    * The properties required by this renderer.
+   *
+   * @return an Array of String paths
    */
   public String[] getPaths() {
     return paths;

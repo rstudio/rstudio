@@ -30,6 +30,12 @@ public class Logging {
   private static StackTraceDeobfuscator deobfuscator =
     new StackTraceDeobfuscator("");
 
+  /**
+   * Logs a message.
+   *
+   * @param logRecordJson a log record in JSON format.
+   * @throws RemoteLoggingException if logging fails
+   */
   public static void logMessage(String logRecordJson) throws
   RemoteLoggingException {
     // if the header does not exist, we pass null, which is handled gracefully
@@ -44,6 +50,8 @@ public class Logging {
   /**
    * This function is only for server side use which is why it's not in the
    * LoggingRequest interface.
+   *
+   * @param dir a directory, specified as a String
    */
   public static void setSymbolMapsDirectory(String dir) {
     deobfuscator.setSymbolMapsDirectory(dir);
@@ -53,18 +61,42 @@ public class Logging {
 
   private Integer version = 0;
 
+  /**
+   * Returns the id of this instance.
+   *
+   * @return a String id
+   * @see #setId(String)
+   */
   public String getId() {
     return this.id;
   }
 
+  /**
+   * Returns the version of this instance.
+   *
+   * @return an Integer version number
+   * @see #setVersion(Integer)
+   */
   public Integer getVersion() {
     return this.version;
   }
 
+  /**
+   * Sets the id on this instance.
+   *
+   * @param id a String id
+   * @see #getId()
+   */
   public void setId(String id) {
     this.id = id;
   }
 
+  /**
+   * Sets the version of this instance.
+   *
+   * @param version an Integer version number
+   * @see #getVersion()
+   */
   public void setVersion(Integer version) {
     this.version = version;
   }

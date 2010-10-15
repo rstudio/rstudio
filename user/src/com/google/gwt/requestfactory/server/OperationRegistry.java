@@ -20,7 +20,19 @@ package com.google.gwt.requestfactory.server;
  */
 public interface OperationRegistry {
 
+  /**
+   * Returns the {@link RequestDefinition} associated with the given operation.
+   *
+   * @param operationName the operation name as a String
+   * @return a {@link RequestDefinition} instance
+   */
   RequestDefinition getOperation(String operationName);
 
+  /**
+   * Returns the {@link RequestSecurityProvider} associated with this
+   * {@link OperationRegistry}.
+   *
+   * @return a {@link RequestSecurityProvider} instance
+   */
   RequestSecurityProvider getSecurityProvider();
 }

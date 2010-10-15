@@ -17,12 +17,21 @@ package com.google.gwt.requestfactory.server;
 
 /**
  * Indicates the user attempted to perform an operation on an irretrievable
- * entity
+ * entity.
  */
 public class DeadEntityException extends RuntimeException {
+  
+  /**
+   * Contructs a new {@link DeadEntityException}.
+   */
   public DeadEntityException() {
   }
 
+  /**
+   * Contructs a new {@link DeadEntityException} with a given message.
+   *
+   * @param message a message String
+   */
   public DeadEntityException(String message) {
     super(message);
   }

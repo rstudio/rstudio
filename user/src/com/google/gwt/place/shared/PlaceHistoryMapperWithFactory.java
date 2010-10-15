@@ -16,12 +16,17 @@
 package com.google.gwt.place.shared;
 
 /**
- * A PlaceHistoryMapper that can get its {@link PlaceTokenizer} instances from
- * a factory.
+ * A {@link PlaceHistoryMapper} that can get its {@link PlaceTokenizer}
+ * instances from a factory.
  * 
  * @param <F> factory type
  */
 public interface PlaceHistoryMapperWithFactory<F> extends PlaceHistoryMapper {
 
+  /**
+   * Sets the factory to be used to generate {@link PlaceTokenizer} instances.
+   *
+   * @param factory a factory of type F
+   */
   void setFactory(F factory);
 }

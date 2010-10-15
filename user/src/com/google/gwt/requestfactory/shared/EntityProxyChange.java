@@ -38,9 +38,15 @@ public class EntityProxyChange<P extends EntityProxy> extends
 
   /**
    * Implemented by methods that handle EntityProxyChange events.
+   *
    * @param <P> the proxy type
    */
   public interface Handler<P extends EntityProxy> extends EventHandler {
+    /**
+     * Called when an {@link EntityProxyChange} event is fired.
+     *
+     * @param event an {@link EntityProxyChange} instance
+     */
     void onProxyChange(EntityProxyChange<P> event);
   }
 
@@ -49,6 +55,11 @@ public class EntityProxyChange<P extends EntityProxy> extends
   /**
    * Register a handler for a EntityProxyChange events for a particular proxy
    * class.
+   *
+   * @param eventBus the {@link EventBus}
+   * @param proxyType a Class instance of type P
+   * @param handler an {@link EntityProxyChange.Handler} instance of type P
+   * @return an {@link EntityProxy} instance
    */
   public static <P extends EntityProxy> HandlerRegistration registerForProxyType(
       EventBus eventBus, Class<P> proxyType,
@@ -60,11 +71,22 @@ public class EntityProxyChange<P extends EntityProxy> extends
 
   private WriteOperation writeOperation;
 
+  /**
+   * Constructs an EntityProxyChange object.
+   *
+   * @param proxy an {@link EntityProxy} instance of type P
+   * @param writeOperation a {@link WriteOperation} instance
+   */
   public EntityProxyChange(P proxy, WriteOperation writeOperation) {
     this.proxy = proxy;
     this.writeOperation = writeOperation;
   }
 
+  /**
+   * Returns the type associated with this instance.
+   *
+   * @return an instance of {@link GwtEvent.Type} of type Handler&lt;P&gt
+   */
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public GwtEvent.Type<Handler<P>> getAssociatedType() {
@@ -79,12 +101,19 @@ public class EntityProxyChange<P extends EntityProxy> extends
   /**
    * Returns an unpopulated copy of the changed proxy &mdash; all properties are
    * undefined except its id.
+   *
+   * @return an instance of {@link EntityProxyId}&lt;P&gt;
    */
   @SuppressWarnings("unchecked")
   public EntityProxyId<P> getProxyId() {
     return (EntityProxyId<P>) proxy.stableId();
   }
 
+  /**
+   * Returns the {@link WriteOperation} associated with this instance.
+   *
+   * @return a {@link WriteOperation} instance
+   */
   public WriteOperation getWriteOperation() {
     return writeOperation;
   }

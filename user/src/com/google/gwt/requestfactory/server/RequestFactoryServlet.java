@@ -62,16 +62,30 @@ public class RequestFactoryServlet extends HttpServlet {
   private static final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
   private static final ThreadLocal<HttpServletResponse> perThreadResponse = new ThreadLocal<HttpServletResponse>();
 
+  /**
+   * Returns the thread-local {@link HttpServletRequest}.
+   *
+   * @return an {@link HttpServletRequest} instance
+   */
   public static HttpServletRequest getThreadLocalRequest() {
     return perThreadRequest.get();
   }
 
+  /**
+   * Returns the thread-local {@link HttpServletResponse}.
+   *
+   * @return an {@link HttpServletResponse} instance
+   */
   public static HttpServletResponse getThreadLocalResponse() {
     return perThreadResponse.get();
   }
 
   private final ExceptionHandler exceptionHandler;
 
+  /**
+   * Constructs a new {@link RequestFactoryServlet} with a
+   * {@code DefaultExceptionHandler}.
+   */
   public RequestFactoryServlet() {
     this(new DefaultExceptionHandler());
   }
@@ -79,11 +93,21 @@ public class RequestFactoryServlet extends HttpServlet {
   /**
    * Use this constructor in subclasses to provide a custom
    * {@link ExceptionHandler}.
+   *
+   * @param exceptionHandler an {@link ExceptionHandler} instance
    */
   public RequestFactoryServlet(ExceptionHandler exceptionHandler) {
     this.exceptionHandler = exceptionHandler;
   }
 
+  /**
+   * Processes a POST to the server.
+   * 
+   * @param request an {@link HttpServletRequest} instance
+   * @param response an {@link HttpServletResponse} instance
+   * @throws IOException if an internal I/O error occurs
+   * @throws ServletException if an error occurs in the servlet
+   */
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException {

@@ -30,6 +30,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.beans.Introspector;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -159,7 +160,12 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private static final Logger log = Logger.getLogger(JsonRequestProcessor.class.getName());
 
-  // Decodes a string encoded as web-safe base64
+  /**
+   * Decodes a String encoded as web-safe base64.
+   *
+   * @param encoded the encoded String
+   * @return a decoded String
+   */
   public static String base64Decode(String encoded) {
     byte[] decodedBytes;
     try {
@@ -168,15 +174,31 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       throw new IllegalArgumentException("EntityKeyId was not Base64 encoded: "
           + encoded);
     }
-    return new String(decodedBytes);
+    try {
+      return new String(decodedBytes, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // This can't happen
+      throw new IllegalStateException(e);
+    }
   }
 
-  // Encodes a string with web-safe base64
+  /**
+   * Encodes a String as web-safe base64.
+   *
+   * @param decoded the decoded String
+   * @return an encoded String
+   */
   public static String base64Encode(String decoded) {
-    byte[] decodedBytes = decoded.getBytes();
-    return Base64Utils.toBase64(decodedBytes);
+    try {
+      byte[] decodedBytes = decoded.getBytes("UTF-8");
+      return Base64Utils.toBase64(decodedBytes);
+    } catch (UnsupportedEncodingException e) {
+      // This can't happen
+      throw new IllegalStateException(e);
+    }
   }
 
+  // TODO - document
   @SuppressWarnings("unchecked")
   public static Class<EntityProxy> getRecordFromClassToken(String recordToken) {
     try {
@@ -201,6 +223,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private OperationRegistry operationRegistry;
 
   private ExceptionHandler exceptionHandler;
+
   /*
    * <li>Request comes in. Construct the involvedKeys, dvsDataMap and
    * beforeDataMap, using DVS and parameters.
@@ -218,12 +241,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   private Map<EntityKey, EntityData> afterDvsDataMap = new HashMap<EntityKey, EntityData>();
 
+  // TODO - document
   @SuppressWarnings("rawtypes")
   public Collection<Property<?>> allProperties(
       Class<? extends EntityProxy> clazz) throws IllegalArgumentException {
     return getPropertiesFromRecordProxyType(clazz).values();
   }
 
+  // TODO - document
   public String decodeAndInvokeRequest(String encodedRequest)
       throws RequestProcessingException {
     try {
@@ -250,6 +275,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Decodes parameter value.
    */
+  // TODO - document parameters and return value
   public Object decodeParameterValue(Type genericParameterType,
       String parameterValue) throws SecurityException, JSONException,
       IllegalAccessException, InvocationTargetException, NoSuchMethodException,
@@ -373,8 +399,11 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         + parameterType);
   }
 
-  /*
+  /**
    * Encode a property value to be sent across the wire.
+   *
+   * @param value a value Object
+   * @return an encoded value Object
    */
   public Object encodePropertyValue(Object value) {
     if (value == null) {
@@ -404,6 +433,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * Returns the propertyValue in the right type, from the DataStore. The value
    * is sent into the response.
    */
+  // TODO - document parameters and return value
   public Object encodePropertyValueFromDataStore(Object entityElement,
       Property<?> property, String propertyName, RequestProperty propertyContext)
       throws SecurityException, NoSuchMethodException, IllegalAccessException,
@@ -452,6 +482,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
    * <p>
    * If a <i>set</i> method has side-effects, we will not notice.
    */
+  // TODO - document parameters and return value
   public EntityData getEntityDataForRecordWithSettersApplied(
       EntityKey entityKey, JSONObject recordObject,
       WriteOperation writeOperation) throws JSONException, SecurityException,
@@ -538,6 +569,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         : getViolationsAsJson(violations)));
   }
 
+  // TODO - document
   public Object getEntityInstance(EntityKey entityKey)
       throws NoSuchMethodException, IllegalAccessException,
       InvocationTargetException, JSONException, InstantiationException {
@@ -549,6 +581,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return entityInstance;
   }
 
+  // TODO - document
   public Object getEntityInstance(WriteOperation writeOperation,
       Class<?> entityType, Object idValue, Class<?> idType)
       throws SecurityException, InstantiationException, IllegalAccessException,
@@ -563,6 +596,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
         null, decodeParameterValue(idType, idValue.toString()));
   }
 
+  // TODO - document
   @SuppressWarnings("unchecked")
   public Class<Object> getEntityTypeForProxyType(
       Class<? extends EntityProxy> record) {
@@ -1433,7 +1467,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private boolean hasServerVersionChanged(EntityKey entityKey,
       Object entityInstanceAfterOperation) throws IllegalArgumentException,
       SecurityException, IllegalAccessException, InvocationTargetException,
-      NoSuchMethodException, JSONException, InstantiationException {
+      NoSuchMethodException, JSONException {
     SerializedEntity beforeEntity = beforeDataMap.get(entityKey);
     if (beforeEntity != null
         && hasChanged(beforeEntity.serializedEntity,

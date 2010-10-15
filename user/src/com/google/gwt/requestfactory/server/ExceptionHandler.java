@@ -25,6 +25,8 @@ public interface ExceptionHandler {
    * Generates a {@link ServerFailure} based on the information
    * contained in the received {@code exception}.
    * 
+   * @param throwable a Throwable instance
+   * @return a {@link ServerFailure} instance
    * @see DefaultExceptionHandler
    */
   ServerFailure createServerFailure(Throwable throwable);

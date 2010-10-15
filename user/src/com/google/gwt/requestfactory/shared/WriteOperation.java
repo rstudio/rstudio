@@ -40,6 +40,12 @@ public enum WriteOperation {
     this.unObfuscatedEnumName = unObfuscatedEnumName;
   }
   
+  /**
+   * Returns the unobfuscated name of the event associated with this
+   * {@link WriteOperation}.
+   *
+   * @return one of "PERSIST", "UPDATE", or "DELETE"
+   */
   public String getUnObfuscatedEnumName() {
     return this.unObfuscatedEnumName;
   }

@@ -23,17 +23,28 @@ public interface RequestSecurityProvider {
 
   /**
    * Throws exception if argument is not accessible via remote requests.
+   * 
+   * @param clazz a Class instance
+   * @throws SecurityException if the argument is not accessible via remote
+   *           requests
    */
   void checkClass(Class<?> clazz) throws SecurityException;
 
   /**
    * Encode a Class type into a String token.
+   *
+   * @param type a Class instance
+   * @return an encoded String token
    */
   String encodeClassType(Class<?> type);
 
   /**
    * Optionally decodes a previously encoded operation. Throws exception if
    * argument is not a legal operation.
+   *
+   * @param operationName the operation name as a String
+   * @return a decoded operation name
+   * @throws SecurityException if the argument is not a legal operation
    */
   String mapOperation(String operationName) throws SecurityException;
 }

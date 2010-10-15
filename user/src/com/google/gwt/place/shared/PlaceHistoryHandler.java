@@ -53,11 +53,14 @@ public class PlaceHistoryHandler {
    * isolation for unit testing, and allows pre- or post-processing of tokens.
    */
   public interface Historian {
+    // TODO - document
     HandlerRegistration addValueChangeHandler(
         ValueChangeHandler<String> valueChangeHandler);
 
+    // TODO - document
     String getToken();
 
+    // TODO - document
     void newItem(String token, boolean issueEvent);
   }
 
@@ -73,7 +76,9 @@ public class PlaceHistoryHandler {
    * Create a new PlaceHistoryHandler with a {@link DefaultHistorian}.
    * The DefaultHistorian is created via a call to GWT.create(), so an
    * alternative default implementation can be provided through
-   * &lt;replace-with> rules in a gwt.xml file.
+   * &lt;replace-with&gt; rules in a {@code gwt.xml} file.
+   *
+   * @param mapper a {@link PlaceHistoryMapper} instance
    */
   public PlaceHistoryHandler(PlaceHistoryMapper mapper) {
     this(mapper, (Historian) GWT.create(DefaultHistorian.class));
@@ -81,16 +86,21 @@ public class PlaceHistoryHandler {
 
   /**
    * Create a new PlaceHistoryHandler.
+   *
+   * @param mapper a {@link PlaceHistoryMapper} instance
+   * @param historian a {@link Historian} instance
    */
   public PlaceHistoryHandler(PlaceHistoryMapper mapper, Historian historian) {
     this.mapper = mapper;
     this.historian = historian;
   }
 
+  // TODO - document
   public void handleCurrentHistory() {
     handleHistoryToken(historian.getToken());
   }
 
+  // TODO - document
   public HandlerRegistration register(PlaceController placeController,
       EventBus eventBus, Place defaultPlace) {
     this.placeController = placeController;

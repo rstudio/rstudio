@@ -26,13 +26,26 @@ public interface RequestTransport {
    * A callback interface.
    */
   public interface TransportReceiver {
+    /**
+     * Called when the transmission succeeds.
+     *
+     * @param payload the String payload
+     */
     void onTransportSuccess(String payload);
 
+    /**
+     * Called when the transmission fails.
+     *
+     * @param message the String error message
+     */
     void onTransportFailure(String message);
   }
 
   /**
    * Called by the RequestFactory implementation.
+   *
+   * @param payload the String payload
+   * @param receiver a {@link TransportReceiver} instance
    */
   void send(String payload, TransportReceiver receiver);
 }

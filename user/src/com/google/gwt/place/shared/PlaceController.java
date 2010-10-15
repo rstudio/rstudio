@@ -42,13 +42,25 @@ public class PlaceController {
   }
 
   /**
-   * Optional delegate in charge of Window related events. Provides nice
+   * Optional delegate in charge of Window-related events. Provides nice
    * isolation for unit testing, and allows customization of confirmation
    * handling.
    */
   public interface Delegate {
+    /**
+     * Adds a {@link ClosingHandler} to the Delegate.
+     *
+     * @param handler a {@link ClosingHandler} instance
+     * @return a {@link HandlerRegistration} instance
+     */
     HandlerRegistration addWindowClosingHandler(ClosingHandler handler);
 
+    /**
+     * Called to confirm a window closing event.
+     *
+     * @param message a warning message
+     * @return true to allow the window closing
+     */
     boolean confirm(String message);
   }
 
@@ -62,8 +74,10 @@ public class PlaceController {
   /**
    * Create a new PlaceController with a {@link DefaultDelegate}. The
    * DefaultDelegate is created via a call to GWT.create(), so an alternative
-   * default implementation can be provided through &lt;replace-with> rules in a
-   * gwt.xml file.
+   * default implementation can be provided through &lt;replace-with&gt; rules
+   * in a {@code .gwt.xml} file.
+   * 
+   * @param eventBus the {@link EventBus}
    */
   public PlaceController(EventBus eventBus) {
     this(eventBus, (Delegate) GWT.create(DefaultDelegate.class));
@@ -71,6 +85,9 @@ public class PlaceController {
 
   /**
    * Create a new PlaceController.
+   * 
+   * @param eventBus the {@link EventBus}
+   * @param delegate the {@link Delegate} in charge of Window-related events
    */
   public PlaceController(EventBus eventBus, Delegate delegate) {
     this.eventBus = eventBus;
@@ -87,6 +104,8 @@ public class PlaceController {
 
   /**
    * Returns the current place.
+   * 
+   * @return a {@link Place} instance
    */
   public Place getWhere() {
     return where;
@@ -100,6 +119,8 @@ public class PlaceController {
    * typically a call to {@link Window#confirm(String)}). If she cancels, the
    * current location will not change. Otherwise, the location changes and a
    * {@link PlaceChangeEvent} is posted announcing the new place.
+   *
+   * @param newPlace a {@link Place} instance
    */
   public void goTo(Place newPlace) {
     log().fine("goTo: " + newPlace);
