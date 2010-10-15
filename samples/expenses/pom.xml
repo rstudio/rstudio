@@ -10,12 +10,25 @@
 		<roo.version>1.1.0.M2</roo.version>
 		<spring.version>3.0.3.RELEASE</spring.version>
 		<slf4j.version>1.6.1</slf4j.version>
-	<gae.version>1.3.4</gae.version>
-    <gae-test.version>1.3.4</gae-test.version>
+	<gae.version>1.3.7</gae.version>
+    <gae-test.version>1.3.7</gae-test.version>
     <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk-${gae.version}</gae.home>
-    <datanucleus.version>1.1.6</datanucleus.version>
+    <datanucleus.version>1.1.5</datanucleus.version>
     </properties>
 	<repositories>
+		<repository>
+			<id>google-maven-snapshot-repository</id>
+			<name>Google Maven Snapshot Repository</name>
+			<url>https://oss.sonatype.org/content/repositories/google-snapshots/</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	<repository>
+            <id>maven-gae-plugin-repo</id>
+            <url>http://maven-gae-plugin.googlecode.com/svn/repository</url>
+            <name>maven-gae-plugin repository</name>
+        </repository>
         <repository>
             <id>spring-maven-release</id>
             <name>Spring Maven Release Repository</name>
@@ -31,11 +44,6 @@
             <name>Spring Roo Repository</name>
             <url>http://spring-roo-repository.springsource.org/release</url>
         </repository>
-	<repository>
-            <id>maven-gae-plugin-repo</id>
-            <url>http://maven-gae-plugin.googlecode.com/svn/repository</url>
-            <name>maven-gae-plugin repository</name>
-        </repository>
     <repository>
             <id>DataNucleus_2</id>
             <url>http://www.datanucleus.org/downloads/maven2/</url>
@@ -46,18 +54,15 @@
             <url>https://repository.jboss.org/nexus/content/repositories/releases</url>
             <name>JBoss Repo</name>
         </repository>
+<!--
     <repository>
             <id>gwt-repo</id>
             <url>http://google-web-toolkit.googlecode.com/svn/2.1.0.M3/gwt/maven</url>
             <name>Google Web Toolkit Repository</name>
         </repository>
+-->
     </repositories>
     <pluginRepositories>
-        <pluginRepository>
-            <id>maven-gae-plugin-repo</id>
-            <url>http://maven-gae-plugin.googlecode.com/svn/repository</url>
-            <name>maven-gae-plugin repository</name>
-        </pluginRepository>
     <pluginRepository>
             <id>DataNucleus_2</id>
             <url>http://www.datanucleus.org/downloads/maven2/</url>
@@ -437,6 +442,11 @@
     	<type>jar</type>
     	<scope>compile</scope>
     </dependency>
+    <dependency>
+        <groupId>xalan</groupId>
+        <artifactId>xalan</artifactId>
+        <version>2.7.1</version>
+    </dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -549,7 +559,7 @@
 		<plugin>
                 <groupId>net.kindleit</groupId>
                 <artifactId>maven-gae-plugin</artifactId>
-                <version>0.5.7</version>
+                <version>0.7.2</version>
                 <configuration>
 						<unpackVersion>${gae.version}</unpackVersion>
 					</configuration>
@@ -611,7 +621,7 @@
         <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
-                <version>1.3.1.google</version>
+                <version>1.3.2.google</version>
                 <configuration>
 				<logLevel>INFO</logLevel>
 				<style>PRETTY</style>
