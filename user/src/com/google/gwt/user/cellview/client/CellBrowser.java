@@ -968,7 +968,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
   /**
    * Set the open state of a tree node.
-   *
+   * 
    * @param cellList the CellList that changed state.
    * @param value the value to open
    * @param open true to open, false to close
@@ -1029,12 +1029,9 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       }
 
       // Close the node.
-      TreeNode closedNode = cellList.isFocusedOpen
+      TreeNode closedNode = (cellList.isFocusedOpen && (treeNodes.size() > cellList.level + 1))
           ? treeNodes.get(cellList.level + 1) : null;
       trimToLevel(cellList.level);
-      cellList.focusedKey = null;
-      cellList.focusedValue = null;
-      cellList.isFocusedOpen = false;
 
       // Refresh the display to update the styles for this node.
       if (redraw) {
@@ -1064,6 +1061,14 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       TreeNodeImpl<?> removed = treeNodes.remove(curLevel);
       removed.destroy();
       curLevel--;
+    }
+
+    // Nullify the focused key at the level.
+    if (level < treeNodes.size()) {
+      TreeNodeImpl<?> node = treeNodes.get(level);
+      node.display.focusedKey = null;
+      node.display.focusedValue = null;
+      node.display.isFocusedOpen = false;
     }
   }
 }

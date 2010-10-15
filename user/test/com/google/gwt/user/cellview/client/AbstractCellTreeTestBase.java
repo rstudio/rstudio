@@ -387,6 +387,9 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
 
     // Verify the node is destroyed.
     assertTrue(b.isDestroyed());
+
+    // True to open a new node.
+    assertNotNull(root.setChildOpen(0, true));
   }
 
   /**
