@@ -44,7 +44,6 @@ public enum CompilerEventType implements EventType {
   BUILD_AST("BuildAST", "DarkGoldenRod"), //
   FUNCTION_CLUSTER("JsFunctionClusterer","Cornflower"), //
   BLOCKED("Blocked", "FloralWhite"), //
-  PERMUTATION_WORKER("PermuationWorker", "SpringGreen"), //
   GET_ALL_REBINDS("GetAllPossibleRebindAnswers", "Brown"), //
   FIND_ENTRY_POINTS("FindEntryPoints", "SlateGray"), //
   VALIDATE("Validate", "YellowGreen"), //

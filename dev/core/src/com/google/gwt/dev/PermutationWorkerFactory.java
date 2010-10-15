@@ -61,8 +61,6 @@ public abstract class PermutationWorkerFactory {
       }
 
       public void run() {
-        Event permutationWorkerEvent =
-            SpeedTracerLogger.start(CompilerEventType.PERMUTATION_WORKER, "name", worker.getName());
         Result threadDeathResult = Result.FAIL;
         try {
           while (true) {
@@ -90,7 +88,6 @@ public abstract class PermutationWorkerFactory {
         } catch (InterruptedException e) {
           return;
         } finally {
-          permutationWorkerEvent.end();
           // Record why I died.
           try {
             resultsQueue.put(threadDeathResult);
