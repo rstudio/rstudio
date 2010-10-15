@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,12 +22,13 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
-import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.client.style.Styles;
+import com.google.gwt.sample.expenses.shared.EmployeeProxy;
+import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -53,7 +54,7 @@ public class ExpenseTree extends Composite {
 
     /**
      * Called when the user selects a tree item.
-     *
+     * 
      * @param department the selected department name
      * @param employee the selected employee
      */
@@ -74,8 +75,7 @@ public class ExpenseTree extends Composite {
       super(Styles.resources().userIcon(), new AbstractCell<EmployeeProxy>() {
 
         private final String usernameStyle = Styles.common().usernameTreeItem();
-        private final String usernameStyleSelected =
-            Styles.common().usernameTreeItemSelected();
+        private final String usernameStyleSelected = Styles.common().usernameTreeItemSelected();
 
         @Override
         public boolean dependsOnSelection() {
@@ -83,8 +83,8 @@ public class ExpenseTree extends Composite {
         }
 
         @Override
-        public void render(
-            EmployeeProxy value, Object viewData, SafeHtmlBuilder sb) {
+        public void render(EmployeeProxy value, Object viewData,
+            SafeHtmlBuilder sb) {
           if (value != null) {
             StringBuilder classesBuilder = new StringBuilder(usernameStyle);
             if (lastEmployee != null
@@ -94,7 +94,8 @@ public class ExpenseTree extends Composite {
 
             sb.appendEscaped(value.getDisplayName());
             sb.appendHtmlConstant("<br>");
-            sb.append(template.span(classesBuilder.toString(), value.getUserName()));
+            sb.append(template.span(classesBuilder.toString(),
+                value.getUserName()));
           }
         }
       });
@@ -107,7 +108,8 @@ public class ExpenseTree extends Composite {
   /**
    * The {@link ListDataProvider} used for Employee lists.
    */
-  private class EmployeeListDataProvider extends AsyncDataProvider<EmployeeProxy> {
+  private class EmployeeListDataProvider extends
+      AsyncDataProvider<EmployeeProxy> {
 
     private final String department;
 
@@ -121,13 +123,13 @@ public class ExpenseTree extends Composite {
       super.addDataDisplay(display);
 
       // Request the count anytime a view is added.
-      requestFactory.employeeRequest().countEmployeesByDepartment(
-          department).fire(new Receiver<Long>() {
-        @Override
-        public void onSuccess(Long response) {
-          updateRowCount(response.intValue(), true);
-        }
-      });
+      requestFactory.employeeRequest().countEmployeesByDepartment(department).fire(
+          new Receiver<Long>() {
+            @Override
+            public void onSuccess(Long response) {
+              updateRowCount(response.intValue(), true);
+            }
+          });
     }
 
     @Override
@@ -135,11 +137,13 @@ public class ExpenseTree extends Composite {
       Range range = view.getVisibleRange();
       requestFactory.employeeRequest().findEmployeeEntriesByDepartment(
           department, range.getStart(), range.getLength()).with(
-          getEmployeeMenuProperties()).fire(new Receiver<List<EmployeeProxy>>(){
+          getEmployeeMenuProperties()).fire(
+          new Receiver<List<EmployeeProxy>>() {
             @Override
             public void onSuccess(List<EmployeeProxy> response) {
               updateRowData(0, response);
-            }});
+            }
+          });
     }
   }
 
@@ -161,8 +165,8 @@ public class ExpenseTree extends Composite {
     public <T> NodeInfo<?> getNodeInfo(T value) {
       if (value == null) {
         // Top level.
-        return new DefaultNodeInfo<String>(
-            departments, departmentCell, selectionModel, null);
+        return new DefaultNodeInfo<String>(departments, departmentCell,
+            selectionModel, null);
       } else if (isAllDepartment(value)) {
         // Employees are not displayed under the 'All' Department.
         return null;
@@ -170,8 +174,8 @@ public class ExpenseTree extends Composite {
         // Second level.
         EmployeeListDataProvider dataProvider = new EmployeeListDataProvider(
             (String) value);
-        return new DefaultNodeInfo<EmployeeProxy>(
-            dataProvider, employeeCell, selectionModel, null);
+        return new DefaultNodeInfo<EmployeeProxy>(dataProvider, employeeCell,
+            selectionModel, null);
       }
 
       return null;
@@ -223,16 +227,18 @@ public class ExpenseTree extends Composite {
   /**
    * The factory used to send requests.
    */
-  private ExpensesRequestFactory requestFactory;
+  private final ExpensesRequestFactory requestFactory;
 
   /**
    * The shared {@link SingleSelectionModel}.
    */
   private final SingleSelectionModel<Object> selectionModel = new SingleSelectionModel<Object>(
       new ProvidesKey<Object>() {
+        EntityProxyKeyProvider<EmployeeProxy> keyProvider = new EntityProxyKeyProvider<EmployeeProxy>();
+
         public Object getKey(Object item) {
           if (item instanceof EmployeeProxy) {
-            return Expenses.EMPLOYEE_RECORD_KEY_PROVIDER.getKey((EmployeeProxy) item);
+            return keyProvider.getKey((EmployeeProxy) item);
           }
           return item;
         }
@@ -243,11 +249,13 @@ public class ExpenseTree extends Composite {
    */
   private CellTree tree;
 
-  public ExpenseTree() {
+  public ExpenseTree(ExpensesRequestFactory requestFactory) {
+    this.requestFactory = requestFactory;
+    
     // Initialize the departments.
     List<String> departmentList = departments.getList();
     departmentList.add("All");
-    for (String department : Expenses.DEPARTMENTS) {
+    for (String department : ExpensesApp.DEPARTMENTS) {
       departmentList.add(department);
     }
 
@@ -261,10 +269,6 @@ public class ExpenseTree extends Composite {
     this.listener = listener;
   }
 
-  public void setRequestFactory(ExpensesRequestFactory factory) {
-    this.requestFactory = factory;
-  }
-
   /**
    * Create the {@link CellTree}.
    */
@@ -273,29 +277,28 @@ public class ExpenseTree extends Composite {
 
     // Listen for selection. We need to add this handler before the CellBrowser
     // adds its own handler.
-    selectionModel.addSelectionChangeHandler(
-        new SelectionChangeEvent.Handler() {
-          public void onSelectionChange(SelectionChangeEvent event) {
-            Object selected = selectionModel.getSelectedObject();
-            if (selected == null) {
-              lastEmployee = null;
-              lastDepartment = null;
-            } else if (selected instanceof EmployeeProxy) {
-              lastEmployee = (EmployeeProxy) selected;
-            } else if (selected instanceof String) {
-              lastEmployee = null;
-              if (model.isAllDepartment(selected)) {
-                lastDepartment = null;
-              } else {
-                lastDepartment = (String) selected;
-              }
-            }
-
-            if (listener != null) {
-              listener.onSelection(lastDepartment, lastEmployee);
-            }
+    selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
+      public void onSelectionChange(SelectionChangeEvent event) {
+        Object selected = selectionModel.getSelectedObject();
+        if (selected == null) {
+          lastEmployee = null;
+          lastDepartment = null;
+        } else if (selected instanceof EmployeeProxy) {
+          lastEmployee = (EmployeeProxy) selected;
+        } else if (selected instanceof String) {
+          lastEmployee = null;
+          if (model.isAllDepartment(selected)) {
+            lastDepartment = null;
+          } else {
+            lastDepartment = (String) selected;
           }
-        });
+        }
+
+        if (listener != null) {
+          listener.onSelection(lastDepartment, lastEmployee);
+        }
+      }
+    });
 
     // Create a CellBrowser.
     tree = new CellTree(model, null);
@@ -303,6 +306,6 @@ public class ExpenseTree extends Composite {
   }
 
   private String[] getEmployeeMenuProperties() {
-    return new String[]{"displayName", "userName"};
+    return new String[] {"displayName", "userName"};
   }
 }

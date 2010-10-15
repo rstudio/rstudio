@@ -18,12 +18,13 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
-import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportProxy;
+import com.google.gwt.sample.expenses.shared.ExpenseProxy;
+import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
+import com.google.gwt.sample.expenses.shared.ReportProxy;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Timer;
@@ -65,18 +66,18 @@ public class MobileExpenseList extends Composite implements MobilePage {
   private class ExpenseCell extends AbstractCell<ExpenseProxy> {
 
     private final SafeHtml approvedHtml;
-    private final String approvedText = Expenses.Approval.APPROVED.getText();
+    private final String approvedText = Approval.APPROVED.getText();
     private final SafeHtml blankHtml;
     private final SafeHtml deniedHtml;
-    private final String deniedText = Expenses.Approval.DENIED.getText();
+    private final String deniedText = Approval.DENIED.getText();
 
     public ExpenseCell() {
       if (template == null) {
         template = GWT.create(Template.class);
       }
-      approvedHtml = Expenses.Approval.APPROVED.getIconHtml();
-      blankHtml = Expenses.Approval.BLANK.getIconHtml();
-      deniedHtml = Expenses.Approval.DENIED.getIconHtml();
+      approvedHtml = Approval.APPROVED.getIconHtml();
+      blankHtml = Approval.BLANK.getIconHtml();
+      deniedHtml = Approval.DENIED.getIconHtml();
     }
 
     @Override
@@ -135,7 +136,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
       final Listener listener, final ExpensesRequestFactory requestFactory) {
     this.listener = listener;
     this.requestFactory = requestFactory;
-    expenseDataProvider = new AsyncDataProvider<ExpenseProxy>(Expenses.EXPENSE_RECORD_KEY_PROVIDER) {
+    expenseDataProvider = new AsyncDataProvider<ExpenseProxy>(new EntityProxyKeyProvider<ExpenseProxy>()) {
       @Override
       protected void onRangeChanged(HasData<ExpenseProxy> view) {
         requestExpenses();
@@ -230,7 +231,7 @@ public class MobileExpenseList extends Composite implements MobilePage {
           for (ExpenseProxy value : newValues) {
             Object key = expenseDataProvider.getKey(value);
             String approval = value.getApproval();
-            if (Expenses.Approval.DENIED.getText().equals(approval)) {
+            if (Approval.DENIED.getText().equals(approval)) {
               if (!isInitialData && !knownDeniedKeys.contains(key)) {
                 (new PhaseAnimation.CellListPhaseAnimation<ExpenseProxy>(
                     expenseList, value, expenseDataProvider)).run();

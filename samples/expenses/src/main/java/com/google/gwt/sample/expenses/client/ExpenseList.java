@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,12 +37,14 @@ import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
-import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportProxy;
 import com.google.gwt.sample.expenses.client.style.Styles;
+import com.google.gwt.sample.expenses.shared.EmployeeProxy;
+import com.google.gwt.sample.expenses.shared.ExpenseProxy;
+import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
+import com.google.gwt.sample.expenses.shared.ReportProxy;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -85,7 +87,7 @@ public class ExpenseList extends Composite implements
 
     /**
      * Called when the user selects a report.
-     *
+     * 
      * @param report the selected report
      */
     void onReportSelected(ReportProxy report);
@@ -198,7 +200,7 @@ public class ExpenseList extends Composite implements
   /**
    * Utility method to get the first part of the breadcrumb based on the
    * department and employee.
-   *
+   * 
    * @param department the selected department
    * @param employee the selected employee
    * @return the breadcrumb
@@ -289,7 +291,8 @@ public class ExpenseList extends Composite implements
   /**
    * The data provider that provides reports.
    */
-  private final ReportDataProvider reports = new ReportDataProvider(Expenses.REPORT_RECORD_KEY_PROVIDER);
+  private final ReportDataProvider reports = new ReportDataProvider(
+      new EntityProxyKeyProvider<ReportProxy>());
 
   /**
    * The factory used to send requests.
@@ -363,7 +366,7 @@ public class ExpenseList extends Composite implements
 
   /**
    * Set the current department and employee to filter on.
-   *
+   * 
    * @param department the department, or null if none selected
    * @param employee the employee, or null if none selected
    */
@@ -395,7 +398,7 @@ public class ExpenseList extends Composite implements
 
   /**
    * Add a sortable column to the table.
-   *
+   * 
    * @param <C> the data type for the column
    * @param text the header text
    * @param cell the cell used to render the column
@@ -519,7 +522,7 @@ public class ExpenseList extends Composite implements
 
   /**
    * Send a request for reports in the current range.
-   *
+   * 
    * @param isPolling true if this request is caused by polling
    */
   private void requestReports(boolean isPolling) {

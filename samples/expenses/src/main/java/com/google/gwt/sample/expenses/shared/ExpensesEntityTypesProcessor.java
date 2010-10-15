@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.client.request;
+package com.google.gwt.sample.expenses.shared;
 
 import com.google.gwt.requestfactory.shared.EntityProxy;
 

@@ -23,8 +23,8 @@ import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
-import com.google.gwt.sample.expenses.client.request.ExpenseProxy;
-import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
+import com.google.gwt.sample.expenses.shared.ExpenseProxy;
+import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -114,17 +114,17 @@ public class MobileExpenseDetails extends Composite implements MobilePage {
     @SuppressWarnings("deprecation")
     DateTimeFormat formatter = DateTimeFormat.getMediumDateFormat();
 
-    Expenses.Approval approval = Expenses.Approval.from(expense.getApproval());
+    Approval approval = Approval.from(expense.getApproval());
     nameText.setInnerText(expense.getDescription());
     dateText.setInnerText(formatter.format(expense.getCreated()));
     categoryText.setInnerText(expense.getCategory());
     priceText.setInnerText(ExpensesMobile.formatCurrency(expense.getAmount()));
-    approvalText.setInnerHTML(Expenses.Approval.BLANK.equals(approval)
+    approvalText.setInnerHTML(Approval.BLANK.equals(approval)
         ? "Awaiting Review" : approval.getText());
     approvalText.getStyle().setColor(approval.getColor());
 
     reasonText.setInnerText(expense.getReasonDenied());
-    if (Expenses.Approval.DENIED.equals(approval)) {
+    if (Approval.DENIED.equals(approval)) {
       // Show the reason denied.
       reasonRow.getStyle().clearDisplay();
     } else {

@@ -66,11 +66,11 @@
         </m:MobileScrollPanel>
       </g:west>
       <g:center>
-        <g:LayoutPanel ui:field='layoutPanel'>
-          <g:layer>
-            <e:ExpenseList ui:field='expenseList' />
-          </g:layer>
-        </g:LayoutPanel>
+        <e:SlidingPanel ui:field='slidingPanel'>
+          <!-- The order of the children determines which way they slide -->
+          <e:ExpenseList ui:field='expenseList' />
+          <e:ExpenseDetails ui:field='expenseDetails' />
+        </e:SlidingPanel>
       </g:center>
     </g:DockLayoutPanel>
   </g:center>

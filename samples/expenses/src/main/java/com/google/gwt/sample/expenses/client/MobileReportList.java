@@ -17,10 +17,11 @@ package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.sample.expenses.client.request.EmployeeProxy;
-import com.google.gwt.sample.expenses.client.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.client.request.ReportProxy;
+import com.google.gwt.sample.expenses.shared.EmployeeProxy;
+import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
+import com.google.gwt.sample.expenses.shared.ReportProxy;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
@@ -63,8 +64,10 @@ public class MobileReportList extends Composite implements MobilePage {
     this.listener = listener;
     this.requestFactory = requestFactory;
     this.employee = employee;
+    
+    EntityProxyKeyProvider<ReportProxy> keyProvider = new EntityProxyKeyProvider<ReportProxy>();
 
-    reportDataProvider = new AsyncDataProvider<ReportProxy>(Expenses.REPORT_RECORD_KEY_PROVIDER) {
+    reportDataProvider = new AsyncDataProvider<ReportProxy>(keyProvider) {
       @Override
       protected void onRangeChanged(HasData<ReportProxy> view) {
         requestReports();
@@ -82,7 +85,7 @@ public class MobileReportList extends Composite implements MobilePage {
     });
     reportList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
-    reportSelection = new NoSelectionModel<ReportProxy>(Expenses.REPORT_RECORD_KEY_PROVIDER);
+    reportSelection = new NoSelectionModel<ReportProxy>(keyProvider);
     reportSelection.addSelectionChangeHandler(
         new SelectionChangeEvent.Handler() {
           public void onSelectionChange(SelectionChangeEvent event) {
