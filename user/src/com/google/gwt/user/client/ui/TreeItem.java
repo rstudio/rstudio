@@ -338,6 +338,18 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
   }
 
   /**
+   * Adds a child tree item containing the specified html.
+   * 
+   * @param itemHtml the item's HTML
+   * @return the item that was added
+   */
+  public TreeItem addItem(SafeHtml itemHtml) {
+    TreeItem ret = new TreeItem(itemHtml);
+    addItem(ret);
+    return ret;
+  }
+
+  /**
    * Adds another item as a child to this one.
    * 
    * @param item the item to be added
@@ -468,6 +480,22 @@ public class TreeItem extends UIObject implements HasHTML, HasSafeHtml {
   public TreeItem insertItem(int beforeIndex, String itemText)
       throws IndexOutOfBoundsException {
     TreeItem ret = new TreeItem(itemText);
+    insertItem(beforeIndex, ret);
+    return ret;
+  }
+
+  /**
+   * Inserts a child tree item at the specified index containing the specified
+   * text.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param itemHtml the item's HTML
+   * @return the item that was added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public TreeItem insertItem(int beforeIndex, SafeHtml itemHtml)
+      throws IndexOutOfBoundsException {
+    TreeItem ret = new TreeItem(itemHtml);
     insertItem(beforeIndex, ret);
     return ret;
   }

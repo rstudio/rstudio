@@ -47,6 +47,12 @@ public class TreeItemTest extends GWTTestCase {
     assertEquals(a, item.getChild(1));
   }
 
+  public void testAddItemSafeHtml() {
+    TreeItem item = new TreeItem("foo");
+    TreeItem child = item.addItem(SafeHtmlUtils.fromSafeConstant(html));
+    assertEquals(html, child.getHTML().toLowerCase());
+  }
+
   public void testInsert() {
     TreeItem item = new TreeItem();
     TreeItem b = item.addItem("b");
@@ -122,6 +128,12 @@ public class TreeItemTest extends GWTTestCase {
     } catch (IndexOutOfBoundsException e) {
       // Expected.
     }
+  }
+
+  public void testInsertItemSafeHtml() {
+    TreeItem item = new TreeItem("foo");
+    TreeItem child = item.insertItem(0, SafeHtmlUtils.fromSafeConstant(html));
+    assertEquals(html, child.getHTML().toLowerCase());
   }
 
   public void testSafeHtmlConstructor() {

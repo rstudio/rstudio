@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -26,6 +27,8 @@ import java.util.Iterator;
  */
 public class TreeTest extends GWTTestCase {
 
+  private static final String html = "<b>hello</b><i>world</i>";
+
   static class Adder implements HasWidgetsTester.WidgetAdder {
     public void addChild(HasWidgets container, Widget child) {
       ((Tree) container).addItem(child);
@@ -35,6 +38,12 @@ public class TreeTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
+  }
+
+  public void testAddItemSafeHtml() {
+    Tree t = new Tree();
+    TreeItem item = t.addItem(SafeHtmlUtils.fromSafeConstant(html));
+    assertEquals(html, item.getHTML().toLowerCase());
   }
 
   public void testAttachDetachOrder() {
@@ -109,6 +118,12 @@ public class TreeTest extends GWTTestCase {
     assertEquals(2, t.getItemCount());
     assertEquals(ti, t.getItem(0));
     assertEquals(wti, t.getItem(1));
+  }
+
+  public void testInsertItemSafeHtml() {
+    Tree t = new Tree();
+    TreeItem item = t.insertItem(0, SafeHtmlUtils.fromSafeConstant(html));
+    assertEquals(html, item.getHTML().toLowerCase());
   }
 
   public void testIterator() {

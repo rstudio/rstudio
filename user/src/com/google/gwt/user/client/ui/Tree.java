@@ -55,6 +55,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -331,6 +332,16 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
+   * Adds a simple tree item containing the specified html.
+   * 
+   * @param itemHtml the html of the item to be added
+   * @return the item that was added
+   */
+  public TreeItem addItem(SafeHtml itemHtml) {
+    return root.addItem(itemHtml);
+  }
+
+  /**
    * Adds an item to the root level of this tree.
    * 
    * @param item the item to be added
@@ -491,6 +502,19 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    */
   public TreeItem insertItem(int beforeIndex, String itemText) {
     return root.insertItem(beforeIndex, itemText);
+  }
+
+  /**
+   * Inserts a child tree item at the specified index containing the specified
+   * html.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param itemHtml the html of the item to be added
+   * @return the item that was added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public TreeItem insertItem(int beforeIndex, SafeHtml itemHtml) {
+    return root.insertItem(beforeIndex, itemHtml);
   }
 
   /**
