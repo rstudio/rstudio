@@ -22,7 +22,6 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.AutoHorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 
@@ -125,17 +124,23 @@ public class LabelTest extends GWTTestCase {
         HasAutoHorizontalAlignment.ALIGN_CONTENT_START);
   }
 
-  @SuppressWarnings("deprecation")
-  public void testSetSafeHtml() {
-    Label label = new Label("foo");
-    label.setHTML(SafeHtmlUtils.fromSafeConstant(html1));
-    
-    assertEquals(html1, label.getTextOrHtml(true).toLowerCase());
-    
-    label.setHTML(SafeHtmlUtils.fromSafeConstant(html2), Direction.LTR);
-    
-    assertEquals(html2, label.getTextOrHtml(true).toLowerCase());
+  public void testSetDirection() {
+    Label label = new Label(createAttachedSpanElement());
+    label.setDirectionEstimator(true);
+    label.setText(IW_TEXT);
+
+    // Should be span wrapped.
+    assertTrue(label.getElement().getInnerHTML().toLowerCase().contains("span"));
+
+    // Should not be span wrapped.
+    label.setDirection(Direction.RTL);
+    assertEquals(Direction.RTL, label.getDirection());
+    assertFalse(label.getElement().getInnerHTML().toLowerCase().contains("span"));
+
+    // Should not be span wrapped.
+    label.setDirection(Direction.LTR);
     assertEquals(Direction.LTR, label.getDirection());
+    assertFalse(label.getElement().getInnerHTML().toLowerCase().contains("span"));
   }
 
   /**

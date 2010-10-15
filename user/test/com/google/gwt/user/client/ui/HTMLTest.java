@@ -37,6 +37,13 @@ public class HTMLTest extends LabelTest {
     return "com.google.gwt.user.User";
   }
 
+  public void testDirectionEstimator() {
+    HTML html = new HTML();
+    html.setText("<b>bar</b>", Direction.RTL);
+    html.setDirectionEstimator(true);
+    assertEquals("<b>bar</b>", html.getText());
+  }
+
   // test that the SafeHtml constructor creates the HTML element correctly.
   public void testSafeHtmlConstructor() {
     HTML htmlElement = new HTML(SafeHtmlUtils.fromSafeConstant(html));
@@ -109,6 +116,18 @@ public class HTMLTest extends LabelTest {
     
     assertEquals(html, htmlElement.getHTML().toLowerCase());
     assertEquals(Direction.LTR, htmlElement.getDirection());
+  }
+
+  public void testSetText() {
+    // test that setting plain text works
+    HTML html1 = new HTML();
+    html1.setText("<b>test</b>");
+    assertEquals("<b>test</b>", html1.getText());
+    
+    // test that setting plain text with direction works
+    HTML html2 = new HTML();
+    html2.setText("<b>foo</b>", Direction.RTL);
+    assertEquals("<b>foo</b>", html2.getText());
   }
 
   /**
