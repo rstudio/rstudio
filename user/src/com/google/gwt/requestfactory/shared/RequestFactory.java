@@ -19,6 +19,26 @@ import com.google.gwt.event.shared.EventBus;
 
 /**
  * Marker interface for the RequestFactory code generator.
+ * <p>
+ * <b>Limitations on the transferrability of types.</b> <br>
+ * RequestFactory currently supports the transfer of basic value types, entity
+ * types, and collections, with limitations. The basic value types supported
+ * are {@link String}, {@link Enum}, {@link Boolean}, {@link Character},
+ * subtypes of {@link Number}, and {@link java.util.Date}. Any value type not
+ * included in this list may not be declared in the type signature of a service
+ * method, or {@link EntityProxy}. {@link java.util.Collection} types supported
+ * are {@link java.util.List} and {@link java.util.Set} with the restriction
+ * that a collection must be homogeneous and only hold one type of value.
+ * </p>
+ * <p>
+ * Polymorphism is not supported at this time. RequestFactory encoding and
+ * decoding requires exact knowledge of the concrete type. If a method declares
+ * a given type <code>T</code> as a parameter or return type, only
+ * <code>T</code>'s transferrable properties will be sent over the wire if it is
+ * a proxy, even if the underlying domain value contains extra fields, in
+ * effect, treating it as an instance of the supertype. Returning abstract
+ * supertypes of value types is not supported (e.g. Object, Enum, Number).
+ * </p>
  */
 public interface RequestFactory {
   /**
