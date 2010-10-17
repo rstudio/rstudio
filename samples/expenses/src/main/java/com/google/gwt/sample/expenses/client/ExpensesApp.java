@@ -15,16 +15,21 @@
  */
 package com.google.gwt.sample.expenses.client;
 
+import com.google.gwt.activity.shared.ActivityManager;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.EventBus;
-import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.RequestEvent;
 import com.google.gwt.requestfactory.shared.UserInformationProxy;
 import com.google.gwt.requestfactory.ui.client.AuthenticationFailureHandler;
 import com.google.gwt.requestfactory.ui.client.LoginWidget;
+import com.google.gwt.sample.expenses.client.place.ReportListPlace;
+import com.google.gwt.sample.expenses.client.place.ReportPlace;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportProxy;
@@ -46,23 +51,25 @@ public class ExpensesApp {
 
   private static final Logger log = Logger.getLogger(ExpensesShell.class.getName());
 
+  private final ActivityManager activityManager;
   private final EventBus eventBus;
   private final PlaceController placeController;
   private final PlaceHistoryHandler placeHistoryHandler;
   private final ExpensesRequestFactory requestFactory;
   private final ExpensesShell shell;
 
-  private String lastDepartment;
-  private EmployeeProxy lastEmployee;
+  private EntityProxyId<EmployeeProxy> lastEmployee;
+  private String lastDepartment = "";
 
-  public ExpensesApp(ExpensesRequestFactory requestFactory, EventBus eventBus,
-      ExpensesShell shell, PlaceHistoryHandler placeHistoryHandler,
-      PlaceController placeController) {
-    this.requestFactory = requestFactory;
+  public ExpensesApp(ActivityManager activityManager, EventBus eventBus,
+      PlaceController placeController, PlaceHistoryHandler placeHistoryHandler,
+      ExpensesRequestFactory requestFactory, ExpensesShell shell) {
+    this.activityManager = activityManager;
     this.eventBus = eventBus;
-    this.shell = shell;
-    this.placeHistoryHandler = placeHistoryHandler;
     this.placeController = placeController;
+    this.placeHistoryHandler = placeHistoryHandler;
+    this.requestFactory = requestFactory;
+    this.shell = shell;
   }
 
   /**
@@ -76,10 +83,15 @@ public class ExpensesApp {
     });
 
     final ExpenseTree expenseTree = shell.getExpenseTree();
-    final ExpenseList expenseList = shell.getExpenseList();
-    final ExpenseDetails expenseDetails = shell.getExpenseDetails();
+    final ExpenseReportList expenseList = shell.getExpenseList();
+    final ExpenseReportDetails expenseDetails = shell.getExpenseDetails();
 
-    root.add(shell);
+    // Handle breadcrumb events from Expense Details.
+    expenseDetails.getReportsLink().addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        placeController.goTo(expenseDetails.getReportListPlace());
+      }
+    });
 
     // Check for Authentication failures or mismatches
     RequestEvent.register(eventBus, new AuthenticationFailureHandler());
@@ -97,32 +109,31 @@ public class ExpensesApp {
 
     // Listen for requests from ExpenseTree.
     expenseTree.setListener(new ExpenseTree.Listener() {
-      public void onSelection(String department, EmployeeProxy employee) {
-        lastDepartment = department;
+
+      public void onSelection(String department, EntityProxyId<EmployeeProxy> employee) {
         lastEmployee = employee;
-        expenseList.setEmployee(department, employee);
-        shell.showExpenseDetails(false);
+        lastDepartment = department;
+        placeController.goTo(new ReportListPlace(employee, department));
       }
     });
 
     // Listen for requests from the ExpenseList.
-    expenseList.setListener(new ExpenseList.Listener() {
+    expenseList.setListener(new ExpenseReportList.Listener() {
       public void onReportSelected(ReportProxy report) {
-        expenseDetails.setReportRecord(report, lastDepartment, lastEmployee);
-        shell.showExpenseDetails(true);
+        placeController.goTo(new ReportPlace( //
+            new ReportListPlace(lastEmployee, lastDepartment), //
+            report.stableId() //
+        ));
       }
     });
 
-    /*
-     * TODO these should be constructor arguments, and the inits should probably
-     * happen onLoad
-     */
-    expenseList.init(requestFactory, eventBus);
-    expenseDetails.init(eventBus);
+    // Give the ActivityManager a panel to run
+    activityManager.setDisplay(shell.getPanel());
 
     // Browser history integration
-    placeHistoryHandler.register(placeController, eventBus, new Place() {
-    });
+    placeHistoryHandler.register(placeController, eventBus, ReportListPlace.ALL);
     placeHistoryHandler.handleCurrentHistory();
+
+    root.add(shell);
   }
 }

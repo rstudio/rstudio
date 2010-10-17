@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.client.place;
 
 import com.google.gwt.place.shared.PlaceHistoryMapperWithFactory;
-import com.google.gwt.sample.expenses.client.ioc.Factory;
+import com.google.gwt.sample.expenses.client.ioc.ExpensesFactory;
 
 /**
  * This interface is the hub of your application's navigation system. It links
@@ -31,17 +31,17 @@ import com.google.gwt.sample.expenses.client.ioc.Factory;
  * annotation below and list their corresponding
  * {@link com.google.gwt.place.shared.PlaceTokenizer PlaceTokenizer}s. Or if a
  * tokenizer needs more than a default constructor can provide, add a method to
- * the apps {@link Factory}.
+ * the apps {@link ExpensesFactory}.
  * 
  * <p>
  * This code generated object looks to both the {@literal @}WithTokenizers
  * annotation and the factory to infer the types of
  * {@link com.google.gwt.place.Place Place}s your app can navigate to. In this
- * case it will find the {@link Factory#getListTokenizer()} and
- * {@link Factory#getReportTokenizer()} methods, and so be able to handle
+ * case it will find the {@link ExpensesFactory#getListTokenizer()} and
+ * {@link ExpensesFactory#getReportTokenizer()} methods, and so be able to handle
  * {@link ReportListPlace}s and {@link ReportPlace}s.
  */
 // @WithTokenizers({MyNewPlace.Tokenizer, MyOtherNewPlace.Tokenizer})
 public interface ExpensesPlaceHistoryMapper extends
-    PlaceHistoryMapperWithFactory<Factory> {
+    PlaceHistoryMapperWithFactory<ExpensesFactory> {
 }

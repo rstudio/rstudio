@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.client;
 
+import com.google.gwt.activity.shared.Activity;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.DateCell;
@@ -40,9 +41,9 @@ import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.sample.expenses.client.place.ReportListPlace;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
-import com.google.gwt.sample.expenses.shared.ExpenseProxy;
 import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportProxy;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -50,19 +51,19 @@ import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.AsyncDataProvider;
-import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
 import java.util.ArrayList;
@@ -74,10 +75,10 @@ import java.util.Set;
 /**
  * The list of expense reports on the right side of the app.
  */
-public class ExpenseList extends Composite implements
-    EntityProxyChange.Handler<ReportProxy> {
+public class ExpenseReportList extends Composite implements
+    EntityProxyChange.Handler<ReportProxy>, Activity {
 
-  interface ExpenseListUiBinder extends UiBinder<Widget, ExpenseList> {
+  interface Binder extends UiBinder<Widget, ExpenseReportList> {
   }
 
   /**
@@ -175,27 +176,15 @@ public class ExpenseList extends Composite implements
       }
     }
   }
-  /**
-   * The data provider used to retrieve reports.
-   */
-  private class ReportDataProvider extends AsyncDataProvider<ReportProxy> {
 
-    ReportDataProvider(ProvidesKey<ReportProxy> keyProvider) {
-      super(keyProvider);
-    }
-
-    @Override
-    protected void onRangeChanged(HasData<ReportProxy> display) {
-      requestReports(false);
-    }
-  }
+  private static final ProvidesKey<ReportProxy> keyProvider = new EntityProxyKeyProvider<ReportProxy>();
 
   /**
    * The auto refresh interval in milliseconds.
    */
   private static final int REFRESH_INTERVAL = 5000;
 
-  private static ExpenseListUiBinder uiBinder = GWT.create(ExpenseListUiBinder.class);
+  private static Binder uiBinder = GWT.create(Binder.class);
 
   /**
    * Utility method to get the first part of the breadcrumb based on the
@@ -206,9 +195,10 @@ public class ExpenseList extends Composite implements
    * @return the breadcrumb
    */
   public static String getBreadcrumb(String department, EmployeeProxy employee) {
+    assert null != department;
     if (employee != null) {
       return "Reports for " + employee.getDisplayName();
-    } else if (department != null) {
+    } else if (!"".equals(department)) {
       return "Reports for " + department;
     } else {
       return "All Reports";
@@ -217,13 +207,14 @@ public class ExpenseList extends Composite implements
 
   @UiField
   Element breadcrumb;
-
   @UiField
   SimplePager pager;
-  @UiField(provided = true)
-  DefaultTextBox searchBox;
   @UiField
   Image searchButton;
+
+  @UiField(provided = true)
+  DefaultTextBox searchBox;
+
   /**
    * The main table. We provide this in the constructor before calling
    * {@link UiBinder#createAndBindUi(Object)} because the pager depends on it.
@@ -289,15 +280,9 @@ public class ExpenseList extends Composite implements
       "created", "purpose", "notes"};
 
   /**
-   * The data provider that provides reports.
-   */
-  private final ReportDataProvider reports = new ReportDataProvider(
-      new EntityProxyKeyProvider<ReportProxy>());
-
-  /**
    * The factory used to send requests.
    */
-  private ExpensesRequestFactory requestFactory;
+  private final ExpensesRequestFactory requestFactory;
 
   /**
    * The string that the user searched for.
@@ -309,14 +294,22 @@ public class ExpenseList extends Composite implements
    */
   private String startsWithSearch;
 
-  public ExpenseList() {
+  private ReportListPlace place;
+
+  private boolean running;
+
+  public ExpenseReportList(ExpensesRequestFactory requestFactory) {
+    this.requestFactory = requestFactory;
+
     // Initialize the widget.
     createTable();
+    table.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      public void onRangeChange(RangeChangeEvent event) {
+        requestReports(false);
+      }
+    });
     searchBox = new DefaultTextBox("search");
     initWidget(uiBinder.createAndBindUi(this));
-
-    // Add the view to the data provider.
-    reports.addDataDisplay(table);
 
     // Listen for key events from the text boxes.
     searchBox.addKeyUpHandler(new KeyUpHandler() {
@@ -344,10 +337,12 @@ public class ExpenseList extends Composite implements
     });
   }
 
-  public void init(ExpensesRequestFactory factory, EventBus eventBus) {
-    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class, this);
-    this.requestFactory = factory;
-    requestReports(false);
+  public String mayStop() {
+    return null;
+  }
+
+  public void onCancel() {
+    onStop();
   }
 
   public void onProxyChange(EntityProxyChange<ReportProxy> event) {
@@ -358,34 +353,41 @@ public class ExpenseList extends Composite implements
       if (record != null && changedId.equals(record.stableId())) {
         List<ReportProxy> changedList = new ArrayList<ReportProxy>();
         changedList.add(record);
-        reports.updateRowData(i + table.getPageStart(), changedList);
+        table.setRowData(i + table.getPageStart(), changedList);
       }
       i++;
     }
   }
 
-  /**
-   * Set the current department and employee to filter on.
-   * 
-   * @param department the department, or null if none selected
-   * @param employee the employee, or null if none selected
-   */
-  public void setEmployee(String department, EmployeeProxy employee) {
-    this.department = department;
-    this.employee = employee;
-    isCountStale = true;
-    searchBox.resetDefaultText();
-    startsWithSearch = null;
-    breadcrumb.setInnerText(getBreadcrumb(department, employee));
-    searchRegExp = null;
-
-    // Refresh the table.
-    pager.setPageStart(0);
-    requestReports(false);
+  public void onStop() {
+    running = false;
+    refreshTimer.cancel();
   }
 
   public void setListener(Listener listener) {
     this.listener = listener;
+  }
+
+  public void start(AcceptsOneWidget panel, EventBus eventBus) {
+    running = true;
+    doUpdateForPlace();
+
+    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class, this);
+    requestReports(false);
+    panel.setWidget(this);
+  }
+
+  /**
+   * In this application, called by {@link ExpensesActivityMapper} each time a
+   * ReportListPlace is posted. In a more typical set up, this would be a
+   * constructor argument to a one shot activity, perhaps managing a shared
+   * widget view instance.
+   */
+  public void updateForPlace(final ReportListPlace place) {
+    this.place = place;
+    if (running) {
+      doUpdateForPlace();
+    }
   }
 
   @UiFactory
@@ -520,6 +522,39 @@ public class ExpenseList extends Composite implements
     table.addColumn(new SpacerColumn<ReportProxy>());
   }
 
+  private void doUpdateForPlace() {
+    if (place.getEmployeeId() == null) {
+      findDepartmentOrEmployee(place.getDepartment(), null);
+    } else {
+      requestFactory.find(place.getEmployeeId()).fire(
+          new Receiver<EmployeeProxy>() {
+            @Override
+            public void onSuccess(EmployeeProxy response) {
+              findDepartmentOrEmployee("", response);
+            }
+          });
+    }
+  }
+
+  /**
+   * Set the current department and employee to filter on.
+   * 
+   * @param department the department, or null if none selected
+   * @param employee the employee, or null if none selected
+   */
+  private void findDepartmentOrEmployee(String department,
+      EmployeeProxy employee) {
+    this.department = department;
+    this.employee = employee;
+    isCountStale = true;
+    searchBox.resetDefaultText();
+    startsWithSearch = null;
+    breadcrumb.setInnerText(getBreadcrumb(department, employee));
+    searchRegExp = null;
+    pager.setPageStart(0);
+    requestReports(false);
+  }
+
   /**
    * Send a request for reports in the current range.
    * 
@@ -569,7 +604,7 @@ public class ExpenseList extends Composite implements
           if (this == lastDataSizeReceiver) {
             int count = response.intValue();
             // Treat count == 1000 as inexact due to AppEngine limitation
-            reports.updateRowCount(count, count != 1000);
+            table.setRowCount(count, count != 1000);
           }
         }
       };
@@ -585,10 +620,10 @@ public class ExpenseList extends Composite implements
           int size = newValues.size();
           if (size < table.getPageSize()) {
             // Now we know the exact data size
-            reports.updateRowCount(table.getPageStart() + size, true);
+            table.setRowCount(table.getPageStart() + size, true);
           }
           if (size > 0) {
-            reports.updateRowData(table.getPageStart(), newValues);
+            table.setRowData(table.getPageStart(), newValues);
           }
 
           // Add the new keys to the known keys.
@@ -597,10 +632,10 @@ public class ExpenseList extends Composite implements
             knownReportKeys = new HashSet<Object>();
           }
           for (ReportProxy value : newValues) {
-            Object key = reports.getKey(value);
+            Object key = keyProvider.getKey(value);
             if (!isInitialData && !knownReportKeys.contains(key)) {
-              (new PhaseAnimation.CellTablePhaseAnimation<ReportProxy>(table,
-                  value, reports)).run();
+              new PhaseAnimation.CellTablePhaseAnimation<ReportProxy>(table,
+                  value, keyProvider).run();
             }
             knownReportKeys.add(key);
           }

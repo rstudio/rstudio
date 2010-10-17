@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.client;
 
+import com.google.gwt.activity.shared.Activity;
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.DateCell;
@@ -27,7 +28,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SelectElement;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -50,6 +50,8 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.sample.expenses.client.place.ReportListPlace;
+import com.google.gwt.sample.expenses.client.place.ReportPlace;
 import com.google.gwt.sample.expenses.client.style.Styles;
 import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 import com.google.gwt.sample.expenses.shared.ExpenseProxy;
@@ -63,13 +65,11 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -89,9 +89,43 @@ import java.util.Map;
  * Details about the current expense report on the right side of the app,
  * including the list of expenses.
  */
-public class ExpenseDetails extends Composite {
+public class ExpenseReportDetails extends Composite implements Activity {
 
-  interface ExpenseDetailsUiBinder extends UiBinder<Widget, ExpenseDetails> {
+  interface Binder extends UiBinder<Widget, ExpenseReportDetails> {
+  }
+
+  /**
+   * Fetches an employee and a report in parallel. A fine example of the kind of
+   * thing that will no longer be necessary when RequestFactory provides server
+   * side method chaining.
+   */
+  class EmployeeReportFetcher {
+    ReportProxy fetchedReport;
+    EmployeeProxy fetchedEmployee;
+
+    void Run(EntityProxyId<EmployeeProxy> employeeId,
+        EntityProxyId<ReportProxy> reportId,
+        final Receiver<EmployeeReportFetcher> callback) {
+      expensesRequestFactory.find(employeeId).fire(
+          new Receiver<EmployeeProxy>() {
+            @Override
+            public void onSuccess(EmployeeProxy response) {
+              fetchedEmployee = response;
+              if (fetchedReport != null) {
+                callback.onSuccess(EmployeeReportFetcher.this);
+              }
+            }
+          });
+      expensesRequestFactory.find(reportId).fire(new Receiver<ReportProxy>() {
+        @Override
+        public void onSuccess(ReportProxy response) {
+          fetchedReport = response;
+          if (fetchedEmployee != null) {
+            callback.onSuccess(EmployeeReportFetcher.this);
+          }
+        }
+      });
+    }
   }
 
   /**
@@ -287,72 +321,6 @@ public class ExpenseDetails extends Composite {
     }
   }
 
-  /**
-   * The popup used to enter the rejection reason.
-   */
-  private class DenialPopup extends PopupPanel {
-    private final Button cancelButton = new Button("Cancel",
-        new ClickHandler() {
-          public void onClick(ClickEvent event) {
-            reasonDenied = "";
-            hide();
-          }
-        });
-    private final Button confirmButton = new Button("Confirm",
-        new ClickHandler() {
-          public void onClick(ClickEvent event) {
-            reasonDenied = reasonBox.getText();
-            hide();
-          }
-        });
-
-    private ExpenseProxy expenseRecord;
-    private final TextBox reasonBox = new TextBox();
-    private String reasonDenied;
-
-    public DenialPopup() {
-      super(false, true);
-      setStyleName(Styles.common().popupPanel());
-      setGlassEnabled(true);
-      confirmButton.setWidth("11ex");
-      cancelButton.setWidth("11ex");
-      reasonBox.getElement().getStyle().setMarginLeft(10.0, Unit.PX);
-      reasonBox.getElement().getStyle().setMarginRight(10.0, Unit.PX);
-
-      HorizontalPanel hPanel = new HorizontalPanel();
-      hPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-      hPanel.add(new HTML("<b>Reason:</b>"));
-      hPanel.add(reasonBox);
-      hPanel.add(confirmButton);
-      hPanel.add(cancelButton);
-      setWidget(hPanel);
-      cancelButton.getElement().getParentElement().getStyle().setPaddingLeft(
-          5.0, Unit.PX);
-    }
-
-    public ExpenseProxy getExpenseRecord() {
-      return expenseRecord;
-    }
-
-    public String getReasonDenied() {
-      return reasonDenied;
-    }
-
-    public void popup() {
-      center();
-      reasonBox.setFocus(true);
-    }
-
-    public void setExpenseRecord(ExpenseProxy expenseRecord) {
-      this.expenseRecord = expenseRecord;
-    }
-
-    public void setReasonDenied(String reasonDenied) {
-      this.reasonDenied = reasonDenied;
-      reasonBox.setText(reasonDenied);
-    }
-  }
-
   private static Template template;
 
   /**
@@ -365,34 +333,25 @@ public class ExpenseDetails extends Composite {
    */
   private static final int REFRESH_INTERVAL = 5000;
 
-  private static ExpenseDetailsUiBinder uiBinder = GWT.create(ExpenseDetailsUiBinder.class);
+  private static Binder uiBinder = GWT.create(Binder.class);
 
-  @UiField
-  Element approvedLabel;
+  @UiField Element approvedLabel;
 
-  @UiField
-  Element costLabel;
+  @UiField Element costLabel;
 
-  @UiField
-  Element notes;
+  @UiField Element notes;
 
-  @UiField
-  TextBox notesBox;
+  @UiField TextBox notesBox;
 
-  @UiField
-  Anchor notesEditLink;
+  @UiField Anchor notesEditLink;
 
-  @UiField
-  Element notesEditLinkWrapper;
+  @UiField Element notesEditLinkWrapper;
 
-  @UiField
-  Element notesPending;
+  @UiField Element notesPending;
 
-  @UiField
-  Element reportName;
+  @UiField Element reportName;
 
-  @UiField
-  Anchor reportsLink;
+  @UiField Anchor reportsLink;
 
   @UiField(provided = true)
   CellTable<ExpenseProxy> table;
@@ -464,7 +423,9 @@ public class ExpenseDetails extends Composite {
    */
   private double totalApproved;
 
-  public ExpenseDetails(ExpensesRequestFactory expensesRequestFactory) {
+  private ReportPlace place;
+
+  public ExpenseReportDetails(ExpensesRequestFactory expensesRequestFactory) {
     this.expensesRequestFactory = expensesRequestFactory;
     createErrorPopup();
     initTable();
@@ -506,23 +467,20 @@ public class ExpenseDetails extends Composite {
     });
   }
 
+  public ReportListPlace getReportListPlace() {
+    ReportListPlace listPlace = place.getListPlace();
+    return listPlace == null ? ReportListPlace.ALL : listPlace;
+  }
+
   public Anchor getReportsLink() {
     return reportsLink;
   }
 
-  public void init(EventBus eventBus) {
-    EntityProxyChange.registerForProxyType(eventBus, ExpenseProxy.class,
-        new EntityProxyChange.Handler<ExpenseProxy>() {
-          public void onProxyChange(EntityProxyChange<ExpenseProxy> event) {
-            onExpenseRecordChanged(event);
-          }
-        });
-    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class,
-        new EntityProxyChange.Handler<ReportProxy>() {
-          public void onProxyChange(EntityProxyChange<ReportProxy> event) {
-            onReportChanged(event);
-          }
-        });
+  public String mayStop() {
+    return null;
+  }
+
+  public void onCancel() {
   }
 
   public void onExpenseRecordChanged(EntityProxyChange<ExpenseProxy> event) {
@@ -571,42 +529,57 @@ public class ExpenseDetails extends Composite {
     }
   }
 
-  /**
-   * Set the {@link ReportProxy} to show.
-   * 
-   * @param report the {@link ReportProxy}
-   * @param department the selected department
-   * @param employee the selected employee
-   */
-  public void setReportRecord(ReportProxy report, String department,
-      EmployeeProxy employee) {
-    this.report = report;
-    knownExpenseKeys = null;
-    reportName.setInnerText(report.getPurpose());
-    costLabel.setInnerText("");
-    approvedLabel.setInnerText("");
-    unreconciledLabel.setInnerText("");
-    setNotesEditState(false, false, report.getNotes());
-    items.getList().clear();
-    totalApproved = 0;
+  public void onStop() {
+  }
 
-    // Update the breadcrumb.
-    reportsLink.setText(ExpenseList.getBreadcrumb(department, employee));
+  public void start(AcceptsOneWidget panel, EventBus eventBus) {
+    final ReportListPlace listPlace = place.getListPlace();
 
-    // Reset sorting state of table
-    lastComparator = defaultComparator;
-    if (allHeaders.size() > 0) {
-      for (SortableHeader header : allHeaders) {
-        header.setSorted(false);
-        header.setReverseSort(true);
-      }
-      allHeaders.get(0).setSorted(true);
-      allHeaders.get(0).setReverseSort(false);
-      table.redrawHeaders();
+    if (listPlace.getEmployeeId() == null) {
+      expensesRequestFactory.find(place.getReportId()).fire(
+          new Receiver<ReportProxy>() {
+            @Override
+            public void onSuccess(ReportProxy response) {
+              setReportRecord(response, listPlace.getDepartment(), null);
+            }
+          });
+    } else {
+      new EmployeeReportFetcher().Run(listPlace.getEmployeeId(),
+          place.getReportId(),
+          new Receiver<ExpenseReportDetails.EmployeeReportFetcher>() {
+            @Override
+            public void onSuccess(EmployeeReportFetcher response) {
+              setReportRecord(response.fetchedReport,
+                  listPlace.getDepartment(), response.fetchedEmployee);
+            }
+          });
     }
 
-    // Request the expenses.
-    requestExpenses();
+    EntityProxyChange.registerForProxyType(eventBus, ExpenseProxy.class,
+        new EntityProxyChange.Handler<ExpenseProxy>() {
+          public void onProxyChange(EntityProxyChange<ExpenseProxy> event) {
+            onExpenseRecordChanged(event);
+          }
+        });
+
+    EntityProxyChange.registerForProxyType(eventBus, ReportProxy.class,
+        new EntityProxyChange.Handler<ReportProxy>() {
+          public void onProxyChange(EntityProxyChange<ReportProxy> event) {
+            onReportChanged(event);
+          }
+        });
+
+    panel.setWidget(this);
+  }
+
+  /**
+   * In this application, called by {@link ExpensesActivityMapper} each time a
+   * ReportListPlace is posted. In a more typical set up, this would be a
+   * constructor argument to a one shot activity, perhaps managing a shared
+   * widget view instance.
+   */
+  public void updateForPlace(final ReportPlace place) {
+    this.place = place;
   }
 
   /**
@@ -993,6 +966,44 @@ public class ExpenseDetails extends Composite {
     setVisible(notesEditLinkWrapper, !editable && !pending);
     setVisible(notesPending, pending);
     notesBox.setFocus(editable);
+  }
+
+  /**
+   * Set the {@link ReportProxy} to show.
+   * 
+   * @param report the {@link ReportProxy}
+   * @param department the selected department, or ""
+   * @param employee the selected employee, or null
+   */
+  private void setReportRecord(ReportProxy report, String department,
+      EmployeeProxy employee) {
+    this.report = report;
+    knownExpenseKeys = null;
+    reportName.setInnerText(report.getPurpose());
+    costLabel.setInnerText("");
+    approvedLabel.setInnerText("");
+    unreconciledLabel.setInnerText("");
+    setNotesEditState(false, false, report.getNotes());
+    items.getList().clear();
+    totalApproved = 0;
+
+    // Update the breadcrumb.
+    reportsLink.setText(ExpenseReportList.getBreadcrumb(department, employee));
+
+    // Reset sorting state of table
+    lastComparator = defaultComparator;
+    if (allHeaders.size() > 0) {
+      for (SortableHeader header : allHeaders) {
+        header.setSorted(false);
+        header.setReverseSort(true);
+      }
+      allHeaders.get(0).setSorted(true);
+      allHeaders.get(0).setReverseSort(false);
+      table.redrawHeaders();
+    }
+
+    // Request the expenses.
+    requestExpenses();
   }
 
   /**

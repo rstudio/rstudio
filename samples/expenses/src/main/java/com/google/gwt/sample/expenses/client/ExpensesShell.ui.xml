@@ -68,8 +68,8 @@
       <g:center>
         <e:SlidingPanel ui:field='slidingPanel'>
           <!-- The order of the children determines which way they slide -->
-          <e:ExpenseList ui:field='expenseList' />
-          <e:ExpenseDetails ui:field='expenseDetails' />
+          <e:ExpenseReportList ui:field='expenseList' />
+          <e:ExpenseReportDetails ui:field='expenseDetails' />
         </e:SlidingPanel>
       </g:center>
     </g:DockLayoutPanel>

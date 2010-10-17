@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.expenses.client.place;
 
+import static com.google.gwt.sample.expenses.client.place.ReportListPlace.Tokenizer.SEPARATOR;
+
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.place.shared.PlaceTokenizer;
 import com.google.gwt.place.shared.Prefix;
@@ -41,30 +43,26 @@ public class ReportPlace extends Place {
       this.listTokenizer = listTokenizer;
     }
 
-    private static final String SEPARATOR = ReportListPlace.Tokenizer.SEPARATOR
-        + ReportListPlace.Tokenizer.SEPARATOR;
-
     public ReportPlace getPlace(String token) {
-      String[] bits = token.split(SEPARATOR);
-      if (bits.length != 2) {
+      int i = token.indexOf(SEPARATOR);
+      if (i < 0) {
         return null;
       }
 
-      String listPlaceToken = bits[0];
-      String reporterToken = bits[1];
-      
+      String reporterToken = token.substring(0, i);
+      String listPlaceToken = token.substring(i + SEPARATOR.length());
+
       return new ReportPlace(listTokenizer.getPlace(listPlaceToken),
           requests.<ReportProxy> getProxyId(reporterToken));
     }
 
     public String getToken(ReportPlace place) {
-      return listTokenizer.getToken(place.getListPlace()) + SEPARATOR
-          + requests.getHistoryToken(place.getReportId());
+      return requests.getHistoryToken(place.getReportId()) + SEPARATOR
+          + listTokenizer.getToken(place.getListPlace());
     }
   }
 
   private final ReportListPlace listPlace;
-
   private final EntityProxyId<ReportProxy> reportId;
 
   public ReportPlace(ReportListPlace listPlace,
@@ -79,5 +77,36 @@ public class ReportPlace extends Place {
 
   public EntityProxyId<ReportProxy> getReportId() {
     return reportId;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((listPlace == null) ? 0 : listPlace.hashCode());
+    result = prime * result + ((reportId == null) ? 0 : reportId.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    ReportPlace other = (ReportPlace) obj;
+    if (listPlace == null) {
+      if (other.listPlace != null)
+        return false;
+    } else if (!listPlace.equals(other.listPlace))
+      return false;
+    if (reportId == null) {
+      if (other.reportId != null)
+        return false;
+    } else if (!reportId.equals(other.reportId))
+      return false;
+    return true;
   }
 }

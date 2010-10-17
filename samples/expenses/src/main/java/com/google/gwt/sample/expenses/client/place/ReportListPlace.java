@@ -29,11 +29,13 @@ import com.google.gwt.sample.expenses.shared.EmployeeProxy;
 public class ReportListPlace extends Place {
 
   /**
-   * Tokenizer.
+   * Tokenizer, which by all rights should have been code generated. Stay tuned.
    */
   @Prefix("l")
   public static class Tokenizer implements PlaceTokenizer<ReportListPlace> {
     static final String SEPARATOR = "!";
+    private static final String NO_ID = "n";
+
     private final RequestFactory requests;
 
     public Tokenizer(RequestFactory requests) {
@@ -43,43 +45,47 @@ public class ReportListPlace extends Place {
     public ReportListPlace getPlace(String token) {
       String bits[] = token.split(SEPARATOR);
 
-      if (bits.length != 3) {
+      if (bits.length != 2) {
         return null;
       }
 
-      String reporterIdToken = bits[0];
-      String search = bits[1];
-      int page = Integer.valueOf(bits[2]);
+      String department = URL.decodePathSegment(bits[0]);
+      String reporterIdToken = bits[1];
 
-      return new ReportListPlace(requests.<EmployeeProxy> getProxyId(reporterIdToken),
-          URL.decodePathSegment(search), page);
+      EntityProxyId<EmployeeProxy> proxyId = NO_ID.equals(reporterIdToken)
+          ? null : requests.<EmployeeProxy> getProxyId(reporterIdToken);
+      return new ReportListPlace(proxyId, department);
     }
 
     public String getToken(ReportListPlace place) {
-      return requests.getHistoryToken(place.getReporterId()) + SEPARATOR
-          + URL.encodePathSegment(place.getSearch());
+      EntityProxyId<EmployeeProxy> id = place.getEmployeeId();
+      String idToken = id == null ? NO_ID : requests.getHistoryToken(id);
+      return URL.encodePathSegment(place.getDepartment()) + SEPARATOR + idToken;
     }
   }
 
-  private final int page;
-  private final EntityProxyId<EmployeeProxy> reporterId;
-  private final String search;
+  public static final ReportListPlace ALL = new ReportListPlace(null, "");
 
-  public ReportListPlace(EntityProxyId<EmployeeProxy> reporter, String search, int page) {
-    this.reporterId = reporter;
-    this.search = search;
-    this.page = page;
+  private final EntityProxyId<EmployeeProxy> employeeId;
+  private final String department;
+
+  public ReportListPlace(EntityProxyId<EmployeeProxy> employeeId,
+      String department) {
+    this.employeeId = employeeId;
+    this.department = department;
   }
 
-  public int getPage() {
-    return page;
-  }
-  
-  public EntityProxyId<EmployeeProxy> getReporterId() {
-    return reporterId;
+  /**
+   * @return the department searched for, or null for none
+   */
+  public String getDepartment() {
+    return department;
   }
 
-  public String getSearch() {
-    return search;
+  /**
+   * @return the employee to focus on, or null for none
+   */
+  public EntityProxyId<EmployeeProxy> getEmployeeId() {
+    return employeeId;
   }
 }

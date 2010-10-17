@@ -21,9 +21,11 @@ import com.google.gwt.cell.client.IconCellDecorator;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.ui.client.EntityProxyKeyProvider;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates.Template;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.expenses.client.style.Styles;
@@ -58,7 +60,7 @@ public class ExpenseTree extends Composite {
      * @param department the selected department name
      * @param employee the selected employee
      */
-    void onSelection(String department, EmployeeProxy employee);
+    void onSelection(String department, EntityProxyId<EmployeeProxy> employeeId);
   }
 
   interface Template extends SafeHtmlTemplates {
@@ -251,7 +253,7 @@ public class ExpenseTree extends Composite {
 
   public ExpenseTree(ExpensesRequestFactory requestFactory) {
     this.requestFactory = requestFactory;
-    
+
     // Initialize the departments.
     List<String> departmentList = departments.getList();
     departmentList.add("All");
@@ -282,20 +284,21 @@ public class ExpenseTree extends Composite {
         Object selected = selectionModel.getSelectedObject();
         if (selected == null) {
           lastEmployee = null;
-          lastDepartment = null;
+          lastDepartment = "";
         } else if (selected instanceof EmployeeProxy) {
           lastEmployee = (EmployeeProxy) selected;
         } else if (selected instanceof String) {
           lastEmployee = null;
           if (model.isAllDepartment(selected)) {
-            lastDepartment = null;
+            lastDepartment = "";
           } else {
             lastDepartment = (String) selected;
           }
         }
 
         if (listener != null) {
-          listener.onSelection(lastDepartment, lastEmployee);
+          listener.onSelection(lastDepartment, lastEmployee == null ? null
+              : lastEmployee.stableId());
         }
       }
     });

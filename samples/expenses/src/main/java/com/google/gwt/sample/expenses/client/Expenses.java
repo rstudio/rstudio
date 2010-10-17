@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.sample.expenses.client.ioc.Factory;
+import com.google.gwt.sample.expenses.client.ioc.ExpensesFactory;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 
 /**
@@ -25,6 +25,6 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 public class Expenses implements EntryPoint {
 
   public void onModuleLoad() {
-    new Factory().getExpensesApp().run(RootLayoutPanel.get());
+    new ExpensesFactory().getExpensesApp().run(RootLayoutPanel.get());
   }
 }

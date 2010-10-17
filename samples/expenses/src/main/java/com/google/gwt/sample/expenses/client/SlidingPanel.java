@@ -50,7 +50,7 @@ public class SlidingPanel extends ResizeComposite implements HasWidgets,
   }
 
   public void add(IsWidget w) {
-    add(w.asWidget());
+    add(asWidgetOrNull(w.asWidget()));
   }
 
   public void add(Widget w) {
@@ -82,12 +82,20 @@ public class SlidingPanel extends ResizeComposite implements HasWidgets,
   }
 
   public void setWidget(IsWidget w) {
-    setWidget(w.asWidget());
+    setWidget(asWidgetOrNull(w));
   }
 
+  /**
+   * Set the widget to show, adding it to the end of our sliding set if we
+   * haven't seen it before. Nulls are ignored.
+   */
   // Conflict btw deprecated Composite#setWidget and HasOneWidget#setWidget
   @SuppressWarnings("deprecation")
   public void setWidget(Widget widget) {
+    if (widget == null) {
+      return;
+    }
+    
     int newIndex = widgets.indexOf(widget);
 
     if (newIndex < 0) {

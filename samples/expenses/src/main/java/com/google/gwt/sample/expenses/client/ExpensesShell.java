@@ -16,13 +16,12 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.requestfactory.ui.client.LoginWidget;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HasOneWidget;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -34,37 +33,31 @@ public class ExpensesShell extends Composite {
 
   private static ShellUiBinder uiBinder = GWT.create(ShellUiBinder.class);
 
-  @UiField
-  ExpenseList expenseList;
+  @UiField(provided = true)
+  final ExpenseReportList expenseList;
+  
+  @UiField(provided = true)
+  final ExpenseReportDetails expenseDetails;
+
   @UiField(provided = true)
   final ExpenseTree expenseTree;
-  @UiField
-  SlidingPanel slidingPanel;
-  @UiField
-  LoginWidget loginWidget;
-  @UiField
-  DockLayoutPanel dockLayout;
-  @UiField(provided = true)
-  final ExpenseDetails expenseDetails;
+  
+  @UiField SlidingPanel slidingPanel;
+  @UiField LoginWidget loginWidget;
+  @UiField DockLayoutPanel dockLayout;
 
-  public ExpensesShell(ExpenseTree expenseTree, ExpenseDetails expenseDetails) {
+  public ExpensesShell(ExpenseTree expenseTree, ExpenseReportList expenseList, ExpenseReportDetails expenseDetails) {
     this.expenseTree = expenseTree;
+    this.expenseList = expenseList;
     this.expenseDetails = expenseDetails;
     initWidget(uiBinder.createAndBindUi(this));
-
-    // Handle breadcrumb events from Expense Details.
-    expenseDetails.getReportsLink().addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        showExpenseDetails(false);
-      }
-    });
   }
 
-  public ExpenseDetails getExpenseDetails() {
+  public ExpenseReportDetails getExpenseDetails() {
     return expenseDetails;
   }
 
-  public ExpenseList getExpenseList() {
+  public ExpenseReportList getExpenseList() {
     return expenseList;
   }
 
@@ -72,19 +65,11 @@ public class ExpensesShell extends Composite {
     return expenseTree;
   }
 
-  /**
-   * @return the login widget
-   */
   public LoginWidget getLoginWidget() {
     return loginWidget;
   }
   
-  /**
-   * Show or hide the expense details. When showing, the expense list is hidden.
-   * 
-   * @param isShowing true to show details, false to show reports list
-   */
-  public void showExpenseDetails(boolean isShowing) {
-    slidingPanel.setWidget(isShowing ? expenseDetails : expenseList);
+  public HasOneWidget getPanel() {
+    return slidingPanel;
   }
 }

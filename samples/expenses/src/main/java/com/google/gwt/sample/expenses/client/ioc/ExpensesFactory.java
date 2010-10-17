@@ -15,13 +15,17 @@
  */
 package com.google.gwt.sample.expenses.client.ioc;
 
+import com.google.gwt.activity.shared.ActivityManager;
+import com.google.gwt.activity.shared.ActivityMapper;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.place.shared.PlaceController;
 import com.google.gwt.place.shared.PlaceHistoryHandler;
-import com.google.gwt.sample.expenses.client.ExpenseDetails;
+import com.google.gwt.sample.expenses.client.ExpenseReportDetails;
+import com.google.gwt.sample.expenses.client.ExpenseReportList;
 import com.google.gwt.sample.expenses.client.ExpenseTree;
+import com.google.gwt.sample.expenses.client.ExpensesActivityMapper;
 import com.google.gwt.sample.expenses.client.ExpensesApp;
 import com.google.gwt.sample.expenses.client.ExpensesShell;
 import com.google.gwt.sample.expenses.client.place.ExpensesPlaceHistoryMapper;
@@ -34,30 +38,50 @@ import com.google.gwt.sample.expenses.shared.ExpensesRequestFactory;
  * <p>
  * TODO: Use {@link http ://code.google.com/p/google-gin/} to generate this
  */
-public class Factory {
+public class ExpensesFactory {
 
   private final EventBus eventBus = new SimpleEventBus();
   private final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
   private final ExpensesPlaceHistoryMapper historyMapper = GWT.create(ExpensesPlaceHistoryMapper.class);
   private final PlaceHistoryHandler placeHistoryHandler;
   private final PlaceController placeController = new PlaceController(eventBus);
+  private final ExpenseTree expenseTree = new ExpenseTree(requestFactory);
+  private final ExpenseReportList expenseList = new ExpenseReportList(requestFactory);
+  private final ExpenseReportDetails expenseDetails = new ExpenseReportDetails(
+      requestFactory);
+  private final ActivityMapper activityMapper = new ExpensesActivityMapper(
+      expenseDetails, expenseList);
+  private final ActivityManager activityManager = new ActivityManager(
+      activityMapper, eventBus);
 
-  public Factory() {
+  public ExpensesFactory() {
     requestFactory.initialize(eventBus);
     historyMapper.setFactory(this);
     placeHistoryHandler = new PlaceHistoryHandler(historyMapper);
   }
 
   public ExpensesApp getExpensesApp() {
-    return new ExpensesApp(requestFactory, eventBus, new ExpensesShell(
-        new ExpenseTree(requestFactory), new ExpenseDetails(requestFactory)),
-        placeHistoryHandler, placeController);
+    return new ExpensesApp(activityManager, eventBus, placeController,
+        placeHistoryHandler, requestFactory, new ExpensesShell(expenseTree,
+            expenseList, expenseDetails));
   }
 
+  /**
+   * Exposed for generated {@link ExpensesPlaceHistoryMapper}, which creates a
+   * bookmarkable place in the app for each type of
+   * {@link com.google.gwt.place.shared.PlaceTokenizer} it can find in the
+   * factory.
+   */
   public ReportListPlace.Tokenizer getListTokenizer() {
     return new ReportListPlace.Tokenizer(requestFactory);
   }
 
+  /**
+   * Exposed for generated {@link ExpensesPlaceHistoryMapper}, which creates a
+   * bookmarkable place in the app for each type of
+   * {@link com.google.gwt.place.shared.PlaceTokenizer} it can find in the
+   * factory.
+   */
   public ReportPlace.Tokenizer getReportTokenizer() {
     return new ReportPlace.Tokenizer(getListTokenizer(), requestFactory);
   }
