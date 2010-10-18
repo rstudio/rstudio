@@ -81,6 +81,9 @@ public class ExampleTaglet implements Taglet {
         });
 
     String slurpSource = Booklet.slurpSource(position);
+    // The <pre> tag still requires '<' and '>' characters to be escaped
+    slurpSource = slurpSource.replace("<", "&lt;");
+    slurpSource = slurpSource.replace(">", "&gt;");
     return "<blockquote><pre>" + slurpSource + "</pre></blockquote>";
   }
 
