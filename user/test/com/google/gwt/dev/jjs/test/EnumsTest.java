@@ -63,6 +63,25 @@ public class EnumsTest extends GWTTestCase {
 
     public abstract String value();
   }
+  
+  enum BasicWithOverloadedValueOf {
+    A(1), B(2), C(3);
+    
+    private final int id;
+    
+    private BasicWithOverloadedValueOf(int id) {
+      this.id = id;
+    }
+    
+    public static BasicWithOverloadedValueOf valueOf(Integer id) {
+      for (BasicWithOverloadedValueOf val : BasicWithOverloadedValueOf.values()) {
+        if (val.id == id) {
+          return val;
+        }
+      }
+      throw new IllegalArgumentException();
+    }
+  }
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -233,6 +252,15 @@ public class EnumsTest extends GWTTestCase {
           + "NullPointerException");
     } catch (NullPointerException e) {
     }
+  }
+  
+  public void testValueOfOverload() {
+    BasicWithOverloadedValueOf val1 = Enum.valueOf(BasicWithOverloadedValueOf.class,"A");
+    BasicWithOverloadedValueOf val2 = BasicWithOverloadedValueOf.valueOf("B");
+    BasicWithOverloadedValueOf valById1 = BasicWithOverloadedValueOf.valueOf(1);
+    BasicWithOverloadedValueOf valById2 = BasicWithOverloadedValueOf.valueOf(2);
+    assertEquals(val1, valById1);
+    assertEquals(val2, valById2);
   }
 
   public void testValues() {

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.dev.jjs.test.EnumsTest.BasicWithOverloadedValueOf;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 
@@ -180,6 +181,14 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
           + "NullPointerException");
     } catch (NullPointerException expected) {
     }
+  }
+  
+  @Override
+  public void testValueOfOverload() {
+    BasicWithOverloadedValueOf valById1 = BasicWithOverloadedValueOf.valueOf(1);
+    BasicWithOverloadedValueOf valById2 = BasicWithOverloadedValueOf.valueOf(2);
+    assertEquals(valById1.ordinal(),0);
+    assertEquals(valById2.ordinal(),1);
   }
   
   private <T extends Enum<T>> void enumValuesTest(Class<T> enumClass) {

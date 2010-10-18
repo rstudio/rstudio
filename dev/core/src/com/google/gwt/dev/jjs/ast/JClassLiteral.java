@@ -101,9 +101,9 @@ public class JClassLiteral extends JLiteral implements JAnnotationArgument {
               continue;
             }
             valuesMethod = methodIt;
-          }
-          if ("valueOf".equals(methodIt.getName())) {
-            if (methodIt.getParams().size() != 1) {
+          } else if ("valueOf".equals(methodIt.getName())) {
+            if (methodIt.getParams().size() != 1 ||
+                methodIt.getParams().get(0).getType() != program.getTypeJavaLangString()) {
               continue;
             }
             valueOfMethod = methodIt;
