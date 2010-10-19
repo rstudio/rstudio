@@ -25,7 +25,7 @@ public class JNonNullType extends JReferenceType {
 
   JNonNullType(JReferenceType ref) {
     super(ref.getSourceInfo(), ref.getName());
-    assert ref.canBeNull();
+    assert !(ref instanceof JNullType);
     this.ref = ref;
   }
 

@@ -765,21 +765,18 @@ public class JProgram extends JNode {
   }
 
   public JsonObject getCastableTypeMap(JReferenceType referenceType) {
-    
     // ensure jsonCastableTypeMaps has been initialized
     // it might not have been if the CastNormalizer has not been run
     if (castableTypeMaps == null) {
       initTypeInfo(null);
     }
-    
     JsonObject returnMap = castableTypeMaps.get(referenceType);
     if (returnMap == null) {
       // add a new empty map
       returnMap = new JsonObject(createSourceInfoSynthetic(JProgram.class,
-                                        "empty map"), getJavaScriptObject()); 
+          "empty map"), getJavaScriptObject());
       castableTypeMaps.put(referenceType, returnMap);
     }
-    
     return returnMap;
   }
 
@@ -1158,12 +1155,10 @@ public class JProgram extends JNode {
   public JPrimitiveType getTypeVoid() {
     return JPrimitiveType.VOID;
   }
-  
+
   public void initTypeInfo(
-      IdentityHashMap<JReferenceType,JsonObject> instantiatedTypeCastableTypeMaps) {
-    
+      IdentityHashMap<JReferenceType, JsonObject> instantiatedTypeCastableTypeMaps) {
     castableTypeMaps = instantiatedTypeCastableTypeMaps;
-    
     if (castableTypeMaps == null || castableTypeMaps.size() == 0) {
       castableTypeMaps = new IdentityHashMap<JReferenceType, JsonObject>();
     }
@@ -1239,6 +1234,10 @@ public class JProgram extends JNode {
   public JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {
     if (type1 == type2) {
       return type1;
+    }
+
+    if (type1 instanceof JNullType || type2 instanceof JNullType) {
+      return JNullType.INSTANCE;
     }
 
     if (type1 instanceof JNonNullType != type2 instanceof JNonNullType) {
