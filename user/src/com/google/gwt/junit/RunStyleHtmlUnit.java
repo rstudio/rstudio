@@ -32,6 +32,9 @@ import com.gargoylesoftware.htmlunit.javascript.host.Window;
 
 import net.sourceforge.htmlunit.corejs.javascript.ScriptableObject;
 
+import org.w3c.css.sac.CSSParseException;
+import org.w3c.css.sac.ErrorHandler;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -91,6 +94,25 @@ public class RunStyleHtmlUnit extends RunStyle {
     public void run() {
       WebClient webClient = new WebClient(browser);
       webClient.setAlertHandler(this);
+      // Adding a handler that ignores errors to work-around
+      // https://sourceforge.net/tracker/?func=detail&aid=3090806&group_id=47038&atid=448266
+      webClient.setCssErrorHandler(new ErrorHandler() {
+
+        public void error(CSSParseException exception) {
+          // ignore
+        }
+
+        public void fatalError(CSSParseException exception) {
+          treeLogger.log(TreeLogger.WARN,
+              "CSS fatal error: " + exception.getURI() + " ["
+                  + exception.getLineNumber() + ":"
+                  + exception.getColumnNumber() + "] " + exception.getMessage());
+        }
+
+        public void warning(CSSParseException exception) {
+          // ignore
+        }
+      });
       webClient.setIncorrectnessListener(this);
       webClient.setThrowExceptionOnFailingStatusCode(false);
       webClient.setThrowExceptionOnScriptError(true);
