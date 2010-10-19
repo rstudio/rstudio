@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,10 @@
  */
 
 /**
- * This package contains classes which are machine-generated from Unicode CLDR
- * data -- see <a href="http://www.unicode.com/cldr/">http://www.unicode.com/cldr</a>.
- * 
- * The classes currently here were hand-written based on the CLDR data.
+ * This packages code originated from Apache, so it seperate from gwt
+ * code. However, as gwt does not support all of Apache Collections,
+ * this package has been <b>heavily</b> modified, so replace it with a
+ * new version only if you wish to do all the modifications again.
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
-package com.google.gwt.i18n.client.impl.cldr;
+package org.apache.commons.collections;

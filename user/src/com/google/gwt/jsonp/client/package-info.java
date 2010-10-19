@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,12 @@
  */
 
 /**
- * This package contains classes which are machine-generated from Unicode CLDR
- * data -- see <a href="http://www.unicode.com/cldr/">http://www.unicode.com/cldr</a>.
- * 
- * The classes currently here were hand-written based on the CLDR data.
+ * Classes for sending cross domain requests to an http server, potentially on a
+ * different domain, via JSONP.
+ *
+ * This package contains classes that allow applications to send requests to
+ * servers on different domains than the host page.
+ * server.  
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
-package com.google.gwt.i18n.client.impl.cldr;
+package com.google.gwt.jsonp.client;

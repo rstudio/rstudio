@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,11 @@
  */
 
 /**
- * This package contains classes which are machine-generated from Unicode CLDR
- * data -- see <a href="http://www.unicode.com/cldr/">http://www.unicode.com/cldr</a>.
- * 
- * The classes currently here were hand-written based on the CLDR data.
+ * Internationalization support for GWT applications.
+ *
+ * GWT includes a flexible set of tools to help you internationalize your
+ * applications and libraries. GWT internationalization support provides a
+ * variety of techniques to internationalize strings, typed values, and classes.
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
-package com.google.gwt.i18n.client.impl.cldr;
+package com.google.gwt.i18n.client;

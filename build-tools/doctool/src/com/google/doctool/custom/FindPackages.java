@@ -127,11 +127,20 @@ public class FindPackages {
       out.println("");
       out.println("# Individual classes to include when we don't want to include an entire package");
       out.println("USER_CLASSES=\\");
+
+      // Output a package-info.java once for each package
+      Set<String> classPaths = new HashSet<String>();
       for (int i = 0; i < USER_CLASSES.length; i++) {
+        String className = USER_CLASSES[i];
+        String classPath = className.substring(0, className.lastIndexOf('/'));
+        if (!classPaths.contains(classPath)) {
+          classPaths.add(classPath);
+          out.println("${gwt.root}/" + classPath + "/package-info.java" + ":\\");
+        }
         if (i < USER_CLASSES.length - 1) {
-          out.println("${gwt.root}/" + USER_CLASSES[i] + ":\\");
+          out.println("${gwt.root}/" + className + ":\\");
         } else {
-          out.println("${gwt.root}/" + USER_CLASSES[i]);
+          out.println("${gwt.root}/" + className);
         }
       }
       out.println("");

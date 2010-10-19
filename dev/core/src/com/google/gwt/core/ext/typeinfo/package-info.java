@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,11 @@
  */
 
 /**
- * This package contains classes which are machine-generated from Unicode CLDR
- * data -- see <a href="http://www.unicode.com/cldr/">http://www.unicode.com/cldr</a>.
- * 
- * The classes currently here were hand-written based on the CLDR data.
+ * Type-introspection support classes used by generators.
+ *
+ * Developers implementing custom {@link com.google.gwt.core.ext.Generator generators}
+ * will use the classes in this package for introspection of the code being
+ * compiled.
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
-package com.google.gwt.i18n.client.impl.cldr;
+package com.google.gwt.core.ext.typeinfo;
