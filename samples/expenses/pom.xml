@@ -25,11 +25,6 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
-	<repository>
-            <id>maven-gae-plugin-repo</id>
-            <url>http://maven-gae-plugin.googlecode.com/svn/repository</url>
-            <name>maven-gae-plugin repository</name>
-        </repository>
         <repository>
             <id>spring-maven-release</id>
             <name>Spring Maven Release Repository</name>
@@ -155,7 +150,7 @@
 	<dependency>
             <groupId>com.google.appengine.orm</groupId>
             <artifactId>datanucleus-appengine</artifactId>
-            <version>1.0.7.final</version>
+            <version>1.0.7</version>
         </dependency>
         <!-- must be in main dependencies as well as plugin dependencies below -->
         <dependency>
@@ -416,6 +411,9 @@
             <artifactId>json</artifactId>
             <version>20090211</version>
         </dependency>
+        <!-- Uncomment appengine-local-runtime and appengine-tools-api to be able to run App Engine unit tests -->
+        <!-- With these uncommented, you must run mvn gae:unpack before importing the project into Eclipse -->
+        <!-- 
     <dependency>
             <groupId>com.google.appengine</groupId>
             <artifactId>appengine-local-runtime</artifactId>
@@ -430,6 +428,7 @@
             <scope>system</scope>
             <systemPath>${gae.home}/lib/appengine-tools-api.jar</systemPath>
         </dependency>
+         -->
     <dependency>
     	<groupId>net.sf.jsr107cache</groupId>
     	<artifactId>jsr107cache</artifactId>
