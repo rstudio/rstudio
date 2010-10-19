@@ -4,9 +4,11 @@ If you use Eclipse, you can simply import the generated project into
 Eclipse. We've tested against Eclipse 3.5. Later versions will likely
 also work, earlier versions may not.
 
-Eclipse users will need to have the m2eclipse, or equivalent, pluigin
-installed. Instructions for how to install the m2eclipse plugin can
-be found here: http://m2eclipse.sonatype.org/installing-m2eclipse.html
+Eclipse users will need to install the following plugin components:
+- m2eclipse Core
+- Maven Integration for WTP (in m2eclipse extras)
+  Instructions for how to install both can be found here:
+  http://m2eclipse.sonatype.org/installing-m2eclipse.html
 
 Ensure Eclipse is configured to use Java 1.6 as this sample uses
 AppEngine.
