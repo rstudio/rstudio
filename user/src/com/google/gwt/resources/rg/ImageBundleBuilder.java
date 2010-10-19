@@ -555,11 +555,17 @@ class ImageBundleBuilder {
 
     try {
       ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-      ImageIO.write(bundledImage, BUNDLE_FILE_TYPE, byteOutputStream);
+      boolean writerAvailable = ImageIO.write(bundledImage, BUNDLE_FILE_TYPE,
+          byteOutputStream);
+      if (!writerAvailable) {
+        logger.log(TreeLogger.ERROR, "No " + BUNDLE_FILE_TYPE
+            + " writer available");
+        throw new UnableToCompleteException();
+      }
       imageBytes = byteOutputStream.toByteArray();
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR,
-          "Unable to generate file name for image bundle file", null);
+          "An error occurred while trying to write the image bundle.", e);
       throw new UnableToCompleteException();
     }
     return imageBytes;
