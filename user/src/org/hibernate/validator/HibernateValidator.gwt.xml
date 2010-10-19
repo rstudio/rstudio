@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module>
-<!-- 
-Import this module to use Hibernate Validator during the compilation of validation classes for 
+<!--
+Import this module to use Hibernate Validator during the compilation of validation classes for
 gwt clients.
  -->
   <inherits name='com.google.gwt.validation.Validation' />
@@ -10,7 +10,9 @@ gwt clients.
     <exclude name="super/" />
   </source>
   <source path="engine">
+    <include name="ConstraintViolationImpl.java"/>
     <include name="NodeImpl.java"/>
+    <include name="PathImpl.java"/>
   </source>
   <super-source path="super" />
 </module>

@@ -16,8 +16,20 @@
 package com.google.gwt.sample.validation.server;
 
 import com.google.gwt.rpc.server.RpcServlet;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.sample.validation.client.GreetingService;
 import com.google.gwt.sample.validation.shared.Person;
+import com.google.gwt.sample.validation.shared.ServerGroup;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * The server side implementation of the RPC service.
@@ -26,35 +38,33 @@ import com.google.gwt.sample.validation.shared.Person;
 public class GreetingServiceImpl extends RpcServlet implements
     GreetingService {
 
-  public String greetServer(Person person) throws IllegalArgumentException {
-    // Verify that the input is valid.
+  private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-    // TODO(nchalko) validate
+  public SafeHtml greetServer(Person person) throws IllegalArgumentException,
+      ConstraintViolationException {
+    // Verify that the input is valid.
+    Set<ConstraintViolation<Person>> violations = validator.validate(person,
+        Default.class, ServerGroup.class);
+    if (!violations.isEmpty()) {
+      Set<ConstraintViolation<?>> temp = new HashSet<ConstraintViolation<?>>(
+          violations);
+      throw new ConstraintViolationException(temp);
+    }
 
     String serverInfo = getServletContext().getServerInfo();
     String userAgent = getThreadLocalRequest().getHeader("User-Agent");
 
     // Escape data from the client to avoid cross-site script vulnerabilities.
-    String value = escapeHtml(person.getName());
-    userAgent = escapeHtml(userAgent);
+    SafeHtmlBuilder builder = new SafeHtmlBuilder();
 
-    return "Hello, " + value + "!<br><br>I am running " + serverInfo
-        + ".<br><br>It looks like you are using:<br>" + userAgent;
-  }
-
-  /**
-   * Escape an html string. Escaping data received from the client helps to
-   * prevent cross-site script vulnerabilities.
-   *
-   * @param html the html string to escape
-   * @return the escaped string
-   */
-  private String escapeHtml(String html) {
-    // TODO(nchalko) use SafeHtml after it's integrated.
-    if (html == null) {
-      return null;
-    }
-    return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(
-        ">", "&gt;");
+    SafeHtml safeHtml = builder//
+    .appendEscapedLines("Hello, " + person.getName() + "!")//
+    .appendHtmlConstant("<br>")//
+    .appendEscaped("I am running " + serverInfo + ".")//
+    .appendHtmlConstant("<br><br>")//
+    .appendEscaped("It looks like you are using: ")//
+    .appendEscaped(userAgent)//
+    .toSafeHtml();
+    return safeHtml;
   }
 }

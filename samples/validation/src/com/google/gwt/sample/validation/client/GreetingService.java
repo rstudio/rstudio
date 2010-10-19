@@ -16,13 +16,17 @@
 package com.google.gwt.sample.validation.client;
 
 import com.google.gwt.rpc.client.RpcService;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+
+import javax.validation.ConstraintViolationException;
 
 /**
  * The client side stub for the RPC service.
  */
 @RemoteServiceRelativePath("greet")
 public interface GreetingService extends RpcService {
-  String greetServer(Person name) throws IllegalArgumentException;
+  SafeHtml greetServer(Person name) throws IllegalArgumentException,
+      ConstraintViolationException;
 }

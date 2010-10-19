@@ -146,7 +146,7 @@
         <exclude name="javax/validation/super/javax/validation/MessageInterpolator.java"/>
         <exclude name="javax/validation/super/javax/validation/Configuration.java"/>
         <exclude name="javax/validation/super/javax/validation/Validation.java"/>
-        <exclude name="org/hibernate/validator/super/org/hibernate/validator/constraints/ScriptAssert.java"/>
+        <exclude name="org/hibernate/validator/super/org/hibernate/validator/**/*.java"/>
       </fileset>
       <fileset dir="super/com/google/gwt/emul" />
       <fileset dir="super/com/google/gwt/junit/translatable" />
