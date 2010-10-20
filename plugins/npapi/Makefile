@@ -17,30 +17,27 @@ include ../config.mk
 ifeq ($(OS),mac)
 RUN_PATH_FLAG = -executable_path
 DLL_SUFFIX = .dylib
-DLLFLAGS = -bundle $(ALLARCHCFLAGS)
-CFLAGS += $(ALLARCHCFLAGS)
-CXXFLAGS += $(ALLARCHCFLAGS)
+DLLFLAGS = -bundle $(ARCHCFLAGS)
+CFLAGS += -DXP_MACOSX $(ARCHCFLAGS)
+CXXFLAGS += -DXP_MACOSX $(ARCHCFLAGS)
 # Mac puts multiple architectures into the same files
 TARGET_PLATFORM = Darwin-gcc3
+CHROME_PATH ?= /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
 else
 ifeq ($(OS),linux)
 RUN_PATH_FLAG = -rpath-link
 DLL_SUFFIX = .so
 DLLFLAGS = -shared -m$(FLAG32BIT)
 TARGET_PLATFORM = Linux_$(ARCH)-gcc3
+CHROME_PATH ?= /opt/google/chrome/chrome
 else
-ifeq ($(OS),sun)
-TARGET_PLATFORM = SunOS_$(ARCH)-sunc
-RUN_PATH_FLAG = -rpath-link
-DLLFLAGS=
-endif
 endif
 endif
 
 
 export FLAG32BIT
 
-CFLAGS += -DBROWSER_NPAPI -fshort-wchar
+CFLAGS += -DBROWSER_NPAPI -DXP_UNIX -fshort-wchar
 CXXFLAGS = $(CXXONLYFLAGS) $(CFLAGS)
 DIR = $(shell pwd)
 
@@ -55,11 +52,15 @@ PLATFORM_DIR      = $(EXTENSION_OUTDIR)/$(TARGET_PLATFORM)
 
 INSTALLER_CRX     = prebuilt/gwt-dev-plugin.crx
 DLL               = $(OBJ_OUTDIR)/libGwtDevPlugin$(DLL_SUFFIX)
+GWTDEV_CRX_PEM   ?= $(CURDIR)/gwt-dev-plugin.pem
+CHROME_COMMAND    = $(CHROME_PATH) --pack-extension=$(CURDIR)/$(EXTENSION_OUTDIR) --no-message-box --user-data-dir=$(CURDIR)/$(OBJ_OUTDIR)/user-data --pack-extension-key=$(GWTDEV_CRX_PEM)
 
 #DLLFLAGS += 
 
-#VERSION ?= 0.9.$(shell ./getversion).$(shell date +%Y%m%d%H%M%S)
-VERSION ?= 0.9.$(shell ./getversion)
+VERSION ?= 1.0.$(shell ./getversion)
+ifeq ($(VERSION), 1.0.)
+$(error You must specify the version if you are not in an svn checkout)
+endif
 
 .PHONY: default all crx lib common clean depend install install-platform \
 	versioned-files
@@ -101,11 +102,8 @@ $(OBJS): $(OBJ_OUTDIR)
 $(OBJ_OUTDIR)::
 	@mkdir -p $@
 
-$(INSTALLER_CRX): $(EXTENSION_OUTDIR) versioned-files
-	@mkdir -p $(EXTENSION_OUTDIR)/components
-	#(cd prebuilt/extension; find . \( -name .svn -prune \) -o -print | cpio -pmdua ../../$(EXTENSION_OUTDIR))
-	-rm $(INSTALLER_CRX)
-	(cd $(EXTENSION_OUTDIR) && zip -r -D -9 $(DIR)/$(INSTALLER_CRX) * -x '*/.svn/*' -x 'META-INF/*')
+$(INSTALLER_CRX): $(GWTDEV_CRX_PEM) $(EXTENSION_OUTDIR) versioned-files
+	$(shell $(CHROME_COMMAND))
 
 versioned-files::
 	sed -e s/GWT_DEV_PLUGIN_VERSION/$(VERSION)/ manifest-template.json >prebuilt/gwt-dev-plugin/manifest.json
@@ -124,14 +122,6 @@ common $(COMMON):
 
 clean:
 	rm -rf build
-
-install-platform:
-	@-mkdir -p $(PLATFORM_DIR)
-	-cp $(DLL) $(PLATFORM_DIR)/
-ifeq ($(OS),mac)
-	@-mkdir -p $(subst $(EXTENSION_OUTDIR),prebuilt/extension-$(BROWSER),$(subst x86,ppc,$(PLATFORM_DIR)))/components
-	-cp $(DLL) $(subst $(EXTENSION_OUTDIR),prebuilt/extension-$(BROWSER),$(subst x86,ppc,$(PLATFORM_DIR)))/components
-endif
 
 depend: $(OBJ_OUTDIR)
 	($(foreach src,$(SRCS),$(DEPEND)) true) >>Makefile

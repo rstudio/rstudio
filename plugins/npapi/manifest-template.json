@@ -20,6 +20,7 @@
   "plugins": [
     { "path": "WINNT_x86-msvc/npGwtDevPlugin.dll", "public": true },
     { "path": "Linux_x86-gcc3/libGwtDevPlugin.so", "public": true },
-    { "path": "Linux_x86_64-gcc3/libGwtDevPlugin.so", "public": true }
+    { "path": "Linux_x86_64-gcc3/libGwtDevPlugin.so", "public": true },
+    { "path": "Darwin-gcc3/gwtDev.plugin", "public": true }
   ]
 }
