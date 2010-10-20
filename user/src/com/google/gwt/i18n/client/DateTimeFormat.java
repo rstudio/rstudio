@@ -446,6 +446,7 @@ public class DateTimeFormat {
     YEAR_MONTH_DAY,
     YEAR_MONTH_NUM,
     YEAR_MONTH_NUM_DAY,
+    YEAR_MONTH_WEEKDAY_DAY,
     YEAR_QUARTER,
     YEAR_QUARTER_ABBR,
   }
@@ -614,6 +615,9 @@ public class DateTimeFormat {
         break;
       case YEAR_MONTH_NUM_DAY:
         pattern = dtfi.formatYearMonthNumDay();
+        break;
+      case YEAR_MONTH_WEEKDAY_DAY:
+        pattern = dtfi.formatYearMonthWeekdayDay();
         break;
       case YEAR_QUARTER:
         pattern = dtfi.formatYearQuarterFull();
