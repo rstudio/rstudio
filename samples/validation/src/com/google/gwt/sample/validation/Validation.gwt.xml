@@ -22,5 +22,4 @@
 
   <source path='client'/>
   <source path='shared'/>
-  <super-source path="super" />
 </module>

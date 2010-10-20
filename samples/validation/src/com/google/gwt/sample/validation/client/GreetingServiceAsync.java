@@ -15,16 +15,13 @@
  */
 package com.google.gwt.sample.validation.client;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-
-import javax.validation.ConstraintViolationException;
 
 /**
  * The async counterpart of <code>GreetingService</code>.
  */
 public interface GreetingServiceAsync {
-  void greetServer(Person person, AsyncCallback<SafeHtml> callback)
-      throws IllegalArgumentException, ConstraintViolationException;
+  void greetServer(Person person, AsyncCallback<String> callback)
+      throws IllegalArgumentException;
 }

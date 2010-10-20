@@ -20,7 +20,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -37,7 +36,6 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 
 /**
@@ -126,6 +124,7 @@ public class ValidationView extends Composite {
     person.setName(nameField.getText());
 
     Validator validator = GWT.create(SampleValidator.class);
+
     Set<ConstraintViolation<Person>> violations = validator.validate(person);
     if (!violations.isEmpty()) {
       StringBuffer errorMessage = new StringBuffer();
@@ -141,24 +140,8 @@ public class ValidationView extends Composite {
     sendButton.setEnabled(false);
     textToServer.setText(person.getName());
     serverResponse.setText("");
-    greetingService.greetServer(person, new AsyncCallback<SafeHtml>() {
+    greetingService.greetServer(person, new AsyncCallback<String>() {
       public void onFailure(Throwable caught) {
-        if (caught instanceof ConstraintViolationException) {
-          ConstraintViolationException violationException = (ConstraintViolationException) caught;
-          Set<ConstraintViolation<?>> violations = violationException.getConstraintViolations();
-          StringBuffer sb = new StringBuffer();
-          for (ConstraintViolation<?> constraintViolation : violations) {
-            sb.append(constraintViolation.getPropertyPath().toString()) //
-            .append(":") //
-            .append(constraintViolation.getMessage()) //
-            .append("\n");
-          }
-          errorLabel.setText(sb.toString());
-          sendButton.setEnabled(true);
-          sendButton.setFocus(true);
-          return;
-        }
-
         // Show the RPC error message to the user
         dialogBox.setText("Remote Procedure Call - Failure");
         serverResponse.addStyleName(style.error());
@@ -167,7 +150,7 @@ public class ValidationView extends Composite {
         closeButton.setFocus(true);
       }
 
-      public void onSuccess(SafeHtml result) {
+      public void onSuccess(String result) {
         dialogBox.setText("Remote Procedure Call");
         serverResponse.removeStyleName(style.error());
         serverResponse.setHTML(result);

@@ -23,7 +23,7 @@ import javax.validation.constraints.Size;
 /**
  * A sample bean to show validation on.
  */
-@ServerConstraint(groups = ServerGroup.class)
+@NoOp
 public class Person implements IsSerializable {
 
   @NotNull
