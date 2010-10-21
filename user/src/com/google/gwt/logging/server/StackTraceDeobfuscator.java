@@ -62,6 +62,25 @@ public class StackTraceDeobfuscator {
     return lr;
   }
   
+  public StackTraceElement resymbolize(StackTraceElement ste,
+      String strongName) {
+    SymbolMap map = loadSymbolMap(strongName);
+    String symbolData = map == null ? null : map.get(ste.getMethodName());
+
+    if (symbolData != null) {
+      // jsniIdent, className, memberName, sourceUri, sourceLine
+      String[] parts = symbolData.split(",");
+      if (parts.length == 5) {
+        String[] ref = parse(
+            parts[0].substring(0, parts[0].lastIndexOf(')') + 1));
+        return new StackTraceElement(
+            ref[0], ref[1], ste.getFileName(), ste.getLineNumber());
+      }
+    }
+    // If anything goes wrong, just return the unobfuscated element
+    return ste;
+  }
+  
   public void setSymbolMapsDirectory(String dir) {
     // Switching the directory should clear the symbolMaps variable (which 
     // is read in lazily), but causing the symbolMaps variable to be re-read
@@ -131,24 +150,5 @@ public class StackTraceDeobfuscator {
     String memberName = matcher.group(2);
     String[] toReturn = new String[] {className, memberName};
     return toReturn;
-  }
-  
-  private StackTraceElement resymbolize(StackTraceElement ste,
-      String strongName) {
-    SymbolMap map = loadSymbolMap(strongName);
-    String symbolData = map == null ? null : map.get(ste.getMethodName());
-
-    if (symbolData != null) {
-      // jsniIdent, className, memberName, sourceUri, sourceLine
-      String[] parts = symbolData.split(",");
-      if (parts.length == 5) {
-        String[] ref = parse(
-            parts[0].substring(0, parts[0].lastIndexOf(')') + 1));
-        return new StackTraceElement(
-            ref[0], ref[1], ste.getFileName(), ste.getLineNumber());
-      }
-    }
-    // If anything goes wrong, just return the unobfuscated element
-    return ste;
   }
 }
