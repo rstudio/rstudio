@@ -97,6 +97,7 @@ public class PersonEditorWorkflow {
         }
       }
     }, KeyUpEvent.getType());
+    this.favorite.setVisible(false);
   }
 
   /**
@@ -156,8 +157,9 @@ public class PersonEditorWorkflow {
   private void edit(RequestContext requestContext) {
     editorDriver = GWT.create(Driver.class);
     editorDriver.initialize(requestFactory, personEditor);
-
+    
     if (requestContext == null) {
+      this.favorite.setVisible(true);
       fetchAndEdit();
       return;
     }
