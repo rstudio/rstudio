@@ -369,6 +369,15 @@ public final class WebAppCreator {
     replacements.put("@testFolder", testFolder);
     replacements.put("@warFolder", warFolder);
 
+    // Add command to copy gwt-servlet-deps.jar into libs, unless this is a
+    // maven project. Maven projects should include libs as maven dependencies.
+    String copyServletDeps = "";
+    if (!maven) {
+      copyServletDeps = "<copy todir=\"" + warFolder + "/WEB-INF/lib\" "
+          + "file=\"${gwt.sdk}/gwt-servlet-deps.jar\" />";
+    }
+    replacements.put("@copyServletDeps", copyServletDeps);
+
     // Collect the list of server libs to include on the eclipse classpath.
     StringBuilder serverLibs = new StringBuilder();
     if (libDir.exists()) {

@@ -17,6 +17,7 @@
   <target name="libs" description="Copy libs to WEB-INF/lib">
     <mkdir dir="@warFolder/WEB-INF/lib" />
     <copy todir="@warFolder/WEB-INF/lib" file="${gwt.sdk}/gwt-servlet.jar" />
+    @copyServletDeps
     <!-- Add any additional server libs that need to be copied -->
   </target>
 

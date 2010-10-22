@@ -20,7 +20,9 @@
     <pathelement location="${gwt.tools.lib}/javax/xml/stream/stax-api-1.0-2.jar" />
   </path>
   <fileset id="sample.server.libs" dir="${gwt.tools.lib}">
+    <include name="javax/validation/validation-api-1.0.0.GA-sources.jar" />
     <include name="hibernate/validator/hibernate-validator-4.1.0.Final.jar" />
+    <include name="hibernate/validator/hibernate-validator-4.1.0.Final-sources.jar" />
     <include name="apache/log4j/log4j-1.2.16.jar" />
     <include name="slf4j/slf4j-api/slf4j-api-1.6.1.jar" />
     <include name="slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar" />
