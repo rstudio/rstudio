@@ -148,6 +148,13 @@ public class LocaleInfo {
   }
 
   /**
+   * @return an implementation of {@link LocalizedNames} for this locale.
+   */
+  public LocalizedNames getLocalizedNames() {
+    return infoImpl.getLocalizedNames();
+  }
+
+  /**
    * Returns a NumberConstants instance for this locale.
    */
   public final NumberConstants getNumberConstants() {

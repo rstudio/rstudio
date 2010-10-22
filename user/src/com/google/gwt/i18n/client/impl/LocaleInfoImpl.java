@@ -17,9 +17,11 @@ package com.google.gwt.i18n.client.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormatInfo;
+import com.google.gwt.i18n.client.LocalizedNames;
 import com.google.gwt.i18n.client.constants.NumberConstants;
 import com.google.gwt.i18n.client.constants.NumberConstantsImpl;
 import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl;
+import com.google.gwt.i18n.client.impl.cldr.LocalizedNamesImpl;
 
 /**
  * Implementation detail of LocaleInfo -- not a public API and subject to
@@ -77,6 +79,13 @@ public class LocaleInfoImpl {
    */
   public String getLocaleNativeDisplayName(String localeName) {
     return null;
+  }
+
+  /**
+   * @return an implementation of {@link LocalizedNames} for this locale.
+   */
+  public LocalizedNames getLocalizedNames() {
+    return GWT.create(LocalizedNamesImpl.class);
   }
 
   /**
