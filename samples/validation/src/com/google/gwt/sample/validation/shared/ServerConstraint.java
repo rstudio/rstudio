@@ -31,14 +31,15 @@ import javax.validation.Constraint;
 import javax.validation.Payload;
 
 /**
- * Test constraint that is always valid
+ * Sample constraint that is designed to only run on the server. It will fail if
+ * the Persons name is "Fail"
  */
 @Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE})
 @Retention(RUNTIME)
 @Documented
-@Constraint(validatedBy = {NoOpValidator.class})
-public @interface NoOp {
-  String message() default "Hey, this can't fail!";
+@Constraint(validatedBy = {ServerValidator.class})
+public @interface ServerConstraint {
+  String message() default "Not valid at the server";
 
   Class<?>[] groups() default {};
 

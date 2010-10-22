@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.validation.client;
 
+import com.google.gwt.sample.validation.shared.ClientGroup;
 import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.validation.client.GwtValidation;
 
@@ -27,17 +28,6 @@ import javax.validation.groups.Default;
  */
 @GwtValidation(value = Person.class,
  groups = {
-    Default.class, SampleValidator.ClientGroup.class})
+    Default.class, ClientGroup.class})
 public interface SampleValidator extends Validator {
-  /**
-   * Client Validation Group
-   */
-  public interface ClientGroup {
-  }
-
-  /**
-   * Server Validation Group
-   */
-  public interface ServerGroup {
-  }
 }

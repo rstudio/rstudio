@@ -71,7 +71,8 @@
 
   <target name="compile" description="Compile all java files">
     <mkdir dir="${sample.build}/war/WEB-INF/classes" />
-    <gwt.javac destdir="${sample.build}/war/WEB-INF/classes">
+    <gwt.javac destdir="${sample.build}/war/WEB-INF/classes" 
+               excludes="**/super/**">
       <classpath>
         <pathelement location="${gwt.user.jar}" />
         <pathelement location="${gwt.dev.jar}" />

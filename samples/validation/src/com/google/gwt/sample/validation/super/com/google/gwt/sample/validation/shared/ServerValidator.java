@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,26 +15,23 @@
  */
 package com.google.gwt.sample.validation.shared;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
 /**
- * A sample bean to show validation on.
+ * Always passes.
+ * <p>
+ * TODO(nchalko) change this to extend
+ * {@link com.google.gwt.validation.client.constraints.NotGwtCompatibleValidator}
+ * when groups are properly handled.
  */
-@ServerConstraint(groups = ServerGroup.class)
-public class Person implements IsSerializable {
+public class ServerValidator implements
+    ConstraintValidator<ServerConstraint, Person> {
 
-  @NotNull
-  @Size(min = 4)
-  private String name;
-
-  public String getName() {
-    return name;
+  public void initialize(ServerConstraint constraintAnnotation) {
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public boolean isValid(Person person, ConstraintValidatorContext context) {
+    return true;
   }
 }
