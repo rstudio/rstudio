@@ -57,7 +57,6 @@ public class DateTimeFormatInfoProcessor extends Processor {
    */
   private static final Map<String, String> FORMATS;
 
-
   /**
    * Index of the formats, ordered by the method name. 
    */
@@ -598,30 +597,6 @@ public class DateTimeFormatInfoProcessor extends Processor {
         regionLanguageData, "//supplementalData/weekData/weekendEnd", "weekendEnd", "day");
     localeData.addTerritoryEntries("weekdata", cldrFactory,
         regionLanguageData, "//supplementalData/weekData/minDays", "minDays", "count");
-  }
-
-  private void printHeader(PrintWriter pw) {
-    pw.println("/*");
-    pw.println(" * Copyright 2010 Google Inc.");
-    pw.println(" * ");
-    pw.println(" * Licensed under the Apache License, Version 2.0 (the "
-        + "\"License\"); you may not");
-    pw.println(" * use this file except in compliance with the License. You "
-        + "may obtain a copy of");
-    pw.println(" * the License at");
-    pw.println(" * ");
-    pw.println(" * http://www.apache.org/licenses/LICENSE-2.0");
-    pw.println(" * ");
-    pw.println(" * Unless required by applicable law or agreed to in writing, "
-        + "software");
-    pw.println(" * distributed under the License is distributed on an \"AS "
-        + "IS\" BASIS, WITHOUT");
-    pw.println(" * WARRANTIES OR CONDITIONS OF ANY KIND, either express or "
-        + "implied. See the");
-    pw.println(" * License for the specific language governing permissions and "
-        + "limitations under");
-    pw.println(" * the License.");
-    pw.println(" */");
   }
 
   /**

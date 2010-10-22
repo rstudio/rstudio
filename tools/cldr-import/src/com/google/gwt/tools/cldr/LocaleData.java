@@ -56,19 +56,19 @@ public class LocaleData {
 
     private final String code;
 
-    private String symbol;
-
-    private String displayName;
-
-    private String pattern;
+    private int decimalDigits;
 
     private String decimalSeparator;
 
+    private String displayName;
+
     private String groupingSeparator;
 
-    private int decimalDigits;
-
     private boolean inUse;
+
+    private String pattern;
+
+    private String symbol;
 
     public Currency(String code) {
       this.code = code;
@@ -196,9 +196,12 @@ public class LocaleData {
    */
   private class LocaleComparator implements Comparator<GwtLocale> {
     public int compare(GwtLocale a, GwtLocale b) {
-      int depthA = localeDepth.get(a);
-      int depthB = localeDepth.get(b);
-      int c = depthB - depthA;
+      Integer depthA = localeDepth.get(a);
+      Integer depthB = localeDepth.get(b);
+      int c = 0;
+      if (depthA != null && depthB != null) {
+        c = depthB - depthA;
+      }
       if (c == 0) {
         c = a.compareTo(b);
       }
@@ -210,8 +213,8 @@ public class LocaleData {
    * Encapsulates the key for lookup values, comprising a locale and a category.
    */
   private static class MapKey {
-    private final GwtLocale locale;
     private final String category;
+    private final GwtLocale locale;
 
     public MapKey(String category, GwtLocale locale) {
       this.category = category;
@@ -264,17 +267,6 @@ public class LocaleData {
   }
   
   /**
-   * @param factory 
-   * @param localeName
-   * @return GwtLocale instance for CLDR locale
-   */
-  public static GwtLocale getGwtLocale(GwtLocaleFactory factory,
-      String localeName) {
-    return "root".equals(localeName) ? factory.getDefault()
-        : factory.fromString(localeName).getCanonicalForm();
-  }
-  
-  /**
    * Get the value of a given category of territory data inherited by a locale.
    * 
    * @param locale the locale to search for
@@ -299,18 +291,18 @@ public class LocaleData {
     }
     return null;
   }
-
-  private Map<MapKey, Map<String, String>> maps;
-
-  private final HashMap<GwtLocale, GwtLocale> inheritsFrom;
   
   private final Map<GwtLocale, String> allLocales;
 
-  private final Map<GwtLocale, Integer> localeDepth;
-
   private final GwtLocale defaultLocale;
 
+  private final HashMap<GwtLocale, GwtLocale> inheritsFrom;
+  
+  private final Map<GwtLocale, Integer> localeDepth;
+
   private final GwtLocaleFactory localeFactory;
+
+  private Map<MapKey, Map<String, String>> maps;
 
   /**
    * Construct a LocaleData object.
@@ -324,7 +316,7 @@ public class LocaleData {
     defaultLocale = localeFactory.getDefault();
     allLocales = new HashMap<GwtLocale, String>();
     for (String localeName : localeNames) {
-      allLocales.put(getGwtLocale(localeFactory, localeName), localeName);
+      allLocales.put(getGwtLocale(localeName), localeName);
     }
     inheritsFrom = new HashMap<GwtLocale, GwtLocale>();
     buildInheritsFrom();
@@ -643,6 +635,15 @@ public class LocaleData {
       return null;
     }
     return map.get(key);
+  }
+
+  /**
+   * @param localeName
+   * @return GwtLocale instance for CLDR locale
+   */
+  public GwtLocale getGwtLocale(String localeName) {
+    return "root".equals(localeName) ? localeFactory.getDefault()
+        : localeFactory.fromString(localeName);
   }
 
   /**

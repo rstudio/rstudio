@@ -59,6 +59,20 @@ public class CurrencyDataProcessor extends Processor {
     localeData.addCurrencyEntries("currency", cldrFactory, currencyFractions,
         defaultCurrencyFraction, stillInUse);
   }
+
+  @Override
+  protected void printHeader(PrintWriter pw) {
+    pw.println("# Do not edit - generated from Unicode CLDR data");
+    pw.println("#");
+    pw.println("# The key is an ISO4217 currency code, and the value is of the "
+        + "form:");
+    pw.println("#   display name|symbol|decimal digits|not-used-flag");
+    pw.println("# If a symbol is not supplied, the currency code will be used");
+    pw.println("# If # of decimal digits is omitted, 2 is used");
+    pw.println("# If a currency is not generally used, not-used-flag=1");
+    pw.println("# Trailing empty fields can be omitted");
+    pw.println();
+  }
   
   @Override
   protected void writeOutputFiles() throws IOException {
@@ -132,18 +146,5 @@ public class CurrencyDataProcessor extends Processor {
         stillInUse.add(curCode);
       }
     }
-  }
-
-  private void printHeader(PrintWriter pw) {
-    pw.println("# Do not edit - generated from Unicode CLDR data");
-    pw.println("#");
-    pw.println("# The key is an ISO4217 currency code, and the value is of the "
-        + "form:");
-    pw.println("#   display name|symbol|decimal digits|not-used-flag");
-    pw.println("# If a symbol is not supplied, the currency code will be used");
-    pw.println("# If # of decimal digits is omitted, 2 is used");
-    pw.println("# If a currency is not generally used, not-used-flag=1");
-    pw.println("# Trailing empty fields can be omitted");
-    pw.println();
   }
 }

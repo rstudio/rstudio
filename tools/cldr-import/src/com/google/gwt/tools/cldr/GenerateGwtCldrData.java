@@ -49,6 +49,7 @@ public class GenerateGwtCldrData {
         CurrencyDataProcessor.class,
         DateTimeFormatInfoProcessor.class,
         ListFormattingProcessor.class,
+        LocalizedNamesProcessor.class,
     };
   }
 
@@ -72,7 +73,7 @@ public class GenerateGwtCldrData {
     Set<String> locales = cldrFactory.getAvailable();
     if (DEBUG) {
       locales = new HashSet<String>(Arrays.asList(new String[] {
-          "root", "en", "en_US", "en_CA", "ar", "ar_IQ"}));
+          "root", "en", "zh", "zh_Hans", "zh_Hant", "zh_CN", "zh_TW"}));
     }
     System.out.println("Processing " + locales.size() + " locales");
     File outputDir = new File(targetDir);

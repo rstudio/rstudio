@@ -36,7 +36,7 @@ public class ListFormattingProcessor extends Processor {
 
   @Override
   protected void cleanupData() {
-    localeData.removeCompleteDuplicates();
+    localeData.removeCompleteDuplicates("list");
   }
 
   @Override
