@@ -1246,9 +1246,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     Object newId = getRawPropertyValueFromDatastore(entityInstance,
         Constants.ENTITY_ID_PROPERTY);
     if (newId == null) {
-      log.warning("Record with futureId " + originalEntityKey.encodedId
-          + " not persisted");
-      return null; // no changeRecord for this CREATE.
+      // no changeRecord for this CREATE.
+      return null; 
     }
 
     newId = encodeId(newId);
