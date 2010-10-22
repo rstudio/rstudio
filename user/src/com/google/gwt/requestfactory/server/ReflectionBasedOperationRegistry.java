@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,8 +18,10 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.ProxyFor;
+import com.google.gwt.requestfactory.shared.ProxyForName;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.Service;
+import com.google.gwt.requestfactory.shared.ServiceName;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -30,13 +32,12 @@ import java.util.Set;
 
 /**
  * OperationRegistry which uses the operation name as a convention for
- * reflection to a method on a class, and returns an appropriate {@link
- * com.google.gwt.requestfactory.server.RequestDefinition}.
+ * reflection to a method on a class, and returns an appropriate
+ * {@link com.google.gwt.requestfactory.server.RequestDefinition}.
  */
 public class ReflectionBasedOperationRegistry implements OperationRegistry {
 
-  class ReflectiveRequestDefinition
-      implements RequestDefinition {
+  class ReflectiveRequestDefinition implements RequestDefinition {
 
     private Class<?> requestClass;
 
@@ -49,7 +50,8 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
     private boolean isInstance;
 
     public ReflectiveRequestDefinition(Class<?> requestClass,
-        Method requestMethod, Class<?> domainClass, Method domainMethod, boolean isInstance) {
+        Method requestMethod, Class<?> domainClass, Method domainMethod,
+        boolean isInstance) {
       this.requestClass = requestClass;
       this.requestMethod = requestMethod;
       this.domainClass = domainClass;
@@ -94,19 +96,28 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
       Class<?> requestReturnType = getReturnTypeFromParameter(requestMethod,
           requestMethod.getGenericReturnType());
       if (EntityProxy.class.isAssignableFrom(requestReturnType)) {
-        ProxyFor annotation =
-            requestReturnType.getAnnotation(ProxyFor.class);
+        ProxyFor annotation = requestReturnType.getAnnotation(ProxyFor.class);
+        ProxyForName nameAnnotation = requestReturnType.getAnnotation(ProxyForName.class);
+
+        Class<?> dtoClass = null;
         if (annotation != null) {
-          Class<?> dtoClass = annotation.value();
-          if (!dtoClass.equals(domainReturnType)) {
+          dtoClass = annotation.value();
+        } else if (nameAnnotation != null) {
+          try {
+            dtoClass = Class.forName(nameAnnotation.value(), false,
+                Thread.currentThread().getContextClassLoader());
+          } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(
-                "Type mismatch between " + domainMethod + " return type, and "
-                    + requestReturnType + "'s ProxyFor annotation "
-                    + dtoClass);
+                "Unknown type specified in ProxyForName annotation", e);
           }
         } else {
           throw new IllegalArgumentException(
               "Missing ProxyFor annotation on proxy type " + requestReturnType);
+        }
+        if (!dtoClass.equals(domainReturnType)) {
+          throw new IllegalArgumentException("Type mismatch between "
+              + domainMethod + " return type, and " + requestReturnType
+              + "'s ProxyFor annotation " + dtoClass);
         }
         return requestReturnType;
       }
@@ -172,7 +183,7 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
       } else {
         return null;
       }
-      
+
       if (toExamine instanceof ParameterizedType) {
         // if type is for example, RequestObject<List<T>> we return T
         return getTypeArgument((ParameterizedType) toExamine);
@@ -190,9 +201,9 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
   private RequestSecurityProvider securityProvider;
 
   /**
-   * Constructs a {@link ReflectionBasedOperationRegistry} instance
-   * with a given {@link RequestSecurityProvider}.
-   *
+   * Constructs a {@link ReflectionBasedOperationRegistry} instance with a given
+   * {@link RequestSecurityProvider}.
+   * 
    * @param securityProvider a {@link RequestSecurityProvider} instance.
    */
   public ReflectionBasedOperationRegistry(
@@ -219,25 +230,34 @@ public class ReflectionBasedOperationRegistry implements OperationRegistry {
           this.getClass().getClassLoader());
       securityProvider.checkClass(requestClass);
       Service domainClassAnnotation = requestClass.getAnnotation(Service.class);
+      ServiceName domainClassNameAnnotation = requestClass.getAnnotation(ServiceName.class);
+      Class<?> domainClass;
       if (domainClassAnnotation != null) {
-        Class<?> domainClass = domainClassAnnotation.value();
-        Method requestMethod = findMethod(requestClass, domainMethodName);
-        Method domainMethod = findMethod(domainClass, domainMethodName);
-        if (requestMethod != null && domainMethod != null) {
-          boolean isInstance = InstanceRequest.class.isAssignableFrom(requestMethod.getReturnType());
-          if (isInstance == Modifier.isStatic(domainMethod.getModifiers())) {
-            throw new IllegalArgumentException("domain method " + domainMethod
-                + " and interface method " + requestMethod
-                + " don't match wrt instance/static");
-          }
-          return new ReflectiveRequestDefinition(requestClass, requestMethod,
-              domainClass, domainMethod, isInstance);
-        }
+        domainClass = domainClassAnnotation.value();
+      } else if (domainClassNameAnnotation != null) {
+        domainClass = Class.forName(domainClassNameAnnotation.value(), false,
+            Thread.currentThread().getContextClassLoader());
+      } else {
+        return null;
       }
+
+      Method requestMethod = findMethod(requestClass, domainMethodName);
+      Method domainMethod = findMethod(domainClass, domainMethodName);
+      if (requestMethod != null && domainMethod != null) {
+        boolean isInstance = InstanceRequest.class.isAssignableFrom(requestMethod.getReturnType());
+        if (isInstance == Modifier.isStatic(domainMethod.getModifiers())) {
+          throw new IllegalArgumentException("domain method " + domainMethod
+              + " and interface method " + requestMethod
+              + " don't match wrt instance/static");
+        }
+        return new ReflectiveRequestDefinition(requestClass, requestMethod,
+            domainClass, domainMethod, isInstance);
+      }
+
       return null;
     } catch (ClassNotFoundException e) {
-      throw new SecurityException(
-          "Access to non-existent class " + reqClassName);
+      throw new SecurityException("Access to non-existent class "
+          + reqClassName);
     }
   }
 

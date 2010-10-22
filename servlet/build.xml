@@ -4,7 +4,9 @@
   <import file="${gwt.root}/common.ant.xml" />
 
   <property.ensure name="gwt.user.root" location="${gwt.root}/user" />
+  <property.ensure name="gwt.dev.build" location="${gwt.build.out}/dev" />
   <property.ensure name="gwt.user.build" location="${gwt.build.out}/user" />
+  <property.ensure name="gwt.dev.bin" location="${gwt.dev.build}/bin" />
   <property.ensure name="gwt.user.bin" location="${gwt.user.build}/bin" />
 
   <property name="project.lib.deps"
@@ -21,6 +23,10 @@
   <target name="-servlet" description="Packages this project into a jar">
     <mkdir dir="${gwt.build.lib}" />
     <gwt.jar>
+      <fileset dir="${gwt.dev.bin}">
+        <include name="com/google/gwt/dev/asm/**" />
+        <include name="com/google/gwt/dev/util/Name*.class" />
+      </fileset>
       <fileset dir="${gwt.user.bin}">
         <exclude name="**/rebind/**" />
         <exclude name="**/tools/**" />

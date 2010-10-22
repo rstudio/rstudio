@@ -52,17 +52,12 @@ public class ContextMethod {
     public void setRequestMethods(List<RequestMethod> requestMethods) {
       toReturn.requestMethods = requestMethods;
     }
-
-    public void setServiceClass(Class<?> serviceClass) {
-      toReturn.serviceClass = serviceClass;
-    }
   }
 
   private String interfaceName;
   private String methodName;
   private String packageName;
   private List<RequestMethod> requestMethods;
-  private Class<?> serviceClass;
   private String simpleSourceName;
 
   private ContextMethod() {
@@ -93,10 +88,6 @@ public class ContextMethod {
 
   public List<RequestMethod> getRequestMethods() {
     return Collections.unmodifiableList(requestMethods);
-  }
-
-  public Class<?> getServiceClass() {
-    return serviceClass;
   }
 
   public String getSimpleSourceName() {

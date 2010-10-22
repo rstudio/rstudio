@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
+import com.google.gwt.requestfactory.shared.ProxyForName;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.CollectionProperty;
@@ -162,7 +163,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Decodes a String encoded as web-safe base64.
-   *
+   * 
    * @param encoded the encoded String
    * @return a decoded String
    */
@@ -184,7 +185,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Encodes a String as web-safe base64.
-   *
+   * 
    * @param decoded the decoded String
    * @return an encoded String
    */
@@ -370,8 +371,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
        * 2. Merge the following and the object resolution code in getEntityKey.
        * 3. Update the involvedKeys set.
        */
-      ProxyFor service = parameterType.getAnnotation(ProxyFor.class);
-      if (service != null) {
+      ProxyFor proxyFor = parameterType.getAnnotation(ProxyFor.class);
+      ProxyForName proxyForName = parameterType.getAnnotation(ProxyForName.class);
+      if (proxyFor != null || proxyForName != null) {
         EntityKey entityKey = getEntityKey(parameterValue.toString());
 
         DvsData dvsData = dvsDataMap.get(entityKey);
@@ -387,8 +389,9 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     }
     if (EntityProxyId.class.isAssignableFrom(parameterType)) {
       EntityKey entityKey = getEntityKey(parameterValue.toString());
-      ProxyFor service = entityKey.proxyType.getAnnotation(ProxyFor.class);
-      if (service == null) {
+      ProxyFor proxyFor = entityKey.proxyType.getAnnotation(ProxyFor.class);
+      ProxyForName proxyForName = entityKey.proxyType.getAnnotation(ProxyForName.class);
+      if (proxyFor == null && proxyForName == null) {
         throw new IllegalArgumentException("Unknown service, unable to decode "
             + parameterValue);
       }
@@ -401,7 +404,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
   /**
    * Encode a property value to be sent across the wire.
-   *
+   * 
    * @param value a value Object
    * @return an encoded value Object
    */
@@ -603,6 +606,16 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     ProxyFor dtoAnn = record.getAnnotation(ProxyFor.class);
     if (dtoAnn != null) {
       return (Class<Object>) dtoAnn.value();
+    }
+    ProxyForName name = record.getAnnotation(ProxyForName.class);
+    if (name != null) {
+      try {
+        return (Class<Object>) Class.forName(name.value(), false,
+            Thread.currentThread().getContextClassLoader());
+      } catch (ClassNotFoundException e) {
+        throw new IllegalArgumentException("Could not find ProxyForName class",
+            e);
+      }
     }
     throw new IllegalArgumentException("Proxy class " + record.getName()
         + " missing ProxyFor annotation");
@@ -866,6 +879,21 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
 
     operation = getOperation(operationName);
     Class<?> domainClass = Class.forName(operation.getDomainClassName());
+
+    /*
+     * The use of JRP's classloader mirrors the use of Class.forName elsewhere.
+     * It's wrong, but it's consistently wrong.
+     */
+    RequestFactoryInterfaceValidator validator = new RequestFactoryInterfaceValidator(
+        log, new RequestFactoryInterfaceValidator.ClassLoaderLoader(
+            JsonRequestProcessor.class.getClassLoader()));
+    validator.validateRequestContext(operationName.substring(0,
+        operationName.indexOf("::")));
+    if (validator.isPoisoned()) {
+      log.severe("Unable to validate RequestContext");
+      throw new RuntimeException();
+    }
+
     Method domainMethod = domainClass.getMethod(
         operation.getDomainMethod().getName(), operation.getParameterTypes());
     if (Modifier.isStatic(domainMethod.getModifiers()) == operation.isInstance()) {
@@ -1596,6 +1624,14 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           ProxyFor pFor = fieldType.getAnnotation(ProxyFor.class);
           if (pFor != null) {
             fieldType = pFor.value();
+          }
+          ProxyForName pFN = fieldType.getAnnotation(ProxyForName.class);
+          if (pFN != null) {
+            try {
+              fieldType = Class.forName(pFN.value(), false,
+                  Thread.currentThread().getContextClassLoader());
+            } catch (ClassNotFoundException ignored) {
+            }
           }
           // TODO: remove override declared method return type with field type
           if (!fieldType.equals(field.getType())) {

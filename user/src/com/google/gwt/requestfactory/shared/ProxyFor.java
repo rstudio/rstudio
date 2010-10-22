@@ -21,12 +21,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation on Record classes specifying 'type'. 'type'
- * represents the server-side counterpart of the Record.
+ * Annotation on EntityProxy classes specifying the domain (server-side) object
+ * type.
+ * 
+ * @see ProxyForName
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ProxyFor {
-
   Class<?> value();
 }

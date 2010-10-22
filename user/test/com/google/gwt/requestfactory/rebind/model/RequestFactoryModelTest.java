@@ -26,8 +26,6 @@ import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.requestfactory.server.TestContextImpl;
-import com.google.gwt.requestfactory.server.TestContextNoIdImpl;
-import com.google.gwt.requestfactory.server.TestContextNoVersionImpl;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.ProxyFor;
@@ -49,8 +47,9 @@ import java.util.Set;
 import java.util.SortedSet;
 
 /**
- * Test case for {@link com.google.gwt.requestfactory.rebind.model.RequestFactoryModel}
- * that uses mock CompilationStates.
+ * Test case for
+ * {@link com.google.gwt.requestfactory.rebind.model.RequestFactoryModel} that
+ * uses mock CompilationStates.
  */
 public class RequestFactoryModelTest extends TestCase {
 
@@ -64,8 +63,7 @@ public class RequestFactoryModelTest extends TestCase {
     public EmptyMockJavaResource(Class<?> clazz) {
       super(clazz.getName());
 
-      code.append("package ").append(clazz.getPackage().getName())
-          .append(";\n");
+      code.append("package ").append(clazz.getPackage().getName()).append(";\n");
       code.append("public interface ").append(clazz.getSimpleName());
 
       int numParams = clazz.getTypeParameters().length;
@@ -103,15 +101,15 @@ public class RequestFactoryModelTest extends TestCase {
     @Override
     protected CharSequence getContent() {
       String resourceName = getTypeName().replace('.', '/') + ".java";
-      InputStream stream = Thread.currentThread().getContextClassLoader()
-          .getResourceAsStream(resourceName);
+      InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+          resourceName);
       return Util.readStreamAsString(stream);
     }
   }
 
   private static TreeLogger createCompileLogger() {
-    PrintWriterTreeLogger logger = new PrintWriterTreeLogger(
-        new PrintWriter(System.err, true));
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
+        System.err, true));
     logger.setMaxDetail(TreeLogger.ERROR);
     return logger;
   }
@@ -125,7 +123,8 @@ public class RequestFactoryModelTest extends TestCase {
   }
 
   public void testBadCollectionType() {
-    testModelWithMethodDecl("Request<SortedSet<Integer>> badReturnType();",
+    testModelWithMethodDecl(
+        "Request<SortedSet<Integer>> badReturnType();",
         "Requests that return collections may be declared with java.util.List or java.util.Set only");
   }
 
@@ -139,68 +138,16 @@ public class RequestFactoryModelTest extends TestCase {
         "Invalid Request parameterization java.lang.Iterable");
   }
 
-  public void testMismatchedArityInstance() {
-    testModelWithMethodDecl(
-        "InstanceRequest<TestProxy, String> mismatchedArityInstance(TestProxy p, int x);",
-        "Parameter 0 of method TestContext.mismatchedArityInstance does not match method com.google.gwt.requestfactory.server.TestContextImpl.mismatchedArityInstance");
-  }
-
-  public void testMismatchedArityStatic() {
-    testModelWithMethodDecl("Request<String> mismatchedArityStatic(int x);",
-        "Method TestContext.mismatchedArityStatic parameters do not match same method on com.google.gwt.requestfactory.server.TestContextImpl");
-  }
-
-  public void testMismatchedModifierNonStatic() {
-    testModelWithMethodDecl(
-        "InstanceRequest<TestProxy, String> mismatchedNonStatic();",
-        "Method TestContext.mismatchedNonStatic is an instance method, while the corresponding method on com.google.gwt.requestfactory.server.TestContextImpl is static");
-  }
-
-  public void testMismatchedModifierStatic() {
-    testModelWithMethodDecl("Request<String> mismatchedStatic();",
-        "Method TestContext.mismatchedStatic is a static method, while the corresponding method on com.google.gwt.requestfactory.server.TestContextImpl is not");
-  }
-
-  public void testMismatchedParamType() {
-    testModelWithMethodDecl("Request<String> mismatchedParamType(Integer x);",
-        "Parameter 0 of method TestContext.mismatchedParamType does not match method com.google.gwt.requestfactory.server.TestContextImpl.mismatchedParamType");
-  }
-
-  public void testMismatchedReturnType() {
-    testModelWithMethodDecl("Request<String> mismatchedReturnType();",
-        "Return type of method TestContext.mismatchedReturnType does not match method com.google.gwt.requestfactory.server.TestContextImpl.mismatchedReturnType");
-  }
-
-  public void testMissingId() {
-    testModelWithMethodDeclArgs("Request<TestProxy> okMethodProxy();",
-        TestContextNoIdImpl.class.getName(),
-        TestContextNoIdImpl.class.getName(),
-        "The class com.google.gwt.requestfactory.server.TestContextNoIdImpl is missing method getId()");
-  }
-
-  public void testMissingMethod() {
-    testModelWithMethodDecl("Request<String> missingMethod();",
-        "Method t.TestContext.missingMethod has no corresponding public method on"
-            + " com.google.gwt.requestfactory.server.TestContextImpl");
-  }
-
   public void testMissingProxyFor() {
     testModelWithMethodDeclArgs("Request<TestProxy> okMethodProxy();",
         TestContextImpl.class.getName(), null,
-        "The t.TestProxy type does not have a @ProxyFor annotation");
+        "The t.TestProxy type does not have a @ProxyFor or @ProxyForName annotation");
   }
 
   public void testMissingService() {
     testModelWithMethodDeclArgs("Request<String> okMethod();", null,
         TestContextImpl.class.getName(),
         "RequestContext subtype t.TestContext is missing a @Service annotation");
-  }
-
-  public void testMissingVersion() {
-    testModelWithMethodDeclArgs("Request<TestProxy> okMethodProxy();",
-        TestContextNoVersionImpl.class.getName(),
-        TestContextNoVersionImpl.class.getName(),
-        "The class com.google.gwt.requestfactory.server.TestContextNoVersionImpl is missing method getVersion()");
   }
 
   public void testModelWithMethodDecl(final String clientMethodDecls,
@@ -250,8 +197,8 @@ public class RequestFactoryModelTest extends TestCase {
       }
     });
 
-    CompilationState state = CompilationStateBuilder
-        .buildFrom(logger, javaResources);
+    CompilationState state = CompilationStateBuilder.buildFrom(logger,
+        javaResources);
 
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);
@@ -261,17 +208,12 @@ public class RequestFactoryModelTest extends TestCase {
     builder.expectError(RequestFactoryModel.poisonedMessage(), null);
     UnitTestTreeLogger testLogger = builder.createLogger();
     try {
-      new RequestFactoryModel(testLogger,
-          state.getTypeOracle().findType("t.TestRequestFactory"));
+      new RequestFactoryModel(testLogger, state.getTypeOracle().findType(
+          "t.TestRequestFactory"));
       fail("Should have complained");
     } catch (UnableToCompleteException e) {
     }
     testLogger.assertCorrectLogEntries();
-  }
-
-  public void testOverloadedMethod() {
-    testModelWithMethodDecl("Request<String> overloadedMethod();",
-        "Method t.TestContext.overloadedMethod is overloaded on com.google.gwt.requestfactory.server.TestContextImpl");
   }
 
   private Set<Resource> getJavaResources(final String proxyClass) {
@@ -290,7 +232,7 @@ public class RequestFactoryModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("java.util.List") {
-      // Tests a Driver interface that extends more than RFED
+        // Tests a Driver interface that extends more than RFED
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -300,7 +242,7 @@ public class RequestFactoryModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("java.util.Set") {
-      // Tests a Driver interface that extends more than RFED
+        // Tests a Driver interface that extends more than RFED
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -310,7 +252,7 @@ public class RequestFactoryModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("java.util.SortedSet") {
-      // Tests a Driver interface that extends more than RFED
+        // Tests a Driver interface that extends more than RFED
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -323,18 +265,18 @@ public class RequestFactoryModelTest extends TestCase {
 
     Set<Resource> toReturn = new HashSet<Resource>(Arrays.asList(javaFiles));
 
-    toReturn.addAll(Arrays.asList(
-        new Resource[]{new EmptyMockJavaResource(Iterable.class),
-            new EmptyMockJavaResource(Property.class),
-            new EmptyMockJavaResource(EntityProxy.class),
-            new EmptyMockJavaResource(InstanceRequest.class),
-            new EmptyMockJavaResource(RequestFactory.class),
-            new EmptyMockJavaResource(Receiver.class),
+    toReturn.addAll(Arrays.asList(new Resource[] {
+        new EmptyMockJavaResource(Iterable.class),
+        new EmptyMockJavaResource(Property.class),
+        new EmptyMockJavaResource(EntityProxy.class),
+        new EmptyMockJavaResource(InstanceRequest.class),
+        new EmptyMockJavaResource(RequestFactory.class),
+        new EmptyMockJavaResource(Receiver.class),
 
-            new RealJavaResource(Request.class),
-            new RealJavaResource(Service.class),
-            new RealJavaResource(ProxyFor.class),
-            new EmptyMockJavaResource(RequestContext.class),}));
+        new RealJavaResource(Request.class),
+        new RealJavaResource(Service.class),
+        new RealJavaResource(ProxyFor.class),
+        new EmptyMockJavaResource(RequestContext.class),}));
     toReturn.addAll(Arrays.asList(JavaResourceBase.getStandardResources()));
     return toReturn;
   }

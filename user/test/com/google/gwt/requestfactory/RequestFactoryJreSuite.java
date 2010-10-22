@@ -19,6 +19,7 @@ import com.google.gwt.requestfactory.client.impl.SimpleEntityProxyIdTest;
 import com.google.gwt.requestfactory.rebind.model.RequestFactoryModelTest;
 import com.google.gwt.requestfactory.server.JsonRequestProcessorTest;
 import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistryTest;
+import com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidatorTest;
 import com.google.gwt.requestfactory.server.RequestPropertyTest;
 
 import junit.framework.Test;
@@ -34,6 +35,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(SimpleEntityProxyIdTest.class);
     suite.addTestSuite(JsonRequestProcessorTest.class);
     suite.addTestSuite(ReflectionBasedOperationRegistryTest.class);
+    suite.addTestSuite(RequestFactoryInterfaceValidatorTest.class);
     suite.addTestSuite(RequestFactoryModelTest.class);
     suite.addTestSuite(RequestPropertyTest.class);
     return suite;

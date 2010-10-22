@@ -21,13 +21,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation on Request classes specifying the server side implementations that
- * back them.
- * 
- * @see ServiceName
+ * Annotation on EntityProxy classes specifying the domain (server-side) object
+ * type. This annotation can be used in place of {@link ProxyFor} if the domain
+ * object is not available to the GWT compiler or DevMode runtime.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface Service {
-  Class<?> value();
+public @interface ProxyForName {
+  String value();
 }

@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * Do nothing test interface.
  */
-@Service(com.google.gwt.requestfactory.server.SimpleBar.class)
+@ServiceName("com.google.gwt.requestfactory.server.SimpleBar")
 public interface SimpleBarRequest extends RequestContext {
 
   Request<Long> countSimpleBar();

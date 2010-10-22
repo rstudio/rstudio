@@ -22,12 +22,11 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation on Request classes specifying the server side implementations that
- * back them.
- * 
- * @see ServiceName
+ * back them.This annotation can be used in place of {@link Service} if the
+ * service type is not available to the GWT compiler or DevMode runtime.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface Service {
-  Class<?> value();
+public @interface ServiceName {
+  String value();
 }
