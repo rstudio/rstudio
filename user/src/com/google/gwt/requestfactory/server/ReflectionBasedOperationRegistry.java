@@ -35,7 +35,7 @@ import java.util.Set;
  * reflection to a method on a class, and returns an appropriate
  * {@link com.google.gwt.requestfactory.server.RequestDefinition}.
  */
-public class ReflectionBasedOperationRegistry implements OperationRegistry {
+class ReflectionBasedOperationRegistry implements OperationRegistry {
 
   class ReflectiveRequestDefinition implements RequestDefinition {
 

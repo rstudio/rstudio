@@ -20,7 +20,7 @@ package com.google.gwt.requestfactory.server;
  * an unexpected exception is caught. Includes an appropriate
  * response of T to send to the client.
  */
-public class RequestProcessingException extends Exception {
+class RequestProcessingException extends Exception {
   private final Object response;
 
   /**

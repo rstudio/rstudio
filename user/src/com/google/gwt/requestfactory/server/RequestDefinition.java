@@ -22,7 +22,7 @@ import java.lang.reflect.Type;
  * Implemented by enums that define the mapping between request objects and
  * service methods.
  */
-public interface RequestDefinition {
+interface RequestDefinition {
   /**
    * Returns the name of the (domain) class that contains the method to be
    * invoked on the server.

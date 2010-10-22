@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Represents one piece in a property reference sequence.
  */
-public class RequestProperty implements Iterable<RequestProperty> {
+class RequestProperty implements Iterable<RequestProperty> {
 
   /**
    * Merge two property chains.

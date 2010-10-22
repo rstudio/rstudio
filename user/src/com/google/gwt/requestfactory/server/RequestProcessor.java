@@ -21,7 +21,7 @@ package com.google.gwt.requestfactory.server;
  * requests, and a serialized return value of the same type is returned.
  * @param <T> the type of encoding used to serialize the request (e.g. String)
  */
-public interface RequestProcessor<T> {
+interface RequestProcessor<T> {
   /**
    * Decodes request, invokes methods, and re-encoded resulting return values.
    *

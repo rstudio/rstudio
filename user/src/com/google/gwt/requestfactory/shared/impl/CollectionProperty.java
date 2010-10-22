@@ -18,11 +18,6 @@ package com.google.gwt.requestfactory.shared.impl;
 import java.util.Collection;
 
 /**
- * <p> <span style="color:red">Experimental API: This class is still under rapid
- * development, and is very likely to be deleted. Use it at your own risk.
- * </span> </p> Defines a property of a {@link com.google.gwt.requestfactory.shared.EntityProxy} that contains a
- * one-to-many set of related values.
- *
  * @param <C> the type of the Container, must be List or Set
  * @param <E> the type of the element the container contains
  */

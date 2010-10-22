@@ -61,7 +61,7 @@ import javax.validation.ValidatorFactory;
 /**
  * An implementation of RequestProcessor for JSON encoded payloads.
  */
-public class JsonRequestProcessor implements RequestProcessor<String> {
+class JsonRequestProcessor implements RequestProcessor<String> {
 
   // TODO should we consume String, InputStream, or JSONObject?
   private class DvsData {
@@ -243,7 +243,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   private Map<EntityKey, EntityData> afterDvsDataMap = new HashMap<EntityKey, EntityData>();
 
   // TODO - document
-  @SuppressWarnings("rawtypes")
   public Collection<Property<?>> allProperties(
       Class<? extends EntityProxy> clazz) throws IllegalArgumentException {
     return getPropertiesFromRecordProxyType(clazz).values();
@@ -759,7 +758,6 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
   /**
    * Returns the property fields (name => type) for a record.
    */
-  @SuppressWarnings("unchecked")
   public Map<String, Property<?>> getPropertiesFromRecordProxyType(
       Class<? extends EntityProxy> record) throws SecurityException {
     if (!EntityProxy.class.isAssignableFrom(record)) {
@@ -771,7 +769,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     for (Method method : methods) {
       String methodName = method.getName();
       String propertyName = null;
-      Property newProperty = null;
+      Property<?> newProperty = null;
       if (methodName.startsWith("get")) {
         propertyName = Introspector.decapitalize(methodName.substring(3));
         if (propertyName.length() == 0) {
@@ -792,7 +790,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
       if (newProperty == null) {
         continue;
       }
-      Property existing = properties.put(propertyName, newProperty);
+      Property<?> existing = properties.put(propertyName, newProperty);
       if (existing != null && !existing.equals(newProperty)) {
         throw new IllegalStateException(String.format(
             "In %s, mismatched getter and setter types for property %s, "
@@ -803,8 +801,8 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
     return properties;
   }
 
-  @SuppressWarnings("unchecked")
-  public Property getPropertyFromGenericType(String propertyName, Type type) {
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public Property<?> getPropertyFromGenericType(String propertyName, Type type) {
     if (type instanceof ParameterizedType) {
       ParameterizedType pType = (ParameterizedType) type;
       Class<?> rawType = (Class<Object>) pType.getRawType();
@@ -814,7 +812,7 @@ public class JsonRequestProcessor implements RequestProcessor<String> {
           Type leafType = typeArgs[0];
           if (leafType instanceof Class) {
             return new CollectionProperty(propertyName, rawType,
-                (Class) leafType);
+                (Class<?>) leafType);
           }
         }
       }

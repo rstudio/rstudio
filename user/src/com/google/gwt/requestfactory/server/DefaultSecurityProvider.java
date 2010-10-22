@@ -22,7 +22,7 @@ import com.google.gwt.requestfactory.shared.ServiceName;
  * A security provider that enforces
  * {@link com.google.gwt.requestfactory.shared.Service} annotations.
  */
-public class DefaultSecurityProvider implements RequestSecurityProvider {
+class DefaultSecurityProvider implements RequestSecurityProvider {
 
   public void checkClass(Class<?> clazz) throws SecurityException {
     Service service = clazz.getAnnotation(Service.class);

@@ -19,7 +19,7 @@ package com.google.gwt.requestfactory.server;
  * Enforces security policy for operations and classes, as well as permitting
  * request obfuscation.
  */
-public interface RequestSecurityProvider {
+interface RequestSecurityProvider {
 
   /**
    * Throws exception if argument is not accessible via remote requests.

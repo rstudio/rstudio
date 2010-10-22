@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.server;
 /**
  * Maps operation name to {RequestDefinition}.
  */
-public interface OperationRegistry {
+interface OperationRegistry {
 
   /**
    * Returns the {@link RequestDefinition} associated with the given operation.
