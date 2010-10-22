@@ -24,7 +24,7 @@ ifeq ($(OS),mac)
 DEFAULT_FIREFOX_LIBS ?= /Applications/Firefox.app/Contents/MacOS
 RUN_PATH_FLAG = -executable_path
 DLL_SUFFIX = .dylib
-DLLFLAGS = -bundle $(ALLARCHCFLAGS)
+DLLFLAGS += -bundle $(ALLARCHCFLAGS)
 CFLAGS += $(ALLARCHCFLAGS)
 CXXFLAGS += $(ALLARCHCFLAGS)
 TARGET_PLATFORM = Darwin-gcc3
@@ -35,13 +35,13 @@ ifeq ($(OS),linux)
 DEFAULT_FIREFOX_LIBS ?= /usr/lib/firefox
 RUN_PATH_FLAG = -rpath-link
 DLL_SUFFIX = .so
-DLLFLAGS = -shared -m$(FLAG32BIT)
+DLLFLAGS += -shared -m$(FLAG32BIT)
 TARGET_PLATFORM = Linux_$(ARCH)-gcc3
 else
 ifeq ($(OS),sun)
 TARGET_PLATFORM = SunOS_$(ARCH)-sunc
 RUN_PATH_FLAG = -rpath-link
-DLLFLAGS=
+DLLFLAGS ?= ""
 endif
 endif
 endif
@@ -51,6 +51,18 @@ export FLAG32BIT
 ifeq ($(BROWSER),)
 $(warning Defaulting to FF3 build [set with BROWSER=ff2, ff3, ff3+, ff35, or ff36])
 BROWSER=ff3
+endif
+
+# Gold doesn't play nice with xpcom libs
+LINKER=$(shell ld -v | awk '{print $$2}')
+ifeq ($(LINKER), gold)
+ifeq ($(wildcard /usr/lib/compat-ld),)
+$(error cannot link with gold, use the BFD ld instead)
+else
+CFLAGS += -B/usr/lib/compat-ld/
+CXXFLAGS += -B/usr/lib/compat-ld/
+DLLFLAGS += -B/usr/lib/compat-ld/
+endif
 endif
 
 CFLAGS += -DBROWSER=$(BROWSER)
