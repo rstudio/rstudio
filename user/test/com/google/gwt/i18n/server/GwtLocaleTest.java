@@ -29,7 +29,7 @@ import java.util.List;
 public class GwtLocaleTest extends TestCase {
 
   private GwtLocaleFactory factory = new GwtLocaleFactoryImpl();
-  
+
   public void testAliases() {
     GwtLocale en = factory.fromString("en");
     List<GwtLocale> aliases = en.getAliases();
@@ -105,7 +105,7 @@ public class GwtLocaleTest extends TestCase {
     // Test equals against some non-GwtLocale class
     assertFalse(locales[0].equals(factory));
   }
-  
+
   public void testDefault() {
     GwtLocale def1 = factory.getDefault();
     GwtLocale def2 = factory.fromString("default");
@@ -173,7 +173,7 @@ public class GwtLocaleTest extends TestCase {
     } catch (IllegalArgumentException expected) {
     }
   }
-  
+
   public void testInheritance() {
     GwtLocale en = factory.fromString("en_Latn_US_VARIANT");
     List<GwtLocale> chain = en.getInheritanceChain();
@@ -260,9 +260,13 @@ public class GwtLocaleTest extends TestCase {
     assertContainsAndGetPosition(searchList, factory.fromString("no"));
     GwtLocale zhTW = factory.fromString("zh_TW");
     searchList = zhTW.getCompleteSearchList();
-    assertContainsAndGetPosition(searchList, factory.fromString("zh_Hant"));
+    int hantPos = assertContainsAndGetPosition(searchList,
+        factory.fromString("zh_Hant"));
+    int zhPos = assertContainsAndGetPosition(searchList,
+        factory.fromString("zh"));
     assertNotContains(searchList, factory.fromString("zh_Hans"));
-    // TODO: explicitly verify search list for zh_TW
+    assertTrue("zh_Hant should appear before zh in zh_TW searchlist "
+        + searchList, hantPos < zhPos);
     idx_default = assertContainsAndGetPosition(searchList,
         factory.getDefault());
     assertEquals(searchList.size() - 1, idx_default);
@@ -274,19 +278,17 @@ public class GwtLocaleTest extends TestCase {
     int arabPos = assertContainsAndGetPosition(searchList, paArab);
     int paPos = assertContainsAndGetPosition(searchList, pa);
     assertNotContains(searchList, paGuru);
-    // See TODO in {@link GwtLocaleImpl#getCompleteSearchList()} for what is
-    // needed for this test to pass (and likewise for zh_Hant appearing before
-    // zh in the search list for zh_TW).
-    // assertTrue(arabPos < paPos);
+    assertTrue("pa_Arab should appear before pa in pa_PK searchlist "
+        + searchList, arabPos < paPos);
   }
-  
+
   private <T> int assertContainsAndGetPosition(List<T> list, T value) {
     int idx = list.indexOf(value);
     assertTrue("List " + list + " should have contained " + value,
         idx >= 0);
     return idx;
   }
-  
+
   private <T> void assertNotContains(List<T> list, T value) {
     assertFalse("List " + list + " should not have contained " + value,
         list.contains(value));

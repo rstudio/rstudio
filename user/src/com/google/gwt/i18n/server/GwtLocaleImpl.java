@@ -423,7 +423,15 @@ public class GwtLocaleImpl implements GwtLocale {
           initialScript = DefaultLanguageScripts.getDefaultScript(language,
               region);
         }
-        List<GwtLocale> thisGroup = new ArrayList<GwtLocale>(this.getAliases());
+        List<GwtLocale> thisGroup = new ArrayList<GwtLocale>();
+        if (initialScript != null) {
+          // Make sure the default script is listed first in the search list,
+          // which ensures that zh_Hant appears before zh in the search list for
+          // zh_TW.
+          thisGroup.add(factory.fromComponents(language, initialScript, region,
+              variant));
+        }
+        thisGroup.add(this);
         seen.addAll(thisGroup);
         GwtLocale defLocale = factory.getDefault();
         seen.add(defLocale);
