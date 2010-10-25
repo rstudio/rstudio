@@ -23,12 +23,11 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
  * An interface to serializer or deserialize objects of a particular type.
  */
 public interface TypeHandler {
-  void deserialize(SerializationStreamReader reader, Object object)
+  Object create(SerializationStreamReader reader) throws SerializationException;
+
+  void deserial(SerializationStreamReader reader, Object object)
       throws SerializationException;
 
-  Object instantiate(SerializationStreamReader reader)
-      throws SerializationException;
-
-  void serialize(SerializationStreamWriter writer, Object object)
+  void serial(SerializationStreamWriter writer, Object object)
       throws SerializationException;
 }

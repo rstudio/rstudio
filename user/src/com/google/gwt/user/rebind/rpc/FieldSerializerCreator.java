@@ -51,7 +51,7 @@ import java.io.PrintWriter;
  * fully qualified type names everywhere
  */
 public class FieldSerializerCreator {
-  
+
   private static final String WEAK_MAPPING_CLASS_NAME = WeakMapping.class.getName();
 
   private final JClassType customFieldSerializer;
@@ -111,8 +111,6 @@ public class FieldSerializerCreator {
     }
     assert sourceWriter != null;
 
-    maybeWriteTypeHandlerClass();
-
     writeFieldAccessors();
 
     writeConcreteTypeMethod();
@@ -122,6 +120,8 @@ public class FieldSerializerCreator {
     maybeWriteInstatiateMethod();
 
     writeSerializeMethod();
+
+    maybeWriteTypeHandlerImpl();
 
     sourceWriter.commit(logger);
 
@@ -138,7 +138,7 @@ public class FieldSerializerCreator {
     }
     return true;
   }
-  
+
   private String createArrayInstantiationExpression(JArrayType array) {
     StringBuilder sb = new StringBuilder();
 
@@ -195,6 +195,9 @@ public class FieldSerializerCreator {
     composerFactory.addImport(SerializationStreamReader.class.getCanonicalName());
     composerFactory.addImport(SerializationStreamWriter.class.getCanonicalName());
     composerFactory.addAnnotationDeclaration("@SuppressWarnings(\"deprecation\")");
+    if (needsTypeHandler()) {
+      composerFactory.addImplementedInterface(TypeHandler.class.getCanonicalName());
+    }
     return composerFactory.createSourceWriter(ctx, printWriter);
   }
 
@@ -331,70 +334,34 @@ public class FieldSerializerCreator {
   }
 
   /**
-   * Write a {@link TypeHandler} for the class, used by Java.
+   * Implement {@link TypeHandler} for the class, used by Java.
    * 
    * <pre>
-   * public static class Handler implements
-   *     com.google.gwt.user.client.rpc.impl.TypeHandler {
-   *   public void deserialize(SerializationStreamReader reader, Object object)
-   *       throws SerializationException {
-   *     com.google.gwt.sample.client.Student_FieldSerializer.deserialize(
-   *         reader, (com.google.gwt.sample.client.Student) object);
-   *   }
+   * public void deserial(SerializationStreamReader reader, Object object)
+   *     throws SerializationException {
+   *   com.google.gwt.sample.client.Student_FieldSerializer.deserialize(
+   *       reader, (com.google.gwt.sample.client.Student) object);
+   * }
    * 
-   *   public Object instantiate(SerializationStreamReader reader)
-   *       throws SerializationException {
-   *     return com.google.gwt.sample.client.Student_FieldSerializer.instantiate(reader);
-   *   }
+   * public Object create(SerializationStreamReader reader)
+   *     throws SerializationException {
+   *   return com.google.gwt.sample.client.Student_FieldSerializer.instantiate(reader);
+   * }
    * 
-   *   public void serialize(SerializationStreamWriter writer, Object object)
-   *       throws SerializationException {
-   *     com.google.gwt.sample.client.Student_FieldSerializer.serialize(
-   *         writer, (com.google.gwt.sample.client.Student) object);
-   *   }
+   * public void serial(SerializationStreamWriter writer, Object object)
+   *     throws SerializationException {
+   *   com.google.gwt.sample.client.Student_FieldSerializer.serialize(
+   *       writer, (com.google.gwt.sample.client.Student) object);
    * }
    * </pre>
    */
-  private void maybeWriteTypeHandlerClass() {
-    if (serializableClass.isEnum() == null && serializableClass.isAbstract()) {
-      /*
-       * Field serializers are shared by all of the RemoteService proxies in a
-       * compilation. Therefore, we have to generate an instantiate method even
-       * if the type is not instantiable relative to the RemoteService which
-       * caused this field serializer to be created. If the type is not
-       * instantiable relative to any of the RemoteService proxies, dead code
-       * optimizations will cause the method to be removed from the compiled
-       * output.
-       * 
-       * Enumerated types require an instantiate method even if they are
-       * abstract. You will have an abstract enum in cases where the enum type
-       * is sub-classed. Non-default instantiable classes cannot have
-       * instantiate methods.
-       */
+  private void maybeWriteTypeHandlerImpl() {
+    if (!needsTypeHandler()) {
       return;
     }
-    sourceWriter.println("public static class Handler implements "
-        + TypeHandler.class.getCanonicalName() + " {");
-    sourceWriter.indent();
 
-    // Deserialization method
-    sourceWriter.println("public void deserialize(SerializationStreamReader reader, Object object) throws SerializationException {");
-    if (customFieldSerializer != null) {
-      JMethod deserializationMethod = CustomFieldSerializerValidator.getDeserializationMethod(
-          customFieldSerializer, serializableClass);
-      JType castType = deserializationMethod.getParameters()[1].getType();
-      String typeSig = getTypeSig(deserializationMethod);
-      sourceWriter.indentln(customFieldSerializer.getQualifiedSourceName()
-          + "." + typeSig + "deserialize(reader, ("
-          + castType.getQualifiedSourceName() + ")object);");
-    } else {
-      sourceWriter.indentln(fieldSerializerName + ".deserialize(reader, ("
-          + serializableClass.getQualifiedSourceName() + ")object);");
-    }
-    sourceWriter.println("}");
-
-    // Instantiation method
-    sourceWriter.println("public Object instantiate(SerializationStreamReader reader) throws SerializationException {");
+    // Create method
+    sourceWriter.println("public Object create(SerializationStreamReader reader) throws SerializationException {");
     sourceWriter.indent();
     if (serializableClass.isEnum() != null
         || serializableClass.isDefaultInstantiable()
@@ -417,9 +384,27 @@ public class FieldSerializerCreator {
     }
     sourceWriter.outdent();
     sourceWriter.println("}");
+    sourceWriter.println();
 
-    // Serialization method
-    sourceWriter.println("public void serialize(SerializationStreamWriter writer, Object object) throws SerializationException {");
+    // Deserial method
+    sourceWriter.println("public void deserial(SerializationStreamReader reader, Object object) throws SerializationException {");
+    if (customFieldSerializer != null) {
+      JMethod deserializationMethod = CustomFieldSerializerValidator.getDeserializationMethod(
+          customFieldSerializer, serializableClass);
+      JType castType = deserializationMethod.getParameters()[1].getType();
+      String typeSig = getTypeSig(deserializationMethod);
+      sourceWriter.indentln(customFieldSerializer.getQualifiedSourceName()
+          + "." + typeSig + "deserialize(reader, ("
+          + castType.getQualifiedSourceName() + ")object);");
+    } else {
+      sourceWriter.indentln(fieldSerializerName + ".deserialize(reader, ("
+          + serializableClass.getQualifiedSourceName() + ")object);");
+    }
+    sourceWriter.println("}");
+    sourceWriter.println();
+
+    // Serial method
+    sourceWriter.println("public void serial(SerializationStreamWriter writer, Object object) throws SerializationException {");
     if (customFieldSerializer != null) {
       JMethod serializationMethod = CustomFieldSerializerValidator.getSerializationMethod(
           customFieldSerializer, serializableClass);
@@ -434,8 +419,7 @@ public class FieldSerializerCreator {
     }
 
     sourceWriter.println("}");
-    sourceWriter.outdent();
-    sourceWriter.println("}");
+    sourceWriter.println();
   }
 
   /**
@@ -453,6 +437,16 @@ public class FieldSerializerCreator {
      * package and all subclasses public - all
      */
     return field.isPrivate();
+  }
+
+  /**
+   * Enumerated types can be instantiated even if they are abstract. You will
+   * have an abstract enum in cases where the enum type is sub-classed.
+   * Non-default instantiable classes cannot have instantiate methods.
+   */
+  private boolean needsTypeHandler() {
+    return serializableClass.isEnum() != null
+        || !serializableClass.isAbstract();
   }
 
   private void writeArrayDeserializationStatements(JArrayType isArray) {
@@ -504,7 +498,7 @@ public class FieldSerializerCreator {
           + getDepth(serializableClass)
           + "\", streamReader.readString());");
     }
-    
+
     for (JField serializableField : serializableFields) {
       JType fieldType = serializableField.getType();
 
@@ -547,14 +541,14 @@ public class FieldSerializerCreator {
      * If the type is capable of making a round trip between the client and
      * server, retrieve the additional server-only field data from {@link WeakMapping}.
      */
-    
+
     if (serializableClass.isEnhanced()) {
       sourceWriter.println("streamWriter.writeString((String) "
           + WEAK_MAPPING_CLASS_NAME
           + ".get(instance, \"server-enhanced-data-"
           + getDepth(serializableClass) + "\"));");
     }
-    
+
     for (JField serializableField : serializableFields) {
       JType fieldType = serializableField.getType();
 
@@ -634,7 +628,7 @@ public class FieldSerializerCreator {
     } else {
       writeClassDeserializationStatements();
     }
-      
+
     sourceWriter.outdent();
     sourceWriter.println("}");
     sourceWriter.println();

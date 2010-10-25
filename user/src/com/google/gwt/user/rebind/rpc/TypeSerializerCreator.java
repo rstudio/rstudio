@@ -355,7 +355,7 @@ public class TypeSerializerCreator {
           + type.getQualifiedSourceName();
       srcWriter.println("result.put(\"" + typeString + "\", new "
           + SerializationUtils.getStandardSerializerName((JClassType) type)
-          + ".Handler());");
+          + "());");
     }
 
     srcWriter.println("return result;");

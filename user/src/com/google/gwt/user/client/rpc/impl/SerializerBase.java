@@ -88,7 +88,7 @@ public abstract class SerializerBase implements Serializer {
       methodMapNative.deserialize(stream, instance, typeSignature);
     } else {
       TypeHandler typeHandler = getTypeHandler(typeSignature);
-      typeHandler.deserialize(stream, instance);
+      typeHandler.deserial(stream, instance);
     }
   }
 
@@ -108,7 +108,7 @@ public abstract class SerializerBase implements Serializer {
       return methodMapNative.instantiate(stream, typeSignature);
     } else {
       TypeHandler typeHandler = getTypeHandler(typeSignature);
-      return typeHandler.instantiate(stream);
+      return typeHandler.create(stream);
     }
   }
 
@@ -119,7 +119,7 @@ public abstract class SerializerBase implements Serializer {
       methodMapNative.serialize(stream, instance, typeSignature);
     } else {
       TypeHandler typeHandler = getTypeHandler(typeSignature);
-      typeHandler.serialize(stream, instance);
+      typeHandler.serial(stream, instance);
     }
   }
 
