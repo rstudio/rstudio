@@ -22,7 +22,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.CompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
@@ -127,6 +129,7 @@ import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionOptimize;
+import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -145,6 +148,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -163,10 +167,9 @@ import javax.xml.parsers.ParserConfigurationException;
  * JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
-  
-  private static final String ENUM_NAME_OBFUSCATION_PROPERTY = 
-                                                "compiler.enum.obfuscate.names";
-  
+
+  private static final String ENUM_NAME_OBFUSCATION_PROPERTY = "compiler.enum.obfuscate.names";
+
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
@@ -231,13 +234,15 @@ public class JavaToJavaScriptCompiler {
       return true;
     }
   }
-  
+
   /**
    * Compiles a particular permutation, based on a precompiled unified AST.
    *
    * @param logger the logger to use
    * @param unifiedAst the result of a
-   *          {@link #precompile(TreeLogger, ModuleDef, RebindPermutationOracle, String[], String[], JJSOptions, boolean)}
+   *          {@link #precompile(TreeLogger, ModuleDef, RebindPermutationOracle, 
+   *                             String[], String[], JJSOptions, boolean, 
+   *                             PrecompilationMetricsArtifact)}
    * @param permutation the permutation to compile
    * @return the output JavaScript
    * @throws UnableToCompleteException if an error other than
@@ -246,9 +251,12 @@ public class JavaToJavaScriptCompiler {
   public static PermutationResult compilePermutation(TreeLogger logger,
       UnifiedAst unifiedAst, Permutation permutation)
       throws UnableToCompleteException {
-    Event jjsCompilePermutationEvent =
-        SpeedTracerLogger.start(CompilerEventType.JJS_COMPILE_PERMUTATION,  "name",
-            permutation.prettyPrint());
+    JJSOptions options = unifiedAst.getOptions();
+    long startTimeMilliseconds = System.currentTimeMillis();
+
+    Event jjsCompilePermutationEvent = SpeedTracerLogger.start(
+        CompilerEventType.JJS_COMPILE_PERMUTATION, "name",
+        permutation.prettyPrint());
 
     InternalCompilerException.preload();
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
@@ -267,7 +275,7 @@ public class JavaToJavaScriptCompiler {
       AST ast = unifiedAst.getFreshAst();
       JProgram jprogram = ast.getJProgram();
       JsProgram jsProgram = ast.getJsProgram();
-      JJSOptions options = unifiedAst.getOptions();
+
       Map<StandardSymbolData, JsName> symbolTable = new TreeMap<StandardSymbolData, JsName>(
           new SymbolData.ClassIdentComparator());
 
@@ -411,10 +419,11 @@ public class JavaToJavaScriptCompiler {
       // (12) Generate the final output text.
       String[] js = new String[jsProgram.getFragmentCount()];
       StatementRanges[] ranges = new StatementRanges[js.length];
-      SizeBreakdown[] sizeBreakdowns = options.isSoycEnabled()
-          ? new SizeBreakdown[js.length] : null;
-      List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycExtra()
-          ? new ArrayList<Map<Range, SourceInfo>>() : null;
+      SizeBreakdown[] sizeBreakdowns =
+        options.isSoycEnabled() || options.isCompilerMetricsEnabled() ?
+          new SizeBreakdown[js.length] : null;
+      List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycExtra() ?
+          new ArrayList<Map<Range, SourceInfo>>() : null;
       generateJavaScriptCode(options, jsProgram, map, js, ranges,
           sizeBreakdowns, sourceInfoMaps, splitBlocks);
 
@@ -422,7 +431,17 @@ public class JavaToJavaScriptCompiler {
           makeSymbolMap(symbolTable), ranges);
       toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram,
           js, sizeBreakdowns, sourceInfoMaps, dependencies, map, obfuscateMap));
-
+      if (options.isCompilerMetricsEnabled()) {
+        CompilationMetricsArtifact compilationMetrics = new CompilationMetricsArtifact(permutation.getId());        
+        compilationMetrics.setCompileElapsedMilliseconds(System.currentTimeMillis()
+            - startTimeMilliseconds);
+        compilationMetrics.setElapsedMilliseconds(System.currentTimeMillis()
+            - ManagementFactory.getRuntimeMXBean().getStartTime());
+        compilationMetrics.setJsSize(sizeBreakdowns);
+        compilationMetrics.setPermutationDescription(permutation.prettyPrint());
+        toReturn.addArtifacts(Lists.create(unifiedAst.getModuleMetrics(),
+            unifiedAst.getPrecompilationMetrics(), compilationMetrics));
+      }
       logger.log(TreeLogger.TRACE, "Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
       return toReturn;
@@ -433,6 +452,14 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
+  public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
+      RebindPermutationOracle rpo, String[] declEntryPts,
+      String[] additionalRootTypes, JJSOptions options,
+      boolean singlePermutation) throws UnableToCompleteException {
+    return precompile(logger, module, rpo, declEntryPts, additionalRootTypes,
+        options, singlePermutation, null);
+  }
+  
   /**
    * Performs a precompilation, returning a unified AST.
    *
@@ -446,6 +473,8 @@ public class JavaToJavaScriptCompiler {
    * @param options the compiler options
    * @param singlePermutation if true, do not pre-optimize the resulting AST or
    *          allow serialization of the result
+   * @param precompilationMetrics if not null, gather diagnostic information
+   *          from this build for a report.
    * @return the unified AST used to drive permutation compiles
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
@@ -453,7 +482,9 @@ public class JavaToJavaScriptCompiler {
   public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
       RebindPermutationOracle rpo, String[] declEntryPts,
       String[] additionalRootTypes, JJSOptions options,
-      boolean singlePermutation) throws UnableToCompleteException {
+      boolean singlePermutation,
+      PrecompilationMetricsArtifact precompilationMetrics)
+  throws UnableToCompleteException {
 
     InternalCompilerException.preload();
 
@@ -478,20 +509,27 @@ public class JavaToJavaScriptCompiler {
     allRootTypes.add(FragmentLoaderCreator.ASYNC_FRAGMENT_LOADER);
 
     Memory.maybeDumpMemory("CompStateBuilt");
-
+    
     // Compile the source and get the compiler so we can get the parse tree
-    //
     CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
         logger, allRootTypes.toArray(new String[allRootTypes.size()]), rpo,
         TypeLinker.NULL_TYPE_LINKER).compiledUnits;
 
+    List<String> finalTypeOracleTypes = Lists.create();
+    if (precompilationMetrics != null) {
+      for (com.google.gwt.core.ext.typeinfo.JClassType type : rpo.getCompilationState().getTypeOracle().getTypes()) {
+        finalTypeOracleTypes = Lists.add(finalTypeOracleTypes,
+            type.getPackage().getName() + "." + type.getName());
+      }
+      precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
+    }
+
     // Free up memory.
     rpo.clear();
     Memory.maybeDumpMemory("GoldenCudsBuilt");
-
+    
     // Check for compilation problems. We don't log here because any problems
     // found here will have already been logged by AbstractCompiler.
-    //
     checkForErrors(logger, goldenCuds, false);
 
     CorrelationFactory correlator = options.isSoycExtra()
@@ -523,7 +561,7 @@ public class JavaToJavaScriptCompiler {
       checkForErrors(logger, goldenCuds, true);
 
       Memory.maybeDumpMemory("AstBuilt");
-
+      
       // Allow GC
       goldenCuds = null;
       typeMap = null;
@@ -531,17 +569,17 @@ public class JavaToJavaScriptCompiler {
 
       Memory.maybeDumpMemory("AstOnly");
       maybeDumpAST(jprogram);
-      
+
       // See if we should run the EnumNameObfuscator
       if (module != null) {
-        ConfigurationProperty enumNameObfuscationProp = 
-            (ConfigurationProperty) module.getProperties().find(ENUM_NAME_OBFUSCATION_PROPERTY);
-        if (enumNameObfuscationProp != null &&
-            Boolean.parseBoolean(enumNameObfuscationProp.getValue())) {
+        ConfigurationProperty enumNameObfuscationProp = (ConfigurationProperty) module.getProperties().find(
+            ENUM_NAME_OBFUSCATION_PROPERTY);
+        if (enumNameObfuscationProp != null
+            && Boolean.parseBoolean(enumNameObfuscationProp.getValue())) {
           EnumNameObfuscator.exec(jprogram, logger);
         }
       }
-      
+
       // (3) Perform Java AST normalizations.
       ArtificialRescueRecorder.exec(jprogram);
       FixAssignmentToUnbox.exec(jprogram);
@@ -580,7 +618,8 @@ public class JavaToJavaScriptCompiler {
        * Don't optimizing early if this is a draft compile, or if there's only
        * one permutation.
        */
-      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT && !singlePermutation) {
+      if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT
+          && !singlePermutation) {
         if (options.isOptimizePrecompile()) {
           /*
            * Go ahead and optimize early, so that each permutation will run
@@ -605,6 +644,10 @@ public class JavaToJavaScriptCompiler {
       Set<String> rebindRequests = new HashSet<String>();
       RecordRebinds.exec(jprogram, rebindRequests);
 
+      if (options.isCompilerMetricsEnabled()) {
+        precompilationMetrics.setAstTypes(getReferencedJavaClasses(jprogram));
+      }
+      
       Event createUnifiedAstEvent = SpeedTracerLogger.start(CompilerEventType.CREATE_UNIFIED_AST);
       UnifiedAst result = new UnifiedAst(options, new AST(jprogram, jsProgram),
           singlePermutation, rebindRequests);
@@ -636,9 +679,9 @@ public class JavaToJavaScriptCompiler {
   }
 
   protected static void optimize(JJSOptions options, JProgram jprogram)
-  throws InterruptedException {
+      throws InterruptedException {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
-    
+
     /*
      * Record the beginning of optimizations; this turns on certain checks that
      * guard against problematic late construction of things like class
@@ -648,10 +691,11 @@ public class JavaToJavaScriptCompiler {
 
     List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
     int counter = 0;
-    int optimizationLevel = options.getOptimizationLevel();    
+    int optimizationLevel = options.getOptimizationLevel();
     while (true) {
       counter++;
-      if (optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX && counter > optimizationLevel) {
+      if (optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX
+          && counter > optimizationLevel) {
         break;
       }
       if (Thread.interrupted()) {
@@ -659,7 +703,8 @@ public class JavaToJavaScriptCompiler {
         throw new InterruptedException();
       }
       maybeDumpAST(jprogram);
-      OptimizerStats stats = optimizeLoop("Pass " + counter, jprogram, options.isAggressivelyOptimize());
+      OptimizerStats stats = optimizeLoop("Pass " + counter, jprogram,
+          options.isAggressivelyOptimize());
       allOptimizerStats.add(stats);
       if (!stats.didChange()) {
         break;
@@ -670,7 +715,7 @@ public class JavaToJavaScriptCompiler {
       // Just run it once, because it is very time consuming
       allOptimizerStats.add(DataflowOptimizer.exec(jprogram));
     }
-    
+
     if (JProgram.isTracingEnabled()) {
       System.out.println("");
       System.out.println("                Java Optimization Stats");
@@ -683,7 +728,8 @@ public class JavaToJavaScriptCompiler {
     optimizeEvent.end();
   }
 
-  protected static void optimizeJs(JJSOptions options, JsProgram jsProgram) throws InterruptedException {
+  protected static void optimizeJs(JJSOptions options, JsProgram jsProgram)
+      throws InterruptedException {
     List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
     int counter = 0;
     while (true) {
@@ -692,9 +738,9 @@ public class JavaToJavaScriptCompiler {
         throw new InterruptedException();
       }
       Event optimizeJsEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE_JS);
-      
+
       OptimizerStats stats = new OptimizerStats("Pass " + counter);
-      
+
       // Remove unused functions, possible
       stats.add(JsStaticEval.exec(jsProgram));
       // Inline JavaScript function invocations
@@ -704,10 +750,10 @@ public class JavaToJavaScriptCompiler {
 
       // Save the stats to print out after optimizers finish.
       allOptimizerStats.add(stats);
-      
+
       optimizeJsEvent.end();
       int optimizationLevel = options.getOptimizationLevel();
-      if ((optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX && counter > optimizationLevel) 
+      if ((optimizationLevel < OptionOptimize.OPTIMIZE_LEVEL_MAX && counter > optimizationLevel)
           || !stats.didChange()) {
         break;
       }
@@ -723,21 +769,24 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
-  protected static OptimizerStats optimizeLoop(String passName, JProgram jprogram,
-      boolean isAggressivelyOptimize) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "loop");
+  protected static OptimizerStats optimizeLoop(String passName,
+      JProgram jprogram, boolean isAggressivelyOptimize) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
+        "phase", "loop");
 
     // Count the number of nodes in the AST so we can measure the efficiency of
     // the optimizers.
-    Event countEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "countNodes");
+    Event countEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE,
+        "phase", "countNodes");
     TreeStatistics treeStats = new TreeStatistics();
     treeStats.accept(jprogram);
     int numNodes = treeStats.getNodeCount();
     countEvent.end();
-    
+
     // Recompute clinits each time, they can become empty.
     jprogram.typeOracle.recomputeAfterOptimizations();
-    // jprogram.methodOracle = MethodOracleBuilder.buildMethodOracle(jprogram);
+    // jprogram.methodOracle =
+    // MethodOracleBuilder.buildMethodOracle(jprogram);
     OptimizerStats stats = new OptimizerStats(passName);
 
     // Remove unreferenced types, fields, methods, [params, locals]
@@ -768,7 +817,8 @@ public class JavaToJavaScriptCompiler {
 
     if (isAggressivelyOptimize) {
       // remove same parameters value
-      stats.add(SameParameterValueOptimizer.exec(jprogram).recordVisits(numNodes));
+      stats.add(SameParameterValueOptimizer.exec(jprogram).recordVisits(
+          numNodes));
     }
 
     // prove that any types that have been culled from the main tree are
@@ -1107,8 +1157,8 @@ public class JavaToJavaScriptCompiler {
 
     SyntheticArtifact sizeMaps = null;
     if (sizeBreakdowns != null) {
-      Event recordSizeMap =
-          SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordSizeMap");
+      Event recordSizeMap = SpeedTracerLogger.start(
+          CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordSizeMap");
       baos.reset();
       SizeMapRecorder.recordMap(logger, baos, sizeBreakdowns, jjsmap,
           obfuscateMap);
@@ -1119,8 +1169,8 @@ public class JavaToJavaScriptCompiler {
     }
 
     if (sourceInfoMaps != null) {
-      Event recordStories =
-          SpeedTracerLogger.start(CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordStories");
+      Event recordStories = SpeedTracerLogger.start(
+          CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordStories");
       baos.reset();
       StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
       soycArtifacts.add(new SyntheticArtifact(SoycReportLinker.class,
@@ -1139,7 +1189,8 @@ public class JavaToJavaScriptCompiler {
 
     if (sizeBreakdowns != null) {
       Event generateCompileReport = SpeedTracerLogger.start(
-          CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "generateCompileReport");
+          CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase",
+          "generateCompileReport");
       ArtifactsOutputDirectory outDir = new ArtifactsOutputDirectory();
       SoycDashboard dashboard = new SoycDashboard(outDir);
       dashboard.startNewPermutation(Integer.toString(permutationId));
@@ -1263,5 +1314,26 @@ public class JavaToJavaScriptCompiler {
 
     deps.endDependencyGraph();
     deps.close();
+  }
+  
+  /**
+   * This method can be used to fetch the list of referenced classs.
+   *
+   * This method is intended to support compiler metrics in the precompile
+   * phase.
+   */
+  private static String[] getReferencedJavaClasses(JProgram jprogram) {
+    class ClassNameVisitor extends JVisitor {
+      List<String> classNames = new ArrayList<String>();
+
+      @Override
+      public boolean visit(JClassType x, Context ctx) {
+        classNames.add(x.getName());
+        return true;
+      }
+    }
+    ClassNameVisitor v = new ClassNameVisitor();
+    v.accept(jprogram);
+    return v.classNames.toArray(new String[v.classNames.size()]);
   }
 }

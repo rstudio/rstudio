@@ -46,8 +46,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Represents a module specification. In principle, this could be built without
@@ -287,6 +287,14 @@ public class ModuleDef {
   }
 
   /**
+   * Strictly for statistics gathering.  There is no guarantee that the source
+   * oracle has been initialized.
+   */
+  public String[] getAllSourceFiles() {
+    return lazySourceOracle.getPathNames().toArray(Empty.STRINGS);
+  }
+
+  /**
    * Returns the physical name for the module by which it can be found in the
    * classpath.
    */
@@ -487,7 +495,7 @@ public class ModuleDef {
     branch = Messages.SOURCE_PATH_LOCATIONS.branch(logger, null);
     lazySourceOracle = new ResourceOracleImpl(branch);
     lazySourceOracle.setPathPrefixes(sourcePrefixSet);
-    
+
     ResourceOracleImpl.refresh(logger, lazyPublicOracle, lazySourceOracle);
     if (lazySourceOracle.getResources().isEmpty()) {
       branch.log(TreeLogger.WARN,

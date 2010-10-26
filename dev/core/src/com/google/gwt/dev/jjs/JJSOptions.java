@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
+import com.google.gwt.dev.util.arg.OptionCompilerMetricsEnabled;
 import com.google.gwt.dev.util.arg.OptionDisableCastChecking;
 import com.google.gwt.dev.util.arg.OptionDisableClassMetadata;
 import com.google.gwt.dev.util.arg.OptionEnableAssertions;
@@ -34,5 +35,5 @@ public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
     OptionDisableClassMetadata, OptionDisableCastChecking,
     OptionEnableAssertions, OptionRunAsyncEnabled, OptionScriptStyle,
     OptionSoycEnabled, OptionSoycDetailed, OptionOptimizePrecompile,
-    OptionStrict {
+    OptionStrict, OptionCompilerMetricsEnabled {
 }

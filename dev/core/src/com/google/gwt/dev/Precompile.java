@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,7 +19,10 @@ import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
+import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
@@ -46,6 +49,7 @@ import com.google.gwt.dev.util.CollapsedPropertyKey;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerCompileReport;
+import com.google.gwt.dev.util.arg.ArgHandlerCompilerMetrics;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
@@ -68,6 +72,7 @@ import com.google.gwt.dev.util.arg.OptionEnableGeneratingOnShards;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.OptionValidateOnly;
+import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -76,10 +81,10 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.Serializable;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +130,7 @@ public class Precompile {
       registerHandler(new ArgHandlerSoyc(options));
       registerHandler(new ArgHandlerSoycDetailed(options));
       registerHandler(new ArgHandlerStrict(options));
+      registerHandler(new ArgHandlerCompilerMetrics(options));
     }
 
     @Override
@@ -189,6 +195,10 @@ public class Precompile {
       return jjsOptions.isClassMetadataDisabled();
     }
 
+    public boolean isCompilerMetricsEnabled() {
+      return jjsOptions.isCompilerMetricsEnabled();
+    }
+
     public boolean isDraftCompile() {
       return jjsOptions.isDraftCompile();
     }
@@ -239,6 +249,10 @@ public class Precompile {
 
     public void setClassMetadataDisabled(boolean disabled) {
       jjsOptions.setClassMetadataDisabled(disabled);
+    }
+
+    public void setCompilerMetricsEnabled(boolean enabled) {
+      jjsOptions.setCompilerMetricsEnabled(enabled);
     }
 
     public void setDisableUpdateCheck(boolean disabled) {
@@ -451,7 +465,7 @@ public class Precompile {
 
   /**
    * Precompiles the given module.
-   * 
+   *
    * @param logger a logger to use
    * @param jjsOptions a set of compiler options
    * @param module the module to compile
@@ -468,12 +482,12 @@ public class Precompile {
 
   /**
    * Validates the given module can be compiled.
-   * 
+   *
    * @param logger a logger to use
    * @param jjsOptions a set of compiler options
    * @param module the module to compile
-   * @param genDir optional directory to dump generated source, may be
-   *          <code>null</code>
+   * @param genDir optional directory to dump generated source, may be 
+   *               <code>null</code>
    */
   public static boolean validate(TreeLogger logger, JJSOptions jjsOptions,
       ModuleDef module, File genDir) {
@@ -505,7 +519,7 @@ public class Precompile {
       // Never optimize on a validation run.
       jjsOptions.setOptimizePrecompile(false);
       getCompiler(module).precompile(logger, module, rpo, declEntryPts,
-          additionalRootTypes, jjsOptions, true);
+          additionalRootTypes, jjsOptions, true, null);
       return true;
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -518,6 +532,15 @@ public class Precompile {
   static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions,
       ModuleDef module, int permutationBase,
       PropertyPermutations allPermutations, File genDir) {
+    return precompile(logger, jjsOptions, module, permutationBase,
+        allPermutations, genDir,
+        ManagementFactory.getRuntimeMXBean().getStartTime());
+  }
+
+  static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions,
+      ModuleDef module, int permutationBase,
+      PropertyPermutations allPermutations, File genDir,
+      long startTimeMilliseconds) {
 
     Event precompileEvent = SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
 
@@ -531,6 +554,17 @@ public class Precompile {
         abortDueToStrictMode(logger);
       }
 
+      List<String> initialTypeOracleTypes = new ArrayList<String>();
+      if (jjsOptions.isCompilerMetricsEnabled()) {
+        for (JClassType type : compilationState.getTypeOracle().getTypes()) {
+          initialTypeOracleTypes.add(type.getPackage().getName() + "." + type.getName());
+        }
+      }
+
+      // Track information about the module load including initial type
+      // oracle build for diagnostic purposes.
+      long moduleLoadFinished = System.currentTimeMillis();
+
       String[] declEntryPts = module.getEntryPointTypeNames();
       if (declEntryPts.length == 0) {
         logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
@@ -542,8 +576,24 @@ public class Precompile {
           module, compilationState, generatedArtifacts, allPermutations, genDir);
       // Allow GC later.
       compilationState = null;
+      PrecompilationMetricsArtifact precompilationMetrics = jjsOptions.isCompilerMetricsEnabled()
+          ? new PrecompilationMetricsArtifact(permutationBase) : null;
       UnifiedAst unifiedAst = getCompiler(module).precompile(logger, module,
-          rpo, declEntryPts, null, jjsOptions, rpo.getPermuationCount() == 1);
+          rpo, declEntryPts, null, jjsOptions, rpo.getPermuationCount() == 1,
+          precompilationMetrics);
+
+      if (jjsOptions.isCompilerMetricsEnabled()) {
+        ModuleMetricsArtifact moduleMetrics = new ModuleMetricsArtifact();
+        moduleMetrics.setSourceFiles(module.getAllSourceFiles());
+        // The initial type list has to be gathered before the call to
+        // precompile().
+        moduleMetrics.setInitialTypes(initialTypeOracleTypes);
+        // The elapsed time in ModuleMetricsArtifact represents time
+        // which could be done once for all permutations.
+        moduleMetrics.setElapsedMilliseconds(moduleLoadFinished
+            - startTimeMilliseconds);
+        unifiedAst.setModuleMetrics(moduleMetrics);
+      }
 
       // Merge all identical permutations together.
       List<Permutation> permutations = new ArrayList<Permutation>(
@@ -565,7 +615,20 @@ public class Precompile {
           merged.put(key, permutation);
         }
       }
-
+      if (jjsOptions.isCompilerMetricsEnabled()) {
+        int[] ids = new int[allPermutations.size()];
+        for (int i = 0; i < allPermutations.size(); i++) {
+          ids[i] = permutationBase + i;
+        }
+        precompilationMetrics.setPermuationIds(ids);
+        // TODO(zundel): Right now this double counts module load and
+        // precompile time. It correctly counts the amount of time spent
+        // in this process.  The elapsed time in ModuleMetricsArtifact
+        // represents time which could be done once for all permutations.
+        precompilationMetrics.setElapsedMilliseconds(System.currentTimeMillis()
+            - startTimeMilliseconds);
+        unifiedAst.setPrecompilationMetrics(precompilationMetrics);
+      }
       return new Precompilation(unifiedAst, merged.values(), permutationBase,
           generatedArtifacts);
     } catch (UnableToCompleteException e) {
@@ -661,13 +724,14 @@ public class Precompile {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    // Avoid early optimizations since permutation compiles will run separately.
+    // Avoid early optimizations since permutation compiles will run
+    // separately.
     options.setOptimizePrecompile(false);
 
     for (String moduleName : options.getModuleNames()) {
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
       Util.recursiveDelete(compilerWorkDir, true);
-      // No need to check mkdirs result because an IOException will occur anyway
+      // No need to check mkdirs result because an IOException will occur anyway.
       compilerWorkDir.mkdirs();
 
       File precompilationFile = new File(compilerWorkDir, PRECOMPILE_FILENAME);
@@ -740,7 +804,6 @@ public class Precompile {
         }
       }
     }
-
     return true;
   }
 }

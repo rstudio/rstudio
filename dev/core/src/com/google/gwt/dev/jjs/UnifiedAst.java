@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,8 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
+import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -68,6 +70,12 @@ public class UnifiedAst implements Serializable {
   private transient AST initialAst;
 
   /**
+   * Metrics for the module load phase.  Stored here so they can be written out
+   * as artifacts in the compile phase.
+   */
+  private ModuleMetricsArtifact moduleMetrics;
+
+  /**
    * Used for internal synchronization.
    */
   private transient Object myLockObject = new Object();
@@ -76,6 +84,12 @@ public class UnifiedAst implements Serializable {
    * The compilation options.
    */
   private final JJSOptions options;
+
+  /**
+   * Metrics for the precompilation phase.  Stored here so they can be written out
+   * as artifacts in the compile phase.
+   */
+  private PrecompilationMetricsArtifact precompilationMetrics;
 
   /**
    * The set of all live rebind request types in the AST.
@@ -110,7 +124,7 @@ public class UnifiedAst implements Serializable {
 
   /**
    * Compiles a particular permutation.
-   * 
+   *
    * @param logger the logger to use
    * @param permutation the permutation to compile
    * @return the permutation result
@@ -124,8 +138,8 @@ public class UnifiedAst implements Serializable {
   }
 
   /**
-   * Return the current AST so that clients can explicitly walk the
-   * Java or JavaScript parse trees.
+   * Return the current AST so that clients can explicitly walk the Java or
+   * JavaScript parse trees.
    *
    * @return the current AST object holding the Java and JavaScript trees.
    */
@@ -146,10 +160,24 @@ public class UnifiedAst implements Serializable {
   }
 
   /**
+   * Returns metrics about the module load portion of the build.
+   */
+  public ModuleMetricsArtifact getModuleMetrics() {
+    return moduleMetrics;
+  }
+
+  /**
    * Returns the active set of JJS options associated with this compile.
    */
   public JJSOptions getOptions() {
     return new JJSOptionsImpl(options);
+  }
+
+  /**
+   * Returns metrics about the precompilation portion of the build.
+   */
+  public PrecompilationMetricsArtifact getPrecompilationMetrics() {
+    return precompilationMetrics;
   }
 
   /**
@@ -169,6 +197,20 @@ public class UnifiedAst implements Serializable {
         initialAst = diskCache.readObject(serializedAstToken, AST.class);
       }
     }
+  }
+
+  /**
+   * Save some module load metrics in the AST.
+   */
+  public void setModuleMetrics(ModuleMetricsArtifact metrics) {
+    this.moduleMetrics = metrics;
+  }
+
+  /**
+   * Save some precompilation metrics in the AST.
+   */
+  public void setPrecompilationMetrics(PrecompilationMetricsArtifact metrics) {
+    this.precompilationMetrics = metrics;
   }
 
   /**

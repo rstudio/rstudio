@@ -1,0 +1,288 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:annotation>
+ <xsd:documentation>
+ Schema to describe compilerMetrics.xml output from GWT compiler.
+ </xsd:documentation>
+</xsd:annotation>
+
+<!-- root element -->
+
+<xsd:element name="metrics" type="metricsType" />
+
+
+<!-- common element definitions -->
+
+<xsd:simpleType name="permutationIdType">
+  <xsd:annotation>
+    <xsd:documentation>
+    A numeric id that identifies this permutation in the module. Use 
+    to correlate precompilation and compilation elements..
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:restriction base="xsd:nonNegativeInteger" />
+</xsd:simpleType>
+
+<xsd:simpleType name="permutationIdListType">
+  <xsd:annotation>
+    <xsd:documentation>
+    A list of permutations associated with this action.
+    </xsd:documentation>
+  </xsd:annotation>
+  
+  <xsd:list itemType="permutationIdType" />
+</xsd:simpleType>
+
+<xsd:complexType name="sourcesType">
+  <xsd:sequence>
+    <xsd:element name="source" type="sourceType" 
+                 minOccurs="0" maxOccurs="unbounded" />
+  </xsd:sequence>
+
+  <xsd:attribute name="count" type="xsd:nonNegativeInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      The number of source files on the source path of the module.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+<xsd:complexType name="typeType">
+  <xsd:attribute name="name"  type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      The name of a java type (including package name).
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+<xsd:complexType name="typesType">
+  <xsd:sequence>
+    <xsd:element name="type" type="typeType" 
+                 minOccurs="0" maxOccurs="unbounded" />
+  </xsd:sequence>
+
+  <xsd:attribute name="kind" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      Describes which view of the type list this represents.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:enumeration value="initial" />
+        <xsd:enumeration value="ast" />
+        <xsd:enumeration value="generated" />
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:attribute>
+
+  <xsd:attribute name="count" type="xsd:nonNegativeInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      The number of types created in the initial type oracle build.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+
+<!-- precompilationType specific elements -->
+
+<xsd:complexType name="precompilationType">
+  <xsd:annotation>
+    <xsd:documentation>
+    Records a single instance of a precompile task.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:sequence>
+    <!-- ast types -->
+    <xsd:element name="types" type="typesType" />
+    <!-- generated types -->
+    <xsd:element name="types" type="typesType" />
+  </xsd:sequence>
+
+  <xsd:attribute name="base" type="permutationIdType" use="required" />
+
+  <xsd:attribute name="ids" type="permutationIdListType" use="required" />
+
+  <xsd:attribute name="elapsed" type="xsd:nonNegativeInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      Elapsed time in milliseconds from the start of the compilePerms step
+      until the end of the compilePerms step.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+
+<!-- moduleType specific elements -->
+
+<xsd:complexType name="sourceType">
+  <xsd:attribute name="name"  type="xsd:string" use="required">
+  <xsd:annotation>
+    <xsd:documentation>
+    The path to a java source file on the GWT moudle source path.  This
+    file will be compiled and put it the initial type oracle build.
+    </xsd:documentation>
+  </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+
+<!-- compilationType specific elements -->
+
+<xsd:complexType name="fragmentType">
+  <xsd:annotation>
+    <xsd:documentation>
+    Represents a fragment of javascript output from the compilePermutations 
+    step.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:attribute name="initial" type="xsd:boolean">
+    <xsd:annotation>
+      <xsd:documentation>
+      Set to true to indicate that this is the initial fragment of javascript
+      to be downloaded by the app.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+
+  <xsd:attribute name="size" type="xsd:nonNegativeInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      Size of this fragment in bytes (uncompressed).
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+<xsd:complexType name="javascriptType">
+  <xsd:annotation>
+    <xsd:documentation>
+    Represents javascript output from the compilePermutations step.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:sequence>
+    <xsd:element name="fragment" type="fragmentType"
+                 minOccurs="0" maxOccurs="unbounded" />
+  </xsd:sequence>
+
+  <xsd:attribute name="size" type="xsd:nonNegativeInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      Size of all fragments output in bytes (uncompressed).
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+
+  <xsd:attribute name="fragments" type="xsd:positiveInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      The number of javascript fragments output.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+<xsd:complexType name="compilationType">
+  <xsd:annotation>
+    <xsd:documentation>
+    Records a single instance of a compilePermutations task.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:sequence>
+    <xsd:element name="javascript" type="javascriptType"
+                 minOccurs="0" maxOccurs="unbounded" />    
+  </xsd:sequence>
+
+  <xsd:attribute name="id" type="permutationIdType" use="required" />
+
+  <xsd:attribute name="elapsed" type="xsd:nonNegativeInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      Elapsed time in millesconds from the start of the compilePerms step
+      until the end of the compilePerms step.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+
+  <xsd:attribute name="totalElapsed" type="xsd:nonNegativeInteger" 
+                 use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      Elapsed time in millesconds from the start of the JVM execution
+      until the end of the compilePerms step.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+
+  <xsd:attribute name="description" type="xsd:string" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      Human readable string describing the permutation being compiled.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+
+<!-- top level element definition -->
+
+<xsd:complexType name="moduleType">
+  <xsd:sequence>
+    <xsd:element name="sources" type="sourcesType" />
+    <xsd:element name="types" type="typesType" />
+  </xsd:sequence>
+
+  <xsd:attribute name="elapsed" type="xsd:nonNegativeInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      Elapsed time in millesconds from the start of the JVM execution
+      until the finish of building the initial type oracle typs.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+<xsd:complexType name="precompilationsType">
+  <xsd:sequence>
+    <xsd:element name="precompilation" type="precompilationType"
+                 minOccurs="0" maxOccurs="unbounded" />
+  </xsd:sequence>
+</xsd:complexType>
+
+<xsd:complexType name="compilationsType">
+  <xsd:sequence>
+    <xsd:element name="compilation" type="compilationType"
+                 minOccurs="0" maxOccurs="unbounded" />
+  </xsd:sequence>
+</xsd:complexType>
+
+<!-- root element definition -->
+
+<xsd:complexType name="metricsType">
+  <xsd:sequence>
+    <xsd:element name="module" type="moduleType" />
+    <xsd:element name="precompilations" type="precompilationsType" />
+    <xsd:element name="compilations" type="compilationsType" />
+  </xsd:sequence>
+  
+  <xsd:attribute name="version" type="xsd:positiveInteger" use="required">
+    <xsd:annotation>
+      <xsd:documentation>
+      A version number for the compilerMetics.xml file format. 
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:attribute>
+</xsd:complexType>
+
+</xsd:schema>
+

@@ -23,10 +23,13 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.Shardable;
+import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.ext.linker.Transferable;
-import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.soyc.CompilerMetricsXmlFormatter;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 
@@ -34,6 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -109,18 +113,38 @@ public class SoycReportLinker extends Linker {
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts, boolean onePermutation) {
-    if (!anyReportFilesPresent(artifacts)) {
-      // No report was generated
+
+    boolean reportFilesPresent = anyReportFilesPresent(artifacts);
+    boolean metricsPresent = anyCompilerMetricsPresent(artifacts);
+    
+    if (!reportFilesPresent && !metricsPresent) {
       return artifacts;
     }
-
-    if (onePermutation) {
-      return emitPermutationDescriptions(artifacts);
-    } else {
-      return buildTopLevelFiles(logger, artifacts);
+    
+    artifacts = new ArtifactSet(artifacts);
+    
+    if (!onePermutation) {
+      buildCompilerMetricsXml(artifacts);
     }
+    
+    if (reportFilesPresent) {
+      if (onePermutation) {
+        emitPermutationDescriptions(artifacts);
+      } else {
+        buildTopLevelFiles(logger, artifacts);
+      }
+    }
+    
+    return artifacts;
   }
 
+  /**
+   * Check whether an artifact set contains any compilerMetrics
+   */  
+  boolean anyCompilerMetricsPresent(ArtifactSet artifacts) {
+    return  !artifacts.find(ModuleMetricsArtifact.class).isEmpty(); 
+  }
+  
   /**
    * Check whether an artifact set contains any SOYC report documents.
    */
@@ -140,10 +164,37 @@ public class SoycReportLinker extends Linker {
     return false;
   }
 
-  private ArtifactSet buildTopLevelFiles(TreeLogger logger,
-      ArtifactSet artifacts) {
-    artifacts = new ArtifactSet(artifacts);
+  /**
+   * Compiler Metrics are captured in the module load, precompilation,
+   * and compile permutations step, then all merged together into a single
+   * XML file as output.  That file can then be consumed by external 
+   * reporting tools.
+   */
+  private void buildCompilerMetricsXml(ArtifactSet artifacts) {
+    ModuleMetricsArtifact moduleMetrics = null;
+    Set<ModuleMetricsArtifact> moduleMetricsSet = artifacts.find(ModuleMetricsArtifact.class);
+    if (!moduleMetricsSet.isEmpty()) {
+      for (ModuleMetricsArtifact metrics : moduleMetricsSet) {
+        moduleMetrics = metrics;
+        // We only need one module metrics definition.
+        break;
+      }
+    }
 
+    // No module metrics? Then we'll skip creating the compilerMetrics output
+    if (moduleMetrics == null) {
+      return;
+    }
+
+    byte[] xmlResult = CompilerMetricsXmlFormatter.writeMetricsAsXml(artifacts, moduleMetrics);
+    EmittedArtifact metricsArtifact = new SyntheticArtifact(SoycReportLinker.class, 
+       "compilerMetrics.xml", xmlResult);
+    metricsArtifact.setPrivate(true);
+    artifacts.add(metricsArtifact);
+  }
+
+  private void buildTopLevelFiles(TreeLogger logger,
+      ArtifactSet artifacts) {
     ArtifactsOutputDirectory out = new ArtifactsOutputDirectory();
     try {
       new SoycDashboard(out).generateCrossPermutationFiles(extractPermutationDescriptions(artifacts));
@@ -154,12 +205,9 @@ public class SoycReportLinker extends Linker {
     }
 
     artifacts.addAll(out.getArtifacts());
-    return artifacts;
   }
 
-  private ArtifactSet emitPermutationDescriptions(ArtifactSet artifacts) {
-    artifacts = new ArtifactSet(artifacts);
-
+  private void emitPermutationDescriptions(ArtifactSet artifacts) {
     for (CompilationResult res : artifacts.find(CompilationResult.class)) {
       int permId = res.getPermutationId();
       List<String> permDesc = new ArrayList<String>();
@@ -169,8 +217,6 @@ public class SoycReportLinker extends Linker {
 
       artifacts.add(new PermDescriptionArtifact(permId, permDesc));
     }
-
-    return artifacts;
   }
 
   private Map<String, List<String>> extractPermutationDescriptions(

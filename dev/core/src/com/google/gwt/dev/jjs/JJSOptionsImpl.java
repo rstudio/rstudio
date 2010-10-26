@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,6 +35,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycExtra = false;
   private boolean strict = false;
   private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_MAX;
+  private boolean compilerMetricsEnabled = false;
 
   public JJSOptionsImpl() {
   }
@@ -46,6 +47,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public void copyFrom(JJSOptions other) {
     setCastCheckingDisabled(other.isCastCheckingDisabled());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
+    setCompilerMetricsEnabled(other.isCompilerMetricsEnabled());
     setEnableAssertions(other.isEnableAssertions());
     setAggressivelyOptimize(other.isAggressivelyOptimize());
     setOptimizationLevel(other.getOptimizationLevel());
@@ -59,7 +61,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public int getOptimizationLevel() {
     return optimizationLevel;
   }
-  
+
   public JsOutputOption getOutput() {
     return output;
   }
@@ -74,6 +76,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public boolean isClassMetadataDisabled() {
     return disableClassMetadata;
+  }
+
+  public boolean isCompilerMetricsEnabled() {
+    return compilerMetricsEnabled;
   }
 
   public boolean isDraftCompile() {
@@ -114,6 +120,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setClassMetadataDisabled(boolean disabled) {
     disableClassMetadata = disabled;
+  }
+
+  public void setCompilerMetricsEnabled(boolean enabled) {
+    this.compilerMetricsEnabled = enabled;
   }
 
   public void setEnableAssertions(boolean enableAssertions) {

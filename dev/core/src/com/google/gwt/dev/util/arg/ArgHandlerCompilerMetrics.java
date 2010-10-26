@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,29 +18,33 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler that enables Story Of Your Compile data-collection.
+ * An ArgHandler that enables Compiler Metrics.
  */
-public class ArgHandlerCompileReport extends ArgHandlerFlag {
+public class ArgHandlerCompilerMetrics extends ArgHandlerFlag {
 
-  private final OptionSoycEnabled options;
+  private final OptionCompilerMetricsEnabled options;
 
-  public ArgHandlerCompileReport(OptionSoycEnabled options) {
+  public ArgHandlerCompilerMetrics(OptionCompilerMetricsEnabled options) {
     this.options = options;
   }
 
   @Override
   public String getPurpose() {
-    return "Create a compile report that tells the Story of Your Compile";
+    return "Enable CompilerMetrics";
   }
 
   @Override
   public String getTag() {
-    return "-compileReport";
+    return "-XcompilerMetrics";
+  }
+
+  @Override
+  public boolean isUndocumented() {
+    return true;
   }
 
   @Override
   public boolean setFlag() {
-    options.setSoycEnabled(true);
     options.setCompilerMetricsEnabled(true);
     return true;
   }
