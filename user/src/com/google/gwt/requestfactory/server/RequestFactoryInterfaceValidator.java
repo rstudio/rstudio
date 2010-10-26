@@ -286,6 +286,10 @@ public class RequestFactoryInterfaceValidator {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc,
         String signature, String[] exceptions) {
+      // Ignore initializers
+      if ("<clinit>".equals(name) || "<init>".equals(name)) {
+        return null;
+      }
       RFMethod method = new RFMethod(name, desc);
       method.setDeclaredStatic((access & Opcodes.ACC_STATIC) != 0);
       method.setDeclaredSignature(signature);

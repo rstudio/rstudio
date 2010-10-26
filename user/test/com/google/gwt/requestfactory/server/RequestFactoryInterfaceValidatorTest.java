@@ -21,17 +21,53 @@ import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 
 import junit.framework.TestCase;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * JRE tests for {@link RequestFactoryInterfaceValidator}.
  */
 public class RequestFactoryInterfaceValidatorTest extends TestCase {
+  static class ClinitEntity {
+    static ClinitEntity request() {
+      return null;
+    }
+
+    Object OBJECT = new Object();
+
+    String getId() {
+      return null;
+    }
+
+    int getVersion() {
+      return 0;
+    }
+  }
+
+  @ProxyFor(ClinitEntity.class)
+  interface ClinitEntityProxy extends EntityProxy {
+    Object OBJECT = new Object();
+  }
+
+  @Service(ClinitEntity.class)
+  interface ClinitRequestContext extends RequestContext {
+    Object OBJECT = new Object();
+
+    Request<ClinitEntityProxy> request();
+  }
+
+  interface ClinitRequestFactory extends RequestFactory {
+    Object OBJECT = new Object();
+
+    ClinitRequestContext context();
+  }
+
   static class Domain {
     static int fooStatic(int a) {
       return 0;
@@ -107,6 +143,14 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
 
   RequestFactoryInterfaceValidator v;
 
+  /**
+   * Ensure that the &lt;clinit> methods don't interfere with validation.
+   */
+  public void testIntecfacesWithClinits() {
+    v.validateRequestFactory(ClinitRequestFactory.class.getName());
+    assertFalse(v.isPoisoned());
+  }
+
   public void testMismatchedArity() {
     v.validateRequestContext(ServiceRequestMismatchedArity.class.getName());
     assertTrue(v.isPoisoned());
@@ -132,11 +176,6 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     assertTrue(v.isPoisoned());
   }
 
-  public void testMissingServiceAnnotations() {
-    v.validateRequestContext(RequestContextMissingAnnotation.class.getName());
-    assertTrue(v.isPoisoned());
-  }
-
   public void testMissingIdAndVersion() {
     v.validateEntityProxy(DomainProxy.class.getName());
     assertTrue(v.isPoisoned());
@@ -144,6 +183,11 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
 
   public void testMissingMethod() {
     v.validateRequestContext(ServiceRequestMissingMethod.class.getName());
+    assertTrue(v.isPoisoned());
+  }
+
+  public void testMissingServiceAnnotations() {
+    v.validateRequestContext(RequestContextMissingAnnotation.class.getName());
     assertTrue(v.isPoisoned());
   }
 
@@ -163,6 +207,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     Logger logger = Logger.getLogger("");
+    logger.setLevel(Level.OFF);
     v = new RequestFactoryInterfaceValidator(logger, new ClassLoaderLoader(
         Thread.currentThread().getContextClassLoader()));
   }
