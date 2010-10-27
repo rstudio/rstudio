@@ -27,6 +27,9 @@ import java.net.URL;
  * Utility class to help linkers do resource injection.
  */
 public class ResourceInjectionUtil {
+  /**
+   * Installs stylesheets and scripts
+   */
   public static StringBuffer injectResources(StringBuffer selectionScript,
       ArtifactSet artifacts) {
     // Add external dependencies
@@ -50,6 +53,40 @@ public class ResourceInjectionUtil {
     return selectionScript;
   }
   
+  /**
+   * Installs stylesheets using the installOneStylesheet method, which is
+   * assumed to be defined on the page.
+   */
+  public static StringBuffer injectStylesheets(StringBuffer selectionScript,
+      ArtifactSet artifacts) {
+    int startPos = selectionScript.indexOf("// __MODULE_STYLES__");
+    if (startPos != -1) {
+      for (StylesheetReference resource : artifacts.find(StylesheetReference.class)) {
+        String text = generateNewStylesheetInjector(resource.getSrc());
+        selectionScript.insert(startPos, text);
+        startPos += text.length();
+      }
+    }
+    return selectionScript;
+  }
+  
+  /**
+   * Generate a Snippet of JavaScript to inject an external stylesheet using
+   * the installOneStylesheet helper function (which is assumed to already
+   * be defined on the page.
+   * 
+   * <pre>
+   * installOneStylesheet(URL, HREF_EXPR);
+   * </pre>
+   */
+  private static String generateNewStylesheetInjector(String stylesheetUrl) {
+    String hrefExpr = "'" + stylesheetUrl + "'";
+    if (isRelativeURL(stylesheetUrl)) {
+      hrefExpr = "__MODULE_FUNC__.__moduleBase + " + hrefExpr;
+    }
+    return "installOneStylesheet('" + stylesheetUrl + "', " + hrefExpr + ");\n";
+  }
+  
   private static String generateScriptInjector(String scriptUrl) {
     if (isRelativeURL(scriptUrl)) {
       return "  if (!__gwt_scriptsLoaded['"
@@ -67,7 +104,7 @@ public class ResourceInjectionUtil {
           + scriptUrl + "\\\"></script>');\n" + "  }\n";
     }
   }
-  
+
   /**
    * Generate a Snippet of JavaScript to inject an external stylesheet.
    * 
@@ -95,7 +132,7 @@ public class ResourceInjectionUtil {
         + "  $doc.getElementsByTagName('head')[0].appendChild(l);\n         "
         + "}\n";
   }
-  
+
   /**
    * Determines whether or not the URL is relative.
    * 

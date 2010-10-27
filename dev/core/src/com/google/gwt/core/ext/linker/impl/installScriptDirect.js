@@ -1,8 +1,10 @@
+// Installs the script directly, by simply appending a script tag with the
+// src set to the correct location to the install location.
 function installScript(filename) {
   // Provides the getInstallLocation() and getInstallLocationDoc() functions
   __INSTALL_LOCATION__
 
-  // Provides the setupWaitForBodyLoad() and isBodyLoaded() functions
+  // Provides the setupWaitForBodyLoad()function
   __WAIT_FOR_BODY_LOADED__
   
   function installCode(code) {

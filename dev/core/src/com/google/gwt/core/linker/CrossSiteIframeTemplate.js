@@ -22,6 +22,10 @@ function __MODULE_FUNC__() {
    * Internal Helper Functions
    ***************************************************************************/
 
+  function isBodyLoaded() {
+    return (/loaded|complete/.test($doc.readyState));
+  }
+
   function isHostedMode() {
     var query = $wnd.location.search;
     return (query.indexOf('gwt.codesvr=') != -1);
@@ -90,6 +94,8 @@ function __MODULE_FUNC__() {
   // __MODULE_FUNC__.__softPermutationId variables if needed
   __PERMUTATIONS__
 
+  // Provides the loadExternalStylesheets() function
+  __LOAD_STYLESHEETS__
 
   /****************************************************************************
    * Bootstrap startup code
@@ -103,11 +109,9 @@ function __MODULE_FUNC__() {
   // Must be done right before the "bootstrap" "end" stat is sent
   var filename = getCompiledCodeFilename();
 
+  loadExternalStylesheets();
+
   sendStats('bootstrap', 'end');
-  // For now, send this dummy statistic since some people are depending on it
-  // being present. TODO(unnurg): remove this statistic soon
-  sendStats('loadExternalRefs', 'begin');
-  sendStats('loadExternalRefs', 'end');
 
   installScript(filename);
 

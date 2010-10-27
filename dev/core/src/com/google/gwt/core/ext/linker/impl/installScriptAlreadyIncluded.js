@@ -1,8 +1,13 @@
+// Installs a script which has already been downloaded (usually because the 
+// script contents are combined with the bootstrap script in cases like SSSS).
+// Since the script contents are wrapped in a call to onScriptDownloaded, all
+// we do here is set up that function, which will install the contents in
+// a script tag appended to the install location.
 function installScript(filename) {
   // Provides the getInstallLocation() and getInstallLocationDoc() functions
   __INSTALL_LOCATION__
 
-  // Provides the setupWaitForBodyLoad() and isBodyLoaded() functions
+  // Provides the setupWaitForBodyLoad() function
   __WAIT_FOR_BODY_LOADED__
 
   function installCode(code) {

@@ -15,11 +15,13 @@
  */
 
 /**
- * Determine our own script's URL via magic :)
- * This function produces one side-effect, it sets base to the module's
- * base url. Note: although this script returns the module's base url, it
- * also sets the global 'base' variable for backwards compatability with older
- * linkers.
+ * Determine our own script's URL by trying various things
+ *
+ * First - use the baseUrl meta tag if it exists
+ * Second - look for a script tag with the src set to MODULE_NAME.nocache.js and
+ *   if it's found, use it to determine the baseUrl
+ * Third - if the page is not already loaded, try to use some document.write
+ *   magic to install a temporary tag and use that to determine the baseUrl.
  * 
  * This is included into the selection scripts
  * wherever COMPUTE_SCRIPT_BASE appears with underlines
@@ -32,10 +34,15 @@ function computeScriptBase() {
   // Note: the base variable should not be defined in this function because in
   // the older templates (like IFrameTemplate.js), base is defined outside this
   // function, and they rely on the fact that calling computeScriptBase will set
-  // that base variable rather than using the return value.
+  // that base variable rather than using the return value. Instead, we define
+  // a tempBase variable, and then right before we return, we also set the
+  // base variable for backwards compatability
+  var tempBase = '';
+
   if (metaVal != null) {
-    base = metaVal;
-    return base;
+    tempBase = metaVal;
+    base = tempBase;
+    return tempBase;
   }
 
   // The baseUrl will be similar to the URL for this script's URL
@@ -54,16 +61,18 @@ function computeScriptBase() {
   // it. Note that this will not work in the Late Loading case due to the
   // document.write call.
   if (!thisScript) {
-    // Put in a marker script element which should be the first script tag after
-    // the tag we're looking for. To find it, we start at the marker and walk
-    // backwards until we find a script.
-    var markerId = "__gwt_marker___MODULE_NAME__";
-    var markerScript;
-    $doc.write('<script id="' + markerId + '"></script>');
-    markerScript = $doc.getElementById(markerId);
-    thisScript = markerScript && markerScript.previousSibling;
-    while (thisScript && thisScript.tagName != 'SCRIPT') {
-      thisScript = thisScript.previousSibling;
+    if (typeof isBodyLoaded == 'undefined' || !isBodyLoaded()) {
+      // Put in a marker script element which should be the first script tag after
+      // the tag we're looking for. To find it, we start at the marker and walk
+      // backwards until we find a script.
+      var markerId = "__gwt_marker___MODULE_NAME__";
+      var markerScript;
+      $doc.write('<script id="' + markerId + '"></script>');
+      markerScript = $doc.getElementById(markerId);
+      thisScript = markerScript && markerScript.previousSibling;
+      while (thisScript && thisScript.tagName != 'SCRIPT') {
+        thisScript = thisScript.previousSibling;
+      }
     }
   }
 
@@ -84,21 +93,21 @@ function computeScriptBase() {
 
   if (thisScript && thisScript.src) {
     // Compute our base url
-    base = getDirectoryOfFile(thisScript.src);
+    tempBase = getDirectoryOfFile(thisScript.src);
   }
 
   // Make the base URL absolute
-  if (base == '') {
+  if (tempBase == '') {
     // If there's a base tag, use it.
     var baseElements = $doc.getElementsByTagName('base');
     if (baseElements.length > 0) {
       // It's always the last parsed base tag that will apply to this script.
-      base = baseElements[baseElements.length - 1].href;
+      tempBase = baseElements[baseElements.length - 1].href;
     } else {
       // No base tag; the base must be the same as the document location.
-      base = getDirectoryOfFile($doc.location.href);
+      tempBase = getDirectoryOfFile($doc.location.href);
     }
-  } else if ((base.match(/^\w+:\/\//))) {
+  } else if ((tempBase.match(/^\w+:\/\//))) {
     // If the URL is obviously absolute, do nothing.
   } else {
     // Probably a relative URL; use magic to make the browser absolutify it.
@@ -106,8 +115,8 @@ function computeScriptBase() {
     // sure way!  (A side benefit is it preloads clear.cache.gif)
     // Note: this trick is harmless if the URL was really already absolute.
     var img = $doc.createElement("img");
-    img.src = base + 'clear.cache.gif';
-    base = getDirectoryOfFile(img.src);
+    img.src = tempBase + 'clear.cache.gif';
+    tempBase = getDirectoryOfFile(img.src);
   }
 
   if (markerScript) {
@@ -115,5 +124,6 @@ function computeScriptBase() {
     markerScript.parentNode.removeChild(markerScript);
   }
 
-  return base;
+  base = tempBase;
+  return tempBase;
 }

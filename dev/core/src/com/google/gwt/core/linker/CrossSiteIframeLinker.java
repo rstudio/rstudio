@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.impl.PropertiesMappingArtifact;
+import com.google.gwt.core.ext.linker.impl.ResourceInjectionUtil;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.js.JsToStringGenerationVisitor;
@@ -65,12 +66,14 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     includeJs(ss, logger, getJsProperties(context), "__PROPERTIES__");
     includeJs(ss, logger, getJsProcessMetas(context), "__PROCESS_METAS__");
     includeJs(ss, logger, getJsComputeScriptBase(context), "__COMPUTE_SCRIPT_BASE__");
+    includeJs(ss, logger, getJsLoadExternalStylesheets(context), "__LOAD_STYLESHEETS__");
     
+    ss = ResourceInjectionUtil.injectStylesheets(ss, artifacts);
+    ss = permutationsUtil.addPermutationsJs(ss, logger, context);
+
     replaceAll(ss, "__MODULE_FUNC__", context.getModuleFunctionName());
     replaceAll(ss, "__MODULE_NAME__", context.getModuleName());
     replaceAll(ss, "__HOSTED_FILENAME__", getHostedFilename());
-
-    permutationsUtil.addPermutationsJs(ss, logger, context);
 
     return ss.toString();
   }
@@ -98,6 +101,10 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   // also override shouldInstallCode() to return false
   protected String getJsInstallScript(LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/installScriptEarlyDownload.js";
+  }
+
+  protected String getJsLoadExternalStylesheets(LinkerContext context) {
+    return "com/google/gwt/core/ext/linker/impl/loadExternalStylesheets.js";
   }
   
   protected String getJsPermutations(LinkerContext context) {
