@@ -306,6 +306,12 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
      * matches" message.
      */
     private boolean hideWhenEmpty = true;
+    
+    /**
+     * Object to position the suggestion display next to, instead of the 
+     * associated suggest box.
+     */
+    private UIObject positionRelativeTo;
 
     /**
      * Construct a new {@link DefaultSuggestionDisplay}.
@@ -358,6 +364,16 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       suggestionPopup.setStyleName(style);
     }
 
+    /**
+     * Sets the UI object where the suggestion display should appear next to.
+     * 
+     * @param uiObject the uiObject used for positioning, or null to position 
+     *     relative to the suggest box
+     */
+    public void setPositionRelativeTo(UIObject uiObject) {
+      positionRelativeTo = uiObject;
+    }
+    
     /**
      * Set whether or not the suggestion list should be hidden when there are 
      * no suggestions to display. Defaults to true.
@@ -505,7 +521,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       }
 
       // Show the popup under the TextBox.
-      suggestionPopup.showRelativeTo(suggestBox);
+      suggestionPopup.showRelativeTo(positionRelativeTo != null 
+          ? positionRelativeTo : suggestBox);
     }
 
     @Override
