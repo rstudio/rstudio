@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.util;
 
+import com.google.gwt.dev.util.NullOutputFileSet.NullOutputStream;
 import com.google.gwt.dev.util.collect.HashSet;
 
 import java.io.File;
@@ -67,6 +68,8 @@ public class OutputFileSetOnJar extends OutputFileSet {
   private final JarOutputStream jar;
 
   private final String pathPrefix;
+  
+  private final Set<String> seenEntries = new HashSet<String>();
 
   public OutputFileSetOnJar(File jarFile, String pathPrefix) throws IOException {
     super(jarFile.getAbsolutePath());
@@ -83,9 +86,14 @@ public class OutputFileSetOnJar extends OutputFileSet {
   @Override
   public OutputStream createNewOutputStream(String path, long lastModifiedTime)
       throws IOException {
-    mkzipDirs(getParentPath(pathPrefix + path));
+    String fullPath = pathPrefix + path;
+    if (seenEntries.contains(fullPath)) {
+      return new NullOutputStream();
+    }
+    seenEntries.add(fullPath);
+    mkzipDirs(getParentPath(fullPath));
 
-    ZipEntry zipEntry = new ZipEntry(pathPrefix + path);
+    ZipEntry zipEntry = new ZipEntry(fullPath);
     if (lastModifiedTime >= 0) {
       zipEntry.setTime(lastModifiedTime);
     }

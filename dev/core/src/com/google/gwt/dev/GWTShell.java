@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.WorkDirs;
@@ -224,7 +225,8 @@ public class GWTShell extends DevModeBase {
       outputDir.mkdirs();
       OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
           outputDir, "");
-      linkerStack.produceOutput(logger, artifacts, false, outFileSet);
+      linkerStack.produceOutput(logger, artifacts, Visibility.Public,
+          outFileSet);
       outFileSet.close();
     }
   }

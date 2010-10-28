@@ -31,7 +31,7 @@ public class BinaryOnlyArtifactWrapper extends BinaryEmittedArtifact {
 
   public BinaryOnlyArtifactWrapper(String path, EmittedArtifact artifact) {
     super(path);
-    setPrivate(artifact.isPrivate());
+    setVisibility(artifact.getVisibility());
     this.underlyingArtifact = artifact;
   }
 

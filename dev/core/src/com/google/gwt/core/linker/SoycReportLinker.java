@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
@@ -172,7 +173,8 @@ public class SoycReportLinker extends Linker {
    */
   private void buildCompilerMetricsXml(ArtifactSet artifacts) {
     ModuleMetricsArtifact moduleMetrics = null;
-    Set<ModuleMetricsArtifact> moduleMetricsSet = artifacts.find(ModuleMetricsArtifact.class);
+    Set<ModuleMetricsArtifact> moduleMetricsSet = artifacts.find(
+        ModuleMetricsArtifact.class);
     if (!moduleMetricsSet.isEmpty()) {
       for (ModuleMetricsArtifact metrics : moduleMetricsSet) {
         moduleMetrics = metrics;
@@ -186,10 +188,11 @@ public class SoycReportLinker extends Linker {
       return;
     }
 
-    byte[] xmlResult = CompilerMetricsXmlFormatter.writeMetricsAsXml(artifacts, moduleMetrics);
-    EmittedArtifact metricsArtifact = new SyntheticArtifact(SoycReportLinker.class, 
-       "compilerMetrics.xml", xmlResult);
-    metricsArtifact.setPrivate(true);
+    byte[] xmlResult = CompilerMetricsXmlFormatter.writeMetricsAsXml(
+        artifacts, moduleMetrics);
+    EmittedArtifact metricsArtifact = new SyntheticArtifact(
+        SoycReportLinker.class, "compilerMetrics.xml", xmlResult);
+    metricsArtifact.setVisibility(Visibility.Private);
     artifacts.add(metricsArtifact);
   }
 
@@ -197,7 +200,8 @@ public class SoycReportLinker extends Linker {
       ArtifactSet artifacts) {
     ArtifactsOutputDirectory out = new ArtifactsOutputDirectory();
     try {
-      new SoycDashboard(out).generateCrossPermutationFiles(extractPermutationDescriptions(artifacts));
+      new SoycDashboard(out).generateCrossPermutationFiles(
+          extractPermutationDescriptions(artifacts));
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR,
           "Error while generating a Story of Your Compile", e);
@@ -221,9 +225,12 @@ public class SoycReportLinker extends Linker {
 
   private Map<String, List<String>> extractPermutationDescriptions(
       ArtifactSet artifacts) {
-    Map<String, List<String>> permDescriptions = new TreeMap<String, List<String>>();
-    for (PermDescriptionArtifact art : artifacts.find(PermDescriptionArtifact.class)) {
-      permDescriptions.put(Integer.toString(art.getPermId()), art.getPermDesc());
+    Map<String, List<String>> permDescriptions = new TreeMap<String,
+        List<String>>();
+    for (PermDescriptionArtifact art : artifacts.find(
+        PermDescriptionArtifact.class)) {
+      permDescriptions.put(Integer.toString(art.getPermId()),
+          art.getPermDesc());
     }
     return permDescriptions;
   }

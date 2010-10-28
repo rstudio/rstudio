@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
@@ -1184,7 +1185,7 @@ public class JavaToJavaScriptCompiler {
 
     // Set all of the main SOYC artifacts private.
     for (SyntheticArtifact soycArtifact : soycArtifacts) {
-      soycArtifact.setPrivate(true);
+      soycArtifact.setVisibility(Visibility.Private);
     }
 
     if (sizeBreakdowns != null) {

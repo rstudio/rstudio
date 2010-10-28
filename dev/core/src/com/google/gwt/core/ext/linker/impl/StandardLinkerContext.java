@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.PublicResource;
 import com.google.gwt.core.ext.linker.SelectionProperty;
@@ -467,26 +468,26 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
    * 
    * @param logger where to log progress
    * @param artifacts the artifacts to emit
-   * @param emitPrivates whether to emit the private artifacts only, vs. the
-   *          public artifacts only
+   * @param visibility the level of visibility of artifacts to output
    * @param out where to emit the artifact contents
    */
   public void produceOutput(TreeLogger logger, ArtifactSet artifacts,
-      boolean emitPrivates, OutputFileSet out) throws UnableToCompleteException {
-    String publicness = emitPrivates ? "private" : "public";
-    logger = logger.branch(TreeLogger.TRACE, "Linking " + publicness
+      Visibility visibility, OutputFileSet out) throws UnableToCompleteException {
+    logger = logger.branch(TreeLogger.TRACE, "Linking " + visibility
         + " artifacts into " + out.getPathDescription(), null);
 
     for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
       TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
           "Emitting resource " + artifact.getPartialPath(), null);
 
-      if (artifact.isPrivate() != emitPrivates) {
+      if (!artifact.getVisibility().matches(visibility)) {
         continue;
       }
 
       String partialPath = artifact.getPartialPath();
-      if (artifact.isPrivate()) {
+      if (artifact.getVisibility() != Visibility.Public) {
+        // Any non-public linker will have their artifacts stored in a directory
+        // named after the linker.
         partialPath = getExtraPathForLinker(artifact.getLinker(), partialPath);
         if (partialPath.startsWith("/")) {
           partialPath = partialPath.substring(1);

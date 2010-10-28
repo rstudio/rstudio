@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
@@ -226,7 +227,8 @@ abstract class AbstractLocalizableImplCreator extends
               msgWriter.write(branch, locale.toString(), resourceList, out,
                   targetClass);
               out.flush();
-              context.commitResource(logger, outStr).setPrivate(true);
+              context.commitResource(logger, outStr).setVisibility(
+                  Visibility.Private);
             } catch (UnableToCompleteException e) {
               // msgWriter should have already logged an error message.
               // Keep going for now so we can find other errors.

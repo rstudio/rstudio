@@ -19,14 +19,15 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.module.client.NoDeployTest;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Creates two files in the generated output directory.
+ * Creates three files in the generated output directory with different
+ * visibility.
  */
 public class NoDeployGenerator extends Generator {
 
@@ -35,8 +36,10 @@ public class NoDeployGenerator extends Generator {
       String typeName) throws UnableToCompleteException {
 
     try {
-      createFile(logger, context, "publicFile.txt", false);
-      createFile(logger, context, "privateFile.txt", true);
+      createFile(logger, context, "publicFile.txt", Visibility.Public);
+      createFile(logger, context, "deployFile.txt", Visibility.Deploy);
+      createFile(logger, context, "privateFile.txt", Visibility.Private);
+      createFile(logger, context, "legacyFile.txt", Visibility.LegacyDeploy);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to create test file", e);
       throw new UnableToCompleteException();
@@ -46,7 +49,7 @@ public class NoDeployGenerator extends Generator {
   }
 
   private void createFile(TreeLogger logger, GeneratorContext context,
-      String path, boolean isPrivate) throws UnableToCompleteException,
+      String path, Visibility visibility) throws UnableToCompleteException,
       IOException {
 
     OutputStream out = context.tryCreateResource(logger, path);
@@ -54,7 +57,7 @@ public class NoDeployGenerator extends Generator {
       return;
     }
 
-    out.write(Util.getBytes(NoDeployTest.TEST_TEXT));
-    context.commitResource(logger, out).setPrivate(isPrivate);
+    out.write(Util.getBytes(path));
+    context.commitResource(logger, out).setVisibility(visibility);
   }
 }

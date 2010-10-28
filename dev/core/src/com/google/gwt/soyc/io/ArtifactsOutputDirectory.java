@@ -15,6 +15,7 @@
  */
 package com.google.gwt.soyc.io;
 
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.linker.SoycReportLinker;
 
@@ -51,7 +52,7 @@ public class ArtifactsOutputDirectory implements OutputDirectory {
         SyntheticArtifact newArtifact = new SyntheticArtifact(
             SoycReportLinker.class, COMPILE_REPORT_DIRECTORY + "/" + path,
             baos.toByteArray());
-        newArtifact.setPrivate(true);
+        newArtifact.setVisibility(Visibility.Private);
         artifacts.add(newArtifact);
         baos = null;
       }

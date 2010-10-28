@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -762,7 +763,8 @@ public class ProxyCreator {
       os.write(manifestBytes);
 
       GeneratedResource resource = context.commitResource(logger, os);
-      resource.setPrivate(true);
+      // TODO: change to Deploy when possible
+      resource.setVisibility(Visibility.LegacyDeploy);
     } catch (UnsupportedEncodingException e) {
       logger.log(TreeLogger.ERROR,
           SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING

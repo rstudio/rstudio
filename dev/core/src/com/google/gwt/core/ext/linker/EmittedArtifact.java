@@ -37,17 +37,98 @@ import java.io.OutputStream;
  */
 public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
 
+  /**
+   * Describes the visibility of an artifact.
+   */
+  public enum Visibility {
+
+    /**
+     * A public artifact is something that may be served to clients.
+     */
+    Public,
+    
+    /**
+     * A private artifact is something that is only used during the build
+     * process.
+     */
+    Private {
+      @Override
+      public boolean matches(Visibility visibility) {
+        switch (visibility) {
+          case LegacyDeploy:
+          case Private:
+            return true;
+          default:
+            return false;
+        }
+      }
+    },
+    
+    /**
+     * A deploy artifact is deployed to the server but is never served to the
+     * client.
+     */
+    Deploy {
+      @Override
+      public boolean matches(Visibility visibility) {
+        switch (visibility) {
+          case Deploy:
+          case LegacyDeploy:
+            return true;
+          default:
+            return false;
+        }
+      }
+    },
+    
+    /**
+     * For legacy use only - used for artifacts that were previously marked as
+     * private because they should not be delivered to the client, but actually
+     * should be visible to the server.  These artifacts will now be treated as
+     * both Private and Deploy, so that existing build tools that expect to find
+     * them in the output directory for Private artifacts will find them.
+     * 
+     * New code should use Deploy instead.
+     */
+    LegacyDeploy {
+      @Override
+      public boolean matches(Visibility visibility) {
+        switch (visibility) {
+          case Deploy:
+          case LegacyDeploy:
+          case Private:
+            return true;
+          default:
+            return false;
+        }
+      }
+    };
+    
+    /**
+     * Returns true if this visibility matches the requested visibility level,
+     * dealing with the fact that {@link #LegacyDeploy} matches both
+     * {@link #Private} and {@link #Deploy}.
+     * 
+     * @param visibility
+     * @return true if this visibility matches the requested level
+     */
+    public boolean matches(Visibility visibility) {
+      return this == visibility;
+    }
+  }
+
   private final String partialPath;
 
   /**
    * This is mutable because it has no effect on identity.
    */
-  private boolean isPrivate;
+  private Visibility visibility;
 
   protected EmittedArtifact(Class<? extends Linker> linker, String partialPath) {
     super(linker);
     assert partialPath != null;
     this.partialPath = partialPath;
+    visibility = Visibility.Public;
   }
 
   /**
@@ -78,6 +159,13 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
     return partialPath;
   }
 
+  /**
+   * @return the visibility
+   */
+  public Visibility getVisibility() {
+    return visibility;
+  }
+
   @Override
   public final int hashCode() {
     return getPartialPath().hashCode();
@@ -96,16 +184,31 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
    * Private EmittedArtifacts are intended for resources that generally should
    * not be deployed to the server in the same location as the module
    * compilation artifacts.
+   * 
+   * @deprecated use {@link #getVisibility()} instead
    */
+  @Deprecated
   public boolean isPrivate() {
-    return isPrivate;
+    return visibility == Visibility.Private;
   }
 
   /**
    * Sets the private attribute of the EmittedResource.
+   * 
+   * @param isPrivate true if this artifact is private
+   *
+   * @deprecated use {@link #setVisibility(Visibility)} instead
    */
+  @Deprecated
   public void setPrivate(boolean isPrivate) {
-    this.isPrivate = isPrivate;
+    this.visibility = isPrivate ? Visibility.Private : Visibility.Public;
+  }
+
+  /**
+   * @param visibility the visibility to set
+   */
+  public void setVisibility(Visibility visibility) {
+    this.visibility = visibility;
   }
 
   @Override

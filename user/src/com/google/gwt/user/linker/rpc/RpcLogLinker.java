@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
@@ -59,7 +60,7 @@ public class RpcLogLinker extends AbstractLinker {
           EmittedArtifact art = emitInputStream(logger,
               logArt.getContents(logger), logArt.getQualifiedSourceName() + "-"
                   + policyStrongName + ".rpc.log");
-          art.setPrivate(true);
+          art.setVisibility(Visibility.Private);
           toReturn.add(art);
         }
       }

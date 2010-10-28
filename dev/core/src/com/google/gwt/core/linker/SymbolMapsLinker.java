@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.Shardable;
@@ -120,7 +121,8 @@ public class SymbolMapsLinker extends AbstractLinker {
       throws UnableToCompleteException {
     EmittedArtifact symbolMapArtifact = emitBytes(logger, out.toByteArray(),
         result.getStrongName() + STRONG_NAME_SUFFIX);
-    symbolMapArtifact.setPrivate(true);
+    // TODO: change to Deploy when possible
+    symbolMapArtifact.setVisibility(Visibility.LegacyDeploy);
     artifacts.add(symbolMapArtifact);
   }
 

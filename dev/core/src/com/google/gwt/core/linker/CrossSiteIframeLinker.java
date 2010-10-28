@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.Shardable;
@@ -237,7 +238,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     try {
       serializedMap = emitString(logger, mappingArtifact.getSerialized(),
           "compilation-mappings.txt");
-      serializedMap.setPrivate(false);
+      // TODO(unnurg): make this Deploy
+      serializedMap.setVisibility(Visibility.Public);
       toReturn.add(serializedMap);
     } catch (UnableToCompleteException e) {
       e.printStackTrace();

@@ -30,6 +30,7 @@ import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
@@ -59,6 +60,7 @@ public class Compiler {
       registerHandler(new ArgHandlerWorkDirOptional(options));
 
       registerHandler(new ArgHandlerWarDir(options));
+      registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
     }
 
@@ -87,6 +89,10 @@ public class Compiler {
       localWorkers = other.getLocalWorkers();
     }
 
+    public File getDeployDir() {
+      return linkOptions.getDeployDir();
+    }
+
     public File getExtraDir() {
       return linkOptions.getExtraDir();
     }
@@ -102,6 +108,10 @@ public class Compiler {
 
     public File getWarDir() {
       return linkOptions.getWarDir();
+    }
+
+    public void setDeployDir(File extraDir) {
+      linkOptions.setDeployDir(extraDir);
     }
 
     public void setExtraDir(File extraDir) {
@@ -234,7 +244,7 @@ public class Compiler {
           }
           Link.link(logger.branch(TreeLogger.TRACE, logMessage), module,
               generatedArtifacts, allPerms, resultFiles, options.getWarDir(),
-              options.getExtraDir(), precompileOptions);
+              options.getDeployDir(), options.getExtraDir(), precompileOptions);
 
           linkEvent.end();
           long compileDone = System.currentTimeMillis();

@@ -24,10 +24,8 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Ensure that generated resources in the no-deploy directory aren't in the
- * output. This validates that the
- * {@link com.google.gwt.dev.linker.NoDeployResourcesShim} is being loaded and
- * operating correctly.
+ * Ensure that generated resources are deployed properly according to their
+ * visibility.
  */
 public class NoDeployTest extends GWTTestCase {
 
@@ -37,24 +35,69 @@ public class NoDeployTest extends GWTTestCase {
   private static class NoDeploy {
   }
 
-  public static final String TEST_TEXT = "Hello world!";
-
   /**
    * The maximum amount of time to wait for an RPC response in milliseconds. 
    */
-  private static final int RESPONSE_DELAY = 5000; 
+  private static final int RESPONSE_DELAY = 5000;
+  private static final String DEPLOY_PREFIX = "deploy?com.google.gwt.module.NoDeployTest.JUnit/"; 
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.module.NoDeployTest";
   }
 
-  public void testDeploy() throws RequestException {
+  /**
+   * Verify that a no-deploy directory in the public path will be deployed.
+   */
+  public void testPublicNoDeployPath() throws RequestException {
+    assertFileIsPublic("no-deploy/", "inPublic.txt");
+  }
+
+  public void testVisibilityDeployHttp() throws RequestException {
+    assertFileIsNotPublic("", "deployFile.txt");
+  }
+
+  public void testVisibilityDeployServer() throws RequestException {
+    assertFileIsDeployed("deployFile.txt");
+  }
+
+  public void testVisibilityLegacyDeployHttp() throws RequestException {
+    assertFileIsNotPublic("", "legacyFile.txt");
+  }
+
+  public void testVisibilityLegacyDeployServer() throws RequestException {
+    assertFileIsDeployed("legacyFile.txt");
+  }
+
+  public void testVisibilityPrivateHttp() throws RequestException {
+      assertFileIsNotPublic("", "privateFile.txt");
+  }
+
+  public void testVisibilityPrivateServer() throws RequestException {
+    assertFileIsNotDeployed("privateFile.txt");
+  }
+
+  public void testVisibilityPublicHttp() throws RequestException {
+    assertFileIsPublic("", "publicFile.txt");
+  }    
+
+  public void testVisibilityPublicServer() throws RequestException {
+    assertFileIsNotDeployed("publicFile.txt");
+  }    
+
+  /**
+   * Fetch a file from a servlet to make sure it is deployed.
+   * @param path
+   *
+   * @throws RequestException
+   */
+  private void assertFileIsDeployed(final String path) 
+      throws RequestException {
     GWT.create(NoDeploy.class);
 
-    // Try fetching a file that should exist
+    // Try fetching a file that should be publicly accessible
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-        GWT.getHostPageBaseURL() + "publicFile.txt");
+        GWT.getHostPageBaseURL() + DEPLOY_PREFIX + path);
     delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
@@ -63,28 +106,31 @@ public class NoDeployTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
-        assertEquals(TEST_TEXT, response.getText());
+        assertEquals(200, response.getStatusCode());
+        assertEquals(path, response.getText());
         finishTest();
       }
     });
   }
 
-  public void testNoDeploy() throws RequestException {
-    if (!GWT.isScript()) {
-      // Linkers aren't used in hosted-mode
-      return;
-    }
-
+  /**
+   * Fetch a file from a servlet to make sure it is not deployed.
+   * @param path
+   *
+   * @throws RequestException
+   */
+  private void assertFileIsNotDeployed(final String path) 
+      throws RequestException {
     GWT.create(NoDeploy.class);
 
-    // Try fetching a file that shouldn't exist
+    // Try fetching a file that should be publicly accessible
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-        GWT.getHostPageBaseURL() + "privateFile.txt");
+        GWT.getHostPageBaseURL() + DEPLOY_PREFIX + path);
     delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
-        fail();
+        throw new RuntimeException(exception);
       }
 
       public void onResponseReceived(Request request, Response response) {
@@ -95,14 +141,47 @@ public class NoDeployTest extends GWTTestCase {
   }
 
   /**
-   * Verify that a no-deploy directory in the public path will be deployed.
+   * Fetch a file from the HTTP server that should not be publicly accessible.
+   *
+   * @param prefix
+   * @param path
+   * @throws RequestException
    */
-  public void testNoDeployInPublic() throws RequestException {
+  private void assertFileIsNotPublic(final String prefix, final String path) 
+      throws RequestException {
     GWT.create(NoDeploy.class);
 
-    // Try fetching a file that shouldn't exist
+    // Try fetching a file that should be publicly accessible
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-        GWT.getHostPageBaseURL() + "no-deploy/inPublic.txt");
+        GWT.getHostPageBaseURL() + prefix + path);
+    delayTestFinish(RESPONSE_DELAY);
+    builder.sendRequest("", new RequestCallback() {
+
+      public void onError(Request request, Throwable exception) {
+        throw new RuntimeException(exception);
+      }
+
+      public void onResponseReceived(Request request, Response response) {
+        assertEquals(404, response.getStatusCode());
+        finishTest();
+      }
+    });
+  }
+
+  /**
+   * Fetch a file from the HTTP server that should be publicly accessible.
+   *
+   * @param prefix
+   * @param path
+   * @throws RequestException
+   */
+  private void assertFileIsPublic(String prefix, final String path) 
+      throws RequestException {
+    GWT.create(NoDeploy.class);
+
+    // Try fetching a file that should be publicly accessible
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
+        GWT.getHostPageBaseURL() + prefix + path);
     delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
@@ -111,7 +190,8 @@ public class NoDeployTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
-        assertEquals(TEST_TEXT, response.getText());
+        assertEquals(200, response.getStatusCode());
+        assertEquals(path, response.getText().trim());
         finishTest();
       }
     });

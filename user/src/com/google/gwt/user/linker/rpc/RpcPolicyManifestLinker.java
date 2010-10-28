@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
@@ -72,7 +73,7 @@ public class RpcPolicyManifestLinker extends AbstractLinker {
       ArtifactSet toReturn = new ArtifactSet(artifacts);
       SyntheticArtifact manifestArt = emitString(logger,
           generateManifest(context), MANIFEST_TXT);
-      manifestArt.setPrivate(true);
+      manifestArt.setVisibility(Visibility.LegacyDeploy);
       toReturn.add(manifestArt);
       return toReturn;
     }

@@ -35,6 +35,12 @@ public abstract class OutputFileSet {
     return pathsSeen.contains(path);
   }
 
+  /**
+   * No more output will be sent to this OutputFileSet.  It is safe to call
+   * {@link #close()} on an already-closed instance.
+   * 
+   * @throws IOException
+   */
   public abstract void close() throws IOException;
 
   /**

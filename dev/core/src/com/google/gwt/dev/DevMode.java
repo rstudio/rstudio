@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.ServletContainerLauncher;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
@@ -30,6 +31,7 @@ import com.google.gwt.dev.util.NullOutputFileSet;
 import com.google.gwt.dev.util.OutputFileSet;
 import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
@@ -167,6 +169,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       registerHandler(new ArgHandlerServer(options));
       registerHandler(new ArgHandlerStartupURLs(options));
       registerHandler(new ArgHandlerWarDir(options));
+      registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
       registerHandler(new ArgHandlerModuleName(options) {
@@ -207,6 +210,15 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     private ServletContainerLauncher scl;
     private String sclArgs;
     private File warDir;
+    private File deployDir;
+
+    /**
+     * @return the deploy directory.
+     */
+    public File getDeployDir() {
+      return (deployDir == null) ? new File(warDir, "WEB-INF/deploy")
+          : deployDir;
+    }
 
     public File getExtraDir() {
       return extraDir;
@@ -231,6 +243,15 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     public File getWarDir() {
       return warDir;
+    }
+
+    /**
+     * Set the deploy directory.
+     * 
+     * @param deployDir the deployDir to set
+     */
+    public void setDeployDir(File deployDir) {
+      this.deployDir = deployDir;
     }
 
     public void setExtraDir(File extraDir) {
@@ -491,16 +512,23 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
         options.getWarDir(), module.getName() + "/");
+    OutputFileSetOnDirectory deployFileSet = new OutputFileSetOnDirectory(
+        options.getDeployDir(), module.getName() + "/");
     OutputFileSet extraFileSet = new NullOutputFileSet();
     if (options.getExtraDir() != null) {
       extraFileSet = new OutputFileSetOnDirectory(options.getExtraDir(),
           module.getName() + "/");
     }
 
-    linkerStack.produceOutput(linkLogger, artifacts, false, outFileSet);
-    linkerStack.produceOutput(linkLogger, artifacts, true, extraFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Public,
+        outFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Deploy,
+        deployFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, Visibility.Private,
+        extraFileSet);
 
     outFileSet.close();
+    deployFileSet.close();
     try {
       extraFileSet.close();
     } catch (IOException e) {

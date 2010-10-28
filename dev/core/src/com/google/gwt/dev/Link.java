@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.impl.BinaryOnlyArtifactWrapper;
 import com.google.gwt.core.ext.linker.impl.JarEntryEmittedArtifact;
@@ -42,8 +43,10 @@ import com.google.gwt.dev.util.OutputFileSet;
 import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.OutputFileSetOnJar;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
+import com.google.gwt.dev.util.arg.OptionDeployDir;
 import com.google.gwt.dev.util.arg.OptionExtraDir;
 import com.google.gwt.dev.util.arg.OptionOutDir;
 import com.google.gwt.dev.util.arg.OptionWarDir;
@@ -80,7 +83,7 @@ public class Link {
    * Options for Link.
    */
   public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
-      OptionWarDir, LegacyLinkOptions {
+      OptionWarDir, OptionDeployDir, LegacyLinkOptions {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -89,6 +92,7 @@ public class Link {
       super(options);
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWarDir(options));
+      registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerOutDirDeprecated(options));
     }
 
@@ -104,6 +108,7 @@ public class Link {
   static class LinkOptionsImpl extends CompileTaskOptionsImpl implements
       LinkOptions {
 
+    private File deployDir;
     private File extraDir;
     private File outDir;
     private File warDir;
@@ -117,9 +122,15 @@ public class Link {
 
     public void copyFrom(LinkOptions other) {
       super.copyFrom(other);
+      setDeployDir(other.getDeployDir());
       setExtraDir(other.getExtraDir());
       setWarDir(other.getWarDir());
       setOutDir(other.getOutDir());
+    }
+
+    public File getDeployDir() {
+      return (deployDir == null) ? new File(warDir, "WEB-INF/deploy")
+          : deployDir;
     }
 
     public File getExtraDir() {
@@ -133,6 +144,10 @@ public class Link {
 
     public File getWarDir() {
       return warDir;
+    }
+
+    public void setDeployDir(File dir) {
+      deployDir = dir;
     }
 
     public void setExtraDir(File extraDir) {
@@ -160,23 +175,35 @@ public class Link {
         linkerContext, generatedArtifacts, permutations, resultFiles);
     OutputFileSet outFileSet = chooseOutputFileSet(outDir, module.getName()
         + "/");
+    OutputFileSet deployFileSet = chooseOutputFileSet(outDir, module.getName()
+        + "-deploy/");
     OutputFileSet extraFileSet = chooseOutputFileSet(outDir, module.getName()
         + "-aux/");
-    doProduceOutput(logger, artifacts, linkerContext, outFileSet, extraFileSet);
+    doProduceOutput(logger, artifacts, linkerContext, outFileSet, deployFileSet,
+        extraFileSet);
   }
 
   public static void link(TreeLogger logger, ModuleDef module,
       ArtifactSet generatedArtifacts, Permutation[] permutations,
       List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
-      File extrasDir, JJSOptions precompileOptions)
+      File deployDir, File extrasDir, JJSOptions precompileOptions)
       throws UnableToCompleteException, IOException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompileOptions);
     ArtifactSet artifacts = doSimulatedShardingLink(logger, module,
         linkerContext, generatedArtifacts, permutations, resultFiles);
+    OutputFileSet extrasFileSet = chooseOutputFileSet(extrasDir,
+        module.getName() + "/");
+    // allow -deploy and -extra to point to the same directory/jar
+    OutputFileSet deployFileSet;
+    if (deployDir.equals(extrasDir)) {
+      deployFileSet = extrasFileSet;
+    } else {
+      deployFileSet = chooseOutputFileSet(deployDir,
+          module.getName() + "/");
+    }
     doProduceOutput(logger, artifacts, linkerContext, chooseOutputFileSet(
-        outDir, module.getName() + "/"), chooseOutputFileSet(extrasDir,
-        module.getName() + "/"));
+        outDir, module.getName() + "/"), deployFileSet, extrasFileSet);
   }
 
   /**
@@ -215,17 +242,12 @@ public class Link {
 
       // Write the data of emitted artifacts
       for (EmittedArtifact art : linkedArtifacts.find(EmittedArtifact.class)) {
-        String jarEntryPath;
-        if (art.isPrivate()) {
-          String pathWithLinkerName = linkerContext.getExtraPathForLinker(
-              art.getLinker(), art.getPartialPath());
-          if (pathWithLinkerName.startsWith("/")) {
-            // This happens if the linker has no extra path
-            pathWithLinkerName = pathWithLinkerName.substring(1);
-          }
-          jarEntryPath = "aux/" + pathWithLinkerName;
+        Visibility visibility = art.getVisibility();
+        String jarEntryPath = visibility.name() + "/";
+        if (visibility == Visibility.Public) {
+          jarEntryPath += art.getPartialPath();
         } else {
-          jarEntryPath = "target/" + art.getPartialPath();
+          jarEntryPath += prefixArtifactPath(art, linkerContext);
         }
         ZipEntry ze = new ZipEntry(jarEntryPath);
         ze.setTime(art.getLastModified());
@@ -331,8 +353,8 @@ public class Link {
     }
 
     String name = dirOrJar.getName();
-    if (!dirOrJar.isDirectory()
-        && (name.endsWith(".war") || name.endsWith(".jar") || name.endsWith(".zip"))) {
+    if (!dirOrJar.isDirectory() && (name.endsWith(".war")
+        || name.endsWith(".jar") || name.endsWith(".zip"))) {
       return new OutputFileSetOnJar(dirOrJar, pathPrefix);
     } else {
       Util.recursiveDelete(new File(dirOrJar, pathPrefix), true);
@@ -389,11 +411,18 @@ public class Link {
    */
   private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
       StandardLinkerContext linkerContext, OutputFileSet outFileSet,
-      OutputFileSet extraFileSet) throws UnableToCompleteException, IOException {
-    linkerContext.produceOutput(logger, artifacts, false, outFileSet);
-    linkerContext.produceOutput(logger, artifacts, true, extraFileSet);
+      OutputFileSet deployFileSet, OutputFileSet extraFileSet)
+      throws UnableToCompleteException, IOException {
+
+    linkerContext.produceOutput(logger, artifacts, Visibility.Public,
+        outFileSet);
+    linkerContext.produceOutput(logger, artifacts, Visibility.Deploy,
+        deployFileSet);
+    linkerContext.produceOutput(logger, artifacts, Visibility.Private,
+        extraFileSet);
 
     outFileSet.close();
+    deployFileSet.close();
     extraFileSet.close();
 
     logger.log(TreeLogger.INFO, "Link succeeded");
@@ -456,12 +485,8 @@ public class Link {
   private static String getFullArtifactPath(EmittedArtifact emittedArtifact,
       StandardLinkerContext context) {
     String path = emittedArtifact.getPartialPath();
-    if (emittedArtifact.isPrivate()) {
-      path = context.getExtraPathForLinker(emittedArtifact.getLinker(), path);
-      if (path.startsWith("/")) {
-        // This happens if the linker has no extra path
-        path = path.substring(1);
-      }
+    if (emittedArtifact.getVisibility() != Visibility.Public) {
+      path = prefixArtifactPath(emittedArtifact, context);
     }
     return path;
   }
@@ -490,6 +515,25 @@ public class Link {
         + javaScript[0].length() + " and total script size of " + totalSize);
   }
 
+  /**
+   * Prefix an artifact's partial path with the linker name and make sure it is
+   * a relative pathname.
+   * 
+   * @param art
+   * @param linkerContext
+   * @return prefixed path
+   */
+  private static String prefixArtifactPath(
+      EmittedArtifact art, StandardLinkerContext linkerContext) {
+    String pathWithLinkerName = linkerContext.getExtraPathForLinker(
+        art.getLinker(), art.getPartialPath());
+    if (pathWithLinkerName.startsWith("/")) {
+      // This happens if the linker has no extra path
+      pathWithLinkerName = pathWithLinkerName.substring(1);
+    }
+    return pathWithLinkerName;
+  }
+
   private static ArtifactSet scanCompilePermResults(TreeLogger logger,
       List<File> resultFiles) throws IOException, UnableToCompleteException {
     final ArtifactSet artifacts = new ArtifactSet();
@@ -504,18 +548,10 @@ public class Link {
         }
 
         String path;
-        Artifact<?> artForEntry;
+        Artifact<?> artForEntry = null;
 
-        if (entry.getName().startsWith("target/")) {
-          path = entry.getName().substring("target/".length());
-          artForEntry = new JarEntryEmittedArtifact(path, resultFile, entry);
-        } else if (entry.getName().startsWith("aux/")) {
-          path = entry.getName().substring("aux/".length());
-          JarEntryEmittedArtifact jarArtifact = new JarEntryEmittedArtifact(
-              path, resultFile, entry);
-          jarArtifact.setPrivate(true);
-          artForEntry = jarArtifact;
-        } else if (entry.getName().startsWith("arts/")) {
+        String entryName = entry.getName();
+        if (entryName.startsWith("arts/")) {
           try {
             artForEntry = Util.readStreamAsObject(new BufferedInputStream(
                 jarFile.getInputStream(entry)), Artifact.class);
@@ -526,7 +562,21 @@ public class Link {
             throw new UnableToCompleteException();
           }
         } else {
-          continue;
+          int slash = entryName.indexOf('/');
+          if (slash >= 0) {
+            try {
+              Visibility visibility = Visibility.valueOf(entryName.substring(0,
+                  slash));
+              path = entryName.substring(slash + 1);
+              JarEntryEmittedArtifact jarArtifact = new JarEntryEmittedArtifact(
+                  path, resultFile, entry);
+              jarArtifact.setVisibility(visibility);
+              artForEntry = jarArtifact;
+            } catch (IllegalArgumentException e) {
+              // silently ignore paths with invalid visibilities
+              continue;
+            }
+          }
         }
 
         artifacts.add(artForEntry);
@@ -596,8 +646,8 @@ public class Link {
 
         try {
           link(branch, module, precomp.getGeneratedArtifacts(), perms,
-              resultFiles, options.getWarDir(), options.getExtraDir(),
-              precomp.getUnifiedAst().getOptions());
+              resultFiles, options.getWarDir(), options.getDeployDir(),
+              options.getExtraDir(), precomp.getUnifiedAst().getOptions());
         } catch (IOException e) {
           logger.log(TreeLogger.ERROR,
               "Unexpected exception while producing output", e);
@@ -638,13 +688,21 @@ public class Link {
           module.getName() + "/");
       OutputFileSet extraFileSet = chooseOutputFileSet(options.getExtraDir(),
           module.getName() + "/");
+      // allow -deploy and -extra to point to the same directory/jar
+      OutputFileSet deployFileSet;
+      if (options.getDeployDir().equals(options.getExtraDir())) {
+        deployFileSet = extraFileSet;
+      } else {
+        deployFileSet = chooseOutputFileSet(options.getDeployDir(),
+            module.getName() + "/");
+      }
 
       ArtifactSet artifacts = scanCompilePermResults(logger, resultFiles);
       artifacts.addAll(linkerContext.getArtifactsForPublicResources(logger,
           module));
       artifacts = linkerContext.invokeFinalLink(logger, artifacts);
       doProduceOutput(logger, artifacts, linkerContext, outFileSet,
-          extraFileSet);
+          deployFileSet, extraFileSet);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Exception during final linking", e);
       throw new UnableToCompleteException();

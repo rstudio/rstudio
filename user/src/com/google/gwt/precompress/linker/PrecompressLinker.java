@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
@@ -130,7 +131,8 @@ public class PrecompressLinker extends AbstractLinker {
 
       ArtifactSet updated = new ArtifactSet(artifacts);
       for (EmittedArtifact art : artifacts.find(EmittedArtifact.class)) {
-        if (art.isPrivate()) {
+        if (art.getVisibility() != Visibility.Public) {
+          // only compress things that will be served to the client
           continue;
         }
         if (art.getPartialPath().endsWith(".gz")) {

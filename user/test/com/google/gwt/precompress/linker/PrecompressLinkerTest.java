@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 
@@ -180,7 +181,7 @@ public class PrecompressLinkerTest extends TestCase {
 
   private static SyntheticArtifact emitPrivate(String string, String contents) {
     SyntheticArtifact art = emit(string, contents);
-    art.setPrivate(true);
+    art.setVisibility(Visibility.Private);
     return art;
   }
 
