@@ -115,7 +115,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
        * called from the legacy link method.
        */
       for (CompilationResult compilation : toReturn.find(CompilationResult.class)) {
-        toReturn.addAll(doEmitCompilation(logger, context, compilation));
+        toReturn.addAll(doEmitCompilation(logger, context, compilation, artifacts));
       }
       return toReturn;
     } else {
@@ -137,11 +137,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
   
   protected Collection<Artifact<?>> doEmitCompilation(TreeLogger logger,
-      LinkerContext context, CompilationResult result)
+      LinkerContext context, CompilationResult result, ArtifactSet artifacts)
       throws UnableToCompleteException {
     String[] js = result.getJavaScript();
     byte[][] bytes = new byte[js.length][];
-    bytes[0] = generatePrimaryFragment(logger, context, result, js);
+    bytes[0] = generatePrimaryFragment(logger, context, result, js, artifacts);
     for (int i = 1; i < js.length; i++) {
       bytes[i] = Util.getBytes(generateDeferredFragment(logger, context, i,
           js[i]));
@@ -227,22 +227,23 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * {@link #getModuleSuffix(TreeLogger, LinkerContext)}.
    */
   protected byte[] generatePrimaryFragment(TreeLogger logger,
-      LinkerContext context, CompilationResult result, String[] js)
-      throws UnableToCompleteException {
+      LinkerContext context, CompilationResult result, String[] js,
+      ArtifactSet artifacts) throws UnableToCompleteException {
     TextOutput to = new DefaultTextOutput(context.isOutputCompact());
     to.print(generatePrimaryFragmentString(
-        logger, context, result.getStrongName(), js[0], js.length));
+        logger, context, result.getStrongName(), js[0], js.length, artifacts));
     return Util.getBytes(to.toString());
   }
   
   protected String generatePrimaryFragmentString(TreeLogger logger,
-      LinkerContext context, String strongName, String js, int length) 
+      LinkerContext context, String strongName, String js, int length,
+      ArtifactSet artifacts) 
   throws UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     b.append(getModulePrefix(logger, context, strongName, length));
     b.append(js);
     b.append(getModuleSuffix(logger, context));
-    return wrapPrimaryFragment(logger, context, b.toString());
+    return wrapPrimaryFragment(logger, context, b.toString(), artifacts);
   }
   
   protected String generateSelectionScript(TreeLogger logger,
@@ -358,7 +359,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   protected String wrapPrimaryFragment(TreeLogger logger,
-      LinkerContext context, String script) {
+      LinkerContext context, String script, ArtifactSet artifacts) {
     return script;
   }
 

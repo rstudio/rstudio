@@ -18,12 +18,13 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.StatementRanges;
-import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
@@ -120,8 +121,8 @@ public class IFrameLinker extends SelectionScriptLinker {
    */
   @Override
   protected byte[] generatePrimaryFragment(TreeLogger logger,
-      LinkerContext context, CompilationResult result, String[] js)
-      throws UnableToCompleteException {
+      LinkerContext context, CompilationResult result, String[] js,
+      ArtifactSet artifacts) throws UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     b.append(getModulePrefix(logger, context, result.getStrongName(), js.length));
     b.append(splitPrimaryJavaScript(result.getStatementRanges()[0], js[0],

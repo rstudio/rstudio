@@ -61,7 +61,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
 
   @Override
   protected Collection<Artifact<?>> doEmitCompilation(TreeLogger logger,
-      LinkerContext context, CompilationResult result)
+      LinkerContext context, CompilationResult result, ArtifactSet artifacts)
       throws UnableToCompleteException {
     if (result.getJavaScript().length != 1) {
       logger.branch(TreeLogger.ERROR,
@@ -69,7 +69,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
               + getDescription() + " Linker.", null);
       throw new UnableToCompleteException();
     }
-    return super.doEmitCompilation(logger, context, result);
+    return super.doEmitCompilation(logger, context, result, artifacts);
   }
 
   @Override

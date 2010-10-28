@@ -211,7 +211,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
         "com/google/gwt/core/ext/linker/impl/" + filename, logger); 
 
     String script = generatePrimaryFragmentString(
-        logger, context, "", buffer.toString(), 1);
+        logger, context, "", buffer.toString(), 1, artifacts);
     
     EmittedArtifact devArtifact = 
       emitString(logger, script, filename, lastModified);
@@ -261,11 +261,11 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   
   @Override
   protected String wrapPrimaryFragment(TreeLogger logger,
-      LinkerContext context, String script) {
+      LinkerContext context, String script, ArtifactSet artifacts) {
     StringBuffer out = new StringBuffer();
     if (shouldIncludeBootstrapInPrimaryFragment(context)) {
       try {
-        out.append(generateSelectionScript(logger, context, null));
+        out.append(generateSelectionScript(logger, context, artifacts));
       } catch (UnableToCompleteException e) {
         logger.log(TreeLogger.ERROR, "Problem setting up selection script", e);
         e.printStackTrace();
