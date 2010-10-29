@@ -64,6 +64,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
+import com.google.gwt.dev.jjs.impl.AstDumper;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
@@ -71,6 +72,7 @@ import com.google.gwt.dev.jjs.impl.CodeSplitter;
 import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
+import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
@@ -97,7 +99,6 @@ import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
-import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.TypeLinker;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
@@ -123,11 +124,9 @@ import com.google.gwt.dev.js.SizeBreakdown;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.util.AbstractTextOutput;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Memory;
-import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.collect.Lists;
@@ -145,10 +144,8 @@ import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -569,8 +566,8 @@ public class JavaToJavaScriptCompiler {
       allTypeDeclarations = null;
 
       Memory.maybeDumpMemory("AstOnly");
-      maybeDumpAST(jprogram);
-
+      AstDumper.maybeDumpAST(jprogram);
+      
       // See if we should run the EnumNameObfuscator
       if (module != null) {
         ConfigurationProperty enumNameObfuscationProp = (ConfigurationProperty) module.getProperties().find(
@@ -616,7 +613,7 @@ public class JavaToJavaScriptCompiler {
       /*
        * 4) Possibly optimize some.
        *
-       * Don't optimizing early if this is a draft compile, or if there's only
+       * Don't optimize early if this is a draft compile, or if there's only
        * one permutation.
        */
       if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT
@@ -703,7 +700,7 @@ public class JavaToJavaScriptCompiler {
         optimizeEvent.end();
         throw new InterruptedException();
       }
-      maybeDumpAST(jprogram);
+      AstDumper.maybeDumpAST(jprogram);
       OptimizerStats stats = optimizeLoop("Pass " + counter, jprogram,
           options.isAggressivelyOptimize());
       allOptimizerStats.add(stats);
@@ -820,6 +817,13 @@ public class JavaToJavaScriptCompiler {
       // remove same parameters value
       stats.add(SameParameterValueOptimizer.exec(jprogram).recordVisits(
           numNodes));
+    
+      /*
+       * enum ordinalization
+       * TODO(jbrosenberg): graduate this out of the 'isAggressivelyOptimize'
+       * block, over time.
+       */ 
+      stats.add(EnumOrdinalizer.exec(jprogram).recordVisits(numNodes));
     }
 
     // prove that any types that have been culled from the main tree are
@@ -1261,28 +1265,6 @@ public class JavaToJavaScriptCompiler {
       result[i++] = symbolData;
     }
     return result;
-  }
-
-  private static void maybeDumpAST(JProgram jprogram) {
-    String dumpFile = System.getProperty("gwt.jjs.dumpAst");
-    if (dumpFile != null) {
-      try {
-        FileOutputStream os = new FileOutputStream(dumpFile, true);
-        final PrintWriter pw = new PrintWriter(os);
-        TextOutput out = new AbstractTextOutput(false) {
-          {
-            setPrintWriter(pw);
-          }
-        };
-        SourceGenerationVisitor v = new SourceGenerationVisitor(out);
-        v.accept(jprogram);
-        pw.flush();
-        pw.close();
-      } catch (IOException e) {
-        System.out.println("Could not dump AST");
-        e.printStackTrace();
-      }
-    }
   }
 
   /**
