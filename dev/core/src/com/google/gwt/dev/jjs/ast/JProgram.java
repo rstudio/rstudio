@@ -77,7 +77,6 @@ public class JProgram extends JNode {
           "java.util.Iterator", "java.lang.AssertionError", "java.lang.Boolean",
           "java.lang.Byte", "java.lang.Character", "java.lang.Short",
           "java.lang.Integer", "java.lang.Float", "java.lang.Double",
-          "java.lang.Throwable",
           "com.google.gwt.core.client.GWT",
           "com.google.gwt.core.client.JavaScriptObject",
           "com.google.gwt.lang.ClassLiteralHolder",
@@ -781,10 +780,6 @@ public class JProgram extends JNode {
     return returnMap;
   }
 
-  public String getClassLiteralName(JType type) {
-    return type.getJavahSignatureName() + "_classLit";
-  }
-
   public CorrelationFactory getCorrelator() {
     return correlator;
   }
@@ -880,8 +875,8 @@ public class JProgram extends JNode {
           JClassLiteral.computeClassObjectAllocation(this,info, type);
 
       // Create a field in the class literal holder to hold the object.
-      JField field = new JField(info, getClassLiteralName(type),
-          typeSpecialClassLiteralHolder, getTypeJavaLangClass(),
+      JField field = new JField(info, type.getJavahSignatureName()
+          + "_classLit", typeSpecialClassLiteralHolder, getTypeJavaLangClass(),
           true, Disposition.FINAL);
       typeSpecialClassLiteralHolder.addField(field);
 

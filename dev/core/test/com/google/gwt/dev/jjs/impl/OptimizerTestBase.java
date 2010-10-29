@@ -34,17 +34,17 @@ public abstract class OptimizerTestBase extends JJSTestBase {
   protected final class Result {
     private final String returnType;
     private final String originalCode;
-    private final boolean madeChanges;
+    private final boolean madeChages;
     private final JProgram optimizedProgram;
     private final String methodName;
 
     public Result(JProgram optimizedProgram, String returnType, 
-        String methodName, String originalCode, boolean madeChanges) {
+        String methodName, String originalCode, boolean madeChages) {
       this.optimizedProgram = optimizedProgram;
       this.returnType = returnType;
       this.methodName = methodName;
       this.originalCode = originalCode;
-      this.madeChanges = madeChanges;
+      this.madeChages = madeChages;
     }
 
     public void into(String... expected) throws UnableToCompleteException {
@@ -77,7 +77,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     }
 
     public void noChange() {
-      assertFalse(madeChanges);
+      assertFalse(madeChages);
     }
 
     public JMethod findMethod(String methodName) {
