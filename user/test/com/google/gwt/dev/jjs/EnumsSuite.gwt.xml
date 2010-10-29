@@ -16,5 +16,5 @@
   <inherits name="com.google.gwt.dev.jjs.CompilerSuite"/>
   
   <set-configuration-property name="compiler.enum.obfuscate.names" 
-        value="true" /> 
+        value="false" /> 
 </module>

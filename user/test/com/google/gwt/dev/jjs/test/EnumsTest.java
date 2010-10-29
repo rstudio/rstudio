@@ -84,7 +84,7 @@ public class EnumsTest extends GWTTestCase {
   }
 
   public String getModuleName() {
-    return "com.google.gwt.dev.jjs.CompilerSuite";
+    return "com.google.gwt.dev.jjs.EnumsSuite";
   }
 
   public void testCompareTo() {
@@ -190,6 +190,7 @@ public class EnumsTest extends GWTTestCase {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public void testValueOf() {
     assertEquals(Basic.A, Basic.valueOf("A"));
     assertEquals(Basic.B, Basic.valueOf("B"));

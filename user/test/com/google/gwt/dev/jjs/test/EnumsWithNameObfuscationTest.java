@@ -127,6 +127,7 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
   }
   
   @Override
+  @SuppressWarnings("unchecked")
   public void testValueOf() {
     
     try {
