@@ -51,6 +51,14 @@ final class BeanHelper {
     return jClass.getName() + "Descriptor";
   }
 
+  public String getFullyQualifiedValidatorName() {
+    return jClass.getQualifiedSourceName() + "Validator";
+  }
+
+  public String getPackage() {
+    return jClass.getPackage().getName();
+  }
+
   public String getTypeCanonicalName() {
     return jClass.getQualifiedSourceName();
   }

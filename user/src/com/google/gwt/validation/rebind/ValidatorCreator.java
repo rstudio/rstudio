@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.user.rebind.AbstractSourceCreator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.GwtValidation;
@@ -28,6 +29,7 @@ import com.google.gwt.validation.client.impl.GwtBeanDescriptor;
 import com.google.gwt.validation.client.impl.GwtSpecificValidator;
 import com.google.gwt.validation.client.impl.GwtValidationContext;
 
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -110,31 +112,6 @@ public class ValidatorCreator extends AbstractCreator {
       writeGetConstraintsForClass(sourceWriter);
   }
 
-  protected void writeTypeSupport(SourceWriter sw) {
-    // TODO (nchalko) write these as top level interfaces.
-    // As top level interfaces other generated Validators can use them.
-    // Without it a gwt application can only have ONE validator.
-    for (BeanHelper bean : beansToValidate.values()) {
-      sw.println("public interface " + bean.getValidatorName()
-          + " extends GwtSpecificValidator<" + bean.getTypeCanonicalName()
-          + "> {");
-      sw.println("}");
-
-      sw.println("public interface " + bean.getDescriptorName()
-          + " extends GwtBeanDescriptor<"
-          + bean.getTypeCanonicalName() + "> {");
-      sw.println("}");
-
-      sw.print("private final " + bean.getValidatorName() + " ");
-      sw.print(bean.getValidatorInstanceName());
-      sw.println(" = GWT.create(" + bean.getValidatorName() + ".class);");
-    }
-  }
-
-  private String getQaulifiedName() {
-    return validatorType.getQualifiedSourceName() + "Impl";
-  }
-
   private String getSimpleName() {
     return validatorType.getSimpleSourceName() + "Impl";
   }
@@ -161,6 +138,7 @@ public class ValidatorCreator extends AbstractCreator {
     sw.println("}");
   }
 
+
   private void writeContext(SourceWriter sw, BeanHelper bean, String objectName) {
     // GwtValidationContext<T> context =
     // new GwtValidationContext<T>(object,myBeanValidator.getConstraints());
@@ -181,9 +159,35 @@ public class ValidatorCreator extends AbstractCreator {
     sourceWriter.println("}");
   }
 
-  private void writeIfEqulsBeanType(SourceWriter sourceWriter, BeanHelper bean) {
+  private void writeIfEqualsBeanType(SourceWriter sourceWriter, BeanHelper bean) {
     sourceWriter.println("if (object.getClass().equals("
         + bean.getTypeCanonicalName() + ".class)) {");
+  }
+
+  /**
+   * Write an Empty Interface implementing {@link GwtSpecificValidator} with
+   * Generic parameter of the bean type.
+   * 
+   * @param bean
+   */
+  private void writeInterface(BeanHelper bean) {
+    PrintWriter pw = context.tryCreate(logger, bean.getPackage(),
+        bean.getValidatorName());
+    if (pw != null) {
+      TreeLogger interfaceLogger = AbstractSourceCreator.branch(
+          logger,
+          "Creating the interface for "
+              + bean.getFullyQualifiedValidatorName());
+
+      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
+          bean.getPackage(), bean.getValidatorName());
+      factory.addImplementedInterface(GwtSpecificValidator.class.getCanonicalName()
+          + " <" + bean.getTypeCanonicalName() + ">");
+      factory.makeInterface();
+      SourceWriter sw2 = factory.createSourceWriter(context, pw);
+      sw2.commit(interfaceLogger);
+      pw.close();
+    }
   }
 
   private void writeThrowIllegalArgumnet(SourceWriter sourceWriter) {
@@ -191,6 +195,24 @@ public class ValidatorCreator extends AbstractCreator {
         + this.validatorType.getName() + " can only validate ");
     sourceWriter.print(beansToValidate.toString());
     sourceWriter.println("\");");
+  }
+
+  private void writeTypeSupport(SourceWriter sw) {
+    for (BeanHelper bean : beansToValidate.values()) {
+      writeInterface(bean);
+      // private final MyBeanValidator myBeanValidator =
+      sw.print("private final " + bean.getFullyQualifiedValidatorName() + " ");
+      sw.print(bean.getValidatorInstanceName());
+      sw.println(" = ");
+      sw.indent();
+      sw.indent();
+
+      // GWT.create(MyBeanValidator
+      sw.println("GWT.create(" + bean.getFullyQualifiedValidatorName()
+          + ".class);");
+      sw.outdent();
+      sw.outdent();
+    }
   }
 
   private void writeValidate(SourceWriter sw) {
@@ -214,7 +236,7 @@ public class ValidatorCreator extends AbstractCreator {
   }
 
   private void writeValidate(SourceWriter sw, BeanHelper bean) {
-    writeIfEqulsBeanType(sw, bean);
+    writeIfEqualsBeanType(sw, bean);
     sw.indent();
 
     writeContext(sw, bean, "object");
@@ -250,7 +272,7 @@ public class ValidatorCreator extends AbstractCreator {
   }
 
   private void writeValidateProperty(SourceWriter sw, BeanHelper bean) {
-    writeIfEqulsBeanType(sw, bean);
+    writeIfEqualsBeanType(sw, bean);
     sw.indent();
     writeContext(sw, bean, "object");
     sw.print("return " + bean.getValidatorInstanceName()
