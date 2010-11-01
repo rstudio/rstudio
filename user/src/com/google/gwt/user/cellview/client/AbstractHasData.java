@@ -369,6 +369,16 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     return getVisibleRange().getStart();
   }
 
+  /**
+   * Return the outer element that contains all of the rendered row values. This
+   * method delegates to {@link #getChildContainer()};
+   * 
+   * @return the {@link Element} that contains the rendered row values
+   */
+  public Element getRowContainer() {
+    return getChildContainer();
+  }
+
   public int getRowCount() {
     return presenter.getRowCount();
   }
