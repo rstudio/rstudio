@@ -186,7 +186,7 @@ class CellTreeNodeView<T> extends UIObject {
           }
           // Render cell contents
           SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
-          cell.render(value, null, cellBuilder);
+          cell.render(value, key, cellBuilder);
 
           SafeHtml innerDiv = template.innerDiv(paddingDirection, imageWidth,
               innerClasses.toString(), image, itemValueStyle,

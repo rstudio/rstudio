@@ -22,9 +22,11 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.TreeViewModel;
 
 import java.util.ArrayList;
@@ -191,6 +193,53 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
     assertTrue(tree.isLeaf("abcd"));
   }
 
+  /**
+   * Test that the correct values are sent to the Cell to be rendered.
+   */
+  public void testRenderWithKeyProvider() {
+    // Create a cell that verifies the render args.
+    final List<String> rendered = new ArrayList<String>();
+    final Cell<String> cell = new TextCell() {
+      @Override
+      public void render(String data, Object key, SafeHtmlBuilder sb) {
+        int call = rendered.size(); 
+        rendered.add(data);
+        assertTrue("render() called more than thrice", rendered.size() < 4);
+
+        assertEquals(call + "value", data);
+        assertTrue(key instanceof Integer);
+        assertEquals(call, key);
+      }
+    };
+
+    // Create a model with only one level, and three values at that level.
+    TreeViewModel model = new TreeViewModel() {
+      public NodeInfo<?> getNodeInfo(Object value) {
+        // The key provider returns the first char as an integer.
+        ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+          public Object getKey(String item) {
+            return Integer.parseInt(item.substring(0, 1));
+          }
+        };
+        ListDataProvider<String> dataProvider = new ListDataProvider<String>(
+            keyProvider);
+        dataProvider.getList().add("0value");
+        dataProvider.getList().add("1value");
+        dataProvider.getList().add("2value");
+        return new DefaultNodeInfo<String>(dataProvider, cell);
+      }
+
+      public boolean isLeaf(Object value) {
+        return value != null;
+      }
+    };
+
+    // Create a tree.
+    new CellTree(model, null);
+    assertEquals("Cell#render() should be called exactly thrice", 3,
+        rendered.size());
+  }
+  
   /**
    * Test that opening a sibling node works.
    */
