@@ -52,7 +52,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
                  + "return (value == null) ? null : value; }");
     code.append(Utility.getFileFromClassPath(SelectionScriptLinker.COMPUTE_SCRIPT_BASE_JS));
     code.append("computeScriptBase();\n");
-    return code.toString().replaceAll("__MODULE_NAME__", TEST_MODULE_NAME);
+    return code.toString();
   }
 
   /**
@@ -133,11 +133,28 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   }
 
   /**
+   * Test the default href
+   */
+  public void testDefault() throws IOException {
+    StringBuffer testCode = new StringBuffer();
+    testCode.append("var metaProps = { };\n");
+    testCode.append("function isBodyLoaded() { return true; }\n");
+    testCode.append(loadComputeScriptBase());
+    testCode.append("alert('base='+base);\n");
+
+    List<String> alerts = loadPage(makeHostPage(""), testCode);
+
+    assertEquals(1, alerts.size());
+    assertEquals("base=http://foo.test/", alerts.get(0));
+  }
+  
+  /**
    * Test the fully magic script base with no meta properties.
    */
   public void testScriptBase() throws IOException {
     StringBuffer testCode = new StringBuffer();
     testCode.append("var metaProps = { };\n");
+    testCode.append("function isBodyLoaded() { return false; }\n");
     testCode.append(loadComputeScriptBase());
     testCode.append("alert('base='+base);\n");
 
@@ -146,7 +163,37 @@ public class SelectionScriptJavaScriptTest extends TestCase {
     assertEquals(1, alerts.size());
     assertEquals("base=http://foo.test/foo/", alerts.get(0));
   }
+  
+  /**
+   * Test getting the base URL from a meta property with an absolute URL
+   */
+  public void testScriptBaseFromMetas() throws IOException {
+    StringBuffer testCode = new StringBuffer();
+    testCode.append("var metaProps = { baseUrl : \"http://static.test/fromMetaTag/\" };\n");
+    testCode.append(loadComputeScriptBase());
+    testCode.append("alert('base='+base);\n");
 
+    List<String> alerts = loadPage(makeHostPage(""), testCode);
+
+    assertEquals(1, alerts.size());
+    assertEquals("base=http://static.test/fromMetaTag/", alerts.get(0));
+  }
+
+  /**
+   * Test getting the base URL from a meta property with a relative URL
+   */
+  public void testRelativeScriptBaseFromMetas() throws IOException {
+    StringBuffer testCode = new StringBuffer();
+    testCode.append("var metaProps = { baseUrl : \"fromMeta/tag/\" };\n");
+    testCode.append(loadComputeScriptBase());
+    testCode.append("alert('base='+base);\n");
+
+    List<String> alerts = loadPage(makeHostPage(""), testCode);
+
+    assertEquals(1, alerts.size());
+    assertEquals("base=http://foo.test/fromMeta/tag/", alerts.get(0));
+  }
+  
   /**
    * Test the script base logic for an inlined selection script.
    */
@@ -171,7 +218,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   public void testScriptBaseFromBaseTag() throws IOException {
     StringBuffer hostPage = new StringBuffer();
     hostPage.append("<html><head>\n");
-    hostPage.append("<base href=\"http://static.test/foo/\">\n");
+    hostPage.append("<base href=\"http://static.test/fromBaseTag/\">\n");
     hostPage.append("<script lang=\"javascript\"><!--\n");
     hostPage.append("var metaProps = { }\n");
     hostPage.append(loadComputeScriptBase());
@@ -181,22 +228,27 @@ public class SelectionScriptJavaScriptTest extends TestCase {
     List<String> alerts = loadPage(hostPage.toString(), "");
 
     assertEquals(1, alerts.size());
-    assertEquals("base=http://static.test/foo/", alerts.get(0));
+    assertEquals("base=http://static.test/fromBaseTag/", alerts.get(0));
   }
-
+  
   /**
-   * Test getting the base URL from a meta property
+   * Test the script base logic for an inlined selection script.
    */
-  public void testScriptBaseFromMetas() throws IOException {
-    StringBuffer testCode = new StringBuffer();
-    testCode.append("var metaProps = { baseUrl : \"http://static.test/foo/\" };\n");
-    testCode.append(loadComputeScriptBase());
-    testCode.append("alert('base='+base);\n");
+  public void testNocacheJsTag() throws IOException {
+    StringBuffer hostPage = new StringBuffer();
+    hostPage.append("<html><head>\n");
+    hostPage.append("<script lang='javascript' type='application/javascript' ");
+    hostPage.append("src='from/nocache/__MODULE_NAME__.nocache.js'></script>\n");
+    hostPage.append("<script lang=\"javascript\"><!--\n");
+    hostPage.append("var metaProps = { }\n");
+    hostPage.append(loadComputeScriptBase());
+    hostPage.append("alert('base='+base);\n");
+    hostPage.append("--></script>\n");
 
-    List<String> alerts = loadPage(makeHostPage(""), testCode);
+    List<String> alerts = loadPage(hostPage.toString(), "");
 
     assertEquals(1, alerts.size());
-    assertEquals("base=http://static.test/foo/", alerts.get(0));
+    assertEquals("base=http://foo.test/from/nocache/", alerts.get(0));
   }
 
   /**
