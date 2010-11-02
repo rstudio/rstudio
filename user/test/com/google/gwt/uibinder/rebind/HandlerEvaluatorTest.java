@@ -24,8 +24,8 @@ import com.google.gwt.uibinder.rebind.model.OwnerClass;
 
 import junit.framework.TestCase;
 
-import org.easymock.classextension.EasyMock;
-import org.easymock.classextension.IMocksControl;
+import org.easymock.EasyMock;
+import org.easymock.IMocksControl;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

@@ -30,7 +30,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 
 import org.easymock.IAnswer;
-import org.easymock.classextension.EasyMock;
+import org.easymock.EasyMock;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
