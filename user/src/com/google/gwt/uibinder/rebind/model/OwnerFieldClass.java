@@ -30,6 +30,7 @@ import com.google.gwt.uibinder.rebind.UiBinderContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,6 +43,31 @@ import java.util.Set;
  * actually present as a field in the owner.
  */
 public class OwnerFieldClass {
+  
+  private static final int defaultCost = 4;
+  private static final Map<String, Integer> typeRank;
+  static {
+    HashMap<String, Integer> tmpTypeRank = new HashMap<String, Integer>();
+    tmpTypeRank.put("java.lang.String", 1);
+    tmpTypeRank.put("boolean", 2);
+    tmpTypeRank.put("byte", 2);
+    tmpTypeRank.put("char", 2);
+    tmpTypeRank.put("double", 2);
+    tmpTypeRank.put("float", 2);
+    tmpTypeRank.put("int", 2);
+    tmpTypeRank.put("long", 2);
+    tmpTypeRank.put("short", 2);
+    tmpTypeRank.put("java.lang.Boolean", 3);
+    tmpTypeRank.put("java.lang.Byte", 3);
+    tmpTypeRank.put("java.lang.Character", 3);
+    tmpTypeRank.put("java.lang.Double", 3);
+    tmpTypeRank.put("java.lang.Float", 3);
+    tmpTypeRank.put("java.lang.Integer", 3);
+    tmpTypeRank.put("java.lang.Long", 3);
+    tmpTypeRank.put("java.lang.Short", 3);
+    typeRank = Collections.unmodifiableMap(tmpTypeRank);
+  }
+  
   /**
    * Gets or creates the descriptor for the given field class.
    *
@@ -72,7 +98,7 @@ public class OwnerFieldClass {
   private final Map<String, Pair<JMethod, Integer>> uiChildren = new HashMap<String, Pair<JMethod, Integer>>();
 
   private JConstructor uiConstructor;
-
+ 
   /**
    * Default constructor. This is package-visible for testing only.
    *
@@ -105,10 +131,7 @@ public class OwnerFieldClass {
    */
   public JMethod getSetter(String propertyName)
       throws UnableToCompleteException {
-    // TODO(rjrjr) This fails for CheckBox#setValue(Boolean) because it
-    // also finds CheckBox#setValue(Boolean, Boolean). Must fix for 2.0,
-    // when CheckBox#setChecked will go away and CheckBox#setValue must be used
-
+   
     if (ambiguousSetters != null && ambiguousSetters.contains(propertyName)) {
       logger.die("Ambiguous setter requested: " + rawType.getName() + "."
           + propertyName);
@@ -139,41 +162,44 @@ public class OwnerFieldClass {
    * use. Not having a proper setter is not an error unless of course the user
    * tries to use it.
    *
-   * @param propertySetters the collection of setters
-   * @return the setter to use, or null if none is good enough
+   * @param propertyName the name of the property/setter.
+   * @param propertySetters the collection of setters.
+   * @return the setter to use, or null if none is good enough.
    */
-  private JMethod disambiguateSetters(Collection<JMethod> propertySetters) {
+  private JMethod disambiguateSetters(String propertyName, 
+      Collection<JMethod> propertySetters) {
+    
+    // if only have one overload, there is no need to rank them.
     if (propertySetters.size() == 1) {
       return propertySetters.iterator().next();
     }
-
-    // Pick the string setter, if there's one
+    
+    // rank overloads and pick the one with minimum 'cost' of conversion.
+    JMethod preferredMethod = null;
+    int minRank = Integer.MAX_VALUE;
     for (JMethod method : propertySetters) {
-      JParameter[] parameters = method.getParameters();
-      if (parameters.length == 1
-          && parameters[0].getType().getQualifiedSourceName().equals(
-              "java.lang.String")) {
-        return method;
+      int rank = rankMethodOnParameters(method);
+      if (rank < minRank) {
+        minRank = rank;
+        preferredMethod = method;
+        ambiguousSetters.remove(propertyName);
+      } else if (rank == minRank && 
+          !sameParameterTypes(preferredMethod, method)) {
+        // sameParameterTypes test is necessary because a setter can be 
+        // overridden by a subclass and that is not considered ambiguous. 
+        if (!ambiguousSetters.contains(propertyName)) {
+          ambiguousSetters.add(propertyName);
+        }
       }
     }
-
-    // Check if all setters aren't just the same one being overridden in parent
-    // classes.
-    JMethod firstMethod = null;
-    for (JMethod method : propertySetters) {
-      if (firstMethod == null) {
-        firstMethod = method;
-        continue;
-      }
-
-      // If the method is not the same as the first one, there's still an
-      // ambiguity. Being equal means having the same parameter types.
-      if (!sameParameterTypes(method, firstMethod)) {
-        return null;
-      }
+    
+    // if the setter is ambiguous, return null.
+    if (ambiguousSetters.contains(propertyName)) {
+      return null;
     }
-
-    return firstMethod;
+    
+    // the setter is not ambiguous therefore return the preferred overload.
+    return preferredMethod;
   }
 
   /**
@@ -230,22 +256,15 @@ public class OwnerFieldClass {
     Map<String, Collection<JMethod>> allSetters = findAllSetters(fieldType);
 
     // Pass two - disambiguate
+    ambiguousSetters = new HashSet<String>();
     for (String propertyName : allSetters.keySet()) {
       Collection<JMethod> propertySetters = allSetters.get(propertyName);
-      JMethod setter = disambiguateSetters(propertySetters);
-
-      // If no setter could be disambiguated for this property, add it to the
-      // set of ambiguous setters. This is later consulted if and only if the
-      // setter is used.
-      if (setter == null) {
-        if (ambiguousSetters == null) {
-          ambiguousSetters = new HashSet<String>();
-        }
-
-        ambiguousSetters.add(propertyName);
-      }
-
+      JMethod setter = disambiguateSetters(propertyName, propertySetters);
       setters.put(propertyName, setter);
+    }
+    
+    if (ambiguousSetters.size() == 0) {
+      ambiguousSetters = null;
     }
   }
 
@@ -313,7 +332,43 @@ public class OwnerFieldClass {
         && method.getName().startsWith("set") && method.getName().length() > 3
         && method.getReturnType() == JPrimitiveType.VOID;
   }
-
+  
+  /**
+   * Ranks given method based on parameter conversion cost. A lower rank is
+   * preferred over a higher rank since it has a lower cost of conversion.
+   * 
+   * The ranking criteria is as follows:
+   * 1) methods with fewer arguments are preferred. for instance:
+   *    'setValue(int)' is preferred 'setValue(int, int)'.
+   * 2) within a set of overloads with the same number of arguments:
+   * 2.1) String has the lowest cost = 1
+   * 2.2) primitive types, cost = 2
+   * 2.3) boxed primitive types, cost = 3
+   * 2.4) any (reference types, etc), cost = 4.
+   * 3) if a setter is overridden by a subclass and have the exact same argument
+   * types, it will not be considered ambiguous. 
+   *  
+   * The cost mapping is defined in 
+   * {@link #typeRank typeRank }
+   * @param method.
+   * @return the rank of the method.
+   */
+  private int rankMethodOnParameters(JMethod method) {
+    JParameter[] params = method.getParameters();
+    int rank = 0;
+    for (int i = 0; i < Math.min(params.length, 10); i++) {
+      JType paramType = params[i].getType();
+      int cost = defaultCost;
+      if (typeRank.containsKey(paramType.getQualifiedSourceName())) {
+        cost = typeRank.get(paramType.getQualifiedSourceName());
+      }
+      assert (cost >= 0 && cost <= 0x07);
+      rank = rank | (cost << (3 * i));
+    }
+    assert (rank >= 0);
+    return rank;
+  }
+  
   /**
    * Checks whether two methods have the same parameter types.
    *
@@ -338,7 +393,6 @@ public class OwnerFieldClass {
       }
     }
 
-    // No types were different
     return true;
   }
 }

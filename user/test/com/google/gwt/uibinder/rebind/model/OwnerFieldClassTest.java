@@ -28,6 +28,7 @@ import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 
 import junit.framework.TestCase;
@@ -142,6 +143,142 @@ public class OwnerFieldClassTest extends TestCase {
     }
   }
 
+  /**
+   * 
+   * base class for setters disambiguation tests.
+   *
+   */
+  public class baseSetters {
+    public baseSetters() {
+    }
+    
+    // setvalue1 is not ambiguous
+    public void setValue1(boolean b) {
+    }
+
+    public void setValue1(Boolean b) {
+    }
+
+    // derived wins
+    public void setValue2(Integer b) {
+    }
+
+    // this overload wins
+    public void setValue3(int b) {
+    }
+    
+    // this is not ambiguous since derived
+    // has the exact same signature
+    public void setValue4(int b) {
+    }
+    
+    // setvalue5 is ambiguous
+    public void setValue5(float f) {
+    }
+    
+    public void setValue5(double d) {
+    }
+    
+    // string always wins
+    public void setValue6(String s) {
+    }
+
+    public void setValue6(char s) {
+    }
+    
+    public void setValue6(Object s) {
+    }
+    
+    // primitive wins
+    public void setValue7(int s) {
+    }
+    
+    public void setValue7(StringBuffer s) {
+    }
+  }
+
+  /**
+   * 
+   * derived class for setter disambiguation tests.
+   *
+   */
+  public class derivedSetters extends baseSetters {
+    public derivedSetters() {
+      super();
+    }
+    
+    public void setValue2(int b) {
+    }
+    
+    public void setValue3(Integer b) {
+    }
+    
+    public void setValue4(int b) {
+    }
+  }
+
+  /**
+   * Regression test.
+   */
+  public void testCheckBoxValueSetters() throws Exception {
+      JClassType cbClassType = gwtTypeAdapter.adaptJavaClass(CheckBox.class);
+      OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(cbClassType,
+          MortalLogger.NULL, uiBinderCtx);
+      JMethod setValueSetter = settersClass.getSetter("value");
+      assertNotNull(setValueSetter);
+  }  
+  
+  public void testDisambiguateClassHierarchySettersBase() throws Exception {
+    // ensure that primitive types win over boxed primitive types.
+    JClassType baseClassType = gwtTypeAdapter.adaptJavaClass(baseSetters.class);
+    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(baseClassType,
+        MortalLogger.NULL, uiBinderCtx);
+    JMethod setValueSetter = settersClass.getSetter("value1");
+    assertNotNull(setValueSetter);
+  }
+
+  public void testDisambiguateClassHierarchySettersDerived() throws Exception {
+    // ensure that primitive types win over boxed primitive types
+    // in a class hierarchy.
+    JClassType derivedClass = gwtTypeAdapter.adaptJavaClass(derivedSetters.class);
+    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(derivedClass,
+        MortalLogger.NULL, uiBinderCtx);
+    
+    // base.value1(boolean) and base.value1(Boolean) is never ambiguous 
+    // must return boolean
+    assertNotNull(settersClass.getSetter("value1"));
+    assertMethod(settersClass.getSetter("value1"), "setValue1", JPrimitiveType.BOOLEAN);
+    
+    // base.value2(Integer) and derived.value2(int) is not ambiguous - must be int
+    assertNotNull(settersClass.getSetter("value2"));
+    assertMethod(settersClass.getSetter("value2"), "setValue2", JPrimitiveType.INT);
+    
+    // base.value3 (int) and derived.value3(Integer) is not ambiguous - must be int.
+    assertNotNull(settersClass.getSetter("value3"));
+    
+    // base.value4(int) and derived.value4(int) is not ambiguous.
+    assertNotNull(settersClass.getSetter("value4"));
+    
+    // base.value5(float) and base.value5(double) is ambiguous
+    try {
+      settersClass.getSetter("value5");
+      fail("Expected exception not thrown");
+    } catch (UnableToCompleteException utce) {
+      // Expected
+    }
+    
+    // value6 has multiple overload but string always wins
+    // base.value6(string), base.value6(char) and base.value6(object)
+    assertNotNull(settersClass.getSetter("value6"));
+    assertMethod(settersClass.getSetter("value6"), "setValue6", 
+        gwtTypeAdapter.adaptJavaClass(String.class));
+    
+    // base.value7(object) and base.value7(int) is not ambiguous - must be int.
+    assertNotNull(settersClass.getSetter("value7"));
+    assertMethod(settersClass.getSetter("value7"), "setValue7", 
+        JPrimitiveType.INT);
+  }
+  
   public void testOwnerFieldClass_setters() throws Exception {
     JClassType settersType = gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
