@@ -110,14 +110,6 @@ public final class JsRootScope extends JsScope {
         "onmozorientation", "onpaint", "onreset", "onresize", "onscroll",
         "onselect", "onsubmit", "onunload",
         
-        // Safari Web Content Guide
-        // http://developer.apple.com/library/safari/#documentation/AppleApplications/Reference/SafariWebContent/SafariWebContent.pdf
-        // WebKit Window member data, from WebKit DOM Reference
-        // (http://developer.apple.com/safari/library/documentation/AppleApplications/Reference/WebKitDOMRef/DOMWindow_idl/Classes/DOMWindow/index.html)
-        // TODO(fredsa) Many, many more functions and member data to add
-        "ontouchcancel", "ontouchend", "ontouchmove", "ontouchstart",
-        "ongesturestart", "ongesturechange", "ongestureend",
-        
         // extra window methods
         "uneval",
         

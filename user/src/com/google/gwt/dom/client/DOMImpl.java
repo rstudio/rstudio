@@ -16,7 +16,6 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
 
 abstract class DOMImpl {
 
@@ -131,14 +130,6 @@ abstract class DOMImpl {
 
   public abstract EventTarget eventGetRelatedTarget(NativeEvent nativeEvent);
 
-  public native double eventGetRotation(NativeEvent evt) /*-{
-    return evt.rotation;
-  }-*/;
-
-  public native double eventGetScale(NativeEvent evt) /*-{
-    return evt.scale;
-  }-*/;
-
   public native int eventGetScreenX(NativeEvent evt) /*-{
     return evt.screenX || 0;
   }-*/;
@@ -211,10 +202,6 @@ abstract class DOMImpl {
     return 0;
   }-*/;
 
-  public native JsArray<Touch> getChangedTouches(NativeEvent evt) /*-{
-    return evt.changedTouches;
-  }-*/;
-
   public native Element getFirstChildElement(Element elem) /*-{
     var child = elem.firstChild;
     while (child && child.nodeType != 1)
@@ -279,14 +266,6 @@ abstract class DOMImpl {
 
   public native String getTagName(Element elem) /*-{
     return elem.tagName;
-  }-*/;
-
-  public native JsArray<Touch> getTargetTouches(NativeEvent evt) /*-{
-    return evt.targetTouches;
-  }-*/;
-
-  public native JsArray<Touch> getTouches(NativeEvent evt) /*-{
-    return evt.touches;
   }-*/;
 
   public native boolean hasAttribute(Element elem, String name) /*-{
@@ -385,37 +364,5 @@ abstract class DOMImpl {
 
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
-  }-*/;
-
-  public native int touchGetClientX(Touch touch)/*-{
-    return touch.clientX;
-  }-*/;
-
-  public native int touchGetClientY(Touch touch)/*-{
-    return touch.clientY;
-  }-*/;
-
-  public native int touchGetIdentifier(Touch touch)/*-{
-    return touch.identifier;
-  }-*/;
-
-  public native int touchGetPageX(Touch touch)/*-{
-    return touch.pageX;
-  }-*/;
-
-  public native int touchGetPageY(Touch touch)/*-{
-    return touch.pageY;
-  }-*/;
-
-  public native int touchGetScreenX(Touch touch)/*-{
-    return touch.ScreenX;
-  }-*/;
-
-  public native int touchGetScreenY(Touch touch)/*-{
-    return touch.ScreenY;
-  }-*/;
-
-  public native EventTarget touchGetTarget(Touch touch)/*-{
-    return touch.target;
   }-*/;
 }

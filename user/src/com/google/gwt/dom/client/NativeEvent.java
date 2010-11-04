@@ -16,7 +16,6 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
 /**
  * The native dom event.
@@ -62,15 +61,6 @@ public class NativeEvent extends JavaScriptObject {
    */
   public final int getButton() {
     return DOMImpl.impl.eventGetButton(this);
-  }
-
-  /**
-   * Get an array of touches which have changed since the last touch event.
-   * 
-   * @return array of touches which have changed since the last touch event
-   */
-  public final JsArray<Touch> getChangedTouches() {
-    return DOMImpl.impl.getChangedTouches(this);
   }
 
   /**
@@ -176,24 +166,6 @@ public class NativeEvent extends JavaScriptObject {
   }
 
   /**
-   * Get the rotation in degrees, with positive values indicating clockwise rotation.
-   * 
-   * @return the rotation in degrees since the gesture started
-   */
-  public final double getRotation() {
-    return DOMImpl.impl.eventGetRotation(this);
-  }
-
-  /**
-   * Get the amount scaled since the gesture started, with 1.0 representing no scaling.
-   * 
-   * @return the amount scaled since the gesture started
-   */
-  public final double getScale() {
-    return DOMImpl.impl.eventGetScale(this);
-  }
-
-  /**
    * Gets the mouse x-position on the user's display.
    * 
    * @return the mouse x-position
@@ -230,24 +202,6 @@ public class NativeEvent extends JavaScriptObject {
    */
   public final String getString() {
     return DOMImpl.impl.eventToString(this);
-  }
-
-  /**
-   * Get an array of touches which have changed since the last touch event.
-   * 
-   * @return array of touches which have changed since the last touch event
-   */
-  public final JsArray<Touch> getTargetTouches() {
-    return DOMImpl.impl.getTargetTouches(this);
-  }
-
-  /**
-   * Get an array of touches which have changed since the last touch event.
-   * 
-   * @return array of touches which have changed since the last touch event
-   */
-  public final JsArray<Touch> getTouches() {
-    return DOMImpl.impl.getTouches(this);
   }
 
   /**

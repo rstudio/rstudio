@@ -22,9 +22,7 @@ import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
 import com.google.gwt.user.client.DoubleClickEventSinkTest;
 import com.google.gwt.user.client.EventTest;
-import com.google.gwt.user.client.GestureEventSinkTest;
 import com.google.gwt.user.client.HistoryDisabledTest;
-import com.google.gwt.user.client.TouchEventSinkTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.AnchorTest;
@@ -164,7 +162,6 @@ public class UISuite {
     suite.addTestSuite(FlowPanelTest.class);
     suite.addTestSuite(FocusPanelTest.class);
     suite.addTestSuite(FormPanelTest.class);
-    suite.addTestSuite(GestureEventSinkTest.class);
     suite.addTestSuite(GridTest.class);
     suite.addTestSuite(HiddenTest.class);
     suite.addTestSuite(HistoryTest.class);
@@ -208,7 +205,6 @@ public class UISuite {
     suite.addTestSuite(TextAreaTest.class);
     suite.addTestSuite(TreeTest.class);
     suite.addTestSuite(TreeItemTest.class);
-    suite.addTestSuite(TouchEventSinkTest.class);
     suite.addTestSuite(UIObjectTest.class);
     suite.addTestSuite(ValueBoxBaseTest.class);
     suite.addTestSuite(ValueListBoxTest.class);
@@ -224,3 +220,4 @@ public class UISuite {
     return suite;
   }
 }
+

@@ -258,21 +258,6 @@ public class Event extends NativeEvent {
   public static final int ONFOCUS = 0x00800;
 
   /**
-   * Fired when the user gesture changes.
-   */
-  public static final int ONGESTURECHANGE = 0x2000000;
-
-  /**
-   * Fired when the user gesture ends.
-   */
-  public static final int ONGESTUREEND = 0x4000000;
-
-  /**
-   * Fired when the user gesture starts.
-   */
-  public static final int ONGESTURESTART = 0x1000000;
-
-  /**
    * Fired when the user depresses a key.
    */
   public static final int ONKEYDOWN = 0x00080;
@@ -345,25 +330,6 @@ public class Event extends NativeEvent {
   public static final int ONSCROLL = 0x04000;
 
   /**
-   * Fired when the user cancels touching an element.
-   */
-  public static final int ONTOUCHCANCEL = 0x800000;
-
-  /**
-   * Fired when the user ends touching an element.
-   */
-  public static final int ONTOUCHEND = 0x400000;
-
-  /**
-   * Fired when the user moves while touching an element.
-   */
-  public static final int ONTOUCHMOVE = 0x200000;
-
-  /**
-   * Fired when the user starts touching an element.
-   */
-  public static final int ONTOUCHSTART = 0x100000;
-  /**
    * Fired when the user requests an element's context menu (usually by
    * right-clicking).
    * 
@@ -387,16 +353,6 @@ public class Event extends NativeEvent {
    */
   public static final int MOUSEEVENTS = ONMOUSEDOWN | ONMOUSEUP | ONMOUSEMOVE
       | ONMOUSEOVER | ONMOUSEOUT;
-
-  /**
-   * A bit-mask covering all touch events (start, move, end, cancel).
-   */
-  public static final int TOUCHEVENTS = ONTOUCHSTART | ONTOUCHMOVE | ONTOUCHEND | ONTOUCHCANCEL;
-
-  /**
-   * A bit-mask covering all gesture events (start, change, end).
-   */
-  public static final int GESTUREEVENTS = ONGESTURESTART | ONGESTURECHANGE | ONGESTUREEND;
 
   /**
    * Value returned by accessors when the actual integer value is undefined. In

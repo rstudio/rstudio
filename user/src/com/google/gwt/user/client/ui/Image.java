@@ -26,15 +26,7 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
 import com.google.gwt.event.dom.client.ErrorHandler;
-import com.google.gwt.event.dom.client.GestureChangeEvent;
-import com.google.gwt.event.dom.client.GestureChangeHandler;
-import com.google.gwt.event.dom.client.GestureEndEvent;
-import com.google.gwt.event.dom.client.GestureEndHandler;
-import com.google.gwt.event.dom.client.GestureStartEvent;
-import com.google.gwt.event.dom.client.GestureStartHandler;
-import com.google.gwt.event.dom.client.HasAllGestureHandlers;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
-import com.google.gwt.event.dom.client.HasAllTouchHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.HasErrorHandlers;
@@ -53,14 +45,6 @@ import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
-import com.google.gwt.event.dom.client.TouchCancelEvent;
-import com.google.gwt.event.dom.client.TouchCancelHandler;
-import com.google.gwt.event.dom.client.TouchEndEvent;
-import com.google.gwt.event.dom.client.TouchEndHandler;
-import com.google.gwt.event.dom.client.TouchMoveEvent;
-import com.google.gwt.event.dom.client.TouchMoveHandler;
-import com.google.gwt.event.dom.client.TouchStartEvent;
-import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -110,8 +94,7 @@ import java.util.HashMap;
 @SuppressWarnings("deprecation")
 public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     HasErrorHandlers, SourcesClickEvents, HasClickHandlers,
-    HasDoubleClickHandlers, HasAllGestureHandlers, HasAllMouseHandlers, HasAllTouchHandlers,
-    SourcesMouseEvents {
+    HasDoubleClickHandlers, HasAllMouseHandlers, SourcesMouseEvents {
 
   /**
    * The attribute that is set when an image fires a native load or error event
@@ -143,7 +126,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
       // Todo(ecc) This is wrong, we should not be sinking these here on such a
       // common widget.After the branch is stable, this should be fixed.
       image.sinkEvents(Event.ONCLICK | Event.ONDBLCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL
-          | Event.ONLOAD | Event.TOUCHEVENTS | Event.GESTUREEVENTS);
+          | Event.ONLOAD);
     }
 
     @Override
@@ -300,8 +283,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
       // This case is relatively unusual, in that we swapped a clipped image
       // out, so does not need to be efficient.
       Event.sinkEvents(element, Event.ONCLICK | Event.ONDBLCLICK | Event.MOUSEEVENTS
-          | Event.ONLOAD | Event.ONERROR | Event.ONMOUSEWHEEL | Event.TOUCHEVENTS
-          | Event.GESTUREEVENTS);
+          | Event.ONLOAD | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
 
     UnclippedState(Image image) {
@@ -313,7 +295,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
       // Todo(ecc) this could be more efficient overall.
       image.sinkEvents(Event.ONCLICK | Event.ONDBLCLICK | Event.MOUSEEVENTS | Event.ONLOAD
-          | Event.ONERROR | Event.ONMOUSEWHEEL | Event.TOUCHEVENTS | Event.GESTUREEVENTS);
+          | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
 
     UnclippedState(Image image, String url) {
@@ -503,18 +485,6 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     return addHandler(handler, ErrorEvent.getType());
   }
 
-  public HandlerRegistration addGestureChangeHandler(GestureChangeHandler handler) {
-    return addDomHandler(handler, GestureChangeEvent.getType());
-  }
-
-  public HandlerRegistration addGestureEndHandler(GestureEndHandler handler) {
-    return addDomHandler(handler, GestureEndEvent.getType());
-  }
-
-  public HandlerRegistration addGestureStartHandler(GestureStartHandler handler) {
-    return addDomHandler(handler, GestureStartEvent.getType());
-  }
-
   public HandlerRegistration addLoadHandler(LoadHandler handler) {
     return addHandler(handler, LoadEvent.getType());
   }
@@ -568,22 +538,6 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
   @Deprecated
   public void addMouseWheelListener(MouseWheelListener listener) {
     ListenerWrapper.WrappedMouseWheelListener.add(this, listener);
-  }
-
-  public HandlerRegistration addTouchCancelHandler(TouchCancelHandler handler) {
-    return addDomHandler(handler, TouchCancelEvent.getType());
-  }
-
-  public HandlerRegistration addTouchEndHandler(TouchEndHandler handler) {
-    return addDomHandler(handler, TouchEndEvent.getType());
-  }
-
-  public HandlerRegistration addTouchMoveHandler(TouchMoveHandler handler) {
-    return addDomHandler(handler, TouchMoveEvent.getType());
-  }
-
-  public HandlerRegistration addTouchStartHandler(TouchStartHandler handler) {
-    return addDomHandler(handler, TouchStartEvent.getType());
   }
 
   /**
