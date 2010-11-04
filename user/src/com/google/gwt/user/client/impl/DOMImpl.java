@@ -84,6 +84,13 @@ public abstract class DOMImpl {
     case "DOMMouseScroll": return 0x20000;
     case "contextmenu": return 0x40000;
     case "paste": return 0x80000;
+    case "touchstart": return 0x100000;
+    case "touchmove": return 0x200000;
+    case "touchend": return 0x400000;
+    case "touchcancel": return 0x800000;
+    case "gesturestart": return 0x1000000;
+    case "gesturechange": return 0x2000000;
+    case "gestureend": return 0x4000000;
     default: return -1;
     }
   }-*/; 
