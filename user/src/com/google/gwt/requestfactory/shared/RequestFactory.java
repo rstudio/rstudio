@@ -123,7 +123,7 @@ public interface RequestFactory {
    * Start this request factory with a user-provided transport.
    *
    * @param eventBus an {@link EventBus}
-   * @param transport a {@link RequestTransport} instance
+   * @param transport a {@link RequestTransport} instance
    */
   void initialize(EventBus eventBus, RequestTransport transport);
 }
