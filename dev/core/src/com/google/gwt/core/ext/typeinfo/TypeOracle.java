@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -651,6 +653,45 @@ public class TypeOracle {
     return javaSourceParser;
   }
 
+  private List<JClassType> classChain(JClassType cls) {
+    LinkedList<JClassType> chain = new LinkedList<JClassType>();
+    while (cls != null) {
+      chain.push(cls);
+      cls = cls.getSuperclass();
+    }
+    return chain;
+  }
+
+  /**
+   * Determines whether the given class fully implements an interface (either
+   * directly or via inherited methods).
+   */
+  private boolean classFullyImplements(JClassType cls, JClassType intf) {
+    // The class must at least nominally implement the interface.
+    if (!intf.isAssignableFrom(cls)) {
+      return false;
+    }
+
+    // Check to see whether it implements all the interfaces methods.
+    for (JMethod meth : intf.getInheritableMethods()) {
+      if (!classImplementsMethod(cls, meth)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean classImplementsMethod(JClassType cls, JMethod meth) {
+    while (cls != null) {
+      JMethod found = cls.findMethod(meth.getName(), methodParamTypes(meth));
+      if ((found != null) && !found.isAbstract()) {
+        return true;
+      }
+      cls = cls.getSuperclass();
+    }
+    return false;
+  }
+
   private void computeHierarchyRelationships(JClassType[] types) {
     // For each type, walk up its hierarchy chain and tell each supertype
     // about its subtype.
@@ -703,15 +744,67 @@ public class TypeOracle {
         } else if (type.isAssignableTo(previousType)) {
           // Do nothing
         } else {
-          throw new InternalCompilerException(
-              "Already seen an implementing JSO subtype ("
-                  + previousType.getName() + ") for interface ("
-                  + intf.getName() + ") while examining newly-added type ("
-                  + type.getName() + "). This is a bug in "
-                  + "JSORestrictionsChecker.");
+          // Special case: If two JSOs implement the same interface, but they
+          // share a common base class that fully implements that interface,
+          // then choose that base class.
+          JClassType impl = findFullyImplementingBase(intf, type, previousType);
+          if (impl != null) {
+            jsoSingleImpls.put(intf, impl);
+          } else {
+            throw new InternalCompilerException(
+                "Already seen an implementing JSO subtype ("
+                    + previousType.getName() + ") for interface ("
+                    + intf.getName() + ") while examining newly-added type ("
+                    + type.getName() + "). This is a bug in "
+                    + "JSORestrictionsChecker.");
+          }
         }
       }
     }
+  }
+
+  /**
+   * Determines whether both classes A and B share a common superclass which
+   * fully implements the given interface.
+   */
+  private JClassType findFullyImplementingBase(JClassType intf, JClassType a,
+      JClassType b) {
+    JClassType common = findNearestCommonBase(a, b);
+    if (classFullyImplements(common, intf)) {
+      return common;
+    }
+    return null;
+  }
+
+  /**
+   * Finds the nearest common base class of the given classes.
+   */
+  private JClassType findNearestCommonBase(JClassType a, JClassType b) {
+    List<JClassType> as = classChain(a);
+    List<JClassType> bs = classChain(b);
+
+    JClassType match = null;
+    Iterator<JClassType> ait = as.iterator();
+    Iterator<JClassType> bit = bs.iterator();
+    while (ait.hasNext() && bit.hasNext()) {
+      a = ait.next();
+      b = bit.next();
+      if (a.equals(b)) {
+        match = a;
+      } else {
+        break;
+      }
+    }
+    return match;
+  }
+
+  private JType[] methodParamTypes(JMethod meth) {
+    JParameter[] params = meth.getParameters();
+    JType[] types = new JType[params.length];
+    for (int i = 0; i < params.length; ++i) {
+      types[i] = params[i].getType();
+    }
+    return types;
   }
 
   private JType parseImpl(String type) throws NotFoundException,

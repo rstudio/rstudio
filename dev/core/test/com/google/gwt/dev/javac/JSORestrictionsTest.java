@@ -37,6 +37,37 @@ public class JSORestrictionsTest extends TestCase {
     }
   }
 
+  public void testBaseClassFullyImplements() {
+    StringBuffer goodCode = new StringBuffer();
+    goodCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    goodCode.append("public class Buggy {\n");
+    goodCode.append("  static interface IntfA {\n");
+    goodCode.append("    void a();\n");
+    goodCode.append("    void b();\n");
+    goodCode.append("  }\n");
+    goodCode.append("  static interface IntfB {\n");
+    goodCode.append("    void c();\n");
+    goodCode.append("  }\n");
+    goodCode.append("  static abstract class BaseA extends JavaScriptObject {\n");
+    goodCode.append("    public final void a() { }\n");
+    goodCode.append("    protected BaseA() { }\n");
+    goodCode.append("  }\n");
+    goodCode.append("  static class BaseB extends BaseA implements IntfA {\n");
+    goodCode.append("    public final void b() { }\n");
+    goodCode.append("    protected BaseB() { }\n");
+    goodCode.append("  }\n");
+    goodCode.append("  static class LeafA extends BaseB {\n");
+    goodCode.append("    protected LeafA() { }\n");
+    goodCode.append("  }\n");
+    goodCode.append("  static class LeafB extends BaseB implements IntfB {\n");
+    goodCode.append("    public final void c() { }\n");
+    goodCode.append("    protected LeafB() { }\n");
+    goodCode.append("  }\n");
+    goodCode.append("}\n");
+
+    shouldGenerateNoError(goodCode);
+  }
+
   public void testFinalClass() {
     StringBuffer code = new StringBuffer();
     code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
