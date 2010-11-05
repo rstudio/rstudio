@@ -19,11 +19,13 @@ import com.google.gwt.requestfactory.shared.ServerFailure;
 
 /**
  * Handles an exception produced while processing a request.
+ * 
+ * @see DefaultExceptionHandler
  */
 public interface ExceptionHandler {
   /**
-   * Generates a {@link ServerFailure} based on the information
-   * contained in the received {@code exception}.
+   * Generates a {@link ServerFailure} based on the information contained in the
+   * received {@code exception}.
    * 
    * @param throwable a Throwable instance
    * @return a {@link ServerFailure} instance

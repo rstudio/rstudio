@@ -30,7 +30,7 @@ public interface EntityProxy {
    * Subtypes should override to declare they return a stable id of their own
    * type, to allow type safe use of the request objects returned by
    * {@link RequestFactory#find(EntityProxyId)}.
-   *
+   * 
    * @return an {@link EntityProxyId} instance
    */
   EntityProxyId<?> stableId();

@@ -27,30 +27,29 @@ import com.google.gwt.user.client.rpc.RpcRequestBuilder;
  */
 public class Logging {
 
-  private static StackTraceDeobfuscator deobfuscator =
-    new StackTraceDeobfuscator("");
+  private static StackTraceDeobfuscator deobfuscator = new StackTraceDeobfuscator(
+      "");
 
   /**
    * Logs a message.
-   *
+   * 
    * @param logRecordJson a log record in JSON format.
    * @throws RemoteLoggingException if logging fails
    */
-  public static void logMessage(String logRecordJson) throws
-  RemoteLoggingException {
+  public static void logMessage(String logRecordJson)
+      throws RemoteLoggingException {
     // if the header does not exist, we pass null, which is handled gracefully
     // by the deobfuscation code.
-    String strongName =
-      RequestFactoryServlet.getThreadLocalRequest().getHeader(
-          RpcRequestBuilder.STRONG_NAME_HEADER);
-    RemoteLoggingServiceUtil.logOnServer(logRecordJson,
-        strongName, deobfuscator, null);
+    String strongName = RequestFactoryServlet.getThreadLocalRequest().getHeader(
+        RpcRequestBuilder.STRONG_NAME_HEADER);
+    RemoteLoggingServiceUtil.logOnServer(logRecordJson, strongName,
+        deobfuscator, null);
   }
 
   /**
    * This function is only for server side use which is why it's not in the
    * LoggingRequest interface.
-   *
+   * 
    * @param dir a directory, specified as a String
    */
   public static void setSymbolMapsDirectory(String dir) {
@@ -63,7 +62,7 @@ public class Logging {
 
   /**
    * Returns the id of this instance.
-   *
+   * 
    * @return a String id
    * @see #setId(String)
    */
@@ -73,7 +72,7 @@ public class Logging {
 
   /**
    * Returns the version of this instance.
-   *
+   * 
    * @return an Integer version number
    * @see #setVersion(Integer)
    */
@@ -83,7 +82,7 @@ public class Logging {
 
   /**
    * Sets the id on this instance.
-   *
+   * 
    * @param id a String id
    * @see #getId()
    */
@@ -93,7 +92,7 @@ public class Logging {
 
   /**
    * Sets the version of this instance.
-   *
+   * 
    * @param version an Integer version number
    * @see #getVersion()
    */

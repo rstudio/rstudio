@@ -46,7 +46,7 @@ public class WeakMapping {
     /**
      * The identity hash code of the referent, cached during construction.
      */
-    private int hashCode;
+    private final int hashCode;
 
     public IdentityWeakReference(Object referent, ReferenceQueue<Object> queue) {
       super(referent, queue);
@@ -93,7 +93,7 @@ public class WeakMapping {
    * identity. Weak references are used to allow otherwise unreferenced Objects
    * to be garbage collected.
    */
-  private static Map<IdentityWeakReference, HashMap<String, Object>> map = new HashMap<IdentityWeakReference, HashMap<String, Object>>();
+  private static Map<IdentityWeakReference, Map<String, Object>> map = new HashMap<IdentityWeakReference, Map<String, Object>>();
 
   /**
    * A ReferenceQueue used to clean up the map as its keys are
@@ -109,11 +109,11 @@ public class WeakMapping {
    * @param key a String key.
    * @return an Object associated with that key on the given instance, or null.
    */
-  public static Object get(Object instance, String key) {
+  public static synchronized Object get(Object instance, String key) {
     cleanup();
 
     Object ref = new IdentityWeakReference(instance, queue);
-    HashMap<String, Object> m = map.get(ref);
+    Map<String, Object> m = map.get(ref);
     if (m == null) {
       return null;
     }
@@ -135,7 +135,7 @@ public class WeakMapping {
    *          Object.
    * @throws IllegalArgumentException if instance is a String.
    */
-  public static void set(Object instance, String key, Object value) {
+  public static synchronized void set(Object instance, String key, Object value) {
     cleanup();
 
     if (instance instanceof String) {
@@ -143,7 +143,7 @@ public class WeakMapping {
     }
 
     IdentityWeakReference ref = new IdentityWeakReference(instance, queue);
-    HashMap<String, Object> m = map.get(ref);
+    Map<String, Object> m = map.get(ref);
     if (m == null) {
       m = new HashMap<String, Object>();
       map.put(ref, m);

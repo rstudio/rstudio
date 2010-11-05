@@ -21,14 +21,15 @@ package com.google.gwt.requestfactory.shared;
  * <p>
  * In particular, an {@link EntityProxy} foo that is yet to be persisted and a
  * copy of foo after being persisted have equal {@link EntityProxyId}.
- *
+ * 
  * @param <P> the entity type
  */
+@ProxyFor(Object.class)
 public interface EntityProxyId<P extends EntityProxy> {
 
   /**
    * Returns the class of the proxy identified.
-   *
+   * 
    * @return a Class object of type P
    */
   Class<P> getProxyClass();

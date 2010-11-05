@@ -22,7 +22,5 @@ public interface SimpleRequestFactory extends RequestFactory {
 
   SimpleFooRequest simpleFooRequest();
 
-  SimpleFooStringRequest simpleFooStringRequest();
-
   SimpleBarRequest simpleBarRequest();
 }

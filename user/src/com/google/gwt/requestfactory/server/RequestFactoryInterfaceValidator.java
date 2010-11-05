@@ -28,7 +28,6 @@ import com.google.gwt.dev.asm.signature.SignatureVisitor;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
-import com.google.gwt.requestfactory.client.impl.FindRequest;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.ProxyFor;
@@ -61,6 +60,26 @@ import java.util.logging.Logger;
  * interfaces match their domain counterparts. This implementation examines the
  * classfiles directly in order to avoid the need to load the types into the
  * JVM.
+ * <p>
+ * This class is amenable to being used as a unit test:
+ * 
+ * <pre>
+ * public void testRequestFactory() {
+ *   Logger logger = Logger.getLogger("");
+ *   RequestFactoryInterfaceValidator v = new RequestFactoryInterfaceValidator(
+ *     logger, new ClassLoaderLoader(Thread.currentThread().getContextClassLoader()));
+ *   v.validateRequestContext(MyRequestContext.class.getName());
+ *   assertFalse(v.isPoisoned());
+ * }
+ * </pre>
+ * This class also has a {@code main} method and can be used as a build-time
+ * tool:
+ * 
+ * <pre>
+ * java -cp gwt-servlet.jar:your-code.jar \
+ *   com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidator \
+ *   com.example.MyRequestFactory
+ * </pre>
  */
 public class RequestFactoryInterfaceValidator {
   /**
@@ -91,12 +110,16 @@ public class RequestFactoryInterfaceValidator {
   public interface Loader {
     /**
      * Returns true if the specified resource can be loaded.
+     * 
+     * @param resource a resource name (e.g. <code>com/example/Foo.class</code>)
      */
     boolean exists(String resource);
 
     /**
      * Returns an InputStream to access the specified resource, or
      * <code>null</code> if no such resource exists.
+     * 
+     * @param resource a resource name (e.g. <code>com/example/Foo.class</code>)
      */
     InputStream getResourceAsStream(String resource);
   }
@@ -201,12 +224,14 @@ public class RequestFactoryInterfaceValidator {
     }
 
     public void poison(String msg, Object... args) {
+      poison();
       logger.logp(Level.SEVERE, currentType(), currentMethod(),
           String.format(msg, args));
       poisoned = true;
     }
 
     public void poison(String msg, Throwable t) {
+      poison();
       logger.logp(Level.SEVERE, currentType(), currentMethod(), msg, t);
       poisoned = true;
     }
@@ -246,6 +271,19 @@ public class RequestFactoryInterfaceValidator {
         return parent.currentType();
       }
       return null;
+    }
+
+    /**
+     * Populate {@link RequestFactoryInterfaceValidator#badTypes} with the
+     * current context.
+     */
+    private void poison() {
+      if (currentType != null) {
+        badTypes.add(currentType.getClassName());
+      }
+      if (parent != null) {
+        parent.poison();
+      }
     }
   }
 
@@ -396,9 +434,15 @@ public class RequestFactoryInterfaceValidator {
   }
 
   /**
+   * A set of binary type names that are known to be bad.
+   */
+  private final Set<String> badTypes = new HashSet<String>();
+
+  /**
    * Maps client types (e.g. FooProxy) to server domain types (e.g. Foo).
    */
   private final Map<Type, Type> clientToDomainType = new HashMap<Type, Type>();
+  private final Map<Type, Type> domainToClientType = new HashMap<Type, Type>();
   /**
    * The type {@link EntityProxy}.
    */
@@ -417,6 +461,10 @@ public class RequestFactoryInterfaceValidator {
    * A cache of all methods defined in a type hierarchy.
    */
   private final Map<Type, Set<RFMethod>> methodsInHierarchy = new HashMap<Type, Set<RFMethod>>();
+  /**
+   * The type {@link Object}.
+   */
+  private final Type objectType = Type.getObjectType("java/lang/Object");
   private final ErrorContext parentLogger;
   private boolean poisoned;
   /**
@@ -447,6 +495,14 @@ public class RequestFactoryInterfaceValidator {
     for (Class<?> clazz : VALUE_TYPES) {
       valueTypes.add(Type.getType(clazz));
     }
+  }
+
+  /**
+   * Reset the poisoned status of the validator so that it may be reused without
+   * destroying cached state.
+   */
+  public void antidote() {
+    poisoned = false;
   }
 
   /**
@@ -481,13 +537,7 @@ public class RequestFactoryInterfaceValidator {
    *          EntityProxy subtype
    */
   public void validateEntityProxy(String binaryName) {
-    if (!Name.isBinaryName(binaryName)) {
-      parentLogger.poison("%s is not a binary name", binaryName);
-      return;
-    }
-
-    // Don't revalidate the same type
-    if (!validatedTypes.add(binaryName)) {
+    if (fastFail(binaryName)) {
       return;
     }
 
@@ -555,18 +605,7 @@ public class RequestFactoryInterfaceValidator {
    * @see #validateEntityProxy(String)
    */
   public void validateRequestContext(String binaryName) {
-    if (!Name.isBinaryName(binaryName)) {
-      parentLogger.poison("%s is not a binary name", binaryName);
-      return;
-    }
-
-    // Don't revalidate the same type
-    if (!validatedTypes.add(binaryName)) {
-      return;
-    }
-
-    if (FindRequest.class.getName().equals(binaryName)) {
-      // Ignore FindRequest, it's a huge hack
+    if (fastFail(binaryName)) {
       return;
     }
 
@@ -620,13 +659,7 @@ public class RequestFactoryInterfaceValidator {
    * @see #validateRequestContext(String)
    */
   public void validateRequestFactory(String binaryName) {
-    if (!Name.isBinaryName(binaryName)) {
-      parentLogger.poison("%s is not a binary name", binaryName);
-      return;
-    }
-
-    // Don't revalidate the same type
-    if (!validatedTypes.add(binaryName)) {
+    if (fastFail(binaryName)) {
       return;
     }
 
@@ -649,6 +682,16 @@ public class RequestFactoryInterfaceValidator {
         validateRequestContext(returnType.getClassName());
       }
     }
+  }
+
+  /**
+   * Given the binary name of a domain type, return the EntityProxy type that
+   * has been seen to map to the domain type.
+   */
+  String getEntityProxyTypeName(String domainTypeNameBinaryName) {
+    Type key = Type.getObjectType(BinaryName.toInternalName(domainTypeNameBinaryName));
+    Type found = domainToClientType.get(key);
+    return found == null ? null : found.getClassName();
   }
 
   /**
@@ -687,6 +730,9 @@ public class RequestFactoryInterfaceValidator {
    * <code>getVersion</code> methods.
    */
   private void checkIdAndVersion(ErrorContext logger, Type domainType) {
+    if (objectType.equals(domainType)) {
+      return;
+    }
     logger = logger.setType(domainType);
     Method getIdString = new Method("getId", "()Ljava/lang/String;");
     Method getIdLong = new Method("getId", "()Ljava/lang/Long;");
@@ -726,6 +772,29 @@ public class RequestFactoryInterfaceValidator {
     }
     Type returnType = getDomainType(logger, clientMethod.getReturnType());
     return new Method(clientMethod.getName(), returnType, args);
+  }
+
+  /**
+   * Common checks to quickly determine if a type needs to be checked.
+   */
+  private boolean fastFail(String binaryName) {
+    if (!Name.isBinaryName(binaryName)) {
+      parentLogger.poison("%s is not a binary name", binaryName);
+      return true;
+    }
+
+    // Allow the poisoned flag to be reset without losing data
+    if (badTypes.contains(binaryName)) {
+      parentLogger.poison("Type type %s was previously marked as bad",
+          binaryName);
+      return true;
+    }
+
+    // Don't revalidate the same type
+    if (!validatedTypes.add(binaryName)) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -855,6 +924,8 @@ public class RequestFactoryInterfaceValidator {
     }
     if (isValueType(logger, clientType) || isCollectionType(logger, clientType)) {
       toReturn = clientType;
+    } else if (entityProxyIntf.equals(clientType)) {
+      toReturn = objectType;
     } else {
       logger = logger.setType(clientType);
       DomainMapper pv = new DomainMapper(logger);
@@ -869,6 +940,15 @@ public class RequestFactoryInterfaceValidator {
       }
     }
     clientToDomainType.put(clientType, toReturn);
+    if (isAssignable(logger, entityProxyIntf, clientType)) {
+      Type previousProxyType = domainToClientType.put(toReturn, clientType);
+      if (previousProxyType != null) {
+        logger.poison(
+            "The domain type %s has more than one proxy type: %s and %s",
+            toReturn.getClassName(), previousProxyType.getClassName(),
+            clientType.getClassName());
+      }
+    }
     return toReturn;
   }
 

@@ -24,6 +24,7 @@ import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
+import com.google.gwt.requestfactory.shared.impl.FindRequest;
 
 import junit.framework.TestCase;
 
@@ -142,6 +143,26 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   }
 
   RequestFactoryInterfaceValidator v;
+
+  /**
+   * Ensure that calling {@link RequestFactoryInterfaceValidator#antidote()}
+   * doesn't cause information to be lost.
+   */
+  public void testAntidote() {
+    v.validateRequestContext(RequestContextMissingAnnotation.class.getName());
+    assertTrue(v.isPoisoned());
+    v.antidote();
+    assertFalse(v.isPoisoned());
+    v.validateRequestContext(RequestContextMissingAnnotation.class.getName());
+    assertTrue(v.isPoisoned());
+  }
+
+  /**
+   * Test the {@link FindRequest} context used to implement find().
+   */
+  public void testFindRequestContext() {
+    v.validateRequestContext(FindRequest.class.getName());
+  }
 
   /**
    * Ensure that the &lt;clinit> methods don't interfere with validation.

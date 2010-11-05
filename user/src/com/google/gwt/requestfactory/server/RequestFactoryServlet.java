@@ -51,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 @SuppressWarnings("serial")
 public class RequestFactoryServlet extends HttpServlet {
 
+  private static final boolean DUMP_PAYLOAD = Boolean.getBoolean("gwt.rpc.dumpPayload");
   private static final String JSON_CHARSET = "UTF-8";
   private static final String JSON_CONTENT_TYPE = "application/json";
   private static final Logger log = Logger.getLogger(RequestFactoryServlet.class.getCanonicalName());
@@ -64,7 +65,7 @@ public class RequestFactoryServlet extends HttpServlet {
 
   /**
    * Returns the thread-local {@link HttpServletRequest}.
-   *
+   * 
    * @return an {@link HttpServletRequest} instance
    */
   public static HttpServletRequest getThreadLocalRequest() {
@@ -73,14 +74,14 @@ public class RequestFactoryServlet extends HttpServlet {
 
   /**
    * Returns the thread-local {@link HttpServletResponse}.
-   *
+   * 
    * @return an {@link HttpServletResponse} instance
    */
   public static HttpServletResponse getThreadLocalResponse() {
     return perThreadResponse.get();
   }
 
-  private final ExceptionHandler exceptionHandler;
+  private final SimpleRequestProcessor processor;
 
   /**
    * Constructs a new {@link RequestFactoryServlet} with a
@@ -93,11 +94,12 @@ public class RequestFactoryServlet extends HttpServlet {
   /**
    * Use this constructor in subclasses to provide a custom
    * {@link ExceptionHandler}.
-   *
+   * 
    * @param exceptionHandler an {@link ExceptionHandler} instance
    */
   public RequestFactoryServlet(ExceptionHandler exceptionHandler) {
-    this.exceptionHandler = exceptionHandler;
+    processor = new SimpleRequestProcessor(new ReflectiveServiceLayer());
+    processor.setExceptionHandler(exceptionHandler);
   }
 
   /**
@@ -114,13 +116,15 @@ public class RequestFactoryServlet extends HttpServlet {
 
     perThreadRequest.set(request);
     perThreadResponse.set(response);
-    
+
     // No new code should be placed outside of this try block.
     try {
       ensureConfig();
       String jsonRequestString = RPCServletUtils.readContent(request,
           JSON_CONTENT_TYPE, JSON_CHARSET);
-      response.setStatus(HttpServletResponse.SC_OK);
+      if (DUMP_PAYLOAD) {
+        System.out.println(">>> " + jsonRequestString);
+      }
       PrintWriter writer = response.getWriter();
 
       try {
@@ -130,19 +134,18 @@ public class RequestFactoryServlet extends HttpServlet {
           response.setHeader("login", userInfo.getLoginUrl());
           response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
+          String payload = processor.process(jsonRequestString);
+          if (DUMP_PAYLOAD) {
+            System.out.println("<<< " + payload);
+          }
           response.setHeader("userId", String.format("%s", userInfo.getId()));
           response.setStatus(HttpServletResponse.SC_OK);
-          RequestProcessor<String> requestProcessor = new JsonRequestProcessor();
-          requestProcessor.setOperationRegistry(new ReflectionBasedOperationRegistry(
-              new DefaultSecurityProvider()));
-          requestProcessor.setExceptionHandler(exceptionHandler);
           response.setContentType(RequestFactory.JSON_CONTENT_TYPE_UTF8);
-          writer.print(requestProcessor.decodeAndInvokeRequest(jsonRequestString));
+          writer.print(payload);
           writer.flush();
         }
-      } catch (RequestProcessingException e) {
-        writer.print((String) e.getResponse());
-        writer.flush();
+      } catch (RuntimeException e) {
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         log.log(Level.SEVERE, "Unexpected error", e);
       }
     } finally {
@@ -160,9 +163,9 @@ public class RequestFactoryServlet extends HttpServlet {
     if (userInfoClass != null) {
       UserInformation.setUserInformationImplClass(userInfoClass);
     }
-    
-    String symbolMapsDirectory =
-      getServletConfig().getInitParameter("symbolMapsDirectory");
+
+    String symbolMapsDirectory = getServletConfig().getInitParameter(
+        "symbolMapsDirectory");
     if (symbolMapsDirectory != null) {
       Logging.setSymbolMapsDirectory(symbolMapsDirectory);
     }

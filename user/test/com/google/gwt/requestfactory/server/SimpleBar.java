@@ -16,7 +16,6 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.dev.util.collect.HashSet;
-import com.google.gwt.requestfactory.shared.Id;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,7 +123,6 @@ public class SimpleBar {
 
   Integer version = 1;
 
-  @Id
   private String id = "999L";
   private boolean findFails;
   private boolean isNew = true;

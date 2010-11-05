@@ -15,11 +15,15 @@
  */
 
 /**
- * Server side classes for mediating between the client side and the persistent datastore.
- *
- * This package contains classes that can receive client side read and write requests in the JSON format, perform the necessary operations on the persistent datastore, and return the results in JSON format.
- *
+ * Server side classes for mediating between the client side and the persistent
+ * datastore.
+ * 
+ * This package contains classes that can receive client side read and write
+ * requests in the JSON format, perform the necessary operations on the
+ * persistent datastore, and return the results in JSON format.
+ * 
  * @since GWT 2.1
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.requestfactory.server;
+

@@ -15,12 +15,11 @@
  */
 package com.google.gwt.requestfactory;
 
-import com.google.gwt.requestfactory.client.impl.SimpleEntityProxyIdTest;
 import com.google.gwt.requestfactory.rebind.model.RequestFactoryModelTest;
-import com.google.gwt.requestfactory.server.JsonRequestProcessorTest;
-import com.google.gwt.requestfactory.server.ReflectionBasedOperationRegistryTest;
+import com.google.gwt.requestfactory.server.FindServiceJreTest;
 import com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidatorTest;
-import com.google.gwt.requestfactory.server.RequestPropertyTest;
+import com.google.gwt.requestfactory.server.RequestFactoryJreTest;
+import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyIdTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -32,12 +31,11 @@ public class RequestFactoryJreSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite(
         "requestfactory package tests that require the JRE");
+    suite.addTestSuite(FindServiceJreTest.class);
+    suite.addTestSuite(RequestFactoryJreTest.class);
     suite.addTestSuite(SimpleEntityProxyIdTest.class);
-    suite.addTestSuite(JsonRequestProcessorTest.class);
-    suite.addTestSuite(ReflectionBasedOperationRegistryTest.class);
     suite.addTestSuite(RequestFactoryInterfaceValidatorTest.class);
     suite.addTestSuite(RequestFactoryModelTest.class);
-    suite.addTestSuite(RequestPropertyTest.class);
     return suite;
   }
 }

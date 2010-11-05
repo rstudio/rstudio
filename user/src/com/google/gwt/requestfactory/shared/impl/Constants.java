@@ -20,18 +20,6 @@ package com.google.gwt.requestfactory.shared.impl;
  */
 public interface Constants {
 
-  String CONTENT_TOKEN = "contentData";
-  String OPERATION_TOKEN = "operation";
-  String PARAM_TOKEN = "param";
-  String PROPERTY_REF_TOKEN = "propertyRefs";
-  String RESULT_TOKEN = "result";
-  String RELATED_TOKEN = "related";
-  String SIDE_EFFECTS_TOKEN = "sideEffects";
-  String VIOLATIONS_TOKEN = "violations";
-  /**
-   * Property on a proxy JSO that holds its futureId.
-   */
-  String ENCODED_FUTUREID_PROPERTY = "!futureId";
   /**
    * Property on a proxy JSO that holds its encoded server side data store id.
    */

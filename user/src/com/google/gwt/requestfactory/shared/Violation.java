@@ -22,21 +22,21 @@ package com.google.gwt.requestfactory.shared;
 public interface Violation {
   /**
    * Returns the message associated with this {@link Violation}.
-   *
+   * 
    * @return a String message
    */
   String getMessage();
 
   /**
    * Returns the path associated with this {@link Violation}.
-   *
+   * 
    * @return a String path
    */
   String getPath();
 
   /**
    * Returns the proxy id associated with this {@link Violation}.
-   *
+   * 
    * @return an {@link EntityProxyId} instance
    */
   EntityProxyId<?> getProxyId();

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.Id;
 import com.google.gwt.requestfactory.shared.SimpleEnum;
 
 import java.math.BigDecimal;
@@ -39,7 +38,7 @@ public class SimpleFoo {
   /**
    * DO NOT USE THIS UGLY HACK DIRECTLY! Call {@link #get} instead.
    */
-  private static Map<Long, SimpleFoo> jreTestSingleton = new HashMap<Long, SimpleFoo>();
+  private static Map<Long, SimpleFoo> jreTestSingleton;
 
   private static Long nextId = 1L;
 
@@ -87,6 +86,9 @@ public class SimpleFoo {
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
     if (req == null) {
       // May be in a JRE test case, use the singleton
+      if (jreTestSingleton == null) {
+        jreTestSingleton = resetImpl();
+      }
       return jreTestSingleton;
     } else {
       /*
@@ -278,7 +280,6 @@ public class SimpleFoo {
 
   Integer version = 1;
 
-  @Id
   private Long id = 1L;
   private boolean isNew = true;
 

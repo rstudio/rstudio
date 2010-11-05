@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.client;
 
-import com.google.gwt.requestfactory.client.impl.SimpleEntityProxyId;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
@@ -29,6 +28,7 @@ import com.google.gwt.requestfactory.shared.SimpleEnum;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooRequest;
 import com.google.gwt.requestfactory.shared.Violation;
+import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,11 +62,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     @Override
     public void onFailure(ServerFailure error) {
       assertEquals(expectedException, error.getExceptionType());
-      if (expectedException.length() > 0) {
+      if (expectedException != null) {
         assertFalse(error.getStackTraceString().length() == 0);
         assertEquals("THIS EXCEPTION IS EXPECTED BY A TEST", error.getMessage());
       } else {
-        assertEquals("", error.getStackTraceString());
+        assertEquals(null, error.getStackTraceString());
         assertEquals("Server Error: THIS EXCEPTION IS EXPECTED BY A TEST",
             error.getMessage());
       }
@@ -338,7 +338,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       public void onSuccess(SimpleFooProxy response) {
         assertFalse(((SimpleEntityProxyId<SimpleFooProxy>) response.stableId()).isEphemeral());
         assertEquals(2, handler.persistEventCount); // two bars persisted.
-        assertEquals(2, handler.totalEventCount);
+        assertEquals(2, handler.updateEventCount); // two bars persisted.
+        assertEquals(4, handler.totalEventCount);
         finishTestAndReset();
       }
     });
@@ -924,7 +925,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInIntegerListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<Integer> list = Arrays.asList(new Integer[] {1, 2, null});
+    List<Integer> list = Arrays.asList(new Integer[]{1, 2, null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInIntegerList(
         list);
     fooReq.fire(new Receiver<Void>() {
@@ -940,7 +941,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    */
   public void testNullValueInStringListRequest() {
     delayTestFinish(DELAY_TEST_FINISH);
-    List<String> list = Arrays.asList(new String[] {"nonnull", "null", null});
+    List<String> list = Arrays.asList(new String[]{"nonnull", "null", null});
     final Request<Void> fooReq = req.simpleFooRequest().receiveNullValueInStringList(
         list);
     fooReq.fire(new Receiver<Void>() {
@@ -973,7 +974,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         assertEquals("user name", f.getUserName());
         assertEquals(Byte.valueOf((byte) 100), f.getByteField());
         assertEquals(Short.valueOf((short) 12345), f.getShortField());
-        assertEquals(Float.valueOf(1234.56f), f.getFloatField());
+        assertEquals(0, (int) Math.rint(123456f - 100 * f.getFloatField()));
         assertEquals(Double.valueOf(1.2345), f.getDoubleField());
         assertEquals(Long.valueOf(1234L), f.getLongField());
         assertFalse(f.getBoolField());
@@ -1821,7 +1822,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final SimpleFooProxy mutableFoo = context.edit(newFoo);
     // 43 is the crash causing magic number for a checked exception
     mutableFoo.setPleaseCrash(43);
-    persistRequest.fire(new FooReciever(mutableFoo, persistRequest, ""));
+    persistRequest.fire(new FooReciever(mutableFoo, persistRequest, null));
   }
 
   public void testServerFailureRuntimeException() {
@@ -1833,7 +1834,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final SimpleFooProxy mutableFoo = context.edit(newFoo);
     // 42 is the crash causing magic number for a runtime exception
     mutableFoo.setPleaseCrash(42);
-    persistRequest.fire(new FooReciever(mutableFoo, persistRequest, ""));
+    persistRequest.fire(new FooReciever(mutableFoo, persistRequest, null));
   }
 
   /**

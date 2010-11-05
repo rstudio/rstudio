@@ -15,9 +15,7 @@
  */
 package com.google.gwt.requestfactory.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Receiver;
@@ -150,8 +148,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
 
     // Here's the factory from the "previous invocation" of the client
     {
-      SimpleRequestFactory oldFactory = GWT.create(SimpleRequestFactory.class);
-      oldFactory.initialize(new SimpleEventBus());
+      SimpleRequestFactory oldFactory = createFactory();
       EntityProxyId<SimpleBarProxy> id = oldFactory.simpleBarRequest().create(
           SimpleBarProxy.class).stableId();
       historyToken = oldFactory.getHistoryToken(id);

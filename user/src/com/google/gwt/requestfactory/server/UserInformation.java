@@ -17,8 +17,8 @@
 package com.google.gwt.requestfactory.server;
 
 /**
- * A base class for providing authentication related information about the
- * user. Services that want real authentication should subclass this class.
+ * A base class for providing authentication related information about the user.
+ * Services that want real authentication should subclass this class.
  */
 public abstract class UserInformation {
 
@@ -38,9 +38,8 @@ public abstract class UserInformation {
     UserInformation userInfo = null;
     if (!"".equals(userInformationImplClass)) {
       try {
-        userInfo = (UserInformation) Class.forName(
-            userInformationImplClass).getConstructor(
-                String.class).newInstance(redirectUrl);
+        userInfo = (UserInformation) Class.forName(userInformationImplClass).getConstructor(
+            String.class).newInstance(redirectUrl);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -52,9 +51,9 @@ public abstract class UserInformation {
   }
 
   /**
-   * Sets the implementation class to be used to gather user information
-   * in {@link #getCurrentUserInformation(String)}.
-   *
+   * Sets the implementation class to be used to gather user information in
+   * {@link #getCurrentUserInformation(String)}.
+   * 
    * @param clazz a class name
    */
   public static void setUserInformationImplClass(String clazz) {
@@ -66,10 +65,10 @@ public abstract class UserInformation {
    */
   protected String redirectUrl = "";
   private Integer version = 0;
-  
+
   /**
    * Constructs a new {@link UserInformation} instance.
-   *
+   * 
    * @param redirectUrl the redirect URL as a String
    */
   public UserInformation(String redirectUrl) {
@@ -80,68 +79,68 @@ public abstract class UserInformation {
 
   /**
    * Returns the user's email address.
-   *
+   * 
    * @return the user's email address as a String
    */
   public abstract String getEmail();
-  
+
   /**
    * Returns the user's id.
-   *
+   * 
    * @return the user's id as a Long
    * @see #setId(Long)
    */
   public abstract Long getId();
-  
+
   /**
    * Returns the user's login URL.
-   *
+   * 
    * @return the user's login URL as a String
    */
   public abstract String getLoginUrl();
-  
+
   /**
    * Returns the user's logout URL.
-   *
+   * 
    * @return the user's logout URL as a String
    */
   public abstract String getLogoutUrl();
-  
+
   /**
    * Returns the user's name.
-   *
+   * 
    * @return the user's name as a String
    */
   public abstract String getName();
 
   /**
    * Returns the version of this instance.
-   *
+   * 
    * @return an Integer version number
    * @see #setVersion(Integer)
    */
   public Integer getVersion() {
     return this.version;
   }
-  
+
   /**
    * Returns whether the user is logged in.
-   *
+   * 
    * @return {@code true} if the user is logged in
    */
   public abstract boolean isUserLoggedIn();
 
   /**
    * Sets the id for this user.
-   *
+   * 
    * @param id a String id
    * @see #getId()
    */
   public abstract void setId(Long id);
-  
+
   /**
    * Sets the version of this instance.
-   *
+   * 
    * @param version an Integer version number
    * @see #getVersion()
    */

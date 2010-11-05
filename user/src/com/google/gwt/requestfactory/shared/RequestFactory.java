@@ -22,13 +22,13 @@ import com.google.gwt.event.shared.EventBus;
  * <p>
  * <b>Limitations on the transferrability of types.</b> <br>
  * RequestFactory currently supports the transfer of basic value types, entity
- * types, and collections, with limitations. The basic value types supported
- * are {@link String}, {@link Enum}, {@link Boolean}, {@link Character},
- * subtypes of {@link Number}, and {@link java.util.Date}. Any value type not
- * included in this list may not be declared in the type signature of a service
- * method, or {@link EntityProxy}. {@link java.util.Collection} types supported
- * are {@link java.util.List} and {@link java.util.Set} with the restriction
- * that a collection must be homogeneous and only hold one type of value.
+ * types, and collections, with limitations. The basic value types supported are
+ * {@link String}, {@link Enum}, {@link Boolean}, {@link Character}, subtypes of
+ * {@link Number}, and {@link java.util.Date}. Any value type not included in
+ * this list may not be declared in the type signature of a service method, or
+ * {@link EntityProxy}. {@link java.util.Collection} types supported are
+ * {@link java.util.List} and {@link java.util.Set} with the restriction that a
+ * collection must be homogeneous and only hold one type of value.
  * </p>
  * <p>
  * Polymorphism is not supported at this time. RequestFactory encoding and
@@ -48,16 +48,16 @@ public interface RequestFactory {
 
   /**
    * Return a request to find a fresh instance of the referenced proxy.
-   *
+   * 
    * @param proxyId an {@link EntityProxyId} instance of type P
    * @return a {@link Request} object
    */
   <P extends EntityProxy> Request<P> find(EntityProxyId<P> proxyId);
 
   /**
-   * Returns the event bus this factory's events are posted on, which was set via
-   * {@link #initialize}.
-   *
+   * Returns the event bus this factory's events are posted on, which was set
+   * via {@link #initialize}.
+   * 
    * @return the {@link EventBus} associated with this instance
    */
   EventBus getEventBus();
@@ -96,7 +96,7 @@ public interface RequestFactory {
    * type of this token, via {@link RequestContext#create}. The token may
    * represent either a proxy instance (see {@link #getHistoryToken}) or a proxy
    * class (see {@link #getProxyClass}).
-   *
+   * 
    * @param historyToken a String token
    * @return a Class object for an {@link EntityProxy} subclass
    */
@@ -105,7 +105,7 @@ public interface RequestFactory {
   /**
    * Return the appropriate {@link EntityProxyId} using a string returned from
    * {@link #getHistoryToken(EntityProxyId)}.
-   *
+   * 
    * @param historyToken a String token
    * @return an {@link EntityProxyId}
    */
@@ -114,14 +114,14 @@ public interface RequestFactory {
   /**
    * Start this request factory with a
    * {@link com.google.gwt.requestfactory.client.DefaultRequestTransport}.
-   *
+   * 
    * @param eventBus an {@link EventBus}
    */
   void initialize(EventBus eventBus);
 
   /**
    * Start this request factory with a user-provided transport.
-   *
+   * 
    * @param eventBus an {@link EventBus}
    * @param transport a {@link RequestTransport} instance
    */
