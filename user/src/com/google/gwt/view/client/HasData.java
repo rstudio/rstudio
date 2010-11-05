@@ -34,8 +34,18 @@ public interface HasData<T> extends HasRows {
   SelectionModel<? super T> getSelectionModel();
 
   /**
+   * <p>
    * Set a values associated with the rows in the visible range.
-   *
+   * </p>
+   * <p>
+   * This method <i>does not</i> replace all rows in the display; it replaces
+   * the row values starting at the specified start index through the length of
+   * the the specified values. You must call {@link #setRowCount(int)} to set
+   * the total number of rows in the display. You should also use
+   * {@link #setRowCount(int)} to remove rows when the total number of rows
+   * decreases.
+   * </p>
+   * 
    * @param start the start index of the data
    * @param values the values within the range
    */

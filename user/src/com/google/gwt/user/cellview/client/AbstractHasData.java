@@ -545,6 +545,25 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     presenter.setRowCount(size, isExact);
   }
 
+  /**
+   * <p>
+   * Set the complete list of values to display on one page.
+   * </p>
+   * <p>
+   * Equivalent to calling {@link #setRowCount(int)} with the length of the list
+   * of values, {@link #setVisibleRange(Range)} from 0 to the size of the list
+   * of values, and {@link #setRowData(int, List)} with a start of 0 and the
+   * specified list of values.
+   * </p>
+   * 
+   * @param values
+   */
+  public final void setRowData(List<? extends T> values) {
+    setRowCount(values.size());
+    setVisibleRange(0, values.size());
+    setRowData(0, values);
+  }
+
   public void setRowData(int start, List<? extends T> values) {
     presenter.setRowData(start, values);
   }

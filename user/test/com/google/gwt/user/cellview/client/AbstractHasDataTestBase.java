@@ -20,6 +20,7 @@ import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +80,36 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     assertEquals("test 10", items.get(0));
     assertEquals("test 11", items.get(1));
     assertEquals("test 12", items.get(2));
+  }
+
+  public void testSetRowData() {
+    AbstractHasData<String> display = createAbstractHasData();
+
+    // Set exact data.
+    List<String> values = createData(0, 62);
+    display.setRowData(values);
+    assertEquals(62, display.getRowCount());
+    assertTrue(display.isRowCountExact());
+    assertEquals(values, display.getDisplayedItems());
+    assertEquals(new Range(0, 62), display.getVisibleRange());
+
+    // Add some data.
+    List<String> moreValues = createData(62, 10);
+    display.setVisibleRange(0, 100);
+    display.setRowData(62, moreValues);
+    assertEquals(72, display.getRowCount());
+    assertTrue(display.isRowCountExact());
+    assertEquals("test 62", display.getDisplayedItem(62));
+    assertEquals("test 71", display.getDisplayedItem(71));
+    assertEquals(72, display.getDisplayedItems().size());
+    assertEquals(new Range(0, 100), display.getVisibleRange());
+
+    // Push the exact data again.
+    display.setRowData(values);
+    assertEquals(62, display.getRowCount());
+    assertTrue(display.isRowCountExact());
+    assertEquals(values, display.getDisplayedItems());
+    assertEquals(new Range(0, 62), display.getVisibleRange());
   }
 
   public void testSetTabIndex() {
