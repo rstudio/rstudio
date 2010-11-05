@@ -17,6 +17,9 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+
+
+import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
@@ -30,6 +33,14 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  * {@link com.google.gwt.user.client.ui.Label} widget is more appropriate, as it
  * disallows the use of HTML, which can lead to potential security issues if not
  * used properly.
+ * </p>
+ *
+ * <p>
+ * <h3>Built-in Bidi Text Support</h3>
+ * This widget is capable of automatically adjusting its direction according to
+ * its content. This feature is controlled by {@link #setDirectionEstimator} or
+ * passing a DirectionEstimator parameter to the constructor, and is off by
+ * default.
  * </p>
  *
  * <h3>CSS Style Rules</h3>
@@ -80,16 +91,6 @@ public class InlineHTML extends HTML {
   }
 
   /**
-   * Creates an HTML widget with the specified HTML contents.
-   *
-   * @param html the new widget's HTML contents
-   */
-  public InlineHTML(String html) {
-    this();
-    setHTML(html);
-  }
-
-  /**
    * Creates an HTML widget with the specified contents and with the
    * specified direction.
    *
@@ -99,6 +100,31 @@ public class InlineHTML extends HTML {
    */
   public InlineHTML(SafeHtml html, Direction dir) {
     this(html.asString(), dir);
+  }
+
+  /**
+   * Creates an HTML widget with the specified HTML contents and with a default
+   * direction estimator.
+   *
+   * @param html the new widget's SafeHtml contents
+   * @param directionEstimator A DirectionEstimator object used for automatic
+   *          direction adjustment. For convenience,
+   *          {@link Label#DEFAULT_DIRECTION_ESTIMATOR} can be used.
+   */
+  public InlineHTML(SafeHtml html, DirectionEstimator directionEstimator) {
+    this();
+    setDirectionEstimator(directionEstimator);
+    setHTML(html);
+  }
+
+  /**
+   * Creates an HTML widget with the specified HTML contents.
+   *
+   * @param html the new widget's HTML contents
+   */
+  public InlineHTML(String html) {
+    this();
+    setHTML(html);
   }
 
   /**
@@ -113,7 +139,7 @@ public class InlineHTML extends HTML {
     this();
     setHTML(html, dir);
   }
-
+  
   /**
    * This constructor may be used by subclasses to explicitly use an existing
    * element. This element must be either a &lt;div&gt; &lt;span&gt; element.

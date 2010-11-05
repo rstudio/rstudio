@@ -17,8 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.i18n.client.BidiUtils;
-import com.google.gwt.i18n.shared.BidiFormatter;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
@@ -33,6 +31,14 @@ import com.google.gwt.safehtml.shared.SafeHtml;
  * {@link com.google.gwt.user.client.ui.Label} widget is more appropriate, as it
  * disallows the use of HTML, which can lead to potential security issues if not
  * used properly.
+ * </p>
+ *
+ * <p>
+ * <h3>Built-in Bidi Text Support</h3>
+ * This widget is capable of automatically adjusting its direction according to
+ * its content. This feature is controlled by {@link #setDirectionEstimator} or
+ * passing a DirectionEstimator parameter to the constructor, and is off by
+ * default.
  * </p>
  *
  * <h3>CSS Style Rules</h3>
@@ -89,18 +95,8 @@ public class HTML extends Label
   }
 
   /**
-   * Creates an HTML widget with the specified HTML contents.
-   *
-   * @param html the new widget's HTML contents
-   */
-  public HTML(String html) {
-    this();
-    setHTML(html);
-  }
-
-  /**
-   * Creates an HTML widget with the specified contents and with the
-   * specified direction.
+   * Creates an HTML widget with the specified contents and with the specified
+   * direction.
    *
    * @param html the new widget's SafeHtml contents
    * @param dir the content's direction. Note: {@code Direction.DEFAULT} means
@@ -108,6 +104,31 @@ public class HTML extends Label
    */
   public HTML(SafeHtml html, Direction dir) {
     this(html.asString(), dir);
+  }
+
+  /**
+   * Creates an HTML widget with the specified HTML contents and specifies a
+   * direction estimator.
+   *
+   * @param html the new widget's SafeHtml contents
+   * @param directionEstimator A DirectionEstimator object used for automatic
+   *          direction adjustment. For convenience,
+   *          {@link Label#DEFAULT_DIRECTION_ESTIMATOR} can be used.
+   */
+  public HTML(SafeHtml html, DirectionEstimator directionEstimator) {
+    this();
+    setDirectionEstimator(directionEstimator);
+    setHTML(html);
+  }
+
+  /**
+   * Creates an HTML widget with the specified HTML contents.
+   *
+   * @param html the new widget's HTML contents
+   */
+  public HTML(String html) {
+    this();
+    setHTML(html);
   }
 
   /**
@@ -122,7 +143,7 @@ public class HTML extends Label
     this();
     setHTML(html, dir);
   }
-
+  
   /**
    * Creates an HTML widget with the specified contents, optionally treating it
    * as HTML, and optionally disabling word wrapping.
@@ -148,39 +169,7 @@ public class HTML extends Label
   }
 
   public String getHTML() {
-    return getTextOrHtml(true);
-  }
-
-  /**
-   * Sets the widget element's direction.
-   * @deprecated Use {@link #setDirectionEstimator} and / or pass explicit
-   * direction to {@link #setText} instead
-   */
-  @Deprecated
-  public void setDirection(Direction direction) {
-    BidiUtils.setDirectionOnElement(getElement(), direction);
-    initialElementDir = direction;
-
-    // For backwards compatibility, assure there's no span wrap, and update the
-    // content direction.
-    setInnerTextOrHtml(getTextOrHtml(true), true);
-    isSpanWrapped = false;
-    textDir = initialElementDir;
-    updateHorizontalAlignment();
-  }
-
-  /**
-   * {@inheritDoc}
-   * <p>
-   * Note: if the widget already has non-empty content, this will update
-   * its direction according to the new estimator's result. This may cause
-   * flicker, and thus should be avoided; DirectionEstimator should be set
-   * before the widget has any content.
-   */
-  public void setDirectionEstimator(DirectionEstimator directionEstimator) {
-    this.directionEstimator = directionEstimator;
-    // Refresh appearance
-    setHTML(getTextOrHtml(true));
+    return directionalTextHelper.getTextOrHtml(true);
   }
 
   /**
@@ -191,48 +180,22 @@ public class HTML extends Label
    * @param html the new widget's HTML content
    */
   public void setHTML(String html) {
-    if (directionEstimator == null) {
-      isSpanWrapped = false;
-      getElement().setInnerHTML(html);
-
-      // Preserves the initial direction of the widget. This is different from
-      // passing the direction parameter explicitly as DEFAULT, which forces the
-      // widget to inherit the direction from its parent.
-      if (textDir != initialElementDir) {
-        textDir = initialElementDir;
-        BidiUtils.setDirectionOnElement(getElement(), initialElementDir);
-        updateHorizontalAlignment();
-      }
-    } else {
-      setHTML(html, directionEstimator.estimateDirection(html, true));
-    }
+    directionalTextHelper.setTextOrHtml(html, true);
+    updateHorizontalAlignment();
   }
 
   /**
    * Sets the label's content to the given HTML, applying the given direction.
    * See
-   * {@link #setText(String, com.google.gwt.i18n.client.HasDirection.Direction)
-   * setText(String, Direction)} for details on potential effects on alignment.
+   * {@link #setText(String, com.google.gwt.i18n.client.HasDirection.Direction) setText(String, Direction)}
+   * for details on potential effects on alignment.
    * 
    * @param html the new widget's HTML content
    * @param dir the content's direction. Note: {@code Direction.DEFAULT} means
    *          direction should be inherited from the widget's parent element.
    */
   public void setHTML(String html, Direction dir) {
-    textDir = dir;
-
-    // Set the text and the direction.
-    if (isElementInline) {
-      isSpanWrapped = true;
-      getElement().setInnerHTML(BidiFormatter.getInstanceForCurrentLocale(
-          true /* alwaysSpan */).spanWrapWithKnownDir(dir, html, true));
-    } else {
-      isSpanWrapped = false;
-      BidiUtils.setDirectionOnElement(getElement(), dir);
-      getElement().setInnerHTML(html);
-    }
-
-    // Update the horizontal alignment if needed.
+    directionalTextHelper.setTextOrHtml(html, dir, true);
     updateHorizontalAlignment();
   }
 
@@ -251,16 +214,6 @@ public class HTML extends Label
   }
 
   protected String getTextOrHtml(boolean isHtml) {
-    Element element = isSpanWrapped ? getElement().getFirstChildElement()
-        : getElement();
-    return isHtml ? element.getInnerHTML() : element.getInnerText();
-  }
-
-  private void setInnerTextOrHtml(String content, boolean isHtml) {
-    if (isHtml) {
-      getElement().setInnerHTML(content);
-    } else {
-      getElement().setInnerText(content);
-    }
+    return directionalTextHelper.getTextOrHtml(isHtml);
   }
 }

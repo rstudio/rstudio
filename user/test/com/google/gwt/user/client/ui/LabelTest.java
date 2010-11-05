@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.junit.client.GWTTestCase;
+
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.AutoHorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 
@@ -91,7 +92,7 @@ public class LabelTest extends GWTTestCase {
     // Initialize the div with a specific direction, to verify it remembers its
     // original direction on turning direction estimator off.
     BidiUtils.setDirectionOnElement(elem, Direction.LTR);
-    label = Label.wrap(createAttachedDivElement());
+    label = Label.wrap(elem);
 
     label.setAutoHorizontalAlignment(
         HasAutoHorizontalAlignment.ALIGN_CONTENT_END);
@@ -117,30 +118,11 @@ public class LabelTest extends GWTTestCase {
         HasAutoHorizontalAlignment.ALIGN_CONTENT_START);
 
     label.setDirectionEstimator(false);
-    assertAlign("direction was supposed to be reset to the original " +
-        "ALIGN_LEFT after turning off direction estimator, and automatic " +
-        "horizontal alignment was to ALIGN_CONTENT_START",
+    assertAlign("horizontal alignment was supposed to be reset to the " +
+        "original ALIGN_LEFT after turning off direction estimator, and " +
+        "automatic horizontal alignment was to ALIGN_CONTENT_START",
         HasHorizontalAlignment.ALIGN_LEFT,
         HasAutoHorizontalAlignment.ALIGN_CONTENT_START);
-  }
-
-  public void testSetDirection() {
-    Label label = new Label(createAttachedSpanElement());
-    label.setDirectionEstimator(true);
-    label.setText(IW_TEXT);
-
-    // Should be span wrapped.
-    assertTrue(label.getElement().getInnerHTML().toLowerCase().contains("span"));
-
-    // Should not be span wrapped.
-    label.setDirection(Direction.RTL);
-    assertEquals(Direction.RTL, label.getDirection());
-    assertFalse(label.getElement().getInnerHTML().toLowerCase().contains("span"));
-
-    // Should not be span wrapped.
-    label.setDirection(Direction.LTR);
-    assertEquals(Direction.LTR, label.getDirection());
-    assertFalse(label.getElement().getInnerHTML().toLowerCase().contains("span"));
   }
 
   /**

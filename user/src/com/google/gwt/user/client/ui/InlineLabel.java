@@ -18,11 +18,22 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 
+
+import com.google.gwt.i18n.shared.DirectionEstimator;
+
 /**
  * A widget that contains arbitrary text, <i>not</i> interpreted as HTML.
  *
  * This widget uses a &lt;span&gt; element, causing it to be displayed with
  * inline layout.
+ *
+ * <p>
+ * <h3>Built-in Bidi Text Support</h3>
+ * This widget is capable of automatically adjusting its direction according to
+ * its content. This feature is controlled by {@link #setDirectionEstimator} or
+ * passing a DirectionEstimator parameter to the constructor, and is off by
+ * default.
+ * </p>
  *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
@@ -84,6 +95,20 @@ public class InlineLabel extends Label {
     setText(text, dir);
   }
 
+  /**
+   * Creates a label with the specified text and a default direction estimator.
+   *
+   * @param text the new label's text
+   * @param directionEstimator A DirectionEstimator object used for automatic
+   *          direction adjustment. For convenience,
+   *          {@link Label#DEFAULT_DIRECTION_ESTIMATOR} can be used.
+   */
+  public InlineLabel(String text, DirectionEstimator directionEstimator) {
+    this();
+    setDirectionEstimator(directionEstimator);
+    setText(text);
+  }
+  
   /**
    * This constructor may be used by subclasses to explicitly use an existing
    * element. This element must be either a &lt;div&gt; &lt;span&gt; element.
