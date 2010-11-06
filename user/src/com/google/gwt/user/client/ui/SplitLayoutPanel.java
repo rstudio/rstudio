@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -25,19 +27,19 @@ import com.google.gwt.user.client.Event;
 /**
  * A panel that adds user-positioned splitters between each of its child
  * widgets.
- * 
+ *
  * <p>
  * This panel is used in the same way as {@link DockLayoutPanel}, except that
  * its children's sizes are always specified in {@link Unit#PX} units, and each
  * pair of child widgets has a splitter between them that the user can drag.
  * </p>
- * 
+ *
  * <p>
  * This widget will <em>only</em> work in standards mode, which requires that
  * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
- * 
+ *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-SplitLayoutPanel { the panel itself }</li>
@@ -46,7 +48,7 @@ import com.google.gwt.user.client.Event;
  * <li>.gwt-SplitLayoutPanel .gwt-SplitLayoutPanel-VDragger { vertical dragger }
  * </li>
  * </ul>
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.SplitLayoutPanelExample}
@@ -106,6 +108,14 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       switch (event.getTypeInt()) {
         case Event.ONMOUSEDOWN:
           mouseDown = true;
+
+          // Resize glassElem to take up the entire scrollable window area
+          int height = RootLayoutPanel.get().getElement().getScrollHeight() - 1;
+          int width = RootLayoutPanel.get().getElement().getScrollWidth() - 1;
+          glassElem.getStyle().setHeight(height, Unit.PX);
+          glassElem.getStyle().setWidth(width, Unit.PX);
+          Document.get().getBody().appendChild(glassElem);
+
           offset = getEventPosition(event) - getAbsolutePosition();
           Event.setCapture(getElement());
           event.preventDefault();
@@ -113,6 +123,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
         case Event.ONMOUSEUP:
           mouseDown = false;
+
+          glassElem.removeFromParent();
+
           Event.releaseCapture(getElement());
           event.preventDefault();
           break;
@@ -206,7 +219,13 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
   private static final int DEFAULT_SPLITTER_SIZE = 8;
 
-  private final int splitterSize; 
+  private final int splitterSize;
+
+  /**
+   * The element that masks the screen so we can catch mouse events over
+   * iframes.
+   */
+  private static Element glassElem = null;
 
   /**
    * Construct a new {@link SplitLayoutPanel} with the default splitter size of
@@ -219,18 +238,34 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   /**
    * Construct a new {@link SplitLayoutPanel} with the specified splitter size
    * in pixels.
-   * 
+   *
    * @param splitterSize the size of the splitter in pixels
    */
   public SplitLayoutPanel(int splitterSize) {
     super(Unit.PX);
     this.splitterSize = splitterSize;
     setStyleName("gwt-SplitLayoutPanel");
+
+    if (glassElem == null) {
+      glassElem = Document.get().createDivElement();
+      glassElem.getStyle().setPosition(Position.ABSOLUTE);
+      glassElem.getStyle().setTop(0, Unit.PX);
+      glassElem.getStyle().setLeft(0, Unit.PX);
+      glassElem.getStyle().setMargin(0, Unit.PX);
+      glassElem.getStyle().setPadding(0, Unit.PX);
+      glassElem.getStyle().setBorderWidth(0, Unit.PX);
+
+      // We need to set the background color or mouse events will go right
+      // through the glassElem. If the SplitPanel contains an iframe, the
+      // iframe will capture the event and the slider will stop moving.
+      glassElem.getStyle().setProperty("background", "white");
+      glassElem.getStyle().setOpacity(0.0);
+    }
   }
 
   /**
    * Return the size of the splitter in pixels.
-   * 
+   *
    * @return the splitter size
    */
   public int getSplitterSize() {
@@ -264,20 +299,20 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
   /**
    * Sets the minimum allowable size for the given widget.
-   * 
+   *
    * <p>
    * Its associated splitter cannot be dragged to a position that would make it
    * smaller than this size. This method has no effect for the
    * {@link DockLayoutPanel.Direction#CENTER} widget.
    * </p>
-   * 
+   *
    * @param child the child whose minimum size will be set
    * @param minSize the minimum size for this widget
    */
   public void setWidgetMinSize(Widget child, int minSize) {
     assertIsChild(child);
     Splitter splitter = getAssociatedSplitter(child);
-    // The splitter is null for the center element. 
+    // The splitter is null for the center element.
     if (splitter != null) {
       splitter.setMinSize(minSize);
     }
