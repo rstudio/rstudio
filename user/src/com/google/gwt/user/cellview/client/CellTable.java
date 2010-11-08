@@ -844,6 +844,22 @@ public class CellTable<T> extends AbstractHasData<T> {
     return dependsOnSelection;
   }
 
+  /**
+   * Called when a user action triggers selection.
+   *
+   * @param event the event that triggered selection
+   * @param value the value that was selected
+   * @param row the row index of the value on the page
+   * @param column the column index where the event occurred
+   */
+  protected void doSelection(Event event, T value, int row, int column) {
+    // TODO(jlabanca): Defer to a user provided SelectionManager.
+    SelectionModel<? super T> selectionModel = getSelectionModel();
+    if (selectionModel != null) {
+      selectionModel.setSelected(value, true);
+    }
+  }
+
   @Override
   protected Element getChildContainer() {
     return tbody;
@@ -967,10 +983,8 @@ public class CellTable<T> extends AbstractHasData<T> {
         return;
       }
       T value = getDisplayedItem(row);
-      SelectionModel<? super T> selectionModel = getSelectionModel();
-      if (selectionModel != null && "click".equals(eventType)
-          && !handlesSelection) {
-        selectionModel.setSelected(value, true);
+      if ("click".equals(eventType) && !handlesSelection) {
+        doSelection(event, value, row, col);
       }
 
       fireEventToCell(event, eventType, tableCell, value, row, columns.get(col));
