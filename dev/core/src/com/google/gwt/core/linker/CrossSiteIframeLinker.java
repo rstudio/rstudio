@@ -236,8 +236,9 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     toReturn.add(mappingArtifact);
     EmittedArtifact serializedMap;
     try {
-      serializedMap = emitString(logger, mappingArtifact.getSerialized(),
-          "compilation-mappings.txt");
+      String mappings = mappingArtifact.getSerialized();
+      mappings = mappings.concat("Devmode:" + getHostedFilename());
+      serializedMap = emitString(logger, mappings, "compilation-mappings.txt");
       // TODO(unnurg): make this Deploy
       serializedMap.setVisibility(Visibility.Public);
       toReturn.add(serializedMap);
