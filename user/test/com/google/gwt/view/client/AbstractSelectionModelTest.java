@@ -27,16 +27,24 @@ public class AbstractSelectionModelTest extends GWTTestCase {
   /**
    * A mock {@link SelectionChangeEvent.Handler} used for testing.
    */
-  private static class MockSelectionChangeHandler
+  static class MockSelectionChangeHandler
       implements SelectionChangeEvent.Handler {
 
     private boolean eventFired;
 
+    /**
+     * Assert that a {@link SelectionChangeEvent} was fired and clear the
+     * boolean.
+     * 
+     * @param expected the expected value
+     */
     public void assertEventFired(boolean expected) {
       assertEquals(expected, eventFired);
+      eventFired = false;
     }
 
     public void onSelectionChange(SelectionChangeEvent event) {
+      assertFalse(eventFired);
       eventFired = true;
     }
   }

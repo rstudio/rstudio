@@ -23,6 +23,67 @@ import java.util.Set;
  */
 public class MultiSelectionModelTest extends AbstractSelectionModelTest {
 
+  public void testClear() {
+    MultiSelectionModel<String> model = createSelectionModel(null);
+    MockSelectionChangeHandler handler = new MockSelectionChangeHandler();
+    model.addSelectionChangeHandler(handler);
+
+    // Select a few values.
+    model.setSelected("test0", true);
+    model.setSelected("test1", true);
+    model.setSelected("test2", true);
+    assertTrue(model.isSelected("test0"));
+    handler.assertEventFired(true);
+
+    // Clear selection and verify that an event is fired.
+    model.clear();
+    assertFalse(model.isSelected("test"));
+    handler.assertEventFired(true);
+  }
+
+  /**
+   * Clearing an empty {@link MultiSelectionModel} should not fire an event,
+   * even if there are pending changes.
+   */
+  public void testClearWhenEmpty() {
+    MultiSelectionModel<String> model = createSelectionModel(null);
+    MockSelectionChangeHandler handler = new MockSelectionChangeHandler();
+    model.addSelectionChangeHandler(handler);
+
+    // Add a pending change.
+    model.setSelected("test", true);
+
+    // Clear selection and verify that no event is fired.
+    model.clear();
+    assertFalse(model.isSelected("test"));
+    handler.assertEventFired(false);
+  }
+
+  /**
+   * Pending changes should apply after the list is cleared. An event should not
+   * be fired if all selected values are reselected.
+   */
+  public void testClearAndReselect() {
+    MultiSelectionModel<String> model = createSelectionModel(null);
+    MockSelectionChangeHandler handler = new MockSelectionChangeHandler();
+    model.addSelectionChangeHandler(handler);
+
+    // Select a few values.
+    model.setSelected("test0", true);
+    model.setSelected("test1", true);
+    model.setSelected("test2", true);
+    assertTrue(model.isSelected("test0"));
+    handler.assertEventFired(true);
+
+    // Clear selection and reselect.  Verify that no event is fired.
+    model.clear();
+    model.setSelected("test0", true);
+    model.setSelected("test1", true);
+    model.setSelected("test2", true);
+    assertTrue(model.isSelected("test0"));
+    handler.assertEventFired(false);
+  }
+
   public void testGetSelectedSet() {
     MultiSelectionModel<String> model = createSelectionModel(null);
     Set<String> selected = new HashSet<String>();

@@ -52,6 +52,25 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
   }
 
   /**
+   * Deselect all selected values.
+   */
+  public void clear() {
+    // Clear the current list of pending changes. 
+    selectionChanges.clear();
+
+    /*
+     * Add a pending change to deselect each value that is currently selected.
+     * We cannot just clear the selected set, because then we would not know
+     * which values were selected before we cleared, which we need to know to
+     * determine if we should fire an event.
+     */
+    for (T value : selectedSet.values()) {
+      selectionChanges.put(value, false);
+    }
+    scheduleSelectionChangeEvent();
+  }
+
+  /**
    * Get the set of selected items as a copy.
    *
    * @return the set of selected items
