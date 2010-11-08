@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
+import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -192,7 +193,14 @@ public class BuildTypeMap {
     public boolean visit(LocalDeclaration localDeclaration, BlockScope scope) {
       try {
         LocalVariableBinding b = localDeclaration.binding;
-        JType localType = getType(localDeclaration.type.resolvedType);
+        TypeBinding resolvedType = localDeclaration.type.resolvedType;
+        JType localType;
+        if (resolvedType.constantPoolName() != null) {
+          localType = getType(resolvedType);
+        } else {
+          // Special case, a statically unreachable local type.
+          localType = JNullType.INSTANCE;
+        }
         JMethodBody enclosingBody = findEnclosingMethod(scope);
         if (enclosingBody == null) {
           // Happens in the case of external types
