@@ -219,13 +219,13 @@ public class SplitLayoutPanel extends DockLayoutPanel {
 
   private static final int DEFAULT_SPLITTER_SIZE = 8;
 
-  private final int splitterSize;
-
   /**
    * The element that masks the screen so we can catch mouse events over
    * iframes.
    */
   private static Element glassElem = null;
+
+  private final int splitterSize;
 
   /**
    * Construct a new {@link SplitLayoutPanel} with the default splitter size of
