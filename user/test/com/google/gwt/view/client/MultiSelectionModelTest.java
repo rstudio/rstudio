@@ -33,11 +33,15 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     model.setSelected("test1", true);
     model.setSelected("test2", true);
     assertTrue(model.isSelected("test0"));
+    assertTrue(model.isSelected("test1"));
+    assertTrue(model.isSelected("test2"));
     handler.assertEventFired(true);
 
     // Clear selection and verify that an event is fired.
     model.clear();
-    assertFalse(model.isSelected("test"));
+    assertFalse(model.isSelected("test0"));
+    assertFalse(model.isSelected("test1"));
+    assertFalse(model.isSelected("test2"));
     handler.assertEventFired(true);
   }
 
