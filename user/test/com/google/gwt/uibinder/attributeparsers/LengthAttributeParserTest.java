@@ -83,6 +83,8 @@ public class LengthAttributeParserTest extends TestCase {
     assertEquals(lengthString("1", "EX"), parser.parse("1EX"));
 
     assertEquals(lengthString("2.5", "EM"), parser.parse("2.5em"));
+    assertEquals(lengthString("+1", "EM"), parser.parse("+1em"));
+    assertEquals(lengthString("-1", "EM"), parser.parse("-1em"));
 
     assertEquals(lengthString("1", "EM"), parser.parse("1 em"));
 

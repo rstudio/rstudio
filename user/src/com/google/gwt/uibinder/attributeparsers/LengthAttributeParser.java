@@ -33,7 +33,7 @@ public class LengthAttributeParser implements AttributeParser {
   // This regular expression matches CSS length patterns of the form
   // (value)(unit), where the two may be separated by whitespace. Either part
   // can be a {class.method} expression.
-  private static final Pattern pattern = Pattern.compile("((?:\\{[\\w\\.]+\\})|[\\d\\.]+)\\s*(\\{?[\\w\\.\\%]*\\}?)?");
+  private static final Pattern pattern = Pattern.compile("((?:\\{[\\w\\.]+\\})|[\\+\\-]?[\\d\\.]+)\\s*(\\{?[\\w\\.\\%]*\\}?)?");
 
   private final MortalLogger logger;
   private final DoubleAttributeParser doubleParser;

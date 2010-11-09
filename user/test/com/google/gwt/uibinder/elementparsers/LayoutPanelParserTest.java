@@ -21,7 +21,6 @@ import junit.framework.TestCase;
 
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -39,7 +38,7 @@ public class LayoutPanelParserTest extends TestCase {
     tester = new ElementParserTester(PARSED_TYPE, new LayoutPanelParser());
   }
 
-  public void testBadChild() throws SAXException, IOException {
+  public void testBadChild() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:LayoutPanel>");
     b.append("  <g:blah/>");
@@ -54,7 +53,7 @@ public class LayoutPanelParserTest extends TestCase {
     }
   }
 
-  public void testBadValue() throws SAXException, IOException {
+  public void testBadValue() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:LayoutPanel>");
     b.append("  <g:layer left='goosnarg'><g:HTML/></g:layer>");
@@ -69,8 +68,7 @@ public class LayoutPanelParserTest extends TestCase {
     }
   }
 
-  public void testHappy() throws UnableToCompleteException, SAXException,
-      IOException {
+  public void testHappy() throws UnableToCompleteException, SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:LayoutPanel>");
     b.append("  <g:layer>");
@@ -130,21 +128,69 @@ public class LayoutPanelParserTest extends TestCase {
             + "com.google.gwt.dom.client.Style.Unit.EM, 50, foo.unit());" };
 
     tester.parse(b.toString());
+    
+    assertStatements(expected);
+  }
+  
+  public void testNegativeTopLeft() throws UnableToCompleteException, SAXException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:LayoutPanel>");
+    b.append("  <g:layer left='-1em' width='2px' top='-3mm' height='4px'>");
+    b.append("    <g:Label/>");
+    b.append("  </g:layer>");
+    b.append("</g:LayoutPanel>");
+    
+    tester.parse(b.toString());
 
-    Iterator<String> i = tester.writer.statements.iterator();
-    for (String e : expected) {
-      assertEquals(e, i.next());
-    }
-    assertFalse(i.hasNext());
-    assertNull(tester.logger.died);
+    assertStatements("fieldName.add(<g:Label>);",
+        "fieldName.setWidgetLeftWidth(<g:Label>, "
+            + "-1, com.google.gwt.dom.client.Style.Unit.EM, "
+            + "2, com.google.gwt.dom.client.Style.Unit.PX);",
+        "fieldName.setWidgetTopHeight(<g:Label>, "
+            + "-3, com.google.gwt.dom.client.Style.Unit.MM, "
+            + "4, com.google.gwt.dom.client.Style.Unit.PX);");
   }
 
-  public void testLonelyBottom() throws SAXException, IOException {
+  public void testNegativeWidth() throws SAXException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:LayoutPanel>");
+    b.append("  <g:layer left='1em' width='-2px'>");
+    b.append("    <g:Label/>");
+    b.append("  </g:layer>");
+    b.append("</g:LayoutPanel>");
+
+    try {
+      tester.parse(b.toString());
+      fail();
+    } catch (UnableToCompleteException e) {
+      String died = tester.logger.died;
+      assertTrue(died, died.contains("Attribute 'width' can not be negative"));
+    }
+  }
+  
+  public void testNegativeHeight() throws SAXException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:LayoutPanel>");
+    b.append("  <g:layer top='1em' height='-2px'>");
+    b.append("    <g:Label/>");
+    b.append("  </g:layer>");
+    b.append("</g:LayoutPanel>");
+    
+    try {
+      tester.parse(b.toString());
+      fail();
+    } catch (UnableToCompleteException e) {
+      String died = tester.logger.died;
+      assertTrue(died, died.contains("Attribute 'height' can not be negative"));
+    }
+  }
+  
+  public void testLonelyBottom() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:LayoutPanel>");
     b.append("  <g:layer bottom='0'><g:HTML/></g:layer>");
     b.append("</g:LayoutPanel>");
-
+    
     try {
       tester.parse(b.toString());
       fail();
@@ -154,7 +200,7 @@ public class LayoutPanelParserTest extends TestCase {
     }
   }
 
-  public void testLonelyLeft() throws SAXException, IOException {
+  public void testLonelyLeft() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:LayoutPanel>");
     b.append("  <g:layer left='0'><g:HTML/></g:layer>");
@@ -169,7 +215,7 @@ public class LayoutPanelParserTest extends TestCase {
     }
   }
 
-  public void testLonelyRight() throws SAXException, IOException {
+  public void testLonelyRight() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:LayoutPanel>");
     b.append("  <g:layer right='0'><g:HTML/></g:layer>");
@@ -184,7 +230,7 @@ public class LayoutPanelParserTest extends TestCase {
     }
   }
 
-  public void testLonelyTop() throws SAXException, IOException {
+  public void testLonelyTop() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:LayoutPanel>");
     b.append("  <g:layer top='0'><g:HTML/></g:layer>");
@@ -199,7 +245,7 @@ public class LayoutPanelParserTest extends TestCase {
     }
   }
 
-  public void testOverConstrained() throws SAXException, IOException {
+  public void testOverConstrainedHorizontally() throws SAXException {
     StringBuffer b = new StringBuffer();
     b.append("<g:LayoutPanel>");
     b.append("  <g:layer left='0' width='0' right='0'><g:HTML/></g:layer>");
@@ -209,8 +255,32 @@ public class LayoutPanelParserTest extends TestCase {
       tester.parse(b.toString());
       fail();
     } catch (UnableToCompleteException e) {
-      assertTrue("expect \"too many\" error",
-          tester.logger.died.contains("too many"));
+      String died = tester.logger.died;
+      assertTrue(died, died.contains("too many horizontal constraints"));
     }
+  }
+  
+  public void testOverConstrainedVertically() throws SAXException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:LayoutPanel>");
+    b.append("  <g:layer top='0' height='0' bottom='0'><g:HTML/></g:layer>");
+    b.append("</g:LayoutPanel>");
+    
+    try {
+      tester.parse(b.toString());
+      fail();
+    } catch (UnableToCompleteException e) {
+      String died = tester.logger.died;
+      assertTrue(died, died.contains("too many vertical constraints"));
+    }
+  }
+
+  private void assertStatements(String... expected) {
+    Iterator<String> i = tester.writer.statements.iterator();
+    for (String e : expected) {
+      assertEquals(e, i.next());
+    }
+    assertFalse(i.hasNext());
+    assertNull(tester.logger.died);
   }
 }
