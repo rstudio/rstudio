@@ -101,6 +101,71 @@ public class ApiCompatibilityUnitTest extends TestCase {
   }
 
   /**
+   * Test when constructor overloading results in Api incompatibilities.
+   * <p>
+   * Imagine a class Foo had a constructor Foo(String ..). If in the new Api, a
+   * constructor Foo(Integer ..) is added, ApiChecker should output a
+   * OVERLOADED_METHOD_CALL Api change (because Foo(null) cannot be compiled).
+   * However, if Foo(Object ..) is added, it should be okay since JLS matches
+   * from the most specific to the least specific.
+   */
+  private static class OverloadedConstructorRefactoring {
+    private static String getFirstApiSourceForObject() {
+      StringBuffer sb = new StringBuffer();
+      sb.append("package java.lang;\n");
+      sb.append("public class Object {\n");
+      sb.append("\tpublic static class Foo extends java.lang.Object {\n");
+      sb.append("\tpublic Foo(Foo x){}\n");
+      sb.append("\t}\n");
+      sb.append("\tpublic static class Bar extends java.lang.Object {\n");
+      sb.append("\tpublic Bar(Bar y){}\n");
+      sb.append("\t}\n");
+      sb.append("}\n");
+      return sb.toString();
+    }
+
+    private static String getSecondApiSourceForObject() {
+      StringBuffer sb = new StringBuffer();
+      sb.append("package java.lang;\n");
+      sb.append("public class Object {\n");
+      sb.append("\tpublic static class Foo extends java.lang.Object {\n");
+      sb.append("\tpublic Foo(Foo x){}\n");
+      sb.append("\tpublic Foo(Object x){}\n");
+      sb.append("\t}\n");
+      sb.append("\tpublic static class Bar extends java.lang.Object {\n");
+      sb.append("\tpublic Bar(Bar y){}\n");
+      sb.append("\tpublic Bar(Foo y){}\n");
+      sb.append("\t}\n");
+      sb.append("}\n");
+      return sb.toString();
+    }
+
+    void testBothWays() throws NotFoundException, UnableToCompleteException {
+      Map<String, String> firstApi = new HashMap<String, String>();
+      firstApi.put("java.lang.Object", getFirstApiSourceForObject());
+      Map<String, String> secondApi = new HashMap<String, String>();
+      secondApi.put("java.lang.Object", getSecondApiSourceForObject());
+
+      // firstApi is the reference Api
+      Collection<ApiChange> apiChanges = getApiChanges(firstApi, secondApi);
+      assertEquals(
+          Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
+              "java.lang.Object.Bar::Bar(Ljava/lang/Object$Bar;)"),
+              ApiChange.Status.OVERLOADED_METHOD_CALL),}), apiChanges);
+
+      // secondApi is the reference Api
+      apiChanges = getApiChanges(secondApi, firstApi);
+      assertEquals(Arrays.asList(new ApiChange[] {
+          new ApiChange(new MockApiElement(
+              "java.lang.Object.Foo::Foo(Ljava/lang/Object;)"),
+              ApiChange.Status.MISSING),
+          new ApiChange(new MockApiElement(
+              "java.lang.Object.Bar::Bar(Ljava/lang/Object$Foo;)"),
+              ApiChange.Status.MISSING),}), apiChanges);
+    }
+  }
+  
+  /**
    * Test when method overloading results in Api incompatibilities.
    * <p>
    * Imagine a class Foo had a method foo(String ..). If in the new Api, a
@@ -281,6 +346,11 @@ public class ApiCompatibilityUnitTest extends TestCase {
     return ApiCompatibilityChecker.getApiDiff(newApi, existingApi, emptyList);
   }
 
+  public void testConstructorOverloading() throws NotFoundException,
+      UnableToCompleteException {
+    new OverloadedConstructorRefactoring().testBothWays();
+  }
+  
   public void testFinalKeywordRefactoring() throws NotFoundException,
       UnableToCompleteException {
     new FinalKeywordRefactoring().testBothWays();
