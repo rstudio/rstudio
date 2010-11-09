@@ -250,11 +250,27 @@ public class CompilePerms {
     return new File(compilerWorkDir, "permutation-" + permNumber + ".js");
   }
 
+  static PrecompilationResult readPrecompilationFile(TreeLogger logger,
+      File precompilationFile) {
+    PrecompilationResult precompileResults = null;
+    try {
+      precompileResults = Util.readFileAsObject(precompilationFile,
+          PrecompilationResult.class);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Failed to read "
+          + precompilationFile + "\nHas Precompile been run?");
+    } catch (ClassNotFoundException e) {
+      logger.log(TreeLogger.ERROR, "Failed to read "
+          + precompilationFile, e);
+    }
+    return precompileResults;
+  }
+
   /**
    * Choose the subset of requested permutations that correspond to the
    * indicated precompilation.
    */
-  private static Permutation[] selectPermutationsForPrecompilation(
+  static Permutation[] selectPermutationsForPrecompilation(
       int[] permsToRun, Precompilation precompilation) {
     if (permsToRun == null) {
       // Special case: compile everything.
@@ -288,19 +304,8 @@ public class CompilePerms {
       File precompilationFile = new File(compilerWorkDir,
           Precompile.PRECOMPILE_FILENAME);
 
-      PrecompilationResult precompileResults;
-      try {
-        precompileResults = Util.readFileAsObject(precompilationFile,
-            PrecompilationResult.class);
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Failed to read "
-            + Precompile.PRECOMPILE_FILENAME + "; has Precompile been run?");
-        return false;
-      } catch (ClassNotFoundException e) {
-        logger.log(TreeLogger.ERROR, "Failed to read "
-            + Precompile.PRECOMPILE_FILENAME, e);
-        return false;
-      }
+      PrecompilationResult precompileResults = readPrecompilationFile(logger, 
+          precompilationFile);
 
       if (precompileResults instanceof PrecompileOptions) {
         PrecompileOptions precompilationOptions = (PrecompileOptions) precompileResults;

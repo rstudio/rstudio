@@ -67,6 +67,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 
 /**
  * Performs the last phase of compilation, merging the compilation outputs.
@@ -199,8 +200,7 @@ public class Link {
     if (deployDir.equals(extrasDir)) {
       deployFileSet = extrasFileSet;
     } else {
-      deployFileSet = chooseOutputFileSet(deployDir,
-          module.getName() + "/");
+      deployFileSet = chooseOutputFileSet(deployDir, module.getName() + "/");
     }
     doProduceOutput(logger, artifacts, linkerContext, chooseOutputFileSet(
         outDir, module.getName() + "/"), deployFileSet, extrasFileSet);
@@ -220,7 +220,7 @@ public class Link {
       if (jarFile.exists()) {
         boolean success = jarFile.delete();
         if (!success) {
-          logger.log(Type.ERROR, "Linker output file " + jarFile.getName() 
+          logger.log(Type.ERROR, "Linker output file " + jarFile.getName()
               + " already exists and can't be deleted.");
         }
       }
@@ -523,8 +523,8 @@ public class Link {
    * @param linkerContext
    * @return prefixed path
    */
-  private static String prefixArtifactPath(
-      EmittedArtifact art, StandardLinkerContext linkerContext) {
+  private static String prefixArtifactPath(EmittedArtifact art,
+      StandardLinkerContext linkerContext) {
     String pathWithLinkerName = linkerContext.getExtraPathForLinker(
         art.getLinker(), art.getPartialPath());
     if (pathWithLinkerName.startsWith("/")) {
@@ -539,7 +539,15 @@ public class Link {
     final ArtifactSet artifacts = new ArtifactSet();
 
     for (File resultFile : resultFiles) {
-      JarFile jarFile = new JarFile(resultFile);
+      JarFile jarFile = null;
+      try {
+        jarFile = new JarFile(resultFile);
+      } catch (ZipException ze) {
+        logger.log(TreeLogger.ERROR, "Error opening " + resultFile
+            + " as jar file.", ze);
+        throw new UnableToCompleteException();
+      }
+
       Enumeration<JarEntry> entries = jarFile.entries();
       while (entries.hasMoreElements()) {
         JarEntry entry = entries.nextElement();
@@ -599,26 +607,32 @@ public class Link {
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
-      PrecompilationResult precompileResults;
-      try {
-        precompileResults = Util.readFileAsObject(new File(compilerWorkDir,
-            Precompile.PRECOMPILE_FILENAME), PrecompilationResult.class);
-      } catch (ClassNotFoundException e) {
-        logger.log(TreeLogger.ERROR, "Error reading "
-            + Precompile.PRECOMPILE_FILENAME);
-        return false;
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Error reading "
-            + Precompile.PRECOMPILE_FILENAME);
-        return false;
+
+      // Look for the compilerOptions file output from running AnalyzeModule
+      PrecompileOptions precompileOptions = AnalyzeModule.readAnalyzeModuleOptionsFile(
+          logger, compilerWorkDir);
+
+      PrecompilationResult precompileResults = null;
+      if (precompileOptions == null) {
+        // Check for the output from Precompile where precompiling has
+        // been delegated to shards.
+        File precompilationFile = new File(compilerWorkDir,
+            Precompile.PRECOMPILE_FILENAME);
+        precompileResults = CompilePerms.readPrecompilationFile(logger,
+            precompilationFile);
+        if (precompileResults == null) {
+          return false;
+        }
+        if (precompileResults instanceof PrecompileOptions) {
+          precompileOptions = (PrecompileOptions) precompileResults;
+        }
       }
 
-      if (precompileResults instanceof PrecompileOptions) {
+      if (precompileOptions != null) {
         /**
          * Precompiling happened on the shards.
          */
-        if (!doLinkFinal(logger, compilerWorkDir, module,
-            (JJSOptions) precompileResults)) {
+        if (!doLinkFinal(logger, compilerWorkDir, module, precompileOptions)) {
           return false;
         }
         continue loop_modules;
