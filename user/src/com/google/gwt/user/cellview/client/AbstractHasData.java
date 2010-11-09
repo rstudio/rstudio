@@ -28,7 +28,6 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.HasDataPresenter.ElementIterator;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -75,30 +74,15 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
       return hasData.addHandler(handler, type);
     }
 
-    public boolean dependsOnSelection() {
-      return hasData.dependsOnSelection();
-    }
-
-    public int getChildCount() {
-      return hasData.getChildCount();
-    }
-
-    public ElementIterator getChildIterator() {
-      return new HasDataPresenter.DefaultElementIterator(this,
-          hasData.getChildContainer().getFirstChildElement());
-    }
-
-    public void onUpdateSelection() {
-      hasData.onUpdateSelection();
-    }
-
     public void render(SafeHtmlBuilder sb, List<T> values, int start,
         SelectionModel<? super T> selectionModel) {
       hasData.renderRowValues(sb, values, start, selectionModel);
     }
 
-    public void replaceAllChildren(List<T> values, SafeHtml html) {
+    public void replaceAllChildren(List<T> values, SafeHtml html,
+        boolean stealFocus) {
       // Removing elements can fire a blur event, which we ignore.
+      hasData.isFocused = hasData.isFocused || stealFocus;
       wasFocused = hasData.isFocused;
       hasData.isRefreshing = true;
       hasData.replaceAllChildren(values, html);
@@ -106,8 +90,10 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
       fireValueChangeEvent();
     }
 
-    public void replaceChildren(List<T> values, int start, SafeHtml html) {
+    public void replaceChildren(List<T> values, int start, SafeHtml html,
+        boolean stealFocus) {
       // Removing elements can fire a blur event, which we ignore.
+      hasData.isFocused = hasData.isFocused || stealFocus;
       wasFocused = hasData.isFocused;
       hasData.isRefreshing = true;
       hasData.replaceChildren(values, start, html);
@@ -132,6 +118,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
     public void setKeyboardSelected(int index, boolean seleted,
         boolean stealFocus) {
+      hasData.isFocused = hasData.isFocused || stealFocus;
       hasData.setKeyboardSelected(index, seleted, stealFocus);
     }
 
@@ -139,10 +126,6 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
       hasData.isRefreshing = true;
       hasData.setLoadingState(state);
       hasData.isRefreshing = false;
-    }
-
-    public void setSelected(Element elem, boolean selected) {
-      hasData.setSelected(elem, selected);
     }
 
     /**
@@ -321,7 +304,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    */
   public T getDisplayedItem(int indexOnPage) {
     checkRowBounds(indexOnPage);
-    return presenter.getRowData().get(indexOnPage);
+    return presenter.getRowDataValue(indexOnPage);
   }
 
   /**
@@ -330,7 +313,12 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    * @return a List of displayed items
    */
   public List<T> getDisplayedItems() {
-    return new ArrayList<T>(presenter.getRowData());
+    List<T> list = new ArrayList<T>();
+    int rowCount = presenter.getRowDataSize();
+    for (int i = 0; i < rowCount; i++) {
+      list.add(presenter.getRowDataValue(i));
+    }
+    return list;
   }
 
   public KeyboardPagingPolicy getKeyboardPagingPolicy() {
@@ -376,6 +364,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    * @return the {@link Element} that contains the rendered row values
    */
   public Element getRowContainer() {
+    presenter.flush();
     return getChildContainer();
   }
 
@@ -664,7 +653,8 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    */
   protected Object getValueKey(T value) {
     ProvidesKey<T> keyProvider = getKeyProvider();
-    return keyProvider == null ? value : keyProvider.getKey(value);
+    return (keyProvider == null || value == null) ? value
+        : keyProvider.getKey(value);
   }
 
   /**
@@ -676,14 +666,13 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   protected abstract boolean isKeyboardNavigationSuppressed();
 
   /**
-   * Checks that the row is within the correct bounds.
+   * Checks that the row is within bounds of the view.
    *
    * @param row row index to check
    * @return true if within bounds, false if not
    */
   protected boolean isRowWithinBounds(int row) {
-    return row >= 0 && row < getChildCount()
-        && row < presenter.getRowData().size();
+    return row >= 0 && row < presenter.getRowDataSize();
   }
 
   /**
@@ -714,7 +703,12 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
   /**
    * Called when selection changes.
+   * 
+   * @deprecated this method is never called by AbstractHasData, render the
+   *             selected styles in
+   *             {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
    */
+  @Deprecated
   protected void onUpdateSelection() {
   }
 
@@ -723,7 +717,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    *
    * @param sb the {@link SafeHtmlBuilder} to render into
    * @param values the row values
-   * @param start the start index of the values
+   * @param start the absolute start index of the values
    * @param selectionModel the {@link SelectionModel}
    */
   protected abstract void renderRowValues(SafeHtmlBuilder sb, List<T> values,
@@ -746,7 +740,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    * should be appended.
    *
    * @param values the values of the new children
-   * @param start the start index to be replaced
+   * @param start the start index to be replaced, relative to the page start
    * @param html the HTML to convert
    */
   protected void replaceChildren(List<T> values, int start, SafeHtml html) {
@@ -799,8 +793,14 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    *
    * @param elem the element to update
    * @param selected true if selected, false if not
+   * @deprecated this method is never called by AbstractHasData, render the
+   *             selected styles in
+   *             {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
    */
-  protected abstract void setSelected(Element elem, boolean selected);
+  @Deprecated
+  protected void setSelected(Element elem, boolean selected) {
+    // Never called.
+  }
 
   /**
    * Add a {@link ValueChangeHandler} that is called when the display values
@@ -815,44 +815,8 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     return addHandler(handler, ValueChangeEvent.getType());
   }
 
-  /**
-   * Return the number of child elements.
-   */
-  int getChildCount() {
-    return getChildContainer().getChildCount();
-  }
-
   HasDataPresenter<T> getPresenter() {
     return presenter;
-  }
-
-  /**
-   * Get the first index of a displayed item according to its key.
-   *
-   * @param value the value
-   * @return the index of the item, or -1 of not found
-   */
-  int indexOf(T value) {
-    ProvidesKey<T> keyProvider = getKeyProvider();
-    List<T> items = getDisplayedItems();
-
-    // If no key provider is present, just compare the objets.
-    if (keyProvider == null) {
-      return items.indexOf(value);
-    }
-
-    // Compare the keys of each object.
-    Object key = keyProvider.getKey(value);
-    if (key == null) {
-      return -1;
-    }
-    int itemCount = items.size();
-    for (int i = 0; i < itemCount; i++) {
-      if (key.equals(keyProvider.getKey(items.get(i)))) {
-        return i;
-      }
-    }
-    return -1;
   }
 
   /**

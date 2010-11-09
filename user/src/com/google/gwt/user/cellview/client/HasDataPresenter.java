@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,12 +15,15 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasKeyProvider;
 import com.google.gwt.view.client.ProvidesKey;
@@ -34,8 +37,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * <p>
@@ -50,55 +53,19 @@ import java.util.Set;
  * the presenter, which then updates the widget via the view. This keeps the
  * user facing API simpler.
  * <p>
- *
+ * <p>
+ * Updates are not pushed to the view immediately. Instead, the presenter
+ * collects updates and resolves them all in a finally command. This reduces the
+ * total number of DOM manipulations, and makes it easier to handle side effects
+ * in user code triggered by the rendering pass. The view is responsible for
+ * called {@link #flush()} to force the presenter to synchronize the view when
+ * needed.
+ * </p>
+ * 
  * @param <T> the data type of items in the list
  */
 class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     HasKeyboardPagingPolicy {
-
-  /**
-   * Default iterator over DOM elements.
-   */
-  static class DefaultElementIterator implements ElementIterator {
-    private Element current;
-    private Element next;
-    private final View<?> view;
-
-    public DefaultElementIterator(View<?> view, Element first) {
-      this.view = view;
-      next = first;
-    }
-
-    public boolean hasNext() {
-      return next != null;
-    }
-
-    public Element next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      current = next;
-      next = next.getNextSiblingElement();
-      return current;
-    }
-
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Set the selection state of the current element.
-     *
-     * @param selected the selection state
-     * @throws IllegalStateException if {@link #next()} has not been called
-     */
-    public void setSelected(boolean selected) throws IllegalStateException {
-      if (current == null) {
-        throw new IllegalStateException();
-      }
-      view.setSelected(current, selected);
-    }
-  }
 
   /**
    * An iterator over DOM elements.
@@ -106,7 +73,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   static interface ElementIterator extends Iterator<Element> {
     /**
      * Set the selection state of the current element.
-     *
+     * 
      * @param selected the selection state
      * @throws IllegalStateException if {@link #next()} has not been called
      */
@@ -125,14 +92,14 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
   /**
    * The view that this presenter presents.
-   *
+   * 
    * @param <T> the data type
    */
   static interface View<T> {
 
     /**
      * Add a handler to the view.
-     *
+     * 
      * @param <H> the handler type
      * @param handler the handler to add
      * @param type the event type
@@ -141,38 +108,12 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
         GwtEvent.Type<H> type);
 
     /**
-     * Check whether or not the cells in the view depend on the selection state.
-     *
-     * @return true if cells depend on selection, false if not
-     */
-    boolean dependsOnSelection();
-
-    /**
-     * Get the physical child count.
-     *
-     * @return the child count
-     */
-    int getChildCount();
-
-    /**
-     * Get an iterator over the children of the view.
-     *
-     * @return the iterator
-     */
-    ElementIterator getChildIterator();
-
-    /**
-     * Called when selection changes.
-     */
-    void onUpdateSelection();
-
-    /**
      * Construct the HTML that represents the list of values, taking the
      * selection state into account.
-     *
+     * 
      * @param sb the {@link SafeHtmlBuilder} to build into
      * @param values the values to render
-     * @param start the start index that is being rendered
+     * @param start the absolute start index that is being rendered
      * @param selectionModel the {@link SelectionModel}
      */
     void render(SafeHtmlBuilder sb, List<T> values, int start,
@@ -180,23 +121,26 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
     /**
      * Replace all children with the specified html.
-     *
+     * 
      * @param values the values of the new children
      * @param html the html to render in the child
+     * @param stealFocus true if the row should steal focus, false if not
      */
-    void replaceAllChildren(List<T> values, SafeHtml html);
+    void replaceAllChildren(List<T> values, SafeHtml html, boolean stealFocus);
 
     /**
      * Convert the specified HTML into DOM elements and replace the existing
      * elements starting at the specified index. If the number of children
      * specified exceeds the existing number of children, the remaining children
      * should be appended.
-     *
+     * 
      * @param values the values of the new children
-     * @param start the start index to be replaced
+     * @param start the start index to be replaced, relative to the pageStart
      * @param html the HTML to convert
+     * @param stealFocus true if the row should steal focus, false if not
      */
-    void replaceChildren(List<T> values, int start, SafeHtml html);
+    void replaceChildren(List<T> values, int start, SafeHtml html,
+        boolean stealFocus);
 
     /**
      * Re-establish focus on an element within the view if the view already had
@@ -206,7 +150,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
     /**
      * Update an element to reflect its keyboard selected state.
-     *
+     * 
      * @param index the index of the element relative to page start
      * @param selected true if selected, false if not
      * @param stealFocus true if the row should steal focus, false if not
@@ -215,18 +159,190 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
     /**
      * Set the current loading state of the data.
-     *
+     * 
      * @param state the loading state
      */
     void setLoadingState(LoadingState state);
+  }
+
+  /**
+   * Represents the state of the presenter.
+   * 
+   * @param <T> the data type of the presenter
+   */
+  private static class DefaultState<T> implements State<T> {
+    int keyboardSelectedRow = 0;
+    T keyboardSelectedRowValue = null;
+    int pageSize;
+    int pageStart = 0;
+    int rowCount = 0;
+    boolean rowCountIsExact = false;
+    final List<T> rowData = new ArrayList<T>();
+    final Set<Integer> selectedRows = new HashSet<Integer>();
+
+    public DefaultState(int pageSize) {
+      this.pageSize = pageSize;
+    }
+
+    public int getKeyboardSelectedRow() {
+      return keyboardSelectedRow;
+    }
+
+    public T getKeyboardSelectedRowValue() {
+      return keyboardSelectedRowValue;
+    }
+
+    public int getPageSize() {
+      return pageSize;
+    }
+
+    public int getPageStart() {
+      return pageStart;
+    }
+
+    public int getRowCount() {
+      return rowCount;
+    }
+
+    public int getRowDataSize() {
+      return rowData.size();
+    }
+
+    public T getRowDataValue(int index) {
+      return rowData.get(index);
+    }
+
+    public boolean isRowCountExact() {
+      return rowCountIsExact;
+    }
 
     /**
-     * Update an element to reflect its selected state.
-     *
-     * @param elem the element to update
-     * @param selected true if selected, false if not
+     * {@inheritDoc}
+     * 
+     * <p>
+     * The set of selected rows is not maintained in the pending state. This
+     * method should only be called on the state after it has been resolved.
+     * </p>
      */
-    void setSelected(Element elem, boolean selected);
+    public boolean isRowSelected(int index) {
+      return selectedRows.contains(index);
+    }
+  }
+
+  /**
+   * Represents the pending state of the presenter.
+   * 
+   * @param <T> the data type of the presenter
+   */
+  private static class PendingState<T> extends DefaultState<T> {
+
+    /**
+     * A boolean indicating that the user has keyboard selected a new row.
+     */
+    private boolean keyboardSelectedRowChanged;
+
+    /**
+     * A boolean indicating that a change in keyboard selected should cause us
+     * to steal focus.
+     */
+    private boolean keyboardStealFocus = false;
+
+    /**
+     * Set to true if a redraw is required.
+     */
+    private boolean redrawRequired = false;
+
+    /**
+     * The list of ranges that have been replaced.
+     */
+    private final List<Range> replacedRanges = new ArrayList<Range>();
+
+    public PendingState(State<T> state) {
+      super(state.getPageSize());
+      this.keyboardSelectedRow = state.getKeyboardSelectedRow();
+      this.keyboardSelectedRowValue = state.getKeyboardSelectedRowValue();
+      this.pageSize = state.getPageSize();
+      this.pageStart = state.getPageStart();
+      this.rowCount = state.getRowCount();
+      this.rowCountIsExact = state.isRowCountExact();
+
+      // Copy the row data.
+      int rowDataSize = state.getRowDataSize();
+      for (int i = 0; i < rowDataSize; i++) {
+        this.rowData.add(state.getRowDataValue(i));
+      }
+
+      /*
+       * We do not copy the selected rows from the old state. They will be
+       * resolved from the SelectionModel.
+       */
+    }
+
+    /**
+     * Update the range of replaced data.
+     * 
+     * @param start the start index
+     * @param end the end index
+     */
+    public void replaceRange(int start, int end) {
+      replacedRanges.add(new Range(start, end - start));
+    }
+  }
+
+  /**
+   * Represents the state of the presenter.
+   * 
+   * @param <T> the data type of the presenter
+   */
+  private static interface State<T> {
+    /**
+     * Get the current keyboard selected row relative to page start. This value
+     * should never be negative.
+     */
+    int getKeyboardSelectedRow();
+
+    /**
+     * Get the last row value that was selected with the keyboard.
+     */
+    T getKeyboardSelectedRowValue();
+
+    /**
+     * Get the number of rows in the current page.
+     */
+    int getPageSize();
+
+    /**
+     * Get the absolute start index of the page.
+     */
+    int getPageStart();
+
+    /**
+     * Get the total number of rows.
+     */
+    int getRowCount();
+
+    /**
+     * Get the size of the row data.
+     */
+    int getRowDataSize();
+
+    /**
+     * Get a specific value from the row data.
+     */
+    T getRowDataValue(int index);
+
+    /**
+     * Get a boolean indicating whether the row count is exact or an estimate.
+     */
+    boolean isRowCountExact();
+
+    /**
+     * Check if a row index is selected.
+     * 
+     * @param index the row index
+     * @return true if selected, false if not
+     */
+    boolean isRowSelected(int index);
   }
 
   /**
@@ -236,18 +352,31 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   static final int PAGE_INCREMENT = 30;
 
+  /**
+   * The maximum number of times we can try to {@link #resolvePendingState()}
+   * before we assume there is an infinite loop.
+   */
+  private static final int LOOP_MAXIMUM = 10;
+
+  /**
+   * The minimum number of rows that need to be replaced before we do a redraw.
+   */
+  private static final int REDRAW_MINIMUM = 5;
+
+  /**
+   * The threshold of new data after which we redraw the entire view instead of
+   * replacing specific rows.
+   * 
+   * TODO(jlabanca): Find the optimal value for the threshold.
+   */
+  private static final double REDRAW_THRESHOLD = 0.30;
+
   private final HasData<T> display;
 
   /**
-   * The current keyboard selected row relative to page start. This value should
-   * never be negative.
+   * A boolean indicating that we are in the process of resolving state.
    */
-  private int keyboardSelectedRow = 0;
-
-  /**
-   * The last row value that was selected with the keyboard.
-   */
-  private T keyboardSelectedRowValue;
+  private boolean isResolvingState;
 
   private KeyboardPagingPolicy keyboardPagingPolicy = KeyboardPagingPolicy.CHANGE_PAGE;
   private KeyboardSelectionPolicy keyboardSelectionPolicy = KeyboardSelectionPolicy.ENABLED;
@@ -257,43 +386,42 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   /**
    * As an optimization, keep track of the last HTML string that we rendered. If
    * the contents do not change the next time we render, then we don't have to
-   * set inner html.
+   * set inner html. This is useful for apps that continuously refresh the view.
    */
   private SafeHtml lastContents = null;
 
-  private int pageSize;
-  private int pageStart = 0;
+  /**
+   * The pending state of the presenter to be pushed to the view.
+   */
+  private PendingState<T> pendingState;
 
   /**
-   * Set to true when the page start changes, and we need to do a full refresh.
+   * The command used to resolve the pending state.
    */
-  private boolean pageStartChangedSinceRender;
-
-  private int rowCount = 0;
-
-  private boolean rowCountIsExact;
+  private ScheduledCommand pendingStateCommand;
 
   /**
-   * The local cache of data in the view. The 0th index in the list corresponds
-   * to the value at pageStart.
+   * A counter used to detect infinite loops in {@link #resolvePendingState()}.
+   * An infinite loop can occur if user code, such as reading the
+   * {@link SelectionModel}, causes the table to have a pending state.
    */
-  private final List<T> rowData = new ArrayList<T>();
-
-  /**
-   * A local cache of the currently selected rows. We cannot track selected keys
-   * instead because we might end up in an inconsistent state where we render a
-   * subset of a list with duplicate values, styling a value in the subset but
-   * not styling the duplicate value outside of the subset.
-   */
-  private final Set<Integer> selectedRows = new HashSet<Integer>();
+  private int pendingStateLoop = 0;
 
   private HandlerRegistration selectionHandler;
   private SelectionModel<? super T> selectionModel;
+
+  /**
+   * The current state of the presenter reflected in the view. We intentionally
+   * use the interface, which only has getters, to ensure that we do not
+   * accidently modify the current state.
+   */
+  private State<T> state;
+
   private final View<T> view;
 
   /**
    * Construct a new {@link HasDataPresenter}.
-   *
+   * 
    * @param display the display that is being presented
    * @param view the view implementation
    * @param pageSize the default page size
@@ -302,8 +430,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       ProvidesKey<T> keyProvider) {
     this.display = display;
     this.view = view;
-    this.pageSize = pageSize;
     this.keyProvider = keyProvider;
+    this.state = new DefaultState<T>(pageSize);
   }
 
   public HandlerRegistration addRangeChangeHandler(
@@ -314,6 +442,15 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   public HandlerRegistration addRowCountChangeHandler(
       RowCountChangeEvent.Handler handler) {
     return view.addHandler(handler, RowCountChangeEvent.getType());
+  }
+
+  /**
+   * Clear the row value associated with the keyboard selected row.
+   */
+  public void clearKeyboardSelectedRowValue() {
+    if (getKeyboardSelectedRowValue() != null) {
+      ensurePendingState().keyboardSelectedRowValue = null;
+    }
   }
 
   /**
@@ -336,13 +473,28 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   }
 
   /**
+   * Flush pending changes to the view.
+   */
+  public void flush() {
+    /*
+     * resolvePendingState can exit early user code applied more pending state,
+     * so we need to loop until we are sure that the pending state is clear. If
+     * the user calls this method while resolving pending state, then do not
+     * attempt to resolve pending state again.
+     */
+    while (pendingStateCommand != null && !isResolvingState) {
+      resolvePendingState();
+    }
+  }
+
+  /**
    * Get the current page size. This is usually the page size, but can be less
    * if the data size cannot fill the current page.
-   *
+   * 
    * @return the size of the current page
    */
   public int getCurrentPageSize() {
-    return Math.min(pageSize, rowCount - pageStart);
+    return Math.min(getPageSize(), getRowCount() - getPageStart());
   }
 
   public KeyboardPagingPolicy getKeyboardPagingPolicy() {
@@ -351,12 +503,34 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
   /**
    * Get the index of the keyboard selected row relative to the page start.
-   *
+   * 
    * @return the row index, or -1 if disabled
    */
   public int getKeyboardSelectedRow() {
     return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? -1
-        : keyboardSelectedRow;
+        : getCurrentState().getKeyboardSelectedRow();
+  }
+
+  /**
+   * Get the index of the keyboard selected row relative to the page start as it
+   * appears in the view, regardless of whether or not there is a pending
+   * change.
+   * 
+   * @return the row index, or -1 if disabled
+   */
+  public int getKeyboardSelectedRowInView() {
+    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? -1
+        : state.getKeyboardSelectedRow();
+  }
+
+  /**
+   * Get the value that the user selected.
+   * 
+   * @return the value, or null if a value was not selected
+   */
+  public T getKeyboardSelectedRowValue() {
+    return KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy ? null
+        : getCurrentState().getKeyboardSelectedRowValue();
   }
 
   public KeyboardSelectionPolicy getKeyboardSelectionPolicy() {
@@ -369,22 +543,30 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
   /**
    * Get the overall data size.
-   *
+   * 
    * @return the data size
    */
   public int getRowCount() {
-    return rowCount;
+    return getCurrentState().getRowCount();
   }
 
   /**
-   * Get the list of data within the current range. The 0th index corresponds to
-   * the first value on the page. The data may not be complete or may contain
-   * null values.
-   *
-   * @return the list of data for the current page
+   * Get the size of the list of row data.
+   * 
+   * @return the size of the row data
    */
-  public List<T> getRowData() {
-    return rowData;
+  public int getRowDataSize() {
+    return getCurrentState().getRowDataSize();
+  }
+
+  /**
+   * Get a value from the row data.
+   * 
+   * @param the index of the row data
+   * @return the value at the specified index
+   */
+  public T getRowDataValue(int index) {
+    return getCurrentState().getRowDataValue(index);
   }
 
   public SelectionModel<? super T> getSelectionModel() {
@@ -395,21 +577,21 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * Return the range of data being displayed.
    */
   public Range getVisibleRange() {
-    return new Range(pageStart, pageSize);
+    return new Range(getPageStart(), getPageSize());
   }
 
   /**
    * Check if the next call to {@link #keyboardNext()} would succeed.
-   *
+   * 
    * @return true if there is another row accessible by the keyboard
    */
   public boolean hasKeyboardNext() {
     if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
       return false;
-    } else if (keyboardSelectedRow < rowData.size() - 1) {
+    } else if (getKeyboardSelectedRow() < getRowDataSize() - 1) {
       return true;
     } else if (!keyboardPagingPolicy.isLimitedToRange()
-        && (keyboardSelectedRow + pageStart < rowCount - 1 || !rowCountIsExact)) {
+        && (getKeyboardSelectedRow() + getPageStart() < getRowCount() - 1 || !isRowCountExact())) {
       return true;
     }
     return false;
@@ -417,22 +599,33 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
   /**
    * Check if the next call to {@link #keyboardPrevious()} would succeed.
-   *
+   * 
    * @return true if there is a previous row accessible by the keyboard
    */
   public boolean hasKeyboardPrev() {
     if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
       return false;
-    } else if (keyboardSelectedRow > 0) {
+    } else if (getKeyboardSelectedRow() > 0) {
       return true;
-    } else if (!keyboardPagingPolicy.isLimitedToRange() && pageStart > 0) {
+    } else if (!keyboardPagingPolicy.isLimitedToRange() && getPageStart() > 0) {
       return true;
     }
     return false;
   }
 
+  /**
+   * Check whether or not there is a pending state. If there is a pending state,
+   * views might skip DOM updates and wait for the new data to be rendered when
+   * the pending state is resolved.
+   * 
+   * @return true if there is a pending state, false if not
+   */
+  public boolean hasPendingState() {
+    return pendingState != null;
+  }
+
   public boolean isRowCountExact() {
-    return rowCountIsExact;
+    return getCurrentState().isRowCountExact();
   }
 
   /**
@@ -440,7 +633,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void keyboardEnd() {
     if (!keyboardPagingPolicy.isLimitedToRange()) {
-      setKeyboardSelectedRow(rowCount - 1, true);
+      setKeyboardSelectedRow(getRowCount() - 1, true);
     }
   }
 
@@ -449,7 +642,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void keyboardHome() {
     if (!keyboardPagingPolicy.isLimitedToRange()) {
-      setKeyboardSelectedRow(-pageStart, true);
+      setKeyboardSelectedRow(-getPageStart(), true);
     }
   }
 
@@ -458,7 +651,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void keyboardNext() {
     if (hasKeyboardNext()) {
-      setKeyboardSelectedRow(keyboardSelectedRow + 1, true);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() + 1, true);
     }
   }
 
@@ -468,9 +661,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   public void keyboardNextPage() {
     if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
       // 0th index of next page.
-      setKeyboardSelectedRow(pageSize, true);
+      setKeyboardSelectedRow(getPageSize(), true);
     } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
-      setKeyboardSelectedRow(keyboardSelectedRow + PAGE_INCREMENT, true);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() + PAGE_INCREMENT, true);
     }
   }
 
@@ -479,7 +672,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void keyboardPrev() {
     if (hasKeyboardPrev()) {
-      setKeyboardSelectedRow(keyboardSelectedRow - 1, true);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() - 1, true);
     }
   }
 
@@ -489,9 +682,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   public void keyboardPrevPage() {
     if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
       // 0th index of previous page.
-      setKeyboardSelectedRow(-pageSize, true);
+      setKeyboardSelectedRow(-getPageSize(), true);
     } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
-      setKeyboardSelectedRow(keyboardSelectedRow - PAGE_INCREMENT, true);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() - PAGE_INCREMENT, true);
     }
   }
 
@@ -499,10 +692,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * Toggle selection of the current keyboard row in the {@link SelectionModel}.
    */
   public void keyboardToggleSelect() {
+    int keyboardSelectedRow = getKeyboardSelectedRow();
     if (KeyboardSelectionPolicy.ENABLED == keyboardSelectionPolicy
         && selectionModel != null && keyboardSelectedRow >= 0
-        && keyboardSelectedRow < rowData.size()) {
-      T value = rowData.get(keyboardSelectedRow);
+        && keyboardSelectedRow < getRowDataSize()) {
+      T value = getRowDataValue(keyboardSelectedRow);
       if (value != null) {
         selectionModel.setSelected(value, !selectionModel.isSelected(value));
       }
@@ -514,7 +708,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void redraw() {
     lastContents = null;
-    setRowData(pageStart, rowData);
+    ensurePendingState().redrawRequired = true;
   }
 
   public void setKeyboardPagingPolicy(KeyboardPagingPolicy policy) {
@@ -526,7 +720,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
   /**
    * Set the row index of the keyboard selected element.
-   *
+   * 
    * @param index the row index
    * @param stealFocus true to steal focus
    */
@@ -535,24 +729,16 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
       return;
     }
-    boolean isBound = KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy;
-
-    // Deselect the old index.
-    if (keyboardSelectedRow >= 0 && keyboardSelectedRow < view.getChildCount()) {
-      view.setKeyboardSelected(keyboardSelectedRow, false, false);
-      if (isBound) {
-        deselectKeyboardValue();
-      }
-    }
 
     // Trim to within bounds.
+    int pageStart = getPageStart();
+    int pageSize = getPageSize();
+    int rowCount = getRowCount();
     int absIndex = pageStart + index;
-    if (absIndex < 0) {
-      absIndex = 0;
-    } else if (absIndex >= rowCount && rowCountIsExact) {
+    if (absIndex >= rowCount && isRowCountExact()) {
       absIndex = rowCount - 1;
     }
-    index = absIndex - pageStart;
+    index = Math.max(0, absIndex) - pageStart;
     if (keyboardPagingPolicy.isLimitedToRange()) {
       index = Math.max(0, Math.min(index, pageSize - 1));
     }
@@ -560,13 +746,15 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     // Select the new index.
     int newPageStart = pageStart;
     int newPageSize = pageSize;
-    keyboardSelectedRow = 0;
+    PendingState<T> pending = ensurePendingState();
+    pending.keyboardSelectedRow = 0;
+    pending.keyboardSelectedRowValue = null;
+    pending.keyboardSelectedRowChanged = true;
     if (index >= 0 && index < pageSize) {
-      keyboardSelectedRow = index;
-      if (isBound) {
-        selectKeyboardValue(index);
-      }
-      view.setKeyboardSelected(index, true, stealFocus);
+      pending.keyboardSelectedRow = index;
+      pending.keyboardSelectedRowValue = index < pending.getRowDataSize()
+          ? ensurePendingState().getRowDataValue(index) : null;
+      pending.keyboardStealFocus = stealFocus;
       return;
     } else if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
       // Go to previous page.
@@ -607,8 +795,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
     // Update the range if it changed.
     if (newPageStart != pageStart || newPageSize != pageSize) {
-      deselectKeyboardValue();
-      keyboardSelectedRow = index;
+      pending.keyboardSelectedRow = index;
       setVisibleRange(new Range(newPageStart, newPageSize), false, false);
     }
   }
@@ -630,25 +817,17 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   }
 
   public void setRowCount(int count, boolean isExact) {
-    if (count == this.rowCount && isExact == this.rowCountIsExact) {
+    if (count == getRowCount() && isExact == isRowCountExact()) {
       return;
     }
-    this.rowCount = count;
-    this.rowCountIsExact = isExact;
-    updateLoadingState();
+    ensurePendingState().rowCount = count;
+    ensurePendingState().rowCountIsExact = isExact;
 
-    // Update the keyboardSelectedRow.
-    if (keyboardSelectedRow >= count) {
-      keyboardSelectedRow = Math.max(0, count - 1);
-    }
-
-    // Redraw the current page if it is affected by the new data size.
-    if (updateCachedData()) {
-      redraw();
-    }
+    // Update the cached data.
+    updateCachedData();
 
     // Update the pager.
-    RowCountChangeEvent.fire(display, count, rowCountIsExact);
+    RowCountChangeEvent.fire(display, count, isExact);
   }
 
   public void setRowData(int start, List<? extends T> values) {
@@ -656,7 +835,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     int valuesEnd = start + valuesLength;
 
     // Calculate the bounded start (inclusive) and end index (exclusive).
-    int pageEnd = pageStart + pageSize;
+    int pageStart = getPageStart();
+    int pageEnd = getPageStart() + getPageSize();
     int boundedStart = Math.max(start, pageStart);
     int boundedEnd = Math.min(valuesEnd, pageEnd);
     if (start != pageStart && boundedStart >= boundedEnd) {
@@ -665,115 +845,30 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       return;
     }
 
-    // The data size must be at least as large as the data.
-    if (valuesEnd > rowCount) {
-      rowCount = valuesEnd;
-      RowCountChangeEvent.fire(display, rowCount, rowCountIsExact);
-    }
-
     // Create placeholders up to the specified index.
-    int cacheOffset = Math.max(0, boundedStart - pageStart - rowData.size());
+    PendingState<T> pending = ensurePendingState();
+    int cacheOffset = Math.max(0, boundedStart - pageStart - getRowDataSize());
     for (int i = 0; i < cacheOffset; i++) {
-      rowData.add(null);
-    }
-
-    // If the keyboard selected row is within the data set, clear it out. If the
-    // key still exists, it will be reset below at its new index.
-    Object keyboardSelectedKey = null;
-    int keyboardSelectedAbsoluteRow = pageStart + keyboardSelectedRow;
-    boolean keyboardSelectedInRange = false;
-    boolean keyboardSelectedStillExists = false;
-    if (keyboardSelectedAbsoluteRow >= boundedStart
-        && keyboardSelectedAbsoluteRow < boundedEnd) {
-      keyboardSelectedInRange = true;
-
-      // If the value is null, then we will select whatever value is at the
-      // selected row.
-      if (keyboardSelectedRowValue != null) {
-        keyboardSelectedKey = getRowValueKey(keyboardSelectedRowValue);
-        keyboardSelectedRow = 0; // Will be set to a non-negative number later.
-      }
+      pending.rowData.add(null);
     }
 
     // Insert the new values into the data array.
     for (int i = boundedStart; i < boundedEnd; i++) {
       T value = values.get(i - start);
       int dataIndex = i - pageStart;
-      if (dataIndex < rowData.size()) {
-        rowData.set(dataIndex, value);
+      if (dataIndex < getRowDataSize()) {
+        pending.rowData.set(dataIndex, value);
       } else {
-        rowData.add(value);
-      }
-
-      // Update our local cache of selected rows.
-      if (selectionModel != null) {
-        if (value != null && selectionModel.isSelected(value)) {
-          selectedRows.add(i);
-        } else {
-          selectedRows.remove(i);
-        }
-      }
-
-      // Update the keyboard selected index.
-      if (keyboardSelectedKey != null && value != null
-          && keyboardSelectedKey.equals(getRowValueKey(value))) {
-        keyboardSelectedRow = i - pageStart;
-        keyboardSelectedStillExists = true;
+        pending.rowData.add(value);
       }
     }
 
-    // Construct a run of elements within the range of the data and the page.
-    // boundedStart = start index of the data to replace.
-    // boundedSize = the number of items to replace.
-    boundedStart = pageStartChangedSinceRender ? pageStart : boundedStart;
-    boundedStart -= cacheOffset;
-    List<T> boundedValues = rowData.subList(boundedStart - pageStart,
-        boundedEnd - pageStart);
-    int boundedSize = boundedValues.size();
-    SafeHtmlBuilder sb = new SafeHtmlBuilder();
-    view.render(sb, boundedValues, boundedStart, selectionModel);
+    // Remember the range that has been replaced.
+    pending.replaceRange(boundedStart - cacheOffset, boundedEnd);
 
-    // Update the loading state.
-    updateLoadingState();
-
-    // Replace the DOM elements with the new rendered cells.
-    int childCount = view.getChildCount();
-    if (boundedStart == pageStart
-        && (boundedSize >= childCount || boundedSize >= getCurrentPageSize() || rowData.size() < childCount)) {
-      // If the contents have not changed, we're done.
-      SafeHtml newContents = sb.toSafeHtml();
-      if (!newContents.equals(lastContents)) {
-        lastContents = newContents;
-        view.replaceAllChildren(boundedValues, newContents);
-      }
-
-      // Allow the view to reestablish focus after being re-rendered.
-      view.resetFocus();
-    } else {
-      lastContents = null;
-      view.replaceChildren(boundedValues, boundedStart - pageStart,
-          sb.toSafeHtml());
-
-      // Only reset focus if needed.
-      if (keyboardSelectedStillExists) {
-        view.resetFocus();
-      }
-    }
-
-    // Reset the pageStartChanged boolean.
-    pageStartChangedSinceRender = false;
-
-    // Update the keyboard selected value.
-    if (keyboardSelectedInRange && !keyboardSelectedStillExists) {
-      if (keyboardSelectedKey != null) {
-        // We had a value, but its lost.
-        deselectKeyboardValue();
-      }
-
-      // Select the selected row based off the row index.
-      if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy) {
-        selectKeyboardValue(keyboardSelectedRow);
-      }
+    // Fire a row count change event after updating the data.
+    if (valuesEnd > getRowCount()) {
+      setRowCount(valuesEnd, isRowCountExact());
     }
   }
 
@@ -803,55 +898,461 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     if (selectionModel != null) {
       selectionHandler = selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
         public void onSelectionChange(SelectionChangeEvent event) {
-          updateSelection();
+          // Ensure that we resolve selection.
+          ensurePendingState();
         }
       });
     }
 
     // Update the current selection state based on the new model.
-    updateSelection();
+    ensurePendingState();
   }
 
   /**
-   * Deselect the keyboard selected value.
+   * Combine the modified row indexes into as many as two {@link Range}s,
+   * optimizing to have the fewest unmodified rows within the ranges. Using two
+   * ranges covers the most common use cases of selecting one row, selecting a
+   * range, moving selection from one row to another, or moving keyboard
+   * selection.
+   * 
+   * Visible for testing.
+   * 
+   * @param modifiedRows the indexes of modified rows
+   * @return up to two ranges that encompass the modified rows
    */
-  private void deselectKeyboardValue() {
-    if (selectionModel != null && keyboardSelectedRowValue != null) {
-      T curValue = keyboardSelectedRowValue;
-      keyboardSelectedRow = 0;
-      keyboardSelectedRowValue = null;
-      selectionModel.setSelected(curValue, false);
+  List<Range> calculateModifiedRanges(TreeSet<Integer> modifiedRows,
+      int pageStart, int pageEnd) {
+    int rangeStart0 = -1;
+    int rangeEnd0 = -1;
+    int rangeStart1 = -1;
+    int rangeEnd1 = -1;
+    int maxDiff = 0;
+    for (int index : modifiedRows) {
+      if (index < pageStart || index >= pageEnd) {
+        // The index is out of range of the current page.
+        continue;
+      } else if (rangeStart0 == -1) {
+        // Range0 defaults to the first index.
+        rangeStart0 = index;
+        rangeEnd0 = index;
+      } else if (rangeStart1 == -1) {
+        // Range1 defaults to the second index.
+        maxDiff = index - rangeEnd0;
+        rangeStart1 = index;
+        rangeEnd1 = index;
+      } else {
+        int diff = index - rangeEnd1;
+        if (diff > maxDiff) {
+          // Move the old range1 onto range0 and start range1 from this index.
+          rangeEnd0 = rangeEnd1;
+          rangeStart1 = index;
+          rangeEnd1 = index;
+          maxDiff = diff;
+        } else {
+          // Add this index to range1.
+          rangeEnd1 = index;
+        }
+      }
     }
+
+    // Convert the range ends to exclusive indexes for calculations.
+    rangeEnd0 += 1;
+    rangeEnd1 += 1;
+
+    // Combine the ranges if they are continuous.
+    if (rangeStart1 == rangeEnd0) {
+      rangeEnd0 = rangeEnd1;
+      rangeStart1 = -1;
+      rangeEnd1 = -1;
+    }
+
+    // Return the ranges.
+    List<Range> toRet = new ArrayList<Range>();
+    if (rangeStart0 != -1) {
+      int rangeLength0 = rangeEnd0 - rangeStart0;
+      toRet.add(new Range(rangeStart0, rangeLength0));
+    }
+    if (rangeStart1 != -1) {
+      int rangeLength1 = rangeEnd1 - rangeStart1;
+      toRet.add(new Range(rangeStart1, rangeLength1));
+    }
+    return toRet;
+  }
+
+  /**
+   * Ensure that a pending {@link DefaultState} exists and return it.
+   * 
+   * @return the pending state
+   */
+  private PendingState<T> ensurePendingState() {
+    // Create the pending state if needed.
+    if (pendingState == null) {
+      pendingState = new PendingState<T>(state);
+    }
+
+    /*
+     * Schedule a command to resolve the pending state. If a command is already
+     * scheduled, we reschedule a new one to ensure that it happens after any
+     * existing finally commands (such as SelectionModel commands).
+     */
+    pendingStateCommand = new ScheduledCommand() {
+      public void execute() {
+        // Verify that this command was the last one scheduled.
+        if (pendingStateCommand == this) {
+          resolvePendingState();
+        }
+      }
+    };
+    Scheduler.get().scheduleFinally(pendingStateCommand);
+
+    // Return the pending state.
+    return pendingState;
+  }
+
+  /**
+   * Find the index within the {@link State} of the best match for the specified
+   * row value. The best match is a row value with the same key, closest to the
+   * initial index.
+   * 
+   * @param state the state to search
+   * @param value the value to find
+   * @param initialIndex the initial index of the value
+   * @return the best match index, or -1 if not found
+   */
+  private int findIndexOfBestMatch(State<T> state, T value, int initialIndex) {
+    // Get the key for the value.
+    Object key = getRowValueKey(value);
+    if (key == null) {
+      return -1;
+    }
+
+    int bestMatchIndex = -1;
+    int bestMatchDiff = Integer.MAX_VALUE;
+    int rowDataCount = state.getRowDataSize();
+    for (int i = 0; i < rowDataCount; i++) {
+      T curValue = state.getRowDataValue(i);
+      Object curKey = getRowValueKey(curValue);
+      if (key.equals(curKey)) {
+        int diff = Math.abs(initialIndex - i);
+        if (diff < bestMatchDiff) {
+          bestMatchIndex = i;
+          bestMatchDiff = diff;
+        }
+      }
+    }
+    return bestMatchIndex;
+  }
+
+  /**
+   * Get the current state of the presenter.
+   * 
+   * @return the pending state if one exists, otherwise the state
+   */
+  private State<T> getCurrentState() {
+    return pendingState == null ? state : pendingState;
+  }
+
+  private int getPageSize() {
+    return getCurrentState().getPageSize();
+  }
+
+  private int getPageStart() {
+    return getCurrentState().getPageStart();
   }
 
   /**
    * Get the key for the specified row value.
-   *
+   * 
    * @param rowValue the row value
    * @return the key
    */
   private Object getRowValueKey(T rowValue) {
-    return keyProvider == null ? rowValue : keyProvider.getKey(rowValue);
+    return (keyProvider == null || rowValue == null) ? rowValue
+        : keyProvider.getKey(rowValue);
   }
 
   /**
-   * Select the value at the keyboard selected row.
-   *
-   * @param row the row index
+   * Resolve the pending state and push updates to the view.
    */
-  private void selectKeyboardValue(int row) {
-    if (selectionModel != null && row >= 0 && row < rowData.size()) {
-      keyboardSelectedRowValue = rowData.get(row);
-      if (keyboardSelectedRowValue != null) {
-        selectionModel.setSelected(keyboardSelectedRowValue, true);
+  private void resolvePendingState() {
+    pendingStateCommand = null;
+
+    // Early exit if there is no pending state.
+    if (pendingState == null) {
+      pendingStateLoop = 0;
+      return;
+    }
+
+    /*
+     * Check for an infinite loop. This can happen if user code accessed in this
+     * method modifies the pending state and flushes changes.
+     */
+    pendingStateLoop++;
+    if (pendingStateLoop > LOOP_MAXIMUM) {
+      pendingStateLoop = 0; // Let user code handle exception and try again.
+      throw new IllegalStateException(
+          "A possible infinite loop has been detected in a Cell Widget. This "
+              + "usually happens when your SelectionModel triggers a "
+              + "SelectionChangeEvent when SelectionModel.isSelection() is "
+              + "called, which causes the table to redraw continuously.");
+    }
+
+    /*
+     * Check for conflicting state resolution code. This can happen if the
+     * View's render methods modify the view and flush the pending state.
+     */
+    if (isResolvingState) {
+      throw new IllegalStateException(
+          "The Cell Widget is attempting to render itself within the render "
+              + "loop. This usually happens when your render code modifies the "
+              + "state of the Cell Widget then accesses data or elements "
+              + "within the Widget.");
+    }
+    isResolvingState = true;
+
+    // Keep track of the absolute indexes of modified rows.
+    TreeSet<Integer> modifiedRows = new TreeSet<Integer>();
+
+    // Get the values used for calculations.
+    State<T> oldState = state;
+    PendingState<T> pending = pendingState;
+    int pageStart = pending.getPageStart();
+    int pageSize = pending.getPageSize();
+    int pageEnd = pageStart + pageSize;
+    int rowDataCount = pending.getRowDataSize();
+
+    /*
+     * Resolve keyboard selection. If the row value still exists, use its index.
+     * If the row value exists in multiple places, use the closest index. If the
+     * row value not longer exists, use the current index.
+     */
+    pending.keyboardSelectedRow = Math.max(0,
+        Math.min(pending.keyboardSelectedRow, rowDataCount - 1));
+    if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
+      // Clear the keyboard selected state.
+      pending.keyboardSelectedRow = 0;
+      pending.keyboardSelectedRowValue = null;
+    } else if (pending.keyboardSelectedRowChanged) {
+      // Choose the row value based on the index.
+      pending.keyboardSelectedRowValue = rowDataCount > 0
+          ? pending.getRowDataValue(pending.keyboardSelectedRow) : null;
+    } else if (pending.keyboardSelectedRowValue != null) {
+      // Choose the index based on the row value.
+      int bestMatchIndex = findIndexOfBestMatch(pending,
+          pending.keyboardSelectedRowValue, pending.keyboardSelectedRow);
+      if (bestMatchIndex >= 0) {
+        // A match was found.
+        pending.keyboardSelectedRow = bestMatchIndex;
+        pending.keyboardSelectedRowValue = rowDataCount > 0
+            ? pending.getRowDataValue(pending.keyboardSelectedRow) : null;
+      } else {
+        // No match was found, so reset to 0.
+        pending.keyboardSelectedRow = 0;
+        pending.keyboardSelectedRowValue = null;
       }
     }
+
+    /*
+     * Update the SelectionModel based on the keyboard selected value. This must
+     * happen before we read the selection state.
+     */
+    if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy
+        && selectionModel != null) {
+      T oldValue = oldState.getRowDataSize() > 0
+          ? oldState.getRowDataValue(oldState.getKeyboardSelectedRow()) : null;
+      Object oldKey = getRowValueKey(oldValue);
+      T newValue = rowDataCount > 0
+          ? pending.getRowDataValue(pending.getKeyboardSelectedRow()) : null;
+      Object newKey = getRowValueKey(newValue);
+      if ((oldKey == null) ? newKey != null : !oldKey.equals(newKey)) {
+        // Deselect the old value.
+        if (oldValue != null && selectionModel.isSelected(oldValue)) {
+          selectionModel.setSelected(oldValue, false);
+        }
+
+        // Select the new value.
+        if (newValue != null && !selectionModel.isSelected(newValue)) {
+          selectionModel.setSelected(newValue, true);
+        }
+      }
+    }
+
+    // If the keyboard row changes, add it to the modified set.
+    boolean keyboardRowChanged = pending.keyboardSelectedRowChanged
+        || (oldState.getKeyboardSelectedRow() != pending.keyboardSelectedRow)
+        || (oldState.getKeyboardSelectedRowValue() == null && pending.keyboardSelectedRowValue != null);
+
+    /*
+     * Resolve selection. Check the selection status of all row values in the
+     * pending state and compare them to the status in the old state. If we know
+     * longer have a SelectionModel but had selected rows, we still need to
+     * update the rows.
+     */
+    for (int i = pageStart; i < pageStart + rowDataCount; i++) {
+      // Check the new selection state.
+      T rowValue = pending.getRowDataValue(i - pageStart);
+      boolean isSelected = (rowValue != null && selectionModel != null && selectionModel.isSelected(rowValue));
+
+      // Compare to the old selection state.
+      boolean wasSelected = oldState.isRowSelected(i);
+      if (isSelected) {
+        pending.selectedRows.add(i);
+        if (!wasSelected) {
+          modifiedRows.add(i);
+        }
+      } else if (wasSelected) {
+        modifiedRows.add(i);
+      }
+    }
+
+    /*
+     * We called methods in user code that could modify the view, so early exit
+     * if there is a new pending state waiting to be resolved.
+     */
+    if (pendingStateCommand != null) {
+      isResolvingState = false;
+      return;
+    }
+    pendingStateLoop = 0;
+
+    // Swap the states.
+    state = pendingState;
+    pendingState = null;
+
+    // Add the replaced ranges as modified rows.
+    boolean replacedEmptyRange = false;
+    for (Range replacedRange : pending.replacedRanges) {
+      int start = replacedRange.getStart();
+      int length = replacedRange.getLength();
+      // If the user set an empty range, pass it through to the view.
+      if (length == 0) {
+        replacedEmptyRange = true;
+      }
+      for (int i = start; i < start + length; i++) {
+        modifiedRows.add(i);
+      }
+    }
+
+    // Add keyboard rows to modified rows if we are going to render anyway.
+    if (modifiedRows.size() > 0 && keyboardRowChanged) {
+      modifiedRows.add(oldState.getKeyboardSelectedRow());
+      modifiedRows.add(pending.keyboardSelectedRow);
+    }
+
+    // Calculate the modified ranges.
+    List<Range> modifiedRanges = calculateModifiedRanges(modifiedRows,
+        pageStart, pageEnd);
+    Range range0 = modifiedRanges.size() > 0 ? modifiedRanges.get(0) : null;
+    Range range1 = modifiedRanges.size() > 1 ? modifiedRanges.get(1) : null;
+    int replaceDiff = 0; // The total number of rows to replace.
+    for (Range range : modifiedRanges) {
+      replaceDiff += range.getLength();
+    }
+
+    /*
+     * Check the various conditions that require redraw.
+     */
+    int oldPageStart = oldState.getPageStart();
+    int oldPageSize = oldState.getPageSize();
+    int oldRowDataCount = oldState.getRowDataSize();
+    boolean redrawRequired = pending.redrawRequired;
+    if (pageStart != oldPageStart) {
+      // Redraw if pageStart changes.
+      redrawRequired = true;
+    } else if (rowDataCount < oldRowDataCount) {
+      // Redraw if we have trimmed the row data.
+      redrawRequired = true;
+    } else if (range1 == null && range0 != null
+        && range0.getStart() == pageStart
+        && (replaceDiff >= oldRowDataCount || replaceDiff > oldPageSize)) {
+      // Redraw if the new data completely overlaps the old data.
+      redrawRequired = true;
+    } else if (replaceDiff >= REDRAW_MINIMUM
+        && replaceDiff > REDRAW_THRESHOLD * oldRowDataCount) {
+      /*
+       * Redraw if the number of modified rows represents a large portion of the
+       * view, defined as greater than 30% of the rows (minimum of 5).
+       */
+      redrawRequired = true;
+    } else if (replacedEmptyRange && oldRowDataCount == 0) {
+      /*
+       * If the user replaced an empty range, pass it to the view. This is a
+       * useful edge case that provides consistency in the way data is pushed to
+       * the view.
+       */
+      redrawRequired = true;
+    }
+
+    // Update the loading state in the view.
+    updateLoadingState();
+
+    /*
+     * Push changes to the view.
+     */
+    if (redrawRequired) {
+      // Redraw the entire content.
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      view.render(sb, pending.rowData, pending.pageStart, selectionModel);
+      SafeHtml newContents = sb.toSafeHtml();
+      if (!newContents.equals(lastContents)) {
+        lastContents = newContents;
+        view.replaceAllChildren(pending.rowData, newContents,
+            pending.keyboardStealFocus);
+      }
+      view.resetFocus();
+    } else if (range0 != null) {
+      // Replace specific rows.
+      lastContents = null;
+
+      // Replace range0.
+      {
+        int absStart = range0.getStart();
+        int relStart = absStart - pageStart;
+        SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        List<T> replaceValues = pending.rowData.subList(relStart, relStart
+            + range0.getLength());
+        view.render(sb, replaceValues, absStart, selectionModel);
+        view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(),
+            pending.keyboardStealFocus);
+      }
+
+      // Replace range1 if it exists.
+      if (range1 != null) {
+        int absStart = range1.getStart();
+        int relStart = absStart - pageStart;
+        SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        List<T> replaceValues = pending.rowData.subList(relStart, relStart
+            + range1.getLength());
+        view.render(sb, replaceValues, absStart, selectionModel);
+        view.replaceChildren(replaceValues, relStart, sb.toSafeHtml(),
+            pending.keyboardStealFocus);
+      }
+
+      view.resetFocus();
+    } else if (keyboardRowChanged) {
+      // Update the keyboard selected rows without redrawing.
+      // Deselect the old keyboard row.
+      int oldSelectedRow = oldState.getKeyboardSelectedRow();
+      if (oldSelectedRow >= 0 && oldSelectedRow < rowDataCount) {
+        view.setKeyboardSelected(oldSelectedRow, false, false);
+      }
+
+      // Select the new keyboard row.
+      int newSelectedRow = pending.getKeyboardSelectedRow();
+      if (newSelectedRow >= 0 && newSelectedRow < rowDataCount) {
+        view.setKeyboardSelected(newSelectedRow, true,
+            pending.keyboardStealFocus);
+      }
+    }
+
+    // We are done resolving state.
+    isResolvingState = false;
   }
 
   /**
    * Set the visible {@link Range}, optionally clearing data and/or firing a
    * {@link RangeChangeEvent}.
-   *
+   * 
    * @param range the new {@link Range}
    * @param clearData true to clear all data
    * @param forceRangeChangeEvent true to force a {@link RangeChangeEvent}
@@ -860,64 +1361,69 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       boolean forceRangeChangeEvent) {
     final int start = range.getStart();
     final int length = range.getLength();
+    if (start < 0) {
+      throw new IllegalArgumentException("Range start cannot be less than 0");
+    }
     if (length < 0) {
-      throw new IllegalArgumentException("Range length cannot be less than 1");
+      throw new IllegalArgumentException("Range length cannot be less than 0");
     }
 
     // Update the page start.
+    final int pageStart = getPageStart();
+    final int pageSize = getPageSize();
     final boolean pageStartChanged = (pageStart != start);
     if (pageStartChanged) {
+      PendingState<T> pending = ensurePendingState();
+
       // Trim the data if we aren't clearing it.
       if (!clearData) {
         if (start > pageStart) {
           int increase = start - pageStart;
-          if (rowData.size() > increase) {
+          if (getRowDataSize() > increase) {
             // Remove the data we no longer need.
             for (int i = 0; i < increase; i++) {
-              rowData.remove(0);
+              pending.rowData.remove(0);
             }
           } else {
             // We have no overlapping data, so just clear it.
-            rowData.clear();
+            pending.rowData.clear();
           }
         } else {
           int decrease = pageStart - start;
-          if ((rowData.size() > 0) && (decrease < pageSize)) {
+          if ((getRowDataSize() > 0) && (decrease < pageSize)) {
             // Insert null data at the beginning.
             for (int i = 0; i < decrease; i++) {
-              rowData.add(0, null);
+              pending.rowData.add(0, null);
             }
+
+            // Remember the inserted range because we might return to the same
+            // pageStart in this event loop, which means we won't do a full
+            // redraw, but still need to replace the inserted nulls in the view.
+            pending.replaceRange(start, start + decrease);
           } else {
             // We have no overlapping data, so just clear it.
-            rowData.clear();
+            pending.rowData.clear();
           }
         }
       }
 
       // Update the page start.
-      pageStart = start;
-      pageStartChangedSinceRender = true;
+      pending.pageStart = start;
     }
 
     // Update the page size.
     final boolean pageSizeChanged = (pageSize != length);
     if (pageSizeChanged) {
-      pageSize = length;
+      ensurePendingState().pageSize = length;
     }
 
     // Clear the data.
     if (clearData) {
-      rowData.clear();
-      selectedRows.clear();
+      ensurePendingState().rowData.clear();
     }
 
-    // Update the loading state.
-    updateLoadingState();
-
-    // Redraw with the existing data.
-    if (pageStartChanged || clearData || updateCachedData()) {
-      redraw();
-    }
+    // Trim the row values if needed.
+    updateCachedData();
 
     // Update the pager and data source if the range changed.
     if (pageStartChanged || pageSizeChanged || forceRangeChangeEvent) {
@@ -927,30 +1433,25 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
   /**
    * Ensure that the cached data is consistent with the data size.
-   *
-   * @return true if the data was updated, false if not
    */
-  private boolean updateCachedData() {
-    boolean updated = false;
+  private void updateCachedData() {
+    int pageStart = getPageStart();
     int expectedLastIndex = Math.max(0,
-        Math.min(pageSize, rowCount - pageStart));
-    int lastIndex = rowData.size() - 1;
+        Math.min(getPageSize(), getRowCount() - pageStart));
+    int lastIndex = getRowDataSize() - 1;
     while (lastIndex >= expectedLastIndex) {
-      rowData.remove(lastIndex);
-      selectedRows.remove(lastIndex + pageStart);
+      ensurePendingState().rowData.remove(lastIndex);
       lastIndex--;
-      updated = true;
     }
-    return updated;
   }
 
   /**
    * Update the loading state of the view based on the data size and page size.
    */
   private void updateLoadingState() {
-    int cacheSize = rowData.size();
-    int curPageSize = isRowCountExact() ? getCurrentPageSize() : pageSize;
-    if (rowCount == 0 && rowCountIsExact) {
+    int cacheSize = getRowDataSize();
+    int curPageSize = isRowCountExact() ? getCurrentPageSize() : getPageSize();
+    if (getRowCount() == 0 && isRowCountExact()) {
       view.setLoadingState(LoadingState.EMPTY);
     } else if (cacheSize >= curPageSize) {
       view.setLoadingState(LoadingState.LOADED);
@@ -958,49 +1459,6 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       view.setLoadingState(LoadingState.LOADING);
     } else {
       view.setLoadingState(LoadingState.PARTIALLY_LOADED);
-    }
-  }
-
-  /**
-   * Update the table based on the current selection.
-   */
-  private void updateSelection() {
-    view.onUpdateSelection();
-
-    // Determine if our selection states are stale.
-    boolean dependsOnSelection = view.dependsOnSelection();
-    boolean refreshRequired = false;
-    ElementIterator children = view.getChildIterator();
-    int row = pageStart;
-    for (T value : rowData) {
-      // Increment the child.
-      if (!children.hasNext()) {
-        break;
-      }
-      children.next();
-
-      // Update the selection state.
-      boolean selected = selectionModel == null ? false
-          : selectionModel.isSelected(value);
-      if (selected != selectedRows.contains(row)) {
-        refreshRequired = true;
-        if (selected) {
-          selectedRows.add(row);
-        } else {
-          selectedRows.remove(row);
-        }
-        if (!dependsOnSelection) {
-          // The cell doesn't depend on selection, so we only need to update
-          // the style.
-          children.setSelected(selected);
-        }
-      }
-      row++;
-    }
-
-    // Redraw the entire list if needed.
-    if (refreshRequired && dependsOnSelection) {
-      redraw();
     }
   }
 }

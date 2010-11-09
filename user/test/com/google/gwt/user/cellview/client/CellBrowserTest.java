@@ -17,6 +17,8 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.user.cellview.client.CellBrowser.BrowserCellList;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.TreeViewModel;
 
@@ -72,7 +74,7 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
     assertEquals(1, browser.treeNodes.size());
 
     // Open a leaf node.
-    rootNode.setChildOpen(1, true);
+    assertNull(rootNode.setChildOpen(1, true));
     assertEquals(1, browser.treeNodes.size());
     assertEquals(1, browser.treeNodes.get(0).getFocusedKey());
     assertFalse(browser.treeNodes.get(0).isFocusedOpen());
@@ -80,7 +82,6 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
     // Close the leaf node.
     rootNode.setChildOpen(1, false);
     assertEquals(1, browser.treeNodes.size());
-    assertNull(browser.treeNodes.get(0).getFocusedKey());
     assertFalse(browser.treeNodes.get(0).isFocusedOpen());
   }
 
@@ -115,6 +116,21 @@ public class CellBrowserTest extends AbstractCellTreeTestBase {
     assertEquals(2, browser.treeNodes.size());
     assertEquals(2, browser.treeNodes.get(0).getFocusedKey());
     assertTrue(browser.treeNodes.get(0).isFocusedOpen());
+  }
+
+  public void testSetKeyboardSelectionPolicyDisabled() {
+    CellBrowser browser = (CellBrowser) tree;
+
+    // Disable keyboard selection.
+    browser.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+    assertEquals(KeyboardSelectionPolicy.DISABLED,
+        browser.getKeyboardSelectionPolicy());
+
+    // Verify that keyboard selection is enabled in the lists.
+    BrowserCellList<?> list = browser.treeNodes.get(0).getDisplay();
+    assertEquals(KeyboardSelectionPolicy.ENABLED,
+        list.getKeyboardSelectionPolicy());
+    assertTrue(list.isKeyboardNavigationSuppressed());
   }
 
   @Override

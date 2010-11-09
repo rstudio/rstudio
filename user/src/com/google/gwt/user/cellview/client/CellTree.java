@@ -18,7 +18,6 @@ package com.google.gwt.user.cellview.client;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -521,6 +520,11 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    */
   boolean isRefreshing;
 
+  /**
+   * The hidden root node in the tree. Visible for testing.
+   */
+  final CellTreeNodeView<?> rootNode;
+
   private char accessKey = 0;
 
   /**
@@ -554,11 +558,6 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
   private boolean isAnimationEnabled;
 
   /**
-   * The deferred command used to keyboard select a node. 
-   */
-  private ScheduledCommand keyboardSelectCommand;
-
-  /**
    * The {@link CellTreeNodeView} whose children are currently being selected
    * using the keyboard.
    */
@@ -578,11 +577,6 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    * The HTML used to generate the open image for the top items.
    */
   private final SafeHtml openImageTopHtml;
-
-  /**
-   * The hidden root node in the tree.
-   */
-  private final CellTreeNodeView<?> rootNode;
 
   /**
    * The styles used by this widget.
@@ -731,11 +725,11 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
       }
     }
 
-    Element target = event.getEventTarget().cast();
+    final Element target = event.getEventTarget().cast();
     ArrayList<Element> chain = new ArrayList<Element>();
     collectElementChain(chain, getElement(), target);
 
-    boolean isMouseDown = "mousedown".equals(eventType);
+    final boolean isMouseDown = "mousedown".equals(eventType);
     final CellTreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
     if (nodeView != null && nodeView != rootNode) {
       if (isMouseDown) {
@@ -754,19 +748,14 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
       // Forward the event to the cell
       if (nodeView.getSelectionElement().isOrHasChild(target)) {
         // Move the keyboard focus to the clicked item.
-        if ("focus".equals(eventType) || isMouseDown) {
-          // Wait until any pending blur event has fired.
-          final boolean targetsCellParent = nodeView.getCellParent().isOrHasChild(target);
-          keyboardSelectCommand = new ScheduledCommand() {
-            public void execute() {
-              if (keyboardSelectCommand == this && !nodeView.isDestroyed()) {
-                isFocused = true;
-                keyboardSelectCommand = null;
-                keyboardSelect(nodeView, !targetsCellParent);
-              }
-            }
-          };
-          Scheduler.get().scheduleDeferred(keyboardSelectCommand);
+        if (isMouseDown) {
+          /*
+           * If the selected element is natively focusable, then we do not want to
+           * steal focus away from it.
+           */
+          boolean isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
+          isFocused = isFocused || isFocusable;
+          keyboardSelect(nodeView, !isFocusable);
         }
 
         nodeView.fireEventToCell(event);

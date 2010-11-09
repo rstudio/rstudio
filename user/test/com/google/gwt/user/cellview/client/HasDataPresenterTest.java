@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,13 +15,13 @@
  */
 package com.google.gwt.user.cellview.client;
 
-import com.google.gwt.dom.client.Element;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.HasDataPresenter.ElementIterator;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.cellview.client.HasDataPresenter.View;
 import com.google.gwt.user.cellview.client.HasKeyboardPagingPolicy.KeyboardPagingPolicy;
@@ -33,82 +33,33 @@ import com.google.gwt.view.client.MockHasData.MockRowCountChangeHandler;
 import com.google.gwt.view.client.MockSelectionModel;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
-
-import junit.framework.TestCase;
+import com.google.gwt.view.client.SingleSelectionModel;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Tests for {@link HasDataPresenter}.
  */
-public class HasDataPresenterTest extends TestCase {
-
-  /**
-   * Mock iterator over DOM elements.
-   */
-  private static class MockElementIterator implements ElementIterator {
-
-    private final int count;
-    private int next = 0;
-    private final MockView<?> view;
-
-    public MockElementIterator(MockView<?> view, int count) {
-      this.view = view;
-      this.count = count;
-    }
-
-    public boolean hasNext() {
-      return next < count;
-    }
-
-    public Element next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      next++;
-      return null;
-    }
-
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Set the selection state of the current element.
-     *
-     * @param selected the selection state
-     * @throws IllegalStateException if {@link #next()} has not been called
-     */
-    public void setSelected(boolean selected) throws IllegalStateException {
-      if (next == 0) {
-        throw new IllegalStateException();
-      }
-      view.setSelected(next - 1, selected);
-    }
-  }
+public class HasDataPresenterTest extends GWTTestCase {
 
   /**
    * A mock view used for testing.
-   *
+   * 
    * @param <T> the data type
    */
   private static class MockView<T> implements View<T> {
 
     private int childCount;
-    private boolean dependsOnSelection;
     private List<Integer> keyboardSelectedRow = new ArrayList<Integer>();
     private List<Boolean> keyboardSelectedRowState = new ArrayList<Boolean>();
-    private SafeHtml lastHtml;
+    private final List<SafeHtml> lastHtml = new ArrayList<SafeHtml>();
     private LoadingState loadingState;
-    private boolean onUpdateSelectionFired;
     private boolean replaceAllChildrenCalled;
     private boolean replaceChildrenCalled;
-    private Set<Integer> selectedRows = new HashSet<Integer>();
 
     public <H extends EventHandler> HandlerRegistration addHandler(H handler,
         Type<H> type) {
@@ -117,7 +68,7 @@ public class HasDataPresenterTest extends TestCase {
 
     /**
      * Assert the value of the oldest keyboard selected row and pop it.
-     *
+     * 
      * @param row the row index
      * @param selected true if selected, false if not
      */
@@ -137,20 +88,14 @@ public class HasDataPresenterTest extends TestCase {
 
     public void assertLastHtml(String html) {
       if (html == null) {
-        assertNull(lastHtml);
+        assertTrue(lastHtml.isEmpty());
       } else {
-        assertEquals(html, lastHtml.asString());
+        assertEquals(html, lastHtml.remove(0).asString());
       }
-      lastHtml = null;
     }
 
     public void assertLoadingState(LoadingState expected) {
       assertEquals(expected, loadingState);
-    }
-
-    public void assertOnUpdateSelectionFired(boolean expected) {
-      assertEquals(expected, onUpdateSelectionFired);
-      onUpdateSelectionFired = false;
     }
 
     public void assertReplaceAllChildrenCalled(boolean expected) {
@@ -163,33 +108,8 @@ public class HasDataPresenterTest extends TestCase {
       replaceChildrenCalled = false;
     }
 
-    /**
-     * Assert that {@link #setSelected(int, boolean)} was called for the
-     * specified rows.
-     *
-     * @param rows the rows
-     */
-    public void assertSelectedRows(Integer... rows) {
-      assertEquals(rows.length, selectedRows.size());
-      for (Integer row : rows) {
-        assertTrue("Row " + row + "is not selected", selectedRows.contains(row));
-      }
-    }
-
-    public boolean dependsOnSelection() {
-      return dependsOnSelection;
-    }
-
     public int getChildCount() {
       return childCount;
-    }
-
-    public MockElementIterator getChildIterator() {
-      return new MockElementIterator(this, 10);
-    }
-
-    public void onUpdateSelection() {
-      onUpdateSelectionFired = true;
     }
 
     public void render(SafeHtmlBuilder sb, List<T> values, int start,
@@ -198,23 +118,21 @@ public class HasDataPresenterTest extends TestCase {
       sb.appendHtmlConstant(",size=").append(values.size());
     }
 
-    public void replaceAllChildren(List<T> values, SafeHtml html) {
+    public void replaceAllChildren(List<T> values, SafeHtml html,
+        boolean stealFocus) {
       childCount = values.size();
       replaceAllChildrenCalled = true;
-      lastHtml = html;
+      lastHtml.add(html);
     }
 
-    public void replaceChildren(List<T> values, int start, SafeHtml html) {
+    public void replaceChildren(List<T> values, int start, SafeHtml html,
+        boolean stealFocus) {
       childCount = Math.max(childCount, start + values.size());
       replaceChildrenCalled = true;
-      lastHtml = html;
+      lastHtml.add(html);
     }
 
     public void resetFocus() {
-    }
-
-    public void setDependsOnSelection(boolean dependsOnSelection) {
-      this.dependsOnSelection = dependsOnSelection;
     }
 
     public void setKeyboardSelected(int index, boolean selected,
@@ -226,19 +144,11 @@ public class HasDataPresenterTest extends TestCase {
     public void setLoadingState(LoadingState state) {
       this.loadingState = state;
     }
+  }
 
-    public void setSelected(Element elem, boolean selected) {
-      // Not used in this mock.
-      throw new UnsupportedOperationException();
-    }
-
-    protected void setSelected(int index, boolean selected) {
-      if (selected) {
-        selectedRows.add(index);
-      } else {
-        selectedRows.remove(index);
-      }
-    }
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.user.cellview.CellView";
   }
 
   public void testAddRowCountChangeHandler() {
@@ -318,16 +228,55 @@ public class HasDataPresenterTest extends TestCase {
     handler.reset();
   }
 
+  public void testCalculateModifiedRanges() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 10, null);
+
+    TreeSet<Integer> rows = new TreeSet<Integer>();
+
+    // Empty set of rows.
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 10));
+
+    // One row in range.
+    rows.add(5);
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 10),
+        new Range(5, 1));
+
+    // One row not in range.
+    assertListContains(presenter.calculateModifiedRanges(rows, 6, 10));
+
+    // Consecutive rows (should return only one range).
+    rows.add(6);
+    rows.add(7);
+    rows.add(8);
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 10),
+        new Range(5, 4));
+
+    // Disjoint rows. Should return two ranges.
+    rows.add(10);
+    rows.add(11);
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 20),
+        new Range(5, 4), new Range(10, 2));
+
+    // Multiple gaps. The largest gap should be between the two ranges.
+    rows.add(15);
+    rows.add(17);
+    assertListContains(presenter.calculateModifiedRanges(rows, 0, 20),
+        new Range(5, 7), new Range(15, 3));
+  }
+
   public void testClearSelectionModel() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    view.setDependsOnSelection(true);
     HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
         view, 10, null);
     assertNull(presenter.getSelectionModel());
 
     // Initialize some data.
     populatePresenter(presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -336,19 +285,17 @@ public class HasDataPresenterTest extends TestCase {
     SelectionModel<String> model = new MockSelectionModel<String>(null);
     model.setSelected("test 0", true);
     presenter.setSelectionModel(model);
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
-    view.assertOnUpdateSelectionFired(true);
-    view.assertSelectedRows();
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenCalled(true);
+    view.assertLastHtml("start=0,size=1");
 
     // Clear the selection model without updating the view.
     presenter.clearSelectionModel();
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
-    view.assertOnUpdateSelectionFired(false);
-    view.assertSelectedRows();
   }
 
   public void testDefaults() {
@@ -361,6 +308,50 @@ public class HasDataPresenterTest extends TestCase {
     assertFalse(presenter.isRowCountExact());
     assertEquals(0, presenter.getCurrentPageSize());
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
+  }
+
+  /**
+   * Test that keyboard selection moves if its value moves.
+   */
+  public void testFindIndexOfBestMatch() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 10, null);
+    populatePresenter(presenter);
+
+    // Select the second element.
+    presenter.setKeyboardSelectedRow(2, false);
+    presenter.flush();
+    assertEquals(2, presenter.getKeyboardSelectedRow());
+    assertEquals("test 2", presenter.getKeyboardSelectedRowValue());
+
+    // Shift the values by one.
+    presenter.setRowData(1, createData(0, 9));
+    presenter.flush();
+    assertEquals(3, presenter.getKeyboardSelectedRow());
+    assertEquals("test 2", presenter.getKeyboardSelectedRowValue());
+
+    // Replace the keyboard selected value.
+    presenter.setRowData(0, createData(100, 10));
+    presenter.flush();
+    assertEquals(0, presenter.getKeyboardSelectedRow());
+    assertEquals(null, presenter.getKeyboardSelectedRowValue());
+  }
+
+  public void testFlush() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 10, null);
+
+    // Data should not be pushed to the view until flushed.
+    populatePresenter(presenter);
+    view.assertReplaceAllChildrenCalled(false);
+
+    // Now the data is pushed.
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
   }
 
   public void testGetCurrentPageSize() {
@@ -386,32 +377,39 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setRowCount(100, true);
     presenter.setVisibleRange(new Range(50, 10));
     populatePresenter(presenter);
+    presenter.flush();
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CHANGE_PAGE);
 
     // keyboardPrev in middle.
     presenter.setKeyboardSelectedRow(1, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
     assertTrue(presenter.hasKeyboardPrev());
     presenter.keyboardPrev();
+    presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(0, true);
 
-    // keyboardPrev at beginning.
+    // keyboardPrev at beginning goes to previous page.
     assertTrue(presenter.hasKeyboardPrev());
     presenter.keyboardPrev();
-    assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(0, false);
-    assertEquals(new Range(40, 10), presenter.getVisibleRange());
     populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(9, presenter.getKeyboardSelectedRow());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
+    assertEquals(new Range(40, 10), presenter.getVisibleRange());
 
     // keyboardNext in middle.
     presenter.setKeyboardSelectedRow(8, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(9, false);
     view.assertKeyboardSelectedRow(8, true);
     assertTrue(presenter.hasKeyboardNext());
     presenter.keyboardNext();
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(8, false);
     view.assertKeyboardSelectedRow(9, true);
@@ -419,53 +417,69 @@ public class HasDataPresenterTest extends TestCase {
     // keyboardNext at end.
     assertTrue(presenter.hasKeyboardNext());
     presenter.keyboardNext();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(9, false);
-    assertEquals(new Range(50, 10), presenter.getVisibleRange());
     populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(0, presenter.getKeyboardSelectedRow());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
+    assertEquals(new Range(50, 10), presenter.getVisibleRange());
 
     // keyboardPrevPage.
     presenter.setKeyboardSelectedRow(5, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(5, true);
     presenter.keyboardPrevPage();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(5, false);
-    assertEquals(new Range(40, 10), presenter.getVisibleRange());
     populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(0, presenter.getKeyboardSelectedRow());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
+    assertEquals(new Range(40, 10), presenter.getVisibleRange());
 
     // keyboardNextPage.
     presenter.setKeyboardSelectedRow(5, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(5, true);
     presenter.keyboardNextPage();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(5, false);
-    assertEquals(new Range(50, 10), presenter.getVisibleRange());
     populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(0, presenter.getKeyboardSelectedRow());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
+    assertEquals(new Range(50, 10), presenter.getVisibleRange());
 
     // keyboardHome.
     presenter.keyboardHome();
-    assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(0, false);
-    assertEquals(new Range(0, 10), presenter.getVisibleRange());
     populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(0, presenter.getKeyboardSelectedRow());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
+    assertEquals(new Range(0, 10), presenter.getVisibleRange());
 
     // keyboardPrev at first row.
     assertFalse(presenter.hasKeyboardPrev());
     presenter.keyboardPrev();
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(false);
     view.assertKeyboardSelectedRowEmpty();
 
     // keyboardEnd.
     presenter.keyboardEnd();
-    assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(0, false);
-    assertEquals(new Range(90, 10), presenter.getVisibleRange());
     populatePresenter(presenter);
+    presenter.flush();
+    assertEquals(9, presenter.getKeyboardSelectedRow());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
+    assertEquals(new Range(90, 10), presenter.getVisibleRange());
 
     // keyboardNext at last row.
     assertFalse(presenter.hasKeyboardNext());
     presenter.keyboardNext();
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(false);
     view.assertKeyboardSelectedRowEmpty();
   }
 
@@ -476,14 +490,17 @@ public class HasDataPresenterTest extends TestCase {
         view, 10, null);
     presenter.setVisibleRange(new Range(50, 10));
     populatePresenter(presenter);
+    presenter.flush();
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CURRENT_PAGE);
 
     // keyboardPrev in middle.
     presenter.setKeyboardSelectedRow(1, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
     assertTrue(presenter.hasKeyboardPrev());
     presenter.keyboardPrev();
+    presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(0, true);
@@ -491,15 +508,18 @@ public class HasDataPresenterTest extends TestCase {
     // keyboardPrev at beginning.
     assertFalse(presenter.hasKeyboardPrev());
     presenter.keyboardPrev();
+    presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRowEmpty();
 
     // keyboardNext in middle.
     presenter.setKeyboardSelectedRow(8, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(8, true);
     assertTrue(presenter.hasKeyboardNext());
     presenter.keyboardNext();
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(8, false);
     view.assertKeyboardSelectedRow(9, true);
@@ -507,23 +527,28 @@ public class HasDataPresenterTest extends TestCase {
     // keyboardNext at end.
     assertFalse(presenter.hasKeyboardNext());
     presenter.keyboardNext();
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRowEmpty();
 
     // keyboardPrevPage.
     presenter.keyboardPrevPage();
+    presenter.flush();
     view.assertKeyboardSelectedRowEmpty();
 
     // keyboardNextPage.
     presenter.keyboardNextPage();
+    presenter.flush();
     view.assertKeyboardSelectedRowEmpty();
 
     // keyboardHome.
     presenter.keyboardHome();
+    presenter.flush();
     view.assertKeyboardSelectedRowEmpty();
 
     // keyboardEnd.
     presenter.keyboardEnd();
+    presenter.flush();
     view.assertKeyboardSelectedRowEmpty();
   }
 
@@ -538,14 +563,17 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setRowCount(300, true);
     presenter.setVisibleRange(new Range(pageStart, pageSize));
     populatePresenter(presenter);
+    presenter.flush();
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.INCREASE_RANGE);
 
     // keyboardPrev in middle.
     presenter.setKeyboardSelectedRow(1, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
     assertTrue(presenter.hasKeyboardPrev());
     presenter.keyboardPrev();
+    presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(0, true);
@@ -553,19 +581,23 @@ public class HasDataPresenterTest extends TestCase {
     // keyboardPrev at beginning.
     assertTrue(presenter.hasKeyboardPrev());
     presenter.keyboardPrev();
-    view.assertKeyboardSelectedRow(0, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
     pageStart -= increment;
     pageSize += increment;
     assertEquals(increment - 1, presenter.getKeyboardSelectedRow());
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-    populatePresenter(presenter);
 
     // keyboardNext in middle.
     presenter.setKeyboardSelectedRow(pageSize - 2, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(increment - 1, false);
     view.assertKeyboardSelectedRow(pageSize - 2, true);
     assertTrue(presenter.hasKeyboardNext());
     presenter.keyboardNext();
+    presenter.flush();
     assertEquals(pageSize - 1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(pageSize - 2, false);
     view.assertKeyboardSelectedRow(pageSize - 1, true);
@@ -573,17 +605,21 @@ public class HasDataPresenterTest extends TestCase {
     // keyboardNext at end.
     assertTrue(presenter.hasKeyboardNext());
     presenter.keyboardNext();
-    view.assertKeyboardSelectedRow(pageSize - 1, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
     pageSize += increment;
     assertEquals(pageSize - increment, presenter.getKeyboardSelectedRow());
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-    populatePresenter(presenter);
 
     // keyboardPrevPage within range.
     presenter.setKeyboardSelectedRow(increment, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(pageSize - increment, false);
     view.assertKeyboardSelectedRow(increment, true);
     presenter.keyboardPrevPage();
+    presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(increment, false);
     view.assertKeyboardSelectedRow(0, true);
@@ -591,57 +627,121 @@ public class HasDataPresenterTest extends TestCase {
 
     // keyboardPrevPage outside range.
     presenter.keyboardPrevPage();
+    populatePresenter(presenter);
+    presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(0, false);
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
     pageStart -= increment;
     pageSize += increment;
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-    populatePresenter(presenter);
 
     // keyboardNextPage inside range.
     presenter.keyboardNextPage();
+    presenter.flush();
     assertEquals(increment, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(increment, true);
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-    populatePresenter(presenter);
 
     // keyboardNextPage outside range.
     presenter.setKeyboardSelectedRow(pageSize - 1, false);
+    presenter.flush();
     view.assertKeyboardSelectedRow(increment, false);
     view.assertKeyboardSelectedRow(pageSize - 1, true);
     presenter.keyboardNextPage();
-    view.assertKeyboardSelectedRow(pageSize - 1, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
     pageSize += increment;
     assertEquals(pageSize - 1, presenter.getKeyboardSelectedRow());
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-    populatePresenter(presenter);
 
     // keyboardHome.
     presenter.keyboardHome();
-    view.assertKeyboardSelectedRow(pageSize - 1, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
     pageSize += pageStart;
     pageStart = 0;
     assertEquals(0, presenter.getKeyboardSelectedRow());
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
-    populatePresenter(presenter);
 
     // keyboardPrev at first row.
     assertFalse(presenter.hasKeyboardPrev());
     presenter.keyboardPrev();
+    presenter.flush();
     view.assertKeyboardSelectedRowEmpty();
 
     // keyboardEnd.
     presenter.keyboardEnd();
-    view.assertKeyboardSelectedRow(0, false);
+    populatePresenter(presenter);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
     assertEquals(299, presenter.getKeyboardSelectedRow());
     assertEquals(new Range(0, 300), presenter.getVisibleRange());
-    populatePresenter(presenter);
 
     // keyboardNext at last row.
     assertFalse(presenter.hasKeyboardNext());
     presenter.keyboardNext();
+    presenter.flush();
     view.assertKeyboardSelectedRowEmpty();
+  }
+
+  /**
+   * Test that we can detect an infinite loop caused by user code updating the
+   * presenter every time we try to resolve state.
+   */
+  public void testLoopDetection() {
+    HasData<String> listView = new MockHasData<String>();
+    final MockView<String> view = new MockView<String>();
+    final HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10, null);
+    presenter.setSelectionModel(new SingleSelectionModel<String>() {
+      @Override
+      public boolean isSelected(String object) {
+        // This selection model triggers a selection change event every time it
+        // is accessed, which puts the presenter in a pending state.
+        SelectionChangeEvent.fire(this);
+        return super.isSelected(object);
+      }
+    });
+
+    populatePresenter(presenter);
+    try {
+      presenter.flush();
+      fail("Expected IllegalStateException because of infinite loop.");
+    } catch (IllegalStateException e) {
+      // Expected.
+    }
+  }
+
+  /**
+   * Test that pending command execute in a finally loop.
+   */
+  public void testPendingCommand() {
+    HasData<String> listView = new MockHasData<String>();
+    final MockView<String> view = new MockView<String>();
+    final HasDataPresenter<String> presenter = new HasDataPresenter<String>(
+        listView, view, 10, null);
+
+    // Data should not be pushed to the view until the pending command executes.
+    populatePresenter(presenter);
+    assertTrue(presenter.hasPendingState());
+    view.assertReplaceAllChildrenCalled(false);
+
+    // The pending command is scheduled. Wait for it to execute.
+    delayTestFinish(5000);
+    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+      public void execute() {
+        assertFalse(presenter.hasPendingState());
+        view.assertReplaceAllChildrenCalled(true);
+        finishTest();
+      }
+    });
   }
 
   public void testRedraw() {
@@ -653,8 +753,9 @@ public class HasDataPresenterTest extends TestCase {
     // Initialize some data.
     presenter.setRowCount(10, true);
     populatePresenter(presenter);
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals("test 0", presenter.getRowData().get(0));
+    presenter.flush();
+    assertEquals(10, presenter.getRowDataSize());
+    assertEquals("test 0", presenter.getRowDataValue(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -662,6 +763,8 @@ public class HasDataPresenterTest extends TestCase {
 
     // Redraw.
     presenter.redraw();
+    view.assertReplaceAllChildrenCalled(false);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -675,6 +778,7 @@ public class HasDataPresenterTest extends TestCase {
         view, 10, null);
     presenter.setVisibleRange(new Range(0, 10));
     populatePresenter(presenter);
+    presenter.flush();
 
     // The default is ENABLED.
     assertEquals(KeyboardSelectionPolicy.ENABLED,
@@ -687,26 +791,31 @@ public class HasDataPresenterTest extends TestCase {
     // Add a selection model.
     MockSelectionModel<String> model = new MockSelectionModel<String>(null);
     presenter.setSelectionModel(model);
+    presenter.flush();
     assertEquals(0, model.getSelectedSet().size());
 
     // Select an element.
     presenter.setKeyboardSelectedRow(5, false);
+    presenter.flush();
     assertEquals(1, model.getSelectedSet().size());
     assertTrue(model.isSelected("test 5"));
 
     // Select another element.
     presenter.setKeyboardSelectedRow(9, false);
+    presenter.flush();
     assertEquals(1, model.getSelectedSet().size());
     assertTrue(model.isSelected("test 9"));
 
     // Select an element on another page.
     presenter.setKeyboardSelectedRow(11, false);
+    presenter.flush();
     // Nothing is selected yet because we don't have data.
     assertEquals(0, model.getSelectedSet().size());
     populatePresenter(presenter);
+    presenter.flush();
     // Once data is pushed, the selection model should be populated.
     assertEquals(1, model.getSelectedSet().size());
-    assertTrue(model.isSelected("test 11"));
+    assertTrue(model.isSelected("test 10"));
   }
 
   public void testSetKeyboardSelectedRowChangePage() {
@@ -716,6 +825,7 @@ public class HasDataPresenterTest extends TestCase {
         view, 10, null);
     presenter.setVisibleRange(new Range(10, 10));
     populatePresenter(presenter);
+    presenter.flush();
 
     // Default policy is CHANGE_PAGE.
     assertEquals(KeyboardPagingPolicy.CHANGE_PAGE,
@@ -727,19 +837,28 @@ public class HasDataPresenterTest extends TestCase {
 
     // Move to middle.
     presenter.setKeyboardSelectedRow(1, false);
+    assertEquals("test 11", presenter.getKeyboardSelectedRowValue());
+    presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
+    assertEquals("test 11", presenter.getKeyboardSelectedRowValue());
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to same row (should not early out).
     presenter.setKeyboardSelectedRow(1, false);
+    assertEquals("test 11", presenter.getKeyboardSelectedRowValue());
+    presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
+    assertEquals("test 11", presenter.getKeyboardSelectedRowValue());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to last row.
     presenter.setKeyboardSelectedRow(9, false);
+    assertEquals("test 19", presenter.getKeyboardSelectedRowValue());
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
+    assertEquals("test 19", presenter.getKeyboardSelectedRowValue());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(9, true);
     assertEquals(10, presenter.getVisibleRange().getStart());
@@ -747,19 +866,25 @@ public class HasDataPresenterTest extends TestCase {
 
     // Move to next page.
     presenter.setKeyboardSelectedRow(10, false);
+    populatePresenter(presenter);
+    assertNull(presenter.getKeyboardSelectedRowValue());
+    presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(9, false);
-    // Select is not fired because there is no row data yet.
+    assertEquals("test 20", presenter.getKeyboardSelectedRowValue());
+    view.assertReplaceAllChildrenCalled(true);
     view.assertKeyboardSelectedRowEmpty();
     assertEquals(20, presenter.getVisibleRange().getStart());
     assertEquals(10, presenter.getVisibleRange().getLength());
-    populatePresenter(presenter);
 
     // Negative index.
     presenter.setKeyboardSelectedRow(-1, false);
+    populatePresenter(presenter);
+    assertNull(presenter.getKeyboardSelectedRowValue());
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(0, false);
-    // Select is not fired because there is no row data yet.
+    assertEquals("test 19", presenter.getKeyboardSelectedRowValue());
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
     assertEquals(10, presenter.getVisibleRange().getStart());
     assertEquals(10, presenter.getVisibleRange().getLength());
   }
@@ -771,6 +896,7 @@ public class HasDataPresenterTest extends TestCase {
         view, 10, null);
     presenter.setVisibleRange(new Range(10, 10));
     populatePresenter(presenter);
+    presenter.flush();
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CURRENT_PAGE);
 
     // Default to row 0.
@@ -779,30 +905,35 @@ public class HasDataPresenterTest extends TestCase {
 
     // Negative index (should remain at index 0).
     presenter.setKeyboardSelectedRow(-1, false);
+    presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(0, true);
 
     // Move to middle.
     presenter.setKeyboardSelectedRow(1, false);
+    presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to same row (should not early out).
     presenter.setKeyboardSelectedRow(1, false);
+    presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to last row.
     presenter.setKeyboardSelectedRow(9, false);
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(9, true);
 
     // Move to next page (confined to page).
     presenter.setKeyboardSelectedRow(10, false);
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(9, false);
     view.assertKeyboardSelectedRow(9, true);
@@ -818,13 +949,17 @@ public class HasDataPresenterTest extends TestCase {
         view, 10, null);
     presenter.setVisibleRange(new Range(10, 10));
     populatePresenter(presenter);
+    presenter.flush();
     presenter.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
     assertEquals(-1, presenter.getKeyboardSelectedRow());
+    assertNull(presenter.getKeyboardSelectedRowValue());
     view.assertKeyboardSelectedRowEmpty();
 
     presenter.setKeyboardSelectedRow(1, false);
+    presenter.flush();
     assertEquals(-1, presenter.getKeyboardSelectedRow());
+    assertNull(presenter.getKeyboardSelectedRowValue());
     view.assertKeyboardSelectedRowEmpty();
   }
 
@@ -835,6 +970,7 @@ public class HasDataPresenterTest extends TestCase {
         view, 10, null);
     presenter.setVisibleRange(new Range(10, 10));
     populatePresenter(presenter);
+    presenter.flush();
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.INCREASE_RANGE);
     int pageSize = presenter.getVisibleRange().getLength();
 
@@ -844,18 +980,21 @@ public class HasDataPresenterTest extends TestCase {
 
     // Move to middle.
     presenter.setKeyboardSelectedRow(1, false);
+    presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to same row (should not early out).
     presenter.setKeyboardSelectedRow(1, false);
+    presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to last row.
     presenter.setKeyboardSelectedRow(9, false);
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(9, true);
@@ -864,20 +1003,22 @@ public class HasDataPresenterTest extends TestCase {
 
     // Move to next page.
     presenter.setKeyboardSelectedRow(10, false);
+    populatePresenter(presenter);
+    presenter.flush();
     assertEquals(10, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(9, false);
-    // Select is not fired because there is no row data yet.
+    view.assertReplaceAllChildrenCalled(true);
     view.assertKeyboardSelectedRowEmpty();
     assertEquals(10, presenter.getVisibleRange().getStart());
     pageSize += HasDataPresenter.PAGE_INCREMENT;
     assertEquals(pageSize, presenter.getVisibleRange().getLength());
-    populatePresenter(presenter);
 
     // Negative index near index 0.
     presenter.setKeyboardSelectedRow(-1, false);
+    populatePresenter(presenter);
+    presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
-    view.assertKeyboardSelectedRow(10, false);
-    // Select is not fired because there is no row data yet.
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertKeyboardSelectedRowEmpty();
     assertEquals(0, presenter.getVisibleRange().getStart());
     pageSize += 10;
     assertEquals(pageSize, presenter.getVisibleRange().getLength());
@@ -894,6 +1035,7 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setRowCount(100, true);
     assertEquals(100, presenter.getRowCount());
     assertTrue(presenter.isRowCountExact());
+    presenter.flush();
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set size to 0, but not exact. The state is loading until we know there is
@@ -901,12 +1043,14 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setRowCount(0, false);
     assertEquals(0, presenter.getRowCount());
     assertFalse(presenter.isRowCountExact());
+    presenter.flush();
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set size to 0 and exact. Now we know the list is empty.
     presenter.setRowCount(0, true);
     assertEquals(0, presenter.getRowCount());
     assertTrue(presenter.isRowCountExact());
+    presenter.flush();
     view.assertLoadingState(LoadingState.EMPTY);
   }
 
@@ -936,8 +1080,10 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setVisibleRange(new Range(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     populatePresenter(presenter);
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals("test 0", presenter.getRowData().get(0));
+    presenter.flush();
+    assertEquals(10, presenter.getRowDataSize());
+    assertEquals("test 0", presenter.getRowDataValue(0));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -948,7 +1094,8 @@ public class HasDataPresenterTest extends TestCase {
     assertEquals(8, presenter.getRowCount());
     assertTrue(presenter.isRowCountExact());
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowData().size());
+    assertEquals(8, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=8");
@@ -961,13 +1108,15 @@ public class HasDataPresenterTest extends TestCase {
     HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
         view, 10, null);
     presenter.setVisibleRange(new Range(5, 10));
+    presenter.flush();
+    view.assertLastHtml("start=5,size=0");
     view.assertLoadingState(LoadingState.LOADING);
 
     // Page range same as data range.
     List<String> expectedData = createData(5, 10);
     presenter.setRowData(5, createData(5, 10));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
@@ -978,8 +1127,8 @@ public class HasDataPresenterTest extends TestCase {
     expectedData.set(2, "test 100");
     expectedData.set(3, "test 101");
     presenter.setRowData(7, createData(100, 2));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=7,size=2");
@@ -990,8 +1139,8 @@ public class HasDataPresenterTest extends TestCase {
     expectedData.set(0, "test 202");
     expectedData.set(1, "test 203");
     presenter.setRowData(3, createData(200, 4));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=5,size=2");
@@ -1002,8 +1151,8 @@ public class HasDataPresenterTest extends TestCase {
     expectedData.set(8, "test 300");
     expectedData.set(9, "test 301");
     presenter.setRowData(13, createData(300, 4));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(true);
     view.assertLastHtml("start=13,size=2");
@@ -1013,8 +1162,8 @@ public class HasDataPresenterTest extends TestCase {
     // Data range contains page range.
     expectedData = createData(400, 20).subList(2, 12);
     presenter.setRowData(3, createData(400, 20));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
@@ -1033,15 +1182,18 @@ public class HasDataPresenterTest extends TestCase {
 
     // Set the initial data size.
     presenter.setRowCount(10, true);
+    presenter.flush();
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set the data within the range.
     presenter.setRowData(0, createData(0, 10));
+    presenter.flush();
     view.assertLoadingState(LoadingState.LOADED);
 
     // Set the data past the range.
     presenter.setRowData(5, createData(5, 10));
     assertEquals(15, presenter.getRowCount());
+    presenter.flush();
     view.assertLoadingState(LoadingState.LOADED);
   }
 
@@ -1057,10 +1209,12 @@ public class HasDataPresenterTest extends TestCase {
 
     // Set the initial data size.
     presenter.setRowCount(10, true);
+    presenter.flush();
     view.assertLoadingState(LoadingState.LOADING);
 
     // Set an empty list of row values.
     presenter.setRowData(0, createData(0, 0));
+    presenter.flush();
     view.assertLoadingState(LoadingState.LOADING);
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1072,13 +1226,15 @@ public class HasDataPresenterTest extends TestCase {
     HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
         view, 10, null);
     presenter.setVisibleRange(new Range(5, 10));
+    presenter.flush();
+    view.assertLastHtml("start=5,size=0");
     view.assertLoadingState(LoadingState.LOADING);
 
     // Page range same as data range.
     List<String> expectedData = createData(5, 10);
     presenter.setRowData(5, createData(5, 10));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
@@ -1086,8 +1242,8 @@ public class HasDataPresenterTest extends TestCase {
 
     // Data range past page end.
     presenter.setRowData(15, createData(15, 5));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -1095,12 +1251,53 @@ public class HasDataPresenterTest extends TestCase {
 
     // Data range before page start.
     presenter.setRowData(0, createData(0, 5));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
     view.assertLoadingState(LoadingState.LOADED);
+  }
+
+  /**
+   * Test that modifying more than 30% of the rows forces a full redraw.
+   */
+  public void testSetRowValuesRequiresRedraw() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 100, null);
+
+    // Initialize 100% of the rows.
+    populatePresenter(presenter);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+
+    // Modify 30% of the rows.
+    presenter.setRowData(0, createData(0, 30));
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenCalled(true);
+
+    // Modify 31% of the rows.
+    presenter.setRowData(0, createData(0, 31));
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+
+    /*
+     * Modify 4 rows in a 5 row table. This should NOT require a redraw because
+     * it is less than the minimum threshold.
+     */
+    presenter.setRowCount(5, true);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    presenter.setRowData(0, createData(0, 4));
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenCalled(true);
   }
 
   /**
@@ -1118,6 +1315,7 @@ public class HasDataPresenterTest extends TestCase {
     // Initialize some data.
     presenter.setVisibleRange(new Range(0, 10));
     presenter.setRowData(0, createData(0, 10));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -1125,6 +1323,7 @@ public class HasDataPresenterTest extends TestCase {
 
     // Set the same data over the entire range.
     presenter.setRowData(0, createData(0, 10));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -1149,12 +1348,53 @@ public class HasDataPresenterTest extends TestCase {
     expectedData.add(0, null);
     presenter.setVisibleRange(new Range(0, 10));
     presenter.setRowData(5, createData(5, 3));
-    assertEquals(8, presenter.getRowData().size());
-    assertEquals(expectedData, presenter.getRowData());
+    assertPresenterRowData(expectedData, presenter);
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=8");
     view.assertLoadingState(LoadingState.PARTIALLY_LOADED);
+  }
+
+  public void testSetSelectionModel() {
+    HasData<String> listView = new MockHasData<String>();
+    MockView<String> view = new MockView<String>();
+    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
+        view, 10, null);
+    assertNull(presenter.getSelectionModel());
+
+    // Initialize some data.
+    presenter.setVisibleRange(new Range(0, 10));
+    populatePresenter(presenter);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(true);
+    view.assertReplaceChildrenCalled(false);
+    view.assertLastHtml("start=0,size=10");
+
+    // Set the selection model.
+    SelectionModel<String> model = new MockSelectionModel<String>(null);
+    model.setSelected("test 0", true);
+    presenter.setSelectionModel(model);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenCalled(true);
+    view.assertLastHtml("start=0,size=1");
+
+    // Select something.
+    model.setSelected("test 2", true);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenCalled(true);
+    view.assertLastHtml("start=2,size=1");
+
+    // Set selection model to null.
+    presenter.setSelectionModel(null);
+    presenter.flush();
+    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenCalled(true);
+    view.assertLastHtml("start=0,size=1");
+    view.assertLastHtml("start=2,size=1");
+    view.assertLastHtml(null);
   }
 
   public void testSetVisibleRange() {
@@ -1166,7 +1406,8 @@ public class HasDataPresenterTest extends TestCase {
     // Set the range the first time.
     presenter.setVisibleRange(new Range(0, 100));
     assertEquals(new Range(0, 100), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowData().size());
+    assertEquals(0, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -1175,11 +1416,28 @@ public class HasDataPresenterTest extends TestCase {
     // Set the range to the same value.
     presenter.setVisibleRange(new Range(0, 100));
     assertEquals(new Range(0, 100), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowData().size());
+    assertEquals(0, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
     view.assertLoadingState(LoadingState.LOADING);
+
+    // Set the start to a negative value.
+    try {
+      presenter.setVisibleRange(new Range(-1, 100));
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+
+    // Set the length to a negative value.
+    try {
+      presenter.setVisibleRange(new Range(0, -100));
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
   }
 
   public void testSetVisibleRangeAndClearDataDifferentRange() {
@@ -1200,7 +1458,8 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setVisibleRange(new Range(5, 10));
     presenter.setRowData(5, createData(5, 10));
     assertEquals(new Range(5, 10), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowData().size());
+    assertEquals(10, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=5,size=10");
@@ -1210,7 +1469,8 @@ public class HasDataPresenterTest extends TestCase {
     // Set a different range.
     presenter.setVisibleRangeAndClearData(new Range(0, 10), false);
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowData().size());
+    assertEquals(0, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=0");
@@ -1235,7 +1495,8 @@ public class HasDataPresenterTest extends TestCase {
     // Set some initial data.
     presenter.setRowData(0, createData(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowData().size());
+    assertEquals(10, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -1245,7 +1506,8 @@ public class HasDataPresenterTest extends TestCase {
     // Set the same range.
     presenter.setVisibleRangeAndClearData(new Range(0, 10), false);
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowData().size());
+    assertEquals(0, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=0");
@@ -1270,7 +1532,8 @@ public class HasDataPresenterTest extends TestCase {
     // Set some initial data.
     presenter.setRowData(0, createData(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowData().size());
+    assertEquals(10, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -1280,7 +1543,8 @@ public class HasDataPresenterTest extends TestCase {
     // Set the same range.
     presenter.setVisibleRangeAndClearData(new Range(0, 10), true);
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowData().size());
+    assertEquals(0, presenter.getRowDataSize());
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=0");
@@ -1298,8 +1562,9 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setVisibleRange(new Range(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     presenter.setRowData(0, createData(0, 10));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals("test 0", presenter.getRowData().get(0));
+    assertEquals(10, presenter.getRowDataSize());
+    assertEquals("test 0", presenter.getRowDataValue(0));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -1308,8 +1573,9 @@ public class HasDataPresenterTest extends TestCase {
     // Decrease the page size.
     presenter.setVisibleRange(new Range(0, 8));
     assertEquals(new Range(0, 8), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowData().size());
-    assertEquals("test 0", presenter.getRowData().get(0));
+    assertEquals(8, presenter.getRowDataSize());
+    assertEquals("test 0", presenter.getRowDataValue(0));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=8");
@@ -1326,8 +1592,9 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setVisibleRange(new Range(10, 30));
     assertEquals(new Range(10, 30), presenter.getVisibleRange());
     presenter.setRowData(10, createData(0, 10));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals("test 0", presenter.getRowData().get(0));
+    assertEquals(10, presenter.getRowDataSize());
+    assertEquals("test 0", presenter.getRowDataValue(0));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=10,size=10");
@@ -1336,10 +1603,11 @@ public class HasDataPresenterTest extends TestCase {
     // Decrease the start index.
     presenter.setVisibleRange(new Range(8, 30));
     assertEquals(new Range(8, 30), presenter.getVisibleRange());
-    assertEquals(12, presenter.getRowData().size());
-    assertEquals(null, presenter.getRowData().get(0));
-    assertEquals(null, presenter.getRowData().get(1));
-    assertEquals("test 0", presenter.getRowData().get(2));
+    assertEquals(12, presenter.getRowDataSize());
+    assertEquals(null, presenter.getRowDataValue(0));
+    assertEquals(null, presenter.getRowDataValue(1));
+    assertEquals("test 0", presenter.getRowDataValue(2));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=8,size=12");
@@ -1356,8 +1624,9 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setVisibleRange(new Range(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     presenter.setRowData(0, createData(0, 10));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals("test 0", presenter.getRowData().get(0));
+    assertEquals(10, presenter.getRowDataSize());
+    assertEquals("test 0", presenter.getRowDataValue(0));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -1366,8 +1635,9 @@ public class HasDataPresenterTest extends TestCase {
     // Increase the page size.
     presenter.setVisibleRange(new Range(0, 20));
     assertEquals(new Range(0, 20), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals("test 0", presenter.getRowData().get(0));
+    assertEquals(10, presenter.getRowDataSize());
+    assertEquals("test 0", presenter.getRowDataValue(0));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml(null);
@@ -1384,8 +1654,9 @@ public class HasDataPresenterTest extends TestCase {
     presenter.setVisibleRange(new Range(0, 20));
     assertEquals(new Range(0, 20), presenter.getVisibleRange());
     presenter.setRowData(0, createData(0, 10));
-    assertEquals(10, presenter.getRowData().size());
-    assertEquals("test 0", presenter.getRowData().get(0));
+    assertEquals(10, presenter.getRowDataSize());
+    assertEquals("test 0", presenter.getRowDataValue(0));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -1394,8 +1665,9 @@ public class HasDataPresenterTest extends TestCase {
     // Increase the start index.
     presenter.setVisibleRange(new Range(2, 20));
     assertEquals(new Range(2, 20), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowData().size());
-    assertEquals("test 2", presenter.getRowData().get(0));
+    assertEquals(8, presenter.getRowDataSize());
+    assertEquals("test 2", presenter.getRowDataValue(0));
+    presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=2,size=8");
@@ -1417,98 +1689,64 @@ public class HasDataPresenterTest extends TestCase {
   }
 
   /**
-   * If the cells depend on selection, the cells should be replaced.
+   * Test that the view is correctly updated if we move the page start back and
+   * forth in the same render loop.
    */
-  public void testSetSelectionModelDependOnSelection() {
+  public void testSetVisibleRangeResetPageStart() {
     HasData<String> listView = new MockHasData<String>();
     MockView<String> view = new MockView<String>();
-    view.setDependsOnSelection(true);
     HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
         view, 10, null);
-    assertNull(presenter.getSelectionModel());
 
-    // Initialize some data.
-    presenter.setVisibleRange(new Range(0, 10));
+    // Initialize the view.
     populatePresenter(presenter);
+    presenter.flush();
+    view.assertLastHtml("start=0,size=10");
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
 
-    // Set the selection model.
-    SelectionModel<String> model = new MockSelectionModel<String>(null);
-    model.setSelected("test 0", true);
-    presenter.setSelectionModel(model);
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
-    view.assertOnUpdateSelectionFired(true);
-    view.assertSelectedRows();
-
-    // Select something.
-    model.setSelected("test 2", true);
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
-    view.assertOnUpdateSelectionFired(true);
-    view.assertSelectedRows();
-
-    // Set selection model to null.
-    presenter.setSelectionModel(null);
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
-    view.assertOnUpdateSelectionFired(true);
-    view.assertSelectedRows();
+    // Move pageStart to 2, then back to 0.
+    presenter.setVisibleRange(new Range(2, 8));
+    presenter.setVisibleRange(new Range(0, 10));
+    presenter.flush();
+    view.assertLastHtml("start=0,size=2");
+    view.assertReplaceAllChildrenCalled(false);
+    view.assertReplaceChildrenCalled(true);
   }
 
   /**
-   * If the cells do not depend on selection, the view should be told to update
-   * the cell container element.
+   * Assert that the expected List of values matches the row data in the
+   * specified {@link HasDataPresenter}.
+   * 
+   * @param <T> the data type
+   * @param expected the expected values
+   * @param presenter the presenter
    */
-  public void testSetSelectionModelDoesNotDependOnSelection() {
-    HasData<String> listView = new MockHasData<String>();
-    MockView<String> view = new MockView<String>();
-    HasDataPresenter<String> presenter = new HasDataPresenter<String>(listView,
-        view, 10, null);
-    assertNull(presenter.getSelectionModel());
+  private <T> void assertPresenterRowData(List<T> expected,
+      HasDataPresenter<T> presenter) {
+    assertEquals(expected.size(), presenter.getRowDataSize());
+    for (int i = 0; i < expected.size(); i++) {
+      assertEquals(expected.get(i), presenter.getRowDataValue(i));
+    }
+  }
 
-    // Initialize some data.
-    presenter.setVisibleRange(new Range(0, 10));
-    populatePresenter(presenter);
-    view.assertReplaceAllChildrenCalled(true);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml("start=0,size=10");
-
-    // Set the selection model.
-    SelectionModel<String> model = new MockSelectionModel<String>(null);
-    model.setSelected("test 0", true);
-    presenter.setSelectionModel(model);
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
-    view.assertOnUpdateSelectionFired(true);
-    view.assertSelectedRows(0);
-
-    // Select something.
-    model.setSelected("test 2", true);
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
-    view.assertOnUpdateSelectionFired(true);
-    view.assertSelectedRows(0, 2);
-
-    // Set selection model to null.
-    presenter.setSelectionModel(null);
-    view.assertReplaceAllChildrenCalled(false);
-    view.assertReplaceChildrenCalled(false);
-    view.assertLastHtml(null);
-    view.assertOnUpdateSelectionFired(true);
-    view.assertSelectedRows();
+  /**
+   * Assert that the specified set contains specified values in order.
+   * 
+   * @param <T> the data type
+   * @param list the list to check
+   * @param values the expected values
+   */
+  private <T> void assertListContains(List<T> list, T... values) {
+    assertEquals(values.length, list.size());
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], list.get(i));
+    }
   }
 
   /**
    * Create a list of data for testing.
-   *
+   * 
    * @param start the start index
    * @param length the length
    * @return a list of data
@@ -1523,7 +1761,7 @@ public class HasDataPresenterTest extends TestCase {
 
   /**
    * Populate the entire range of a presenter.
-   *
+   * 
    * @param presenter the presenter
    */
   private void populatePresenter(HasDataPresenter<String> presenter) {

@@ -17,6 +17,7 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
@@ -24,7 +25,6 @@ import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.TreeViewModel;
@@ -87,7 +87,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
       throw new IllegalArgumentException("Unrecognized value type");
     }
 
-    public AbstractDataProvider<String> getRootDataProvider() {
+    public ListDataProvider<String> getRootDataProvider() {
       return rootDataProvider;
     }
 
@@ -235,9 +235,15 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
     };
 
     // Create a tree.
-    new CellTree(model, null);
-    assertEquals("Cell#render() should be called exactly thrice", 3,
-        rendered.size());
+    createAbstractCellTree(model, null);
+    delayTestFinish(5000);
+    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+      public void execute() {
+        assertEquals("Cell#render() should be called exactly thrice", 3,
+            rendered.size());
+        finishTest();
+      }
+    });
   }
   
   /**

@@ -41,6 +41,7 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
@@ -208,14 +209,19 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     private Object focusedKey;
 
     /**
-     * The value of the currently focused item.
+     * A boolean indicating that this widget is no longer used.
      */
-    private T focusedValue;
+    private boolean isDestroyed;
 
     /**
      * Indicates whether or not the focused value is open.
      */
     private boolean isFocusedOpen;
+
+    /**
+     * Temporary element used to create elements from HTML.
+     */
+    private final Element tmpElem = Document.get().createDivElement();
 
     public BrowserCellList(final Cell<T> cell, int level,
         ProvidesKey<T> keyProvider) {
@@ -226,6 +232,17 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     @Override
     protected Element getCellParent(Element item) {
       return item.getFirstChildElement().getNextSiblingElement();
+    }
+
+    @Override
+    protected boolean isKeyboardNavigationSuppressed() {
+      /*
+       * Keyboard selection is never disabled in this list because we use it to
+       * track the open node, but we want to suppress keyboard navigation if the
+       * user disables it.
+       */
+      return KeyboardSelectionPolicy.DISABLED == CellBrowser.this.getKeyboardSelectionPolicy()
+          || super.isKeyboardNavigationSuppressed();
     }
 
     @Override
@@ -270,11 +287,9 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       int end = start + length;
       for (int i = start; i < end; i++) {
         T value = values.get(i - start);
-        Object key = getValueKey(value);
         boolean isSelected = selectionModel == null ? false
             : selectionModel.isSelected(value);
-        boolean isOpen = (focusedKey == null || !isFocusedOpen) ? false
-            : focusedKey.equals(key);
+        boolean isOpen = isOpen(i);
         StringBuilder classesBuilder = new StringBuilder();
         classesBuilder.append(i % 2 == 0 ? evenItem : oddItem);
         if (isOpen) {
@@ -285,7 +300,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
         }
 
         SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
-        cell.render(value, null, cellBuilder);
+        cell.render(value, getValueKey(value), cellBuilder);
 
         // Figure out which image to use.
         SafeHtml image;
@@ -316,15 +331,54 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
               image, cellBuilder.toSafeHtml()));
         }
       }
+
+      // Update the child state.
+      updateChildState(this, true);
     }
 
     @Override
-    void doKeyboardSelection(Event event, T value, int indexOnPage) {
-      super.doKeyboardSelection(event, value, indexOnPage);
+    protected void setKeyboardSelected(int index, boolean selected,
+        boolean stealFocus) {
+      super.setKeyboardSelected(index, selected, stealFocus);
+      if (!isRowWithinBounds(index)) {
+        return;
+      }
 
-      // Open the selected row. If keyboard selection updates the selection
-      // model, this is a no-op.
-      setChildState(this, value, true, true, true);
+      // Update the style.
+      Element elem = getRowElement(index);
+      T value = getPresenter().getRowDataValue(index);
+      boolean isOpen = selected && isOpen(index);
+      setStyleName(elem, style.cellBrowserOpenItem(), isOpen);
+
+      // Update the image.
+      SafeHtml image = null;
+      if (isOpen) {
+        image = openImageHtml;
+      } else if (getTreeViewModel().isLeaf(value)) {
+        image = LEAF_IMAGE;
+      } else {
+        image = closedImageHtml;
+      }
+      tmpElem.setInnerHTML(image.asString());
+      elem.replaceChild(tmpElem.getFirstChildElement(),
+          elem.getFirstChildElement());
+
+      // Update the open state.
+      updateChildState(this, true);
+    }
+
+    /**
+     * Check if the specified index is currently open. An index is open if it is
+     * the keyboard selected index, there is an associated keyboard selected
+     * value, and the value is not a leaf.
+     * 
+     * @param index the index
+     * @return true if open, false if not
+     */
+    private boolean isOpen(int index) {
+      T value = getPresenter().getKeyboardSelectedRowValue();
+      return index == getKeyboardSelectedRow() && value != null
+          && !getTreeViewModel().isLeaf(value);
     }
 
     /**
@@ -338,14 +392,8 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
       // Move to the child node.
       if (level < treeNodes.size() - 1) {
         TreeNodeImpl<?> treeNode = treeNodes.get(level + 1);
-        treeNode.display.setFocus(true);
-
-        // Select the element.
-        int selected = getKeyboardSelectedRow();
-        if (isRowWithinBounds(selected)) {
-          T value = getDisplayedItem(selected);
-          setChildState(this, value, true, true, true);
-        }
+        treeNode.display.getPresenter().setKeyboardSelectedRow(
+            treeNode.display.getKeyboardSelectedRow(), true);
       }
     }
 
@@ -415,7 +463,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     public int getChildCount() {
       assertNotDestroyed();
-      return display.getChildCount();
+      return display.getPresenter().getRowDataSize();
     }
 
     public C getChildValue(int index) {
@@ -432,7 +480,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     public TreeNodeImpl<?> getParent() {
       assertNotDestroyed();
-      return (display.level == 0) ? null : treeNodes.get(display.level - 1);
+      return getParentImpl();
     }
 
     public Object getValue() {
@@ -454,6 +502,16 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     }
 
     public boolean isDestroyed() {
+      if (nodeInfo != null) {
+        /*
+         * Flush the parent display because the user may have replaced this
+         * node, which would destroy it.
+         */
+        TreeNodeImpl<?> parent = getParentImpl();
+        if (parent != null && !parent.isDestroyed()) {
+          parent.display.getPresenter().flush();
+        }
+      }
       return nodeInfo == null;
     }
 
@@ -464,8 +522,22 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     public TreeNode setChildOpen(int index, boolean open, boolean fireEvents) {
       assertNotDestroyed();
       checkChildBounds(index);
-      return setChildState(display, getChildValue(index), open, fireEvents,
-          true);
+      if (open) {
+        // Open the child node.
+        display.getPresenter().setKeyboardSelectedRow(index, false);
+        return updateChildState(display, fireEvents);
+      } else {
+        // Close the child node if it is currently open.
+        if (index == display.getKeyboardSelectedRow()) {
+          display.getPresenter().clearKeyboardSelectedRowValue();
+          updateChildState(display, fireEvents);
+        }
+        return null;
+      }
+    }
+
+    BrowserCellList<C> getDisplay() {
+      return display;
     }
 
     /**
@@ -507,6 +579,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
      * Unregister the list view and remove it from the widget.
      */
     private void destroy() {
+      display.isDestroyed = true;
       valueChangeHandler.removeHandler();
       display.setSelectionModel(null);
       nodeInfo.unsetDataDisplay();
@@ -520,8 +593,16 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
      * @return the index of the open item, or -1 if not found
      */
     private int getOpenIndex() {
-      return display.isFocusedOpen ? display.indexOf(display.focusedValue)
-          : null;
+      return display.isFocusedOpen ? display.getKeyboardSelectedRow() : -1;
+    }
+
+    /**
+     * Get the parent node without checking if this node is destroyed.
+     * 
+     * @return the parent node, or null if the node has no parent
+     */
+    private TreeNodeImpl<?> getParentImpl() {
+      return (display.level == 0) ? null : treeNodes.get(display.level - 1);
     }
   }
 
@@ -832,6 +913,12 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   @Override
   public void setKeyboardSelectionPolicy(KeyboardSelectionPolicy policy) {
     super.setKeyboardSelectionPolicy(policy);
+
+    /*
+     * Set the policy on all lists. We use keyboard selection to track the open
+     * node, so we never actually disable keyboard selection on the lists.
+     */
+    policy = getKeyboardSelectionPolicyForLists();
     for (TreeNodeImpl<?> treeNode : treeNodes) {
       treeNode.display.setKeyboardSelectionPolicy(policy);
     }
@@ -883,7 +970,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
    * @param nodeInfo the info about the node
    * @param value the value of the open node
    */
-  private <C> void appendTreeNode(final NodeInfo<C> nodeInfo, Object value) {
+  private <C> TreeNode appendTreeNode(final NodeInfo<C> nodeInfo, Object value) {
     // Create the list view.
     final int level = treeNodes.size();
     final BrowserCellList<C> view = createDisplay(nodeInfo, level);
@@ -924,6 +1011,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     // Scroll to the right.
     animation.scrollToEnd();
+    return treeNode;
   }
 
   /**
@@ -939,7 +1027,10 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     BrowserCellList<C> display = new BrowserCellList<C>(nodeInfo.getCell(),
         level, nodeInfo.getProvidesKey());
     display.setValueUpdater(nodeInfo.getValueUpdater());
-    display.setKeyboardSelectionPolicy(getKeyboardSelectionPolicy());
+
+    // Set the keyboard selection policy, but never disable it.
+    KeyboardSelectionPolicy keyboardPolicy = getKeyboardSelectionPolicyForLists();
+    display.setKeyboardSelectionPolicy(keyboardPolicy);
     return display;
   }
 
@@ -958,92 +1049,25 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
   }
 
   /**
+   * Get the {@link KeyboardSelectionPolicy} to apply to lists. We use keyboard
+   * selection to track the open node, so we never actually disable keyboard
+   * selection on the lists.
+   * 
+   * @return the {@link KeyboardSelectionPolicy} to use on lists
+   */
+  private KeyboardSelectionPolicy getKeyboardSelectionPolicyForLists() {
+    KeyboardSelectionPolicy policy = getKeyboardSelectionPolicy();
+    return KeyboardSelectionPolicy.DISABLED == policy
+        ? KeyboardSelectionPolicy.ENABLED : policy;
+  }
+
+  /**
    * Get the {@link SplitLayoutPanel} used to lay out the views.
-   *
+   * 
    * @return the {@link SplitLayoutPanel}
    */
   private SplitLayoutPanel getSplitLayoutPanel() {
     return (SplitLayoutPanel) getWidget();
-  }
-
-  /**
-   * Set the open state of a tree node.
-   * 
-   * @param cellList the CellList that changed state.
-   * @param value the value to open
-   * @param open true to open, false to close
-   * @param fireEvents true to fireEvents
-   * @return the open {@link TreeNode}, or null if not opened
-   */
-  private <C> TreeNode setChildState(BrowserCellList<C> cellList, C value,
-      boolean open, boolean fireEvents, boolean redraw) {
-
-    // Get the key of the value to open.
-    Object newKey = cellList.getValueKey(value);
-
-    if (open) {
-      if (newKey == null) {
-        // Early exit if opening but the specified node has no key.
-        return null;
-      } else if (newKey.equals(cellList.focusedKey)) {
-        // Early exit if opening but the specified node is already open.
-        return cellList.isFocusedOpen ? treeNodes.get(cellList.level + 1)
-            : null;
-      }
-
-      // Close the currently open node.
-      if (cellList.focusedKey != null) {
-        setChildState(cellList, cellList.focusedValue, false, fireEvents, false);
-      }
-
-      // Update the cell so it renders the styles correctly.
-      cellList.focusedValue = value;
-      cellList.focusedKey = cellList.getValueKey(value);
-
-      // Add the child node.
-      NodeInfo<?> childNodeInfo = isLeaf(value) ? null : getNodeInfo(value);
-      if (childNodeInfo != null) {
-        cellList.isFocusedOpen = true;
-        appendTreeNode(childNodeInfo, value);
-      } else {
-        cellList.isFocusedOpen = false;
-      }
-
-      // Refresh the display to update the styles for this node.
-      if (redraw) {
-        treeNodes.get(cellList.level).display.redraw();
-      }
-
-      if (cellList.isFocusedOpen) {
-        TreeNodeImpl<?> node = treeNodes.get(cellList.level + 1);
-        if (fireEvents) {
-          OpenEvent.fire(this, node);
-        }
-        return node.isDestroyed() ? null : node;
-      }
-      return null;
-    } else {
-      // Early exit if closing and the specified node or all nodes are closed.
-      if (cellList.focusedKey == null || !cellList.focusedKey.equals(newKey)) {
-        return null;
-      }
-
-      // Close the node.
-      TreeNode closedNode = (cellList.isFocusedOpen && (treeNodes.size() > cellList.level + 1))
-          ? treeNodes.get(cellList.level + 1) : null;
-      trimToLevel(cellList.level);
-
-      // Refresh the display to update the styles for this node.
-      if (redraw) {
-        treeNodes.get(cellList.level).display.redraw();
-      }
-
-      if (fireEvents && closedNode != null) {
-        CloseEvent.fire(this, closedNode);
-      }
-    }
-
-    return null;
   }
 
   /**
@@ -1067,8 +1091,83 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
     if (level < treeNodes.size()) {
       TreeNodeImpl<?> node = treeNodes.get(level);
       node.display.focusedKey = null;
-      node.display.focusedValue = null;
       node.display.isFocusedOpen = false;
     }
+  }
+
+  /**
+   * Update the state of a child node based on the keyboard selection of the
+   * specified {@link BrowserCellList}. This method will open/close child
+   * {@link TreeNode}s as needed.
+   * 
+   * @param cellList the CellList that changed state.
+   * @param value the value to open
+   * @param open true to open, false to close
+   * @param fireEvents true to fireEvents
+   * @return the open {@link TreeNode}, or null if not opened
+   */
+  private <C> TreeNode updateChildState(BrowserCellList<C> cellList,
+      boolean fireEvents) {
+    /*
+     * Verify that the specified list is still in the browser. It possible for
+     * the list to receive deferred updates after it has been removed 
+     */
+    if (cellList.isDestroyed) {
+      return null;
+    }
+
+    // Get the key of the value to open.
+    C newValue = cellList.getPresenter().getKeyboardSelectedRowValue();
+    Object newKey = cellList.getValueKey(newValue);
+
+    // Close the current open node.
+    TreeNode closedNode = null;
+    if (cellList.focusedKey != null && cellList.isFocusedOpen
+        && !cellList.focusedKey.equals(newKey)) {
+      // Get the node to close.
+      closedNode = (treeNodes.size() > cellList.level + 1)
+          ? treeNodes.get(cellList.level + 1) : null;
+
+      // Close the node.
+      trimToLevel(cellList.level);
+    }
+
+    // Open the new node.
+    TreeNode openNode = null;
+    boolean justOpenedNode = false;
+    if (newKey != null) {
+      if (newKey.equals(cellList.focusedKey)) {
+        // The node is already open.
+        openNode = cellList.isFocusedOpen ? treeNodes.get(cellList.level + 1)
+            : null;
+      } else {
+        // Add the child node.
+        cellList.focusedKey = newKey;
+        NodeInfo<?> childNodeInfo = isLeaf(newValue) ? null
+            : getNodeInfo(newValue);
+        if (childNodeInfo != null) {
+          cellList.isFocusedOpen = true;
+          justOpenedNode = true;
+          openNode = appendTreeNode(childNodeInfo, newValue);
+        }
+      }
+    }
+
+    /*
+     * Fire event. We fire events after updating the view in case user event
+     * handlers modify the open state of nodes, which would interrupt the
+     * process.
+     */
+    if (fireEvents) {
+      if (closedNode != null) {
+        CloseEvent.fire(this, closedNode);
+      }
+      if (openNode != null && justOpenedNode) {
+        OpenEvent.fire(this, openNode);
+      }
+    }
+
+    // Return the open node if it is still open.
+    return (openNode == null || openNode.isDestroyed()) ? null : openNode;
   }
 }

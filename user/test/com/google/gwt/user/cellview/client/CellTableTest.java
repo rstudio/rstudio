@@ -21,13 +21,53 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.CellTable.Style;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Tests for {@link CellTable}.
  */
 public class CellTableTest extends AbstractHasDataTestBase {
+
+  /**
+   * Test that calls to addColumn results in only one redraw.
+   */
+  public void testAddColumnSingleRedraw() {
+    final List<SafeHtml> replaceValues = new ArrayList<SafeHtml>();
+    CellTable<String> table = new CellTable<String>() {
+      @Override
+      protected void replaceAllChildren(List<String> values, SafeHtml html) {
+        replaceValues.add(html);
+      }
+    };
+    table.addColumn(new Column<String, String>(new TextCell()) {
+      @Override
+      public String getValue(String object) {
+        return object + "-3";
+      }
+    });
+    table.addColumn(new Column<String, String>(new TextCell()) {
+      @Override
+      public String getValue(String object) {
+        return object + "-4";
+      }
+    });
+    table.setRowData(0, createData(0, 10));
+    table.getPresenter().flush();
+    assertEquals(1, replaceValues.size());
+  }
+  
+  public void testGetRowElement() {
+    CellTable<String> table = createAbstractHasData();
+    table.setRowData(0, createData(0, 10));
+
+    // Ensure that calling getRowElement() flushes all pending changes.
+    assertNotNull(table.getRowElement(9));
+  }
 
   /**
    * Test headers that span multiple columns.
@@ -45,6 +85,7 @@ public class CellTableTest extends AbstractHasDataTestBase {
 
     // No header.
     table.redraw();
+    table.getPresenter().flush();
     assertEquals(0, getHeaderCount(table));
 
     // Single column.
@@ -54,7 +95,7 @@ public class CellTableTest extends AbstractHasDataTestBase {
         return null;
       }
     }, header);
-    table.redraw();
+    table.getPresenter().flush();
     assertEquals(1, getHeaderCount(table));
     assertEquals(1, getHeaderElement(table, 0).getColSpan());
     assertTrue(getHeaderElement(table, 0).getClassName().contains(styleHeader));
@@ -70,7 +111,7 @@ public class CellTableTest extends AbstractHasDataTestBase {
         return null;
       }
     }, header);
-    table.redraw();
+    table.getPresenter().flush();
     assertEquals(1, getHeaderCount(table));
     assertEquals(2, getHeaderElement(table, 0).getColSpan());
     assertTrue(getHeaderElement(table, 0).getClassName().contains(styleHeader));
@@ -86,7 +127,7 @@ public class CellTableTest extends AbstractHasDataTestBase {
         return null;
       }
     }, header);
-    table.redraw();
+    table.getPresenter().flush();
     assertEquals(1, getHeaderCount(table));
     assertEquals(3, getHeaderElement(table, 0).getColSpan());
     assertTrue(getHeaderElement(table, 0).getClassName().contains(styleHeader));
@@ -102,7 +143,7 @@ public class CellTableTest extends AbstractHasDataTestBase {
         return null;
       }
     }, "New Header");
-    table.redraw();
+    table.getPresenter().flush();
     assertEquals(2, getHeaderCount(table));
     assertEquals(3, getHeaderElement(table, 0).getColSpan());
     assertTrue(getHeaderElement(table, 0).getClassName().contains(styleHeader));
@@ -126,7 +167,7 @@ public class CellTableTest extends AbstractHasDataTestBase {
         return null;
       }
     }, header);
-    table.redraw();
+    table.getPresenter().flush();
     assertEquals(3, getHeaderCount(table));
     assertEquals(3, getHeaderElement(table, 0).getColSpan());
     assertTrue(getHeaderElement(table, 0).getClassName().contains(styleHeader));

@@ -17,10 +17,12 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -45,7 +47,31 @@ abstract class CellBasedWidgetImpl {
     return impl;
   }
 
+  /**
+   * The set of natively focusable elements.
+   */
+  private final Set<String> focusableTypes;
+
   CellBasedWidgetImpl() {
+    focusableTypes = new HashSet<String>();
+    focusableTypes.add("select");
+    focusableTypes.add("input");
+    focusableTypes.add("textarea");
+    focusableTypes.add("option");
+    focusableTypes.add("button");
+    focusableTypes.add("label");
+  }
+
+  /**
+   * Check if an element is focusable. If an element is focusable, the cell
+   * widget should not steal focus from it.
+   * 
+   * @param elem the element
+   * @return
+   */
+  public boolean isFocusable(Element elem) {
+    return focusableTypes.contains(elem.getTagName().toLowerCase())
+        || elem.getTabIndex() >= 0;
   }
 
   /**

@@ -239,6 +239,7 @@ public class CellList<T> extends AbstractHasData<T> {
    *           page
    */
   public Element getRowElement(int indexOnPage) {
+    getPresenter().flush();
     checkRowBounds(indexOnPage);
     if (childContainer.getChildCount() > indexOnPage) {
       return childContainer.getChild(indexOnPage).cast();
@@ -335,8 +336,12 @@ public class CellList<T> extends AbstractHasData<T> {
 
   @Override
   protected Element getKeyboardSelectedElement() {
+    // Do not use getRowElement() because that will flush the presenter.
     int rowIndex = getKeyboardSelectedRow();
-    return isRowWithinBounds(rowIndex) ? getRowElement(rowIndex) : null;
+    if (childContainer.getChildCount() > rowIndex) {
+      return childContainer.getChild(rowIndex).cast();
+    }
+    return null;
   }
 
   @Override
@@ -360,13 +365,14 @@ public class CellList<T> extends AbstractHasData<T> {
     if (!Element.is(eventTarget)) {
       return;
     }
-    Element target = event.getEventTarget().cast();
+    final Element target = event.getEventTarget().cast();
 
     // Forward the event to the cell.
     String idxString = "";
-    while ((target != null)
-        && ((idxString = target.getAttribute("__idx")).length() == 0)) {
-      target = target.getParentElement();
+    Element cellTarget = target;
+    while ((cellTarget != null)
+        && ((idxString = cellTarget.getAttribute("__idx")).length() == 0)) {
+      cellTarget = cellTarget.getParentElement();
     }
     if (idxString.length() > 0) {
       // Select the item if the cell does not consume events. Selection occurs
@@ -382,16 +388,22 @@ public class CellList<T> extends AbstractHasData<T> {
       }
 
       // Get the cell parent before doing selection in case the list is redrawn.
-      Element cellParent = getCellParent(target);
+      Element cellParent = getCellParent(cellTarget);
       T value = getDisplayedItem(indexOnPage);
       if (isMouseDown && !cell.handlesSelection()) {
         doSelection(event, value, indexOnPage);
       }
 
       // Focus on the cell.
-      if ("focus".equals(eventType) || isMouseDown) {
-        isFocused = true;
-        doKeyboardSelection(event, value, indexOnPage);
+      if (isMouseDown
+          && getPresenter().getKeyboardSelectedRowInView() != indexOnPage) {
+        /*
+         * If the selected element is natively focusable, then we do not want to
+         * steal focus away from it.
+         */
+        boolean isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
+        isFocused = isFocused || isFocusable;
+        getPresenter().setKeyboardSelectedRow(indexOnPage, !isFocusable);
       }
 
       // Fire the event to the cell if the list has not been refreshed.
@@ -483,22 +495,15 @@ public class CellList<T> extends AbstractHasData<T> {
     }
   }
 
+  /**
+   * @deprecated this method is never called by AbstractHasData, render the
+   *             selected styles in
+   *             {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
+   */
   @Override
+  @Deprecated
   protected void setSelected(Element elem, boolean selected) {
     setStyleName(elem, style.cellListSelectedItem(), selected);
-  }
-
-  /**
-   * Called when the user selects a cell with the mouse or tab key.
-   *
-   * @param event the event
-   * @param value the value that is selected
-   * @param indexOnPage the index on the page
-   */
-  void doKeyboardSelection(Event event, T value, int indexOnPage) {
-    if (getPresenter().getKeyboardSelectedRow() != indexOnPage) {
-      getPresenter().setKeyboardSelectedRow(indexOnPage, false);
-    }
   }
 
   @Override

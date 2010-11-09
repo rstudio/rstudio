@@ -26,6 +26,41 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
     super(false);
   }
 
+  /**
+   * Test that replacing a subset of children updates both the TreeNode value
+   * and the underlying DOM correctly.
+   */
+  public void testReplaceChildren() {
+    CellTree cellTree = (CellTree) tree;
+    TreeNode root = cellTree.getRootTreeNode();
+
+    // Open a couple of child nodes.
+    TreeNode a = root.setChildOpen(0, true);
+    TreeNode b = root.setChildOpen(1, true);
+    assertEquals("a", a.getValue());
+    assertEquals("ab", a.getChildValue(1));
+    assertEquals("b", b.getValue());
+    assertEquals("bc", b.getChildValue(2));
+
+    // Replace "b" with a "new" value.
+    model.getRootDataProvider().getList().set(1, "new");
+    model.getRootDataProvider().flush();
+    assertFalse(a.isDestroyed());
+    assertTrue(b.isDestroyed());
+    TreeNode newNode = root.setChildOpen(1, true);
+    assertEquals("a", a.getValue());
+    assertEquals("ab", a.getChildValue(1));
+    assertEquals("new", newNode.getValue());
+    assertEquals("newc", newNode.getChildValue(2));
+    
+    // Check the underlying DOM values.
+    CellTreeNodeView<?> aImpl = cellTree.rootNode.getChildNode(0);
+    CellTreeNodeView<?> newNodeImpl = cellTree.rootNode.getChildNode(1);
+    assertEquals("a", aImpl.getCellParent().getInnerText());
+    assertEquals(10, aImpl.ensureChildContainer().getChildCount());
+    assertEquals("new", newNodeImpl.getCellParent().getInnerText());
+  }
+
   public void testSetDefaultNodeSize() {
     CellTree cellTree = (CellTree) tree;
     TreeNode root = cellTree.getRootTreeNode();

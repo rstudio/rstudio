@@ -127,6 +127,7 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     ListDataProvider<String> provider = new ListDataProvider<String>(
         createData(0, 10));
     provider.addDataDisplay(display);
+    display.getPresenter().flush();
 
     // Default tab index is 0.
     assertEquals(0, display.getTabIndex());
@@ -139,6 +140,7 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
 
     // Push new data.
     provider.refresh();
+    display.getPresenter().flush();
     assertEquals(2, display.getTabIndex());
     assertEquals(2, display.getKeyboardSelectedElement().getTabIndex());
   }

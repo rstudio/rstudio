@@ -22,6 +22,14 @@ import com.google.gwt.cell.client.TextCell;
  */
 public class CellListTest extends AbstractHasDataTestBase {
 
+  public void testGetRowElement() {
+    CellList<String> list = createAbstractHasData();
+    list.setRowData(0, createData(0, 10));
+
+    // Ensure that calling getRowElement() flushes all pending changes.
+    assertNotNull(list.getRowElement(9));
+  }
+
   @Override
   protected CellList<String> createAbstractHasData() {
     return new CellList<String>(new TextCell());
