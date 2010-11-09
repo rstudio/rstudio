@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -48,17 +48,35 @@ public class DesignTimeUtilsImpl implements DesignTimeUtils {
   public void addDeclarations(IndentedWriter w) {
     // handler
     w.write("public static interface DTObjectHandler {");
-    w.write("  void handle(String path, Object object);");
+    {
+      w.indent();
+      w.write("void handle(String path, Object object);");
+      w.write("Object provideFactory(Class rawType, String methodName, Object[] args);");
+      w.write("Object provideField(Class rawType, String fieldName);");
+      w.outdent();
+    }
     w.write("}");
     w.write("public DTObjectHandler dtObjectHandler;");
     // attributes
     w.write("public final java.util.Map dtAttributes = new java.util.HashMap();");
     w.write("private void dtPutAttribute(String key, Object...values) {");
-    w.write("  if (values.length == 1) {");
-    w.write("    dtAttributes.put(key, values[0]);");
-    w.write("  } else {");
-    w.write("    dtAttributes.put(key, java.util.Arrays.asList(values));");
-    w.write("  }");
+    {
+      w.indent();
+      w.write("if (values.length == 1) {");
+      {
+        w.indent();
+        w.write("dtAttributes.put(key, values[0]);");
+        w.outdent();
+      }
+      w.write("} else {");
+      {
+        w.indent();
+        w.write("dtAttributes.put(key, java.util.Arrays.asList(values));");
+        w.outdent();
+      }
+      w.write("}");
+      w.outdent();
+    }
     w.write("}");
   }
 
@@ -68,6 +86,19 @@ public class DesignTimeUtilsImpl implements DesignTimeUtils {
 
   public String getPath(Element element) {
     return elementPaths.get(element);
+  }
+
+  public String getProvidedFactory(String typeName, String methodName,
+      String args) {
+    return String.format(
+        "(%1$s) dtObjectHandler.provideFactory(%1$s.class, \"%2$s\", new Object[] {%3$s})",
+        typeName, methodName, args);
+  }
+
+  public String getProvidedField(String typeName, String fieldName) {
+    return String.format(
+        "(%1$s) dtObjectHandler.provideField(%1s.class, \"%2$s\")", typeName,
+        fieldName);
   }
 
   public String getTemplateContent(String path) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -150,6 +150,45 @@ public class DesignTimeUtilsTest extends TestCase {
     assertEquals("0/0", impl.getPath(first));
     assertEquals("0/1", impl.getPath(second));
     assertEquals("0/1/0", impl.getPath(subSecond));
+  }
+
+  /**
+   * Test for {@link DesignTimeUtils#getProvidedField(String, String)}.
+   */
+  public void test_getProvidedField_default() throws Exception {
+    String source = stub.getProvidedField("java.lang.String", "fieldName");
+    assertEquals(null, source);
+  }
+
+  /**
+   * Test for {@link DesignTimeUtils#getProvidedField(String, String)}.
+   */
+  public void test_getProvidedField_designTime() throws Exception {
+    String source = impl.getProvidedField("java.lang.String", "fieldName");
+    assertEquals("(java.lang.String) dtObjectHandler.provideField("
+        + "java.lang.String.class, \"fieldName\")", source);
+  }
+
+  /**
+   * Test for {@link DesignTimeUtils#getProvidedFactory(String, String, String)}
+   * .
+   */
+  public void test_getProvidedFactory_default() throws Exception {
+    String source = stub.getProvidedFactory("java.lang.String", "methodName",
+        "false, 1");
+    assertEquals(null, source);
+  }
+
+  /**
+   * Test for {@link DesignTimeUtils#getProvidedFactory(String, String, String)}
+   * .
+   */
+  public void test_getProvidedFactory_designTime() throws Exception {
+    String source = impl.getProvidedFactory("java.lang.String", "methodName",
+        "false, 1");
+    assertEquals("(java.lang.String) dtObjectHandler.provideFactory("
+        + "java.lang.String.class, \"methodName\", new Object[] {false, 1})",
+        source);
   }
 
   /**

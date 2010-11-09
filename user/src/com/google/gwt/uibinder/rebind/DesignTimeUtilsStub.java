@@ -35,6 +35,15 @@ public class DesignTimeUtilsStub implements DesignTimeUtils {
     return null;
   }
 
+  public String getProvidedFactory(String typeName, String methodName,
+      String args) {
+    return null;
+  }
+
+  public String getProvidedField(String typeName, String fieldName) {
+    return null;
+  }
+
   public String getTemplateContent(String path) {
     return null;
   }

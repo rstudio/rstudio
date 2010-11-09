@@ -269,7 +269,15 @@ public class UiBinderParser {
       }
 
       if (ownerField.isProvided()) {
-        fieldWriter.setInitializer("owner." + ownerField.getName());
+        String initializer;
+        if (writer.getDesignTime().isDesignTime()) {
+          String typeName = ownerField.getType().getRawType().getQualifiedSourceName();
+          initializer = writer.getDesignTime().getProvidedField(typeName,
+              ownerField.getName());
+        } else {
+          initializer = "owner." + ownerField.getName();
+        }
+        fieldWriter.setInitializer(initializer);
         return;
       }
     }
@@ -279,8 +287,15 @@ public class UiBinderParser {
     JMethod factoryMethod = writer.getOwnerClass().getUiFactoryMethod(
         resourceType);
     if (factoryMethod != null) {
-      fieldWriter.setInitializer(String.format("owner.%s()",
-          factoryMethod.getName()));
+      String initializer;
+      if (writer.getDesignTime().isDesignTime()) {
+        String typeName = factoryMethod.getReturnType().getQualifiedSourceName();
+        initializer = writer.getDesignTime().getProvidedFactory(typeName,
+            factoryMethod.getName(), "");
+      } else {
+        initializer = String.format("owner.%s()", factoryMethod.getName());
+      }
+      fieldWriter.setInitializer(initializer);
     }
 
     /*

@@ -176,9 +176,18 @@ public class BeanParser implements ElementParser {
     if (creator != null) {
       String[] args = makeArgsList(requiredValues, creator);
       if (creator instanceof JMethod) { // Factory method
-        String factoryMethod = String.format("owner.%s(%s)", creator.getName(),
-            UiBinderWriter.asCommaSeparatedList(args));
-        writer.setFieldInitializer(fieldName, factoryMethod);
+        JMethod factoryMethod = (JMethod) creator;
+        String initializer;
+        if (writer.getDesignTime().isDesignTime()) {
+          String typeName = factoryMethod.getReturnType().getQualifiedSourceName();
+          initializer = writer.getDesignTime().getProvidedFactory(typeName,
+              factoryMethod.getName(),
+              UiBinderWriter.asCommaSeparatedList(args));
+        } else {
+          initializer = String.format("owner.%s(%s)", factoryMethod.getName(),
+              UiBinderWriter.asCommaSeparatedList(args));
+        }
+        writer.setFieldInitializer(fieldName, initializer);
       } else { // Annotated Constructor
         writer.setFieldInitializerAsConstructor(fieldName, type, args);
       }
