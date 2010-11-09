@@ -238,6 +238,9 @@ public class ApiCompatibilityChecker extends ToolBase {
    * Class that specifies a set of {@link CompilationUnit} read from jar files.
    */
   private static class JarFileResources extends Resources {
+    private static final String MOCK_PREFIX = "/mock/";
+    private static final int MOCK_PREFIX_LENGTH = MOCK_PREFIX.length();
+
     private final ZipScanner excludeScanner;
     private final Set<String> includedPaths;
     private final JarFile jarFiles[];
@@ -270,6 +273,9 @@ public class ApiCompatibilityChecker extends ToolBase {
         while (entries.hasMoreElements()) {
           JarEntry jarEntry = entries.nextElement();
           String fileName = jarEntry.toString();
+          if (fileName.startsWith(MOCK_PREFIX)) {
+            fileName = fileName.substring(MOCK_PREFIX_LENGTH);
+          }
           if (fileName.endsWith(".java") && isIncluded(fileName)) {
             // add this compilation unit
             String fileContent = getFileContentsFromJar(jarFile, jarEntry);

@@ -274,6 +274,9 @@ public final class ApiContainer {
    * @return return true if and only if the packageObject is an apiPackage
    */
   private boolean isApiPackage(JPackage packageObject) {
+    if (excludedPackages.contains(packageObject.getName())) {
+      return false;
+    }
     JClassType classTypes[] = packageObject.getTypes();
     for (JClassType classType : classTypes) {
       if (isPublicOuterClass(classType)) {
