@@ -22,6 +22,7 @@ import com.google.gwt.autobean.rebind.model.AutoBeanMethod;
 import com.google.gwt.autobean.rebind.model.AutoBeanMethod.Action;
 import com.google.gwt.autobean.rebind.model.AutoBeanType;
 import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.CollectionPropertyContext;
@@ -35,16 +36,24 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Generates implementations of AutoBeanFactory.
@@ -52,6 +61,7 @@ import java.io.PrintWriter;
 public class AutoBeanFactoryGenerator extends Generator {
 
   private GeneratorContext context;
+  private String simpleSourceName;
   private TreeLogger logger;
   private AutoBeanFactoryModel model;
 
@@ -69,7 +79,7 @@ public class AutoBeanFactoryGenerator extends Generator {
     }
 
     String packageName = toGenerate.getPackage().getName();
-    String simpleSourceName = toGenerate.getName().replace('.', '_') + "Impl";
+    simpleSourceName = toGenerate.getName().replace('.', '_') + "Impl";
     PrintWriter pw = context.tryCreate(logger, packageName, simpleSourceName);
     if (pw == null) {
       return packageName + "." + simpleSourceName;
@@ -82,7 +92,11 @@ public class AutoBeanFactoryGenerator extends Generator {
     factory.setSuperclass(AbstractAutoBeanFactory.class.getCanonicalName());
     factory.addImplementedInterface(typeName);
     SourceWriter sw = factory.createSourceWriter(context, pw);
+    for (AutoBeanType type : model.getAllTypes()) {
+      writeAutoBean(type);
+    }
     writeDynamicMethods(sw);
+    writeEnumSetup(sw);
     writeMethods(sw);
     sw.commit(logger);
 
@@ -157,8 +171,9 @@ public class AutoBeanFactoryGenerator extends Generator {
 
     // Only simple wrappers have a default constructor
     if (type.isSimpleBean()) {
-      // public FooIntfAutoBean() {}
-      sw.println("public %s() {}", type.getSimpleSourceName());
+      // public FooIntfAutoBean(AutoBeanFactory factory) {}
+      sw.println("public %s(%s factory) {super(factory);}",
+          type.getSimpleSourceName(), AutoBeanFactory.class.getCanonicalName());
     }
 
     // Clone constructor
@@ -169,10 +184,11 @@ public class AutoBeanFactoryGenerator extends Generator {
     sw.println("}");
 
     // Wrapping constructor
-    // public FooIntfAutoBean(FooIntfo wrapped) {
-    sw.println("public %s(%s wrapped) {", type.getSimpleSourceName(),
+    // public FooIntfAutoBean(AutoBeanFactory factory, FooIntfo wrapped) {
+    sw.println("public %s(%s factory, %s wrapped) {",
+        type.getSimpleSourceName(), AutoBeanFactory.class.getCanonicalName(),
         type.getPeerType().getQualifiedSourceName());
-    sw.indentln("super(wrapped);");
+    sw.indentln("super(factory, wrapped);");
     sw.println("}");
 
     // public FooIntf as() {return shim;}
@@ -187,7 +203,7 @@ public class AutoBeanFactoryGenerator extends Generator {
 
     // public Class<Intf> getType() {return Intf.class;}
     sw.println("public Class<%1$s> getType() {return %1$s.class;}",
-        type.getPeerType().getQualifiedSourceName());
+        ModelUtils.ensureBaseType(type.getPeerType()).getQualifiedSourceName());
 
     if (type.isSimpleBean()) {
       writeCreateSimpleBean(sw, type);
@@ -279,11 +295,12 @@ public class AutoBeanFactoryGenerator extends Generator {
       if (type.isNoWrap()) {
         continue;
       }
-      sw.println("creators.put(%s.class, new Creator() {",
-          type.getPeerType().getQualifiedSourceName());
+      sw.println(
+          "creators.put(%s.class, new Creator() {",
+          ModelUtils.ensureBaseType(type.getPeerType()).getQualifiedSourceName());
       if (type.isSimpleBean()) {
-        sw.indentln("public %1$s create() { return new %1$s(); }",
-            type.getQualifiedSourceName());
+        sw.indentln("public %1$s create() { return new %1$s(%2$s.this); }",
+            type.getQualifiedSourceName(), simpleSourceName);
       } else {
         sw.indentln("public %1$s create() { return null; }",
             type.getQualifiedSourceName());
@@ -291,10 +308,62 @@ public class AutoBeanFactoryGenerator extends Generator {
       // public FooAutoBean create(Object delegate) {
       // return new FooAutoBean((Foo) delegate); }
       sw.indentln("public %1$s create(Object delegate) {"
-          + " return new %1$s((%2$s) delegate); }",
-          type.getQualifiedSourceName(),
+          + " return new %1$s(%2$s.this, (%3$s) delegate); }",
+          type.getQualifiedSourceName(), simpleSourceName,
           type.getPeerType().getQualifiedSourceName());
       sw.println("});");
+    }
+    sw.outdent();
+    sw.println("}");
+  }
+
+  private void writeEnumSetup(SourceWriter sw) {
+    // Make the deobfuscation model
+    Map<String, List<JEnumConstant>> map = new HashMap<String, List<JEnumConstant>>();
+    for (Map.Entry<JEnumConstant, String> entry : model.getEnumTokenMap().entrySet()) {
+      List<JEnumConstant> list = map.get(entry.getValue());
+      if (list == null) {
+        list = new ArrayList<JEnumConstant>();
+        map.put(entry.getValue(), list);
+      }
+      list.add(entry.getKey());
+    }
+
+    sw.println("@Override protected void initializeEnumMap() {");
+    sw.indent();
+    for (Map.Entry<JEnumConstant, String> entry : model.getEnumTokenMap().entrySet()) {
+      // enumToStringMap.put(Enum.FOO, "FOO");
+      sw.println("enumToStringMap.put(%s.%s, \"%s\");",
+          entry.getKey().getEnclosingType().getQualifiedSourceName(),
+          entry.getKey().getName(), entry.getValue());
+    }
+    for (Map.Entry<String, List<JEnumConstant>> entry : map.entrySet()) {
+      String listExpr;
+      if (entry.getValue().size() == 1) {
+        JEnumConstant e = entry.getValue().get(0);
+        // Collections.singletonList(Enum.FOO)
+        listExpr = String.format("%s.<%s<?>> singletonList(%s.%s)",
+            Collections.class.getCanonicalName(),
+            Enum.class.getCanonicalName(),
+            e.getEnclosingType().getQualifiedSourceName(), e.getName());
+      } else {
+        // Arrays.asList(Enum.FOO, OtherEnum.FOO, ThirdEnum,FOO)
+        StringBuilder sb = new StringBuilder();
+        boolean needsComma = false;
+        sb.append(String.format("%s.<%s<?>> asList(",
+            Arrays.class.getCanonicalName(), Enum.class.getCanonicalName()));
+        for (JEnumConstant e : entry.getValue()) {
+          if (needsComma) {
+            sb.append(",");
+          }
+          needsComma = true;
+          sb.append(e.getEnclosingType().getQualifiedSourceName()).append(".").append(
+              e.getName());
+        }
+        sb.append(")");
+        listExpr = sb.toString();
+      }
+      sw.println("stringsToEnumsMap.put(\"%s\", %s);", entry.getKey(), listExpr);
     }
     sw.outdent();
     sw.println("}");
@@ -303,8 +372,6 @@ public class AutoBeanFactoryGenerator extends Generator {
   private void writeMethods(SourceWriter sw) throws UnableToCompleteException {
     for (AutoBeanFactoryMethod method : model.getMethods()) {
       AutoBeanType autoBeanType = method.getAutoBeanType();
-
-      writeAutoBean(autoBeanType);
       // public AutoBean<Foo> foo(FooSubtype wrapped) {
       sw.println("public %s %s(%s) {",
           method.getReturnType().getQualifiedSourceName(), method.getName(),
@@ -318,13 +385,14 @@ public class AutoBeanFactoryGenerator extends Generator {
             method.getReturnType().getParameterizedQualifiedSourceName(),
             AutoBeanUtils.class.getCanonicalName());
         sw.println("if (toReturn != null) {return toReturn;}");
-        // return new FooAutoBean(wrapped);
-        sw.println("return new %s(wrapped);",
-            autoBeanType.getQualifiedSourceName());
+        // return new FooAutoBean(Factory.this, wrapped);
+        sw.println("return new %s(%s.this, wrapped);",
+            autoBeanType.getQualifiedSourceName(), simpleSourceName);
         sw.outdent();
       } else {
-        // return new FooAutoBean();
-        sw.indentln("return new %s();", autoBeanType.getQualifiedSourceName());
+        // return new FooAutoBean(Factory.this);
+        sw.indentln("return new %s(%s.this);",
+            autoBeanType.getQualifiedSourceName(), simpleSourceName);
       }
       sw.println("}");
     }
@@ -346,10 +414,8 @@ public class AutoBeanFactoryGenerator extends Generator {
       sw.println("} else {");
       sw.indent();
       if (peer != null) {
-        // Make sure we generate the potentially unreferenced peer type
-        writeAutoBean(peer);
-        // toReturn = new FooAutoBean(toReturn).as();
-        sw.println("toReturn = new %s(toReturn).as();",
+        // toReturn = new FooAutoBean(getFactory(), toReturn).as();
+        sw.println("toReturn = new %s(getFactory(), toReturn).as();",
             peer.getQualifiedSourceName());
       }
       sw.outdent();
@@ -485,11 +551,13 @@ public class AutoBeanFactoryGenerator extends Generator {
    * Generate traversal logic.
    */
   private void writeTraversal(SourceWriter sw, AutoBeanType type) {
+    NameFactory names = new NameFactory();
     sw.println(
         "@Override protected void traverseProperties(%s visitor, %s ctx) {",
         AutoBeanVisitor.class.getCanonicalName(),
         OneShotContext.class.getCanonicalName());
     sw.indent();
+
     for (AutoBeanMethod method : type.getMethods()) {
       if (!method.getAction().equals(Action.GET)) {
         continue;
@@ -530,8 +598,14 @@ public class AutoBeanFactoryGenerator extends Generator {
         propertyContextType = PropertyContext.class;
       }
 
-      // Make the PropertyContext that lets us call the setter
-      String propertyContextName = method.getPropertyName() + "PropertyContext";
+      /*
+       * Make the PropertyContext that lets us call the setter. We allow
+       * multiple methods to be bound to the same property (e.g. to allow JSON
+       * payloads to be interpreted as different types). The leading underscore
+       * allows purely numeric property names, which are valid JSON map keys.
+       */
+      String propertyContextName = names.createName("_"
+          + method.getPropertyName() + "PropertyContext");
       sw.println("class %s implements %s {", propertyContextName,
           propertyContextType.getCanonicalName());
       sw.indent();
@@ -539,19 +613,23 @@ public class AutoBeanFactoryGenerator extends Generator {
           || setter != null);
       if (method.isCollection()) {
         // Will return the collection's element type or null if not a collection
-        sw.println("public Class<?> getElementType() { return %s; }",
-            method.getElementType().getQualifiedSourceName() + ".class");
+        sw.println(
+            "public Class<?> getElementType() { return %s.class; }",
+            ModelUtils.ensureBaseType(method.getElementType()).getQualifiedSourceName());
       } else if (method.isMap()) {
         // Will return the map's value type
-        sw.println("public Class<?> getValueType() { return %s; }",
-            method.getValueType().getQualifiedSourceName() + ".class");
+        sw.println(
+            "public Class<?> getValueType() { return %s.class; }",
+            ModelUtils.ensureBaseType(method.getValueType()).getQualifiedSourceName());
         // Will return the map's key type
-        sw.println("public Class<?> getKeyType() { return %s; }",
-            method.getKeyType().getQualifiedSourceName() + ".class");
+        sw.println(
+            "public Class<?> getKeyType() { return %s.class; }",
+            ModelUtils.ensureBaseType(method.getKeyType()).getQualifiedSourceName());
       }
       // Return the property type
-      sw.println("public Class<?> getType() { return %s.class; }",
-          method.getMethod().getReturnType().getQualifiedSourceName());
+      sw.println(
+          "public Class<?> getType() { return %s.class; }",
+          ModelUtils.ensureBaseType(method.getMethod().getReturnType()).getQualifiedSourceName());
       sw.println("public void set(Object obj) { ");
       if (setter != null) {
         // Prefer the setter if one exists
@@ -559,7 +637,8 @@ public class AutoBeanFactoryGenerator extends Generator {
         sw.indentln(
             "as().%s((%s) obj);",
             setter.getMethod().getName(),
-            setter.getMethod().getParameters()[0].getType().getQualifiedSourceName());
+            ModelUtils.ensureBaseType(
+                setter.getMethod().getParameters()[0].getType()).getQualifiedSourceName());
       } else if (type.isSimpleBean()) {
         // Otherwise, fall back to a map assignment
         sw.indentln("values.put(\"%s\", obj);", method.getPropertyName());

@@ -19,6 +19,7 @@ import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
 import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
+import com.google.gwt.autobean.shared.impl.EnumMap;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -37,6 +38,8 @@ import java.lang.reflect.Proxy;
  * AutoBeanFactoyModel.
  */
 public class AutoBeanFactoryMagic {
+  private static final AutoBeanFactory EMPTY = create(AutoBeanFactory.class);
+
   /**
    * Create an instance of an AutoBeanFactory.
    * 
@@ -55,7 +58,7 @@ public class AutoBeanFactoryMagic {
       builder.setNoWrap(noWrap.value());
     }
 
-    return makeProxy(clazz, new FactoryHandler(builder.build()));
+    return makeProxy(clazz, new FactoryHandler(builder.build()), EnumMap.class);
   }
 
   /**
@@ -67,7 +70,7 @@ public class AutoBeanFactoryMagic {
    */
   public static <T> AutoBean<T> createBean(Class<T> clazz,
       Configuration configuration) {
-    return new ProxyAutoBean<T>(clazz, configuration);
+    return new ProxyAutoBean<T>(EMPTY, clazz, configuration);
   }
 
   /**
@@ -76,11 +79,22 @@ public class AutoBeanFactoryMagic {
    * @param <T> the interface type to be implemented by the Proxy
    * @param intf the Class representing the interface type
    * @param handler the implementation of the interface
+   * @param extraInterfaces additional interface types the Proxy should
+   *          implement
    * @return a Proxy instance
    */
-  static <T> T makeProxy(Class<T> intf, InvocationHandler handler) {
+  static <T> T makeProxy(Class<T> intf, InvocationHandler handler,
+      Class<?>... extraInterfaces) {
+    Class<?>[] intfs;
+    if (extraInterfaces == null) {
+      intfs = new Class<?>[] {intf};
+    } else {
+      intfs = new Class<?>[extraInterfaces.length + 1];
+      intfs[0] = intf;
+      System.arraycopy(extraInterfaces, 0, intfs, 1, extraInterfaces.length);
+    }
+
     return intf.cast(Proxy.newProxyInstance(
-        Thread.currentThread().getContextClassLoader(), new Class<?>[]{intf},
-        handler));
+        Thread.currentThread().getContextClassLoader(), intfs, handler));
   }
 }

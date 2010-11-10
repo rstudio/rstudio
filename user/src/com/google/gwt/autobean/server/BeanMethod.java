@@ -50,8 +50,15 @@ enum BeanMethod {
   GET {
     @Override
     Object invoke(SimpleBeanHandler<?> handler, Method method, Object[] args) {
-      Object toReturn = handler.getBean().getValues().get(
-          method.getName().substring(3));
+      String propertyName;
+      String name = method.getName();
+      if (Boolean.TYPE.equals(method.getReturnType()) && name.startsWith("is")) {
+        propertyName = name.substring(2);
+      } else {
+        // A regular getter or a boolean hasFoo()
+        propertyName = name.substring(3);
+      }
+      Object toReturn = handler.getBean().getValues().get(propertyName);
       if (toReturn == null && method.getReturnType().isPrimitive()) {
         toReturn = TypeUtils.getDefaultPrimitiveValue(method.getReturnType());
       }
@@ -60,9 +67,20 @@ enum BeanMethod {
 
     @Override
     boolean matches(SimpleBeanHandler<?> handler, Method method) {
-      return method.getName().startsWith("get")
-          && method.getParameterTypes().length == 0
-          && !method.getReturnType().equals(Void.TYPE);
+      Class<?> returnType = method.getReturnType();
+      if (method.getParameterTypes().length != 0
+          || Void.TYPE.equals(returnType)) {
+        return false;
+      }
+
+      String name = method.getName();
+      if (Boolean.TYPE.equals(returnType)) {
+        if (name.startsWith("is") && name.length() > 2
+            || name.startsWith("has") && name.length() > 3) {
+          return true;
+        }
+      }
+      return name.startsWith("get") && name.length() > 3;
     }
   },
   /**
@@ -77,7 +95,8 @@ enum BeanMethod {
 
     @Override
     boolean matches(SimpleBeanHandler<?> handler, Method method) {
-      return method.getName().startsWith("set")
+      String name = method.getName();
+      return name.startsWith("set") && name.length() > 3
           && method.getParameterTypes().length == 1
           && method.getReturnType().equals(Void.TYPE);
     }

@@ -23,6 +23,7 @@ import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
@@ -36,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +51,7 @@ public class AutoBeanFactoryModel {
 
   private final JGenericType autoBeanInterface;
   private final JClassType autoBeanFactoryInterface;
+  private final Map<JEnumConstant, String> allEnumConstants = new LinkedHashMap<JEnumConstant, String>();
   private final List<JClassType> categoryTypes;
   private final List<JClassType> noWrapTypes;
   private final TreeLogger logger;
@@ -77,7 +80,7 @@ public class AutoBeanFactoryModel {
      */
     JClassType objectType = oracle.getJavaLangObject();
     objectMethods = Arrays.asList(
-        objectType.findMethod("equals", new JType[]{objectType}),
+        objectType.findMethod("equals", new JType[] {objectType}),
         objectType.findMethod("hashCode", EMPTY_JTYPE),
         objectType.findMethod("toString", EMPTY_JTYPE));
 
@@ -189,6 +192,10 @@ public class AutoBeanFactoryModel {
     return categoryTypes;
   }
 
+  public Map<JEnumConstant, String> getEnumTokenMap() {
+    return Collections.unmodifiableMap(allEnumConstants);
+  }
+
   public List<AutoBeanFactoryMethod> getMethods() {
     return Collections.unmodifiableList(methods);
   }
@@ -210,16 +217,13 @@ public class AutoBeanFactoryModel {
         continue;
       }
       AutoBeanMethod.Builder builder = new AutoBeanMethod.Builder();
-      String name = method.getName();
       builder.setMethod(method);
 
       // See if this method shouldn't have its return type wrapped
       // TODO: Allow class return types?
       JClassType classReturn = method.getReturnType().isInterface();
       if (classReturn != null) {
-        if (!peers.containsKey(classReturn)) {
-          toCalculate.add(classReturn);
-        }
+        maybeCalculate(classReturn);
         if (noWrapTypes != null) {
           for (JClassType noWrap : noWrapTypes) {
             if (noWrap.isAssignableFrom(classReturn)) {
@@ -230,27 +234,34 @@ public class AutoBeanFactoryModel {
         }
       }
 
-      if (name.startsWith("get") && name.length() >= 4
-          && method.getParameters().length == 0) {
-        // Found a getter
-        builder.setAction(Action.GET);
-
-      } else if (name.startsWith("set") && name.length() >= 4
-          && method.getParameters().length == 1) {
-        // Found a setter
-        builder.setAction(Action.SET);
-      } else {
-        // Found something else
-        builder.setAction(Action.CALL);
+      // GET, SET, or CALL
+      Action action = Action.which(method);
+      builder.setAction(action);
+      if (Action.CALL.equals(action)) {
         JMethod staticImpl = findStaticImpl(beanType, method);
         if (staticImpl == null && objectMethods.contains(method)) {
-          // Don't complain about lack of implemenation for Object methods
+          // Don't complain about lack of implementation for Object methods
           continue;
         }
         builder.setStaticImp(staticImpl);
       }
 
-      toReturn.add(builder.build());
+      AutoBeanMethod toAdd = builder.build();
+
+      // Collect referenced enums
+      if (toAdd.isEnum()) {
+        allEnumConstants.putAll(toAdd.getEnumMap());
+      }
+
+      // See if parameterizations will pull in more types
+      if (toAdd.isCollection()) {
+        maybeCalculate(toAdd.getElementType());
+      } else if (toAdd.isMap()) {
+        maybeCalculate(toAdd.getKeyType());
+        maybeCalculate(toAdd.getValueType());
+      }
+
+      toReturn.add(toAdd);
     }
     return toReturn;
   }
@@ -381,6 +392,19 @@ public class AutoBeanFactoryModel {
     return toReturn;
   }
 
+  /**
+   * Enqueue a type in {@link #toCalculate} if {@link #peers} does not already
+   * contain an entry.
+   */
+  private void maybeCalculate(JClassType type) {
+    if (type.isInterface() == null || ModelUtils.isValueType(oracle, type)) {
+      return;
+    }
+    if (!peers.containsKey(type)) {
+      toCalculate.add(type);
+    }
+  }
+
   private boolean methodAcceptsAutoBeanAsFirstParam(JClassType beanType,
       JMethod method) {
     JParameter[] params = method.getParameters();
@@ -397,7 +421,7 @@ public class AutoBeanFactoryModel {
     // Check using base types to account for erasure semantics
     JParameterizedType expectedFirst = oracle.getParameterizedType(
         autoBeanInterface,
-        new JClassType[]{ModelUtils.ensureBaseType(beanType)});
+        new JClassType[] {ModelUtils.ensureBaseType(beanType)});
     return expectedFirst.isAssignableTo(paramAsClass);
   }
 

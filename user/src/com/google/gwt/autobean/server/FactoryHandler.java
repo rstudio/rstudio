@@ -15,8 +15,11 @@
  */
 package com.google.gwt.autobean.server;
 
+import com.google.gwt.autobean.shared.AutoBean.PropertyName;
+import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -45,13 +48,21 @@ class FactoryHandler implements InvocationHandler {
 
     Class<?> beanType;
     Object toWrap = null;
-    if (method.getName().equals("create")) {
+    String name = method.getName();
+    if (name.equals("create")) {
       // Dynamic create. Guaranteed to have at least one argument
       // create(clazz); or create(clazz, toWrap);
       beanType = (Class<?>) args[0];
       if (args.length == 2) {
         toWrap = args[1];
       }
+    } else if (name.equals("getEnum")) {
+      Class<?> clazz = (Class<?>) args[0];
+      String token = (String) args[1];
+      return getEnum(clazz, token);
+    } else if (name.equals("getToken")) {
+      Enum<?> e = (Enum<?>) args[0];
+      return getToken(e);
     } else {
       // Declared factory method, use the parameterization
       // AutoBean<Foo> foo(); or Autobean<foo> foo(Foo toWrap);
@@ -68,12 +79,50 @@ class FactoryHandler implements InvocationHandler {
     if (toReturn == null) {
       // Create the implementation bean
       if (toWrap == null) {
-        toReturn = new ProxyAutoBean<Object>(beanType, configuration);
+        toReturn = new ProxyAutoBean<Object>((AutoBeanFactory) proxy, beanType,
+            configuration);
       } else {
-        toReturn = new ProxyAutoBean<Object>(beanType, configuration, toWrap);
+        toReturn = new ProxyAutoBean<Object>((AutoBeanFactory) proxy, beanType,
+            configuration, toWrap);
       }
     }
 
     return toReturn;
+  }
+
+  /**
+   * EnumMap support.
+   */
+  private Object getEnum(Class<?> clazz, String token)
+      throws IllegalAccessException {
+    for (Field f : clazz.getFields()) {
+      String fieldName;
+      PropertyName annotation = f.getAnnotation(PropertyName.class);
+      if (annotation != null) {
+        fieldName = annotation.value();
+      } else {
+        fieldName = f.getName();
+      }
+      if (token.equals(fieldName)) {
+        f.setAccessible(true);
+        return f.get(null);
+      }
+    }
+    throw new IllegalArgumentException("Cannot find enum " + token
+        + " in type " + clazz.getCanonicalName());
+  }
+
+  /**
+   * EnumMap support.
+   */
+  private Object getToken(Enum<?> e) throws NoSuchFieldException {
+    // Remember enum constants are fields
+    PropertyName annotation = e.getDeclaringClass().getField(e.name()).getAnnotation(
+        PropertyName.class);
+    if (annotation != null) {
+      return annotation.value();
+    } else {
+      return e.name();
+    }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.autobean.shared;
 
+import com.google.gwt.autobean.shared.impl.EnumMap;
 import com.google.gwt.autobean.shared.impl.LazySplittable;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
 
@@ -75,8 +76,7 @@ public class AutoBeanCodex {
           collection.add(null);
         } else {
           if (isValue) {
-            collection.add(ValueCodex.decode(ctx.getElementType(),
-                listData.get(i)));
+            collection.add(decodeValue(ctx.getElementType(), listData.get(i)));
           } else if (isEncoded) {
             collection.add(listData.get(i));
           } else {
@@ -129,8 +129,11 @@ public class AutoBeanCodex {
     public boolean visitValueProperty(String propertyName, Object value,
         PropertyContext ctx) {
       if (!data.isNull(propertyName)) {
+        Object object;
         Splittable propertyValue = data.get(propertyName);
-        ctx.set(ValueCodex.decode(ctx.getType(), propertyValue));
+        Class<?> type = ctx.getType();
+        object = decodeValue(type, propertyValue);
+        ctx.set(object);
       }
       return false;
     }
@@ -160,7 +163,7 @@ public class AutoBeanCodex {
         } else if (isEncodedValue) {
           value = keyList.get(i);
         } else if (isValueValue) {
-          value = ValueCodex.decode(valueType, keyList.get(i));
+          value = decodeValue(valueType, keyList.get(i));
         } else {
           value = decode(valueList.get(i), valueType).as();
         }
@@ -170,6 +173,26 @@ public class AutoBeanCodex {
       return toReturn;
     }
 
+    private Object decodeValue(Class<?> type, Splittable propertyValue) {
+      return decodeValue(type, propertyValue.asString());
+    }
+
+    private Object decodeValue(Class<?> type, String propertyValue) {
+      Object object;
+      if (type.isEnum() && bean.getFactory() instanceof EnumMap) {
+        // The generics kind of get in the way here
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Class<Enum> enumType = (Class<Enum>) type;
+        @SuppressWarnings("unchecked")
+        Enum<?> e = ((EnumMap) bean.getFactory()).getEnum(enumType,
+            propertyValue);
+        object = e;
+      } else {
+        object = ValueCodex.decode(type, propertyValue);
+      }
+      return object;
+    }
+
     private Map<?, ?> decodeValueKeyMap(Splittable map, Class<?> keyType,
         Class<?> valueType) {
       Map<Object, Object> toReturn = new HashMap<Object, Object>();
@@ -177,14 +200,14 @@ public class AutoBeanCodex {
       boolean isEncodedValue = Splittable.class.equals(valueType);
       boolean isValueValue = ValueCodex.canDecode(valueType);
       for (String encodedKey : map.getPropertyKeys()) {
-        Object key = ValueCodex.decode(keyType, encodedKey);
+        Object key = decodeValue(keyType, encodedKey);
         Object value;
         if (map.isNull(encodedKey)) {
           value = null;
         } else if (isEncodedValue) {
           value = map.get(encodedKey);
         } else if (isValueValue) {
-          value = ValueCodex.decode(valueType, map.get(encodedKey));
+          value = decodeValue(valueType, map.get(encodedKey));
         } else {
           value = decode(map.get(encodedKey), valueType).as();
         }
@@ -213,15 +236,26 @@ public class AutoBeanCodex {
     private void push(Splittable data, Class<?> type) {
       this.data = data;
       bean = factory.create(type);
+      if (bean == null) {
+        throw new IllegalArgumentException(
+            "The AutoBeanFactory cannot create a " + type.getName());
+      }
       dataStack.push(data);
       beanStack.push(bean);
     }
   }
 
   static class Encoder extends AutoBeanVisitor {
+    private EnumMap enumMap;
     private Set<AutoBean<?>> seen = new HashSet<AutoBean<?>>();
     private Stack<StringBuilder> stack = new Stack<StringBuilder>();
     private StringBuilder sb;
+
+    public Encoder(AutoBeanFactory factory) {
+      if (factory instanceof EnumMap) {
+        enumMap = (EnumMap) factory;
+      }
+    }
 
     @Override
     public void endVisit(AutoBean<?> bean, Context ctx) {
@@ -261,7 +295,7 @@ public class AutoBeanCodex {
 
       if (ValueCodex.canDecode(ctx.getElementType())) {
         for (Object element : collection) {
-          sb.append(",").append(ValueCodex.encode(element).getPayload());
+          sb.append(",").append(encodeValue(element).getPayload());
         }
       } else {
         boolean isEncoded = Splittable.class.equals(ctx.getElementType());
@@ -335,13 +369,18 @@ public class AutoBeanCodex {
     public boolean visitValueProperty(String propertyName, Object value,
         PropertyContext ctx) {
       // Skip primitive types whose values are uninteresting.
+      Class<?> type = ctx.getType();
       if (value != null) {
-        if (value.equals(ValueCodex.getUninitializedFieldValue(ctx.getType()))) {
+        if (value.equals(ValueCodex.getUninitializedFieldValue(type))) {
           return false;
         }
       }
+
+      // Special handling for enums if we have an obfuscation map
+      Splittable split;
+      split = encodeValue(value);
       sb.append(",\"").append(propertyName).append("\":").append(
-          ValueCodex.encode(value).getPayload());
+          split.getPayload());
       return false;
     }
 
@@ -365,6 +404,20 @@ public class AutoBeanCodex {
       bean.accept(this);
       accumulator.append(pop().toString());
       seen.remove(bean);
+    }
+
+    /**
+     * Encodes a value, with special handling for enums to allow the field name
+     * to be overridden.
+     */
+    private Splittable encodeValue(Object value) {
+      Splittable split;
+      if (value instanceof Enum<?> && enumMap != null) {
+        split = ValueCodex.encode(enumMap.getToken((Enum<?>) value));
+      } else {
+        split = ValueCodex.encode(value);
+      }
+      return split;
     }
 
     private void haltOnCycle() {
@@ -393,8 +446,7 @@ public class AutoBeanCodex {
           values.append(",").append(
               ((Splittable) entry.getValue()).getPayload());
         } else if (isValueValue) {
-          values.append(",").append(
-              ValueCodex.encode(entry.getValue()).getPayload());
+          values.append(",").append(encodeValue(entry.getValue()).getPayload());
         } else {
           encodeToStringBuilder(values.append(","), entry.getValue());
         }
@@ -414,12 +466,12 @@ public class AutoBeanCodex {
     private void writeValueKeyMap(Map<?, ?> map, boolean isEncodedValue,
         boolean isValueValue) {
       for (Map.Entry<?, ?> entry : map.entrySet()) {
-        sb.append(",").append(ValueCodex.encode(entry.getKey()).getPayload()).append(
+        sb.append(",").append(encodeValue(entry.getKey()).getPayload()).append(
             ":");
         if (isEncodedValue) {
           sb.append(((Splittable) entry.getValue()).getPayload());
         } else if (isValueValue) {
-          sb.append(ValueCodex.encode(entry.getValue()).getPayload());
+          sb.append(encodeValue(entry.getValue()).getPayload());
         } else {
           encodeToStringBuilder(sb, entry.getValue());
         }
@@ -483,7 +535,7 @@ public class AutoBeanCodex {
 
   // ["prop",value,"prop",value, ...]
   private static void encodeForJsoPayload(StringBuilder sb, AutoBean<?> bean) {
-    Encoder e = new Encoder();
+    Encoder e = new Encoder(bean.getFactory());
     e.push(sb);
     try {
       bean.accept(e);

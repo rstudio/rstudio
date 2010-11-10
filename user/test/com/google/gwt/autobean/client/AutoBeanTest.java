@@ -38,14 +38,14 @@ public class AutoBeanTest extends GWTTestCase {
   public static class CallImpl {
     public static Object seen;
 
-    public static int add(AutoBean<HasCall> bean, int a, int b) {
-      assertNotNull(bean);
-      return ((Integer) bean.getTag("offset")) + a + b;
-    }
-
     public static <T> T __intercept(AutoBean<HasCall> bean, T value) {
       seen = value;
       return value;
+    }
+
+    public static int add(AutoBean<HasCall> bean, int a, int b) {
+      assertNotNull(bean);
+      return ((Integer) bean.getTag("offset")) + a + b;
     }
   }
 
@@ -54,6 +54,8 @@ public class AutoBeanTest extends GWTTestCase {
    */
   @Category(CallImpl.class)
   protected interface Factory extends AutoBeanFactory {
+    AutoBean<HasBoolean> hasBoolean();
+
     AutoBean<HasCall> hasCall();
 
     AutoBean<HasList> hasList();
@@ -63,6 +65,20 @@ public class AutoBeanTest extends GWTTestCase {
     AutoBean<Intf> intf(RealIntf wrapped);
 
     AutoBean<OtherIntf> otherIntf();
+  }
+
+  interface HasBoolean {
+    boolean isIs();
+
+    boolean getGet();
+
+    boolean hasHas();
+    
+    void setIs(boolean value);
+
+    void setGet(boolean value);
+    
+    void setHas(boolean value);
   }
 
   interface HasCall {
@@ -94,8 +110,8 @@ public class AutoBeanTest extends GWTTestCase {
   }
 
   static class RealIntf implements Intf {
-    String string;
     int i;
+    String string;
 
     @Override
     public boolean equals(Object o) {
@@ -136,6 +152,21 @@ public class AutoBeanTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.autobean.AutoBean";
+  }
+
+  public void testBooleanIsHasMethods() {
+    HasBoolean b = factory.hasBoolean().as();
+    assertFalse(b.getGet());
+    assertFalse(b.hasHas());
+    assertFalse(b.isIs());
+
+    b.setGet(true);
+    b.setHas(true);
+    b.setIs(true);
+
+    assertTrue(b.getGet());
+    assertTrue(b.hasHas());
+    assertTrue(b.isIs());
   }
 
   public void testCategory() {
@@ -267,6 +298,11 @@ public class AutoBeanTest extends GWTTestCase {
     assertEquals(real, w.as());
     assertEquals(real.toString(), w.as().toString());
     assertEquals(w.as(), real);
+  }
+
+  public void testFactory() {
+    AutoBean<Intf> auto = factory.intf();
+    assertSame(factory, auto.getFactory());
   }
 
   public void testFreezing() {

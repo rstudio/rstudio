@@ -15,6 +15,8 @@
  */
 package com.google.gwt.autobean.shared;
 
+import com.google.gwt.autobean.shared.AutoBean.PropertyName;
+import com.google.gwt.autobean.shared.impl.EnumMap;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -34,16 +36,12 @@ public class AutoBeanCodexTest extends GWTTestCase {
   protected interface Factory extends AutoBeanFactory {
     AutoBean<HasAutoBean> hasAutoBean();
 
-    /**
-     * @return
-     */
     AutoBean<HasCycle> hasCycle();
+
+    AutoBean<HasEnum> hasEnum();
 
     AutoBean<HasList> hasList();
 
-    /**
-     * @return
-     */
     AutoBean<HasMap> hasMap();
 
     AutoBean<HasSimple> hasSimple();
@@ -74,6 +72,20 @@ public class AutoBeanCodexTest extends GWTTestCase {
     void setCycle(List<HasCycle> cycle);
   }
 
+  interface HasEnum {
+    MyEnum getEnum();
+
+    List<MyEnum> getEnums();
+
+    Map<MyEnum, Integer> getMap();
+
+    void setEnum(MyEnum value);
+
+    void setEnums(List<MyEnum> value);
+
+    void setMap(Map<MyEnum, Integer> value);
+  }
+
   interface HasList {
     List<Integer> getIntList();
 
@@ -89,6 +101,9 @@ public class AutoBeanCodexTest extends GWTTestCase {
 
     Map<String, Simple> getSimpleMap();
 
+    @AutoBean.PropertyName("simpleMap")
+    Map<String, ReachableOnlyFromParameterization> getSimpleMapAltType();
+
     void setComplexMap(Map<Simple, Simple> map);
 
     void setSimpleMap(Map<String, Simple> map);
@@ -98,6 +113,16 @@ public class AutoBeanCodexTest extends GWTTestCase {
     Simple getSimple();
 
     void setSimple(Simple s);
+  }
+
+  enum MyEnum {
+    FOO, BAR,
+    // The eclipse formatter wants to put this annotation inline
+    @PropertyName("quux")
+    BAZ;
+  }
+
+  interface ReachableOnlyFromParameterization extends Simple {
   }
 
   interface Simple {
@@ -135,6 +160,34 @@ public class AutoBeanCodexTest extends GWTTestCase {
         split);
     assertNotNull(decodedBean.as().getList());
     assertTrue(decodedBean.as().getList().isEmpty());
+  }
+
+  public void testEnum() {
+    EnumMap map = (EnumMap) f;
+    assertEquals("BAR", map.getToken(MyEnum.BAR));
+    assertEquals("quux", map.getToken(MyEnum.BAZ));
+    assertEquals(MyEnum.BAR, map.getEnum(MyEnum.class, "BAR"));
+    assertEquals(MyEnum.BAZ, map.getEnum(MyEnum.class, "quux"));
+
+    List<MyEnum> arrayValue = Arrays.asList(MyEnum.FOO, MyEnum.BAR, MyEnum.BAZ);
+    Map<MyEnum, Integer> mapValue = new HashMap<MyEnum, Integer>();
+    mapValue.put(MyEnum.FOO, 0);
+    mapValue.put(MyEnum.BAR, 1);
+    mapValue.put(MyEnum.BAZ, 2);
+
+    AutoBean<HasEnum> bean = f.hasEnum();
+    bean.as().setEnum(MyEnum.BAZ);
+    bean.as().setEnums(arrayValue);
+    bean.as().setMap(mapValue);
+
+    Splittable split = AutoBeanCodex.encode(bean);
+    // Make sure the overridden form is always used
+    assertFalse(split.getPayload().contains("BAZ"));
+
+    AutoBean<HasEnum> decoded = AutoBeanCodex.decode(f, HasEnum.class, split);
+    assertEquals(MyEnum.BAZ, decoded.as().getEnum());
+    assertEquals(arrayValue, decoded.as().getEnums());
+    assertEquals(mapValue, decoded.as().getMap());
   }
 
   public void testMap() {

@@ -17,6 +17,7 @@ package com.google.gwt.autobean.server;
 
 import com.google.gwt.autobean.server.impl.TypeUtils;
 import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.impl.AbstractAutoBean;
@@ -44,8 +45,9 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
 
   // These constructors mirror the generated constructors.
   @SuppressWarnings("unchecked")
-  public ProxyAutoBean(Class<?> beanType, Configuration configuration) {
-    super();
+  public ProxyAutoBean(AutoBeanFactory factory, Class<?> beanType,
+      Configuration configuration) {
+    super(factory);
     this.beanType = (Class<T>) beanType;
     this.configuration = configuration;
     this.getters = calculateGetters();
@@ -53,8 +55,9 @@ class ProxyAutoBean<T> extends AbstractAutoBean<T> {
   }
 
   @SuppressWarnings("unchecked")
-  public ProxyAutoBean(Class<?> beanType, Configuration configuration, T toWrap) {
-    super(toWrap);
+  public ProxyAutoBean(AutoBeanFactory factory, Class<?> beanType,
+      Configuration configuration, T toWrap) {
+    super(factory, toWrap);
     if (Proxy.isProxyClass(toWrap.getClass())) {
       System.out.println("blah");
     }

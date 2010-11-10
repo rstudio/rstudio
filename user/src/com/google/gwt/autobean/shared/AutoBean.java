@@ -36,7 +36,7 @@ public interface AutoBean<T> {
    */
   @Documented
   @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.METHOD)
+  @Target(value = {ElementType.METHOD, ElementType.FIELD})
   public @interface PropertyName {
     String value();
   }
@@ -68,6 +68,13 @@ public interface AutoBean<T> {
    * @throws IllegalStateException if the AutoBean is a wrapper type
    */
   AutoBean<T> clone(boolean deep);
+
+  /**
+   * Returns the AutoBeanFactory that created the AutoBean.
+   * 
+   * @return an AutoBeanFactory
+   */
+  AutoBeanFactory getFactory();
 
   /**
    * Retrieve a tag value that was previously provided to

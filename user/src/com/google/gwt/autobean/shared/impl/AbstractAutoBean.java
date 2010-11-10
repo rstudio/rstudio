@@ -16,6 +16,7 @@
 package com.google.gwt.autobean.shared.impl;
 
 import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.AutoBeanVisitor.Context;
@@ -50,6 +51,7 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T> {
    */
   protected final Map<String, Object> values;
 
+  private final AutoBeanFactory factory;
   private boolean frozen;
 
   /**
@@ -63,7 +65,8 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T> {
   /**
    * Constructor that will use a generated simple peer.
    */
-  protected AbstractAutoBean() {
+  protected AbstractAutoBean(AutoBeanFactory factory) {
+    this.factory = factory;
     usingSimplePeer = true;
     values = new HashMap<String, Object>();
   }
@@ -72,6 +75,7 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T> {
    * Clone constructor.
    */
   protected AbstractAutoBean(AbstractAutoBean<T> toClone, boolean deep) {
+    this.factory = toClone.factory;
     if (!toClone.usingSimplePeer) {
       throw new IllegalStateException("Cannot clone wrapped bean");
     }
@@ -94,7 +98,8 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T> {
   /**
    * Constructor that wraps an existing object.
    */
-  protected AbstractAutoBean(T wrapped) {
+  protected AbstractAutoBean(AutoBeanFactory factory, T wrapped) {
+    this.factory = factory;
     usingSimplePeer = false;
     values = null;
     this.wrapped = wrapped;
@@ -110,6 +115,10 @@ public abstract class AbstractAutoBean<T> implements AutoBean<T> {
   public abstract T as();
 
   public abstract AutoBean<T> clone(boolean deep);
+
+  public AutoBeanFactory getFactory() {
+    return factory;
+  }
 
   @SuppressWarnings("unchecked")
   public <Q> Q getTag(String tagName) {

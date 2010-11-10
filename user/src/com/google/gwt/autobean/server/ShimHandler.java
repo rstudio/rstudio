@@ -126,8 +126,8 @@ class ShimHandler<T> implements InvocationHandler {
       }
       return toReturn;
     }
-    ProxyAutoBean<Object> newBean = new ProxyAutoBean<Object>(intf,
-        bean.getConfiguration(), toReturn);
+    ProxyAutoBean<Object> newBean = new ProxyAutoBean<Object>(
+        bean.getFactory(), intf, bean.getConfiguration(), toReturn);
     return newBean.as();
   }
 }
