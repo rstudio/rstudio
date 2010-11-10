@@ -7,11 +7,6 @@
 // The items that must be provided in any install location are:
 // $wnd - the location where the bootstrap module is defined. Should also
 //        be the location where the __gwtStatsEvent is defined
-//
-// For hosted mode to work, the following must also be provided. Note that if
-// the hosted.js file went through the same processing as the md5.js files,
-// these additional variables would not be needed.
-// __gwt_moduleFunction
 
 var frameDoc;
 
@@ -19,7 +14,7 @@ function getInstallLocationDoc() {
   setupInstallLocation();
   return frameDoc;
 }
-  
+
 function getInstallLocation() {
   setupInstallLocation();
   return frameDoc.getElementsByTagName('body')[0];
