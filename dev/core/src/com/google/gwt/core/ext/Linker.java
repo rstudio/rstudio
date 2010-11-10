@@ -154,7 +154,7 @@ public abstract class Linker {
   /**
    * Does this linker support DevMode?
    */
-  public boolean supportsDevMode() {
+  public boolean supportsDevModeInJunit(LinkerContext context) {
     // By default, linkers do not support Dev Mode
     return false;
   }

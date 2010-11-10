@@ -15,9 +15,11 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.ArgProcessorBase;
@@ -1102,7 +1104,10 @@ public class JUnitShell extends DevMode {
     if (developmentMode) {
       // BACKWARDS COMPATIBILITY: many linkers currently fail in dev mode.
       try {
-        if (!module.getActivePrimaryLinker().newInstance().supportsDevMode()) {
+        Linker l = module.getActivePrimaryLinker().newInstance();
+        StandardLinkerContext context =
+          new StandardLinkerContext(getTopLogger(), module, null);
+        if (!l.supportsDevModeInJunit(context)) {
           if (module.getLinker("std") != null) {
             // TODO: unfortunately, this could be race condition between dev/prod
             module.addLinker("std");

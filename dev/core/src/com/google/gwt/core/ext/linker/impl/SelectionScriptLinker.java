@@ -132,7 +132,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   @Override
-  public boolean supportsDevMode() {
+  public boolean supportsDevModeInJunit(LinkerContext context) {
     return (getHostedFilename() != "");
   }
   
