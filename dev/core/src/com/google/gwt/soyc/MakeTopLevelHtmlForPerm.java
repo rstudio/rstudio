@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,8 +16,13 @@
 
 package com.google.gwt.soyc;
 
+import com.google.gwt.core.ext.linker.CompilationMetricsArtifact;
+import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
+import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.core.ext.soyc.impl.SizeMapRecorder;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.soyc.io.OutputDirectory;
 
 import java.io.IOException;
@@ -26,6 +31,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +72,7 @@ public class MakeTopLevelHtmlForPerm {
   /**
    * A dependency linker for the total program breakdown. It links to a split
    * status page.
-   * 
+   *
    */
   public class DependencyLinkerForTotalBreakdown implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
@@ -107,10 +113,6 @@ public class MakeTopLevelHtmlForPerm {
    */
   private static final Pattern PATTERN_SP_INT = Pattern.compile("sp([0-9]+)");
 
-  private static String escapeXml(String unescaped) {
-      return SizeMapRecorder.escapeXml(unescaped);
-  }
-
   public static void makeTopLevelHtmlForAllPerms(
       Map<String, List<String>> allPermsInfo, OutputDirectory outDir)
       throws IOException {
@@ -118,27 +120,34 @@ public class MakeTopLevelHtmlForPerm {
     addStandardHtmlProlog(outFile, "Compile report", "Compile report",
         "Overview of permutations");
     outFile.println("<ul>");
-    
-    // in order to print these in ascending order, we have to sort by 
+
+    // in order to print these in ascending order, we have to sort by
     // integers
     SortedSet<Integer> sortedPermIds = new TreeSet<Integer>();
     for (String permutationId : allPermsInfo.keySet()) {
       sortedPermIds.add(Integer.parseInt(permutationId));
     }
-   
+
     for (Integer sortedPermId : sortedPermIds) {
       String permutationId = Integer.toString(sortedPermId);
       List<String> permutationInfoList = allPermsInfo.get(permutationId);
-      outFile.print("<li><a href=\"SoycDashboard" + "-" + permutationId
-        + "-index.html\">Permutation " + permutationId);
-      if (permutationInfoList.size() > 0) {
-        for (String desc : permutationInfoList) {
-          outFile.println("  (" + desc + ")");
-        }
-        outFile.println("</a></li>");
-      } else {
-        outFile.println("</a>");
+      outFile.print("<li>Permutation " + permutationId);
+
+      for (String desc : permutationInfoList) {
+        outFile.println("  (" + desc + ")");
       }
+      outFile.println("<ul>");
+      outFile.println("<li>");
+      outFile.println("<a href=\"SoycDashboard-" + permutationId
+          + "-index.html\">Split Point Report</a>");
+      outFile.println("</li>");
+      outFile.println("<li>");
+      outFile.println("<a href=\"CompilerMetrics-" + permutationId
+          + "-index.html\">Compiler Metrics</a>");
+      outFile.println("</li>");
+
+      outFile.println("</ul>");
+      outFile.println("</li>");
     }
     outFile.println("</ul>");
     addStandardHtmlEnding(outFile);
@@ -160,7 +169,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</style>");
     outFile.println("</head>");
   }
-  
+
   private static void addStandardHtmlEnding(final PrintWriter out) {
     out.println("</div>");
     out.println("</body>");
@@ -173,7 +182,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
     outFile.println("<html>");
     outFile.println("<head>");
-    outFile.println("<script type=\"text/javascript\">");    
+    outFile.println("<script type=\"text/javascript\">");
     outFile.println("function show(elementName)");
     outFile.println("{");
     outFile.println("hp = document.getElementById(elementName);");
@@ -183,7 +192,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("{");
     outFile.println("hp = document.getElementById(elementName);");
     outFile.println("hp.style.visibility = \"Hidden\";");
-    outFile.println("}");    
+    outFile.println("}");
     outFile.println("</script>");
     outFile.println("<title>");
     outFile.println(title);
@@ -214,13 +223,19 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</div>");
     outFile.println("</div>");
     outFile.println("<div id=\"bd\">");
-    outFile.println("<h2>" + header2 + "</h2>");
+    if (header2 != null && header2.length() > 0) {
+      outFile.println("<h2>" + header2 + "</h2>");
+    }
   }
 
   private static String classesInPackageFileName(SizeBreakdown breakdown,
       String packageName, String permutationId) {
     return breakdown.getId() + "_" + filename(packageName) + "-"
         + permutationId + "_Classes.html";
+  }
+
+  private static String escapeXml(String unescaped) {
+    return SizeMapRecorder.escapeXml(unescaped);
   }
 
   /**
@@ -268,29 +283,33 @@ public class MakeTopLevelHtmlForPerm {
         getPermutationId())));
 
     addStandardHtmlProlog(outFile, "Application breakdown analysis",
-      "Application breakdown analysis", "");
+        "Application breakdown analysis", "");
 
-    outFile.println("<div id=\"bd\"><h2><a style=\"cursor:default;\" onMouseOver=\"show('packageBreakdownPopup');\" " +
-        "onMouseOut=\"hide('packageBreakdownPopup');\">Package breakdown</a></h2></div>");
-    outFile.println("<div id=\"packageBreakdownPopup\" style=\"visibility:hidden; position:absolute;\">");
-    outFile.println("<table bgcolor=\"#c5d7ef\" width=\"200\">");
-    outFile.println("<tr><td><b>Package breakdown</b></td></tr>");
-    outFile.println("<tr><td bgcolor=\"#e5ecf9\">The package breakdown blames pieces of JavaScript " +
-        "code on Java packages wherever possible.  Note that this is not possible for all code, so the sizes " +
-        "of the packages here will not normally add up to the full code size.  More specifically, the sum will " +
-        "exclude strings, whitespace, and a few pieces of JavaScript code that are produced during compilation " +
-        "but cannot be attributed to any Java package.</td></tr></table></div>");
+    String popupName = "packageBreakdownPopup";
+    String popupTitle = "Package breakdown";
+    String popupBody =  "The package breakdown blames pieces of JavaScript "
+      + "code on Java packages wherever possible.  Note that this is not possible for all code, so the sizes "
+      + "of the packages here will not normally add up to the full code size.  More specifically, the sum will "
+      + "exclude strings, whitespace, and a few pieces of JavaScript code that are produced during compilation "
+      + "but cannot be attributed to any Java package.";
+
+    outFile.println("<h2>");
+    addPopupLink(outFile, popupName, popupTitle, null);
+    outFile.println("</h2></div>");
+    addPopup(outFile, popupName, popupTitle, popupBody);
     outFile.println("<iframe class='soyc-iframe-package' src=\""
         + packageBreakdownFileName + "\" scrolling=auto></iframe>");
 
-    outFile.println("<h2><a style=\"cursor:default;\" onMouseOver=\"show('codeTypeBreakdownPopup');\" " +
-        "onMouseOut=\"hide('codeTypeBreakdownPopup');\">Code type breakdown</a></h2>");
-    outFile.println("<div id=\"codeTypeBreakdownPopup\" style=\"visibility:hidden; position:absolute;\">");
-    outFile.println("<table bgcolor=\"#c5d7ef\" width=\"200\">");
-    outFile.println("<tr><td><b>Code type breakdown</b></td></tr>");
-    outFile.println("<tr><td bgcolor=\"#e5ecf9\">The code type breakdown breaks down the JavaScript code according to its " +
-        "type or function.  For example, it tells you how much of your code can be attributed to JRE, GWT-RPC, etc.  As " +
-        "above, strings and some other JavaScript snippets are not included in the breakdown.</td></tr></table></div>");
+    popupName = "codeTypeBreakdownPopup";
+    popupTitle = "Code Type Breakdown";
+    popupBody = "The code type breakdown breaks down the JavaScript code according to its "
+      + "type or function.  For example, it tells you how much of your code can be attributed to "
+      + "JRE, GWT-RPC, etc.  As above, strings and some other JavaScript snippets are not included "
+      + "in the breakdown.";
+    outFile.println("<h2>");
+    addPopupLink(outFile, popupName, popupTitle, null);
+    outFile.println("</h2>");
+    addPopup(outFile, popupName, popupTitle, popupBody);
 
     outFile.println("<iframe class='soyc-iframe-code' src=\""
         + codeTypeBreakdownFileName + "\" scrolling=auto></iframe>");
@@ -371,6 +390,168 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
+  public void makeCompilerMetricsPermFiles (
+      ModuleMetricsArtifact moduleMetrics,
+      PrecompilationMetricsArtifact precompilationMetrics,
+      CompilationMetricsArtifact compilationMetrics)  throws IOException {
+    String outFileName = "CompilerMetrics-"
+        + precompilationMetrics.getPermuationBase() + "-index.html";
+    PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
+    String title = "Compiler Metrics for Permutation "
+        + compilationMetrics.getPermuationId();
+    addStandardHtmlProlog(outFile, title, title, "Build Time Metrics");
+
+    outFile.println("<div id=\"bd\">");
+    int permutationId = compilationMetrics.getPermuationId();
+
+    // Build Time Metrics
+    outFile.println("<table class=\"soyc-table\">");
+    outFile.println("<colgroup>");
+    outFile.println("<col id=\"soyc-buildTimePhase-col\">");
+    outFile.println("<col id=\"soyc-buildTimeElapsed-col\">");
+    outFile.println("</colgroup>");
+    outFile.println("<thead>");
+    outFile.println("<th>Phase</th>");
+    outFile.println("<th>Elapsed Time</th>");
+    outFile.println("</thead>");
+
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    outFile.println("Module Analysis");
+    outFile.println("</td>");
+    outFile.println("<td>" + moduleMetrics.getElapsedMilliseconds() + " ms");
+    outFile.println("</td>");
+    outFile.println("</tr>");
+
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    outFile.println("Precompile (may include Module Analysis)");
+    outFile.println("</td>");
+    outFile.println("<td>" + precompilationMetrics.getElapsedMilliseconds() + " ms");
+    outFile.println("</td>");
+    outFile.println("</tr>");
+
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    outFile.println("Compile");
+    outFile.println("</td>");
+    outFile.println("<td>" + compilationMetrics.getElapsedMilliseconds() + " ms");
+    outFile.println("</td>");
+    outFile.println("</tr>");
+    outFile.println("</table>");
+
+    outFile.println("<p></p>");
+    outFile.println("<h2>Source/Type Metrics</h2>");
+
+    outFile.println("<table class=\"soyc-table\">");
+    outFile.println("<colgroup>");
+    outFile.println("<col id=\"soyc-typeList-col\">");
+    outFile.println("<col id=\"soyc-typeReferences-col\">");
+    outFile.println("</colgroup>");
+    outFile.println("<thead>");
+    outFile.println("<th>Description</th>");
+    outFile.println("<th>References</th>");
+    outFile.println("</thead>");
+
+    String sourcesFileName = "CompilerMetrics-sources.html";
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    String popupName = "compilerMetricsSourceFiles";
+    String popupTitle = "Source files";
+    String popupBody = "All source files on the module source path.";
+    addPopupLink(outFile, popupName, popupTitle, sourcesFileName);
+    addPopup(outFile, popupName, popupTitle, popupBody);
+    outFile.println("</td>");
+    outFile.println("<td>");
+    outFile.println("" + moduleMetrics.getSourceFiles().length);
+    outFile.println("</td>");
+    outFile.println("</tr>");
+    makeCompilerMetricsSources(sourcesFileName, moduleMetrics, popupBody);
+
+    String initialTypesFileName = "CompilerMetrics-initialTypes-" + permutationId + ".html";
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    popupName = "compilerMetricsInitialTypes";
+    popupTitle = "Initial Type Oracle Types";
+    popupBody = "All types in the type oracle after compiling sources on the source path.";
+    addPopupLink(outFile, popupName, popupTitle, initialTypesFileName);
+    addPopup(outFile, popupName, popupTitle, popupBody);
+    outFile.println("</td>");
+    outFile.println("<td>");
+    outFile.println("" + moduleMetrics.getInitialTypes().length);
+    outFile.println("</td>");
+    outFile.println("</tr>");
+    makeCompilerMetricsInitialTypeOracleTypes(initialTypesFileName, moduleMetrics, popupBody);
+
+    String finalTypesFileName = "CompilerMetrics-finalTypes-" + permutationId + ".html";
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    popupName = "compilerMetricsFinalTypes";
+    popupTitle = "Final Type Oracle Types";
+    popupBody = "All types in the type oracle after constructing the Java AST.";
+    addPopupLink(outFile, popupName, popupTitle, finalTypesFileName);
+    addPopup(outFile, popupName, popupTitle, popupBody);
+    outFile.println("</td>");
+    outFile.println("<td>");
+    outFile.println("" + precompilationMetrics.getFinalTypeOracleTypes().length);
+    outFile.println("</td>");
+    outFile.println("</tr>");
+    makeCompilerMetricsFinalTypeOracleTypes(finalTypesFileName, precompilationMetrics, popupBody);
+
+    String[] generatedTypes = getGeneratedTypes(moduleMetrics, precompilationMetrics);
+    String generatedTypesFileName = "CompilerMetrics-generatedTypes-" + permutationId + ".html";
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    popupName = "compilerMetricsGeneratedTypes";
+    popupTitle = "GeneratedTypes";
+    popupBody = "Types that were added to the type oracle while running generators.";
+    addPopupLink(outFile, popupName, popupTitle, generatedTypesFileName);
+    addPopup(outFile, popupName, popupTitle, popupBody);
+    outFile.println("</td>");
+    outFile.println("<td>");
+    outFile.println("" + generatedTypes.length);
+    outFile.println("</td>");
+    outFile.println("</tr>");
+    makeCompilerMetricsGeneratedTypes(generatedTypesFileName, generatedTypes, popupBody);
+
+    String astFileName = "CompilerMetrics-ast-" + permutationId + ".html";
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    popupName = "compilerMetricsAstTypes";
+    popupTitle = "AST Referenced Types";
+    popupBody = "All types referenced by the Java AST after performing "
+        + "reachability analysis from the module EntryPoint.";
+    addPopupLink(outFile, popupName, popupTitle, astFileName);
+    addPopup(outFile, popupName, popupTitle, popupBody);
+    outFile.println("</td>");
+    outFile.println("<td>");
+    outFile.println("" + precompilationMetrics.getAstTypes().length);
+    outFile.println("</td>");
+    outFile.println("</tr>");
+    makeCompilerMetricsAstTypes(astFileName, precompilationMetrics, popupBody);
+
+    String[] unreferencedTypes = getUnreferencedTypes(precompilationMetrics);
+    String unreferencedFileName = "CompilerMetrics-unreferencedTypes-" + permutationId + ".html";
+    outFile.println("<tr>");
+    outFile.println("<td>");
+    popupName = "compilerMetricsUnreferenceTypes";
+    popupTitle = "Unreferenced Types";
+    popupBody = "Types that were on the initial source path but never referenced in "
+        + "the Java AST.";
+    addPopupLink(outFile, popupName, popupTitle, unreferencedFileName);
+    addPopup(outFile, popupName, popupTitle, popupBody);
+    outFile.println("</td>");
+    outFile.println("<td>");
+    outFile.println("" + unreferencedTypes.length);
+    outFile.println("</td>");
+    outFile.println("</tr>");
+    makeCompilerMetricsUnreferencedTypes(unreferencedFileName, unreferencedTypes, popupBody);
+    outFile.println("</table>");
+
+    addStandardHtmlEnding(outFile);
+    outFile.close();
+  }
+
   public void makeDependenciesHtml() throws IOException {
     for (String depGraphName : globalInformation.dependencies.keySet()) {
       makeDependenciesHtml(depGraphName,
@@ -416,7 +597,7 @@ public class MakeTopLevelHtmlForPerm {
   public void makePackageClassesHtmls(SizeBreakdown breakdown,
       DependencyLinker depLinker) throws IOException {
     for (String packageName : globalInformation.getPackageToClasses().keySet()) {
-      TreeMap<Integer, Set<String> > sortedClasses = new TreeMap<Integer, Set<String> >(
+      TreeMap<Integer, Set<String>> sortedClasses = new TreeMap<Integer, Set<String>>(
           Collections.reverseOrder());
       int sumSize = 0;
       for (String className : globalInformation.getPackageToClasses().get(
@@ -509,8 +690,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<dl>");
     outFile.println("<dt>Full code size</dt>");
     outFile.println("<dd class=\"value\">"
-        + globalInformation.getTotalCodeBreakdown().sizeAllCode
-        + " Bytes</dd>");
+        + globalInformation.getTotalCodeBreakdown().sizeAllCode + " Bytes</dd>");
     outFile.println("<dd class=\"report\"><a href=\"total-" + permutationId
         + "-overallBreakdown.html\">Report</a></dd>");
 
@@ -519,7 +699,8 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<dt>Initial download size</dt>");
     // TODO(kprobst) -- add percentage here: (48%)</dd>");
     outFile.println("<dd class=\"value\">"
-        + globalInformation.getInitialCodeBreakdown().sizeAllCode + " Bytes</dd>");
+        + globalInformation.getInitialCodeBreakdown().sizeAllCode
+        + " Bytes</dd>");
     outFile.println("<dd class=\"report\"><a href=\"initial-" + permutationId
         + "-overallBreakdown.html\">Report</a></dd>");
     outFile.println("</dl>");
@@ -616,6 +797,25 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</ul>");
   }
 
+  private void addPopup(PrintWriter outFile, String popupName, String popupTitle, String popupBody) {
+    outFile.println("<div class=\"soyc-popup\" id=\"" + popupName + "\">");
+    outFile.println("<table>");
+    outFile.println("<tr><th><b>" + popupTitle + "</b></th></tr>");
+    outFile.println("<tr><td>" + popupBody + "</td></tr>");
+    outFile.println("</table>");
+    outFile.println("</div>");
+  }
+
+  private void addPopupLink(PrintWriter outFile, String popupName,
+      String popupTitle, String href) {
+    outFile.println("<a ");
+    if (href != null) {
+      outFile.println("href=\"" + href + "\"");
+    }
+    outFile.println("style=\"cursor:default;\" onMouseOver=\"show('" + popupName + "');\" "
+        + "onMouseOut=\"hide('" + popupName + "');\">" + popupTitle + "</a>");
+  }
+
   /**
    * Returns a file name for the dependencies list.
    */
@@ -626,7 +826,7 @@ public class MakeTopLevelHtmlForPerm {
 
   /**
    * Format floating point number to two decimal points.
-   * 
+   *
    * @param number
    * @return formatted number
    */
@@ -635,8 +835,18 @@ public class MakeTopLevelHtmlForPerm {
     return formatBy.format(number);
   }
 
+  private String[] getGeneratedTypes(ModuleMetricsArtifact moduleMetrics,
+      PrecompilationMetricsArtifact precompilationMetrics) {
+    List<String> initialTypes = Lists.create(moduleMetrics.getInitialTypes());
+    Set<String> generatedTypes = Sets.create(precompilationMetrics.getFinalTypeOracleTypes());
+    generatedTypes.removeAll(initialTypes);
+    String[] results = generatedTypes.toArray(new String[generatedTypes.size()]);
+    Arrays.sort(results);
+    return results;
+  }
+
   /**
-   * Return a {@link File} object for a file to be emitted into the output
+   * Return a {@link java.io.File} object for a file to be emitted into the output
    * directory.
    */
   private OutputStream getOutFile(String localFileName) throws IOException {
@@ -648,6 +858,15 @@ public class MakeTopLevelHtmlForPerm {
    */
   private String getPermutationId() {
     return globalInformation.getPermutationId();
+  }
+
+  private String[] getUnreferencedTypes(PrecompilationMetricsArtifact precompilationMetrics) {
+    List<String> astTypes = Lists.create(precompilationMetrics.getAstTypes());
+    Set<String> unreferencedTypes = Sets.create(precompilationMetrics.getFinalTypeOracleTypes());
+    unreferencedTypes.removeAll(astTypes);
+    String[] results = unreferencedTypes.toArray(new String[unreferencedTypes.size()]);
+    Arrays.sort(results);
+    return results;
   }
 
   /**
@@ -678,7 +897,7 @@ public class MakeTopLevelHtmlForPerm {
 
   /**
    * Returns whether a split point is initial or not.
-   * 
+   *
    * @param splitPoint
    * @returns true of the split point is initial, false otherwise
    */
@@ -689,7 +908,7 @@ public class MakeTopLevelHtmlForPerm {
 
   /**
    * Makes a file name for a leftovers status file.
-   * 
+   *
    * @param className
    * @return the file name of the leftovers status file
    */
@@ -700,7 +919,7 @@ public class MakeTopLevelHtmlForPerm {
 
   /**
    * Produces an HTML file that breaks down by code type.
-   * 
+   *
    * @param breakdown
    * @param nameToCodeColl
    * @param nameToLitColl
@@ -713,7 +932,7 @@ public class MakeTopLevelHtmlForPerm {
     String outFileName = breakdown.getId() + "-" + getPermutationId()
         + "-codeTypeBreakdown.html";
     int sumSize = 0;
-    TreeMap<Integer, Set<String> > sortedCodeTypes = new TreeMap<Integer, Set<String> >(
+    TreeMap<Integer, Set<String>> sortedCodeTypes = new TreeMap<Integer, Set<String>>(
         Collections.reverseOrder());
 
     for (String codeType : nameToCodeColl.keySet()) {
@@ -773,18 +992,131 @@ public class MakeTopLevelHtmlForPerm {
     int stringSize = nameToLitColl.get("string").size;
     String drillDownFileName = breakdown.getId() + "_string-"
         + getPermutationId() + "Lits.html";
-    outFile.println("<p class=\"soyc-breakdown-strings\">" + stringSize + " bytes occupied by <a href=\""
-        + drillDownFileName + "\" target=\"_top\">Strings</a></p>");
+    outFile.println("<p class=\"soyc-breakdown-strings\">" + stringSize
+        + " bytes occupied by <a href=\"" + drillDownFileName
+        + "\" target=\"_top\">Strings</a></p>");
     int unaccountedForSize = breakdown.sizeAllCode - sumSize - stringSize;
-    outFile.println("<p class=\"soyc-breakdown-strings\">" + unaccountedForSize + " bytes of the JavaScript output cannot be attributed to any package or code type.</p>");
+    outFile.println("<p class=\"soyc-breakdown-strings\">"
+        + unaccountedForSize
+        + " bytes of the JavaScript output cannot be attributed to any package or code type.</p>");
     addStandardHtmlEnding(outFile);
     outFile.close();
     return outFileName;
   }
 
+  private void makeCompilerMetricsAstTypes(String outFileName,
+      PrecompilationMetricsArtifact precompilationMetrics, String helpText) throws IOException {
+    PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
+    String title = "AST Types";
+    addStandardHtmlProlog(outFile, title, title, "");
+    outFile.println("<p>");
+    outFile.println(helpText);
+    outFile.println("</p>");
+    outFile.println("<pre>");
+    String[] types = precompilationMetrics.getAstTypes();
+    Arrays.sort(types);
+    for (String type : types) {
+      outFile.println(type);
+    }
+    outFile.println("</pre>");
+    addStandardHtmlEnding(outFile);
+    outFile.close();
+  }
+
+  private void makeCompilerMetricsFinalTypeOracleTypes(String outFileName,
+      PrecompilationMetricsArtifact precompilationMetrics, String helpText) throws IOException {
+    PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
+    String title = "Final Type Oracle Types";
+    addStandardHtmlProlog(outFile, title, title, "");
+    outFile.println("<p>");
+    outFile.println(helpText);
+    outFile.println("</p>");
+    outFile.println("<pre>");
+    String[] types = precompilationMetrics.getFinalTypeOracleTypes();
+    Arrays.sort(types);
+    for (String type : types) {
+      outFile.println(type);
+    }
+    outFile.println("</pre>");
+    addStandardHtmlEnding(outFile);
+    outFile.close();
+  }
+
+  private void makeCompilerMetricsGeneratedTypes(String outFileName,
+      String[] generatedTypes, String helpText) throws IOException {
+    PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
+    String title = "Generated Types";
+    addStandardHtmlProlog(outFile, title, title, "");
+    outFile.println("<p>");
+    outFile.println(helpText);
+    outFile.println("</p>");
+    outFile.println("<pre>");
+    for (String type : generatedTypes) {
+      outFile.println(type);
+    }
+    outFile.println("</pre>");
+    addStandardHtmlEnding(outFile);
+    outFile.close();
+  }
+
+  private void makeCompilerMetricsInitialTypeOracleTypes(String outFileName,
+      ModuleMetricsArtifact moduleMetrics, String helpText) throws IOException {
+    PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
+    String title = "Initial Type Oracle Types (built from source path)";
+    addStandardHtmlProlog(outFile, title, title, "");
+    outFile.println("<p>");
+    outFile.println(helpText);
+    outFile.println("</p>");
+    outFile.println("<pre>");
+    String[] types = moduleMetrics.getInitialTypes();
+    Arrays.sort(types);
+    for (String type : types) {
+      outFile.println(type);
+    }
+    outFile.println("</pre>");
+    addStandardHtmlEnding(outFile);
+    outFile.close();
+  }
+
+  private void makeCompilerMetricsSources(String outFileName, ModuleMetricsArtifact moduleMetrics,
+      String helpText) throws IOException {
+    PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
+    String title = "Sources on Source Path";
+    addStandardHtmlProlog(outFile, title, title, "");
+    outFile.println("<p>");
+    outFile.println(helpText);
+    outFile.println("</p>");
+    outFile.println("<pre>");
+    String[] sources = moduleMetrics.getSourceFiles();
+    Arrays.sort(sources);
+    for (String source : sources) {
+      outFile.println(source);
+    }
+    outFile.println("</pre>");
+    addStandardHtmlEnding(outFile);
+    outFile.close();
+  }
+
+  private void makeCompilerMetricsUnreferencedTypes(String outFileName,
+      String[] unreferencedTypes, String helpText) throws IOException {
+    PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
+    String title = "Unreferenced Types";
+    addStandardHtmlProlog(outFile, title, title, "");
+    outFile.println("<p>");
+    outFile.println(helpText);
+    outFile.println("</p>");
+    outFile.println("<pre>");
+    for (String type : unreferencedTypes) {
+      outFile.println(type);
+    }
+    outFile.println("</pre>");
+    addStandardHtmlEnding(outFile);
+    outFile.close();
+  }
+
   /**
    * Produces an HTML file that displays dependencies.
-   * 
+   *
    * @param depGraphName name of dependency graph
    * @param dependencies map of dependencies
    * @throws IOException
@@ -856,7 +1188,7 @@ public class MakeTopLevelHtmlForPerm {
 
   /**
    * Produces an HTML file for leftovers status.
-   * 
+   *
    * @param className
    * @throws IOException
    */
@@ -876,7 +1208,7 @@ public class MakeTopLevelHtmlForPerm {
 
   /**
    * Produces an HTML file that shows information about a package.
-   * 
+   *
    * @param breakdown
    * @return the name of the HTML file
    * @throws IOException

@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.StatementRanges;
@@ -241,8 +242,8 @@ public class JavaToJavaScriptCompiler {
    *
    * @param logger the logger to use
    * @param unifiedAst the result of a
-   *          {@link #precompile(TreeLogger, ModuleDef, RebindPermutationOracle, 
-   *                             String[], String[], JJSOptions, boolean, 
+   *          {@link #precompile(TreeLogger, ModuleDef, RebindPermutationOracle,
+   *                             String[], String[], JJSOptions, boolean,
    *                             PrecompilationMetricsArtifact)}
    * @param permutation the permutation to compile
    * @return the output JavaScript
@@ -430,10 +431,9 @@ public class JavaToJavaScriptCompiler {
 
       PermutationResult toReturn = new PermutationResultImpl(js, permutation,
           makeSymbolMap(symbolTable), ranges);
-      toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram,
-          js, sizeBreakdowns, sourceInfoMaps, dependencies, map, obfuscateMap));
+      CompilationMetricsArtifact compilationMetrics = null;
       if (options.isCompilerMetricsEnabled()) {
-        CompilationMetricsArtifact compilationMetrics = new CompilationMetricsArtifact(permutation.getId());        
+        compilationMetrics = new CompilationMetricsArtifact(permutation.getId());
         compilationMetrics.setCompileElapsedMilliseconds(System.currentTimeMillis()
             - startTimeMilliseconds);
         compilationMetrics.setElapsedMilliseconds(System.currentTimeMillis()
@@ -443,6 +443,11 @@ public class JavaToJavaScriptCompiler {
         toReturn.addArtifacts(Lists.create(unifiedAst.getModuleMetrics(),
             unifiedAst.getPrecompilationMetrics(), compilationMetrics));
       }
+      toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram,
+          js, sizeBreakdowns, sourceInfoMaps, dependencies, map, obfuscateMap,
+          unifiedAst.getModuleMetrics(), unifiedAst.getPrecompilationMetrics(),
+          compilationMetrics));
+
       logger.log(TreeLogger.TRACE, "Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
       return toReturn;
@@ -460,7 +465,7 @@ public class JavaToJavaScriptCompiler {
     return precompile(logger, module, rpo, declEntryPts, additionalRootTypes,
         options, singlePermutation, null);
   }
-  
+
   /**
    * Performs a precompilation, returning a unified AST.
    *
@@ -510,7 +515,7 @@ public class JavaToJavaScriptCompiler {
     allRootTypes.add(FragmentLoaderCreator.ASYNC_FRAGMENT_LOADER);
 
     Memory.maybeDumpMemory("CompStateBuilt");
-    
+
     // Compile the source and get the compiler so we can get the parse tree
     CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
         logger, allRootTypes.toArray(new String[allRootTypes.size()]), rpo,
@@ -528,7 +533,7 @@ public class JavaToJavaScriptCompiler {
     // Free up memory.
     rpo.clear();
     Memory.maybeDumpMemory("GoldenCudsBuilt");
-    
+
     // Check for compilation problems. We don't log here because any problems
     // found here will have already been logged by AbstractCompiler.
     checkForErrors(logger, goldenCuds, false);
@@ -562,7 +567,7 @@ public class JavaToJavaScriptCompiler {
       checkForErrors(logger, goldenCuds, true);
 
       Memory.maybeDumpMemory("AstBuilt");
-      
+
       // Allow GC
       goldenCuds = null;
       typeMap = null;
@@ -648,7 +653,7 @@ public class JavaToJavaScriptCompiler {
       if (options.isCompilerMetricsEnabled()) {
         precompilationMetrics.setAstTypes(getReferencedJavaClasses(jprogram));
       }
-      
+
       Event createUnifiedAstEvent = SpeedTracerLogger.start(CompilerEventType.CREATE_UNIFIED_AST);
       UnifiedAst result = new UnifiedAst(options, new AST(jprogram, jsProgram),
           singlePermutation, rebindRequests);
@@ -1139,7 +1144,10 @@ public class JavaToJavaScriptCompiler {
       SizeBreakdown[] sizeBreakdowns,
       List<Map<Range, SourceInfo>> sourceInfoMaps,
       SyntheticArtifact dependencies, JavaToJavaScriptMap jjsmap,
-      Map<JsName, String> obfuscateMap) throws IOException,
+      Map<JsName, String> obfuscateMap,
+      ModuleMetricsArtifact moduleMetricsArtifact,
+      PrecompilationMetricsArtifact precompilationMetricsArtifact,
+      CompilationMetricsArtifact compilationMetrics) throws IOException,
       UnableToCompleteException {
     List<SyntheticArtifact> soycArtifacts = new ArrayList<SyntheticArtifact>();
 
@@ -1213,6 +1221,11 @@ public class JavaToJavaScriptCompiler {
             e);
       }
       dashboard.generateForOnePermutation();
+      if (moduleMetricsArtifact != null && precompilationMetricsArtifact != null
+          && compilationMetrics != null) {
+        dashboard.generateCompilerMetricsForOnePermuation(moduleMetricsArtifact,
+            precompilationMetricsArtifact, compilationMetrics);
+      }
       soycArtifacts.addAll(outDir.getArtifacts());
       generateCompileReport.end();
     }
@@ -1316,7 +1329,7 @@ public class JavaToJavaScriptCompiler {
     deps.endDependencyGraph();
     deps.close();
   }
-  
+
   /**
    * This method can be used to fetch the list of referenced classs.
    *

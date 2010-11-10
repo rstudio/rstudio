@@ -239,3 +239,22 @@ html>body .goog-inline-block {
 *:first-child+html .goog-inline-block {
   display:inline
 }
+.soyc-popup {
+  visibility:hidden;
+  position:absolute;
+  margin-left: 5px;
+}
+.soyc-popup td {
+  background-color: #e5ecf9;
+  padding:.35em 1em .25em .35em;
+  margin:0
+}
+.soyc-popup th {
+  background-color: transparent;
+  padding:.35em 1em .25em .35em;
+  margin:0 
+}
+.soyc-popup table {
+  background-color: #c5d7ef;
+  width: 200px
+}
