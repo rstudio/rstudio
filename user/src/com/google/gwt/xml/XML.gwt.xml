@@ -23,11 +23,6 @@
     <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
   </replace-with>
 
-  <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplMozillaOld">
-    <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
-    <when-property-is name="user.agent" value="gecko"/>
-  </replace-with>
-
   <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplOpera">
     <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
     <when-property-is name="user.agent" value="opera"/>

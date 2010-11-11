@@ -23,10 +23,7 @@
   <!-- Firefox uses a hidden input to set accesskeys -->
   <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplStandard">
     <when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
-    <any>
-      <when-property-is name="user.agent" value="gecko"/>
-      <when-property-is name="user.agent" value="gecko1_8"/>
-    </any>
+    <when-property-is name="user.agent" value="gecko1_8"/>
   </replace-with>
 
   <!-- Safari uses a hidden input to set accesskeys and -->

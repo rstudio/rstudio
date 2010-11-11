@@ -267,8 +267,8 @@ public class ElementTest extends GWTTestCase {
     // Ensure that the 'position:fixed' div's absolute position includes the
     // body's scroll position.
     //
-    // Don't do this on IE6/7 or old Gecko, which don't support position:fixed.
-    if (!isIE6or7() && !isOldGecko()) {
+    // Don't do this on IE6/7, which doesn't support position:fixed.
+    if (!isIE6or7()) {
       assertTrue(fixedDiv.getAbsoluteLeft() >= body.getScrollLeft());
       assertTrue(fixedDiv.getAbsoluteTop() >= body.getScrollTop());
     }
@@ -618,25 +618,6 @@ public class ElementTest extends GWTTestCase {
     if (ua.indexOf("msie") != -1) {
       if (document.documentMode >= 8) {
         return false;
-      }
-      return true;
-    }
-    return false;
-  }-*/;
-
-  // Stolen from UserAgent.gwt.xml.
-  private native boolean isOldGecko() /*-{
-    var makeVersion = function(result) {
-      return (parseInt(result[1]) * 1000) + parseInt(result[2]);
-    };
-
-    var ua = navigator.userAgent.toLowerCase();
-    if (ua.indexOf("gecko") != -1) {
-      var result = /rv:([0-9]+)\.([0-9]+)/.exec(ua);
-      if (result && result.length == 3) {
-        if (makeVersion(result) >= 1008) {
-          return false;
-        }
       }
       return true;
     }

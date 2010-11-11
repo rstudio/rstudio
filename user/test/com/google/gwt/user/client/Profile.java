@@ -85,14 +85,8 @@ public abstract class Profile extends GWTTestCase {
     return "ie6";
     }
     else if (ua.indexOf("gecko") != -1) {
-      var result = /rv:([0-9]+)\.([0-9]+)/.exec(ua);
-      if (result && result.length == 3) {
-        var version = (parseInt(result[1]) * 10) + parseInt(result[2]);
-        if (version >= 18)
-          return "gecko1_8";
-        }
-        return "gecko";
-      }
+      return "gecko1_8";
+    }
     return "unknown";
-}-*/;
+  }-*/;
 }

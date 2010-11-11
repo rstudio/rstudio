@@ -23,10 +23,7 @@
   <!-- Mozilla needs a different implementation due to issue #410 -->
   <replace-with class="com.google.gwt.user.client.ui.impl.PopupImplMozilla">
     <when-type-is class="com.google.gwt.user.client.ui.impl.PopupImpl"/>
-    <any>
-      <when-property-is name="user.agent" value="gecko"/>
-      <when-property-is name="user.agent" value="gecko1_8"/>
-    </any>
+    <when-property-is name="user.agent" value="gecko1_8"/>
   </replace-with>
 
   <!-- IE6 has a completely different popup implementation. It is no longer -->

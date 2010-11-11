@@ -138,7 +138,7 @@ public class JUnitMessageQueue {
   private final Map<TestInfo, Map<ClientStatus, JUnitResult>> testResults = new HashMap<TestInfo, Map<ClientStatus, JUnitResult>>();
 
   /**
-   * A set of the GWT user agents (eg. ie6, gecko) that have connected.
+   * A set of the GWT user agents (eg. ie6, gecko1_8) that have connected.
    */
   private final Set<String> userAgents = new HashSet<String>();
 

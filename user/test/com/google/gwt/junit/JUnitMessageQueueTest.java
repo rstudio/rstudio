@@ -95,7 +95,7 @@ public class JUnitMessageQueueTest extends TestCase {
     // Add some clients in a few ways.
     {
       queue.getTestBlock(createClientInfo(0, "ie6"), 0, timeout);
-      queue.reportFatalLaunch(createClientInfo(1, "gecko"), null);
+      queue.reportFatalLaunch(createClientInfo(1, "gecko1_8"), null);
       queue.reportResults(createClientInfo(2, "safari"), createTestResults(0));
       assertEquals(3, queue.getNumConnectedClients());
     }
@@ -111,7 +111,7 @@ public class JUnitMessageQueueTest extends TestCase {
     // Add existing clients.
     {
       queue.getTestBlock(createClientInfo(0, "ie6"), 0, timeout);
-      queue.reportFatalLaunch(createClientInfo(1, "gecko"), null);
+      queue.reportFatalLaunch(createClientInfo(1, "gecko1_8"), null);
       queue.reportResults(createClientInfo(2, "safari"), createTestResults(0));
       assertEquals(5, queue.getNumConnectedClients());
     }
@@ -273,9 +273,9 @@ public class JUnitMessageQueueTest extends TestCase {
     // Add some clients in a few ways.
     {
       queue.getTestBlock(createClientInfo(0, "ie6"), 0, timeout);
-      queue.reportFatalLaunch(createClientInfo(1, "gecko"), null);
+      queue.reportFatalLaunch(createClientInfo(1, "gecko1_8"), null);
       queue.reportResults(createClientInfo(2, "safari"), createTestResults(0));
-      assertSimilar(new String[] {"ie6", "gecko", "safari"},
+      assertSimilar(new String[] {"ie6", "gecko1_8", "safari"},
           queue.getUserAgents());
     }
 
@@ -285,16 +285,16 @@ public class JUnitMessageQueueTest extends TestCase {
       queue.reportFatalLaunch(createClientInfo(3, "ie7"), null);
       queue.reportResults(createClientInfo(4, "gecko1_8"), createTestResults(0));
       queue.getTestBlock(createClientInfo(3, "ie7"), 0, timeout);
-      assertSimilar(new String[] {"ie6", "ie7", "gecko", "gecko1_8", "safari"},
+      assertSimilar(new String[] {"ie6", "ie7", "gecko1_8", "safari"},
           queue.getUserAgents());
     }
 
     // Add existing clients.
     {
       queue.getTestBlock(createClientInfo(0, "ie6"), 0, timeout);
-      queue.reportFatalLaunch(createClientInfo(1, "gecko"), null);
+      queue.reportFatalLaunch(createClientInfo(1, "gecko1_8"), null);
       queue.reportResults(createClientInfo(2, "safari"), createTestResults(0));
-      assertSimilar(new String[] {"ie6", "ie7", "gecko", "gecko1_8", "safari"},
+      assertSimilar(new String[] {"ie6", "ie7", "gecko1_8", "safari"},
           queue.getUserAgents());
     }
   }
@@ -422,7 +422,7 @@ public class JUnitMessageQueueTest extends TestCase {
     // Add some clients in a few ways.
     {
       queue.getTestBlock(createClientInfo(0, "ie6"), 0, timeout);
-      queue.reportFatalLaunch(createClientInfo(1, "gecko"), null);
+      queue.reportFatalLaunch(createClientInfo(1, "gecko1_8"), null);
       queue.reportResults(createClientInfo(2, "safari"), createTestResults(0));
       assertSimilar(new String[] {"desc0", "desc1", "desc2"},
           queue.getNewClients());
@@ -442,7 +442,7 @@ public class JUnitMessageQueueTest extends TestCase {
     // Add existing clients.
     {
       queue.getTestBlock(createClientInfo(0, "ie6"), 0, timeout);
-      queue.reportFatalLaunch(createClientInfo(1, "gecko"), null);
+      queue.reportFatalLaunch(createClientInfo(1, "gecko1_8"), null);
       queue.reportResults(createClientInfo(2, "safari"), createTestResults(0));
       assertEquals(0, queue.getNewClients().length);
     }

@@ -19,7 +19,7 @@
 <module>
 
   <!-- Browser-sensitive code should use the 'user.agent' property -->
-  <define-property name="user.agent" values="ie6,ie8,gecko,gecko1_8,safari,opera"/>
+  <define-property name="user.agent" values="ie6,ie8,gecko1_8,safari,opera"/>
 
   <property-provider name="user.agent"><![CDATA[
       var ua = navigator.userAgent.toLowerCase();
@@ -44,12 +44,7 @@
           }
         }
       } else if (ua.indexOf("gecko") != -1) {
-        var result = /rv:([0-9]+)\.([0-9]+)/.exec(ua);
-        if (result && result.length == 3) {
-          if (makeVersion(result) >= 1008)
-            return "gecko1_8";
-          }
-        return "gecko";
+        return "gecko1_8";
       }
       return "unknown";
   ]]></property-provider>

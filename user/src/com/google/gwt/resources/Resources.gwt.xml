@@ -51,7 +51,6 @@
       <any>
         <when-property-is name="user.agent" value="safari" />
         <when-property-is name="user.agent" value="opera" />
-        <when-property-is name="user.agent" value="gecko" />
         <when-property-is name="user.agent" value="gecko1_8" />
         <when-property-is name="user.agent" value="ie8" />
       </any>
