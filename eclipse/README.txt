@@ -169,7 +169,16 @@ Description can be left blank.
     - DynaTable: uses RPC
   Then press the Finish button.
 
-2) Dismiss the welcome tab if you are setting up an Eclipse workspace
+2) If you are using the Google Plugin for Eclipse 
+  (http://code.google.com/eclipse), enable it for 'gwt-user'
+
+  Right click the 'gwt-user' project and go to properties. Select 
+  Google->Web Toolkit, and check the box for 'Use Google Web Toolkit'.
+
+  Then, select Google->Web Application, and uncheck 'This project has a WAR
+  directory'. Then press the "Apply" button.
+
+3) Dismiss the welcome tab if you are setting up an Eclipse workspace
   for the first time.
 
   You should now have several new projects in your Eclipse workspace.
@@ -183,7 +192,7 @@ Description can be left blank.
 
   Then refresh each project.
 
-3) Finally, drop to the command line and build the project
+4) Finally, drop to the command line and build the project
   using 'ant'. You may need to first download ant from the web:
 
     http://ant.apache.org/
@@ -241,7 +250,7 @@ This section captures the process used to create the original 'Hello.launch'
  Project->Preferences...->Projects Tab->Add...
  Add 'gwt-user' as a project dependency.
 
-2) Create a new launch configuration
+3) Create a new launch configuration
 
   Select the project in the tree on the left of the Main Window
   Open the Run... dialog
