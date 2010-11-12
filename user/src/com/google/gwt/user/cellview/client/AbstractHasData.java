@@ -270,8 +270,9 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     Set<String> eventTypes = new HashSet<String>();
     eventTypes.add("focus");
     eventTypes.add("blur");
-    eventTypes.add("keydown");
-    eventTypes.add("mousedown"); // Used by subclasses to steal focus.
+    eventTypes.add("keydown"); // Used for keyboard navigation.
+    eventTypes.add("click"); // Used by subclasses for selection.
+    eventTypes.add("mousedown"); // No longer used, but here for legacy support.
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
   }
 

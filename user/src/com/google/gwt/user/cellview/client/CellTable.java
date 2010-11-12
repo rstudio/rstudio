@@ -563,7 +563,6 @@ public class CellTable<T> extends AbstractHasData<T> {
 
     // Sink events.
     Set<String> eventTypes = new HashSet<String>();
-    eventTypes.add("click");
     eventTypes.add("mouseover");
     eventTypes.add("mouseout");
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
@@ -926,7 +925,7 @@ public class CellTable<T> extends AbstractHasData<T> {
       }
     } else if (section == tbody) {
       // Update the hover state.
-      boolean isMouseDown = "mousedown".equals(eventType);
+      boolean isClick = "click".equals(eventType);
       int row = tr.getSectionRowIndex();
       if ("mouseover".equals(eventType)) {
         // Unstyle the old row if it is still part of the table.
@@ -941,7 +940,7 @@ public class CellTable<T> extends AbstractHasData<T> {
         setRowStyleName(hoveringRow, style.cellTableHoveredRow(),
             style.cellTableHoveredRowCell(), false);
         hoveringRow = null;
-      } else if (isMouseDown
+      } else if (isClick
           && ((getPresenter().getKeyboardSelectedRowInView() != row)
           || (keyboardSelectedColumn != col))) {
         // Move keyboard focus. Since the user clicked, allow focus to go to a
@@ -960,7 +959,7 @@ public class CellTable<T> extends AbstractHasData<T> {
         return;
       }
       T value = getDisplayedItem(row);
-      if ("click".equals(eventType) && !handlesSelection) {
+      if (isClick && !handlesSelection) {
         doSelection(event, value, row, col);
       }
 

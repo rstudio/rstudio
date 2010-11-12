@@ -379,7 +379,7 @@ public class CellList<T> extends AbstractHasData<T> {
       // before firing the event to the cell in case the cell operates on the
       // currently selected item.
       String eventType = event.getType();
-      boolean isMouseDown = "mousedown".equals(eventType);
+      boolean isClick = "click".equals(eventType);
       int idx = Integer.parseInt(idxString);
       int indexOnPage = idx - getPageStart();
       if (!isRowWithinBounds(indexOnPage)) {
@@ -390,12 +390,12 @@ public class CellList<T> extends AbstractHasData<T> {
       // Get the cell parent before doing selection in case the list is redrawn.
       Element cellParent = getCellParent(cellTarget);
       T value = getDisplayedItem(indexOnPage);
-      if (isMouseDown && !cell.handlesSelection()) {
+      if (isClick && !cell.handlesSelection()) {
         doSelection(event, value, indexOnPage);
       }
 
       // Focus on the cell.
-      if (isMouseDown
+      if (isClick
           && getPresenter().getKeyboardSelectedRowInView() != indexOnPage) {
         /*
          * If the selected element is natively focusable, then we do not want to
