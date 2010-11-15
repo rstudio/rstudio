@@ -663,6 +663,8 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_PADDING_BOTTOM = "paddingBottom";
   private static final String STYLE_PADDING = "padding";
   private static final String STYLE_OVERFLOW = "overflow";
+  private static final String STYLE_OVERFLOW_X = "overflow-x";
+  private static final String STYLE_OVERFLOW_Y = "overflow-y";
   private static final String STYLE_OPACITY = "opacity";
   private static final String STYLE_MARGIN_TOP = "marginTop";
   private static final String STYLE_MARGIN_RIGHT = "marginRight";
@@ -877,6 +879,20 @@ public class Style extends JavaScriptObject {
     clearProperty(STYLE_OVERFLOW);
   }
 
+  /**
+   * Clears the overflow-x CSS property.
+   */
+  public final void clearOverflowX() {
+    clearProperty(STYLE_OVERFLOW_X);
+  }
+  
+  /**
+   * Clears the overflow-y CSS property.
+   */
+  public final void clearOverflowY() {
+    clearProperty(STYLE_OVERFLOW_Y);
+  }
+  
   /**
    * Clear the padding css property.
    */
@@ -1120,6 +1136,20 @@ public class Style extends JavaScriptObject {
    */
   public final String getOverflow() {
     return getProperty(STYLE_OVERFLOW);
+  }
+
+  /**
+   * Gets the overflow-x CSS property. 
+   */
+  public final String getOverflowX() {
+    return getProperty(STYLE_OVERFLOW_X);
+  }
+
+  /**
+   * Gets the overflow-y CSS property. 
+   */
+  public final String getOverflowY() {
+    return getProperty(STYLE_OVERFLOW_Y);
   }
 
   /**
@@ -1380,6 +1410,20 @@ public class Style extends JavaScriptObject {
    */
   public final void setOverflow(Overflow value) {
     setProperty(STYLE_OVERFLOW, value.getCssName());
+  }
+
+  /**
+   * Sets the overflow-x CSS property.
+   */
+  public final void setOverflowX(Overflow value) {
+    setProperty(STYLE_OVERFLOW_X, value.getCssName());
+  }
+
+  /**
+   * Sets the overflow-y CSS property.
+   */
+  public final void setOverflowY(Overflow value) {
+    setProperty(STYLE_OVERFLOW_Y, value.getCssName());
   }
 
   /**
