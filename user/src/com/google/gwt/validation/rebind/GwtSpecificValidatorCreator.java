@@ -56,22 +56,22 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
   /**
      * Returns the literal value of an object that is suitable for inclusion in
-     * Java Source code.  
-     * 
+     * Java Source code.
+     *
      * <p>
      * Supports all types that {@link Annotation) value can have.
-     * 
-     * 
+     *
+     *
      * @throws IllegalArgumentException if the type of the object does not have a java literal form.
      */
     public static String asLiteral(Object value) throws IllegalArgumentException {
       Class<?> clazz = value.getClass();
       JProgram jProgram = new JProgram();
-  
+
       if (clazz.isArray()) {
         StringBuilder sb = new StringBuilder();
         Object[] array = (Object[]) value;
-  
+
         sb.append("new " + clazz.getComponentType().getCanonicalName() + "[] ");
         sb.append("{");
         boolean first = true;
@@ -95,6 +95,9 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
       }
       if (value instanceof Integer) {
         return jProgram.getLiteralInt(((Integer) value).intValue()).toSource();
+      }
+      if (value instanceof Long) {
+        return jProgram.getLiteralLong(((Long) value).intValue()).toSource();
       }
       if (value instanceof String) {
         return '"' + ((String) value).toString().replace("\"", "\\\"") + '"';
@@ -243,10 +246,10 @@ public class GwtSpecificValidatorCreator extends AbstractCreator {
 
     // .setConstraintValidatorClasses(classes )
     sw.print(".setConstraintValidatorClasses(");
-    sw.print(asLiteral(asArray(constraint.getConstraintValidatorClasses(), 
+    sw.print(asLiteral(asArray(constraint.getConstraintValidatorClasses(),
         new Class[0])));
     sw.println(")");
-    
+
     // .getGroups(groups)
     sw.print(".setGroups(");
     Set<Class<?>> groups = constraint.getGroups();

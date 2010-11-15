@@ -26,8 +26,8 @@ import javax.validation.metadata.BeanDescriptor;
 final class BeanHelper {
 
   private final BeanDescriptor beanDescriptor;
-  private final JClassType jClass;
 
+  private final JClassType jClass;
   public BeanHelper(JClassType jClass,
       BeanDescriptor beanDescriptor) {
     super();
@@ -52,7 +52,7 @@ final class BeanHelper {
   }
 
   public String getFullyQualifiedValidatorName() {
-    return jClass.getQualifiedSourceName() + "Validator";
+    return getPackage() + "." + getValidatorName();
   }
 
   public String getPackage() {
@@ -64,15 +64,20 @@ final class BeanHelper {
   }
 
   public String getValidatorInstanceName() {
-    return jClass.getName().toLowerCase() + "Validator";
+    return makeJavaSafe(jClass.getName().toLowerCase() + "Validator");
   }
 
   public String getValidatorName() {
-    return jClass.getName() + "Validator";
+    return makeJavaSafe(jClass.getName() + "Validator");
   }
 
   @Override
   public String toString() {
     return getTypeCanonicalName();
   }
+
+  private String makeJavaSafe(String in) {
+      return in.replaceAll("\\.", "_");
+    }
+
 }

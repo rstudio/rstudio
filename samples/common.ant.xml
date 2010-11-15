@@ -3,7 +3,7 @@
   <property name="project.tail" value="samples/${sample.root}" />
   <import file="${gwt.root}/common.ant.xml" />
 
-  <!-- 
+  <!--
     Number of localworkers for sample compilation.  This depends on your
     hardware, so it's a good candidate to specify in local.ant.properties
     if this default isn't good for you.  Ideally, it should approximate
@@ -71,7 +71,7 @@
 
   <target name="compile" description="Compile all java files">
     <mkdir dir="${sample.build}/war/WEB-INF/classes" />
-    <gwt.javac destdir="${sample.build}/war/WEB-INF/classes" 
+    <gwt.javac destdir="${sample.build}/war/WEB-INF/classes"
                excludes="**/super/**">
       <classpath>
         <pathelement location="${gwt.user.jar}" />
@@ -155,7 +155,9 @@
 
   <target name="checkstyle" description="Static analysis of source">
     <gwt.checkstyle outputdirectory="${sample.build}">
-      <fileset dir="src" />
+      <fileset dir="src" >
+        <exclude name="org/**/super/org/**/*.java"/>
+      </fileset>
     </gwt.checkstyle>
   </target>
 

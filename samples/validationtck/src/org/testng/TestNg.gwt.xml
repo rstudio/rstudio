@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This is a HACK, is not a general solution for using TestNg.
+It is only enough to run the tests in the GWT Validation TCK.
+-->
+<module>
+  <inherits name="com.google.gwt.user.User" />
+  <source path="annotations">
+    <exclude name="ITestAnnotation.java" />
+    <exclude name="Listeners.java" />
+    <exclude name="Optional.java" />
+  </source>
+  <source path="collections" />
+  <source path="">
+    <include name="Assert.java" />
+    <include name="AssertJUnit.java" />
+    <include name="IClass.java" />
+    <include name="IHookable.java" />
+    <include name="IHookCallBack.java" />
+    <include name="ITestResult.java" />
+    <include name="ITestNGListener.java" />
+    <include name="ITestNGMethod.java" />
+    <include name="IAttributes.java" />
+    <include name="IRetryAnalyzer.java" />
+    <include name="ITestClass.java" />
+  </source>
+  <super-source path="super" />
+</module>
