@@ -1,0 +1,59 @@
+/*
+ * Copyright 2010 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+/*
+ * Cross-browser implementation of the "display: inline-block" CSS property.
+ * See http://www.w3.org/TR/CSS21/visuren.html#propdef-display for details.
+ * Tested on IE 6 & 7, FF 2.0 & 3.0, Safari 2 & 3, Webkit, Chrome and Opera 9.
+ *
+ * Original author: attila@google.com (Attila Bodis)
+ */
+
+/*
+ * Firefox hack is needed for versions < FF3.  But since the user.agent property
+ * does not allow us to specify directly for (versions < FF3), we will need to
+ * use the following two rules to workaround.
+ */
+/* Firefox versions >= FF 1.5 */
+@if user.agent gecko1_8 {
+  .inlineBlock {
+    /*
+     * Note on funny syntax: what we really need is this: "display: -moz-inline-box;"
+     * but "\\" is needed to make GWT's CssResource escape the "-" character properly.
+     */
+    display: \\-moz-inline-box; /* This is ignored by FF3 and later*/
+  }
+}
+
+/* Default rule; only Safari, Webkit, Opera, FF3 handle it without hacks. */
+.inlineBlock {
+  position: relative;
+  display: inline-block;
+}
+
+/*
+ * IE specific rules (for IE version IE6/7)
+ * On IE, "display: inline-block" only gives the element layout, but doesn't
+ * give it inline behavior.  Subsequently setting display to inline does the
+ * trick.
+ */
+@if user.agent ie6 {
+  .inlineBlock {
+    /* workaround to make IE "hasLayout" */
+    zoom: 1;
+    display: inline;
+  }
+}
