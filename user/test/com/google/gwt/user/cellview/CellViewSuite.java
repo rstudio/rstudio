@@ -22,6 +22,7 @@ import com.google.gwt.user.cellview.client.CellBrowserTest;
 import com.google.gwt.user.cellview.client.CellListTest;
 import com.google.gwt.user.cellview.client.CellTableTest;
 import com.google.gwt.user.cellview.client.CellTreeTest;
+import com.google.gwt.user.cellview.client.CellWidgetTest;
 import com.google.gwt.user.cellview.client.ColumnTest;
 import com.google.gwt.user.cellview.client.HasDataPresenterTest;
 import com.google.gwt.user.cellview.client.PageSizePagerTest;
@@ -42,6 +43,7 @@ public class CellViewSuite {
     suite.addTestSuite(CellListTest.class);
     suite.addTestSuite(CellTableTest.class);
     suite.addTestSuite(CellTreeTest.class);
+    suite.addTestSuite(CellWidgetTest.class);
     suite.addTestSuite(ColumnTest.class);
     suite.addTestSuite(HasDataPresenterTest.class);
     suite.addTestSuite(PageSizePagerTest.class);
