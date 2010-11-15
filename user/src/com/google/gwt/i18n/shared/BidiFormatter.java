@@ -211,6 +211,8 @@ public class BidiFormatter {
 
   private boolean alwaysSpan;
   private Direction contextDir;
+  private DirectionEstimator directionEstimator =
+      WordCountDirectionEstimator.get();
 
   /**
    * @param contextDir The context direction
@@ -240,14 +242,14 @@ public class BidiFormatter {
    * Returns "dir=ltr" or "dir=rtl", depending on {@code str}'s estimated
    * direction, if it is not the same as the context direction. Otherwise,
    * returns the empty string.
-   *
+   * 
    * @param str String whose direction is to be estimated
    * @param isHtml Whether {@code str} is HTML / HTML-escaped
    * @return "dir=rtl" for RTL text in non-RTL context; "dir=ltr" for LTR text
    *         in non-LTR context; else, the empty string.
    */
   public String dirAttr(String str, boolean isHtml) {
-    return knownDirAttr(BidiUtils.get().estimateDirection(str, isHtml));
+    return knownDirAttr(directionEstimator.estimateDirection(str, isHtml));
   }
 
   /**
@@ -266,7 +268,7 @@ public class BidiFormatter {
    * @return {@code str}'s estimated overall direction
    */
   public Direction estimateDirection(String str) {
-    return BidiUtils.get().estimateDirection(str);
+    return directionEstimator.estimateDirection(str);
   }
 
   /**
@@ -279,7 +281,7 @@ public class BidiFormatter {
    * @return {@code str}'s estimated overall direction
    */
   public Direction estimateDirection(String str, boolean isHtml) {
-    return BidiUtils.get().estimateDirection(str, isHtml);
+    return directionEstimator.estimateDirection(str, isHtml);
   }
 
   /**
@@ -295,6 +297,10 @@ public class BidiFormatter {
    */
   public Direction getContextDir() {
     return contextDir;
+  }
+
+  public DirectionEstimator getDirectionEstimator() {
+    return directionEstimator;
   }
 
   /**
@@ -354,8 +360,12 @@ public class BidiFormatter {
    */
   public String markAfter(String str, boolean isHtml) {
     str = BidiUtils.get().stripHtmlIfNeeded(str, isHtml);
-    return dirResetIfNeeded(str, BidiUtils.get().estimateDirection(str), false,
-        true);
+    return dirResetIfNeeded(str, directionEstimator.estimateDirection(str),
+        false, true);
+  }
+
+  public void setDirectionEstimator(DirectionEstimator directionEstimator) {
+    this.directionEstimator = directionEstimator;
   }
 
   /**
@@ -407,12 +417,13 @@ public class BidiFormatter {
    * @return Input string after applying the above processing.
    */
   public String spanWrap(String str, boolean isHtml, boolean dirReset) {
-    Direction dir = BidiUtils.get().estimateDirection(str, isHtml);
+    Direction dir = directionEstimator.estimateDirection(str, isHtml);
     return spanWrapWithKnownDir(dir, str, isHtml, dirReset);
   }
 
   /**
-   * Like {@link #spanWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
+   * Like
+   * {@link #spanWrapWithKnownDir(com.google.gwt.i18n.client.HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code isHtml} is false and {@code dirReset} is true.
    *
    * @param dir {@code str}'s direction
@@ -424,7 +435,8 @@ public class BidiFormatter {
   }
 
   /**
-   * Like {@link #spanWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
+   * Like
+   * {@link #spanWrapWithKnownDir(com.google.gwt.i18n.client.HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code dirReset} is true.
    *
    * @param dir {@code str}'s direction
@@ -543,12 +555,13 @@ public class BidiFormatter {
    * @return Input string after applying the above processing.
    */
   public String unicodeWrap(String str, boolean isHtml, boolean dirReset) {
-    Direction dir = BidiUtils.get().estimateDirection(str, isHtml);
+    Direction dir = directionEstimator.estimateDirection(str, isHtml);
     return unicodeWrapWithKnownDir(dir, str, isHtml, dirReset);
   }
 
   /**
-   * Like {@link #unicodeWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
+   * Like
+   * {@link #unicodeWrapWithKnownDir(com.google.gwt.i18n.client.HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code isHtml} is false and {@code dirReset} is true.
    *
    * @param dir {@code str}'s direction
@@ -560,7 +573,8 @@ public class BidiFormatter {
   }
 
   /**
-   * Like {@link #unicodeWrapWithKnownDir(HasDirection.Direction, String, boolean, boolean)},
+   * Like
+   * {@link #unicodeWrapWithKnownDir(com.google.gwt.i18n.client.HasDirection.Direction, String, boolean, boolean)},
    * but assumes {@code dirReset} is true.
    *
    * @param dir {@code str}'s direction
