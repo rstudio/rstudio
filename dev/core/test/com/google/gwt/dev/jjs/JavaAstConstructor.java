@@ -64,22 +64,57 @@ public class JavaAstConstructor {
       return code;
     }
   };
+  public static final MockJavaResource CAST = new MockJavaResource(
+      "com.google.gwt.lang.Cast") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.lang;\n");
+      code.append("public final class Cast {\n");
+      code.append("  public static Object dynamicCast(Object src, int dstId) { return src;}\n");
+      code.append("  public static boolean isNull(Object a) { return false;}\n");
+      code.append("  public static boolean isNotNull(Object a) { return false;}\n");
+      code.append("  public static boolean jsEquals(Object a, Object b) { return false;}\n");
+      code.append("  public static boolean jsNotEquals(Object a, Object b) { return false;}\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource CLASS = new MockJavaResource(
       "java.lang.Class") {
     @Override
     protected CharSequence getContent() {
+      // This has extra code in the createForEnum method, to keep it from being inlined
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
       code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
       code.append("public final class Class<T> {\n");
-      code.append("  static <T> Class<T> createForArray(String packageName, String className, String seedName, Class<?> componentType) { return new Class<T>(); }\n");
-      code.append("  static <T> Class<T> createForClass(String packageName, String className, String seedName, Class<? super T> superclass) { return new Class<T>(); }\n");
-      code.append("  static <T> Class<T> createForEnum(String packageName, String className, String seedName, Class<? super T> superclass, JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) { return new Class<T>(); }\n");
-      code.append("  static <T> Class<T> createForInterface(String packageName, String className) { return new Class<T>(); }\n");
-      code.append("  static <T> Class<T> createForPrimitive(String packageName, String className, String jni) { return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForArray(String packageName,\n");
+      code.append("       String className, String seedName, Class<?> componentType) {\n");
+      code.append("     return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForClass(String packageName,\n");
+      code.append("       String className, String seedName, Class<? super T> superclass) {\n");
+      code.append("     return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForEnum(String packageName,\n");
+      code.append("       String className, String seedName, Class<? super T> superclass,\n");
+      code.append("       JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) {\n");
+      code.append("     Class<T> newClass = new Class<T>();\n");
+      code.append("     newClass.className = className;\n");
+      code.append("     newClass.packageName = packageName;\n");
+      code.append("     newClass.seedName = seedName;\n");
+      code.append("     return newClass;}\n");
+      code.append("  static <T> Class<T> createForInterface(String packageName, String className) {\n");
+      code.append("     return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForPrimitive(String packageName,\n");
+      code.append("       String className, String jni) {\n");
+      code.append("     return new Class<T>(); }\n");
       code.append("  static boolean isClassMetadataEnabled() { return true; }\n");
       code.append("  public boolean desiredAssertionStatus() { return true; }\n");
-      code.append("  public String getName() { return null; }\n");
+      code.append("  public String getName() { return className; }\n");
+      code.append("  public T[] getEnumConstants() { return null; }\n");
+      code.append("  private String packageName = null;");
+      code.append("  private String className = null;");
+      code.append("  private String seedName = null;");
       code.append("}\n");
       return code;
     }
@@ -104,9 +139,20 @@ public class JavaAstConstructor {
       code.append("import java.io.Serializable;\n");
       code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
       code.append("public abstract class Enum<E extends Enum<E>> implements Serializable {\n");
-      code.append("  protected Enum(String name, int ordinal) {}\n");
-      code.append("  protected static <T extends Enum<T>> JavaScriptObject createValueOfMap(T[] enumConstants) { return null; }\n");
+      code.append("  public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) { \n");
+      code.append("    for (T enumConstant : enumType.getEnumConstants()) {\n");
+      code.append("      if (enumConstant.name() != null) {\n");
+      code.append("        return enumConstant;}}\n");
+      code.append("    return null;}\n");
+      code.append("  protected Enum(String name, int ordinal) { \n");
+      code.append("    this.name = name;\n");
+      code.append("    this.ordinal = ordinal;}\n");
+      code.append("  protected static <T extends Enum<T>> JavaScriptObject createValueOfMap(T[] enumConstants) { return null;}\n");
       code.append("  protected static <T extends Enum<T>> T valueOf(JavaScriptObject map, String name) { return null; }\n");
+      code.append("  private final String name;\n");
+      code.append("  private final int ordinal;\n");
+      code.append("  public final String name() { return name; }\n");
+      code.append("  public final int ordinal() { return ordinal; }\n"); 
       code.append("}\n");
       return code;
     }
@@ -240,7 +286,7 @@ public class JavaAstConstructor {
     // Replace the basic Class and Enum with a compiler-specific one.
     result.remove(JavaResourceBase.CLASS);
     result.remove(JavaResourceBase.ENUM);
-    Collections.addAll(result, ARRAY, CLASS, CLASSLITERALHOLDER, ENUM, GWT,
+    Collections.addAll(result, ARRAY, CAST, CLASS, CLASSLITERALHOLDER, ENUM, GWT,
         RUNASYNCCALLBACK);
     return result.toArray(new MockJavaResource[result.size()]);
   }
