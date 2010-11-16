@@ -22,10 +22,12 @@ import com.google.gwt.core.ext.linker.CastableTypeMap;
  * The standard implementation of {@link CastableTypeMap}.
  */
 public class StandardCastableTypeMap implements CastableTypeMap {
+  // Save some memory by defining this constant string.
+  private static final String EMPTY_JSON_REF = "{}";
   
   final String jsonData;
   public StandardCastableTypeMap(String jsonData) {
-    this.jsonData = jsonData;
+    this.jsonData = jsonData.equals(EMPTY_JSON_REF) ? EMPTY_JSON_REF : jsonData;
   }
 
   public String toJs() {

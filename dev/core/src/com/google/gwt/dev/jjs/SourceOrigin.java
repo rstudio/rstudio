@@ -16,13 +16,14 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.Correlation.Axis;
+import com.google.gwt.dev.util.StringInterner;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Describes where a SourceInfo's node came from. This class currently includes
@@ -118,7 +119,7 @@ public class SourceOrigin implements SourceInfo {
   private final int startLine;
 
   private SourceOrigin(String location, int startLine) {
-    this.fileName = location;
+    this.fileName = StringInterner.get().intern(location);
     this.startLine = startLine;
   }
 

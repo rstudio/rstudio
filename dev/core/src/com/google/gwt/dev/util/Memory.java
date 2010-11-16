@@ -81,7 +81,8 @@ public class Memory {
     }
     String dumpFile = System.getProperty(PROPERTY_DUMP_HEAP);
     if (dumpFile != null) {
-      dumpFile = info + "-" + dumpFile;
+      String procName = ManagementFactory.getRuntimeMXBean().getName();
+      dumpFile = info + "-" + procName + dumpFile;
       new File(dumpFile).delete();
       try {
         Class<?> beanClass = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");

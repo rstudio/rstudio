@@ -24,9 +24,9 @@ import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
-import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
@@ -308,7 +308,7 @@ public class JavaToJavaScriptCompiler {
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeAfterOptimizations();
-      JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(jprogram, jsProgram,
+      JavaToJavaScriptMap jjsmap = GenerateJavaScriptAST.exec(jprogram, jsProgram,
           options.getOutput(), symbolTable, propertyOracles);
 
       // (8) Normalize the JS AST.
@@ -317,7 +317,7 @@ public class JavaToJavaScriptCompiler {
       // Resolve all unresolved JsNameRefs.
       JsSymbolResolver.exec(jsProgram);
       // Move all function definitions to a top-level scope, to reduce weirdness
-      EvalFunctionsAtTopScope.exec(jsProgram, map);
+      EvalFunctionsAtTopScope.exec(jsProgram, jjsmap);
 
       // (9) Optimize the JS AST.
       if (optimizationLevel > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
@@ -340,7 +340,7 @@ public class JavaToJavaScriptCompiler {
       SyntheticArtifact dependencies = null;
       if (options.isRunAsyncEnabled()) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        CodeSplitter.exec(logger, jprogram, jsProgram, map,
+        CodeSplitter.exec(logger, jprogram, jsProgram, jjsmap,
             chooseDependencyRecorder(options.isSoycEnabled(), baos));
         if (baos.size() == 0 && options.isSoycEnabled()) {
           recordNonSplitDependencies(jprogram, baos);
@@ -423,7 +423,7 @@ public class JavaToJavaScriptCompiler {
           new SizeBreakdown[js.length] : null;
       List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycExtra() ?
           new ArrayList<Map<Range, SourceInfo>>() : null;
-      generateJavaScriptCode(options, jsProgram, map, js, ranges,
+      generateJavaScriptCode(options, jsProgram, jjsmap, js, ranges,
           sizeBreakdowns, sourceInfoMaps, splitBlocks);
 
       PermutationResult toReturn = new PermutationResultImpl(js, permutation,
@@ -441,7 +441,7 @@ public class JavaToJavaScriptCompiler {
             unifiedAst.getPrecompilationMetrics(), compilationMetrics));
       }
       toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram,
-          js, sizeBreakdowns, sourceInfoMaps, dependencies, map, obfuscateMap,
+          js, sizeBreakdowns, sourceInfoMaps, dependencies, jjsmap, obfuscateMap,
           unifiedAst.getModuleMetrics(), unifiedAst.getPrecompilationMetrics(),
           compilationMetrics));
 
@@ -1153,6 +1153,7 @@ public class JavaToJavaScriptCompiler {
       PrecompilationMetricsArtifact precompilationMetricsArtifact,
       CompilationMetricsArtifact compilationMetrics) throws IOException,
       UnableToCompleteException {
+    Memory.maybeDumpMemory("makeSoycArtifactsStart");
     List<SyntheticArtifact> soycArtifacts = new ArrayList<SyntheticArtifact>();
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -1215,6 +1216,7 @@ public class JavaToJavaScriptCompiler {
         if (dependencies != null) {
           dashboard.readDependencies(openWithGunzip(dependencies));
         }
+        Memory.maybeDumpMemory("soycReadDependenciesEnd");
       } catch (ParserConfigurationException e) {
         throw new InternalCompilerException(
             "Error reading compile report information that was just generated",

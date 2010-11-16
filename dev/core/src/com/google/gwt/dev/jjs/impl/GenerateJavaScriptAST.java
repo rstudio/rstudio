@@ -135,8 +135,9 @@ import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
-import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Maps;
 
@@ -150,10 +151,10 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 
 /**
  * Creates a JavaScript AST from a <code>JProgram</code> node.
@@ -482,7 +483,7 @@ public class GenerateJavaScriptAST {
         }
         sb.append(')');
         sb.append(method.getOriginalReturnType().getJsniSignatureName());
-        methodSig = sb.toString();
+        methodSig = StringInterner.get().intern(sb.toString());
       } else {
         methodSig = null;
       }

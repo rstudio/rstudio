@@ -19,6 +19,7 @@ package com.google.gwt.soyc;
 import com.google.gwt.core.ext.linker.CompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.soyc.MakeTopLevelHtmlForPerm.DependencyLinker;
 import com.google.gwt.soyc.MakeTopLevelHtmlForPerm.NullDependencyLinker;
 import com.google.gwt.soyc.io.FileSystemOutputDirectory;
@@ -40,10 +41,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -212,9 +213,9 @@ public class SoycDashboard {
             && (attributes.getValue("name") != null)) {
           String name = attributes.getValue("name");
           dependencies = new TreeMap<String, String>();
-          allDependencies.put(name, dependencies);
+          allDependencies.put(StringInterner.get().intern(name), dependencies);
           if (attributes.getValue("extends") != null) {
-            graphExtends = attributes.getValue("extends");
+            graphExtends = StringInterner.get().intern(attributes.getValue("extends"));
             if (!allDependencies.containsKey(graphExtends)) {
               throw new FormatException("Graph " + name
                   + " extends an unknown graph " + graphExtends);
@@ -224,12 +225,13 @@ public class SoycDashboard {
           }
         } else if ((strippedName.compareTo("method") == 0)
             && (attributes.getValue("name") != null)) {
-          curMethod = attributes.getValue("name");
+          curMethod = StringInterner.get().intern(attributes.getValue("name"));
         } else if ((strippedName.compareTo("called") == 0)
             && (attributes.getValue("by") != null)) {
           String curDepMethod = attributes.getValue("by");
           if (!dependencies.containsKey(curMethod)) {
-            dependencies.put(curMethod, curDepMethod);
+            dependencies.put(StringInterner.get().intern(curMethod),
+                StringInterner.get().intern(curDepMethod));
           }
         }
       }
@@ -519,7 +521,7 @@ public class SoycDashboard {
             int idx = className.indexOf(':');
             className = className.substring(0, idx);
           }
-
+          className = StringInterner.get().intern(className);
           // derive the package name from the class
           String packageName;
           if (!globalInformation.getClassToPackage().containsKey(className)) {
@@ -529,6 +531,7 @@ public class SoycDashboard {
           } else {
             packageName = globalInformation.getClassToPackage().get(className);
           }
+
           if (!globalInformation.getPackageToClasses().containsKey(packageName)) {
             TreeSet<String> insertSet = new TreeSet<String>();
             insertSet.add(className);
@@ -569,6 +572,8 @@ public class SoycDashboard {
 
       private void recordSize(String refType, String ref, int size,
           GlobalInformation globalInformation) {
+        refType = StringInterner.get().intern(refType);
+        ref = StringInterner.get().intern(ref);
         for (SizeBreakdown breakdown : breakdownsForFragment(fragment)) {
           accountForSize(breakdown, refType, ref, size, globalInformation);
         }

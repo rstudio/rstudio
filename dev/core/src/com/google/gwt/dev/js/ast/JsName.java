@@ -24,7 +24,6 @@ import java.io.Serializable;
  * An abstract base class for named JavaScript objects.
  */
 public class JsName implements Serializable {
-
   private final JsScope enclosing;
   private final String ident;
   private boolean isObfuscatable;
@@ -76,7 +75,7 @@ public class JsName implements Serializable {
   }
 
   public void setShortIdent(String shortIdent) {
-    this.shortIdent = shortIdent;
+    this.shortIdent = StringInterner.get().intern(shortIdent);
   }
 
   /**
@@ -91,5 +90,4 @@ public class JsName implements Serializable {
   public String toString() {
     return ident;
   }
-
 }
