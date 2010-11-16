@@ -29,7 +29,7 @@ function setupInstallLocation() {
   scriptFrame.id = '__MODULE_NAME__';
   scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none; left: -1000px; top: -1000px; !important';
   scriptFrame.tabIndex = -1;
-  document.body.appendChild(scriptFrame);
+  $doc.body.appendChild(scriptFrame);
 
   frameDoc = scriptFrame.contentDocument;
   if (!frameDoc) {

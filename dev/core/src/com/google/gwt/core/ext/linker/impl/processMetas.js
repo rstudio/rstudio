@@ -26,7 +26,7 @@ function processMetas() {
   var propertyErrorFunc;
   var onLoadErrorFunc;
 
-  var metas = document.getElementsByTagName('meta');
+  var metas = $doc.getElementsByTagName('meta');
   for (var i = 0, n = metas.length; i < n; ++i) {
     var meta = metas[i]
     , name = meta.getAttribute('name')

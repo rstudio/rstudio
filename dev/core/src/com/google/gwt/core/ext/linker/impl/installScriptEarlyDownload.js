@@ -32,7 +32,7 @@ function installScript(filename) {
   if (isBodyLoaded()) {
     // if the body is loaded, then the tag to download the script can be added
     // in a non-destructive manner
-    var script = document.createElement('script');
+    var script = $doc.createElement('script');
     script.src = filename;
     $doc.getElementsByTagName('head')[0].appendChild(script);
   } else {
