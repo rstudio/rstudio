@@ -17,6 +17,7 @@ package com.google.gwt.sample.validationtck;
 
 import com.google.gwt.validation.client.GwtValidation;
 
+import org.hibernate.jsr303.tck.tests.constraints.application.Building;
 import org.hibernate.jsr303.tck.tests.constraints.application.SuperWoman;
 import org.hibernate.jsr303.tck.tests.constraints.application.Woman;
 
@@ -26,8 +27,9 @@ import javax.validation.Validator;
  * Top Level validator for the TCK tests
  */
 @GwtValidation(value = {
-    Woman.class,
-    SuperWoman.class
+    Building.class,
+    SuperWoman.class,
+    Woman.class
     })
 public interface TckValidator extends Validator {
 }

@@ -17,6 +17,7 @@ package com.google.gwt.sample.validation.shared;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -30,11 +31,23 @@ public class Person implements IsSerializable {
   @Size(min = 4)
   private String name;
 
+  @Max(999999999)
+  private long ssn;
+
   public String getName() {
     return name;
   }
 
   public void setName(String name) {
     this.name = name;
+
+  }
+
+  public long getSsn() {
+    return ssn;
+  }
+
+  public void setSsn(long ssn) {
+    this.ssn = ssn;
   }
 }

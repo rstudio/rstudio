@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.thirdparty.guava.common.primitives.Primitives;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.impl.AbstractGwtSpecificValidator;
@@ -664,7 +665,7 @@ private boolean hasGetter(PropertyDescriptor p) {
       sw.print("violations, ");
       sw.print("null, ");
       sw.print("(");
-      sw.print(property.getElementClass().getCanonicalName());
+      sw.print(Primitives.wrap(property.getElementClass()).getCanonicalName());
       sw.print(") value, ");
       sw.println("groups);");
 
