@@ -183,7 +183,7 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
       SecurityException, NoSuchMethodException {
     JClassType annotatedClass = typeOracle.getType(AnnotatedClass.class.getName());
     JMethod jmethod = annotatedClass.getMethod("methodWithAnnotatedParameter",
-        new JType[] {JPrimitiveType.INT});
+        new JType[]{JPrimitiveType.INT});
     JParameter parameter = jmethod.getParameters()[0];
 
     Method method = AnnotatedClass.class.getDeclaredMethod(
@@ -197,8 +197,8 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
   public void testAnnotatedWithArrayOfClasses() throws NotFoundException,
       SecurityException, NoSuchMethodException {
     JClassType annotatedClass = typeOracle.getType(AnnotatedClass.class.getName());
-    JMethod annotatedMethod = annotatedClass.getMethod("annotatedWithArrayOfClasses",
-        new JType[0]);
+    JMethod annotatedMethod = annotatedClass.getMethod(
+        "annotatedWithArrayOfClasses", new JType[0]);
 
     Method method = AnnotatedClass.class.getDeclaredMethod("annotatedWithArrayOfClasses");
     TestAnnotation realAnnotation = method.getAnnotation(TestAnnotation.class);
@@ -206,7 +206,7 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     validateAnnotation(annotatedMethod, "Method", "Not assigned",
         realAnnotation);
   }
-  
+
   /**
    * Tests translatable classes that are annotated with annotations for which we
    * have no source.
@@ -251,7 +251,7 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
 
     short s = annotation.s();
     assertTrue(s > 0);
-    
+
     int[] ia = annotation.ia();
     assertEquals(3, ia.length);
     for (int it = 0; it < 3; ++it) {

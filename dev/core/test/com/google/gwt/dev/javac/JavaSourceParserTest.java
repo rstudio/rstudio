@@ -30,18 +30,6 @@ import java.util.List;
  */
 public class JavaSourceParserTest extends CompilationStateTestBase {
 
-  private static final MockJavaResource FOO = new MockJavaResource("test.Foo") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package test;\n");
-      code.append("public class Foo {\n");
-      code.append("  public String value(String a, int val) { return \"Foo\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-
   private static final MockJavaResource BAR = new MockJavaResource("test.Bar") {
     @Override
     protected CharSequence getContent() {
@@ -75,7 +63,20 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
     }
   };
 
-  private static final MockJavaResource FOO_INT = new MockJavaResource("test.FooInt") {
+  private static final MockJavaResource FOO = new MockJavaResource("test.Foo") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package test;\n");
+      code.append("public class Foo {\n");
+      code.append("  public String value(String a, int val) { return \"Foo\"; }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+
+  private static final MockJavaResource FOO_INT = new MockJavaResource(
+      "test.FooInt") {
     @Override
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
@@ -94,8 +95,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
     assertExpected(JavaSourceParser.getClassChain("Foo"), "Foo");
     assertExpected(JavaSourceParser.getClassChain("test.Foo"), "Foo");
     assertExpected(JavaSourceParser.getClassChain("Foo$Bar"), "Foo", "Bar");
-    assertExpected(JavaSourceParser.getClassChain("test.Foo$Bar"),
-        "Foo", "Bar");
+    assertExpected(JavaSourceParser.getClassChain("test.Foo$Bar"), "Foo", "Bar");
     assertExpected(JavaSourceParser.getClassChain("test.test2.Foo$Bar$Baz"),
         "Foo", "Bar", "Baz");
   }
@@ -114,46 +114,45 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
     parser.addSourceForType(baz, BAZ);
     JClassType baz1 = state.getTypeOracle().getType("test.Baz.Baz1");
     JClassType baz2 = state.getTypeOracle().getType("test.Baz.Baz2");
-    JMethod method = foo.getMethod("value", new JType[] { string,
-        JPrimitiveType.INT });
+    JMethod method = foo.getMethod("value", new JType[]{
+        string, JPrimitiveType.INT});
     String[] arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(2, arguments.length);
     assertEquals("a", arguments[0]);
     assertEquals("val", arguments[1]);
-    method = bar.getMethod("value", new JType[] { string,
-        JPrimitiveType.INT });
+    method = bar.getMethod("value", new JType[]{string, JPrimitiveType.INT});
     arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(2, arguments.length);
     assertEquals("a", arguments[0]);
     assertEquals("val", arguments[1]);
-    method = bar.getMethod("value", new JType[] { JPrimitiveType.INT });
+    method = bar.getMethod("value", new JType[]{JPrimitiveType.INT});
     arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(1, arguments.length);
     assertEquals("val", arguments[0]);
-    method = bar.getMethod("value", new JType[] { string });
+    method = bar.getMethod("value", new JType[]{string});
     arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(1, arguments.length);
     assertEquals("a", arguments[0]);
-    method = baz1.getMethod("value", new JType[] { JPrimitiveType.INT });
+    method = baz1.getMethod("value", new JType[]{JPrimitiveType.INT});
     arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(1, arguments.length);
     assertEquals("val", arguments[0]);
-    method = baz1.getMethod("value", new JType[] { string });
+    method = baz1.getMethod("value", new JType[]{string});
     arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(1, arguments.length);
     assertEquals("a", arguments[0]);
-    method = baz2.getMethod("value", new JType[] { JPrimitiveType.INT });
+    method = baz2.getMethod("value", new JType[]{JPrimitiveType.INT});
     arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(1, arguments.length);
     assertEquals("val", arguments[0]);
-    method = baz2.getMethod("value", new JType[] { string });
+    method = baz2.getMethod("value", new JType[]{string});
     arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(1, arguments.length);
@@ -166,8 +165,8 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
     JClassType string = state.getTypeOracle().getType("java.lang.String");
     JClassType fooInt = state.getTypeOracle().getType("test.FooInt");
     parser.addSourceForType(fooInt, FOO_INT);
-    JMethod method = fooInt.getMethod("value", new JType[] { string,
-        JPrimitiveType.INT });
+    JMethod method = fooInt.getMethod("value", new JType[]{
+        string, JPrimitiveType.INT});
     String[] arguments = parser.getArguments(method);
     assertNotNull(arguments);
     assertEquals(2, arguments.length);
@@ -182,7 +181,7 @@ public class JavaSourceParserTest extends CompilationStateTestBase {
     for (int i = 0; i < expected.length; ++i) {
       assertTrue("index " + i + " should be " + expected[i] + ", got "
           + Arrays.toString(actual.get(i)), Arrays.equals(actual.get(i),
-              expected[i].toCharArray()));
+          expected[i].toCharArray()));
     }
   }
 }

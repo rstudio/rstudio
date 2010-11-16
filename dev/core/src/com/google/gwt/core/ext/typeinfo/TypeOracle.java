@@ -53,10 +53,10 @@ import java.util.Set;
  * JClassType o = typeOracle.getJavaLangObject();
  * JClassType s1 = typeOracle.getType(&quot;java.lang.String&quot;);
  * JClassType s2 = typeOracle.getType(&quot;java.lang.String&quot;);
- * assert(s1 == s2);
- * assert(o == s1.getSuperclass());
+ * assert (s1 == s2);
+ * assert (o == s1.getSuperclass());
  * JParameterizedType ls = typeOracle.parse(&quot;java.util.List&lt;java.lang.String&gt;&quot;);
- * assert(ls.getTypeArgs()[0] == s1);
+ * assert (ls.getTypeArgs()[0] == s1);
  * </pre>
  * 
  * </p>
@@ -266,7 +266,7 @@ public class TypeOracle {
 
   private JClassType javaLangObject;
 
-  private JavaSourceParser javaSourceParser = new JavaSourceParser();
+  private final JavaSourceParser javaSourceParser = new JavaSourceParser();
 
   /**
    * Maps SingleJsoImpl interfaces to the implementing JSO subtype.
@@ -500,6 +500,7 @@ public class TypeOracle {
    *             gets reloaded anymore. Callers should not rely on this value to
    *             manage static state.
    */
+  @Deprecated
   public long getReloadCount() {
     return 0;
   }
@@ -695,8 +696,7 @@ public class TypeOracle {
   private void computeHierarchyRelationships(JClassType[] types) {
     // For each type, walk up its hierarchy chain and tell each supertype
     // about its subtype.
-    for (int i = 0; i < types.length; i++) {
-      JClassType type = types[i];
+    for (JClassType type : types) {
       type.notifySuperTypes();
     }
   }

@@ -49,35 +49,35 @@ public class CollectClassDataTest extends AsmTestCase {
   @PrimitiveValuesAnnotation(b = 42, i = 42)
   protected static class Two {
 
-    public class TwoInner {      
+    public class TwoInner {
     }
 
-    private String field;
-    
+    private final String field;
+
     @TestAnnotation("field")
-    private String annotatedField;
-    
+    private final String annotatedField;
+
     public Two(int a) {
       this(a, null);
     }
-    
+
     @TestAnnotation("foo")
     public String foo(int a) throws IllegalStateException {
       return annotatedField;
     }
-    
+
     public Two(int a, String b) {
       new TwoInner();
       field = b;
       annotatedField = field;
     }
   }
-  
+
   /**
    * Test local classes.
    */
   public static class Three {
-    
+
     public int foo;
 
     /**
@@ -86,7 +86,7 @@ public class CollectClassDataTest extends AsmTestCase {
     public static void methodWithLocalStatic() {
       class Foo {
       }
-      
+
       Foo x = new Foo();
     }
 
@@ -99,7 +99,7 @@ public class CollectClassDataTest extends AsmTestCase {
           foo = 1;
         }
       }
-      
+
       Foo x = new Foo();
     }
   }
@@ -117,15 +117,15 @@ public class CollectClassDataTest extends AsmTestCase {
   public void testOne() {
     CollectClassData cd = collect(One.class);
     // Don't check for super bit, as it will depend on the JDK used to compile.
-    assertEquals(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-        cd.getAccess() & ~Opcodes.ACC_SUPER);
+    assertEquals(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, cd.getAccess()
+        & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Nested, cd.getClassType());
     assertEquals(0, cd.getFields().size());
     assertEquals(0, cd.getInterfaces().length);
     assertEquals(0, cd.getAnnotations().size());
     assertEquals("com/google/gwt/dev/asm/commons/EmptyVisitor",
         cd.getSuperName());
-    
+
     List<CollectMethodData> methods = cd.getMethods();
     assertEquals(2, methods.size());
     // TODO(jat): Is it safe to assume the implicit constructor is always first?
@@ -167,8 +167,8 @@ public class CollectClassDataTest extends AsmTestCase {
   public void testTwo() {
     CollectClassData cd = collect(Two.class);
     // Don't check for super bit, as it will depend on the JDK used to compile.
-    assertEquals(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-        cd.getAccess() & ~Opcodes.ACC_SUPER);
+    assertEquals(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, cd.getAccess()
+        & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Nested, cd.getClassType());
     List<CollectFieldData> fields = cd.getFields();
     assertEquals(2, fields.size());
@@ -196,9 +196,9 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(Byte.valueOf((byte) 42), annotation.getValues().get("b"));
     assertEquals(42, annotation.getValues().get("i"));
     assertEquals("java/lang/Object", cd.getSuperName());
-    
+
     List<CollectMethodData> methods = cd.getMethods();
-     assertEquals(3, methods.size());
+    assertEquals(3, methods.size());
     // TODO(jat): Is it safe to assume the order?
     CollectMethodData method = methods.get(0);
     Type[] argTypes = method.getArgTypes();
@@ -239,11 +239,11 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(0, method.getAnnotations().size());
     assertEquals(0, method.getExceptions().length);
   }
-  
+
   public void testTwoInner() {
     CollectClassData cd = collect(Two.TwoInner.class);
     // Don't check for super bit, as it will depend on the JDK used to compile.
-    assertEquals(Opcodes.ACC_PUBLIC , cd.getAccess() & ~Opcodes.ACC_SUPER);
+    assertEquals(Opcodes.ACC_PUBLIC, cd.getAccess() & ~Opcodes.ACC_SUPER);
     assertEquals(ClassType.Inner, cd.getClassType());
   }
 

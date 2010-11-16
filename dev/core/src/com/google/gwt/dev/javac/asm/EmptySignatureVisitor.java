@@ -25,8 +25,8 @@ import com.google.gwt.dev.asm.signature.SignatureVisitor;
  * sub-visitors, so that a subclass doesn't have to worry about calls for
  * something under a sub-visitor it doesn't care about.
  * 
- * There is no need to call any superclass methods from any subclass as they
- * do nothing.
+ * There is no need to call any superclass methods from any subclass as they do
+ * nothing.
  */
 public class EmptySignatureVisitor implements SignatureVisitor {
 

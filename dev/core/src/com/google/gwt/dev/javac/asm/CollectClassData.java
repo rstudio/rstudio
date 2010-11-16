@@ -86,16 +86,16 @@ public class CollectClassData extends EmptyVisitor {
     };
 
     /**
-     * @return true if this class type has a hidden constructor argument
-     * for the containing instance (ie, this$0).
+     * @return true if this class type has a hidden constructor argument for the
+     *         containing instance (ie, this$0).
      */
     public boolean hasHiddenConstructorArg() {
       return false;
     }
 
-   /**
-    * @return true if this class type is not visible outside a method.
-    */
+    /**
+     * @return true if this class type is not visible outside a method.
+     */
     public boolean hasNoExternalName() {
       return false;
     }
@@ -134,10 +134,10 @@ public class CollectClassData extends EmptyVisitor {
     }
   }
 
-  private List<CollectAnnotationData> annotations = new ArrayList<CollectAnnotationData>();
+  private final List<CollectAnnotationData> annotations = new ArrayList<CollectAnnotationData>();
 
   private String source = null;
-  
+
   // internal name
   private String name;
 
@@ -148,8 +148,8 @@ public class CollectClassData extends EmptyVisitor {
 
   // internal names of interfaces
   private String[] interfaces;
-  private List<CollectMethodData> methods = new ArrayList<CollectMethodData>();
-  private List<CollectFieldData> fields = new ArrayList<CollectFieldData>();
+  private final List<CollectMethodData> methods = new ArrayList<CollectMethodData>();
+  private final List<CollectFieldData> fields = new ArrayList<CollectFieldData>();
   private int access;
   private String outerClass;
   private String outerMethodName;
@@ -254,8 +254,8 @@ public class CollectClassData extends EmptyVisitor {
   }
 
   /**
-   * @return true if this class has no external name (ie, is defined inside
-   * a method).
+   * @return true if this class has no external name (ie, is defined inside a
+   *         method).
    */
   public boolean hasNoExternalName() {
     return classType.hasNoExternalName();
@@ -296,8 +296,7 @@ public class CollectClassData extends EmptyVisitor {
 
   @Override
   public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-    CollectAnnotationData av = new CollectAnnotationData(desc,
-        visible);
+    CollectAnnotationData av = new CollectAnnotationData(desc, visible);
     annotations.add(av);
     return av;
   }
@@ -322,8 +321,8 @@ public class CollectClassData extends EmptyVisitor {
       // skip synthetic fields
       return null;
     }
-    CollectFieldData fv = new CollectFieldData(access, name, desc,
-        signature, value);
+    CollectFieldData fv = new CollectFieldData(access, name, desc, signature,
+        value);
     fields.add(fv);
     return fv;
   }
@@ -378,8 +377,8 @@ public class CollectClassData extends EmptyVisitor {
       // skip synthetic methods
       return null;
     }
-    CollectMethodData mv = new CollectMethodData(classType,
-        access, name, desc, signature, exceptions);
+    CollectMethodData mv = new CollectMethodData(classType, access, name, desc,
+        signature, exceptions);
     methods.add(mv);
     return mv;
   }

@@ -16,8 +16,7 @@
 package com.google.gwt.core.ext.typeinfo;
 
 /**
- * The superclass of exceptions thrown by
- * {@link TypeOracle}.
+ * The superclass of exceptions thrown by {@link TypeOracle}.
  */
 public class TypeOracleException extends Exception {
 

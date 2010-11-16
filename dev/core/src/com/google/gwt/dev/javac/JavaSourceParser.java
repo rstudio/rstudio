@@ -50,16 +50,17 @@ public class JavaSourceParser {
     }
     return type;
   }
-  
+
   /**
    * Spits a binary name into a series of char arrays, corresponding to
    * enclosing classes.
    * 
-   * <p>For example, {@code test.Foo$Bar} gets expanded to [[Foo],[Bar]].
-   * Note that the package is not included.
+   * <p>
+   * For example, {@code test.Foo$Bar} gets expanded to [[Foo],[Bar]]. Note that
+   * the package is not included.
    * 
    * @param binaryName class name in binary form (ie, test.Foo$Bar)
-   * @return list of char arrays of class names, from outer to inner 
+   * @return list of char arrays of class names, from outer to inner
    */
   // @VisibleForTesting
   static List<char[]> getClassChain(String binaryName) {
@@ -91,15 +92,14 @@ public class JavaSourceParser {
     if (candidates.size() == 1) {
       return candidates.get(0);
     }
-    nextCandidate: for (AbstractMethodDeclaration candidate : candidates) {
+    nextCandidate : for (AbstractMethodDeclaration candidate : candidates) {
       int n = candidate.arguments == null ? 0 : candidate.arguments.length;
       JParameter[] params = jMethod.getParameters();
       if (n != params.length) {
         continue;
       }
       for (int i = 0; i < n; ++i) {
-        if (!typeMatches(candidate.arguments[i].type,
-            params[i].getType())) {
+        if (!typeMatches(candidate.arguments[i].type, params[i].getType())) {
           continue nextCandidate;
         }
       }
@@ -111,21 +111,23 @@ public class JavaSourceParser {
   /**
    * Find all methods which have the requested name.
    * 
-   * <p>{@code <clinit>} is not supported.
+   * <p>
+   * {@code <clinit>} is not supported.
+   * 
    * @param type JDT type declaration
    * @param name name of methods to find
    * @return list of matching methods
    */
-   private static List<AbstractMethodDeclaration> findNamedMethods(
+  private static List<AbstractMethodDeclaration> findNamedMethods(
       TypeDeclaration type, String name) {
     List<AbstractMethodDeclaration> matching = new ArrayList<AbstractMethodDeclaration>();
     boolean isCtor = "<init>".equals(name);
     char[] nameArray = name.toCharArray();
     for (AbstractMethodDeclaration method : type.methods) {
-      if ((isCtor && method.isConstructor()) ||
-          (!isCtor && !method.isConstructor() && !method.isClinit()
-              && Arrays.equals(method.selector, nameArray))) {
-          matching.add(method);
+      if ((isCtor && method.isConstructor())
+          || (!isCtor && !method.isConstructor() && !method.isClinit() && Arrays.equals(
+              method.selector, nameArray))) {
+        matching.add(method);
       }
     }
     return matching;
@@ -148,7 +150,7 @@ public class JavaSourceParser {
       }
       curType = findType(curType.memberTypes, classChain.get(i));
     }
-    return curType; 
+    return curType;
   }
 
   /**
@@ -191,16 +193,15 @@ public class JavaSourceParser {
    * 
    * @param jdtType
    * @param toType
-   * @return true if the two type objects resolve to the same 
+   * @return true if the two type objects resolve to the same
    */
   private static boolean typeMatches(TypeReference jdtType, JType toType) {
-    List<char[]> toNameComponents = getClassChain(
-        toType.getQualifiedBinaryName());
+    List<char[]> toNameComponents = getClassChain(toType.getQualifiedBinaryName());
     int toLen = toNameComponents.size();
     char[][] jdtNameComponents = jdtType.getTypeName();
     int jdtLen = jdtNameComponents.length;
     int maxToCompare = Math.min(toLen, jdtLen);
-    
+
     // compare from the end
     for (int i = 1; i <= maxToCompare; ++i) {
       if (!Arrays.equals(jdtNameComponents[jdtLen - i],
@@ -219,7 +220,8 @@ public class JavaSourceParser {
   /**
    * Cache of top-level classes to JDT CUDs associated with them.
    * 
-   * <p>CUDs may be discarded at any time (with a performance cost if they are
+   * <p>
+   * CUDs may be discarded at any time (with a performance cost if they are
    * needed again), and are held in SoftReferences to allow GC to dump them.
    */
   private WeakHashMap<JClassType, SoftReference<CompilationUnitDeclaration>> cudCache = new WeakHashMap<JClassType, SoftReference<CompilationUnitDeclaration>>();
@@ -230,7 +232,7 @@ public class JavaSourceParser {
    * @param topType
    * @param source
    * 
-   * TODO: reduce visibility
+   *          TODO: reduce visibility
    */
   public synchronized void addSourceForType(JClassType topType, Resource source) {
     classSources.put(topType, source);
@@ -266,7 +268,7 @@ public class JavaSourceParser {
     }
     return argNames;
   }
-  
+
   /**
    * Finds a JDT CUD for a given top-level type, generating it if needed.
    * 

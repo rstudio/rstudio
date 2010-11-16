@@ -17,7 +17,7 @@ package com.google.gwt.dev.javac.asm;
 
 /**
  * Test class for generic signature validation.
- *
+ * 
  * @param <V>
  */
 public class TestHandler1<V> implements TestHandler {

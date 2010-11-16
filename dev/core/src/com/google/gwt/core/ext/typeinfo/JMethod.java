@@ -128,8 +128,8 @@ public class JMethod extends JAbstractMethod {
   String getReadableDeclaration(int modifierBits) {
     String[] names = TypeOracle.modifierBitsToNames(modifierBits);
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < names.length; i++) {
-      sb.append(names[i]);
+    for (String name2 : names) {
+      sb.append(name2);
       sb.append(" ");
     }
     if (getTypeParameters().length > 0) {

@@ -20,6 +20,6 @@ public abstract class TestOuter0<H extends TestHandler> {
     public Type() {
     }
   }
-  
+
   public abstract void dispatch(H handler);
 }

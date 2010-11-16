@@ -35,8 +35,7 @@ public class JPackage implements HasAnnotations {
     this.name = name;
   }
 
-  void addAnnotations(
-      Map<Class<? extends Annotation>, Annotation> annotations) {
+  void addAnnotations(Map<Class<? extends Annotation>, Annotation> annotations) {
     this.annotations.addAnnotations(annotations);
   }
 

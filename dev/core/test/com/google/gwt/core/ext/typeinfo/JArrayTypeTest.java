@@ -34,6 +34,7 @@ public class JArrayTypeTest extends TestCase {
   private static JArrayType getIntArray(TypeOracle oracle) {
     return oracle.getArrayType(getIntVector(oracle));
   }
+
   /*
    * Returns int[].
    */
@@ -106,7 +107,7 @@ public class JArrayTypeTest extends TestCase {
 
   public void testIsAssignableFrom() throws NotFoundException {
     TypeOracle oracle = moduleContext.getOracle();
-    
+
     JArrayType intVector = getIntVector(oracle);
     JArrayType intArray = getIntArray(oracle);
     JArrayType objVector = getObjectVector(oracle);
@@ -124,12 +125,12 @@ public class JArrayTypeTest extends TestCase {
 
     // int[] is assignable from int[]
     assertTrue(intVector.isAssignableFrom(intVector));
-    
+
     // int[] is assignable from int[][]
     assertFalse(intArray.isAssignableFrom(intVector));
-    
+
     JClassType testSubtype = oracle.getType(MyCustomList.class.getName());
-    
+
     // MyCustomList[]
     JArrayType testArraySubtype = oracle.getArrayType(testSubtype);
 
@@ -138,8 +139,8 @@ public class JArrayTypeTest extends TestCase {
 
     // MyCustomList[]
     JArrayType testVectorSubtype = oracle.getArrayType(testArraySubtype);
-    
-    // MyList[] is not assignable from MyCustomList[][]    
+
+    // MyList[] is not assignable from MyCustomList[][]
     assertFalse(getTestArrayType().isAssignableFrom(testVectorSubtype));
 
     // MyCustomList[] is not assignable from MyList[]
@@ -153,13 +154,13 @@ public class JArrayTypeTest extends TestCase {
 
     // MyCustomList[] is assignable to MyList[]
     assertTrue(testArraySubtype.isAssignableTo(getTestArrayType()));
-    
+
     // MyCustomList[] is assignable to Object
     assertTrue(testArraySubtype.isAssignableTo(oracle.getJavaLangObject()));
-    
+
     // MyList[] is not assignable to MyCustomList[]
     assertFalse(getTestArrayType().isAssignableTo(testArraySubtype));
-    
+
     // MyList[] is assignable to MyCustomList[]
     assertFalse(getTestArrayType().isAssignableTo(testArraySubtype));
 

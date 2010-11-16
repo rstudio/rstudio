@@ -54,8 +54,8 @@ public abstract class AsmTestCase extends TestCase {
    * @return bytes from class file or null if not found
    */
   protected byte[] getClassBytes(String className) {
-    URL resource = CLASSLOADER.getResource(
-        className.replace('.', '/') + ".class");
+    URL resource = CLASSLOADER.getResource(className.replace('.', '/')
+        + ".class");
     if (resource == null) {
       return null;
     }
@@ -79,8 +79,9 @@ public abstract class AsmTestCase extends TestCase {
    * @return source from .java file or null if not found
    */
   protected String getClassSource(String className) {
-    InputStream str = CLASSLOADER.getResourceAsStream(
-        className.replace('.', '/') + ".java");
+    InputStream str = CLASSLOADER.getResourceAsStream(className.replace('.',
+        '/')
+        + ".java");
     if (str == null) {
       return null;
     }

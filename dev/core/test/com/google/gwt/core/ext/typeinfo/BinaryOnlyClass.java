@@ -16,8 +16,8 @@
 package com.google.gwt.core.ext.typeinfo;
 
 /**
- * This class is defined outside of a GWT module, therefore it should
- * only be available as a binary type.  
+ * This class is defined outside of a GWT module, therefore it should only be
+ * available as a binary type.
  */
 public class BinaryOnlyClass {
 }

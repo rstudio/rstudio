@@ -38,22 +38,22 @@ import java.util.Map;
  */
 public class ResolveMethodSignature extends EmptySignatureVisitor {
 
-  private final Resolver resolver;
-  private final TreeLogger logger;
-  private final JAbstractMethod method;
-  private final TypeParameterLookup typeParamLookup;
-  private final boolean hasReturnType;
-  private final CollectMethodData methodData;
-  private final Type[] argTypes;
+  private final MethodArgNamesLookup allMethodArgs;
   private final String[] argNames;
   private final boolean argNamesAreReal;
-  private final MethodArgNamesLookup allMethodArgs;
-
-  private JType[] returnType = new JType[1];
-  private List<JType[]> params = new ArrayList<JType[]>();
-  private List<JType[]> exceptions = new ArrayList<JType[]>();
-  private JTypeParameter currentParam = null;
+  private final Type[] argTypes;
   private ArrayList<JType[]> bounds = null;
+  private JTypeParameter currentParam = null;
+  private final List<JType[]> exceptions = new ArrayList<JType[]>();
+  private final boolean hasReturnType;
+  private final TreeLogger logger;
+  private final JAbstractMethod method;
+
+  private final CollectMethodData methodData;
+  private final List<JType[]> params = new ArrayList<JType[]>();
+  private final Resolver resolver;
+  private final JType[] returnType = new JType[1];
+  private final TypeParameterLookup typeParamLookup;
 
   /**
    * Resolve a method signature.

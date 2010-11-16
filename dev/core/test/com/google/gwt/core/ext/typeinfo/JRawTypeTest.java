@@ -75,7 +75,7 @@ public class JRawTypeTest extends JDelegatingClassTypeTestBase {
     assertNotNull(genericTestType);
 
     JRawType rawTestType = genericTestType.getRawType();
-    JClassType[] expectedTypes = new JClassType[] {
+    JClassType[] expectedTypes = new JClassType[]{
         oracle.getType(MyCustomList.class.getName()).isGenericType().getRawType(),
         oracle.getType(MyIntegerList.class.getName())};
     JClassType[] actualSubtypes = rawTestType.getSubtypes();

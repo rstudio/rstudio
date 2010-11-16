@@ -18,15 +18,15 @@ package com.google.gwt.core.ext.typeinfo;
 import java.io.File;
 
 /**
- * This annotation is defined outside of a GWT module, therefore it should
- * only be available as a binary type.  
+ * This annotation is defined outside of a GWT module, therefore it should only
+ * be available as a binary type.
  * 
- * It is used to test that translatable types ignore annotations for which 
- * they have no source.
+ * It is used to test that translatable types ignore annotations for which they
+ * have no source.
  */
 public @interface BinaryOnlyAnnotation {
   /**
-   * Member used to test that we can handle binary only references to types 
+   * Member used to test that we can handle binary only references to types
    * inside of java's boot path.
    */
   Class<? extends File> jreClassLiteralReference();

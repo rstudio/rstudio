@@ -302,7 +302,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#findConstructor(com.google.gwt.core.ext.typeinfo.JType[])}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#findConstructor(com.google.gwt.core.ext.typeinfo.JType[])}
+   * .
    */
   public void testFindConstructor() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -313,7 +314,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#findField(java.lang.String)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#findField(java.lang.String)}
+   * .
    */
   public void testFindField() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -324,7 +326,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#findMethod(java.lang.String, com.google.gwt.core.ext.typeinfo.JType[])}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#findMethod(java.lang.String, com.google.gwt.core.ext.typeinfo.JType[])}
+   * .
    */
   public void testFindMethod() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -335,13 +338,15 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#findNestedType(java.lang.String)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#findNestedType(java.lang.String)}
+   * .
    */
   public abstract void testFindNestedType() throws NotFoundException;
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getAnnotation(java.lang.Class)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getAnnotation(java.lang.Class)}
+   * .
    */
   public void testGetAnnotation() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -355,7 +360,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getAnnotations()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getAnnotations()}
+   * .
    */
   public void testGetAnnotations() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -366,7 +372,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getBaseType()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getBaseType()}
+   * .
    */
   public void testGetBaseType() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -375,7 +382,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getConstructor(com.google.gwt.core.ext.typeinfo.JType[])}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getConstructor(com.google.gwt.core.ext.typeinfo.JType[])}
+   * .
    */
   public void testGetConstructor() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -385,7 +393,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getConstructors()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getConstructors()}
+   * .
    */
   public void testGetConstructors() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -396,7 +405,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getDeclaredAnnotations()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getDeclaredAnnotations()}
+   * .
    */
   public void testGetDeclaredAnnotations() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -408,13 +418,15 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getEnclosingType()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getEnclosingType()}
+   * .
    */
   public abstract void testGetEnclosingType() throws NotFoundException;
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getErasedType()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getErasedType()}
+   * .
    */
   public void testGetErasedType() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -425,7 +437,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getField(java.lang.String)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getField(java.lang.String)}
+   * .
    */
   public void testGetField() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -447,7 +460,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getImplementedInterfaces()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getImplementedInterfaces()}
+   * .
    */
   public void testGetImplementedInterfaces() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -459,20 +473,23 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getInheritableMethods()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getInheritableMethods()}
+   * .
    */
   public abstract void testGetInheritableMethods() throws NotFoundException;
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getJNISignature()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getJNISignature()}
+   * .
    */
   public void testGetJNISignature() {
   }
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getMethod(java.lang.String, com.google.gwt.core.ext.typeinfo.JType[])}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getMethod(java.lang.String, com.google.gwt.core.ext.typeinfo.JType[])}
+   * .
    */
   public void testGetMethod() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -494,7 +511,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getModifierBits()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getModifierBits()}
+   * .
    */
   public void testGetModifierBits() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -516,13 +534,15 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getNestedType(java.lang.String)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getNestedType(java.lang.String)}
+   * .
    */
   public abstract void testGetNestedType() throws NotFoundException;
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getNestedTypes()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getNestedTypes()}
+   * .
    */
   public abstract void testGetNestedTypes() throws NotFoundException;
 
@@ -539,7 +559,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getOverloads(java.lang.String)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getOverloads(java.lang.String)}
+   * .
    */
   public void testGetOverloads() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -550,7 +571,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getOverridableMethods()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getOverridableMethods()}
+   * .
    */
   public abstract void testGetOverridableMethods() throws NotFoundException;
 
@@ -567,13 +589,15 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getSubtypes()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getSubtypes()}
+   * .
    */
   public abstract void testGetSubtypes() throws NotFoundException;
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getSuperclass()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getSuperclass()}
+   * .
    */
   public void testGetSuperclass() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -602,7 +626,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isAnnotationPresent(java.lang.Class)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isAnnotationPresent(java.lang.Class)}
+   * .
    */
   public void testIsAnnotationPresent() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -629,13 +654,15 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isAssignableFrom(com.google.gwt.core.ext.typeinfo.JClassType)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isAssignableFrom(com.google.gwt.core.ext.typeinfo.JClassType)}
+   * .
    */
   public abstract void testIsAssignableFrom() throws NotFoundException;
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isAssignableTo(com.google.gwt.core.ext.typeinfo.JClassType)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isAssignableTo(com.google.gwt.core.ext.typeinfo.JClassType)}
+   * .
    */
   public abstract void testIsAssignableTo() throws NotFoundException;
 
@@ -652,7 +679,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isClassOrInterface()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isClassOrInterface()}
+   * .
    */
   public void testIsClassOrInterface() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -664,7 +692,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isDefaultInstantiable()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isDefaultInstantiable()}
+   * .
    */
   public void testIsDefaultInstantiable() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -687,7 +716,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isInterface()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isInterface()}
+   * .
    */
   public void testIsInterface() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -698,7 +728,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isMemberType()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isMemberType()}
+   * .
    */
   public void testIsMemberType() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -709,7 +740,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isPrimitive()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isPrimitive()}
+   * .
    */
   public void testIsPrimitive() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
@@ -732,7 +764,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isProtected()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#isProtected()}
+   * .
    */
   public void testIsProtected() throws NotFoundException {
     JDelegatingClassType testType = getTestType();

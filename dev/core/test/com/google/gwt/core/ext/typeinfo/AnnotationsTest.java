@@ -83,7 +83,8 @@ public class AnnotationsTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.Annotations#addAnnotations(java.util.Map)}.
+   * {@link com.google.gwt.core.ext.typeinfo.Annotations#addAnnotations(java.util.Map)}
+   * .
    */
   public void testAddAnnotations() {
     Annotations annotations = new Annotations();
@@ -96,7 +97,8 @@ public class AnnotationsTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.Annotations#getAnnotation(java.lang.Class)}.
+   * {@link com.google.gwt.core.ext.typeinfo.Annotations#getAnnotation(java.lang.Class)}
+   * .
    * 
    * case 1: annotation is a declared case 2: annotation is inherited case 3:
    * annotation is not found
@@ -110,7 +112,8 @@ public class AnnotationsTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.Annotations#getAnnotation(java.lang.Class)}.
+   * {@link com.google.gwt.core.ext.typeinfo.Annotations#getAnnotation(java.lang.Class)}
+   * .
    * 
    * case 1: annotation is a declared case 2: annotation is inherited case 3:
    * annotation is not found
@@ -140,7 +143,8 @@ public class AnnotationsTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.Annotations#getDeclaredAnnotations()}.
+   * {@link com.google.gwt.core.ext.typeinfo.Annotations#getDeclaredAnnotations()}
+   * .
    */
   public void testGetDeclaredAnnotations() {
     Annotations annotations1 = initializeAnnotationsFromClass(
@@ -154,7 +158,8 @@ public class AnnotationsTest extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.Annotations#isAnnotationPresent(java.lang.Class)}.
+   * {@link com.google.gwt.core.ext.typeinfo.Annotations#isAnnotationPresent(java.lang.Class)}
+   * .
    */
   public void testIsAnnotationPresent() {
     Annotations annotations1 = initializeAnnotationsFromClass(

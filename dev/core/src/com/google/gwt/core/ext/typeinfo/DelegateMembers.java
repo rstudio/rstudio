@@ -77,7 +77,7 @@ class DelegateMembers extends AbstractMembers {
     if (object == null) {
       return TypeOracle.NO_JMETHODS;
     } else if (object instanceof JMethod) {
-      return new JMethod[] {(JMethod) object};
+      return new JMethod[]{(JMethod) object};
     } else {
       return ((JMethod[]) object).clone();
     }

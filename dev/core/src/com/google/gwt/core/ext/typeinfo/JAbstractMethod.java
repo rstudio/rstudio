@@ -244,7 +244,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
         if (realParameterNames == null) {
           realParameterName = StringInterner.get().intern("arg" + i);
         } else {
-          realParameterName = StringInterner.get().intern(realParameterNames[i]); 
+          realParameterName = StringInterner.get().intern(realParameterNames[i]);
         }
         return realParameterName;
       }
@@ -274,6 +274,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
   }
 
   private void fetchRealParameterNames() {
-    realParameterNames = getEnclosingType().getOracle().getJavaSourceParser().getArguments(this);
+    realParameterNames = getEnclosingType().getOracle().getJavaSourceParser().getArguments(
+        this);
   }
 }

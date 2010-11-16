@@ -80,7 +80,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     TypeOracle oracle = moduleContext.getOracle();
     JGenericType genericType = getGenericTestType();
     JClassType type = oracle.getParameterizedType(genericType,
-        new JClassType[] {integerType});
+        new JClassType[]{integerType});
     JParameterizedType parameterizedType = type.isParameterized();
 
     validateTypeSubstitution(genericType, parameterizedType,
@@ -94,7 +94,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
         integerType);
 
     JClassType type = oracle.getParameterizedType(genericType,
-        new JClassType[] {lowerBoundWildcard});
+        new JClassType[]{lowerBoundWildcard});
     JParameterizedType parameterizedType = type.isParameterized();
 
     validateTypeSubstitution(genericType, parameterizedType,
@@ -108,7 +108,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
         BoundType.EXTENDS, oracle.getJavaLangObject());
 
     JClassType type = oracle.getParameterizedType(genericType,
-        new JClassType[] {upperBoundWildcard});
+        new JClassType[]{upperBoundWildcard});
     JParameterizedType parameterizedType = type.isParameterized();
 
     validateTypeSubstitution(genericType, parameterizedType,
@@ -122,7 +122,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
         BoundType.EXTENDS, integerType);
 
     JClassType type = oracle.getParameterizedType(genericType,
-        new JClassType[] {upperBoundWildcard});
+        new JClassType[]{upperBoundWildcard});
     JParameterizedType parameterizedType = type.isParameterized();
 
     validateTypeSubstitution(genericType, parameterizedType,
@@ -131,7 +131,8 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JParameterizedType#getEnclosingType()}.
+   * {@link com.google.gwt.core.ext.typeinfo.JParameterizedType#getEnclosingType()}
+   * .
    * 
    * @throws NotFoundException
    */
@@ -163,8 +164,9 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
   }
 
   /**
-   * Test method for {@link
-   * com.google.gwt.core.ext.typeinfo.JParameterizedType#getNestedTypes()}.
+   * Test method for
+   * {@link com.google.gwt.core.ext.typeinfo.JParameterizedType#getNestedTypes()}
+   * .
    * 
    * @throws NotFoundException
    */
@@ -207,12 +209,12 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     JGenericType genericType = oracle.getType(MyList.class.getName()).isGenericType();
 
     JParameterizedType parameterizedType = oracle.getParameterizedType(
-        genericType, new JClassType[] {integerType});
+        genericType, new JClassType[]{integerType});
     JClassType[] actualSubtypes = parameterizedType.getSubtypes();
 
     JGenericType myCustomListType = oracle.getType(MyCustomList.class.getName()).isGenericType();
     JParameterizedType parameterizedMyCustomList = oracle.getParameterizedType(
-        myCustomListType, new JClassType[] {
+        myCustomListType, new JClassType[]{
             oracle.getWildcardType(BoundType.EXTENDS,
                 oracle.getType(Serializable.class.getName())), integerType});
     JClassType[] expected = {
@@ -224,7 +226,8 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JParameterizedType#isAssignableFrom(JClassType)}.
+   * {@link com.google.gwt.core.ext.typeinfo.JParameterizedType#isAssignableFrom(JClassType)}
+   * .
    */
   @Override
   public void testIsAssignableFrom() throws NotFoundException {
@@ -247,11 +250,11 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
     // List<?>
     JParameterizedType unboundList = oracle.getParameterizedType(genericList,
-        new JClassType[] {unboundWildcard});
+        new JClassType[]{unboundWildcard});
 
     // List<? extends Number>
     JParameterizedType listOfExtendsNumber = oracle.getParameterizedType(
-        genericList, new JClassType[] {numUpperBoundWildcard});
+        genericList, new JClassType[]{numUpperBoundWildcard});
 
     // List<?> should be assignable from List<? extends Number>
     assertTrue(unboundList.isAssignableFrom(listOfExtendsNumber));
@@ -266,7 +269,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
     // List<? extends Integer>
     JParameterizedType listOfExtendsInteger = oracle.getParameterizedType(
-        genericList, new JClassType[] {intUpperBoundWildcard});
+        genericList, new JClassType[]{intUpperBoundWildcard});
 
     // List<? extends Number> should be assignable from List<? extends Integer>
     assertTrue(listOfExtendsNumber.isAssignableFrom(listOfExtendsInteger));
@@ -283,11 +286,11 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
     // List<? super Number>
     JParameterizedType listOfSuperNumber = oracle.getParameterizedType(
-        genericList, new JClassType[] {numLowerBoundWildcard});
+        genericList, new JClassType[]{numLowerBoundWildcard});
 
     // List<? super Interger>
     JParameterizedType listOfSuperInteger = oracle.getParameterizedType(
-        genericList, new JClassType[] {intLowerBoundWildcard});
+        genericList, new JClassType[]{intLowerBoundWildcard});
 
     assertTrue(listOfSuperInteger.isAssignableFrom(listOfSuperNumber));
     assertFalse(listOfSuperInteger.isAssignableTo(listOfSuperNumber));
@@ -295,11 +298,11 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     assertTrue(listOfSuperNumber.isAssignableTo(listOfSuperInteger));
 
     JParameterizedType listOfObject = oracle.getParameterizedType(genericList,
-        new JClassType[] {oracle.getJavaLangObject()});
+        new JClassType[]{oracle.getJavaLangObject()});
 
     JClassType stringType = oracle.getType(String.class.getName());
     JParameterizedType listOfString = oracle.getParameterizedType(genericList,
-        new JClassType[] {stringType});
+        new JClassType[]{stringType});
 
     // List<Object> is not assignable from List<String>
     assertFalse(listOfObject.isAssignableFrom(listOfString));
@@ -309,26 +312,26 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
     // List<List<String>> is not assignable from List<Vector<String>>
     JParameterizedType listOfListOfString = oracle.getParameterizedType(
-        genericList, new JClassType[] {listOfString});
+        genericList, new JClassType[]{listOfString});
 
     JGenericType genericVector = oracle.getType(Vector.class.getName()).isGenericType();
     JParameterizedType vectorOfString = oracle.getParameterizedType(
-        genericVector, new JClassType[] {stringType});
+        genericVector, new JClassType[]{stringType});
     JParameterizedType listOfVectorOfString = oracle.getParameterizedType(
-        genericList, new JClassType[] {vectorOfString});
+        genericList, new JClassType[]{vectorOfString});
 
     assertFalse(listOfListOfString.isAssignableFrom(listOfVectorOfString));
     assertFalse(listOfVectorOfString.isAssignableFrom(listOfListOfString));
 
     // List<List> is not assignable from List<List<String>>
     JClassType listOfRawList = oracle.getParameterizedType(genericList,
-        new JClassType[] {genericList.getRawType()});
+        new JClassType[]{genericList.getRawType()});
     assertFalse(listOfRawList.isAssignableFrom(listOfListOfString));
     assertFalse(listOfListOfString.isAssignableFrom(listOfRawList));
 
     JGenericType genericClass = oracle.getType(GenericClass.class.getName()).isGenericType();
     JParameterizedType parameterizedGenericClass = oracle.getParameterizedType(
-        genericClass, new JClassType[] {stringType});
+        genericClass, new JClassType[]{stringType});
     JClassType extendsRawGenericClass = oracle.getType(ExtendsRawGenericClass.class.getName());
 
     // GenericClass<String> is assignable from ExtendsRawGenericClass
@@ -339,17 +342,17 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
 
     // List<List<? extends Number>>
     JClassType listOfListOfExtendsNumber = oracle.getParameterizedType(
-        genericList, new JClassType[] {listOfExtendsNumber});
+        genericList, new JClassType[]{listOfExtendsNumber});
 
     // List<List<? extends Integer>>
     JClassType listOfListOfExtendsInteger = oracle.getParameterizedType(
-        genericList, new JClassType[] {listOfExtendsInteger});
+        genericList, new JClassType[]{listOfExtendsInteger});
 
     assertFalse(listOfListOfExtendsNumber.isAssignableFrom(listOfListOfExtendsInteger));
 
     // List<Integer>
     JClassType listOfInteger = oracle.getParameterizedType(genericList,
-        new JClassType[] {integerType});
+        new JClassType[]{integerType});
 
     // List<? extends Number> is assignable from List<Integer>
     assertTrue(listOfExtendsNumber.isAssignableFrom(listOfInteger));
@@ -397,7 +400,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     List<JMethod> expected = new ArrayList<JMethod>();
     expected.addAll(Arrays.asList(genericType.getOverloads("m")));
     expected.add(paramType.getMethod("m",
-        new JType[] {paramType.getTypeArgs()[0]}));
+        new JType[]{paramType.getTypeArgs()[0]}));
 
     List<JMethod> actual = new ArrayList<JMethod>(
         Arrays.asList(type.getInheritableMethods()));
@@ -414,7 +417,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     assertNotNull(genericType);
 
     JParameterizedType paramType = oracle.getParameterizedType(genericType,
-        new JClassType[] {integerType});
+        new JClassType[]{integerType});
 
     List<JMethod> expected = new ArrayList<JMethod>();
     expected.addAll(Arrays.asList(paramType.getOverloads("m")));
@@ -452,7 +455,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     JGenericType type = getGenericTestType();
 
     return moduleContext.getOracle().getParameterizedType(type, null,
-        new JClassType[] {integerType});
+        new JClassType[]{integerType});
   }
 
   /**
@@ -476,7 +479,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
      */
     // 
     JParameterizedType parameterizedInnerClass = oracle.getParameterizedType(
-        innerGenericClass, cut, new JClassType[] {booleanType});
+        innerGenericClass, cut, new JClassType[]{booleanType});
 
     return parameterizedInnerClass;
   }

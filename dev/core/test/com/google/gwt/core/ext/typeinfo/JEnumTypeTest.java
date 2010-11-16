@@ -127,7 +127,7 @@ public class JEnumTypeTest extends TestCase {
   /**
    * Test an enum that implements an interface.
    * 
-   * @throws NotFoundException 
+   * @throws NotFoundException
    */
   public void testInterface() throws NotFoundException {
     JClassType type = typeOracle.getType(EnumOfInterface.class.getName());
@@ -176,7 +176,8 @@ public class JEnumTypeTest extends TestCase {
   }
 
   /**
-   * Test method for {@link com.google.gwt.core.ext.typeinfo.JEnumType#isEnum()}.
+   * Test method for {@link com.google.gwt.core.ext.typeinfo.JEnumType#isEnum()}
+   * .
    * 
    * @throws NotFoundException
    */

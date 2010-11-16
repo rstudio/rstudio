@@ -19,7 +19,7 @@ import java.lang.annotation.Annotation;
 import java.util.Map;
 
 /**
- * An enumeration constant declared in an enumerated type. 
+ * An enumeration constant declared in an enumerated type.
  */
 public class JEnumConstant extends JField {
   private final int ordinal;

@@ -26,12 +26,12 @@ import java.util.List;
  */
 public class CollectFieldData extends EmptyVisitor {
 
-  private List<CollectAnnotationData> annotations = new ArrayList<CollectAnnotationData>();
-  private int access;
-  private String name;
-  private String desc;
-  private String signature;
-  private Object value;
+  private final List<CollectAnnotationData> annotations = new ArrayList<CollectAnnotationData>();
+  private final int access;
+  private final String name;
+  private final String desc;
+  private final String signature;
+  private final Object value;
 
   public CollectFieldData(int access, String name, String desc,
       String signature, Object value) {
@@ -91,8 +91,7 @@ public class CollectFieldData extends EmptyVisitor {
 
   @Override
   public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-    CollectAnnotationData av = new CollectAnnotationData(desc,
-        visible);
+    CollectAnnotationData av = new CollectAnnotationData(desc, visible);
     annotations.add(av);
     return av;
   }

@@ -39,19 +39,19 @@ public class JGenericTypeTest extends TestCase {
   }
 
   /**
-   * Test method for {@link
-   * com.google.gwt.core.ext.typeinfo.JGenericType#getTypeParameters()}. This
-   * test goes beyond
+   * Test method for
+   * {@link com.google.gwt.core.ext.typeinfo.JGenericType#getTypeParameters()}.
+   * This test goes beyond
    * {@link com.google.gwt.core.ext.typeinfo.JGenericTypeTest#testGetTypeParameters()}
    * by testing generic types that have type parameters which are dependent on
    * one another.
-   *
+   * 
    * NOTE: This test does not make use of the
    * {@link com.google.gwt.core.ext.typeinfo.JGenericTypeTest#getTestType()}
    * method. The test types used are:
    * {@link GenericClassWithDependentTypeBounds}
    * {@link GenericClassWithTypeBound}
-   *
+   * 
    * @throws NotFoundException
    */
   public void testGetDependentTypeParameters() throws NotFoundException {
@@ -60,14 +60,13 @@ public class JGenericTypeTest extends TestCase {
 
     // Get the generic type
 
-    JClassType type = oracle.getType(
-        GenericClassWithDependentTypeBounds.class.getName());
+    JClassType type = oracle.getType(GenericClassWithDependentTypeBounds.class.getName());
     JGenericType genericType = type.isGenericType();
     assertNotNull(genericType);
 
     // Get its type parameters
 
-    JTypeParameter [] typeParameters  = genericType.getTypeParameters();
+    JTypeParameter[] typeParameters = genericType.getTypeParameters();
     assertEquals(2, typeParameters.length);
 
     // Examine the first type parameter. Its name should be 'C'.
@@ -77,28 +76,28 @@ public class JGenericTypeTest extends TestCase {
 
     // Check the bound of the first type parameter. It should be a single
     // upper bound.
-    JClassType [] genericTypeBounds = typeParameter.getBounds();
+    JClassType[] genericTypeBounds = typeParameter.getBounds();
     assertEquals(1, genericTypeBounds.length);
 
     // Check to see that the upper bound is a parameterized type.
 
     JClassType upperBoundType = genericTypeBounds[0];
-    JParameterizedType upperBoundParameterizedType =
-        upperBoundType.isParameterized();
+    JParameterizedType upperBoundParameterizedType = upperBoundType.isParameterized();
     assertNotNull(upperBoundParameterizedType);
 
     // Examine the parameterized type. Its name should be
     // 'GenericClassWithTypeBound'. The base type of the parameterized type
     // should be a reference to the class 'GenericClassWithTypeBound'.
 
-    assertEquals("GenericClassWithTypeBound", upperBoundParameterizedType.getName());
+    assertEquals("GenericClassWithTypeBound",
+        upperBoundParameterizedType.getName());
     assertEquals(upperBoundParameterizedType.getBaseType(),
         oracle.getType(GenericClassWithTypeBound.class.getName()));
 
     // Check the type arguments for the parameterized type. There should be a
     // single type argument.
 
-    JClassType [] typeArgs = upperBoundParameterizedType.getTypeArgs();
+    JClassType[] typeArgs = upperBoundParameterizedType.getTypeArgs();
     assertEquals(1, typeArgs.length);
 
     // Examine the first type argument. It should be a type parameter.
@@ -113,19 +112,21 @@ public class JGenericTypeTest extends TestCase {
 
     // Check the bound of the type parameter. It should have a single upper
     // bound.
-    JClassType [] typeArgBounds = typeArgTypeParameter.getBounds();
+    JClassType[] typeArgBounds = typeArgTypeParameter.getBounds();
     assertEquals(1, typeArgBounds.length);
 
-    // Verify that the bound type is actually a reference to java.io.Serializable.
+    // Verify that the bound type is actually a reference to
+    // java.io.Serializable.
 
     JClassType typeArgUpperBoundType = typeArgBounds[0];
-    assertEquals(typeArgUpperBoundType, oracle.getType(Serializable.class.getName()));
+    assertEquals(typeArgUpperBoundType,
+        oracle.getType(Serializable.class.getName()));
 
     // Now look at the second type parameter on the generic type. It should
-    // be  identical to the type argument of the the first type parameter
+    // be identical to the type argument of the the first type parameter
     // (remember, the first type parameter was a paramaterized type).
 
-    JTypeParameter secondTypeParameter =  typeParameters[1];
+    JTypeParameter secondTypeParameter = typeParameters[1];
     assertEquals(secondTypeParameter, typeArgTypeParameter);
   }
 
@@ -159,8 +160,8 @@ public class JGenericTypeTest extends TestCase {
   }
 
   /**
-   * Test method for {@link
-   * com.google.gwt.core.ext.typeinfo.JGenericType#getTypeParameters()}.
+   * Test method for
+   * {@link com.google.gwt.core.ext.typeinfo.JGenericType#getTypeParameters()}.
    * 
    * @throws NotFoundException
    */
@@ -175,22 +176,25 @@ public class JGenericTypeTest extends TestCase {
 
     JClassType[] bounds = typeParameter.getBounds();
     assertEquals(1, bounds.length);
-    assertEquals(moduleContext.getOracle().getType(Serializable.class.getName()), 
+    assertEquals(
+        moduleContext.getOracle().getType(Serializable.class.getName()),
         bounds[0]);
   }
-  
+
   /**
-   * Test method for {@link
-   * com.google.gwt.core.ext.typeinfo.JGenericType#isAssignableFrom(JClassType)}.
+   * Test method for
+   * {@link com.google.gwt.core.ext.typeinfo.JGenericType#isAssignableFrom(JClassType)}
+   * .
    * 
    * @throws NotFoundException
    */
   public void testIsAssignableFrom() throws NotFoundException {
     JGenericType genericType = getTestType();
-    
-    // Check that the generic type's superclass is assignable from the generic type
+
+    // Check that the generic type's superclass is assignable from the generic
+    // type
     assertTrue(genericType.getSuperclass().isAssignableFrom(genericType));
-    
+
     // Check that each implemented interface is assignable from the generic type
     JClassType[] implementedInterfaces = genericType.getImplementedInterfaces();
     for (JClassType implementedInterface : implementedInterfaces) {
@@ -198,31 +202,31 @@ public class JGenericTypeTest extends TestCase {
       assertTrue(implementedInterface.isAssignableFrom(genericType.getRawType()));
     }
   }
-  
+
   /**
-   * Test method for {@link
-   * com.google.gwt.core.ext.typeinfo.JGenericType#isAssignableTo(JClassType)}.
+   * Test method for
+   * {@link com.google.gwt.core.ext.typeinfo.JGenericType#isAssignableTo(JClassType)}
+   * .
    * 
    * @throws NotFoundException
    */
   public void testIsAssignableTo() throws NotFoundException {
     JGenericType genericType = getTestType();
-    
+
     // Check that generic type is assignable to its superclass
     assertTrue(genericType.isAssignableTo(genericType.getSuperclass()));
-    
+
     // Check that the generic class is assignable to any implemented interface
     JClassType[] implementedInterfaces = genericType.getImplementedInterfaces();
     for (JClassType implementedInterface : implementedInterfaces) {
       assertTrue(genericType.isAssignableTo(implementedInterface));
-      
+
       if (implementedInterface.isParameterized() != null) {
         assertTrue(genericType.isAssignableTo(implementedInterface.isParameterized().getRawType()));
       }
     }
   }
 
-  
   /**
    * Returns the generic version of {@link GenericClass}.
    */

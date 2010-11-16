@@ -182,7 +182,8 @@ public class JArrayType extends JClassType {
   @Override
   public String getQualifiedBinaryName() {
     if (lazyQualifiedBinaryName == null) {
-      lazyQualifiedBinaryName = "[" + getComponentType().getQualifiedBinaryName();
+      lazyQualifiedBinaryName = "["
+          + getComponentType().getQualifiedBinaryName();
     }
     return lazyQualifiedBinaryName;
   }

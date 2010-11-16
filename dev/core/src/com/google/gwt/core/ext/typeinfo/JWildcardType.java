@@ -92,7 +92,7 @@ public class JWildcardType extends JDelegatingClassType {
       if (isUpperBound()) {
         lazyLowerBounds = TypeOracle.NO_JCLASSES;
       } else {
-        lazyLowerBounds = new JClassType[] {getFirstBound()};
+        lazyLowerBounds = new JClassType[]{getFirstBound()};
       }
     }
     return lazyLowerBounds;
@@ -166,10 +166,10 @@ public class JWildcardType extends JDelegatingClassType {
   public JClassType[] getUpperBounds() {
     if (lazyUpperBounds == null) {
       if (isUpperBound()) {
-        lazyUpperBounds = new JClassType[] {getFirstBound()};
+        lazyUpperBounds = new JClassType[]{getFirstBound()};
       } else {
         // Object is the default upper bound.
-        lazyUpperBounds = new JClassType[] {getOracle().getJavaLangObject()};
+        lazyUpperBounds = new JClassType[]{getOracle().getJavaLangObject()};
       }
     }
 

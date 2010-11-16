@@ -99,8 +99,8 @@ public class JParameterizedType extends JMaybeParameterizedType {
     });
 
     this.typeArgs = Lists.create(typeArgs);
-    assert (this.typeArgs.indexOf(null) == -1)
-        : "Unresolved typeArg creating JParameterizedType from " + baseType;
+    assert (this.typeArgs.indexOf(null) == -1) : "Unresolved typeArg creating JParameterizedType from "
+        + baseType;
 
     // NOTE: Can't perform substitutions until we are done building
   }

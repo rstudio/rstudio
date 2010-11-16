@@ -49,7 +49,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
   private final JClassType enclosingClass;
 
   private JClassType outerClass;
-  private List<JType[]> args = new ArrayList<JType[]>();
+  private final List<JType[]> args = new ArrayList<JType[]>();
   private int arrayDepth = 0;
 
   /**
@@ -66,15 +66,14 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
       Map<String, JRealClassType> binaryMapper, TreeLogger logger,
       JType[] returnTypeRef, TypeParameterLookup lookup,
       JClassType enclosingClass) {
-    this(resolver, binaryMapper, logger, returnTypeRef, lookup,
-        enclosingClass, '=');
+    this(resolver, binaryMapper, logger, returnTypeRef, lookup, enclosingClass,
+        '=');
   }
 
   public ResolveTypeSignature(Resolver resovler,
-      Map<String, JRealClassType> binaryMapper,
-      TreeLogger logger, JType[] returnTypeRef,
-      TypeParameterLookup lookup, JClassType enclosingClass,
-      char wildcardMatch) {
+      Map<String, JRealClassType> binaryMapper, TreeLogger logger,
+      JType[] returnTypeRef, TypeParameterLookup lookup,
+      JClassType enclosingClass, char wildcardMatch) {
     this.resolver = resovler;
     this.binaryMapper = binaryMapper;
     this.logger = logger;
@@ -121,8 +120,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
         returnTypeRef[0] = JPrimitiveType.DOUBLE;
         break;
       default:
-        throw new IllegalStateException("Unrecognized base type "
-            + descriptor);
+        throw new IllegalStateException("Unrecognized base type " + descriptor);
     }
     // this is the last visitor called on this visitor
     visitEnd();
@@ -135,10 +133,10 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
     JRealClassType classType = binaryMapper.get(internalName);
     // TODO(jat): failures here are likely binary-only annotations or local
     // classes that have been elided from TypeOracle -- what should we do in
-    // those cases?  Currently we log an error and replace them with Object,
+    // those cases? Currently we log an error and replace them with Object,
     // but we may can do something better.
-    boolean resolveSuccess = classType == null ? false
-        : resolver.resolveClass(logger, classType);
+    boolean resolveSuccess = classType == null ? false : resolver.resolveClass(
+        logger, classType);
     returnTypeRef[0] = classType;
     if (!resolveSuccess || returnTypeRef[0] == null) {
       logger.log(TreeLogger.ERROR, "Unable to resolve class " + internalName);
@@ -170,8 +168,8 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
       }
       returnTypeRef[0] = searchClass.getNestedType(innerName);
     } catch (NotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Unable to resolve inner class "
-          + innerName + " in " + searchClass, e);
+      logger.log(TreeLogger.ERROR, "Unable to resolve inner class " + innerName
+          + " in " + searchClass, e);
     }
   }
 
@@ -189,11 +187,11 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
     JType[] arg = new JType[1];
     args.add(arg);
     // TODO(jat): should we pass enclosingClass here instead of null?
-    //    not sure what the enclosing class of a type argument means, but
-    //    I haven't found a case where it is actually used while processing
-    //    the type argument.
-    return new ResolveTypeSignature(resolver, binaryMapper, logger,
-        arg, lookup, null, wildcard);
+    // not sure what the enclosing class of a type argument means, but
+    // I haven't found a case where it is actually used while processing
+    // the type argument.
+    return new ResolveTypeSignature(resolver, binaryMapper, logger, arg,
+        lookup, null, wildcard);
   }
 
   @Override
@@ -207,7 +205,8 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
    * Merge the bounds from the declared type parameters into the type arguments
    * for this type if necessary.
    * 
-   * <pre>Example:
+   * <pre>
+   * Example:
    * class Foo<T extends Bar> ...
    * 
    * Foo<?> foo
@@ -215,8 +214,9 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
    * foo needs to have bounds ? extends Bar.
    * </pre>
    * 
-   * <p>Currently we only deal with unbound wildcards as above, which matches
-   * existing TypeOracleMediator behavior.  However, this may need to be
+   * <p>
+   * Currently we only deal with unbound wildcards as above, which matches
+   * existing TypeOracleMediator behavior. However, this may need to be
    * extended.
    * 
    * @param typeParams
@@ -230,9 +230,9 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
       // right now we only replace Foo<?> with the constraints defined on the
       // definition (which appears to match the existing TypeOracleMediator)
       // but other cases may need to be handled.
-      if (wildcard != null && wildcard.getBoundType() == BoundType.UNBOUND
-          && wildcard.getBaseType()
-          == resolver.getTypeOracle().getJavaLangObject()
+      if (wildcard != null
+          && wildcard.getBoundType() == BoundType.UNBOUND
+          && wildcard.getBaseType() == resolver.getTypeOracle().getJavaLangObject()
           && typeParams[i].getBaseType() != null) {
         typeArgs[i] = resolver.getTypeOracle().getWildcardType(
             BoundType.UNBOUND, typeParams[i].getBaseType());
@@ -253,14 +253,14 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
       } else {
         if (actual != expected) {
           throw new IllegalStateException("Incorrect # of type parameters to "
-            + genericType.getQualifiedBinaryName() + ": expected " + expected
-            + ", actual=" + actual);
+              + genericType.getQualifiedBinaryName() + ": expected " + expected
+              + ", actual=" + actual);
         }
         JClassType genericEnc = genericType.getEnclosingType();
         if (outer == null && genericEnc != null) {
           // Sometimes the signature is like Foo$Bar<H> even if Foo is a
-          // generic class.  The cases I have seen are where Foo's type
-          // parameter is also named H and has the same bounds.  That
+          // generic class. The cases I have seen are where Foo's type
+          // parameter is also named H and has the same bounds. That
           // manifests itself as getting visitClassType("Foo$Bar") and
           // then VisitTypeArgument/etc, rather than the usual
           // visitClassType("Foo"), visitTypeArgument/etc,
@@ -288,10 +288,9 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
                   }
                 }
               }
-              assert outerArgs[i] != null
-                  : "Unable to resolve type parameter "
-                    + encTypeParams[i].getName() + " in enclosing type "
-                    + genericEnc + " of type " + genericType;
+              assert outerArgs[i] != null : "Unable to resolve type parameter "
+                  + encTypeParams[i].getName() + " in enclosing type "
+                  + genericEnc + " of type " + genericType;
             }
           }
           outer = (JClassType) resolveGeneric(genericEnc, null, outerArgs);
@@ -314,7 +313,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
           if (", ".equals(prefix)) {
             buf.append('>');
           }
-          logger.log(TreeLogger.ERROR, buf.toString(), e); 
+          logger.log(TreeLogger.ERROR, buf.toString(), e);
           type = genericType.getRawType();
         }
       }
@@ -330,8 +329,8 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
       for (int i = 0; i < actual; ++i) {
         JType type = args.get(i)[0];
         if (!(type instanceof JClassType)) {
-          logger.log(TreeLogger.ERROR, "Parameterized type argument is "
-              + type + ", expected reference type");
+          logger.log(TreeLogger.ERROR, "Parameterized type argument is " + type
+              + ", expected reference type");
         } else {
           typeArgs[i] = (JClassType) type;
         }
@@ -340,8 +339,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
       args.clear();
     }
     for (int i = 0; i < arrayDepth; ++i) {
-      returnTypeRef[0] = resolver.getTypeOracle().getArrayType(
-          returnTypeRef[0]);
+      returnTypeRef[0] = resolver.getTypeOracle().getArrayType(returnTypeRef[0]);
     }
     switch (wildcardMatch) {
       case '=':

@@ -162,20 +162,20 @@ public class ResolveGenericsTest extends AsmTestCase {
   private final MockResolver resolver;
 
   @SuppressWarnings("unused")
-  private JRealClassType testHandler;
+  private final JRealClassType testHandler;
   @SuppressWarnings("unused")
-  private JRealClassType testHandler1;
+  private final JRealClassType testHandler1;
 
-  private JRealClassType testOuter0;
-  private JMethod testOuter0dispatch;
-  private JRealClassType testOuter1;
+  private final JRealClassType testOuter0;
+  private final JMethod testOuter0dispatch;
+  private final JRealClassType testOuter1;
 
-  private JMethod testOuter1dispatch;
-  private JRealClassType testOuter2;
-  private JMethod testOuter2dispatch;
+  private final JMethod testOuter1dispatch;
+  private final JRealClassType testOuter2;
+  private final JMethod testOuter2dispatch;
 
   @SuppressWarnings("unused")
-  private JRealClassType testType;
+  private final JRealClassType testType;
 
   public ResolveGenericsTest() {
     mediator = TypeOracleTestingUtils.buildStandardMediatorWith(failTreeLogger);
@@ -265,8 +265,8 @@ public class ResolveGenericsTest extends AsmTestCase {
           clazz.getSimpleName(), clazz.isInterface());
     } else {
       JTypeParameter[] params = createTypeParams(typeParams);
-      type = new JGenericType(oracle, pkg, enclosingTypeName, clazz.getSimpleName(),
-          clazz.isInterface(), params);
+      type = new JGenericType(oracle, pkg, enclosingTypeName,
+          clazz.getSimpleName(), clazz.isInterface(), params);
     }
     return type;
   }

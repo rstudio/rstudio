@@ -33,8 +33,7 @@ abstract class AbstractMembers {
 
   public JConstructor findConstructor(JType[] paramTypes) {
     JConstructor[] ctors = getConstructors();
-    for (int i = 0; i < ctors.length; i++) {
-      JConstructor candidate = ctors[i];
+    for (JConstructor candidate : ctors) {
       if (candidate.hasParamTypes(paramTypes)) {
         return candidate;
       }
@@ -46,8 +45,7 @@ abstract class AbstractMembers {
 
   public JMethod findMethod(String name, JType[] paramTypes) {
     JMethod[] overloads = getOverloads(name);
-    for (int i = 0; i < overloads.length; i++) {
-      JMethod candidate = overloads[i];
+    for (JMethod candidate : overloads) {
       if (candidate.hasParamTypes(paramTypes)) {
         return candidate;
       }
@@ -177,9 +175,7 @@ abstract class AbstractMembers {
     }
 
     JMethod[] declaredMethods = getMethods();
-    for (int i = 0; i < declaredMethods.length; i++) {
-      JMethod method = declaredMethods[i];
-
+    for (JMethod method : declaredMethods) {
       // Ensure that this method is inheritable.
       if (method.isPrivate() || method.isStatic()) {
         // We cannot inherit this method, so skip it.
@@ -205,8 +201,7 @@ abstract class AbstractMembers {
     // Recurse first so that more derived methods will clobber less derived
     // methods.
     JClassType[] superIntfs = classType.getImplementedInterfaces();
-    for (int i = 0; i < superIntfs.length; i++) {
-      JClassType superIntf = superIntfs[i];
+    for (JClassType superIntf : superIntfs) {
       superIntf.getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
     }
 
@@ -217,9 +212,7 @@ abstract class AbstractMembers {
     }
 
     JMethod[] declaredMethods = getMethods();
-    for (int i = 0; i < declaredMethods.length; i++) {
-      JMethod method = declaredMethods[i];
-
+    for (JMethod method : declaredMethods) {
       String sig = computeInternalSignature(method);
       JMethod existing = methodsBySignature.get(sig);
       if (existing != null) {
@@ -243,8 +236,7 @@ abstract class AbstractMembers {
     sb.setLength(0);
     sb.append(method.getName());
     JParameter[] params = method.getParameters();
-    for (int j = 0; j < params.length; j++) {
-      JParameter param = params[j];
+    for (JParameter param : params) {
       sb.append("/");
       sb.append(param.getType().getErasedType().getQualifiedSourceName());
     }

@@ -35,7 +35,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
   private String name;
 
   private JType type;
-  
+
   JParameter(JAbstractMethod enclosingMethod, JParameter srcParam) {
     this.enclosingMethod = enclosingMethod;
     this.type = srcParam.type;
@@ -43,8 +43,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
     this.annotations = new Annotations(srcParam.annotations);
   }
 
-  JParameter(JAbstractMethod enclosingMethod, JType type,
-      String name) {
+  JParameter(JAbstractMethod enclosingMethod, JType type, String name) {
     this(enclosingMethod, type, name, null);
   }
 

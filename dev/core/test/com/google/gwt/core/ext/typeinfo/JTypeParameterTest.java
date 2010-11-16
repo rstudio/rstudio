@@ -34,7 +34,8 @@ public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
     Set<JClassType> supertypes = JClassType.getFlattenedSuperTypeHierarchy(classType);
     for (JClassType supertype : supertypes) {
       JMaybeParameterizedType maybeParameterizedType = supertype.isMaybeParameterizedType();
-      if (maybeParameterizedType != null && maybeParameterizedType.getBaseType() == genericType) {
+      if (maybeParameterizedType != null
+          && maybeParameterizedType.getBaseType() == genericType) {
         return supertype;
       }
     }

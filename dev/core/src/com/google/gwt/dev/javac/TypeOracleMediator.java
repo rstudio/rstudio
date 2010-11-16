@@ -74,11 +74,6 @@ import java.util.Set;
 public class TypeOracleMediator extends TypeOracleBuilder {
 
   /**
-   * Turn on to trace class processing.
-   */
-  private static final boolean TRACE_CLASSES = false;
-
-  /**
    * Pairs of bits to convert from ASM Opcodes.* to Shared.* bitfields.
    */
   private static final int[] ASM_TO_SHARED_MODIFIERS = new int[]{
@@ -90,6 +85,11 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       Shared.MOD_TRANSIENT,};
 
   private static final JTypeParameter[] NO_TYPE_PARAMETERS = new JTypeParameter[0];
+
+  /**
+   * Turn on to trace class processing.
+   */
+  private static final boolean TRACE_CLASSES = false;
 
   /**
    * Returns the binary name of a type. This is the same name that would be
@@ -254,10 +254,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         return TypeOracleMediator.this.binaryMapper;
       }
 
-      public TypeOracleMediator getMediator() {
-        return TypeOracleMediator.this;
-      }
-
       public TypeOracle getTypeOracle() {
         return TypeOracleMediator.this.typeOracle;
       }
@@ -318,10 +314,9 @@ public class TypeOracleMediator extends TypeOracleBuilder {
    * @param logger logger to use
    * @param units collection of compilation units to process
    */
-  public void addNewUnits(TreeLogger logger,
-      Collection<CompilationUnit> units) {
+  public void addNewUnits(TreeLogger logger, Collection<CompilationUnit> units) {
     Event typeOracleMediatorEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR);
-    
+
     // First collect all class data.
     Event visitClassFileEvent = SpeedTracerLogger.start(
         CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Visit Class Files");
@@ -364,7 +359,9 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     }
     identityEvent.end();
 
-    Event resolveEnclosingEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Resolve Enclosing Classes");
+    Event resolveEnclosingEvent = SpeedTracerLogger.start(
+        CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase",
+        "Resolve Enclosing Classes");
     // Hook up enclosing types
     TreeLogger branch = logger.branch(TreeLogger.SPAM,
         "Resolving enclosing classes");
@@ -377,7 +374,9 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     }
     resolveEnclosingEvent.end();
 
-    Event resolveUnresolvedEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Resolve Unresolved Types");
+    Event resolveUnresolvedEvent = SpeedTracerLogger.start(
+        CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase",
+        "Resolve Unresolved Types");
     // Resolve unresolved types.
     for (JRealClassType type : unresolvedTypes) {
       branch = logger.branch(TreeLogger.SPAM, "Resolving "
@@ -389,7 +388,8 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     }
     resolveUnresolvedEvent.end();
 
-    Event finishEvent = SpeedTracerLogger.start(CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Finish");
+    Event finishEvent = SpeedTracerLogger.start(
+        CompilerEventType.TYPE_ORACLE_MEDIATOR, "phase", "Finish");
     super.finish();
     finishEvent.end();
 
@@ -470,8 +470,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         resultType = new JGenericType(typeOracle, pkg, enclosingTypeName,
             className, isIntf, typeParams);
       } else {
-        resultType = newRealClassType(pkg, enclosingTypeName, className,
-            isIntf);
+        resultType = newRealClassType(pkg, enclosingTypeName, className, isIntf);
       }
     }
 

@@ -16,10 +16,11 @@
 
 /**
  * Type-introspection support classes used by generators.
- *
- * Developers implementing custom {@link com.google.gwt.core.ext.Generator generators}
- * will use the classes in this package for introspection of the code being
- * compiled.
+ * 
+ * Developers implementing custom {@link com.google.gwt.core.ext.Generator
+ * generators} will use the classes in this package for introspection of the
+ * code being compiled.
  */
 @com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.core.ext.typeinfo;
+

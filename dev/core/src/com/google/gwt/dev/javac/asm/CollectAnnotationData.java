@@ -73,8 +73,8 @@ public class CollectAnnotationData implements AnnotationVisitor {
    */
   public static class MyAnnotationArrayVisitor implements AnnotationVisitor {
 
-    private Callback<Object> callback;
-    private List<Object> values = new ArrayList<Object>();
+    private final Callback<Object> callback;
+    private final List<Object> values = new ArrayList<Object>();
 
     public MyAnnotationArrayVisitor(Callback<Object> callback) {
       this.callback = callback;
@@ -126,8 +126,8 @@ public class CollectAnnotationData implements AnnotationVisitor {
     void call(T value);
   }
 
-  private CollectAnnotationData.AnnotationData annotation;
-  private Callback<CollectAnnotationData.AnnotationData> callback;
+  private final CollectAnnotationData.AnnotationData annotation;
+  private final Callback<CollectAnnotationData.AnnotationData> callback;
 
   /**
    * Construct the collector.

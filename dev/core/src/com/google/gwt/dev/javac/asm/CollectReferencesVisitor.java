@@ -34,8 +34,8 @@ public class CollectReferencesVisitor extends EmptyVisitor {
   /**
    * Collect type names from generic signatures.
    * 
-   * All we care about is picking up type names, so we just return ourselves
-   * for nested visitors.
+   * All we care about is picking up type names, so we just return ourselves for
+   * nested visitors.
    */
   private class CollectGenericTypes implements SignatureVisitor {
     public SignatureVisitor visitArrayType() {
@@ -152,8 +152,8 @@ public class CollectReferencesVisitor extends EmptyVisitor {
    * @param outerName internal name of the enclosing class
    */
   @Override
-  public void visitInnerClass(String name, String outerName,
-      String innerName, int access) {
+  public void visitInnerClass(String name, String outerName, String innerName,
+      int access) {
     referencedTypes.add(name);
     if (outerName != null) {
       referencedTypes.add(outerName);

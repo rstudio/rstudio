@@ -31,16 +31,16 @@ public class CollectMethodData extends EmptyVisitor {
 
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  private List<CollectAnnotationData> annotations = new ArrayList<CollectAnnotationData>();
-  private String name;
-  private String desc;
-  private String signature;
-  private String[] exceptions;
+  private final List<CollectAnnotationData> annotations = new ArrayList<CollectAnnotationData>();
+  private final String name;
+  private final String desc;
+  private final String signature;
+  private final String[] exceptions;
   private Type[] argTypes;
-  private String[] argNames;
-  private List<CollectAnnotationData>[] paramAnnots;
+  private final String[] argNames;
+  private final List<CollectAnnotationData>[] paramAnnots;
   private boolean actualArgNames = false;
-  private int access;
+  private final int access;
   private int syntheticArgs;
 
   /**
@@ -53,7 +53,8 @@ public class CollectMethodData extends EmptyVisitor {
    * @param signature
    * @param exceptions
    */
-  @SuppressWarnings("unchecked") // for new List[]
+  @SuppressWarnings("unchecked")
+  // for new List[]
   public CollectMethodData(CollectClassData.ClassType classType, int access,
       String name, String desc, String signature, String[] exceptions) {
     this.access = access;
@@ -65,9 +66,9 @@ public class CollectMethodData extends EmptyVisitor {
     argTypes = Type.getArgumentTypes(desc);
     // Non-static instance methods and constructors of non-static inner
     // classes have an extra synthetic parameter that isn't in the source,
-    // so we remove it.  Note that for local classes, they may or may not
+    // so we remove it. Note that for local classes, they may or may not
     // have this synthetic parameter depending on whether the containing
-    // method is static, but we can't get that info here.  However, since
+    // method is static, but we can't get that info here. However, since
     // local classes are dropped from TypeOracle, we don't care.
     if (classType.hasHiddenConstructorArg() && "<init>".equals(name)) {
       // remove "this$1" as a parameter
@@ -167,8 +168,7 @@ public class CollectMethodData extends EmptyVisitor {
 
   @Override
   public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-    CollectAnnotationData av = new CollectAnnotationData(desc,
-        visible);
+    CollectAnnotationData av = new CollectAnnotationData(desc, visible);
     annotations.add(av);
     return av;
   }
@@ -190,10 +190,9 @@ public class CollectMethodData extends EmptyVisitor {
   }
 
   @Override
-  public AnnotationVisitor visitParameterAnnotation(int parameter,
-      String desc, boolean visible) {
-    CollectAnnotationData av = new CollectAnnotationData(desc,
-        visible);
+  public AnnotationVisitor visitParameterAnnotation(int parameter, String desc,
+      boolean visible) {
+    CollectAnnotationData av = new CollectAnnotationData(desc, visible);
     if (parameter >= syntheticArgs) {
       // javac adds @Synthetic annotation on its synthetic constructor
       // arg, so we ignore it since it isn't in the source.

@@ -43,8 +43,7 @@ public class JEnumType extends JRealClassType {
         }
       }
 
-      lazyEnumConstants = enumConstants.toArray(
-          new JEnumConstant[enumConstants.size()]);
+      lazyEnumConstants = enumConstants.toArray(new JEnumConstant[enumConstants.size()]);
     }
 
     return lazyEnumConstants;

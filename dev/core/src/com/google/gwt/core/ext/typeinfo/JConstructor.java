@@ -63,8 +63,8 @@ public class JConstructor extends JAbstractMethod {
   public String getReadableDeclaration() {
     String[] names = TypeOracle.modifierBitsToNames(getModifierBits());
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < names.length; i++) {
-      sb.append(names[i]);
+    for (String name2 : names) {
+      sb.append(name2);
       sb.append(" ");
     }
     if (getTypeParameters().length > 0) {

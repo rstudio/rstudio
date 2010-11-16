@@ -22,7 +22,7 @@ public abstract class JType {
 
   JType() {
   }
-  
+
   /**
    * All types use identity for comparison.
    */
@@ -84,11 +84,11 @@ public abstract class JType {
   }
 
   /**
-   * Returns this instance if it is an enumeration or <code>null</code> if it
-   * is not.
+   * Returns this instance if it is an enumeration or <code>null</code> if it is
+   * not.
    * 
-   * @return this instance if it is an enumeration or <code>null</code> if it
-   *         is not
+   * @return this instance if it is an enumeration or <code>null</code> if it is
+   *         not
    */
   public abstract JEnumType isEnum();
 

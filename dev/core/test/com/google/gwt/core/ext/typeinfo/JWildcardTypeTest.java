@@ -146,7 +146,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JWildcardType upperBoundWildcard = oracle.getWildcardType(
         BoundType.EXTENDS, oracle.getType(CA.class.getName()));
 
-    JClassType[] expected = new JClassType[] {
+    JClassType[] expected = new JClassType[]{
         oracle.getType(CB.class.getName()), oracle.getType(CC.class.getName())};
     Set<JClassType> expectedSet = new HashSet<JClassType>();
     expectedSet.addAll(Arrays.asList(expected));

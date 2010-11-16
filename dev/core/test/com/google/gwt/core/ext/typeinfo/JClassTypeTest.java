@@ -39,7 +39,7 @@ public class JClassTypeTest extends TestCase {
     // TypeOracle typeOracle = buildOracleFromTestPackage(logger);
 
     String[] noParams = new String[0];
-    String[] intObjectParams = new String[] {"int", "java.lang.Object"};
+    String[] intObjectParams = new String[]{"int", "java.lang.Object"};
 
     // Verify IA.
     {
@@ -206,18 +206,15 @@ public class JClassTypeTest extends TestCase {
     {
       assertMethodOverridable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.IA",
-          "com.google.gwt.core.ext.typeinfo.test.CA", "foo",
-          noParams);
+          "com.google.gwt.core.ext.typeinfo.test.CA", "foo", noParams);
 
       assertMethodInheritableNotOverridable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.CB",
-          "com.google.gwt.core.ext.typeinfo.test.CB", "foo",
-          noParams);
+          "com.google.gwt.core.ext.typeinfo.test.CB", "foo", noParams);
 
       assertMethodInheritableNotOverridable(typeOracle,
           "com.google.gwt.core.ext.typeinfo.test.CB",
-          "com.google.gwt.core.ext.typeinfo.test.CC", "foo",
-          noParams);
+          "com.google.gwt.core.ext.typeinfo.test.CC", "foo", noParams);
 
       // Check that we aren't including methods that aren't actually overridable
       // (but are inheritable) because they are final (but non-private).
@@ -283,8 +280,7 @@ public class JClassTypeTest extends TestCase {
       JType[] paramTypes) {
     boolean wasFound = false;
 
-    for (int i = 0; i < leafMethods.length; i++) {
-      JMethod method = leafMethods[i];
+    for (JMethod method : leafMethods) {
       if (method.getName().equals(methodName)) {
         if (method.hasParamTypes(paramTypes)) {
           assertEquals(expectedType, method.getEnclosingType());

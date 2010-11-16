@@ -37,12 +37,12 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
   private final Map<String, JRealClassType> binaryMapper;
   private ArrayList<JType[]> bounds = null;
   private JTypeParameter currentParam = null;
-  private List<JType[]> interfaces = new ArrayList<JType[]>();
+  private final List<JType[]> interfaces = new ArrayList<JType[]>();
   private final TreeLogger logger;
 
   private final TypeParameterLookup lookup;
   private final Resolver resolver;
-  private JType[] superClass = new JType[1];
+  private final JType[] superClass = new JType[1];
   private final JRealClassType type;
 
   public ResolveClassSignature(Resolver resolver,
