@@ -218,13 +218,17 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     BufferedReader bin = new BufferedReader(new InputStreamReader(in));
     String line;
     try {
-      while ((line = bin.readLine()) != null) {
-        if (line.charAt(0) == '#') {
-          continue;
+      try {
+        while ((line = bin.readLine()) != null) {
+          if (line.charAt(0) == '#') {
+            continue;
+          }
+          int idx = line.indexOf(',');
+          toReturn.put(new SymbolName(line.substring(0, idx)),
+                       line.substring(idx + 1));
         }
-        int idx = line.indexOf(',');
-        toReturn.put(new SymbolName(line.substring(0, idx)),
-            line.substring(idx + 1));
+      } finally {
+        bin.close();
       }
     } catch (IOException e) {
       toReturn = null;

@@ -123,15 +123,20 @@ public class StackTraceDeobfuscator {
     toReturn = new SymbolMap();
     String line;
     String filename = symbolMapsDirectory + strongName + ".symbolMap";
+
     try {
       BufferedReader bin = new BufferedReader(new FileReader(filename));
-      while ((line = bin.readLine()) != null) {
-        if (line.charAt(0) == '#') {
-          continue;
+      try {
+        while ((line = bin.readLine()) != null) {
+          if (line.charAt(0) == '#') {
+            continue;
+          }
+          int idx = line.indexOf(',');
+          toReturn.put(new String(line.substring(0, idx)),
+                       line.substring(idx + 1));
         }
-        int idx = line.indexOf(',');
-        toReturn.put(new String(line.substring(0, idx)),
-            line.substring(idx + 1));
+      } finally {
+        bin.close();
       }
     } catch (IOException e) {
       toReturn = null;
