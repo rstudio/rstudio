@@ -71,7 +71,8 @@ public interface SelectionModel<T> extends HasHandlers, ProvidesKey<T> {
     }
 
     public Object getKey(T item) {
-      return keyProvider == null ? item : keyProvider.getKey(item);
+      return (keyProvider == null || item == null) ? item
+          : keyProvider.getKey(item);
     }
 
     /**

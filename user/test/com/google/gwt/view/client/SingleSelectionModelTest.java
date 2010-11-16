@@ -20,6 +20,18 @@ package com.google.gwt.view.client;
  */
 public class SingleSelectionModelTest extends AbstractSelectionModelTest {
 
+  /**
+   * Test that deselecting a value other than the pending selection does not
+   * cause the pending selection to be lost.
+   */
+  public void testDeselectWhileSelectionPending() {
+    SingleSelectionModel<String> model = createSelectionModel(null);
+    model.setSelected("test", true);
+    model.setSelected("other", false);
+    assertTrue(model.isSelected("test"));
+    assertEquals("test", model.getSelectedObject());
+  }
+
   public void testGetSelectedObject() {
     SingleSelectionModel<String> model = createSelectionModel(null);
     assertNull(model.getSelectedObject());

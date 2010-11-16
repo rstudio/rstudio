@@ -68,6 +68,14 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
   }
 
   public void setSelected(T object, boolean selected) {
+    // If we are deselecting a value that isn't actually selected, ignore it.
+    if (!selected) {
+      Object oldKey = newSelectedPending ? getKey(newSelectedObject) : curKey;
+      Object newKey = getKey(object);
+      if (!equalsOrBothNull(oldKey, newKey)) {
+        return;
+      }
+    }
     newSelectedObject = object;
     newSelected = selected;
     newSelectedPending = true;
@@ -82,13 +90,17 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
     resolveChanges();
   }
 
+  private boolean equalsOrBothNull(Object a, Object b) {
+    return (a == null) ? (b == null) : a.equals(b);
+  }
+
   private void resolveChanges() {
     if (!newSelectedPending) {
       return;
     }
 
-    Object key = (newSelectedObject == null) ? null : getKey(newSelectedObject);
-    boolean sameKey = curKey == null ? key == null : curKey.equals(key);
+    Object key = getKey(newSelectedObject);
+    boolean sameKey = equalsOrBothNull(curKey, key);
     boolean changed = false;
     if (newSelected) {
       changed = !sameKey;
