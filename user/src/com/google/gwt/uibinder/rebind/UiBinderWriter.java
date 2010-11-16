@@ -997,6 +997,7 @@ public class UiBinderWriter implements Statements {
     addWidgetParser("Image");
     addWidgetParser("ListBox");
     addWidgetParser("Grid");
+    addWidgetParser("HasAlignment");
   }
 
   /**
