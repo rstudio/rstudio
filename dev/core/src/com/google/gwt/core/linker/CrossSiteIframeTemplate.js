@@ -27,7 +27,7 @@ function __MODULE_FUNC__() {
       // FF 3.5 and below does not have readyState, but it does allow us to
       // append to the body before it has finished loading, so we return whether
       // the body element exists.
-      return (typeof $doc.body != "undefined");
+      return (typeof $doc.body != "undefined" && $doc.body != null);
     }
     return (/loaded|complete/.test($doc.readyState));
   }
