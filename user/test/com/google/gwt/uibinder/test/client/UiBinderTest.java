@@ -573,12 +573,6 @@ public class UiBinderTest extends GWTTestCase {
         "<td>Lately, anyway.</td>");
   }
 
-  public void testAlignmentAttributes() {
-    assertInOrder(widgetUi.myHorizontalPanel.getElement().getInnerHTML(),
-        "<td style=\"vertical-align: middle;\" align=\"left\">",
-        "class=\"gwt-StackPanelItem");
-  }
-  
   /**
    * Assert that the expect strings are found in body, and in the order given.
    * WARNING: both body and expected are normalized to lower case, to get around
