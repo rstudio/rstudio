@@ -214,9 +214,8 @@ function embedPlugin() {
   obj.id = 'pluginObject';
   obj.CLASSID = 'CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E';
 
-  var dochead = document.getElementsByTagName('head')[0];
-  dochead.appendChild(embed);
-  dochead.appendChild(obj);
+  document.body.appendChild(embed);
+  document.body.appendChild(obj);
 }
 
 function findPluginObject() {
@@ -316,28 +315,29 @@ function tryConnectingToPlugin(sessionId, url) {
   // Note that the order is important
   var pluginFinders = [findPluginXPCOM, findPluginObject, findPluginEmbed];
   var codeServer = getCodeServer();
-  var plugin;
+  var plugin = null;
   for (var i = 0; i < pluginFinders.length; ++i) {
     try {
-      plugin = pluginFinders[i]();
-      if (plugin != null) {
-        if (!plugin.init(window)) {
-          pluginConnectionError(codeServer);
-          return null;
-        }
-        if (!plugin.connect(url, sessionId, codeServer, $moduleName,
-          $hostedHtmlVersion)) {
-          pluginConnectionError(codeServer);
-          return null;
-        }
-        return plugin;
+      var maybePlugin = pluginFinders[i]();
+      if (maybePlugin != null && maybePlugin.init(window)) {
+        plugin = maybePlugin;
+        break;
       }
     } catch (e) {
-      pluginConnectionError(codeServer);
-      return null;
     }
   }
-  return null;
+
+  if (plugin == null) {
+    // Plugin initialization failed. Show the missing-plugin page.
+    return null;
+  }
+  if (!plugin.connect(url, sessionId, codeServer, $moduleName,
+                      $hostedHtmlVersion)) {
+    // Connection failed. Show the error alert and troubleshooting page.
+    pluginConnectionError(codeServer);
+  }
+
+  return plugin;
 }
 
 
