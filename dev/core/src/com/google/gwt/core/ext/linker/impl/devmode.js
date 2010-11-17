@@ -215,8 +215,8 @@ function embedPlugin() {
   obj.CLASSID = 'CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E';
 
   var dochead = document.getElementsByTagName('head')[0];
-  dochead.append(embed);
-  dochead.append(obj);
+  dochead.appendChild(embed);
+  dochead.appendChild(obj);
 }
 
 function findPluginObject() {
