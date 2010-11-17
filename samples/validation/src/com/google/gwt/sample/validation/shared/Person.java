@@ -38,13 +38,12 @@ public class Person implements IsSerializable {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-
-  }
-
   public long getSsn() {
     return ssn;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   public void setSsn(long ssn) {

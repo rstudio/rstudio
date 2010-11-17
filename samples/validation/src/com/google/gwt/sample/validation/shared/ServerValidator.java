@@ -21,7 +21,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 /**
- * Fails only on the server if the persons name is "Fail"
+ * Fails only on the server if the persons name is "Fail".
  */
 public class ServerValidator implements
     ConstraintValidator<ServerConstraint, Person> {
