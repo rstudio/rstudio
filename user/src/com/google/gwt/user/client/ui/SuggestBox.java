@@ -678,11 +678,11 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   private final TextBoxBase box;
   private final Callback callback = new Callback() {
     public void onSuggestionsReady(Request request, Response response) {
+      display.setMoreSuggestions(response.hasMoreSuggestions(), 
+          response.getMoreSuggestionsCount());
       display.showSuggestions(SuggestBox.this, response.getSuggestions(),
           oracle.isDisplayStringHTML(), isAutoSelectEnabled(),
           suggestionCallback);
-      display.setMoreSuggestions(response.hasMoreSuggestions(), 
-          response.getMoreSuggestionsCount());
     }
   };
   private final SuggestionCallback suggestionCallback = new SuggestionCallback() {
