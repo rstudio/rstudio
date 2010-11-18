@@ -8,7 +8,7 @@
 	<name>expenses</name>
 	<properties>
                 <gwt.version>2.1.0</gwt.version>
-		<roo.version>1.1.0.M2</roo.version>
+		<roo.version>1.1.0.RELEASE</roo.version>
 		<spring.version>3.0.3.RELEASE</spring.version>
 		<slf4j.version>1.6.1</slf4j.version>
 	<gae.version>1.3.7</gae.version>
@@ -17,14 +17,6 @@
     <datanucleus.version>1.1.5</datanucleus.version>
     </properties>
 	<repositories>
-		<repository>
-			<id>google-maven-snapshot-repository</id>
-			<name>Google Maven Snapshot Repository</name>
-			<url>https://oss.sonatype.org/content/repositories/google-snapshots/</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
         <repository>
             <id>spring-maven-release</id>
             <name>Spring Maven Release Repository</name>
@@ -609,6 +601,15 @@
                         <groupId>org.datanucleus</groupId>
                         <artifactId>datanucleus-enhancer</artifactId>
                         <version>1.1.4</version>
+                    </dependency>
+                    <!-- Dependency added as workaround to GWT Issue 5947 for details
+                         see http://code.google.com/p/google-web-toolkit/issues/detail?id=5497
+                    -->
+                    <dependency>
+                        <groupId>javax.jdo</groupId>
+                        <artifactId>jdo2-api</artifactId>
+                        <version>2.3-ec</version>
+                        <scope>runtime</scope>
                     </dependency>
                 </dependencies>
             </plugin>
