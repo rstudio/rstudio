@@ -15,16 +15,15 @@
  */
 package com.google.gwt.sample.dynatablerf.shared;
 
-import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.ProxyFor;
+import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.sample.dynatablerf.domain.Address;
 
 /**
  * Represents an Address in the client code.
  */
-@ProxyFor(Address.class)
-public interface AddressProxy extends EntityProxy {
+@ProxyFor(value = Address.class)
+public interface AddressProxy extends ValueProxy {
   String getCity();
 
   String getState();
@@ -40,6 +39,4 @@ public interface AddressProxy extends EntityProxy {
   void setStreet(String street);
 
   void setZip(String zip);
-
-  EntityProxyId<AddressProxy> stableId();
 }

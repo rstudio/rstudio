@@ -18,7 +18,6 @@ package com.google.gwt.sample.dynatablerf.server;
 import static com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.SchoolCalendarRequest.ALL_DAYS;
 import static com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.SchoolCalendarRequest.NO_DAYS;
 
-import com.google.gwt.sample.dynatablerf.domain.Address;
 import com.google.gwt.sample.dynatablerf.domain.Person;
 
 import java.util.ArrayList;
@@ -90,12 +89,6 @@ public abstract class PersonSource {
     }
 
     @Override
-    public void persist(Address address) {
-      address.setVersion(address.getVersion() + 1);
-      findPerson(address.getId()).getAddress().copyFrom(address);
-    }
-
-    @Override
     public void persist(Person person) {
       if (person.getId() == null) {
         person.setId(Long.toString(++serial));
@@ -149,11 +142,6 @@ public abstract class PersonSource {
     }
 
     @Override
-    public void persist(Address address) {
-      backingStore.persist(address);
-    }
-
-    @Override
     public void persist(Person person) {
       backingStore.persist(person);
     }
@@ -186,8 +174,6 @@ public abstract class PersonSource {
 
   public abstract List<Person> getPeople(int startIndex, int maxCount,
       List<Boolean> daysFilter);
-
-  public abstract void persist(Address address);
 
   public abstract void persist(Person person);
 }

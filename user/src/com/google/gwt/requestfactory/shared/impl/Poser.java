@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,28 +15,16 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
-import java.util.Collection;
-
 /**
- * @param <C> the type of the Container, must be List or Set
- * @param <E> the type of the element the container contains
+ * Used to lock down mutable, non-proxy, value objects when their owning proxy
+ * is frozen.
+ * 
+ * @param <T> the type of simple value the Poser is standing in for
  */
-public class CollectionProperty<C extends Collection<?>, E> extends Property<C> {
+public interface Poser<T> {
+  T getPosedValue();
 
-  private Class<E> leafType;
+  boolean isFrozen();
 
-  public CollectionProperty(String name, String displayName, Class<C> colType,
-      Class<E> type) {
-    super(name, displayName, colType);
-    this.leafType = type;
-  }
-
-  public CollectionProperty(String name, Class<C> colType, Class<E> type) {
-    super(name, colType);
-    this.leafType = type;
-  }
-
-  public Class<E> getLeafType() {
-    return leafType;
-  }
+  void setFrozen(boolean frozen);
 }

@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+
 /**
  * A simple proxy used for testing. Has an int field and date field. Add other
  * data types as their support gets built in.
@@ -27,59 +28,57 @@ import java.util.Set;
 public interface BaseFooProxy extends EntityProxy {
 
   SimpleBarProxy getBarField();
-  
+
   SimpleBarProxy getBarNullField();
-  
+
   BigDecimal getBigDecimalField();
-  
+
   BigInteger getBigIntField();
-  
+
   Boolean getBoolField();
-  
+
   Byte getByteField();
-  
+
   Character getCharField();
-  
+
   Date getCreated();
-  
+
   Double getDoubleField();
-  
+
   SimpleEnum getEnumField();
-  
+
   Float getFloatField();
-  
+
   Integer getIntId();
-  
+
   Long getLongField();
-  
+
   String getNullField();
-  
-  Boolean getOtherBoolField();
-  
-  Integer getPleaseCrash();
-
-  String getPassword();
-
-  Short getShortField();
-  
-  String getUserName();
-
-  List<SimpleBarProxy> getOneToManyField();
-
-  List<SimpleFooProxy> getSelfOneToManyField();
 
   List<Integer> getNumberListField();
 
+  List<SimpleBarProxy> getOneToManyField();
+
   Set<SimpleBarProxy> getOneToManySetField();
 
-  void setOneToManyField(List<SimpleBarProxy> field);
+  Boolean getOtherBoolField();
 
-  void setOneToManySetField(Set<SimpleBarProxy> field);
+  String getPassword();
 
-  void setSelfOneToManyField(List<SimpleFooProxy> field);
+  Integer getPleaseCrash();
 
-  void setNumberListField(List<Integer> field);
-  
+  List<SimpleFooProxy> getSelfOneToManyField();
+
+  Short getShortField();
+
+  SimpleValueProxy getSimpleValue();
+
+  List<SimpleValueProxy> getSimpleValues();
+
+  Boolean getUnpersisted();
+
+  String getUserName();
+
   void setBarField(SimpleBarProxy barField);
 
   void setBarNullField(SimpleBarProxy barNullField);
@@ -99,12 +98,18 @@ public interface BaseFooProxy extends EntityProxy {
   void setDoubleField(Double d);
 
   void setFloatField(Float f);
-  
+
   void setIntId(Integer intId);
 
   void setLongField(Long longField);
 
   void setNullField(String nullField);
+
+  void setNumberListField(List<Integer> field);
+
+  void setOneToManyField(List<SimpleBarProxy> field);
+
+  void setOneToManySetField(Set<SimpleBarProxy> field);
 
   void setOtherBoolField(Boolean boolField);
 
@@ -112,8 +117,15 @@ public interface BaseFooProxy extends EntityProxy {
 
   void setPleaseCrash(Integer dummy);
 
+  void setSelfOneToManyField(List<SimpleFooProxy> field);
+
   void setShortField(Short s);
 
+  void setSimpleValue(SimpleValueProxy value);
+
+  void setSimpleValues(List<SimpleValueProxy> value);
+
+  void setUnpersisted(Boolean unpersisted);
+
   void setUserName(String userName);
-  
 }

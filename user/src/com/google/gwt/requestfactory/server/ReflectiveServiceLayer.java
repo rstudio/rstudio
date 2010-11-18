@@ -18,19 +18,24 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.autobean.server.impl.TypeUtils;
 import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.requestfactory.server.SimpleRequestProcessor.ServiceLayer;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.ProxyForName;
+import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.requestfactory.shared.ServiceName;
+import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex.EntitySource;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -91,13 +96,14 @@ public class ReflectiveServiceLayer implements ServiceLayer {
         clazz.getCanonicalName());
   }
 
-  public Class<?> getClientType(Class<?> domainClass) {
+  public Class<?> getClientType(Class<?> domainClass, Class<?> clientClass) {
     String name;
     synchronized (validator) {
-      name = validator.getEntityProxyTypeName(domainClass.getName());
+      name = validator.getEntityProxyTypeName(domainClass.getName(),
+          clientClass.getName());
     }
     if (name != null) {
-      return forName(name).asSubclass(EntityProxy.class);
+      return forName(name).asSubclass(BaseProxy.class);
     }
     if (List.class.isAssignableFrom(domainClass)) {
       return List.class;
@@ -117,7 +123,7 @@ public class ReflectiveServiceLayer implements ServiceLayer {
       return List.class;
     } else if (Set.class.equals(clazz)) {
       return Set.class;
-    } else if (EntityProxy.class.isAssignableFrom(clazz)) {
+    } else if (BaseProxy.class.isAssignableFrom(clazz)) {
       ProxyFor pf = clazz.getAnnotation(ProxyFor.class);
       if (pf != null) {
         return pf.value();
@@ -135,7 +141,7 @@ public class ReflectiveServiceLayer implements ServiceLayer {
   public String getFlatId(EntitySource source, Object domainObject) {
     Object id = getProperty(domainObject, "id");
     if (id == null) {
-      report("Could not retrieve id property for domain object");
+      return null;
     }
     if (!isKeyType(id.getClass())) {
       die(null, "The type %s is not a valid key type",
@@ -165,6 +171,23 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     return die(toReport, "Could not retrieve property %s", property);
   }
 
+  public Type getRequestReturnType(Method contextMethod) {
+    Class<?> returnClass = contextMethod.getReturnType();
+    if (InstanceRequest.class.isAssignableFrom(returnClass)) {
+      Type[] params = TypeUtils.getParameterization(InstanceRequest.class,
+          contextMethod.getGenericReturnType());
+      assert params.length == 2;
+      return params[1];
+    } else if (Request.class.isAssignableFrom(returnClass)) {
+      Type param = TypeUtils.getSingleParameterization(Request.class,
+          contextMethod.getGenericReturnType());
+      return param;
+    } else {
+      throw new IllegalArgumentException("Unknown RequestContext return type "
+          + returnClass.getCanonicalName());
+    }
+  }
+
   public String getTypeToken(Class<?> clazz) {
     return clazz.getName();
   }
@@ -173,7 +196,7 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     // TODO: Make version any value type
     Object version = getProperty(domainObject, "version");
     if (version == null) {
-      report("Could not retrieve version property");
+      return 0;
     }
     if (!(version instanceof Integer)) {
       die(null, "The getVersion() method on type %s did not return"
@@ -244,21 +267,23 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     return die(ex, "Cauld not load domain object using id", id.toString());
   }
 
-  public Class<? extends EntityProxy> resolveClass(String typeToken) {
+  public Class<? extends BaseProxy> resolveClass(String typeToken) {
     Class<?> found = forName(typeToken);
-    if (!EntityProxy.class.isAssignableFrom(found)) {
-      die(null, "The requested type %s is not assignable to %s", typeToken,
-          EntityProxy.class.getName());
+    if (!EntityProxy.class.isAssignableFrom(found)
+        && !ValueProxy.class.isAssignableFrom(found)) {
+      die(null, "The requested type %s is not assignable to %s or %s",
+          typeToken, EntityProxy.class.getCanonicalName(),
+          ValueProxy.class.getCanonicalName());
     }
     synchronized (validator) {
       validator.antidote();
-      validator.validateEntityProxy(found.getName());
+      validator.validateProxy(found.getName());
       if (validator.isPoisoned()) {
         die(null, "The type %s did not pass RequestFactory validation",
             found.getCanonicalName());
       }
     }
-    return found.asSubclass(EntityProxy.class);
+    return found.asSubclass(BaseProxy.class);
   }
 
   public Method resolveDomainMethod(Method requestContextMethod) {
@@ -289,8 +314,8 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     Class<?>[] parameterTypes = requestContextMethod.getParameterTypes();
     Class<?>[] domainArgs = new Class<?>[parameterTypes.length];
     for (int i = 0, j = domainArgs.length; i < j; i++) {
-      if (EntityProxy.class.isAssignableFrom(parameterTypes[i])) {
-        domainArgs[i] = getDomainClass(parameterTypes[i].asSubclass(EntityProxy.class));
+      if (BaseProxy.class.isAssignableFrom(parameterTypes[i])) {
+        domainArgs[i] = getDomainClass(parameterTypes[i].asSubclass(BaseProxy.class));
       } else if (EntityProxyId.class.isAssignableFrom(parameterTypes[i])) {
         domainArgs[i] = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
             EntityProxyId.class,
@@ -346,7 +371,7 @@ public class ReflectiveServiceLayer implements ServiceLayer {
       report(e);
       return;
     }
-    die(ex, "Could not locate getter for property %s in type %s", property,
+    die(ex, "Could not locate setter for property %s in type %s", property,
         domainObject.getClass().getCanonicalName());
   }
 
@@ -381,7 +406,7 @@ public class ReflectiveServiceLayer implements ServiceLayer {
 
   private boolean isKeyType(Class<?> clazz) {
     return ValueCodex.canDecode(clazz)
-        || EntityProxy.class.isAssignableFrom(clazz);
+        || BaseProxy.class.isAssignableFrom(clazz);
   }
 
   /**

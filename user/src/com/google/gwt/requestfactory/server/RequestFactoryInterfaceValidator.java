@@ -28,6 +28,7 @@ import com.google.gwt.dev.asm.signature.SignatureVisitor;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.ProxyFor;
@@ -37,6 +38,7 @@ import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.requestfactory.shared.ServiceName;
+import com.google.gwt.requestfactory.shared.ValueProxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -138,6 +140,7 @@ public class RequestFactoryInterfaceValidator {
   private class DomainMapper extends EmptyVisitor {
     private final ErrorContext logger;
     private String domainInternalName;
+    private boolean isValueType;
 
     public DomainMapper(ErrorContext logger) {
       this.logger = logger;
@@ -146,6 +149,10 @@ public class RequestFactoryInterfaceValidator {
 
     public String getDomainInternalName() {
       return domainInternalName;
+    }
+
+    public boolean isValueType() {
+      return isValueType;
     }
 
     @Override
@@ -168,9 +175,12 @@ public class RequestFactoryInterfaceValidator {
 
           @Override
           public void visit(String name, Object value) {
-            domainInternalName = ((Type) value).getInternalName();
+            if ("value".equals(name)) {
+              domainInternalName = ((Type) value).getInternalName();
+            } else if ("isValueType".equals(name)) {
+              isValueType = (Boolean) value;
+            }
           }
-
         };
       }
 
@@ -178,25 +188,30 @@ public class RequestFactoryInterfaceValidator {
         return new EmptyVisitor() {
           @Override
           public void visit(String name, Object value) {
-            String sourceName = (String) value;
+            if ("value".equals(name)) {
+              String sourceName = (String) value;
 
-            /*
-             * The input is a source name, so we need to convert it to an
-             * internal name. We'll do this by substituting dollar signs for the
-             * last slash in the name until there are no more slashes.
-             */
-            StringBuffer desc = new StringBuffer(sourceName.replace('.', '/'));
-            while (!loader.exists(desc.toString() + ".class")) {
-              logger.spam("Did not find " + desc.toString());
-              int idx = desc.lastIndexOf("/");
-              if (idx == -1) {
-                return;
+              /*
+               * The input is a source name, so we need to convert it to an
+               * internal name. We'll do this by substituting dollar signs for
+               * the last slash in the name until there are no more slashes.
+               */
+              StringBuffer desc = new StringBuffer(sourceName.replace('.', '/'));
+              while (!loader.exists(desc.toString() + ".class")) {
+                logger.spam("Did not find " + desc.toString());
+                int idx = desc.lastIndexOf("/");
+                if (idx == -1) {
+                  return;
+                }
+                desc.setCharAt(idx, '$');
               }
-              desc.setCharAt(idx, '$');
-            }
 
-            domainInternalName = desc.toString();
-            logger.spam(domainInternalName);
+              domainInternalName = desc.toString();
+              logger.spam(domainInternalName);
+            } else if ("isValueType".equals(name)) {
+              isValueType = (Boolean) value;
+              logger.spam("isValueType: %s", isValueType);
+            }
           }
         };
       }
@@ -399,6 +414,58 @@ public class RequestFactoryInterfaceValidator {
     }
   }
 
+  /**
+   * Return all types referenced by a method signature.
+   */
+  private static class TypesInSignatureCollector extends SignatureAdapter {
+    private final Set<Type> found = new HashSet<Type>();
+
+    public Type[] getFound() {
+      return found.toArray(new Type[found.size()]);
+    }
+
+    public SignatureVisitor visitArrayType() {
+      return this;
+    }
+
+    public SignatureVisitor visitClassBound() {
+      return this;
+    }
+
+    @Override
+    public void visitClassType(String name) {
+      found.add(Type.getObjectType(name));
+    }
+
+    public SignatureVisitor visitExceptionType() {
+      return this;
+    }
+
+    public SignatureVisitor visitInterface() {
+      return this;
+    }
+
+    public SignatureVisitor visitInterfaceBound() {
+      return this;
+    }
+
+    public SignatureVisitor visitParameterType() {
+      return this;
+    }
+
+    public SignatureVisitor visitReturnType() {
+      return this;
+    }
+
+    public SignatureVisitor visitSuperclass() {
+      return this;
+    }
+
+    public SignatureVisitor visitTypeArgument(char wildcard) {
+      return this;
+    }
+  }
+
   @SuppressWarnings("unchecked")
   static final Set<Class<?>> VALUE_TYPES = Collections.unmodifiableSet(new HashSet<Class<?>>(
       Arrays.asList(Boolean.class, Character.class, Class.class, Date.class,
@@ -439,10 +506,19 @@ public class RequestFactoryInterfaceValidator {
   private final Set<String> badTypes = new HashSet<String>();
 
   /**
+   * The type {@link BaseProxy}.
+   */
+  private final Type baseProxyIntf = Type.getType(BaseProxy.class);
+  /**
    * Maps client types (e.g. FooProxy) to server domain types (e.g. Foo).
    */
   private final Map<Type, Type> clientToDomainType = new HashMap<Type, Type>();
-  private final Map<Type, Type> domainToClientType = new HashMap<Type, Type>();
+  /**
+   * Maps domain types (e.g Foo) to client proxy types (e.g. FooAProxy,
+   * FooBProxy).
+   */
+  private final Map<Type, List<Type>> domainToClientType = new HashMap<Type, List<Type>>();
+
   /**
    * The type {@link EntityProxy}.
    */
@@ -479,6 +555,10 @@ public class RequestFactoryInterfaceValidator {
    * A map of a type to all types that it could be assigned to.
    */
   private final Map<Type, List<Type>> supertypes = new HashMap<Type, List<Type>>();
+  /**
+   * The type {@link ValueProxy}.
+   */
+  private final Type valueProxyIntf = Type.getType(ValueProxy.class);
   /**
    * A set to prevent re-validation of a type.
    */
@@ -530,53 +610,37 @@ public class RequestFactoryInterfaceValidator {
    * <li>The domain object has getId() and getVersion() methods</li>
    * <li>All property methods in the EntityProxy can be mapped onto an
    * equivalent domain method</li>
-   * <li>All referenced EntityProxy types are valid</li>
+   * <li>All referenced proxy types are valid</li>
    * </ul>
    * 
    * @param binaryName the binary name (e.g. {@link Class#getName()}) of the
    *          EntityProxy subtype
    */
   public void validateEntityProxy(String binaryName) {
+    validateProxy(binaryName, entityProxyIntf, true);
+  }
+
+  /**
+   * Determine if the specified type implements a proxy interface and apply the
+   * appropriate validations. This can be used as a general-purpose entry method
+   * when writing unit tests.
+   * 
+   * @param binaryName the binary name (e.g. {@link Class#getName()}) of the
+   *          EntityProxy or ValueProxy subtype
+   */
+  public void validateProxy(String binaryName) {
     if (fastFail(binaryName)) {
       return;
     }
 
     Type proxyType = Type.getObjectType(BinaryName.toInternalName(binaryName));
-    ErrorContext logger = parentLogger.setType(proxyType);
-
-    // Quick sanity check for calling code
-    if (!isAssignable(logger, entityProxyIntf, proxyType)) {
-      parentLogger.poison("%s is not a %s", print(proxyType),
-          EntityProxy.class.getSimpleName());
-      return;
-    }
-
-    // Find the domain type
-    Type domainType = getDomainType(logger, proxyType);
-    if (domainType == errorType) {
-      logger.poison(
-          "The type %s must be annotated with a @%s or @%s annotation",
-          BinaryName.toSourceName(binaryName), ProxyFor.class.getSimpleName(),
-          ProxyForName.class.getSimpleName());
-      return;
-    }
-
-    // Check for getId() and getVersion() in domain
-    checkIdAndVersion(logger, domainType);
-
-    // Collect all methods in the client proxy type
-    Set<RFMethod> clientPropertyMethods = getMethodsInHierarchy(logger,
-        proxyType);
-
-    // Find the equivalent domain getter/setter method
-    for (RFMethod clientPropertyMethod : clientPropertyMethods) {
-      // Ignore stableId(). Can't use descriptor due to overrides
-      if ("stableId".equals(clientPropertyMethod.getName())
-          && clientPropertyMethod.getArgumentTypes().length == 0) {
-        continue;
-      }
-      checkPropertyMethod(logger, clientPropertyMethod, domainType);
-      maybeCheckReferredProxies(logger, clientPropertyMethod);
+    if (isAssignable(parentLogger, entityProxyIntf, proxyType)) {
+      validateEntityProxy(binaryName);
+    } else if (isAssignable(parentLogger, valueProxyIntf, proxyType)) {
+      validateValueProxy(binaryName);
+    } else {
+      parentLogger.poison("%s is neither an %s nor a %s", print(proxyType),
+          print(entityProxyIntf), print(valueProxyIntf));
     }
   }
 
@@ -685,13 +749,78 @@ public class RequestFactoryInterfaceValidator {
   }
 
   /**
-   * Given the binary name of a domain type, return the EntityProxy type that
-   * has been seen to map to the domain type.
+   * This method checks a ValueProxy interface against its peer domain object to
+   * determine if the server code would be able to process a request using the
+   * methods defined in the ValueProxy interface. It does not perform any checks
+   * as to whether or not the ValueProxy could actually be generated by the
+   * Generator.
+   * <p>
+   * This method may be called repeatedly on a single instance of the validator.
+   * Doing so will amortize type calculation costs.
+   * <p>
+   * Checks implemented:
+   * <ul>
+   * <li> <code>binaryName</code> implements ValueProxy</li>
+   * <li><code>binaryName</code> has a {@link ProxyFor} or {@link ProxyForName}
+   * annotation</li>
+   * <li>All property methods in the EntityProxy can be mapped onto an
+   * equivalent domain method</li>
+   * <li>All referenced proxy types are valid</li>
+   * </ul>
+   * 
+   * @param binaryName the binary name (e.g. {@link Class#getName()}) of the
+   *          EntityProxy subtype
    */
-  String getEntityProxyTypeName(String domainTypeNameBinaryName) {
-    Type key = Type.getObjectType(BinaryName.toInternalName(domainTypeNameBinaryName));
-    Type found = domainToClientType.get(key);
-    return found == null ? null : found.getClassName();
+  public void validateValueProxy(String binaryName) {
+    validateProxy(binaryName, valueProxyIntf, false);
+  }
+
+  /**
+   * Given the binary name of a domain type, return the BaseProxy type that is
+   * assignable to {@code clientType}. This method allows multiple proxy types
+   * to be assigned to a domain type for use in different contexts (e.g. API
+   * slices). If there are multiple client types mapped to
+   * {@code domainTypeBinaryName} and assignable to {@code clientTypeBinaryName}
+   * , the first matching type will be returned.
+   */
+  String getEntityProxyTypeName(String domainTypeBinaryName,
+      String clientTypeBinaryName) {
+    Type key = Type.getObjectType(BinaryName.toInternalName(domainTypeBinaryName));
+    List<Type> found = domainToClientType.get(key);
+    if (found == null || found.isEmpty()) {
+      return null;
+    }
+    // Common case
+    if (found.size() == 1) {
+      return found.get(0).getClassName();
+    }
+
+    // Search for the first assignable type
+    Type assignableTo = Type.getObjectType(BinaryName.toInternalName(clientTypeBinaryName));
+    for (Type t : found) {
+      if (isAssignable(parentLogger, assignableTo, t)) {
+        return t.getClassName();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Record the mapping of a domain type to a client type. Proxy types will be
+   * added to {@link #domainToClientType}.
+   */
+  private void addToDomainMap(ErrorContext logger, Type domainType,
+      Type clientType) {
+    clientToDomainType.put(clientType, domainType);
+
+    if (isAssignable(logger, baseProxyIntf, clientType)) {
+      List<Type> list = domainToClientType.get(domainType);
+      if (list == null) {
+        list = new ArrayList<Type>();
+        domainToClientType.put(domainType, list);
+      }
+      list.add(clientType);
+    }
   }
 
   /**
@@ -918,14 +1047,15 @@ public class RequestFactoryInterfaceValidator {
    * object.
    */
   private Type getDomainType(ErrorContext logger, Type clientType) {
-    Type toReturn = clientToDomainType.get(clientType);
-    if (toReturn != null) {
-      return toReturn;
+    Type domainType = clientToDomainType.get(clientType);
+    if (domainType != null) {
+      return domainType;
     }
     if (isValueType(logger, clientType) || isCollectionType(logger, clientType)) {
-      toReturn = clientType;
-    } else if (entityProxyIntf.equals(clientType)) {
-      toReturn = objectType;
+      domainType = clientType;
+    } else if (entityProxyIntf.equals(clientType)
+        || valueProxyIntf.equals(clientType)) {
+      domainType = objectType;
     } else {
       logger = logger.setType(clientType);
       DomainMapper pv = new DomainMapper(logger);
@@ -934,22 +1064,16 @@ public class RequestFactoryInterfaceValidator {
         logger.poison("%s has no mapping to a domain type (e.g. @%s or @%s)",
             print(clientType), ProxyFor.class.getSimpleName(),
             Service.class.getSimpleName());
-        toReturn = errorType;
+        domainType = errorType;
       } else {
-        toReturn = Type.getObjectType(pv.getDomainInternalName());
+        domainType = Type.getObjectType(pv.getDomainInternalName());
+        if (pv.isValueType()) {
+          valueTypes.add(clientType);
+        }
       }
     }
-    clientToDomainType.put(clientType, toReturn);
-    if (isAssignable(logger, entityProxyIntf, clientType)) {
-      Type previousProxyType = domainToClientType.put(toReturn, clientType);
-      if (previousProxyType != null) {
-        logger.poison(
-            "The domain type %s has more than one proxy type: %s and %s",
-            toReturn.getClassName(), previousProxyType.getClassName(),
-            clientType.getClassName());
-      }
-    }
-    return toReturn;
+    addToDomainMap(logger, domainType, clientType);
+    return domainType;
   }
 
   /**
@@ -1094,28 +1218,88 @@ public class RequestFactoryInterfaceValidator {
   }
 
   /**
-   * Examine an array of Types and call {@link #validateEntityProxy(String)} if
-   * the type is an EntityProxy.
+   * Examine an array of Types and call {@link #validateEntityProxy(String)} or
+   * {@link #validateValueProxy(String)} if the type is a proxy.
    */
-  private void maybeCheckEntityProxyType(ErrorContext logger, Type... types) {
+  private void maybeCheckProxyType(ErrorContext logger, Type... types) {
     for (Type type : types) {
       if (isAssignable(logger, entityProxyIntf, type)) {
         validateEntityProxy(type.getClassName());
+      } else if (isAssignable(logger, valueProxyIntf, type)) {
+        validateValueProxy(type.getClassName());
+      } else if (isAssignable(logger, baseProxyIntf, type)) {
+        logger.poison(
+            "Invalid type hierarchy for %s. Only types derived from %s or %s may be used.",
+            print(type), print(entityProxyIntf), print(valueProxyIntf));
       }
     }
   }
 
   /**
-   * Examine the arguments ond return value of a method and check any
+   * Examine the arguments and return value of a method and check any
    * EntityProxies referred.
    */
   private void maybeCheckReferredProxies(ErrorContext logger, RFMethod method) {
-    Type[] argTypes = method.getArgumentTypes();
-    Type returnType = getReturnType(logger, method);
+    if (method.getSignature() != null) {
+      TypesInSignatureCollector collector = new TypesInSignatureCollector();
+      SignatureReader reader = new SignatureReader(method.getSignature());
+      reader.accept(collector);
+      maybeCheckProxyType(logger, collector.getFound());
+    } else {
+      Type[] argTypes = method.getArgumentTypes();
+      Type returnType = getReturnType(logger, method);
 
-    // Check EntityProxy args ond return types against the domain
-    maybeCheckEntityProxyType(logger, argTypes);
-    maybeCheckEntityProxyType(logger, returnType);
+      // Check EntityProxy args ond return types against the domain
+      maybeCheckProxyType(logger, argTypes);
+      maybeCheckProxyType(logger, returnType);
+    }
+  }
+
+  private void validateProxy(String binaryName, Type expectedType,
+      boolean requireId) {
+    if (fastFail(binaryName)) {
+      return;
+    }
+
+    Type proxyType = Type.getObjectType(BinaryName.toInternalName(binaryName));
+    ErrorContext logger = parentLogger.setType(proxyType);
+
+    // Quick sanity check for calling code
+    if (!isAssignable(logger, expectedType, proxyType)) {
+      parentLogger.poison("%s is not a %s", print(proxyType),
+          print(expectedType));
+      return;
+    }
+
+    // Find the domain type
+    Type domainType = getDomainType(logger, proxyType);
+    if (domainType == errorType) {
+      logger.poison(
+          "The type %s must be annotated with a @%s or @%s annotation",
+          BinaryName.toSourceName(binaryName), ProxyFor.class.getSimpleName(),
+          ProxyForName.class.getSimpleName());
+      return;
+    }
+
+    // Check for getId() and getVersion() in domain
+    if (requireId) {
+      checkIdAndVersion(logger, domainType);
+    }
+
+    // Collect all methods in the client proxy type
+    Set<RFMethod> clientPropertyMethods = getMethodsInHierarchy(logger,
+        proxyType);
+
+    // Find the equivalent domain getter/setter method
+    for (RFMethod clientPropertyMethod : clientPropertyMethods) {
+      // Ignore stableId(). Can't use descriptor due to overrides
+      if ("stableId".equals(clientPropertyMethod.getName())
+          && clientPropertyMethod.getArgumentTypes().length == 0) {
+        continue;
+      }
+      checkPropertyMethod(logger, clientPropertyMethod, domainType);
+      maybeCheckReferredProxies(logger, clientPropertyMethod);
+    }
   }
 
   /**

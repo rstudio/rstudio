@@ -138,6 +138,21 @@ public class JsonSplittable implements Splittable {
     return array.length();
   }
 
+  /**
+   * For debugging use only.
+   */
+  @Override
+  public String toString() {
+    if (obj != null) {
+      return obj.toString();
+    } else if (array != null) {
+      return array.toString();
+    } else if (string != null) {
+      return string;
+    }
+    return "<Uninitialized>";
+  }
+
   private JsonSplittable makeSplittable(Object object) {
     if (object instanceof JSONObject) {
       return new JsonSplittable((JSONObject) object);

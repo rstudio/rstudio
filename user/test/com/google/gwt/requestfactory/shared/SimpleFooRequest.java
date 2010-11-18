@@ -51,6 +51,8 @@ public interface SimpleFooRequest extends RequestContext {
 
   Request<SimpleFooProxy> getTripletReference();
 
+  Request<SimpleFooProxy> getUnpersistedInstance();
+
   InstanceRequest<SimpleFooProxy, String> hello(SimpleBarProxy proxy);
 
   InstanceRequest<SimpleFooProxy, Void> persist();
@@ -91,6 +93,8 @@ public interface SimpleFooRequest extends RequestContext {
   Request<SimpleFooProxy> returnNullSimpleFoo();
 
   Request<String> returnNullString();
+
+  Request<SimpleValueProxy> returnValueProxy();
 
   InstanceRequest<SimpleFooProxy, Integer> sum(List<Integer> values);
 }

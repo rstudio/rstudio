@@ -33,19 +33,23 @@ import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.requestfactory.client.impl.AbstractClientRequestFactory;
 import com.google.gwt.requestfactory.rebind.model.ContextMethod;
 import com.google.gwt.requestfactory.rebind.model.EntityProxyModel;
+import com.google.gwt.requestfactory.rebind.model.EntityProxyModel.Type;
 import com.google.gwt.requestfactory.rebind.model.RequestFactoryModel;
 import com.google.gwt.requestfactory.rebind.model.RequestMethod;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequest;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequestContext;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequestFactory;
+import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.gwt.requestfactory.shared.impl.EntityProxyCategory;
 import com.google.gwt.requestfactory.shared.impl.RequestData;
+import com.google.gwt.requestfactory.shared.impl.ValueProxyCategory;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Generates implementations of
@@ -96,8 +100,11 @@ public class RequestFactoryGenerator extends Generator {
 
   private void writeAutoBeanFactory(SourceWriter sw) {
     // Map in static implementations of EntityProxy methods
-    sw.println("@%s(%s.class)", Category.class.getCanonicalName(),
-        EntityProxyCategory.class.getCanonicalName());
+    sw.println("@%s({%s.class, %s.class, %s.class})",
+        Category.class.getCanonicalName(),
+        EntityProxyCategory.class.getCanonicalName(),
+        ValueProxyCategory.class.getCanonicalName(),
+        BaseProxyCategory.class.getCanonicalName());
     // Don't wrap our id type, because it makes code grungy
     sw.println("@%s(%s.class)", NoWrap.class.getCanonicalName(),
         EntityProxyId.class.getCanonicalName());
@@ -251,6 +258,12 @@ public class RequestFactoryGenerator extends Generator {
         + " = new %1$s<String, Class<?>>();", HashMap.class.getCanonicalName());
     sw.println("private static final %1$s<Class<?>, String> typesToTokens"
         + " = new %1$s<Class<?>, String>();", HashMap.class.getCanonicalName());
+    sw.println(
+        "private static final %1$s<Class<?>> entityProxyTypes = new %1$s<Class<?>>();",
+        HashSet.class.getCanonicalName());
+    sw.println(
+        "private static final %1$s<Class<?>> valueProxyTypes = new %1$s<Class<?>>();",
+        HashSet.class.getCanonicalName());
     sw.println("static {");
     sw.indent();
     for (EntityProxyModel type : model.getAllProxyModels()) {
@@ -259,6 +272,10 @@ public class RequestFactoryGenerator extends Generator {
           type.getQualifiedSourceName());
       // typesToTokens.put(Foo.class, Foo);
       sw.println("typesToTokens.put(%1$s.class, \"%1$s\");",
+          type.getQualifiedSourceName());
+      // fooProxyTypes.add(MyFooProxy.class);
+      sw.println("%s.add(%s.class);", type.getType().equals(Type.ENTITY)
+          ? "entityProxyTypes" : "valueProxyTypes",
           type.getQualifiedSourceName());
     }
     sw.outdent();
@@ -270,6 +287,12 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
     sw.println("@Override protected String getTypeToken(Class type) {");
     sw.indentln("return typesToTokens.get(type);");
+    sw.println("}");
+    sw.println("@Override public boolean isEntityType(Class<?> type) {");
+    sw.indentln("return entityProxyTypes.contains(type);");
+    sw.println("}");
+    sw.println("@Override public boolean isValueType(Class<?> type) {");
+    sw.indentln("return valueProxyTypes.contains(type);");
     sw.println("}");
   }
 }

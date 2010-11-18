@@ -13,24 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared.messages;
-
-import com.google.gwt.autobean.shared.AutoBean;
-import com.google.gwt.autobean.shared.AutoBeanFactory;
+package com.google.gwt.requestfactory.shared;
 
 /**
- * The factory for creating RequestFactory wire messages.
+ * The root type from which all client-side proxy objects are derived. Users
+ * should not extend the BaseProxy type directly, but use either
+ * {@link EntityProxy} or {@link ValueProxy}.
+ * 
+ * @see EntityProxy
+ * @see ValueProxy
  */
-public interface MessageFactory extends AutoBeanFactory {
-  AutoBean<ServerFailureMessage> failure();
-
-  AutoBean<InvocationMessage> invocation();
-
-  AutoBean<OperationMessage> operation();
-
-  AutoBean<RequestMessage> request();
-
-  AutoBean<ResponseMessage> response();
-
-  AutoBean<ViolationMessage> violation();
+public interface BaseProxy {
 }

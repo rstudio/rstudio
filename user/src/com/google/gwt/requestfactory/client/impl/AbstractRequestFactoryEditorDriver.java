@@ -24,6 +24,7 @@ import com.google.gwt.requestfactory.client.RequestFactoryEditorDriver;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 
 import java.util.ArrayList;
@@ -38,10 +39,34 @@ import java.util.List;
 public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
     implements RequestFactoryEditorDriver<R, E> {
 
+  /**
+   * Since the ValueProxy is being mutated in-place, we need a way to stabilize
+   * its hashcode for future equality checks.
+   */
+  private static class ValueProxyHolder {
+    private final ValueProxy proxy;
+
+    public ValueProxyHolder(ValueProxy proxy) {
+      this.proxy = proxy;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return proxy.equals(((ValueProxyHolder) o).proxy);
+    }
+
+    @Override
+    public int hashCode() {
+      return proxy.getClass().hashCode();
+    }
+  }
+
   private static final DelegateMap.KeyMethod PROXY_ID_KEY = new DelegateMap.KeyMethod() {
-    public Object key(Object object) {
+    public Object key(final Object object) {
       if (object instanceof EntityProxy) {
         return ((EntityProxy) object).stableId();
+      } else if (object instanceof ValueProxy) {
+        return new ValueProxyHolder((ValueProxy) object);
       }
       return null;
     }
@@ -115,7 +140,11 @@ public abstract class AbstractRequestFactoryEditorDriver<R, E extends Editor<R>>
        * Find the delegates that are attached to the object. Use getRaw() here
        * since the violation doesn't include an EntityProxy reference
        */
-      List<AbstractEditorDelegate<?, ?>> delegateList = delegateMap.getRaw(error.getProxyId());
+      Object key = error.getInvalidProxy();
+      // Object key = error.getOriginalProxy();
+      // if (key == null) {
+      // }
+      List<AbstractEditorDelegate<?, ?>> delegateList = delegateMap.get(key);
       if (delegateList != null) {
 
         // For each delegate editing some record...

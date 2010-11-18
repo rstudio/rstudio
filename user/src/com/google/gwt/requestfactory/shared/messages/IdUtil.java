@@ -19,9 +19,11 @@ package com.google.gwt.requestfactory.shared.messages;
  * Common functions for slicing and dicing EntityProxy ids.
  */
 public class IdUtil {
-  private static final String ANY_SEPARATOR_PATTERN = "@[01]@";
+  private static final String ANY_SEPARATOR_PATTERN = "@[012]@";
   private static final String EPHEMERAL_SEPARATOR = "@1@";
   private static final String TOKEN_SEPARATOR = "@0@";
+  private static final String SYNTHETIC_SEPARATOR = "@2@";
+
   private static final int ID_TOKEN_INDEX = 0;
   private static final int TYPE_TOKEN_INDEX = 1;
 
@@ -35,6 +37,10 @@ public class IdUtil {
 
   public static String getServerId(String encodedId) {
     return asPersisted(encodedId)[ID_TOKEN_INDEX];
+  }
+
+  public static int getSyntheticId(String encodedId) {
+    return Integer.valueOf(asSynthetic(encodedId)[ID_TOKEN_INDEX]);
   }
 
   public static String getTypeToken(String encodedId) {
@@ -53,8 +59,16 @@ public class IdUtil {
     return encodedId.contains(TOKEN_SEPARATOR);
   }
 
+  public static boolean isSynthetic(String encodedId) {
+    return encodedId.contains(SYNTHETIC_SEPARATOR);
+  }
+
   public static String persistedId(String serverId, String typeToken) {
     return serverId + TOKEN_SEPARATOR + typeToken;
+  }
+
+  public static String syntheticId(int syntheticId, String historyToken) {
+    return syntheticId + SYNTHETIC_SEPARATOR + historyToken;
   }
 
   private static String[] asAny(String encodedId) {
@@ -69,8 +83,12 @@ public class IdUtil {
     return encodedId.split(TOKEN_SEPARATOR);
   }
 
+  private static String[] asSynthetic(String encodedId) {
+    return encodedId.split(SYNTHETIC_SEPARATOR);
+  }
+
   /**
-   * Utility class
+   * Utility class.
    */
   private IdUtil() {
   }

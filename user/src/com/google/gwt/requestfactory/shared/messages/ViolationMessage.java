@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.shared.messages;
 import com.google.gwt.autobean.shared.AutoBean.PropertyName;
 
 /**
- * Represents a ConstraintViolation
+ * Represents a ConstraintViolation.
  */
 public interface ViolationMessage extends IdMessage {
   String MESSAGE = "M";

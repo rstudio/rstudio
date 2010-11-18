@@ -20,7 +20,7 @@ package com.google.gwt.autobean.shared.impl;
  * convert enum values to strings.
  */
 public interface EnumMap {
-  public <E extends Enum<E>> E getEnum(Class<E> clazz, String token);
+  <E extends Enum<E>> E getEnum(Class<E> clazz, String token);
 
-  public String getToken(Enum<?> e);
+  String getToken(Enum<?> e);
 }

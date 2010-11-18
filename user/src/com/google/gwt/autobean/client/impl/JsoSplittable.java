@@ -24,11 +24,11 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Implements the EntityCodex.Splittable interface
+ * Implements the EntityCodex.Splittable interface using a raw JavaScriptObject.
  */
 public final class JsoSplittable extends JavaScriptObject implements Splittable {
   /**
-   * This type is only used in DevMode because we can't treat Strings as JSOs.
+   * This type is used because we can't treat Strings as JSOs.
    */
   public static class StringSplittable implements Splittable {
     private final String value;

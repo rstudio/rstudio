@@ -34,7 +34,7 @@ import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
-import com.google.gwt.requestfactory.shared.impl.Property;
+import com.google.gwt.requestfactory.shared.ValueProxy;
 
 import junit.framework.TestCase;
 
@@ -267,11 +267,11 @@ public class RequestFactoryModelTest extends TestCase {
 
     toReturn.addAll(Arrays.asList(new Resource[] {
         new EmptyMockJavaResource(Iterable.class),
-        new EmptyMockJavaResource(Property.class),
         new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(InstanceRequest.class),
         new EmptyMockJavaResource(RequestFactory.class),
         new EmptyMockJavaResource(Receiver.class),
+        new EmptyMockJavaResource(ValueProxy.class),
 
         new RealJavaResource(Request.class),
         new RealJavaResource(Service.class),

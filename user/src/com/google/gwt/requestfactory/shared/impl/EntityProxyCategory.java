@@ -15,19 +15,22 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
+import static com.google.gwt.requestfactory.shared.impl.BaseProxyCategory.requestContext;
+import static com.google.gwt.requestfactory.shared.impl.Constants.STABLE_ID;
+
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.RequestFactory;
 
 /**
- * Contains static implementation methods used by the AutoBean generator.
+ * Contains static implementation of EntityProxy-specific methods.
  */
 public class EntityProxyCategory {
-  static final String REQUEST_CONTEXT = "requestContext";
-  static final String REQUEST_FACTORY = "requestFactory";
-  static final String STABLE_ID = "stableId";
 
+  /**
+   * EntityProxies are equal if they are from the same RequestContext and their
+   * stableIds are equal.
+   */
   public static boolean equals(AutoBean<? extends EntityProxy> bean, Object o) {
     if (!(o instanceof EntityProxy)) {
       return false;
@@ -50,59 +53,12 @@ public class EntityProxyCategory {
     return stableId(bean).hashCode();
   }
 
-  public static AbstractRequestContext requestContext(AutoBean<?> bean) {
-    return (AbstractRequestContext) bean.getTag(REQUEST_CONTEXT);
-  }
-
-  public static RequestFactory requestFactory(
-      AutoBean<? extends EntityProxy> bean) {
-    return (RequestFactory) bean.getTag(REQUEST_FACTORY);
-  }
-
-  @SuppressWarnings("unchecked")
+  /**
+   * Effectively overrides {@link BaseProxyCategory#stableId(AutoBean)} to
+   * return a narrower bound.
+   */
   public static <T extends EntityProxy> SimpleEntityProxyId<T> stableId(
       AutoBean<? extends T> bean) {
-    return (SimpleEntityProxyId<T>) bean.getTag(STABLE_ID);
-  }
-
-  /**
-   * Sniff all return values and ensure that if the current bean is a mutable
-   * EntityProxy, that its return values are mutable.
-   */
-  // CHECKSTYLE_OFF
-  public static <T> T __intercept(AutoBean<?> bean, T returnValue) {
-    // CHECKSTYLE_ON
-
-    AbstractRequestContext context = requestContext(bean);
-
-    /*
-     * The context will be null if the bean is immutable. If the context is
-     * locked, don't try to edit.
-     */
-    if (context == null || context.isLocked()) {
-      return returnValue;
-    }
-
-    /*
-     * EntityProxies need to be recorded specially by the RequestContext, so
-     * delegate to the edit() method for wiring up the context.
-     */
-    if (returnValue instanceof EntityProxy) {
-      @SuppressWarnings("unchecked")
-      T toReturn = (T) context.edit((EntityProxy) returnValue);
-      return toReturn;
-    }
-
-    /*
-     * We're returning some object that's not an EntityProxy, most likely a
-     * Collection type. At the very least, propagate the current RequestContext
-     * so that editable chains can be constructed.
-     */
-    AutoBean<T> otherBean = AutoBeanUtils.getAutoBean(returnValue);
-    if (otherBean != null) {
-      otherBean.setTag(EntityProxyCategory.REQUEST_CONTEXT,
-          bean.getTag(EntityProxyCategory.REQUEST_CONTEXT));
-    }
-    return returnValue;
+    return bean.getTag(STABLE_ID);
   }
 }

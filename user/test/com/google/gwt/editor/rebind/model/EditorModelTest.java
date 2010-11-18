@@ -43,7 +43,6 @@ import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Violation;
-import com.google.gwt.requestfactory.shared.impl.Property;
 import com.google.gwt.user.client.TakesValue;
 import com.google.gwt.user.client.ui.HasText;
 
@@ -260,9 +259,10 @@ public class EditorModelTest extends TestCase {
     EditorData[] data = m.getEditorData();
     assertNotNull(data);
     assertEquals(2, data.length);
-    assertEquals(Arrays.asList("b", "b.string"), Arrays.asList(
-        data[0].getPath(), data[1].getPath()));
-    assertEquals(Arrays.asList("bEditor().asEditor()", "stringEditor()"),
+    assertEquals(Arrays.asList("b", "b.string"),
+        Arrays.asList(data[0].getPath(), data[1].getPath()));
+    assertEquals(
+        Arrays.asList("bEditor().asEditor()", "stringEditor()"),
         Arrays.asList(data[0].getSimpleExpression(),
             data[1].getSimpleExpression()));
   }
@@ -285,9 +285,11 @@ public class EditorModelTest extends TestCase {
         "bEditor().viewEditor()"), Arrays.asList(data[0].getExpression(),
         data[1].getExpression(), data[2].getExpression(),
         data[3].getExpression()));
-    assertEquals(Arrays.asList(true, false, true, false), Arrays.asList(
-        data[0].isDelegateRequired(), data[1].isDelegateRequired(),
-        data[2].isDelegateRequired(), data[3].isDelegateRequired()));
+    assertEquals(
+        Arrays.asList(true, false, true, false),
+        Arrays.asList(data[0].isDelegateRequired(),
+            data[1].isDelegateRequired(), data[2].isDelegateRequired(),
+            data[3].isDelegateRequired()));
   }
 
   public void testListDriver() throws UnableToCompleteException {
@@ -333,10 +335,12 @@ public class EditorModelTest extends TestCase {
   public void testMissingGetter() {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);
-    builder.expectError(EditorModel.noGetterMessage("missing",
-        types.findType("t.MissingGetterEditorDriver.AProxy")), null);
-    builder.expectError(EditorModel.noGetterMessage("yetAgain",
-        types.findType("t.MissingGetterEditorDriver.AProxy")), null);
+    builder.expectError(
+        EditorModel.noGetterMessage("missing",
+            types.findType("t.MissingGetterEditorDriver.AProxy")), null);
+    builder.expectError(
+        EditorModel.noGetterMessage("yetAgain",
+            types.findType("t.MissingGetterEditorDriver.AProxy")), null);
     builder.expectError(EditorModel.poisonedMessage(), null);
     UnitTestTreeLogger testLogger = builder.createLogger();
     try {
@@ -354,8 +358,9 @@ public class EditorModelTest extends TestCase {
   public void testSanityErrorMessages() {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);
-    builder.expectError(EditorModel.unexpectedInputTypeMessage(rfedType,
-        types.getJavaLangObject()), null);
+    builder.expectError(
+        EditorModel.unexpectedInputTypeMessage(rfedType,
+            types.getJavaLangObject()), null);
     builder.expectError(EditorModel.mustExtendMessage(rfedType), null);
     builder.expectError(
         EditorModel.tooManyInterfacesMessage(types.findType("t.TooManyInterfacesEditorDriver")),
@@ -384,9 +389,11 @@ public class EditorModelTest extends TestCase {
   public void testUnparameterizedEditor() {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);
-    builder.expectError(EditorModel.noEditorParameterizationMessage(
-        types.findType(Editor.class.getName()), types.findType(
-            SimpleEditor.class.getName()).isGenericType().getRawType()), null);
+    builder.expectError(
+        EditorModel.noEditorParameterizationMessage(
+            types.findType(Editor.class.getName()),
+            types.findType(SimpleEditor.class.getName()).isGenericType().getRawType()),
+        null);
     UnitTestTreeLogger testLogger = builder.createLogger();
     try {
       new EditorModel(testLogger,
@@ -486,7 +493,7 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("t.CyclicEditorDriver") {
-      // Tests error-detection when the editor graph isn't a DAG
+        // Tests error-detection when the editor graph isn't a DAG
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -510,7 +517,7 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("t.DottedPathEditorDriver") {
-      // Tests error-detection when the editor graph isn't a DAG
+        // Tests error-detection when the editor graph isn't a DAG
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -532,7 +539,7 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("t.ListEditor") {
-      // Tests error-detection when the editor graph isn't a DAG
+        // Tests error-detection when the editor graph isn't a DAG
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -555,7 +562,8 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("t.MissingGetterEditorDriver") {
-      // Tests error-detection when the editor structure doesn't match the proxy
+        // Tests error-detection when the editor structure doesn't match the
+        // proxy
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -657,7 +665,7 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("t.TooManyInterfacesEditorDriver") {
-      // Tests a Driver interface that extends more than RFED
+        // Tests a Driver interface that extends more than RFED
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -671,7 +679,8 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("t.UnparameterizedEditorEditorDriver") {
-      // Tests error-detection when the editor structure doesn't match the proxy
+        // Tests error-detection when the editor structure doesn't match the
+        // proxy
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -692,7 +701,8 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("t.UsesIsEditorDriver") {
-      // Tests error-detection when the editor structure doesn't match the proxy
+        // Tests error-detection when the editor structure doesn't match the
+        // proxy
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -721,7 +731,8 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("t.UsesIsEditorAndEditorDriver") {
-      // Tests error-detection when the editor structure doesn't match the proxy
+        // Tests error-detection when the editor structure doesn't match the
+        // proxy
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -751,7 +762,7 @@ public class EditorModelTest extends TestCase {
         return code;
       }
     }, new MockJavaResource("java.util.List") {
-      // Tests a Driver interface that extends more than RFED
+        // Tests a Driver interface that extends more than RFED
       @Override
       protected CharSequence getContent() {
         StringBuilder code = new StringBuilder();
@@ -774,7 +785,6 @@ public class EditorModelTest extends TestCase {
         new RealJavaResource(IsEditor.class),
         new EmptyMockJavaResource(Iterable.class),
         new RealJavaResource(LeafValueEditor.class),
-        new EmptyMockJavaResource(Property.class),
         new EmptyMockJavaResource(EntityProxy.class),
         new EmptyMockJavaResource(RequestFactory.class),
         new RealJavaResource(RequestFactoryEditorDriver.class),

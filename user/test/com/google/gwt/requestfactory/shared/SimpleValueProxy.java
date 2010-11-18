@@ -15,28 +15,37 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.requestfactory.server.SimpleValue;
+
+import java.util.Date;
+import java.util.List;
+
 /**
- * A simple entity used for testing. Has an int field and date field. Add other
- * data types as their support gets built in.
+ * A proxy for a non-addressable value object.
  */
-@ProxyForName("com.google.gwt.requestfactory.server.SimpleBar")
-public interface SimpleBarProxy extends EntityProxy {
-  Boolean getFindFails();
+@ProxyFor(value = SimpleValue.class)
+public interface SimpleValueProxy extends ValueProxy {
+  Date getDate();
 
-  Boolean getUnpersisted();
+  int getNumber();
 
-  /*
-   * NB: The lack of a getId() here is intentional, to ensure that the system
-   * does not assume that the id property is available to the client.
-   */
+  String getShouldBeNull();
 
-  String getUserName();
+  SimpleFooProxy getSimpleFoo();
 
-  void setFindFails(Boolean fails);
+  List<SimpleValueProxy> getSimpleValue();
 
-  void setUnpersisted(Boolean b);
+  String getString();
 
-  void setUserName(String userName);
+  void setDate(Date value);
 
-  EntityProxyId<SimpleBarProxy> stableId();
+  void setNumber(int value);
+
+  void setShouldBeNull(String value);
+
+  void setSimpleFoo(SimpleFooProxy value);
+
+  void setSimpleValue(List<SimpleValueProxy> value);
+
+  void setString(String value);
 }

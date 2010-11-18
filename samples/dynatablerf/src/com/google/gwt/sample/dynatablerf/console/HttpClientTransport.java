@@ -41,7 +41,6 @@ class HttpClientTransport implements RequestTransport {
     this.uri = uri;
   }
 
-  @Override
   public void send(String payload, TransportReceiver receiver) {
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost();

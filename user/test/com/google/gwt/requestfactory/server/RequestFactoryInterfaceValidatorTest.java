@@ -24,10 +24,12 @@ import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
+import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.impl.FindRequest;
 
 import junit.framework.TestCase;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -101,7 +103,6 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
       return 0;
     }
   }
-
   @ProxyFor(DomainWithOverloads.class)
   interface DomainWithOverloadsProxy extends EntityProxy {
     void foo();
@@ -142,6 +143,13 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     Request<Integer> doesNotExist(int a);
   }
 
+  static class Value {
+  }
+
+  @ProxyFor(value = Value.class)
+  interface MyValueProxy extends ValueProxy {
+  }
+
   RequestFactoryInterfaceValidator v;
 
   /**
@@ -162,6 +170,51 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
    */
   public void testFindRequestContext() {
     v.validateRequestContext(FindRequest.class.getName());
+  }
+
+  @ProxyFor(HasListDomain.class)
+  interface HasList extends EntityProxy {
+    List<ReachableOnlyThroughReturnedList> getList();
+
+    void setList(List<ReachableOnlyThroughParamaterList> list);
+  }
+
+  static class HasListDomain extends Domain {
+    List<Domain> getList() {
+      return null;
+    }
+
+    void setList(List<Domain> value) {
+    }
+
+    public String getId() {
+      return null;
+    }
+
+    public int getVersion() {
+      return 0;
+    }
+  }
+
+  @ProxyFor(Domain.class)
+  interface ReachableOnlyThroughReturnedList extends EntityProxy {
+  };
+  @ProxyFor(Domain.class)
+  interface ReachableOnlyThroughParamaterList extends EntityProxy {
+  };
+
+  /**
+   * Make sure that proxy types referenced through type parameters of method
+   * return types and paramaters types are examined.
+   */
+  public void testFollowingTypeParameters() {
+    v.validateEntityProxy(HasList.class.getName());
+    assertNotNull(v.getEntityProxyTypeName(HasListDomain.class.getName(),
+        HasList.class.getName()));
+    assertNotNull(v.getEntityProxyTypeName(Domain.class.getName(),
+        ReachableOnlyThroughParamaterList.class.getName()));
+    assertNotNull(v.getEntityProxyTypeName(Domain.class.getName(),
+        ReachableOnlyThroughReturnedList.class.getName()));
   }
 
   /**
@@ -222,6 +275,11 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
    */
   public void testTestCodeFactories() {
     v.validateRequestFactory(SimpleRequestFactory.class.getName());
+    assertFalse(v.isPoisoned());
+  }
+
+  public void testValueType() {
+    v.validateValueProxy(MyValueProxy.class.getName());
     assertFalse(v.isPoisoned());
   }
 

@@ -50,7 +50,7 @@ public class Person {
   }
 
   @NotNull
-  private final Address address = new Address();
+  private Address address = new Address();
 
   @NotNull
   private Schedule classSchedule = new Schedule();
@@ -158,7 +158,7 @@ public class Person {
   }
 
   public void setAddress(Address address) {
-    this.address.copyFrom(address);
+    this.address = address;
   }
 
   public void setDaysFilter(List<Boolean> daysFilter) {
@@ -172,7 +172,6 @@ public class Person {
 
   public void setId(String id) {
     this.id = id;
-    address.setId(id);
   }
 
   public void setMentor(Person mentor) {

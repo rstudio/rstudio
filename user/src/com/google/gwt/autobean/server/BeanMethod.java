@@ -138,13 +138,21 @@ enum BeanMethod {
     Class<?>[] searchParams = new Class<?>[declaredParams.length + 1];
     searchParams[0] = AutoBean.class;
     System.arraycopy(declaredParams, 0, searchParams, 1, declaredParams.length);
+    Class<?> autoBeanType = handler.getBean().getType();
 
     for (Class<?> clazz : handler.getBean().getConfiguration().getCategories()) {
       try {
         Method found = clazz.getMethod(method.getName(), searchParams);
-        if (Modifier.isStatic(found.getModifiers())) {
-          return found;
+        if (!Modifier.isStatic(found.getModifiers())) {
+          continue;
         }
+        // Check the AutoBean parameterization of the 0th argument
+        Class<?> foundAutoBean = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
+            AutoBean.class, found.getGenericParameterTypes()[0]));
+        if (!foundAutoBean.isAssignableFrom(autoBeanType)) {
+          continue;
+        }
+        return found;
       } catch (NoSuchMethodException expected) {
       } catch (IllegalArgumentException e) {
         throw new RuntimeException(e);

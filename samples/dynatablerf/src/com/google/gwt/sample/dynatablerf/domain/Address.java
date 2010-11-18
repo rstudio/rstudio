@@ -15,8 +15,6 @@
  */
 package com.google.gwt.sample.dynatablerf.domain;
 
-import com.google.gwt.sample.dynatablerf.server.SchoolCalendarService;
-
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -26,14 +24,6 @@ import javax.validation.constraints.Size;
  * Represents an address.
  */
 public class Address {
-  /**
-   * The RequestFactory requires a static finder method for each proxied type.
-   * Soon it should allow you to customize how instances are found.
-   */
-  public static Address findAddress(String id) {
-    return SchoolCalendarService.findPerson(id).getAddress();
-  }
-
   @NotNull
   @Size(min = 1)
   private String city;
@@ -77,20 +67,12 @@ public class Address {
     return city;
   }
 
-  public String getId() {
-    return id;
-  }
-
   public String getState() {
     return state;
   }
 
   public String getStreet() {
     return street;
-  }
-
-  public Integer getVersion() {
-    return version;
   }
 
   public String getZip() {
@@ -101,21 +83,8 @@ public class Address {
     return new Address(this);
   }
 
-  /**
-   * When this was written the RequestFactory required a persist method per
-   * type. That requirement should be relaxed very soon (and may well have been
-   * already if we forget to update this comment).
-   */
-  public void persist() {
-    SchoolCalendarService.persist(this);
-  }
-
   public void setCity(String city) {
     this.city = city;
-  }
-
-  public void setId(String id) {
-    this.id = id;
   }
 
   public void setState(String state) {
@@ -124,10 +93,6 @@ public class Address {
 
   public void setStreet(String street) {
     this.street = street;
-  }
-
-  public void setVersion(Integer version) {
-    this.version = version;
   }
 
   public void setZip(String zip) {

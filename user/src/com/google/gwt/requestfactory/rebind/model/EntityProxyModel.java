@@ -23,6 +23,14 @@ import java.util.List;
  */
 public class EntityProxyModel {
   /**
+   * The kind of proxy. This is an enum in case more proxy types are defined in
+   * the future.
+   */
+  public enum Type {
+    ENTITY, VALUE
+  }
+
+  /**
    * Builds {@link EntityProxyModel}.
    */
   public static class Builder {
@@ -56,11 +64,16 @@ public class EntityProxyModel {
     public void setRequestMethods(List<RequestMethod> requestMethods) {
       toReturn.requestMethods = requestMethods;
     }
+
+    public void setType(Type type) {
+      toReturn.type = type;
+    }
   }
 
   private Class<?> proxyFor;
   private String qualifiedSourceName;
   private List<RequestMethod> requestMethods;
+  private Type type;
 
   private EntityProxyModel() {
   }
@@ -75,6 +88,10 @@ public class EntityProxyModel {
 
   public List<RequestMethod> getRequestMethods() {
     return Collections.unmodifiableList(requestMethods);
+  }
+
+  public Type getType() {
+    return type;
   }
 
   /**

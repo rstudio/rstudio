@@ -24,12 +24,16 @@ public interface IdMessage {
   String CLIENT_ID = "C";
   String SERVER_ID = "S";
   String TYPE_TOKEN = "T";
+  String SYNTHETIC_ID = "Y";
 
   @PropertyName(CLIENT_ID)
   int getClientId();
 
   @PropertyName(SERVER_ID)
   String getServerId();
+
+  @PropertyName(SYNTHETIC_ID)
+  int getSyntheticId();
 
   @PropertyName(TYPE_TOKEN)
   String getTypeToken();
@@ -39,6 +43,9 @@ public interface IdMessage {
 
   @PropertyName(SERVER_ID)
   void setServerId(String value);
+
+  @PropertyName(SYNTHETIC_ID)
+  void setSyntheticId(int value);
 
   @PropertyName(TYPE_TOKEN)
   void setTypeToken(String value);

@@ -15,15 +15,16 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
-import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.messages.IdUtil;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Handles common code for creating SimpleEntityProxyIds.
+ * Handles common code for creating SimpleProxyIds.
  */
 public abstract class IdFactory {
   /**
@@ -31,57 +32,114 @@ public abstract class IdFactory {
    * resolves the problem of EntityProxyIds hashcodes changing after persist.
    * Only ids that are created in the RequestFactory are stored here.
    */
-  private final Map<String, SimpleEntityProxyId<?>> ephemeralIds = new HashMap<String, SimpleEntityProxyId<?>>();
+  private final Map<String, SimpleProxyId<?>> ephemeralIds = new HashMap<String, SimpleProxyId<?>>();
 
   /**
    * Allocates an ephemeral proxy id. This object is only valid for the lifetime
    * of the RequestFactory.
    */
-  public <P extends EntityProxy> SimpleEntityProxyId<P> allocateId(
-      Class<P> clazz) {
-    SimpleEntityProxyId<P> toReturn = new SimpleEntityProxyId<P>(clazz,
-        ephemeralIds.size() + 1);
+  public <P extends BaseProxy> SimpleProxyId<P> allocateId(Class<P> clazz) {
+    SimpleProxyId<P> toReturn = createId(clazz, ephemeralIds.size() + 1);
     ephemeralIds.put(getHistoryToken(toReturn), toReturn);
     return toReturn;
   }
 
-  public String getHistoryToken(Class<? extends EntityProxy> clazz) {
-    return getTypeToken(clazz);
+  /**
+   * Allocates a synthetic proxy id. This object is only valid for the lifetime
+   * of a request.
+   */
+  public <P extends BaseProxy> SimpleProxyId<P> allocateSyntheticId(
+      Class<P> clazz, int syntheticId) {
+    SimpleProxyId<P> toReturn = createId(clazz, "%" + syntheticId);
+    toReturn.setSyntheticId(syntheticId);
+    return toReturn;
   }
 
-  public String getHistoryToken(EntityProxyId<?> proxy) {
-    SimpleEntityProxyId<?> id = (SimpleEntityProxyId<?>) proxy;
+  /**
+   * A utility function to handle generic type conversion. This method will also
+   * assert that {@code clazz} is actually an EntityProxy type.
+   */
+  @SuppressWarnings("unchecked")
+  public <P extends EntityProxy> Class<P> asEntityProxy(
+      Class<? extends BaseProxy> clazz) {
+    assert isEntityType(clazz);
+    return (Class<P>) clazz;
+  }
+
+  /**
+   * A utility function to handle generic type conversion. This method will also
+   * assert that {@code clazz} is actually a ValueProxy type.
+   */
+  @SuppressWarnings("unchecked")
+  public <P extends ValueProxy> Class<P> asValueProxy(
+      Class<? extends BaseProxy> clazz) {
+    assert isEntityType(clazz);
+    return (Class<P>) clazz;
+  }
+
+  public <P extends BaseProxy> SimpleProxyId<P> getBaseProxyId(
+      String historyToken) {
+    assert !IdUtil.isSynthetic(historyToken) : "Synthetic id resolution"
+        + " should be handled by AbstractRequestContext";
+    if (IdUtil.isPersisted(historyToken)) {
+      return getId(IdUtil.getTypeToken(historyToken),
+          IdUtil.getServerId(historyToken));
+    }
+    if (IdUtil.isEphemeral(historyToken)) {
+      @SuppressWarnings("unchecked")
+      SimpleProxyId<P> toReturn = (SimpleProxyId<P>) ephemeralIds.get(historyToken);
+
+      /*
+       * This is tested in FindServiceTest.testFetchUnpersistedFutureId. In
+       * order to get here, the user would have to get an unpersisted history
+       * token and attempt to use it with a different RequestFactory instance.
+       * This could occur if an ephemeral token were bookmarked. In this case,
+       * we'll create a token, however it will never match anything.
+       */
+      if (toReturn == null) {
+        Class<P> clazz = checkTypeToken(IdUtil.getTypeToken(historyToken));
+        toReturn = createId(clazz, -1 * ephemeralIds.size());
+        ephemeralIds.put(historyToken, toReturn);
+      }
+
+      return toReturn;
+    }
+    throw new IllegalArgumentException(historyToken);
+  }
+
+  public String getHistoryToken(SimpleProxyId<?> proxy) {
+    SimpleProxyId<?> id = (SimpleProxyId<?>) proxy;
+    String token = getTypeToken(proxy.getProxyClass());
     if (id.isEphemeral()) {
-      return IdUtil.ephemeralId(id.getClientId(),
-          getHistoryToken(proxy.getProxyClass()));
+      return IdUtil.ephemeralId(id.getClientId(), token);
+    } else if (id.isSynthetic()) {
+      return IdUtil.syntheticId(id.getSyntheticId(), token);
     } else {
-      return IdUtil.persistedId(id.getServerId(),
-          getHistoryToken(proxy.getProxyClass()));
+      return IdUtil.persistedId(id.getServerId(), token);
     }
   }
 
   /**
-   * Create or retrieve a SimpleEntityProxyId.
+   * Create or retrieve a SimpleProxyId.
    */
-  public <P extends EntityProxy> SimpleEntityProxyId<P> getId(Class<P> clazz,
+  public <P extends BaseProxy> SimpleProxyId<P> getId(Class<P> clazz,
       String serverId) {
     return getId(getTypeToken(clazz), serverId);
   }
 
   /**
-   * Create or retrieve a SimpleEntityProxyId. If both the serverId and clientId
-   * are specified and the id is ephemeral, it will be updated with the server
-   * id.
+   * Create or retrieve a SimpleProxyId. If both the serverId and clientId are
+   * specified and the id is ephemeral, it will be updated with the server id.
    */
-  public <P extends EntityProxy> SimpleEntityProxyId<P> getId(Class<P> clazz,
+  public <P extends BaseProxy> SimpleProxyId<P> getId(Class<P> clazz,
       String serverId, Integer clientId) {
     return getId(getTypeToken(clazz), serverId, clientId);
   }
 
   /**
-   * Create or retrieve a SimpleEntityProxyId.
+   * Create or retrieve a SimpleProxyId.
    */
-  public <P extends EntityProxy> SimpleEntityProxyId<P> getId(String typeToken,
+  public <P extends BaseProxy> SimpleProxyId<P> getId(String typeToken,
       String serverId) {
     return getId(typeToken, serverId, null);
   }
@@ -91,7 +149,7 @@ public abstract class IdFactory {
    * are specified and the id is ephemeral, it will be updated with the server
    * id.
    */
-  public <P extends EntityProxy> SimpleEntityProxyId<P> getId(String typeToken,
+  public <P extends BaseProxy> SimpleProxyId<P> getId(String typeToken,
       String serverId, Integer clientId) {
     /*
      * If there's a clientId, that probably means we've just created a brand-new
@@ -101,12 +159,12 @@ public abstract class IdFactory {
       // Try a cache lookup for the ephemeral key
       String ephemeralKey = IdUtil.ephemeralId(clientId, typeToken);
       @SuppressWarnings("unchecked")
-      SimpleEntityProxyId<P> toReturn = (SimpleEntityProxyId<P>) ephemeralIds.get(ephemeralKey);
+      SimpleProxyId<P> toReturn = (SimpleProxyId<P>) ephemeralIds.get(ephemeralKey);
 
       // Do we need to allocate an ephemeral id?
       if (toReturn == null) {
         Class<P> clazz = getTypeFromToken(typeToken);
-        toReturn = new SimpleEntityProxyId<P>(clazz, clientId);
+        toReturn = createId(clazz, clientId);
         ephemeralIds.put(ephemeralKey, toReturn);
       }
 
@@ -133,7 +191,7 @@ public abstract class IdFactory {
 
     String serverKey = IdUtil.persistedId(serverId, typeToken);
     @SuppressWarnings("unchecked")
-    SimpleEntityProxyId<P> toReturn = (SimpleEntityProxyId<P>) ephemeralIds.get(serverKey);
+    SimpleProxyId<P> toReturn = (SimpleProxyId<P>) ephemeralIds.get(serverKey);
     if (toReturn != null) {
       // A cache hit for a locally-created object that has been persisted
       return toReturn;
@@ -145,38 +203,14 @@ public abstract class IdFactory {
      * case for read-dominated applications.
      */
     Class<P> clazz = getTypeFromToken(typeToken);
-    return new SimpleEntityProxyId<P>(clazz, serverId);
+    return createId(clazz, serverId);
   }
 
-  public <P extends EntityProxy> SimpleEntityProxyId<P> getProxyId(
-      String historyToken) {
-    if (IdUtil.isPersisted(historyToken)) {
-      return getId(IdUtil.getTypeToken(historyToken),
-          IdUtil.getServerId(historyToken));
-    }
-    if (IdUtil.isEphemeral(historyToken)) {
-      @SuppressWarnings("unchecked")
-      SimpleEntityProxyId<P> toReturn = (SimpleEntityProxyId<P>) ephemeralIds.get(historyToken);
+  public abstract boolean isEntityType(Class<?> clazz);
 
-      /*
-       * This is tested in FindServiceTest.testFetchUnpersistedFutureId. In
-       * order to get here, the user would have to get an unpersisted history
-       * token and attempt to use it with a different RequestFactory instance.
-       * This could occur if an ephemeral token was bookmarked. In this case,
-       * we'll create a token, however it will never match anything.
-       */
-      if (toReturn == null) {
-        Class<P> clazz = checkTypeToken(IdUtil.getTypeToken(historyToken));
-        toReturn = new SimpleEntityProxyId<P>(clazz, -1 * ephemeralIds.size());
-        ephemeralIds.put(historyToken, toReturn);
-      }
+  public abstract boolean isValueType(Class<?> clazz);
 
-      return toReturn;
-    }
-    throw new IllegalArgumentException(historyToken);
-  }
-
-  protected abstract <P extends EntityProxy> Class<P> getTypeFromToken(
+  protected abstract <P extends BaseProxy> Class<P> getTypeFromToken(
       String typeToken);
 
   protected abstract String getTypeToken(Class<?> clazz);
@@ -188,6 +222,34 @@ public abstract class IdFactory {
       throw new IllegalArgumentException("Unknnown type");
     }
     return clazz;
+  }
+
+  private <P extends BaseProxy> SimpleProxyId<P> createId(Class<P> clazz,
+      int clientId) {
+    SimpleProxyId<P> toReturn;
+    if (isValueType(clazz)) {
+      toReturn = new SimpleProxyId<P>(clazz, clientId);
+    } else {
+      @SuppressWarnings("unchecked")
+      SimpleProxyId<P> temp = (SimpleProxyId<P>) new SimpleEntityProxyId<EntityProxy>(
+          asEntityProxy(clazz), clientId);
+      toReturn = (SimpleProxyId<P>) temp;
+    }
+    return toReturn;
+  }
+
+  private <P extends BaseProxy> SimpleProxyId<P> createId(Class<P> clazz,
+      String serverId) {
+    SimpleProxyId<P> toReturn;
+    if (isValueType(clazz)) {
+      toReturn = new SimpleProxyId<P>(clazz, serverId);
+    } else {
+      @SuppressWarnings("unchecked")
+      SimpleProxyId<P> temp = (SimpleProxyId<P>) new SimpleEntityProxyId<EntityProxy>(
+          asEntityProxy(clazz), serverId);
+      toReturn = (SimpleProxyId<P>) temp;
+    }
+    return toReturn;
   }
 
 }

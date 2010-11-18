@@ -60,6 +60,7 @@ public class TypeUtils {
 
   static {
     Map<Class<?>, Class<?>> autoBoxMap = new HashMap<Class<?>, Class<?>>();
+    autoBoxMap.put(boolean.class, Boolean.class);
     autoBoxMap.put(byte.class, Byte.class);
     autoBoxMap.put(char.class, Character.class);
     autoBoxMap.put(double.class, Double.class);

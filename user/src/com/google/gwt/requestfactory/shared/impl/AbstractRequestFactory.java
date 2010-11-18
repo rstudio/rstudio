@@ -15,9 +15,12 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
+import static com.google.gwt.requestfactory.shared.impl.Constants.STABLE_ID;
+
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanFactory;
 import com.google.gwt.event.shared.EventBus;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Request;
@@ -30,7 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * 
+ * Base type for generated RF interfaces.
  */
 public abstract class AbstractRequestFactory extends IdFactory implements
     RequestFactory {
@@ -49,17 +52,16 @@ public abstract class AbstractRequestFactory extends IdFactory implements
   private RequestTransport transport;
 
   /**
-   * Creates a new EntityProxy with an assigned ID.
+   * Creates a new proxy with an assigned ID.
    */
-  public <T extends EntityProxy> AutoBean<T> createEntityProxy(Class<T> clazz,
-      SimpleEntityProxyId<T> id) {
+  public <T extends BaseProxy> AutoBean<T> createProxy(Class<T> clazz,
+      SimpleProxyId<T> id) {
     AutoBean<T> created = getAutoBeanFactory().create(clazz);
     if (created == null) {
       throw new IllegalArgumentException("Unknown EntityProxy type "
           + clazz.getName());
     }
-    created.setTag(EntityProxyCategory.REQUEST_FACTORY, this);
-    created.setTag(EntityProxyCategory.STABLE_ID, id);
+    created.setTag(STABLE_ID, id);
     return created;
   }
 
@@ -79,7 +81,7 @@ public abstract class AbstractRequestFactory extends IdFactory implements
       protected RequestData makeRequestData() {
         return new RequestData(
             "com.google.gwt.requestfactory.shared.impl.FindRequest::find",
-            new Object[]{proxyId}, propertyRefs, proxyId.getProxyClass(), null);
+            new Object[] {proxyId}, propertyRefs, proxyId.getProxyClass(), null);
       }
     };
   }
@@ -88,12 +90,25 @@ public abstract class AbstractRequestFactory extends IdFactory implements
     return eventBus;
   }
 
+  public String getHistoryToken(Class<? extends EntityProxy> clazz) {
+    return getTypeToken(clazz);
+  }
+
+  public String getHistoryToken(EntityProxyId<?> proxy) {
+    return getHistoryToken((SimpleProxyId<?>) proxy);
+  }
+
   public Class<? extends EntityProxy> getProxyClass(String historyToken) {
     String typeToken = IdUtil.getTypeToken(historyToken);
     if (typeToken != null) {
       return getTypeFromToken(typeToken);
     }
     return getTypeFromToken(historyToken);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends EntityProxy> EntityProxyId<T> getProxyId(String historyToken) {
+    return (EntityProxyId<T>) getBaseProxyId(historyToken);
   }
 
   public RequestTransport getRequestTransport() {
@@ -120,8 +135,7 @@ public abstract class AbstractRequestFactory extends IdFactory implements
    * Used by {@link AbstractRequestContext} to quiesce update events for objects
    * that haven't truly changed.
    */
-  protected boolean hasVersionChanged(SimpleEntityProxyId<?> id,
-      int observedVersion) {
+  protected boolean hasVersionChanged(SimpleProxyId<?> id, int observedVersion) {
     String key = getHistoryToken(id);
     Integer existingVersion = version.get(key);
     // Return true if we haven't seen this before or the versions differ
@@ -132,4 +146,5 @@ public abstract class AbstractRequestFactory extends IdFactory implements
     }
     return toReturn;
   }
+
 }

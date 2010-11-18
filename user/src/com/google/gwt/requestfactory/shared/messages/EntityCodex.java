@@ -16,12 +16,16 @@
 package com.google.gwt.requestfactory.shared.messages;
 
 import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.autobean.shared.impl.LazySplittable;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
-import com.google.gwt.requestfactory.shared.EntityProxy;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
+import com.google.gwt.requestfactory.shared.impl.Poser;
+import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,12 +41,13 @@ public class EntityCodex {
    * Abstracts the process by which EntityProxies are created.
    */
   public interface EntitySource {
-    <Q extends EntityProxy> AutoBean<Q> getBeanForPayload(
-        String serializedProxyId);
+    <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(String serializedProxyId);
 
-    String getSerializedProxyId(EntityProxyId<?> stableId);
+    String getSerializedProxyId(SimpleProxyId<?> stableId);
 
     boolean isEntityType(Class<?> clazz);
+
+    boolean isValueType(Class<?> clazz);
   }
 
   /**
@@ -88,7 +93,8 @@ public class EntityCodex {
       return collection;
     }
 
-    if (source.isEntityType(type) || EntityProxyId.class.equals(type)) {
+    if (source.isEntityType(type) || source.isValueType(type)
+        || EntityProxyId.class.equals(type)) {
       return source.getBeanForPayload(split.asString()).as();
     }
 
@@ -133,12 +139,17 @@ public class EntityCodex {
       return new LazySplittable(toReturn.toString());
     }
 
-    if (value instanceof EntityProxy) {
-      value = source.getSerializedProxyId(((EntityProxy) value).stableId());
+    if (value instanceof BaseProxy) {
+      AutoBean<BaseProxy> autoBean = AutoBeanUtils.getAutoBean((BaseProxy) value);
+      value = BaseProxyCategory.stableId(autoBean);
     }
 
-    if (value instanceof EntityProxyId<?>) {
-      value = source.getSerializedProxyId((EntityProxyId<?>) value);
+    if (value instanceof SimpleProxyId<?>) {
+      value = source.getSerializedProxyId((SimpleProxyId<?>) value);
+    }
+
+    if (value instanceof Poser<?>) {
+      value = ((Poser<?>) value).getPosedValue();
     }
 
     return ValueCodex.encode(value);

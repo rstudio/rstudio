@@ -69,6 +69,14 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
     eventBus = req.getEventBus();
   }
 
+  protected void checkEqualityAndHashcode(Object a, Object b) {
+    assertNotNull(a);
+    assertNotNull(b);
+    assertEquals(a.hashCode(), b.hashCode());
+    assertEquals(a, b);
+    assertEquals(b, a);
+  }
+
   protected void checkStableIdEquals(EntityProxy expected, EntityProxy actual) {
     assertEquals(expected.stableId(), actual.stableId());
     assertEquals(expected.stableId().hashCode(), actual.stableId().hashCode());

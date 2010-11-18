@@ -21,12 +21,16 @@ import com.google.gwt.autobean.shared.AutoBeanFactory.Category;
 import com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.server.testing.InProcessRequestContext.RequestContextHandler;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.impl.AbstractRequestFactory;
+import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.gwt.requestfactory.shared.impl.EntityProxyCategory;
+import com.google.gwt.requestfactory.shared.impl.ValueProxyCategory;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -37,7 +41,9 @@ import java.lang.reflect.Proxy;
  * An JRE-compatible implementation of RequestFactory.
  */
 class InProcessRequestFactory extends AbstractRequestFactory {
-  @Category(EntityProxyCategory.class)
+  @Category(value = {
+      EntityProxyCategory.class, ValueProxyCategory.class,
+      BaseProxyCategory.class})
   @NoWrap(EntityProxyId.class)
   interface Factory extends AutoBeanFactory {
   }
@@ -60,7 +66,7 @@ class InProcessRequestFactory extends AbstractRequestFactory {
           InProcessRequestFactory.this).new RequestContextHandler();
       return context.cast(Proxy.newProxyInstance(
           Thread.currentThread().getContextClassLoader(),
-          new Class<?>[]{context}, handler));
+          new Class<?>[] {context}, handler));
     }
   }
 
@@ -71,17 +77,27 @@ class InProcessRequestFactory extends AbstractRequestFactory {
   }
 
   @Override
+  public boolean isEntityType(Class<?> clazz) {
+    return EntityProxy.class.isAssignableFrom(clazz);
+  }
+
+  @Override
+  public boolean isValueType(Class<?> clazz) {
+    return ValueProxy.class.isAssignableFrom(clazz);
+  }
+
+  @Override
   protected AutoBeanFactory getAutoBeanFactory() {
     return AutoBeanFactoryMagic.create(Factory.class);
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  protected <P extends EntityProxy> Class<P> getTypeFromToken(String typeToken) {
+  protected <P extends BaseProxy> Class<P> getTypeFromToken(String typeToken) {
     try {
-      Class<? extends EntityProxy> found = Class.forName(typeToken, false,
+      Class<? extends BaseProxy> found = Class.forName(typeToken, false,
           Thread.currentThread().getContextClassLoader()).asSubclass(
-          EntityProxy.class);
+          BaseProxy.class);
       return (Class<P>) found;
     } catch (ClassNotFoundException e) {
       return null;
@@ -90,6 +106,6 @@ class InProcessRequestFactory extends AbstractRequestFactory {
 
   @Override
   protected String getTypeToken(Class<?> clazz) {
-    return EntityProxy.class.isAssignableFrom(clazz) ? clazz.getName() : null;
+    return isEntityType(clazz) || isValueType(clazz) ? clazz.getName() : null;
   }
 }

@@ -24,15 +24,17 @@ import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
+import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
+import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.gwt.requestfactory.shared.impl.Constants;
 import com.google.gwt.requestfactory.shared.impl.EntityProxyCategory;
-import com.google.gwt.requestfactory.shared.impl.IdFactory;
-import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyId;
+import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
+import com.google.gwt.requestfactory.shared.impl.ValueProxyCategory;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex.EntitySource;
 import com.google.gwt.requestfactory.shared.messages.IdUtil;
@@ -53,13 +55,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.validation.ConstraintViolation;
 
@@ -77,13 +76,23 @@ public class SimpleRequestProcessor {
     /**
      * The way to introduce polymorphism.
      */
-    Class<?> getClientType(Class<?> domainClass);
+    Class<?> getClientType(Class<?> domainClass, Class<?> clientType);
 
     Class<?> getDomainClass(Class<?> clazz);
 
+    /**
+     * May return {@code null} to indicate that the domain object has not been
+     * persisted.
+     */
     String getFlatId(EntitySource source, Object domainObject);
 
     Object getProperty(Object domainObject, String property);
+
+    /**
+     * Compute the return type for a method declared in a RequestContext by
+     * analyzing the generic method declaration.
+     */
+    Type getRequestReturnType(Method contextMethod);
 
     String getTypeToken(Class<?> domainClass);
 
@@ -93,7 +102,7 @@ public class SimpleRequestProcessor {
 
     Object loadDomainObject(EntitySource source, Class<?> clazz, String flatId);
 
-    Class<? extends EntityProxy> resolveClass(String typeToken);
+    Class<? extends BaseProxy> resolveClass(String typeToken);
 
     Method resolveDomainMethod(Method requestContextMethod);
 
@@ -111,120 +120,24 @@ public class SimpleRequestProcessor {
    * specific type.
    */
   @SuppressWarnings("serial")
-  private static class IdToEntityMap extends
-      HashMap<SimpleEntityProxyId<?>, AutoBean<? extends EntityProxy>> {
+  static class IdToEntityMap extends
+      HashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> {
   }
 
-  private class RequestState implements EntityCodex.EntitySource {
-    private final IdToEntityMap beans = new IdToEntityMap();
-    private final Map<Object, Integer> domainObjectsToClientId;
-    private final IdFactory idFactory;
+  /**
+   * Allows the creation of properly-configured AutoBeans without having to
+   * create an AutoBeanFactory with the desired annotations.
+   */
+  static final Configuration CONFIGURATION = new Configuration.Builder().setCategories(
+      EntityProxyCategory.class, ValueProxyCategory.class,
+      BaseProxyCategory.class).setNoWrap(EntityProxyId.class).build();
 
-    public RequestState() {
-      idFactory = new IdFactory() {
-        @Override
-        @SuppressWarnings("unchecked")
-        protected <P extends EntityProxy> Class<P> getTypeFromToken(
-            String typeToken) {
-          return (Class<P>) service.resolveClass(typeToken);
-        }
+  /**
+   * Vends message objects.
+   */
+  static final MessageFactory FACTORY = AutoBeanFactoryMagic.create(MessageFactory.class);
 
-        @Override
-        protected String getTypeToken(Class<?> clazz) {
-          return service.getTypeToken(clazz);
-        }
-      };
-      domainObjectsToClientId = new IdentityHashMap<Object, Integer>();
-    }
-
-    public RequestState(RequestState parent) {
-      idFactory = parent.idFactory;
-      domainObjectsToClientId = parent.domainObjectsToClientId;
-    }
-
-    public <Q extends EntityProxy> AutoBean<Q> getBeanForPayload(
-        SimpleEntityProxyId<Q> id) {
-      @SuppressWarnings("unchecked")
-      AutoBean<Q> toReturn = (AutoBean<Q>) beans.get(id);
-      if (toReturn == null) {
-        toReturn = AutoBeanFactoryMagic.createBean(id.getProxyClass(),
-            CONFIGURATION);
-        toReturn.setTag(STABLE_ID, id);
-
-        // Resolve the domain object
-        Class<?> domainClass = service.getDomainClass(id.getProxyClass());
-
-        Object domain;
-        if (id.isEphemeral()) {
-          domain = service.createDomainObject(domainClass);
-          // Don't call getFlatId here, resolve the ids after invocations
-          domainObjectsToClientId.put(domain, id.getClientId());
-        } else {
-          domain = service.loadDomainObject(this, domainClass,
-              fromBase64(id.getServerId()));
-        }
-        toReturn.setTag(DOMAIN_OBJECT, domain);
-
-        beans.put(id, toReturn);
-      }
-      return toReturn;
-    }
-
-    /**
-     * EntityCodex support.
-     */
-    public <Q extends EntityProxy> AutoBean<Q> getBeanForPayload(
-        String serializedProxyId) {
-      String typeToken = IdUtil.getTypeToken(serializedProxyId);
-      SimpleEntityProxyId<Q> id;
-      if (IdUtil.isEphemeral(serializedProxyId)) {
-        id = idFactory.getId(typeToken, null,
-            IdUtil.getClientId(serializedProxyId));
-      } else {
-        id = idFactory.getId(typeToken, IdUtil.getServerId(serializedProxyId));
-      }
-      return getBeanForPayload(id);
-    }
-
-    /**
-     * If the domain object was sent with an ephemeral id, return the client id.
-     */
-    public Integer getClientId(Object domainEntity) {
-      return domainObjectsToClientId.get(domainEntity);
-    }
-
-    /**
-     * EntityCodex support.
-     */
-    public String getSerializedProxyId(EntityProxyId<?> stableId) {
-      SimpleEntityProxyId<?> impl = (SimpleEntityProxyId<?>) stableId;
-      if (impl.isEphemeral()) {
-        return IdUtil.ephemeralId(impl.getClientId(),
-            service.getTypeToken(stableId.getProxyClass()));
-      } else {
-        return IdUtil.persistedId(impl.getServerId(),
-            service.getTypeToken(stableId.getProxyClass()));
-      }
-    }
-
-    /**
-     * EntityCodex support.
-     */
-    public boolean isEntityType(Class<?> clazz) {
-      return EntityProxy.class.isAssignableFrom(clazz);
-    }
-  }
-
-  private static final Configuration CONFIGURATION = new Configuration.Builder().setCategories(
-      EntityProxyCategory.class).setNoWrap(EntityProxyId.class).build();
-  private static final MessageFactory FACTORY = AutoBeanFactoryMagic.create(MessageFactory.class);
-
-  // Tag constants
-  private static final String DOMAIN_OBJECT = "domainObject";
-  private static final String IN_RESPONSE = "inResponse";
-  private static final String STABLE_ID = "stableId";
-
-  private static String fromBase64(String encoded) {
+  static String fromBase64(String encoded) {
     try {
       return new String(Base64Utils.fromBase64(encoded), "UTF-8");
     } catch (UnsupportedEncodingException e) {
@@ -232,7 +145,7 @@ public class SimpleRequestProcessor {
     }
   }
 
-  private static String toBase64(String data) {
+  static String toBase64(String data) {
     try {
       return Base64Utils.toBase64(data.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException e) {
@@ -241,6 +154,7 @@ public class SimpleRequestProcessor {
   }
 
   private ExceptionHandler exceptionHandler = new DefaultExceptionHandler();
+
   private final ServiceLayer service;
 
   public SimpleRequestProcessor(ServiceLayer serviceLayer) {
@@ -271,7 +185,7 @@ public class SimpleRequestProcessor {
    * Main processing method.
    */
   void process(RequestMessage req, ResponseMessage resp) {
-    final RequestState source = new RequestState();
+    final RequestState source = new RequestState(service);
     // Apply operations
     processOperationMessages(source, req);
 
@@ -319,41 +233,44 @@ public class SimpleRequestProcessor {
 
   private void createReturnOperations(List<OperationMessage> operations,
       RequestState returnState, IdToEntityMap toProcess) {
-    for (Map.Entry<SimpleEntityProxyId<?>, AutoBean<? extends EntityProxy>> entry : toProcess.entrySet()) {
-      SimpleEntityProxyId<?> id = entry.getKey();
+    for (Map.Entry<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> entry : toProcess.entrySet()) {
+      SimpleProxyId<?> id = entry.getKey();
 
-      AutoBean<? extends EntityProxy> bean = entry.getValue();
-      Object domainObject = bean.getTag(DOMAIN_OBJECT);
+      AutoBean<? extends BaseProxy> bean = entry.getValue();
+      Object domainObject = bean.getTag(Constants.DOMAIN_OBJECT);
       WriteOperation writeOperation;
 
       if (id.isEphemeral()) {
-        resolveClientEntityProxy(returnState, domainObject,
-            Collections.<String> emptySet(), "");
-        if (id.isEphemeral()) {
-          throw new ReportableException("Could not persist entity "
-              + service.getFlatId(returnState, domainObject.toString()));
-        }
+        // See if the entity has been persisted in the meantime
+        returnState.getResolver().resolveClientValue(domainObject,
+            id.getProxyClass(), Collections.<String> emptySet());
       }
 
-      if (service.loadDomainObject(returnState,
-          service.getDomainClass(id.getProxyClass()),
-          fromBase64(id.getServerId())) == null) {
+      int version;
+      if (id.isEphemeral() || id.isSynthetic()) {
+        // If the object isn't persistent, there's no reason to send an update
+        writeOperation = null;
+        version = 0;
+      } else if (service.loadDomainObject(returnState,
+          service.getDomainClass(id.getProxyClass()), id.getServerId()) == null) {
         writeOperation = WriteOperation.DELETE;
+        version = 0;
       } else if (id.wasEphemeral()) {
         writeOperation = WriteOperation.PERSIST;
+        version = service.getVersion(domainObject);
       } else {
         writeOperation = WriteOperation.UPDATE;
+        version = service.getVersion(domainObject);
       }
 
-      boolean inResponse = bean.getTag(IN_RESPONSE) != null;
-      int version = domainObject == null ? 0 : service.getVersion(domainObject);
+      boolean inResponse = bean.getTag(Constants.IN_RESPONSE) != null;
 
       /*
        * Don't send any data back to the client for an update on an object that
        * isn't part of the response payload when the client's version matches
        * the domain version.
        */
-      if (writeOperation.equals(WriteOperation.UPDATE) && !inResponse) {
+      if (WriteOperation.UPDATE.equals(writeOperation) && !inResponse) {
         if (Integer.valueOf(version).equals(
             bean.getTag(Constants.ENCODED_VERSION_PROPERTY))) {
           continue;
@@ -361,9 +278,15 @@ public class SimpleRequestProcessor {
       }
 
       OperationMessage op = FACTORY.operation().as();
-      if (writeOperation == WriteOperation.PERSIST) {
+
+      /*
+       * Send a client id if the id is ephemeral or was previously associated
+       * with a client id.
+       */
+      if (id.wasEphemeral()) {
         op.setClientId(id.getClientId());
       }
+
       op.setOperation(writeOperation);
 
       // Only send properties for entities that are part of the return graph
@@ -380,7 +303,12 @@ public class SimpleRequestProcessor {
         op.setPropertyMap(propertyMap);
       }
 
-      op.setServerId(id.getServerId());
+      if (!id.isEphemeral() && !id.isSynthetic()) {
+        // Send the server address only for persistent objects
+        op.setServerId(toBase64(id.getServerId()));
+      }
+
+      op.setSyntheticId(id.getSyntheticId());
       op.setTypeToken(service.getTypeToken(id.getProxyClass()));
       op.setVersion(version);
 
@@ -411,7 +339,8 @@ public class SimpleRequestProcessor {
         split = invocation.getParameters().get(i);
       }
       Object arg = EntityCodex.decode(source, type, elementType, split);
-      arg = resolveDomainValue(arg, !EntityProxyId.class.equals(contextArgs[i]));
+      arg = source.getResolver().resolveDomainValue(arg,
+          !EntityProxyId.class.equals(contextArgs[i]));
       args.add(arg);
     }
 
@@ -446,26 +375,6 @@ public class SimpleRequestProcessor {
     return args;
   }
 
-  /**
-   * Expand the property references in an InvocationMessage into a
-   * fully-expanded list of properties. For example, <code>[foo.bar.baz]</code>
-   * will be converted into <code>[foo, foo.bar, foo.bar.baz]</code>.
-   */
-  private Set<String> getPropertyRefs(InvocationMessage invocation) {
-    Set<String> refs = invocation.getPropertyRefs();
-    if (refs == null) {
-      return Collections.emptySet();
-    }
-
-    Set<String> toReturn = new TreeSet<String>();
-    for (String raw : refs) {
-      for (int idx = raw.length(); idx >= 0; idx = raw.lastIndexOf('.', idx - 1)) {
-        toReturn.add(raw.substring(0, idx));
-      }
-    }
-    return toReturn;
-  }
-
   private void processInvocationMessages(RequestState state,
       List<InvocationMessage> invlist, List<Splittable> results,
       List<Boolean> success, RequestState returnState) {
@@ -483,8 +392,9 @@ public class SimpleRequestProcessor {
         Object returnValue = service.invoke(domainMethod, args.toArray());
 
         // Convert domain object to client object
-        returnValue = resolveClientValue(returnState, returnValue,
-            getPropertyRefs(invocation), "");
+        Type requestReturnType = service.getRequestReturnType(contextMethod);
+        returnValue = state.getResolver().resolveClientValue(returnValue,
+            requestReturnType, invocation.getPropertyRefs());
 
         // Convert the client object to a string
         results.add(EntityCodex.encode(returnState, returnValue));
@@ -511,10 +421,10 @@ public class SimpleRequestProcessor {
               operation.getServerId(), operation.getTypeToken());
       AutoBean<? extends EntityProxy> bean = state.getBeanForPayload(payloadId);
       // Use the version later to know which objects need to be sent back
-      bean.setTag(Constants.ENCODED_ID_PROPERTY, operation.getVersion());
+      bean.setTag(Constants.ENCODED_VERSION_PROPERTY, operation.getVersion());
 
       // Load the domain object with properties, if it exists
-      final Object domain = bean.getTag(DOMAIN_OBJECT);
+      final Object domain = bean.getTag(Constants.DOMAIN_OBJECT);
       if (domain != null) {
         // Apply any property updates
         final Map<String, Splittable> flatValueMap = operation.getPropertyMap();
@@ -529,7 +439,8 @@ public class SimpleRequestProcessor {
                     ? ((CollectionPropertyContext) ctx).getElementType() : null;
                 Object newValue = EntityCodex.decode(state, ctx.getType(),
                     elementType, flatValueMap.get(propertyName));
-                Object resolved = resolveDomainValue(newValue, false);
+                Object resolved = state.getResolver().resolveDomainValue(
+                    newValue, false);
                 service.setProperty(domain, propertyName,
                     service.getDomainClass(ctx.getType()), resolved);
               }
@@ -542,7 +453,8 @@ public class SimpleRequestProcessor {
               if (flatValueMap.containsKey(propertyName)) {
                 Splittable split = flatValueMap.get(propertyName);
                 Object newValue = ValueCodex.decode(ctx.getType(), split);
-                Object resolved = resolveDomainValue(newValue, false);
+                Object resolved = state.getResolver().resolveDomainValue(
+                    newValue, false);
                 service.setProperty(domain, propertyName, ctx.getType(),
                     resolved);
               }
@@ -555,175 +467,30 @@ public class SimpleRequestProcessor {
   }
 
   /**
-   * Converts a domain entity into an EntityProxy that will be sent to the
-   * client.
-   */
-  private EntityProxy resolveClientEntityProxy(final RequestState state,
-      final Object domainEntity, final Set<String> propertyRefs,
-      final String prefix) {
-    if (domainEntity == null) {
-      return null;
-    }
-
-    // Compute data needed to return id to the client
-    String flatId = toBase64(service.getFlatId(state, domainEntity));
-    Class<? extends EntityProxy> proxyType = service.getClientType(
-        domainEntity.getClass()).asSubclass(EntityProxy.class);
-
-    // Retrieve the id, possibly setting its persisted value
-    SimpleEntityProxyId<? extends EntityProxy> id = state.idFactory.getId(
-        proxyType, flatId, state.getClientId(domainEntity));
-
-    AutoBean<? extends EntityProxy> bean = state.getBeanForPayload(id);
-    bean.setTag(IN_RESPONSE, true);
-    bean.accept(new AutoBeanVisitor() {
-      @Override
-      public boolean visitReferenceProperty(String propertyName,
-          AutoBean<?> value, PropertyContext ctx) {
-        // Does the user care about the property?
-        String newPrefix = (prefix.length() > 0 ? (prefix + ".") : "")
-            + propertyName;
-
-        /*
-         * Send if the user cares about the property or if it's a collection of
-         * values.
-         */
-        Class<?> elementType = ctx instanceof CollectionPropertyContext
-            ? ((CollectionPropertyContext) ctx).getElementType() : null;
-        boolean shouldSend = propertyRefs.contains(newPrefix)
-            || elementType != null && !state.isEntityType(elementType);
-
-        if (!shouldSend) {
-          return false;
-        }
-
-        // Call the getter
-        Object domainValue = service.getProperty(domainEntity, propertyName);
-        if (domainValue == null) {
-          return false;
-        }
-
-        // Turn the domain object into something usable on the client side
-        Object resolved = resolveClientValue(state, domainValue, propertyRefs,
-            newPrefix);
-
-        ctx.set(ctx.getType().cast(resolved));
-        return false;
-      }
-
-      @Override
-      public boolean visitValueProperty(String propertyName, Object value,
-          PropertyContext ctx) {
-        // Limit unrequested value properties?
-        value = service.getProperty(domainEntity, propertyName);
-        ctx.set(ctx.getType().cast(value));
-        return false;
-      }
-    });
-    bean.setTag(Constants.ENCODED_VERSION_PROPERTY,
-        service.getVersion(domainEntity));
-    return proxyType.cast(bean.as());
-  }
-
-  /**
-   * Given a method a domain object, return a value that can be encoded by the
-   * client.
-   */
-  private Object resolveClientValue(RequestState source, Object domainValue,
-      Set<String> propertyRefs, String prefix) {
-    if (domainValue == null) {
-      return null;
-    }
-
-    Class<?> returnClass = service.getClientType(domainValue.getClass());
-
-    // Pass simple values through
-    if (ValueCodex.canDecode(returnClass)) {
-      return domainValue;
-    }
-
-    // Convert entities to EntityProxies
-    if (EntityProxy.class.isAssignableFrom(returnClass)) {
-      return resolveClientEntityProxy(source, domainValue, propertyRefs, prefix);
-    }
-
-    // Convert collections
-    if (Collection.class.isAssignableFrom(returnClass)) {
-      Collection<Object> accumulator;
-      if (List.class.isAssignableFrom(returnClass)) {
-        accumulator = new ArrayList<Object>();
-      } else if (Set.class.isAssignableFrom(returnClass)) {
-        accumulator = new HashSet<Object>();
-      } else {
-        throw new ReportableException("Unsupported collection type"
-            + returnClass.getName());
-      }
-
-      for (Object o : (Collection<?>) domainValue) {
-        accumulator.add(resolveClientValue(source, o, propertyRefs, prefix));
-      }
-      return accumulator;
-    }
-
-    throw new ReportableException("Unsupported domain type "
-        + returnClass.getCanonicalName());
-  }
-
-  /**
-   * Convert a client-side value into a domain value.
-   * 
-   * @param the client object to resolve
-   * @param detectDeadEntities if <code>true</code> this method will throw a
-   *          ReportableException containing a {@link DeadEntityException} if an
-   *          EntityProxy cannot be resolved
-   */
-  private Object resolveDomainValue(Object maybeEntityProxy,
-      boolean detectDeadEntities) {
-    if (maybeEntityProxy instanceof EntityProxy) {
-      AutoBean<EntityProxy> bean = AutoBeanUtils.getAutoBean((EntityProxy) maybeEntityProxy);
-      Object domain = bean.getTag(DOMAIN_OBJECT);
-      if (domain == null && detectDeadEntities) {
-        throw new ReportableException(new DeadEntityException(
-            "The requested entity is not available on the server"));
-      }
-      return domain;
-    } else if (maybeEntityProxy instanceof Collection<?>) {
-      Collection<Object> accumulator;
-      if (maybeEntityProxy instanceof List) {
-        accumulator = new ArrayList<Object>();
-      } else if (maybeEntityProxy instanceof Set) {
-        accumulator = new HashSet<Object>();
-      } else {
-        throw new ReportableException("Unsupported collection type "
-            + maybeEntityProxy.getClass().getName());
-      }
-      for (Object o : (Collection<?>) maybeEntityProxy) {
-        accumulator.add(resolveDomainValue(o, detectDeadEntities));
-      }
-      return accumulator;
-    }
-    return maybeEntityProxy;
-  }
-
-  /**
    * Validate all of the entities referenced in a RequestState.
    */
   private List<ViolationMessage> validateEntities(RequestState source) {
     List<ViolationMessage> errorMessages = new ArrayList<ViolationMessage>();
-    for (Map.Entry<SimpleEntityProxyId<?>, AutoBean<? extends EntityProxy>> entry : source.beans.entrySet()) {
-      Object domainObject = entry.getValue().getTag(DOMAIN_OBJECT);
+    for (Map.Entry<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> entry : source.beans.entrySet()) {
+      AutoBean<? extends BaseProxy> bean = entry.getValue();
+      Object domainObject = bean.getTag(Constants.DOMAIN_OBJECT);
 
       // The object could have been deleted
       if (domainObject != null) {
         Set<ConstraintViolation<Object>> errors = service.validate(domainObject);
         if (errors != null && !errors.isEmpty()) {
-          SimpleEntityProxyId<?> id = entry.getKey();
+          SimpleProxyId<?> id = entry.getKey();
           for (ConstraintViolation<Object> error : errors) {
             ViolationMessage message = FACTORY.violation().as();
             message.setClientId(id.getClientId());
             message.setMessage(error.getMessage());
             message.setPath(error.getPropertyPath().toString());
-            message.setServerId(id.getServerId());
+            if (id.isEphemeral()) {
+              message.setClientId(id.getClientId());
+            }
+            if (id.getServerId() != null) {
+              message.setServerId(toBase64(id.getServerId()));
+            }
             message.setTypeToken(service.getTypeToken(id.getProxyClass()));
             errorMessages.add(message);
           }

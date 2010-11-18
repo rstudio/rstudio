@@ -21,11 +21,29 @@ package com.google.gwt.requestfactory.shared;
  */
 public interface Violation {
   /**
+   * If the ConstraintViolation occurred while validating a object, this method
+   * will return a BaseProxy that contains the invalid values.
+   * 
+   * @return the BaseProxy that caused the ConstraintViolation
+   */
+  BaseProxy getInvalidProxy();
+
+  /**
    * Returns the message associated with this {@link Violation}.
    * 
    * @return a String message
    */
   String getMessage();
+
+  /**
+   * If the ConstraintViolation occurred while validating a value object that
+   * originated from the server, this method will return a BaseProxy that
+   * contains the original values.
+   * 
+   * @return the BaseProxy originally sent by the server or {@code null} if the
+   *         BaseProxy was created on the client.
+   */
+  BaseProxy getOriginalProxy();
 
   /**
    * Returns the path associated with this {@link Violation}.
@@ -35,9 +53,11 @@ public interface Violation {
   String getPath();
 
   /**
-   * Returns the proxy id associated with this {@link Violation}.
+   * Returns the proxy id associated with this {@link Violation} if the object
+   * associated with the violation is an {@link EntityProxy}.
    * 
-   * @return an {@link EntityProxyId} instance
+   * @return an {@link EntityProxyId} instance or {@code null} if the object is
+   *         a ValueProxy.
    */
   EntityProxyId<?> getProxyId();
 }

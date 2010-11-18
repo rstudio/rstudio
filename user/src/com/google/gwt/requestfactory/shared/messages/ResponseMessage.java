@@ -21,7 +21,7 @@ import com.google.gwt.autobean.shared.Splittable;
 import java.util.List;
 
 /**
- * The result of fulfilling a request on the server;
+ * The result of fulfilling a request on the server.
  */
 public interface ResponseMessage extends VersionedMessage {
   String GENERAL_FAILURE = "F";

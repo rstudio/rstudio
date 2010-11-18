@@ -17,7 +17,6 @@ package com.google.gwt.sample.dynatablerf.server;
 
 import static com.google.gwt.sample.dynatablerf.shared.DynaTableRequestFactory.SchoolCalendarRequest.ALL_DAYS;
 
-import com.google.gwt.sample.dynatablerf.domain.Address;
 import com.google.gwt.sample.dynatablerf.domain.Person;
 
 import java.io.IOException;
@@ -60,11 +59,6 @@ public class SchoolCalendarService implements Filter {
     PersonSource source = PERSON_SOURCE.get();
     return source.getPeople(new Random().nextInt(source.countPeople()), 1,
         ALL_DAYS).get(0);
-  }
-
-  public static void persist(Address address) {
-    checkPersonSource();
-    PERSON_SOURCE.get().persist(address);
   }
 
   public static void persist(Person person) {

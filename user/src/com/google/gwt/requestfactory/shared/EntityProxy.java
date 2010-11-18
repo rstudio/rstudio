@@ -18,7 +18,7 @@ package com.google.gwt.requestfactory.shared;
 /**
  * A proxy for a server-side domain object.
  */
-public interface EntityProxy {
+public interface EntityProxy extends BaseProxy {
   /**
    * Returns the {@link EntityProxyId} that identifies a particular instance of
    * the type proxied by the receiver.

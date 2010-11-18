@@ -15,6 +15,8 @@
  */
 package com.google.gwt.autobean.server;
 
+import com.google.gwt.autobean.shared.AutoBeanCodex;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
@@ -46,5 +48,13 @@ class SimpleBeanHandler<T> implements InvocationHandler {
       }
     }
     throw new RuntimeException("Unhandled invocation " + method.getName());
+  }
+
+  /**
+   * For debugging use only.
+   */
+  @Override
+  public String toString() {
+    return AutoBeanCodex.encode(bean).getPayload();
   }
 }
