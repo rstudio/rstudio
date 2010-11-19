@@ -16,7 +16,6 @@
 package com.google.gwt.requestfactory.shared.impl;
 
 import com.google.gwt.requestfactory.shared.BaseProxy;
-import com.google.gwt.requestfactory.shared.messages.IdUtil;
 
 /**
  * The base implementation of id objects in the RequestFactory system. This type
@@ -82,8 +81,7 @@ public class SimpleProxyId<P extends BaseProxy> {
    */
   SimpleProxyId(Class<P> proxyClass, String encodedAddress) {
     assert proxyClass != null;
-    assert encodedAddress != null && !encodedAddress.contains("@")
-        && !"null".equals(encodedAddress);
+    assert encodedAddress != null;
     setServerId(encodedAddress);
     clientId = NEVER_EPHEMERAL;
     hashCode = encodedAddress.hashCode();

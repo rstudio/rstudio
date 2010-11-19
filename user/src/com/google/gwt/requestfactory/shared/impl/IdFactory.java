@@ -18,7 +18,6 @@ package com.google.gwt.requestfactory.shared.impl;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ValueProxy;
-import com.google.gwt.requestfactory.shared.messages.IdUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,7 +61,8 @@ public abstract class IdFactory {
   @SuppressWarnings("unchecked")
   public <P extends EntityProxy> Class<P> asEntityProxy(
       Class<? extends BaseProxy> clazz) {
-    assert isEntityType(clazz);
+    assert isEntityType(clazz) : clazz.getName()
+        + " is not an EntityProxy type";
     return (Class<P>) clazz;
   }
 
@@ -73,7 +73,7 @@ public abstract class IdFactory {
   @SuppressWarnings("unchecked")
   public <P extends ValueProxy> Class<P> asValueProxy(
       Class<? extends BaseProxy> clazz) {
-    assert isEntityType(clazz);
+    assert isValueType(clazz) : clazz.getName() + " is not a ValueProxy type";
     return (Class<P>) clazz;
   }
 
@@ -120,19 +120,11 @@ public abstract class IdFactory {
   }
 
   /**
-   * Create or retrieve a SimpleProxyId.
-   */
-  public <P extends BaseProxy> SimpleProxyId<P> getId(Class<P> clazz,
-      String serverId) {
-    return getId(getTypeToken(clazz), serverId);
-  }
-
-  /**
    * Create or retrieve a SimpleProxyId. If both the serverId and clientId are
    * specified and the id is ephemeral, it will be updated with the server id.
    */
   public <P extends BaseProxy> SimpleProxyId<P> getId(Class<P> clazz,
-      String serverId, Integer clientId) {
+      String serverId, int clientId) {
     return getId(getTypeToken(clazz), serverId, clientId);
   }
 
@@ -141,7 +133,7 @@ public abstract class IdFactory {
    */
   public <P extends BaseProxy> SimpleProxyId<P> getId(String typeToken,
       String serverId) {
-    return getId(typeToken, serverId, null);
+    return getId(typeToken, serverId, 0);
   }
 
   /**
@@ -150,12 +142,12 @@ public abstract class IdFactory {
    * id.
    */
   public <P extends BaseProxy> SimpleProxyId<P> getId(String typeToken,
-      String serverId, Integer clientId) {
+      String serverId, int clientId) {
     /*
      * If there's a clientId, that probably means we've just created a brand-new
      * EntityProxy or have just persisted something on the server.
      */
-    if (clientId != null) {
+    if (clientId > 0) {
       // Try a cache lookup for the ephemeral key
       String ephemeralKey = IdUtil.ephemeralId(clientId, typeToken);
       @SuppressWarnings("unchecked")
@@ -203,6 +195,7 @@ public abstract class IdFactory {
      * case for read-dominated applications.
      */
     Class<P> clazz = getTypeFromToken(typeToken);
+    assert clazz != null : "No class literal for " + typeToken;
     return createId(clazz, serverId);
   }
 

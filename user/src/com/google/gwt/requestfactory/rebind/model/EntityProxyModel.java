@@ -23,14 +23,6 @@ import java.util.List;
  */
 public class EntityProxyModel {
   /**
-   * The kind of proxy. This is an enum in case more proxy types are defined in
-   * the future.
-   */
-  public enum Type {
-    ENTITY, VALUE
-  }
-
-  /**
    * Builds {@link EntityProxyModel}.
    */
   public static class Builder {
@@ -56,6 +48,10 @@ public class EntityProxyModel {
       toReturn.proxyFor = value;
     }
 
+    public void setQualifiedBinaryName(String qualifiedBinaryName) {
+      toReturn.qualifiedBinaryName = qualifiedBinaryName;
+    }
+
     public void setQualifiedSourceName(String name) {
       assert !name.contains(" ");
       toReturn.qualifiedSourceName = name;
@@ -70,7 +66,16 @@ public class EntityProxyModel {
     }
   }
 
+  /**
+   * The kind of proxy. This is an enum in case more proxy types are defined in
+   * the future.
+   */
+  public enum Type {
+    ENTITY, VALUE
+  }
+
   private Class<?> proxyFor;
+  private String qualifiedBinaryName;
   private String qualifiedSourceName;
   private List<RequestMethod> requestMethods;
   private Type type;
@@ -80,6 +85,10 @@ public class EntityProxyModel {
 
   public Class<?> getProxyFor() {
     return proxyFor;
+  }
+
+  public String getQualifiedBinaryName() {
+    return qualifiedBinaryName;
   }
 
   public String getQualifiedSourceName() {
@@ -101,5 +110,4 @@ public class EntityProxyModel {
   public String toString() {
     return qualifiedSourceName;
   }
-
 }

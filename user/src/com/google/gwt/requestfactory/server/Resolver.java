@@ -19,6 +19,7 @@ import com.google.gwt.autobean.server.impl.TypeUtils;
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
+import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.requestfactory.server.SimpleRequestProcessor.ServiceLayer;
 import com.google.gwt.requestfactory.shared.BaseProxy;
@@ -187,7 +188,8 @@ class Resolver {
    * @param domainValue the domain object to be converted into a client-side
    *          value
    * @param assignableTo the type in the client to which the resolved value
-   *          should be assignable
+   *          should be assignable. A value of {@code null} indicates that any
+   *          resolution will suffice.
    * @param propertyRefs the property references requested by the client
    */
   public Object resolveClientValue(Object domainValue, Type assignableTo,
@@ -266,22 +268,22 @@ class Resolver {
 
     boolean isEntityProxy = state.isEntityType(proxyType);
     final boolean isOwnerValueProxy = state.isValueType(proxyType);
-    int version;
+    Object domainVersion;
 
     // Create the id or update an ephemeral id by calculating its address
     if (id == null || id.isEphemeral()) {
       // The address is an id or an id plus a path
-      String address;
+      Object domainId;
       if (isEntityProxy) {
         // Compute data needed to return id to the client
-        address = service.getFlatId(state, domainEntity);
-        version = service.getVersion(domainEntity);
+        domainId = service.getId(domainEntity);
+        domainVersion = service.getVersion(domainEntity);
       } else {
-        address = null;
-        version = 0;
+        domainId = null;
+        domainVersion = null;
       }
       if (id == null) {
-        if (address == null) {
+        if (domainId == null) {
           /*
            * This will happen when server code attempts to return an unpersisted
            * object to the client. In this case, we'll assign a synthetic id
@@ -293,24 +295,32 @@ class Resolver {
           id = state.getIdFactory().allocateSyntheticId(proxyType,
               ++syntheticId);
         } else {
-          id = state.getIdFactory().getId(proxyType, address, null);
+          Splittable flatValue = state.flatten(domainId);
+          id = state.getIdFactory().getId(proxyType, flatValue.getPayload(), 0);
         }
-      } else {
-        id.setServerId(address);
+      } else if (domainId != null) {
+        // Mark an ephemeral id as having been persisted
+        Splittable flatValue = state.flatten(domainId);
+        id.setServerId(flatValue.getPayload());
       }
     } else if (isEntityProxy) {
       // Already have the id, just pull the current version
-      version = service.getVersion(domainEntity);
+      domainVersion = service.getVersion(domainEntity);
     } else {
-      // The version of a value object is always 0
-      version = 0;
+      // The version of a value object is always null
+      domainVersion = null;
     }
 
     @SuppressWarnings("unchecked")
     AutoBean<T> bean = (AutoBean<T>) state.getBeanForPayload(id, domainEntity);
     resolved.put(key, bean.as());
     bean.setTag(Constants.IN_RESPONSE, true);
-    bean.setTag(Constants.ENCODED_VERSION_PROPERTY, version);
+    if (domainVersion != null) {
+      Splittable flatVersion = state.flatten(domainVersion);
+      bean.setTag(Constants.VERSION_PROPERTY_B64,
+          SimpleRequestProcessor.toBase64(flatVersion.getPayload()));
+    }
+
     bean.accept(new AutoBeanVisitor() {
 
       @Override
@@ -376,6 +386,11 @@ class Resolver {
       return null;
     }
 
+    boolean anyType = returnType == null;
+    if (anyType) {
+      returnType = Object.class;
+    }
+
     Class<?> assignableTo = TypeUtils.ensureBaseType(returnType);
     ResolutionKey key = new ResolutionKey(domainValue, returnType);
 
@@ -387,6 +402,10 @@ class Resolver {
     Class<?> returnClass = service.getClientType(domainValue.getClass(),
         assignableTo);
 
+    if (anyType) {
+      assignableTo = returnClass;
+    }
+
     // Pass simple values through
     if (ValueCodex.canDecode(returnClass)) {
       return assignableTo.cast(domainValue);
@@ -396,8 +415,9 @@ class Resolver {
     boolean isProxy = BaseProxy.class.isAssignableFrom(returnClass);
     boolean isId = EntityProxyId.class.isAssignableFrom(returnClass);
     if (isProxy || isId) {
-      BaseProxy entity = resolveClientProxy(domainValue,
-          assignableTo.asSubclass(BaseProxy.class), propertyRefs, key, prefix);
+      Class<? extends BaseProxy> proxyClass = assignableTo.asSubclass(BaseProxy.class);
+      BaseProxy entity = resolveClientProxy(domainValue, proxyClass,
+          propertyRefs, key, prefix);
       if (isId) {
         return assignableTo.cast(((EntityProxy) entity).stableId());
       }

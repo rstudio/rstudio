@@ -24,6 +24,8 @@ import com.google.gwt.autobean.shared.AutoBeanFactory;
 public interface MessageFactory extends AutoBeanFactory {
   AutoBean<ServerFailureMessage> failure();
 
+  AutoBean<IdMessage> id();
+
   AutoBean<InvocationMessage> invocation();
 
   AutoBean<OperationMessage> operation();

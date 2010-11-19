@@ -108,7 +108,7 @@ public class AutoBeanFactoryGenerator extends Generator {
     StringBuilder parameters = new StringBuilder();
     for (JParameter param : jmethod.getParameters()) {
       parameters.append(",").append(
-          ModelUtils.getQualifiedBaseName(param.getType())).append(" ").append(
+          ModelUtils.getQualifiedBaseSourceName(param.getType())).append(" ").append(
           param.getName());
     }
     if (parameters.length() > 0) {
@@ -119,12 +119,12 @@ public class AutoBeanFactoryGenerator extends Generator {
     if (jmethod.getThrows().length > 0) {
       for (JType thrown : jmethod.getThrows()) {
         throwsDeclaration.append(". ").append(
-            ModelUtils.getQualifiedBaseName(thrown));
+            ModelUtils.getQualifiedBaseSourceName(thrown));
       }
       throwsDeclaration.deleteCharAt(0);
       throwsDeclaration.insert(0, "throws ");
     }
-    String returnName = ModelUtils.getQualifiedBaseName(jmethod.getReturnType());
+    String returnName = ModelUtils.getQualifiedBaseSourceName(jmethod.getReturnType());
     assert !returnName.contains("extends");
     return String.format("%s %s(%s) %s", returnName, jmethod.getName(),
         parameters, throwsDeclaration);
@@ -248,7 +248,7 @@ public class AutoBeanFactoryGenerator extends Generator {
           } else {
             // return (ReturnType) values.get(\"foo\");
             sw.println("return (%s) values.get(\"%s\");",
-                ModelUtils.getQualifiedBaseName(jmethod.getReturnType()),
+                ModelUtils.getQualifiedBaseSourceName(jmethod.getReturnType()),
                 method.getPropertyName());
           }
         }
@@ -482,7 +482,7 @@ public class AutoBeanFactoryGenerator extends Generator {
           // Foo toReturn=FooAutoBean.this.get("getFoo", getWrapped().getFoo());
           sw.println(
               "%s toReturn = %3$s.this.get(\"%2$s\", getWrapped().%2$s());",
-              ModelUtils.getQualifiedBaseName(jmethod.getReturnType()),
+              ModelUtils.getQualifiedBaseSourceName(jmethod.getReturnType()),
               methodName, type.getSimpleSourceName());
 
           // Non-value types might need to be wrapped

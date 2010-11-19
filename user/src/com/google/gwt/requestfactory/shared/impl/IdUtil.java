@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared.messages;
+package com.google.gwt.requestfactory.shared.impl;
 
 /**
  * Common functions for slicing and dicing EntityProxy ids.
  */
-public class IdUtil {
+class IdUtil {
   private static final String ANY_SEPARATOR_PATTERN = "@[012]@";
   private static final String EPHEMERAL_SEPARATOR = "@1@";
   private static final String TOKEN_SEPARATOR = "@0@";

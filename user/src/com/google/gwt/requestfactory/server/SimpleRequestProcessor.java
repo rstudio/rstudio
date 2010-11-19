@@ -37,7 +37,6 @@ import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
 import com.google.gwt.requestfactory.shared.impl.ValueProxyCategory;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex.EntitySource;
-import com.google.gwt.requestfactory.shared.messages.IdUtil;
 import com.google.gwt.requestfactory.shared.messages.InvocationMessage;
 import com.google.gwt.requestfactory.shared.messages.MessageFactory;
 import com.google.gwt.requestfactory.shared.messages.OperationMessage;
@@ -84,7 +83,13 @@ public class SimpleRequestProcessor {
      * May return {@code null} to indicate that the domain object has not been
      * persisted.
      */
-    String getFlatId(EntitySource source, Object domainObject);
+    Object getId(Object domainObject);
+
+    /**
+     * Returns the type of object the domain type's {@code findFoo()} expects to
+     * receive.
+     */
+    Class<?> getIdType(Class<?> domainType);
 
     Object getProperty(Object domainObject, String property);
 
@@ -96,11 +101,21 @@ public class SimpleRequestProcessor {
 
     String getTypeToken(Class<?> domainClass);
 
-    int getVersion(Object domainObject);
+    /**
+     * May return {@code null} to indicate that the domain object has not been
+     * persisted.
+     */
+    Object getVersion(Object domainObject);
 
-    Object invoke(Method domainMethod, Object[] args);
+    Object invoke(Method domainMethod, Object... args);
 
-    Object loadDomainObject(EntitySource source, Class<?> clazz, String flatId);
+    /**
+     * Returns {@code true} if the given domain object is still live (i.e. not
+     * deleted) in the backing store.
+     */
+    boolean isLive(EntitySource source, Object domainObject);
+
+    Object loadDomainObject(EntitySource source, Class<?> clazz, Object domainId);
 
     Class<? extends BaseProxy> resolveClass(String typeToken);
 
@@ -154,7 +169,6 @@ public class SimpleRequestProcessor {
   }
 
   private ExceptionHandler exceptionHandler = new DefaultExceptionHandler();
-
   private final ServiceLayer service;
 
   public SimpleRequestProcessor(ServiceLayer serviceLayer) {
@@ -179,6 +193,61 @@ public class SimpleRequestProcessor {
 
   public void setExceptionHandler(ExceptionHandler exceptionHandler) {
     this.exceptionHandler = exceptionHandler;
+  }
+
+  /**
+   * Encode a list of objects into a self-contained message that can be used for
+   * out-of-band communication.
+   */
+  <T> Splittable createOobMessage(List<T> domainValues) {
+    RequestState state = new RequestState(service);
+
+    List<Splittable> encodedValues = new ArrayList<Splittable>(
+        domainValues.size());
+    for (T domainValue : domainValues) {
+      Object clientValue;
+      if (domainValue == null) {
+        clientValue = null;
+      } else {
+        Class<?> clientType = service.getClientType(domainValue.getClass(),
+            BaseProxy.class);
+        clientValue = state.getResolver().resolveClientValue(domainValue,
+            clientType, Collections.<String> emptySet());
+      }
+      encodedValues.add(EntityCodex.encode(state, clientValue));
+    }
+
+    IdToEntityMap map = new IdToEntityMap();
+    map.putAll(state.beans);
+    List<OperationMessage> operations = new ArrayList<OperationMessage>();
+    createReturnOperations(operations, state, map);
+
+    InvocationMessage invocation = FACTORY.invocation().as();
+    invocation.setParameters(encodedValues);
+
+    AutoBean<RequestMessage> bean = FACTORY.request();
+    RequestMessage resp = bean.as();
+    resp.setInvocations(Collections.singletonList(invocation));
+    resp.setOperations(operations);
+    return AutoBeanCodex.encode(bean);
+  }
+
+  /**
+   * Decode an out-of-band message.
+   */
+  <T> List<T> decodeOobMessage(Class<T> domainClass, Splittable payload) {
+    Class<?> proxyType = service.getClientType(domainClass, BaseProxy.class);
+    RequestState state = new RequestState(service);
+    RequestMessage message = AutoBeanCodex.decode(FACTORY,
+        RequestMessage.class, payload).as();
+    processOperationMessages(state, message);
+    List<Object> decoded = decodeInvocationArguments(state,
+        message.getInvocations().get(0).getParameters(),
+        new Class<?>[] {proxyType}, new Type[] {domainClass});
+
+    @SuppressWarnings("unchecked")
+    List<T> toReturn = (List<T>) decoded;
+    return toReturn;
   }
 
   /**
@@ -246,21 +315,24 @@ public class SimpleRequestProcessor {
             id.getProxyClass(), Collections.<String> emptySet());
       }
 
-      int version;
-      if (id.isEphemeral() || id.isSynthetic()) {
+      if (id.isEphemeral() || id.isSynthetic() || domainObject == null) {
         // If the object isn't persistent, there's no reason to send an update
         writeOperation = null;
-        version = 0;
-      } else if (service.loadDomainObject(returnState,
-          service.getDomainClass(id.getProxyClass()), id.getServerId()) == null) {
+      } else if (!service.isLive(returnState, domainObject)) {
         writeOperation = WriteOperation.DELETE;
-        version = 0;
       } else if (id.wasEphemeral()) {
         writeOperation = WriteOperation.PERSIST;
-        version = service.getVersion(domainObject);
       } else {
         writeOperation = WriteOperation.UPDATE;
-        version = service.getVersion(domainObject);
+      }
+
+      Splittable version = null;
+      if (writeOperation == WriteOperation.PERSIST
+          || writeOperation == WriteOperation.UPDATE) {
+        Object domainVersion = service.getVersion(domainObject);
+        if (domainVersion != null) {
+          version = returnState.flatten(domainVersion);
+        }
       }
 
       boolean inResponse = bean.getTag(Constants.IN_RESPONSE) != null;
@@ -271,8 +343,9 @@ public class SimpleRequestProcessor {
        * the domain version.
        */
       if (WriteOperation.UPDATE.equals(writeOperation) && !inResponse) {
-        if (Integer.valueOf(version).equals(
-            bean.getTag(Constants.ENCODED_VERSION_PROPERTY))) {
+        String previousVersion = bean.<String> getTag(Constants.VERSION_PROPERTY_B64);
+        if (version != null && previousVersion != null
+            && version.equals(fromBase64(previousVersion))) {
           continue;
         }
       }
@@ -310,41 +383,12 @@ public class SimpleRequestProcessor {
 
       op.setSyntheticId(id.getSyntheticId());
       op.setTypeToken(service.getTypeToken(id.getProxyClass()));
-      op.setVersion(version);
+      if (version != null) {
+        op.setVersion(toBase64(version.getPayload()));
+      }
 
       operations.add(op);
     }
-  }
-
-  /**
-   * Handles instance invocations as the instance at the 0th parameter.
-   */
-  private List<Object> decodeInvocationArguments(RequestState source,
-      InvocationMessage invocation, Class<?>[] contextArgs, Type[] genericArgs) {
-    if (invocation.getParameters() == null) {
-      return Collections.emptyList();
-    }
-
-    assert invocation.getParameters().size() == contextArgs.length;
-    List<Object> args = new ArrayList<Object>(contextArgs.length);
-    for (int i = 0, j = contextArgs.length; i < j; i++) {
-      Class<?> type = contextArgs[i];
-      Class<?> elementType = null;
-      Splittable split;
-      if (Collection.class.isAssignableFrom(type)) {
-        elementType = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
-            Collection.class, genericArgs[i]));
-        split = invocation.getParameters().get(i);
-      } else {
-        split = invocation.getParameters().get(i);
-      }
-      Object arg = EntityCodex.decode(source, type, elementType, split);
-      arg = source.getResolver().resolveDomainValue(arg,
-          !EntityProxyId.class.equals(contextArgs[i]));
-      args.add(arg);
-    }
-
-    return args;
   }
 
   /**
@@ -370,8 +414,39 @@ public class SimpleRequestProcessor {
     System.arraycopy(contextMethod.getGenericParameterTypes(), 0, genericArgs,
         offset, baseLength);
 
-    List<Object> args = decodeInvocationArguments(source, invocation,
-        contextArgs, genericArgs);
+    List<Object> args = decodeInvocationArguments(source,
+        invocation.getParameters(), contextArgs, genericArgs);
+    return args;
+  }
+
+  /**
+   * Handles instance invocations as the instance at the 0th parameter.
+   */
+  private List<Object> decodeInvocationArguments(RequestState source,
+      List<Splittable> parameters, Class<?>[] contextArgs, Type[] genericArgs) {
+    if (parameters == null) {
+      return Collections.emptyList();
+    }
+
+    assert parameters.size() == contextArgs.length;
+    List<Object> args = new ArrayList<Object>(contextArgs.length);
+    for (int i = 0, j = contextArgs.length; i < j; i++) {
+      Class<?> type = contextArgs[i];
+      Class<?> elementType = null;
+      Splittable split;
+      if (Collection.class.isAssignableFrom(type)) {
+        elementType = TypeUtils.ensureBaseType(TypeUtils.getSingleParameterization(
+            Collection.class, genericArgs[i]));
+        split = parameters.get(i);
+      } else {
+        split = parameters.get(i);
+      }
+      Object arg = EntityCodex.decode(source, type, elementType, split);
+      arg = source.getResolver().resolveDomainValue(arg,
+          !EntityProxyId.class.equals(contextArgs[i]));
+      args.add(arg);
+    }
+
     return args;
   }
 
@@ -415,13 +490,11 @@ public class SimpleRequestProcessor {
 
     for (final OperationMessage operation : operations) {
       // Unflatten properties
-      String payloadId = operation.getOperation().equals(WriteOperation.PERSIST)
-          ? IdUtil.ephemeralId(operation.getClientId(),
-              operation.getTypeToken()) : IdUtil.persistedId(
-              operation.getServerId(), operation.getTypeToken());
-      AutoBean<? extends EntityProxy> bean = state.getBeanForPayload(payloadId);
+      AutoBean<? extends EntityProxy> bean = state.getBeanForPayload(operation);
       // Use the version later to know which objects need to be sent back
-      bean.setTag(Constants.ENCODED_VERSION_PROPERTY, operation.getVersion());
+      if (operation.getVersion() != null) {
+        bean.setTag(Constants.VERSION_PROPERTY_B64, operation.getVersion());
+      }
 
       // Load the domain object with properties, if it exists
       final Object domain = bean.getTag(Constants.DOMAIN_OBJECT);

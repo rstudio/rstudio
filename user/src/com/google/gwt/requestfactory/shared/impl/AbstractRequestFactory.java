@@ -26,7 +26,6 @@ import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestTransport;
-import com.google.gwt.requestfactory.shared.messages.IdUtil;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,10 +41,10 @@ public abstract class AbstractRequestFactory extends IdFactory implements
   private EventBus eventBus;
 
   @SuppressWarnings("serial")
-  private final Map<String, Integer> version = new LinkedHashMap<String, Integer>(
+  private final Map<String, String> version = new LinkedHashMap<String, String>(
       16, 0.75f, true) {
     @Override
-    protected boolean removeEldestEntry(Entry<String, Integer> eldest) {
+    protected boolean removeEldestEntry(Entry<String, String> eldest) {
       return size() > MAX_VERSION_ENTRIES;
     }
   };
@@ -135,9 +134,10 @@ public abstract class AbstractRequestFactory extends IdFactory implements
    * Used by {@link AbstractRequestContext} to quiesce update events for objects
    * that haven't truly changed.
    */
-  protected boolean hasVersionChanged(SimpleProxyId<?> id, int observedVersion) {
+  protected boolean hasVersionChanged(SimpleProxyId<?> id,
+      String observedVersion) {
     String key = getHistoryToken(id);
-    Integer existingVersion = version.get(key);
+    String existingVersion = version.get(key);
     // Return true if we haven't seen this before or the versions differ
     boolean toReturn = existingVersion == null
         || !existingVersion.equals(observedVersion);
@@ -146,5 +146,4 @@ public abstract class AbstractRequestFactory extends IdFactory implements
     }
     return toReturn;
   }
-
 }

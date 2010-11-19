@@ -172,13 +172,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   private static final int DELAY_TEST_FINISH = 5000;
 
   public <T extends EntityProxy> void assertContains(Collection<T> col, T value) {
+    EntityProxyId<?> lookFor = value.stableId();
     for (T x : col) {
-      if (x.stableId().equals(value.stableId())) {
+      EntityProxyId<?> found = x.stableId();
+      if (found.equals(lookFor)) {
         return;
       }
     }
-    assertTrue(
-        ("Value " + value + " not found in collection ") + col.toString(),
+    assertTrue("Value " + value + " not found in collection " + col.toString(),
         false);
   }
 

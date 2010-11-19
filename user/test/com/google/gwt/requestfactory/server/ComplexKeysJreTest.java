@@ -15,21 +15,19 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.client.FindServiceTest;
-import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
+import com.google.gwt.requestfactory.shared.ComplexKeysTest;
 
 /**
- * Run the FindService tests in-process.
+ * JRE version of ComplexKeysTest.
  */
-public class FindServiceJreTest extends FindServiceTest {
-
+public class ComplexKeysJreTest extends ComplexKeysTest {
   @Override
   public String getModuleName() {
     return null;
   }
 
   @Override
-  protected SimpleRequestFactory createFactory() {
-    return RequestFactoryJreTest.createInProcess(SimpleRequestFactory.class);
+  protected Factory createFactory() {
+    return RequestFactoryJreTest.createInProcess(Factory.class);
   }
 }

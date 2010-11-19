@@ -21,6 +21,6 @@ import com.google.gwt.requestfactory.shared.messages.MessageFactory;
 /**
  * This class has a super-source version with a client-only implementation.
  */
-interface MessageFactoryHolder {
+public interface MessageFactoryHolder {
   MessageFactory FACTORY = AutoBeanFactoryMagic.create(MessageFactory.class);
 }

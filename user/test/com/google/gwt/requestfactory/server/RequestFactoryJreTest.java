@@ -21,6 +21,7 @@ import com.google.gwt.requestfactory.client.RequestFactoryTest;
 import com.google.gwt.requestfactory.server.SimpleRequestProcessor.ServiceLayer;
 import com.google.gwt.requestfactory.server.testing.InProcessRequestTransport;
 import com.google.gwt.requestfactory.server.testing.RequestFactoryMagic;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
 
 /**
@@ -28,9 +29,9 @@ import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
  */
 public class RequestFactoryJreTest extends RequestFactoryTest {
 
-  public static SimpleRequestFactory createInProcess() {
+  public static <T extends RequestFactory> T createInProcess(Class<T> clazz) {
     EventBus eventBus = new SimpleEventBus();
-    SimpleRequestFactory req = RequestFactoryMagic.create(SimpleRequestFactory.class);
+    T req = RequestFactoryMagic.create(clazz);
     ServiceLayer serviceLayer = new ReflectiveServiceLayer();
     SimpleRequestProcessor processor = new SimpleRequestProcessor(serviceLayer);
     req.initialize(eventBus, new InProcessRequestTransport(processor));
@@ -44,6 +45,6 @@ public class RequestFactoryJreTest extends RequestFactoryTest {
 
   @Override
   protected SimpleRequestFactory createFactory() {
-    return createInProcess();
+    return createInProcess(SimpleRequestFactory.class);
   }
 }

@@ -268,11 +268,11 @@ public class RequestFactoryGenerator extends Generator {
     sw.indent();
     for (EntityProxyModel type : model.getAllProxyModels()) {
       // tokensToTypes.put("Foo", Foo.class);
-      sw.println("tokensToTypes.put(\"%1$s\", %1$s.class);",
-          type.getQualifiedSourceName());
+      sw.println("tokensToTypes.put(\"%s\", %s.class);",
+          type.getQualifiedBinaryName(), type.getQualifiedSourceName());
       // typesToTokens.put(Foo.class, Foo);
-      sw.println("typesToTokens.put(%1$s.class, \"%1$s\");",
-          type.getQualifiedSourceName());
+      sw.println("typesToTokens.put(%s.class, \"%s\");",
+          type.getQualifiedSourceName(), type.getQualifiedBinaryName());
       // fooProxyTypes.add(MyFooProxy.class);
       sw.println("%s.add(%s.class);", type.getType().equals(Type.ENTITY)
           ? "entityProxyTypes" : "valueProxyTypes",

@@ -24,8 +24,8 @@ public interface VersionedMessage {
   String VERSION = "V";
 
   @PropertyName(VERSION)
-  int getVersion();
+  String getVersion();
 
   @PropertyName(VERSION)
-  void setVersion(int version);
+  void setVersion(String version);
 }

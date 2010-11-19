@@ -370,10 +370,9 @@ public class AutoBeanCodex {
         PropertyContext ctx) {
       // Skip primitive types whose values are uninteresting.
       Class<?> type = ctx.getType();
-      if (value != null) {
-        if (value.equals(ValueCodex.getUninitializedFieldValue(type))) {
-          return false;
-        }
+      Object blankValue = ValueCodex.getUninitializedFieldValue(type);
+      if (value == blankValue || value != null && value.equals(blankValue)) {
+        return false;
       }
 
       // Special handling for enums if we have an obfuscation map

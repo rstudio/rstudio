@@ -41,9 +41,18 @@ public class EntityCodex {
    * Abstracts the process by which EntityProxies are created.
    */
   public interface EntitySource {
-    <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(String serializedProxyId);
+    /**
+     * Expects an encoded
+     * {@link com.google.gwt.requestfactory.shared.messages.IdMessage}.
+     */
+    <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(
+        Splittable serializedIdMessage);
 
-    String getSerializedProxyId(SimpleProxyId<?> stableId);
+    /**
+     * Should return an encoded
+     * {@link com.google.gwt.requestfactory.shared.messages.IdMessage}.
+     */
+    Splittable getSerializedProxyId(SimpleProxyId<?> stableId);
 
     boolean isEntityType(Class<?> clazz);
 
@@ -95,7 +104,7 @@ public class EntityCodex {
 
     if (source.isEntityType(type) || source.isValueType(type)
         || EntityProxyId.class.equals(type)) {
-      return source.getBeanForPayload(split.asString()).as();
+      return source.getBeanForPayload(split).as();
     }
 
     // Fall back to values
@@ -117,6 +126,10 @@ public class EntityCodex {
   public static Splittable encode(EntitySource source, Object value) {
     if (value == null) {
       return LazySplittable.NULL;
+    }
+
+    if (value instanceof Poser<?>) {
+      value = ((Poser<?>) value).getPosedValue();
     }
 
     if (value instanceof Iterable<?>) {
@@ -145,11 +158,7 @@ public class EntityCodex {
     }
 
     if (value instanceof SimpleProxyId<?>) {
-      value = source.getSerializedProxyId((SimpleProxyId<?>) value);
-    }
-
-    if (value instanceof Poser<?>) {
-      value = ((Poser<?>) value).getPosedValue();
+      return source.getSerializedProxyId((SimpleProxyId<?>) value);
     }
 
     return ValueCodex.encode(value);

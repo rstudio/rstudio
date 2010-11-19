@@ -94,7 +94,7 @@ public class AutoBeanFactoryMagic {
       System.arraycopy(extraInterfaces, 0, intfs, 1, extraInterfaces.length);
     }
 
-    return intf.cast(Proxy.newProxyInstance(
-        Thread.currentThread().getContextClassLoader(), intfs, handler));
+    return intf.cast(Proxy.newProxyInstance(intf.getClassLoader(), intfs,
+        handler));
   }
 }

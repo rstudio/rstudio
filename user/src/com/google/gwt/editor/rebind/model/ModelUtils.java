@@ -88,11 +88,20 @@ public class ModelUtils {
   }
 
   /**
+   * Given a JType, return the binary name of the class that is most proximately
+   * assignable to the type. This method will resolve type parameters as well as
+   * wildcard types.
+   */
+  public static String getQualifiedBaseBinaryName(JType type) {
+    return ensureBaseType(type).getErasedType().getQualifiedBinaryName();
+  }
+
+  /**
    * Given a JType, return the source name of the class that is most proximately
    * assignable to the type. This method will resolve type parameters as well as
    * wildcard types.
    */
-  public static String getQualifiedBaseName(JType type) {
+  public static String getQualifiedBaseSourceName(JType type) {
     return ensureBaseType(type).getErasedType().getQualifiedSourceName();
   }
 

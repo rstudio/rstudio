@@ -38,7 +38,7 @@ import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.posers.DatePoser;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex;
 import com.google.gwt.requestfactory.shared.messages.IdMessage;
-import com.google.gwt.requestfactory.shared.messages.IdUtil;
+import com.google.gwt.requestfactory.shared.messages.IdMessage.Strength;
 import com.google.gwt.requestfactory.shared.messages.InvocationMessage;
 import com.google.gwt.requestfactory.shared.messages.MessageFactory;
 import com.google.gwt.requestfactory.shared.messages.OperationMessage;
@@ -220,14 +220,11 @@ public class AbstractRequestContext implements RequestContext,
    * EntityCodex support.
    */
   public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(
-      String serializedProxyId) {
-    SimpleProxyId<Q> id;
-    if (IdUtil.isSynthetic(serializedProxyId)) {
-      id = allocateSyntheticId(IdUtil.getTypeToken(serializedProxyId),
-          IdUtil.getSyntheticId(serializedProxyId));
-    } else {
-      id = requestFactory.getBaseProxyId(serializedProxyId);
-    }
+      Splittable serializedProxyId) {
+    IdMessage ref = AutoBeanCodex.decode(MessageFactoryHolder.FACTORY,
+        IdMessage.class, serializedProxyId).as();
+    @SuppressWarnings("unchecked")
+    SimpleProxyId<Q> id = (SimpleProxyId<Q>) getId(ref);
     return getProxyForReturnPayloadGraph(id);
   }
 
@@ -238,8 +235,21 @@ public class AbstractRequestContext implements RequestContext,
   /**
    * EntityCodex support.
    */
-  public String getSerializedProxyId(SimpleProxyId<?> stableId) {
-    return requestFactory.getHistoryToken(stableId);
+  public Splittable getSerializedProxyId(SimpleProxyId<?> stableId) {
+    AutoBean<IdMessage> bean = MessageFactoryHolder.FACTORY.id();
+    IdMessage ref = bean.as();
+    ref.setServerId(stableId.getServerId());
+    ref.setTypeToken(getRequestFactory().getTypeToken(stableId.getProxyClass()));
+    if (stableId.isSynthetic()) {
+      ref.setStrength(Strength.SYNTHETIC);
+      ref.setSyntheticId(stableId.getSyntheticId());
+    } else if (stableId.isEphemeral()) {
+      ref.setStrength(Strength.EPHEMERAL);
+      ref.setClientId(stableId.getClientId());
+    } else {
+      ref.setStrength(Strength.PERSISTED);
+    }
+    return AutoBeanCodex.encode(bean);
   }
 
   public boolean isChanged() {
@@ -514,11 +524,8 @@ public class AbstractRequestContext implements RequestContext,
     if (op.getSyntheticId() > 0) {
       return allocateSyntheticId(op.getTypeToken(), op.getSyntheticId());
     }
-    if (op.getClientId() > 0) {
-      return requestFactory.getId(op.getTypeToken(), op.getServerId(),
-          op.getClientId());
-    }
-    return requestFactory.getId(op.getTypeToken(), op.getServerId());
+    return requestFactory.getId(op.getTypeToken(), op.getServerId(),
+        op.getClientId());
   }
 
   /**
@@ -592,7 +599,7 @@ public class AbstractRequestContext implements RequestContext,
       assert parent != null;
 
       // Send our version number to the server to cut down on future payloads
-      Integer version = currentView.getTag(Constants.ENCODED_VERSION_PROPERTY);
+      String version = currentView.getTag(Constants.VERSION_PROPERTY_B64);
       if (version != null) {
         operation.setVersion(version);
       }
@@ -667,7 +674,7 @@ public class AbstractRequestContext implements RequestContext,
       OperationMessage op, WriteOperation... operations) {
 
     AutoBean<Q> toMutate = getProxyForReturnPayloadGraph(id);
-    toMutate.setTag(Constants.ENCODED_VERSION_PROPERTY, op.getVersion());
+    toMutate.setTag(Constants.VERSION_PROPERTY_B64, op.getVersion());
 
     final Map<String, Splittable> properties = op.getPropertyMap();
     if (properties != null) {

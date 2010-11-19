@@ -140,7 +140,6 @@ public class RequestFactoryInterfaceValidator {
   private class DomainMapper extends EmptyVisitor {
     private final ErrorContext logger;
     private String domainInternalName;
-    private boolean isValueType;
 
     public DomainMapper(ErrorContext logger) {
       this.logger = logger;
@@ -149,10 +148,6 @@ public class RequestFactoryInterfaceValidator {
 
     public String getDomainInternalName() {
       return domainInternalName;
-    }
-
-    public boolean isValueType() {
-      return isValueType;
     }
 
     @Override
@@ -177,8 +172,6 @@ public class RequestFactoryInterfaceValidator {
           public void visit(String name, Object value) {
             if ("value".equals(name)) {
               domainInternalName = ((Type) value).getInternalName();
-            } else if ("isValueType".equals(name)) {
-              isValueType = (Boolean) value;
             }
           }
         };
@@ -208,9 +201,6 @@ public class RequestFactoryInterfaceValidator {
 
               domainInternalName = desc.toString();
               logger.spam(domainInternalName);
-            } else if ("isValueType".equals(name)) {
-              isValueType = (Boolean) value;
-              logger.spam("isValueType: %s", isValueType);
             }
           }
         };
@@ -569,6 +559,11 @@ public class RequestFactoryInterfaceValidator {
    */
   private final Set<Type> valueTypes = new HashSet<Type>();
 
+  /**
+   * Maps a domain object to the type returned from its getId method.
+   */
+  private final Map<Type, Type> unresolvedKeyTypes = new HashMap<Type, Type>();
+
   public RequestFactoryInterfaceValidator(Logger logger, Loader loader) {
     this.parentLogger = new ErrorContext(logger);
     this.loader = loader;
@@ -702,6 +697,8 @@ public class RequestFactoryInterfaceValidator {
       checkClientMethodInDomain(logger, method, domainServiceType);
       maybeCheckReferredProxies(logger, method);
     }
+
+    checkUnresolvedKeyTypes(logger);
   }
 
   /**
@@ -887,18 +884,55 @@ public class RequestFactoryInterfaceValidator {
       return;
     }
     logger = logger.setType(domainType);
-    Method getIdString = new Method("getId", "()Ljava/lang/String;");
-    Method getIdLong = new Method("getId", "()Ljava/lang/Long;");
-    if (findCompatibleMethod(logger, domainType, getIdString, false, true) == null
-        && findCompatibleMethod(logger, domainType, getIdLong, false, true) == null) {
-      logger.poison("Did not find a getId() method that"
-          + " returns a String or a Long");
+    String findMethodName = "find"
+        + BinaryName.getShortClassName(domainType.getClassName());
+    Type keyType = null;
+    RFMethod findMethod = null;
+
+    boolean foundFind = false;
+    boolean foundId = false;
+    boolean foundVersion = false;
+    for (RFMethod method : getMethodsInHierarchy(logger, domainType)) {
+      if ("getId".equals(method.getName())
+          && method.getArgumentTypes().length == 0) {
+        foundId = true;
+        keyType = method.getReturnType();
+        if (!isResolvedKeyType(logger, keyType)) {
+          unresolvedKeyTypes.put(domainType, keyType);
+        }
+      } else if ("getVersion".equals(method.getName())
+          && method.getArgumentTypes().length == 0) {
+        foundVersion = true;
+        if (!isResolvedKeyType(logger, method.getReturnType())) {
+          unresolvedKeyTypes.put(domainType, method.getReturnType());
+        }
+      } else if (findMethodName.equals(method.getName())
+          && method.getArgumentTypes().length == 1) {
+        foundFind = true;
+        findMethod = method;
+      }
+      if (foundFind && foundId && foundVersion) {
+        break;
+      }
+    }
+    if (!foundId) {
+      logger.poison("There is no getId() method in type %s", print(domainType));
+    }
+    if (!foundVersion) {
+      logger.poison("There is no getVersion() method in type %s",
+          print(domainType));
     }
 
-    Method getVersion = new Method("getVersion", "()Ljava/lang/Integer;");
-    if (findCompatibleMethod(logger, domainType, getVersion) == null) {
-      logger.poison("Did not find a getVersion() method"
-          + " that returns an Integer");
+    if (foundFind) {
+      if (keyType != null
+          && !isAssignable(logger, findMethod.getArgumentTypes()[0], keyType)) {
+        logger.poison("The key type returned by %s getId()"
+            + " cannot be used as the argument to %s(%s)", print(keyType),
+            findMethod.getName(), print(findMethod.getArgumentTypes()[0]));
+      }
+    } else {
+      logger.poison("There is no %s method in type %s that returns %2$s",
+          findMethodName, print(domainType));
     }
   }
 
@@ -912,6 +946,21 @@ public class RequestFactoryInterfaceValidator {
 
     findCompatibleMethod(logger, domainType,
         createDomainMethod(logger, clientPropertyMethod));
+  }
+
+  private void checkUnresolvedKeyTypes(ErrorContext logger) {
+    unresolvedKeyTypes.values().removeAll(domainToClientType.keySet());
+    if (unresolvedKeyTypes.isEmpty()) {
+      return;
+    }
+
+    for (Map.Entry<Type, Type> type : unresolvedKeyTypes.entrySet()) {
+      logger.setType(type.getKey()).poison(
+          "The domain type %s uses  a non-simple key type (%s)"
+              + " in its getId() or getVersion() method that"
+              + " does not have a proxy mapping.", print(type.getKey()),
+          print(type.getValue()));
+    }
   }
 
   /**
@@ -1091,12 +1140,10 @@ public class RequestFactoryInterfaceValidator {
         domainType = errorType;
       } else {
         domainType = Type.getObjectType(pv.getDomainInternalName());
-        if (pv.isValueType()) {
-          valueTypes.add(clientType);
-        }
       }
     }
     addToDomainMap(logger, domainType, clientType);
+    maybeCheckProxyType(logger, clientType);
     return domainType;
   }
 
@@ -1216,6 +1263,22 @@ public class RequestFactoryInterfaceValidator {
   private boolean isCollectionType(ErrorContext logger, Type type) {
     return "java/util/List".equals(type.getInternalName())
         || "java/util/Set".equals(type.getInternalName());
+  }
+
+  /**
+   * Keep in sync with {@code ReflectiveServiceLayer.isKeyType()}.
+   */
+  private boolean isResolvedKeyType(ErrorContext logger, Type type) {
+    if (isValueType(logger, type)) {
+      return true;
+    }
+
+    // We have already seen a mapping for the key type
+    if (domainToClientType.containsKey(type)) {
+      return true;
+    }
+
+    return false;
   }
 
   private boolean isValueType(ErrorContext logger, Type type) {

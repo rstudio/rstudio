@@ -209,7 +209,8 @@ public class RequestFactoryModel {
       EntityProxyModel.Builder builder = new EntityProxyModel.Builder();
       peerBuilders.put(entityProxyType, builder);
 
-      builder.setQualifiedSourceName(ModelUtils.getQualifiedBaseName(entityProxyType));
+      builder.setQualifiedBinaryName(ModelUtils.getQualifiedBaseBinaryName(entityProxyType));
+      builder.setQualifiedSourceName(ModelUtils.getQualifiedBaseSourceName(entityProxyType));
       if (entityProxyInterface.isAssignableFrom(entityProxyType)) {
         builder.setType(Type.ENTITY);
       } else if (valueProxyInterface.isAssignableFrom(entityProxyType)) {

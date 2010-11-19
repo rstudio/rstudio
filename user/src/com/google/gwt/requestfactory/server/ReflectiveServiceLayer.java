@@ -29,9 +29,9 @@ import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.Service;
 import com.google.gwt.requestfactory.shared.ServiceName;
 import com.google.gwt.requestfactory.shared.ValueProxy;
-import com.google.gwt.requestfactory.shared.messages.EntityCodex;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex.EntitySource;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -86,10 +86,20 @@ public class ReflectiveServiceLayer implements ServiceLayer {
   public Object createDomainObject(Class<?> clazz) {
     Throwable ex;
     try {
-      return clazz.newInstance();
+      Constructor<?> c = clazz.getConstructor();
+      c.setAccessible(true);
+      return c.newInstance();
     } catch (InstantiationException e) {
       return report("Could not create a new instance of the requested type");
+    } catch (NoSuchMethodException e) {
+      return report("The requested type is not default-instantiable");
+    } catch (InvocationTargetException e) {
+      return report(e);
     } catch (IllegalAccessException e) {
+      ex = e;
+    } catch (SecurityException e) {
+      ex = e;
+    } catch (IllegalArgumentException e) {
       ex = e;
     }
     return die(ex, "Could not create a new instance of domain type %s",
@@ -138,16 +148,12 @@ public class ReflectiveServiceLayer implements ServiceLayer {
         clazz.getCanonicalName());
   }
 
-  public String getFlatId(EntitySource source, Object domainObject) {
-    Object id = getProperty(domainObject, "id");
-    if (id == null) {
-      return null;
-    }
-    if (!isKeyType(id.getClass())) {
-      die(null, "The type %s is not a valid key type",
-          id.getClass().getCanonicalName());
-    }
-    return EntityCodex.encode(source, id).getPayload();
+  public Object getId(Object domainObject) {
+    return getProperty(domainObject, "id");
+  }
+
+  public Class<?> getIdType(Class<?> domainType) {
+    return getFind(domainType).getParameterTypes()[0];
   }
 
   public Object getProperty(Object domainObject, String property) {
@@ -155,6 +161,7 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     try {
       Method method = domainObject.getClass().getMethod(
           "get" + capitalize(property));
+      method.setAccessible(true);
       Object value = method.invoke(domainObject);
       return value;
     } catch (SecurityException e) {
@@ -192,22 +199,14 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     return clazz.getName();
   }
 
-  public int getVersion(Object domainObject) {
-    // TODO: Make version any value type
-    Object version = getProperty(domainObject, "version");
-    if (version == null) {
-      return 0;
-    }
-    if (!(version instanceof Integer)) {
-      die(null, "The getVersion() method on type %s did not return"
-          + " int or Integer", domainObject.getClass().getCanonicalName());
-    }
-    return ((Integer) version).intValue();
+  public Object getVersion(Object domainObject) {
+    return getProperty(domainObject, "version");
   }
 
-  public Object invoke(Method domainMethod, Object[] args) {
+  public Object invoke(Method domainMethod, Object... args) {
     Throwable ex;
     try {
+      domainMethod.setAccessible(true);
       if (Modifier.isStatic(domainMethod.getModifiers())) {
         return domainMethod.invoke(null, args);
       } else {
@@ -225,46 +224,19 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     return die(ex, "Could not invoke method %s", domainMethod.getName());
   }
 
-  public Object loadDomainObject(EntitySource source, Class<?> clazz,
-      String flatId) {
-    String searchFor = "find" + clazz.getSimpleName();
-    Method found = null;
-    for (Method method : clazz.getMethods()) {
-      if (!Modifier.isStatic(method.getModifiers())) {
-        continue;
-      }
-      if (!searchFor.equals(method.getName())) {
-        continue;
-      }
-      if (method.getParameterTypes().length != 1) {
-        continue;
-      }
-      if (!isKeyType(method.getParameterTypes()[0])) {
-        continue;
-      }
-      found = method;
-      break;
-    }
-    if (found == null) {
-      die(null, "Could not find static method %s with a single"
-          + " parameter of a key type", searchFor);
-    }
-    Object id = EntityCodex.decode(source, found.getParameterTypes()[0], null,
-        flatId);
+  /**
+   * This implementation attempts to re-load the object from the backing store.
+   */
+  public boolean isLive(EntitySource source, Object domainObject) {
+    Object id = getId(domainObject);
+    return invoke(getFind(domainObject.getClass()), id) != null;
+  }
+
+  public Object loadDomainObject(EntitySource source, Class<?> clazz, Object id) {
     if (id == null) {
-      report("Cannot load a domain object with a null id");
+      die(null, "Cannot invoke find method with a null id");
     }
-    Throwable ex;
-    try {
-      return found.invoke(null, id);
-    } catch (IllegalArgumentException e) {
-      ex = e;
-    } catch (IllegalAccessException e) {
-      ex = e;
-    } catch (InvocationTargetException e) {
-      return report(e);
-    }
-    return die(ex, "Cauld not load domain object using id", id.toString());
+    return invoke(getFind(clazz), id);
   }
 
   public Class<? extends BaseProxy> resolveClass(String typeToken) {
@@ -288,14 +260,6 @@ public class ReflectiveServiceLayer implements ServiceLayer {
 
   public Method resolveDomainMethod(Method requestContextMethod) {
     Class<?> enclosing = requestContextMethod.getDeclaringClass();
-    synchronized (validator) {
-      validator.antidote();
-      validator.validateRequestContext(enclosing.getName());
-      if (validator.isPoisoned()) {
-        die(null, "The type %s did not pass RequestFactory validation",
-            enclosing.getCanonicalName());
-      }
-    }
 
     Class<?> searchIn = null;
     Service s = enclosing.getAnnotation(Service.class);
@@ -340,6 +304,14 @@ public class ReflectiveServiceLayer implements ServiceLayer {
 
   public Method resolveRequestContextMethod(String requestContextClass,
       String methodName) {
+    synchronized (validator) {
+      validator.antidote();
+      validator.validateRequestContext(requestContextClass);
+      if (validator.isPoisoned()) {
+        die(null, "The RequestContext type %s did not pass validation",
+            requestContextClass);
+      }
+    }
     Class<?> searchIn = forName(requestContextClass);
     for (Method method : searchIn.getMethods()) {
       if (method.getName().equals(methodName)) {
@@ -352,12 +324,13 @@ public class ReflectiveServiceLayer implements ServiceLayer {
 
   public void setProperty(Object domainObject, String property,
       Class<?> expectedType, Object value) {
-    Method getId;
+    Method setter;
     Throwable ex;
     try {
-      getId = domainObject.getClass().getMethod("set" + capitalize(property),
+      setter = domainObject.getClass().getMethod("set" + capitalize(property),
           expectedType);
-      getId.invoke(domainObject, value);
+      setter.setAccessible(true);
+      setter.invoke(domainObject, value);
       return;
     } catch (SecurityException e) {
       ex = e;
@@ -395,6 +368,10 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     throw new UnexpectedException(msg, e);
   }
 
+  /**
+   * Call {@link Class#forName(String)} and report any errors through
+   * {@link #die()}.
+   */
   private Class<?> forName(String name) {
     try {
       return Class.forName(name, false,
@@ -404,9 +381,41 @@ public class ReflectiveServiceLayer implements ServiceLayer {
     }
   }
 
-  private boolean isKeyType(Class<?> clazz) {
-    return ValueCodex.canDecode(clazz)
-        || BaseProxy.class.isAssignableFrom(clazz);
+  private Method getFind(Class<?> clazz) {
+    if (clazz == null) {
+      return die(null, "Could not find static method with a single"
+          + " parameter of a key type");
+    }
+    String searchFor = "find" + clazz.getSimpleName();
+    for (Method method : clazz.getMethods()) {
+      if (!Modifier.isStatic(method.getModifiers())) {
+        continue;
+      }
+      if (!searchFor.equals(method.getName())) {
+        continue;
+      }
+      if (method.getParameterTypes().length != 1) {
+        continue;
+      }
+      if (!isKeyType(method.getParameterTypes()[0])) {
+        continue;
+      }
+      return method;
+    }
+    return getFind(clazz.getSuperclass());
+  }
+
+  /**
+   * Returns <code>true</code> if the given class can be used as an id or
+   * version key.
+   */
+  private boolean isKeyType(Class<?> domainClass) {
+    if (ValueCodex.canDecode(domainClass)) {
+      return true;
+    }
+
+    return BaseProxy.class.isAssignableFrom(getClientType(domainClass,
+        BaseProxy.class));
   }
 
   /**

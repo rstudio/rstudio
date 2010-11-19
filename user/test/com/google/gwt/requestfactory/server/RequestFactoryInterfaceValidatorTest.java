@@ -30,6 +30,7 @@ import com.google.gwt.requestfactory.shared.impl.FindRequest;
 import junit.framework.TestCase;
 
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +39,10 @@ import java.util.logging.Logger;
  */
 public class RequestFactoryInterfaceValidatorTest extends TestCase {
   static class ClinitEntity {
+    static ClinitEntity findClinitEntity(String key) {
+      return null;
+    }
+
     static ClinitEntity request() {
       return null;
     }
@@ -111,6 +116,42 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   class Foo {
   }
 
+  @ProxyFor(HasListDomain.class)
+  interface HasList extends EntityProxy {
+    List<ReachableOnlyThroughReturnedList> getList();
+
+    void setList(List<ReachableOnlyThroughParamaterList> list);
+  }
+
+  static class HasListDomain extends Domain {
+    public String getId() {
+      return null;
+    }
+
+    public int getVersion() {
+      return 0;
+    }
+
+    List<Domain> getList() {
+      return null;
+    }
+
+    void setList(List<Domain> value) {
+    }
+  }
+
+  @ProxyFor(value = Value.class)
+  interface MyValueProxy extends ValueProxy {
+  }
+
+  @ProxyFor(Domain.class)
+  interface ReachableOnlyThroughParamaterList extends EntityProxy {
+  }
+
+  @ProxyFor(Domain.class)
+  interface ReachableOnlyThroughReturnedList extends EntityProxy {
+  }
+
   interface RequestContextMissingAnnotation extends RequestContext {
   }
 
@@ -125,7 +166,6 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   interface ServiceRequestMismatchedParam extends RequestContext {
     Request<Integer> foo(long a);
   }
-
   @Service(Domain.class)
   interface ServiceRequestMismatchedReturn extends RequestContext {
     Request<Long> foo(int a);
@@ -143,14 +183,26 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     Request<Integer> doesNotExist(int a);
   }
 
+  static class UnexpectedIdAndVersionDomain {
+    Random getId() {
+      return null;
+    }
+
+    Random getVersion() {
+      return null;
+    }
+  }
+
+  @ProxyFor(UnexpectedIdAndVersionDomain.class)
+  interface UnexpectedIdAndVersionProxy extends EntityProxy {
+  }
+
   static class Value {
   }
 
-  @ProxyFor(value = Value.class)
-  interface MyValueProxy extends ValueProxy {
-  }
-
   RequestFactoryInterfaceValidator v;
+
+  private static final boolean DUMP_PAYLOAD = Boolean.getBoolean("gwt.rpc.dumpPayload");;
 
   /**
    * Ensure that calling {@link RequestFactoryInterfaceValidator#antidote()}
@@ -163,7 +215,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     assertFalse(v.isPoisoned());
     v.validateRequestContext(RequestContextMissingAnnotation.class.getName());
     assertTrue(v.isPoisoned());
-  }
+  };
 
   /**
    * Test the {@link FindRequest} context used to implement find().
@@ -171,37 +223,6 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   public void testFindRequestContext() {
     v.validateRequestContext(FindRequest.class.getName());
   }
-
-  @ProxyFor(HasListDomain.class)
-  interface HasList extends EntityProxy {
-    List<ReachableOnlyThroughReturnedList> getList();
-
-    void setList(List<ReachableOnlyThroughParamaterList> list);
-  }
-
-  static class HasListDomain extends Domain {
-    List<Domain> getList() {
-      return null;
-    }
-
-    void setList(List<Domain> value) {
-    }
-
-    public String getId() {
-      return null;
-    }
-
-    public int getVersion() {
-      return 0;
-    }
-  }
-
-  @ProxyFor(Domain.class)
-  interface ReachableOnlyThroughReturnedList extends EntityProxy {
-  };
-  @ProxyFor(Domain.class)
-  interface ReachableOnlyThroughParamaterList extends EntityProxy {
-  };
 
   /**
    * Make sure that proxy types referenced through type parameters of method
@@ -278,6 +299,11 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     assertFalse(v.isPoisoned());
   }
 
+  public void testUnexpectedIdAndVersion() {
+    v.validateEntityProxy(UnexpectedIdAndVersionProxy.class.getName());
+    assertTrue(v.isPoisoned());
+  }
+
   public void testValueType() {
     v.validateValueProxy(MyValueProxy.class.getName());
     assertFalse(v.isPoisoned());
@@ -286,7 +312,7 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     Logger logger = Logger.getLogger("");
-    logger.setLevel(Level.OFF);
+    logger.setLevel(DUMP_PAYLOAD ? Level.ALL : Level.OFF);
     v = new RequestFactoryInterfaceValidator(logger, new ClassLoaderLoader(
         Thread.currentThread().getContextClassLoader()));
   }

@@ -17,6 +17,10 @@ package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.autobean.server.AutoBeanFactoryMagic;
 import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBeanCodex;
+import com.google.gwt.autobean.shared.Splittable;
+import com.google.gwt.autobean.shared.ValueCodex;
+import com.google.gwt.autobean.shared.impl.StringQuoter;
 import com.google.gwt.requestfactory.server.SimpleRequestProcessor.IdToEntityMap;
 import com.google.gwt.requestfactory.server.SimpleRequestProcessor.ServiceLayer;
 import com.google.gwt.requestfactory.shared.BaseProxy;
@@ -24,10 +28,13 @@ import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.impl.Constants;
 import com.google.gwt.requestfactory.shared.impl.IdFactory;
+import com.google.gwt.requestfactory.shared.impl.MessageFactoryHolder;
 import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
 import com.google.gwt.requestfactory.shared.messages.EntityCodex;
-import com.google.gwt.requestfactory.shared.messages.IdUtil;
+import com.google.gwt.requestfactory.shared.messages.IdMessage;
+import com.google.gwt.requestfactory.shared.messages.IdMessage.Strength;
 
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
@@ -77,6 +84,31 @@ class RequestState implements EntityCodex.EntitySource {
     resolver = new Resolver(this);
   }
 
+  public Splittable flatten(Object domainValue) {
+    Splittable flatValue;
+    if (ValueCodex.canDecode(domainValue.getClass())) {
+      flatValue = ValueCodex.encode(domainValue);
+    } else {
+      flatValue = new SimpleRequestProcessor(service).createOobMessage(Collections.singletonList(domainValue));
+    }
+    return flatValue;
+  }
+
+  public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(IdMessage idMessage) {
+    SimpleProxyId<Q> id;
+    if (idMessage.getSyntheticId() > 0) {
+      @SuppressWarnings("unchecked")
+      Class<Q> clazz = (Class<Q>) service.resolveClass(idMessage.getTypeToken());
+      id = idFactory.allocateSyntheticId(clazz, idMessage.getSyntheticId());
+    } else {
+      String decodedId = idMessage.getServerId() == null ? null
+          : SimpleRequestProcessor.fromBase64(idMessage.getServerId());
+      id = idFactory.getId(idMessage.getTypeToken(), decodedId,
+          idMessage.getClientId());
+    }
+    return getBeanForPayload(id);
+  }
+
   public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(
       SimpleProxyId<Q> id, Object domainObject) {
     @SuppressWarnings("unchecked")
@@ -91,18 +123,10 @@ class RequestState implements EntityCodex.EntitySource {
    * EntityCodex support.
    */
   public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(
-      String serializedProxyId) {
-    String typeToken = IdUtil.getTypeToken(serializedProxyId);
-    SimpleProxyId<Q> id;
-    if (IdUtil.isEphemeral(serializedProxyId)) {
-      id = idFactory.getId(typeToken, null,
-          IdUtil.getClientId(serializedProxyId));
-    } else {
-      id = idFactory.getId(
-          typeToken,
-          SimpleRequestProcessor.fromBase64(IdUtil.getServerId(serializedProxyId)));
-    }
-    return getBeanForPayload(id);
+      Splittable serializedProxyId) {
+    IdMessage idMessage = AutoBeanCodex.decode(MessageFactoryHolder.FACTORY,
+        IdMessage.class, serializedProxyId).as();
+    return getBeanForPayload(idMessage);
   }
 
   public IdFactory getIdFactory() {
@@ -118,20 +142,23 @@ class RequestState implements EntityCodex.EntitySource {
    * {@link IdFactory#getHistoryToken(SimpleProxyId)} except that it
    * base64-encodes the server ids.
    * <p>
-   * XXX: Fix the above
+   * XXX: Merge this with AbstsractRequestContext's implementation
    */
-  public String getSerializedProxyId(SimpleProxyId<?> stableId) {
-    if (stableId.isEphemeral()) {
-      return IdUtil.ephemeralId(stableId.getClientId(),
-          service.getTypeToken(stableId.getProxyClass()));
-    } else if (stableId.isSynthetic()) {
-      return IdUtil.syntheticId(stableId.getSyntheticId(),
-          service.getTypeToken(stableId.getProxyClass()));
+  public Splittable getSerializedProxyId(SimpleProxyId<?> stableId) {
+    AutoBean<IdMessage> bean = MessageFactoryHolder.FACTORY.id();
+    IdMessage ref = bean.as();
+    ref.setTypeToken(service.getTypeToken(stableId.getProxyClass()));
+    if (stableId.isSynthetic()) {
+      ref.setStrength(Strength.SYNTHETIC);
+      ref.setSyntheticId(stableId.getSyntheticId());
+    } else if (stableId.isEphemeral()) {
+      ref.setStrength(Strength.EPHEMERAL);
+      ref.setClientId(stableId.getClientId());
     } else {
-      return IdUtil.persistedId(
-          SimpleRequestProcessor.toBase64(stableId.getServerId()),
-          service.getTypeToken(stableId.getProxyClass()));
+      ref.setStrength(Strength.PERSISTED);
+      ref.setServerId(SimpleRequestProcessor.toBase64(stableId.getServerId()));
     }
+    return AutoBeanCodex.encode(bean);
   }
 
   public ServiceLayer getServiceLayer() {
@@ -185,11 +212,19 @@ class RequestState implements EntityCodex.EntitySource {
       // Resolve the domain object
       Class<?> domainClass = service.getDomainClass(id.getProxyClass());
       Object domain;
-      if (id.isEphemeral()) {
+      if (id.isEphemeral() || id.isSynthetic()) {
         domain = service.createDomainObject(domainClass);
       } else {
-        String address = id.getServerId();
-        domain = service.loadDomainObject(this, domainClass, address);
+        Splittable address = StringQuoter.split(id.getServerId());
+        Class<?> param = service.getIdType(domainClass);
+        Object domainParam;
+        if (ValueCodex.canDecode(param)) {
+          domainParam = ValueCodex.decode(param, address);
+        } else {
+          domainParam = new SimpleRequestProcessor(service).decodeOobMessage(
+              param, address).get(0);
+        }
+        domain = service.loadDomainObject(this, domainClass, domainParam);
       }
       domainObjectsToId.put(domain, id);
       toReturn = createEntityProxyBean(id, domain);
