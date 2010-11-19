@@ -16,11 +16,16 @@
 package com.google.gwt.requestfactory.shared;
 
 /**
- * Creates SimpleFooRequests.
+ * Simple RequesetFactory interface with two domain objects, and our standard
+ * UserInformation and Logging services.
  */
 public interface SimpleRequestFactory extends RequestFactory {
 
-  SimpleFooRequest simpleFooRequest();
+  LoggingRequest loggingRequest();
 
   SimpleBarRequest simpleBarRequest();
+  
+  SimpleFooRequest simpleFooRequest();
+
+  UserInformationRequest userInformationRequest();
 }

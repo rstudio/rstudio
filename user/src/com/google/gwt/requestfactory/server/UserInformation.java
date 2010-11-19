@@ -18,36 +18,63 @@ package com.google.gwt.requestfactory.server;
 
 /**
  * A base class for providing authentication related information about the user.
- * Services that want real authentication should subclass this class.
+ * Services that want real authentication should subclass this class with a
+ * matching constructor, and set their class name via
+ * {@link #setUserInformationImplClass(String)}.
  */
 public abstract class UserInformation {
+
+  /**
+   * Reset by {@link #getCurrentUserInformation}, which is called by
+   * {@link RequestFactoryServlet#doPost} at the start of each request, so
+   * shouldn't leak between re-used threads.
+   */
+  private static final ThreadLocal<UserInformation> currentUser = new ThreadLocal<UserInformation>();
 
   private static String userInformationImplClass = "";
 
   /**
-   * Returns the current user information for a given redirect URL. If
-   * {@link #setUserInformationImplClass(String)} has been called with a class
-   * name, that class is used to gather the information by calling a (String)
-   * constructor. If the impl class name is "", or if the class cannont be
-   * instantiated, dummy user info is returned.
+   * Instance finder method required by RequestFactory. Returns the last
+   * UserInformation established for this thread by a call to
+   * getCurrentUserInformation, or null if non has been set.
+   * 
+   * @param id ignored, required by RequestFactoryServlet
+   */
+  public static UserInformation findUserInformation(Long id) {
+    return currentUser.get();
+  }
+
+  /**
+   * Called by {@link RequestFactoryServlet#doPost} at the start of each request
+   * received. Establishes the current user information for this request, and
+   * notes a redirect url to be provided back to the client if the user's bona
+   * fides cannot be established. All succeeding calls to
+   * {@link #findUserInformation(Long)} made from the same thread will return
+   * the same UserInfo instance.
+   * <p>
+   * If {@link #setUserInformationImplClass(String)} has been called with a
+   * class name, that class is used to gather the information by calling a
+   * (String) constructor. If the impl class name is "", or if the class cannont
+   * be instantiated, dummy user info is returned.
    * 
    * @param redirectUrl the redirect URL as a String
    * @return a {@link UserInformation} instance
    */
   public static UserInformation getCurrentUserInformation(String redirectUrl) {
-    UserInformation userInfo = null;
+    currentUser.remove();
     if (!"".equals(userInformationImplClass)) {
       try {
-        userInfo = (UserInformation) Class.forName(userInformationImplClass).getConstructor(
-            String.class).newInstance(redirectUrl);
+        currentUser.set((UserInformation) Class.forName(
+            userInformationImplClass).getConstructor(String.class).newInstance(
+            redirectUrl));
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
-    if (userInfo == null) {
-      userInfo = new UserInformationSimpleImpl(redirectUrl);
+    if (currentUser.get() == null) {
+      currentUser.set(new UserInformationSimpleImpl(redirectUrl));
     }
-    return userInfo;
+    return currentUser.get();
   }
 
   /**

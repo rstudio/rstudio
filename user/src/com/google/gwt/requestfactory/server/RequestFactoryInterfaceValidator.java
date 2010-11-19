@@ -326,7 +326,7 @@ public class RequestFactoryInterfaceValidator {
       if (!seen.add(name)) {
         return;
       }
-      if (!"java/lang/Object".equals(superName)) {
+      if (!objectType.getInternalName().equals(superName)) {
         RequestFactoryInterfaceValidator.this.visit(logger, superName, this);
       }
       if (interfaces != null) {
@@ -384,7 +384,7 @@ public class RequestFactoryInterfaceValidator {
   private class SupertypeCollector extends EmptyVisitor {
     private final ErrorContext logger;
     private final Set<String> seen = new HashSet<String>();
-    private final List<Type> supertypes = new ArrayList<Type>();
+    private final List<Type> supers = new ArrayList<Type>();
 
     public SupertypeCollector(ErrorContext logger) {
       this.logger = logger;
@@ -393,7 +393,7 @@ public class RequestFactoryInterfaceValidator {
     public List<Type> exec(Type type) {
       RequestFactoryInterfaceValidator.this.visit(logger,
           type.getInternalName(), this);
-      return supertypes;
+      return supers;
     }
 
     @Override
@@ -402,8 +402,8 @@ public class RequestFactoryInterfaceValidator {
       if (!seen.add(name)) {
         return;
       }
-      supertypes.add(Type.getObjectType(name));
-      if (!"java/lang/Object".equals(name)) {
+      supers.add(Type.getObjectType(name));
+      if (!objectType.getInternalName().equals(name)) {
         RequestFactoryInterfaceValidator.this.visit(logger, superName, this);
       }
       if (interfaces != null) {
@@ -787,22 +787,46 @@ public class RequestFactoryInterfaceValidator {
       String clientTypeBinaryName) {
     Type key = Type.getObjectType(BinaryName.toInternalName(domainTypeBinaryName));
     List<Type> found = domainToClientType.get(key);
+
+    /*
+     * If nothing was found look for proxyable supertypes the domain object can
+     * be upcast to. 
+     */
+    if (found == null || found.isEmpty()) {
+      List<Type> types = getSupertypes(parentLogger, key);
+      for (Type type : types) {
+        if (objectType.equals(type)) {
+          break;
+        }
+
+        found = domainToClientType.get(type);
+        if (found != null && !found.isEmpty()) {
+          break;
+        }
+      }
+    }
+    
     if (found == null || found.isEmpty()) {
       return null;
     }
+    
+    Type typeToReturn = null;
+    
     // Common case
     if (found.size() == 1) {
-      return found.get(0).getClassName();
-    }
-
-    // Search for the first assignable type
-    Type assignableTo = Type.getObjectType(BinaryName.toInternalName(clientTypeBinaryName));
-    for (Type t : found) {
-      if (isAssignable(parentLogger, assignableTo, t)) {
-        return t.getClassName();
+      typeToReturn = found.get(0);
+    } else {
+      // Search for the first assignable type
+      Type assignableTo = Type.getObjectType(BinaryName.toInternalName(clientTypeBinaryName));
+      for (Type t : found) {
+        if (isAssignable(parentLogger, assignableTo, t)) {
+          typeToReturn = t;
+          break;
+        }
       }
     }
-    return null;
+    
+    return typeToReturn == null ? null : typeToReturn.getClassName();
   }
 
   /**
@@ -1099,7 +1123,7 @@ public class RequestFactoryInterfaceValidator {
    */
   private Type getReturnType(ErrorContext logger, RFMethod method) {
     logger = logger.setMethod(method);
-    final String[] returnType = {"java/lang/Object"};
+    final String[] returnType = { objectType.getInternalName() };
     String signature = method.getSignature();
 
     final int expectedCount;
@@ -1147,7 +1171,9 @@ public class RequestFactoryInterfaceValidator {
     if (toReturn != null) {
       return toReturn;
     }
+    
     logger = logger.setType(type);
+    
     toReturn = new SupertypeCollector(logger).exec(type);
     supertypes.put(type, Collections.unmodifiableList(toReturn));
     return toReturn;

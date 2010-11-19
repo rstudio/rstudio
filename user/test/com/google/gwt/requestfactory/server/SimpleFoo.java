@@ -278,6 +278,11 @@ public class SimpleFoo {
   public static String returnNullString() {
     return null;
   }
+  
+  public static SimpleFoo returnSimpleFooSubclass() {
+    return new SimpleFoo() {
+    };
+  }
 
   public static SimpleValue returnValueProxy() {
     SimpleValue toReturn = new SimpleValue();

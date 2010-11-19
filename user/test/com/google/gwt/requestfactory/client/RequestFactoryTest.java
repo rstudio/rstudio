@@ -28,6 +28,7 @@ import com.google.gwt.requestfactory.shared.SimpleEnum;
 import com.google.gwt.requestfactory.shared.SimpleFooProxy;
 import com.google.gwt.requestfactory.shared.SimpleFooRequest;
 import com.google.gwt.requestfactory.shared.SimpleValueProxy;
+import com.google.gwt.requestfactory.shared.UserInformationProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyId;
 
@@ -382,6 +383,18 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
   }
 
+  public void testDomainUpcast() {
+    delayTestFinish(DELAY_TEST_FINISH);
+    simpleFooRequest().returnSimpleFooSubclass().fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            assertEquals(42, response.getIntId().intValue());
+            finishTestAndReset();
+          }
+        });
+  }
+
   public void testDummyCreate() {
     delayTestFinish(DELAY_TEST_FINISH);
 
@@ -685,6 +698,26 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         assertEquals(persistedId.getProxyClass(),
             req.getProxyClass(futureToken));
 
+        finishTestAndReset();
+      }
+    });
+  }
+  
+  /**
+   * Make sure our stock RF logging service keeps receiving.
+   */
+  public void testLoggingService() {
+    String logRecordJson = new StringBuilder("{").append("\"level\": \"ALL\", ")
+      .append("\"loggerName\": \"logger\", ")
+      .append("\"msg\": \"Hi mom\", ")
+      .append("\"timestamp\": \"1234567890\",")
+      .append("\"thrown\": {}")
+      .append("}")
+      .toString();
+
+    req.loggingRequest().logMessage(logRecordJson).fire(new Receiver<Void>() {
+      @Override
+      public void onSuccess(Void response) {
         finishTestAndReset();
       }
     });
@@ -1918,6 +1951,25 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         });
       }
     });
+  }
+
+  /**
+   * We provide a simple UserInformation class to give GAE developers a hand,
+   * and other developers a hint. Make sure RF doesn't break it (it relies on
+   * server side upcasting, and a somewhat sleazey reflective lookup mechanism
+   * in a static method on UserInformation). 
+   */
+  public void testUserInfo() {
+    req.userInformationRequest().getCurrentUserInformation("").fire(
+        new Receiver<UserInformationProxy>() {
+          @Override
+          public void onSuccess(UserInformationProxy getResponse) {
+            assertEquals("Dummy Email", getResponse.getEmail());
+            assertEquals("Dummy User", getResponse.getName());
+            assertEquals("", getResponse.getLoginUrl());
+            assertEquals("", getResponse.getLogoutUrl());
+          }
+        });
   }
 
   /**

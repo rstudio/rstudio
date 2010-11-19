@@ -30,7 +30,8 @@ public interface LoggingRequest extends RequestContext {
   /**
    * Log a message on the server.
    *
-   * @param serializedLogRecordString a String
+   * @param serializedLogRecordString a json serialized LogRecord, as provided by
+   * {@link com.google.gwt.logging.client.JsonLogRecordClientUtil.logRecordAsJsonObject(LogRecord)}
    * @return a Void {@link Request}
    */
   Request<Void> logMessage(String serializedLogRecordString);

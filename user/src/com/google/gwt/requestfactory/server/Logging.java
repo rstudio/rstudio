@@ -21,6 +21,8 @@ import com.google.gwt.logging.server.RemoteLoggingServiceUtil.RemoteLoggingExcep
 import com.google.gwt.logging.server.StackTraceDeobfuscator;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Server side object that handles log messages sent by
  * {@link com.google.gwt.requestfactory.client.RequestFactoryLogHandler}.
@@ -33,15 +35,22 @@ public class Logging {
   /**
    * Logs a message.
    * 
-   * @param logRecordJson a log record in JSON format.
+   * @param serializedLogRecordString a json serialized LogRecord, as provided by
+   * {@link com.google.gwt.logging.client.JsonLogRecordClientUtil.logRecordAsJsonObject(LogRecord)}
    * @throws RemoteLoggingException if logging fails
    */
   public static void logMessage(String logRecordJson)
       throws RemoteLoggingException {
-    // if the header does not exist, we pass null, which is handled gracefully
-    // by the deobfuscation code.
-    String strongName = RequestFactoryServlet.getThreadLocalRequest().getHeader(
-        RpcRequestBuilder.STRONG_NAME_HEADER);
+    /*
+     * if the header does not exist, we pass null, which is handled gracefully
+     * by the deobfuscation code.
+     */
+    HttpServletRequest threadLocalRequest = RequestFactoryServlet.getThreadLocalRequest();
+    String strongName = null;
+    if (threadLocalRequest != null) {
+      // can be null during tests
+      threadLocalRequest.getHeader(RpcRequestBuilder.STRONG_NAME_HEADER);
+    }
     RemoteLoggingServiceUtil.logOnServer(logRecordJson, strongName,
         deobfuscator, null);
   }
