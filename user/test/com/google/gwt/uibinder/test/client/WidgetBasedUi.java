@@ -38,6 +38,7 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -97,6 +98,7 @@ public class WidgetBasedUi extends Composite {
   @UiField RadioButton myRadioAble;
   @UiField RadioButton myRadioBaker;
   @UiField StackPanel myStackPanel;
+  @UiField HorizontalPanel myHorizontalPanel;
   @UiField Widget myStackPanelItem;
   @UiField DisclosurePanel myDisclosurePanel;
   @UiField Widget myDisclosurePanelItem;
