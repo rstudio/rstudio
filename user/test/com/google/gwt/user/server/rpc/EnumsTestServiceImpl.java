@@ -39,8 +39,4 @@ public class EnumsTestServiceImpl extends HybridServiceServlet implements
   public Subclassing echo(Subclassing value) {
     return value;
   }
-  
-  public FieldEnumWrapper echo(FieldEnumWrapper value) {
-    return value;
-  }
 }

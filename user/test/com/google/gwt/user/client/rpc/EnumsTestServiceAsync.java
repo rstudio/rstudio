@@ -18,7 +18,6 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.user.client.rpc.EnumsTestService.Basic;
 import com.google.gwt.user.client.rpc.EnumsTestService.Complex;
 import com.google.gwt.user.client.rpc.EnumsTestService.Subclassing;
-import com.google.gwt.user.client.rpc.EnumsTestService.FieldEnumWrapper;
 
 /**
  *
@@ -27,5 +26,4 @@ public interface EnumsTestServiceAsync {
   void echo(Basic value, AsyncCallback<Basic> callback);
   void echo(Complex value, AsyncCallback<Complex> callback);
   void echo(Subclassing value, AsyncCallback<Subclassing> callback);
-  void echo(FieldEnumWrapper value, AsyncCallback<FieldEnumWrapper> callback);
 }
