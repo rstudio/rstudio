@@ -20,6 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * Wraps
  * {@link org.hibernate.jsr303.tck.tests.constraints.application.ValidationRequirementTest}
+ * .
  */
 public class ValidationRequirementTest extends GWTTestCase {
   org.hibernate.jsr303.tck.tests.constraints.application.ValidationRequirementTest delegate =
@@ -27,7 +28,7 @@ public class ValidationRequirementTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.sample.validationtck.ValidationTckTest";
+    return "com.google.gwt.sample.validationtck.constraints.application.TckTest";
   }
 
   public void testClassLevelConstraints() {

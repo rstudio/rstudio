@@ -13,22 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck;
+package com.google.gwt.sample.validationtck.validation;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.sample.validationtck.constraints.application.ValidationRequirementTest;
 
 import junit.framework.Test;
 
 /**
- * All Tck Tests
+ * Tck Tests for the {@code validation} package.
  */
-public class TckGwtSuite {
-
+public class ValidationGwtSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("TCK for GWT Validation");
-    suite.addTestSuite(ValidationRequirementTest.class);
-    // suite.addTestSuite(CustomConstraintValidatorTest.class);
+    GWTTestSuite suite = new GWTTestSuite(
+        "TCK for GWT Validation, validation package");
+    suite.addTestSuite(PropertyPathTest.class);
+    suite.addTestSuite(ValidatePropertyTest.class);
+    suite.addTestSuite(ValidateValueTest.class);
     return suite;
   }
 }

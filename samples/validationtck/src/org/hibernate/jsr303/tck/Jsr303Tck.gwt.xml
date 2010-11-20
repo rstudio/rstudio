@@ -15,7 +15,6 @@ It is only enough to run the tests in the GWT Validation TCK.
     <exclude name="tests/bootstrap/" />
     <exclude name="tests/constraints/builtinconstraints/" />
     <exclude name="tests/messageinterpolation/" />
-    <exclude name="tests/validation/" />
     <exclude name="tests/xmlconfiguration/" />
     <exclude name="util/StandaloneContainersImpl.java" />
   </source>

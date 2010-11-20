@@ -17,9 +17,11 @@
 -->
 <module>
   <inherits name="com.google.gwt.sample.validationtck.ValidationTck" />
-
   <source path="">
+    <include name="*.java" />
     <exclude name="super" />
   </source>
-  <entry-point class="com.google.gwt.sample.validationtck.Tck" />
+  <replace-with class="com.google.gwt.sample.validationtck.validatorfactory.TckTestValidator">
+    <when-type-is class="javax.validation.Validator"/>
+  </replace-with>
 </module>

@@ -5,6 +5,7 @@ It is only enough to run the tests in the GWT Validation TCK.
 -->
 <module>
   <inherits name="com.google.gwt.user.User" />
+  <inherits name="com.google.gwt.junit.JUnit" />
   <source path="annotations">
     <exclude name="ITestAnnotation.java" />
     <exclude name="Listeners.java" />

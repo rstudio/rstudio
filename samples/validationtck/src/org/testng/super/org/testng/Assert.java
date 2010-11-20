@@ -14,11 +14,12 @@ import java.util.Set;
 /**
  * Assertion tool class. Presents assertion methods with a more natural parameter order.
  * The order is always <B>actualValue</B>, <B>expectedValue</B> [, message].
- * 
+ *
  * <p>
  * Modified by Google
  * <ul>
  * <li>Removed java.lang.reflect</li>
+ * <li>Delegate fail messages to junit</li>
  * </ul>
  *
  * @author <a href='mailto:the_mindstorm@evolva.ro'>Alexandru Popescu</a>
@@ -81,10 +82,14 @@ public class Assert {
    * @param realCause the original exception
    */
   static public void fail(String message, Throwable realCause) {
-    AssertionError ae = new AssertionError(message);
-    ae.initCause(realCause);
-
-    throw ae;
+    if(message == null){
+      if (realCause != null){
+        message = realCause.getMessage();
+      }
+    } else {
+      message = message + ": " + realCause.getMessage();
+    }
+    junit.framework.Assert.fail(message);
   }
 
   /**
@@ -92,7 +97,7 @@ public class Assert {
    * @param message the assertion error message
    */
   static public void fail(String message) {
-    throw new AssertionError(message);
+    junit.framework.Assert.fail(message);
   }
 
   /**

@@ -13,19 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck;
+package com.google.gwt.sample.validationtck.validation;
 
-import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Just a place holder Entry point.
+ * Abstract Validation test for the {@code validation} package.
  */
-public class Tck implements EntryPoint {
+public abstract class AbstractValidationTest extends GWTTestCase {
 
-  public void onModuleLoad() {
-    Label label = new Label("tck");
-    RootPanel.get("view").add(label);
+  public AbstractValidationTest() {
+    super();
+  }
+
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.sample.validationtck.validation.TckTest";
   }
 }

@@ -19,8 +19,6 @@ package org.hibernate.jsr303.tck.util;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
-import com.google.gwt.sample.validationtck.TckTestValidator;
-import com.google.gwt.sample.validationtck.TckValidator;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -48,7 +46,7 @@ import javax.validation.spi.ValidationProvider;
  * <ul>
  * <li>Use RegExp instead of Pattern</li>
  *  <li>Hard code the validator</li>
- * </ul> 
+ * </ul>
  * @author Hardy Ferentschik
  */
 public final class TestUtil {

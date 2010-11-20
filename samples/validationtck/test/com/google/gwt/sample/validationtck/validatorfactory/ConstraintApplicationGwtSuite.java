@@ -13,19 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck;
+package com.google.gwt.sample.validationtck.validatorfactory;
 
-import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.junit.tools.GWTTestSuite;
+
+import junit.framework.Test;
 
 /**
- * Just a place holder Entry point.
+ * Tck Tests for the {@code validatorfactory} package.
  */
-public class Tck implements EntryPoint {
-
-  public void onModuleLoad() {
-    Label label = new Label("tck");
-    RootPanel.get("view").add(label);
+public class ConstraintApplicationGwtSuite {
+  public static Test suite() {
+    GWTTestSuite suite = new GWTTestSuite(
+        "TCK for GWT Validation, validatorfactory package");
+    suite.addTestSuite(CustomConstraintValidatorTest.class);
+    return suite;
   }
 }

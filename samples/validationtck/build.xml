@@ -50,7 +50,7 @@
   -->
   <path id="test.extraclasspath">
     <pathelement location="${gwt.build}/out/dev/bin-test" />
-     <pathelement location="${gwt.dev.jar}" />
+    <pathelement location="${gwt.dev.jar}" />
     <pathelement location="${gwt.build.lib}/gwt-user.jar" />
     <path refid="sample.extraclasspath" />
   </path>
@@ -64,24 +64,24 @@
   <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}" />
   <property name="gwt.junit.testcase.dev.excludes" value="" />
 
-    <!--
+  <!--
         Compiles the test code for this project
     -->
-    <target name="compile.tests"
+  <target name="compile.tests"
         depends="compile.emma.if.enabled"
         unless="compile.tests.complete">
-      <mkdir dir="${javac.junit.out}" />
-      <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**"
+    <mkdir dir="${javac.junit.out}" />
+    <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**"
           destdir="${javac.junit.out}">
-        <classpath>
-          <pathelement location="${javac.out}" />
-          <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-          <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
-          <path refid="sample.extraclasspath" />
-          <path refid="test.extraclasspath" />
-        </classpath>
-      </gwt.javac>
-    </target>
+      <classpath>
+        <pathelement location="${javac.out}" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
+        <path refid="sample.extraclasspath" />
+        <path refid="test.extraclasspath" />
+      </classpath>
+    </gwt.javac>
+  </target>
 
 
   <target name="tck"
@@ -94,13 +94,13 @@
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
         message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
+      <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
-      <!--
+        <!--
         The remote targets must be run sequentially or BrowserManager will queue
         requests, which will cause some tests to timeout while waiting.
       -->
-      <!--sequential>
+        <!--sequential>
         <antcall target="test.dev.remote"/>
         <antcall target="test.emma.remote"/>
         <antcall target="test.web.remote"/>
@@ -112,13 +112,26 @@
       <antcall target="test.web.selenium"/>
       <antcall target="test.draft.selenium"/>
       <antcall target="test.nometa.selenium"/-->
-      <antcall target="test.dev.htmlunit"/>
-      <!--antcall target="test.emma.htmlunit"/>
+        <antcall target="test.dev.htmlunit"/>
+        <!--antcall target="test.emma.htmlunit"/>
       <antcall target="test.web.htmlunit"/>
       <antcall target="test.draft.htmlunit"/>
       <antcall target="test.nometa.htmlunit"/-->
-    </parallel>
+      </parallel>
     </limit>
+
+
+    <mkdir dir="${junit.out}/tck-report"/>
+    <junitreport todir="${junit.out}/tck-report">
+      <fileset dir="${junit.out}">
+        <include name="*/reports/TEST-*.xml"/>
+      </fileset>
+      <report format="noframes" todir="${junit.out}/tck-report"/>
+    </junitreport>
+
+    <fail
+        message="One or more junit tests failed for target: @{test.name} @{test.args}"
+        if="junit.failure" status="2" />
   </target>
 
   <target name="test.dev.htmlunit"
@@ -132,11 +145,15 @@
         test.args="${test.args} -standardsMode "
         test.jvmargs="${test.jvmargs}"
         test.out="${junit.out}/dev-htmlunit"
-        test.cases="test.dev.htmlunit.tests" >
+        test.cases="test.dev.htmlunit.tests"
+        haltonfailure="false"
+       >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
+
+
   </target>
 
 </project>
