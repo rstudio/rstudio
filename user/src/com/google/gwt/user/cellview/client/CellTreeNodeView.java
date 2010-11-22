@@ -40,6 +40,8 @@ import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
+import com.google.gwt.view.client.CellPreviewEvent;
+import com.google.gwt.view.client.CellPreviewEvent.Handler;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.Range;
@@ -427,6 +429,10 @@ class CellTreeNodeView<T> extends UIObject {
       });
     }
 
+    public HandlerRegistration addCellPreviewHandler(Handler<C> handler) {
+      return presenter.addCellPreviewHandler(handler);
+    }
+
     public HandlerRegistration addRangeChangeHandler(
         RangeChangeEvent.Handler handler) {
       return presenter.addRangeChangeHandler(handler);
@@ -458,6 +464,18 @@ class CellTreeNodeView<T> extends UIObject {
 
     public SelectionModel<? super C> getSelectionModel() {
       return presenter.getSelectionModel();
+    }
+
+    public C getVisibleItem(int indexOnPage) {
+      return presenter.getVisibleItem(indexOnPage);
+    }
+
+    public int getVisibleItemCount() {
+      return presenter.getVisibleItemCount();
+    }
+
+    public List<C> getVisibleItems() {
+      return presenter.getVisibleItems();
     }
 
     public Range getVisibleRange() {
@@ -968,9 +986,10 @@ class CellTreeNodeView<T> extends UIObject {
 
   /**
    * Fire an event to the {@link com.google.gwt.cell.client.AbstractCell}.
-   *
+   * 
    * @param event the native event
    */
+  @SuppressWarnings("unchecked")
   protected void fireEventToCell(NativeEvent event) {
     if (parentNodeInfo == null) {
       return;
@@ -978,24 +997,24 @@ class CellTreeNodeView<T> extends UIObject {
 
     Cell<T> parentCell = parentNodeInfo.getCell();
     String eventType = event.getType();
-    boolean isMouseDown = "mousedown".equals(eventType);
-    SelectionModel<? super T> selectionModel = parentNodeInfo.getSelectionModel();
     Element cellParent = getCellParent();
     Object key = getValueKey();
+    boolean cellWasEditing = parentCell.isEditing(cellParent, value, key);
 
     // Update selection.
-    if (selectionModel != null && isMouseDown && !parentCell.handlesSelection()) {
-      // TODO(jlabanca): Should we toggle? Only when ctrl is pressed?
-      selectionModel.setSelected(value, true);
-    }
+    boolean isSelectionHandled = parentCell.handlesSelection()
+        || KeyboardSelectionPolicy.BOUND_TO_SELECTION == tree.getKeyboardSelectionPolicy();
+    HasData<T> display = (HasData<T>) parentNode.listView;
+    CellPreviewEvent<T> previewEvent = CellPreviewEvent.fire(display, event,
+        display, getIndex(), value, cellWasEditing, isSelectionHandled);
 
     // Forward the event to the cell.
-    if (!cellParent.isOrHasChild(Element.as(event.getEventTarget()))) {
+    if (previewEvent.isCanceled()
+        || !cellParent.isOrHasChild(Element.as(event.getEventTarget()))) {
       return;
     }
     Set<String> consumedEvents = parentCell.getConsumedEvents();
     if (consumedEvents != null && consumedEvents.contains(eventType)) {
-      boolean cellWasEditing = parentCell.isEditing(cellParent, value, key);
       parentCell.onBrowserEvent(cellParent, value, key, event,
           parentNodeInfo.getValueUpdater());
       tree.cellIsEditing = parentCell.isEditing(cellParent, value, key);
@@ -1113,6 +1132,13 @@ class CellTreeNodeView<T> extends UIObject {
       contentContainer.appendChild(showMoreElem);
     }
     return contentContainer;
+  }
+
+  /**
+   * Return the index of this node in its parent.
+   */
+  int getIndex() {
+    return parentNode == null ? 0 : parentNode.indexOf(this);
   }
 
   /**

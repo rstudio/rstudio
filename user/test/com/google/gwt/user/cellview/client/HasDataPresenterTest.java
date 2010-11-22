@@ -754,8 +754,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setRowCount(10, true);
     populatePresenter(presenter);
     presenter.flush();
-    assertEquals(10, presenter.getRowDataSize());
-    assertEquals("test 0", presenter.getRowDataValue(0));
+    assertEquals(10, presenter.getVisibleItemCount());
+    assertEquals("test 0", presenter.getVisibleItem(0));
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
     view.assertLastHtml("start=0,size=10");
@@ -1081,8 +1081,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     populatePresenter(presenter);
     presenter.flush();
-    assertEquals(10, presenter.getRowDataSize());
-    assertEquals("test 0", presenter.getRowDataValue(0));
+    assertEquals(10, presenter.getVisibleItemCount());
+    assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1094,7 +1094,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(8, presenter.getRowCount());
     assertTrue(presenter.isRowCountExact());
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowDataSize());
+    assertEquals(8, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1406,7 +1406,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Set the range the first time.
     presenter.setVisibleRange(new Range(0, 100));
     assertEquals(new Range(0, 100), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowDataSize());
+    assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
@@ -1416,7 +1416,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Set the range to the same value.
     presenter.setVisibleRange(new Range(0, 100));
     assertEquals(new Range(0, 100), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowDataSize());
+    assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
@@ -1458,7 +1458,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setVisibleRange(new Range(5, 10));
     presenter.setRowData(5, createData(5, 10));
     assertEquals(new Range(5, 10), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowDataSize());
+    assertEquals(10, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1469,7 +1469,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Set a different range.
     presenter.setVisibleRangeAndClearData(new Range(0, 10), false);
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowDataSize());
+    assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1495,7 +1495,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Set some initial data.
     presenter.setRowData(0, createData(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowDataSize());
+    assertEquals(10, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1506,7 +1506,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Set the same range.
     presenter.setVisibleRangeAndClearData(new Range(0, 10), false);
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowDataSize());
+    assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1532,7 +1532,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Set some initial data.
     presenter.setRowData(0, createData(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowDataSize());
+    assertEquals(10, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1543,7 +1543,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Set the same range.
     presenter.setVisibleRangeAndClearData(new Range(0, 10), true);
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
-    assertEquals(0, presenter.getRowDataSize());
+    assertEquals(0, presenter.getVisibleItemCount());
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1562,8 +1562,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setVisibleRange(new Range(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     presenter.setRowData(0, createData(0, 10));
-    assertEquals(10, presenter.getRowDataSize());
-    assertEquals("test 0", presenter.getRowDataValue(0));
+    assertEquals(10, presenter.getVisibleItemCount());
+    assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1573,8 +1573,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Decrease the page size.
     presenter.setVisibleRange(new Range(0, 8));
     assertEquals(new Range(0, 8), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowDataSize());
-    assertEquals("test 0", presenter.getRowDataValue(0));
+    assertEquals(8, presenter.getVisibleItemCount());
+    assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1592,8 +1592,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setVisibleRange(new Range(10, 30));
     assertEquals(new Range(10, 30), presenter.getVisibleRange());
     presenter.setRowData(10, createData(0, 10));
-    assertEquals(10, presenter.getRowDataSize());
-    assertEquals("test 0", presenter.getRowDataValue(0));
+    assertEquals(10, presenter.getVisibleItemCount());
+    assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1603,10 +1603,10 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Decrease the start index.
     presenter.setVisibleRange(new Range(8, 30));
     assertEquals(new Range(8, 30), presenter.getVisibleRange());
-    assertEquals(12, presenter.getRowDataSize());
-    assertEquals(null, presenter.getRowDataValue(0));
-    assertEquals(null, presenter.getRowDataValue(1));
-    assertEquals("test 0", presenter.getRowDataValue(2));
+    assertEquals(12, presenter.getVisibleItemCount());
+    assertEquals(null, presenter.getVisibleItem(0));
+    assertEquals(null, presenter.getVisibleItem(1));
+    assertEquals("test 0", presenter.getVisibleItem(2));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1624,8 +1624,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setVisibleRange(new Range(0, 10));
     assertEquals(new Range(0, 10), presenter.getVisibleRange());
     presenter.setRowData(0, createData(0, 10));
-    assertEquals(10, presenter.getRowDataSize());
-    assertEquals("test 0", presenter.getRowDataValue(0));
+    assertEquals(10, presenter.getVisibleItemCount());
+    assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1635,8 +1635,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Increase the page size.
     presenter.setVisibleRange(new Range(0, 20));
     assertEquals(new Range(0, 20), presenter.getVisibleRange());
-    assertEquals(10, presenter.getRowDataSize());
-    assertEquals("test 0", presenter.getRowDataValue(0));
+    assertEquals(10, presenter.getVisibleItemCount());
+    assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(false);
     view.assertReplaceChildrenCalled(false);
@@ -1654,8 +1654,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setVisibleRange(new Range(0, 20));
     assertEquals(new Range(0, 20), presenter.getVisibleRange());
     presenter.setRowData(0, createData(0, 10));
-    assertEquals(10, presenter.getRowDataSize());
-    assertEquals("test 0", presenter.getRowDataValue(0));
+    assertEquals(10, presenter.getVisibleItemCount());
+    assertEquals("test 0", presenter.getVisibleItem(0));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1665,8 +1665,8 @@ public class HasDataPresenterTest extends GWTTestCase {
     // Increase the start index.
     presenter.setVisibleRange(new Range(2, 20));
     assertEquals(new Range(2, 20), presenter.getVisibleRange());
-    assertEquals(8, presenter.getRowDataSize());
-    assertEquals("test 2", presenter.getRowDataValue(0));
+    assertEquals(8, presenter.getVisibleItemCount());
+    assertEquals("test 2", presenter.getVisibleItem(0));
     presenter.flush();
     view.assertReplaceAllChildrenCalled(true);
     view.assertReplaceChildrenCalled(false);
@@ -1724,9 +1724,9 @@ public class HasDataPresenterTest extends GWTTestCase {
    */
   private <T> void assertPresenterRowData(List<T> expected,
       HasDataPresenter<T> presenter) {
-    assertEquals(expected.size(), presenter.getRowDataSize());
+    assertEquals(expected.size(), presenter.getVisibleItemCount());
     for (int i = 0; i < expected.size(); i++) {
-      assertEquals(expected.get(i), presenter.getRowDataValue(i));
+      assertEquals(expected.get(i), presenter.getVisibleItem(i));
     }
   }
 

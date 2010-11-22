@@ -637,7 +637,9 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     eventTypes.add("focus");
     eventTypes.add("blur");
     eventTypes.add("keydown");
+    eventTypes.add("keyup");
     eventTypes.add("mousedown");
+    eventTypes.add("click");
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
 
     // Associate a view with the item.
@@ -714,14 +716,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
           event.preventDefault();
           return;
         case 32:
-          // Handle space bar selection.
-          if (KeyboardSelectionPolicy.ENABLED == getKeyboardSelectionPolicy()) {
-            keyboardSelectedNode.setSelected(!keyboardSelectedNode.isSelected());
-
-            // Prevent scrollbars from scrolling.
-            event.preventDefault();
-          }
-          return;
+          // Prevent scrollbars from scrolling.
+          event.preventDefault();
       }
     }
 
@@ -730,6 +726,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     collectElementChain(chain, getElement(), target);
 
     final boolean isMouseDown = "mousedown".equals(eventType);
+    final boolean isClick = "click".equals(eventType);
     final CellTreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
     if (nodeView != null && nodeView != rootNode) {
       if (isMouseDown) {
@@ -748,7 +745,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
       // Forward the event to the cell
       if (nodeView.getSelectionElement().isOrHasChild(target)) {
         // Move the keyboard focus to the clicked item.
-        if (isMouseDown) {
+        if (isClick) {
           /*
            * If the selected element is natively focusable, then we do not want to
            * steal focus away from it.
@@ -1013,7 +1010,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
   private void handleKeyNavigation(int keyCode) {
     CellTreeNodeView<?> parent = keyboardSelectedNode.getParentNode();
     int parentChildCount = (parent == null) ? 0 : parent.getChildCount();
-    int index = (parent == null) ? 0 : parent.indexOf(keyboardSelectedNode);
+    int index = keyboardSelectedNode.getIndex();
     int childCount = keyboardSelectedNode.getChildCount();
 
     switch (keyCode) {

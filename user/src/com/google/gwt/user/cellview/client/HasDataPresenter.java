@@ -24,6 +24,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasKeyProvider;
 import com.google.gwt.view.client.ProvidesKey;
@@ -34,6 +35,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -212,6 +214,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       return rowData.get(index);
     }
 
+    public List<T> getRowDataValues() {
+      return Collections.unmodifiableList(rowData);
+    }
+
     public boolean isRowCountExact() {
       return rowCountIsExact;
     }
@@ -332,6 +338,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     T getRowDataValue(int index);
 
     /**
+     * Get all of the row data values in an unmodifiable list.
+     */
+    List<T> getRowDataValues();
+
+    /**
      * Get a boolean indicating whether the row count is exact or an estimate.
      */
     boolean isRowCountExact();
@@ -432,6 +443,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     this.view = view;
     this.keyProvider = keyProvider;
     this.state = new DefaultState<T>(pageSize);
+  }
+
+  public HandlerRegistration addCellPreviewHandler(
+      CellPreviewEvent.Handler<T> handler) {
+    return view.addHandler(handler, CellPreviewEvent.getType());
   }
 
   public HandlerRegistration addRangeChangeHandler(
@@ -550,27 +566,20 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     return getCurrentState().getRowCount();
   }
 
-  /**
-   * Get the size of the list of row data.
-   * 
-   * @return the size of the row data
-   */
-  public int getRowDataSize() {
+  public SelectionModel<? super T> getSelectionModel() {
+    return selectionModel;
+  }
+
+  public T getVisibleItem(int indexOnPage) {
+    return getCurrentState().getRowDataValue(indexOnPage);
+  }
+
+  public int getVisibleItemCount() {
     return getCurrentState().getRowDataSize();
   }
 
-  /**
-   * Get a value from the row data.
-   * 
-   * @param the index of the row data
-   * @return the value at the specified index
-   */
-  public T getRowDataValue(int index) {
-    return getCurrentState().getRowDataValue(index);
-  }
-
-  public SelectionModel<? super T> getSelectionModel() {
-    return selectionModel;
+  public List<T> getVisibleItems() {
+    return getCurrentState().getRowDataValues();
   }
 
   /**
@@ -588,7 +597,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   public boolean hasKeyboardNext() {
     if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
       return false;
-    } else if (getKeyboardSelectedRow() < getRowDataSize() - 1) {
+    } else if (getKeyboardSelectedRow() < getVisibleItemCount() - 1) {
       return true;
     } else if (!keyboardPagingPolicy.isLimitedToRange()
         && (getKeyboardSelectedRow() + getPageStart() < getRowCount() - 1 || !isRowCountExact())) {
@@ -685,21 +694,6 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       setKeyboardSelectedRow(-getPageSize(), true);
     } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
       setKeyboardSelectedRow(getKeyboardSelectedRow() - PAGE_INCREMENT, true);
-    }
-  }
-
-  /**
-   * Toggle selection of the current keyboard row in the {@link SelectionModel}.
-   */
-  public void keyboardToggleSelect() {
-    int keyboardSelectedRow = getKeyboardSelectedRow();
-    if (KeyboardSelectionPolicy.ENABLED == keyboardSelectionPolicy
-        && selectionModel != null && keyboardSelectedRow >= 0
-        && keyboardSelectedRow < getRowDataSize()) {
-      T value = getRowDataValue(keyboardSelectedRow);
-      if (value != null) {
-        selectionModel.setSelected(value, !selectionModel.isSelected(value));
-      }
     }
   }
 
@@ -847,7 +841,8 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
     // Create placeholders up to the specified index.
     PendingState<T> pending = ensurePendingState();
-    int cacheOffset = Math.max(0, boundedStart - pageStart - getRowDataSize());
+    int cacheOffset = Math.max(0, boundedStart - pageStart
+        - getVisibleItemCount());
     for (int i = 0; i < cacheOffset; i++) {
       pending.rowData.add(null);
     }
@@ -856,7 +851,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     for (int i = boundedStart; i < boundedEnd; i++) {
       T value = values.get(i - start);
       int dataIndex = i - pageStart;
-      if (dataIndex < getRowDataSize()) {
+      if (dataIndex < getVisibleItemCount()) {
         pending.rowData.set(dataIndex, value);
       } else {
         pending.rowData.add(value);
@@ -870,24 +865,6 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     if (valuesEnd > getRowCount()) {
       setRowCount(valuesEnd, isRowCountExact());
     }
-  }
-
-  /**
-   * @throws UnsupportedOperationException
-   */
-  public final void setVisibleRange(int start, int length) {
-    // Views should defer to their own implementation of setVisibleRange(Range)
-    // per HasRows spec.
-    throw new UnsupportedOperationException();
-  }
-
-  public void setVisibleRange(Range range) {
-    setVisibleRange(range, false, false);
-  }
-
-  public void setVisibleRangeAndClearData(Range range,
-      boolean forceRangeChangeEvent) {
-    setVisibleRange(range, true, forceRangeChangeEvent);
   }
 
   public void setSelectionModel(final SelectionModel<? super T> selectionModel) {
@@ -906,6 +883,24 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
 
     // Update the current selection state based on the new model.
     ensurePendingState();
+  }
+
+  /**
+   * @throws UnsupportedOperationException
+   */
+  public final void setVisibleRange(int start, int length) {
+    // Views should defer to their own implementation of setVisibleRange(Range)
+    // per HasRows spec.
+    throw new UnsupportedOperationException();
+  }
+
+  public void setVisibleRange(Range range) {
+    setVisibleRange(range, false, false);
+  }
+
+  public void setVisibleRangeAndClearData(Range range,
+      boolean forceRangeChangeEvent) {
+    setVisibleRange(range, true, forceRangeChangeEvent);
   }
 
   /**
@@ -1379,7 +1374,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
       if (!clearData) {
         if (start > pageStart) {
           int increase = start - pageStart;
-          if (getRowDataSize() > increase) {
+          if (getVisibleItemCount() > increase) {
             // Remove the data we no longer need.
             for (int i = 0; i < increase; i++) {
               pending.rowData.remove(0);
@@ -1390,7 +1385,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
           }
         } else {
           int decrease = pageStart - start;
-          if ((getRowDataSize() > 0) && (decrease < pageSize)) {
+          if ((getVisibleItemCount() > 0) && (decrease < pageSize)) {
             // Insert null data at the beginning.
             for (int i = 0; i < decrease; i++) {
               pending.rowData.add(0, null);
@@ -1438,7 +1433,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
     int pageStart = getPageStart();
     int expectedLastIndex = Math.max(0,
         Math.min(getPageSize(), getRowCount() - pageStart));
-    int lastIndex = getRowDataSize() - 1;
+    int lastIndex = getVisibleItemCount() - 1;
     while (lastIndex >= expectedLastIndex) {
       ensurePendingState().rowData.remove(lastIndex);
       lastIndex--;
@@ -1449,7 +1444,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * Update the loading state of the view based on the data size and page size.
    */
   private void updateLoadingState() {
-    int cacheSize = getRowDataSize();
+    int cacheSize = getVisibleItemCount();
     int curPageSize = isRowCountExact() ? getCurrentPageSize() : getPageSize();
     if (getRowCount() == 0 && isRowCountExact()) {
       view.setLoadingState(LoadingState.EMPTY);

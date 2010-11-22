@@ -346,7 +346,7 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
       // Update the style.
       Element elem = getRowElement(index);
-      T value = getPresenter().getRowDataValue(index);
+      T value = getPresenter().getVisibleItem(index);
       boolean isOpen = selected && isOpen(index);
       setStyleName(elem, style.cellBrowserOpenItem(), isOpen);
 
@@ -463,13 +463,13 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
 
     public int getChildCount() {
       assertNotDestroyed();
-      return display.getPresenter().getRowDataSize();
+      return display.getPresenter().getVisibleItemCount();
     }
 
     public C getChildValue(int index) {
       assertNotDestroyed();
       checkChildBounds(index);
-      return display.getDisplayedItem(index);
+      return display.getVisibleItem(index);
     }
 
     public int getIndex() {
@@ -999,8 +999,11 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize,
         scrollable);
     treeNodes.add(treeNode);
 
-    // Attach the view to the selection model and node info.
-    view.setSelectionModel(nodeInfo.getSelectionModel());
+    /*
+     * Attach the view to the selection model and node info. Nullify the default
+     * selection manager because it is provided by the node info.
+     */
+    view.setSelectionModel(nodeInfo.getSelectionModel(), null);
     nodeInfo.setDataDisplay(view);
 
     // Add the view to the LayoutPanel.

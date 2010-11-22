@@ -34,6 +34,8 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
+import com.google.gwt.view.client.CellPreviewEvent;
+import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasKeyProvider;
 import com.google.gwt.view.client.ProvidesKey;
@@ -42,7 +44,6 @@ import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -136,7 +137,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
       // constructor. We can't call ValueChangeEvent.fire() because this class
       // doesn't implement HasValueChangeHandlers.
       hasData.fireEvent(new ValueChangeEvent<List<T>>(
-          hasData.getDisplayedItems()) {
+          hasData.getVisibleItems()) {
       });
     }
   }
@@ -251,11 +252,12 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
   private boolean isRefreshing;
 
   private final HasDataPresenter<T> presenter;
+  private HandlerRegistration selectionManagerReg; 
   private int tabIndex;
 
   /**
    * Constructs an {@link AbstractHasData} with the given page size.
-   *
+   * 
    * @param elem the parent {@link Element}
    * @param pageSize the page size
    * @param keyProvider the key provider, or null
@@ -271,9 +273,19 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
     eventTypes.add("focus");
     eventTypes.add("blur");
     eventTypes.add("keydown"); // Used for keyboard navigation.
+    eventTypes.add("keyup"); // Used by subclasses for selection.
     eventTypes.add("click"); // Used by subclasses for selection.
     eventTypes.add("mousedown"); // No longer used, but here for legacy support.
     CellBasedWidgetImpl.get().sinkEvents(this, eventTypes);
+
+    // Add a default selection event manager.
+    selectionManagerReg = addCellPreviewHandler(
+        DefaultSelectionEventManager.<T> createDefaultManager());
+  }
+
+  public HandlerRegistration addCellPreviewHandler(
+      CellPreviewEvent.Handler<T> handler) {
+    return presenter.addCellPreviewHandler(handler);
   }
 
   public HandlerRegistration addRangeChangeHandler(
@@ -302,24 +314,23 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    *
    * @param indexOnPage the index on the page
    * @return the row value
+   * @deprecated use {@link #getVisibleItem(int)} instead
    */
+  @Deprecated
   public T getDisplayedItem(int indexOnPage) {
-    checkRowBounds(indexOnPage);
-    return presenter.getRowDataValue(indexOnPage);
+    return getVisibleItem(indexOnPage);
   }
 
   /**
-   * Return the row values that the widget is currently displaying.
+   * Return the row values that the widget is currently displaying as an
+   * immutable list.
    * 
    * @return a List of displayed items
+   * @deprecated use {@link #getVisibleItems()} instead
    */
+  @Deprecated
   public List<T> getDisplayedItems() {
-    List<T> list = new ArrayList<T>();
-    int rowCount = presenter.getRowDataSize();
-    for (int i = 0; i < rowCount; i++) {
-      list.add(presenter.getRowDataValue(i));
-    }
-    return list;
+    return getVisibleItems();
   }
 
   public KeyboardPagingPolicy getKeyboardPagingPolicy() {
@@ -379,6 +390,25 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
   public int getTabIndex() {
     return tabIndex;
+  }
+
+  public T getVisibleItem(int indexOnPage) {
+    checkRowBounds(indexOnPage);
+    return presenter.getVisibleItem(indexOnPage);
+  }
+
+  public int getVisibleItemCount() {
+    return presenter.getVisibleItemCount();
+  }
+
+  /**
+   * Return the row values that the widget is currently displaying as an
+   * immutable list.
+   * 
+   * @return a List of displayed items
+   */
+  public List<T> getVisibleItems() {
+    return presenter.getVisibleItems();
   }
 
   public Range getVisibleRange() {
@@ -456,8 +486,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
           event.preventDefault();
           return;
         case 32:
-          // Select the node on space.
-          presenter.keyboardToggleSelect();
+          // Prevent the list box from scrolling.
           event.preventDefault();
           return;
       }
@@ -560,6 +589,31 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
   public void setSelectionModel(SelectionModel<? super T> selectionModel) {
     presenter.setSelectionModel(selectionModel);
+  }
+
+  /**
+   * Set the {@link SelectionModel} that defines which items are selected and
+   * the {@link CellPreviewEvent.Handler} that controls how user selection is
+   * handled.
+   * 
+   * @param selectionModel the {@link SelectionModel} that defines selection
+   * @param selectionEventManager the handler that controls user selection
+   */
+  public void setSelectionModel(SelectionModel<? super T> selectionModel,
+      CellPreviewEvent.Handler<T> selectionEventManager) {
+    // Remove the old manager.
+    if (this.selectionManagerReg != null) {
+      this.selectionManagerReg.removeHandler();
+      this.selectionManagerReg = null;
+    }
+
+    // Add the new manager.
+    if (selectionEventManager != null) {
+      this.selectionManagerReg = addCellPreviewHandler(selectionEventManager);
+    }
+
+    // Set the selection model.
+    setSelectionModel(selectionModel);
   }
 
   public void setTabIndex(int index) {
@@ -673,7 +727,7 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
    * @return true if within bounds, false if not
    */
   protected boolean isRowWithinBounds(int row) {
-    return row >= 0 && row < presenter.getRowDataSize();
+    return row >= 0 && row < presenter.getVisibleItemCount();
   }
 
   /**

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,6 +38,7 @@ import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.user.cellview.client.SimplePager.TextLocation;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.SelectionModel;
 
@@ -97,7 +98,7 @@ public class CwCellTable extends ContentWidget {
 
   /**
    * Constructor.
-   *
+   * 
    * @param constants the constants
    */
   public CwCellTable(CwConstants constants) {
@@ -117,18 +118,19 @@ public class CwCellTable extends ContentWidget {
     // Set a key provider that provides a unique key for each contact. If key is
     // used to identify contacts when fields (such as the name and address)
     // change.
-    cellTable = new CellTable<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
+    cellTable = new CellTable<ContactInfo>(
+        ContactDatabase.ContactInfo.KEY_PROVIDER);
 
     // Create a Pager to control the table.
-    SimplePager.Resources pagerResources = GWT.create(
-        SimplePager.Resources.class);
-    pager = new SimplePager(
-        TextLocation.CENTER, pagerResources, false, 0, true);
+    SimplePager.Resources pagerResources = GWT.create(SimplePager.Resources.class);
+    pager = new SimplePager(TextLocation.CENTER, pagerResources, false, 0, true);
     pager.setDisplay(cellTable);
 
     // Add a selection model so we can select cells.
-    final MultiSelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>(ContactDatabase.ContactInfo.KEY_PROVIDER);
-    cellTable.setSelectionModel(selectionModel);
+    final SelectionModel<ContactInfo> selectionModel = new MultiSelectionModel<ContactInfo>(
+        ContactDatabase.ContactInfo.KEY_PROVIDER);
+    cellTable.setSelectionModel(selectionModel,
+        DefaultSelectionEventManager.<ContactInfo>createCheckboxManager());
 
     // Initialize the columns.
     initTableColumns(selectionModel);
@@ -161,37 +163,29 @@ public class CwCellTable extends ContentWidget {
    * Add the columns to the table.
    */
   @ShowcaseSource
-  private void initTableColumns(
-      final SelectionModel<ContactInfo> selectionModel) {
+  private void initTableColumns(final SelectionModel<ContactInfo> selectionModel) {
     // Checkbox column. This table will uses a checkbox column for selection.
     // Alternatively, you can call cellTable.setSelectionEnabled(true) to enable
     // mouse selection.
     Column<ContactInfo, Boolean> checkColumn = new Column<ContactInfo, Boolean>(
-        new CheckboxCell(true)) {
+        new CheckboxCell(true, false)) {
       @Override
       public Boolean getValue(ContactInfo object) {
         // Get the value from the selection model.
         return selectionModel.isSelected(object);
       }
     };
-    checkColumn.setFieldUpdater(new FieldUpdater<ContactInfo, Boolean>() {
-      public void update(int index, ContactInfo object, Boolean value) {
-        // Called when the user clicks on a checkbox.
-        selectionModel.setSelected(object, value);
-      }
-    });
-    cellTable.addColumn(checkColumn, SafeHtmlUtils.fromSafeConstant("<br>"));
+    cellTable.addColumn(checkColumn, SafeHtmlUtils.fromSafeConstant("<br/>"));
 
     // First name.
-    Column<ContactInfo, String> firstNameColumn = new Column<
-        ContactInfo, String>(new EditTextCell()) {
+    Column<ContactInfo, String> firstNameColumn = new Column<ContactInfo, String>(
+        new EditTextCell()) {
       @Override
       public String getValue(ContactInfo object) {
         return object.getFirstName();
       }
     };
-    cellTable.addColumn(
-        firstNameColumn, constants.cwCellTableColumnFirstName());
+    cellTable.addColumn(firstNameColumn, constants.cwCellTableColumnFirstName());
     firstNameColumn.setFieldUpdater(new FieldUpdater<ContactInfo, String>() {
       public void update(int index, ContactInfo object, String value) {
         // Called when the user changes the value.
@@ -201,8 +195,8 @@ public class CwCellTable extends ContentWidget {
     });
 
     // Last name.
-    Column<ContactInfo, String> lastNameColumn = new Column<
-        ContactInfo, String>(new EditTextCell()) {
+    Column<ContactInfo, String> lastNameColumn = new Column<ContactInfo, String>(
+        new EditTextCell()) {
       @Override
       public String getValue(ContactInfo object) {
         return object.getLastName();
@@ -224,8 +218,8 @@ public class CwCellTable extends ContentWidget {
       categoryNames.add(category.getDisplayName());
     }
     SelectionCell categoryCell = new SelectionCell(categoryNames);
-    Column<ContactInfo, String> categoryColumn = new Column<
-        ContactInfo, String>(categoryCell) {
+    Column<ContactInfo, String> categoryColumn = new Column<ContactInfo, String>(
+        categoryCell) {
       @Override
       public String getValue(ContactInfo object) {
         return object.getCategory().getDisplayName();

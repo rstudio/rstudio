@@ -20,6 +20,7 @@ import com.google.gwt.view.client.AbstractDataProviderTest;
 import com.google.gwt.view.client.AbstractSelectionModelTest;
 import com.google.gwt.view.client.AsyncDataProviderTest;
 import com.google.gwt.view.client.DefaultNodeInfoTest;
+import com.google.gwt.view.client.DefaultSelectionEventManagerTest;
 import com.google.gwt.view.client.DefaultSelectionModelTest;
 import com.google.gwt.view.client.ListDataProviderTest;
 import com.google.gwt.view.client.MultiSelectionModelTest;
@@ -40,6 +41,7 @@ public class ViewSuite {
     suite.addTestSuite(AbstractSelectionModelTest.class);
     suite.addTestSuite(AsyncDataProviderTest.class);
     suite.addTestSuite(DefaultNodeInfoTest.class);
+    suite.addTestSuite(DefaultSelectionEventManagerTest.class);
     suite.addTestSuite(DefaultSelectionModelTest.class);
     suite.addTestSuite(ListDataProviderTest.class);
     suite.addTestSuite(MultiSelectionModelTest.class);

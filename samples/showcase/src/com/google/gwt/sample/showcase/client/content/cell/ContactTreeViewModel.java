@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,11 +21,8 @@ import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.HasCell;
-import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -33,6 +30,7 @@ import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.Catego
 import com.google.gwt.sample.showcase.client.content.cell.ContactDatabase.ContactInfo;
 import com.google.gwt.sample.showcase.client.content.cell.CwCellList.ContactCell;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
@@ -90,7 +88,7 @@ public class ContactTreeViewModel implements TreeViewModel {
 
     /**
      * Construct a new {@link LetterCount} for one contact.
-     *
+     * 
      * @param category the category
      * @param firstLetter the first letter of the contacts name
      */
@@ -142,10 +140,11 @@ public class ContactTreeViewModel implements TreeViewModel {
 
   private final ListDataProvider<Category> categoryDataProvider;
   private final Cell<ContactInfo> contactCell;
+  private final DefaultSelectionEventManager<ContactInfo> selectionManager =
+      DefaultSelectionEventManager.createCheckboxManager();
   private final SelectionModel<ContactInfo> selectionModel;
 
-  public ContactTreeViewModel(
-      final SelectionModel<ContactInfo> selectionModel) {
+  public ContactTreeViewModel(final SelectionModel<ContactInfo> selectionModel) {
     this.selectionModel = selectionModel;
     if (images == null) {
       images = GWT.create(Images.class);
@@ -159,22 +158,17 @@ public class ContactTreeViewModel implements TreeViewModel {
     }
 
     // Construct a composite cell for contacts that includes a checkbox.
-    List<HasCell<ContactInfo, ?>> hasCells = new ArrayList<
-        HasCell<ContactInfo, ?>>();
+    List<HasCell<ContactInfo, ?>> hasCells = new ArrayList<HasCell<ContactInfo, ?>>();
     hasCells.add(new HasCell<ContactInfo, Boolean>() {
 
-      private CheckboxCell cell = new CheckboxCell(true);
+      private CheckboxCell cell = new CheckboxCell(true, false);
 
       public Cell<Boolean> getCell() {
         return cell;
       }
 
       public FieldUpdater<ContactInfo, Boolean> getFieldUpdater() {
-        return new FieldUpdater<ContactInfo, Boolean>() {
-          public void update(int index, ContactInfo object, Boolean value) {
-            selectionModel.setSelected(object, value);
-          }
-        };
+        return null;
       }
 
       public Boolean getValue(ContactInfo object) {
@@ -199,18 +193,6 @@ public class ContactTreeViewModel implements TreeViewModel {
     });
     contactCell = new CompositeCell<ContactInfo>(hasCells) {
       @Override
-      public void onBrowserEvent(Element parent, ContactInfo value, Object key,
-          NativeEvent event, ValueUpdater<ContactInfo> valueUpdater) {
-        // Make sure that the composition cells see the event.
-        super.onBrowserEvent(parent, value, key, event, valueUpdater);
-
-        if ("keyup".equals(event.getType())
-            && event.getKeyCode() == KeyCodes.KEY_ENTER) {
-          selectionModel.setSelected(value, !selectionModel.isSelected(value));
-        }
-      }
-
-      @Override
       public void render(ContactInfo value, Object key, SafeHtmlBuilder sb) {
         sb.appendHtmlConstant("<table><tbody><tr>");
         super.render(value, key, sb);
@@ -224,8 +206,8 @@ public class ContactTreeViewModel implements TreeViewModel {
       }
 
       @Override
-      protected <X> void render(ContactInfo value, Object key, SafeHtmlBuilder sb,
-          HasCell<ContactInfo, X> hasCell) {
+      protected <X> void render(ContactInfo value, Object key,
+          SafeHtmlBuilder sb, HasCell<ContactInfo, X> hasCell) {
         Cell<X> cell = hasCell.getCell();
         sb.appendHtmlConstant("<td>");
         cell.render(hasCell.getValue(value), key, sb);
@@ -237,14 +219,14 @@ public class ContactTreeViewModel implements TreeViewModel {
   public <T> NodeInfo<?> getNodeInfo(T value) {
     if (value == null) {
       // Return top level categories.
-      return new DefaultNodeInfo<Category>(
-          categoryDataProvider, new CategoryCell(images.contactsGroup()));
+      return new DefaultNodeInfo<Category>(categoryDataProvider,
+          new CategoryCell(images.contactsGroup()));
     } else if (value instanceof Category) {
       // Return the first letters of each first name.
       Category category = (Category) value;
-          List<ContactInfo> contacts = ContactDatabase.get().queryContactsByCategory(category);
-      Map<Character, LetterCount> counts = new TreeMap<
-          Character, LetterCount>();
+      List<ContactInfo> contacts = ContactDatabase.get().queryContactsByCategory(
+          category);
+      Map<Character, LetterCount> counts = new TreeMap<Character, LetterCount>();
       for (ContactInfo contact : contacts) {
         Character first = contact.getFirstName().charAt(0);
         LetterCount count = counts.get(first);
@@ -263,13 +245,12 @@ public class ContactTreeViewModel implements TreeViewModel {
     } else if (value instanceof LetterCount) {
       // Return the contacts with the specified character and first name.
       LetterCount count = (LetterCount) value;
-          List<ContactInfo> contacts =
-            ContactDatabase.get().queryContactsByCategoryAndFirstName(count.category,
-                count.firstLetter + "");
-      ListDataProvider<ContactInfo> dataProvider = new ListDataProvider<
-          ContactInfo>(contacts, ContactInfo.KEY_PROVIDER);
+      List<ContactInfo> contacts = ContactDatabase.get().queryContactsByCategoryAndFirstName(
+          count.category, count.firstLetter + "");
+      ListDataProvider<ContactInfo> dataProvider = new ListDataProvider<ContactInfo>(
+          contacts, ContactInfo.KEY_PROVIDER);
       return new DefaultNodeInfo<ContactInfo>(
-          dataProvider, contactCell, selectionModel, null);
+          dataProvider, contactCell, selectionModel, selectionManager, null);
     }
 
     // Unhandled type.

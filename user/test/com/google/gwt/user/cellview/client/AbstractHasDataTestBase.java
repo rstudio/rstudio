@@ -35,7 +35,7 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     return "com.google.gwt.user.cellview.CellView";
   }
 
-  public void testGetDisplayedItem() {
+  public void testGetVisibleItem() {
     AbstractHasData<String> display = createAbstractHasData();
     ListDataProvider<String> provider = new ListDataProvider<String>(
         createData(0, 13));
@@ -43,13 +43,13 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     display.setVisibleRange(10, 10);
 
     // No items when no data is present.
-    assertEquals("test 10", display.getDisplayedItem(0));
-    assertEquals("test 11", display.getDisplayedItem(1));
-    assertEquals("test 12", display.getDisplayedItem(2));
+    assertEquals("test 10", display.getVisibleItem(0));
+    assertEquals("test 11", display.getVisibleItem(1));
+    assertEquals("test 12", display.getVisibleItem(2));
 
     // Out of range.
     try {
-      assertEquals("test 10", display.getDisplayedItem(-1));
+      assertEquals("test 10", display.getVisibleItem(-1));
       fail("Expected IndexOutOfBoundsException");
     } catch (IndexOutOfBoundsException e) {
       // Expected.
@@ -57,25 +57,25 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
 
     // Within page range, but out of data range.
     try {
-      assertEquals("test 10", display.getDisplayedItem(4));
+      assertEquals("test 10", display.getVisibleItem(4));
       fail("Expected IndexOutOfBoundsException");
     } catch (IndexOutOfBoundsException e) {
       // Expected.
     }
   }
 
-  public void testGetDisplayedItems() {
+  public void testGetVisibleItems() {
     AbstractHasData<String> display = createAbstractHasData();
     ListDataProvider<String> provider = new ListDataProvider<String>();
     provider.addDataDisplay(display);
     display.setVisibleRange(10, 3);
 
     // No items when no data is present.
-    assertEquals(0, display.getDisplayedItems().size());
+    assertEquals(0, display.getVisibleItems().size());
 
     // Set some data.
     provider.setList(createData(0, 13));
-    List<String> items = display.getDisplayedItems();
+    List<String> items = display.getVisibleItems();
     assertEquals(3, items.size());
     assertEquals("test 10", items.get(0));
     assertEquals("test 11", items.get(1));
@@ -90,7 +90,7 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     display.setRowData(values);
     assertEquals(62, display.getRowCount());
     assertTrue(display.isRowCountExact());
-    assertEquals(values, display.getDisplayedItems());
+    assertEquals(values, display.getVisibleItems());
     assertEquals(new Range(0, 62), display.getVisibleRange());
 
     // Add some data.
@@ -99,16 +99,16 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     display.setRowData(62, moreValues);
     assertEquals(72, display.getRowCount());
     assertTrue(display.isRowCountExact());
-    assertEquals("test 62", display.getDisplayedItem(62));
-    assertEquals("test 71", display.getDisplayedItem(71));
-    assertEquals(72, display.getDisplayedItems().size());
+    assertEquals("test 62", display.getVisibleItem(62));
+    assertEquals("test 71", display.getVisibleItem(71));
+    assertEquals(72, display.getVisibleItems().size());
     assertEquals(new Range(0, 100), display.getVisibleRange());
 
     // Push the exact data again.
     display.setRowData(values);
     assertEquals(62, display.getRowCount());
     assertTrue(display.isRowCountExact());
-    assertEquals(values, display.getDisplayedItems());
+    assertEquals(values, display.getVisibleItems());
     assertEquals(new Range(0, 62), display.getVisibleRange());
   }
 

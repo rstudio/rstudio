@@ -36,6 +36,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionModel;
 
@@ -274,17 +275,16 @@ public class CellList<T> extends AbstractHasData<T> {
 
   /**
    * Called when a user action triggers selection.
-   *
+   * 
    * @param event the event that triggered selection
    * @param value the value that was selected
    * @param indexOnPage the index of the value on the page
+   * @deprecated use
+   *             {@link #addCellPreviewHandler(com.google.gwt.view.client.CellPreviewEvent.Handler)}
+   *             instead
    */
+  @Deprecated
   protected void doSelection(Event event, T value, int indexOnPage) {
-    // TODO(jlabanca): Defer to a user provided SelectionManager.
-    SelectionModel<? super T> selectionModel = getSelectionModel();
-    if (selectionModel != null) {
-      selectionModel.setSelected(value, true);
-    }
   }
 
   /**
@@ -358,6 +358,7 @@ public class CellList<T> extends AbstractHasData<T> {
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   protected void onBrowserEvent2(Event event) {
     // Get the event target.
@@ -388,9 +389,13 @@ public class CellList<T> extends AbstractHasData<T> {
       }
 
       // Get the cell parent before doing selection in case the list is redrawn.
+      boolean isSelectionHandled = cell.handlesSelection()
+          || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
       Element cellParent = getCellParent(cellTarget);
-      T value = getDisplayedItem(indexOnPage);
-      if (isClick && !cell.handlesSelection()) {
+      T value = getVisibleItem(indexOnPage);
+      CellPreviewEvent<T> previewEvent = CellPreviewEvent.fire(this, event,
+          this, indexOnPage, value, cellIsEditing, isSelectionHandled);
+      if (isClick && !cellIsEditing && !isSelectionHandled) {
         doSelection(event, value, indexOnPage);
       }
 
@@ -407,7 +412,9 @@ public class CellList<T> extends AbstractHasData<T> {
       }
 
       // Fire the event to the cell if the list has not been refreshed.
-      fireEventToCell(event, cellParent, value);
+      if (!previewEvent.isCanceled()) {
+        fireEventToCell(event, cellParent, value);
+      }
     }
   }
 
@@ -470,7 +477,7 @@ public class CellList<T> extends AbstractHasData<T> {
     if (isRowWithinBounds(row)) {
       Element rowElem = getKeyboardSelectedElement();
       Element cellParent = getCellParent(rowElem);
-      T value = getDisplayedItem(row);
+      T value = getVisibleItem(row);
       Object key = getValueKey(value);
       return cell.resetFocus(cellParent, value, key);
     }

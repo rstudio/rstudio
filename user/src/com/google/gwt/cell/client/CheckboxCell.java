@@ -39,7 +39,8 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
    */
   private static final SafeHtml INPUT_UNCHECKED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\"/>");
 
-  private final boolean isSelectBox;
+  private final boolean dependsOnSelection;
+  private final boolean handlesSelection;
 
   /**
    * Construct a new {@link CheckboxCell}.
@@ -52,20 +53,33 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
    * Construct a new {@link CheckboxCell} that optionally controls selection.
    *
    * @param isSelectBox true if the cell controls the selection state
+   * @deprecated use {@link #CheckboxCell(boolean, boolean)} instead
    */
+  @Deprecated
   public CheckboxCell(boolean isSelectBox) {
+    this(isSelectBox, isSelectBox);
+  }
+
+  /**
+   * Construct a new {@link CheckboxCell} that optionally controls selection.
+   *
+   * @param dependsOnSelection true if the cell depends on the selection state
+   * @param handlesSelection true if the cell modifies the selection state
+   */
+  public CheckboxCell(boolean dependsOnSelection, boolean handlesSelection) {
     super("change", "keydown");
-    this.isSelectBox = isSelectBox;
+    this.dependsOnSelection = dependsOnSelection;
+    this.handlesSelection = handlesSelection;
   }
 
   @Override
   public boolean dependsOnSelection() {
-    return isSelectBox;
+    return dependsOnSelection;
   }
 
   @Override
   public boolean handlesSelection() {
-    return isSelectBox;
+    return handlesSelection;
   }
 
   @Override
@@ -86,13 +100,28 @@ public class CheckboxCell extends AbstractEditableCell<Boolean, Boolean> {
       InputElement input = parent.getFirstChild().cast();
       Boolean isChecked = input.isChecked();
 
-      // If the enter key was pressed, toggle the value
-      if (enterPressed) {
+      /*
+       * Toggle the value if the enter key was pressed and the cell handles
+       * selection or doesn't depend on selection. If the cell depends on
+       * selection but doesn't handle selection, then ignore the enter key and
+       * let the SelectionEventManager determine which keys will trigger a
+       * change.
+       */
+      if (enterPressed && (handlesSelection() || !dependsOnSelection())) {
         isChecked = !isChecked;
         input.setChecked(isChecked);
       }
 
-      setViewData(key, isChecked);
+      /*
+       * Save the new value. However, if the cell depends on the selection, then
+       * do not save the value because we can get into an inconsistent state.
+       */
+      if (value != isChecked && !dependsOnSelection()) {
+        setViewData(key, isChecked);
+      } else {
+        clearViewData(key);
+      }
+
       if (valueUpdater != null) {
         valueUpdater.update(isChecked);
       }

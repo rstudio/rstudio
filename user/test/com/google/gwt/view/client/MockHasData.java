@@ -18,7 +18,10 @@ package com.google.gwt.view.client;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.view.client.CellPreviewEvent.Handler;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -81,7 +84,7 @@ public class MockHasData<T> implements HasData<T> {
 
   private final HandlerManager handlerManager = new HandlerManager(this);
   private Range lastRange;
-  private List<? extends T> lastRowData;
+  private List<T> lastRowData;
 
   private int pageStart;
   private int pageSize = DEFAULT_PAGE_SIZE;
@@ -89,6 +92,10 @@ public class MockHasData<T> implements HasData<T> {
   private boolean rowCountExact;
   private HandlerRegistration selectionHandler;
   private SelectionModel<? super T> selectionModel;
+
+  public HandlerRegistration addCellPreviewHandler(Handler<T> handler) {
+    return handlerManager.addHandler(CellPreviewEvent.getType(), handler);
+  }
 
   public HandlerRegistration addRangeChangeHandler(
       RangeChangeEvent.Handler handler) {
@@ -110,6 +117,28 @@ public class MockHasData<T> implements HasData<T> {
 
   public void fireEvent(GwtEvent<?> event) {
     handlerManager.fireEvent(event);
+  }
+
+  public T getVisibleItem(int indexOnPage) {
+    return lastRowData.get(indexOnPage);
+  }
+
+  public int getVisibleItemCount() {
+    return lastRowData == null ? 0 : lastRowData.size();
+  }
+
+  public List<T> getVisibleItems() {
+    return lastRowData;
+  }
+
+  /**
+   * Gets the number of handlers listening to the event type.
+   *
+   * @param type the event type
+   * @return the number of registered handlers
+   */
+  public int getHandlerCount(Type<?> type) {
+    return handlerManager.getHandlerCount(type);
   }
 
   /**
@@ -148,7 +177,7 @@ public class MockHasData<T> implements HasData<T> {
 
   public void setRowData(int start, List<? extends T> values) {
     lastRange = new Range(start, values.size());
-    lastRowData = values;
+    lastRowData = new ArrayList<T>(values);
   }
 
   public final void setRowCount(int count) {
