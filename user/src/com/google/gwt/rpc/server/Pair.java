@@ -25,9 +25,17 @@ public class Pair<A, B> {
   private final A a;
   private final B b;
 
-  Pair(A a, B b) {
+  public Pair(A a, B b) {
     this.a = a;
     this.b = b;
+  }
+
+  public boolean equals(Object o) {
+    if (!(o instanceof Pair)) {
+      return false;
+    }
+    Pair<?, ?> other = (Pair<?, ?>) o;
+    return a.equals(other.a) && b.equals(other.b);
   }
 
   public A getA() {
@@ -36,5 +44,9 @@ public class Pair<A, B> {
 
   public B getB() {
     return b;
+  }
+
+  public int hashCode() {
+    return a.hashCode() * 13 + b.hashCode() * 7;
   }
 }

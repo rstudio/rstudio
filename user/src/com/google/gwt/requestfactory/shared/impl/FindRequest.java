@@ -16,7 +16,7 @@
 
 package com.google.gwt.requestfactory.shared.impl;
 
-import com.google.gwt.requestfactory.server.FindService;
+import com.google.gwt.requestfactory.server.impl.FindService;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.Request;

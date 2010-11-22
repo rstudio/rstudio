@@ -21,7 +21,6 @@ import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
-import com.google.gwt.requestfactory.server.SimpleRequestProcessor.ServiceLayer;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
@@ -399,8 +398,8 @@ class Resolver {
       return assignableTo.cast(previous);
     }
 
-    Class<?> returnClass = service.getClientType(domainValue.getClass(),
-        assignableTo);
+    Class<?> returnClass = service.resolveClientType(domainValue.getClass(),
+        assignableTo, true);
 
     if (anyType) {
       assignableTo = returnClass;

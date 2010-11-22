@@ -96,9 +96,14 @@ public class RequestFactoryServlet extends HttpServlet {
    * {@link ExceptionHandler}.
    * 
    * @param exceptionHandler an {@link ExceptionHandler} instance
+   * @param serviceDecorators an array of ServiceLayerDecorators that change how
+   *          the RequestFactory request processor interact with the domain
+   *          objects
    */
-  public RequestFactoryServlet(ExceptionHandler exceptionHandler) {
-    processor = new SimpleRequestProcessor(new ReflectiveServiceLayer());
+  public RequestFactoryServlet(ExceptionHandler exceptionHandler,
+      ServiceLayerDecorator... serviceDecorators) {
+    processor = new SimpleRequestProcessor(
+        ServiceLayer.create(serviceDecorators));
     processor.setExceptionHandler(exceptionHandler);
   }
 

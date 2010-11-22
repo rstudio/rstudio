@@ -22,6 +22,7 @@ import com.google.gwt.requestfactory.client.RequestFactoryPolymorphicTest;
 import com.google.gwt.requestfactory.client.RequestFactoryTest;
 import com.google.gwt.requestfactory.client.ui.EditorTest;
 import com.google.gwt.requestfactory.shared.ComplexKeysTest;
+import com.google.gwt.requestfactory.shared.LocatorTest;
 
 import junit.framework.Test;
 
@@ -35,6 +36,7 @@ public class RequestFactorySuite {
     suite.addTestSuite(ComplexKeysTest.class);
     suite.addTestSuite(EditorTest.class);
     suite.addTestSuite(FindServiceTest.class);
+    suite.addTestSuite(LocatorTest.class);
     suite.addTestSuite(RequestFactoryTest.class);
     suite.addTestSuite(RequestFactoryExceptionHandlerTest.class);
     suite.addTestSuite(RequestFactoryPolymorphicTest.class);

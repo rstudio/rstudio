@@ -37,6 +37,10 @@ import java.lang.annotation.Target;
  *   AutoBean&lt;ArbitraryInterface> wrapper(ArbitraryInterface delegate);
  * }
  * </pre>
+ * 
+ * @see <a
+ *      href="http://code.google.com/p/google-web-toolkit/wiki/AutoBean">AutoBean
+ *      wiki page</a>
  */
 public interface AutoBeanFactory {
   /**
@@ -78,8 +82,8 @@ public interface AutoBeanFactory {
   }
 
   /**
-   * Methods annotated with this annotation will not have their return values
-   * automatically wrapped by the factory.
+   * The types specified by this annotation will not be wrapped by an AutoBean
+   * when returned from an AutoBean-controlled method.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)

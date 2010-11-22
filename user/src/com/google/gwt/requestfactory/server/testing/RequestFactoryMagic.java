@@ -34,7 +34,6 @@ public class RequestFactoryMagic {
    * 
    * @param <T> the RequestFactory type
    * @param requestFactory the RequestFactory type
-   * @param processor
    * @return an instance of the RequestFactory type
    * @see InProcessRequestTransport
    */
@@ -42,7 +41,7 @@ public class RequestFactoryMagic {
     RequestFactoryHandler handler = new InProcessRequestFactory().new RequestFactoryHandler();
     return requestFactory.cast(Proxy.newProxyInstance(
         Thread.currentThread().getContextClassLoader(),
-        new Class<?>[]{requestFactory}, handler));
+        new Class<?>[] {requestFactory}, handler));
   }
 
   private RequestFactoryMagic() {

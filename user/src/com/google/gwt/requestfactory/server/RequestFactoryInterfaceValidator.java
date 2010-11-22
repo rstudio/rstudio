@@ -31,6 +31,8 @@ import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
+import com.google.gwt.requestfactory.shared.LocatorFor;
+import com.google.gwt.requestfactory.shared.LocatorForName;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.ProxyForName;
 import com.google.gwt.requestfactory.shared.Request;
@@ -69,7 +71,7 @@ import java.util.logging.Logger;
  * public void testRequestFactory() {
  *   Logger logger = Logger.getLogger("");
  *   RequestFactoryInterfaceValidator v = new RequestFactoryInterfaceValidator(
- *     logger, new ClassLoaderLoader(Thread.currentThread().getContextClassLoader()));
+ *     logger, new ClassLoaderLoader(MyRequestContext.class.getClassLoader()));
  *   v.validateRequestContext(MyRequestContext.class.getName());
  *   assertFalse(v.isPoisoned());
  * }
@@ -140,6 +142,7 @@ public class RequestFactoryInterfaceValidator {
   private class DomainMapper extends EmptyVisitor {
     private final ErrorContext logger;
     private String domainInternalName;
+    private String locatorInternalName;
 
     public DomainMapper(ErrorContext logger) {
       this.logger = logger;
@@ -148,6 +151,10 @@ public class RequestFactoryInterfaceValidator {
 
     public String getDomainInternalName() {
       return domainInternalName;
+    }
+
+    public String getLocatorInternalName() {
+      return locatorInternalName;
     }
 
     @Override
@@ -160,24 +167,30 @@ public class RequestFactoryInterfaceValidator {
 
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+      final boolean foundLocator = desc.equals(Type.getDescriptor(LocatorFor.class));
+      final boolean foundLocatorName = desc.equals(Type.getDescriptor(LocatorForName.class));
       boolean foundProxy = desc.equals(Type.getDescriptor(ProxyFor.class));
       boolean foundProxyName = desc.equals(Type.getDescriptor(ProxyForName.class));
       boolean foundService = desc.equals(Type.getDescriptor(Service.class));
       boolean foundServiceName = desc.equals(Type.getDescriptor(ServiceName.class));
 
-      if (foundProxy || foundService) {
+      if (foundLocator || foundProxy || foundService) {
         return new EmptyVisitor() {
-
           @Override
           public void visit(String name, Object value) {
             if ("value".equals(name)) {
-              domainInternalName = ((Type) value).getInternalName();
+              String found = ((Type) value).getInternalName();
+              if (foundLocator) {
+                locatorInternalName = found;
+              } else {
+                domainInternalName = found;
+              }
             }
           }
         };
       }
 
-      if (foundProxyName || foundServiceName) {
+      if (foundLocatorName || foundProxyName || foundServiceName) {
         return new EmptyVisitor() {
           @Override
           public void visit(String name, Object value) {
@@ -199,7 +212,11 @@ public class RequestFactoryInterfaceValidator {
                 desc.setCharAt(idx, '$');
               }
 
-              domainInternalName = desc.toString();
+              if (foundLocatorName) {
+                locatorInternalName = desc.toString();
+              } else {
+                domainInternalName = desc.toString();
+              }
               logger.spam(domainInternalName);
             }
           }
@@ -494,7 +511,6 @@ public class RequestFactoryInterfaceValidator {
    * A set of binary type names that are known to be bad.
    */
   private final Set<String> badTypes = new HashSet<String>();
-
   /**
    * The type {@link BaseProxy}.
    */
@@ -504,11 +520,15 @@ public class RequestFactoryInterfaceValidator {
    */
   private final Map<Type, Type> clientToDomainType = new HashMap<Type, Type>();
   /**
+   * Maps client types (e.g. FooProxy) to their locator types (e.g. FooLocator).
+   */
+  private final Map<Type, Type> clientToLocatorMap = new HashMap<Type, Type>();
+
+  /**
    * Maps domain types (e.g Foo) to client proxy types (e.g. FooAProxy,
    * FooBProxy).
    */
   private final Map<Type, List<Type>> domainToClientType = new HashMap<Type, List<Type>>();
-
   /**
    * The type {@link EntityProxy}.
    */
@@ -549,6 +569,7 @@ public class RequestFactoryInterfaceValidator {
    * The type {@link ValueProxy}.
    */
   private final Type valueProxyIntf = Type.getType(ValueProxy.class);
+
   /**
    * A set to prevent re-validation of a type.
    */
@@ -787,7 +808,7 @@ public class RequestFactoryInterfaceValidator {
 
     /*
      * If nothing was found look for proxyable supertypes the domain object can
-     * be upcast to. 
+     * be upcast to.
      */
     if (found == null || found.isEmpty()) {
       List<Type> types = getSupertypes(parentLogger, key);
@@ -802,13 +823,13 @@ public class RequestFactoryInterfaceValidator {
         }
       }
     }
-    
+
     if (found == null || found.isEmpty()) {
       return null;
     }
-    
+
     Type typeToReturn = null;
-    
+
     // Common case
     if (found.size() == 1) {
       typeToReturn = found.get(0);
@@ -822,7 +843,7 @@ public class RequestFactoryInterfaceValidator {
         }
       }
     }
-    
+
     return typeToReturn == null ? null : typeToReturn.getClassName();
   }
 
@@ -1141,6 +1162,10 @@ public class RequestFactoryInterfaceValidator {
       } else {
         domainType = Type.getObjectType(pv.getDomainInternalName());
       }
+      if (pv.getLocatorInternalName() != null) {
+        Type locatorType = Type.getObjectType(pv.getLocatorInternalName());
+        clientToLocatorMap.put(clientType, locatorType);
+      }
     }
     addToDomainMap(logger, domainType, clientType);
     maybeCheckProxyType(logger, clientType);
@@ -1170,7 +1195,7 @@ public class RequestFactoryInterfaceValidator {
    */
   private Type getReturnType(ErrorContext logger, RFMethod method) {
     logger = logger.setMethod(method);
-    final String[] returnType = { objectType.getInternalName() };
+    final String[] returnType = {objectType.getInternalName()};
     String signature = method.getSignature();
 
     final int expectedCount;
@@ -1218,9 +1243,9 @@ public class RequestFactoryInterfaceValidator {
     if (toReturn != null) {
       return toReturn;
     }
-    
+
     logger = logger.setType(type);
-    
+
     toReturn = new SupertypeCollector(logger).exec(type);
     supertypes.put(type, Collections.unmodifiableList(toReturn));
     return toReturn;
@@ -1370,9 +1395,12 @@ public class RequestFactoryInterfaceValidator {
       return;
     }
 
-    // Check for getId() and getVersion() in domain
+    // Check for getId() and getVersion() in domain if no locator is specified
     if (requireId) {
-      checkIdAndVersion(logger, domainType);
+      Type locatorType = clientToLocatorMap.get(proxyType);
+      if (locatorType == null) {
+        checkIdAndVersion(logger, domainType);
+      }
     }
 
     // Collect all methods in the client proxy type

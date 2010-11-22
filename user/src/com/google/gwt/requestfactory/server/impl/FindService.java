@@ -13,17 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.server;
-
-import com.google.gwt.requestfactory.shared.ServerFailure;
+package com.google.gwt.requestfactory.server.impl;
 
 /**
- * Default implementation for handling exceptions thrown while processing a
- * request. Suppresses stack traces and the exception class name.
+ * Server side service to support a generic find method.
  */
-public class DefaultExceptionHandler implements ExceptionHandler {
-  public ServerFailure createServerFailure(Throwable throwable) {
-    return new ServerFailure("Server Error: "
-        + (throwable == null ? null : throwable.getMessage()), null, null);
+public class FindService {
+
+  /**
+   * For now, a simple implementation of find will work.
+   * 
+   * @param entityInstance an entity instance
+   * @return the passed-in entity instance
+   */
+  public static <T> T find(T entityInstance) {
+    return entityInstance;
   }
 }

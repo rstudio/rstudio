@@ -13,20 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.server;
 
 /**
- * Server side service to support a generic find method.
+ * The AutoBean framework provides automatically-generated implementations of
+ * bean-like interfaces and a low-level serialization mechanism for those
+ * interfaces. AutoBeans can be used in both client and server code to improve
+ * code re-use.
+ * 
+ * @see <a
+ *      href="http://code.google.com/p/google-web-toolkit/wiki/AutoBean">AutoBean
+ *      wiki page</a>
+ * @see com.google.gwt.autobean.shared.AutoBeanFactory
+ * @see com.google.gwt.autobean.server.AutoBeanFactoryMagic
  */
-public class FindService {
+@com.google.gwt.util.PreventSpuriousRebuilds
+package com.google.gwt.autobean.shared;
 
-  /**
-   * For now, a simple implementation of find will work.
-   * 
-   * @param entityInstance an entity instance
-   * @return the passed-in entity instance
-   */
-  public static <T> T find(T entityInstance) {
-    return entityInstance;
-  }
-}

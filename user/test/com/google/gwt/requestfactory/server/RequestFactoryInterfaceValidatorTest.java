@@ -18,6 +18,8 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidator.ClassLoaderLoader;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
+import com.google.gwt.requestfactory.shared.Locator;
+import com.google.gwt.requestfactory.shared.LocatorFor;
 import com.google.gwt.requestfactory.shared.ProxyFor;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
@@ -140,6 +142,49 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
     }
   }
 
+  /**
+   * An entity type without the usual boilerplate.
+   */
+  class LocatorEntity {
+  }
+
+  class LocatorEntityLocator extends Locator<LocatorEntity, String> {
+    @Override
+    public LocatorEntity create(Class<? extends LocatorEntity> clazz) {
+      return null;
+    }
+
+    @Override
+    public LocatorEntity find(Class<? extends LocatorEntity> clazz, String id) {
+      return null;
+    }
+
+    @Override
+    public Class<LocatorEntity> getDomainType() {
+      return null;
+    }
+
+    @Override
+    public String getId(LocatorEntity domainObject) {
+      return null;
+    }
+
+    @Override
+    public Class<String> getIdType() {
+      return null;
+    }
+
+    @Override
+    public Object getVersion(LocatorEntity domainObject) {
+      return null;
+    }
+  }
+
+  @ProxyFor(LocatorEntity.class)
+  @LocatorFor(LocatorEntityLocator.class)
+  interface LocatorEntityProxy extends EntityProxy {
+  }
+
   @ProxyFor(value = Value.class)
   interface MyValueProxy extends ValueProxy {
   }
@@ -243,6 +288,11 @@ public class RequestFactoryInterfaceValidatorTest extends TestCase {
    */
   public void testIntecfacesWithClinits() {
     v.validateRequestFactory(ClinitRequestFactory.class.getName());
+    assertFalse(v.isPoisoned());
+  }
+
+  public void testLocatorProxy() {
+    v.validateEntityProxy(LocatorEntityProxy.class.getName());
     assertFalse(v.isPoisoned());
   }
 

@@ -18,6 +18,7 @@ package com.google.gwt.requestfactory;
 import com.google.gwt.requestfactory.rebind.model.RequestFactoryModelTest;
 import com.google.gwt.requestfactory.server.ComplexKeysJreTest;
 import com.google.gwt.requestfactory.server.FindServiceJreTest;
+import com.google.gwt.requestfactory.server.LocatorJreTest;
 import com.google.gwt.requestfactory.server.RequestFactoryInterfaceValidatorTest;
 import com.google.gwt.requestfactory.server.RequestFactoryJreTest;
 import com.google.gwt.requestfactory.shared.impl.SimpleEntityProxyIdTest;
@@ -34,6 +35,7 @@ public class RequestFactoryJreSuite {
         "requestfactory package tests that require the JRE");
     suite.addTestSuite(ComplexKeysJreTest.class);
     suite.addTestSuite(FindServiceJreTest.class);
+    suite.addTestSuite(LocatorJreTest.class);
     suite.addTestSuite(RequestFactoryJreTest.class);
     suite.addTestSuite(SimpleEntityProxyIdTest.class);
     suite.addTestSuite(RequestFactoryInterfaceValidatorTest.class);

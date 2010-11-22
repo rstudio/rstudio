@@ -22,7 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * A controller for an implementation of a bean interface.
+ * A controller for an implementation of a bean interface. Instances of
+ * AutoBeans are obtained from an {@link AutoBeanFactory}.
  * 
  * @param <T> the type of interface that will be wrapped.
  */

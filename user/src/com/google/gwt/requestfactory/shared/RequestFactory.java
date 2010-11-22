@@ -39,6 +39,8 @@ import com.google.gwt.event.shared.EventBus;
  * effect, treating it as an instance of the supertype. Returning abstract
  * supertypes of value types is not supported (e.g. Object, Enum, Number).
  * </p>
+ * 
+ * @see com.google.gwt.requestfactory.server.testing.InProcessRequestTransport
  */
 public interface RequestFactory {
   /**

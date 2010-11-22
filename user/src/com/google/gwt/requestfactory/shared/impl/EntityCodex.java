@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared.messages;
+package com.google.gwt.requestfactory.shared.impl;
 
 import com.google.gwt.autobean.shared.AutoBean;
 import com.google.gwt.autobean.shared.AutoBeanUtils;
@@ -23,9 +23,6 @@ import com.google.gwt.autobean.shared.impl.LazySplittable;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
-import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
-import com.google.gwt.requestfactory.shared.impl.Poser;
-import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
 
 import java.util.ArrayList;
 import java.util.Collection;

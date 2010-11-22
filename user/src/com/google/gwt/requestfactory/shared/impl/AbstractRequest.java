@@ -23,7 +23,6 @@ import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestContext;
 import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.Violation;
-import com.google.gwt.requestfactory.shared.messages.EntityCodex;
 
 import java.util.Arrays;
 import java.util.Collections;

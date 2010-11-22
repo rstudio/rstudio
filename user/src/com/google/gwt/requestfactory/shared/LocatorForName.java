@@ -13,17 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.server;
+package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.requestfactory.shared.ServerFailure;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Default implementation for handling exceptions thrown while processing a
- * request. Suppresses stack traces and the exception class name.
+ * Annotation on BaseProxy classes specifying the domain (server-side) object
+ * {@link Locator}. This annotation can be used in place of {@link LocatorFor}
+ * if the domain Locator is not available to the GWT compiler or DevMode
+ * runtime.
+ * 
+ * @see LocatorFor
  */
-public class DefaultExceptionHandler implements ExceptionHandler {
-  public ServerFailure createServerFailure(Throwable throwable) {
-    return new ServerFailure("Server Error: "
-        + (throwable == null ? null : throwable.getMessage()), null, null);
-  }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface LocatorForName {
+  String value();
 }

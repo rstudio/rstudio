@@ -206,7 +206,7 @@ public abstract class IdFactory {
   protected abstract <P extends BaseProxy> Class<P> getTypeFromToken(
       String typeToken);
 
-  protected abstract String getTypeToken(Class<?> clazz);
+  protected abstract String getTypeToken(Class<? extends BaseProxy> clazz);
 
   private <P> Class<P> checkTypeToken(String token) {
     @SuppressWarnings("unchecked")

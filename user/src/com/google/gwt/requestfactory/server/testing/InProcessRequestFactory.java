@@ -38,7 +38,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 /**
- * An JRE-compatible implementation of RequestFactory.
+ * A JRE-compatible implementation of RequestFactory.
  */
 class InProcessRequestFactory extends AbstractRequestFactory {
   @Category(value = {
@@ -105,7 +105,7 @@ class InProcessRequestFactory extends AbstractRequestFactory {
   }
 
   @Override
-  protected String getTypeToken(Class<?> clazz) {
+  protected String getTypeToken(Class<? extends BaseProxy> clazz) {
     return isEntityType(clazz) || isValueType(clazz) ? clazz.getName() : null;
   }
 }

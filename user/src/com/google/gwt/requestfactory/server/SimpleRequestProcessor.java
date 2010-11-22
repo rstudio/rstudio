@@ -32,11 +32,11 @@ import com.google.gwt.requestfactory.shared.ServerFailure;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
 import com.google.gwt.requestfactory.shared.impl.Constants;
+import com.google.gwt.requestfactory.shared.impl.EntityCodex;
 import com.google.gwt.requestfactory.shared.impl.EntityProxyCategory;
 import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
 import com.google.gwt.requestfactory.shared.impl.ValueProxyCategory;
-import com.google.gwt.requestfactory.shared.messages.EntityCodex;
-import com.google.gwt.requestfactory.shared.messages.EntityCodex.EntitySource;
+import com.google.gwt.requestfactory.shared.messages.IdMessage.Strength;
 import com.google.gwt.requestfactory.shared.messages.InvocationMessage;
 import com.google.gwt.requestfactory.shared.messages.MessageFactory;
 import com.google.gwt.requestfactory.shared.messages.OperationMessage;
@@ -66,70 +66,6 @@ import javax.validation.ConstraintViolation;
  * is stateless. A single instance may be reused and is thread-safe.
  */
 public class SimpleRequestProcessor {
-  /**
-   * Abstracts all reflection operations from the request processor.
-   */
-  public interface ServiceLayer {
-    Object createDomainObject(Class<?> clazz);
-
-    /**
-     * The way to introduce polymorphism.
-     */
-    Class<?> getClientType(Class<?> domainClass, Class<?> clientType);
-
-    Class<?> getDomainClass(Class<?> clazz);
-
-    /**
-     * May return {@code null} to indicate that the domain object has not been
-     * persisted.
-     */
-    Object getId(Object domainObject);
-
-    /**
-     * Returns the type of object the domain type's {@code findFoo()} expects to
-     * receive.
-     */
-    Class<?> getIdType(Class<?> domainType);
-
-    Object getProperty(Object domainObject, String property);
-
-    /**
-     * Compute the return type for a method declared in a RequestContext by
-     * analyzing the generic method declaration.
-     */
-    Type getRequestReturnType(Method contextMethod);
-
-    String getTypeToken(Class<?> domainClass);
-
-    /**
-     * May return {@code null} to indicate that the domain object has not been
-     * persisted.
-     */
-    Object getVersion(Object domainObject);
-
-    Object invoke(Method domainMethod, Object... args);
-
-    /**
-     * Returns {@code true} if the given domain object is still live (i.e. not
-     * deleted) in the backing store.
-     */
-    boolean isLive(EntitySource source, Object domainObject);
-
-    Object loadDomainObject(EntitySource source, Class<?> clazz, Object domainId);
-
-    Class<? extends BaseProxy> resolveClass(String typeToken);
-
-    Method resolveDomainMethod(Method requestContextMethod);
-
-    Method resolveRequestContextMethod(String requestContextClass,
-        String methodName);
-
-    void setProperty(Object domainObject, String property,
-        Class<?> expectedType, Object value);
-
-    <T> Set<ConstraintViolation<T>> validate(T domainObject);
-  }
-
   /**
    * This parameterization is so long, it improves readability to have a
    * specific type.
@@ -175,6 +111,12 @@ public class SimpleRequestProcessor {
     this.service = serviceLayer;
   }
 
+  /**
+   * Process a payload sent by a RequestFactory client.
+   * 
+   * @param payload the payload sent by the client
+   * @return a payload to return to the client
+   */
   public String process(String payload) {
     RequestMessage req = AutoBeanCodex.decode(FACTORY, RequestMessage.class,
         payload).as();
@@ -209,8 +151,8 @@ public class SimpleRequestProcessor {
       if (domainValue == null) {
         clientValue = null;
       } else {
-        Class<?> clientType = service.getClientType(domainValue.getClass(),
-            BaseProxy.class);
+        Class<?> clientType = service.resolveClientType(domainValue.getClass(),
+            BaseProxy.class, true);
         clientValue = state.getResolver().resolveClientValue(domainValue,
             clientType, Collections.<String> emptySet());
       }
@@ -236,7 +178,8 @@ public class SimpleRequestProcessor {
    * Decode an out-of-band message.
    */
   <T> List<T> decodeOobMessage(Class<T> domainClass, Splittable payload) {
-    Class<?> proxyType = service.getClientType(domainClass, BaseProxy.class);
+    Class<?> proxyType = service.resolveClientType(domainClass,
+        BaseProxy.class, true);
     RequestState state = new RequestState(service);
     RequestMessage message = AutoBeanCodex.decode(FACTORY,
         RequestMessage.class, payload).as();
@@ -318,7 +261,7 @@ public class SimpleRequestProcessor {
       if (id.isEphemeral() || id.isSynthetic() || domainObject == null) {
         // If the object isn't persistent, there's no reason to send an update
         writeOperation = null;
-      } else if (!service.isLive(returnState, domainObject)) {
+      } else if (!service.isLive(domainObject)) {
         writeOperation = WriteOperation.DELETE;
       } else if (id.wasEphemeral()) {
         writeOperation = WriteOperation.PERSIST;
@@ -381,8 +324,14 @@ public class SimpleRequestProcessor {
         op.setServerId(toBase64(id.getServerId()));
       }
 
-      op.setSyntheticId(id.getSyntheticId());
-      op.setTypeToken(service.getTypeToken(id.getProxyClass()));
+      if (id.isSynthetic()) {
+        op.setStrength(Strength.SYNTHETIC);
+        op.setSyntheticId(id.getSyntheticId());
+      } else if (id.isEphemeral()) {
+        op.setStrength(Strength.EPHEMERAL);
+      }
+
+      op.setTypeToken(service.resolveTypeToken(id.getProxyClass()));
       if (version != null) {
         op.setVersion(toBase64(version.getPayload()));
       }
@@ -459,7 +408,15 @@ public class SimpleRequestProcessor {
         String[] operation = invocation.getOperation().split("::");
         Method contextMethod = service.resolveRequestContextMethod(
             operation[0], operation[1]);
+        if (contextMethod == null) {
+          throw new UnexpectedException("Cannot resolve operation "
+              + invocation.getOperation(), null);
+        }
         Method domainMethod = service.resolveDomainMethod(contextMethod);
+        if (domainMethod == null) {
+          throw new UnexpectedException("Cannot resolve domain method "
+              + invocation.getOperation(), null);
+        }
 
         // Invoke it
         List<Object> args = decodeInvocationArguments(state, invocation,
@@ -515,7 +472,7 @@ public class SimpleRequestProcessor {
                 Object resolved = state.getResolver().resolveDomainValue(
                     newValue, false);
                 service.setProperty(domain, propertyName,
-                    service.getDomainClass(ctx.getType()), resolved);
+                    service.resolveDomainClass(ctx.getType()), resolved);
               }
               return false;
             }
@@ -560,11 +517,11 @@ public class SimpleRequestProcessor {
             message.setPath(error.getPropertyPath().toString());
             if (id.isEphemeral()) {
               message.setClientId(id.getClientId());
-            }
-            if (id.getServerId() != null) {
+              message.setStrength(Strength.EPHEMERAL);
+            } else {
               message.setServerId(toBase64(id.getServerId()));
             }
-            message.setTypeToken(service.getTypeToken(id.getProxyClass()));
+            message.setTypeToken(service.resolveTypeToken(id.getProxyClass()));
             errorMessages.add(message);
           }
         }

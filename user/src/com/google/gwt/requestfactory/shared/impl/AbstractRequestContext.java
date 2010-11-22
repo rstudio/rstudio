@@ -36,7 +36,6 @@ import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.Violation;
 import com.google.gwt.requestfactory.shared.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.posers.DatePoser;
-import com.google.gwt.requestfactory.shared.messages.EntityCodex;
 import com.google.gwt.requestfactory.shared.messages.IdMessage;
 import com.google.gwt.requestfactory.shared.messages.IdMessage.Strength;
 import com.google.gwt.requestfactory.shared.messages.InvocationMessage;
@@ -246,8 +245,6 @@ public class AbstractRequestContext implements RequestContext,
     } else if (stableId.isEphemeral()) {
       ref.setStrength(Strength.EPHEMERAL);
       ref.setClientId(stableId.getClientId());
-    } else {
-      ref.setStrength(Strength.PERSISTED);
     }
     return AutoBeanCodex.encode(bean);
   }
@@ -521,7 +518,7 @@ public class AbstractRequestContext implements RequestContext,
    * Resolves an IdMessage into an SimpleProxyId.
    */
   private SimpleProxyId<BaseProxy> getId(IdMessage op) {
-    if (op.getSyntheticId() > 0) {
+    if (Strength.SYNTHETIC.equals(op.getStrength())) {
       return allocateSyntheticId(op.getTypeToken(), op.getSyntheticId());
     }
     return requestFactory.getId(op.getTypeToken(), op.getServerId(),
@@ -590,6 +587,7 @@ public class AbstractRequestContext implements RequestContext,
         operation.setOperation(WriteOperation.PERSIST);
         // The ephemeral id is passed to the server
         operation.setClientId(stableId.getClientId());
+        operation.setStrength(Strength.EPHEMERAL);
       } else {
         parent = currentView.getTag(PARENT_OBJECT);
         // Requests involving existing objects use the persisted id

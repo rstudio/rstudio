@@ -13,17 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.server;
-
-import com.google.gwt.requestfactory.shared.ServerFailure;
 
 /**
- * Default implementation for handling exceptions thrown while processing a
- * request. Suppresses stack traces and the exception class name.
+ * Contains JVM-compatible implementations of the AutoBean framework.
+ * 
+ * @see <a
+ *      href="http://code.google.com/p/google-web-toolkit/wiki/AutoBean">AutoBean
+ *      wiki page</a>
+ * @see com.google.gwt.autobean.shared.AutoBeanFactory
+ * @see com.google.gwt.autobean.server.AutoBeanFactoryMagic
  */
-public class DefaultExceptionHandler implements ExceptionHandler {
-  public ServerFailure createServerFailure(Throwable throwable) {
-    return new ServerFailure("Server Error: "
-        + (throwable == null ? null : throwable.getMessage()), null, null);
-  }
-}
+@com.google.gwt.util.PreventSpuriousRebuilds
+package com.google.gwt.autobean.server;
+

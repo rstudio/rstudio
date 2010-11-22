@@ -15,15 +15,19 @@
  */
 package com.google.gwt.requestfactory.server;
 
-import com.google.gwt.requestfactory.shared.ServerFailure;
+import com.google.gwt.requestfactory.shared.LocatorTest;
 
 /**
- * Default implementation for handling exceptions thrown while processing a
- * request. Suppresses stack traces and the exception class name.
+ * A JRE version of {@link LocatorTest}.
  */
-public class DefaultExceptionHandler implements ExceptionHandler {
-  public ServerFailure createServerFailure(Throwable throwable) {
-    return new ServerFailure("Server Error: "
-        + (throwable == null ? null : throwable.getMessage()), null, null);
+public class LocatorJreTest extends LocatorTest {
+  @Override
+  public String getModuleName() {
+    return null;
+  }
+
+  @Override
+  protected Factory createFactory() {
+    return RequestFactoryJreTest.createInProcess(Factory.class);
   }
 }

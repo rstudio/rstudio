@@ -28,16 +28,17 @@ import java.lang.reflect.Proxy;
  * Generates JVM-compatible implementations of AutoBeanFactory and AutoBean
  * types.
  * <p>
- * NB: This implementation is excessively dynamic, however, the inability to
- * create a TypeOracle fram a ClassLoader prevents re-using the existing model
- * code. If the model code could be reused, it would be straightforward to
- * simply generate implementations of the various interfaces.
- * <p>
  * This implementation is written assuming that the AutoBeanFactory and
  * associated declarations will validate if compiled and used with the
  * AutoBeanFactoyModel.
  */
 public class AutoBeanFactoryMagic {
+  /*
+   * NB: This implementation is excessively dynamic, however the inability to
+   * create a TypeOracle fram a ClassLoader prevents re-using the existing model
+   * code. If the model code could be reused, it would be straightforward to
+   * simply generate implementations of the various interfaces.
+   */
   private static final AutoBeanFactory EMPTY = create(AutoBeanFactory.class);
 
   /**

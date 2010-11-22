@@ -22,15 +22,14 @@ import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.autobean.shared.impl.StringQuoter;
 import com.google.gwt.requestfactory.server.SimpleRequestProcessor.IdToEntityMap;
-import com.google.gwt.requestfactory.server.SimpleRequestProcessor.ServiceLayer;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.ValueProxy;
 import com.google.gwt.requestfactory.shared.impl.Constants;
+import com.google.gwt.requestfactory.shared.impl.EntityCodex;
 import com.google.gwt.requestfactory.shared.impl.IdFactory;
 import com.google.gwt.requestfactory.shared.impl.MessageFactoryHolder;
 import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
-import com.google.gwt.requestfactory.shared.messages.EntityCodex;
 import com.google.gwt.requestfactory.shared.messages.IdMessage;
 import com.google.gwt.requestfactory.shared.messages.IdMessage.Strength;
 
@@ -76,8 +75,8 @@ class RequestState implements EntityCodex.EntitySource {
       }
 
       @Override
-      protected String getTypeToken(Class<?> clazz) {
-        return service.getTypeToken(clazz);
+      protected String getTypeToken(Class<? extends BaseProxy> clazz) {
+        return service.resolveTypeToken(clazz);
       }
     };
     domainObjectsToId = new IdentityHashMap<Object, SimpleProxyId<?>>();
@@ -96,7 +95,7 @@ class RequestState implements EntityCodex.EntitySource {
 
   public <Q extends BaseProxy> AutoBean<Q> getBeanForPayload(IdMessage idMessage) {
     SimpleProxyId<Q> id;
-    if (idMessage.getSyntheticId() > 0) {
+    if (Strength.SYNTHETIC.equals(idMessage.getStrength())) {
       @SuppressWarnings("unchecked")
       Class<Q> clazz = (Class<Q>) service.resolveClass(idMessage.getTypeToken());
       id = idFactory.allocateSyntheticId(clazz, idMessage.getSyntheticId());
@@ -147,7 +146,7 @@ class RequestState implements EntityCodex.EntitySource {
   public Splittable getSerializedProxyId(SimpleProxyId<?> stableId) {
     AutoBean<IdMessage> bean = MessageFactoryHolder.FACTORY.id();
     IdMessage ref = bean.as();
-    ref.setTypeToken(service.getTypeToken(stableId.getProxyClass()));
+    ref.setTypeToken(service.resolveTypeToken(stableId.getProxyClass()));
     if (stableId.isSynthetic()) {
       ref.setStrength(Strength.SYNTHETIC);
       ref.setSyntheticId(stableId.getSyntheticId());
@@ -155,7 +154,6 @@ class RequestState implements EntityCodex.EntitySource {
       ref.setStrength(Strength.EPHEMERAL);
       ref.setClientId(stableId.getClientId());
     } else {
-      ref.setStrength(Strength.PERSISTED);
       ref.setServerId(SimpleRequestProcessor.toBase64(stableId.getServerId()));
     }
     return AutoBeanCodex.encode(bean);
@@ -210,10 +208,14 @@ class RequestState implements EntityCodex.EntitySource {
     AutoBean<Q> toReturn = (AutoBean<Q>) beans.get(id);
     if (toReturn == null) {
       // Resolve the domain object
-      Class<?> domainClass = service.getDomainClass(id.getProxyClass());
+      Class<?> domainClass = service.resolveDomainClass(id.getProxyClass());
       Object domain;
       if (id.isEphemeral() || id.isSynthetic()) {
         domain = service.createDomainObject(domainClass);
+        if (domain == null) {
+          throw new UnexpectedException("Could not create instance of "
+              + domainClass.getCanonicalName(), null);
+        }
       } else {
         Splittable address = StringQuoter.split(id.getServerId());
         Class<?> param = service.getIdType(domainClass);
@@ -224,7 +226,7 @@ class RequestState implements EntityCodex.EntitySource {
           domainParam = new SimpleRequestProcessor(service).decodeOobMessage(
               param, address).get(0);
         }
-        domain = service.loadDomainObject(this, domainClass, domainParam);
+        domain = service.loadDomainObject(domainClass, domainParam);
       }
       domainObjectsToId.put(domain, id);
       toReturn = createEntityProxyBean(id, domain);

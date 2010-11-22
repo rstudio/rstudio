@@ -22,6 +22,20 @@ import com.google.gwt.requestfactory.shared.RequestTransport;
  * A RequesTransports that calls a {@link SimpleRequestProcessor}. This test can
  * be used for end-to-end tests of RequestFactory service methods in non-GWT
  * test suites.
+ * 
+ * <pre>
+ * ServiceLayer serviceLayer = ServiceLayer.create();
+ * SimpleRequestProcessor processor = new SimpleRequestProcessor(serviceLayer);
+ * EventBus eventBus = new SimpleEventBus();
+ * MyRequestFactory f = RequestFactoryMagic.create(MyRequestFactory.class);
+ * f.initialize(eventBus, new InProcessRequestTransport(processor));
+ * </pre>
+ * 
+ * @see RequestFactoryMagic
+ * @see com.google.gwt.requestfactory.server.ServiceLayer#create(com.google.gwt.requestfactory.server.ServiceLayerDecorator...)
+ *      ServiceLayer.create()
+ * @see com.google.gwt.event.shared.SimpleEventBus SimpleEventBus
+ * @see SimpleRequestProcessor
  */
 public class InProcessRequestTransport implements RequestTransport {
   private static final boolean DUMP_PAYLOAD = Boolean.getBoolean("gwt.rpc.dumpPayload");

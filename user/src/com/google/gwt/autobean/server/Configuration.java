@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Used by {@link AutoBeanFactoryMagic#createBean()}.
+ * Used by {@link AutoBeanFactoryMagic#createBean(Class, Configuration)}. This
+ * type replicates the annotations that may be applied to an AutoBeanFactory
+ * declaration.
  */
 public class Configuration {
   /**
@@ -44,12 +46,29 @@ public class Configuration {
       }
     }
 
+    /**
+     * Equivalent to applying a
+     * {@link com.google.gwt.autobean.shared.AutoBeanFactory.Category Category}
+     * annotation to an AutoBeanFactory declaration.
+     * 
+     * @param categories the category types that should be searched for static
+     *          implementations of non-property methods
+     * @return the Builder
+     */
     public Builder setCategories(Class<?>... categories) {
       toReturn.categories = Collections.unmodifiableList(new ArrayList<Class<?>>(
           Arrays.asList(categories)));
       return this;
     }
 
+    /**
+     * Equivalent to applying a
+     * {@link com.google.gwt.autobean.shared.AutoBeanFactory.NoWrap NoWrap}
+     * annotation to an AutoBeanFactory declaration.
+     * 
+     * @param noWrap the types that should be excluded from wrapping
+     * @return the Builder
+     */
     public Builder setNoWrap(Class<?>... noWrap) {
       toReturn.noWrap.addAll(Arrays.asList(noWrap));
       return this;
