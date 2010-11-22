@@ -193,6 +193,22 @@ public abstract class ServiceLayer {
   public abstract <T> T loadDomainObject(Class<T> clazz, Object domainId);
 
   /**
+   * Load multiple objects from the backing store. This method is intended to
+   * allow more efficient access to the backing store by providing all objects
+   * referenced in an incoming payload.
+   * <p>
+   * The default implementation of this method will delegate to
+   * {@link #loadDomainObject(Class, Object)}.
+   * 
+   * @param classes type type of each object to load
+   * @param domainIds the ids previously returned from {@link #getId(Object)}
+   * @return the requested objects, elements of which may be {@code null} if the
+   *         requested objects were irretrievable
+   */
+  public abstract List<Object> loadDomainObjects(List<Class<?>> classes,
+      List<Object> domainIds);
+
+  /**
    * Given a type token previously returned from
    * {@link #resolveTypeToken(Class)}, return the Class literal associated with
    * the token.

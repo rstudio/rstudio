@@ -21,6 +21,7 @@ import com.google.gwt.requestfactory.shared.Locator;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -90,6 +91,12 @@ public class ServiceLayerDecorator extends ServiceLayer {
   @Override
   public <T> T loadDomainObject(Class<T> clazz, Object domainId) {
     return getNext().loadDomainObject(clazz, domainId);
+  }
+
+  @Override
+  public List<Object> loadDomainObjects(List<Class<?>> classes,
+      List<Object> domainIds) {
+    return getNext().loadDomainObjects(classes, domainIds);
   }
 
   @Override

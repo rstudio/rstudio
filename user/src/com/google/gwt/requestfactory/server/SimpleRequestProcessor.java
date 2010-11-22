@@ -25,7 +25,6 @@ import com.google.gwt.autobean.shared.AutoBeanVisitor;
 import com.google.gwt.autobean.shared.Splittable;
 import com.google.gwt.autobean.shared.ValueCodex;
 import com.google.gwt.requestfactory.shared.BaseProxy;
-import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
 import com.google.gwt.requestfactory.shared.InstanceRequest;
 import com.google.gwt.requestfactory.shared.ServerFailure;
@@ -54,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -445,13 +445,14 @@ public class SimpleRequestProcessor {
       return;
     }
 
-    for (final OperationMessage operation : operations) {
-      // Unflatten properties
-      AutoBean<? extends EntityProxy> bean = state.getBeanForPayload(operation);
-      // Use the version later to know which objects need to be sent back
-      if (operation.getVersion() != null) {
-        bean.setTag(Constants.VERSION_PROPERTY_B64, operation.getVersion());
-      }
+    List<AutoBean<? extends BaseProxy>> beans = state.getBeansForPayload(operations);
+    assert operations.size() == beans.size();
+
+    Iterator<OperationMessage> itOp = operations.iterator();
+    for (AutoBean<? extends BaseProxy> bean : beans) {
+      OperationMessage operation = itOp.next();
+      // Save the client's version information to reduce payload size later
+      bean.setTag(Constants.VERSION_PROPERTY_B64, operation.getVersion());
 
       // Load the domain object with properties, if it exists
       final Object domain = bean.getTag(Constants.DOMAIN_OBJECT);

@@ -26,7 +26,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -185,6 +188,23 @@ final class ReflectiveServiceLayer extends ServiceLayerDecorator {
       die(null, "Cannot invoke find method with a null id");
     }
     return clazz.cast(getTop().invoke(getFind(clazz), id));
+  }
+
+  @Override
+  public List<Object> loadDomainObjects(List<Class<?>> classes,
+      List<Object> domainIds) {
+    if (classes.size() != domainIds.size()) {
+      die(null,
+          "Size mismatch in paramaters. classes.size() = %d domainIds.size=%d",
+          classes.size(), domainIds.size());
+    }
+    List<Object> toReturn = new ArrayList<Object>(classes.size());
+    Iterator<Class<?>> classIt = classes.iterator();
+    Iterator<Object> idIt = domainIds.iterator();
+    while (classIt.hasNext()) {
+      toReturn.add(getTop().loadDomainObject(classIt.next(), idIt.next()));
+    }
+    return toReturn;
   }
 
   @Override
