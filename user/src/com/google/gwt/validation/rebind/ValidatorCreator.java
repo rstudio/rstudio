@@ -190,11 +190,25 @@ public class ValidatorCreator extends AbstractCreator {
     }
   }
 
-  private void writeThrowIllegalArgumnet(SourceWriter sourceWriter) {
-    sourceWriter.print("throw new IllegalArgumentException(\""
-        + this.validatorType.getName() + " can only validate ");
-    sourceWriter.print(beansToValidate.toString());
+  private void writeThrowIllegalArgumnet(SourceWriter sourceWriter,
+      String getClassName) {
+    // throw new IllegalArgumentException("MyValidator can not validate ",
+    sourceWriter.print("throw new IllegalArgumentException(\"");
+    sourceWriter.print(this.validatorType.getName() + " can not  validate \"");
+    sourceWriter.indent();
+    sourceWriter.indent();
+
+    // + object.getClass().getName() +". "
+    sourceWriter.print("+ ");
+    sourceWriter.print(getClassName);
+    sourceWriter.println("+ \". \"");
+
+    // + "Valid values are {Foo.clas, Bar.class}
+    sourceWriter.print("+ \"Valid types are ");
+    sourceWriter.print(beansToValidate.entrySet().toString());
     sourceWriter.println("\");");
+    sourceWriter.outdent();
+    sourceWriter.outdent();
   }
 
   private void writeTypeSupport(SourceWriter sw) {
@@ -229,7 +243,7 @@ public class ValidatorCreator extends AbstractCreator {
       writeValidate(sw, bean);
     }
 
-    writeThrowIllegalArgumnet(sw);
+    writeThrowIllegalArgumnet(sw, "object.getClass().getName()");
 
     sw.outdent();
     sw.println("}");
@@ -265,7 +279,7 @@ public class ValidatorCreator extends AbstractCreator {
       writeValidateProperty(sw, bean);
     }
 
-    writeThrowIllegalArgumnet(sw);
+    writeThrowIllegalArgumnet(sw, "object.getClass().getName()");
 
     sw.outdent();
     sw.println("}");
@@ -296,7 +310,7 @@ public class ValidatorCreator extends AbstractCreator {
       writeValidateValue(sw, bean);
     }
 
-    writeThrowIllegalArgumnet(sw);
+    writeThrowIllegalArgumnet(sw, "beanType.getName()");
 
     sw.outdent();
     sw.println("}");

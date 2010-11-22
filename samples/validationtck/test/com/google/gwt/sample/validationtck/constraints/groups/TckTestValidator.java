@@ -13,28 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck.constraints.application;
+package com.google.gwt.sample.validationtck.constraints.groups;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.validation.client.AbstractValidator;
 import com.google.gwt.validation.client.GwtValidation;
 
-import org.hibernate.jsr303.tck.tests.constraints.application.Building;
-import org.hibernate.jsr303.tck.tests.constraints.application.SuperWoman;
-import org.hibernate.jsr303.tck.tests.constraints.application.Woman;
+import org.hibernate.jsr303.tck.tests.constraints.groups.Animal;
+import org.hibernate.jsr303.tck.tests.constraints.groups.Book;
+import org.hibernate.jsr303.tck.tests.constraints.groups.Order;
+import org.hibernate.jsr303.tck.tests.constraints.groups.User;
 
 import javax.validation.Validator;
 
 /**
- * {@link Validator} implementation that uses
+ * Validator implementation that uses
  * {@link com.google.gwt.validation.client.GwtValidation GwtValidation}.
  */
 public final class TckTestValidator extends AbstractValidator {
   /**
-   * Marker Interface for {@link GWT#create(Class)}.
+   * Marker Interface to {@link GWT#create(Class)}.
    */
-  @GwtValidation(value = {
-      Building.class, SuperWoman.class, Woman.class})
+  @GwtValidation(value = {Animal.class, Book.class, Order.class, User.class})
   public static interface GwtValidator extends Validator {
   }
 

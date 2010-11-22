@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.sample.validation.shared.ClientGroup;
 import com.google.gwt.sample.validation.shared.Person;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,6 +40,7 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
+import javax.validation.groups.Default;
 
 /**
  * Display the Validation sample.
@@ -126,7 +128,8 @@ public class ValidationView extends Composite {
     person.setName(nameField.getText());
 
     Validator validator = GWT.create(SampleValidator.class);
-    Set<ConstraintViolation<Person>> violations = validator.validate(person);
+    Set<ConstraintViolation<Person>> violations = validator.validate(person,
+        Default.class, ClientGroup.class);
     if (!violations.isEmpty()) {
       StringBuffer errorMessage = new StringBuffer();
       for (ConstraintViolation<Person> constraintViolation : violations) {

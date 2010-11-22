@@ -16,13 +16,16 @@
 package com.google.gwt.validation.client.impl;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintViolation;
+import javax.validation.groups.Default;
 
 /**
  * Base methods for implementing a {@link GwtSpecificValidator}.
@@ -59,18 +62,6 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     return new AttributeBuilder();
   }
 
-  /**
-   * @param <A>
-   * @param <T>
-   * @param <V>
-   * @param context
-   * @param violations
-   * @param object
-   * @param value
-   * @param validator
-   * @param constraintDescriptor
-   * @param groups
-   */
   protected <A extends Annotation, T, V> void validate(
       GwtValidationContext<T> context, Set<ConstraintViolation<T>> violations,
       G object, V value, ConstraintValidator<A, ? super V> validator,
@@ -78,6 +69,22 @@ public abstract class AbstractGwtSpecificValidator<G> implements
     validator.initialize(constraintDescriptor.getAnnotation());
     ConstraintValidatorContextImpl<A, V> constraintValidatorContext =
         context.createConstraintValidatorContext(constraintDescriptor);
+
+    // TODO(nchalko) set empties to Default earlier.
+    Set<Class<?>> constraintGroup = constraintDescriptor.getGroups();
+    if (groups.length == 0) {
+      groups = new Class<?>[]{Default.class};
+    }
+    if (constraintGroup.isEmpty()) {
+      constraintGroup = new HashSet<Class<?>>();
+      constraintGroup.add(Default.class);
+    }
+
+    // check group
+    if (!containsAny(groups, constraintGroup)) {
+      return;
+    }
+
     if (!validator.isValid(value, constraintValidatorContext)) {
       addViolations(//
           context, //
@@ -103,6 +110,15 @@ public abstract class AbstractGwtSpecificValidator<G> implements
           messageAndPath);
       violations.add(violation);
     }
+  }
+
+  private <T> boolean containsAny(T[] left, Collection<T> right) {
+    for (T t : left) {
+      if (right.contains(t)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private <T, V, A extends Annotation> ConstraintViolation<T> createConstraintViolation(

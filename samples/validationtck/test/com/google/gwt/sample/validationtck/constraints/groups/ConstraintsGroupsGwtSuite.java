@@ -13,20 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.validationtck.validatorfactory;
+package com.google.gwt.sample.validationtck.constraints.groups;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
 
 /**
- * Tck Tests for the {@code validatorfactory} package.
+ * Tck Tests for the {@code constraints groups} package.
  */
-public class ConstraintApplicationGwtSuite {
+public class ConstraintsGroupsGwtSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
-        "TCK for GWT Validation, validatorfactory package");
-    suite.addTestSuite(CustomConstraintValidatorTest.class);
+        "TCK for GWT Validation, constraints groups package");
+    suite.addTestSuite(GroupTest.class);
     return suite;
   }
 }
