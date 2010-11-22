@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.shared;
 
 import com.google.gwt.i18n.client.HasDirection.Direction;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 /**
  * Interface for direction estimators.
@@ -40,5 +41,16 @@ public abstract class DirectionEstimator {
    */
   public Direction estimateDirection(String str, boolean isHtml) {
     return estimateDirection(BidiUtils.get().stripHtmlIfNeeded(str, isHtml));
+  }
+  
+  /**
+   * Estimates the direction of a SafeHtml.
+   * 
+   * @param html The string to check.
+   * @return {@code html}'s estimated direction.
+   */
+  public Direction estimateDirection(SafeHtml html) {
+    return estimateDirection(BidiUtils.get().stripHtmlIfNeeded(html.asString(),
+        true));
   }
 }
