@@ -24,6 +24,8 @@ import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.CellTable.Style;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +62,61 @@ public class CellTableTest extends AbstractHasDataTestBase {
     table.getPresenter().flush();
     assertEquals(1, replaceValues.size());
   }
-  
+
+  public void testCellAlignment() {
+    CellTable<String> table = createAbstractHasData();
+    Column<String, String> column = new Column<String, String>(new TextCell()) {
+      @Override
+      public String getValue(String object) {
+        return object;
+      }
+    };
+    table.addColumn(column);
+
+    /*
+     * No alignment. Some browsers (FF) return a default value when alignment is
+     * not specified, others (IE/HtmlUnit) return an empty string.
+     */
+    table.setRowData(0, createData(0, 1));
+    table.getPresenter().flush();
+    TableCellElement td = getBodyElement(table, 0, 2);
+    String hAlign = td.getAlign();
+    String vAlign = td.getVAlign();
+    assertTrue("".equals(hAlign) || "left".equals(hAlign));
+    assertTrue("".equals(vAlign) || "middle".equals(vAlign));
+
+    // Horizontal alignment.
+    column.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+    table.setRowData(0, createData(0, 1));
+    table.getPresenter().flush();
+    td = getBodyElement(table, 0, 2);
+    hAlign = td.getAlign();
+    vAlign = td.getVAlign();
+    assertTrue("right".equals(hAlign));
+    assertTrue("".equals(vAlign) || "middle".equals(vAlign));
+
+    // Vertical alignment.
+    column.setHorizontalAlignment(null);
+    column.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
+    table.setRowData(0, createData(0, 1));
+    table.getPresenter().flush();
+    td = getBodyElement(table, 0, 2);
+    hAlign = td.getAlign();
+    vAlign = td.getVAlign();
+    assertTrue("".equals(hAlign) || "left".equals(hAlign));
+    assertTrue("bottom".equals(vAlign));
+
+    // Horizontal and vertical alignment.
+    column.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+    table.setRowData(0, createData(0, 1));
+    table.getPresenter().flush();
+    td = getBodyElement(table, 0, 2);
+    hAlign = td.getAlign();
+    vAlign = td.getVAlign();
+    assertTrue("right".equals(hAlign));
+    assertTrue("bottom".equals(vAlign));
+  }
+
   public void testGetRowElement() {
     CellTable<String> table = createAbstractHasData();
     table.setRowData(0, createData(0, 10));
@@ -197,6 +253,22 @@ public class CellTableTest extends AbstractHasDataTestBase {
       }
     });
     return table;
+  }
+
+  /**
+   * Get a td element from the table body.
+   * 
+   * @param table the {@link CellTable}
+   * @param row the row index
+   * @param column the column index
+   * @return the column header
+   */
+  private TableCellElement getBodyElement(CellTable<?> table, int row,
+      int column) {
+    TableElement tableElem = table.getElement().cast();
+    TableSectionElement tbody = tableElem.getTBodies().getItem(0);
+    TableRowElement tr = tbody.getRows().getItem(row);
+    return tr.getCells().getItem(column);
   }
 
   /**

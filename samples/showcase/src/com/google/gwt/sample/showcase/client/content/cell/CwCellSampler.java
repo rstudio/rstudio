@@ -53,6 +53,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -268,8 +269,8 @@ public class CwCellSampler extends ContentWidget {
           pendingChanges.add(new CategoryChange(object, categories[0]));
         } else {
           // If not a relative, use the Contacts Category.
-          pendingChanges.add(
-              new CategoryChange(object, categories[categories.length - 1]));
+          pendingChanges.add(new CategoryChange(object,
+              categories[categories.length - 1]));
         }
       }
     });
@@ -315,8 +316,8 @@ public class CwCellSampler extends ContentWidget {
     });
 
     // ActionCell.
-    addColumn(new ActionCell<ContactInfo>(
-        "Click Me", new ActionCell.Delegate<ContactInfo>() {
+    addColumn(new ActionCell<ContactInfo>("Click Me",
+        new ActionCell.Delegate<ContactInfo>() {
           public void execute(ContactInfo contact) {
             Window.alert("You clicked " + contact.getFullName());
           }
@@ -338,8 +339,7 @@ public class CwCellSampler extends ContentWidget {
     });
 
     // DateCell.
-    DateTimeFormat dateFormat = DateTimeFormat.getFormat(
-        PredefinedFormat.DATE_MEDIUM);
+    DateTimeFormat dateFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_MEDIUM);
     addColumn(new DateCell(dateFormat), "Date", new GetValue<Date>() {
       public Date getValue(ContactInfo contact) {
         return contact.getBirthday();
@@ -347,8 +347,8 @@ public class CwCellSampler extends ContentWidget {
     }, null);
 
     // DatePickerCell.
-    addColumn(
-        new DatePickerCell(dateFormat), "DatePicker", new GetValue<Date>() {
+    addColumn(new DatePickerCell(dateFormat), "DatePicker",
+        new GetValue<Date>() {
           public Date getValue(ContactInfo contact) {
             return contact.getBirthday();
           }
@@ -359,29 +359,29 @@ public class CwCellSampler extends ContentWidget {
         });
 
     // NumberCell.
-    addColumn(new NumberCell(), "Number", new GetValue<Number>() {
-      @SuppressWarnings("deprecation")
-      public Number getValue(ContactInfo contact) {
-        Date today = new Date();
-        Date birthday = contact.getBirthday();
-        int age = today.getYear() - birthday.getYear();
-        if (today.getMonth() > birthday.getMonth()
-            || (today.getMonth() == birthday.getMonth()
-                && today.getDate() > birthday.getDate())) {
-          age--;
-        }
-        return age;
-      }
-    }, null);
-
-    // IconCellDecorator.
-    addColumn(
-        new IconCellDecorator<String>(images.contactsGroup(), new TextCell()),
-        "Icon", new GetValue<String>() {
-          public String getValue(ContactInfo contact) {
-            return contact.getCategory().getDisplayName();
+    Column<ContactInfo, Number> numberColumn = addColumn(new NumberCell(),
+        "Number", new GetValue<Number>() {
+          @SuppressWarnings("deprecation")
+          public Number getValue(ContactInfo contact) {
+            Date today = new Date();
+            Date birthday = contact.getBirthday();
+            int age = today.getYear() - birthday.getYear();
+            if (today.getMonth() > birthday.getMonth()
+                || (today.getMonth() == birthday.getMonth() && today.getDate() > birthday.getDate())) {
+              age--;
+            }
+            return age;
           }
         }, null);
+    numberColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LOCALE_END);
+
+    // IconCellDecorator.
+    addColumn(new IconCellDecorator<String>(images.contactsGroup(),
+        new TextCell()), "Icon", new GetValue<String>() {
+      public String getValue(ContactInfo contact) {
+        return contact.getCategory().getDisplayName();
+      }
+    }, null);
 
     // ImageCell.
     addColumn(new ImageCell(), "Image", new GetValue<String>() {
@@ -459,7 +459,7 @@ public class CwCellSampler extends ContentWidget {
    * @param getter the value getter for the cell
    */
   @ShowcaseSource
-  private <C> void addColumn(Cell<C> cell, String headerText,
+  private <C> Column<ContactInfo, C> addColumn(Cell<C> cell, String headerText,
       final GetValue<C> getter, FieldUpdater<ContactInfo, C> fieldUpdater) {
     Column<ContactInfo, C> column = new Column<ContactInfo, C>(cell) {
       @Override
@@ -472,5 +472,6 @@ public class CwCellSampler extends ContentWidget {
       editableCells.add((AbstractEditableCell<?, ?>) cell);
     }
     cellTable.addColumn(column, headerText);
+    return column;
   }
 }

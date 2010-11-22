@@ -39,9 +39,12 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.HasDataPresenter.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
+import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionModel;
 
@@ -268,21 +271,33 @@ public class CellTable<T> extends AbstractHasData<T> {
   }
 
   interface Template extends SafeHtmlTemplates {
+    @Template("<div style=\"outline:none;\">{0}</div>")
+    SafeHtml div(SafeHtml contents);
+
+    @Template("<div style=\"outline:none;\" tabindex=\"{0}\">{1}</div>")
+    SafeHtml divFocusable(int tabIndex, SafeHtml contents);
+
+    @Template("<div style=\"outline:none;\" tabindex=\"{0}\" accessKey=\"{1}\">{2}</div>")
+    SafeHtml divFocusableWithKey(int tabIndex, char accessKey, SafeHtml contents);
+
     @Template("<div class=\"{0}\"/>")
     SafeHtml loading(String loading);
 
     @Template("<table><tbody>{0}</tbody></table>")
     SafeHtml tbody(SafeHtml rowHtml);
 
-    @Template("<td class=\"{0}\"><div style=\"outline:none;\">{1}</div></td>")
+    @Template("<td class=\"{0}\">{1}</td>")
     SafeHtml td(String classes, SafeHtml contents);
 
-    @Template("<td class=\"{0}\"><div style=\"outline:none;\" tabindex=\"{1}\">{2}</div></td>")
-    SafeHtml tdFocusable(String classes, int tabIndex, SafeHtml contents);
-
-    @Template("<td class=\"{0}\"><div style=\"outline:none;\" tabindex=\"{1}\" accessKey=\"{2}\">{3}</div></td>")
-    SafeHtml tdFocusableWithKey(String classes, int tabIndex, char accessKey,
+    @Template("<td class=\"{0}\" align=\"{1}\" valign=\"{2}\">{3}</td>")
+    SafeHtml tdBothAlign(String classes, String hAlign, String vAlign,
         SafeHtml contents);
+
+    @Template("<td class=\"{0}\" align=\"{1}\">{2}</td>")
+    SafeHtml tdHorizontalAlign(String classes, String hAlign, SafeHtml contents);
+
+    @Template("<td class=\"{0}\" valign=\"{1}\">{2}</td>")
+    SafeHtml tdVerticalAlign(String classes, String vAlign, SafeHtml contents);
 
     @Template("<table><tfoot>{0}</tfoot></table>")
     SafeHtml tfoot(SafeHtml rowHtml);
@@ -522,7 +537,7 @@ public class CellTable<T> extends AbstractHasData<T> {
   /**
    * Constructs a table with the given page size, the specified
    * {@link Resources}, and the given key provider.
-   *
+   * 
    * @param pageSize the page size
    * @param resources the resources to use for this widget
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
@@ -545,7 +560,13 @@ public class CellTable<T> extends AbstractHasData<T> {
     colgroup = Document.get().createColGroupElement();
     table.appendChild(colgroup);
     thead = table.createTHead();
-    table.appendChild(tbody = Document.get().createTBodyElement());
+    // Some browsers create a tbody automatically, others do not.
+    if (table.getTBodies().getLength() > 0) {
+      tbody = table.getTBodies().getItem(0);
+    } else {
+      tbody = Document.get().createTBodyElement();
+      table.appendChild(tbody);
+    }
     table.appendChild(tbodyLoading = Document.get().createTBodyElement());
     tfoot = table.createTFoot();
     setStyleName(this.style.cellTableWidget());
@@ -1048,6 +1069,8 @@ public class CellTable<T> extends AbstractHasData<T> {
           column.render(value, keyProvider, cellBuilder);
         }
 
+        // Build the contents.
+        SafeHtml contents = SafeHtmlUtils.EMPTY_SAFE_HTML;
         if (i == keyboardSelectedRow && curColumn == keyboardSelectedColumn) {
           // This is the focused cell.
           if (isFocused) {
@@ -1055,14 +1078,31 @@ public class CellTable<T> extends AbstractHasData<T> {
           }
           char accessKey = getAccessKey();
           if (accessKey != 0) {
-            trBuilder.append(template.tdFocusableWithKey(tdClasses,
-                getTabIndex(), accessKey, cellBuilder.toSafeHtml()));
+            contents = template.divFocusableWithKey(getTabIndex(), accessKey,
+                cellBuilder.toSafeHtml());
           } else {
-            trBuilder.append(template.tdFocusable(tdClasses, getTabIndex(),
-                cellBuilder.toSafeHtml()));
+            contents = template.divFocusable(getTabIndex(),
+                cellBuilder.toSafeHtml());
           }
         } else {
-          trBuilder.append(template.td(tdClasses, cellBuilder.toSafeHtml()));
+          contents = template.div(cellBuilder.toSafeHtml());
+        }
+
+        // Build the cell.
+        HorizontalAlignmentConstant hAlign = column.getHorizontalAlignment();
+        VerticalAlignmentConstant vAlign = column.getVerticalAlignment();
+        if (hAlign != null && vAlign != null) {
+          trBuilder.append(template.tdBothAlign(tdClasses,
+              hAlign.getTextAlignString(), vAlign.getVerticalAlignString(),
+              contents));
+        } else if (hAlign != null) {
+          trBuilder.append(template.tdHorizontalAlign(tdClasses,
+              hAlign.getTextAlignString(), contents));
+        } else if (vAlign != null) {
+          trBuilder.append(template.tdVerticalAlign(tdClasses,
+              vAlign.getVerticalAlignString(), contents));
+        } else {
+          trBuilder.append(template.td(tdClasses, contents));
         }
 
         curColumn++;
