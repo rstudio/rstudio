@@ -324,7 +324,23 @@ public class RequestFactoryInterfaceValidator {
 
     public Set<RFMethod> exec(String internalName) {
       RequestFactoryInterfaceValidator.this.visit(logger, internalName, this);
-      return methods;
+
+      Map<RFMethod, RFMethod> toReturn = new HashMap<RFMethod, RFMethod>();
+      // Return most-derived methods
+      for (RFMethod method : methods) {
+        RFMethod key = new RFMethod(method.getName(), Type.getMethodDescriptor(
+            Type.VOID_TYPE, method.getArgumentTypes()));
+
+        RFMethod compareTo = toReturn.get(key);
+        if (compareTo == null) {
+          toReturn.put(key, method);
+        } else if (isAssignable(logger, compareTo.getReturnType(),
+            method.getReturnType())) {
+          toReturn.put(key, method);
+        }
+      }
+
+      return new HashSet<RFMethod>(toReturn.values());
     }
 
     @Override
@@ -856,6 +872,7 @@ public class RequestFactoryInterfaceValidator {
     clientToDomainType.put(clientType, domainType);
 
     if (isAssignable(logger, baseProxyIntf, clientType)) {
+      maybeCheckProxyType(logger, clientType);
       List<Type> list = domainToClientType.get(domainType);
       if (list == null) {
         list = new ArrayList<Type>();

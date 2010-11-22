@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * Domain object for SimpleFooRequest.
  */
-public class SimpleBar {
+public class SimpleBar implements HasId {
   /**
    * DO NOT USE THIS UGLY HACK DIRECTLY! Call {@link #get} instead.
    */
@@ -88,7 +88,7 @@ public class SimpleBar {
   public static SimpleBar getSingleton() {
     return findSimpleBar("1L");
   }
-  
+
   public static void reset() {
     resetImpl();
   }
