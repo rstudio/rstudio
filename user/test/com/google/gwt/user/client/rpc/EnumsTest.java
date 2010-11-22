@@ -18,6 +18,8 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.EnumsTestService.Basic;
 import com.google.gwt.user.client.rpc.EnumsTestService.Complex;
+import com.google.gwt.user.client.rpc.EnumsTestService.FieldEnum;
+import com.google.gwt.user.client.rpc.EnumsTestService.FieldEnumWrapper;
 import com.google.gwt.user.client.rpc.EnumsTestService.Subclassing;
 
 /**
@@ -116,6 +118,34 @@ public class EnumsTest extends RpcTestBase {
       public void onSuccess(Subclassing result) {
         assertNotNull("Was null", result);
         assertEquals(Subclassing.A, result);
+        finishTest();
+      }
+    });
+  }
+
+  /**
+   * Test that enums as fields in a wrapper class can be passed over RPC.
+   */
+  public void testFieldEnumWrapperClass() {
+    delayTestFinishForRpc();
+
+    FieldEnumWrapper wrapper = new FieldEnumWrapper();
+    wrapper.setFieldEnum(FieldEnum.X);
+    getService().echo(wrapper, new AsyncCallback<FieldEnumWrapper>() {
+      public void onFailure(Throwable caught) {
+        rethrowException(caught);
+      }
+
+      public void onSuccess(FieldEnumWrapper result) {
+        assertNotNull("Was null", result);
+        FieldEnum fieldEnum = result.getFieldEnum();
+        /*
+         * Don't want to do assertEquals(FieldEnum.X, fieldEnum) here,
+         * since it will force an implicit upcast on FieldEnum -> Object, 
+         * which will bias the test.  We want to assert that the
+         * EnumOrdinalizer properly prevents ordinalization of FieldEnum.
+         */
+        assertTrue(FieldEnum.X == fieldEnum);
         finishTest();
       }
     });

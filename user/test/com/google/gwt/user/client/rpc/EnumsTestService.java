@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import java.io.Serializable;
+
 /**
  * RemoteService used to test the use of enums over RPC.
  */
@@ -82,7 +84,30 @@ public interface EnumsTestService extends RemoteService {
     public abstract String value();
   }
   
+  /**
+   * Enum to be used as a field in a wrapper class
+   */
+  public enum FieldEnum {
+    X, Y, Z
+  }
+  
+  /**
+   * Wrapper class containing an enum field
+   */
+  public class FieldEnumWrapper implements Serializable {
+    private FieldEnum fieldEnum = FieldEnum.Z;
+    
+    public FieldEnum getFieldEnum() {
+      return this.fieldEnum;
+    }
+    
+    public void setFieldEnum(FieldEnum fieldEnum) {
+      this.fieldEnum = fieldEnum;
+    }
+  }
+  
   Basic echo(Basic value);
   Complex echo(Complex value) throws EnumStateModificationException;
   Subclassing echo(Subclassing value);
+  FieldEnumWrapper echo(FieldEnumWrapper value);
 }
