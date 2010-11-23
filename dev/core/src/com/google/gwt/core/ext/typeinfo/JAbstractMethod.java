@@ -82,6 +82,14 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
    */
   public abstract JClassType getEnclosingType();
 
+  public JType[] getErasedParameterTypes() {
+    JType[] types = new JType[params.size()];
+    for (int i = 0; i < types.length; ++i) {
+      types[i] = params.get(i).getType().getErasedType();
+    }
+    return types;
+  }
+  
   /**
    * Returns a string contating a JSNI reference to the method.
    * 
@@ -108,12 +116,20 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     return params.toArray(TypeOracle.NO_JPARAMS);
   }
 
+  public JType[] getParameterTypes() {
+    final JType[] paramTypes = new JType[params.size()];
+    for (int i = 0; i < paramTypes.length; ++i) {
+      paramTypes[i] = params.get(i).getType();
+    }
+    return paramTypes;
+  }
+
   public abstract String getReadableDeclaration();
 
   public JType[] getThrows() {
     return thrownTypes.toArray(TypeOracle.NO_JTYPES);
   }
-
+  
   public JTypeParameter[] getTypeParameters() {
     return typeParams.toArray(new JTypeParameter[typeParams.size()]);
   }

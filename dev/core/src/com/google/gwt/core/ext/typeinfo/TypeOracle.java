@@ -684,7 +684,7 @@ public class TypeOracle {
 
   private boolean classImplementsMethod(JClassType cls, JMethod meth) {
     while (cls != null) {
-      JMethod found = cls.findMethod(meth.getName(), methodParamTypes(meth));
+      JMethod found = cls.findMethod(meth.getName(), meth.getParameterTypes());
       if ((found != null) && !found.isAbstract()) {
         return true;
       }
@@ -716,6 +716,12 @@ public class TypeOracle {
       }
 
       for (JClassType intf : JClassType.getFlattenedSuperTypeHierarchy(type)) {
+        // If intf refers to a JParameterizedType, we need to use its generic
+        // base type instead.
+        if (intf instanceof JParameterizedType) {
+          intf = ((JParameterizedType)intf).getBaseType();
+        }
+        
         if (intf.isInterface() == null) {
           // Not an interface
           continue;
@@ -796,15 +802,6 @@ public class TypeOracle {
       }
     }
     return match;
-  }
-
-  private JType[] methodParamTypes(JMethod meth) {
-    JParameter[] params = meth.getParameters();
-    JType[] types = new JType[params.length];
-    for (int i = 0; i < params.length; ++i) {
-      types[i] = params[i].getType();
-    }
-    return types;
   }
 
   private JType parseImpl(String type) throws NotFoundException,

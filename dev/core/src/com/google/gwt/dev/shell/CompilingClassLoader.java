@@ -18,8 +18,8 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.client.GWTBridge;
 import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -38,9 +38,9 @@ import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOr
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplData;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.util.tools.Utility;
 
@@ -387,7 +387,10 @@ public final class CompilingClassLoader extends ClassLoader implements
         JClassType intf = typeOracle.findType(Name.InternalName.toSourceName(intfName));
         JClassType jso = typeOracle.getSingleJsoImpl(intf);
         for (JMethod method : intf.getMethods()) {
-          add(jso, method);
+          JClassType implementingJso = findImplementingTypeForMethod(jso, method);
+          assert implementingJso != null
+            : "Jso should contain method: " + method.getJsniSignature();
+          add(implementingJso, method);
         }
       }
 
@@ -789,6 +792,19 @@ public final class CompilingClassLoader extends ClassLoader implements
       throw new UnableToCompleteException();
     }
   }
+  
+  private static JClassType findImplementingTypeForMethod(JClassType type, JMethod method) {
+    JType[] methodParamTypes = method.getErasedParameterTypes();
+    while (type != null) {
+      for (JMethod candidate : type.getMethods()) {
+        if (hasMatchingErasedSignature(method, methodParamTypes, candidate)) {
+          return type;
+        }
+      }
+      type = type.getSuperclass();
+    }
+    return null;
+  }
 
   private static byte[] getClassBytesFromStream(InputStream is)
       throws IOException {
@@ -803,6 +819,25 @@ public final class CompilingClassLoader extends ClassLoader implements
       Utility.close(is);
     }
   }
+
+  private static boolean hasMatchingErasedSignature(JMethod a, JType[] aParamTypes, JMethod b) {
+    if (!a.getName().equals(b.getName())) {
+      return false;
+    }
+    
+    JType[] bParamTypes = b.getErasedParameterTypes();
+    if (aParamTypes.length != bParamTypes.length) {
+      return false;
+    }
+    
+    for (int i = 0; i < aParamTypes.length; ++i) {
+      if (aParamTypes[i] != bParamTypes[i]) {
+        return false;
+      }
+    }
+    
+    return true;
+  }  
 
   /**
    * The set of units whose JSNI has already been injected.
