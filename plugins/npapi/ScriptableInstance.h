@@ -93,6 +93,13 @@ private:
   const NPIdentifier _connectId;
   const NPIdentifier initID;
   const NPIdentifier toStringID;
+
+  const NPIdentifier loadHostEntriesID;
+  const NPIdentifier locationID;
+  const NPIdentifier hrefID;
+  const NPIdentifier urlID;
+  const NPIdentifier includeID;
+  const NPIdentifier getHostPermissionID;
   
   const NPIdentifier connectedID;
   const NPIdentifier statsID;
@@ -124,6 +131,8 @@ private:
 
   void connect(const NPVariant* args, unsigned argCount, NPVariant* result);
   void init(const NPVariant* args, unsigned argCount, NPVariant* result);
+  void loadHostEntries(const NPVariant* args, unsigned argCount, NPVariant* result);
+  void getHostPermission(const NPVariant* args, unsigned argCount, NPVariant* result);
   
   Value clientMethod_getProperty(HostChannel& channel, int numArgs, const Value* const args);
   Value clientMethod_setProperty(HostChannel& channel, int numArgs, const Value* const args);
@@ -137,6 +146,7 @@ private:
 
 private:
   std::string computeTabIdentity();
+  std::string getLocationHref();
 };
 
 #endif

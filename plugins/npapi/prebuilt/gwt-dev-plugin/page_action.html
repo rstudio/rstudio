@@ -1,0 +1,47 @@
+<head>
+  <style>
+    body {
+      width: 20em;
+    }
+  </style>
+  <script>
+    function getParam(key) {
+      var idx = window.location.search.indexOf(key + "=");
+      var value = '';
+      if (idx >= 0) {
+        idx += key.length + 1;
+        value = window.location.search.substring(idx).split('&')[0];
+      }
+      return value;
+    }
+
+    function init() {
+      var permission = getParam('permission');
+      var host = getParam('host');
+      var message='';
+
+      if (permission == 'include') {
+        message = 'The host at ' + host + ' is allowed to use the plugin';
+      } else if (permission == 'exclude') {
+        message = 'The host at ' + host + ' has been been blacklisted.';
+      } else if (permission == 'unknown') {
+        message = 'The host at ' + host + ' is unknown to the plugin.';
+      }
+
+      document.getElementById('message').innerText = message;
+    }
+
+    function updateConfiguration() {
+      var url = 'DevModeOptions.html?host=' + getParam('host');
+      url = chrome.extension.getURL(url);
+      chrome.tabs.create({'url' : url});
+    }
+  </script>
+</head>
+<body onload='javascript:init()'>
+  <h3>GWT Developer Plugin</h3>
+  <div id='message'></div>
+  <br/>
+  <button onclick= "updateConfiguration()">Update Your Configuration</button>
+  </p>
+</body>

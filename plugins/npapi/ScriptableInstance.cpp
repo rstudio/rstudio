@@ -21,10 +21,6 @@
 #include "ReturnMessage.h"
 #include "ServerMethods.h"
 #include "AllowedConnections.h"
-#ifdef _WINDOWS
-#include "Preferences.h"
-#include "AllowDialog.h"
-#endif
 
 #include "mozincludes.h"
 #include "scoped_ptr/scoped_ptr.h"
@@ -32,6 +28,10 @@
 
 using std::string;
 using std::endl;
+const static string BACKGROUND_PAGE_STR = "chrome-extension://jpjpnpmbddbjkfaccnmhnkdgjideieim/background.html";
+const static string UNKNOWN_STR = "unknown";
+const static string INCLUDE_STR = "include";
+const static string EXCLUDE_STR = "exclude";
 
 static inline string convertToString(const NPString& str) {
   return string(GetNPStringUTF8Characters(str), GetNPStringUTF8Length(str));
@@ -62,6 +62,12 @@ ScriptableInstance::ScriptableInstance(NPP npp) : NPObjectWrapper<ScriptableInst
     _connectId(NPN_GetStringIdentifier("connect")),
     initID(NPN_GetStringIdentifier("init")),
     toStringID(NPN_GetStringIdentifier("toString")),
+    loadHostEntriesID(NPN_GetStringIdentifier("loadHostEntries")),
+    locationID(NPN_GetStringIdentifier("location")),
+    hrefID(NPN_GetStringIdentifier("href")),
+    urlID(NPN_GetStringIdentifier("url")),
+    includeID(NPN_GetStringIdentifier("include")),
+    getHostPermissionID(NPN_GetStringIdentifier("getHostPermission")),
     connectedID(NPN_GetStringIdentifier("connected")),
     statsID(NPN_GetStringIdentifier("stats")),
     gwtId(NPN_GetStringIdentifier("__gwt_ObjectId")),
@@ -178,7 +184,11 @@ bool ScriptableInstance::setProperty(NPIdentifier name, const NPVariant* variant
 bool ScriptableInstance::hasMethod(NPIdentifier name) {
   Debug::log(Debug::Debugging) << "ScriptableInstance::hasMethod(name=" << NPN_UTF8FromIdentifier(name) << ")"
       << Debug::flush; 
-  if (name == _connectId || name == initID || name == toStringID) {
+  if (name == _connectId ||
+      name == initID ||
+      name == toStringID ||
+      name == loadHostEntriesID ||
+      name == getHostPermissionID) {
     return true;
   }
   return false;
@@ -200,6 +210,10 @@ bool ScriptableInstance::invoke(NPIdentifier name, const NPVariant* args, unsign
     val += _channel->isConnected() ? 'Y' : 'N';
     val += ']';
     NPVariantProxy::assignFrom(*result, val);
+  } else if (name == loadHostEntriesID) {
+    loadHostEntries(args, argCount, result);
+  } else if (name == getHostPermissionID) {
+    getHostPermission(args, argCount, result);
   }
   return true;
 }
@@ -248,6 +262,81 @@ void ScriptableInstance::init(const NPVariant* args, unsigned argCount, NPVarian
   result->type = NPVariantType_Bool;
 }
 
+string ScriptableInstance::getLocationHref() {
+  NPVariantWrapper locationVariant(*this);
+  NPVariantWrapper hrefVariant(*this);
+
+  // window.location
+  NPN_GetProperty(getNPP(), window, locationID, locationVariant.addressForReturn());
+  //window.location.href
+  NPN_GetProperty(getNPP(), locationVariant.getAsObject(), hrefID, hrefVariant.addressForReturn());
+
+  const NPString* locationHref = NPVariantProxy::getAsNPString(hrefVariant);
+  return convertToString(*locationHref);
+}
+
+
+void ScriptableInstance::loadHostEntries(const NPVariant* args, unsigned argCount, NPVariant* result) {
+  string locationHref = getLocationHref();
+  if (locationHref.compare(BACKGROUND_PAGE_STR) == 0) {
+    AllowedConnections::clearRules();
+    for (unsigned i = 0; i < argCount; ++i) {
+      //Get the host entry object {url: "somehost.net", include: true/false}
+      NPObject* hostEntry = NPVariantProxy::getAsObject(args[i]);
+      if (!hostEntry) {
+        Debug::log(Debug::Error) << "Got a host entry that is not an object.\n";
+        break;
+      }
+
+      //Get the url
+      NPVariantWrapper urlVariant(*this);
+      if (!NPN_GetProperty(getNPP(), hostEntry, urlID, urlVariant.addressForReturn()) ||
+          !urlVariant.isString()) {
+        Debug::log(Debug::Error) << "Got a host.url entry that is not a string.\n";
+        break;
+      }
+      const NPString* urlNPString = urlVariant.getAsNPString();
+      string urlString = convertToString(*urlNPString);
+
+      //Include/Exclude?
+      NPVariantWrapper includeVariant(*this);
+      if (!NPN_GetProperty(getNPP(), hostEntry, includeID, includeVariant.addressForReturn()) || 
+          !includeVariant.isBoolean()) {
+        Debug::log(Debug::Error) << "Got a host.include entry that is not a boolean.\n";
+        break;
+      }
+      bool include = includeVariant.getAsBoolean();
+      Debug::log(Debug::Info) << "Adding " << urlString << "(" << (include ? "include" : "exclude") << ")\n";
+      AllowedConnections::addRule(urlString, !include);
+    }
+  } else {
+    Debug::log(Debug::Error) << "ScriptableInstance::loadHostEntries called from outside the background page: " <<
+                             locationHref << "\n";
+  }
+}
+
+void ScriptableInstance::getHostPermission(const NPVariant* args, unsigned argCount, NPVariant* result) {
+  if (argCount != 1 || !NPVariantProxy::isString(args[0])) {
+    Debug::log(Debug::Error) << "ScriptableInstance::getHostPermission called with incorrect arguments.\n";
+  }
+
+  const NPString url = args[0].value.stringValue;
+  const string urlStr = convertToString(url);
+  bool allowed = false;
+  bool matches = AllowedConnections::matchesRule(urlStr, &allowed);
+  string retStr;
+
+  if (!matches) {
+    retStr = UNKNOWN_STR;
+  } else if (allowed) {
+    retStr = INCLUDE_STR;
+  } else {
+    retStr = EXCLUDE_STR;
+  }
+
+  NPVariantProxy(*this, *result) = retStr;
+}
+
 void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVariant* result) {
   if (argCount != 5 || !NPVariantProxy::isString(args[0])
       || !NPVariantProxy::isString(args[1])
@@ -263,7 +352,8 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
     result->type = NPVariantType_Void;
     return;
   }
-  const NPString url = args[0].value.stringValue;
+  //ignore args[0]. Get the URL from window.location.href instead.
+  const string urlStr = getLocationHref();
   const NPString sessionKey = args[1].value.stringValue;
   const NPString hostAddr = args[2].value.stringValue;
   const NPString moduleName = args[3].value.stringValue;
@@ -272,27 +362,9 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
       << ",sessionKey=" << NPVariantProxy::toString(args[1]) << ",host=" << NPVariantProxy::toString(args[2])
       << ",module=" << NPVariantProxy::toString(args[3]) << ",hostedHtmlVers=" << NPVariantProxy::toString(args[4])
       << ")" << Debug::flush;
-  const std::string urlStr = convertToString(url);
 
-#ifdef _WINDOWS
-  // TODO: platform-independent preferences storage
-  Preferences::loadAccessList();
-#endif
   bool allowed = false;
-  if (!AllowedConnections::matchesRule(urlStr, &allowed)) {
-#ifdef _WINDOWS
-    // TODO: platform-independent allow-connection dialog
-    bool remember = false;
-    allowed = AllowDialog::askUserToAllow(&remember);
-    if (remember) {
-      std::string host = AllowedConnections::getHostFromUrl(urlStr);
-      Preferences::addNewRule(host, !allowed);
-    }
-#elif 0
-    // WARNING: BIG SECURITY HOLE IF ENABLED!
-    allowed = true;
-#endif
-  }
+  AllowedConnections::matchesRule(urlStr, &allowed);
   if (!allowed) {
     BOOLEAN_TO_NPVARIANT(false, *result);
     result->type = NPVariantType_Bool;
@@ -356,7 +428,7 @@ int ScriptableInstance::getLocalObjectRef(NPObject* obj) {
   return id;
 }
 
-void ScriptableInstance::fatalError(HostChannel& channel, const std::string& message) {
+void ScriptableInstance::fatalError(HostChannel& channel, const string& message) {
   // TODO(jat): better error handling
   Debug::log(Debug::Error) << "Fatal error: " << message << Debug::flush;
 }
@@ -382,7 +454,7 @@ void ScriptableInstance::freeValue(HostChannel& channel, int idCount, const int*
   }
 }
 
-void ScriptableInstance::loadJsni(HostChannel& channel, const std::string& js) {
+void ScriptableInstance::loadJsni(HostChannel& channel, const string& js) {
   NPString npScript;
   dupString(js.c_str(), npScript);
   NPVariantWrapper npResult(*this);
@@ -405,7 +477,7 @@ Value ScriptableInstance::clientMethod_getProperty(HostChannel& channel, int num
   NPObject* obj = localObjects.get(id);
   NPIdentifier propID;
   if (args[1].isString()) {
-    std::string propName = args[1].getString();
+    string propName = args[1].getString();
     propID = NPN_GetStringIdentifier(propName.c_str());
   } else {
     int propNum = args[1].getInt();
@@ -434,7 +506,7 @@ Value ScriptableInstance::clientMethod_setProperty(HostChannel& channel, int num
   NPObject* obj = localObjects.get(id);
   NPIdentifier propID;
   if (args[1].isString()) {
-    std::string propName = args[1].getString();
+    string propName = args[1].getString();
     propID = NPN_GetStringIdentifier(propName.c_str());
   } else {
     int propNum = args[1].getInt();
@@ -477,7 +549,7 @@ bool ScriptableInstance::invokeSpecial(HostChannel& channel, SpecialMethodId dis
   }
   Debug::log(Debug::Error) << Debug::flush;
   // TODO(jat): should we create a real exception object?
-  std::string buf("unexpected invokeSpecial(");
+  string buf("unexpected invokeSpecial(");
   buf += static_cast<int>(dispatchId);
   buf += ")";
   returnValue->setString(buf);
@@ -485,7 +557,7 @@ bool ScriptableInstance::invokeSpecial(HostChannel& channel, SpecialMethodId dis
 }
 
 bool ScriptableInstance::invoke(HostChannel& channel, const Value& thisRef,
-    const std::string& methodName, int numArgs, const Value* const args,
+    const string& methodName, int numArgs, const Value* const args,
     Value* returnValue) {
   Debug::log(Debug::Debugging) << "invokeJS(" << methodName << ", this=" 
       << thisRef.toString() << ", numArgs=" << numArgs << ")" << Debug::flush;

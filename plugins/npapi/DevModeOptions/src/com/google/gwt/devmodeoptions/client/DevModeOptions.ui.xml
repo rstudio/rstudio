@@ -1,0 +1,52 @@
+<!-- Copyright 2010 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:with field='res'
+		type='com.google.gwt.devmodeoptions.client.DevModeOptionsResources' />
+	<g:HTMLPanel styleName="{res.css.mainPanel}">
+		<g:VerticalPanel>
+			<g:HorizontalPanel>
+				<g:Image resource='{res.gwt64}' styleName="{res.css.logo}" />
+				<g:HTML>
+					<h1> GWT Developer Plugin Options </h1>
+				</g:HTML>
+			</g:HorizontalPanel>
+
+			<g:Label styleName="{res.css.explanation}">
+				The GWT Developer Plugin will open a TCP/IP connection to an arbitrary
+				host/port at the request of a web page. To minimize security risks,
+				by default it will only connect to the local machine. To allow
+				cross-machine debugging, you can add exceptions here -- include the
+				exact host name of the web servers you will use for debugging, but
+				do not include any you do not trust.</g:Label>
+
+			<g:Label ui:field="errorMessage" styleName="{res.css.errorMessage}"/>
+			<g:HorizontalPanel>
+				<g:TextBox ui:field="hostname" styleName="{res.css.textBox}" />
+				<g:Button styleName="{res.css.important}" ui:field="addBtn">Add</g:Button>
+				<g:VerticalPanel>
+					<g:RadioButton name="include" ui:field="includeYes"
+						checked="true">Include</g:RadioButton>
+					<g:RadioButton name="include" ui:field="includeNo">Exclude</g:RadioButton>
+				</g:VerticalPanel>
+			</g:HorizontalPanel>
+
+			<g:FlexTable ui:field="savedHosts" styleName="{res.css.savedHosts}">
+			</g:FlexTable>
+		</g:VerticalPanel>
+	</g:HTMLPanel>
+
+</ui:UiBinder> 

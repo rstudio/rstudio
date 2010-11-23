@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="DevModeOptions" default="prebuilt" basedir=".">
+  <!-- Arguments to gwtc and devmode targets -->
+  <property name="gwt.args" value="" />
+
+  <!-- Configure path to GWT SDK -->
+  <property name="gwt.sdk" location="../../../build/staging/gwt-0.0.0" />
+
+  <path id="project.class.path">
+    <pathelement location="war/WEB-INF/classes"/>
+    <pathelement location="${gwt.sdk}/gwt-user.jar"/>
+    <fileset dir="${gwt.sdk}" includes="gwt-dev*.jar"/>
+    <!-- Add any additional non-server libs (such as JUnit) -->
+    <fileset dir="war/WEB-INF/lib" includes="**/*.jar"/>
+  </path>
+
+  <target name="javac" description="Compile java source to bytecode">
+    <mkdir dir="war/WEB-INF/classes"/>
+    <javac srcdir="src" includes="**" encoding="utf-8"
+        destdir="war/WEB-INF/classes"
+        source="1.5" target="1.5" nowarn="true"
+        debug="true" debuglevel="lines,vars,source">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <copy todir="war/WEB-INF/classes">
+      <fileset dir="src" excludes="**/*.java"/>
+    </copy>
+  </target>
+
+  <target name="gwtc" depends="javac" description="GWT compile to JavaScript (production mode)">
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+      <classpath>
+        <pathelement location="src"/>
+        <path refid="project.class.path"/>
+      </classpath>
+      <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+      <jvmarg value="-Xmx256M"/>
+      <arg line="-war"/>
+      <arg value="war"/>
+      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <arg line="${gwt.args}"/>
+      <arg value="com.google.gwt.devmodeoptions.DevModeOptions"/>
+    </java>
+  </target>
+
+  <target name="devmode" depends="javac" description="Run development mode">
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+      <classpath>
+        <pathelement location="src"/>
+        <path refid="project.class.path"/>
+      </classpath>
+      <jvmarg value="-Xmx256M"/>
+      <arg value="-startupUrl"/>
+      <arg value="DevModeOptions.html"/>
+      <arg line="-war"/>
+      <arg value="war"/>
+      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <arg line="${gwt.args}"/>
+      <arg value="com.google.devmodeoptions"/>
+    </java>
+  </target>
+
+  <target name="build" depends="gwtc" description="Build this project">
+  </target>
+
+  <target name="war" depends="build" description="Create a war file">
+    <zip destfile="DevModeOptions.war" basedir="war"/>
+  </target>
+
+  <target name="clean" depends="clean-prebuilt" description="Cleans this project">
+    <delete dir="war/WEB-INF/classes" failonerror="false" />
+    <delete dir="war/DevModeOptions" failonerror="false" />
+  </target>
+
+  <target name="clean-prebuilt" description="Clean the prebuilt copy">
+    <delete file="../prebuilt/gwt-dev-plugin/DevModeOptions.html" />
+    <delete dir="../prebuilt/gwt-dev-plugin/DevModeOptions" />
+  </target>
+
+  <target name="prebuilt" depends="build,clean-prebuilt" description="Copy compiled files into
+    the prebuilt crx directory">
+    <copy todir="../prebuilt/gwt-dev-plugin/DevModeOptions">
+      <fileset dir="war/DevModeOptions" excludes="**/*.java"/>
+    </copy>
+    <copy todir="../prebuilt/gwt-dev-plugin/">
+      <fileset dir="war/">
+        <include name="DevModeOptions.html" />
+      </fileset>
+    </copy>
+  </target>
+</project>

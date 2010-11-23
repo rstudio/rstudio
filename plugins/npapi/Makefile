@@ -23,6 +23,7 @@ CXXFLAGS += -DXP_MACOSX $(ARCHCFLAGS)
 # Mac puts multiple architectures into the same files
 TARGET_PLATFORM = Darwin-gcc3
 CHROME_PATH ?= /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
+PLATFORM_DIR_SUFFIX = gwtDev.plugin/Contents/MacOS/
 else
 ifeq ($(OS),linux)
 RUN_PATH_FLAG = -rpath-link
@@ -49,6 +50,7 @@ COMMON            = ../common/libcommon$(FLAG32BIT).a
 OBJ_OUTDIR        = build/$(TARGET_PLATFORM)
 EXTENSION_OUTDIR  = prebuilt/gwt-dev-plugin
 PLATFORM_DIR      = $(EXTENSION_OUTDIR)/$(TARGET_PLATFORM)
+PLATFORM_DIR_SUFFIX ?= ""
 
 INSTALLER_CRX     = prebuilt/gwt-dev-plugin.crx
 DLL               = $(OBJ_OUTDIR)/libGwtDevPlugin$(DLL_SUFFIX)
@@ -63,9 +65,9 @@ $(error You must specify the version if you are not in an svn checkout)
 endif
 
 .PHONY: default all crx lib common clean depend install install-platform \
-	versioned-files
+	versioned-files devmodeoptions
 
-default:: lib versioned-files
+default:: lib versioned-files devmodeoptions
 
 all:: common lib install-platform crx
 
@@ -112,7 +114,7 @@ versioned-files::
 $(DLL): $(OBJS) $(COMMON)
 	$(CXX) -m$(FLAG32BIT) -o $@ $(OBJS) $(COMMON) $(DLLFLAGS) 
 	@mkdir -p $(PLATFORM_DIR)
-	cp $(DLL) $(PLATFORM_DIR)/
+	cp $(DLL) $(PLATFORM_DIR)/$(PLATFORM_DIR_SUFFIX)
 
 $(OBJ_OUTDIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ -I. -I../common $<
@@ -122,6 +124,9 @@ common $(COMMON):
 
 clean:
 	rm -rf build
+
+devmodeoptions:
+	(ant -f DevModeOptions/build.xml prebuilt)
 
 depend: $(OBJ_OUTDIR)
 	($(foreach src,$(SRCS),$(DEPEND)) true) >>Makefile

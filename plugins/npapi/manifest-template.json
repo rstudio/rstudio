@@ -10,12 +10,16 @@
     "64": "gwt64.png",
     "128": "gwt128.png"
   },
+  "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDi6RrEy9YllRLM8bGBcIEk5ECAG2z+8ngTz7wwzRAQJpOzDp1Alq8fQFjH0+dzxok4RFLrWKHjxGqvXzWyWyTEo2nY3ScHLN/RoANMs8pl9X6TygRyO+3naqZOtLCrYHfV49JKXnYoFVbY5eBVYxHYY3BHAOKJj9onyAM4UPmMzQIDAQAB",
   "background_page": "background.html",
-  "content_scripts": [
-    {
-      "matches": ["http://*/*", "https://*/*", "file:///*"],
-      "js": ["record_tab_id.js"]
-    }
+  "options_page" : "DevModeOptions.html",
+  "page_action" : {
+    "default_icon" : "gwt32.png",
+    "default_title" : "GWT Development Mode",
+    "default_popup" : "page_action.html"
+  },
+  "permissions" : [
+    "tabs"
   ],
   "plugins": [
     { "path": "WINNT_x86-msvc/npGwtDevPlugin.dll", "public": true },

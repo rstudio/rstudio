@@ -61,6 +61,22 @@ public:
     return &variant;
   }
 
+  int isBoolean() const {
+    return isBoolean(variant);
+  }
+
+  static int isBoolean(const NPVariant& variant) {
+    return NPVARIANT_IS_BOOLEAN(variant);
+  }
+
+  bool getAsBoolean() const {
+    return getAsBoolean(variant);
+  }
+
+  static bool getAsBoolean(const NPVariant& variant) {
+    return NPVARIANT_TO_BOOLEAN(variant);
+  }
+
   int isInt() const {
     return isInt(variant);
   }
@@ -429,6 +445,10 @@ public:
     NPVariantProxy::retain(variant); // does nothing, present for consistency
     return &variant;
   }
+  
+  bool isBoolean() const {
+    return NPVariantProxy::isBoolean(variant);
+  }
 
   int isInt() const {
     return NPVariantProxy::isInt(variant);
@@ -442,6 +462,10 @@ public:
     return NPVariantProxy::isString(variant);
   }
   
+  bool getAsBoolean() const {
+    return NPVariantProxy::getAsBoolean(variant);
+  }
+
   int getAsInt() const {
     return NPVariantProxy::getAsInt(variant);
   }

@@ -19,15 +19,12 @@
 #include "scoped_ptr/scoped_ptr.h"
 
 #ifdef _WINDOWS
-// TODO: add platform-independent permission dialog
-#include "AllowDialog.h"
-
 #include <windows.h>
-
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ulReasonForCall, LPVOID lpReserved) {
-  AllowDialog::setHInstance(hModule);
   switch (ulReasonForCall) {
     case DLL_PROCESS_ATTACH:
+      DisableThreadLibraryCalls(hModule);
+      break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
@@ -36,7 +33,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ulReasonForCall, LPVOID lpReserved)
   return TRUE;
 }
 #endif
-
 extern "C" {
 
   static const NPNetscapeFuncs* browser;
@@ -242,8 +238,8 @@ extern "C" {
   }
 
   int16 NPP_HandleEvent(NPP instance, void* event) {
-    Debug::log(Debug::Info) << "NPP_HandleEvent(instance=" << instance << ")" << Debug::flush;
-    return 1 ;
+    Debug::log(Debug::Spam) << "NPP_HandleEvent(instance=" << instance << ")" << Debug::flush;
+    return 0 ;
   }
 
   void NPP_URLNotify(NPP instance, const char* url, NPReason reason, void* notifyData) {
