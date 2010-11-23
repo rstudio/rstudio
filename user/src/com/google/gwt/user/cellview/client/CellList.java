@@ -400,15 +400,14 @@ public class CellList<T> extends AbstractHasData<T> {
       }
 
       // Focus on the cell.
-      if (isClick
-          && getPresenter().getKeyboardSelectedRowInView() != indexOnPage) {
+      if (isClick) {
         /*
          * If the selected element is natively focusable, then we do not want to
          * steal focus away from it.
          */
         boolean isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
         isFocused = isFocused || isFocusable;
-        getPresenter().setKeyboardSelectedRow(indexOnPage, !isFocusable);
+        getPresenter().setKeyboardSelectedRow(indexOnPage, !isFocusable, false);
       }
 
       // Fire the event to the cell if the list has not been refreshed.
@@ -449,7 +448,7 @@ public class CellList<T> extends AbstractHasData<T> {
       }
 
       SafeHtmlBuilder cellBuilder = new SafeHtmlBuilder();
-      cell.render(value, null, cellBuilder);
+      cell.render(value, getValueKey(value), cellBuilder);
 
       if (i == keyboardSelectedRow) {
         // This is the focused item.
@@ -496,7 +495,7 @@ public class CellList<T> extends AbstractHasData<T> {
       setStyleName(elem, style.cellListKeyboardSelectedItem(), selected);
     }
     setFocusable(elem, selected);
-    if (selected && stealFocus) {
+    if (selected && stealFocus && !cellIsEditing) {
       elem.focus();
       onFocus();
     }

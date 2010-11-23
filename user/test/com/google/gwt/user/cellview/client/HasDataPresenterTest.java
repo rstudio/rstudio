@@ -321,7 +321,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     populatePresenter(presenter);
 
     // Select the second element.
-    presenter.setKeyboardSelectedRow(2, false);
+    presenter.setKeyboardSelectedRow(2, false, false);
     presenter.flush();
     assertEquals(2, presenter.getKeyboardSelectedRow());
     assertEquals("test 2", presenter.getKeyboardSelectedRowValue());
@@ -381,7 +381,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CHANGE_PAGE);
 
     // keyboardPrev in middle.
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
@@ -403,7 +403,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(40, 10), presenter.getVisibleRange());
 
     // keyboardNext in middle.
-    presenter.setKeyboardSelectedRow(8, false);
+    presenter.setKeyboardSelectedRow(8, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(9, false);
     view.assertKeyboardSelectedRow(8, true);
@@ -425,7 +425,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(50, 10), presenter.getVisibleRange());
 
     // keyboardPrevPage.
-    presenter.setKeyboardSelectedRow(5, false);
+    presenter.setKeyboardSelectedRow(5, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(5, true);
@@ -438,7 +438,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(40, 10), presenter.getVisibleRange());
 
     // keyboardNextPage.
-    presenter.setKeyboardSelectedRow(5, false);
+    presenter.setKeyboardSelectedRow(5, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(5, true);
@@ -494,7 +494,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.CURRENT_PAGE);
 
     // keyboardPrev in middle.
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
@@ -513,7 +513,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     view.assertKeyboardSelectedRowEmpty();
 
     // keyboardNext in middle.
-    presenter.setKeyboardSelectedRow(8, false);
+    presenter.setKeyboardSelectedRow(8, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(8, true);
@@ -567,7 +567,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     presenter.setKeyboardPagingPolicy(KeyboardPagingPolicy.INCREASE_RANGE);
 
     // keyboardPrev in middle.
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
@@ -591,7 +591,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
 
     // keyboardNext in middle.
-    presenter.setKeyboardSelectedRow(pageSize - 2, false);
+    presenter.setKeyboardSelectedRow(pageSize - 2, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(increment - 1, false);
     view.assertKeyboardSelectedRow(pageSize - 2, true);
@@ -614,7 +614,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
 
     // keyboardPrevPage within range.
-    presenter.setKeyboardSelectedRow(increment, false);
+    presenter.setKeyboardSelectedRow(increment, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(pageSize - increment, false);
     view.assertKeyboardSelectedRow(increment, true);
@@ -645,7 +645,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(new Range(pageStart, pageSize), presenter.getVisibleRange());
 
     // keyboardNextPage outside range.
-    presenter.setKeyboardSelectedRow(pageSize - 1, false);
+    presenter.setKeyboardSelectedRow(pageSize - 1, false, false);
     presenter.flush();
     view.assertKeyboardSelectedRow(increment, false);
     view.assertKeyboardSelectedRow(pageSize - 1, true);
@@ -795,19 +795,19 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(0, model.getSelectedSet().size());
 
     // Select an element.
-    presenter.setKeyboardSelectedRow(5, false);
+    presenter.setKeyboardSelectedRow(5, false, false);
     presenter.flush();
     assertEquals(1, model.getSelectedSet().size());
     assertTrue(model.isSelected("test 5"));
 
     // Select another element.
-    presenter.setKeyboardSelectedRow(9, false);
+    presenter.setKeyboardSelectedRow(9, false, false);
     presenter.flush();
     assertEquals(1, model.getSelectedSet().size());
     assertTrue(model.isSelected("test 9"));
 
     // Select an element on another page.
-    presenter.setKeyboardSelectedRow(11, false);
+    presenter.setKeyboardSelectedRow(11, false, false);
     presenter.flush();
     // Nothing is selected yet because we don't have data.
     assertEquals(0, model.getSelectedSet().size());
@@ -836,7 +836,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     view.assertKeyboardSelectedRowEmpty();
 
     // Move to middle.
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, false);
     assertEquals("test 11", presenter.getKeyboardSelectedRowValue());
     presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
@@ -845,7 +845,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to same row (should not early out).
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, true);
     assertEquals("test 11", presenter.getKeyboardSelectedRowValue());
     presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
@@ -854,7 +854,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to last row.
-    presenter.setKeyboardSelectedRow(9, false);
+    presenter.setKeyboardSelectedRow(9, false, false);
     assertEquals("test 19", presenter.getKeyboardSelectedRowValue());
     presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
@@ -865,7 +865,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(10, presenter.getVisibleRange().getLength());
 
     // Move to next page.
-    presenter.setKeyboardSelectedRow(10, false);
+    presenter.setKeyboardSelectedRow(10, false, false);
     populatePresenter(presenter);
     assertNull(presenter.getKeyboardSelectedRowValue());
     presenter.flush();
@@ -877,7 +877,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(10, presenter.getVisibleRange().getLength());
 
     // Negative index.
-    presenter.setKeyboardSelectedRow(-1, false);
+    presenter.setKeyboardSelectedRow(-1, false, false);
     populatePresenter(presenter);
     assertNull(presenter.getKeyboardSelectedRowValue());
     presenter.flush();
@@ -904,35 +904,35 @@ public class HasDataPresenterTest extends GWTTestCase {
     view.assertKeyboardSelectedRowEmpty();
 
     // Negative index (should remain at index 0).
-    presenter.setKeyboardSelectedRow(-1, false);
+    presenter.setKeyboardSelectedRow(-1, false, false);
     presenter.flush();
     assertEquals(0, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(0, true);
 
     // Move to middle.
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, false);
     presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to same row (should not early out).
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, true);
     presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to last row.
-    presenter.setKeyboardSelectedRow(9, false);
+    presenter.setKeyboardSelectedRow(9, false, false);
     presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(9, true);
 
     // Move to next page (confined to page).
-    presenter.setKeyboardSelectedRow(10, false);
+    presenter.setKeyboardSelectedRow(10, false, false);
     presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(9, false);
@@ -956,7 +956,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertNull(presenter.getKeyboardSelectedRowValue());
     view.assertKeyboardSelectedRowEmpty();
 
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, false);
     presenter.flush();
     assertEquals(-1, presenter.getKeyboardSelectedRow());
     assertNull(presenter.getKeyboardSelectedRowValue());
@@ -979,21 +979,21 @@ public class HasDataPresenterTest extends GWTTestCase {
     view.assertKeyboardSelectedRowEmpty();
 
     // Move to middle.
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, false);
     presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(0, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to same row (should not early out).
-    presenter.setKeyboardSelectedRow(1, false);
+    presenter.setKeyboardSelectedRow(1, false, true);
     presenter.flush();
     assertEquals(1, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
     view.assertKeyboardSelectedRow(1, true);
 
     // Move to last row.
-    presenter.setKeyboardSelectedRow(9, false);
+    presenter.setKeyboardSelectedRow(9, false, false);
     presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());
     view.assertKeyboardSelectedRow(1, false);
@@ -1002,7 +1002,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(pageSize, presenter.getVisibleRange().getLength());
 
     // Move to next page.
-    presenter.setKeyboardSelectedRow(10, false);
+    presenter.setKeyboardSelectedRow(10, false, false);
     populatePresenter(presenter);
     presenter.flush();
     assertEquals(10, presenter.getKeyboardSelectedRow());
@@ -1013,7 +1013,7 @@ public class HasDataPresenterTest extends GWTTestCase {
     assertEquals(pageSize, presenter.getVisibleRange().getLength());
 
     // Negative index near index 0.
-    presenter.setKeyboardSelectedRow(-1, false);
+    presenter.setKeyboardSelectedRow(-1, false, false);
     populatePresenter(presenter);
     presenter.flush();
     assertEquals(9, presenter.getKeyboardSelectedRow());

@@ -642,7 +642,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void keyboardEnd() {
     if (!keyboardPagingPolicy.isLimitedToRange()) {
-      setKeyboardSelectedRow(getRowCount() - 1, true);
+      setKeyboardSelectedRow(getRowCount() - 1, true, false);
     }
   }
 
@@ -651,7 +651,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void keyboardHome() {
     if (!keyboardPagingPolicy.isLimitedToRange()) {
-      setKeyboardSelectedRow(-getPageStart(), true);
+      setKeyboardSelectedRow(-getPageStart(), true, false);
     }
   }
 
@@ -660,7 +660,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void keyboardNext() {
     if (hasKeyboardNext()) {
-      setKeyboardSelectedRow(getKeyboardSelectedRow() + 1, true);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() + 1, true, false);
     }
   }
 
@@ -670,9 +670,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   public void keyboardNextPage() {
     if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
       // 0th index of next page.
-      setKeyboardSelectedRow(getPageSize(), true);
+      setKeyboardSelectedRow(getPageSize(), true, false);
     } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
-      setKeyboardSelectedRow(getKeyboardSelectedRow() + PAGE_INCREMENT, true);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() + PAGE_INCREMENT, true,
+          false);
     }
   }
 
@@ -681,7 +682,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    */
   public void keyboardPrev() {
     if (hasKeyboardPrev()) {
-      setKeyboardSelectedRow(getKeyboardSelectedRow() - 1, true);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() - 1, true, false);
     }
   }
 
@@ -691,9 +692,10 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
   public void keyboardPrevPage() {
     if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
       // 0th index of previous page.
-      setKeyboardSelectedRow(-getPageSize(), true);
+      setKeyboardSelectedRow(-getPageSize(), true, false);
     } else if (KeyboardPagingPolicy.INCREASE_RANGE == keyboardPagingPolicy) {
-      setKeyboardSelectedRow(getKeyboardSelectedRow() - PAGE_INCREMENT, true);
+      setKeyboardSelectedRow(getKeyboardSelectedRow() - PAGE_INCREMENT, true,
+          false);
     }
   }
 
@@ -717,10 +719,21 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>,
    * 
    * @param index the row index
    * @param stealFocus true to steal focus
+   * @param forceUpdate force the update even if the row didn't change
    */
-  public void setKeyboardSelectedRow(int index, boolean stealFocus) {
+  public void setKeyboardSelectedRow(int index, boolean stealFocus,
+      boolean forceUpdate) {
     // Early exit if disabled.
     if (KeyboardSelectionPolicy.DISABLED == keyboardSelectionPolicy) {
+      return;
+    }
+
+    /*
+     * Early exit if the keyboard selected row has not changed and the keyboard
+     * selected value is already set. 
+     */
+    if (!forceUpdate && getKeyboardSelectedRow() == index
+        && getKeyboardSelectedRowValue() != null) {
       return;
     }
 

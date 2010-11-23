@@ -277,7 +277,9 @@ public class EditTextCell extends
     String value = updateViewData(parent, viewData, false);
     clearInput(getInputElement(parent));
     setValue(parent, value, viewData);
-    valueUpdater.update(value);
+    if (valueUpdater != null) {
+      valueUpdater.update(value);
+    }
   }
 
   private void editEvent(Element parent, Object key, ViewData viewData,

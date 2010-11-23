@@ -15,7 +15,13 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.view.client.ProvidesKey;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Tests for {@link CellList}.
@@ -28,6 +34,37 @@ public class CellListTest extends AbstractHasDataTestBase {
 
     // Ensure that calling getRowElement() flushes all pending changes.
     assertNotNull(list.getRowElement(9));
+  }
+
+  /**
+   * Test that the correct values are sent to the Cell to be rendered.
+   */
+  public void testRenderWithKeyProvider() {
+    // Create a cell that verifies the render args.
+    final List<String> rendered = new ArrayList<String>();
+    final Cell<String> cell = new TextCell() {
+      @Override
+      public void render(String data, Object key, SafeHtmlBuilder sb) {
+        int call = rendered.size();
+        rendered.add(data);
+        assertTrue("render() called more than ten times", rendered.size() < 11);
+
+        assertEquals("test " + call, data);
+        assertTrue(key instanceof Integer);
+        assertEquals(call, key);
+      }
+    };
+
+    // Create a model with only one level, and three values at that level.
+    ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+      public Object getKey(String item) {
+        return Integer.parseInt(item.substring(5));
+      }
+    };
+    CellList<String> cellList = new CellList<String>(cell, keyProvider);
+    cellList.setRowData(createData(0, 10));
+    cellList.getPresenter().flush();
+    assertEquals(10, rendered.size());
   }
 
   @Override

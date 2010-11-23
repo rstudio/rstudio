@@ -971,7 +971,7 @@ public class CellTable<T> extends AbstractHasData<T> {
         boolean isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
         isFocused = isFocused || isFocusable;
         keyboardSelectedColumn = col;
-        getPresenter().setKeyboardSelectedRow(row, !isFocusable);
+        getPresenter().setKeyboardSelectedRow(row, !isFocusable, true);
       }
 
       // Update selection. Selection occurs before firing the event to the cell
@@ -1164,7 +1164,7 @@ public class CellTable<T> extends AbstractHasData<T> {
     }
 
     // Move focus to the cell.
-    if (selected && stealFocus) {
+    if (selected && stealFocus && !cellIsEditing) {
       TableCellElement td = tr.getCells().getItem(keyboardSelectedColumn);
       final com.google.gwt.user.client.Element cellParent = getCellParent(td).cast();
       CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
@@ -1404,7 +1404,7 @@ public class CellTable<T> extends AbstractHasData<T> {
       } else {
         // Reselect the row to move the selected column.
         keyboardSelectedColumn = nextColumn;
-        getPresenter().setKeyboardSelectedRow(oldRow, true);
+        getPresenter().setKeyboardSelectedRow(oldRow, true, true);
         event.preventDefault();
         return true;
       }
@@ -1421,7 +1421,7 @@ public class CellTable<T> extends AbstractHasData<T> {
       } else {
         // Reselect the row to move the selected column.
         keyboardSelectedColumn = prevColumn;
-        getPresenter().setKeyboardSelectedRow(oldRow, true);
+        getPresenter().setKeyboardSelectedRow(oldRow, true, true);
         event.preventDefault();
         return true;
       }
