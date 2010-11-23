@@ -25,7 +25,8 @@ import com.google.gwt.event.shared.EventHandler;
  * @param <H> handler type
  * 
  */
-public abstract class MouseEvent<H extends EventHandler> extends DomEvent<H> {
+public abstract class MouseEvent<H extends EventHandler>
+    extends HumanInputEvent<H> {
 
   /**
    * Gets the mouse x-position within the browser window's client area.
@@ -125,41 +126,5 @@ public abstract class MouseEvent<H extends EventHandler> extends DomEvent<H> {
       return getRelativeY(relativeElem);
     }
     return getClientY();
-  }
-
-  /**
-   * Is <code>alt</code> key down.
-   * 
-   * @return whether the alt key is down
-   */
-  public boolean isAltKeyDown() {
-    return getNativeEvent().getAltKey();
-  }
-
-  /**
-   * Is <code>control</code> key down.
-   * 
-   * @return whether the control key is down
-   */
-  public boolean isControlKeyDown() {
-    return getNativeEvent().getCtrlKey();
-  }
-
-  /**
-   * Is <code>meta</code> key down.
-   * 
-   * @return whether the meta key is down
-   */
-  public boolean isMetaKeyDown() {
-    return getNativeEvent().getMetaKey();
-  }
-
-  /**
-   * Is <code>shift</code> key down.
-   * 
-   * @return whether the shift key is down
-   */
-  public boolean isShiftKeyDown() {
-    return getNativeEvent().getShiftKey();
   }
 }

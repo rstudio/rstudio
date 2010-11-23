@@ -24,7 +24,15 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.GestureChangeEvent;
+import com.google.gwt.event.dom.client.GestureChangeHandler;
+import com.google.gwt.event.dom.client.GestureEndEvent;
+import com.google.gwt.event.dom.client.GestureEndHandler;
+import com.google.gwt.event.dom.client.GestureStartEvent;
+import com.google.gwt.event.dom.client.GestureStartHandler;
+import com.google.gwt.event.dom.client.HasAllGestureHandlers;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
+import com.google.gwt.event.dom.client.HasAllTouchHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -39,6 +47,14 @@ import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.dom.client.TouchCancelEvent;
+import com.google.gwt.event.dom.client.TouchCancelHandler;
+import com.google.gwt.event.dom.client.TouchEndEvent;
+import com.google.gwt.event.dom.client.TouchEndHandler;
+import com.google.gwt.event.dom.client.TouchMoveEvent;
+import com.google.gwt.event.dom.client.TouchMoveHandler;
+import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
@@ -72,8 +88,8 @@ import com.google.gwt.i18n.shared.HasDirectionEstimator;
 @SuppressWarnings("deprecation")
 public class Label extends Widget implements HasDirectionalText, HasWordWrap,
     HasDirection, HasClickHandlers, HasDoubleClickHandlers, SourcesClickEvents,
-    SourcesMouseEvents, HasAllMouseHandlers, HasDirectionEstimator,
-    HasAutoHorizontalAlignment, IsEditor<LeafValueEditor<String>> {
+    SourcesMouseEvents, HasAllGestureHandlers, HasAllMouseHandlers, HasAllTouchHandlers,
+    HasDirectionEstimator, HasAutoHorizontalAlignment, IsEditor<LeafValueEditor<String>> {
 
   public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
       DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
@@ -204,6 +220,18 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
     return addDomHandler(handler, DoubleClickEvent.getType());
   }
 
+  public HandlerRegistration addGestureChangeHandler(GestureChangeHandler handler) {
+    return addDomHandler(handler, GestureChangeEvent.getType());
+  }
+
+  public HandlerRegistration addGestureEndHandler(GestureEndHandler handler) {
+    return addDomHandler(handler, GestureEndEvent.getType());
+  }
+
+  public HandlerRegistration addGestureStartHandler(GestureStartHandler handler) {
+    return addDomHandler(handler, GestureStartEvent.getType());
+  }
+
   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
     return addDomHandler(handler, MouseDownEvent.getType());
   }
@@ -246,6 +274,22 @@ public class Label extends Widget implements HasDirectionalText, HasWordWrap,
     ListenerWrapper.WrappedMouseWheelListener.add(this, listener);
   }
 
+  public HandlerRegistration addTouchCancelHandler(TouchCancelHandler handler) {
+    return addDomHandler(handler, TouchCancelEvent.getType());
+  }
+
+  public HandlerRegistration addTouchEndHandler(TouchEndHandler handler) {
+    return addDomHandler(handler, TouchEndEvent.getType());
+  }
+
+  public HandlerRegistration addTouchMoveHandler(TouchMoveHandler handler) {
+    return addDomHandler(handler, TouchMoveEvent.getType());
+  }
+
+  public HandlerRegistration addTouchStartHandler(TouchStartHandler handler) {
+    return addDomHandler(handler, TouchStartEvent.getType());
+  }
+  
   public LeafValueEditor<String> asEditor() {
     return HasTextEditor.of(this);
   }

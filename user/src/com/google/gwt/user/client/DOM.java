@@ -969,8 +969,9 @@ public class DOM {
   }
 
   /**
-   * Releases mouse capture on the given element. Calling this method has no
-   * effect if the element does not currently have mouse capture.
+   * Releases mouse/touch/gesture capture on the given element. Calling this
+   * method has no effect if the element does not currently have
+   * mouse/touch/gesture capture.
    * 
    * @param elem the element to release capture
    * @see #setCapture(Element)
@@ -1063,10 +1064,11 @@ public class DOM {
   }
 
   /**
-   * Sets mouse-capture on the given element. This element will directly receive
-   * all mouse events until {@link #releaseCapture(Element)} is called on it.
+   * Sets mouse/touch/gesture capture on the given element. This element will
+   * directly receive all mouse events until {@link #releaseCapture(Element)} is
+   * called on it.
    * 
-   * @param elem the element on which to set mouse capture
+   * @param elem the element on which to set mouse/touch/gesture capture
    */
   public static void setCapture(Element elem) {
     sCaptureElem = elem;

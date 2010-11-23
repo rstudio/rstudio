@@ -200,6 +200,16 @@ abstract class DOMImplStandard extends DOMImpl {
     $wnd.addEventListener('keydown', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent, true);
     $wnd.addEventListener('keyup', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent, true);
     $wnd.addEventListener('keypress', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent, true);
+
+    // Touch and gesture events are not actually mouse events, but we treat
+    // them as such, so that DOM#setCapture() and DOM#releaseCapture() work.
+    $wnd.addEventListener('touchstart', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('touchmove', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('touchend', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('touchcancel', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('gesturestart', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('gesturechange', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('gestureend', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
   }-*/;
 
   protected native void sinkEventsImpl(Element elem, int bits) /*-{
@@ -246,6 +256,20 @@ abstract class DOMImplStandard extends DOMImpl {
     if (chMask & 0x40000) elem.oncontextmenu = (bits & 0x40000) ? 
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x80000) elem.onpaste       = (bits & 0x80000) ? 
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    if (chMask & 0x100000) elem.ontouchstart = (bits & 0x100000) ? 
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    if (chMask & 0x200000) elem.ontouchmove  = (bits & 0x200000) ? 
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    if (chMask & 0x400000) elem.ontouchend   = (bits & 0x400000) ? 
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    if (chMask & 0x800000) elem.ontouchcancel= (bits & 0x800000) ? 
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    if (chMask & 0x1000000) elem.ongesturestart  =(bits & 0x1000000) ? 
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    if (chMask & 0x2000000) elem.ongesturechange =(bits & 0x2000000) ? 
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    if (chMask & 0x4000000) elem.ongestureend    = (bits & 0x4000000) ? 
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
   }-*/;
 

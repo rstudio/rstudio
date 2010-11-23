@@ -71,7 +71,7 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
     /**
      * Gets the name associated with this event type.
      * 
-     * @return the name of this event typ
+     * @return the name of this event type
      */
     public String getName() {
       return name;
