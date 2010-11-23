@@ -55,6 +55,14 @@ public final class RPCRequest {
    * Construct an RPCRequest.
    */
   public RPCRequest(Method method, Object[] parameters,
+      SerializationPolicy serializationPolicy, int flags) {
+    this(method, parameters, null, serializationPolicy, flags);
+  }
+
+  /**
+   * Construct an RPCRequest.
+   */
+  public RPCRequest(Method method, Object[] parameters,
       RpcToken rpcToken, SerializationPolicy serializationPolicy, int flags) {
     this.method = method;
     this.parameters = parameters;
