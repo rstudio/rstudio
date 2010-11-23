@@ -20,4 +20,7 @@
 	<source path="client"/>
 	<extend-property name="locale" values="ar"/>
 	<set-property name = "locale" value = "ar"/>
+
+  <set-configuration-property name="locale.cookie" value="LOCALE"/>
+  <set-configuration-property name="locale.queryparam" value="arlocale"/>
 </module>

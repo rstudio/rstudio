@@ -17,6 +17,8 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
@@ -26,6 +28,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.impl.LocaleInfoImpl;
+import com.google.gwt.i18n.linker.LocalePropertyProviderGenerator;
 import com.google.gwt.i18n.server.GwtLocaleImpl;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -83,6 +86,24 @@ public class LocaleInfoGenerator extends Generator {
   }
 
   /**
+   * Generates source representing a string constant that might be null (and
+   * empty strings are treated as null as well).
+   * 
+   * @param value
+   * @return source representation of value
+   */
+  private static String possiblyNullStringConstant(String value) {
+    if (value == null || value.length() == 0) {
+      return "null";
+    }
+    return "\"" + quoteQuotes(value) + "\"";
+  }
+
+  private static String quoteQuotes(String val) {
+    return val.replace("\"", "\\\"");
+  }
+
+  /**
    * Generate an implementation for the given type.
    * 
    * @param logger error logger
@@ -99,6 +120,25 @@ public class LocaleInfoGenerator extends Generator {
     PropertyOracle propertyOracle = context.getPropertyOracle();
     LocaleUtils localeUtils = LocaleUtils.getInstance(logger, propertyOracle,
         context);
+    String cookieName = null;
+    String queryParamName = null;
+    ConfigurationProperty prop;
+    try {
+      prop = propertyOracle.getConfigurationProperty(
+          LocalePropertyProviderGenerator.LOCALE_COOKIE);
+      cookieName = prop.getValues().get(0);
+    } catch (BadPropertyValueException e) {
+    } catch (IndexOutOfBoundsException e) {
+      // ignore, leaving the value as null
+    }
+    try {
+      prop = propertyOracle.getConfigurationProperty(
+          LocalePropertyProviderGenerator.LOCALE_QUERYPARAM);
+      queryParamName = prop.getValues().get(0);
+    } catch (BadPropertyValueException e) {
+    } catch (IndexOutOfBoundsException e) {
+      // ignore, leaving the value as null
+    }
 
     JClassType targetClass;
     try {
@@ -177,6 +217,12 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("}");
       writer.println();
       writer.println("@Override");
+      writer.println("public String getLocaleCookieName() {");
+      writer.println("  return " + possiblyNullStringConstant(cookieName)
+          + ";");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
       writer.println("public String getLocaleNativeDisplayName(String localeName) {");
       writer.println("  if (GWT.isScript()) {");
       writer.println("    if (nativeDisplayNamesNative == null) {");
@@ -207,6 +253,12 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("    }");
       writer.println("    return nativeDisplayNamesJava.get(localeName);");
       writer.println("  }");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("public String getLocaleQueryParamName() {");
+      writer.println("  return " + possiblyNullStringConstant(queryParamName)
+          + ";");
       writer.println("}");
       writer.println();
       writer.println("@Override");
@@ -378,9 +430,5 @@ public class LocaleInfoGenerator extends Generator {
       localeMap.put(generatedClass, locales);
     }
     locales.add(locale);
-  }
-  
-  private String quoteQuotes(String val) {
-    return val.replace("\"", "\\\"");
   }
 }

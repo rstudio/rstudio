@@ -69,6 +69,16 @@ public class LocaleInfo {
   }
 
   /**
+   * Returns the name of the cookie used by GWT to get the locale, or
+   * null if this app was compiled to not use a cookie.
+   * 
+   * @return cookie name or null
+   */
+  public static String getLocaleCookieName() {
+    return instance.infoImpl.getLocaleCookieName();
+  }
+
+  /**
    * Returns the display name of the requested locale in its native locale, if
    * possible. If no native localization is available, the English name will
    * be returned, or as a last resort just the locale name will be returned.  If
@@ -85,6 +95,16 @@ public class LocaleInfo {
      * See the comment from getAvailableLocaleNames() above.
      */
     return instance.infoImpl.getLocaleNativeDisplayName(localeName);
+  }
+ 
+  /**
+   * Returns the name of the query parameter used by GWT to get the locale, or
+   * null if this app was compiled to not use a query parameter.
+   * 
+   * @return query parameter name or null
+   */
+  public static String getLocaleQueryParamName() {
+    return instance.infoImpl.getLocaleQueryParamName();
   }
 
   /**

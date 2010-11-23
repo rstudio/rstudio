@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
@@ -48,6 +49,7 @@ public class BindingProperty extends Property {
   private final Map<Condition, SortedSet<String>> conditionalValues = new LinkedHashMap<Condition, SortedSet<String>>();
   private final SortedSet<String> definedValues = new TreeSet<String>();
   private PropertyProvider provider;
+  private Class<? extends PropertyProviderGenerator> providerGenerator;
   private String fallback;
   private final ConditionAll rootCondition = new ConditionAll();
 
@@ -134,12 +136,24 @@ public class BindingProperty extends Property {
     return definedValues.toArray(new String[definedValues.size()]);
   }
 
+  /**
+   * Returns the fallback value for this property, or the empty string if none.
+   * 
+   * @return the fallback value
+   */
   public String getFallback() {
     return fallback;
   }
 
   public PropertyProvider getProvider() {
     return provider;
+  }
+
+  /**
+   * @return the the provider generator class, or null if none.
+   */
+  public Class<? extends PropertyProviderGenerator> getProviderGenerator() {
+    return providerGenerator;
   }
 
   public Set<String> getRequiredProperties() {
@@ -168,8 +182,7 @@ public class BindingProperty extends Property {
 
   /**
    * Returns <code>true</code> if the value was previously provided to
-   * {@link #addDefinedValue(String)} since the last time {@link #clearValues()}
-   * was called.
+   * {@link #addDefinedValue(Condition,String)}.
    */
   public boolean isDefinedValue(String value) {
     return definedValues.contains(value);
@@ -194,7 +207,7 @@ public class BindingProperty extends Property {
    * the currently-defined values.
    * 
    * @throws IllegalArgumentException if any of the provided values were not
-   *           provided to {@link #addDefinedValue(String)}.
+   *     provided to {@link #addDefinedValue(Condition,String)}.
    */
   public void setAllowedValues(Condition condition, String... values) {
     SortedSet<String> temp = new TreeSet<String>(Arrays.asList(values));
@@ -225,6 +238,15 @@ public class BindingProperty extends Property {
 
   public void setProvider(PropertyProvider provider) {
     this.provider = provider;
+  }
+
+  /**
+   * Set a provider generator for this property.
+   * 
+   * @param generator
+   */
+  public void setProviderGenerator(Class<? extends PropertyProviderGenerator> generator) {
+    providerGenerator = generator;
   }
 
   /**

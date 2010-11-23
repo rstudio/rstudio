@@ -18,6 +18,7 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.dev.util.StringKey;
@@ -72,9 +73,16 @@ public class PermutationsUtil {
   /**
    * Uses the internal map to insert JS to select a permutation into the
    * selection script.
+   * 
+   * @param selectionScript
+   * @param logger
+   * @param context
+   * @return the modified selectionScript buffer
+   * @throws UnableToCompleteException 
    */
   public StringBuffer addPermutationsJs(StringBuffer selectionScript,
-      TreeLogger logger, LinkerContext context) {
+      TreeLogger logger, LinkerContext context)
+      throws UnableToCompleteException {
     int startPos;
     
     PropertiesUtil.addPropertiesJs(selectionScript, logger, context);

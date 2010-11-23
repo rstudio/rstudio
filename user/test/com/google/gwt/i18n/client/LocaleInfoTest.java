@@ -38,6 +38,17 @@ public class LocaleInfoTest extends GWTTestCase {
     assertEquals("piglatin_UK_WINDOWS", locale);
   }
 
+  public void testLocaleCookieName() {
+    String cookieName = LocaleInfo.getLocaleCookieName();
+    assertNull("Default locale cooke name should be null", cookieName);
+  }
+
+  public void testLocaleQueryParam() {
+    String queryParam = LocaleInfo.getLocaleQueryParamName();
+    assertEquals("Default locale query param should be 'locale'", "locale",
+        queryParam);
+  }
+
   public void testNativeDisplayNames() {
     // en isn't in the property set for this module so should return null
     String displayName = LocaleInfo.getLocaleNativeDisplayName("en");
