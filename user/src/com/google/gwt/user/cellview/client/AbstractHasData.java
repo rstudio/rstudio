@@ -593,8 +593,8 @@ public abstract class AbstractHasData<T> extends Widget implements HasData<T>,
 
   /**
    * Set the {@link SelectionModel} that defines which items are selected and
-   * the {@link CellPreviewEvent.Handler} that controls how user selection is
-   * handled.
+   * the {@link com.google.gwt.view.client.CellPreviewEvent.Handler} that
+   * controls how user selection is handled.
    * 
    * @param selectionModel the {@link SelectionModel} that defines selection
    * @param selectionEventManager the handler that controls user selection

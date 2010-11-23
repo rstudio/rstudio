@@ -22,15 +22,14 @@ import com.google.gwt.event.shared.GwtEvent;
 /**
  * Allows the previewing of events before they are fired to Cells.
  * 
- * @param <T> the data type of the {@link DataDisplay} source
+ * @param <T> the data type of the {@link HasData} source
  */
 public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
 
   /**
    * Handler for {@link CellPreviewEvent}.
    * 
-   * @param <T> the data type of the {@link DataDisplay}
-   * @param <C> the context of the event, usually the Widget source
+   * @param <T> the data type of the {@link HasData}
    */
   public static interface Handler<T> extends EventHandler {
 
@@ -55,7 +54,7 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
    * @param <T> the old value type
    * @param source the source of the handlers
    * @param nativeEvent the event to preview
-   * @param display the {@link DataDisplay} source of the event
+   * @param display the {@link HasData} source of the event
    * @param index the index of the value where the event occurred
    * @param value the value where the event occurred
    * @param isCellEditing indicates whether or not the cell is being edited
@@ -76,7 +75,7 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
    * @param <T> the old value type
    * @param source the source of the handlers
    * @param nativeEvent the event to preview
-   * @param display the {@link DataDisplay} source of the event
+   * @param display the {@link HasData} source of the event
    * @param index the index of the value where the event occurred
    * @param column the column index
    * @param value the value where the event occurred
@@ -120,7 +119,7 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
    * Construct a new {@link CellPreviewEvent}.
    * 
    * @param nativeEvent the event to preview
-   * @param display the {@link DataDisplay} source of the event
+   * @param display the {@link HasData} source of the event
    * @param index the index of the value where the event occurred
    * @param value the value where the event occurred
    * @param isCellEditing indicates whether or not the cell is being edited
@@ -157,7 +156,7 @@ public class CellPreviewEvent<T> extends GwtEvent<CellPreviewEvent.Handler<T>> {
   }
 
   /**
-   * Get the {@link DataDisplay} source of the event.
+   * Get the {@link HasData} source of the event.
    */
   public HasData<T> getDisplay() {
     return display;

@@ -44,7 +44,7 @@ public class DefaultSelectionEventManager<T> implements
    * 
    * @param <T> the data type
    */
-  public static class CheckboxEventTranslater<T> implements EventTranslator<T> {
+  public static class CheckboxEventTranslator<T> implements EventTranslator<T> {
 
     /**
      * The column index of the checkbox. Other columns are ignored.
@@ -52,20 +52,20 @@ public class DefaultSelectionEventManager<T> implements
     private final int column;
 
     /**
-     * Construct a new {@link CheckboxEventTranslater} that will trigger
+     * Construct a new {@link CheckboxEventTranslator} that will trigger
      * selection when any checkbox in any column is selected.
      */
-    public CheckboxEventTranslater() {
+    public CheckboxEventTranslator() {
       this(-1);
     }
 
     /**
-     * Construct a new {@link CheckboxEventTranslater} that will trigger
+     * Construct a new {@link CheckboxEventTranslator} that will trigger
      * selection when a checkbox in the specified column is selected.
      * 
      * @param column the column index, or -1 for all columns
      */
-    public CheckboxEventTranslater(int column) {
+    public CheckboxEventTranslator(int column) {
       this.column = column;
     }
 
@@ -140,7 +140,7 @@ public class DefaultSelectionEventManager<T> implements
    * @return a {@link DefaultSelectionEventManager} instance
    */
   public static <T> DefaultSelectionEventManager<T> createCheckboxManager() {
-    return new DefaultSelectionEventManager<T>(new CheckboxEventTranslater<T>());
+    return new DefaultSelectionEventManager<T>(new CheckboxEventTranslator<T>());
   }
 
   /**
@@ -153,7 +153,7 @@ public class DefaultSelectionEventManager<T> implements
    */
   public static <T> DefaultSelectionEventManager<T> createCheckboxManager(
       int column) {
-    return new DefaultSelectionEventManager<T>(new CheckboxEventTranslater<T>(
+    return new DefaultSelectionEventManager<T>(new CheckboxEventTranslator<T>(
         column));
   }
 
@@ -167,8 +167,8 @@ public class DefaultSelectionEventManager<T> implements
    * @return a {@link DefaultSelectionEventManager} instance
    */
   public static <T> DefaultSelectionEventManager<T> createCustomManager(
-      EventTranslator<T> translater) {
-    return new DefaultSelectionEventManager<T>(translater);
+      EventTranslator<T> translator) {
+    return new DefaultSelectionEventManager<T>(translator);
   }
 
   /**

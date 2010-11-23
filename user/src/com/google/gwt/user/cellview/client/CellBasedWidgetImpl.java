@@ -67,7 +67,7 @@ abstract class CellBasedWidgetImpl {
    * widget should not steal focus from it.
    * 
    * @param elem the element
-   * @return
+   * @return true if the element is focusable, false if not
    */
   public boolean isFocusable(Element elem) {
     return focusableTypes.contains(elem.getTagName().toLowerCase())
