@@ -23,56 +23,60 @@
   <!-- 'default' is always defined.                                    -->
   <define-property name="locale" values="default" />
 
-  <!--
-   - Configuration property defining the query parameter to use for the locale.
-   - Valid values are any legal URL query parameter name. 
-   -->
-  <define-configuration-property name="locale.queryparam"
-      is-multi-valued="false"/>
-  <set-configuration-property name="locale.queryparam" value="locale"/>
+  <property-provider name="locale">
+    <![CDATA[
+      try {
+      var locale;
+      var defaultLocale = "/*-FALLBACK-*/" || 'default';
 
-  <!--
-   - Configuration property defining the cookie to use for the locale.
-   - Valid values are any legal cookie name. 
-   -->
-  <define-configuration-property name="locale.cookie" is-multi-valued="false"/>
-  <set-configuration-property name="locale.cookie" value=""/>
+      // Look for the locale as a url argument
+      if (locale == null) {
+        var args = location.search;
+        var startLang = args.indexOf("locale=");
+        if (startLang >= 0) {
+          var language = args.substring(startLang);
+          var begin = language.indexOf("=") + 1;
+          var end = language.indexOf("&");
+          if (end == -1) {
+            end = language.length;
+          }
+          locale = language.substring(begin, end);
+        }
+      }
 
-  <!--
-   - Configuration property controlling whether to use user agent info for
-   - the user's locale.
-   - Valid values are (case insensitive): y/yes/n/no/true/false/on/off (others
-   - are treated as no).
-   -->
-  <define-configuration-property name="locale.useragent"
-      is-multi-valued="false"/>
-  <set-configuration-property name="locale.useragent" value="N"/>
+      if (locale == null) {
+        // Look for the locale on the web page
+        locale = __gwt_getMetaProperty("locale")
+      }
 
-  <!--
-   - Configuration controlling whether to look for locale information in meta
-   - tags embedded by the server.
-   - Valid values are (case insensitive): y/yes/n/no/true/false/on/off (others
-   - are treated as no).
-   -->
-  <define-configuration-property name="locale.usemeta"
-      is-multi-valued="false"/>
-  <set-configuration-property name="locale.usemeta" value="Y"/>
+      if (locale == null) {
+        // Look for an override computed by other means in the selection script
+        locale = $wnd['__gwt_Locale'];
+      } else {
+        $wnd['__gwt_Locale'] = locale || defaultLocale;
+      }
 
-  <!--
-   - Configuration property defining the order to search for a locale.
-   - Valid values are comma-separated lists of the following values:
-   -   * queryparam
-   -   * meta
-   -   * cookie
-   -   * useragent
-   -->
-  <define-configuration-property name="locale.searchorder"
-      is-multi-valued="false"/>
-  <set-configuration-property name="locale.searchorder"
-      value="queryparam,cookie,meta,useragent"/>
+      if (locale == null) {
+        return defaultLocale;
+      }
 
-  <property-provider name="locale"
-      generator="com.google.gwt.i18n.linker.LocalePropertyProviderGenerator"/>
+      while (!__gwt_isKnownPropertyValue("locale",  locale)) {
+        var lastIndex = locale.lastIndexOf("_");
+        if (lastIndex == -1) {
+          locale = defaultLocale;
+          break;
+        } else {
+          locale = locale.substring(0,lastIndex);
+        }
+      }
+
+      return locale;
+    } catch(e){
+      alert("Unexpected exception in locale detection, using default: " + e);
+      return "default";
+    }
+  ]]>
+  </property-provider>
 
   <generate-with class="com.google.gwt.i18n.rebind.LocalizableGenerator">
     <when-type-assignable class="com.google.gwt.i18n.client.Localizable" />
@@ -95,6 +99,7 @@
       reference the compile-time locale set in the "locale" property.
    -->
   <define-configuration-property name="runtime.locales" is-multi-valued="true"/>
+  <set-configuration-property name="runtime.locales" value=""/>
 
   <!--
       A "real" locale to be served by default (i.e. if the browser either

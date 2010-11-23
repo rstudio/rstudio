@@ -62,13 +62,6 @@ public class LocaleInfoImpl {
   }
 
   /**
-   * @return the cookie name used for the GWT locale, or null if none.
-   */
-  public String getLocaleCookieName() {
-    return null;
-  }
-
-  /**
    * Returns the current locale name, such as "default, "en_US", etc.
    */
   public String getLocaleName() {
@@ -85,13 +78,6 @@ public class LocaleInfoImpl {
    * @return the name of the locale in its native locale
    */
   public String getLocaleNativeDisplayName(String localeName) {
-    return null;
-  }
-
-  /**
-   * @return the query parameter name used for the GWT locale, or null if none.
-   */
-  public String getLocaleQueryParamName() {
     return null;
   }
 

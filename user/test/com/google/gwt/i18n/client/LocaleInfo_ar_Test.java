@@ -30,29 +30,17 @@ public class LocaleInfo_ar_Test extends GWTTestCase {
     return "com.google.gwt.i18n.I18NTest_ar";
   }
 
+  public void testCurrentLocale() {
+    String locale = LocaleInfo.getCurrentLocale().getLocaleName();
+    assertEquals("ar", locale);
+  }
+
   public void testAvailableLocales() {
     String[] locales = LocaleInfo.getAvailableLocaleNames();
     ArrayList<String> localeList = new ArrayList<String>();
     Collections.addAll(localeList, locales);
     assertTrue(localeList.contains("ar"));
     assertTrue(localeList.contains("default"));
-  }
-
-  public void testCurrentLocale() {
-    String locale = LocaleInfo.getCurrentLocale().getLocaleName();
-    assertEquals("ar", locale);
-  }
-
-  public void testLocaleCookieName() {
-    String cookieName = LocaleInfo.getLocaleCookieName();
-    assertEquals("I18N/ar locale cooke name should be 'LOCALE'", "LOCALE",
-        cookieName);
-  }
-
-  public void testLocaleQueryParam() {
-    String queryParam = LocaleInfo.getLocaleQueryParamName();
-    assertEquals("I18N/ar locale query param should be 'arlocale'", "arlocale",
-        queryParam);
   }
 
   public void testNativeDisplayNames() {

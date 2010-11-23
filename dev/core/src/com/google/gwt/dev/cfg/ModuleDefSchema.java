@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.LinkerOrder;
-import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -50,151 +49,100 @@ public class ModuleDefSchema extends Schema {
 
   private final class BodySchema extends Schema {
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __add_linker_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __clear_configuration_property_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __collapse_all_properties_1_value = "true";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __collapse_property_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __collapse_property_2_values = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __define_configuration_property_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __define_configuration_property_2_is_multi_valued = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __define_linker_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __define_linker_2_class = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __define_property_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __define_property_2_values = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __entry_point_1_class = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __extend_configuration_property_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __extend_configuration_property_2_value = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __extend_property_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __extend_property_2_values = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __generate_with_1_class = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __inherits_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __property_provider_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
-    protected final String __property_provider_2_generator = "";
-
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __public_1_path = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __public_2_includes = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __public_3_excludes = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __public_4_skips = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __public_5_defaultexcludes = "yes";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __public_6_casesensitive = "true";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __replace_with_1_class = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __script_1_src = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __servlet_1_path = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __servlet_2_class = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __set_configuration_property_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __set_configuration_property_2_value = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __set_property_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __set_property_2_value = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __set_property_fallback_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __set_property_fallback_2_value = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __source_1_path = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __source_2_includes = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __source_3_excludes = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __source_4_skips = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __source_5_defaultexcludes = "yes";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __source_6_casesensitive = "true";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __stylesheet_1_src = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __super_source_1_path = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __super_source_2_includes = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __super_source_3_excludes = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __super_source_4_skips = "";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __super_source_5_defaultexcludes = "yes";
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __super_source_6_casesensitive = "true";
 
     /**
@@ -205,7 +153,6 @@ public class ModuleDefSchema extends Schema {
 
     private Schema fChild;
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __add_linker_begin(LinkerName name)
         throws UnableToCompleteException {
       if (moduleDef.getLinker(name.name) == null) {
@@ -216,7 +163,6 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __clear_configuration_property_begin(PropertyName name)
         throws UnableToCompleteException {
       // Don't allow configuration properties with the same name as a
@@ -243,13 +189,11 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __collapse_all_properties_begin(boolean collapse) {
       moduleDef.setCollapseAllProperties(collapse);
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __collapse_property_begin(PropertyName name,
         PropertyValueGlob[] values) throws UnableToCompleteException {
       Property prop = moduleDef.getProperties().find(name.token);
@@ -291,7 +235,6 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __define_configuration_property_begin(PropertyName name,
         String is_multi_valued) throws UnableToCompleteException {
       boolean isMultiValued = toPrimitiveBoolean(is_multi_valued);
@@ -360,7 +303,6 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __define_linker_begin(LinkerName name,
         Class<? extends Linker> linker) throws UnableToCompleteException {
       if (!Linker.class.isAssignableFrom(linker)) {
@@ -377,7 +319,6 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __define_property_begin(PropertyName name,
         PropertyValue[] values) throws UnableToCompleteException {
 
@@ -410,13 +351,11 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __entry_point_begin(String className) {
       moduleDef.addEntryPointTypeName(className);
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __extend_configuration_property_begin(PropertyName name,
         String value) throws UnableToCompleteException {
 
@@ -439,7 +378,6 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __extend_property_begin(BindingProperty property,
         PropertyValue[] values) {
       for (int i = 0; i < values.length; i++) {
@@ -450,14 +388,12 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __fail_begin() {
       RuleFail rule = new RuleFail();
       moduleDef.getRules().prepend(rule);
       return new FullConditionSchema(rule.getRootCondition());
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __generate_with_begin(Class<? extends Generator> generator)
         throws UnableToCompleteException {
       if (!Generator.class.isAssignableFrom(generator)) {
@@ -470,7 +406,6 @@ public class ModuleDefSchema extends Schema {
       return new FullConditionSchema(rule.getRootCondition());
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __inherits_begin(String name)
         throws UnableToCompleteException {
       TreeLogger branch = logger.branch(TreeLogger.TRACE,
@@ -479,49 +414,36 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
-    protected Schema __property_provider_begin(BindingProperty property,
-        Class<? extends PropertyProviderGenerator> generator) {
-      fChild = new ScriptSchema();
-      return fChild;
+    @SuppressWarnings("unused")
+    protected Schema __property_provider_begin(BindingProperty property) {
+      return fChild = new ScriptSchema();
     }
 
-    @SuppressWarnings("unused") // called reflectively
-    protected void __property_provider_end(BindingProperty property,
-        Class<? extends PropertyProviderGenerator> generator)
+    protected void __property_provider_end(BindingProperty property)
         throws UnableToCompleteException {
-      if (generator != null
-          && !PropertyProviderGenerator.class.isAssignableFrom(generator)) {
-        logger.log(TreeLogger.ERROR, "A property provider generator must "
-            + "extend " + PropertyProviderGenerator.class.getName(), null);
-        throw new UnableToCompleteException();
-      }
       ScriptSchema childSchema = ((ScriptSchema) fChild);
       String script = childSchema.getScript();
-      property.setProviderGenerator(generator);
       if (script == null) {
-        if (generator == null) {
-          // This is a problem.
-          //
-          logger.log(TreeLogger.ERROR, "Property providers must specify a "
-              + "JavaScript body or a provider generator", null);
-          throw new UnableToCompleteException();
-        }
-      } else {
-        int lineNumber = childSchema.getStartLineNumber();
-        JsFunction fn = parseJsBlock(lineNumber, script);
-        property.setProvider(new PropertyProvider(fn.getBody().toSource()));
+        // This is a problem.
+        //
+        logger.log(TreeLogger.ERROR,
+            "Property providers must specify a JavaScript body", null);
+        throw new UnableToCompleteException();
       }
+
+      int lineNumber = childSchema.getStartLineNumber();
+      JsFunction fn = parseJsBlock(lineNumber, script);
+
+      property.setProvider(new PropertyProvider(fn.getBody().toSource()));
     }
 
-    @SuppressWarnings("unused") // called reflectively
+    @SuppressWarnings("unused")
     protected Schema __public_begin(String path, String includes,
         String excludes, String skips, String defaultExcludes,
         String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected void __public_end(String path, String includes, String excludes,
         String skips, String defaultExcludes, String caseSensitive) {
       IncludeExcludeSchema childSchema = ((IncludeExcludeSchema) fChild);
@@ -546,7 +468,6 @@ public class ModuleDefSchema extends Schema {
           skipList, doDefaultExcludes, doCaseSensitive);
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __replace_with_begin(String className) {
       RuleReplaceWith rule = new RuleReplaceWith(className);
       moduleDef.getRules().prepend(rule);
@@ -557,12 +478,11 @@ public class ModuleDefSchema extends Schema {
      * @param src a partial or full url to a script file to inject
      * @return <code>null</code> since there can be no children
      */
-    @SuppressWarnings("unused") // called reflectively
+    @SuppressWarnings("unused")
     protected Schema __script_begin(String src) {
       return fChild = new ScriptSchema();
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected void __script_end(String src) {
       ScriptSchema childSchema = (ScriptSchema) fChild;
       String js = childSchema.getScript();
@@ -575,7 +495,6 @@ public class ModuleDefSchema extends Schema {
       moduleDef.getScripts().append(new Script(src));
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __servlet_begin(String path, String servletClass)
         throws UnableToCompleteException {
 
@@ -592,7 +511,6 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __set_configuration_property_begin(PropertyName name,
         String value) throws UnableToCompleteException {
 
@@ -629,14 +547,13 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
+    @SuppressWarnings("unused")
     protected Schema __set_property_begin(BindingProperty prop,
         PropertyValue[] value) throws UnableToCompleteException {
       bindingPropertyCondition = new ConditionAll();
       return new PropertyConditionSchema(bindingPropertyCondition);
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected void __set_property_end(BindingProperty prop,
         PropertyValue[] value) throws UnableToCompleteException {
       boolean error = false;
@@ -660,7 +577,6 @@ public class ModuleDefSchema extends Schema {
       prop.setAllowedValues(bindingPropertyCondition, stringValues);
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __set_property_fallback_begin(BindingProperty prop,
         PropertyValue value) throws UnableToCompleteException {
       boolean error = true;
@@ -684,14 +600,13 @@ public class ModuleDefSchema extends Schema {
      * Indicates which subdirectories contain translatable source without
      * necessarily adding a sourcepath entry.
      */
-    @SuppressWarnings("unused") // called reflectively
+    @SuppressWarnings("unused")
     protected Schema __source_begin(String path, String includes,
         String excludes, String skips, String defaultExcludes,
         String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected void __source_end(String path, String includes, String excludes,
         String skips, String defaultExcludes, String caseSensitive) {
       addSourcePackage(path, includes, excludes, skips, defaultExcludes,
@@ -702,7 +617,6 @@ public class ModuleDefSchema extends Schema {
      * @param src a partial or full url to a stylesheet file to inject
      * @return <code>null</code> since there can be no children
      */
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __stylesheet_begin(String src) {
       moduleDef.getStyles().append(src);
       return null;
@@ -712,14 +626,13 @@ public class ModuleDefSchema extends Schema {
      * Like adding a translatable source package, but such that it uses the
      * module's package itself as its sourcepath root entry.
      */
-    @SuppressWarnings("unused") // called reflectively
+    @SuppressWarnings("unused")
     protected Schema __super_source_begin(String path, String includes,
         String excludes, String skips, String defaultExcludes,
         String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected void __super_source_end(String path, String includes,
         String excludes, String skips, String defaultExcludes,
         String caseSensitive) {
@@ -860,10 +773,6 @@ public class ModuleDefSchema extends Schema {
     @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
-      if (value.length() == 0) {
-        // handle optional class names
-        return null;
-      }
       try {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         return cl.loadClass(value);
@@ -879,17 +788,14 @@ public class ModuleDefSchema extends Schema {
    */
   private final class FullConditionSchema extends PropertyConditionSchema {
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __when_type_assignable_1_class = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __when_type_is_1_class = null;
 
     public FullConditionSchema(CompoundCondition parentCondition) {
       super(parentCondition);
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __when_type_assignable_begin(String className) {
       Condition cond = new ConditionWhenTypeAssignableTo(className);
       parentCondition.getConditions().add(cond);
@@ -898,7 +804,6 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __when_type_is_begin(String className) {
       Condition cond = new ConditionWhenTypeIs(className);
       parentCondition.getConditions().add(cond);
@@ -915,13 +820,10 @@ public class ModuleDefSchema extends Schema {
 
   private static final class IncludeExcludeSchema extends Schema {
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __exclude_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __include_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __skip_1_name = null;
 
     /**
@@ -951,24 +853,21 @@ public class ModuleDefSchema extends Schema {
       return skips;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __exclude_begin(String name) {
       excludes.add(name);
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __include_begin(String name) {
       includes.add(name);
       return null;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __skip_begin(String name) {
       skips.add(name);
       return null;
     }
-  }
+}
 
   private static class LinkerName {
     public final String name;
@@ -983,7 +882,6 @@ public class ModuleDefSchema extends Schema {
    */
   private final class LinkerNameAttrCvt extends AttributeConverter {
 
-    @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
       // Ensure the value is a valid Java identifier
@@ -1014,7 +912,6 @@ public class ModuleDefSchema extends Schema {
    */
   private final class NullableNameAttrCvt extends AttributeConverter {
 
-    @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
       if (value == null || value.length() == 0) {
@@ -1048,7 +945,6 @@ public class ModuleDefSchema extends Schema {
       this.concreteType = concreteType;
     }
 
-    @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
       // Find the named property.
@@ -1078,13 +974,10 @@ public class ModuleDefSchema extends Schema {
    * A limited number of conditional predicates based only on properties.
    */
   private class PropertyConditionSchema extends Schema {
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __when_linker_added_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __when_property_is_1_name = null;
 
-    @SuppressWarnings("unused") // referenced reflectively
     protected final String __when_property_is_2_value = null;
 
     protected final CompoundCondition parentCondition;
@@ -1093,28 +986,24 @@ public class ModuleDefSchema extends Schema {
       this.parentCondition = parentCondition;
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __all_begin() {
       CompoundCondition cond = new ConditionAll();
       parentCondition.getConditions().add(cond);
       return subSchema(cond);
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __any_begin() {
       CompoundCondition cond = new ConditionAny();
       parentCondition.getConditions().add(cond);
       return subSchema(cond);
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __none_begin() {
       CompoundCondition cond = new ConditionNone();
       parentCondition.getConditions().add(cond);
       return subSchema(cond);
     }
 
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __when_linker_added_begin(LinkerName linkerName) {
       Condition cond = new ConditionWhenLinkerAdded(linkerName.name);
       parentCondition.getConditions().add(cond);
@@ -1128,7 +1017,6 @@ public class ModuleDefSchema extends Schema {
      * module writers. It prevents them from trying to create property providers
      * for unknown properties.
      */
-    @SuppressWarnings("unused") // called reflectively
     protected Schema __when_property_is_begin(BindingProperty prop,
         PropertyValue value) {
       Condition cond = new ConditionWhenPropertyIs(prop.getName(), value.token);
@@ -1156,7 +1044,6 @@ public class ModuleDefSchema extends Schema {
    */
   private final class PropertyNameAttrCvt extends AttributeConverter {
 
-    @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
       // Ensure each part of the name is valid.
@@ -1188,7 +1075,6 @@ public class ModuleDefSchema extends Schema {
    * Converts a comma-separated string into an array of property value tokens.
    */
   private final class PropertyValueArrayAttrCvt extends AttributeConverter {
-    @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
       String[] tokens = value.split(",");
@@ -1209,7 +1095,6 @@ public class ModuleDefSchema extends Schema {
    * Converts a string into a property value, validating it in the process.
    */
   private final class PropertyValueAttrCvt extends AttributeConverter {
-    @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
 
@@ -1239,7 +1124,6 @@ public class ModuleDefSchema extends Schema {
    * Converts a comma-separated string into an array of property value tokens.
    */
   private final class PropertyValueGlobArrayAttrCvt extends AttributeConverter {
-    @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
       String[] tokens = value.split(",");
@@ -1260,7 +1144,6 @@ public class ModuleDefSchema extends Schema {
    * Converts a string into a property value glob, validating it in the process.
    */
   private final class PropertyValueGlobAttrCvt extends AttributeConverter {
-    @Override
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
 
@@ -1286,7 +1169,6 @@ public class ModuleDefSchema extends Schema {
     public ScriptSchema() {
     }
 
-    @SuppressWarnings("unused") // called reflectively
     public void __text(String text) {
       if (script == null) {
         script = new StringBuffer();

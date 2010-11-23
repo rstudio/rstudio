@@ -15,36 +15,15 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.ConfigurationProperty;
-import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.PropertyProvider;
-import com.google.gwt.dev.shell.FailErrorLogger;
 
 import junit.framework.TestCase;
-
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Tests for {@link StandardSelectionProperty}.
  */
 public class StandardSelectionPropertyTest extends TestCase {
-
-  /**
-   * Test property provider generator.
-   */
-  public static class MyProviderGenerator
-      implements PropertyProviderGenerator {
-
-    public String generate(TreeLogger logger, SortedSet<String> possibleValues,
-        String fallback, SortedSet<ConfigurationProperty> configProperties)
-        throws UnableToCompleteException {
-      return "good " + fallback;
-    }
-  }
 
   private static final String FBV = "FBV";
 
@@ -57,49 +36,30 @@ public class StandardSelectionPropertyTest extends TestCase {
 
   private static final String PROVIDER_NOFALLBACK = "provider text without fallback";
 
-  private static final TreeLogger logger = new FailErrorLogger();
-
-  private static final SortedSet<ConfigurationProperty> configProperties = new TreeSet<ConfigurationProperty>();
-
-  public void testNoFallback() throws UnableToCompleteException {
+  public void testNoFallback() {
     BindingProperty bp = new BindingProperty("doesNotUseFallback");
     PropertyProvider provider = new PropertyProvider(PROVIDER_NOFALLBACK);
     bp.setProvider(provider);
     StandardSelectionProperty property = new StandardSelectionProperty(bp);
-    assertEquals(PROVIDER_NOFALLBACK, property.getPropertyProvider(logger,
-        configProperties));
+    assertEquals(PROVIDER_NOFALLBACK, property.getPropertyProvider());
 
     provider = new PropertyProvider(PROVIDER_MULTIFALLBACK);
     bp.setProvider(provider);
     property = new StandardSelectionProperty(bp);
-    assertEquals(PROVIDER_MULTIFALLBACK_EMPTY, property.getPropertyProvider(
-        logger, configProperties));
+    assertEquals(PROVIDER_MULTIFALLBACK_EMPTY, property.getPropertyProvider());
   }
 
-  public void testPropertyProviderGenerator() throws UnableToCompleteException {
-    BindingProperty bp = new BindingProperty("providerGenerator");
-    bp.setFallback(FBV);
-    PropertyProvider provider = new PropertyProvider("bad");
-    bp.setProvider(provider);
-    bp.setProviderGenerator(MyProviderGenerator.class);
-    StandardSelectionProperty property = new StandardSelectionProperty(bp);
-    assertEquals("good " + FBV, property.getPropertyProvider(logger,
-        configProperties));
-  }
-
-  public void testWithFallback() throws UnableToCompleteException {
+  public void testWithFallback() {
     BindingProperty bp = new BindingProperty("doesUseFallback");
     bp.setFallback(FBV);
     PropertyProvider provider = new PropertyProvider(PROVIDER_NOFALLBACK);
     bp.setProvider(provider);
     StandardSelectionProperty property = new StandardSelectionProperty(bp);
-    assertEquals(PROVIDER_NOFALLBACK, property.getPropertyProvider(logger,
-        configProperties));
+    assertEquals(PROVIDER_NOFALLBACK, property.getPropertyProvider());
 
     provider = new PropertyProvider(PROVIDER_MULTIFALLBACK);
     bp.setProvider(provider);
     property = new StandardSelectionProperty(bp);
-    assertEquals(PROVIDER_MULTIFALLBACK_FBV, property.getPropertyProvider(
-        logger, configProperties));
+    assertEquals(PROVIDER_MULTIFALLBACK_FBV, property.getPropertyProvider());
   }
 }

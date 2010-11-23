@@ -15,9 +15,6 @@
  */
 package com.google.gwt.core.ext.linker;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-
 import java.util.SortedSet;
 
 /**
@@ -30,12 +27,6 @@ import java.util.SortedSet;
  *      used in generators.
  */
 public interface SelectionProperty {
-
-  /**
-   * Returns the fallback value or an empty string if not defined.
-   */
-  String getFallbackValue();
-
   /**
    * Returns the name of the deferred binding property.
    */
@@ -49,15 +40,8 @@ public interface SelectionProperty {
   /**
    * Returns a raw function body that provides the runtime value to be used for
    * a deferred binding property.
-   * 
-   * @param logger logger to use for any warnings/errors
-   * @param configProperties set of configuration properties
-   * @throws UnableToCompleteException if execution cannot continue, after
-   *     having logged a message
    */
-  String getPropertyProvider(TreeLogger logger,
-      SortedSet<ConfigurationProperty> configProperties)
-      throws UnableToCompleteException;
+  String getPropertyProvider();
 
   /**
    * Returns <code>true</code> if the value of the SelectionProperty is always

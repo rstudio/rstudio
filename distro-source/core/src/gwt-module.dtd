@@ -32,28 +32,28 @@
 <!ELEMENT source (include | exclude)*>
 <!ATTLIST source
 	path CDATA #REQUIRED
-	includes CDATA #IMPLIED
-	excludes CDATA #IMPLIED
-	defaultexcludes (yes | no) "yes"
-	casesensitive (true | false) "true"
+		includes CDATA #IMPLIED
+		excludes CDATA #IMPLIED
+		defaultexcludes (yes | no) "yes"
+		casesensitive (true | false) "true"
 >
 <!-- Specify the public resource path, relative to the classpath location of the module descriptor -->
 <!ELEMENT public (include | exclude)*>
 <!ATTLIST public
 	path CDATA #REQUIRED
-	includes CDATA #IMPLIED
-	excludes CDATA #IMPLIED
-	defaultexcludes (yes | no) "yes"
-	casesensitive (true | false) "true"
+		includes CDATA #IMPLIED
+		excludes CDATA #IMPLIED
+		defaultexcludes (yes | no) "yes"
+		casesensitive (true | false) "true"
 >
 <!-- Specify a source path that rebases subpackages into the root namespace -->
 <!ELEMENT super-source (include | exclude)*>
 <!ATTLIST super-source
 	path CDATA #REQUIRED
-	includes CDATA #IMPLIED
-	excludes CDATA #IMPLIED
-	defaultexcludes (yes | no) "yes"
-	casesensitive (true | false) "true"
+		includes CDATA #IMPLIED
+		excludes CDATA #IMPLIED
+		defaultexcludes (yes | no) "yes"
+		casesensitive (true | false) "true"
 >
 <!ELEMENT include EMPTY>
 <!ATTLIST include
@@ -160,7 +160,6 @@
 <!ELEMENT property-provider (#PCDATA)>
 <!ATTLIST property-provider
 	name CDATA #REQUIRED
-	generator CDATA #IMPLIED
 >
 <!-- All possible predicates -->
 <!ENTITY % predicates "when-property-is | when-type-assignable | when-type-is | all | any | none">

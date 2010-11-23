@@ -15,10 +15,6 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.ConfigurationProperty;
-import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.dev.cfg.BindingProperty;
 
@@ -35,27 +31,20 @@ public class StandardSelectionProperty implements SelectionProperty {
   private static final String FALLBACK_TOKEN = "/*-FALLBACK-*/";
 
   private final String activeValue;
-  private final String fallback;
   private final boolean isDerived;
   private final String name;
   private final String provider;
-  private final Class<? extends PropertyProviderGenerator> providerGenerator;
   private final SortedSet<String> values;
 
   public StandardSelectionProperty(BindingProperty p) {
     activeValue = p.getConstrainedValue();
     isDerived = p.isDerived();
     name = p.getName();
-    fallback = p.getFallback();
-    providerGenerator = p.getProviderGenerator();
+    String fallback = p.getFallback();
     provider = p.getProvider() == null ? null
         : p.getProvider().getBody().replace(FALLBACK_TOKEN, fallback);
     values = Collections.unmodifiableSortedSet(new TreeSet<String>(
         Arrays.asList(p.getDefinedValues())));
-  }
-
-  public String getFallbackValue() {
-    return fallback;
   }
 
   public String getName() {
@@ -66,27 +55,8 @@ public class StandardSelectionProperty implements SelectionProperty {
     return values;
   }
 
-  public String getPropertyProvider(TreeLogger logger,
-      SortedSet<ConfigurationProperty> configProperties)
-      throws UnableToCompleteException {
-    String generatorResult = null;
-    if (providerGenerator != null) {
-      Throwable caught = null;
-      try {
-        PropertyProviderGenerator gen = providerGenerator.newInstance();
-        generatorResult = gen.generate(logger, values, fallback,
-            configProperties);
-      } catch (InstantiationException e) {
-        caught = e;
-      } catch (IllegalAccessException e) {
-        caught = e;
-      }
-      if (caught != null) {
-        logger.log(TreeLogger.WARN, "Failed to execute property provider "
-            + "generator '" + providerGenerator + "'", caught);
-      }
-    }
-    return generatorResult != null ? generatorResult : provider;
+  public String getPropertyProvider() {
+    return provider;
   }
 
   public boolean isDerived() {
