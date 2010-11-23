@@ -66,7 +66,7 @@ public class MakeTopLevelHtmlForPerm {
    */
   public class DependencyLinkerForLeftoversFragment implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
-      return leftoversStatusFileName(className);
+      return leftoversStatusFileName() + "#" + filename(className);
     }
   }
 
@@ -77,7 +77,7 @@ public class MakeTopLevelHtmlForPerm {
    */
   public class DependencyLinkerForTotalBreakdown implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
-      return splitStatusFileName(className);
+      return splitStatusFileName() + "#" + filename(className);
     }
   }
 
@@ -92,6 +92,31 @@ public class MakeTopLevelHtmlForPerm {
 
   interface DependencyLinker {
     String dependencyLinkForClass(String className);
+  }
+
+  /**
+   *  Use this class to intern strings to save space in the generated HTML.  After populating the
+   *  map, call getJs to create a JS array of all possible methods in this report.
+   */
+  @SuppressWarnings("serial")
+  private static class HtmlInterner extends LinkedHashMap<String, Integer> {
+    int index = 0;
+
+    public String getJs() {
+      StringBuilder builder = new StringBuilder();
+      builder.append("  var internedStrings = [\n");
+      for (String key : keySet()) {
+        builder.append("\"" + key + "\",");
+      }
+      builder.append("];\n");
+      return builder.toString();
+    }
+
+    public void intern(String key) {
+      if (!containsKey(key)) {
+        put(key, index++);
+      }
+    }
   }
 
   /**
@@ -276,9 +301,8 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   private static String classesInPackageFileName(SizeBreakdown breakdown,
-      String packageName, String permutationId) {
-    return breakdown.getId() + "_" + filename(packageName) + "-"
-        + permutationId + "_Classes.html";
+      String permutationId) {
+    return breakdown.getId() + "_" + permutationId + "_Classes.html";
   }
 
   private static String escapeXml(String unescaped) {
@@ -617,9 +641,24 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   public void makeLeftoverStatusPages() throws IOException {
+    PrintWriter outFile = new PrintWriter(getOutFile(leftoversStatusFileName()));
+    addStandardHtmlProlog(outFile, "Leftovers page", "Leftovers page", "");
+    outFile.println("<div id=\"bd\">");
+    outFile.println("<p>These classes have some leftover code, neither initial nor "
+        + "exclusive to any split point:</p>");
+    String curPackageName = "";
     for (String className : globalInformation.getClassToPackage().keySet()) {
-      makeLeftoversStatusPage(className);
+      String packageName = globalInformation.getClassToPackage().get(className);
+      if (packageName.compareTo("") == 0
+          || packageName.compareTo(curPackageName) != 0) {
+        curPackageName = packageName;
+        outFile.println("<div class='soyc-pkg-break'>Package: " + packageName + "</div>");
+      }
+      outFile.println("<a name=\"" + filename(className) + "\"></a><h3>" + className + "</h3>");
+      addLefttoversStatus(className, packageName, outFile);
     }
+    addStandardHtmlEnding(outFile);
+    outFile.close();
   }
 
   public void makeLiteralsClassesTableHtmls(SizeBreakdown breakdown)
@@ -653,7 +692,15 @@ public class MakeTopLevelHtmlForPerm {
    */
   public void makePackageClassesHtmls(SizeBreakdown breakdown,
       DependencyLinker depLinker) throws IOException {
-    for (String packageName : globalInformation.getPackageToClasses().keySet()) {
+    PrintWriter outFile = new PrintWriter(
+        getOutFile(classesInPackageFileName(breakdown, getPermutationId())));
+    addStandardHtmlProlog(outFile, "Classes in  " + breakdown.getDescription(),
+        "Classes in " + breakdown.getDescription(),
+        headerLineForBreakdown(breakdown));
+
+    String[] packageNames = globalInformation.getPackageToClasses().keySet().toArray(new String[0]);
+    Arrays.sort(packageNames);
+    for (String packageName : packageNames) {
       TreeMap<Integer, Set<String>> sortedClasses = new TreeMap<Integer, Set<String>>(
           Collections.reverseOrder());
       int sumSize = 0;
@@ -679,58 +726,93 @@ public class MakeTopLevelHtmlForPerm {
         }
       }
 
-      PrintWriter outFile = new PrintWriter(
-          getOutFile(classesInPackageFileName(breakdown, packageName,
-              getPermutationId())));
+      if (sortedClasses.size() > 0) {
+        outFile.println("<p>");
+        outFile.println("<table class=\"soyc-table\">");
+        outFile.print("<colgroup>");
+        outFile.print("<col id=\"soyc-splitpoint-type-col\">");
+        outFile.print("<col id=\"soyc-splitpoint-size-col\">");
+        outFile.println("</colgroup>");
+        outFile.print("<thead>");
+        outFile.print("<a name=\"" + filename(packageName) + "\"></a><th>Package: "
+            + packageName + "</th>");
+        outFile.print("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
+        outFile.print("</thead>");
 
-      addStandardHtmlProlog(outFile, "Classes in package " + packageName,
-          "Classes in package " + packageName,
-          headerLineForBreakdown(breakdown));
-      outFile.println("<table class=\"soyc-table\">");
-      outFile.println("<colgroup>");
-      outFile.println("<col id=\"soyc-splitpoint-type-col\">");
-      outFile.println("<col id=\"soyc-splitpoint-size-col\">");
-      outFile.println("</colgroup>");
-      outFile.println("<thead>");
-      outFile.println("<th>Package</th>");
-      outFile.println("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
-      outFile.println("</thead>");
-
-      for (Integer size : sortedClasses.keySet()) {
-        Set<String> classNames = sortedClasses.get(size);
-        for (String className : classNames) {
-          String drillDownFileName = depLinker.dependencyLinkForClass(className);
-          float perc = ((float) size / (float) sumSize) * 100;
-          outFile.println("<tr>");
-          if (drillDownFileName == null) {
-            outFile.println("<td>" + className + "</td>");
-          } else {
-            outFile.println("<td><a href=\"" + drillDownFileName
-                + "\" target=\"_top\">" + className + "</a></td>");
+        for (Integer size : sortedClasses.keySet()) {
+          Set<String> classNames = sortedClasses.get(size);
+          for (String className : classNames) {
+            String drillDownFileName = depLinker.dependencyLinkForClass(className);
+            float perc = ((float) size / (float) sumSize) * 100;
+            outFile.println("<tr>");
+            if (drillDownFileName == null) {
+              outFile.println("<td>" + className + "</td>");
+            } else {
+              outFile.println("<td><a href=\"" + drillDownFileName
+                  + "\" target=\"_top\">" + className + "</a></td>");
+            }
+            outFile.print("<td>");
+            outFile.print("<div class=\"soyc-bar-graph goog-inline-block\">");
+            // CHECKSTYLE_OFF
+            outFile.print("<div style=\"width:" + perc
+                + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+            // CHECKSTYLE_ON
+            outFile.print("</div>");
+            outFile.print(size + " (" + formatNumber(perc) + "%)");
+            outFile.print("</td>");
+            outFile.println("</tr>");
           }
-          outFile.println("<td>");
-          outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
-          // CHECKSTYLE_OFF
-          outFile.println("<div style=\"width:" + perc
-              + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
-          // CHECKSTYLE_ON
-          outFile.println("</div>");
-          outFile.println(size + " (" + formatNumber(perc) + "%)");
-          outFile.println("</td>");
-          outFile.println("</tr>");
         }
+        outFile.println("</table>");
+        outFile.println("</p>");
       }
-
-      outFile.println("</table>");
-      addStandardHtmlEnding(outFile);
-      outFile.close();
     }
+    addStandardHtmlEnding(outFile);
+    outFile.close();
   }
 
   public void makeSplitStatusPages() throws IOException {
+    PrintWriter outFile = new PrintWriter(getOutFile(splitStatusFileName()));
+
+    addStandardHtmlProlog(outFile, "Split point status", "Split point status", "");
+    outFile.println("<div id=\"bd\">");
+
+    String curPackageName = "";
+
     for (String className : globalInformation.getClassToPackage().keySet()) {
-      makeSplitStatusPage(className);
+      String packageName = globalInformation.getClassToPackage().get(className);
+      if (packageName.compareTo("") == 0
+          || packageName.compareTo(curPackageName) != 0) {
+        curPackageName = packageName;
+        outFile.println("<div class='soyc-pkg-break'>Package: " + packageName + "</div>");
+      }
+
+      outFile.println("<a name=\"" + filename(className) + "\"></a><h3>"
+          + className + "</h3>");
+
+      if (globalInformation.getInitialCodeBreakdown().classToSize.containsKey(className)) {
+        if (globalInformation.dependencies != null) {
+          outFile.println("<p>Some code is included in the initial fragment (<a href=\""
+              + dependenciesFileName("initial", packageName)
+              + "#"
+              + className
+              + "\">see why</a>)</p>");
+        } else {
+          outFile.println("<p>Some code is included in the initial fragment</p>");
+        }
+      }
+      for (int sp : splitPointsWithClass(className)) {
+        outFile.println("<p>Some code downloads with split point " + sp + ": "
+            + globalInformation.getSplitPointToLocation().get(sp) + "</p>");
+      }
+      if (globalInformation.getLeftoversBreakdown().classToSize.containsKey(className)) {
+        outFile.println("<p>Some code is left over:</p>");
+        addLefttoversStatus(className, packageName, outFile);
+      }
     }
+
+    addStandardHtmlEnding(outFile);
+    outFile.close();
   }
 
   public void makeTopLevelShell() throws IOException {
@@ -836,9 +918,8 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
   }
 
-  private void addLefttoversStatus(String className, String packageName,
-      PrintWriter outFile) {
-    outFile.println("<ul class=\"soyc-exclusive\">");
+  private void addLefttoversStatus(String className, String packageName, PrintWriter outFile) {
+    outFile.println("<ul class=\"soyc-excl\">");
     if (globalInformation.dependencies != null) {
       outFile.println("<li><a href=\""
           + dependenciesFileName("total", packageName) + "#" + className
@@ -969,12 +1050,10 @@ public class MakeTopLevelHtmlForPerm {
   /**
    * Makes a file name for a leftovers status file.
    *
-   * @param className
    * @return the file name of the leftovers status file
    */
-  private String leftoversStatusFileName(String className) {
-    return "leftoverStatus-" + filename(className) + "-" + getPermutationId()
-        + ".html";
+  private String leftoversStatusFileName() {
+    return "leftoverStatus-" + getPermutationId() + ".html";
   }
 
   /**
@@ -1225,16 +1304,6 @@ public class MakeTopLevelHtmlForPerm {
     PrintWriter outFile = null;
     String curClassName = "";
 
-    // To save space, create a JS array of all possible methods in this report.
-    class HtmlInterner extends LinkedHashMap<String, Integer> {
-      int index = 0;
-
-      public void intern(String key) {
-        if (!containsKey(key)) {
-          put(key, index++);
-        }
-      }
-    }
     HtmlInterner interner = new HtmlInterner();
 
     for (String reportMethod : classesInPackage) {
@@ -1262,11 +1331,7 @@ public class MakeTopLevelHtmlForPerm {
 
     // Write out the data values in the script
     outFile.println("<script language=\"javascript\">");
-    outFile.println("  var internedStrings = [");
-    for (String key : interner.keySet()) {
-      outFile.println("\"" + key + "\",");
-    }
-    outFile.println("  ];");
+    outFile.println(interner.getJs());
     // function to print a class header
     outFile.println("  function showC(packageRef, classRef) {");
     outFile.println("    var className = internedStrings[packageRef] + \".\" + internedStrings[classRef];");
@@ -1332,26 +1397,6 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   /**
-   * Produces an HTML file for leftovers status.
-   *
-   * @param className
-   * @throws IOException
-   */
-  private void makeLeftoversStatusPage(String className) throws IOException {
-    String packageName = globalInformation.getClassToPackage().get(className);
-    PrintWriter outFile = new PrintWriter(
-        getOutFile(leftoversStatusFileName(className)));
-    addStandardHtmlProlog(outFile, "Leftovers page for " + className,
-        "Leftovers page for " + className, "");
-    outFile.println("<div id=\"bd\">");
-    outFile.println("<p>This class has some leftover code, neither initial nor exclusive to any split point:</p>");
-    addLefttoversStatus(className, packageName, outFile);
-    addStandardHtmlEnding(outFile);
-
-    outFile.close();
-  }
-
-  /**
    * Produces an HTML file that shows information about a package.
    *
    * @param breakdown
@@ -1389,15 +1434,18 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<col id=\"soyc-splitpoint-size-col\">");
     outFile.println("</colgroup>");
     outFile.println("<thead>");
-    outFile.println("<th>Package</th>");
+    outFile.println("<th>Packages (Sorted by size)</th>");
     outFile.println("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
     outFile.println("</thead>");
 
     for (int size : sortedPackages.keySet()) {
+      if (size == 0) {
+        continue;
+      }
       Set<String> packageNames = sortedPackages.get(size);
       for (String packageName : packageNames) {
-        String drillDownFileName = classesInPackageFileName(breakdown,
-            packageName, getPermutationId());
+        String drillDownFileName = classesInPackageFileName(breakdown, getPermutationId())
+            + "#" + filename(packageName);
         float perc = (size / sumSize) * 100;
         outFile.println("<tr>");
         outFile.println("<td><a href=\"" + drillDownFileName
@@ -1421,39 +1469,6 @@ public class MakeTopLevelHtmlForPerm {
     return outFileName;
   }
 
-  private void makeSplitStatusPage(String className) throws IOException {
-    String packageName = globalInformation.getClassToPackage().get(className);
-    PrintWriter outFile = new PrintWriter(
-        getOutFile(splitStatusFileName(className)));
-
-    addStandardHtmlProlog(outFile, "Split point status for " + className,
-        "Split point status for " + className, "");
-    outFile.println("<div id=\"bd\">");
-
-    if (globalInformation.getInitialCodeBreakdown().classToSize.containsKey(className)) {
-      if (globalInformation.dependencies != null) {
-        outFile.println("<p>Some code is included in the initial fragment (<a href=\""
-            + dependenciesFileName("initial", packageName)
-            + "#"
-            + className
-            + "\">see why</a>)</p>");
-      } else {
-        outFile.println("<p>Some code is included in the initial fragment</p>");
-      }
-    }
-    for (int sp : splitPointsWithClass(className)) {
-      outFile.println("<p>Some code downloads with split point " + sp + ": "
-          + globalInformation.getSplitPointToLocation().get(sp) + "</p>");
-    }
-    if (globalInformation.getLeftoversBreakdown().classToSize.containsKey(className)) {
-      outFile.println("<p>Some code is left over:</p>");
-      addLefttoversStatus(className, packageName, outFile);
-    }
-
-    addStandardHtmlEnding(outFile);
-    outFile.close();
-  }
-
   /**
    * Find which split points include code belonging to <code>className</code>.
    */
@@ -1468,8 +1483,7 @@ public class MakeTopLevelHtmlForPerm {
     return sps;
   }
 
-  private String splitStatusFileName(String className) {
-    return "splitStatus-" + filename(className) + "-" + getPermutationId()
-        + ".html";
+  private String splitStatusFileName() {
+    return "splitStatus-" + getPermutationId() + ".html";
   }
 }

@@ -99,10 +99,10 @@
 }
 
 /* Split point status page rules */
-.soyc-exclusive {
+.soyc-excl {
   margin-left: 2em;
 }
-.soyc-exclusive li {
+.soyc-excl li {
   padding: .25em 0 .5em 0;
 }
 .soyc-call-stack-link {
@@ -258,3 +258,12 @@ html>body .goog-inline-block {
   background-color: #c5d7ef;
   width: 200px
 }
+
+.soyc-pkg-break {
+  font-size: 1.2em;
+  background-color: #c5d7ef;
+  font-weight: bold;
+  text-align: left;
+  margin-bottom: .5em;
+}
+
