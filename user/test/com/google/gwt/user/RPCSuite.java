@@ -38,6 +38,7 @@ import com.google.gwt.user.client.rpc.InheritanceTest;
 import com.google.gwt.user.client.rpc.InheritanceTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ObjectGraphTest;
 import com.google.gwt.user.client.rpc.ObjectGraphTestWithTypeObfuscation;
+import com.google.gwt.user.client.rpc.RpcTokenTest;
 import com.google.gwt.user.client.rpc.RunTimeSerializationErrorsTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTestWithTypeObfuscation;
@@ -97,6 +98,7 @@ public class RPCSuite {
     suite.addTestSuite(CustomFieldSerializerTest.class);
     suite.addTestSuite(ObjectGraphTest.class);
     suite.addTestSuite(com.google.gwt.user.client.rpc.RemoteServiceServletTest.class);
+    suite.addTestSuite(RpcTokenTest.class);
     suite.addTestSuite(UnicodeEscapingTest.class);
     suite.addTestSuite(RunTimeSerializationErrorsTest.class);
 

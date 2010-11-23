@@ -17,6 +17,7 @@ package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.client.rpc.RpcToken;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
 import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicy;
@@ -235,6 +236,12 @@ public final class RPC {
           classLoader, serializationPolicyProvider);
       streamReader.prepareToRead(encodedRequest);
 
+      RpcToken rpcToken = null;
+      if (streamReader.hasFlags(AbstractSerializationStream.FLAG_RPC_TOKEN_INCLUDED)) {
+        // Read the RPC token
+        rpcToken = (RpcToken) streamReader.deserializeValue(RpcToken.class);
+      }
+            
       // Read the name of the RemoteService interface
       String serviceIntfName = maybeDeobfuscate(streamReader,
           streamReader.readString());
@@ -296,8 +303,8 @@ public final class RPC {
           parameterValues[i] = streamReader.deserializeValue(parameterTypes[i]);
         }
 
-        return new RPCRequest(method, parameterValues, serializationPolicy,
-            streamReader.getFlags());
+        return new RPCRequest(method, parameterValues, rpcToken,
+            serializationPolicy, streamReader.getFlags());
 
       } catch (NoSuchMethodException e) {
         throw new IncompatibleRemoteServiceException(

@@ -43,7 +43,7 @@ public class RPCRequestTest extends TestCase {
 
     // Test simple case
     Object params[] = new Object[] {"abcdefg", 1234};
-    RPCRequest request = new RPCRequest(method, params, null, 0);
+    RPCRequest request = new RPCRequest(method, params, null, null, 0);
     String strRequest = request.toString();
     assertEquals("com.google.gwt.user.server.rpc.RPCRequestTest$"
         + "MockRequestImplementation.doSomething(\"abcdefg\", 1234)",
@@ -51,7 +51,7 @@ public class RPCRequestTest extends TestCase {
 
     // Test case with a string that needs escaping
     Object params2[] = new Object[] {"ab\"cde\"fg", 1234};
-    RPCRequest request2 = new RPCRequest(method, params2, null, 0);
+    RPCRequest request2 = new RPCRequest(method, params2, null, null, 0);
     String strRequest2 = request2.toString();
     assertEquals("com.google.gwt.user.server.rpc.RPCRequestTest$"
         + "MockRequestImplementation.doSomething(\"ab\\\"cde\\\"fg\", 1234)",

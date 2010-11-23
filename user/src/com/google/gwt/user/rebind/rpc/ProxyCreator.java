@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -42,6 +42,9 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+import com.google.gwt.user.client.rpc.RpcToken;
+import com.google.gwt.user.client.rpc.RpcToken.RpcTokenImplementation;
+import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter;
@@ -94,7 +97,7 @@ public class ProxyCreator {
       TypeOracle typeOracle,
       SerializableTypeOracleBuilder typesSentFromBrowser,
       SerializableTypeOracleBuilder typesSentToBrowser, JClassType remoteService)
-      throws NotFoundException {
+      throws NotFoundException, UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG, "Analyzing '"
         + remoteService.getParameterizedQualifiedSourceName()
         + "' for serializable types", null);
@@ -102,6 +105,33 @@ public class ProxyCreator {
     JMethod[] methods = remoteService.getOverridableMethods();
 
     JClassType exceptionClass = typeOracle.getType(Exception.class.getName());
+
+    JClassType rteType = typeOracle.getType(RpcTokenException.class.getName());
+    JClassType rpcTokenClass = typeOracle.getType(RpcToken.class.getName());
+    RpcTokenImplementation tokenClassToUse =
+      remoteService.findAnnotationInTypeHierarchy(
+      RpcTokenImplementation.class);
+    if (tokenClassToUse != null) {
+      // only include serializer for the specified class literal
+      JClassType rpcTokenType = typeOracle.getType(tokenClassToUse.value());
+      if (rpcTokenType.isAssignableTo(rpcTokenClass)) {
+        typesSentFromBrowser.addRootType(logger, rpcTokenType);
+        typesSentToBrowser.addRootType(logger, rteType);
+      } else {
+        logger.branch(TreeLogger.ERROR,
+            "RPC token class " + tokenClassToUse.value() + " must implement " +
+            RpcToken.class.getName(), null);
+        throw new UnableToCompleteException();
+      }
+    } else {
+      JClassType[] rpcTokenSubclasses = rpcTokenClass.getSubtypes();
+      for (JClassType rpcTokenSubclass : rpcTokenSubclasses) {
+        typesSentFromBrowser.addRootType(logger, rpcTokenSubclass);
+      }
+      if (rpcTokenSubclasses.length > 0) {
+        typesSentToBrowser.addRootType(logger, rteType);
+      }
+    }
 
     TreeLogger validationLogger = logger.branch(TreeLogger.DEBUG,
         "Analyzing methods:", null);
@@ -213,7 +243,7 @@ public class ProxyCreator {
 
   /**
    * Creates the client-side proxy class.
-   * 
+   *
    * @throws UnableToCompleteException
    */
   public String create(TreeLogger logger, GeneratorContext context)
@@ -314,12 +344,13 @@ public class ProxyCreator {
 
     generateProxyContructor(srcWriter);
 
-    generateProxyMethods(srcWriter, typesSentFromBrowser,
+    generateProxyMethods(srcWriter, typesSentFromBrowser, typeOracle,
         syncMethToAsyncMethMap);
 
-    if (elideTypeNames) {
-      generateStreamWriterOverride(srcWriter);
-    }
+    generateStreamWriterOverride(srcWriter);
+
+    generateCheckRpcTokenTypeOverride(srcWriter, typeOracle,
+        typesSentFromBrowser);
 
     srcWriter.commit(logger);
 
@@ -359,6 +390,38 @@ public class ProxyCreator {
     return typeName == null ? null : ('"' + typeName + '"');
   }
 
+  protected void generateCheckRpcTokenTypeOverride(SourceWriter srcWriter,
+      TypeOracle typeOracle, SerializableTypeOracle typesSentFromBrowser) {
+    JClassType rpcTokenType = typeOracle.findType(RpcToken.class.getName());
+    JClassType[] rpcTokenSubtypes = rpcTokenType.getSubtypes();
+    String rpcTokenImplementation = "";
+    for (JClassType rpcTokenSubtype : rpcTokenSubtypes) {
+      if (typesSentFromBrowser.isSerializable(rpcTokenSubtype)) {
+        if (!rpcTokenImplementation.isEmpty()) {
+          // >1 implematation of RpcToken, bail
+          rpcTokenImplementation = "";
+          break;
+        } else {
+          rpcTokenImplementation = rpcTokenSubtype.getQualifiedSourceName();
+        }
+      }
+    }
+    if (!rpcTokenImplementation.isEmpty()) {
+      srcWriter.println("@Override");
+      srcWriter.println("protected void checkRpcTokenType(RpcToken token) {");
+      srcWriter.indent();
+      srcWriter.println("if (!(token instanceof " + rpcTokenImplementation
+          + ")) {");
+      srcWriter.indent();
+      srcWriter.println("throw new RpcTokenException(\"Invalid RpcToken type: "
+          + "expected '" + rpcTokenImplementation + "' but got '\" + "
+          + "token.getClass() + \"'\");");
+      srcWriter.outdent();
+      srcWriter.println("}");
+      srcWriter.outdent();
+      srcWriter.println("}");
+    }
+  }
   /**
    * Generate the proxy constructor and delegate to the superclass constructor
    * using the default address for the
@@ -379,7 +442,7 @@ public class ProxyCreator {
 
   /**
    * Generate any fields required by the proxy.
-   * 
+   *
    * @param serializableTypeOracle the type oracle
    */
   protected void generateProxyFields(SourceWriter srcWriter,
@@ -398,12 +461,12 @@ public class ProxyCreator {
 
   /**
    * Generates the client's asynchronous proxy method.
-   * 
+   *
    * @param serializableTypeOracle the type oracle
    */
   protected void generateProxyMethod(SourceWriter w,
-      SerializableTypeOracle serializableTypeOracle, JMethod syncMethod,
-      JMethod asyncMethod) {
+      SerializableTypeOracle serializableTypeOracle, TypeOracle typeOracle,
+      JMethod syncMethod, JMethod asyncMethod) {
 
     w.println();
 
@@ -458,6 +521,12 @@ public class ProxyCreator {
     w.println("// createStreamWriter() prepared the stream");
     w.println("try {");
     w.indent();
+
+    w.println("if (getRpcToken() != null) {");
+    w.indent();
+    w.println(streamWriterName + ".writeObject(getRpcToken());");
+    w.outdent();
+    w.println("}");
 
     w.println(streamWriterName + ".writeString(REMOTE_SERVICE_INTERFACE_NAME);");
 
@@ -552,7 +621,7 @@ public class ProxyCreator {
   }
 
   protected void generateProxyMethods(SourceWriter w,
-      SerializableTypeOracle serializableTypeOracle,
+      SerializableTypeOracle serializableTypeOracle, TypeOracle typeOracle,
       Map<JMethod, JMethod> syncMethToAsyncMethMap) {
     JMethod[] syncMethods = serviceIntf.getOverridableMethods();
     for (JMethod syncMethod : syncMethods) {
@@ -575,7 +644,8 @@ public class ProxyCreator {
         }
       }
 
-      generateProxyMethod(w, serializableTypeOracle, syncMethod, asyncMethod);
+      generateProxyMethod(w, serializableTypeOracle, typeOracle, syncMethod,
+          asyncMethod);
     }
   }
 
@@ -599,7 +669,16 @@ public class ProxyCreator {
      */
     srcWriter.println("ClientSerializationStreamWriter toReturn =");
     srcWriter.indentln("(ClientSerializationStreamWriter) super.createStreamWriter();");
-    srcWriter.println("toReturn.addFlags(ClientSerializationStreamWriter.FLAG_ELIDE_TYPE_NAMES);");
+    if (elideTypeNames) {
+      srcWriter.println("toReturn.addFlags(ClientSerializationStreamWriter."
+          + "FLAG_ELIDE_TYPE_NAMES);");
+    }
+    srcWriter.println("if (getRpcToken() != null) {");
+    srcWriter.indent();
+    srcWriter.println("toReturn.addFlags(ClientSerializationStreamWriter."
+        + "FLAG_RPC_TOKEN_INCLUDED);");
+    srcWriter.outdent();
+    srcWriter.println("}");
     srcWriter.println("return toReturn;");
     srcWriter.outdent();
     srcWriter.println("}");
@@ -814,6 +893,8 @@ public class ProxyCreator {
         SerializationStreamWriter.class.getCanonicalName(),
         GWT.class.getCanonicalName(), ResponseReader.class.getCanonicalName(),
         SerializationException.class.getCanonicalName(),
+        RpcToken.class.getCanonicalName(),
+        RpcTokenException.class.getCanonicalName(),
         Impl.class.getCanonicalName(),
         RpcStatsContext.class.getCanonicalName()};
     for (String imp : imports) {

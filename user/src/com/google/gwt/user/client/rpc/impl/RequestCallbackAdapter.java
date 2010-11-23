@@ -21,6 +21,8 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.InvocationException;
+import com.google.gwt.user.client.rpc.RpcTokenException;
+import com.google.gwt.user.client.rpc.RpcTokenExceptionHandler;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamFactory;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
@@ -152,6 +154,11 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
    * {@link SerializationStreamReader}.
    */
   private final ResponseReader responseReader;
+  
+  /**
+   * {@link RpcTokenExceptionHandler} to notify of token exceptions.
+   */
+  private final RpcTokenExceptionHandler tokenExceptionHandler;
 
   /**
    * {@link SerializationStreamFactory} for creating
@@ -160,7 +167,16 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   private final SerializationStreamFactory streamFactory;
 
   public RequestCallbackAdapter(SerializationStreamFactory streamFactory,
-      String methodName, RpcStatsContext statsContext, AsyncCallback<T> callback,
+      String methodName, RpcStatsContext statsContext,
+      AsyncCallback<T> callback, ResponseReader responseReader) {
+    this(streamFactory, methodName, statsContext, callback, null,
+        responseReader);
+  }
+
+  public RequestCallbackAdapter(SerializationStreamFactory streamFactory,
+      String methodName, RpcStatsContext statsContext,
+      AsyncCallback<T> callback,
+      RpcTokenExceptionHandler tokenExceptionHandler,
       ResponseReader responseReader) {
     assert (streamFactory != null);
     assert (callback != null);
@@ -171,6 +187,7 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
     this.methodName = methodName;
     this.statsContext = statsContext;
     this.responseReader = responseReader;
+    this.tokenExceptionHandler = tokenExceptionHandler;
   }
 
   public void onError(Request request, Throwable exception) {
@@ -213,6 +230,9 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
     try {
       if (caught == null) {
         callback.onSuccess(result);
+      } else if (tokenExceptionHandler != null &&
+          caught instanceof RpcTokenException) {
+        tokenExceptionHandler.onRpcTokenException((RpcTokenException) caught);
       } else {
         callback.onFailure(caught);
       }

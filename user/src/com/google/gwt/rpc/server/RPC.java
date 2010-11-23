@@ -162,7 +162,7 @@ public class RPC {
           parameterValues[i] = o;
         }
 
-        return new RPCRequest(method, parameterValues, null, 0);
+        return new RPCRequest(method, parameterValues, null, null, 0);
 
       } catch (NoSuchMethodException e) {
         throw new IncompatibleRemoteServiceException(

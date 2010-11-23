@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.user.client.rpc.RpcToken;
+
 import java.lang.reflect.Method;
 
 /**
@@ -37,6 +39,11 @@ public final class RPCRequest {
    * The parameters for this request.
    */
   private final Object[] parameters;
+  
+  /**
+   * The RPC token for this request.
+   */
+  private final RpcToken rpcToken;
 
   /**
    * {@link SerializationPolicy} used for decoding this request and for encoding
@@ -48,9 +55,10 @@ public final class RPCRequest {
    * Construct an RPCRequest.
    */
   public RPCRequest(Method method, Object[] parameters,
-      SerializationPolicy serializationPolicy, int flags) {
+      RpcToken rpcToken, SerializationPolicy serializationPolicy, int flags) {
     this.method = method;
     this.parameters = parameters;
+    this.rpcToken = rpcToken;
     this.serializationPolicy = serializationPolicy;
     this.flags = flags;
   }
@@ -73,6 +81,13 @@ public final class RPCRequest {
     return parameters;
   }
 
+  /**
+   * Get the request's RPC token.
+   */
+  public RpcToken getRpcToken() {
+    return rpcToken;
+  }
+  
   /**
    * Returns the {@link SerializationPolicy} used to decode this request. This
    * is also the <code>SerializationPolicy</code> that should be used to encode

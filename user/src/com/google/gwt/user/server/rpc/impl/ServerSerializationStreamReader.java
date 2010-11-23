@@ -437,9 +437,14 @@ public final class ServerSerializationStreamReader extends
           + SERIALIZATION_STREAM_VERSION + " from client, got " + getVersion()
           + ".");
     }
+    
+    // Check the flags
+    if (!areFlagsValid()) {
+      throw new IncompatibleRemoteServiceException("Got an unknown flag from "
+          + "client: " + getFlags());
+    }
 
     // Read the type name table
-    //
     deserializeStringTable();
 
     // Write the serialization policy info

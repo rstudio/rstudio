@@ -21,8 +21,11 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.HasRpcToken;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
+import com.google.gwt.user.client.rpc.RpcToken;
+import com.google.gwt.user.client.rpc.RpcTokenExceptionHandler;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamFactory;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
@@ -37,7 +40,7 @@ import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader
  * For internal use only.
  */
 public abstract class RemoteServiceProxy implements SerializationStreamFactory,
-    ServiceDefTarget {
+    ServiceDefTarget, HasRpcToken {
 
   /**
    * The content type to be used in HTTP requests.
@@ -151,6 +154,10 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
 
   private RpcRequestBuilder rpcRequestBuilder;
 
+  private RpcToken rpcToken;
+
+  private RpcTokenExceptionHandler rpcTokenExceptionHandler;
+  
   /**
    * The name of the serialization policy file specified during construction.
    */
@@ -216,6 +223,20 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     return clientSerializationStreamWriter;
   }
   
+  /**
+   * @see ServiceDefTarget#getRpcToken()
+   */
+  public RpcToken getRpcToken() {
+    return rpcToken;
+  }
+  
+  /**
+   * @see ServiceDefTarget#getRpcTokenExceptionHandler()
+   */
+  public RpcTokenExceptionHandler getRpcTokenExceptionHandler() {
+    return rpcTokenExceptionHandler;
+  }  
+  
   public String getSerializationPolicyName() {
     return serializationPolicyName;
   }
@@ -232,17 +253,43 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   }
 
   /**
+   * @see HasRpcToken#setRpcToken(RpcToken)
+   */  
+  public void setRpcToken(RpcToken token) {
+    checkRpcTokenType(token); 
+    this.rpcToken = token;
+  }
+  
+  /**
+   * @see HasRpcToken#setRpcTokenExceptionHandler(RpcTokenExceptionHandler)
+   */
+  public void setRpcTokenExceptionHandler(RpcTokenExceptionHandler handler) {
+    this.rpcTokenExceptionHandler = handler;
+  }
+  
+  /**
    * @see ServiceDefTarget#setServiceEntryPoint(String)
    */
   public void setServiceEntryPoint(String url) {
     this.remoteServiceURL = url;
+  }
+  
+  /**
+   * This method is overridden by generated proxy classes to ensure that
+   * current service's {@link RpcToken} is of the type specified in {@link
+   * RpcToken.RpcTokenImplementation} annotation.
+   *
+   * @param token currently set {@link RpcToken}.
+   * @throws RpcTokenException if types mismatch.
+   */
+  protected void checkRpcTokenType(RpcToken token) {
   }
 
   protected <T> RequestCallback doCreateRequestCallback(
       ResponseReader responseReader, String methodName, RpcStatsContext statsContext,
       AsyncCallback<T> callback) {
     return new RequestCallbackAdapter<T>(this, methodName, statsContext,
-        callback, responseReader);
+        callback, getRpcTokenExceptionHandler(), responseReader);
   }
 
   /**

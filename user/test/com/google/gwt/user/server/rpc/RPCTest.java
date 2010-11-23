@@ -20,6 +20,7 @@ import static com.google.gwt.user.client.rpc.impl.AbstractSerializationStream.RP
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.client.rpc.RpcToken;
 import com.google.gwt.user.client.rpc.SerializableException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
@@ -233,6 +234,24 @@ public class RPCTest extends TestCase {
       "1" + RPC_SEPARATOR_CHAR + // param count
       "5" + RPC_SEPARATOR_CHAR + // 'J' == long param type
       "P7cuph2VDIQ" + RPC_SEPARATOR_CHAR; // long in base-64 encoding
+  
+  private static final String VALID_V6_ENCODED_REQUEST_WITH_INVALID_FLAGS = ""
+      + AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
+      RPC_SEPARATOR_CHAR + // version
+      "123" + RPC_SEPARATOR_CHAR + // flags
+      "5" + RPC_SEPARATOR_CHAR + // string table count
+      "moduleBaseUrl" + RPC_SEPARATOR_CHAR + // string table entry #1
+      "whitelistHashCode" + RPC_SEPARATOR_CHAR + // string table entry #2
+      D.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #3
+      "echo" + RPC_SEPARATOR_CHAR + // string table entry #4
+      "J" + RPC_SEPARATOR_CHAR + // string table entry #5
+      "1" + RPC_SEPARATOR_CHAR + // moduleBaseUrl
+      "2" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+      "3" + RPC_SEPARATOR_CHAR + // interface name
+      "4" + RPC_SEPARATOR_CHAR + // method name
+      "1" + RPC_SEPARATOR_CHAR + // param count
+      "5" + RPC_SEPARATOR_CHAR + // 'J' == long param type
+      "P7cuph2VDIQ" + RPC_SEPARATOR_CHAR; // long in base-64 encoding
 
   /**
    * Tests that out-of-range or other illegal integer values generated
@@ -344,6 +363,15 @@ public class RPCTest extends TestCase {
       // Expected
     }
   }
+  
+  public void testDecodeInvalidFlags() {
+    try {
+      RPC.decodeRequest(VALID_V6_ENCODED_REQUEST_WITH_INVALID_FLAGS);
+      fail("Should have thrown an IncompatibleRemoteServiceException");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected
+    }
+  }
 
   /**
    * Tests for method {@link RPC#decodeRequest(String)}.
@@ -439,6 +467,79 @@ public class RPCTest extends TestCase {
     } catch (IncompatibleRemoteServiceException e) {
       // should get here
     }
+  }
+
+  private static class TestRpcToken implements RpcToken {
+    String tokenValue;
+    public TestRpcToken() { }
+  }
+
+  private static final String VALID_V6_ENCODED_REQUEST_WITH_RPC_TOKEN = "" +
+      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
+      RPC_SEPARATOR_CHAR + // version
+      AbstractSerializationStream.FLAG_RPC_TOKEN_INCLUDED + // flags 
+          RPC_SEPARATOR_CHAR +
+      "7" + RPC_SEPARATOR_CHAR + // string table count
+      "moduleBaseUrl" + RPC_SEPARATOR_CHAR + // string table entry #1
+      "whitelistHashCode" + RPC_SEPARATOR_CHAR + // string table entry #2
+      TestRpcToken.class.getName() + "/3856085925" + // string table entry #3
+          RPC_SEPARATOR_CHAR +
+      "RPC_TOKEN_VALUE" + RPC_SEPARATOR_CHAR + // string table entry #4 
+      D.class.getName() + // string table entry #5
+          RPC_SEPARATOR_CHAR + 
+      "echo" + RPC_SEPARATOR_CHAR + // string table entry #6
+      "J" + RPC_SEPARATOR_CHAR + // string table entry #7
+      "1" + RPC_SEPARATOR_CHAR + // moduleBaseUrl
+      "2" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+      "3" + RPC_SEPARATOR_CHAR + // RPC token class
+      "4" + RPC_SEPARATOR_CHAR + // RPC token value
+      "5" + RPC_SEPARATOR_CHAR + // interface name
+      "6" + RPC_SEPARATOR_CHAR + // method name
+      "1" + RPC_SEPARATOR_CHAR + // param count
+      "7" + RPC_SEPARATOR_CHAR + // 'J' == long param type
+      "P7cuph2VDIQ" + RPC_SEPARATOR_CHAR; // long in base-64 encoding
+  
+  public void testDecodeRpcToken() {
+    class TestPolicy extends SerializationPolicy {
+      @Override
+      public boolean shouldDeserializeFields(Class<?> clazz) {
+        return TestRpcToken.class.equals(clazz);
+      }
+
+      @Override
+      public boolean shouldSerializeFields(Class<?> clazz) {
+        return TestRpcToken.class.equals(clazz);
+      }
+
+      @Override
+      public void validateDeserialize(Class<?> clazz)
+          throws SerializationException {
+      }
+
+      @Override
+      public void validateSerialize(Class<?> clazz)
+          throws SerializationException {
+      }
+
+      @Override
+      public Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz) {
+        return null;
+      }
+    }
+    class TestPolicyProvider implements SerializationPolicyProvider {      
+      public SerializationPolicy getSerializationPolicy(
+          String moduleBaseURL, String serializationPolicyStrongName) {
+        return new TestPolicy();
+      }
+    }
+    RPCRequest requestWithoutToken = RPC.decodeRequest(
+        VALID_V6_ENCODED_REQUEST);
+    assertNull(requestWithoutToken.getRpcToken());
+    RPCRequest requestWithToken = RPC.decodeRequest(
+        VALID_V6_ENCODED_REQUEST_WITH_RPC_TOKEN, null, new TestPolicyProvider());
+    assertNotNull(requestWithToken.getRpcToken());
+    TestRpcToken token = (TestRpcToken) requestWithToken.getRpcToken();
+    assertEquals("RPC_TOKEN_VALUE", token.tokenValue);
   }
 
   public void testDecodeV5Long() {

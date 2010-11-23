@@ -33,6 +33,10 @@
     class='com.google.gwt.user.server.rpc.ValueTypesTestServiceImpl' />
   <servlet path='/servlettest'
     class='com.google.gwt.user.server.rpc.RemoteServiceServletTestServiceImpl' />
+  <servlet path='/rpctokentest'
+    class='com.google.gwt.user.server.rpc.RpcTokenServiceImpl' />
+  <servlet path='/rpctokentest-annotation'
+    class='com.google.gwt.user.server.rpc.AnnotatedRpcTokenTestServiceImpl' />
   <servlet path='/unicodeEscape'
     class='com.google.gwt.user.server.rpc.UnicodeEscapingServiceImpl' />
 

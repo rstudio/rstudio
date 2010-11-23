@@ -41,10 +41,9 @@ public abstract class AbstractSerializationStream {
 
   /**
    * The current RPC protocol version. This version differs from the previous
-   * one in that primitive long values are represented as single-quoted base-64
-   * strings with an alphabet of [A-Za-z0-9$_], rather than as pairs of doubles.
+   * one in that it supports {@links RpcToken}s.
    */
-  public static final int SERIALIZATION_STREAM_VERSION = 6;
+  public static final int SERIALIZATION_STREAM_VERSION = 7;
   
   /**
    * The oldest supported RPC protocol version.
@@ -55,12 +54,32 @@ public abstract class AbstractSerializationStream {
    * Indicates that obfuscated type names should be used in the RPC payload.
    */
   public static final int FLAG_ELIDE_TYPE_NAMES = 0x1;
+  
+  /**
+   * Indicates that RPC token is included in the RPC payload.
+   */
+  public static final int FLAG_RPC_TOKEN_INCLUDED = 0x2;
+  
+  /**
+   * Bit mask representing all valid flags.
+   */
+  public static final int VALID_FLAGS_MASK = 0x3;
 
   private int flags = DEFAULT_FLAGS;
   private int version = SERIALIZATION_STREAM_VERSION;
 
   public final void addFlags(int flags) {
     this.flags |= flags;
+  }
+  
+  /**
+   * Checks if flags are valid.
+   * 
+   * @return <code>true</code> if flags are valid and <code>false</code>
+   *         otherwise.
+   */
+  public final boolean areFlagsValid() {
+    return (((flags | VALID_FLAGS_MASK) ^ VALID_FLAGS_MASK) == 0);
   }
 
   public final int getFlags() {

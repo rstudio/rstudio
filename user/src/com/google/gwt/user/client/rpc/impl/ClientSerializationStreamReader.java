@@ -57,6 +57,11 @@ public final class ClientSerializationStreamReader extends
           + SERIALIZATION_STREAM_VERSION + " from server, got " + getVersion()
           + ".");
     }
+    
+    if (!areFlagsValid()) {
+      throw new IncompatibleRemoteServiceException("Got an unknown flag from "
+          + "server: " + getFlags());
+    }
 
     stringTable = readJavaScriptObject();
   }
