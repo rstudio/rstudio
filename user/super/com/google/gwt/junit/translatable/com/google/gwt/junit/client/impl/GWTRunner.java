@@ -27,6 +27,9 @@ import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.client.rpc.SerializationStreamFactory;
+import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 import java.util.HashMap;
@@ -245,7 +248,23 @@ public abstract class GWTRunner implements EntryPoint {
     if (result != null && failureMessage != null) {
       RuntimeException ex = new RuntimeException(failureMessage);
       result.setException(ex);
-    }   
+    } else if (!GWT.isProdMode() && result.getException() != null) {
+      SerializationStreamFactory fac = (SerializationStreamFactory) junitHost;
+      SerializationStreamWriter writer = fac.createStreamWriter();
+      Throwable ex = result.getException();
+      try {
+        writer.writeObject(ex);
+      } catch (SerializationException e) {
+        /*
+         * Probably a dev mode exception that isn't client-side serializable.
+         * Send it as a plain old Exception instead.
+         */
+        StackTraceElement[] st = ex.getStackTrace();
+        ex = new Exception(ex.toString());
+        ex.setStackTrace(st);
+        result.setException(ex);
+      }
+    }
     TestInfo currentTest = getCurrentTest();
     currentResults.put(currentTest, result);
     ++currentTestIndex;
