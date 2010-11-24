@@ -17,14 +17,13 @@ package com.google.gwt.junit.client.impl;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.JUnitHost.ClientInfo;
 import com.google.gwt.junit.client.impl.JUnitHost.InitialResponse;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -252,7 +251,7 @@ public abstract class GWTRunner implements EntryPoint {
     ++currentTestIndex;
     if (currentTestIndex < currentBlock.getTests().length) {
       // Run the next test after a short delay.
-      DeferredCommand.addCommand(new Command() {
+      Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
         public void execute() {
           doRunTest();
         }
