@@ -73,11 +73,11 @@ public class AutoBeanTest extends GWTTestCase {
     boolean getGet();
 
     boolean hasHas();
-    
+
     void setIs(boolean value);
 
     void setGet(boolean value);
-    
+
     void setHas(boolean value);
   }
 
@@ -189,6 +189,7 @@ public class AutoBeanTest extends GWTTestCase {
     assertNotSame(i1, i2);
     assertFalse(i1.equals(i2));
     assertEquals(i1.getInt(), i2.getInt());
+    assertTrue(AutoBeanUtils.deepEquals(a1, a2));
 
     // Cloned instances do not affect one another
     i1.setInt(41);
@@ -204,6 +205,8 @@ public class AutoBeanTest extends GWTTestCase {
     o1.getIntf().setInt(42);
 
     AutoBean<OtherIntf> a2 = a1.clone(true);
+    assertTrue(AutoBeanUtils.deepEquals(a1, a2));
+
     OtherIntf o2 = a2.as();
 
     assertNotSame(o1.getIntf(), o2.getIntf());

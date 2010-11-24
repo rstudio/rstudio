@@ -22,7 +22,7 @@ import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.requestfactory.shared.ValueProxy;
 
 /**
- * Contains static implementation of EntityProxy-specific methods.
+ * Contains static implementation of ValueProxy-specific methods.
  */
 public class ValueProxyCategory {
 
@@ -44,12 +44,8 @@ public class ValueProxyCategory {
       return false;
     }
 
-    /*
-     * Comparison of ValueProxies is based solely on property values. Unlike an
-     * EntityProxy, neither the id nor the RequestContext is used
-     */
-    return AutoBeanUtils.getAllProperties(bean).equals(
-        AutoBeanUtils.getAllProperties(other));
+    // Compare the entire object graph
+    return AutoBeanUtils.deepEquals(bean, other);
   }
 
   /**

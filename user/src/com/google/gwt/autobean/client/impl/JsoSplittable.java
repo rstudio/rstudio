@@ -57,12 +57,24 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable 
       return Collections.emptyList();
     }
 
+    public boolean isIndexed() {
+      return false;
+    }
+
+    public boolean isKeyed() {
+      return false;
+    }
+
     public boolean isNull(int index) {
       throw new UnsupportedOperationException();
     }
 
     public boolean isNull(String key) {
       throw new UnsupportedOperationException();
+    }
+
+    public boolean isString() {
+      return true;
     }
 
     public int size() {
@@ -107,12 +119,24 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable 
     return Collections.unmodifiableList(toReturn);
   }
 
+  public native boolean isIndexed() /*-{
+    return this instanceof Array;
+  }-*/;
+
+  public boolean isKeyed() {
+    return !isString() && !isIndexed();
+  }
+
   public native boolean isNull(int index) /*-{
     return this[index] == null;
   }-*/;
 
   public native boolean isNull(String key) /*-{
     return this[key] == null;
+  }-*/;
+
+  public native boolean isString() /*-{
+    return typeof(this) == 'string' || this instanceof String;
   }-*/;
 
   public native int size() /*-{

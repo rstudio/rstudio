@@ -123,7 +123,7 @@ public class AbstractRequestContext implements RequestContext,
    * Objects are placed into this map by being passed into {@link #edit} or as
    * an invocation argument.
    */
-  private final Map<SimpleProxyId<?>, AutoBean<?>> editedProxies = new LinkedHashMap<SimpleProxyId<?>, AutoBean<?>>();
+  private final Map<SimpleProxyId<?>, AutoBean<? extends BaseProxy>> editedProxies = new LinkedHashMap<SimpleProxyId<?>, AutoBean<? extends BaseProxy>>();
   /**
    * A map that contains the canonical instance of an entity to return in the
    * return graph, since this is built from scratch.
@@ -297,6 +297,176 @@ public class AbstractRequestContext implements RequestContext,
     for (Object arg : request.getRequestData().getParameters()) {
       retainArg(arg);
     }
+  }
+
+  /**
+   * Resolves an IdMessage into an SimpleProxyId.
+   */
+  SimpleProxyId<BaseProxy> getId(IdMessage op) {
+    if (Strength.SYNTHETIC.equals(op.getStrength())) {
+      return allocateSyntheticId(op.getTypeToken(), op.getSyntheticId());
+    }
+    return requestFactory.getId(op.getTypeToken(), op.getServerId(),
+        op.getClientId());
+  }
+
+  /**
+   * Creates or retrieves a new canonical AutoBean to represent the given id in
+   * the returned payload.
+   */
+  <Q extends BaseProxy> AutoBean<Q> getProxyForReturnPayloadGraph(
+      SimpleProxyId<Q> id) {
+    @SuppressWarnings("unchecked")
+    AutoBean<Q> bean = (AutoBean<Q>) returnedProxies.get(id);
+    if (bean == null) {
+      Class<Q> proxyClass = id.getProxyClass();
+      bean = requestFactory.createProxy(proxyClass, id);
+      returnedProxies.put(id, bean);
+    }
+
+    return bean;
+  }
+
+  /**
+   * Create a single OperationMessage that encapsulates the state of a proxy
+   * AutoBean.
+   */
+  AutoBean<OperationMessage> makeOperationMessage(
+      SimpleProxyId<BaseProxy> stableId, AutoBean<?> proxyBean, boolean useDelta) {
+
+    // The OperationMessages describes operations on exactly one entity
+    AutoBean<OperationMessage> toReturn = MessageFactoryHolder.FACTORY.operation();
+    OperationMessage operation = toReturn.as();
+    operation.setTypeToken(requestFactory.getTypeToken(stableId.getProxyClass()));
+
+    // Find the object to compare against
+    AutoBean<?> parent;
+    if (stableId.isEphemeral()) {
+      // Newly-created object, use a blank object to compare against
+      parent = requestFactory.createProxy(stableId.getProxyClass(), stableId);
+
+      // Newly-created objects go into the persist operation bucket
+      operation.setOperation(WriteOperation.PERSIST);
+      // The ephemeral id is passed to the server
+      operation.setClientId(stableId.getClientId());
+      operation.setStrength(Strength.EPHEMERAL);
+    } else if (stableId.isSynthetic()) {
+      // Newly-created object, use a blank object to compare against
+      parent = requestFactory.createProxy(stableId.getProxyClass(), stableId);
+
+      // Newly-created objects go into the persist operation bucket
+      operation.setOperation(WriteOperation.PERSIST);
+      // The ephemeral id is passed to the server
+      operation.setSyntheticId(stableId.getSyntheticId());
+      operation.setStrength(Strength.SYNTHETIC);
+    } else {
+      parent = proxyBean.getTag(PARENT_OBJECT);
+      // Requests involving existing objects use the persisted id
+      operation.setServerId(stableId.getServerId());
+      operation.setOperation(WriteOperation.UPDATE);
+    }
+    assert !useDelta || parent != null;
+
+    // Send our version number to the server to cut down on future payloads
+    String version = proxyBean.getTag(Constants.VERSION_PROPERTY_B64);
+    if (version != null) {
+      operation.setVersion(version);
+    }
+
+    Map<String, Object> diff = Collections.emptyMap();
+    if (isEntityType(stableId.getProxyClass())) {
+      // Compute what's changed on the client
+      diff = useDelta ? AutoBeanUtils.diff(parent, proxyBean)
+          : AutoBeanUtils.getAllProperties(proxyBean);
+    } else if (isValueType(stableId.getProxyClass())) {
+      // Send everything
+      diff = AutoBeanUtils.getAllProperties(proxyBean);
+    }
+
+    if (!diff.isEmpty()) {
+      Map<String, Splittable> propertyMap = new HashMap<String, Splittable>();
+      for (Map.Entry<String, Object> entry : diff.entrySet()) {
+        propertyMap.put(entry.getKey(),
+            EntityCodex.encode(this, entry.getValue()));
+      }
+      operation.setPropertyMap(propertyMap);
+    }
+    return toReturn;
+  }
+
+  /**
+   * Create a new EntityProxy from a snapshot in the return payload.
+   * 
+   * @param id the EntityProxyId of the object
+   * @param returnRecord the JSON map containing property/value pairs
+   * @param operations the WriteOperation eventns to broadcast over the EventBus
+   */
+  <Q extends BaseProxy> Q processReturnOperation(SimpleProxyId<Q> id,
+      OperationMessage op, WriteOperation... operations) {
+
+    AutoBean<Q> toMutate = getProxyForReturnPayloadGraph(id);
+    toMutate.setTag(Constants.VERSION_PROPERTY_B64, op.getVersion());
+
+    final Map<String, Splittable> properties = op.getPropertyMap();
+    if (properties != null) {
+      // Apply updates
+      toMutate.accept(new AutoBeanVisitor() {
+        @Override
+        public boolean visitReferenceProperty(String propertyName,
+            AutoBean<?> value, PropertyContext ctx) {
+          if (ctx.canSet()) {
+            if (properties.containsKey(propertyName)) {
+              Splittable raw = properties.get(propertyName);
+              Class<?> elementType = ctx instanceof CollectionPropertyContext
+                  ? ((CollectionPropertyContext) ctx).getElementType() : null;
+              Object decoded = EntityCodex.decode(AbstractRequestContext.this,
+                  ctx.getType(), elementType, raw);
+              ctx.set(decoded);
+            }
+          }
+          return false;
+        }
+
+        @Override
+        public boolean visitValueProperty(String propertyName, Object value,
+            PropertyContext ctx) {
+          if (ctx.canSet()) {
+            if (properties.containsKey(propertyName)) {
+              Splittable raw = properties.get(propertyName);
+              Object decoded = ValueCodex.decode(ctx.getType(), raw);
+              // Hack for Date, consider generalizing for "custom serializers"
+              if (decoded != null && Date.class.equals(ctx.getType())) {
+                decoded = new DatePoser((Date) decoded);
+              }
+              ctx.set(decoded);
+            }
+          }
+          return false;
+        }
+      });
+    }
+
+    // Finished applying updates, freeze the bean
+    makeImmutable(toMutate);
+    Q proxy = toMutate.as();
+
+    /*
+     * Notify subscribers if the object differs from when it first came into the
+     * RequestContext.
+     */
+    if (operations != null && requestFactory.isEntityType(id.getProxyClass())) {
+      for (WriteOperation writeOperation : operations) {
+        if (writeOperation.equals(WriteOperation.UPDATE)
+            && !requestFactory.hasVersionChanged(id, op.getVersion())) {
+          // No updates if the server reports no change
+          continue;
+        }
+        requestFactory.getEventBus().fireEventFromSource(
+            new EntityProxyChange<EntityProxy>((EntityProxy) proxy,
+                writeOperation), id.getProxyClass());
+      }
+    }
+    return proxy;
   }
 
   /**
@@ -515,34 +685,6 @@ public class AbstractRequestContext implements RequestContext,
   }
 
   /**
-   * Resolves an IdMessage into an SimpleProxyId.
-   */
-  private SimpleProxyId<BaseProxy> getId(IdMessage op) {
-    if (Strength.SYNTHETIC.equals(op.getStrength())) {
-      return allocateSyntheticId(op.getTypeToken(), op.getSyntheticId());
-    }
-    return requestFactory.getId(op.getTypeToken(), op.getServerId(),
-        op.getClientId());
-  }
-
-  /**
-   * Creates or retrieves a new canonical AutoBean to represent the given id in
-   * the returned payload.
-   */
-  private <Q extends BaseProxy> AutoBean<Q> getProxyForReturnPayloadGraph(
-      SimpleProxyId<Q> id) {
-    @SuppressWarnings("unchecked")
-    AutoBean<Q> bean = (AutoBean<Q>) returnedProxies.get(id);
-    if (bean == null) {
-      Class<Q> proxyClass = id.getProxyClass();
-      bean = requestFactory.createProxy(proxyClass, id);
-      returnedProxies.put(id, bean);
-    }
-
-    return bean;
-  }
-
-  /**
    * Make an EntityProxy immutable.
    */
   private void makeImmutable(final AutoBean<? extends BaseProxy> toMutate) {
@@ -566,88 +708,8 @@ public class AbstractRequestContext implements RequestContext,
     // Get the factory from the runtime-specific holder.
     MessageFactory f = MessageFactoryHolder.FACTORY;
 
-    List<OperationMessage> operations = new ArrayList<OperationMessage>();
-    // Compute deltas for each entity seen by the context
-    for (AutoBean<?> currentView : editedProxies.values()) {
-      @SuppressWarnings("unchecked")
-      SimpleProxyId<BaseProxy> stableId = stableId((AutoBean<BaseProxy>) currentView);
-      assert !stableId.isSynthetic() : "Should not send synthetic id to server";
-
-      // The OperationMessages describes operations on exactly one entity
-      OperationMessage operation = f.operation().as();
-      operation.setTypeToken(requestFactory.getTypeToken(stableId.getProxyClass()));
-
-      // Find the object to compare against
-      AutoBean<?> parent;
-      if (stableId.isEphemeral()) {
-        // Newly-created object, use a blank object to compare against
-        parent = requestFactory.createProxy(stableId.getProxyClass(), stableId);
-
-        // Newly-created objects go into the persist operation bucket
-        operation.setOperation(WriteOperation.PERSIST);
-        // The ephemeral id is passed to the server
-        operation.setClientId(stableId.getClientId());
-        operation.setStrength(Strength.EPHEMERAL);
-      } else {
-        parent = currentView.getTag(PARENT_OBJECT);
-        // Requests involving existing objects use the persisted id
-        operation.setServerId(stableId.getServerId());
-        operation.setOperation(WriteOperation.UPDATE);
-      }
-      assert parent != null;
-
-      // Send our version number to the server to cut down on future payloads
-      String version = currentView.getTag(Constants.VERSION_PROPERTY_B64);
-      if (version != null) {
-        operation.setVersion(version);
-      }
-
-      Map<String, Object> diff = Collections.emptyMap();
-      if (isEntityType(stableId.getProxyClass())) {
-        // Compute what's changed on the client
-        diff = AutoBeanUtils.diff(parent, currentView);
-      } else if (isValueType(stableId.getProxyClass())) {
-        // Send everything
-        diff = AutoBeanUtils.getAllProperties(currentView);
-      }
-
-      if (!diff.isEmpty()) {
-        Map<String, Splittable> propertyMap = new HashMap<String, Splittable>();
-        for (Map.Entry<String, Object> entry : diff.entrySet()) {
-          propertyMap.put(entry.getKey(),
-              EntityCodex.encode(this, entry.getValue()));
-        }
-        operation.setPropertyMap(propertyMap);
-      }
-      operations.add(operation);
-    }
-
-    List<InvocationMessage> invocationMessages = new ArrayList<InvocationMessage>();
-    for (AbstractRequest<?> invocation : invocations) {
-      RequestData data = invocation.getRequestData();
-      InvocationMessage message = f.invocation().as();
-
-      String opsToSend = data.getOperation();
-      if (!opsToSend.isEmpty()) {
-        message.setOperation(opsToSend);
-      }
-
-      Set<String> refsToSend = data.getPropertyRefs();
-      if (!refsToSend.isEmpty()) {
-        message.setPropertyRefs(refsToSend);
-      }
-
-      List<Splittable> parameters = new ArrayList<Splittable>(
-          data.getParameters().length);
-      for (Object param : data.getParameters()) {
-        parameters.add(EntityCodex.encode(this, param));
-      }
-      if (!parameters.isEmpty()) {
-        message.setParameters(parameters);
-      }
-
-      invocationMessages.add(message);
-    }
+    List<OperationMessage> operations = makePayloadOperations();
+    List<InvocationMessage> invocationMessages = makePayloadInvocations();
 
     // Create the outer envelope message
     AutoBean<RequestMessage> bean = f.request();
@@ -662,78 +724,53 @@ public class AbstractRequestContext implements RequestContext,
   }
 
   /**
-   * Create a new EntityProxy from a snapshot in the return payload.
-   * 
-   * @param id the EntityProxyId of the object
-   * @param returnRecord the JSON map containing property/value pairs
-   * @param operations the WriteOperation eventns to broadcast over the EventBus
+   * Create an InvocationMessage for each remote method call being made by the
+   * context.
    */
-  private <Q extends BaseProxy> Q processReturnOperation(SimpleProxyId<Q> id,
-      OperationMessage op, WriteOperation... operations) {
+  private List<InvocationMessage> makePayloadInvocations() {
+    MessageFactory f = MessageFactoryHolder.FACTORY;
 
-    AutoBean<Q> toMutate = getProxyForReturnPayloadGraph(id);
-    toMutate.setTag(Constants.VERSION_PROPERTY_B64, op.getVersion());
+    List<InvocationMessage> invocationMessages = new ArrayList<InvocationMessage>();
+    for (AbstractRequest<?> invocation : invocations) {
+      // RequestData is produced by the generated subclass
+      RequestData data = invocation.getRequestData();
+      InvocationMessage message = f.invocation().as();
 
-    final Map<String, Splittable> properties = op.getPropertyMap();
-    if (properties != null) {
-      // Apply updates
-      toMutate.accept(new AutoBeanVisitor() {
-        @Override
-        public boolean visitReferenceProperty(String propertyName,
-            AutoBean<?> value, PropertyContext ctx) {
-          if (ctx.canSet()) {
-            if (properties.containsKey(propertyName)) {
-              Splittable raw = properties.get(propertyName);
-              Class<?> elementType = ctx instanceof CollectionPropertyContext
-                  ? ((CollectionPropertyContext) ctx).getElementType() : null;
-              Object decoded = EntityCodex.decode(AbstractRequestContext.this,
-                  ctx.getType(), elementType, raw);
-              ctx.set(decoded);
-            }
-          }
-          return false;
-        }
+      // Operation; essentially a method descriptor
+      message.setOperation(data.getOperation());
 
-        @Override
-        public boolean visitValueProperty(String propertyName, Object value,
-            PropertyContext ctx) {
-          if (ctx.canSet()) {
-            if (properties.containsKey(propertyName)) {
-              Splittable raw = properties.get(propertyName);
-              Object decoded = ValueCodex.decode(ctx.getType(), raw);
-              // Hack for Date, consider generalizing for "custom serializers"
-              if (Date.class.equals(ctx.getType())) {
-                decoded = new DatePoser((Date) decoded);
-              }
-              ctx.set(decoded);
-            }
-          }
-          return false;
-        }
-      });
-    }
-
-    // Finished applying updates, freeze the bean
-    makeImmutable(toMutate);
-    Q proxy = toMutate.as();
-
-    /*
-     * Notify subscribers if the object differs from when it first came into the
-     * RequestContext.
-     */
-    if (operations != null && requestFactory.isEntityType(id.getProxyClass())) {
-      for (WriteOperation writeOperation : operations) {
-        if (writeOperation.equals(WriteOperation.UPDATE)
-            && !requestFactory.hasVersionChanged(id, op.getVersion())) {
-          // No updates if the server reports no change
-          continue;
-        }
-        requestFactory.getEventBus().fireEventFromSource(
-            new EntityProxyChange<EntityProxy>((EntityProxy) proxy,
-                writeOperation), id.getProxyClass());
+      // The arguments to the with() calls
+      Set<String> refsToSend = data.getPropertyRefs();
+      if (!refsToSend.isEmpty()) {
+        message.setPropertyRefs(refsToSend);
       }
+
+      // Parameter values or references
+      List<Splittable> parameters = new ArrayList<Splittable>(
+          data.getParameters().length);
+      for (Object param : data.getParameters()) {
+        parameters.add(EntityCodex.encode(this, param));
+      }
+      if (!parameters.isEmpty()) {
+        message.setParameters(parameters);
+      }
+
+      invocationMessages.add(message);
     }
-    return proxy;
+    return invocationMessages;
+  }
+
+  /**
+   * Compute deltas for each entity seen by the context.
+   */
+  private List<OperationMessage> makePayloadOperations() {
+    List<OperationMessage> operations = new ArrayList<OperationMessage>();
+    for (AutoBean<? extends BaseProxy> currentView : editedProxies.values()) {
+      OperationMessage operation = makeOperationMessage(
+          BaseProxyCategory.stableId(currentView), currentView, true).as();
+      operations.add(operation);
+    }
+    return operations;
   }
 
   /**

@@ -49,6 +49,7 @@ public abstract class IdFactory {
    */
   public <P extends BaseProxy> SimpleProxyId<P> allocateSyntheticId(
       Class<P> clazz, int syntheticId) {
+    assert syntheticId > 0;
     SimpleProxyId<P> toReturn = createId(clazz, "%" + syntheticId);
     toReturn.setSyntheticId(syntheticId);
     return toReturn;

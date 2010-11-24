@@ -114,6 +114,17 @@ public interface RequestFactory {
   <T extends EntityProxy> EntityProxyId<T> getProxyId(String historyToken);
 
   /**
+   * Returns a ProxySerializer that can encode and decode the various
+   * EntityProxy and ValueProxy types reachable from the RequestFactory.
+   * 
+   * @param store a helper object for the ProxySerializer to provide low-level
+   *          storage access
+   * @return a new ProxySerializer
+   * @see DefaultProxyStore
+   */
+  ProxySerializer getSerializer(ProxyStore store);
+
+  /**
    * Start this request factory with a
    * {@link com.google.gwt.requestfactory.client.DefaultRequestTransport}.
    * 

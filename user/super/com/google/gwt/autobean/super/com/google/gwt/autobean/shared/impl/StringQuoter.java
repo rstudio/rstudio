@@ -29,6 +29,14 @@ public class StringQuoter {
   }
 
   public static Splittable split(String payload) {
-    return JsoSplittable.create(JsonUtils.safeEval(payload));
+    boolean isString = payload.charAt(0) == '\"';
+    if (isString) {
+      payload = "[" + payload + "]";
+    }
+    Splittable toReturn = JsoSplittable.create(JsonUtils.safeEval(payload));
+    if (isString) {
+      toReturn = toReturn.get(0);
+    }
+    return toReturn;
   }
 }

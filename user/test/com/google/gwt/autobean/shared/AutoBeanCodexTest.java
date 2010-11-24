@@ -101,9 +101,6 @@ public class AutoBeanCodexTest extends GWTTestCase {
 
     Map<String, Simple> getSimpleMap();
 
-    @AutoBean.PropertyName("simpleMap")
-    Map<String, ReachableOnlyFromParameterization> getSimpleMapAltType();
-
     void setComplexMap(Map<Simple, Simple> map);
 
     void setSimpleMap(Map<String, Simple> map);
@@ -146,7 +143,7 @@ public class AutoBeanCodexTest extends GWTTestCase {
     AutoBean<HasCycle> bean = f.hasCycle();
     bean.as().setCycle(Arrays.asList(bean.as()));
     try {
-      AutoBeanCodex.encode(bean);
+      checkEncode(bean);
       fail("Should not have encoded");
     } catch (UnsupportedOperationException expected) {
     }
@@ -155,11 +152,16 @@ public class AutoBeanCodexTest extends GWTTestCase {
   public void testEmptyList() {
     AutoBean<HasList> bean = f.hasList();
     bean.as().setList(Collections.<Simple> emptyList());
-    Splittable split = AutoBeanCodex.encode(bean);
-    AutoBean<HasList> decodedBean = AutoBeanCodex.decode(f, HasList.class,
-        split);
+    AutoBean<HasList> decodedBean = checkEncode(bean);
     assertNotNull(decodedBean.as().getList());
     assertTrue(decodedBean.as().getList().isEmpty());
+  }
+
+  private <T> AutoBean<T> checkEncode(AutoBean<T> bean) {
+    Splittable split = AutoBeanCodex.encode(bean);
+    AutoBean<T> decoded = AutoBeanCodex.decode(f, bean.getType(), split);
+    assertTrue(AutoBeanUtils.deepEquals(bean, decoded));
+    return decoded;
   }
 
   public void testEnum() {
@@ -184,7 +186,7 @@ public class AutoBeanCodexTest extends GWTTestCase {
     // Make sure the overridden form is always used
     assertFalse(split.getPayload().contains("BAZ"));
 
-    AutoBean<HasEnum> decoded = AutoBeanCodex.decode(f, HasEnum.class, split);
+    AutoBean<HasEnum> decoded = checkEncode(bean);
     assertEquals(MyEnum.BAZ, decoded.as().getEnum());
     assertEquals(arrayValue, decoded.as().getEnums());
     assertEquals(mapValue, decoded.as().getMap());
@@ -207,8 +209,7 @@ public class AutoBeanCodexTest extends GWTTestCase {
       complex.put(key, s);
     }
 
-    Splittable split = AutoBeanCodex.encode(bean);
-    AutoBean<HasMap> decoded = AutoBeanCodex.decode(f, HasMap.class, split);
+    AutoBean<HasMap> decoded = checkEncode(bean);
     map = decoded.as().getSimpleMap();
     complex = decoded.as().getComplexMap();
     assertEquals(5, map.size());
@@ -226,8 +227,7 @@ public class AutoBeanCodexTest extends GWTTestCase {
 
   public void testNull() {
     AutoBean<Simple> bean = f.simple();
-    Splittable split = AutoBeanCodex.encode(bean);
-    AutoBean<Simple> decodedBean = AutoBeanCodex.decode(f, Simple.class, split);
+    AutoBean<Simple> decodedBean = checkEncode(bean);
     assertNull(decodedBean.as().getString());
   }
 
@@ -237,17 +237,13 @@ public class AutoBeanCodexTest extends GWTTestCase {
     simple.setInt(42);
     simple.setString("Hello World!");
 
-    Splittable split = AutoBeanCodex.encode(bean);
-
-    AutoBean<Simple> decodedBean = AutoBeanCodex.decode(f, Simple.class, split);
+    AutoBean<Simple> decodedBean = checkEncode(bean);
     assertTrue(AutoBeanUtils.diff(bean, decodedBean).isEmpty());
 
     AutoBean<HasSimple> bean2 = f.hasSimple();
     bean2.as().setSimple(simple);
-    split = AutoBeanCodex.encode(bean2);
 
-    AutoBean<HasSimple> decodedBean2 = AutoBeanCodex.decode(f, HasSimple.class,
-        split);
+    AutoBean<HasSimple> decodedBean2 = checkEncode(bean2);
     assertNotNull(decodedBean2.as().getSimple());
     assertTrue(AutoBeanUtils.diff(bean,
         AutoBeanUtils.getAutoBean(decodedBean2.as().getSimple())).isEmpty());
@@ -255,10 +251,8 @@ public class AutoBeanCodexTest extends GWTTestCase {
     AutoBean<HasList> bean3 = f.hasList();
     bean3.as().setIntList(Arrays.asList(1, 2, 3, null, 4, 5));
     bean3.as().setList(Arrays.asList(simple));
-    split = AutoBeanCodex.encode(bean3);
 
-    AutoBean<HasList> decodedBean3 = AutoBeanCodex.decode(f, HasList.class,
-        split);
+    AutoBean<HasList> decodedBean3 = checkEncode(bean3);
     assertNotNull(decodedBean3.as().getIntList());
     assertEquals(Arrays.asList(1, 2, 3, null, 4, 5),
         decodedBean3.as().getIntList());
@@ -277,10 +271,8 @@ public class AutoBeanCodexTest extends GWTTestCase {
     List<Splittable> testList = Arrays.asList(AutoBeanCodex.encode(simple),
         null, AutoBeanCodex.encode(simple));
     bean.as().setSimpleList(testList);
-    Splittable split = AutoBeanCodex.encode(bean);
 
-    AutoBean<HasAutoBean> decoded = AutoBeanCodex.decode(f, HasAutoBean.class,
-        split);
+    AutoBean<HasAutoBean> decoded = checkEncode(bean);
     Splittable toDecode = decoded.as().getSimple();
     AutoBean<Simple> decodedSimple = AutoBeanCodex.decode(f, Simple.class,
         toDecode);

@@ -50,6 +50,18 @@ public interface Splittable {
   List<String> getPropertyKeys();
 
   /**
+   * Returns {@code} true if {@link #size()} and {@link #get(int)} can be
+   * expected to return meaningful values.
+   */
+  boolean isIndexed();
+
+  /**
+   * Returns {@code} true if {@link #getPropertyKeys()} and {@link #get(String)}
+   * can be expected to return meaningful values.
+   */
+  boolean isKeyed();
+
+  /**
    * Indicates if the nth element of a list is null.
    */
   boolean isNull(int index);
@@ -58,6 +70,12 @@ public interface Splittable {
    * Indicates if the named property is null.
    */
   boolean isNull(String key);
+
+  /**
+   * Returns {@code} true if {@link #asString()} can be expected to return a
+   * meaningful value.
+   */
+  boolean isString();
 
   /**
    * Returns the size of the list.

@@ -44,9 +44,11 @@ import java.util.Set;
  * Tests for {@link com.google.gwt.requestfactory.shared.RequestFactory}.
  */
 public class RequestFactoryTest extends RequestFactoryTestBase {
-
   /*
    * DO NOT USE finishTest(). Instead, call finishTestAndReset();
+   * 
+   * When possible, pass any returned proxies to checkSerialization() and use
+   * the return value in the place of the returned object.
    */
 
   class FooReciever extends Receiver<SimpleFooProxy> {
@@ -80,6 +82,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       persistRequest.fire(new Receiver<SimpleFooProxy>() {
         @Override
         public void onSuccess(SimpleFooProxy response) {
+          response = checkSerialization(response);
           finishTestAndReset();
         }
       });
@@ -206,6 +209,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleBarProxy>() {
           @Override
           public void onSuccess(SimpleBarProxy persistentBar) {
+            persistentBar = checkSerialization(persistentBar);
             // Persist foo with bar as a child.
             SimpleFooRequest context = req.simpleFooRequest();
             SimpleFooProxy foo = context.create(SimpleFooProxy.class);
@@ -217,6 +221,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             persistRequest.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy persistentFoo) {
+                persistentFoo = checkSerialization(persistentFoo);
                 // Handle changes to SimpleFooProxy.
                 final SimpleFooEventHandler<SimpleFooProxy> fooHandler = new SimpleFooEventHandler<SimpleFooProxy>();
                 EntityProxyChange.registerForProxyType(req.getEventBus(),
@@ -265,6 +270,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         "selfOneToManyField").fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         assertNotNull(response.getFooField());
         assertSame(response.getFooField(),
             response.getSelfOneToManyField().get(0));
@@ -297,6 +303,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     request.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         assertFalse(((SimpleEntityProxyId<SimpleFooProxy>) response.stableId()).isEphemeral());
         assertEquals(2, handler.persistEventCount); // two bars persisted.
         assertEquals(2, handler.updateEventCount); // two bars persisted.
@@ -329,6 +336,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
           @Override
           public void onSuccess(SimpleFooProxy foo) {
+            foo = checkSerialization(foo);
             SimpleFooRequest context = simpleFooRequest();
 
             // edit() doesn't cause a change
@@ -376,6 +384,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
             assertEquals(
                 "I'm here",
                 response.getSelfOneToManyField().get(0).getFooField().getUserName());
@@ -390,6 +399,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
             assertEquals(42, response.getIntId().intValue());
             finishTestAndReset();
           }
@@ -411,7 +421,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooReq.fire(new Receiver<SimpleFooProxy>() {
 
       @Override
-      public void onSuccess(final SimpleFooProxy returned) {
+      public void onSuccess(SimpleFooProxy returned) {
+        returned = checkSerialization(returned);
         EntityProxyId<SimpleFooProxy> returnedId = returned.stableId();
         assertEquals(futureId, returnedId);
         assertFalse((((SimpleEntityProxyId<?>) returnedId).isEphemeral()));
@@ -435,7 +446,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooReq.fire(new Receiver<SimpleBarProxy>() {
 
       @Override
-      public void onSuccess(final SimpleBarProxy returned) {
+      public void onSuccess(SimpleBarProxy returned) {
+        returned = checkSerialization(returned);
         assertFalse(((SimpleEntityProxyId<?>) foo.stableId()).isEphemeral());
 
         checkStableIdEquals(foo, returned);
@@ -454,7 +466,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooReq.fire(new Receiver<SimpleBarProxy>() {
 
       @Override
-      public void onSuccess(final SimpleBarProxy returned) {
+      public void onSuccess(SimpleBarProxy returned) {
+        returned = checkSerialization(returned);
         assertFalse(((SimpleEntityProxyId<?>) bar.stableId()).isEphemeral());
         assertFalse(((SimpleEntityProxyId<?>) returned.stableId()).isEphemeral());
 
@@ -496,6 +509,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     contextA.findSimpleFooById(999L).fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         // The response shouldn't be associated with a RequestContext
         contextB.edit(response);
         finishTestAndReset();
@@ -509,6 +523,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
             assertEquals(42, (int) response.getIntId());
             assertEquals("GWT", response.getUserName());
             assertEquals(8L, (long) response.getLongField());
@@ -526,6 +541,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
             assertEquals(42, (int) response.getIntId());
             assertEquals("GWT", response.getUserName());
             assertEquals(8L, (long) response.getLongField());
@@ -542,7 +558,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     simpleFooRequest().findAll().fire(new Receiver<List<SimpleFooProxy>>() {
       @Override
       public void onSuccess(List<SimpleFooProxy> responseList) {
-        SimpleFooProxy response = responseList.get(0);
+        SimpleFooProxy response = checkSerialization(responseList.get(0));
         assertEquals(42, (int) response.getIntId());
         assertEquals("GWT", response.getUserName());
         assertEquals(8L, (long) response.getLongField());
@@ -576,6 +592,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
           @Override
           public void onSuccess(SimpleFooProxy newFoo) {
+            newFoo = checkSerialization(newFoo);
             assertEquals(1, handler.updateEventCount);
             assertEquals(1, handler.totalEventCount);
 
@@ -584,6 +601,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
                   @Override
                   public void onSuccess(SimpleFooProxy newFoo) {
+                    newFoo = checkSerialization(newFoo);
                     // no events are fired second time.
                     assertEquals(1, handler.updateEventCount);
                     assertEquals(1, handler.totalEventCount);
@@ -614,6 +632,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         "selfOneToManyField.selfOneToManyField.fooField").fire(
         new Receiver<SimpleFooProxy>() {
           public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
             assertNotNull(response.getSelfOneToManyField().get(0));
             assertNotNull(response.getSelfOneToManyField().get(0).getSelfOneToManyField());
             assertNotNull(response.getSelfOneToManyField().get(0).getSelfOneToManyField().get(
@@ -639,6 +658,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
           public void onSuccess(List<SimpleFooProxy> response) {
             assertEquals(2, response.size());
             for (SimpleFooProxy foo : response) {
+              foo = checkSerialization(foo);
               assertNotNull(foo.stableId());
               assertEquals("FOO", foo.getBarField().getUserName());
             }
@@ -656,6 +676,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       public void onSuccess(List<SimpleBarProxy> response) {
         assertEquals(2, response.size());
         for (SimpleBarProxy bar : response) {
+          bar = checkSerialization(bar);
           assertNotNull(bar.stableId());
           finishTestAndReset();
         }
@@ -678,7 +699,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     Request<SimpleBarProxy> fooReq = context.persistAndReturnSelf().using(foo);
     fooReq.fire(new Receiver<SimpleBarProxy>() {
       @Override
-      public void onSuccess(final SimpleBarProxy returned) {
+      public void onSuccess(SimpleBarProxy returned) {
+        returned = checkSerialization(returned);
         EntityProxyId<SimpleBarProxy> persistedId = returned.stableId();
         String persistedToken = req.getHistoryToken(returned.stableId());
 
@@ -703,18 +725,19 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       }
     });
   }
-  
+
   /**
    * Make sure our stock RF logging service keeps receiving.
    */
   public void testLoggingService() {
-    String logRecordJson = new StringBuilder("{").append("\"level\": \"ALL\", ")
-      .append("\"loggerName\": \"logger\", ")
-      .append("\"msg\": \"Hi mom\", ")
-      .append("\"timestamp\": \"1234567890\",")
-      .append("\"thrown\": {}")
-      .append("}")
-      .toString();
+    String logRecordJson = new StringBuilder("{") //
+    .append("\"level\": \"ALL\", ") //
+    .append("\"loggerName\": \"logger\", ") //
+    .append("\"msg\": \"Hi mom\", ") //
+    .append("\"timestamp\": \"1234567890\",") //
+    .append("\"thrown\": {}") //
+    .append("}") //
+    .toString();
 
     req.loggingRequest().logMessage(logRecordJson).fire(new Receiver<Void>() {
       @Override
@@ -741,6 +764,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
           @Override
           public void onSuccess(SimpleFooProxy newFoo) {
+            newFoo = checkSerialization(newFoo);
             assertEquals(1, handler.updateEventCount);
             assertEquals(1, handler.totalEventCount);
             SimpleFooRequest context = simpleFooRequest();
@@ -762,6 +786,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFoo) {
+                        finalFoo = checkSerialization(finalFoo);
                         assertEquals("Ray", finalFoo.getUserName());
                         assertEquals(2, handler.updateEventCount);
                         assertEquals(2, handler.totalEventCount);
@@ -853,8 +878,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
-            final Request<Void> fooReq = req.simpleFooRequest().receiveNull(
-                null).using(response);
+            response = checkSerialization(response);
+            Request<Void> fooReq = req.simpleFooRequest().receiveNull(null).using(
+                response);
             fooReq.fire(new Receiver<Void>() {
               @Override
               public void onSuccess(Void v) {
@@ -898,6 +924,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
             List<SimpleFooProxy> list = new ArrayList<SimpleFooProxy>();
             list.add(response); // non-null
             list.add(null); // null
@@ -964,6 +991,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     r.persistAndReturnSelf().using(f).fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy f) {
+        f = checkSerialization(f);
         assertEquals("user name", f.getUserName());
         assertEquals(Byte.valueOf((byte) 100), f.getByteField());
         assertEquals(Short.valueOf((short) 12345), f.getShortField());
@@ -986,12 +1014,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     simpleBarRequest().findSimpleBarById("999L").fire(
         new Receiver<SimpleBarProxy>() {
           @Override
-          public void onSuccess(final SimpleBarProxy barProxy) {
+          public void onSuccess(SimpleBarProxy response) {
+            final SimpleBarProxy barProxy = checkSerialization(response);
             // Retrieve a Foo
             simpleFooRequest().findSimpleFooById(999L).fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy fooProxy) {
+                    fooProxy = checkSerialization(fooProxy);
                     SimpleFooRequest context = simpleFooRequest();
                     fooProxy = context.edit(fooProxy);
                     // Make the Foo point to the Bar
@@ -1002,6 +1032,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                         "barField").fire(new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy received) {
+                        received = checkSerialization(received);
                         // Check that Foo points to Bar
                         assertNotNull(received.getBarField());
                         assertEquals(barProxy.stableId(),
@@ -1019,6 +1050,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                             new Receiver<SimpleFooProxy>() {
                               @Override
                               public void onSuccess(SimpleFooProxy response) {
+                                response = checkSerialization(response);
                                 assertNull(response.getBarField());
                                 assertNull(response.getUserName());
                                 assertNull(response.getByteField());
@@ -1048,13 +1080,15 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     persistRequest.fire(new Receiver<SimpleBarProxy>() {
       @Override
-      public void onSuccess(final SimpleBarProxy persistedBar) {
+      public void onSuccess(SimpleBarProxy response) {
+        final SimpleBarProxy persistedBar = checkSerialization(response);
 
         // It was made, now find a foo to assign it to
         simpleFooRequest().findSimpleFooById(999L).fire(
             new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
 
                 // Found the foo, edit it
                 SimpleFooRequest context = simpleFooRequest();
@@ -1073,6 +1107,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                           // Here it is
                           @Override
                           public void onSuccess(SimpleFooProxy finalFooProxy) {
+                            finalFooProxy = checkSerialization(finalFooProxy);
                             assertEquals("Amit",
                                 finalFooProxy.getBarField().getUserName());
                             finishTestAndReset();
@@ -1103,6 +1138,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         assertNotNull(response.getBarField());
         assertEquals(newBar.stableId(), response.getBarField().stableId());
         finishTestAndReset();
@@ -1133,6 +1169,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleBarProxy>() {
           @Override
           public void onSuccess(SimpleBarProxy response) {
+            response = checkSerialization(response);
             finalFoo.setBarField(response);
             fooReq.fire(new Receiver<Void>() {
               @Override
@@ -1141,6 +1178,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy finalFooProxy) {
+                        finalFooProxy = checkSerialization(finalFooProxy);
                         // newFoo hasn't been persisted, so userName is the old
                         // value.
                         assertEquals("GWT", finalFooProxy.getUserName());
@@ -1176,10 +1214,13 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
-      public void onSuccess(final SimpleFooProxy persistedFoo) {
+      public void onSuccess(final SimpleFooProxy response) {
+        final SimpleFooProxy persistedFoo = checkSerialization(response);
         barReq.fire(new Receiver<SimpleBarProxy>() {
           @Override
-          public void onSuccess(final SimpleBarProxy persistedBar) {
+          public void onSuccess(SimpleBarProxy response) {
+            final SimpleBarProxy persistedBar = checkSerialization(response);
+
             assertEquals("Ray", persistedFoo.getUserName());
             SimpleFooRequest context = simpleFooRequest();
             final Request<Void> fooReq2 = context.persist().using(persistedFoo);
@@ -1192,6 +1233,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     "barField.userName").fire(new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy finalFooProxy) {
+                    finalFooProxy = checkSerialization(finalFooProxy);
                     assertEquals("Amit",
                         finalFooProxy.getBarField().getUserName());
                     finishTestAndReset();
@@ -1215,11 +1257,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     simpleBarRequest().findSimpleBarById("999L").fire(
         new Receiver<SimpleBarProxy>() {
           @Override
-          public void onSuccess(final SimpleBarProxy barProxy) {
+          public void onSuccess(SimpleBarProxy response) {
+            final SimpleBarProxy barProxy = checkSerialization(response);
             simpleFooRequest().findSimpleFooById(999L).with("oneToManyField").fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy fooProxy) {
+                    fooProxy = checkSerialization(fooProxy);
+
                     SimpleFooRequest context = simpleFooRequest();
                     Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                         fooProxy).with("oneToManyField");
@@ -1231,6 +1276,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     updReq.fire(new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy response) {
+                        response = checkSerialization(response);
                         assertEquals(response.getOneToManyField().size(),
                             listCount + 1);
                         assertContains(response.getOneToManyField(), barProxy);
@@ -1255,7 +1301,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     rayFoo.setFooField(rayFoo);
     persistRay.fire(new Receiver<SimpleFooProxy>() {
       @Override
-      public void onSuccess(final SimpleFooProxy persistedRay) {
+      public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         finishTestAndReset();
       }
     });
@@ -1273,7 +1320,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
     persistRay.fire(new Receiver<SimpleFooProxy>() {
       @Override
-      public void onSuccess(final SimpleFooProxy persistedRay) {
+      public void onSuccess(SimpleFooProxy response) {
+        final SimpleFooProxy persistedRay = checkSerialization(response);
         SimpleBarRequest context = simpleBarRequest();
         SimpleBarProxy amitBar = context.create(SimpleBarProxy.class);
         final Request<SimpleBarProxy> persistAmit = context.persistAndReturnSelf().using(
@@ -1283,18 +1331,20 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
         persistAmit.fire(new Receiver<SimpleBarProxy>() {
           @Override
-          public void onSuccess(SimpleBarProxy persistedAmit) {
+          public void onSuccess(SimpleBarProxy response) {
+            response = checkSerialization(response);
 
             SimpleFooRequest context = simpleFooRequest();
             final Request<SimpleFooProxy> persistRelationship = context.persistAndReturnSelf().using(
                 persistedRay).with("barField");
             SimpleFooProxy newRec = context.edit(persistedRay);
-            newRec.setBarField(persistedAmit);
+            newRec.setBarField(response);
 
             persistRelationship.fire(new Receiver<SimpleFooProxy>() {
               @Override
-              public void onSuccess(SimpleFooProxy relatedRay) {
-                assertEquals("Amit", relatedRay.getBarField().getUserName());
+              public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
+                assertEquals("Amit", response.getBarField().getUserName());
                 finishTestAndReset();
               }
             });
@@ -1311,6 +1361,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy fooProxy) {
+            fooProxy = checkSerialization(fooProxy);
             SimpleFooRequest context = simpleFooRequest();
             Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                 fooProxy).with("selfOneToManyField");
@@ -1321,6 +1372,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             updReq.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 assertEquals(response.getSelfOneToManyField().size(),
                     listCount + 1);
                 assertContains(response.getSelfOneToManyField(), response);
@@ -1337,6 +1389,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy fooProxy) {
+            fooProxy = checkSerialization(fooProxy);
             SimpleFooRequest context = simpleFooRequest();
             Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                 fooProxy);
@@ -1345,6 +1398,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             updReq.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 assertTrue(response.getNumberListField().contains(100));
                 finishTestAndReset();
               }
@@ -1368,6 +1422,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy fooProxy) {
+            fooProxy = checkSerialization(fooProxy);
             SimpleFooRequest context = simpleFooRequest();
             Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                 fooProxy);
@@ -1377,6 +1432,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             updReq.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 List<Integer> list = response.getNumberListField();
                 assertNull(list);
                 finishTestAndReset();
@@ -1401,6 +1457,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy fooProxy) {
+            fooProxy = checkSerialization(fooProxy);
             SimpleFooRequest context = simpleFooRequest();
             Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                 fooProxy);
@@ -1409,6 +1466,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             updReq.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 assertFalse(response.getNumberListField().contains(oldValue));
                 finishTestAndReset();
               }
@@ -1427,6 +1485,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy fooProxy) {
+            fooProxy = checkSerialization(fooProxy);
             SimpleFooRequest context = simpleFooRequest();
             Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                 fooProxy);
@@ -1439,6 +1498,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             updReq.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 List<Integer> list = response.getNumberListField();
                 assertEquals(5, (int) list.get(0));
                 assertEquals(8, (int) list.get(1));
@@ -1460,6 +1520,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy fooProxy) {
+            fooProxy = checkSerialization(fooProxy);
             SimpleFooRequest context = simpleFooRequest();
             Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                 fooProxy);
@@ -1471,6 +1532,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             updReq.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 Collections.reverse(al);
                 assertTrue(response.getNumberListField().equals(al));
                 finishTestAndReset();
@@ -1490,6 +1552,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy fooProxy) {
+            fooProxy = checkSerialization(fooProxy);
             SimpleFooRequest context = simpleFooRequest();
             Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                 fooProxy);
@@ -1498,6 +1561,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             updReq.fire(new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 assertTrue(response.getNumberListField().get(0) == 10);
                 finishTestAndReset();
               }
@@ -1518,11 +1582,13 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     context.persistAndReturnSelf().using(newBar).fire(
         new Receiver<SimpleBarProxy>() {
           @Override
-          public void onSuccess(final SimpleBarProxy barProxy) {
+          public void onSuccess(SimpleBarProxy response) {
+            final SimpleBarProxy barProxy = checkSerialization(response);
             simpleFooRequest().findSimpleFooById(999L).with("oneToManySetField").fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy fooProxy) {
+                    fooProxy = checkSerialization(fooProxy);
                     SimpleFooRequest context = simpleFooRequest();
                     Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                         fooProxy).with("oneToManySetField");
@@ -1534,6 +1600,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     updReq.fire(new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy response) {
+                        response = checkSerialization(response);
                         assertEquals(listCount + 1,
                             response.getOneToManySetField().size());
                         assertContains(response.getOneToManySetField(),
@@ -1557,11 +1624,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     simpleBarRequest().findSimpleBarById("1L").fire(
         new Receiver<SimpleBarProxy>() {
           @Override
-          public void onSuccess(final SimpleBarProxy barProxy) {
+          public void onSuccess(SimpleBarProxy response) {
+            final SimpleBarProxy barProxy = checkSerialization(response);
+
             simpleFooRequest().findSimpleFooById(999L).with("oneToManySetField").fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy fooProxy) {
+                    fooProxy = checkSerialization(fooProxy);
                     SimpleFooRequest context = simpleFooRequest();
                     Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                         fooProxy).with("oneToManySetField");
@@ -1574,6 +1644,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     updReq.fire(new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy response) {
+                        response = checkSerialization(response);
                         assertEquals(response.getOneToManySetField().size(),
                             listCount);
                         assertContains(response.getOneToManySetField(),
@@ -1597,11 +1668,13 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     simpleBarRequest().findSimpleBarById("1L").fire(
         new Receiver<SimpleBarProxy>() {
           @Override
-          public void onSuccess(final SimpleBarProxy barProxy) {
+          public void onSuccess(SimpleBarProxy response) {
+            final SimpleBarProxy barProxy = checkSerialization(response);
             simpleFooRequest().findSimpleFooById(999L).with("oneToManySetField").fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy fooProxy) {
+                    fooProxy = checkSerialization(fooProxy);
                     SimpleFooRequest context = simpleFooRequest();
                     Request<SimpleFooProxy> updReq = context.persistAndReturnSelf().using(
                         fooProxy).with("oneToManySetField");
@@ -1615,6 +1688,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     updReq.fire(new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy response) {
+                        response = checkSerialization(response);
                         assertEquals(listCount - 1,
                             response.getOneToManySetField().size());
                         assertNotContains(response.getOneToManySetField(),
@@ -1650,6 +1724,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         final Request<Integer> sumReq = simpleFooRequest().sum(
             Arrays.asList(1, 2, 3)).using(response);
         sumReq.fire(new Receiver<Integer>() {
@@ -1755,6 +1830,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         assertEquals(2, response.getOneToManyField().size());
 
         // Check lists of proxies returned from a mutable object are mutable
@@ -1771,7 +1847,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         999L).with("selfOneToManyField");
     fooReq.fire(new Receiver<SimpleFooProxy>() {
       @Override
-      public void onSuccess(final SimpleFooProxy fooProxy) {
+      public void onSuccess(SimpleFooProxy response) {
+        final SimpleFooProxy fooProxy = checkSerialization(response);
         final Request<String> procReq = simpleFooRequest().processList(
             fooProxy.getSelfOneToManyField()).using(fooProxy);
         procReq.fire(new Receiver<String>() {
@@ -1791,6 +1868,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
             SimpleFooRequest context = simpleFooRequest();
             SimpleBarProxy bar = context.create(SimpleBarProxy.class);
             Request<String> helloReq = context.hello(bar).using(response);
@@ -1925,7 +2003,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooReq.fire(new Receiver<SimpleFooProxy>() {
 
       @Override
-      public void onSuccess(final SimpleFooProxy returned) {
+      public void onSuccess(SimpleFooProxy response) {
+        final SimpleFooProxy returned = checkSerialization(response);
         assertEquals(futureId, foo.getId());
         assertFalse(((SimpleEntityProxyId<?>) foo.stableId()).isEphemeral());
         assertEquals(futureId, newFoo.getId());
@@ -1943,10 +2022,11 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         editRequest.fire(new Receiver<SimpleFooProxy>() {
 
           @Override
-          public void onSuccess(SimpleFooProxy returnedAfterEdit) {
-            assertEquals(returnedAfterEdit.getId(), returned.getId());
-            assertEquals("GWT power user", returnedAfterEdit.getUserName());
-            checkStableIdEquals(editableFoo, returnedAfterEdit);
+          public void onSuccess(SimpleFooProxy response) {
+            response = checkSerialization(response);
+            assertEquals(response.getId(), returned.getId());
+            assertEquals("GWT power user", response.getUserName());
+            checkStableIdEquals(editableFoo, response);
             finishTestAndReset();
           }
         });
@@ -1958,17 +2038,18 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
    * We provide a simple UserInformation class to give GAE developers a hand,
    * and other developers a hint. Make sure RF doesn't break it (it relies on
    * server side upcasting, and a somewhat sleazey reflective lookup mechanism
-   * in a static method on UserInformation). 
+   * in a static method on UserInformation).
    */
   public void testUserInfo() {
     req.userInformationRequest().getCurrentUserInformation("").fire(
         new Receiver<UserInformationProxy>() {
           @Override
-          public void onSuccess(UserInformationProxy getResponse) {
-            assertEquals("Dummy Email", getResponse.getEmail());
-            assertEquals("Dummy User", getResponse.getName());
-            assertEquals("", getResponse.getLoginUrl());
-            assertEquals("", getResponse.getLogoutUrl());
+          public void onSuccess(UserInformationProxy response) {
+            response = checkSerialization(response);
+            assertEquals("Dummy Email", response.getEmail());
+            assertEquals("Dummy User", response.getName());
+            assertEquals("", response.getLoginUrl());
+            assertEquals("", response.getLogoutUrl());
           }
         });
   }
@@ -1991,11 +2072,13 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
+            // The reconstituted object may not have the same stable id
+            checkStableIdEquals(simpleBar, response.getBarField());
+            response = checkSerialization(response);
             assertEquals(0, handler.totalEventCount);
             checkStableIdEquals(simpleFoo, response);
             SimpleBarProxy responseBar = response.getBarField();
             assertNotNull(responseBar);
-            checkStableIdEquals(simpleBar, responseBar);
             finishTestAndReset();
           }
         });
@@ -2015,6 +2098,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     context.echo(simpleFoo).fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         assertEquals(0, handler.totalEventCount);
         checkStableIdEquals(simpleFoo, response);
         finishTestAndReset();
@@ -2030,13 +2114,15 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     req.simpleFooRequest().getUnpersistedInstance().fire(
         new Receiver<SimpleFooProxy>() {
           @Override
-          public void onSuccess(final SimpleFooProxy created) {
+          public void onSuccess(SimpleFooProxy response) {
+            final SimpleFooProxy created = checkSerialization(response);
             assertNotNull(created);
             assertTrue(created.getUnpersisted());
             req.simpleFooRequest().echo(created).fire(
                 new Receiver<SimpleFooProxy>() {
                   @Override
                   public void onSuccess(SimpleFooProxy response) {
+                    response = checkSerialization(response);
                     assertNotNull(response);
                     assertEquals(created.stableId(), response.stableId());
                     assertTrue(response.getUnpersisted());
@@ -2063,6 +2149,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleBarProxy>() {
           @Override
           public void onSuccess(SimpleBarProxy response) {
+            response = checkSerialization(response);
             assertEquals("A", response.getUserName());
             // Mark the object as deleted
             SimpleBarRequest context = simpleBarRequest();
@@ -2074,6 +2161,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
                   @Override
                   public void onSuccess(SimpleBarProxy response) {
+                    response = checkSerialization(response);
                     // The last-known state should be returned
                     assertNotNull(response);
                     assertEquals("B", response.getUserName());
@@ -2096,6 +2184,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
                           @Override
                           public void onSuccess(SimpleBarProxy response) {
+                            response = checkSerialization(response);
                             fail();
                           }
                         });
@@ -2111,6 +2200,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     req.findSimpleFooById(1L).fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         SimpleFooRequest req = simpleFooRequest();
 
         // Create
@@ -2131,6 +2221,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 SimpleValueProxy value = response.getSimpleValue();
                 assertEquals(42, value.getNumber());
                 assertEquals("Hello world!", value.getString());
@@ -2152,6 +2243,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy response) {
+                        response = checkSerialization(response);
                         assertEquals(43, response.getSimpleValue().getNumber());
                         finishTestAndReset();
                       }
@@ -2168,6 +2260,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     req.findSimpleFooById(1L).fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
+        response = checkSerialization(response);
         SimpleFooRequest req = simpleFooRequest();
 
         // Create
@@ -2185,6 +2278,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             new Receiver<SimpleFooProxy>() {
               @Override
               public void onSuccess(SimpleFooProxy response) {
+                response = checkSerialization(response);
                 SimpleValueProxy value = response.getSimpleValues().get(0);
                 assertEquals(42, value.getNumber());
 
@@ -2203,6 +2297,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                     new Receiver<SimpleFooProxy>() {
                       @Override
                       public void onSuccess(SimpleFooProxy response) {
+                        response = checkSerialization(response);
                         assertEquals(43,
                             response.getSimpleValues().get(0).getNumber());
                         finishTestAndReset();
@@ -2225,6 +2320,18 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     assertFalse(b.equals(a));
 
     b.setString("Hello");
+    checkEqualityAndHashcode(a, b);
+
+    a.setSimpleValue(Collections.singletonList(req.create(SimpleValueProxy.class)));
+    assertFalse(a.equals(b));
+    assertFalse(b.equals(a));
+    b.setSimpleValue(Collections.singletonList(req.create(SimpleValueProxy.class)));
+    checkEqualityAndHashcode(a, b);
+
+    a.getSimpleValue().get(0).setNumber(55);
+    assertFalse(a.equals(b));
+    assertFalse(b.equals(a));
+    b.getSimpleValue().get(0).setNumber(55);
     checkEqualityAndHashcode(a, b);
   }
 
@@ -2260,7 +2367,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     simpleFooRequest().returnValueProxy().fire(
         new Receiver<SimpleValueProxy>() {
           @Override
-          public void onSuccess(final SimpleValueProxy response) {
+          public void onSuccess(SimpleValueProxy response) {
+            final SimpleValueProxy original = checkSerialization(response);
             SimpleFooRequest req = simpleFooRequest();
             final SimpleValueProxy value = req.edit(response);
             value.setShouldBeNull("Hello world");
@@ -2277,7 +2385,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
                 assertEquals(1, errors.size());
                 Violation v = errors.iterator().next();
                 assertEquals(value, v.getInvalidProxy());
-                assertEquals(response, v.getOriginalProxy());
+                assertEquals(original, v.getOriginalProxy());
                 assertEquals("shouldBeNull", v.getPath());
                 assertNull(v.getProxyId());
                 finishTestAndReset();
@@ -2297,6 +2405,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         new Receiver<SimpleValueProxy>() {
           @Override
           public void onSuccess(SimpleValueProxy a) {
+            a = checkSerialization(a);
             try {
               a.setNumber(77);
               fail();
@@ -2315,6 +2424,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
             ctx.returnValueProxy().fire(new Receiver<SimpleValueProxy>() {
               @Override
               public void onSuccess(SimpleValueProxy b) {
+                b = checkSerialization(b);
                 b = simpleFooRequest().edit(b);
                 // Now check that same value is equal across contexts
                 b.setNumber(77);
@@ -2370,6 +2480,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooCreationRequest().fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy returned) {
+        returned = checkSerialization(returned);
         SimpleFooRequest context = simpleFooRequest();
         Request<SimpleFooProxy> editRequest = context.persistAndReturnSelf().using(
             returned);
@@ -2384,6 +2495,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     fooCreationRequest().fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy returned) {
+        returned = checkSerialization(returned);
         SimpleFooRequest context = simpleFooRequest();
         Request<Void> editRequest = context.persist().using(returned);
         new FailFixAndRefire<Void>(returned, context, editRequest).doVoidTest();

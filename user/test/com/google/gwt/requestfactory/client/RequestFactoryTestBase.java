@@ -15,14 +15,22 @@
  */
 package com.google.gwt.requestfactory.client;
 
+import com.google.gwt.autobean.shared.AutoBean;
+import com.google.gwt.autobean.shared.AutoBeanUtils;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.requestfactory.shared.BaseProxy;
+import com.google.gwt.requestfactory.shared.DefaultProxyStore;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyChange;
+import com.google.gwt.requestfactory.shared.ProxySerializer;
 import com.google.gwt.requestfactory.shared.Receiver;
 import com.google.gwt.requestfactory.shared.SimpleRequestFactory;
+import com.google.gwt.requestfactory.shared.impl.BaseProxyCategory;
+import com.google.gwt.requestfactory.shared.impl.Constants;
+import com.google.gwt.requestfactory.shared.impl.SimpleProxyId;
 
 /**
  * A base class for anything that makes use of the SimpleRequestFactory.
@@ -75,6 +83,44 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
     assertEquals(a.hashCode(), b.hashCode());
     assertEquals(a, b);
     assertEquals(b, a);
+  }
+
+  /**
+   * Run the given proxy through a ProxySerializer and verify that the
+   * before-and-after values match.
+   */
+  protected <T extends BaseProxy> T checkSerialization(T proxy) {
+    AutoBean<T> originalBean = AutoBeanUtils.getAutoBean(proxy);
+    SimpleProxyId<T> id = BaseProxyCategory.stableId(originalBean);
+    DefaultProxyStore store = new DefaultProxyStore();
+    ProxySerializer s = req.getSerializer(store);
+
+    String key = s.serialize(proxy);
+    assertNotNull(key);
+
+    // Use a new instance
+    store = new DefaultProxyStore(store.encode());
+    s = req.getSerializer(store);
+    T restored = s.deserialize(id.getProxyClass(), key);
+    AutoBean<BaseProxy> restoredBean = AutoBeanUtils.getAutoBean(restored);
+    assertNotSame(proxy, restored);
+    /*
+     * Performing a regular assertEquals() or even an AutoBeanUtils.diff() here
+     * is wrong. If any of the objects in the graph are unpersisted, it's
+     * expected that the stable ids would change. Instead, we do a value-based
+     * check.
+     */
+    assertTrue(AutoBeanUtils.deepEquals(originalBean, restoredBean));
+
+    if (proxy instanceof EntityProxy && !id.isEphemeral()) {
+      assertEquals(((EntityProxy) proxy).stableId(),
+          ((EntityProxy) restored).stableId());
+    }
+
+    // In deference to testing stable ids, copy the original id into the clone
+    restoredBean.setTag(Constants.STABLE_ID,
+        originalBean.getTag(Constants.STABLE_ID));
+    return restored;
   }
 
   protected void checkStableIdEquals(EntityProxy expected, EntityProxy actual) {

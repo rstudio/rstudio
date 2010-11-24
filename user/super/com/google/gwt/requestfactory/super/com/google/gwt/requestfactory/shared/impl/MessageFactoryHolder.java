@@ -21,6 +21,6 @@ import com.google.gwt.requestfactory.shared.messages.MessageFactory;
 /**
  * This a super-source version with a client-only implementation.
  */
-interface MessageFactoryHolder {
+public interface MessageFactoryHolder {
   MessageFactory FACTORY = GWT.create(MessageFactory.class);
 }

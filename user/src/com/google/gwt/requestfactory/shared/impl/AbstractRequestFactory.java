@@ -23,6 +23,8 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.requestfactory.shared.BaseProxy;
 import com.google.gwt.requestfactory.shared.EntityProxy;
 import com.google.gwt.requestfactory.shared.EntityProxyId;
+import com.google.gwt.requestfactory.shared.ProxySerializer;
+import com.google.gwt.requestfactory.shared.ProxyStore;
 import com.google.gwt.requestfactory.shared.Request;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestTransport;
@@ -112,6 +114,10 @@ public abstract class AbstractRequestFactory extends IdFactory implements
 
   public RequestTransport getRequestTransport() {
     return transport;
+  }
+
+  public ProxySerializer getSerializer(ProxyStore store) {
+    return new ProxySerializerImpl(this, store);
   }
 
   /**

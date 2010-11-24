@@ -62,7 +62,6 @@ public class JsonSplittable implements Splittable {
 
   private final JSONArray array;
   private final JSONObject obj;
-
   private final String string;
 
   private JsonSplittable(JSONArray array) {
@@ -125,6 +124,14 @@ public class JsonSplittable implements Splittable {
     }
   }
 
+  public boolean isIndexed() {
+    return array != null;
+  }
+
+  public boolean isKeyed() {
+    return obj != null;
+  }
+
   public boolean isNull(int index) {
     return array.isNull(index);
   }
@@ -132,6 +139,10 @@ public class JsonSplittable implements Splittable {
   public boolean isNull(String key) {
     // Treat undefined and null as the same
     return !obj.has(key) || obj.isNull(key);
+  }
+
+  public boolean isString() {
+    return string != null;
   }
 
   public int size() {

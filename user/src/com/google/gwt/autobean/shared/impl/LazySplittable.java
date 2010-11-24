@@ -57,6 +57,14 @@ public class LazySplittable implements Splittable {
     return split.getPropertyKeys();
   }
 
+  public boolean isIndexed() {
+    return payload.charAt(0) == '[';
+  }
+
+  public boolean isKeyed() {
+    return payload.charAt(0) == '{';
+  }
+
   public boolean isNull(int index) {
     maybeSplit();
     return split.isNull(index);
@@ -65,6 +73,10 @@ public class LazySplittable implements Splittable {
   public boolean isNull(String key) {
     maybeSplit();
     return split.isNull(key);
+  }
+
+  public boolean isString() {
+    return payload.charAt(0) == '\"';
   }
 
   public int size() {
