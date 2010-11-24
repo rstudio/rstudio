@@ -93,6 +93,13 @@ public class DoubleClickEventSinkTest extends GWTTestCase {
     verifyEventSinkOnAddHandler(new Label(), false);
   }
 
+  @Override
+  protected void gwtTearDown() throws Exception {
+    // clean up after ourselves
+    RootPanel.get().clear();
+    super.gwtTearDown();
+  }
+
   private boolean isDoubleClickEventSunk(Element e) {
     return (DOM.getEventsSunk(e) & Event.ONDBLCLICK) != 0;
   }
