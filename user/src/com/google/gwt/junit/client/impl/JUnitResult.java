@@ -34,11 +34,6 @@ public class JUnitResult implements Serializable {
   private transient String agent;
 
   /**
-   * If non-null, check points that were encountered during the run.
-   */
-  private String[] checkPoints;
-
-  /**
    * If non-null, an exception that occurred during the run.
    */
   private ExceptionWrapper exceptionWrapper;
@@ -48,10 +43,6 @@ public class JUnitResult implements Serializable {
 
   public String getAgent() {
     return agent;
-  }
-
-  public String[] getCheckPoints() {
-    return checkPoints;
   }
 
   public Throwable getException() {
@@ -64,10 +55,6 @@ public class JUnitResult implements Serializable {
 
   public void setAgent(String agent) {
     this.agent = agent;
-  }
-
-  public void setCheckPoints(String[] checkPoints) {
-    this.checkPoints = checkPoints;
   }
 
   public void setException(Throwable exception) {

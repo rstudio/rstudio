@@ -44,6 +44,7 @@ import java.util.Set;
  * translatable implementation.
  * </p>
  */
+@SuppressWarnings("unused") 
 public abstract class GWTTestCase extends TestCase {
 
   /**
@@ -192,19 +193,12 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
-   * Add a checkpoint message to the current test. If this test fails, all
-   * checkpoint messages will be appended to the getException description. This
-   * can be useful in web mode for determining how far test execution progressed
-   * before a failure occurs.
+   * Does nothing.
    *
-   * @param msg the checkpoint message to add
-   * @deprecated This method will be removed when web mode supports stack
-   *             traces. It can be useful for debugging web mode failures, but
-   *             production code should not depend on it.
+   * @deprecated implementation removed
    */
   @Deprecated
   public final void addCheckpoint(String msg) {
-    // implemented in the translatable version of this class
   }
 
   /**
@@ -222,31 +216,22 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
-   * Clears the accumulated list of checkpoint messages.
+   * Does nothing.
    *
-   * @see #addCheckpoint(String)
-   * @deprecated This method will be removed if and when web mode supports stack
-   *             traces. It can be useful for debugging web mode failures, but
-   *             production code should not depend on it
+   * @deprecated implementation removed
    */
   @Deprecated
   public final void clearCheckpoints() {
-    // implemented in the translatable version of this class
   }
 
   /**
-   * Returns the current set of checkpoint messages.
+   * Returns a zero-length array.
    *
-   * @return a non-<code>null</code> array of checkpoint messages
-   * @see #addCheckpoint(String)
-   * @deprecated This method will be removed if and when web mode supports stack
-   *             traces. It can be useful for debugging web mode failures, but
-   *             production code should not depend on it
+   * @deprecated implementation removed
    */
   @Deprecated
   public final String[] getCheckpoints() {
-    // implemented in the translatable version of this class
-    return null;
+    return new String[0];
   }
 
   /**

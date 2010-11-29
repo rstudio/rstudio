@@ -23,12 +23,10 @@ import com.google.gwt.user.client.Timer;
 
 import junit.framework.TestCase;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * The translatable implementation of {@link GWTTestCase}.
  */
+@SuppressWarnings("unused")
 public abstract class GWTTestCase extends TestCase {
 
   /**
@@ -90,11 +88,6 @@ public abstract class GWTTestCase extends TestCase {
       }
     }
   };
-
-  /**
-   * The collected checkpoint messages.
-   */
-  private List<String> checkPoints;
 
   /**
    * Tracks whether the main test body has run (for asynchronous mode).
@@ -166,35 +159,21 @@ public abstract class GWTTestCase extends TestCase {
   }
   // CHECKSTYLE_ON
 
-  /**
-   * Implementation of {@link GWTTestCase#addCheckpoint(String)}.
-   */
+  @Deprecated
   public void addCheckpoint(String msg) {
-    if (checkPoints == null) {
-      checkPoints = new ArrayList<String>();
-    }
-    checkPoints.add(msg);
   }
 
   public boolean catchExceptions() {
     return true;
   }
 
+  @Deprecated
   public void clearCheckpoints() {
-    checkPoints = null;
   }
 
+  @Deprecated
   public String[] getCheckpoints() {
-    if (checkPoints == null) {
-      return new String[0];
-    } else {
-      int len = checkPoints.size();
-      String[] retval = new String[len];
-      for (int i = 0; i < len; ++i) {
-        retval[i] = checkPoints.get(i);
-      }
-      return retval;
-    }
+    return new String[0];
   }
 
   public abstract String getModuleName();
@@ -305,10 +284,6 @@ public abstract class GWTTestCase extends TestCase {
     JUnitResult myResult = __getOrCreateTestResult();
     if (ex != null) {
       myResult.setException(ex);
-      if (checkPoints != null) {
-        String[] cpArray = checkPoints.toArray(new String[checkPoints.size()]);
-        myResult.setCheckPoints(cpArray);
-      }
     }
 
     testIsFinished = true;

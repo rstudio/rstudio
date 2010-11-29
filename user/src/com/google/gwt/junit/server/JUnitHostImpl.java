@@ -114,7 +114,6 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     for (JUnitResult result : results.values()) {
       initResult(getThreadLocalRequest(), result);
       resymbolize(result.getException());
-      addCheckPointElements(result.getException(), result.getCheckPoints());
     }
     JUnitMessageQueue host = getHost();
     ClientInfoExt clientInfoExt = createClientInfo(clientInfo,
@@ -137,29 +136,6 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     } else {
       super.service(request, response);
     }
-  }
-
-  /**
-   * Creates fake stack trace elements for any checkpoints passed. The elements
-   * are copied in reverse order, so that the last check point is at the top of
-   * the trace.
-   */
-  private void addCheckPointElements(Throwable exception, String[] checkPoints) {
-    if (checkPoints == null) {
-      return;
-    }
-    StackTraceElement[] stackTrace = exception.getStackTrace();
-    StackTraceElement[] newStackTrace = new StackTraceElement[checkPoints.length
-        + stackTrace.length];
-    int pos = checkPoints.length - 1;
-    for (String checkPoint : checkPoints) {
-      newStackTrace[pos] = new StackTraceElement("Check", "point", checkPoint,
-          -1);
-      --pos;
-    }
-    System.arraycopy(stackTrace, 0, newStackTrace, checkPoints.length,
-        stackTrace.length);
-    exception.setStackTrace(newStackTrace);
   }
 
   private ClientInfoExt createClientInfo(ClientInfo clientInfo,
