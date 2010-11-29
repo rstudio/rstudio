@@ -20,6 +20,7 @@ import com.google.gwt.text.client.DateTimeFormatRendererTest;
 import com.google.gwt.text.client.DoubleParserTest;
 import com.google.gwt.text.client.IntegerParserTest;
 import com.google.gwt.text.client.LongParserTest;
+import com.google.gwt.text.client.NumberFormatRendererTest;
 
 import junit.framework.Test;
 
@@ -34,6 +35,7 @@ public class TextSuite {
     suite.addTestSuite(DoubleParserTest.class);
     suite.addTestSuite(IntegerParserTest.class);
     suite.addTestSuite(LongParserTest.class);
+    suite.addTestSuite(NumberFormatRendererTest.class);
     return suite;
   }
 }

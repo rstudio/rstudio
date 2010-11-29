@@ -49,6 +49,7 @@ public class ValueListBox<T> extends Composite implements
   private final Renderer<T> renderer;
   private final ProvidesKey<T> keyProvider;
 
+  private TakesValueEditor<T> editor;
   private T value;
 
   public ValueListBox(Renderer<T> renderer) {
@@ -81,7 +82,10 @@ public class ValueListBox<T> extends Composite implements
    * Returns a {@link TakesValueEditor} backed by the ValueListBox.
    */
   public TakesValueEditor<T> asEditor() {
-    return TakesValueEditor.of(this);
+    if (editor == null) {
+      editor = TakesValueEditor.of(this);
+    }
+    return editor;
   }
 
   public T getValue() {

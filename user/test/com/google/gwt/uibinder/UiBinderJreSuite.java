@@ -26,6 +26,7 @@ import com.google.gwt.uibinder.attributeparsers.StringAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.TextAlignConstantParserTest;
 import com.google.gwt.uibinder.attributeparsers.VerticalAlignmentConstantParserTest;
 import com.google.gwt.uibinder.elementparsers.AbsolutePanelParserTest;
+import com.google.gwt.uibinder.elementparsers.DateLabelParserTest;
 import com.google.gwt.uibinder.elementparsers.DialogBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.DisclosurePanelParserTest;
 import com.google.gwt.uibinder.elementparsers.DockLayoutPanelParserTest;
@@ -36,6 +37,7 @@ import com.google.gwt.uibinder.elementparsers.LayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.ListBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.MenuBarParserTest;
 import com.google.gwt.uibinder.elementparsers.MenuItemParserTest;
+import com.google.gwt.uibinder.elementparsers.NumberLabelParserTest;
 import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.StackPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
@@ -88,6 +90,7 @@ public class UiBinderJreSuite {
 
     // elementparsers
     suite.addTestSuite(AbsolutePanelParserTest.class);
+    suite.addTestSuite(DateLabelParserTest.class);
     suite.addTestSuite(DialogBoxParserTest.class);
     suite.addTestSuite(DisclosurePanelParserTest.class);
     suite.addTestSuite(DockLayoutPanelParserTest.class);
@@ -98,6 +101,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(ListBoxParserTest.class);
     suite.addTestSuite(MenuBarParserTest.class);
     suite.addTestSuite(MenuItemParserTest.class);
+    suite.addTestSuite(NumberLabelParserTest.class);
     suite.addTestSuite(StackLayoutPanelParserTest.class);
     suite.addTestSuite(StackPanelParserTest.class);
     suite.addTestSuite(TabLayoutPanelParserTest.class);

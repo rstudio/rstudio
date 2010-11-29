@@ -674,6 +674,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   private boolean selectsFirstItem = true;
   private SuggestOracle oracle;
   private String currentText;
+  private LeafValueEditor<String> editor;
   private final SuggestionDisplay display;
   private final TextBoxBase box;
   private final Callback callback = new Callback() {
@@ -831,7 +832,10 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * Returns a {@link TakesValueEditor} backed by the DateBox.
    */
   public LeafValueEditor<String> asEditor() {
-    return TakesValueEditor.of(this);
+    if (editor == null) {
+      editor = TakesValueEditor.of(this);
+    }
+    return editor;
   }
 
   /**

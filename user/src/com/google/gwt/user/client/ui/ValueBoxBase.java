@@ -45,7 +45,6 @@ import java.text.ParseException;
  * 
  * @param <T> the value type
  */
-@SuppressWarnings("deprecation")
 public class ValueBoxBase<T> extends FocusWidget implements
     HasChangeHandlers, HasName, HasDirectionEstimator,
     HasValue<T>, AutoDirectionHandler.Target, IsEditor<ValueBoxEditor<T>> {
@@ -83,6 +82,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
 
   private final Parser<T> parser;
   private final Renderer<T> renderer;
+  private ValueBoxEditor<T> editor;
   private Event currentEvent;
 
   private boolean valueChangeHandlerInitialized;
@@ -125,7 +125,10 @@ public class ValueBoxBase<T> extends FocusWidget implements
    * Editor framework.
    */
   public ValueBoxEditor<T> asEditor() {
-    return ValueBoxEditor.of(this);
+    if (editor == null) {
+      editor = ValueBoxEditor.of(this);
+    }
+    return editor;
   }
 
   /**

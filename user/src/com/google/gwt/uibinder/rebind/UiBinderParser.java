@@ -264,10 +264,10 @@ public class UiBinderParser {
     /* Perhaps it is provided via @UiField */
 
     if (ownerField != null) {
-      if (!resourceType.equals(ownerField.getType().getRawType())) {
+      if (!resourceType.getErasedType().equals(ownerField.getType().getRawType()
+          .getErasedType())) {
         writer.die(elem, "Type must match %s", ownerField);
       }
-
       if (ownerField.isProvided()) {
         String initializer;
         if (writer.getDesignTime().isDesignTime()) {

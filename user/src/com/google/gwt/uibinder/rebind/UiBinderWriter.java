@@ -998,6 +998,8 @@ public class UiBinderWriter implements Statements {
     addWidgetParser("ListBox");
     addWidgetParser("Grid");
     addWidgetParser("HasAlignment");
+    addWidgetParser("DateLabel");
+    addWidgetParser("NumberLabel");
   }
 
   /**

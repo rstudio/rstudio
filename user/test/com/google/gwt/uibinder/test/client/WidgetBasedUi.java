@@ -27,12 +27,15 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.Shared;
+import com.google.gwt.text.client.DoubleRenderer;
+import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DateLabel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -45,11 +48,13 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.NamedFrame;
+import com.google.gwt.user.client.ui.NumberLabel;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.ValueLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -171,6 +176,11 @@ public class WidgetBasedUi extends Composite {
   @UiField Widget myAbsolutePanelItemB;
   @UiField Widget myAbsolutePanelItemC;
   @UiField NamedFrame myNamedFrame;
+  @UiField DateLabel myDateLabel;
+  @UiField NumberLabel<Float> myNumberLabel;
+  @UiField(provided = true) @SuppressWarnings("unchecked")
+  Renderer doubleRenderer = DoubleRenderer.instance();
+  @UiField ValueLabel<Double> myValueLabel;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();

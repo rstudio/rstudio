@@ -18,6 +18,10 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.editor.client.adapters.TakesValueEditor;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * A simple checkbox widget, with no label.
@@ -28,7 +32,8 @@ import com.google.gwt.dom.client.InputElement;
  * <li>.gwt-SimpleCheckBox-disabled { Applied when checkbox is disabled }</li>
  * </ul>
  */
-public class SimpleCheckBox extends FocusWidget implements HasName {
+public class SimpleCheckBox extends FocusWidget implements HasName,
+    TakesValue<Boolean>, IsEditor<LeafValueEditor<Boolean>> {
 
   /**
    * Creates a SimpleCheckBox widget that wraps an existing &lt;input
@@ -52,6 +57,8 @@ public class SimpleCheckBox extends FocusWidget implements HasName {
 
     return checkBox;
   }
+
+  private LeafValueEditor<Boolean> editor;
 
   /**
    * Creates a new simple checkbox.
@@ -79,28 +86,66 @@ public class SimpleCheckBox extends FocusWidget implements HasName {
     }
   }
 
+  public LeafValueEditor<Boolean> asEditor() {
+    if (editor == null) {
+      editor = TakesValueEditor.of(this);
+    }
+    return editor;
+  }
+
+  /**
+   * Returns the value property of the input element that backs this widget.
+   * This is the value that will be associated with the check box name and
+   * submitted to the server if a {@link FormPanel} that holds it is submitted
+   * and the box is checked.
+   * <p>
+   * Don't confuse this with {@link #getValue}, which returns true or false if
+   * the widget is checked.
+   */
+  public String getFormValue() {
+    return getInputElement().getValue();
+  }
+
   public String getName() {
     return getInputElement().getName();
   }
 
   /**
    * Determines whether this check box is currently checked.
+   * <p>
+   * Note that this <em>does not</em> return the value property of the checkbox
+   * input element wrapped by this widget. For access to that property, see
+   * {@link #getFormValue()}
    * 
-   * @return <code>true</code> if the check box is checked
+   * @return <code>true</code> if the check box is checked, false otherwise.
+   *         Will not return null
    */
-  public boolean isChecked() {
+  public Boolean getValue() {
     String propName = isAttached() ? "checked" : "defaultChecked";
     return getInputElement().getPropertyBoolean(propName);
+  }
+
+  /**
+   * Determines whether this check box is currently checked.
+   * 
+   * @return <code>true</code> if the check box is checked
+   * @deprecated Use {@link #getValue} instead
+   */
+  @Deprecated
+  public boolean isChecked() {
+    // Funny comparison b/c getValue could in theory return null
+    return getValue() == true;
   }
 
   /**
    * Checks or unchecks this check box.
    * 
    * @param checked <code>true</code> to check the check box
+   * @deprecated Use {@link #setValue(Boolean)} instead
    */
+  @Deprecated
   public void setChecked(boolean checked) {
-    getInputElement().setChecked(checked);
-    getInputElement().setDefaultChecked(checked);
+    setValue(checked);
   }
 
   @Override
@@ -113,18 +158,50 @@ public class SimpleCheckBox extends FocusWidget implements HasName {
     }
   }
 
+  /**
+   * Set the value property on the input element that backs this widget. This is
+   * the value that will be associated with the check box's name and submitted
+   * to the server if a {@link FormPanel} that holds it is submitted and the box
+   * is checked.
+   * <p>
+   * Don't confuse this with {@link #setValue}, which actually checks and
+   * unchecks the box.
+   * 
+   * @param value
+   */
+  public void setFormValue(String value) {
+    getInputElement().setAttribute("value", value);
+  }
+
   public void setName(String name) {
     getInputElement().setName(name);
   }
 
   /**
+   * Checks or unchecks the check box.
+   * <p>
+   * Note that this <em>does not</em> set the value property of the checkbox
+   * input element wrapped by this widget. For access to that property, see
+   * {@link #setFormValue(String)}
+   * 
+   * @param value true to check, false to uncheck; null value implies false
+   */
+  public void setValue(Boolean value) {
+    if (value == null) {
+      value = Boolean.FALSE;
+    }
+
+    getInputElement().setChecked(value);
+    getInputElement().setDefaultChecked(value);
+  }
+
+  /**
    * This method is called when a widget is detached from the browser's
-   * document. Overridden because of IE bug that throws away checked state and
-   * in order to clear the event listener off of the <code>inputElem</code>.
+   * document. Overridden because of IE bug that throws away checked state.
    */
   @Override
   protected void onUnload() {
-    setChecked(isChecked());
+    setValue(getValue());
   }
 
   private InputElement getInputElement() {

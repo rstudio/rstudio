@@ -249,6 +249,7 @@ public class DateBox extends Composite implements HasValue<Date>,
   private final PopupPanel popup;
   private final TextBox box = new TextBox();
   private final DatePicker picker;
+  private LeafValueEditor<Date> editor;
   private Format format;
   private boolean allowDPShow = true;
 
@@ -298,7 +299,10 @@ public class DateBox extends Composite implements HasValue<Date>,
    * Returns a {@link TakesValueEditor} backed by the DateBox.
    */
   public LeafValueEditor<Date> asEditor() {
-    return TakesValueEditor.of(this);
+    if (editor == null) {
+      editor = TakesValueEditor.of(this);
+    }
+    return editor;
   }
 
   /**

@@ -98,7 +98,7 @@ public interface DateTimeFormatInfo {
    * @param timePattern the time pattern String
    * @param datePattern the data pattern String
    */
-  String dateTimeShort(String datePattern, String timePattern);
+  String dateTimeShort(String timePattern, String datePattern);
 
   /**
    * Returns an array of the full era names.

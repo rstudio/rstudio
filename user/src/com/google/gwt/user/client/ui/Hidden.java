@@ -18,11 +18,15 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.editor.client.IsEditor;
+import com.google.gwt.editor.client.LeafValueEditor;
+import com.google.gwt.editor.client.adapters.TakesValueEditor;
+import com.google.gwt.user.client.TakesValue;
 
 /**
  * Represents a hidden field in an HTML form.
  */
-public class Hidden extends Widget implements HasName {
+public class Hidden extends Widget implements HasName, TakesValue<String>, IsEditor<LeafValueEditor<String>> {
 
   /**
    * Creates a Hidden widget that wraps an existing &lt;input type='hidden'&gt;
@@ -46,6 +50,8 @@ public class Hidden extends Widget implements HasName {
 
     return hidden;
   }
+
+  private LeafValueEditor<String> editor;
 
   /**
    * Constructor for <code>Hidden</code>.
@@ -85,6 +91,13 @@ public class Hidden extends Widget implements HasName {
   protected Hidden(Element element) {
     assert InputElement.as(element).getType().equalsIgnoreCase("hidden");
     setElement(element);
+  }
+
+  public LeafValueEditor<String> asEditor() {
+    if (editor == null) {
+      editor = TakesValueEditor.of(this);
+    }
+    return editor;
   }
 
   /**

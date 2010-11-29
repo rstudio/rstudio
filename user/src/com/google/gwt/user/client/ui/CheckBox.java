@@ -59,6 +59,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     HasWordWrap, IsEditor<LeafValueEditor<Boolean>> {
   InputElement inputElem;
   LabelElement labelElem;
+  private LeafValueEditor<Boolean> editor;
   private boolean valueChangeHandlerInitialized;
 
   /**
@@ -134,7 +135,10 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
   }
 
   public LeafValueEditor<Boolean> asEditor() {
-    return TakesValueEditor.of(this);
+    if (editor == null) {
+      editor = TakesValueEditor.of(this);
+    }
+    return editor;
   }
 
   /**
@@ -172,7 +176,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
   /**
    * Determines whether this check box is currently checked.
    * <p>
-   * Note that this <em>is not</em> return the value property of the checkbox
+   * Note that this <em>does not</em> return the value property of the checkbox
    * input element wrapped by this widget. For access to that property, see
    * {@link #getFormValue()}
    * 

@@ -253,6 +253,7 @@ public class DatePicker extends Composite implements
   private Date value;
   private Date highlighted;
   private StandardCss css = StandardCss.DEFAULT;
+  private LeafValueEditor<Date> editor;
 
   /**
    * Create a new date picker.
@@ -381,7 +382,10 @@ public class DatePicker extends Composite implements
    * Returns a {@link TakesValueEditor} backed by the DatePicker.
    */
   public LeafValueEditor<Date> asEditor() {
-    return TakesValueEditor.of(this);
+    if (editor == null) {
+      editor = TakesValueEditor.of(this);
+    }
+    return editor;
   }
 
   /**

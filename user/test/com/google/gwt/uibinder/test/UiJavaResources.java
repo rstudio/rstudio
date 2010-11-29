@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,7 @@ import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -91,6 +92,53 @@ public class UiJavaResources {
       code.append("package com.google.gwt.user.client;\n");
       code.append("public interface Command {\n");
       code.append("  void execute();\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource CURRENCY_DATA = new MockJavaResource(
+      "com.google.gwt.i18n.client.CurrencyData") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.client;\n");
+      code.append("public class CurrencyData {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource DATE_LABEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.DateLabel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("import com.google.gwt.i18n.client.DateTimeFormat;\n");
+      code.append("import com.google.gwt.i18n.client.TimeZone;\n");
+      code.append("public class DateLabel extends ValueLabel {\n");
+      code.append("  public DateLabel() { super(null); } ");
+      code.append("  public DateLabel(DateTimeFormat format) { super(null); } ");
+      code.append("  public DateLabel(DateTimeFormat format, TimeZone timeZone) { super(null); } ");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource DATE_TIME_FORMAT = new MockJavaResource(
+      "com.google.gwt.i18n.client.DateTimeFormat") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.client;\n");
+      code.append("public class DateTimeFormat {\n");
+      code.append("  public static enum PredefinedFormat {\n");
+      PredefinedFormat[] values = PredefinedFormat.values();
+      for (int i = 0; i < values.length; i++) {
+        code.append("    ").append(values[i].name());
+        if (i < values.length - 1) {
+          code.append(",\n");
+        }
+      }
+      code.append("  }\n");
       code.append("}\n");
       return code;
     }
@@ -352,6 +400,42 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource NUMBER_LABEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.NumberLabel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("import com.google.gwt.i18n.client.NumberFormat;\n");
+      code.append("public class NumberLabel extends ValueLabel {\n");
+      code.append("  public NumberLabel() { super(null); } ");
+      code.append("  public NumberLabel(NumberFormat format) { super(null); } ");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource NUMBER_FORMAT = new MockJavaResource(
+      "com.google.gwt.i18n.client.NumberFormat") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.client;\n");
+      code.append("public class NumberFormat {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource RENDERER = new MockJavaResource(
+      "com.google.gwt.text.shared.Renderer") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.text.shared;\n");
+      code.append("public class Renderer<T> {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource SPLIT_LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.SplitLayoutPanel") {
     @Override
@@ -432,6 +516,17 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource TIME_ZONE = new MockJavaResource(
+      "com.google.gwt.i18n.client.TimeZone") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.client;\n");
+      code.append("public class TimeZone {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource UI_BINDER = new MockJavaResource(
       "com.google.gwt.uibinder.client.UiBinder") {
     @Override
@@ -467,6 +562,19 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource VALUE_LABEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.ValueLabel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("import com.google.gwt.text.shared.Renderer;\n");
+      code.append("public class ValueLabel extends Widget {\n");
+      code.append("  public ValueLabel(Renderer renderer) {} ");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource WIDGET = new MockJavaResource(
       "com.google.gwt.user.client.ui.Widget") {
     @Override
@@ -491,6 +599,9 @@ public class UiJavaResources {
     rtn.add(CLICK_EVENT);
     rtn.add(CLICK_HANDLER);
     rtn.add(COMMAND);
+    rtn.add(CURRENCY_DATA);
+    rtn.add(DATE_LABEL);
+    rtn.add(DATE_TIME_FORMAT);
     rtn.add(DIALOG_BOX);
     rtn.add(DISCLOSURE_PANEL);
     rtn.add(DOCK_LAYOUT_PANEL);
@@ -512,6 +623,9 @@ public class UiJavaResources {
     rtn.add(MENU_ITEM_SEPARATOR);
     rtn.add(MOUSE_OVER_EVENT);
     rtn.add(MOUSE_OVER_HANDLER);
+    rtn.add(NUMBER_LABEL);
+    rtn.add(NUMBER_FORMAT);
+    rtn.add(RENDERER);
     rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STACK_LAYOUT_PANEL);
     rtn.add(STACK_PANEL);
@@ -519,9 +633,11 @@ public class UiJavaResources {
     rtn.add(TAB_LAYOUT_PANEL);
     rtn.add(TAB_PANEL);
     rtn.add(TEXT_BOX_BASE);
+    rtn.add(TIME_ZONE);
     rtn.add(UI_OBJECT);
     rtn.add(UI_BINDER);
     rtn.add(UI_FACTORY);
+    rtn.add(VALUE_LABEL);
     rtn.add(WIDGET);
     return rtn;
   }

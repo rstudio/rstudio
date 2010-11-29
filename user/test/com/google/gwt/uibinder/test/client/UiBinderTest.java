@@ -28,14 +28,17 @@ import com.google.gwt.uibinder.test.client.EnumeratedLabel.Suffix;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DateLabel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.NamedFrame;
+import com.google.gwt.user.client.ui.NumberLabel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.StackPanel;
+import com.google.gwt.user.client.ui.ValueLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -467,6 +470,21 @@ public class UiBinderTest extends GWTTestCase {
   public void testNamedFrame() {
     NamedFrame p = widgetUi.myNamedFrame;
     assertNotNull("NamedFrame exists", p);
+  }
+
+  public void testDateLabel() {
+    DateLabel p = widgetUi.myDateLabel;
+    assertNotNull("DateLabel exists", p);
+  }
+
+  public void testNumberLabel() {
+    NumberLabel<Float> p = widgetUi.myNumberLabel;
+    assertNotNull("NumberLabel exists", p);
+  }
+
+  public void testValueLabel() {
+    ValueLabel<Double> p = widgetUi.myValueLabel;
+    assertNotNull("ValueLabel exists", p);
   }
 
   public void testStringAttributeIgnoresStaticSetter() {

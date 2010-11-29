@@ -72,6 +72,10 @@
   for a resource to provide arbitrary objects to arbitrary attributes (look for FooLabel)
 </ui:with>
 
+<ui:with field='doubleRenderer' type='com.google.gwt.text.shared.Renderer'>
+  Used to test ValueLabel's @UiConstructor
+</ui:with>
+
 <ui:import field='com.google.gwt.uibinder.test.client.Constants.CONST_FOO'>
   Tests the static import of a single constant into the local namespace.
 </ui:import>
@@ -83,6 +87,7 @@
 <ui:import field='com.google.gwt.uibinder.test.client.Constants.MyEnum.*'>
   Tests the static import of an enum into the local namespace.
 </ui:import>
+
 <!--
   Tests creating a CssResource from an external file.
  -->
@@ -303,7 +308,8 @@
         <ui:attribute name="text" description="radio button name"/>
       </demo:PointlessRadioButtonSubclass>
 
-        <gwt:HorizontalPanel ui:field="myHorizontalPanel" horizontalAlignment="ALIGN_LEFT" verticalAlignment="ALIGN_MIDDLE">
+        <gwt:HorizontalPanel ui:field="myHorizontalPanel"
+            horizontalAlignment="ALIGN_LEFT" verticalAlignment="ALIGN_MIDDLE">
           <gwt:Cell><gwt:HTMLPanel>
       <p> ... a StackPanel ... </p>
 
@@ -639,6 +645,12 @@
   </gwt:AbsolutePanel>
 
   <gwt:NamedFrame ui:field='myNamedFrame' name='myName'/>
+
+  <gwt:DateLabel ui:field='myDateLabel' predefinedFormat='DATE_FULL' />
+
+  <gwt:NumberLabel ui:field='myNumberLabel' predefinedFormat='SCIENTIFIC' />
+
+  <gwt:ValueLabel ui:field='myValueLabel' renderer='{doubleRenderer}' />
 
    </gwt:HTMLPanel>
   </gwt:Dock>

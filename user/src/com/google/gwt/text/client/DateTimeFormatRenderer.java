@@ -47,6 +47,7 @@ public class DateTimeFormatRenderer extends AbstractRenderer<Date> {
    * Create an instance with the given format and time zone.
    */
   public DateTimeFormatRenderer(DateTimeFormat format, TimeZone timeZone) {
+    assert format != null;
     this.format = format;
     this.timeZone = timeZone;
   }
