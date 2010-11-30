@@ -88,7 +88,7 @@ public class LocatorTest extends GWTTestCase {
   };
 
   private static final String ID = "DomainId";
-  private static final int TEST_DELAY = 500;
+  private static final int TEST_DELAY = 5000;
 
   private Factory factory;
 

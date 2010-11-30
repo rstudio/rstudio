@@ -25,6 +25,8 @@ import com.google.gwt.requestfactory.shared.SimpleFooRequest;
  */
 public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
 
+  private static final int DELAY_TEST_FINISH = 5000;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.requestfactory.RequestFactoryExceptionHandlerTest";
@@ -32,7 +34,7 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
 
   @Override
   public void testServerFailureCheckedException() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest context = req.simpleFooRequest();
     SimpleFooProxy rayFoo = context.create(SimpleFooProxy.class);
     final Request<SimpleFooProxy> persistRay = context.persistAndReturnSelf().using(
@@ -46,7 +48,7 @@ public class RequestFactoryExceptionHandlerTest extends RequestFactoryTest {
 
   @Override
   public void testServerFailureRuntimeException() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
     SimpleFooRequest context = req.simpleFooRequest();
     SimpleFooProxy rayFoo = context.create(SimpleFooProxy.class);
     final Request<SimpleFooProxy> persistRay = context.persistAndReturnSelf().using(

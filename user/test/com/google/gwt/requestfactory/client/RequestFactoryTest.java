@@ -172,7 +172,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     }
   }
 
-  private static final int DELAY_TEST_FINISH = 5000;
+  private static final int DELAY_TEST_FINISH = 10 * 1000;
 
   public <T extends EntityProxy> void assertContains(Collection<T> col, T value) {
     EntityProxyId<?> lookFor = value.stableId();
@@ -616,7 +616,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testFindFindEdit() {
-    delayTestFinish(5000);
+    delayTestFinish(DELAY_TEST_FINISH);
 
     final SimpleFooEventHandler<SimpleFooProxy> handler = new SimpleFooEventHandler<SimpleFooProxy>();
     EntityProxyChange.registerForProxyType(req.getEventBus(),
@@ -722,6 +722,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   public void testHistoryToken() {
     delayTestFinish(DELAY_TEST_FINISH);
+
     SimpleBarRequest context = simpleBarRequest();
     final SimpleBarProxy foo = context.create(SimpleBarProxy.class);
     final EntityProxyId<SimpleBarProxy> futureId = foo.stableId();
@@ -1933,6 +1934,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   public void testServerFailureCheckedException() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
     SimpleFooRequest context = simpleFooRequest();
     SimpleFooProxy newFoo = context.create(SimpleFooProxy.class);
     final Request<SimpleFooProxy> persistRequest = context.persistAndReturnSelf().using(
